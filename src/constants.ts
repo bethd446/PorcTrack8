@@ -6,23 +6,23 @@ export const INITIAL_ANIMALS: Animal[] = [
     historique: [{ date: '2026-03-15', event: 'Saillie T4' }, { date: '2026-03-20', event: 'Saillie T7' }]
   },
   { 
-    id: 'V2', boucle: 'B-V2', nom: 'Verrat 2', race: 'Duroc', poids: 280, dateNaissance: '2024-02-15', statut: 'Vide',
+    id: 'V2', boucle: 'B-V2', nom: 'Verrat 2', race: 'Piétrain', poids: 280, dateNaissance: '2024-02-15', statut: 'Vide',
     historique: [{ date: '2026-03-10', event: 'Saillie T1' }]
   },
   // Truies avec statuts variés
-  { id: 'T1', boucle: 'B-T1', nom: 'Truie 1', race: 'Landrace', poids: 210, dateNaissance: '2024-03-01', statut: 'Gestante', dateSaillie: '2026-03-10', dateMBPrevue: '2026-07-04' },
-  { id: 'T2', boucle: 'B-T2', nom: 'Truie 2', race: 'Landrace', poids: 195, dateNaissance: '2024-03-01', statut: 'Allaitante', dateMBPrevue: '2026-03-19', nbPorcelets: 12, dateSaillie: '2025-11-25' },
-  { id: 'T3', boucle: 'B-T3', nom: 'Truie 3', race: 'Landrace', poids: 205, dateNaissance: '2024-03-01', statut: 'Flushing' },
-  { id: 'T4', boucle: 'B-T4', nom: 'Truie 4', race: 'Landrace', poids: 220, dateNaissance: '2024-03-01', statut: 'Gestante', dateSaillie: '2025-12-15', dateMBPrevue: '2026-04-09' }, // MB Dépassée (Aujourd'hui est le 10 Avril)
-  { id: 'T5', boucle: 'B-T5', nom: 'Truie 5', race: 'Landrace', poids: 200, dateNaissance: '2024-03-01', statut: 'Vide' },
-  { id: 'T6', boucle: 'B-T6', nom: 'Truie 6', race: 'Landrace', poids: 215, dateNaissance: '2024-03-01', statut: 'Observation' },
-  { id: 'T7', boucle: 'B-T7', nom: 'Truie 7', race: 'Landrace', poids: 190, dateNaissance: '2024-03-01', statut: 'Gestante', dateSaillie: '2025-12-23', dateMBPrevue: '2026-04-17' },
-  { id: 'T8', boucle: 'B-T8', nom: 'Truie 8', race: 'Landrace', poids: 205, dateNaissance: '2024-03-01', statut: 'Allaitante', dateMBPrevue: '2026-03-10', nbPorcelets: 10, dateSaillie: '2025-11-15' },
-  ...Array.from({ length: 10 }, (_, i) => ({
+  { id: 'T1', boucle: 'B-T1', nom: 'Truie 1', race: 'Large White', poids: 210, dateNaissance: '2024-03-01', statut: 'Gestante', dateSaillie: '2026-03-10', dateMBPrevue: '2026-07-04' },
+  { id: 'T2', boucle: 'B-T2', nom: 'Truie 2', race: 'Large White', poids: 195, dateNaissance: '2024-03-01', statut: 'Allaitante', dateMBPrevue: '2026-03-19', nbPorcelets: 12, dateSaillie: '2025-11-25' },
+  { id: 'T3', boucle: 'B-T3', nom: 'Truie 3', race: 'Large White', poids: 205, dateNaissance: '2024-03-01', statut: 'Flushing' },
+  { id: 'T4', boucle: 'B-T4', nom: 'Truie 4', race: 'Large White', poids: 220, dateNaissance: '2024-03-01', statut: 'Gestante', dateSaillie: '2025-12-15', dateMBPrevue: '2026-04-09' }, // MB Dépassée (Aujourd'hui est le 10 Avril)
+  { id: 'T5', boucle: 'B-T5', nom: 'Truie 5', race: 'Large White', poids: 200, dateNaissance: '2024-03-01', statut: 'Vide' },
+  { id: 'T6', boucle: 'B-T6', nom: 'Truie 6', race: 'Large White', poids: 215, dateNaissance: '2024-03-01', statut: 'Observation' },
+  { id: 'T7', boucle: 'B-T7', nom: 'Truie 7', race: 'Large White', poids: 190, dateNaissance: '2024-03-01', statut: 'Gestante', dateSaillie: '2025-12-23', dateMBPrevue: '2026-04-17' },
+  { id: 'T8', boucle: 'B-T8', nom: 'Truie 8', race: 'Large White', poids: 205, dateNaissance: '2024-03-01', statut: 'Allaitante', dateMBPrevue: '2026-03-10', nbPorcelets: 10, dateSaillie: '2025-11-15' },
+  ...Array.from({ length: 9 }, (_, i) => ({
     id: `T${i + 9}`,
     boucle: `B-T${i + 9}`,
     nom: `Truie ${i + 9}`,
-    race: 'Landrace',
+    race: 'Large White' as const,
     poids: 200,
     dateNaissance: '2024-03-01',
     statut: 'Vide' as const,

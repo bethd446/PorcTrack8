@@ -12,3 +12,11 @@ export function formatDate(date: Date | string) {
     year: 'numeric',
   });
 }
+
+export function getDiffDays(date: string | Date) {
+  const target = new Date(date);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  target.setHours(0, 0, 0, 0);
+  return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+}
