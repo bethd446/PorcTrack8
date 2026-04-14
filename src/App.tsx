@@ -14,6 +14,9 @@ import { BreederList, BreederDetail } from './components/BreederManagement';
 import { PigletList, StockList, BandeManagement } from './components/InventoryManagement';
 import { Planning, HealthModule, RationCalculator, BiosecurityModule, ConseilsExpert } from './components/OperationsManagement';
 import { AssetStudio, SettingsPage, Onboarding } from './components/SystemManagement';
+import NotesHub from './components/NotesHub';
+import NotesDaily from './components/NotesDaily';
+import NotesWeekly from './components/NotesWeekly';
 import FinanceDashboard from './components/FinanceDashboard';
 
 const AppContent = () => {
@@ -95,6 +98,9 @@ const AppContent = () => {
                   <Route path="/biosecurity" element={<BiosecurityModule />} />
                   <Route path="/conseils" element={<ConseilsExpert />} />
                   <Route path="/studio" element={<AssetStudio />} />
+                  <Route path="/notes" element={<NotesHub />} />
+                  <Route path="/notes/daily" element={<NotesDaily />} />
+                  <Route path="/notes/weekly" element={<NotesWeekly />} />
                   <Route path="/more" element={<SettingsPage />} />
                 </Routes>
               </AnimatePresence>

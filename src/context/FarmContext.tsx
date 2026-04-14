@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Animal, StockItem, Event, Portee, Bande, HealthRecord, Ration } from '../types';
 import { INITIAL_ANIMALS, STOCK_ITEMS, INITIAL_BANDES } from '../constants';
-import { syncData, fetchData } from '../services/googleSheets';
+import { fetchData, appendRow } from '../services/googleSheets';
+import { queuePostAction, flushQueue, getQueueStatus } from '../services/offlineQueue';
 import { syncToAppSheet, fetchFromAppSheet } from '../services/appSheet';
 
 interface FarmContextType {
@@ -77,18 +78,13 @@ export const FarmProvider = ({ children }: { children: React.ReactNode }) => {
       setSyncStatus('pending');
       setLastSyncError(null);
       try {
-        const [animalsRes, stockRes, bandesRes] = await Promise.all([
-          fetchData('CHEPTEL'),
-          fetchData('STOCK'),
-          fetchData('BANDES')
-        ]);
-        if (animalsRes.success && animalsRes.data.length > 0) setAnimals(animalsRes.data);
-        if (stockRes.success && stockRes.data.length > 0) setStock(stockRes.data);
-        if (bandesRes.success && bandesRes.data.length > 0) setBandes(bandesRes.data);
+        // IMPORTANT: ton connecteur v5 renvoie un tableau 2D (values), pas des objets.
+        // Pour l'instant, on ne remplace pas le modèle local par ces valeurs brutes.
+        // On utilisera les appels GAS pour écrire/synchroniser, et on gardera l'état local pour l'UI.
+        await fetchData('CHEPTEL');
         setSyncStatus('synced');
       } catch (error) {
         console.error("Failed to pull data (Sheets):", error);
-        // On ne met pas en offline ici car Sheets GET est optionnel selon le script GAS
         setSyncStatus('synced');
       }
     }
@@ -151,25 +147,41 @@ export const FarmProvider = ({ children }: { children: React.ReactNode }) => {
       console.warn('Action ignorée : Mode Observation (ADMIN) actif.');
       return;
     }
+
+    // Mode offline-first: on queue, puis on tente un flush.
     setSyncStatus('pending');
     setLastSyncError(null);
+
+    const syncMode = localStorage.getItem('sync_mode') || 'sheets';
+
     try {
-      const syncMode = localStorage.getItem('sync_mode') || 'sheets';
-      let res;
-      
       if (syncMode === 'appsheet') {
+        // on garde l'existant pour l'instant
         const appSheetAction = action === 'INSERT' ? 'Add' : action === 'UPDATE' ? 'Edit' : 'Delete';
-        res = await syncToAppSheet(table, appSheetAction, data);
-      } else {
-        res = await syncData(table, action, data);
+        const res = await syncToAppSheet(table, appSheetAction, data);
+        if (res.success) setSyncStatus('synced');
+        else {
+          setSyncStatus('offline');
+          setLastSyncError(res.message || 'Erreur inconnue');
+        }
+        return;
       }
 
-      if (res.success) {
-        setSyncStatus('synced');
-      } else {
-        setSyncStatus('offline');
-        setLastSyncError(res.message || 'Erreur inconnue');
-      }
+      // Sheets (Connecteur v5) : on enfile une opération générique.
+      // Pour rester simple, on n'implémente que APPEND pour les notes dans cette itération.
+      queuePostAction({
+        action: 'append_row',
+        sheet: table,
+        values: Array.isArray(data) ? data : [JSON.stringify(data)],
+      });
+
+      // tentative de flush
+      const r = await flushQueue(5);
+      const q = getQueueStatus();
+      if (q.pending === 0) setSyncStatus('synced');
+      else setSyncStatus('offline');
+
+      if (r.lastError) setLastSyncError(r.lastError);
     } catch (error) {
       setSyncStatus('offline');
       setLastSyncError(error instanceof Error ? error.message : 'Erreur réseau');

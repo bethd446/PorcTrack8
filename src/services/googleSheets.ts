@@ -6,7 +6,8 @@
  */
 
 const getGasConfig = () => {
-  const url = localStorage.getItem('gas_url') || 'https://script.google.com/macros/s/AKfycbyaSeQ0mGHN8oP5R7UOMXy_-4OMNhtidl-5LDXFDT3GkGfm4pgb216TfybJ-ILgCKv0iw/exec';
+  // Configurable depuis l'UI (Settings). Valeurs par défaut = connecteur PORC800 v5.
+  const url = localStorage.getItem('gas_url') || 'https://script.google.com/macros/s/AKfycbyM8OfedQsGyZy6USL30wCCpUMY6NDaatl-2scDXuHabERj6hHwxaNsEhmZLmELA_fY/exec';
   const token = localStorage.getItem('gas_token') || 'PORC800_WRITE_2026';
   return { url, token };
 };
@@ -32,66 +33,120 @@ const getDeviceInfo = () => {
   };
 };
 
-export async function fetchData(table: string) {
+export async function fetchData(sheet: string) {
   const { url, token } = getGasConfig();
   if (!url) return { success: false, data: [] };
 
   try {
-    // Note: doGet must be implemented in GAS to return JSON data
-    const response = await fetch(`${url}?token=${token}&table=${table}&action=SELECT`, {
+    // Connecteur v5: lecture complète d'une feuille
+    const response = await fetch(`${url}?token=${encodeURIComponent(token)}&action=read_sheet&sheet=${encodeURIComponent(sheet)}`, {
       method: 'GET',
     });
-    
+
     if (!response.ok) return { success: false, data: [] };
-    const data = await response.json();
-    return { success: true, data: data || [] };
+    const json = await response.json();
+    if (!json?.ok) return { success: false, data: [] };
+    // Retourne un tableau 2D "values"
+    return { success: true, data: json.values || [] };
   } catch (error) {
-    console.error(`Erreur de récupération Sheets (${table}):`, error);
+    console.error(`Erreur de récupération Sheets (${sheet}):`, error);
     return { success: false, data: [] };
   }
 }
 
-export async function syncData(table: string, action: 'INSERT' | 'UPDATE' | 'DELETE', data: any) {
+export async function readRange(sheet: string, range: string) {
+  const { url, token } = getGasConfig();
+  if (!url) return { success: false, data: [] };
+
+  try {
+    const response = await fetch(`${url}?token=${encodeURIComponent(token)}&action=read_range&sheet=${encodeURIComponent(sheet)}&range=${encodeURIComponent(range)}`, {
+      method: 'GET',
+    });
+
+    if (!response.ok) return { success: false, data: [] };
+    const json = await response.json();
+    if (!json?.ok) return { success: false, data: [] };
+    return { success: true, data: json.values || [] };
+  } catch (error) {
+    console.error(`Erreur read_range Sheets (${sheet} ${range}):`, error);
+    return { success: false, data: [] };
+  }
+}
+
+export async function listSheets() {
+  const { url, token } = getGasConfig();
+  if (!url) return { success: false, data: [] };
+
+  try {
+    const response = await fetch(`${url}?token=${encodeURIComponent(token)}&action=list_sheets`, {
+      method: 'GET',
+    });
+
+    if (!response.ok) return { success: false, data: [] };
+    const json = await response.json();
+    if (!json?.ok) return { success: false, data: [] };
+    return { success: true, data: json.sheets || [] };
+  } catch (error) {
+    console.error('Erreur list_sheets:', error);
+    return { success: false, data: [] };
+  }
+}
+
+export async function appendRow(sheet: string, values: any[]) {
   const { url, token } = getGasConfig();
   const deviceInfo = getDeviceInfo();
-  
+
   if (!url) {
     console.warn('URL Apps Script non configurée.');
     return { success: false, message: 'No URL' };
   }
 
   try {
-    /**
-     * NOTE SUR L'AUTHENTIFICATION :
-     * Si vous obtenez une erreur "Authenticate in new window", cela signifie que votre
-     * script Google Apps Script n'est pas déployé correctement.
-     * 
-     * SOLUTIONS :
-     * 1. Déployez en tant qu'Application Web.
-     * 2. Exécuter en tant que : "Moi" (votre compte).
-     * 3. Qui a accès : "Tout le monde" (Anyone).
-     * 4. Assurez-vous d'avoir cliqué sur "Autoriser l'accès" lors du déploiement.
-     */
-    await fetch(url, {
+    const response = await fetch(url, {
       method: 'POST',
-      mode: 'no-cors', // Requis pour éviter les erreurs CORS avec GAS
       headers: {
-        'Content-Type': 'text/plain', // Utiliser text/plain pour éviter le preflight OPTIONS
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        token: token,
-        table,
-        action,
-        payload: data,
+        token,
+        action: 'append_row',
+        sheet,
+        values,
         device: deviceInfo,
-        timestamp: new Date().toISOString()
-      })
+        timestamp: new Date().toISOString(),
+      }),
     });
 
-    // Avec no-cors, on ne peut pas lire la réponse, on assume le succès si pas d'exception
-    return { success: true };
+    // Important: on veut lire le JSON pour savoir si GAS a bien écrit (pas de no-cors)
+    const json = await response.json().catch(() => null);
+    if (!response.ok) return { success: false, message: 'HTTP_' + response.status };
+    if (!json?.ok) return { success: false, message: json?.error || 'GAS_ERROR' };
+
+    return { success: true, data: json };
   } catch (error) {
-    console.error('Erreur de synchronisation Sheets:', error);
+    console.error('Erreur append_row:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+}
+
+export async function postAction(payload: any) {
+  const { url, token } = getGasConfig();
+  const deviceInfo = getDeviceInfo();
+
+  if (!url) return { success: false, message: 'No URL' };
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, ...payload, device: deviceInfo, timestamp: new Date().toISOString() }),
+    });
+    const json = await response.json().catch(() => null);
+    if (!response.ok) return { success: false, message: 'HTTP_' + response.status };
+    if (!json?.ok) return { success: false, message: json?.error || 'GAS_ERROR' };
+    return { success: true, data: json };
+  } catch (error) {
+    console.error('Erreur postAction:', error);
     return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
   }
 }

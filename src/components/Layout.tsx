@@ -7,6 +7,7 @@ import {
   Package, 
   MoreHorizontal, 
   Activity, 
+  NotebookPen,
   Wifi, 
   WifiOff, 
   RefreshCw 
@@ -70,7 +71,7 @@ export const BottomNav = () => {
     { icon: LayoutDashboard, label: 'Board', path: '/' },
     { icon: PiggyBank, label: 'Cheptel', path: '/breeders' },
     { icon: Package, label: 'Stock', path: '/stock' },
-    { icon: Activity, label: 'Santé', path: '/health' },
+    { icon: NotebookPen, label: 'Notes', path: '/notes' },
     { icon: MoreHorizontal, label: 'Plus', path: '/more' },
   ];
 
