@@ -1,0 +1,459 @@
+/**
+ * PorcTrack — Moteur d'Alertes Automatisées
+ * ═══════════════════════════════════════════
+ * Basé sur les standards GTTT (Gestion Technique du Troupeau de Truies)
+ * et les cycles biologiques porcins :
+ *
+ *   Gestation    : 115 jours (±2j)
+ *   Allaitement  : 21-28 jours
+ *   Retour chaleur après sevrage : 3-7 jours
+ *   Intervalle mise-bas : ~155 jours
+ *   Mortalité anormale  : > 15% de la portée
+ *
+ * Le moteur analyse les données du Sheet et génère des alertes
+ * classées par priorité. Certaines alertes déclenchent un workflow
+ * de confirmation (action requise du porcher).
+ */
+
+import React from 'react';
+import { Heart, Stethoscope, Layers, Box, Calendar } from 'lucide-react';
+import type { Truie, BandePorcelets, TraitementSante, StockAliment } from '../types/farm';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TYPES
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type AlertPriority = 'CRITIQUE' | 'HAUTE' | 'NORMALE' | 'INFO';
+export type AlertCategory = 'REPRO' | 'SANTE' | 'BANDES' | 'STOCK' | 'PLANNING';
+
+export type AlertActionType =
+  | 'CONFIRM_SEVRAGE'
+  | 'CONFIRM_SAILLIE'
+  | 'CONFIRM_MISE_BAS'
+  | 'CONFIRM_REGROUPEMENT_BANDE'
+  | 'CONFIRM_REFORME'
+  | 'CONFIRM_SOIN'
+  | 'DISMISS';
+
+export interface AlertAction {
+  type: AlertActionType;
+  label: string;
+  /** Données pré-remplies à envoyer dans Sheets si l'action est confirmée */
+  payload?: Record<string, any>;
+  /** Variante visuelle du bouton */
+  variant?: 'primary' | 'danger' | 'secondary';
+}
+
+export interface FarmAlert {
+  id: string;
+  priority: AlertPriority;
+  category: AlertCategory;
+  /** Identifiant de l'animal ou de l'entité concernée */
+  subjectId: string;
+  subjectLabel: string;
+  title: string;
+  message: string;
+  /** Si true, l'alerte demande une action explicite au porcher */
+  requiresAction: boolean;
+  actions: AlertAction[];
+  createdAt: Date;
+  /** Calculé à partir des données Sheets */
+  dueDate?: Date;
+  /** Nombre de jours en retard (>0) ou en avance (<0) */
+  daysOffset?: number;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSTANTES BIOLOGIQUES
+// ─────────────────────────────────────────────────────────────────────────────
+
+const BIO = {
+  GESTATION_JOURS: 115,
+  LACTATION_JOURS: 21,        // sevrage à 21 jours (standard Côte d'Ivoire)
+  LACTATION_MAX_JOURS: 28,
+  CHALEUR_POST_SEVRAGE_JOURS: 5,  // milieu de la fenêtre 3-7j
+  MORTALITE_SEUIL_PCT: 15,    // % mortalité déclenchant une alerte
+  ALERTE_MB_AVANCE_JOURS: 3,  // alerter J-3 avant la MB prévue
+  ALERTE_MB_RETARD_JOURS: 2,  // alerter J+2 si pas encore de MB
+  REGROUPEMENT_BANDE_FENETRE: 3, // porcelets sevrés à ±3 jours → même bande possible
+} as const;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UTILITAIRES DE DATE
+// ─────────────────────────────────────────────────────────────────────────────
+
+function parseFrDate(dateStr?: string): Date | null {
+  if (!dateStr || dateStr === '—' || dateStr === '') return null;
+
+  // DD/MM/YYYY
+  const dmy = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dmy) return new Date(+dmy[3], +dmy[2] - 1, +dmy[1]);
+
+  // YYYY-MM-DD
+  const ymd = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (ymd) return new Date(+ymd[1], +ymd[2] - 1, +ymd[3]);
+
+  // Serial Sheets
+  const serial = Number(dateStr);
+  if (!isNaN(serial) && serial > 20000) {
+    return new Date(Date.UTC(1899, 11, 30) + serial * 86400000);
+  }
+  return null;
+}
+
+function daysDiff(from: Date, to: Date = new Date()): number {
+  return Math.round((to.getTime() - from.getTime()) / 86400000);
+}
+
+function addDays(date: Date, days: number): Date {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+function alertId(prefix: string, subjectId: string, suffix: string): string {
+  return `${prefix}-${subjectId}-${suffix}`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RÈGLES D'ALERTE
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * R1 — Mise-Bas Imminente ou en Retard
+ * Fenêtre : J-3 à J+2 par rapport à la date prévue
+ */
+function checkMiseBas(truie: Truie, today: Date): FarmAlert | null {
+  const mbPrevue = parseFrDate(truie.dateMBPrevue);
+  if (!mbPrevue) return null;
+
+  const offset = daysDiff(mbPrevue, today); // positif = retard
+
+  if (offset < -BIO.ALERTE_MB_AVANCE_JOURS || offset > BIO.ALERTE_MB_RETARD_JOURS + 5) return null;
+
+  const isRetard = offset > BIO.ALERTE_MB_RETARD_JOURS;
+  const isImminente = offset >= -BIO.ALERTE_MB_AVANCE_JOURS && offset <= 0;
+
+  return {
+    id: alertId('MB', truie.id, String(mbPrevue.getTime())),
+    priority: isRetard ? 'CRITIQUE' : 'HAUTE',
+    category: 'REPRO',
+    subjectId: truie.id,
+    subjectLabel: truie.displayId,
+    title: isRetard
+      ? `Mise-Bas en Retard — ${truie.displayId}`
+      : `Mise-Bas Imminente — ${truie.displayId}`,
+    message: isRetard
+      ? `La mise-bas était prévue il y a ${offset} jour(s). Vérifier l'animal immédiatement.`
+      : `Mise-bas prévue dans ${Math.abs(offset)} jour(s) (${truie.dateMBPrevue}).`,
+    requiresAction: isRetard,
+    dueDate: mbPrevue,
+    daysOffset: offset,
+    actions: [
+      {
+        type: 'CONFIRM_MISE_BAS',
+        label: 'Enregistrer Mise-Bas',
+        variant: 'primary',
+        payload: {
+          sheet: 'SUIVI_TRUIES_REPRODUCTION',
+          idHeader: 'ID',
+          idValue: truie.id,
+          // Noms exacts des colonnes du Sheet SUIVI_TRUIES_REPRODUCTION
+          patch: { STATUT: 'Lactation', DATE_DERNIERE_MB: new Date().toLocaleDateString('fr-FR') },
+        },
+      },
+      { type: 'DISMISS', label: 'Plus tard', variant: 'secondary' },
+    ],
+    createdAt: new Date(),
+  };
+}
+
+/**
+ * R2 — Sevrage à Confirmer
+ * Déclenché à J+21 de la mise-bas réelle
+ */
+function checkSevrage(bande: BandePorcelets, today: Date): FarmAlert | null {
+  if (bande.statut === 'Sevrée' || bande.statut === 'Archivée') return null;
+  const dateMB = parseFrDate(bande.dateMB);
+  if (!dateMB) return null;
+
+  const ageJours = daysDiff(dateMB, today);
+  if (ageJours < BIO.LACTATION_JOURS) return null;
+
+  const retard = ageJours - BIO.LACTATION_JOURS;
+  const nbVivants = bande.vivants ?? 0;
+
+  return {
+    id: alertId('SEV', bande.id, String(dateMB.getTime())),
+    priority: retard > 7 ? 'HAUTE' : 'NORMALE',
+    category: 'BANDES',
+    subjectId: bande.id,
+    subjectLabel: `Bande ${bande.id}`,
+    title: `Sevrage à Confirmer — ${bande.id}`,
+    message: retard === 0
+      ? `La bande ${bande.id} atteint J+${BIO.LACTATION_JOURS} aujourd'hui (${nbVivants} vivants).`
+      : `Sevrage prévu depuis ${retard} jour(s) — ${nbVivants} porcelet(s) sous mère.`,
+    requiresAction: true,
+    dueDate: addDays(dateMB, BIO.LACTATION_JOURS),
+    daysOffset: retard,
+    actions: [
+      {
+        type: 'CONFIRM_SEVRAGE',
+        label: `Confirmer Sevrage (${nbVivants})`,
+        variant: 'primary',
+        payload: {
+          sheet: 'PORCELETS_BANDES_DETAIL',
+          idHeader: 'ID',
+          idValue: bande.id,
+          // Noms exacts des colonnes du Sheet PORCELETS_BANDES_DETAIL
+          patch: {
+            STATUT: 'Sevrée',
+            DATE_SEVRAGE_REELLE: new Date().toLocaleDateString('fr-FR'),
+            SEVRES: nbVivants,
+          },
+          // Mise à jour truie mère si connue
+          truieUpdate: bande.truie ? {
+            sheet: 'SUIVI_TRUIES_REPRODUCTION',
+            idHeader: 'ID',
+            idValue: bande.truie,
+            // STATUT → Vide, et on efface la date MB prévue
+            patch: { STATUT: 'Vide', DATE_MB_PREVUE: '' },
+          } : null,
+        },
+      },
+      { type: 'DISMISS', label: 'Pas encore', variant: 'secondary' },
+    ],
+    createdAt: new Date(),
+  };
+}
+
+/**
+ * R3 — Retour en Chaleur Post-Sevrage
+ * Déclenché J+5 après le sevrage si la truie est encore "Vide"
+ */
+function checkRetourChaleur(truie: Truie, today: Date): FarmAlert | null {
+  if (truie.statut?.toUpperCase() !== 'VIDE') return null;
+  // Utilise dateDerniereMB comme proxy pour la date de sevrage (J+21 après la MB)
+  const dateDerniereMB = parseFrDate(truie.dateDerniereMB);
+  if (!dateDerniereMB) return null;
+  const dateSevrage = addDays(dateDerniereMB, BIO.LACTATION_JOURS);
+  if (!dateSevrage) return null;
+
+  const joursSevrage = daysDiff(dateSevrage, today);
+  if (joursSevrage < BIO.CHALEUR_POST_SEVRAGE_JOURS - 1) return null;
+  if (joursSevrage > 14) return null; // trop tard, autre problème
+
+  return {
+    id: alertId('CHA', truie.id, String(dateSevrage.getTime())),
+    priority: joursSevrage > 10 ? 'HAUTE' : 'NORMALE',
+    category: 'REPRO',
+    subjectId: truie.id,
+    subjectLabel: truie.displayId,
+    title: `Chaleur attendue — ${truie.displayId}`,
+    message: `${truie.displayId} est en Vide depuis J+${joursSevrage} post-sevrage. Surveiller les chaleurs (fenêtre J+3 à J+7).`,
+    requiresAction: true,
+    daysOffset: joursSevrage,
+    actions: [
+      {
+        type: 'CONFIRM_SAILLIE',
+        label: 'Enregistrer Saillie',
+        variant: 'primary',
+        payload: {
+          sheet: 'SUIVI_TRUIES_REPRODUCTION',
+          idHeader: 'ID',
+          idValue: truie.id,
+          // Noms exacts des colonnes du Sheet SUIVI_TRUIES_REPRODUCTION
+          patch: {
+            STATUT: 'Gestation',
+            DATE_SAILLIE: new Date().toLocaleDateString('fr-FR'),
+            DATE_MB_PREVUE: addDays(new Date(), BIO.GESTATION_JOURS).toLocaleDateString('fr-FR'),
+          },
+        },
+      },
+      { type: 'DISMISS', label: 'Pas encore', variant: 'secondary' },
+    ],
+    createdAt: new Date(),
+  };
+}
+
+/**
+ * R4 — Mortalité Anormale dans une Bande
+ * Déclenché si morts > 15% des nés vivants
+ */
+function checkMortalite(bande: BandePorcelets): FarmAlert | null {
+  const nv = bande.nv ?? 0;
+  const morts = bande.morts ?? 0;
+  if (nv === 0) return null;
+
+  const pct = (morts / nv) * 100;
+  if (pct < BIO.MORTALITE_SEUIL_PCT) return null;
+
+  return {
+    id: alertId('MORT', bande.id, String(morts)),
+    priority: pct > 30 ? 'CRITIQUE' : 'HAUTE',
+    category: 'SANTE',
+    subjectId: bande.id,
+    subjectLabel: `Bande ${bande.id}`,
+    title: `Mortalité Anormale — ${bande.id}`,
+    message: `${morts} mort(s) sur ${nv} nés vivants (${Math.round(pct)}%). Seuil d'alerte : ${BIO.MORTALITE_SEUIL_PCT}%.`,
+    requiresAction: true,
+    actions: [
+      {
+        type: 'CONFIRM_SOIN',
+        label: 'Signaler à la Vétérinaire',
+        variant: 'danger',
+        payload: {
+          sheet: 'JOURNAL_SANTE',
+          values: [
+            new Date().toISOString(), 'BANDE', bande.id,
+            'Urgent', 'Mortalité anormale', `${morts} morts / ${nv} NV (${Math.round(pct)}%)`, 'Auto'
+          ],
+        },
+      },
+      { type: 'DISMISS', label: 'Noté', variant: 'secondary' },
+    ],
+    createdAt: new Date(),
+  };
+}
+
+/**
+ * R5 — Stock Critique
+ */
+function checkStock(stock: StockAliment): FarmAlert | null {
+  if (stock.statut === 'OK') return null;
+  const isRupture = stock.statut === 'RUPTURE';
+
+  return {
+    id: alertId('STK', stock.id, stock.statut),
+    priority: isRupture ? 'CRITIQUE' : 'HAUTE',
+    category: 'STOCK',
+    subjectId: stock.id,
+    subjectLabel: stock.nom,
+    title: `Stock ${isRupture ? 'Épuisé' : 'Bas'} — ${stock.nom}`,
+    message: isRupture
+      ? `${stock.nom} est en rupture (${stock.quantite} ${stock.unite} restant).`
+      : `${stock.nom} est en dessous du seuil d'alerte (${stock.quantite}/${stock.alerte} ${stock.unite}).`,
+    requiresAction: false,
+    actions: [{ type: 'DISMISS', label: 'Compris', variant: 'secondary' }],
+    createdAt: new Date(),
+  };
+}
+
+/**
+ * R6 — Regroupement de Bandes Suggéré
+ * Si ≥2 bandes sevrées à ±3 jours → suggérer regroupement
+ */
+function checkRegroupementBandes(bandes: BandePorcelets[], today: Date): FarmAlert[] {
+  const sevrablesSoon = bandes.filter(b => {
+    if (b.statut === 'Sevrée' || b.statut === 'Archivée') return false;
+    const dateMB = parseFrDate(b.dateMB);
+    if (!dateMB) return false;
+    const ageJours = daysDiff(dateMB, today);
+    return ageJours >= BIO.LACTATION_JOURS - BIO.REGROUPEMENT_BANDE_FENETRE;
+  });
+
+  if (sevrablesSoon.length < 2) return [];
+
+  const ids = sevrablesSoon.map(b => b.id).join(', ');
+  const totalVivants = sevrablesSoon.reduce((s, b) => s + (b.vivants ?? 0), 0);
+
+  return [{
+    id: alertId('REG', 'multi', ids.slice(0, 20)),
+    priority: 'INFO',
+    category: 'BANDES',
+    subjectId: 'multi',
+    subjectLabel: `${sevrablesSoon.length} bandes`,
+    title: `Regroupement Bande Possible`,
+    message: `${sevrablesSoon.length} bandes sevrées à ±${BIO.REGROUPEMENT_BANDE_FENETRE}j (${totalVivants} porcelets). Regrouper en une même bande post-sevrage ?`,
+    requiresAction: true,
+    actions: [
+      {
+        type: 'CONFIRM_REGROUPEMENT_BANDE',
+        label: `Créer Bande Post-Sevrage (${totalVivants})`,
+        variant: 'primary',
+        payload: { bandeIds: sevrablesSoon.map(b => b.id), totalVivants },
+      },
+      { type: 'DISMISS', label: 'Garder séparées', variant: 'secondary' },
+    ],
+    createdAt: new Date(),
+  }];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MOTEUR PRINCIPAL
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface AlertEngineInput {
+  truies: Truie[];
+  bandes: BandePorcelets[];
+  sante: TraitementSante[];
+  stockAliments: StockAliment[];
+}
+
+export function runAlertEngine(input: AlertEngineInput): FarmAlert[] {
+  const today = new Date();
+  const alerts: FarmAlert[] = [];
+
+  // R1 — Mise-bas
+  for (const truie of input.truies) {
+    const a = checkMiseBas(truie, today);
+    if (a) alerts.push(a);
+  }
+
+  // R2 — Sevrage
+  for (const bande of input.bandes) {
+    const a = checkSevrage(bande, today);
+    if (a) alerts.push(a);
+  }
+
+  // R3 — Retour chaleur
+  for (const truie of input.truies) {
+    const a = checkRetourChaleur(truie, today);
+    if (a) alerts.push(a);
+  }
+
+  // R4 — Mortalité
+  for (const bande of input.bandes) {
+    const a = checkMortalite(bande);
+    if (a) alerts.push(a);
+  }
+
+  // R5 — Stocks
+  for (const stock of input.stockAliments) {
+    const a = checkStock(stock);
+    if (a) alerts.push(a);
+  }
+
+  // R6 — Regroupement
+  alerts.push(...checkRegroupementBandes(input.bandes, today));
+
+  // Tri : CRITIQUE > HAUTE > NORMALE > INFO, puis par daysOffset
+  const PRIORITY_ORDER: Record<AlertPriority, number> = { CRITIQUE: 0, HAUTE: 1, NORMALE: 2, INFO: 3 };
+  alerts.sort((a, b) => {
+    const pd = PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
+    if (pd !== 0) return pd;
+    return (a.daysOffset ?? 0) - (b.daysOffset ?? 0);
+  });
+
+  return alerts;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS D'AFFICHAGE
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function alertPriorityColor(priority: AlertPriority): string {
+  return { CRITIQUE: 'rose', HAUTE: 'amber', NORMALE: 'blue', INFO: 'slate' }[priority];
+}
+
+export function alertCategoryIcon(category: AlertCategory): React.ReactNode {
+  const iconMap: Record<AlertCategory, React.ComponentType<{ size?: number; className?: string }>> = {
+    REPRO:    Heart,
+    SANTE:    Stethoscope,
+    BANDES:   Layers,
+    STOCK:    Box,
+    PLANNING: Calendar,
+  };
+  const Icon = iconMap[category];
+  return Icon ? React.createElement(Icon, { size: 18 }) : null;
+}

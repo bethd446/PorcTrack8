@@ -1,31 +1,32 @@
 import { Animal, StockItem, Bande } from './types';
 
+// Données mock de démarrage — remplacées dès que FarmContext charge depuis Sheets
 export const INITIAL_ANIMALS: Animal[] = [
-  { 
-    id: 'V1', boucle: 'B-V1', nom: 'Verrat 1', race: 'Large White', poids: 250, dateNaissance: '2024-01-10', statut: 'Vide',
-    historique: [{ date: '2026-03-15', event: 'Saillie T4' }, { date: '2026-03-20', event: 'Saillie T7' }]
+  {
+    id: 'V1', displayId: 'V1', boucle: 'B-V1', nom: 'Verrat 1', race: 'Large White',
+    dateNaissance: '2024-01-10', statut: 'Vide', type: 'VERRAT', ration: 2.5,
   },
-  { 
-    id: 'V2', boucle: 'B-V2', nom: 'Verrat 2', race: 'Piétrain', poids: 280, dateNaissance: '2024-02-15', statut: 'Vide',
-    historique: [{ date: '2026-03-10', event: 'Saillie T1' }]
+  {
+    id: 'V2', displayId: 'V2', boucle: 'B-V2', nom: 'Verrat 2', race: 'Piétrain',
+    dateNaissance: '2024-02-15', statut: 'Vide', type: 'VERRAT', ration: 2.5,
   },
-  // Truies avec statuts variés
-  { id: 'T1', boucle: 'B-T1', nom: 'Truie 1', race: 'Large White', poids: 210, dateNaissance: '2024-03-01', statut: 'Gestante', dateSaillie: '2026-03-10', dateMBPrevue: '2026-07-04' },
-  { id: 'T2', boucle: 'B-T2', nom: 'Truie 2', race: 'Large White', poids: 195, dateNaissance: '2024-03-01', statut: 'Allaitante', dateMBPrevue: '2026-03-19', nbPorcelets: 12, dateSaillie: '2025-11-25' },
-  { id: 'T3', boucle: 'B-T3', nom: 'Truie 3', race: 'Large White', poids: 205, dateNaissance: '2024-03-01', statut: 'Flushing' },
-  { id: 'T4', boucle: 'B-T4', nom: 'Truie 4', race: 'Large White', poids: 220, dateNaissance: '2024-03-01', statut: 'Gestante', dateSaillie: '2025-12-15', dateMBPrevue: '2026-04-09' }, // MB Dépassée (Aujourd'hui est le 10 Avril)
-  { id: 'T5', boucle: 'B-T5', nom: 'Truie 5', race: 'Large White', poids: 200, dateNaissance: '2024-03-01', statut: 'Vide' },
-  { id: 'T6', boucle: 'B-T6', nom: 'Truie 6', race: 'Large White', poids: 215, dateNaissance: '2024-03-01', statut: 'Observation' },
-  { id: 'T7', boucle: 'B-T7', nom: 'Truie 7', race: 'Large White', poids: 190, dateNaissance: '2024-03-01', statut: 'Gestante', dateSaillie: '2025-12-23', dateMBPrevue: '2026-04-17' },
-  { id: 'T8', boucle: 'B-T8', nom: 'Truie 8', race: 'Large White', poids: 205, dateNaissance: '2024-03-01', statut: 'Allaitante', dateMBPrevue: '2026-03-10', nbPorcelets: 10, dateSaillie: '2025-11-15' },
+  { id: 'T1', displayId: 'T1', boucle: 'B-T1', nom: 'Truie 1', race: 'Large White', statut: 'Gestante', type: 'TRUIE', ration: 3, dateMBPrevue: '2026-07-04' },
+  { id: 'T2', displayId: 'T2', boucle: 'B-T2', nom: 'Truie 2', race: 'Large White', statut: 'Allaitante', type: 'TRUIE', ration: 5, dateMBPrevue: '2026-03-19' },
+  { id: 'T3', displayId: 'T3', boucle: 'B-T3', nom: 'Truie 3', race: 'Large White', statut: 'Vide', type: 'TRUIE', ration: 2.5 },
+  { id: 'T4', displayId: 'T4', boucle: 'B-T4', nom: 'Truie 4', race: 'Large White', statut: 'Gestante', type: 'TRUIE', ration: 3, dateMBPrevue: '2026-04-09' },
+  { id: 'T5', displayId: 'T5', boucle: 'B-T5', nom: 'Truie 5', race: 'Large White', statut: 'Vide', type: 'TRUIE', ration: 2.5 },
+  { id: 'T6', displayId: 'T6', boucle: 'B-T6', nom: 'Truie 6', race: 'Large White', statut: 'Observation', type: 'TRUIE', ration: 2.5 },
+  { id: 'T7', displayId: 'T7', boucle: 'B-T7', nom: 'Truie 7', race: 'Large White', statut: 'Gestante', type: 'TRUIE', ration: 3, dateMBPrevue: '2026-04-17' },
+  { id: 'T8', displayId: 'T8', boucle: 'B-T8', nom: 'Truie 8', race: 'Large White', statut: 'Allaitante', type: 'TRUIE', ration: 5 },
   ...Array.from({ length: 9 }, (_, i) => ({
     id: `T${i + 9}`,
+    displayId: `T${i + 9}`,
     boucle: `B-T${i + 9}`,
     nom: `Truie ${i + 9}`,
     race: 'Large White' as const,
-    poids: 200,
-    dateNaissance: '2024-03-01',
-    statut: 'Vide' as const,
+    statut: 'Vide',
+    type: 'TRUIE' as const,
+    ration: 2.5,
   })),
 ];
 

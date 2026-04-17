@@ -1,95 +1,144 @@
 /**
- * File d'attente offline (simple) : stocke les opérations d'écriture dans localStorage.
- * Objectif: l'app fonctionne sans internet, puis synchronise dès que possible.
+ * PorcTrack — File d'attente Offline
+ * ════════════════════════════════════════════════════════
+ * MIGRATION v7 : localStorage → Capacitor Preferences
+ * Raison : localStorage peut être vidé par Android à tout moment.
+ * Capacitor Preferences est backed par SharedPreferences (Android)
+ * et NSUserDefaults (iOS) — persistants entre les redémarrages app.
  */
 
-import { postAction } from './googleSheets';
+import { Preferences } from '@capacitor/preferences';
+import { updateRowById, appendRow } from './googleSheets';
 
 export type QueueItem = {
   id: string;
-  createdAt: string;
-  kind: 'POST_ACTION';
+  action: 'update_row_by_id' | 'append_row';
   payload: any;
+  timestamp: string;
   tries: number;
   lastError?: string;
 };
 
-const KEY = 'porc800_offline_queue_v1';
+const QUEUE_KEY = 'porctrack_sync_queue_v7';
 
-function load(): QueueItem[] {
+// ── Cache mémoire — permet getQueueStatus() synchrone ───────────────────────
+// Les callers existants (Dashboard, Header, etc.) appellent getQueueStatus() de
+// façon synchrone. On maintient une copie mémoire mise à jour à chaque write.
+let _memCache: QueueItem[] = [];
+let _initialized = false;
+
+async function loadQueue(): Promise<QueueItem[]> {
   try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    const { value } = await Preferences.get({ key: QUEUE_KEY });
+    _memCache = value ? JSON.parse(value) : [];
+    _initialized = true;
+    return _memCache;
   } catch {
-    return [];
+    return _memCache;
   }
 }
 
-function save(items: QueueItem[]) {
-  localStorage.setItem(KEY, JSON.stringify(items));
+async function saveQueue(queue: QueueItem[]): Promise<void> {
+  _memCache = queue;
+  try {
+    await Preferences.set({ key: QUEUE_KEY, value: JSON.stringify(queue) });
+  } catch (e) {
+    console.error('[Queue] saveQueue failed:', e);
+  }
 }
 
-function uid() {
-  return 'Q-' + Math.random().toString(36).slice(2, 10).toUpperCase();
+/** Initialise le cache mémoire au démarrage de l'app */
+export async function initQueue(): Promise<void> {
+  await loadQueue();
 }
 
-export function queuePostAction(payload: any) {
-  const items = load();
-  items.push({
-    id: uid(),
-    createdAt: new Date().toISOString(),
-    kind: 'POST_ACTION',
-    payload,
+// ── API publique ─────────────────────────────────────────────────────────────
+
+export async function enqueueUpdateRow(
+  sheet: string, idHeader: string, idValue: string, patch: Record<string, any>
+): Promise<void> {
+  const queue = await loadQueue();
+  queue.push({
+    id: `UP-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+    action: 'update_row_by_id',
+    payload: { sheet, idHeader, idValue, patch },
+    timestamp: new Date().toISOString(),
     tries: 0,
   });
-  save(items);
+  await saveQueue(queue);
 }
 
-export function getQueueStatus() {
-  const items = load();
-  return {
-    pending: items.length,
-    items,
-  };
+export async function enqueueAppendRow(sheet: string, values: any[]): Promise<void> {
+  const queue = await loadQueue();
+  queue.push({
+    id: `AP-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+    action: 'append_row',
+    payload: { sheet, values },
+    timestamp: new Date().toISOString(),
+    tries: 0,
+  });
+  await saveQueue(queue);
 }
 
-export async function flushQueueOnce() {
-  const items = load();
-  if (items.length === 0) return { sent: 0, remaining: 0 };
-
-  // envoie en FIFO
-  const next = items[0];
-  const res = await postAction(next.payload);
-
-  if (res.success) {
-    items.shift();
-    save(items);
-    return { sent: 1, remaining: items.length };
-  }
-
-  next.tries += 1;
-  next.lastError = res.message || 'ERROR';
-  items[0] = next;
-  save(items);
-  return { sent: 0, remaining: items.length, error: next.lastError };
+/**
+ * Retourne l'état de la queue de façon SYNCHRONE (via le cache mémoire).
+ * Compatible avec tous les appels existants sans await.
+ * Le cache mémoire est mis à jour à chaque enqueue/processQueue.
+ * Appeler initQueue() au démarrage pour charger depuis Preferences.
+ */
+export function getQueueStatus(): { pending: number; items: QueueItem[] } {
+  return { pending: _memCache.length, items: [..._memCache] };
 }
 
-export async function flushQueue(max = 20) {
-  let sent = 0;
-  let lastError: string | undefined;
+/**
+ * Traite toute la queue vers GAS.
+ * Succès → retirés. Échecs → conservés pour retry.
+ */
+export async function processQueue(): Promise<{
+  success: boolean; processed: number; remaining: number;
+}> {
+  const queue = await loadQueue();
+  if (queue.length === 0) return { success: true, processed: 0, remaining: 0 };
 
-  for (let i = 0; i < max; i++) {
-    const r: any = await flushQueueOnce();
-    if (r.sent === 1) {
-      sent += 1;
-      continue;
+  const remaining: QueueItem[] = [];
+  let processed = 0;
+  let hasError = false;
+
+  for (const item of queue) {
+    let result: { success: boolean; message?: string };
+    try {
+      if (item.action === 'update_row_by_id') {
+        const { sheet, idHeader, idValue, patch } = item.payload;
+        result = await updateRowById(sheet, idHeader, idValue, patch);
+      } else {
+        const { sheet, values } = item.payload;
+        result = await appendRow(sheet, values);
+      }
+
+      if (result.success) {
+        processed++;
+      } else {
+        item.tries++;
+        item.lastError = result.message;
+        remaining.push(item);
+        hasError = true;
+      }
+    } catch (e) {
+      item.tries++;
+      item.lastError = String(e);
+      remaining.push(item);
+      hasError = true;
     }
-    lastError = r.error;
-    break;
   }
 
-  const remaining = load().length;
-  return { sent, remaining, lastError };
+  await saveQueue(remaining);
+  return { success: !hasError, processed, remaining: remaining.length };
+}
+
+/** Alias rétrocompatibilité */
+export const flushQueue = processQueue;
+
+/** Vide entièrement la queue (reset manuel via SyncView) */
+export async function clearQueue(): Promise<void> {
+  await saveQueue([]);
 }

@@ -1,4 +1,4 @@
-import { queuePostAction, flushQueue } from '../../services/offlineQueue';
+import { enqueueAppendRow, processQueue } from '../../services/offlineQueue';
 import { SHEET_DAILY, SHEET_WEEKLY } from './constants';
 
 export type DailyNoteInput = {
@@ -18,47 +18,49 @@ export type WeeklyNoteInput = {
   dateDebut: string;
   dateFin: string;
   porcher: string;
-  cheptelResume: string;
-  evenements: string;
+  truies: string;
+  verrats: string;
+  porceletsSevrage: string;
+  porcsEngraissement: string;
+  miseBasSemaine: string;
+  sevrageSemaine: string;
+  sailliesSemaine: string;
+  entreesMaternite: string;
   observations: string;
   actionsSemaineProchaine: string;
 };
 
 export async function addDailyNote(input: DailyNoteInput) {
-  queuePostAction({
-    action: 'append_row',
-    sheet: SHEET_DAILY,
-    values: [
-      input.date,
-      input.porcher,
-      input.eauOk,
-      input.alimentOk,
-      input.animauxAlertes,
-      String(input.naissances),
-      String(input.mortalite),
-      input.observations,
-      input.actions,
-    ],
-  });
-
-  return flushQueue(5);
+  enqueueAppendRow(SHEET_DAILY, [
+    input.date,
+    input.porcher,
+    input.eauOk,
+    input.alimentOk,
+    input.animauxAlertes,
+    String(input.naissances),
+    String(input.mortalite),
+    input.observations,
+    input.actions,
+  ]);
+  return processQueue();
 }
 
 export async function addWeeklyPoint(input: WeeklyNoteInput) {
-  queuePostAction({
-    action: 'append_row',
-    sheet: SHEET_WEEKLY,
-    values: [
-      input.semaine,
-      input.dateDebut,
-      input.dateFin,
-      input.porcher,
-      input.cheptelResume,
-      input.evenements,
-      input.observations,
-      input.actionsSemaineProchaine,
-    ],
-  });
-
-  return flushQueue(5);
+  enqueueAppendRow(SHEET_WEEKLY, [
+    input.semaine,
+    input.dateDebut,
+    input.dateFin,
+    input.porcher,
+    input.truies,
+    input.verrats,
+    input.porceletsSevrage,
+    input.porcsEngraissement,
+    input.miseBasSemaine,
+    input.sevrageSemaine,
+    input.sailliesSemaine,
+    input.entreesMaternite,
+    input.observations,
+    input.actionsSemaineProchaine,
+  ]);
+  return processQueue();
 }

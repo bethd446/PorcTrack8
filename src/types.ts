@@ -1,101 +1,99 @@
-export type AnimalStatus = 'Gestante' | 'Allaitante' | 'Flushing' | 'Observation' | 'Saillie' | 'Vide' | 'Mise bas à confirmer';
+/**
+ * PorcTrack — Types partagés (vue unifiée)
+ * ════════════════════════════════════════════
+ * Source de vérité principale : src/types/farm.ts
+ * Ce fichier contient uniquement les types UI (Animal, Note, etc.)
+ * qui ne correspondent pas directement à une table Sheets.
+ *
+ * Pas de duplication : Truie, Verrat, BandePorcelets, etc. sont dans types/farm.ts
+ */
+
+// ── Re-exports depuis farm.ts pour éviter les imports multiples ───────────────
+export type {
+  Truie, Verrat, BandePorcelets, TraitementSante,
+  StockAliment, StockVeto, FarmState, SyncStatus,
+  DataSource, TableIndexEntry
+} from './types/farm';
+
+// ── Type unifié Animal (TRUIE | VERRAT) ──────────────────────────────────────
+// Utilisé par AnimalDetailView, CheptelView, FarmContext.getAnimalById()
+// Fusion de Truie + Verrat en un type générique pour l'UI
+
+export type AnimalStatus =
+  | 'Gestante' | 'Allaitante' | 'Flushing' | 'Observation'
+  | 'Saillie'  | 'Vide'       | 'Réforme'  | 'Actif'
+  | 'Mise bas à confirmer'    | string;
 
 export interface Animal {
-  id: string; // e.g. T1, V1
-  boucle: string;
-  nom: string;
-  race: string;
-  poids: number;
-  dateNaissance: string;
-  photo?: string;
-  statut: AnimalStatus;
-  dateSaillie?: string;
-  verrat?: string;
-  dateMBPrevue?: string;
-  nbPorcelets?: number;
-  notes?: string;
-  historique?: { date: string; event: string }[];
+  id:          string;
+  displayId:   string;
+  boucle:      string;
+  nom:         string;
+  race:        string;
+  statut:      string;
+  type:        'TRUIE' | 'VERRAT';
+  ration:      number;
+  emplacement?: string;
+  // Truie-specific
+  stade?:          string;
+  nbPortees?:      number;
+  dateDerniereMB?: string;
+  dateMBPrevue?:   string;
+  nvMoyen?:        number;
+  // Verrat-specific
+  dateNaissance?: string;
+  // Données brutes pour TableRowEdit
+  raw?: any[];
 }
 
-export interface Event {
-  id: string;
-  animalId: string;
-  type: 'MB' | 'saillie' | 'mort' | 'maladie' | 'traitement' | 'autre';
-  date: string;
-  description: string;
-  synced: boolean;
+// ── Notes terrain ─────────────────────────────────────────────────────────────
+// Lues depuis NOTES_TERRAIN (DATE | SUBJECT_TYPE | SUBJECT_ID | NOTE | AUTHOR)
+export interface Note {
+  id:          string;
+  animalId:    string;
+  animalType:  'TRUIE' | 'VERRAT';
+  date:        string;
+  texte:       string;
+  synced:      boolean;
+}
+
+// ── Autres types UI (non liés à Sheets) ──────────────────────────────────────
+
+export interface HealthRecord {
+  id:          string;
+  animalId:    string;
+  animalType:  'TRUIE' | 'VERRAT';
+  date:        string;
+  type:        string;
+  traitement:  string;
+  observation: string;
+  synced:      boolean;
 }
 
 export interface StockItem {
-  id: string;
-  nom: string;
-  quantite: number;
-  unite: string;
-  alerte: 'RUPTURE' | 'BAS' | 'OK';
+  id:          string;
+  nom:         string;
+  quantite:    number;
+  unite:       string;
+  alerte:      'RUPTURE' | 'BAS' | 'OK';
   prixUnitaire?: number;
-  type?: 'ALIMENT' | 'MEDICAMENT' | 'MATERIEL';
-}
-
-export interface Formula {
-  id: string;
-  nom: string;
-  phase: string;
-  composition: {
-    ingredient: string;
-    pourcentage: number;
-  }[];
-  coutKg: number;
-}
-
-export interface BiosecurityMeasure {
-  id: string;
-  categorie: 'Infrastructure' | 'Protocole' | 'Sanitaire';
-  nom: string;
-  description: string;
-  frequence: string;
-  statut: 'OK' | 'A_VERIFIER' | 'ALERTE';
-}
-
-export interface Portee {
-  id: string;
-  loge: string;
-  mereId: string;
-  bandeId?: string;
-  dateMB: string;
-  vivants: number;
-  statut: 'sous_mere' | 'sevre' | 'engraissement';
+  type?:       'ALIMENT' | 'MEDICAMENT' | 'MATERIEL';
 }
 
 export interface Bande {
-  id: string;
-  nom: string;
-  dateDebut: string;
-  statut: 'en_cours' | 'termine';
-  type: 'gestation' | 'maternite' | 'post_sevrage' | 'engraissement';
-  nbSujets: number;
+  id:          string;
+  nom:         string;
+  dateDebut:   string;
+  statut:      'en_cours' | 'termine';
+  type:        'gestation' | 'maternite' | 'post_sevrage' | 'engraissement';
+  nbSujets:    number;
   poidsMoyen?: number;
 }
 
-export interface SyncQueueItem {
-  id: string;
-  table: string;
-  data: any;
-  timestamp: string;
-}
-
-export interface HealthRecord {
-  id: string;
-  animalId: string;
-  produit: string;
-  dose: string;
-  date: string;
-  veto: string;
-}
-
 export interface Ration {
-  id: string;
-  animalIdOrGroup: string;
-  alimentId: string;
-  quantite: number;
-  date: string;
+  id:                string;
+  animalIdOrGroup:   string;
+  alimentId:         string;
+  quantite:          number;
+  date:              string;
 }

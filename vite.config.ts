@@ -20,5 +20,25 @@ export default defineConfig(({mode}) => {
       // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-react':     ['react', 'react-dom'],
+            'vendor-capacitor': ['@capacitor/core', '@capacitor/preferences'],
+            // Split feature-tables into smaller chunks
+            'bandes':           ['./src/features/tables/BandesView'],
+            'cheptel':          ['./src/features/tables/CheptelView', './src/features/tables/AnimalDetailView'],
+            'tables-misc':      ['./src/features/tables/TableView'],
+            'feature-controle': [
+              './src/features/controle/ControleQuotidien',
+              './src/features/controle/ChecklistFlow',
+              './src/features/controle/AuditView',
+            ],
+          },
+        },
+      },
+      chunkSizeWarningLimit: 600,
+    },
   };
 });

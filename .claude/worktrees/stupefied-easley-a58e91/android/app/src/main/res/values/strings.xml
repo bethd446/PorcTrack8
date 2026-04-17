@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PorcTrack</string>
+    <string name="title_activity_main">PorcTrack</string>
+    <string name="package_name">com.porc800.porctrack</string>
+    <string name="custom_url_scheme">com.porc800.porctrack</string>
+</resources>

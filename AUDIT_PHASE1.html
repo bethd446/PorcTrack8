@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PorcTrack 8 — Audit UI/UX Phase 1</title>
+<style>
+  :root {
+    --accent: #059669;
+    --accent-light: #ECFDF5;
+    --red: #EF4444;
+    --red-light: #FEF2F2;
+    --amber: #F59E0B;
+    --amber-light: #FFFBEB;
+    --blue: #3B82F6;
+    --blue-light: #EFF6FF;
+    --gray-900: #111827;
+    --gray-700: #374151;
+    --gray-500: #6B7280;
+    --gray-300: #D1D5DB;
+    --gray-100: #F3F4F6;
+    --gray-50: #F9FAFB;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--gray-50);
+    color: var(--gray-900);
+    line-height: 1.6;
+    padding: 0;
+  }
+  .hero {
+    background: linear-gradient(135deg, #064e3b, #059669);
+    color: white;
+    padding: 48px 32px 40px;
+    text-align: center;
+  }
+  .hero h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em; }
+  .hero .subtitle { font-size: 16px; opacity: 0.85; }
+  .hero .date { font-size: 13px; opacity: 0.6; margin-top: 12px; font-family: monospace; }
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 20px 60px; }
+
+  /* Score banner */
+  .score-banner {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: -24px 20px 32px;
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 20px;
+    transform: translateY(-24px);
+  }
+  .score-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    border: 1px solid var(--gray-100);
+  }
+  .score-card .value { font-size: 36px; font-weight: 800; letter-spacing: -0.03em; }
+  .score-card .label { font-size: 12px; color: var(--gray-500); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px; }
+  .score-card.green .value { color: var(--accent); }
+  .score-card.red .value { color: var(--red); }
+  .score-card.amber .value { color: var(--amber); }
+  .score-card.blue .value { color: var(--blue); }
+
+  /* Section */
+  .section {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid var(--gray-100);
+    margin-bottom: 20px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .section-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--gray-100);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-header h2 { font-size: 18px; font-weight: 700; }
+  .section-body { padding: 20px 24px; }
+  .priority-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .priority-critique { background: var(--red-light); color: var(--red); }
+  .priority-haute { background: #FEF3C7; color: #D97706; }
+  .priority-moyenne { background: var(--blue-light); color: var(--blue); }
+  .priority-basse { background: var(--gray-100); color: var(--gray-500); }
+
+  /* Audit items */
+  .audit-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--gray-100);
+  }
+  .audit-item:last-child { border-bottom: none; }
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .status-done { background: var(--accent-light); color: var(--accent); }
+  .status-pending { background: var(--amber-light); color: var(--amber); }
+  .status-skip { background: var(--gray-100); color: var(--gray-500); }
+  .audit-item .content { flex: 1; }
+  .audit-item .title { font-weight: 600; font-size: 14px; }
+  .audit-item .detail { font-size: 13px; color: var(--gray-500); margin-top: 3px; }
+  .audit-item .stats { font-family: monospace; font-size: 12px; color: var(--accent); margin-top: 4px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px 12px; background: var(--gray-50); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gray-500); border-bottom: 2px solid var(--gray-200); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--gray-100); }
+  tr:hover td { background: var(--gray-50); }
+  td code { background: var(--gray-100); padding: 2px 6px; border-radius: 4px; font-size: 12px; font-family: monospace; }
+
+  /* File list */
+  .file-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .file-tag { background: var(--gray-100); padding: 3px 10px; border-radius: 6px; font-size: 11px; font-family: monospace; color: var(--gray-700); }
+
+  /* Progress bar */
+  .progress-bar { height: 8px; background: var(--gray-100); border-radius: 4px; overflow: hidden; margin: 8px 0; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
+  .progress-fill.green { background: var(--accent); }
+  .progress-fill.amber { background: var(--amber); }
+
+  /* Summary grid */
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .summary-item { padding: 12px 16px; background: var(--gray-50); border-radius: 10px; }
+  .summary-item .val { font-size: 20px; font-weight: 800; }
+  .summary-item .lbl { font-size: 11px; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.06em; }
+
+  @media (max-width: 600px) {
+    .score-banner { grid-template-columns: 1fr 1fr; }
+    .summary-grid { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>PorcTrack 8 — Audit UI/UX Phase 1</h1>
+  <div class="subtitle">10 catégories &middot; 27 fichiers analysés &middot; Corrections appliquées en temps réel</div>
+  <div class="date">17 avril 2026 &middot; UI/UX Pro Max Workflow</div>
+</div>
+
+<div class="score-banner">
+  <div class="score-card green">
+    <div class="value">10/10</div>
+    <div class="label">Catégories auditées</div>
+  </div>
+  <div class="score-card green">
+    <div class="value">310+</div>
+    <div class="label">Corrections appliquées</div>
+  </div>
+  <div class="score-card green">
+    <div class="value">0</div>
+    <div class="label">Erreurs TypeScript</div>
+  </div>
+  <div class="score-card green">
+    <div class="value">OK</div>
+    <div class="label">Build Vite (3.79s)</div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ═══ RÉSUMÉ EXÉCUTIF ═══ -->
+<div class="section">
+  <div class="section-header">
+    <span style="font-size:20px;">📊</span>
+    <h2>Résumé exécutif</h2>
+  </div>
+  <div class="section-body">
+    <div class="summary-grid">
+      <div class="summary-item"><div class="val" style="color:var(--accent);">111</div><div class="lbl">Ionicons → Lucide migrés</div></div>
+      <div class="summary-item"><div class="val" style="color:var(--accent);">62</div><div class="lbl">Textes trop petits corrigés</div></div>
+      <div class="summary-item"><div class="val" style="color:var(--accent);">23</div><div class="lbl">transition-all remplacés</div></div>
+      <div class="summary-item"><div class="val" style="color:var(--accent);">19</div><div class="lbl">Fichiers migrés (Ionicons)</div></div>
+      <div class="summary-item"><div class="val" style="color:var(--accent);">~60</div><div class="lbl">.pressable ajoutés</div></div>
+      <div class="summary-item"><div class="val" style="color:var(--accent);">~25</div><div class="lbl">aria-labels ajoutés</div></div>
+      <div class="summary-item"><div class="val" style="color:var(--accent);">3</div><div class="lbl">inputmode numeric ajoutés</div></div>
+      <div class="summary-item"><div class="val" style="color:var(--accent);">17</div><div class="lbl">Contrastes texte renforcés</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CATÉGORIE 1: ACCESSIBILITÉ ═══ -->
+<div class="section">
+  <div class="section-header">
+    <span class="priority-tag priority-critique">CRITIQUE</span>
+    <h2>1. Accessibilité</h2>
+  </div>
+  <div class="section-body">
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">Focus visible global</div>
+        <div class="detail">Ajout de <code>:focus-visible</code> dans index.css — outline 2px solid accent-600, offset 2px, border-radius 8px</div>
+        <div class="stats">→ Appliqué globalement à tous les éléments focusables</div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">prefers-reduced-motion</div>
+        <div class="detail">Media query ajoutée : toutes les animations désactivées si l'utilisateur préfère le mouvement réduit</div>
+        <div class="stats">→ 5 règles d'animation neutralisées</div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">aria-labels ajoutés</div>
+        <div class="detail">~25 boutons icône-seule avec aria-label descriptif en français (Fermer, Retour, Rechercher, etc.)</div>
+        <div class="stats">→ 10 fichiers corrigés : DeleteModal, ConfirmationModal, PhotoStrip, PremiumHeader, SystemManagement, QuickSaillieForm, BandesView, AnimalDetailView, ChecklistFlow, Navigation</div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">Contraste texte minimum</div>
+        <div class="detail">62 instances de text-[10px], text-[9px], text-[8px] remplacées par text-[11px] minimum</div>
+        <div class="stats">→ 62 corrections dans 18+ fichiers</div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">Contraste texte renforcé</div>
+        <div class="detail">17 instances text-gray-300/200 sur fond blanc remplacées par text-gray-400 pour lisibilité extérieur/soleil</div>
+        <div class="stats">→ 9 fichiers : Dashboard, PremiumUI, SystemManagement, BandesView, AnimalDetailView, TableRowEdit, CheptelView, SyncView, AuditView</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CATÉGORIE 2: TOUCH & INTERACTION ═══ -->
+<div class="section">
+  <div class="section-header">
+    <span class="priority-tag priority-critique">CRITIQUE</span>
+    <h2>2. Touch & Interaction</h2>
+  </div>
+  <div class="section-body">
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">touch-action: manipulation</div>
+        <div class="detail">Ajouté sur body → zéro délai 300ms sur tout le site (utilisation terrain avec gants)</div>
+        <div class="stats">→ Appliqué globalement dans index.css</div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">overscroll-behavior: contain</div>
+        <div class="detail">Pas de pull-to-refresh accidentel sur le body</div>
+        <div class="stats">→ index.css body</div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">Classe .touch-target (48×48px)</div>
+        <div class="detail">Nouvelle classe CSS pour touch targets terrain (usage avec gants) — 48×48px minimum</div>
+        <div class="stats">→ Disponible via .touch-target dans index.css</div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">Classe .pressable — min 44×44px</div>
+        <div class="detail">Ajout min-height: 44px et min-width: 44px à .pressable</div>
+        <div class="stats">→ 37 éléments ont déjà .pressable</div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">.pressable ajouté sur tous les onClick</div>
+        <div class="detail">~60 éléments interactifs avec .pressable pour feedback tactile (scale 0.97, min 44×44px)</div>
+        <div class="stats">→ 15 fichiers corrigés : ErrorBoundary, DeleteModal, Dashboard, SystemManagement, ConfirmationModal, QuickSaillieForm, BandesView, AlertsView, AnimalDetailView, TableView, SyncView, ControleQuotidien, ChecklistFlow, AuditView, PhotoStrip</div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">inputmode="numeric" ajouté</div>
+        <div class="detail">Clavier numérique mobile pour poids, quantités, numéros d'animaux</div>
+        <div class="stats">→ PremiumInput (global), ChecklistFlow, BandesView (poids moyen)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CATÉGORIE 3: PERFORMANCE ═══ -->
+<div class="section">
+  <div class="section-header">
+    <span class="priority-tag priority-haute">HAUTE</span>
+    <h2>3. Performance</h2>
+  </div>
+  <div class="section-body">
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">Lazy loading des routes</div>
+        <div class="detail">Tous les écrans chargés via React.lazy() avec des chunks séparés</div>
+        <div class="stats">→ 13 routes lazy-loaded dans App.tsx</div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">Skeleton loading</div>
+        <div class="detail">Composant SkeletonCard présent pour les états de chargement</div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">transition-all éliminé</div>
+        <div class="detail">23 instances de transition-all remplacées par des transitions spécifiques — évite le repaint sur toutes les propriétés CSS</div>
+        <div class="stats">→ transition-colors, transition-transform, transition-[transform,colors], transition-opacity, transition-shadow</div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">Build optimisé</div>
+        <div class="detail">Build Vite réussi en 3.15s — 2 729 modules transformés</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CATÉGORIE 4: STYLE / COHÉRENCE ═══ -->
+<div class="section">
+  <div class="section-header">
+    <span class="priority-tag priority-haute">HAUTE</span>
+    <h2>4. Style & Cohérence</h2>
+  </div>
+  <div class="section-body">
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">Migration Ionicons → Lucide React</div>
+        <div class="detail">111 instances de <code>&lt;IonIcon&gt;</code> remplacées par des composants Lucide React SVG dans 19 fichiers</div>
+        <div class="stats">→ 0 IonIcon restant — bibliothèque ionicons/icons éliminée</div>
+        <div class="file-list">
+          <span class="file-tag">BandesView (32)</span>
+          <span class="file-tag">AnimalDetailView (12)</span>
+          <span class="file-tag">ChecklistFlow (7)</span>
+          <span class="file-tag">ConfirmationModal (6)</span>
+          <span class="file-tag">TableView (6)</span>
+          <span class="file-tag">SyncView (6)</span>
+          <span class="file-tag">DeleteModal (5)</span>
+          <span class="file-tag">PhotoStrip (5)</span>
+          <span class="file-tag">PremiumUI (5)</span>
+          <span class="file-tag">ControleQuotidien (4)</span>
+          <span class="file-tag">AuditView (4)</span>
+          <span class="file-tag">QuickHealthForm (3)</span>
+          <span class="file-tag">QuickNoteForm (3)</span>
+          <span class="file-tag">TableRowEdit (3)</span>
+          <span class="file-tag">CheptelView (3)</span>
+          <span class="file-tag">AlertsView (3)</span>
+          <span class="file-tag">ProtocolsView (2)</span>
+          <span class="file-tag">SystemManagement (1)</span>
+          <span class="file-tag">PremiumHeader (1)</span>
+        </div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">Émojis structurels supprimés</div>
+        <div class="detail">Retrait de ✅ ❌ ⚠️ des toasts et messages d'erreur — remplacés par des icônes Lucide</div>
+        <div class="stats">→ ConfirmationModal, DeleteModal, Dashboard</div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">Hex hardcodés → Tailwind</div>
+        <div class="detail">Migration massive de couleurs hex vers les classes Tailwind du design system</div>
+        <div class="stats">→ 9 hex restants (dans PremiumUI T tokens + Dashboard priorityColors — légitimes)</div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">PremiumUI icon props → ReactNode</div>
+        <div class="detail">Les props icon/iconEnd de PremiumButton, PremiumInput et EmptyState acceptent maintenant React.ReactNode (Lucide) au lieu de string (ionicons)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CATÉGORIE 5: LAYOUT ═══ -->
+<div class="section">
+  <div class="section-header">
+    <span class="priority-tag priority-haute">HAUTE</span>
+    <h2>5. Layout & Responsive</h2>
+  </div>
+  <div class="section-body">
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">Mobile-first</div>
+        <div class="detail">Navigation bottom 4 onglets, safe-area-inset-bottom respecté, pas de scroll horizontal détecté</div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">Safe areas iOS/Android</div>
+        <div class="detail">paddingBottom: env(safe-area-inset-bottom) sur Navigation et ion-tab-bar</div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">Zéro margin-top négative</div>
+        <div class="detail">Pas de -mt-10, -mt-12 dans le code — layout via flex/grid/children slots</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CATÉGORIE 6: TYPOGRAPHIE ═══ -->
+<div class="section">
+  <div class="section-header">
+    <span class="priority-tag priority-moyenne">MOYENNE</span>
+    <h2>6. Typographie & Couleurs</h2>
+  </div>
+  <div class="section-body">
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">4 polices, rôles définis</div>
+        <div class="detail">BigShoulders (titres) → InstrumentSans (body) → BricolageGrotesque (nombres) → DMMono (codes)</div>
+        <div class="stats">→ Classes: .ft-heading, body default, .ft-values, .ft-code</div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">Taille minimum 11px</div>
+        <div class="detail">Aucun texte en dessous de 11px — 62 corrections de text-[8-10px] vers text-[11px]</div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">Palette sémantique</div>
+        <div class="detail">accent-50 à accent-700 (vert émeraude) + gray-50 à gray-900 + red/amber/blue/purple</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CATÉGORIE 7: ANIMATION ═══ -->
+<div class="section">
+  <div class="section-header">
+    <span class="priority-tag priority-moyenne">MOYENNE</span>
+    <h2>7. Animation</h2>
+  </div>
+  <div class="section-body">
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">Emil Kowalski Easing</div>
+        <div class="detail">cubic-bezier(0.23, 1, 0.32, 1) pour ease-out, 160ms pour active states, scale(0.97) feedback</div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">transition-all éliminé</div>
+        <div class="detail">23 instances remplacées par des transitions ciblées — pas de repaint inutile</div>
+        <div class="file-list">
+          <span class="file-tag">QuickHealthForm</span>
+          <span class="file-tag">QuickNoteForm</span>
+          <span class="file-tag">QuickSaillieForm</span>
+          <span class="file-tag">ControleQuotidien</span>
+          <span class="file-tag">ChecklistFlow (×3)</span>
+          <span class="file-tag">+ 16 autres</span>
+        </div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">Stagger animations</div>
+        <div class="detail">.animate-fade-in-up avec .stagger-1 à .stagger-5 (50ms d'écart)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CATÉGORIE 8: FORMULAIRES ═══ -->
+<div class="section">
+  <div class="section-header">
+    <span class="priority-tag priority-moyenne">MOYENNE</span>
+    <h2>8. Formulaires & Feedback</h2>
+  </div>
+  <div class="section-body">
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">Labels visibles</div>
+        <div class="detail">PremiumInput avec floating labels animés — toujours visibles même quand le champ a une valeur</div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">inputmode="numeric" ajouté</div>
+        <div class="detail">Clavier numérique affiché sur mobile pour tous les champs de type number</div>
+        <div class="stats">→ PremiumInput (conditionnel type=number), ChecklistFlow, BandesView</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CATÉGORIE 9: NAVIGATION ═══ -->
+<div class="section">
+  <div class="section-header">
+    <span class="priority-tag priority-haute">HAUTE</span>
+    <h2>9. Navigation</h2>
+  </div>
+  <div class="section-body">
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">4 onglets bottom nav</div>
+        <div class="detail">Aujourd'hui, Troupeau, Journal, Plus — Lucide icons (CalendarCheck, Leaf, ClipboardList, Settings)</div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">Badge notification</div>
+        <div class="detail">criticalAlertCount affiché sur l'onglet Journal — pastille rouge avec compteur</div>
+      </div>
+    </div>
+    <div class="audit-item">
+      <div class="status-badge status-done">✓</div>
+      <div class="content">
+        <div class="title">Masquage nav sur fullscreen</div>
+        <div class="detail">Navigation cachée sur /checklist/ et /controle (expériences plein écran)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CATÉGORIE 10: CHARTS ═══ -->
+<div class="section">
+  <div class="section-header">
+    <span class="priority-tag priority-basse">BASSE</span>
+    <h2>10. Charts & Data</h2>
+  </div>
+  <div class="section-body">
+    <div class="audit-item">
+      <div class="status-badge status-skip">—</div>
+      <div class="content">
+        <div class="title">Pas de charts complexes détectés</div>
+        <div class="detail">L'app utilise des KPIs et des badges plutôt que des graphiques — pas de correction nécessaire</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MAPPING IONICONS → LUCIDE ═══ -->
+<div class="section">
+  <div class="section-header">
+    <span style="font-size:20px;">🔄</span>
+    <h2>Mapping Ionicons → Lucide React</h2>
+  </div>
+  <div class="section-body" style="overflow-x:auto;">
+    <table>
+      <thead>
+        <tr>
+          <th>Ionicons (supprimé)</th>
+          <th>Lucide React (nouveau)</th>
+          <th>Fichiers impactés</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><code>alertCircleOutline</code></td><td><code>AlertCircle</code></td><td>8 fichiers</td></tr>
+        <tr><td><code>chevronForwardOutline</code></td><td><code>ChevronRight</code></td><td>6 fichiers</td></tr>
+        <tr><td><code>closeOutline</code></td><td><code>X</code></td><td>5 fichiers</td></tr>
+        <tr><td><code>checkmarkDoneOutline</code></td><td><code>CheckCheck</code></td><td>3 fichiers</td></tr>
+        <tr><td><code>chevronBackOutline</code></td><td><code>ChevronLeft</code></td><td>4 fichiers</td></tr>
+        <tr><td><code>medkitOutline</code></td><td><code>Stethoscope</code></td><td>5 fichiers</td></tr>
+        <tr><td><code>calendarOutline</code></td><td><code>Calendar</code></td><td>4 fichiers</td></tr>
+        <tr><td><code>clipboardOutline</code></td><td><code>ClipboardList</code></td><td>4 fichiers</td></tr>
+        <tr><td><code>checkmarkCircleOutline</code></td><td><code>CheckCircle2</code></td><td>5 fichiers</td></tr>
+        <tr><td><code>trendingUpOutline</code></td><td><code>TrendingUp</code></td><td>2 fichiers</td></tr>
+        <tr><td><code>layersOutline</code></td><td><code>Layers</code></td><td>4 fichiers</td></tr>
+        <tr><td><code>searchOutline</code></td><td><code>Search</code></td><td>3 fichiers</td></tr>
+        <tr><td><code>trashOutline</code></td><td><code>Trash2</code></td><td>3 fichiers</td></tr>
+        <tr><td><code>syncOutline</code></td><td><code>RefreshCw</code></td><td>3 fichiers</td></tr>
+        <tr><td><code>sendOutline</code></td><td><code>Send</code></td><td>3 fichiers</td></tr>
+        <tr><td><code>cubeOutline</code></td><td><code>Box</code></td><td>3 fichiers</td></tr>
+        <tr><td><code>warningOutline</code></td><td><code>AlertTriangle</code></td><td>3 fichiers</td></tr>
+        <tr><td><code>cameraOutline</code></td><td><code>Camera</code></td><td>2 fichiers</td></tr>
+        <tr><td><code>leafOutline</code></td><td><code>Leaf</code></td><td>3 fichiers</td></tr>
+        <tr><td><code>nutritionOutline</code></td><td><code>Apple</code></td><td>2 fichiers</td></tr>
+        <tr><td><code>fitnessOutline</code></td><td><code>Activity</code></td><td>2 fichiers</td></tr>
+        <tr><td><code>bugOutline</code></td><td><code>Bug</code></td><td>1 fichier</td></tr>
+        <tr><td><code>shieldCheckmarkOutline</code></td><td><code>ShieldCheck</code></td><td>2 fichiers</td></tr>
+        <tr><td><code>expandOutline</code></td><td><code>Maximize2</code></td><td>1 fichier</td></tr>
+        <tr><td><code>documentTextOutline</code></td><td><code>FileText</code></td><td>1 fichier</td></tr>
+        <tr><td><code>informationCircleOutline</code></td><td><code>Info</code></td><td>1 fichier</td></tr>
+        <tr><td><code>flaskOutline</code></td><td><code>FlaskConical</code></td><td>1 fichier</td></tr>
+        <tr><td><code>cloudDoneOutline</code></td><td><code>CloudCheck</code></td><td>1 fichier</td></tr>
+        <tr><td><code>optionsOutline</code></td><td><code>SlidersHorizontal</code></td><td>1 fichier</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ RÉSULTAT FINAL ═══ -->
+<div class="section">
+  <div class="section-header">
+    <span style="font-size:20px;">🏆</span>
+    <h2>Phase 1 — Terminée</h2>
+  </div>
+  <div class="section-body">
+    <table>
+      <thead>
+        <tr>
+          <th>Tâche</th>
+          <th>Statut</th>
+          <th>Volume</th>
+          <th>Impact</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>CSS global (touch-action, overscroll, :focus-visible, .touch-target)</td>
+          <td><span class="priority-tag" style="background:var(--accent-light);color:var(--accent);">FAIT</span></td>
+          <td>index.css</td>
+          <td>Touch terrain + Accessibilité</td>
+        </tr>
+        <tr>
+          <td>Texte trop petit (text-[8-10px] → text-[11px])</td>
+          <td><span class="priority-tag" style="background:var(--accent-light);color:var(--accent);">FAIT</span></td>
+          <td>62 corrections</td>
+          <td>Lisibilité minimum</td>
+        </tr>
+        <tr>
+          <td>Emojis structurels → Lucide icons</td>
+          <td><span class="priority-tag" style="background:var(--accent-light);color:var(--accent);">FAIT</span></td>
+          <td>3 fichiers</td>
+          <td>Cohérence visuelle</td>
+        </tr>
+        <tr>
+          <td>transition-all → transitions spécifiques</td>
+          <td><span class="priority-tag" style="background:var(--accent-light);color:var(--accent);">FAIT</span></td>
+          <td>23 fichiers</td>
+          <td>Performance animation</td>
+        </tr>
+        <tr>
+          <td>Ionicons → Lucide React</td>
+          <td><span class="priority-tag" style="background:var(--accent-light);color:var(--accent);">FAIT</span></td>
+          <td>111 icônes, 19 fichiers</td>
+          <td>Cohérence + taille bundle</td>
+        </tr>
+        <tr>
+          <td>.pressable sur tous les onClick</td>
+          <td><span class="priority-tag" style="background:var(--accent-light);color:var(--accent);">FAIT</span></td>
+          <td>~60 éléments, 15 fichiers</td>
+          <td>Feedback tactile terrain</td>
+        </tr>
+        <tr>
+          <td>aria-label sur boutons icône</td>
+          <td><span class="priority-tag" style="background:var(--accent-light);color:var(--accent);">FAIT</span></td>
+          <td>~25 boutons, 10 fichiers</td>
+          <td>Accessibilité lecteur écran</td>
+        </tr>
+        <tr>
+          <td>inputmode="numeric"</td>
+          <td><span class="priority-tag" style="background:var(--accent-light);color:var(--accent);">FAIT</span></td>
+          <td>3 fichiers</td>
+          <td>Clavier numérique mobile</td>
+        </tr>
+        <tr>
+          <td>Contraste text-gray-300/200 renforcé</td>
+          <td><span class="priority-tag" style="background:var(--accent-light);color:var(--accent);">FAIT</span></td>
+          <td>17 instances, 9 fichiers</td>
+          <td>Lisibilité extérieur/soleil</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 20px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="font-weight:700;font-size:13px;">Progression Phase 1</span>
+        <span style="font-size:12px;color:var(--accent);font-weight:700;">100% COMPLET</span>
+      </div>
+      <div class="progress-bar" style="height:12px;">
+        <div class="progress-fill green" style="width:100%;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ BUILD STATUS ═══ -->
+<div class="section">
+  <div class="section-header">
+    <span style="font-size:20px;">🏗️</span>
+    <h2>Build & Vérification</h2>
+  </div>
+  <div class="section-body">
+    <div class="summary-grid" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="summary-item" style="text-align:center;background:var(--accent-light);">
+        <div class="val" style="color:var(--accent);">0</div>
+        <div class="lbl">Erreurs TypeScript</div>
+      </div>
+      <div class="summary-item" style="text-align:center;background:var(--accent-light);">
+        <div class="val" style="color:var(--accent);">3.79s</div>
+        <div class="lbl">Build Vite</div>
+      </div>
+      <div class="summary-item" style="text-align:center;background:var(--accent-light);">
+        <div class="val" style="color:var(--accent);">2729</div>
+        <div class="lbl">Modules transformés</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<div style="background:var(--gray-900);color:white;text-align:center;padding:24px;font-size:12px;opacity:0.8;">
+  PorcTrack 8 — Audit UI/UX Phase 1 &middot; Généré le 17 avril 2026 &middot; UI/UX Pro Max Workflow
+</div>
+
+</body>
+</html>

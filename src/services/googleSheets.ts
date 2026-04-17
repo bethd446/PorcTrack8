@@ -1,13 +1,33 @@
+import { CapacitorHttp, Capacitor } from '@capacitor/core';
+import { getQueueStatus } from './offlineQueue';
+import { setCache, getCache, isCacheValid, invalidateCache, clearAllCache } from './offlineCache';
+import { mapTable } from '../mappers';
+import { Truie, Verrat, BandePorcelets, TraitementSante, StockAliment, StockVeto } from '../types/farm';
+import { Note } from '../types';
+
 /**
- * Service de communication avec Google Sheets via Google Apps Script.
- * 
- * Pour que cela fonctionne, vous devez déployer un script Google Apps Script
- * en tant qu'application Web (Web App) avec accès "Anyone" (ou via token).
+ * Map sheetName → KEY(s) du TABLES_INDEX
+ * Permet d'invalider le bon cache Preferences après une écriture.
+ */
+const SHEET_TO_KEYS: Record<string, string[]> = {
+  'TRUIES_REPRODUCTION':       ['SUIVI_TRUIES_REPRODUCTION'],
+  'SUIVI_TRUIES_REPRODUCTION': ['SUIVI_TRUIES_REPRODUCTION'],
+  'VERRATS':                   ['VERRATS'],
+  'PORCELETS_BANDES':          ['PORCELETS_BANDES_DETAIL'],
+  'PORCELETS_BANDES_DETAIL':   ['PORCELETS_BANDES_DETAIL'],
+  'SANTE':                     ['JOURNAL_SANTE'],
+  'JOURNAL_SANTE':             ['JOURNAL_SANTE'],
+  'STOCK_ALIMENTS':            ['STOCK_ALIMENTS'],
+  'STOCK_VETO':                ['STOCK_VETO'],
+};
+
+/**
+ * Service de communication avec Google Sheets via Google Apps Script V6.
+ * Stratégie hybride : fetch (Web/Dev) -> CapacitorHttp (Native/CORS).
  */
 
 const getGasConfig = () => {
-  // Configurable depuis l'UI (Settings). Valeurs par défaut = connecteur PORC800 v5.
-  const url = localStorage.getItem('gas_url') || 'https://script.google.com/macros/s/AKfycbyM8OfedQsGyZy6USL30wCCpUMY6NDaatl-2scDXuHabERj6hHwxaNsEhmZLmELA_fY/exec';
+  const url = localStorage.getItem('gas_url') || 'https://script.google.com/macros/s/AKfycbzLNf0EpNRXK17LYuIHjHVTKlvbbZ0gtZHQah73ZCZM5HIC91qKCyAe-PF5PntqF1cnwg/exec';
   const token = localStorage.getItem('gas_token') || 'PORC800_WRITE_2026';
   return { url, token };
 };
@@ -18,152 +38,344 @@ const getDeviceInfo = () => {
     deviceId = 'DEV-' + Math.random().toString(36).substr(2, 9).toUpperCase();
     localStorage.setItem('device_id', deviceId);
   }
-  
-  const userAgent = navigator.userAgent;
-  let brand = "Inconnu";
-  if (userAgent.match(/iPhone/i)) brand = "iPhone";
-  else if (userAgent.match(/Samsung/i)) brand = "Samsung";
-  else if (userAgent.match(/Android/i)) brand = "Android";
-  
   return {
     deviceId,
-    brand,
-    model: navigator.platform,
-    role: localStorage.getItem('user_role') || 'USER'
+    role: localStorage.getItem('user_role') || 'USER',
+    userName: localStorage.getItem('user_name') || 'Anonyme'
   };
 };
 
-export async function fetchData(sheet: string) {
-  const { url, token } = getGasConfig();
-  if (!url) return { success: false, data: [] };
+// Système de Cache Mémoire pour éviter les doubles appels
+const memoryCache = new Map<string, { data: any, timestamp: number }>();
+const pendingRequests = new Map<string, Promise<any>>();
+const CACHE_TTL = 30000; // 30 secondes
 
+async function request(options: { method: 'GET' | 'POST', url: string, data?: any, skipCache?: boolean }) {
+  const isNative = Capacitor.isNativePlatform();
+  const cacheKey = options.url + (options.data ? JSON.stringify(options.data) : '');
+
+  // 1. DÉDOUBLONNAGE : Si une requête identique est déjà en cours, on s'y abonne
+  if (options.method === 'GET' && pendingRequests.has(cacheKey)) {
+    return pendingRequests.get(cacheKey);
+  }
+
+  // 2. CACHE MÉMOIRE
+  const pendingCount = getQueueStatus().pending;
+  const shouldSkipCache = options.skipCache || pendingCount > 0;
+
+  if (options.method === 'GET' && !shouldSkipCache) {
+    const cached = memoryCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+      return { status: 200, data: cached.data, fromCache: true };
+    }
+  }
+
+  const executeRequest = async () => {
+    try {
+      let result;
+      if (!isNative) {
+        const fetchOptions: any = {
+          method: options.method,
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+        };
+        if (options.method === 'POST') fetchOptions.body = JSON.stringify(options.data);
+
+        const resp = await fetch(options.url, fetchOptions);
+        const data = await resp.json();
+        result = { status: resp.status, data };
+      } else {
+        if (options.method === 'GET') {
+          result = await CapacitorHttp.get({ url: options.url });
+        } else {
+          result = await CapacitorHttp.post({
+            url: options.url,
+            headers: { 'Content-Type': 'application/json' },
+            data: options.data
+          });
+        }
+      }
+
+      if (options.method === 'GET' && result.status === 200 && result.data?.ok) {
+          memoryCache.set(cacheKey, { data: result.data, timestamp: Date.now() });
+      }
+
+      return result;
+    } catch (err) {
+      console.error(`Network error (${options.method} ${options.url}):`, err);
+      return { status: 0, data: { ok: false, error: String(err) } };
+    } finally {
+      // Nettoyage de la requête pendante
+      pendingRequests.delete(cacheKey);
+    }
+  };
+
+  const promise = executeRequest();
+  if (options.method === 'GET') {
+    pendingRequests.set(cacheKey, promise);
+  }
+  return promise;
+}
+
+/**
+ * Service de lecture typé avec cache offline.
+ * Stratégie Stale-While-Revalidate (SWR) :
+ * Retourne le cache immédiatement, et met à jour via le réseau en arrière-plan.
+ */
+export async function readTypedTable<T>(
+  key: string,
+  ttl: number = 30 * 60 * 1000,
+  onBackgroundUpdate?: (data: T[]) => void
+): Promise<{ success: boolean, data: T[], source: 'NETWORK' | 'CACHE' | 'FALLBACK', error?: string }> {
+
+  // 1. Tenter le cache (priorité rapidité)
+  const cachedData = await getCache<T[]>(key);
+  const isValid = await isCacheValid(key);
+
+  // Si on a un cache, on le retourne tout de suite (source CACHE ou FALLBACK selon validité)
+  if (cachedData) {
+    // Si on a un callback, on lance le fetch en tâche de fond
+    if (onBackgroundUpdate) {
+      triggerBackgroundFetch<T>(key, ttl, onBackgroundUpdate);
+    }
+    return { success: true, data: cachedData, source: isValid ? 'CACHE' : 'FALLBACK' };
+  }
+
+  // 2. Si pas de cache, on attend le réseau (comportement bloquant initial)
+  return await fetchAndCacheTable<T>(key, ttl);
+}
+
+/** Exécution du fetch en arrière-plan pour SWR */
+async function triggerBackgroundFetch<T>(key: string, ttl: number, onUpdate: (data: T[]) => void) {
   try {
-    // Connecteur v5: lecture complète d'une feuille
-    const response = await fetch(`${url}?token=${encodeURIComponent(token)}&action=read_sheet&sheet=${encodeURIComponent(sheet)}`, {
-      method: 'GET',
-    });
-
-    if (!response.ok) return { success: false, data: [] };
-    const json = await response.json();
-    if (!json?.ok) return { success: false, data: [] };
-    // Retourne un tableau 2D "values"
-    return { success: true, data: json.values || [] };
-  } catch (error) {
-    console.error(`Erreur de récupération Sheets (${sheet}):`, error);
-    return { success: false, data: [] };
+    const res = await fetchAndCacheTable<T>(key, ttl);
+    if (res.success) onUpdate(res.data);
+  } catch (e) {
+    console.error(`SWR Background fetch failed for ${key}`);
   }
 }
 
-export async function readRange(sheet: string, range: string) {
+/** Logique de fetch brute + mise en cache */
+async function fetchAndCacheTable<T>(key: string, ttl: number) {
   const { url, token } = getGasConfig();
-  if (!url) return { success: false, data: [] };
+  const fullUrl = `${url}?token=${encodeURIComponent(token)}&action=read_table_by_key&key=${encodeURIComponent(key)}`;
 
   try {
-    const response = await fetch(`${url}?token=${encodeURIComponent(token)}&action=read_range&sheet=${encodeURIComponent(sheet)}&range=${encodeURIComponent(range)}`, {
-      method: 'GET',
-    });
+    const res = await request({ method: 'GET', url: fullUrl });
+    if (res.status === 200 && res.data?.ok) {
+      const header = res.data.header || [];
+      const rows = res.data.rows || [];
+      const mappedData = mapTable(key, header, rows) as T[];
 
-    if (!response.ok) return { success: false, data: [] };
-    const json = await response.json();
-    if (!json?.ok) return { success: false, data: [] };
-    return { success: true, data: json.values || [] };
-  } catch (error) {
-    console.error(`Erreur read_range Sheets (${sheet} ${range}):`, error);
-    return { success: false, data: [] };
+      await setCache(key, mappedData, ttl);
+      return { success: true, data: mappedData, source: 'NETWORK' as const };
+    }
+  } catch (e) {
+    console.error(`Fetch failed for ${key}`);
   }
+  return { success: false, data: [], source: 'NETWORK' as const, error: 'Réseau indisponible' };
 }
 
-export async function listSheets() {
+export async function getTablesIndex() {
   const { url, token } = getGasConfig();
-  if (!url) return { success: false, data: [] };
-
-  try {
-    const response = await fetch(`${url}?token=${encodeURIComponent(token)}&action=list_sheets`, {
-      method: 'GET',
-    });
-
-    if (!response.ok) return { success: false, data: [] };
-    const json = await response.json();
-    if (!json?.ok) return { success: false, data: [] };
-    return { success: true, data: json.sheets || [] };
-  } catch (error) {
-    console.error('Erreur list_sheets:', error);
-    return { success: false, data: [] };
+  const fullUrl = `${url}?token=${encodeURIComponent(token)}&action=get_tables_index`;
+  const res = await request({ method: 'GET', url: fullUrl, skipCache: true });
+  if (res.status === 200 && res.data?.ok) {
+    return { success: true, values: res.data.values || [] };
   }
+  return { success: false, values: [], message: res.data?.error || 'Erreur Index' };
+}
+
+/**
+ * Helpers directs pour les entités.
+ */
+export const getTruies = (cb?: (d: Truie[]) => void) => readTypedTable<Truie>('SUIVI_TRUIES_REPRODUCTION', 30*60*1000, cb);
+export const getVerrats = (cb?: (d: Verrat[]) => void) => readTypedTable<Verrat>('VERRATS', 30*60*1000, cb);
+export const getBandes = (cb?: (d: BandePorcelets[]) => void) => readTypedTable<BandePorcelets>('PORCELETS_BANDES_DETAIL', 30*60*1000, cb);
+export const getJournalSante = (cb?: (d: TraitementSante[]) => void) => readTypedTable<TraitementSante>('JOURNAL_SANTE', 30*60*1000, cb);
+export const getStockAliments = (cb?: (d: StockAliment[]) => void) => readTypedTable<StockAliment>('STOCK_ALIMENTS', 30*60*1000, cb);
+export const getStockVeto = (cb?: (d: StockVeto[]) => void) => readTypedTable<StockVeto>('STOCK_VETO', 30*60*1000, cb);
+
+/**
+ * Notes terrain : structure dans Sheets → DATE | SUBJECT_TYPE | SUBJECT_ID | NOTE | AUTHOR
+ * Mappées vers le type Note de types.ts
+ */
+export async function getNotesTerrain(cb?: (d: Note[]) => void): Promise<{ success: boolean; data: Note[]; source: 'NETWORK' | 'CACHE' | 'FALLBACK' }> {
+  const result = await readTypedTable<any>('NOTES_TERRAIN', 15 * 60 * 1000, (fresh) => {
+    if (cb) cb(fresh.map((row: any, idx: number) => mapRowToNote(row, idx)));
+  });
+
+  const mapped = result.data.map((row: any, idx: number) => mapRowToNote(row, idx));
+  return { success: result.success, data: mapped, source: result.source };
+}
+
+function mapRowToNote(row: any, idx: number): Note {
+  return {
+    id: `note-${row[0] || idx}-${row[2] || '?'}`,
+    animalId: String(row[2] || ''),
+    animalType: (String(row[1] || '')).toUpperCase() as 'TRUIE' | 'VERRAT',
+    date: String(row[0] || ''),
+    texte: String(row[3] || ''),
+    synced: true,
+  };
+}
+
+export async function updateRowById(sheet: string, idHeader: string, idValue: string, patch: Record<string, any>) {
+  const { url, token } = getGasConfig();
+  const payload = {
+    token,
+    action: 'update_row_by_id',
+    sheet,
+    idHeader,
+    idValue,
+    patch,
+    device: getDeviceInfo(),
+    timestamp: new Date().toISOString()
+  };
+  const res = await request({ method: 'POST', url, data: payload });
+  if (res.status === 200 && res.data?.ok) {
+    // 1. Vider le cache mémoire (immédiat)
+    memoryCache.clear();
+    // 2. Invalider le cache Preferences pour cette table (persistant)
+    const keysToInvalidate = SHEET_TO_KEYS[sheet] ?? [sheet];
+    await Promise.all(keysToInvalidate.map(k => invalidateCache(k)));
+  }
+  return { success: res.status === 200 && res.data?.ok, message: res.data?.error || res.data?.message };
 }
 
 export async function appendRow(sheet: string, values: any[]) {
   const { url, token } = getGasConfig();
-  const deviceInfo = getDeviceInfo();
-
-  if (!url) {
-    console.warn('URL Apps Script non configurée.');
-    return { success: false, message: 'No URL' };
+  const payload = {
+    token,
+    action: 'append_row',
+    sheet,
+    values,
+    device: getDeviceInfo(),
+    timestamp: new Date().toISOString()
+  };
+  const res = await request({ method: 'POST', url, data: payload });
+  if (res.status === 200 && res.data?.ok) {
+    memoryCache.clear();
+    const keysToInvalidate = SHEET_TO_KEYS[sheet] ?? [sheet];
+    await Promise.all(keysToInvalidate.map(k => invalidateCache(k)));
   }
-
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        token,
-        action: 'append_row',
-        sheet,
-        values,
-        device: deviceInfo,
-        timestamp: new Date().toISOString(),
-      }),
-    });
-
-    // Important: on veut lire le JSON pour savoir si GAS a bien écrit (pas de no-cors)
-    const json = await response.json().catch(() => null);
-    if (!response.ok) return { success: false, message: 'HTTP_' + response.status };
-    if (!json?.ok) return { success: false, message: json?.error || 'GAS_ERROR' };
-
-    return { success: true, data: json };
-  } catch (error) {
-    console.error('Erreur append_row:', error);
-    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
-  }
-}
-
-export async function postAction(payload: any) {
-  const { url, token } = getGasConfig();
-  const deviceInfo = getDeviceInfo();
-
-  if (!url) return { success: false, message: 'No URL' };
-
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, ...payload, device: deviceInfo, timestamp: new Date().toISOString() }),
-    });
-    const json = await response.json().catch(() => null);
-    if (!response.ok) return { success: false, message: 'HTTP_' + response.status };
-    if (!json?.ok) return { success: false, message: json?.error || 'GAS_ERROR' };
-    return { success: true, data: json };
-  } catch (error) {
-    console.error('Erreur postAction:', error);
-    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
-  }
+  return { success: res.status === 200 && res.data?.ok, message: res.data?.error || res.data?.message };
 }
 
 /**
- * Exemple de code Google Apps Script (ConnecteurV4) :
- * 
- * function doPost(e) {
- *   var data = JSON.parse(e.postData.contents);
- *   if (data.token !== "PORC800_WRITE_2026") return ContentService.createTextOutput("Unauthorized");
- *   
- *   var ss = SpreadsheetApp.getActiveSpreadsheet();
- *   var sheet = ss.getSheetByName(data.table);
- *   
- *   // Logique d'insertion/mise à jour ici...
- *   sheet.appendRow([new Date(), JSON.stringify(data.payload)]);
- *   
- *   return ContentService.createTextOutput("Success");
- * }
+ * Supprime une ligne par son ID dans Google Sheets.
+ * Invalide le cache après suppression.
+ * ⚠️ Irréversible — toujours demander confirmation à l'utilisateur avant.
+ *
+ * @param sheet    Nom exact de l'onglet Google Sheets
+ * @param idHeader Nom de la colonne ID (ex: 'ID')
+ * @param idValue  Valeur de l'ID à supprimer (ex: 'T01')
+ * @param reason   Raison de la suppression (tracée dans ZZ_LOGS)
  */
+export async function deleteRowById(
+  sheet: string, idHeader: string, idValue: string, reason?: string
+): Promise<{ success: boolean; message?: string }> {
+  const { url, token } = getGasConfig();
+  const payload = {
+    token,
+    action: 'delete_row_by_id',
+    sheet,
+    idHeader,
+    idValue,
+    reason: reason ?? 'Suppression manuelle porcher',
+    device: getDeviceInfo(),
+    timestamp: new Date().toISOString(),
+  };
+  try {
+    const res = await request({ method: 'POST', url, data: payload });
+    if (res.status === 200 && res.data?.ok) {
+      memoryCache.clear();
+      const keysToInvalidate = SHEET_TO_KEYS[sheet] ?? [sheet];
+      await Promise.all(keysToInvalidate.map(k => invalidateCache(k)));
+      return { success: true };
+    }
+    return { success: false, message: res.data?.error || 'Erreur suppression GAS' };
+  } catch (err) {
+    // En cas d'erreur réseau → mettre en queue offline
+    await import('./offlineQueue').then(m =>
+      m.enqueueUpdateRow(sheet, idHeader, idValue, { __ACTION: 'DELETE', __REASON: reason ?? '' })
+    );
+    return { success: false, message: 'Hors ligne — suppression mise en queue' };
+  }
+}
+
+export async function fetchData(sheet: string) {
+  const { url, token } = getGasConfig();
+  const fullUrl = `${url}?token=${encodeURIComponent(token)}&action=read_sheet&sheet=${encodeURIComponent(sheet)}`;
+  const res = await request({ method: 'GET', url: fullUrl });
+  if (res.status === 200 && res.data?.ok) return { success: true, data: res.data.values || [] };
+  return { success: false, data: [] };
+}
+
+/**
+ * readTableByKey — lecture brute (headers + rows), sans mapper.
+ * Alias utilisé par BandesView, TableView, AuditView, ChecklistFlow, checklistService.
+ * Les composants qui ont besoin des données mappées doivent utiliser readTypedTable.
+ */
+export interface ReadTableResult {
+  success: boolean;
+  /** Noms des colonnes (ex: ['ID', 'BOUCLE', 'STATUT']) */
+  headers: string[];
+  /** Alias de headers — compatibilité avec l'ancien code */
+  header: string[];
+  rows: any[][];
+  /** Métadonnées de la table depuis TABLES_INDEX */
+  meta?: { key: string; sheetName: string; headerRow: number; idHeader: string };
+  source: 'NETWORK' | 'CACHE' | 'FALLBACK';
+  /** Message d'erreur si success=false */
+  message?: string;
+}
+
+export async function readTableByKey(key: string): Promise<ReadTableResult> {
+  const CACHE_KEY = `raw_${key}`;
+  const isValid = await isCacheValid(CACHE_KEY);
+  if (isValid) {
+    const cached = await getCache<{ headers: string[]; rows: any[][] }>(CACHE_KEY);
+    if (cached) return { success: true, headers: cached.headers, header: cached.headers, rows: cached.rows, source: 'CACHE' };
+  }
+
+  const { url, token } = getGasConfig();
+  const fullUrl = `${url}?token=${encodeURIComponent(token)}&action=read_table_by_key&key=${encodeURIComponent(key)}`;
+  try {
+    const res = await request({ method: 'GET', url: fullUrl });
+    if (res.status === 200 && res.data?.ok) {
+      const headers: string[] = res.data.header || res.data.headers || [];
+      const rows: any[][] = res.data.rows || [];
+      const meta = res.data.meta;
+      await setCache(CACHE_KEY, { headers, rows }, 10 * 60 * 1000);
+      return { success: true, headers, header: headers, rows, meta, source: 'NETWORK' };
+    }
+    return { success: false, headers: [], header: [], rows: [], source: 'NETWORK', message: res.data?.error || 'Erreur GAS' };
+  } catch (e) {
+    console.error(`readTableByKey "${key}" network failed`);
+  }
+
+  const fallback = await getCache<{ headers: string[]; rows: any[][] }>(CACHE_KEY);
+  if (fallback) return { success: true, headers: fallback.headers, header: fallback.headers, rows: fallback.rows, source: 'FALLBACK' };
+  return { success: false, headers: [], header: [], rows: [], source: 'NETWORK', message: 'Données indisponibles' };
+}
+
+/**
+ * readRange — lecture d'une plage nommée ou d'une feuille brute.
+ * Utilisé par ensureHeaders.ts.
+ */
+export async function readRange(sheet: string): Promise<{ success: boolean; values: any[][] }> {
+  const { url, token } = getGasConfig();
+  const fullUrl = `${url}?token=${encodeURIComponent(token)}&action=read_sheet&sheet=${encodeURIComponent(sheet)}`;
+  const res = await request({ method: 'GET', url: fullUrl });
+  if (res.status === 200 && res.data?.ok) return { success: true, values: res.data.values || [] };
+  return { success: false, values: [] };
+}
+
+/**
+ * postAction — envoi générique d'une action GAS (utilisé par ensureHeaders.ts).
+ */
+export async function postAction(payload: Record<string, any>): Promise<{ success: boolean; message?: string }> {
+  const { url, token } = getGasConfig();
+  const res = await request({ method: 'POST', url, data: { token, ...payload } });
+  return { success: res.status === 200 && res.data?.ok, message: res.data?.error };
+}

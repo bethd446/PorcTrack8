@@ -1,0 +1,7 @@
+{
+  "name": "PorcTrack",
+  "description": "Système professionnel de gestion porcine avec synchronisation temps-réel Google Sheets, suivi de santé avancé, et analyses prédictives par IA.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

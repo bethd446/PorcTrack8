@@ -1,127 +1,91 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
-import { RefreshCw } from 'lucide-react';
+import { IonApp, IonRouterOutlet } from '@ionic/react';
 
-// Context & Layout
-import { FarmProvider, useFarm } from './context/FarmContext';
-import { Header, BottomNav } from './components/Layout';
-import { ErrorBoundary } from './components/ErrorBoundary';
+/* Core CSS required for Ionic components to work properly */
+import '@ionic/react/css/core.css';
+import '@ionic/react/css/normalize.css';
+import '@ionic/react/css/structure.css';
+import '@ionic/react/css/typography.css';
+import '@ionic/react/css/padding.css';
+import '@ionic/react/css/float-elements.css';
+import '@ionic/react/css/text-alignment.css';
+import '@ionic/react/css/text-transformation.css';
+import '@ionic/react/css/flex-utils.css';
+import '@ionic/react/css/display.css';
 
-// Components
-import Dashboard from './components/Dashboard';
-import { BreederList, BreederDetail } from './components/BreederManagement';
-import { PigletList, StockList, BandeManagement } from './components/InventoryManagement';
-import { Planning, HealthModule, RationCalculator, BiosecurityModule, ConseilsExpert } from './components/OperationsManagement';
-import { AssetStudio, SettingsPage, Onboarding } from './components/SystemManagement';
-import NotesHub from './components/NotesHub';
-import NotesDaily from './components/NotesDaily';
-import NotesWeekly from './components/NotesWeekly';
-import FinanceDashboard from './components/FinanceDashboard';
+import { FarmProvider } from './context/FarmContext';
+import Navigation from './components/Navigation';
+import { loadChecklistDefinitions } from './services/checklistService';
+
+// Lazy loading — chaque écran dans son propre chunk pour réduire le bundle initial
+const Dashboard = React.lazy(() => import(/* webpackChunkName: "dashboard" */ './components/Dashboard'));
+const TableView = React.lazy(() => import(/* webpackChunkName: "table-view" */ './features/tables/TableView'));
+const BandesView = React.lazy(() => import(/* webpackChunkName: "bandes" */ './features/tables/BandesView'));
+const CheptelView = React.lazy(() => import(/* webpackChunkName: "cheptel" */ './features/tables/CheptelView'));
+const AnimalDetailView = React.lazy(() => import(/* webpackChunkName: "animal-detail" */ './features/tables/AnimalDetailView'));
+const ControleQuotidien = React.lazy(() => import(/* webpackChunkName: "controle" */ './features/controle/ControleQuotidien'));
+const ChecklistFlow = React.lazy(() => import(/* webpackChunkName: "checklist" */ './features/controle/ChecklistFlow'));
+const AuditView = React.lazy(() => import(/* webpackChunkName: "audit" */ './features/controle/AuditView'));
+const SyncView = React.lazy(() => import(/* webpackChunkName: "sync" */ './features/controle/SyncView'));
+const ProtocolsView = React.lazy(() => import(/* webpackChunkName: "protocoles" */ './features/protocoles/ProtocolsView'));
+const AlertsView = React.lazy(() => import(/* webpackChunkName: "alertes" */ './features/tables/AlertsView'));
+const SettingsPage = React.lazy(() => import(/* webpackChunkName: "settings" */ './components/SystemManagement').then(m => ({ default: m.SettingsPage })));
+
+// Placeholder for missing components
+const StockHub = () => (
+  <TableView tableKey="STOCK_ALIMENTS" />
+);
 
 const AppContent = () => {
-  const [showSplash, setShowSplash] = useState(true);
-  const { showOnboarding, handleOnboardingComplete } = useFarm();
-
   useEffect(() => {
-    const timer = setTimeout(() => setShowSplash(false), 3000);
-    return () => clearTimeout(timer);
+    loadChecklistDefinitions();
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 relative">
-      <AnimatePresence mode="wait">
-        {showSplash ? (
-          <motion.div 
-            key="splash"
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-emerald-900 flex flex-col items-center justify-center p-8 text-center"
-          >
-            <div className="absolute inset-0 opacity-20">
-              <img 
-                src="/images/splash-screen.jpg" 
-                alt="Splash" 
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "https://picsum.photos/seed/large-white-pig-farm/1080/1920";
-                }}
-                referrerPolicy="no-referrer"
-              />
+    <IonApp>
+      <React.Suspense fallback={
+        <div className="flex flex-col items-center justify-center h-screen bg-white">
+          <div className="animate-pulse-soft flex flex-col items-center gap-5">
+            <img src="/images/icon.svg" alt="PorcTrack" className="w-16 h-16 rounded-xl" />
+            <div className="space-y-1 text-center">
+              <p className="text-[18px] font-bold text-gray-900">PorcTrack</p>
+              <p className="text-[12px] text-gray-400">Intelligence Terrain</p>
             </div>
-            <div className="relative z-10 space-y-6">
-              <motion.div 
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="w-24 h-24 bg-white rounded-[2rem] shadow-2xl flex items-center justify-center mx-auto"
-              >
-                <img 
-                  src="/images/app-icon.png" 
-                  alt="Icon" 
-                  className="w-16 h-16 rounded-2xl"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "https://picsum.photos/seed/large-white-pig-icon/200/200";
-                  }}
-                  referrerPolicy="no-referrer"
-                />
-              </motion.div>
-              <div className="space-y-2">
-                <h1 className="text-4xl font-bold text-white tracking-tighter">PorcTrack</h1>
-                <p className="text-emerald-400 font-mono text-xs uppercase tracking-[0.3em]">Version 5.0 Professional</p>
-              </div>
-              <div className="pt-12">
-                <RefreshCw className="w-6 h-6 text-white/20 animate-spin mx-auto" />
-              </div>
-            </div>
-          </motion.div>
-        ) : (
-          <div className="max-w-md mx-auto relative">
-            {/* Futuristic Background Pattern */}
-            <div className="fixed inset-0 pointer-events-none opacity-[0.03]" 
-                 style={{ backgroundImage: 'radial-gradient(#10b981 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-            
-            <Header />
-            <main className="relative min-h-screen">
-              <AnimatePresence mode="wait">
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/breeders" element={<BreederList />} />
-                  <Route path="/breeders/:id" element={<BreederDetail />} />
-                  <Route path="/piglets" element={<PigletList />} />
-                  <Route path="/bandes" element={<BandeManagement />} />
-                  <Route path="/stock" element={<StockList />} />
-                  <Route path="/health" element={<HealthModule />} />
-                  <Route path="/rations" element={<RationCalculator />} />
-                  <Route path="/planning" element={<Planning />} />
-                  <Route path="/finance" element={<FinanceDashboard />} />
-                  <Route path="/biosecurity" element={<BiosecurityModule />} />
-                  <Route path="/conseils" element={<ConseilsExpert />} />
-                  <Route path="/studio" element={<AssetStudio />} />
-                  <Route path="/notes" element={<NotesHub />} />
-                  <Route path="/notes/daily" element={<NotesDaily />} />
-                  <Route path="/notes/weekly" element={<NotesWeekly />} />
-                  <Route path="/more" element={<SettingsPage />} />
-                </Routes>
-              </AnimatePresence>
-            </main>
-            <BottomNav />
-            {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
           </div>
-        )}
-      </AnimatePresence>
-    </div>
+        </div>
+      }>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/controle" element={<ControleQuotidien />} />
+          <Route path="/cheptel" element={<CheptelView />} />
+          <Route path="/cheptel/truie/:id" element={<AnimalDetailView mode="TRUIE" />} />
+          <Route path="/cheptel/verrat/:id" element={<AnimalDetailView mode="VERRAT" />} />
+          <Route path="/bandes" element={<BandesView />} />
+          <Route path="/bandes/:bandeId" element={<BandesView />} />
+          <Route path="/sante" element={<TableView tableKey="JOURNAL_SANTE" />} />
+          <Route path="/stock" element={<StockHub />} />
+          <Route path="/stock/aliments" element={<TableView tableKey="STOCK_ALIMENTS" />} />
+          <Route path="/stock/veto" element={<TableView tableKey="STOCK_VETO" />} />
+          <Route path="/protocoles" element={<ProtocolsView />} />
+          <Route path="/checklist/:name" element={<ChecklistFlow />} />
+          <Route path="/audit" element={<AuditView />} />
+          <Route path="/alerts" element={<AlertsView />} />
+          <Route path="/sync" element={<SyncView />} />
+          <Route path="/more" element={<SettingsPage />} />
+        </Routes>
+      </React.Suspense>
+      <Navigation />
+    </IonApp>
   );
 };
 
 export default function App() {
   return (
     <Router>
-      <ErrorBoundary>
-        <FarmProvider>
-          <AppContent />
-        </FarmProvider>
-      </ErrorBoundary>
+      <FarmProvider>
+        <AppContent />
+      </FarmProvider>
     </Router>
   );
 }

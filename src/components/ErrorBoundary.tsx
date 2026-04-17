@@ -35,12 +35,12 @@ export class ErrorBoundary extends (React.Component as any) {
           <p className="text-sm text-gray-500 mb-8 max-w-xs mx-auto">
             Une erreur inattendue est survenue dans l'application PorcTrack.
           </p>
-          <div className="bg-white p-4 rounded-2xl border border-gray-200 mb-8 w-full max-w-sm text-left overflow-auto max-h-32">
-            <p className="text-[10px] font-mono text-red-600">{this.state.error?.message}</p>
+          <div className="bg-white p-4 rounded-xl border border-gray-200 mb-8 w-full max-w-sm text-left overflow-auto max-h-32">
+            <p className="text-[11px] font-mono text-red-600">{this.state.error?.message}</p>
           </div>
           <button
             onClick={() => window.location.reload()}
-            className="flex items-center gap-2 px-8 py-4 bg-emerald-900 text-white rounded-2xl font-bold shadow-lg active:scale-95 transition-all"
+            className="pressable flex items-center gap-2 px-8 py-4 bg-emerald-900 text-white rounded-xl font-bold shadow-lg active:scale-[0.95] transition-transform duration-[160ms]"
           >
             <RefreshCw className="w-5 h-5" />
             Redémarrer l'application
