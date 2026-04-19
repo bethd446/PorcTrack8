@@ -212,3 +212,46 @@ export interface FarmState {
   lastUpdate: number;
   syncStatus: SyncStatus;
 }
+
+// ─── FINANCES ────────────────────────────────────────────────────────────────
+
+/** Type d'entrée financière : DEPENSE (charges) ou REVENU (ventes, subventions). */
+export type FinanceType = 'DEPENSE' | 'REVENU';
+
+/**
+ * Entrée comptable brute lue depuis la feuille Sheets `FINANCES`.
+ * Schéma présumé (tolérant aux variantes) :
+ *   Date/Période · Catégorie · Libellé · Montant · Type · Notes
+ *
+ * `montant` est toujours positif (valeur absolue) ; le signe est porté par
+ * `type`. Ça évite l'ambiguïté côté UI et permet des agrégats simples.
+ */
+export interface FinanceEntry {
+  /** Date au format dd/MM/yyyy (FR) — ou chaîne vide si non renseignée. */
+  date: string;
+  /** Catégorie libre : ALIMENT, SANTE, GENETIQUE, ENERGIE, REVENU_VENTE… */
+  categorie: string;
+  /** Libellé libre (description saisie par l'utilisateur). */
+  libelle: string;
+  /** Montant en valeur absolue. Devise inférée côté analyzer. */
+  montant: number;
+  /** Sens de l'opération. */
+  type: FinanceType;
+  notes?: string;
+  raw?: unknown[];
+}
+
+/**
+ * Synthèse financière agrégée sur une période donnée (ex: "2026-04" ou "all").
+ * Utilisée par l'UI FinancesView pour les KpiCard + bar chart par catégorie.
+ */
+export interface FinanceSummary {
+  /** Identifiant de période : "YYYY-MM" ou "all". */
+  periode: string;
+  totalDepenses: number;
+  totalRevenus: number;
+  /** totalRevenus - totalDepenses. Peut être négatif. */
+  margeNette: number;
+  /** Détail par catégorie — dépenses et revenus séparés. */
+  parCategorie: Record<string, { depenses: number; revenus: number }>;
+}

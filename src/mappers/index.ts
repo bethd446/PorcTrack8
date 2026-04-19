@@ -1,4 +1,4 @@
-import { Truie, Verrat, BandePorcelets, TraitementSante, StockAliment, StockVeto, AlerteServeur, Saillie } from '../types/farm';
+import { Truie, Verrat, BandePorcelets, TraitementSante, StockAliment, StockVeto, AlerteServeur, Saillie, FinanceEntry, FinanceType } from '../types/farm';
 import type { Note, NoteAnimalType } from '../types';
 import { logger } from '../services/logger';
 
@@ -301,6 +301,73 @@ export const mapSaillie = (header: string[], row: any[]): Saillie => {
   };
 };
 
+// ─── FINANCES (feuille FINANCES) ─────────────────────────────────────────────
+/**
+ * Mappe une ligne de la feuille `FINANCES` vers `FinanceEntry`.
+ *
+ * Schéma tolérant — tente plusieurs variantes de noms de colonnes :
+ *   • Date / Période / Période (avec accent)
+ *   • Catégorie / Cat
+ *   • Libellé / Description / Intitulé
+ *   • Montant / Montant FCFA / Prix
+ *   • Type / Nature
+ *   • Notes / Note / Remarque
+ *
+ * Déduction du type si la colonne `TYPE` est absente :
+ *   • Mot-clé REV/VENTE/INCOME → REVENU
+ *   • Mot-clé DEP/CHARGE/EXPENSE → DEPENSE
+ *   • Sinon → DEPENSE par défaut (hypothèse conservative)
+ *
+ * Lignes filtrées (retour `null`) :
+ *   • Ligne totalement vide (pas de date, pas de libellé, montant = 0)
+ */
+export const mapFinance = (header: string[], row: any[]): FinanceEntry | null => {
+  const dIdx = findIdx(header, 'DATE', 'PERIODE', 'PÉRIODE');
+  const cIdx = findIdx(header, 'CATEGORIE', 'CATÉGORIE', 'CAT');
+  const lIdx = findIdx(header, 'LIBELLE', 'LIBELLÉ', 'DESCRIPTION', 'INTITULE', 'INTITULÉ');
+  const mIdx = findIdx(header, 'MONTANT', 'MONTANT FCFA', 'MONTANT (FCFA)', 'PRIX');
+  const tIdx = findIdx(header, 'TYPE', 'NATURE');
+  const nIdx = findIdx(header, 'NOTES', 'NOTE', 'REMARQUE');
+
+  // Type : on priorise la colonne TYPE/NATURE si présente, sinon DEPENSE.
+  const rawType = tIdx !== -1 ? String(row[tIdx] ?? '').toUpperCase() : '';
+  let type: FinanceType;
+  if (rawType.includes('REV') || rawType.includes('VENTE') || rawType.includes('INCOME')) {
+    type = 'REVENU';
+  } else if (rawType.includes('DEP') || rawType.includes('CHARGE') || rawType.includes('EXPENSE')) {
+    type = 'DEPENSE';
+  } else {
+    type = 'DEPENSE';
+  }
+
+  const rawMontant = mIdx !== -1 ? row[mIdx] : 0;
+  const parsedMontant = parseFloat(
+    String(rawMontant ?? '0').replace(/[^\d.,-]/g, '').replace(',', '.')
+  );
+  const montant = Math.abs(Number.isFinite(parsedMontant) ? parsedMontant : 0);
+
+  const date = dIdx !== -1 ? parseSheetDate(row[dIdx]) : '';
+  const categorie = cIdx !== -1
+    ? (String(row[cIdx] ?? '').trim() || 'DIVERS')
+    : 'DIVERS';
+  const libelle = lIdx !== -1 ? String(row[lIdx] ?? '') : '';
+
+  // Filtrer les lignes totalement vides (header-only ou total)
+  if (!date && !libelle && montant === 0) return null;
+
+  const notes = nIdx !== -1 ? String(row[nIdx] ?? '') : '';
+
+  return {
+    date,
+    categorie,
+    libelle,
+    montant,
+    type,
+    notes: notes || undefined,
+    raw: row,
+  };
+};
+
 // ─── ALERTES SERVEUR (feuille ALERTES_ACTIVES) ───────────────────────────────
 /**
  * Mappe une ligne de la feuille `ALERTES_ACTIVES` (backend Sheets) vers
@@ -442,6 +509,9 @@ export const mapTable = (key: string, header: string[], rows: any[][]): any[] =>
     case 'STOCK_VETO': return rows.map(r => mapStockVeto(header, r));
     case 'ALERTES_ACTIVES': return rows.map(r => mapAlerteServeur(header, r));
     case 'SUIVI_REPRODUCTION_ACTUEL': return rows.map(r => mapSaillie(header, r));
+    case 'FINANCES': return rows
+      .map(r => mapFinance(header, r))
+      .filter((f): f is FinanceEntry => f !== null);
     case 'NOTES_TERRAIN': return rows
       .map((r, idx) => mapRowToNote(r, idx))
       .filter((n): n is Note => n !== null);

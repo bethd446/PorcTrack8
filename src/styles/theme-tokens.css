@@ -1,0 +1,70 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PorcTrack 8 — Theme Tokens · Jour / Nuit
+   ═══════════════════════════════════════════════════════════════════════════
+   Les valeurs HEX sont définies ici. Tailwind (@theme dans agritech-tokens.css)
+   référence les --color-* via var(--*), donc les classes utilitaires
+   (.bg-bg-0, .text-text-0, etc.) résolvent dynamiquement selon la classe
+   appliquée sur <html> (.theme-day ou par défaut = night).
+
+   Usage :
+     document.documentElement.classList.add('theme-day')    → passe en jour
+     document.documentElement.classList.remove('theme-day') → retour nuit
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* NIGHT (par défaut) — Agritech Moderne dark cockpit */
+  --bg-0: #0A0D0C;
+  --bg-1: #12171A;
+  --bg-2: #1A2025;
+  --text-0: #F4F7F6;
+  --text-1: #A8B3B8;
+  --text-2: #6B7880;
+  --border: #2A3239;
+  --accent: #10B981;
+  --accent-dim: #065F46;
+  --amber: #F4A261;
+  --red: #EF4444;
+  --blue: #60A5FA;
+  --gold: #D4A056;
+
+  /* StatusBar Android */
+  --status-bar-bg: #0A0D0C;
+  --status-bar-style: dark;
+
+  color-scheme: dark;
+}
+
+:root.theme-day {
+  /* DAY — Terrain Vivant raffiné (ivoire + émeraude profond) */
+  --bg-0: #FAFAF7;
+  --bg-1: #FFFFFF;
+  --bg-2: #F5F3EE;
+  --text-0: #0F172A;
+  --text-1: #4B5563;
+  --text-2: #9CA3AF;
+  --border: #E5E7EB;
+  --accent: #065F46;        /* vert plus profond pour contraste sur blanc */
+  --accent-dim: #047857;
+  --amber: #D97706;
+  --red: #DC2626;
+  --blue: #2563EB;
+  --gold: #B45309;
+
+  --status-bar-bg: #FAFAF7;
+  --status-bar-style: light;
+
+  color-scheme: light;
+}
+
+/* Transition douce entre thèmes (sauf reduced-motion) */
+@media (prefers-reduced-motion: no-preference) {
+  html,
+  body {
+    transition: background-color 250ms ease, color 250ms ease;
+  }
+  .card-dense,
+  .chip,
+  .data-row {
+    transition: background-color 250ms ease, border-color 250ms ease, color 250ms ease;
+  }
+}

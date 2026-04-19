@@ -19,6 +19,7 @@ import AgritechLayout from './AgritechLayout';
 import QuickSaillieForm from './forms/QuickSaillieForm';
 import QuickHealthForm from './forms/QuickHealthForm';
 import QuickNoteForm from './forms/QuickNoteForm';
+import QuickPeseeForm from './forms/QuickPeseeForm';
 import type { FarmAlert, AlertPriority } from '../services/alertEngine';
 import type { AlerteServeur } from '../types/farm';
 import {
@@ -78,6 +79,7 @@ const Cockpit: React.FC = () => {
 
   const [sheet, setSheet] = useState<QuickSheetKind>(null);
   const [showSaillie, setShowSaillie] = useState(false);
+  const [peseeOpen, setPeseeOpen] = useState(false);
   const [toast, setToast] = useState<{ open: boolean; message: string }>({ open: false, message: '' });
 
   // ── KPIs ────────────────────────────────────────────────────────────────
@@ -211,9 +213,7 @@ const Cockpit: React.FC = () => {
     refreshData().finally(() => e.detail.complete());
   };
 
-  const handleOpenPesee = (): void => {
-    setToast({ open: true, message: 'Pesée bulk · Bientôt disponible' });
-  };
+  const handleOpenPesee = (): void => setPeseeOpen(true);
 
   const handleOpenSoin = (): void => setSheet('soin');
   const handleOpenSaillie = (): void => setShowSaillie(true);
@@ -401,7 +401,6 @@ const Cockpit: React.FC = () => {
                   icon={<Scale size={16} aria-hidden="true" />}
                   label="Pesée"
                   onClick={handleOpenPesee}
-                  disabledHint
                 />
               </div>
             </section>
@@ -484,6 +483,8 @@ const Cockpit: React.FC = () => {
 
       {/* ── Quick forms ────────────────────────────────────────────────── */}
       <QuickSaillieForm isOpen={showSaillie} onClose={() => setShowSaillie(false)} />
+
+      <QuickPeseeForm isOpen={peseeOpen} onClose={() => setPeseeOpen(false)} />
 
       <BottomSheet
         isOpen={sheet === 'soin'}

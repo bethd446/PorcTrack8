@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
   Truie, Verrat, BandePorcelets, TraitementSante,
-  StockAliment, StockVeto, FarmState, AlerteServeur, Saillie, DataSource
+  StockAliment, StockVeto, FarmState, AlerteServeur, Saillie, FinanceEntry, DataSource
 } from '../types/farm';
 import { Animal, Note } from '../types';
 import {
   getTruies, getVerrats, getBandes, getJournalSante,
-  getStockAliments, getStockVeto, getNotesTerrain, getAlertesServeur, getSaillies
+  getStockAliments, getStockVeto, getNotesTerrain, getAlertesServeur, getSaillies, getFinances
 } from '../services/googleSheets';
 import { getQueueStatus, processQueue } from '../services/offlineQueue';
 import { runAlertEngine, type FarmAlert } from '../services/alertEngine';
@@ -23,6 +23,8 @@ interface FarmContextType extends FarmState {
   alertesServeur: AlerteServeur[];
   /** Saillies actives (feuille SUIVI_REPRODUCTION_ACTUEL). Utilisées par performanceAnalyzer. */
   saillies: Saillie[];
+  /** Journal financier (feuille FINANCES) — entrées brutes dépenses/revenus. */
+  finances: FinanceEntry[];
   /** Nombre d'alertes nécessitant une action immédiate */
   criticalAlertCount: number;
   /** Source de la dernière lecture : NETWORK = frais, CACHE = cache valide, FALLBACK = cache expiré (offline) */
@@ -105,6 +107,7 @@ export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [alerts, setAlerts] = useState<FarmAlert[]>([]);
   const [alertesServeur, setAlertesServeur] = useState<AlerteServeur[]>([]);
   const [saillies, setSaillies] = useState<Saillie[]>([]);
+  const [finances, setFinances] = useState<FinanceEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [dataSource, setDataSource] = useState<'NETWORK' | 'CACHE' | 'FALLBACK' | null>(null);
 
@@ -142,12 +145,13 @@ export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children
         getNotesTerrain((data) => setNotes(data)),
         getAlertesServeur((data) => setAlertesServeur(data)),
         getSaillies((data) => setSaillies(data)),
+        getFinances((data) => setFinances(data)),
       ]);
 
       const empty = { success: false, data: [] as any[], header: [] as string[], source: ('FALL' + 'BACK') as DataSource };
       const [
         truieRes, verratRes, bandeRes,
-        santeRes, stockARes, stockVRes, notesRes, alertesServeurRes, sailliesRes
+        santeRes, stockARes, stockVRes, notesRes, alertesServeurRes, sailliesRes, financesRes
       ] = results.map(r => r.status === 'fulfilled' ? r.value : empty) as [
         { success: boolean; data: Truie[];             header: string[]; source: DataSource },
         { success: boolean; data: Verrat[];            header: string[]; source: DataSource },
@@ -158,6 +162,7 @@ export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children
         { success: boolean; data: Note[];              header: string[]; source: DataSource },
         { success: boolean; data: AlerteServeur[];     header: string[]; source: DataSource },
         { success: boolean; data: Saillie[];           header: string[]; source: DataSource },
+        { success: boolean; data: FinanceEntry[];      header: string[]; source: DataSource },
       ];
 
       // Mise à jour synchrone immédiate (depuis cache)
@@ -196,6 +201,15 @@ export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSaillies([]);
       } else {
         setSaillies(sailliesRes.data);
+      }
+
+      // Finances (Sheets) : rejet explicite = log + []
+      const financesSettled = results[9];
+      if (financesSettled.status === 'rejected') {
+        logger.error('FarmContext', 'finances fetch failed', financesSettled.reason);
+        setFinances([]);
+      } else {
+        setFinances(financesRes.data);
       }
 
       // ── Moteur d'alertes GTTT ──────────────────────────────────
@@ -279,6 +293,7 @@ export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children
       alerts,
       alertesServeur,
       saillies,
+      finances,
       criticalAlertCount,
       loading,
       dataSource,

@@ -46,6 +46,10 @@ const TruiesListView = React.lazy(() => import(/* webpackChunkName: "truies-list
 // Agritech ressources sub-screens.
 const PlanAlimentationView = React.lazy(() => import(/* webpackChunkName: "plan-alim" */ './features/ressources/PlanAlimentationView'));
 
+// Agritech pilotage sub-screens (Sprint 3 livrés).
+const PerfKpiView = React.lazy(() => import(/* webpackChunkName: "pilotage-perf" */ './features/pilotage/PerfKpiView'));
+const FinancesView = React.lazy(() => import(/* webpackChunkName: "pilotage-finances" */ './features/pilotage/FinancesView'));
+
 // Agritech cycles sub-screens (Sprint 2 livrés).
 const ReproCalendarView = React.lazy(() => import(/* webpackChunkName: "cycle-repro" */ './features/cycles/ReproCalendarView'));
 const MaterniteView = React.lazy(() => import(/* webpackChunkName: "cycle-maternite" */ './features/cycles/MaterniteView'));
@@ -119,26 +123,8 @@ const AppContent = () => {
           <Route path="/pilotage/alertes" element={<Navigate to="/alerts" replace />} />
           <Route path="/pilotage/reglages" element={<Navigate to="/more" replace />} />
           <Route path="/pilotage/audit" element={<Navigate to="/audit" replace />} />
-          <Route
-            path="/pilotage/perf"
-            element={
-              <ComingSoon
-                title="Performance"
-                subtitle="GMQ · IC · productivité"
-                backTo="/pilotage"
-              />
-            }
-          />
-          <Route
-            path="/pilotage/finances"
-            element={
-              <ComingSoon
-                title="Finances"
-                subtitle="Marges · charges"
-                backTo="/pilotage"
-              />
-            }
-          />
+          <Route path="/pilotage/perf" element={<PerfKpiView />} />
+          <Route path="/pilotage/finances" element={<FinancesView />} />
 
           {/* ── Ressources sub-routes ─────────────────────────────────── */}
           <Route path="/ressources/aliments" element={<TableView tableKey="STOCK_ALIMENTS" />} />
