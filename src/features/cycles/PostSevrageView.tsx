@@ -192,8 +192,10 @@ function chipForPostSevrage(jours: number | null): {
   label: string;
 } {
   if (jours === null) return { tone: 'default', label: 'Récent' };
-  if (jours < 30) return { tone: 'blue', label: `J+${jours}` };
-  if (jours < 50) return { tone: 'amber', label: `J+${jours}` };
+  const seuil1 = FARM_CONFIG.POST_SEVRAGE_DUREE_JOURS * 0.33; // ~10j sur 32
+  const seuil2 = FARM_CONFIG.POST_SEVRAGE_DUREE_JOURS * 0.66; // ~21j sur 32
+  if (jours < seuil1) return { tone: 'blue', label: `J+${jours}` };
+  if (jours < seuil2) return { tone: 'amber', label: `J+${jours}` };
   return { tone: 'gold', label: `J+${jours}` };
 }
 

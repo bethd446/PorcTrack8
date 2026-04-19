@@ -90,8 +90,8 @@ const EngraissementView: React.FC = () => {
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
           <AgritechHeader
-            title="ENGRAISSEMENT"
-            subtitle="Porcelets séparés par sexe · jusqu'à finition"
+            title="CROISSANCE & FINITION"
+            subtitle="Porcelets séparés par sexe · même loge jusqu'à l'abattoir"
             backTo="/cycles"
           />
 
@@ -99,7 +99,7 @@ const EngraissementView: React.FC = () => {
             {/* Summary strip — 4 KPI */}
             <div
               role="group"
-              aria-label="Résumé engraissement"
+              aria-label="Résumé croissance-finition"
               className="grid grid-cols-2 gap-3 sm:grid-cols-4"
             >
               <KpiCard
@@ -129,7 +129,7 @@ const EngraissementView: React.FC = () => {
 
             {/* Liste portées */}
             <SectionDivider
-              label={`Portées en engraissement${
+              label={`Portées en croissance-finition${
                 portees.length > 0 ? ` · ${portees.length}` : ''
               }`}
             />
@@ -139,7 +139,7 @@ const EngraissementView: React.FC = () => {
             ) : (
               <div
                 role="list"
-                aria-label="Portées en engraissement"
+                aria-label="Portées en croissance-finition"
                 className="card-dense !p-0 overflow-hidden"
               >
                 {portees.map((p) => (
@@ -248,13 +248,13 @@ const LogesOccupationCard: React.FC<LogesOccupationCardProps> = ({
     <div
       className="card-dense flex flex-col gap-2"
       role="group"
-      aria-label={`Loges engraissement : ${occupees} sur ${capacite}, ${tauxPct}%, ${statusLabel}`}
+      aria-label={`Loges croissance-finition : ${occupees} sur ${capacite}, ${tauxPct}%, ${statusLabel}`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="kpi-label">Loges engraissement</div>
+          <div className="kpi-label">Loges croissance-finition</div>
           <div className="mt-0.5 font-mono text-[11px] text-text-2 leading-tight">
-            Séparation par sexe · finition
+            1 loge mâles · 1 loge femelles · J60 → abattoir
           </div>
         </div>
         <Chip
@@ -282,7 +282,7 @@ const LogesOccupationCard: React.FC<LogesOccupationCardProps> = ({
         aria-valuenow={tauxPct}
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-label={`Occupation loges engraissement ${tauxPct}%`}
+        aria-label={`Occupation loges croissance-finition ${tauxPct}%`}
       >
         <div
           className={`h-full ${barFill} rounded-full transition-[width]`}
@@ -302,10 +302,10 @@ const EmptyState: React.FC = () => (
       <PorceletIcon size={48} aria-hidden="true" />
     </div>
     <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
-      Aucune portée en engraissement
+      Aucune portée en croissance-finition
     </h3>
     <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
-      Les portées basculent en engraissement après séparation par sexe (~J+70).
+      Les porcelets basculent en croissance-finition (~J60 de vie, après séparation par sexe) et y restent jusqu'à l'abattoir.
     </p>
   </div>
 );

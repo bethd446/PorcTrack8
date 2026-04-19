@@ -34,12 +34,12 @@ import type { BandePorcelets, Truie } from '../../types/farm';
  *  - un état chip (récent / proche sevrage J+18+ / mortalité >15%)
  *
  * Source de capacité : `FARM_CONFIG.MATERNITE_LOGES_CAPACITY` (9 loges chauffage).
- * Pas de pesées J3/J7/J14/J21 à ce sprint (placeholder UX).
+ * Pas de pesées J3/J7/J14/J28 à ce sprint (placeholder UX).
  */
 
-// ─── Constantes métier (duplication minimale — pas de changement service) ───
-const SEVRAGE_JOURS = 21;
-const SEVRAGE_PROCHE_JOURS = 18;
+// ─── Constantes métier (ferme K13 · sevrage J28) ────────────────────────────
+const SEVRAGE_JOURS = 28;
+const SEVRAGE_PROCHE_JOURS = 25;
 const MORTALITE_SEUIL_PCT = 15;
 
 // ─── Helpers internes ───────────────────────────────────────────────────────
@@ -333,7 +333,7 @@ const MaterniteView: React.FC = () => {
                 <span className="kpi-label">Pesées porcelets</span>
               </div>
               <p className="font-mono text-[11px] text-text-2 leading-snug">
-                Les pesées J3 · J7 · J14 · J21 seront accessibles depuis cette vue
+                Les pesées J3 · J7 · J14 · J28 seront accessibles depuis cette vue
                 dans une prochaine mise à jour.
               </p>
               <div className="flex flex-wrap gap-1.5">

@@ -5,7 +5,7 @@
  * et les cycles biologiques porcins :
  *
  *   Gestation    : 115 jours (±2j)
- *   Allaitement  : 21-28 jours
+ *   Allaitement  : 28-35 jours (ferme K13 : sevrage à J28)
  *   Retour chaleur après sevrage : 3-7 jours
  *   Intervalle mise-bas : ~155 jours
  *   Mortalité anormale  : > 15% de la portée
@@ -79,8 +79,8 @@ export interface FarmAlert {
 
 const BIO = {
   GESTATION_JOURS: 115,
-  LACTATION_JOURS: 21,        // sevrage à 21 jours (standard Côte d'Ivoire)
-  LACTATION_MAX_JOURS: 28,
+  LACTATION_JOURS: 28,        // sevrage à J28 (ferme K13, validé porcher 19/04/2026)
+  LACTATION_MAX_JOURS: 35,
   CHALEUR_POST_SEVRAGE_JOURS: 5,  // milieu de la fenêtre 3-7j
   MORTALITE_SEUIL_PCT: 15,    // % mortalité déclenchant une alerte
   ALERTE_MB_AVANCE_JOURS: 3,  // alerter J-3 avant la MB prévue
@@ -217,7 +217,7 @@ function checkMiseBas(truie: Truie, today: Date): FarmAlert | null {
 
 /**
  * R2 — Sevrage à Confirmer
- * Déclenché à J+21 de la mise-bas réelle
+ * Déclenché à J+28 de la mise-bas réelle (sevrage ferme K13, constante BIO.LACTATION_JOURS)
  */
 function checkSevrage(bande: BandePorcelets, today: Date): FarmAlert | null {
   if (bande.statut === 'Sevrés' || bande.statut === 'Sevrée' || bande.statut === 'Archivée') return null;

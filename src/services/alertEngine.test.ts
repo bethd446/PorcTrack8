@@ -157,9 +157,9 @@ describe('R1 — Mise-Bas', () => {
 // ─── R2 — Sevrage ────────────────────────────────────────────────────────────
 
 describe('R2 — Sevrage', () => {
-  it('déclenche NORMALE à J+21 exact (sevrage du jour)', () => {
+  it('déclenche NORMALE à J+28 exact (sevrage du jour)', () => {
     const bande = makeBande({
-      dateMB: toFrDate(dayOffset(NOW, -21)),
+      dateMB: toFrDate(dayOffset(NOW, -28)),
       vivants: 10,
     });
     const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
@@ -170,18 +170,18 @@ describe('R2 — Sevrage', () => {
     expect(sev?.requiresAction).toBe(true);
   });
 
-  it('ne déclenche pas à J+20 (veille du sevrage)', () => {
+  it('ne déclenche pas à J+27 (veille du sevrage)', () => {
     const bande = makeBande({
-      dateMB: toFrDate(dayOffset(NOW, -20)),
+      dateMB: toFrDate(dayOffset(NOW, -27)),
       vivants: 10,
     });
     const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
     expect(alerts.find(a => a.id.startsWith('SEV-'))).toBeUndefined();
   });
 
-  it('passe à HAUTE si retard > 7 jours (J+29)', () => {
+  it('passe à HAUTE si retard > 7 jours (J+36)', () => {
     const bande = makeBande({
-      dateMB: toFrDate(dayOffset(NOW, -29)),
+      dateMB: toFrDate(dayOffset(NOW, -36)),
       vivants: 8,
     });
     const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
@@ -210,7 +210,7 @@ describe('R3 — Retour Chaleur Post-Sevrage', () => {
     const bande = makeBande({
       id: `BP-${truie.id}`,
       truie: truie.id,
-      dateMB: toFrDate(dayOffset(NOW, -(21 + joursDepuisSevrage))),
+      dateMB: toFrDate(dayOffset(NOW, -(28 + joursDepuisSevrage))),
       dateSevrageReelle: toFrDate(dayOffset(NOW, -joursDepuisSevrage)),
       statut: 'Sevrés',
       vivants: 10,
@@ -324,12 +324,12 @@ describe('R6 — Regroupement Bandes', () => {
   it('suggère le regroupement quand 2 bandes sont sevrables à ±3j', () => {
     const b1 = makeBande({
       id: 'BP-A',
-      dateMB: toFrDate(dayOffset(NOW, -21)), // sevrage aujourd'hui
+      dateMB: toFrDate(dayOffset(NOW, -28)), // sevrage aujourd'hui
       vivants: 8,
     });
     const b2 = makeBande({
       id: 'BP-B',
-      dateMB: toFrDate(dayOffset(NOW, -19)), // sevrage dans 2 jours
+      dateMB: toFrDate(dayOffset(NOW, -26)), // sevrage dans 2 jours
       vivants: 7,
     });
     const alerts = runAlertEngine(emptyInput({ bandes: [b1, b2] }));
@@ -344,7 +344,7 @@ describe('R6 — Regroupement Bandes', () => {
   it('ne suggère pas avec une seule bande sevrable', () => {
     const b1 = makeBande({
       id: 'BP-A',
-      dateMB: toFrDate(dayOffset(NOW, -21)),
+      dateMB: toFrDate(dayOffset(NOW, -28)),
       vivants: 8,
     });
     const alerts = runAlertEngine(emptyInput({ bandes: [b1] }));
@@ -428,8 +428,8 @@ describe('runAlertEngine — tri global', () => {
         makeTruie({ id: 'T1', displayId: 'T1', dateMBPrevue: toFrDate(dayOffset(NOW, -3)) }), // MB retard CRITIQUE
       ],
       bandes: [
-        makeBande({ id: 'B1', dateMB: toFrDate(dayOffset(NOW, -21)), vivants: 5 }), // SEV NORMALE
-        makeBande({ id: 'B2', dateMB: toFrDate(dayOffset(NOW, -20)), vivants: 5 }), // REG INFO
+        makeBande({ id: 'B1', dateMB: toFrDate(dayOffset(NOW, -28)), vivants: 5 }), // SEV NORMALE
+        makeBande({ id: 'B2', dateMB: toFrDate(dayOffset(NOW, -27)), vivants: 5 }), // REG INFO
       ],
       stockAliments: [
         makeStock({ id: 'S1', statutStock: 'BAS', stockActuel: 10 }), // STK HAUTE

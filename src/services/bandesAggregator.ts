@@ -230,11 +230,12 @@ export function logesPostSevrageOccupation(
 }
 
 /**
- * Calcule l'occupation des loges d'engraissement.
+ * Calcule l'occupation des loges croissance-finition (anciennement "engraissement").
  *
- * Une bande est comptée en engraissement si son statut est "Sevrés" et que la
- * date de sevrage est >= 70 jours (voir `computeBandePhase`). Capacité définie
- * par `FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY` (K13 = 2 loges).
+ * Une bande est comptée en croissance-finition si statut "Sevrés" ET date de
+ * sevrage ≥ 32 j (voir `computeBandePhase` · FARM_CONFIG.POST_SEVRAGE_DUREE_JOURS).
+ * 2 loges physiques (1 mâles, 1 femelles) — même loge de la croissance à la
+ * finition. Capacité `FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY` (K13 = 2).
  */
 export function logesEngraissementOccupation(
   bandes: BandePorcelets[],

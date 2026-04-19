@@ -26,16 +26,17 @@ import type { BandePorcelets, Truie } from '../../types/farm';
  * ═══════════════════════════════════════════════════════
  *
  * Remplace l'ancien CyclesHub (4 HubTile statiques) par un pipeline visuel
- * horizontal à 5 étapes (Gestation → Maternité → Post-sevrage → Engraissement
- * → Finition) avec compteurs live calculés depuis `useFarm()` + un summary
- * rapide (porcelets vivants, prochaines sorties abattoir).
+ * horizontal à 5 étapes (Gestation → Maternité → Post-sevrage →
+ * Croissance-finition → Finition) avec compteurs live calculés depuis
+ * `useFarm()` + un summary rapide (porcelets vivants, sorties abattoir).
  *
  * Chaque étape du pipeline est cliquable et mène à sa vue dédiée :
- *  - Gestation       → /cycles/repro
- *  - Maternité       → /cycles/maternite
- *  - Post-sevrage    → /cycles/post-sevrage
- *  - Engraissement   → /cycles/engraissement
- *  - Finition        → /cycles/finition (nouveau)
+ *  - Gestation            → /cycles/repro
+ *  - Maternité            → /cycles/maternite
+ *  - Post-sevrage         → /cycles/post-sevrage (J28 → J60, 4 loges)
+ *  - Croissance-finition  → /cycles/engraissement (J60 → abattoir, séparé
+ *                           par sexe, même loge)
+ *  - Finition             → /cycles/finition (sous-vue ≥80 kg)
  *
  * Les 4 HubTiles historiques sont conservés en dessous pour la navigation
  * d'appoint ("Voir …"), cohérents avec le reste de l'UX hub.
@@ -100,21 +101,21 @@ const CyclesHub: React.FC = () => {
               <HubTile
                 icon={<PackageCheck size={22} />}
                 title="Post-sevrage"
-                subtitle="Porcelets sevrés · J+0 à J+70"
+                subtitle="Porcelets sevrés · J+0 à J+32 · 4 loges"
                 to="/cycles/post-sevrage"
                 count={stats.stages.postSevrage}
               />
               <HubTile
                 icon={<TrendingUp size={22} />}
-                title="Engraissement"
-                subtitle="Séparation par sexe · croissance"
+                title="Croissance-finition"
+                subtitle="Séparés par sexe · même loge → abattoir"
                 to="/cycles/engraissement"
                 count={stats.stages.engraissement}
               />
               <HubTile
                 icon={<Trophy size={22} />}
-                title="Finition"
-                subtitle="Proches poids abattage · ≥80 kg"
+                title="Finition (≥80 kg)"
+                subtitle="Sous-vue · proches poids abattage"
                 to="/cycles/finition"
                 tone="amber"
                 count={stats.stages.finition}
@@ -153,10 +154,10 @@ interface PipelineStageDef {
 
 const STAGE_DEFS: readonly PipelineStageDef[] = [
   { key: 'gestation', label: 'Gestation', duration: '115 j', icon: <Heart size={16} aria-hidden="true" />, to: '/cycles/repro' },
-  { key: 'maternite', label: 'Maternité', duration: '21 j', icon: <Baby size={16} aria-hidden="true" />, to: '/cycles/maternite' },
-  { key: 'postSevrage', label: 'Post-sevrage', duration: '70 j', icon: <PackageCheck size={16} aria-hidden="true" />, to: '/cycles/post-sevrage' },
-  { key: 'engraissement', label: 'Engraissement', duration: '90 j', icon: <TrendingUp size={16} aria-hidden="true" />, to: '/cycles/engraissement' },
-  { key: 'finition', label: 'Finition', duration: '≥90 kg', icon: <Trophy size={16} aria-hidden="true" />, to: '/cycles/finition' },
+  { key: 'maternite', label: 'Maternité', duration: '28 j', icon: <Baby size={16} aria-hidden="true" />, to: '/cycles/maternite' },
+  { key: 'postSevrage', label: 'Post-sevrage', duration: '32 j', icon: <PackageCheck size={16} aria-hidden="true" />, to: '/cycles/post-sevrage' },
+  { key: 'engraissement', label: 'Croissance-fin.', duration: 'J60→abat.', icon: <TrendingUp size={16} aria-hidden="true" />, to: '/cycles/engraissement' },
+  { key: 'finition', label: 'Finition', duration: '≥80 kg', icon: <Trophy size={16} aria-hidden="true" />, to: '/cycles/finition' },
 ] as const;
 
 interface PipelineBarProps {
@@ -266,11 +267,11 @@ function isFinition(bande: BandePorcelets, today: Date): boolean {
 
 /**
  * Compteurs live du pipeline :
- *  - Gestation       : truies pleines/gestantes (statut contient "pleine" ou "gest")
- *  - Maternité       : truies allaitantes (statut contient "maternit" ou "allait" ou "lactat")
- *  - Post-sevrage    : bandes en phase POST_SEVRAGE (sevrées <70 j)
- *  - Engraissement   : bandes en phase ENGRAISSEMENT (sevrées ≥70 j)
- *  - Finition        : bandes en engraissement avec poids estimé ≥80 kg
+ *  - Gestation           : truies pleines/gestantes (statut contient "pleine" ou "gest")
+ *  - Maternité           : truies allaitantes (statut "maternit" ou "allait" ou "lactat")
+ *  - Post-sevrage        : bandes en phase POST_SEVRAGE (sevrées <32 j)
+ *  - Croissance-finition : bandes en phase ENGRAISSEMENT (sevrées ≥32 j)
+ *  - Finition            : sous-catégorie avec poids estimé ≥80 kg (prêts abattoir)
  *
  * Total porcelets = vivants (sous mère + sevrés). Sorties abattoir = bandes
  * en finition prêtes à la vente.

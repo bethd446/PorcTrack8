@@ -187,11 +187,11 @@ describe('logesPostSevrageOccupation', () => {
     expect(r.alerte).toBe('OK');
   });
 
-  it('exclut les bandes en engraissement (sevrées >= 70j)', () => {
+  it('exclut les bandes en engraissement (sevrées >= 32j)', () => {
     const today = new Date(2026, 3, 17); // 17 avril 2026
     const engr: BandePorcelets = {
       ...makeBande('Sevrés'),
-      dateSevrageReelle: '01/01/2026', // >70j avant today → engraissement
+      dateSevrageReelle: '01/01/2026', // >32j avant today → engraissement
     };
     const recent: BandePorcelets = {
       ...makeBande('Sevrés'),
@@ -223,24 +223,24 @@ describe('computeBandePhase', () => {
     const b: BandePorcelets = {
       ...makeBande('Sevrés'),
       // DST : bascule heure d'été fin mars ⇒ on recule au 05/02 pour couvrir
-      // ≥70 jours de façon robuste (floor sur diffMs tronque l'offset 1h).
-      dateSevrageReelle: '05/02/2026', // 70 jours avant today
+      // le seuil de façon robuste (floor sur diffMs tronque l'offset 1h).
+      dateSevrageReelle: '05/02/2026', // 70 jours avant today (≥32j)
     };
     expect(computeBandePhase(b, today)).toBe('ENGRAISSEMENT');
   });
 
-  it('retourne ENGRAISSEMENT à partir de 70 jours (limite)', () => {
+  it('retourne ENGRAISSEMENT à partir de 32 jours (limite)', () => {
     const b: BandePorcelets = {
       ...makeBande('Sevrés'),
-      dateSevrageReelle: '05/02/2026', // 70j avant today (17/04/2026) post-DST
+      dateSevrageReelle: '14/03/2026', // ≥32j avant today (17/04/2026) post-DST
     };
     expect(computeBandePhase(b, today)).toBe('ENGRAISSEMENT');
   });
 
-  it('reste POST_SEVRAGE à 69 jours (juste avant seuil 70)', () => {
+  it('reste POST_SEVRAGE à 31 jours (juste avant seuil 32)', () => {
     const b: BandePorcelets = {
       ...makeBande('Sevrés'),
-      dateSevrageReelle: '07/02/2026', // 69j avant today (17/04/2026)
+      dateSevrageReelle: '18/03/2026', // 30j avant today (17/04/2026)
     };
     expect(computeBandePhase(b, today)).toBe('POST_SEVRAGE');
   });
