@@ -12,6 +12,7 @@ import { Chip, SectionDivider } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
 import { TruieIcon, VerratIcon } from '../../components/icons';
 import { getStatusConfig } from '../../components/PremiumUI';
+import { FARM_CONFIG } from '../../config/farm';
 
 interface CheptelViewProps {
   /** Optional forced tab — used by the `/troupeau/truies` · `/troupeau/verrats` redirects. */
@@ -107,8 +108,8 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
 
   const subtitle =
     tab === 'TRUIE'
-      ? `${truies.length} truie${truies.length > 1 ? 's' : ''} · A130`
-      : `${verrats.length} verrat${verrats.length > 1 ? 's' : ''} · A130`;
+      ? `${truies.length} truie${truies.length > 1 ? 's' : ''} · ${FARM_CONFIG.FARM_ID}`
+      : `${verrats.length} verrat${verrats.length > 1 ? 's' : ''} · ${FARM_CONFIG.FARM_ID}`;
 
   const EmptyIcon = tab === 'TRUIE' ? TruieIcon : VerratIcon;
 

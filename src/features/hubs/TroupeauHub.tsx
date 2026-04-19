@@ -6,6 +6,7 @@ import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { HubTile, Chip, SectionDivider } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
+import { FARM_CONFIG } from '../../config/farm';
 import {
   filterRealPortees,
   countSousMere,
@@ -23,7 +24,7 @@ import {
  * Note data model :
  *  - "Portée" = lot issu d'une mise-bas (1 truie = 1 portée).
  *  - "Loge"   = unité physique post-sevrage regroupant plusieurs portées.
- *    La ferme A130 a 4 loges ; voir `bandesAggregator.countLoges`.
+ *    La ferme K13 a 4 loges ; voir `bandesAggregator.countLoges`.
  */
 const TroupeauHub: React.FC = () => {
   const { truies, verrats, bandes } = useFarm();
@@ -70,7 +71,7 @@ const TroupeauHub: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
-          <AgritechHeader title="TROUPEAU" subtitle="A130 · Reproducteurs & descendance" />
+          <AgritechHeader title="TROUPEAU" subtitle={`${FARM_CONFIG.FARM_ID} · Reproducteurs & descendance`} />
 
           <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
             {/* Global stats strip */}

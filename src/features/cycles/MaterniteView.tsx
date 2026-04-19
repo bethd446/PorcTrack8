@@ -24,7 +24,7 @@ import {
 import type { BandePorcelets, Truie } from '../../types/farm';
 
 /**
- * MaterniteView — vue opérationnelle "maternité" (A130).
+ * MaterniteView — vue opérationnelle "maternité" (K13).
  *
  * Pour chaque truie en maternité (statut "En maternité" / "allaitante" / "lactation"),
  * affiche :

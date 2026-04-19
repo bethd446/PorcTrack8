@@ -490,6 +490,9 @@ const AnimalDetailView: React.FC<{ mode: Mode }> = ({ mode }) => {
                           size="xs"
                         />
                         <Chip label={`ID ${animal.displayId}`} size="xs" />
+                        {mode === 'TRUIE' && truiePerf && truiePerf.nbPortees === 0 ? (
+                          <Chip label="Primipare" tone="amber" size="xs" />
+                        ) : null}
                       </div>
                     </div>
                   </div>
@@ -551,7 +554,24 @@ const AnimalDetailView: React.FC<{ mode: Mode }> = ({ mode }) => {
                 </section>
 
                 {/* ── Performance (intelligence métier) ─────────────── */}
-                {mode === 'TRUIE' && truiePerf ? (
+                {mode === 'TRUIE' && truiePerf && truiePerf.nbPortees === 0 ? (
+                  <section aria-label="Primipare — aucune portée">
+                    <SectionDivider label="Performance" />
+                    <div className="card-dense flex items-start gap-3">
+                      <span
+                        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-bg-2 text-amber"
+                        aria-hidden="true"
+                      >
+                        <Baby size={18} />
+                      </span>
+                      <p className="text-[13px] text-text-1 leading-relaxed">
+                        Cette truie n'a pas encore de portée enregistrée.
+                        L'historique apparaîtra après la première mise-bas.
+                      </p>
+                    </div>
+                  </section>
+                ) : null}
+                {mode === 'TRUIE' && truiePerf && truiePerf.nbPortees > 0 ? (
                   <section aria-label="Performance technique">
                     <SectionDivider
                       label="Performance"

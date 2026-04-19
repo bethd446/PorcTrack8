@@ -10,6 +10,7 @@ import { DataRow, Chip, SectionDivider } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
 import { TruieIcon } from '../../components/icons';
 import type { Truie } from '../../types/farm';
+import { FARM_CONFIG } from '../../config/farm';
 
 /** Filter bucket keys. `all` shows every truie. */
 type FilterKey = 'all' | 'pleine' | 'maternite' | 'attente' | 'surveiller';
@@ -114,7 +115,7 @@ const TruiesListView: React.FC = () => {
         <AgritechLayout>
           <AgritechHeader
             title="Truies"
-            subtitle={`${truies.length} actives · A130`}
+            subtitle={`${truies.length} actives · ${FARM_CONFIG.FARM_ID}`}
             backTo="/troupeau"
           />
 

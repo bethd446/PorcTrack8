@@ -1,6 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { IonApp } from '@ionic/react';
+import { kvGet } from './services/kvStore';
+import OnboardingFlow from './features/onboarding/OnboardingFlow';
+import AgritechLayout from './components/AgritechLayout';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -49,12 +52,16 @@ const PlanAlimentationView = React.lazy(() => import(/* webpackChunkName: "plan-
 // Agritech pilotage sub-screens (Sprint 3 livrés).
 const PerfKpiView = React.lazy(() => import(/* webpackChunkName: "pilotage-perf" */ './features/pilotage/PerfKpiView'));
 const FinancesView = React.lazy(() => import(/* webpackChunkName: "pilotage-finances" */ './features/pilotage/FinancesView'));
+const ForecastView = React.lazy(() => import(/* webpackChunkName: "pilotage-previsions" */ './features/pilotage/ForecastView'));
 
 // Agritech cycles sub-screens (Sprint 2 livrés).
 const ReproCalendarView = React.lazy(() => import(/* webpackChunkName: "cycle-repro" */ './features/cycles/ReproCalendarView'));
 const MaterniteView = React.lazy(() => import(/* webpackChunkName: "cycle-maternite" */ './features/cycles/MaterniteView'));
 const PostSevrageView = React.lazy(() => import(/* webpackChunkName: "cycle-postsevrage" */ './features/cycles/PostSevrageView'));
 const EngraissementView = React.lazy(() => import(/* webpackChunkName: "cycle-engraissement" */ './features/cycles/EngraissementView'));
+
+// Aide / Support (non lazy : petit, consulté fréquemment par porcher).
+const AideView = React.lazy(() => import(/* webpackChunkName: "aide" */ './features/help/AideView'));
 
 // Placeholder for missing components
 const StockHub = () => (
@@ -65,6 +72,20 @@ const AppContent = () => {
   useEffect(() => {
     loadChecklistDefinitions();
   }, []);
+
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(
+    () => kvGet('onboarding_done') !== '1'
+  );
+
+  if (showOnboarding) {
+    return (
+      <IonApp>
+        <AgritechLayout withNav={false}>
+          <OnboardingFlow onComplete={() => setShowOnboarding(false)} />
+        </AgritechLayout>
+      </IonApp>
+    );
+  }
 
   return (
     <IonApp>
@@ -98,6 +119,7 @@ const AppContent = () => {
           <Route path="/alerts" element={<AlertsView />} />
           <Route path="/sync" element={<SyncView />} />
           <Route path="/more" element={<SettingsPage />} />
+          <Route path="/aide" element={<AideView />} />
 
           {/* ── New agritech hubs ─────────────────────────────────────── */}
           <Route path="/troupeau" element={<TroupeauHub />} />
@@ -125,6 +147,7 @@ const AppContent = () => {
           <Route path="/pilotage/audit" element={<Navigate to="/audit" replace />} />
           <Route path="/pilotage/perf" element={<PerfKpiView />} />
           <Route path="/pilotage/finances" element={<FinancesView />} />
+          <Route path="/pilotage/previsions" element={<ForecastView />} />
 
           {/* ── Ressources sub-routes ─────────────────────────────────── */}
           <Route path="/ressources/aliments" element={<TableView tableKey="STOCK_ALIMENTS" />} />

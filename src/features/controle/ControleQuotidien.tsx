@@ -27,7 +27,7 @@ const ControleQuotidien: React.FC = () => {
     setLoading(true);
     setLastAnswer(answer);
     const now = new Date();
-    const porcher = localStorage.getItem('user_name') || 'Porcher A130';
+    const porcher = localStorage.getItem('user_name') || 'Porcher K13';
     const deviceId = localStorage.getItem('device_id') || 'DEV-UNKNOWN';
 
     // Schéma canonique NOTES_TERRAIN (5 colonnes) :

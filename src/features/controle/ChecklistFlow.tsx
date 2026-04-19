@@ -159,7 +159,7 @@ const ChecklistFlow: React.FC = () => {
       const table = String(currentQuestion.CIBLE_TABLE).toUpperCase();
       const now = new Date();
       const timestamp = now.toISOString();
-      const porcher = localStorage.getItem('user_name') || 'Porcher A130';
+      const porcher = localStorage.getItem('user_name') || 'Porcher K13';
 
       // Memory for session
       if (table === 'PORCELETS_BANDES' || table === 'PORCELETS_BANDES_DETAIL') {

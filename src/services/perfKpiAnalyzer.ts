@@ -71,6 +71,35 @@ export interface GlobalKpis {
   intervalSevrageSaillieMoyJours: number | null;
   /** Mises-bas prévues dans les 30 prochains jours. */
   nbMbAVenir30j: number;
+  /**
+   * ISSE (Intervalle Sevrage-Saillie) moyen en jours — pour chaque truie,
+   * moyenne des deltas sevrage → saillie suivante (fenêtre ≤ 60j).
+   * `null` si aucune séquence exploitable. Cible pro : 3-7 j.
+   */
+  isseMoyJours: number | null;
+  /**
+   * IEM (Intervalle Entre Mise-Bas) moyen en jours — moyenne des deltas
+   * entre MB consécutives d'une même truie (fenêtre [100j, 200j]).
+   * `null` si aucune truie avec ≥ 2 portées datées. Cible pro : 140-150 j.
+   */
+  iemMoyJours: number | null;
+  /**
+   * Taux MB (%) — nb portées 12m / nb saillies 12m × 100.
+   * `null` si nbSaillies12m === 0. Cible pro : ≥ 88%.
+   */
+  tauxMBPct: number | null;
+  /**
+   * Taux de renouvellement (%) — truies ayant leur 1re portée dans les 12
+   * derniers mois / nb truies total × 100. `null` si nbTruiesTotal === 0.
+   * Cible pro : 35-40 %/an.
+   */
+  tauxRenouvellementPct: number | null;
+  /** Nombre de truies avec au moins 2 MB datées (crédibilité IEM). */
+  nbTruiesAvecMBMultiples: number;
+  /** Nombre de saillies sur les 12 derniers mois. */
+  nbSaillies12m: number;
+  /** Nombre de mises-bas sur les 12 derniers mois (alias sur nbPortees12m). */
+  nbMB12m: number;
 }
 
 export interface TruieRanking {
@@ -78,7 +107,11 @@ export interface TruieRanking {
   performance: TruiePerformance;
 }
 
-export type MotifReforme = 'PERF_INSUFFISANTE' | 'INACTIVE_LONG' | 'MULTIPLE';
+export type MotifReforme =
+  | 'PERF_INSUFFISANTE'
+  | 'INACTIVE_LONG'
+  | 'ISSE_ELEVE'
+  | 'MULTIPLE';
 
 export interface TruiesAReformer {
   motif: MotifReforme;
@@ -100,6 +133,205 @@ const HORIZON_MB_A_VENIR = 30;
 
 /** Période d'agrégation pour les KPI globaux (jours). */
 const HORIZON_12M = 365;
+
+/** Fenêtre max (jours) pour accepter une paire sevrage → saillie comme valide (anti-outliers). */
+const ISSE_FENETRE_MAX_J = 60;
+
+/** Seuil ISSE individuel (jours) au-delà duquel une occurrence est considérée "élevée". */
+const ISSE_INDIVIDUEL_SEUIL_J = 14;
+
+/** Nombre minimum d'occurrences ISSE > seuil pour déclencher le motif ISSE_ELEVE (récurrence). */
+const ISSE_ELEVE_MIN_OCCURRENCES = 2;
+
+/** Fenêtre IEM : intervalles MB consécutifs hors de [IEM_MIN_J, IEM_MAX_J] filtrés comme aberrants. */
+const IEM_MIN_J = 100;
+const IEM_MAX_J = 200;
+
+// ─── KPI repro avancés (ISSE, IEM, taux MB, renouvellement) ─────────────────
+
+/**
+ * Récupère les sevrages réels d'une truie sous forme de timestamps triés.
+ */
+function sevrageTsForTruie(truie: Truie, bandes: BandePorcelets[]): number[] {
+  return findPorteesForTruie(truie, bandes)
+    .filter(b => !!b.dateSevrageReelle)
+    .map(b => parseFr(b.dateSevrageReelle))
+    .filter(ts => ts > 0)
+    .sort((a, b) => a - b);
+}
+
+/**
+ * Récupère les saillies d'une truie sous forme de timestamps triés.
+ */
+function saillieTsForTruie(truie: Truie, saillies: Saillie[]): number[] {
+  return saillies
+    .filter(s => s.truieId === truie.id || (!!truie.boucle && s.truieBoucle === truie.boucle))
+    .map(s => parseFr(s.dateSaillie))
+    .filter(ts => ts > 0)
+    .sort((a, b) => a - b);
+}
+
+/**
+ * Retourne tous les intervalles (jours) sevrage → saillie suivante pour une truie,
+ * en filtrant les aberrants (> ISSE_FENETRE_MAX_J jours).
+ */
+function isseIntervallesForTruie(
+  truie: Truie,
+  bandes: BandePorcelets[],
+  saillies: Saillie[],
+): number[] {
+  const sevrages = sevrageTsForTruie(truie, bandes);
+  const saillieTs = saillieTsForTruie(truie, saillies);
+  const out: number[] = [];
+  for (const sevrage of sevrages) {
+    const next = saillieTs.find(st => st > sevrage);
+    if (!next) continue;
+    const delta = daysBetween(sevrage, next);
+    if (delta >= 0 && delta <= ISSE_FENETRE_MAX_J) out.push(delta);
+  }
+  return out;
+}
+
+/**
+ * ISSE moyen (Intervalle Sevrage-Saillie) sur toutes les truies.
+ *
+ * Pour chaque truie, chaque sevrage est apparié à la saillie suivante (dans
+ * la fenêtre ≤ 60 j). La moyenne globale est calculée sur l'ensemble des
+ * paires valides (pondération par paire, pas par truie). Retourne `null`
+ * si aucune paire exploitable.
+ *
+ * Décision : filtre à 60 j pour éliminer les séquences dégradées (retour de
+ * chaleur manqué, inséminations manquantes) — au-delà, ce n'est plus un
+ * "intervalle sevrage-saillie" au sens biologique.
+ */
+export function computeISSEMoyen(
+  truies: Truie[],
+  bandes: BandePorcelets[],
+  saillies: Saillie[],
+): number | null {
+  let total = 0;
+  let n = 0;
+  for (const t of truies) {
+    for (const delta of isseIntervallesForTruie(t, bandes, saillies)) {
+      total += delta;
+      n += 1;
+    }
+  }
+  return n > 0 ? round1(total / n) : null;
+}
+
+/**
+ * IEM moyen (Intervalle Entre Mise-Bas) sur les truies avec ≥ 2 portées datées.
+ *
+ * Pour chaque truie avec au moins 2 MB datées, on calcule les intervalles
+ * entre MB consécutives. On filtre les aberrants hors de [100j, 200j] —
+ * au-delà, c'est probablement un trou de data (saillie manquée, période
+ * non enregistrée) plutôt qu'un vrai cycle biologique.
+ *
+ * Retourne `null` si aucune truie avec ≥ 2 MB exploitable.
+ */
+export function computeIEMMoyen(bandes: BandePorcelets[]): number | null {
+  // Regrouper par truie (priorité id puis boucleMere).
+  const byTruie = new Map<string, number[]>();
+  for (const b of bandes) {
+    const ts = parseFr(b.dateMB);
+    if (!ts) continue;
+    const key = b.truie || (b.boucleMere ? `@${b.boucleMere}` : '');
+    if (!key) continue;
+    const arr = byTruie.get(key);
+    if (arr) arr.push(ts);
+    else byTruie.set(key, [ts]);
+  }
+
+  let total = 0;
+  let n = 0;
+  for (const tsList of byTruie.values()) {
+    if (tsList.length < 2) continue;
+    tsList.sort((a, b) => a - b);
+    for (let i = 1; i < tsList.length; i += 1) {
+      const delta = daysBetween(tsList[i - 1], tsList[i]);
+      if (delta >= IEM_MIN_J && delta <= IEM_MAX_J) {
+        total += delta;
+        n += 1;
+      }
+    }
+  }
+  return n > 0 ? round1(total / n) : null;
+}
+
+/**
+ * Nombre de truies avec ≥ 2 MB datées (indicateur de crédibilité IEM).
+ */
+function countTruiesAvecMBMultiples(bandes: BandePorcelets[]): number {
+  const byTruie = new Map<string, number>();
+  for (const b of bandes) {
+    const ts = parseFr(b.dateMB);
+    if (!ts) continue;
+    const key = b.truie || (b.boucleMere ? `@${b.boucleMere}` : '');
+    if (!key) continue;
+    byTruie.set(key, (byTruie.get(key) || 0) + 1);
+  }
+  let n = 0;
+  for (const count of byTruie.values()) if (count >= 2) n += 1;
+  return n;
+}
+
+/**
+ * Taux MB (%) sur 12 derniers mois : MB effectives / saillies dans la période.
+ *
+ * Comptage bornes [cutoff12m, today] inclusives, basé sur `dateMB` pour les
+ * portées et `dateSaillie` pour les saillies. Retourne `null` si aucune
+ * saillie recensée sur la période (division impossible).
+ */
+export function computeTauxMB(
+  bandes: BandePorcelets[],
+  saillies: Saillie[],
+  today: Date = new Date(),
+): number | null {
+  const nowTs = today.getTime();
+  const cutoff = nowTs - HORIZON_12M * 86_400_000;
+  let nbMB = 0;
+  for (const b of bandes) {
+    const ts = parseFr(b.dateMB);
+    if (ts >= cutoff && ts <= nowTs) nbMB += 1;
+  }
+  let nbSaillies = 0;
+  for (const s of saillies) {
+    const ts = parseFr(s.dateSaillie);
+    if (ts >= cutoff && ts <= nowTs) nbSaillies += 1;
+  }
+  if (nbSaillies === 0) return null;
+  return round1((nbMB * 100) / nbSaillies);
+}
+
+/**
+ * Taux de renouvellement (%) : truies dont la 1re portée date de < 12 mois
+ * / nb truies total × 100.
+ *
+ * Une truie "nouvelle" est une truie dont la plus ancienne portée datée
+ * se situe dans la fenêtre 12m. Truies sans portée connue → exclues du
+ * numérateur (pas "nouvelles" au sens reproductif). Retourne `null` si
+ * aucune truie dans le troupeau.
+ */
+export function computeTauxRenouvellement(
+  truies: Truie[],
+  bandes: BandePorcelets[],
+  today: Date = new Date(),
+): number | null {
+  if (truies.length === 0) return null;
+  const nowTs = today.getTime();
+  const cutoff = nowTs - HORIZON_12M * 86_400_000;
+  let nbNouvelles = 0;
+  for (const t of truies) {
+    const portees = findPorteesForTruie(t, bandes)
+      .map(b => parseFr(b.dateMB))
+      .filter(ts => ts > 0);
+    if (portees.length === 0) continue;
+    const premiere = Math.min(...portees);
+    if (premiere >= cutoff && premiere <= nowTs) nbNouvelles += 1;
+  }
+  return round1((nbNouvelles * 100) / truies.length);
+}
 
 // ─── computeGlobalKpis ───────────────────────────────────────────────────────
 
@@ -174,37 +406,10 @@ export function computeGlobalKpis(
       ? round1((nbPortees12m / nbTruiesProductives) * facteurAnnualisation)
       : 0;
 
-  // --- Intervalle sevrage → saillie suivante ---
-  let totalDeltaJours = 0;
-  let nbPaires = 0;
-  for (const t of truies) {
-    const porteesSevrees = findPorteesForTruie(t, bandes)
-      .filter(b => !!b.dateSevrageReelle)
-      .map(b => parseFr(b.dateSevrageReelle))
-      .filter(ts => ts > 0)
-      .sort((a, b) => a - b);
-
-    const truieSaillies = saillies
-      .filter(s => s.truieId === t.id || (!!t.boucle && s.truieBoucle === t.boucle))
-      .map(s => parseFr(s.dateSaillie))
-      .filter(ts => ts > 0)
-      .sort((a, b) => a - b);
-
-    for (const sevrageTs of porteesSevrees) {
-      // Chercher la 1re saillie postérieure au sevrage.
-      const next = truieSaillies.find(st => st > sevrageTs);
-      if (!next) continue;
-      const delta = daysBetween(sevrageTs, next);
-      // Filtre anti-outliers : on ignore les paires > 60j (manque probable de data
-      // intermédiaire ou réforme ponctuelle).
-      if (delta >= 0 && delta <= 60) {
-        totalDeltaJours += delta;
-        nbPaires += 1;
-      }
-    }
-  }
-  const intervalSevrageSaillieMoyJours =
-    nbPaires > 0 ? round1(totalDeltaJours / nbPaires) : null;
+  // --- Intervalle sevrage → saillie suivante (= ISSE moyen troupeau) ---
+  const intervalSevrageSaillieMoyJours = computeISSEMoyen(truies, bandes, saillies);
+  // ISSE est l'alias métier de intervalSevrageSaillie — mêmes calculs, libellé pro.
+  const isseMoyJours = intervalSevrageSaillieMoyJours;
 
   // --- Mises-bas prévues dans les 30 prochains jours ---
   const horizonTs = nowTs + HORIZON_MB_A_VENIR * 86_400_000;
@@ -212,6 +417,18 @@ export function computeGlobalKpis(
   for (const t of truies) {
     const ts = parseFr(t.dateMBPrevue);
     if (ts > 0 && ts >= nowTs && ts <= horizonTs) nbMbAVenir30j += 1;
+  }
+
+  // --- KPI repro avancés ---
+  const iemMoyJours = computeIEMMoyen(bandes);
+  const tauxMBPct = computeTauxMB(bandes, saillies, today);
+  const tauxRenouvellementPct = computeTauxRenouvellement(truies, bandes, today);
+  const nbTruiesAvecMBMultiples = countTruiesAvecMBMultiples(bandes);
+
+  let nbSaillies12m = 0;
+  for (const s of saillies) {
+    const ts = parseFr(s.dateSaillie);
+    if (ts >= cutoff12m && ts <= nowTs) nbSaillies12m += 1;
   }
 
   return {
@@ -225,6 +442,13 @@ export function computeGlobalKpis(
     porteesParTruieAn,
     intervalSevrageSaillieMoyJours,
     nbMbAVenir30j,
+    isseMoyJours,
+    iemMoyJours,
+    tauxMBPct,
+    tauxRenouvellementPct,
+    nbTruiesAvecMBMultiples,
+    nbSaillies12m,
+    nbMB12m: nbPortees12m,
   };
 }
 
@@ -270,7 +494,7 @@ export function rankTruiesByPerformance(
 // ─── detectTruiesAReformer ───────────────────────────────────────────────────
 
 /**
- * Détecte les truies candidates à réforme selon deux motifs (combinables) :
+ * Détecte les truies candidates à réforme selon trois motifs (combinables) :
  *
  *   1. `PERF_INSUFFISANTE` : tier FAIBLE ou INSUFFISANT **ET** ≥ 3 portées.
  *      (Assez de data pour juger — évite de réformer une primipare malchanceuse.)
@@ -278,7 +502,10 @@ export function rankTruiesByPerformance(
  *   2. `INACTIVE_LONG`     : statut `En attente saillie` **ET** pas de saillie
  *      depuis > 90 jours (ou jamais saillie).
  *
- *   Si les deux motifs s'appliquent → `MULTIPLE`.
+ *   3. `ISSE_ELEVE`        : truie avec ≥ 2 occurrences d'ISSE individuel > 14 j
+ *      (fertilité post-sevrage dégradée de façon récurrente).
+ *
+ *   Si ≥ 2 motifs s'appliquent → `MULTIPLE`.
  *
  * Les truies en statut `Pleine`, `En maternité` ou `À surveiller` sont exclues
  * du motif INACTIVE (elles sont par définition en cycle actif).
@@ -302,11 +529,11 @@ export function detectTruiesAReformer(
       perf.nbPortees >= MIN_PORTEES_POUR_JUGER;
 
     // INACTIVE : statut "En attente saillie" + aucune saillie récente
-    const truieSaillies = saillies
+    const truieSailliesTs = saillies
       .filter(s => s.truieId === t.id || (!!t.boucle && s.truieBoucle === t.boucle))
       .map(s => parseFr(s.dateSaillie))
       .filter(ts => ts > 0);
-    const lastSaillieTs = truieSaillies.length > 0 ? Math.max(...truieSaillies) : 0;
+    const lastSaillieTs = truieSailliesTs.length > 0 ? Math.max(...truieSailliesTs) : 0;
     const joursDepuisDerniereSaillie = lastSaillieTs > 0
       ? Math.floor(daysBetween(lastSaillieTs, nowTs))
       : Number.POSITIVE_INFINITY;
@@ -314,27 +541,48 @@ export function detectTruiesAReformer(
     const isEnAttente = t.statut === 'En attente saillie';
     const inactiveLong = isEnAttente && (lastSaillieTs === 0 || nowTs - lastSaillieTs > seuilMs);
 
-    if (!perfInsuffisante && !inactiveLong) continue;
+    // ISSE_ELEVE : récurrence d'intervalles sevrage-saillie hors cible.
+    const isseIntervalles = isseIntervallesForTruie(t, bandes, saillies);
+    const nbOccurrencesISSEElevees = isseIntervalles.filter(
+      d => d > ISSE_INDIVIDUEL_SEUIL_J,
+    ).length;
+    const isseEleve = nbOccurrencesISSEElevees >= ISSE_ELEVE_MIN_OCCURRENCES;
 
-    const motif: MotifReforme =
-      perfInsuffisante && inactiveLong
-        ? 'MULTIPLE'
-        : perfInsuffisante
-          ? 'PERF_INSUFFISANTE'
-          : 'INACTIVE_LONG';
+    if (!perfInsuffisante && !inactiveLong && !isseEleve) continue;
+
+    const motifs: MotifReforme[] = [];
+    if (perfInsuffisante) motifs.push('PERF_INSUFFISANTE');
+    if (inactiveLong) motifs.push('INACTIVE_LONG');
+    if (isseEleve) motifs.push('ISSE_ELEVE');
+
+    const motif: MotifReforme = motifs.length > 1 ? 'MULTIPLE' : motifs[0];
+
+    // Fragments de détail réutilisables.
+    const perfFrag = `${perf.nbPortees} portées · moyNV ${perf.moyNV}`;
+    const inactFrag = Number.isFinite(joursDepuisDerniereSaillie)
+      ? `${joursDepuisDerniereSaillie}j sans saillie`
+      : 'Jamais saillie';
+    const isseFrag = `ISSE ${nbOccurrencesISSEElevees}× > ${ISSE_INDIVIDUEL_SEUIL_J}j`;
 
     let detail: string;
     if (motif === 'PERF_INSUFFISANTE') {
-      detail = `${perf.nbPortees} portées · moyNV ${perf.moyNV}`;
+      detail = perfFrag;
     } else if (motif === 'INACTIVE_LONG') {
-      detail = Number.isFinite(joursDepuisDerniereSaillie)
-        ? `${joursDepuisDerniereSaillie}j sans saillie`
-        : 'Jamais saillie';
+      detail = inactFrag;
+    } else if (motif === 'ISSE_ELEVE') {
+      detail = isseFrag;
     } else {
-      const inactDetail = Number.isFinite(joursDepuisDerniereSaillie)
-        ? `${joursDepuisDerniereSaillie}j sans saillie`
-        : 'jamais saillie';
-      detail = `${perf.nbPortees} portées · moyNV ${perf.moyNV} · ${inactDetail}`;
+      // MULTIPLE → concatène les fragments des motifs actifs (lowercase pour le 1er sans majuscule).
+      const parts: string[] = [];
+      if (perfInsuffisante) parts.push(perfFrag);
+      if (inactiveLong)
+        parts.push(
+          Number.isFinite(joursDepuisDerniereSaillie)
+            ? `${joursDepuisDerniereSaillie}j sans saillie`
+            : 'jamais saillie',
+        );
+      if (isseEleve) parts.push(isseFrag);
+      detail = parts.join(' · ');
     }
 
     out.push({ motif, truie: t, detail, performance: perf });

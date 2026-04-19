@@ -4,6 +4,7 @@ import { ChevronLeft, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useFarm } from '../context/FarmContext';
 import { getQueueStatus } from '../services/offlineQueue';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { FARM_CONFIG } from '../config/farm';
 
 interface PremiumHeaderProps {
   title?: string;
@@ -16,7 +17,7 @@ interface PremiumHeaderProps {
 
 const PremiumHeader: React.FC<PremiumHeaderProps> = ({
   title = "PorcTrack",
-  subtitle = "Ferme A130 · Terrain",
+  subtitle = `${FARM_CONFIG.FARM_NAME} · Terrain`,
   showStatus = true,
   children
 }) => {
@@ -123,7 +124,7 @@ const PremiumHeader: React.FC<PremiumHeaderProps> = ({
       <div className="flex items-center gap-2 bg-accent-50 px-2.5 py-1 rounded-lg border border-accent-200 w-fit">
         <div className="w-2 h-2 rounded-full bg-accent-600 flex-shrink-0" />
         <p className="text-[11px] text-accent-500 font-medium">
-          {userName || 'Secteur Nord'} · Ferme A130
+          {userName || 'Secteur Nord'} · {FARM_CONFIG.FARM_NAME}
         </p>
       </div>
 

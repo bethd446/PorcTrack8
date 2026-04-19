@@ -4,7 +4,7 @@ import {
 } from '@ionic/react';
 import {
   RefreshCw, Cloud, Shield, BookOpen, AlertTriangle,
-  Save, Trash2, Bug
+  Save, Trash2, Bug, MessageCircle
 } from 'lucide-react';
 import { useFarm } from '../context/FarmContext';
 import { getTablesIndex } from '../services/googleSheets';
@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { isDebugEnabled, setDebugEnabled, APP_VERSION } from '../config';
 import { getQueueStatus } from '../services/offlineQueue';
 import { kvGet, kvSet, kvClear } from '../services/kvStore';
+import { getSupportWhatsapp, setSupportWhatsapp } from '../services/supportContact';
 
 export const SettingsPage: React.FC = () => {
   const { syncStatus, pullData, processQueue } = useFarm();
@@ -33,6 +34,8 @@ export const SettingsPage: React.FC = () => {
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState('');
   const [debug, setDebug] = useState(isDebugEnabled());
+  const [whatsapp, setWhatsapp] = useState<string>(getSupportWhatsapp());
+  const [whatsappSaved, setWhatsappSaved] = useState(false);
   const { mode: themeMode, resolved: themeResolved, setMode: setThemeMode } = useTheme();
 
   const pendingCount = getQueueStatus().pending;
@@ -205,6 +208,63 @@ export const SettingsPage: React.FC = () => {
                   <p className="text-[11px] text-text-2 mt-2">
                     Auto : jour 6h-19h, nuit sinon.
                   </p>
+                </div>
+              </div>
+            </section>
+
+            {/* ── Contact support (WhatsApp) ─────────────────────────── */}
+            <section aria-label="Contact support" role="region">
+              <SectionDivider label="Contact support" />
+              <div className="card-dense !p-0 overflow-hidden">
+                <div className="px-4 py-4">
+                  <label
+                    htmlFor="settings-support-wa"
+                    className="kpi-label block mb-2"
+                  >
+                    Numéro WhatsApp
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-bg-2 text-accent"
+                      aria-hidden="true"
+                    >
+                      <MessageCircle size={16} />
+                    </span>
+                    <input
+                      id="settings-support-wa"
+                      type="tel"
+                      inputMode="tel"
+                      value={whatsapp}
+                      onChange={(e) => {
+                        setWhatsapp(e.target.value);
+                        setWhatsappSaved(false);
+                      }}
+                      placeholder="+225 07 XX XX XX XX"
+                      className="flex-1 h-11 px-3 rounded-md bg-bg-1 border border-border text-text-0 placeholder-text-2 font-mono text-[13px] outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+                    />
+                  </div>
+                  <p className="text-[11px] text-text-2 mt-2">
+                    Utilisé dans l'écran <span className="font-semibold text-text-1">Aide</span> pour joindre le support. Format international.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSupportWhatsapp(whatsapp);
+                      setWhatsappSaved(true);
+                    }}
+                    className="pressable mt-3 h-10 px-4 rounded-md bg-accent text-bg-0 text-[12px] font-semibold uppercase tracking-wide active:scale-[0.97] transition-transform duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                  >
+                    Enregistrer
+                  </button>
+                  {whatsappSaved ? (
+                    <span
+                      role="status"
+                      aria-live="polite"
+                      className="ml-3 font-mono text-[11px] text-accent uppercase tracking-wide"
+                    >
+                      Enregistré
+                    </span>
+                  ) : null}
                 </div>
               </div>
             </section>

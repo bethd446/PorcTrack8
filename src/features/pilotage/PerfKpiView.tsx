@@ -1,7 +1,18 @@
 import React, { useMemo } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
 import { useNavigate } from 'react-router-dom';
-import { TrendingUp, Activity, Baby, Skull, Trophy, AlertTriangle } from 'lucide-react';
+import {
+  TrendingUp,
+  Activity,
+  Baby,
+  Skull,
+  Trophy,
+  AlertTriangle,
+  Repeat,
+  CalendarClock,
+  CheckCircle2,
+  RefreshCw,
+} from 'lucide-react';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { Chip, DataRow, SectionDivider, KpiCard } from '../../components/agritech';
@@ -44,6 +55,8 @@ function motifToChipTone(motif: MotifReforme): ChipTone {
       return 'red';
     case 'INACTIVE_LONG':
       return 'amber';
+    case 'ISSE_ELEVE':
+      return 'amber';
     case 'MULTIPLE':
     default:
       return 'red';
@@ -57,10 +70,47 @@ function motifLabel(motif: MotifReforme): string {
       return 'Perf';
     case 'INACTIVE_LONG':
       return 'Inactif';
+    case 'ISSE_ELEVE':
+      return 'ISSE';
     case 'MULTIPLE':
     default:
       return 'Multi';
   }
+}
+
+// ─── Tones KPI repro avancés ────────────────────────────────────────────────
+type KpiTone = 'default' | 'warning' | 'critical' | 'success';
+
+/** ISSE (j) : cible 3-7, amber 8-10, red >10. Null → default. */
+function isseToTone(isse: number | null): KpiTone {
+  if (isse === null) return 'default';
+  if (isse >= 3 && isse <= 7) return 'success';
+  if (isse >= 8 && isse <= 10) return 'warning';
+  return 'critical';
+}
+
+/** IEM (j) : cible 140-150, amber 135-155, red hors. */
+function iemToTone(iem: number | null): KpiTone {
+  if (iem === null) return 'default';
+  if (iem >= 140 && iem <= 150) return 'success';
+  if (iem >= 135 && iem <= 155) return 'warning';
+  return 'critical';
+}
+
+/** Taux MB (%) : cible ≥88, amber 82-88, red <82. */
+function tauxMBToTone(taux: number | null): KpiTone {
+  if (taux === null) return 'default';
+  if (taux >= 88) return 'success';
+  if (taux >= 82) return 'warning';
+  return 'critical';
+}
+
+/** Renouvellement (%) : cible 30-40, amber 25-30 ou 40-45, red <25 ou >45. */
+function renouvToTone(taux: number | null): KpiTone {
+  if (taux === null) return 'default';
+  if (taux >= 30 && taux <= 40) return 'success';
+  if ((taux >= 25 && taux < 30) || (taux > 40 && taux <= 45)) return 'warning';
+  return 'critical';
 }
 
 /** Formate un nombre : "—" si 0, sinon 1 décimale pour fractionnaires. */
@@ -188,6 +238,61 @@ const PerfKpiView: React.FC = () => {
                   />
                   <KpiCard label="MB à venir 30j" value={kpis.nbMbAVenir30j} />
                 </div>
+
+                {/* ── Reproduction avancée : ISSE, IEM, Taux MB, Renouv. ── */}
+                <section>
+                  <SectionDivider label="Reproduction avancée" />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex flex-col gap-1">
+                      <KpiCard
+                        label="ISSE"
+                        value={kpis.isseMoyJours !== null ? formatNum(kpis.isseMoyJours) : '—'}
+                        unit={kpis.isseMoyJours !== null ? 'j' : undefined}
+                        icon={<Repeat size={14} />}
+                        tone={isseToTone(kpis.isseMoyJours)}
+                      />
+                      <span className="px-1 font-mono text-[10px] text-text-2">cible 3-7 j</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <KpiCard
+                        label="IEM"
+                        value={kpis.iemMoyJours !== null ? formatNum(kpis.iemMoyJours) : '—'}
+                        unit={kpis.iemMoyJours !== null ? 'j' : undefined}
+                        icon={<CalendarClock size={14} />}
+                        tone={iemToTone(kpis.iemMoyJours)}
+                      />
+                      <span className="px-1 font-mono text-[10px] text-text-2">
+                        cible 140-150 j
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <KpiCard
+                        label="Taux MB"
+                        value={kpis.tauxMBPct !== null ? formatNum(kpis.tauxMBPct) : '—'}
+                        unit={kpis.tauxMBPct !== null ? '%' : undefined}
+                        icon={<CheckCircle2 size={14} />}
+                        tone={tauxMBToTone(kpis.tauxMBPct)}
+                      />
+                      <span className="px-1 font-mono text-[10px] text-text-2">cible ≥ 88 %</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <KpiCard
+                        label="Renouv."
+                        value={
+                          kpis.tauxRenouvellementPct !== null
+                            ? formatNum(kpis.tauxRenouvellementPct)
+                            : '—'
+                        }
+                        unit={kpis.tauxRenouvellementPct !== null ? '%' : undefined}
+                        icon={<RefreshCw size={14} />}
+                        tone={renouvToTone(kpis.tauxRenouvellementPct)}
+                      />
+                      <span className="px-1 font-mono text-[10px] text-text-2">
+                        cible 30-40 %/an
+                      </span>
+                    </div>
+                  </div>
+                </section>
 
                 {/* ── Top truies (ELITE / BON) ──────────────────────── */}
                 <section>

@@ -173,6 +173,11 @@ export const mapBande = (header: string[], row: any[]): BandePorcelets | null =>
   const stIdx = findIdx(header, 'STATUT');
   const spIdx = findIdx(header, 'SEVRAGE PRÉVU', 'SEVRAGE PREVU', 'DATE SEVRAGE PRÉVUE', 'SEVRAGE_PREVUE');
   const srIdx = findIdx(header, 'SEVRAGE RÉEL', 'SEVRAGE REEL', 'DATE SEVRAGE RÉELLE', 'SEVRAGE_REELLE');
+  // Séparation par sexe (J+70 post-sevrage) — colonnes optionnelles, schéma tolérant
+  const nmIdx = findIdx(header, 'NB_MALES', 'NB MALES', 'NBMALES', 'MÂLES', 'MALES');
+  const nfIdx = findIdx(header, 'NB_FEMELLES', 'NB FEMELLES', 'NBFEMELLES', 'FEMELLES');
+  const leIdx = findIdx(header, 'LOGE_ENG', 'LOGE ENGRAISSEMENT', 'LOGEENGRAISSEMENT', 'LOGE');
+  const dsepIdx = findIdx(header, 'DATE_SEPARATION', 'DATE SEPARATION', 'DATESEPARATION', 'SEPARATION');
   const noIdx = findIdx(header, 'NOTES');
 
   const statut = readStr(row, stIdx);
@@ -180,6 +185,18 @@ export const mapBande = (header: string[], row: any[]): BandePorcelets | null =>
   if (statut === 'RECAP') return null;
 
   const id = readStr(row, idIdx);
+
+  // LogeEngraissement : normalise en 'M' | 'F' | undefined
+  let logeEngraissement: 'M' | 'F' | undefined;
+  if (leIdx !== -1) {
+    const raw = String(row[leIdx] ?? '').trim().toUpperCase();
+    if (raw === 'M' || raw.startsWith('MÂLE') || raw.startsWith('MALE')) {
+      logeEngraissement = 'M';
+    } else if (raw === 'F' || raw.startsWith('FEMELLE')) {
+      logeEngraissement = 'F';
+    }
+  }
+
   return {
     id,
     idPortee: id,
@@ -192,6 +209,10 @@ export const mapBande = (header: string[], row: any[]): BandePorcelets | null =>
     statut,
     dateSevragePrevue: spIdx !== -1 ? parseSheetDate(row[spIdx]) : undefined,
     dateSevrageReelle: srIdx !== -1 ? parseSheetDate(row[srIdx]) : undefined,
+    nbMales: readOptInt(row, nmIdx),
+    nbFemelles: readOptInt(row, nfIdx),
+    logeEngraissement,
+    dateSeparation: dsepIdx !== -1 ? parseSheetDate(row[dsepIdx]) : undefined,
     notes: readOptStr(row, noIdx),
     synced: true,
     raw: row,

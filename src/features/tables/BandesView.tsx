@@ -19,6 +19,9 @@ import { Chip, SectionDivider } from '../../components/agritech';
 import { BandeIcon } from '../../components/icons';
 import QuickNoteForm from '../../components/forms/QuickNoteForm';
 import QuickHealthForm from '../../components/forms/QuickHealthForm';
+import QuickSexSeparationForm from '../../components/forms/QuickSexSeparationForm';
+import BandeCroissanceCard from '../../components/bande/BandeCroissanceCard';
+import { useFarm } from '../../context/FarmContext';
 import { isDebugEnabled } from '../../config';
 
 // Error Boundary locale pour le module Portées
@@ -153,6 +156,7 @@ const BandesView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchText, setSearchText] = useState('');
   const [selectionMode, setSelectionMode] = useState(false);
+  const [showSexSeparation, setShowSexSeparation] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'SOUS' | 'SEVRES'>('ALL');
@@ -321,21 +325,31 @@ const BandesView: React.FC = () => {
             title="Portées"
             subtitle={selectionMode ? `${selectedIds.length} sélectionné(s)` : "Suivi porcelets"}
             action={
-              <button
-                type="button"
-                onClick={() => {
-                    setSelectionMode(!selectionMode);
-                    setSelectedIds([]);
-                }}
-                className={`pressable inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
-                    selectionMode
-                        ? 'bg-red text-bg-0'
-                        : 'bg-bg-2 text-text-1 hover:bg-bg-1'
-                }`}
-                aria-label={selectionMode ? "Annuler la sélection" : "Mode sélection"}
-              >
-                  {selectionMode ? <X size={18} /> : <CheckSquare size={18} />}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowSexSeparation(true)}
+                  className="pressable inline-flex h-9 px-3 items-center justify-center rounded-md transition-colors bg-bg-2 text-text-1 hover:bg-bg-1 font-mono text-[11px] uppercase tracking-wide"
+                  aria-label="Séparation par sexe"
+                >
+                  ♂ / ♀
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                      setSelectionMode(!selectionMode);
+                      setSelectedIds([]);
+                  }}
+                  className={`pressable inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
+                      selectionMode
+                          ? 'bg-red text-bg-0'
+                          : 'bg-bg-2 text-text-1 hover:bg-bg-1'
+                  }`}
+                  aria-label={selectionMode ? "Annuler la sélection" : "Mode sélection"}
+                >
+                    {selectionMode ? <X size={18} /> : <CheckSquare size={18} />}
+                </button>
+              </div>
             }
           >
               {/* Search */}
@@ -595,6 +609,12 @@ const BandesView: React.FC = () => {
         </IonModal>
         </AgritechLayout>
       </IonContent>
+
+      <QuickSexSeparationForm
+        isOpen={showSexSeparation}
+        onClose={() => setShowSexSeparation(false)}
+        onSuccess={() => loadData()}
+      />
     </IonPage>
   );
 };
@@ -659,6 +679,7 @@ const BandeDetailView: React.FC<{
     const [healthHeader, setHealthHeader] = useState<string[]>([]);
     const [notesData, setNotesData] = useState<any[][]>([]);
     const [notesHeader, setNotesHeader] = useState<string[]>([]);
+    const { notes: notesAsNotes } = useFarm();
 
     const loadRelatedData = useCallback(async () => {
         setLoading(true);
@@ -758,6 +779,8 @@ const BandeDetailView: React.FC<{
                             <PhotoStrip subjectType="BANDE" subjectId={bande.id} />
 
                             <CycleTimeline age={bande.age} status={bande.status || ''} />
+
+                            <BandeCroissanceCard bande={bande} notes={notesAsNotes} />
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="card-dense">

@@ -12,7 +12,9 @@ import {
   Scale,
   RefreshCw,
   CloudOff,
+  HelpCircle,
 } from 'lucide-react';
+import { FARM_CONFIG } from '../config/farm';
 import { useFarm } from '../context/FarmContext';
 import { KpiCard, BottomSheet, SectionDivider, DataRow } from './agritech';
 import AgritechLayout from './AgritechLayout';
@@ -20,8 +22,9 @@ import QuickSaillieForm from './forms/QuickSaillieForm';
 import QuickHealthForm from './forms/QuickHealthForm';
 import QuickNoteForm from './forms/QuickNoteForm';
 import QuickPeseeForm from './forms/QuickPeseeForm';
+import ForecastWidget from './cockpit/ForecastWidget';
 import type { FarmAlert, AlertPriority } from '../services/alertEngine';
-import type { AlerteServeur } from '../types/farm';
+import type { AlerteServeur, DataSource } from '../types/farm';
 import {
   filterRealPortees,
   logesMaterniteOccupation,
@@ -246,31 +249,50 @@ const Cockpit: React.FC = () => {
             <div className="flex items-baseline justify-between gap-3">
               <div className="min-w-0">
                 <h1 className="agritech-heading text-[24px] leading-none uppercase truncate">
-                  Cockpit <span className="text-text-2"> · A130</span>
+                  Cockpit <span className="text-text-2"> · {FARM_CONFIG.FARM_ID}</span>
                 </h1>
                 <p className="mt-1 font-mono text-[12px] text-text-2 leading-none">
                   {headerDate} · {headerTime}
                 </p>
               </div>
-              {dataSource && dataSource !== 'NETWORK' ? (
-                <span
-                  className="chip chip--amber inline-flex items-center gap-1.5"
-                  aria-label={
-                    dataSource === 'FALLBACK' ? 'Hors ligne' : 'Données en cache'
-                  }
+              <div className="flex items-center gap-2 shrink-0">
+                {dataSource && dataSource !== 'NETWORK' ? (
+                  <OfflineChip dataSource={dataSource} />
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => navigate('/aide')}
+                  aria-label="Aide"
+                  className="pressable inline-flex h-9 w-9 items-center justify-center rounded-md bg-bg-2 text-text-1 active:scale-[0.96] transition-transform duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
                 >
-                  {dataSource === 'FALLBACK' ? (
-                    <CloudOff size={12} aria-hidden="true" />
-                  ) : (
-                    <RefreshCw size={12} aria-hidden="true" />
-                  )}
-                  {dataSource === 'FALLBACK' ? 'Offline' : 'Cache'}
-                </span>
-              ) : null}
+                  <HelpCircle size={16} aria-hidden="true" />
+                </button>
+              </div>
             </div>
           </header>
 
           <div className="px-4 pt-4 pb-32 space-y-5">
+            {/* ── Bannière hors ligne renforcée ─────────────────────────── */}
+            {dataSource && dataSource !== 'NETWORK' ? (
+              <div
+                role="status"
+                aria-live="polite"
+                className="card-dense flex items-start gap-3 border-l-2 border-l-amber bg-bg-1"
+              >
+                <CloudOff
+                  size={18}
+                  className="mt-0.5 shrink-0 text-amber"
+                  aria-hidden="true"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="kpi-label text-amber">Hors ligne</div>
+                  <p className="mt-1 text-[13px] text-text-1 leading-snug">
+                    Vos saisies seront synchronisées automatiquement dès le retour du réseau.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
             {/* ── Strip alerte critique ─────────────────────────────────── */}
             {criticalAlert ? (
               <button
@@ -382,6 +404,9 @@ const Cockpit: React.FC = () => {
                 </ul>
               )}
             </section>
+
+            {/* ── Prévisions 14 jours ───────────────────────────────────── */}
+            <ForecastWidget />
 
             {/* ── Quick actions ─────────────────────────────────────────── */}
             <section aria-label="Actions rapides" role="region">
@@ -579,5 +604,26 @@ const SnapshotMetric: React.FC<SnapshotMetricProps> = ({ value, unit }) => (
     <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">{unit}</span>
   </span>
 );
+
+interface OfflineChipProps {
+  dataSource: DataSource | null;
+}
+
+const OfflineChip: React.FC<OfflineChipProps> = ({ dataSource }) => {
+  const isOffline = dataSource !== 'NETWORK' && dataSource !== 'CACHE';
+  return (
+    <span
+      className="chip chip--amber inline-flex items-center gap-1.5"
+      aria-label={isOffline ? 'Hors ligne' : 'Données en cache'}
+    >
+      {isOffline ? (
+        <CloudOff size={12} aria-hidden="true" />
+      ) : (
+        <RefreshCw size={12} aria-hidden="true" />
+      )}
+      {isOffline ? 'Offline' : 'Cache'}
+    </span>
+  );
+};
 
 export default Cockpit;

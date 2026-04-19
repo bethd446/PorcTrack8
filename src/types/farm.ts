@@ -68,6 +68,14 @@ export interface BandePorcelets {
   statut: BandeStatut;
   dateSevragePrevue?: string;
   dateSevrageReelle?: string;
+  /** Nombre de mâles après séparation par sexe (J+70 post-sevrage). Undefined avant séparation. */
+  nbMales?: number;
+  /** Nombre de femelles après séparation. */
+  nbFemelles?: number;
+  /** Loge d'engraissement : 'M' (mâles) ou 'F' (femelles). Une bande séparée en 2 crée 2 lignes logiquement. */
+  logeEngraissement?: 'M' | 'F';
+  /** Date de séparation par sexe (dd/MM/yyyy ou ISO). */
+  dateSeparation?: string;
   notes?: string;
   synced: boolean;
   raw?: any[];

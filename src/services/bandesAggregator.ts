@@ -6,10 +6,10 @@
  *  - Une **portée** est un lot de porcelets issus d'une mise-bas unique
  *    (1 portée = 1 truie mère). Colonne Sheets `PORCELETS_BANDES`.
  *  - Une **loge** est une unité physique regroupant une ou plusieurs portées.
- *    Trois types co-existent à la ferme A130 :
+ *    Trois types co-existent à la ferme K13 :
  *      1. maternité       (9 loges, J0→J21 avec la truie)
- *      2. post-sevrage    (4 loges, J21→~J81, porcelets groupés)
- *      3. engraissement   (2 loges, >J81, séparés par sexe, jusqu'à finition)
+ *      2. post-sevrage    (4 loges, J21→~J91, porcelets groupés mixtes)
+ *      3. engraissement   (2 loges, >J91, séparés par sexe M/F, jusqu'à finition)
  *
  * Tant que la feuille Sheets `PORCELETS_BANDES` n'a pas de colonne `Loge`
  * explicite, on dérive la phase d'une bande depuis son statut + date de
@@ -50,8 +50,8 @@ export interface LogeOccupation {
  * Phase d'élevage d'une bande porcelet.
  *
  * - `SOUS_MERE`     : avec la truie, maternité (statut "Sous mère").
- * - `POST_SEVRAGE`  : sevrés, <60 jours après la date de sevrage.
- * - `ENGRAISSEMENT` : sevrés, >=60 jours après la date de sevrage (séparation par sexe).
+ * - `POST_SEVRAGE`  : sevrés, <70 jours après la date de sevrage.
+ * - `ENGRAISSEMENT` : sevrés, >=70 jours après la date de sevrage (séparation par sexe).
  * - `INCONNU`       : statut RECAP ou non classifiable.
  */
 export type BandePhase = 'SOUS_MERE' | 'POST_SEVRAGE' | 'ENGRAISSEMENT' | 'INCONNU';
@@ -113,8 +113,8 @@ export function countSevres(bandes: BandePorcelets[]): { portees: number; porcel
  *
  * Règles :
  *  - Statut "Sous mère"                                    → `SOUS_MERE`
- *  - Statut "Sevrés" + date sevrage < 60 j                 → `POST_SEVRAGE`
- *  - Statut "Sevrés" + date sevrage ≥ 60 j                 → `ENGRAISSEMENT`
+ *  - Statut "Sevrés" + date sevrage < 70 j                 → `POST_SEVRAGE`
+ *  - Statut "Sevrés" + date sevrage ≥ 70 j                 → `ENGRAISSEMENT`
  *  - Statut "Sevrés" sans date (ou date invalide)          → `POST_SEVRAGE` (fallback récent)
  *  - Statut `RECAP` ou non reconnu                         → `INCONNU`
  *
@@ -181,7 +181,7 @@ export function countLoges(bandes: BandePorcelets[], fallbackCount = 4): number 
  * Source : `truie.statut` matchant "maternité" (case-insensitive, également
  * robuste aux variantes sans accent type "maternite").
  *
- * Une truie en maternité occupe exactement une loge de maternité à la ferme A130.
+ * Une truie en maternité occupe exactement une loge de maternité à la ferme K13.
  */
 export function countTruiesEnMaternite(truies: Truie[]): number {
   return truies.filter(t => /maternit/i.test(t.statut ?? '')).length;
@@ -191,7 +191,7 @@ export function countTruiesEnMaternite(truies: Truie[]): number {
  * Calcule l'occupation des loges de maternité (chauffage porcelet).
  *
  * 1 truie en maternité = 1 loge occupée. La capacité physique est définie par
- * `FARM_CONFIG.MATERNITE_LOGES_CAPACITY` (A130 = 9 loges).
+ * `FARM_CONFIG.MATERNITE_LOGES_CAPACITY` (K13 = 9 loges).
  *
  * `occupees` est borné à la capacité pour l'affichage : si la feuille Sheets
  * remonte plus de truies en maternité que de loges physiques, on reste à 100 %
@@ -210,8 +210,8 @@ export function logesMaterniteOccupation(truies: Truie[]): LogeOccupation {
  * Calcule l'occupation des loges post-sevrage.
  *
  * Utilise `computeBandePhase` pour distinguer les bandes en phase POST_SEVRAGE
- * (sevrées depuis moins de 60 jours) de celles en ENGRAISSEMENT (>60 j).
- * Capacité définie par `FARM_CONFIG.POST_SEVRAGE_LOGES_CAPACITY` (A130 = 4 loges).
+ * (sevrées depuis moins de 70 jours) de celles en ENGRAISSEMENT (>=70 j).
+ * Capacité définie par `FARM_CONFIG.POST_SEVRAGE_LOGES_CAPACITY` (K13 = 4 loges).
  *
  * TODO(sheets-schema) : ajouter une colonne `Loge` dans `PORCELETS_BANDES`
  * pour permettre un comptage distinct réel (plusieurs portées peuvent partager
@@ -233,8 +233,8 @@ export function logesPostSevrageOccupation(
  * Calcule l'occupation des loges d'engraissement.
  *
  * Une bande est comptée en engraissement si son statut est "Sevrés" et que la
- * date de sevrage est >= 60 jours (voir `computeBandePhase`). Capacité définie
- * par `FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY` (A130 = 2 loges).
+ * date de sevrage est >= 70 jours (voir `computeBandePhase`). Capacité définie
+ * par `FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY` (K13 = 2 loges).
  */
 export function logesEngraissementOccupation(
   bandes: BandePorcelets[],
@@ -246,4 +246,81 @@ export function logesEngraissementOccupation(
   const tauxPct = capacite > 0 ? Math.round((raw / capacite) * 100) : 0;
   const alerte = computeAlerte(raw, capacite, tauxPct);
   return { occupees, capacite, tauxPct, alerte };
+}
+
+/**
+ * Agrégat d'une loge d'engraissement par sexe.
+ */
+export interface SexEngraissementTotal {
+  portees: number;
+  porcelets: number;
+}
+
+/**
+ * Compte les bandes en engraissement ventilées par sexe après séparation.
+ *
+ * Une bande est affectée à une loge sexuée (`males` ou `femelles`) si elle :
+ *   - est en phase `ENGRAISSEMENT` (J+70+ post-sevrage, cf. `computeBandePhase`)
+ *   - ET possède `logeEngraissement === 'M'` ou `'F'`
+ *
+ * Les bandes en `ENGRAISSEMENT` mais sans `logeEngraissement` sont remontées
+ * dans `nonSepares` — signalant qu'une saisie de séparation est attendue.
+ *
+ * Le comptage des `porcelets` utilise :
+ *   - `nbMales` si présent pour une bande `logeEngraissement === 'M'`
+ *   - `nbFemelles` si présent pour une bande `logeEngraissement === 'F'`
+ *   - sinon `vivants ?? 0`
+ */
+export function countEngraissementBySex(
+  bandes: BandePorcelets[],
+  today: Date = new Date()
+): {
+  males: SexEngraissementTotal;
+  femelles: SexEngraissementTotal;
+  nonSepares: SexEngraissementTotal;
+} {
+  const males: SexEngraissementTotal = { portees: 0, porcelets: 0 };
+  const femelles: SexEngraissementTotal = { portees: 0, porcelets: 0 };
+  const nonSepares: SexEngraissementTotal = { portees: 0, porcelets: 0 };
+
+  for (const b of bandes) {
+    const phase = computeBandePhase(b, today);
+    if (phase !== 'ENGRAISSEMENT') continue;
+
+    if (b.logeEngraissement === 'M') {
+      males.portees += 1;
+      males.porcelets += b.nbMales ?? b.vivants ?? 0;
+    } else if (b.logeEngraissement === 'F') {
+      femelles.portees += 1;
+      femelles.porcelets += b.nbFemelles ?? b.vivants ?? 0;
+    } else {
+      nonSepares.portees += 1;
+      nonSepares.porcelets += b.vivants ?? 0;
+    }
+  }
+
+  return { males, femelles, nonSepares };
+}
+
+/**
+ * Détecte les bandes éligibles à la saisie d'une séparation par sexe.
+ *
+ * Critères :
+ *   - Phase `ENGRAISSEMENT` (J+70+ post-sevrage)
+ *   - Pas encore séparée (`logeEngraissement` non défini ET
+ *     `nbMales`/`nbFemelles` non renseignés)
+ *
+ * Les bandes déjà séparées (avec `logeEngraissement` ou les compteurs sexués
+ * renseignés) sont exclues.
+ */
+export function bandesAEligibleSeparation(
+  bandes: BandePorcelets[],
+  today: Date = new Date()
+): BandePorcelets[] {
+  return bandes.filter(b => {
+    if (computeBandePhase(b, today) !== 'ENGRAISSEMENT') return false;
+    if (b.logeEngraissement === 'M' || b.logeEngraissement === 'F') return false;
+    if (typeof b.nbMales === 'number' || typeof b.nbFemelles === 'number') return false;
+    return true;
+  });
 }

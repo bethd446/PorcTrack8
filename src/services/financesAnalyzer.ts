@@ -154,7 +154,7 @@ export function formatMontant(n: number, currency: 'FCFA' | 'EUR' = 'FCFA'): str
 }
 
 /**
- * Détecte la devise à partir d'une entrée. Par défaut FCFA (ferme A130 en
+ * Détecte la devise à partir d'une entrée. Par défaut FCFA (ferme K13 en
  * Côte d'Ivoire). Si le libellé ou les notes mentionnent `€` ou `EUR`,
  * renvoie `EUR`.
  */

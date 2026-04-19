@@ -36,7 +36,6 @@
     "@capacitor/status-bar": "^6.0.3",
     "@ionic/core": "^8.8.3",
     "@ionic/react": "^8.8.3",
-    "@rollup/rollup-linux-arm64-gnu": "^4.60.1",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
     "clsx": "^2.1.1",
