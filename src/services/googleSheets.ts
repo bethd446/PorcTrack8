@@ -2,7 +2,7 @@ import { CapacitorHttp, Capacitor } from '@capacitor/core';
 import { getQueueStatus, enqueueUpdateRow } from './offlineQueue';
 import { setCache, getCache, isCacheValid, invalidateCache } from './offlineCache';
 import { mapTable } from '../mappers';
-import { Truie, Verrat, BandePorcelets, TraitementSante, StockAliment, StockVeto, AlerteServeur, Saillie, DataSource } from '../types/farm';
+import { Truie, Verrat, BandePorcelets, TraitementSante, StockAliment, StockVeto, AlerteServeur, Saillie, FinanceEntry, DataSource } from '../types/farm';
 import { Note } from '../types';
 import { kvGet, kvSet } from './kvStore';
 
@@ -250,6 +250,9 @@ export const getAlertesServeur = (cb?: (d: AlerteServeur[], header: string[]) =>
 /** Saillies actives (feuille SUIVI_REPRODUCTION_ACTUEL) — TTL 10 min. */
 export const getSaillies = (cb?: (d: Saillie[], header: string[]) => void) =>
   readTypedTable<Saillie>('SUIVI_REPRODUCTION_ACTUEL', 10 * 60 * 1000, cb);
+/** Journal financier (feuille FINANCES) — TTL 30 min (les écritures sont rares). */
+export const getFinances = (cb?: (d: FinanceEntry[], header: string[]) => void) =>
+  readTypedTable<FinanceEntry>('FINANCES', 30 * 60 * 1000, cb);
 
 /**
  * Notes terrain : structure dans Sheets → DATE | SUBJECT_TYPE | SUBJECT_ID | NOTE | AUTHOR

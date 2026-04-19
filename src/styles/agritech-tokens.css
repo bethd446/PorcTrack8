@@ -5,29 +5,33 @@
    This file is ADDITIVE. It coexists with the existing "Ultra Clean" system
    in src/index.css. Use the agritech-* tokens for the new dark dashboard
    surfaces; existing .premium-* / .ft-* classes remain untouched.
+
+   Note : les valeurs hex des couleurs vivent désormais dans theme-tokens.css
+   (vars --bg-0, --text-0, etc.). @theme référence via var() pour que Tailwind
+   génère des utilities qui s'adaptent au thème actif (.theme-day / night).
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @theme {
-  /* ── Surfaces (dark-first) ───────────────────────────────────────────── */
-  --color-bg-0: #0A0D0C;           /* Page background — deep forest-black */
-  --color-bg-1: #12171A;           /* Primary cards */
-  --color-bg-2: #1A2025;           /* Secondary cards / row hover */
-  --color-border: #2A3239;         /* 1px subtle separators */
+  /* ── Surfaces (dynamiques : jour/nuit via theme-tokens.css) ──────────── */
+  --color-bg-0: var(--bg-0);
+  --color-bg-1: var(--bg-1);
+  --color-bg-2: var(--bg-2);
+  --color-border: var(--border);
 
   /* ── Text scale ──────────────────────────────────────────────────────── */
-  --color-text-0: #F4F7F6;         /* Primary (near-white) */
-  --color-text-1: #A8B3B8;         /* Secondary */
-  --color-text-2: #6B7880;         /* Tertiary / muted / axes */
+  --color-text-0: var(--text-0);
+  --color-text-1: var(--text-1);
+  --color-text-2: var(--text-2);
 
   /* ── Brand accents ───────────────────────────────────────────────────── */
-  --color-accent: #10B981;         /* Emerald vif — primary signal */
-  --color-accent-dim: #065F46;     /* Forest — gradients, active border */
+  --color-accent: var(--accent);
+  --color-accent-dim: var(--accent-dim);
 
   /* ── Semantic signals ────────────────────────────────────────────────── */
-  --color-amber: #F4A261;          /* Warning (modéré) */
-  --color-red: #EF4444;            /* Critical, mortality, rupture */
-  --color-blue: #60A5FA;           /* Info, neutral data */
-  --color-gold: #D4A056;           /* Premium metrics (GMQ, margin) */
+  --color-amber: var(--amber);
+  --color-red: var(--red);
+  --color-blue: var(--blue);
+  --color-gold: var(--gold);
 
   /* ── Typography stacks ───────────────────────────────────────────────────
      display → screen titles (Big Shoulders Display 800)

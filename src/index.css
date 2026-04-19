@@ -4,6 +4,10 @@
    Principe : blanc pur, une couleur d'accent, zéro bruit visuel
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* ── Theme tokens (Jour/Nuit) — défini AVANT agritech-tokens car celui-ci
+   référence les --bg-0, --text-0, etc. via var(). ───────────────────────── */
+@import "./styles/theme-tokens.css";
+
 /* ── Agritech Moderne overlay (dark cockpit tokens + utilities) ────────────
    Additive system — cohabite avec les classes .premium-* / .ft-* ci-dessous.
    ──────────────────────────────────────────────────────────────────────── */

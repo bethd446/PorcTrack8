@@ -11,6 +11,8 @@ import { getTablesIndex } from '../services/googleSheets';
 import AgritechLayout from './AgritechLayout';
 import AgritechHeader from './AgritechHeader';
 import { HubTile, SectionDivider, Chip } from './agritech';
+import { useTheme } from '../context/ThemeContext';
+import type { ThemeMode } from '../services/themeAuto';
 import { useNavigate } from 'react-router-dom';
 import { isDebugEnabled, setDebugEnabled, APP_VERSION } from '../config';
 import { getQueueStatus } from '../services/offlineQueue';
@@ -31,6 +33,7 @@ export const SettingsPage: React.FC = () => {
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState('');
   const [debug, setDebug] = useState(isDebugEnabled());
+  const { mode: themeMode, resolved: themeResolved, setMode: setThemeMode } = useTheme();
 
   const pendingCount = getQueueStatus().pending;
 
@@ -163,6 +166,46 @@ export const SettingsPage: React.FC = () => {
                   to="/protocoles"
                   tone="accent"
                 />
+              </div>
+            </section>
+
+            {/* ── Apparence ────────────────────────────────────────────── */}
+            <section aria-label="Apparence" role="region">
+              <SectionDivider label="Apparence" />
+              <div className="card-dense !p-0 overflow-hidden">
+                <div className="px-4 py-4">
+                  <p className="kpi-label mb-3">Thème · actif : {themeResolved === 'day' ? 'Jour' : 'Nuit'}</p>
+                  <div
+                    role="radiogroup"
+                    aria-label="Choix du thème"
+                    className="grid grid-cols-3 gap-2"
+                  >
+                    {(['auto', 'day', 'night'] as ThemeMode[]).map((m) => {
+                      const active = themeMode === m;
+                      const label = m === 'auto' ? 'Auto' : m === 'day' ? 'Jour' : 'Nuit';
+                      return (
+                        <button
+                          key={m}
+                          type="button"
+                          role="radio"
+                          aria-checked={active}
+                          onClick={() => setThemeMode(m)}
+                          className={
+                            'pressable h-11 rounded-md font-mono text-[12px] uppercase tracking-wide transition-colors ' +
+                            (active
+                              ? 'bg-accent text-bg-0'
+                              : 'bg-bg-1 border border-border text-text-1 hover:bg-bg-2')
+                          }
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[11px] text-text-2 mt-2">
+                    Auto : jour 6h-19h, nuit sinon.
+                  </p>
+                </div>
               </div>
             </section>
 
