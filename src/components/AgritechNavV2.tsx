@@ -3,7 +3,6 @@ import React, {
   useCallback,
   useContext,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import { IonToast } from '@ionic/react';
@@ -139,7 +138,7 @@ export const QuickActionsProvider: React.FC<{ children: React.ReactNode }> = ({
 
 /* ── Tabs definition ─────────────────────────────────────────────────────── */
 
-type TabId = 'cockpit' | 'troupeau' | 'ressources' | 'pilotage';
+type TabId = 'cockpit' | 'troupeau' | 'cycles' | 'ressources' | 'pilotage';
 
 interface NavTabDef {
   id: TabId;
@@ -165,6 +164,14 @@ const TABS: NavTabDef[] = [
     Icon: Users,
     accent: 'var(--accent-troupeau)',
     match: ['/troupeau', '/cheptel', '/bandes'],
+  },
+  {
+    id: 'cycles',
+    path: '/cycles',
+    label: 'Cycles',
+    Icon: Activity,
+    accent: 'var(--accent-cycles)',
+    match: ['/cycles', '/controle'],
   },
   {
     id: 'ressources',
@@ -268,25 +275,6 @@ const AgritechNavV2: React.FC = () => {
 
   const activeTabId = resolveActiveTab(location.pathname);
 
-  /* ── Long-press sur le FAB → /cycles ────────────────────────────────── */
-  const longPressTimer = useRef<number | null>(null);
-  const longPressFired = useRef(false);
-
-  const startLongPress = useCallback(() => {
-    longPressFired.current = false;
-    longPressTimer.current = window.setTimeout(() => {
-      longPressFired.current = true;
-      navigate('/cycles');
-    }, 550);
-  }, [navigate]);
-
-  const cancelLongPress = useCallback(() => {
-    if (longPressTimer.current !== null) {
-      window.clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
-  }, []);
-
   /* ── FAB actions ────────────────────────────────────────────────────── */
   const fabActions: FABAction[] = useMemo(
     () => [
@@ -331,9 +319,6 @@ const AgritechNavV2: React.FC = () => {
   const hideOn = ['/checklist/', '/controle/checklist'];
   if (hideOn.some((p) => location.pathname.startsWith(p))) return null;
 
-  const leftTabs = TABS.slice(0, 2);
-  const rightTabs = TABS.slice(2);
-
   return (
     <>
       <nav
@@ -346,32 +331,7 @@ const AgritechNavV2: React.FC = () => {
           aria-label="Onglets principaux"
           className="grid grid-cols-5 h-16"
         >
-          {leftTabs.map((tab) => (
-            <NavTab
-              key={tab.id}
-              tab={tab}
-              isActive={activeTabId === tab.id}
-              onSelect={navigate}
-            />
-          ))}
-
-          {/* Placeholder central — occupé visuellement par le FAB. */}
-          <li
-            role="presentation"
-            className="relative flex items-center justify-center"
-            aria-hidden="true"
-          >
-            {/* Mini label 'Cycles' sous le FAB (long-press hint) */}
-            <span
-              className="absolute bottom-1 left-1/2 -translate-x-1/2 font-mono text-[9px] font-semibold uppercase tracking-wide leading-none opacity-40 pointer-events-none select-none"
-              style={{ color: 'var(--accent-cycles)' }}
-            >
-              <Activity size={10} className="inline-block mr-0.5 -mt-0.5" aria-hidden="true" />
-              Cycles
-            </span>
-          </li>
-
-          {rightTabs.map((tab) => (
+          {TABS.map((tab) => (
             <NavTab
               key={tab.id}
               tab={tab}
@@ -382,16 +342,8 @@ const AgritechNavV2: React.FC = () => {
         </ul>
       </nav>
 
-      {/* FAB central — positionné au-dessus de la nav. Long-press → /cycles. */}
-      <div
-        onPointerDown={startLongPress}
-        onPointerUp={cancelLongPress}
-        onPointerLeave={cancelLongPress}
-        onPointerCancel={cancelLongPress}
-        onContextMenu={(e) => e.preventDefault()}
-      >
-        <FAB actions={fabActions} ariaLabel="Actions rapides · long-press pour Cycles" />
-      </div>
+      {/* FAB — actions rapides. Cycles est maintenant un onglet à part entière. */}
+      <FAB actions={fabActions} ariaLabel="Actions rapides" />
     </>
   );
 };

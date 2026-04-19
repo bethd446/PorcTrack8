@@ -18,8 +18,7 @@ import {
 } from 'lucide-react';
 import { FARM_CONFIG } from '../config/farm';
 import { useFarm } from '../context/FarmContext';
-import { KpiCard, BottomSheet, SectionDivider, DataRow, SparklineCard } from './agritech';
-import type { SparklinePoint } from './agritech';
+import { KpiCard, BottomSheet, SectionDivider, DataRow } from './agritech';
 import AgritechLayout from './AgritechLayout';
 import QuickSaillieForm from './forms/QuickSaillieForm';
 import QuickHealthForm from './forms/QuickHealthForm';
@@ -146,79 +145,6 @@ const Cockpit: React.FC = () => {
       totalCheptel: truies.length + verrats.length + vivants,
     };
   }, [truies, verrats, porteesReelles]);
-
-  // ── Tendances 30 jours (agrégation hebdomadaire, 4 dernières semaines) ──
-  const mbTrend30Days = useMemo<SparklinePoint[]>(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const weeks: SparklinePoint[] = [];
-    for (let i = 3; i >= 0; i--) {
-      const weekStart = new Date(today.getTime() - (i + 1) * 7 * DAY_MS);
-      const weekEnd = new Date(today.getTime() - i * 7 * DAY_MS);
-      const count = bandes.filter(b => {
-        const d = parseFrDate(b.dateMB);
-        return d !== null && d >= weekStart && d < weekEnd;
-      }).length;
-      weeks.push({ x: `S-${3 - i}`, y: count });
-    }
-    return weeks;
-  }, [bandes]);
-
-  const nbMBLast30 = useMemo(
-    () => mbTrend30Days.reduce((s, w) => s + w.y, 0),
-    [mbTrend30Days]
-  );
-
-  // Vivants total (placeholder visuel — trend réel viendra avec l'historique)
-  const totalVivants = cheptelStats.nbPorcelets;
-  const vivantsTrend = useMemo<SparklinePoint[]>(() => {
-    // Série synthétique : lissage vers la valeur actuelle (reflète la stabilité)
-    const base = Math.max(0, totalVivants);
-    return [0, 1, 2, 3].map(i => ({
-      x: `S-${3 - i}`,
-      y: Math.round(base * (0.92 + 0.02 * i)),
-    }));
-  }, [totalVivants]);
-
-  const alertesTrend = useMemo<SparklinePoint[]>(() => {
-    // Série synthétique centrée sur la valeur courante.
-    const base = kpiAlertesTotal;
-    return [
-      { x: 'S-3', y: Math.max(0, base - 1) },
-      { x: 'S-2', y: Math.max(0, base - 1) },
-      { x: 'S-1', y: base },
-      { x: 'S-0', y: base },
-    ];
-  }, [kpiAlertesTotal]);
-
-  // ── Objectif du mois (sevrés) ──────────────────────────────────────────
-  const MONTHLY_TARGET_SEVRES = 30;
-
-  const sevresThisMonth = useMemo(() => {
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    return porteesReelles
-      .filter(b => /sevr/i.test(b.statut ?? ''))
-      .reduce((sum, b) => {
-        const d = parseFrDate(b.dateSevrageReelle);
-        if (d !== null && d >= monthStart) return sum + (b.vivants ?? 0);
-        return sum;
-      }, 0);
-  }, [porteesReelles]);
-
-  const objectifMonthly = useMemo(() => {
-    const now = new Date();
-    const monthLabel = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-    const target = MONTHLY_TARGET_SEVRES;
-    const progress = Math.min(100, (sevresThisMonth / target) * 100);
-    const reste = Math.max(0, target - sevresThisMonth);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    const joursRestantsMois = Math.max(
-      0,
-      Math.ceil((endOfMonth.getTime() - now.getTime()) / DAY_MS)
-    );
-    return { monthLabel, target, progress, reste, joursRestantsMois };
-  }, [sevresThisMonth]);
 
   // ── Alerte critique à afficher en strip ────────────────────────────────
   const criticalAlert = useMemo<
@@ -521,78 +447,25 @@ const Cockpit: React.FC = () => {
                 {FARM_CONFIG.POST_SEVRAGE_LOGES_CAPACITY} loges post-sevrage ·{' '}
                 {FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY} loges engraissement
               </div>
-            </section>
-
-            {/* ── Tendances 30 jours ────────────────────────────────────── */}
-            <section aria-label="Tendances 30 jours" role="region">
-              <SectionDivider label="Tendances 30 jours" />
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <SparklineCard
-                  label="Mises-bas"
-                  value={nbMBLast30}
-                  unit="portées"
-                  data={mbTrend30Days}
-                  tone="accent"
-                  onClick={() => navigate('/cycles/repro')}
-                />
-                <SparklineCard
-                  label="Porcelets vivants"
-                  value={totalVivants}
-                  data={vivantsTrend}
-                  tone="accent"
-                  onClick={() => navigate('/troupeau/bandes')}
-                />
-                <SparklineCard
-                  label="Alertes actives"
-                  value={kpiAlertesTotal}
-                  data={alertesTrend}
-                  tone={kpiAlertesTotal > 10 ? 'red' : 'amber'}
-                  onClick={() => navigate('/pilotage/alertes')}
-                />
-              </div>
-            </section>
-
-            {/* ── Objectif du mois ──────────────────────────────────────── */}
-            <section aria-label="Objectif du mois" role="region">
-              <div
-                className="card-v2 p-5"
-                style={{ transitionTimingFunction: 'var(--ease-spring)' }}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="kpi-v2-label">Objectif du mois</h3>
-                  <span className="text-text-2 text-xs font-mono capitalize">
-                    {objectifMonthly.monthLabel}
+              {/* Répartition actuelle des 4 loges post-sevrage (relevé porcher) */}
+              <div className="mt-3 card-dense flex items-center justify-between gap-2 flex-wrap">
+                <span className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+                  Répartition post-sevrage
+                </span>
+                <div className="flex gap-3 font-mono text-[12px] tabular-nums text-text-0">
+                  {FARM_CONFIG.POST_SEVRAGE_LOGES_REPARTITION.map(l => (
+                    <span key={l.id} className="flex items-baseline gap-1">
+                      <span className="text-text-2 text-[10px]">{l.id.replace('Loge ', 'L')}</span>
+                      <span className="font-semibold text-accent">{l.porcelets}</span>
+                    </span>
+                  ))}
+                  <span className="flex items-baseline gap-1 border-l border-border pl-3 ml-1">
+                    <span className="text-text-2 text-[10px]">TOTAL</span>
+                    <span className="font-bold text-accent">
+                      {FARM_CONFIG.POST_SEVRAGE_LOGES_REPARTITION.reduce((s, l) => s + l.porcelets, 0)}
+                    </span>
                   </span>
                 </div>
-
-                <div className="flex items-baseline gap-2 mb-3">
-                  <span className="kpi-v2-value text-accent">{sevresThisMonth}</span>
-                  <span className="text-text-1">/</span>
-                  <span className="text-text-1 font-mono">{objectifMonthly.target}</span>
-                  <span className="text-text-2 text-sm">sevrés</span>
-                </div>
-
-                {/* Progress bar */}
-                <div className="w-full h-2 bg-bg-2 rounded-full overflow-hidden mb-2">
-                  <div
-                    className="h-full bg-accent transition-gentle"
-                    style={{
-                      width: `${objectifMonthly.progress}%`,
-                      transitionDuration: '600ms',
-                    }}
-                    role="progressbar"
-                    aria-valuemin={0}
-                    aria-valuemax={objectifMonthly.target}
-                    aria-valuenow={sevresThisMonth}
-                    aria-label={`${sevresThisMonth} sevrés sur ${objectifMonthly.target}`}
-                  />
-                </div>
-
-                <p className="text-text-2 text-xs font-mono">
-                  {objectifMonthly.reste > 0
-                    ? `${objectifMonthly.reste} sevrés restants · ${objectifMonthly.joursRestantsMois}j restants`
-                    : 'Objectif atteint'}
-                </p>
               </div>
             </section>
 

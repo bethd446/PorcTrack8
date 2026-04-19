@@ -29,4 +29,15 @@ export const FARM_CONFIG = {
   ENGRAISSEMENT_LOGES_CAPACITY: 2,
   /** Jours après sevrage avant passage en phase engraissement (séparation par sexe). 2 mois 10 jours = 70 j. */
   POST_SEVRAGE_DUREE_JOURS: 70,
+  /**
+   * Répartition manuelle des porcelets dans les 4 loges post-sevrage.
+   * Source : relevé porcher du 19/04/2026 · à synchroniser via Sheets quand colonne dédiée.
+   * Total attendu : 102 porcelets.
+   */
+  POST_SEVRAGE_LOGES_REPARTITION: [
+    { id: 'Loge 1', porcelets: 23 },
+    { id: 'Loge 2', porcelets: 22 },
+    { id: 'Loge 3', porcelets: 28 },
+    { id: 'Loge 4', porcelets: 29 },
+  ] as const,
 } as const;
