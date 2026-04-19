@@ -17,7 +17,15 @@
 
 import React from 'react';
 import { Heart, Stethoscope, Layers, Box, Calendar } from 'lucide-react';
+import { differenceInCalendarDays, startOfDay } from 'date-fns';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import type { Truie, BandePorcelets, TraitementSante, StockAliment } from '../types/farm';
+
+/** Fuseau horaire de référence pour toute la logique métier GTTT.
+ *  L'élevage est en Côte d'Ivoire, mais les données Sheets sont saisies
+ *  depuis la France (Europe/Paris). On normalise tout sur ce fuseau pour
+ *  éviter les décalages DST et les différences de fuseau utilisateur. */
+const FARM_TIMEZONE = 'Europe/Paris';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -82,33 +90,71 @@ const BIO = {
 // UTILITAIRES DE DATE
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Parse une date sérialisée Sheets (DD/MM/YYYY, YYYY-MM-DD ou serial Excel)
+ * en traitant la date comme étant saisie dans le fuseau `Europe/Paris`.
+ *
+ * Exemple : "27/03/2026" → l'instant correspondant à 00:00:00 à Paris
+ * le 27 mars 2026, quel que soit le fuseau du runtime.
+ */
 function parseFrDate(dateStr?: string): Date | null {
   if (!dateStr || dateStr === '—' || dateStr === '') return null;
 
+  const toFarmMidnight = (y: number, m: number, d: number): Date => {
+    // Construit l'ISO "YYYY-MM-DDT00:00:00" et l'interprète comme Europe/Paris
+    const iso = `${y.toString().padStart(4, '0')}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}T00:00:00`;
+    return fromZonedTime(iso, FARM_TIMEZONE);
+  };
+
   // DD/MM/YYYY
   const dmy = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (dmy) return new Date(+dmy[3], +dmy[2] - 1, +dmy[1]);
+  if (dmy) return toFarmMidnight(+dmy[3], +dmy[2], +dmy[1]);
 
   // YYYY-MM-DD
   const ymd = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (ymd) return new Date(+ymd[1], +ymd[2] - 1, +ymd[3]);
+  if (ymd) return toFarmMidnight(+ymd[1], +ymd[2], +ymd[3]);
 
-  // Serial Sheets
+  // Serial Sheets (jours depuis 1899-12-30, epoch Excel/Sheets)
   const serial = Number(dateStr);
   if (!isNaN(serial) && serial > 20000) {
-    return new Date(Date.UTC(1899, 11, 30) + serial * 86400000);
+    // Le serial Sheets représente une date civile, pas un instant UTC.
+    // On reconstruit la date civile puis on la réinterprète en Europe/Paris.
+    const utcProxy = new Date(Date.UTC(1899, 11, 30) + serial * 86400000);
+    return toFarmMidnight(
+      utcProxy.getUTCFullYear(),
+      utcProxy.getUTCMonth() + 1,
+      utcProxy.getUTCDate(),
+    );
   }
   return null;
 }
 
+/**
+ * Différence en JOURS CIVILS (calendaires) entre deux dates, en se plaçant
+ * dans le fuseau Europe/Paris. Robuste aux changements d'heure (DST) et
+ * aux différences de fuseau de l'utilisateur : un 27 mars et un 30 mars
+ * retournent toujours 3 jours d'écart, même si la nuit du 28-29 ne fait
+ * que 23h (passage heure d'été).
+ *
+ * Retourne un entier positif si `to` > `from`, négatif sinon.
+ */
 function daysDiff(from: Date, to: Date = new Date()): number {
-  return Math.round((to.getTime() - from.getTime()) / 86400000);
+  const fromFarm = startOfDay(toZonedTime(from, FARM_TIMEZONE));
+  const toFarm = startOfDay(toZonedTime(to, FARM_TIMEZONE));
+  return differenceInCalendarDays(toFarm, fromFarm);
 }
 
+/**
+ * Ajoute N jours CIVILS à une date en raisonnant dans le fuseau Europe/Paris.
+ * Évite les dérives DST de `setDate` sur 24h*N millisecondes.
+ */
 function addDays(date: Date, days: number): Date {
-  const d = new Date(date);
-  d.setDate(d.getDate() + days);
-  return d;
+  const farmLocal = toZonedTime(date, FARM_TIMEZONE);
+  const midnight = startOfDay(farmLocal);
+  midnight.setDate(midnight.getDate() + days);
+  // Ré-interprète la date civile résultante comme instant Europe/Paris
+  const iso = `${midnight.getFullYear()}-${String(midnight.getMonth() + 1).padStart(2, '0')}-${String(midnight.getDate()).padStart(2, '0')}T00:00:00`;
+  return fromZonedTime(iso, FARM_TIMEZONE);
 }
 
 function alertId(prefix: string, subjectId: string, suffix: string): string {
@@ -159,7 +205,7 @@ function checkMiseBas(truie: Truie, today: Date): FarmAlert | null {
           idHeader: 'ID',
           idValue: truie.id,
           // Noms exacts des colonnes du Sheet SUIVI_TRUIES_REPRODUCTION
-          patch: { STATUT: 'Lactation', DATE_DERNIERE_MB: new Date().toLocaleDateString('fr-FR') },
+          patch: { STATUT: 'En maternité', DATE_DERNIERE_MB: new Date().toLocaleDateString('fr-FR') },
         },
       },
       { type: 'DISMISS', label: 'Plus tard', variant: 'secondary' },
@@ -173,7 +219,7 @@ function checkMiseBas(truie: Truie, today: Date): FarmAlert | null {
  * Déclenché à J+21 de la mise-bas réelle
  */
 function checkSevrage(bande: BandePorcelets, today: Date): FarmAlert | null {
-  if (bande.statut === 'Sevrée' || bande.statut === 'Archivée') return null;
+  if (bande.statut === 'Sevrés' || bande.statut === 'Sevrée' || bande.statut === 'Archivée') return null;
   const dateMB = parseFrDate(bande.dateMB);
   if (!dateMB) return null;
 
@@ -207,7 +253,7 @@ function checkSevrage(bande: BandePorcelets, today: Date): FarmAlert | null {
           idValue: bande.id,
           // Noms exacts des colonnes du Sheet PORCELETS_BANDES_DETAIL
           patch: {
-            STATUT: 'Sevrée',
+            STATUT: 'Sevrés',
             DATE_SEVRAGE_REELLE: new Date().toLocaleDateString('fr-FR'),
             SEVRES: nbVivants,
           },
@@ -216,8 +262,8 @@ function checkSevrage(bande: BandePorcelets, today: Date): FarmAlert | null {
             sheet: 'SUIVI_TRUIES_REPRODUCTION',
             idHeader: 'ID',
             idValue: bande.truie,
-            // STATUT → Vide, et on efface la date MB prévue
-            patch: { STATUT: 'Vide', DATE_MB_PREVUE: '' },
+            // STATUT → En attente saillie (sevrée), et on efface la date MB prévue
+            patch: { STATUT: 'En attente saillie', DATE_MB_PREVUE: '' },
           } : null,
         },
       },
@@ -229,14 +275,47 @@ function checkSevrage(bande: BandePorcelets, today: Date): FarmAlert | null {
 
 /**
  * R3 — Retour en Chaleur Post-Sevrage
- * Déclenché J+5 après le sevrage si la truie est encore "Vide"
+ * Déclenché J+5 après le sevrage si la truie est encore "En attente saillie".
+ *
+ * Le schéma Sheets V20 n'expose plus `dateDerniereMB` sur la truie : la date
+ * de sevrage est donc dérivée de la bande la plus récente liée à cette truie
+ * (via `bande.truie === truie.id` ou le rapprochement par boucle mère),
+ * en préférant `dateSevrageReelle` puis en retombant sur `dateMB + 21j`.
  */
-function checkRetourChaleur(truie: Truie, today: Date): FarmAlert | null {
-  if (truie.statut?.toUpperCase() !== 'VIDE') return null;
-  // Utilise dateDerniereMB comme proxy pour la date de sevrage (J+21 après la MB)
-  const dateDerniereMB = parseFrDate(truie.dateDerniereMB);
-  if (!dateDerniereMB) return null;
-  const dateSevrage = addDays(dateDerniereMB, BIO.LACTATION_JOURS);
+function checkRetourChaleur(
+  truie: Truie,
+  bandes: BandePorcelets[],
+  today: Date,
+): FarmAlert | null {
+  const statutNorm = truie.statut?.toLowerCase() ?? '';
+  const stadeNorm = truie.stade?.toLowerCase() ?? '';
+  const isEnAttenteSaillie =
+    statutNorm === 'en attente saillie' ||
+    stadeNorm === 'en attente saillie' ||
+    stadeNorm === 'en attente saillie (sevrée)';
+  if (!isEnAttenteSaillie) return null;
+
+  // Bande la plus récente associée à cette truie (par id ou par boucle)
+  const bandesTruie = bandes.filter(b =>
+    b.truie === truie.id ||
+    b.truie === truie.displayId ||
+    b.boucleMere === truie.boucle,
+  );
+  if (bandesTruie.length === 0) return null;
+
+  let dateSevrage: Date | null = null;
+  for (const b of bandesTruie) {
+    const dSevrage = parseFrDate(b.dateSevrageReelle);
+    if (dSevrage) {
+      if (!dateSevrage || dSevrage.getTime() > dateSevrage.getTime()) dateSevrage = dSevrage;
+      continue;
+    }
+    const dMB = parseFrDate(b.dateMB);
+    if (dMB) {
+      const dEstim = addDays(dMB, BIO.LACTATION_JOURS);
+      if (!dateSevrage || dEstim.getTime() > dateSevrage.getTime()) dateSevrage = dEstim;
+    }
+  }
   if (!dateSevrage) return null;
 
   const joursSevrage = daysDiff(dateSevrage, today);
@@ -250,7 +329,7 @@ function checkRetourChaleur(truie: Truie, today: Date): FarmAlert | null {
     subjectId: truie.id,
     subjectLabel: truie.displayId,
     title: `Chaleur attendue — ${truie.displayId}`,
-    message: `${truie.displayId} est en Vide depuis J+${joursSevrage} post-sevrage. Surveiller les chaleurs (fenêtre J+3 à J+7).`,
+    message: `${truie.displayId} est en attente saillie depuis J+${joursSevrage} post-sevrage. Surveiller les chaleurs (fenêtre J+3 à J+7).`,
     requiresAction: true,
     daysOffset: joursSevrage,
     actions: [
@@ -264,7 +343,7 @@ function checkRetourChaleur(truie: Truie, today: Date): FarmAlert | null {
           idValue: truie.id,
           // Noms exacts des colonnes du Sheet SUIVI_TRUIES_REPRODUCTION
           patch: {
-            STATUT: 'Gestation',
+            STATUT: 'Pleine',
             DATE_SAILLIE: new Date().toLocaleDateString('fr-FR'),
             DATE_MB_PREVUE: addDays(new Date(), BIO.GESTATION_JOURS).toLocaleDateString('fr-FR'),
           },
@@ -320,19 +399,19 @@ function checkMortalite(bande: BandePorcelets): FarmAlert | null {
  * R5 — Stock Critique
  */
 function checkStock(stock: StockAliment): FarmAlert | null {
-  if (stock.statut === 'OK') return null;
-  const isRupture = stock.statut === 'RUPTURE';
+  if (stock.statutStock === 'OK') return null;
+  const isRupture = stock.statutStock === 'RUPTURE';
 
   return {
-    id: alertId('STK', stock.id, stock.statut),
+    id: alertId('STK', stock.id, stock.statutStock),
     priority: isRupture ? 'CRITIQUE' : 'HAUTE',
     category: 'STOCK',
     subjectId: stock.id,
-    subjectLabel: stock.nom,
-    title: `Stock ${isRupture ? 'Épuisé' : 'Bas'} — ${stock.nom}`,
+    subjectLabel: stock.libelle,
+    title: `Stock ${isRupture ? 'Épuisé' : 'Bas'} — ${stock.libelle}`,
     message: isRupture
-      ? `${stock.nom} est en rupture (${stock.quantite} ${stock.unite} restant).`
-      : `${stock.nom} est en dessous du seuil d'alerte (${stock.quantite}/${stock.alerte} ${stock.unite}).`,
+      ? `${stock.libelle} est en rupture (${stock.stockActuel} ${stock.unite} restant).`
+      : `${stock.libelle} est en dessous du seuil d'alerte (${stock.stockActuel}/${stock.seuilAlerte} ${stock.unite}).`,
     requiresAction: false,
     actions: [{ type: 'DISMISS', label: 'Compris', variant: 'secondary' }],
     createdAt: new Date(),
@@ -345,7 +424,7 @@ function checkStock(stock: StockAliment): FarmAlert | null {
  */
 function checkRegroupementBandes(bandes: BandePorcelets[], today: Date): FarmAlert[] {
   const sevrablesSoon = bandes.filter(b => {
-    if (b.statut === 'Sevrée' || b.statut === 'Archivée') return false;
+    if (b.statut === 'Sevrés' || b.statut === 'Sevrée' || b.statut === 'Archivée') return false;
     const dateMB = parseFrDate(b.dateMB);
     if (!dateMB) return false;
     const ageJours = daysDiff(dateMB, today);
@@ -408,7 +487,7 @@ export function runAlertEngine(input: AlertEngineInput): FarmAlert[] {
 
   // R3 — Retour chaleur
   for (const truie of input.truies) {
-    const a = checkRetourChaleur(truie, today);
+    const a = checkRetourChaleur(truie, input.bandes, today);
     if (a) alerts.push(a);
   }
 

@@ -1,103 +1,263 @@
-import React, { useState } from 'react';
-import {
-  IonPage, IonHeader, IonContent, IonSegment, IonSegmentButton, IonLabel,
-  IonCard
-} from '@ionic/react';
-import { Apple } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import PremiumHeader from '../../components/PremiumHeader';
+import React, { useMemo, useState } from 'react';
+import { IonPage, IonContent } from '@ionic/react';
+import { Apple, ShieldCheck, ClipboardCheck, CircleDot } from 'lucide-react';
+import AgritechLayout from '../../components/AgritechLayout';
+import AgritechHeader from '../../components/AgritechHeader';
+import { Chip, SectionDivider } from '../../components/agritech';
+
+type TabKey = 'biosecurite' | 'rations' | 'checklists';
+
+interface ProtocolItem {
+  id: number;
+  title: string;
+  content: string;
+  priority: string;
+}
+
+interface ChecklistItem {
+  id: number;
+  title: string;
+  tasks: string[];
+}
 
 const ProtocolsView: React.FC = () => {
-  const navigate = useNavigate();
-  const [tab, setTab] = useState('biosecurite');
+  const [tab, setTab] = useState<TabKey>('biosecurite');
 
-  const protocols = {
-    biosecurite: [
-      { id: 1, title: 'Accès Zone Élevage', content: 'Changement de bottes obligatoire. Pédiluve avec solution désinfectante active.', priority: 'HAUTE' },
-      { id: 2, title: 'Quarantaine', content: 'Tout nouvel animal doit rester 3 semaines en zone tampon isolée.', priority: 'HAUTE' },
-      { id: 3, title: 'Lutte contre les nuisibles', content: 'Vérification hebdomadaire des postes d\'appâtage. Nettoyage des abords.', priority: 'MOYENNE' }
-    ],
-    rations: [
-      { id: 1, title: 'Truies Gestantes', content: '2.5kg / jour (AMV 5%). Ajuster selon état corporel (NEC).', priority: 'REFERENCE' },
-      { id: 2, title: 'Maternité (Lactation)', content: 'Libre service après 3 jours post-MB. Viser 6-8kg/jour.', priority: 'REFERENCE' },
-      { id: 3, title: 'Porcelets 1er âge', content: 'Pre-starter en petites quantités 4x/jour pour stimuler la curiosité.', priority: 'REFERENCE' }
-    ],
-    checklists: [
-      { id: 1, title: 'Contrôle Quotidien', tasks: ['Température salles', 'Fonctionnement abreuvoirs', 'Observation état général'] },
-      { id: 2, title: 'Hebdomadaire', tasks: ['Inventaire pharmacie', 'Nettoyage couloirs', 'Entretien matériel'] }
-    ]
+  const protocols = useMemo<{
+    biosecurite: ProtocolItem[];
+    rations: ProtocolItem[];
+    checklists: ChecklistItem[];
+  }>(
+    () => ({
+      biosecurite: [
+        {
+          id: 1,
+          title: 'Accès zone élevage',
+          content:
+            'Changement de bottes obligatoire. Pédiluve avec solution désinfectante active.',
+          priority: 'HAUTE',
+        },
+        {
+          id: 2,
+          title: 'Quarantaine',
+          content:
+            'Tout nouvel animal doit rester 3 semaines en zone tampon isolée.',
+          priority: 'HAUTE',
+        },
+        {
+          id: 3,
+          title: 'Lutte contre les nuisibles',
+          content:
+            "Vérification hebdomadaire des postes d'appâtage. Nettoyage des abords.",
+          priority: 'MOYENNE',
+        },
+      ],
+      rations: [
+        {
+          id: 1,
+          title: 'Truies gestantes',
+          content: '2.5kg / jour (AMV 5%). Ajuster selon état corporel (NEC).',
+          priority: 'REFERENCE',
+        },
+        {
+          id: 2,
+          title: 'Maternité (lactation)',
+          content: 'Libre service après 3 jours post-MB. Viser 6-8kg/jour.',
+          priority: 'REFERENCE',
+        },
+        {
+          id: 3,
+          title: 'Porcelets 1er âge',
+          content:
+            'Pre-starter en petites quantités 4x/jour pour stimuler la curiosité.',
+          priority: 'REFERENCE',
+        },
+      ],
+      checklists: [
+        {
+          id: 1,
+          title: 'Contrôle quotidien',
+          tasks: [
+            'Température salles',
+            'Fonctionnement abreuvoirs',
+            'Observation état général',
+          ],
+        },
+        {
+          id: 2,
+          title: 'Hebdomadaire',
+          tasks: [
+            'Inventaire pharmacie',
+            'Nettoyage couloirs',
+            'Entretien matériel',
+          ],
+        },
+      ],
+    }),
+    []
+  );
+
+  const tabs: { key: TabKey; label: string; count: number }[] = [
+    { key: 'biosecurite', label: 'Biosécurité', count: protocols.biosecurite.length },
+    { key: 'rations', label: 'Rations', count: protocols.rations.length },
+    { key: 'checklists', label: 'Listes', count: protocols.checklists.length },
+  ];
+
+  const priorityTone = (p: string): 'red' | 'amber' | 'default' => {
+    const up = p.toUpperCase();
+    if (up === 'HAUTE') return 'red';
+    if (up === 'MOYENNE') return 'amber';
+    return 'default';
   };
 
   return (
     <IonPage>
-      <IonHeader className="ion-no-border">
-        <PremiumHeader title="Guide Métier" subtitle="Protocoles Élevage">
-            <IonSegment value={tab} onIonChange={e => setTab(e.detail.value as string)} className="premium-segment rounded-xl bg-white/15 backdrop-blur-md overflow-hidden border border-white/10">
-                <IonSegmentButton value="biosecurite">
-                    <IonLabel className="text-[11px] font-bold uppercase">Biosécurité</IonLabel>
-                </IonSegmentButton>
-                <IonSegmentButton value="rations">
-                    <IonLabel className="text-[11px] font-bold uppercase">Rations</IonLabel>
-                </IonSegmentButton>
-                <IonSegmentButton value="checklists">
-                    <IonLabel className="text-[11px] font-bold uppercase">Listes</IonLabel>
-                </IonSegmentButton>
-            </IonSegment>
-        </PremiumHeader>
-      </IonHeader>
-
-      <IonContent className="bg-white">
-        <div className="px-5 py-6 pb-32">
-          {tab === 'biosecurite' && (
-            <div className="space-y-4">
-              {protocols.biosecurite.map(p => (
-                <div key={p.id} className="premium-card p-6 bg-white border-gray-100 shadow-sm border-l-4 border-l-accent-500">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="ft-heading text-sm uppercase tracking-tight">{p.title}</h3>
-                    <span className="text-[11px] font-bold bg-accent-50 text-accent-700 px-1.5 py-0.5 rounded uppercase">{p.priority}</span>
-                  </div>
-                  <p className="text-[11px] text-gray-600 leading-relaxed font-medium">{p.content}</p>
-                </div>
-              ))}
+      <IonContent fullscreen className="ion-no-padding">
+        <AgritechLayout withNav={true}>
+          <AgritechHeader
+            title="Guide métier"
+            subtitle="Protocoles élevage"
+            backTo="/"
+          >
+            <div
+              className="flex gap-2 overflow-x-auto -mx-1 px-1"
+              role="tablist"
+              aria-label="Catégories"
+            >
+              {tabs.map(t => {
+                const active = tab === t.key;
+                return (
+                  <button
+                    key={t.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setTab(t.key)}
+                    className={
+                      'pressable shrink-0 inline-flex items-center gap-1.5 px-3 h-8 rounded-md border text-[11px] font-semibold uppercase tracking-wide transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 ' +
+                      (active
+                        ? 'bg-accent text-bg-0 border-accent'
+                        : 'bg-bg-1 text-text-1 border-border hover:border-accent/60 hover:text-text-0')
+                    }
+                  >
+                    <span>{t.label}</span>
+                    <span
+                      className={
+                        'font-mono tabular-nums text-[10px] ' +
+                        (active ? 'text-bg-0/80' : 'text-text-2')
+                      }
+                    >
+                      {t.count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-          )}
+          </AgritechHeader>
 
-          {tab === 'rations' && (
-            <div className="space-y-4">
-              {protocols.rations.map(r => (
-                <div key={r.id} className="premium-card p-6 bg-white border-gray-100 shadow-sm border-l-4 border-l-amber-500">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center">
-                        <Apple size={18} className="text-amber-600" />
-                    </div>
-                    <h3 className="ft-heading text-sm uppercase tracking-tight">{r.title}</h3>
-                  </div>
-                  <p className="ft-code text-[11px] text-gray-800 font-medium bg-gray-50 p-3 rounded-xl border border-gray-100">{r.content}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {tab === 'checklists' && (
-            <div className="space-y-6">
-              {protocols.checklists.map(c => (
-                <div key={c.id} className="space-y-3">
-                   <h3 className="text-[11px] font-bold text-gray-500 uppercase px-2">{c.title}</h3>
-                   <div className="bg-white rounded-[20px] border border-gray-100 shadow-sm overflow-hidden">
-                      {c.tasks.map((task, idx) => (
-                        <div key={idx} className={`p-5 flex items-center gap-4 ${idx < c.tasks.length - 1 ? 'border-b border-gray-100' : ''} active:bg-gray-50`}>
-                           <div className="w-6 h-6 rounded-full border-2 border-gray-200 flex items-center justify-center">
-                              <div className="w-2 h-2 rounded-full bg-gray-200"></div>
-                           </div>
-                           <span className="text-xs font-bold text-gray-700">{task}</span>
+          <div className="px-4 pt-4 pb-8">
+            {tab === 'biosecurite' && (
+              <>
+                <SectionDivider label="Biosécurité" />
+                <ul className="space-y-3" aria-label="Protocoles de biosécurité">
+                  {protocols.biosecurite.map(p => (
+                    <li key={p.id}>
+                      <div className="card-dense border-l-2 border-l-accent flex items-start gap-3">
+                        <span
+                          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-bg-2 text-accent"
+                          aria-hidden="true"
+                        >
+                          <ShieldCheck size={16} />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="agritech-heading text-[14px] uppercase leading-none">
+                              {p.title}
+                            </h3>
+                            <Chip
+                              label={p.priority}
+                              tone={priorityTone(p.priority)}
+                              size="xs"
+                            />
+                          </div>
+                          <p className="mt-2 text-[13px] text-text-1 leading-relaxed">
+                            {p.content}
+                          </p>
                         </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+
+            {tab === 'rations' && (
+              <>
+                <SectionDivider label="Rations" />
+                <ul className="space-y-3" aria-label="Protocoles de rationnement">
+                  {protocols.rations.map(r => (
+                    <li key={r.id}>
+                      <div className="card-dense border-l-2 border-l-amber flex items-start gap-3">
+                        <span
+                          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-bg-2 text-amber"
+                          aria-hidden="true"
+                        >
+                          <Apple size={16} />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="agritech-heading text-[14px] uppercase leading-none">
+                            {r.title}
+                          </h3>
+                          <p className="mt-2 font-mono text-[12px] text-text-1 leading-relaxed bg-bg-0 border border-border rounded-md p-3">
+                            {r.content}
+                          </p>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+
+            {tab === 'checklists' && (
+              <div className="space-y-5">
+                {protocols.checklists.map(c => (
+                  <section key={c.id} aria-label={c.title}>
+                    <SectionDivider
+                      label={c.title}
+                      action={
+                        <span className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wide text-text-2">
+                          <ClipboardCheck size={12} aria-hidden="true" />
+                          {c.tasks.length} tâches
+                        </span>
+                      }
+                    />
+                    <ul className="card-dense !p-0 overflow-hidden" aria-label={`Tâches ${c.title}`}>
+                      {c.tasks.map((task, idx) => (
+                        <li
+                          key={idx}
+                          className={
+                            'flex items-center gap-3 px-4 py-3 ' +
+                            (idx < c.tasks.length - 1
+                              ? 'border-b border-border'
+                              : '')
+                          }
+                        >
+                          <CircleDot
+                            size={14}
+                            className="shrink-0 text-text-2"
+                            aria-hidden="true"
+                          />
+                          <span className="text-[13px] text-text-0">{task}</span>
+                        </li>
                       ))}
-                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                    </ul>
+                  </section>
+                ))}
+              </div>
+            )}
+          </div>
+        </AgritechLayout>
       </IonContent>
     </IonPage>
   );

@@ -1,196 +1,305 @@
-import React, { useState, useEffect } from 'react';
-import {
-  IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent,
-  IonList, IonItem, IonLabel, IonInput, IonNote, IonLoading, IonToast
-} from '@ionic/react';
-import { Box, ShieldCheck } from 'lucide-react';
+/**
+ * TableRowEdit — Agritech Dark
+ * ══════════════════════════════════════════════════════════════════
+ * Édition inline d'une ligne de table Sheets. Rendu à l'intérieur
+ * d'un `<BottomSheet>` (agritech) : pas de wrapper IonModal propre.
+ *
+ * Conservations strictes :
+ *   · Dynamic headers (placeholder "Chargement du schéma…")
+ *   · Coercion numérique (poids/montant/quantité/ration/nb)
+ *   · Offline queue fallback (enqueueUpdateRow)
+ *   · PhotoStrip (subjectType déduit du sheetName)
+ */
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { IonLoading, IonToast } from '@ionic/react';
+import { ShieldCheck, AlertCircle, X, Save } from 'lucide-react';
 import { updateRowById } from '../../services/googleSheets';
 import { enqueueUpdateRow } from '../../services/offlineQueue';
 import PhotoStrip from '../../components/PhotoStrip';
 import { PhotoEntry } from '../../services/photos';
 
+interface TableRowEditMeta {
+  sheetName: string;
+  idHeader: string;
+}
+
 interface TableRowEditProps {
-  meta: any;
+  meta: TableRowEditMeta;
+  /** Colonnes dynamiques fournies par le parent — lues depuis FarmContext / cache Sheets. */
   header: string[];
-  rowData: any[];
+  rowData: unknown[];
   onClose: () => void;
   onSaved: () => void;
 }
 
-const formatCellValue = (value: any) => {
-    if (value === null || value === undefined || value === '—' || value === '') return '';
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
 
-    // Check if it's an ISO date string
-    if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}T/)) {
-        try {
-            return new Date(value).toLocaleDateString('fr-FR');
-        } catch {
-            return value;
-        }
+const formatCellValue = (value: unknown): string => {
+  if (value === null || value === undefined || value === '—' || value === '') return '';
+
+  if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}T/)) {
+    try {
+      return new Date(value).toLocaleDateString('fr-FR');
+    } catch {
+      return value;
     }
+  }
 
-    // Google Sheets often sends dates as strings like "2023-12-31" or "31/12/2023"
-    // We keep them as is in the input for simplicity, or just stringify
-    return String(value);
+  return String(value);
 };
 
+const isNumericLike = (val: unknown): boolean => {
+  if (typeof val === 'number') return true;
+  if (typeof val !== 'string') return false;
+  if (val.trim() === '') return false;
+  return !isNaN(parseFloat(val)) && isFinite(Number(val));
+};
+
+const isNumericColumn = (columnName: string, sampleValue: unknown): boolean => {
+  const lower = columnName.toLowerCase();
+  return (
+    isNumericLike(sampleValue) ||
+    lower.includes('poids') ||
+    lower.includes('montant') ||
+    lower.includes('quantité') ||
+    lower.includes('ration') ||
+    lower.includes('nb')
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Component
+// ─────────────────────────────────────────────────────────────────────────────
+
 const TableRowEdit: React.FC<TableRowEditProps> = ({ meta, header, rowData, onClose, onSaved }) => {
-  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [formData, setFormData] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState<{show: boolean, message: string}>({show: false, message: ''});
+  const [toast, setToast] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
+
+  // Guard: without dynamic header we cannot edit safely.
+  const headerReady = header.length > 0;
 
   useEffect(() => {
-    const initialData: Record<string, any> = {};
+    // TODO(refactor): use `key` prop on parent to remount instead of reinitializing form on prop change
+    const initialData: Record<string, string> = {};
     header.forEach((col, index) => {
-      initialData[col] = rowData[index];
+      const raw = rowData[index];
+      initialData[col] = raw === null || raw === undefined ? '' : String(raw);
     });
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormData(initialData);
   }, [header, rowData]);
 
-  const idIndex = header.indexOf(meta.idHeader);
-  const idValue = rowData[idIndex];
+  const idIndex = headerReady ? header.indexOf(meta.idHeader) : -1;
+  const idValue = idIndex >= 0 ? String(rowData[idIndex] ?? '') : '';
 
-  const handleSave = async () => {
+  const getSubjectType = useCallback((): PhotoEntry['subjectType'] => {
+    const s = meta.sheetName.toLowerCase();
+    if (s.includes('truie')) return 'TRUIE';
+    if (s.includes('verrat')) return 'VERRAT';
+    if (s.includes('bande') || s.includes('portee')) return 'BANDE';
+    if (s.includes('sante')) return 'SANTE';
+    return 'NOTE';
+  }, [meta.sheetName]);
+
+  const handleSave = async (): Promise<void> => {
+    if (!headerReady) return;
     setLoading(true);
-    const patch: Record<string, any> = {};
+    const patch: Record<string, string | number> = {};
     header.forEach((col, index) => {
-      let currentVal = formData[col];
+      const rawInitial = rowData[index];
+      let currentVal: string | number = formData[col] ?? '';
 
-      const isNum = isNumeric(rowData[index]) ||
-                    col.toLowerCase().includes('poids') ||
-                    col.toLowerCase().includes('montant') ||
-                    col.toLowerCase().includes('quantité') ||
-                    col.toLowerCase().includes('ration') ||
-                    col.toLowerCase().includes('nb');
-
-      if (isNum && typeof currentVal === 'string' && currentVal.trim() !== '') {
+      const numericColumn = isNumericColumn(col, rawInitial);
+      if (numericColumn && typeof currentVal === 'string' && currentVal.trim() !== '') {
         const parsed = parseFloat(currentVal.replace(',', '.'));
         if (!isNaN(parsed)) currentVal = parsed;
       }
 
-      if (col !== meta.idHeader && currentVal !== rowData[index]) {
+      const initialStr = rawInitial === null || rawInitial === undefined ? '' : String(rawInitial);
+      const currentStr = typeof currentVal === 'number' ? String(currentVal) : currentVal;
+
+      if (col !== meta.idHeader && currentStr !== initialStr) {
         patch[col] = currentVal;
       }
     });
 
     if (Object.keys(patch).length === 0) {
-        onClose();
-        return;
+      onClose();
+      setLoading(false);
+      return;
     }
 
     try {
       const result = await updateRowById(meta.sheetName, meta.idHeader, idValue, patch);
       if (result.success) {
-        setToast({show: true, message: 'Mis à jour avec succès'});
+        setToast({ show: true, message: 'Mis à jour avec succès' });
         setTimeout(() => {
-            onSaved();
-            onClose();
+          onSaved();
+          onClose();
         }, 800);
       } else {
         enqueueUpdateRow(meta.sheetName, meta.idHeader, idValue, patch);
-        setToast({show: true, message: 'En attente de synchronisation (hors ligne)'});
+        setToast({ show: true, message: 'En attente de synchronisation (hors ligne)' });
         setTimeout(() => {
-            onSaved();
-            onClose();
+          onSaved();
+          onClose();
         }, 1200);
       }
-    } catch (error) {
+    } catch {
       enqueueUpdateRow(meta.sheetName, meta.idHeader, idValue, patch);
-      setToast({show: true, message: 'En attente de synchronisation'});
+      setToast({ show: true, message: 'En attente de synchronisation' });
       setTimeout(() => {
-            onSaved();
-            onClose();
-        }, 1200);
+        onSaved();
+        onClose();
+      }, 1200);
     } finally {
       setLoading(false);
     }
   };
 
-  const getSubjectType = (): PhotoEntry['subjectType'] => {
-      const s = meta.sheetName.toLowerCase();
-      if (s.includes('truie')) return 'TRUIE';
-      if (s.includes('verrat')) return 'VERRAT';
-      if (s.includes('bande') || s.includes('portee')) return 'BANDE';
-      if (s.includes('sante')) return 'SANTE';
-      return 'NOTE';
-  };
-
-  const isNumeric = (val: any) => {
-    if (typeof val === 'number') return true;
-    if (typeof val !== 'string') return false;
-    return !isNaN(parseFloat(val)) && isFinite(Number(val));
-  };
-
   return (
-    <div className="flex flex-col h-full bg-white rounded-t-[40px] overflow-hidden">
-      <div className="premium-header-compact bg-accent-600 px-8 pt-10 pb-8 flex items-center justify-between shadow-2xl shadow-accent-950/20 relative overflow-hidden">
-         <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-            <Box size={144} className="text-white rotate-12" />
-         </div>
-         <button onClick={onClose} className="pressable bg-white/10 backdrop-blur-md p-3 rounded-xl border border-white/10 text-white font-bold text-[11px] uppercase active:scale-[0.95] transition-transform duration-[160ms] z-10">Fermer</button>
-         <div className="text-center z-10">
-            <h2 className="ft-heading text-white font-bold uppercase text-xs mb-1">Édition Active</h2>
-            <p className="ft-code text-accent-300 text-[11px] font-bold uppercase">{idValue}</p>
-         </div>
-         <button onClick={handleSave} className="pressable bg-accent-400 text-accent-950 px-5 py-3 rounded-xl font-bold uppercase text-[11px] shadow-xl shadow-accent-400/20 active:scale-[0.95] transition-transform duration-[160ms] z-10">Valider</button>
+    <div className="agritech-root flex flex-col h-full bg-bg-1 text-text-0">
+      {/* ── Header : close / title / save ───────────────────────────────── */}
+      <div
+        className="flex items-center justify-between border-b border-border bg-bg-2 px-4 py-3"
+        style={{ minHeight: 56 }}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Fermer"
+          className={[
+            'pressable inline-flex h-9 w-9 items-center justify-center rounded-md',
+            'bg-bg-1 border border-border text-text-1',
+            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
+          ].join(' ')}
+        >
+          <X size={18} aria-hidden="true" />
+        </button>
+
+        <div className="min-w-0 text-center px-3">
+          <h2
+            className="agritech-heading text-[14px] uppercase tracking-wide leading-none truncate"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            Édition
+          </h2>
+          {idValue && (
+            <p className="mt-1 font-mono text-[11px] text-text-2 leading-none truncate tabular-nums">
+              {idValue}
+            </p>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!headerReady || loading}
+          aria-label="Valider les modifications"
+          className={[
+            'pressable inline-flex items-center gap-1.5 h-9 px-3 rounded-md',
+            'bg-accent text-bg-0 font-mono text-[12px] font-semibold uppercase tracking-wide',
+            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
+            (!headerReady || loading) ? 'opacity-40 cursor-not-allowed' : '',
+          ].join(' ')}
+        >
+          <Save size={14} aria-hidden="true" />
+          Valider
+        </button>
       </div>
 
-      <IonContent className="bg-white">
-        <IonLoading isOpen={loading} message="Traitement crypté..." spinner="bubbles" cssClass="premium-loading" />
+      {/* ── Body ────────────────────────────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto">
+        <IonLoading isOpen={loading} message="Synchronisation…" spinner="bubbles" />
 
-        <div className="px-5 pt-10">
-            <PhotoStrip subjectType={getSubjectType()} subjectId={String(idValue)} />
-        </div>
+        {!headerReady ? (
+          <div
+            className="flex flex-col items-center justify-center gap-3 py-20 px-5 text-center"
+            role="status"
+          >
+            <AlertCircle size={32} className="text-amber" aria-hidden="true" />
+            <p className="font-mono text-[12px] uppercase tracking-wide text-text-1">
+              Chargement du schéma de la table…
+            </p>
+            <p className="font-mono text-[11px] text-text-2 max-w-xs leading-relaxed">
+              L'édition sera disponible dès que les colonnes seront synchronisées avec Sheets.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="px-4 pt-4">
+              <PhotoStrip subjectType={getSubjectType()} subjectId={String(idValue)} />
+            </div>
 
-        <div className="px-5 py-10 space-y-8 pb-32">
-          {header.map((col, index) => {
-            const initialValue = rowData[index];
-            const isId = col === meta.idHeader;
-            const useNumberInput = isNumeric(initialValue) ||
-                                  col.toLowerCase().includes('poids') ||
-                                  col.toLowerCase().includes('montant') ||
-                                  col.toLowerCase().includes('quantité') ||
-                                  col.toLowerCase().includes('ration') ||
-                                  col.toLowerCase().includes('nb');
+            <div className="px-4 py-4 space-y-4 pb-8">
+              {header.map((col, index) => {
+                const initialValue = rowData[index];
+                const isId = col === meta.idHeader;
+                const useNumberInput = isNumericColumn(col, initialValue);
+                const currentValue = formData[col] ?? formatCellValue(initialValue);
 
-            return (
-              <div key={col} className={`space-y-3 transition-opacity duration-200 ${isId ? 'opacity-40' : 'opacity-100'}`}>
-                <div className="flex items-center gap-2 px-2">
-                    <div className="w-1 h-1 bg-accent-600 rounded-full"></div>
-                    <label className="ft-code text-[11px] font-bold text-gray-400 uppercase">{col}</label>
-                </div>
-                <div className={`premium-card p-1.5 transition-transform duration-[160ms] shadow-sm ${isId ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-100 focus-within:border-accent-600/50 focus-within:shadow-lg focus-within:shadow-accent-500/5'}`}>
-                   <input
+                return (
+                  <div key={col} className="space-y-1.5">
+                    {/* Label */}
+                    <label
+                      htmlFor={`tr-edit-${col}`}
+                      className="block font-mono text-[11px] uppercase tracking-wide text-text-1"
+                    >
+                      {col}
+                    </label>
+
+                    {/* Input */}
+                    <input
+                      id={`tr-edit-${col}`}
                       type="text"
-                      inputMode={useNumberInput ? "decimal" : "text"}
-                      className="w-full bg-transparent border-none px-4 py-4 text-gray-900 font-extrabold text-lg outline-none disabled:text-gray-500 placeholder-gray-300"
-                      placeholder={`Saisir ${col.toLowerCase()}...`}
-                      value={formData[col] === undefined ? formatCellValue(initialValue) : formData[col]}
+                      inputMode={useNumberInput ? 'decimal' : 'text'}
+                      className={[
+                        'w-full rounded-md px-3 py-2.5',
+                        'bg-bg-0 border text-text-0 placeholder:text-text-2',
+                        'font-mono text-[13px] tabular-nums',
+                        'outline-none transition-colors duration-[160ms]',
+                        'focus:border-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-1px]',
+                        isId
+                          ? 'border-border opacity-50 cursor-not-allowed'
+                          : 'border-border hover:border-text-2',
+                      ].join(' ')}
+                      placeholder={`Saisir ${col.toLowerCase()}…`}
+                      value={currentValue}
                       disabled={isId}
+                      aria-label={col}
                       onChange={e => {
-                        setFormData({...formData, [col]: e.target.value});
+                        setFormData({ ...formData, [col]: e.target.value });
                       }}
-                   />
-                </div>
-                {isId && (
-                    <div className="flex items-center gap-1.5 px-3">
-                        <ShieldCheck size={11} className="text-gray-400 flex-shrink-0" />
-                        <p className="ft-code text-[11px] font-bold text-gray-400 uppercase italic">Clé primaire immuable</p>
-                    </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                    />
+
+                    {/* Primary key notice */}
+                    {isId && (
+                      <div className="flex items-center gap-1.5">
+                        <ShieldCheck size={11} className="shrink-0 text-text-2" aria-hidden="true" />
+                        <span className="font-mono text-[10px] uppercase tracking-wide text-text-2 italic">
+                          Clé primaire immuable
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
         <IonToast
           isOpen={toast.show}
           message={toast.message}
           duration={3000}
-          onDidDismiss={() => setToast({show: false, message: ''})}
+          onDidDismiss={() => setToast({ show: false, message: '' })}
           position="top"
-          className="premium-toast"
         />
-      </IonContent>
+      </div>
     </div>
   );
 };

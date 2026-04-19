@@ -4,6 +4,12 @@
    Principe : blanc pur, une couleur d'accent, zéro bruit visuel
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* ── Agritech Moderne overlay (dark cockpit tokens + utilities) ────────────
+   Additive system — cohabite avec les classes .premium-* / .ft-* ci-dessous.
+   ──────────────────────────────────────────────────────────────────────── */
+@import "./styles/agritech-tokens.css";
+@import "./styles/agritech-utilities.css";
+
 /* ── Polices ──────────────────────────────────────────────────────────────── */
 @font-face { font-family: 'BigShoulders'; src: url('/fonts/BigShoulders-Bold.ttf') format('truetype'); font-weight: 700; font-display: block; }
 @font-face { font-family: 'BigShoulders'; src: url('/fonts/BigShoulders-Regular.ttf') format('truetype'); font-weight: 400; font-display: block; }

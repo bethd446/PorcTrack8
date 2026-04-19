@@ -206,3 +206,40 @@ $ADB shell pidof com.porc800.porctrack    # Vérifier pas de crash
 - Réduire 22 `transition-all` restants (éléments multi-propriétés à auditer)
 - Code splitting chunk principal (1.1MB gzipped 312KB)
 - Commit + deploy émulateur pour tester tactilement les inputs + contraste outdoor
+
+---
+
+### Session 6 — 17 avril 2026 (Audit complet + Durcissement prod)
+
+**11 chantiers sécurité/qualité/DX en 2 phases parallèles (4+4 agents) :**
+
+#### Phase 1 — Fondations
+- **Secrets migrés** : `googleSheets.ts` et `SystemManagement.tsx` lisent désormais `import.meta.env.VITE_GAS_URL/TOKEN`, throw explicite si absent. Token `PORC800_WRITE_2026` toujours dans git history → à rotate côté GAS (action manuelle)
+- **Logger centralisé** `src/services/logger.ts` (ring buffer 50, zéro `any`, hook `setErrorHook` pour Sentry futur) + 3 `.catch` silencieux éliminés (`FarmContext:162`, `offlineCache:104`, `main:30`)
+- **Tests Vitest** (1er tests unitaires du projet) : 26 tests sur les 6 règles alertEngine → passés à 29 après fix DST
+- **Notifications locales Capacitor** : `@capacitor/local-notifications` 6.1.3, `src/services/notifications.ts`, sync automatique depuis `setAlerts`, ID stable via djb2 hash, filtre R1/R3/R5 HAUTE+CRITIQUE, permission bootstrap via localStorage
+- **Dead code** : `dispatchParser.ts` + `ErrorBoundary.tsx` (orphelins) supprimés
+- **Validation inputs** : inline errors sur ChecklistFlow/QuickHealth/QuickNote
+- **Code splitting** : chunk `tables-misc` 1.2MB éclaté → `table-view` 44KB + `alertes` 18KB + `bandes` 47KB + `cheptel` 22KB ; vendors isolés (ionic/react/capacitor/dates/icons)
+
+#### Phase 2 — Durcissement
+- **CI GitHub Actions** `.github/workflows/ci.yml` : tsc + eslint + vitest + build sur push/PR main, Node 20, cache npm auto, mocks VITE_GAS_*
+- **ESLint 9 flat config** + Prettier : 0 errors, 212 warnings (tech debt). Rules React 19 compiler (set-state-in-effect, purity, immutability) downgradées en warn pour pré-existant. **IMPORTANT** : `.claude/` dans ignores sinon worktrees imbriqués pètent le lint
+- **Timezone Europe/Paris** dans alertEngine : `date-fns-tz` + `differenceInCalendarDays` remplace le diff en ms. Fiable DST, 3 tests ajoutés (printemps DST, minuit pile, fuseau Tokyo)
+- **Mémoization** : `CheptelView.statGroups` en `useMemo`. Dashboard déjà propre (tous useMemo existants)
+- **Labels a11y** : `htmlFor`/`id` sur QuickHealth/QuickNote, `role="radiogroup"` + `aria-checked` sur QuickSaillie (boutons custom)
+- **README** réécrit (fr, sobre, pas d'emoji/badge)
+
+#### Vérifications finales
+- `npx tsc --noEmit` : 0 erreur
+- `npm run test:unit` : 29/29 passent (172ms)
+- `npm run build` : 2.13s, 2733 modules, `vendor-ionic` reste à 1.1MB (inhérent Ionic, 229KB gzipped)
+- `npm run lint` : 0 errors, 212 warnings
+- `npx cap sync android` : 6 plugins détectés dont local-notifications
+
+#### Leçons clés Session 6
+- **ESLint v9 flat config + react-hooks v5** : les rules recommended incluent maintenant le React Compiler (set-state-in-effect, purity, immutability, etc.). Downgrade en `warn` si codebase pré-existant
+- **`.claude/worktrees/*`** : contient d'autres worktrees Claude Code avec leur propre src — les lister dans ESLint ignores
+- **Rollup warning dynamic+static import** : si un module est statiquement importé ailleurs, le `await import()` est inutile. Unifier en static
+- **Vitest 4.x** + React 19 : pas besoin de jsdom pour tests purement logique, 172ms pour 29 tests
+- **Capacitor LocalNotifications** : préférer ID stable (hash du contenu) pour éviter doublons sur rescheduling

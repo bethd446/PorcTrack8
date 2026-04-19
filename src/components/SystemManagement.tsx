@@ -1,29 +1,31 @@
 import React, { useState } from 'react';
 import {
-  IonContent, IonHeader, IonSpinner, IonPage, IonToast, IonAlert, IonToggle, IonLabel
+  IonContent, IonPage, IonSpinner, IonToast, IonAlert, IonToggle
 } from '@ionic/react';
 import {
-  RefreshCw, CloudOff, Cloud, Shield, BookOpen, AlertTriangle,
-  Settings, ChevronRight, Save, Trash2, Bug, User, Wifi
+  RefreshCw, Cloud, Shield, BookOpen, AlertTriangle,
+  Save, Trash2, Bug
 } from 'lucide-react';
 import { useFarm } from '../context/FarmContext';
 import { getTablesIndex } from '../services/googleSheets';
-import PremiumHeader from './PremiumHeader';
+import AgritechLayout from './AgritechLayout';
+import AgritechHeader from './AgritechHeader';
+import { HubTile, SectionDivider, Chip } from './agritech';
 import { useNavigate } from 'react-router-dom';
 import { isDebugEnabled, setDebugEnabled, APP_VERSION } from '../config';
 import { getQueueStatus } from '../services/offlineQueue';
-import { PremiumButton, PremiumInput, PremiumCard, SectionHeader } from './PremiumUI';
+import { kvGet, kvSet, kvClear } from '../services/kvStore';
 
 export const SettingsPage: React.FC = () => {
   const { syncStatus, pullData, processQueue } = useFarm();
   const navigate = useNavigate();
 
-  const defaultUrl = "https://script.google.com/macros/s/AKfycbzLNf0EpNRXK17LYuIHjHVTKlvbbZ0gtZHQah73ZCZM5HIC91qKCyAe-PF5PntqF1cnwg/exec";
-  const defaultToken = "PORC800_WRITE_2026";
+  const defaultUrl = (import.meta.env.VITE_GAS_URL as string | undefined) || '';
+  const defaultToken = (import.meta.env.VITE_GAS_TOKEN as string | undefined) || '';
 
-  const [url, setUrl] = useState(localStorage.getItem('gas_url') || defaultUrl);
-  const [token, setToken] = useState(localStorage.getItem('gas_token') || defaultToken);
-  const [userName, setUserName] = useState(localStorage.getItem('user_name') || '');
+  const [url, setUrl] = useState(kvGet('gas_url') || defaultUrl);
+  const [token, setToken] = useState(kvGet('gas_token') || defaultToken);
+  const [userName, setUserName] = useState(kvGet('user_name') || '');
   const [showToast, setShowToast] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
@@ -32,10 +34,12 @@ export const SettingsPage: React.FC = () => {
 
   const pendingCount = getQueueStatus().pending;
 
-  const handleSaveAndTest = async () => {
-    localStorage.setItem('gas_url', url);
-    localStorage.setItem('gas_token', token);
-    localStorage.setItem('user_name', userName);
+  const handleSaveAndTest = async (): Promise<void> => {
+    await Promise.all([
+      kvSet('gas_url', url),
+      kvSet('gas_token', token),
+      kvSet('user_name', userName),
+    ]);
 
     setTestStatus('testing');
     try {
@@ -55,200 +59,334 @@ export const SettingsPage: React.FC = () => {
     }
   };
 
-  const handleReset = () => {
-    localStorage.clear();
+  const handleReset = async (): Promise<void> => {
+    await kvClear();
     window.location.href = '/';
   };
 
-  const toggleDebug = (val: boolean) => {
-      setDebug(val);
-      setDebugEnabled(val);
+  const toggleDebug = (val: boolean): void => {
+    setDebug(val);
+    setDebugEnabled(val);
   };
 
-  const userRole = localStorage.getItem('user_role') || 'PORCHER';
+  const userRole = kvGet('user_role') || 'PORCHER';
   const isSynced = syncStatus === 'synced';
+  const needsName = userRole === 'PORCHER' && !userName;
 
   return (
     <IonPage>
-      <IonHeader className="ion-no-border">
-        <PremiumHeader title="Contrôle" subtitle="Pilotage & Configuration" />
-      </IonHeader>
-      <IonContent>
-        <div className="px-5 space-y-6 pb-32 mt-5">
+      <IonContent fullscreen className="ion-no-padding">
+        <AgritechLayout withNav={true}>
+          <AgritechHeader
+            title="Réglages"
+            subtitle="Système & paramètres"
+            action={
+              <Chip label={`v${APP_VERSION}`} tone="default" size="xs" />
+            }
+          />
 
-          {/* ── SYNC STATUS CARD ─────────────────────────────────────── */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 px-1">
-              <h2 className="ft-heading text-gray-700">Flux & Synchronisation</h2>
-              <div className={`w-2 h-2 rounded-full ${isSynced ? 'bg-accent-500 animate-pulse' : 'bg-amber-500 animate-pulse'}`} />
-            </div>
-
-            <div className="premium-card">
-                <div className="flex items-center justify-between mb-5">
-                    <div className="flex items-center gap-3">
-                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${isSynced ? 'bg-accent-50' : 'bg-amber-50'}`}>
-                            {isSynced
-                              ? <Cloud size={20} className="text-accent-500" />
-                              : <RefreshCw size={20} className={`text-amber-500 ${!isSynced ? 'animate-spin' : ''}`} />
-                            }
-                        </div>
-                        <div>
-                            <p className="text-[14px] font-bold text-gray-900">{isSynced ? 'Système à jour' : 'Synchronisation...'}</p>
-                            <p className="text-[12px] text-gray-400 mt-0.5">{pendingCount} action(s) en attente</p>
-                        </div>
+          <div className="px-4 pt-4 pb-8 space-y-5">
+            {/* ── Flux & Synchronisation ─────────────────────────────── */}
+            <section aria-label="Flux & synchronisation" role="region">
+              <SectionDivider label="Flux & synchronisation" />
+              <div className="card-dense">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span
+                      className={
+                        'inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-bg-2 ' +
+                        (isSynced ? 'text-accent' : 'text-amber')
+                      }
+                      aria-hidden="true"
+                    >
+                      {isSynced ? (
+                        <Cloud size={18} />
+                      ) : (
+                        <RefreshCw size={18} className="animate-spin" />
+                      )}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[14px] font-semibold text-text-0 truncate">
+                        {isSynced ? 'Système à jour' : 'Synchronisation...'}
+                      </p>
+                      <p className="mt-0.5 font-mono text-[11px] text-text-2 truncate">
+                        {pendingCount} action(s) en attente
+                      </p>
                     </div>
-                    <button onClick={() => processQueue()} className="pressable w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center active:bg-gray-100 transition-colors" aria-label="Traiter la file">
-                        <RefreshCw size={16} className="text-gray-500" />
-                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => processQueue()}
+                    aria-label="Traiter la file"
+                    className="pressable inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-bg-2 text-text-1 active:scale-[0.96] transition-transform duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                  >
+                    <RefreshCw size={15} />
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => navigate('/sync')}
-                      className="pressable flex items-center justify-center gap-2 h-11 rounded-xl border border-gray-200 bg-white text-gray-700 text-[13px] font-medium active:bg-gray-50 transition-colors"
-                    >
-                        Détails File
-                    </button>
-                    <button
-                      onClick={() => pullData()}
-                      className="pressable flex items-center justify-center gap-2 h-11 rounded-xl bg-accent-600 text-white text-[13px] font-medium active:bg-accent-700 transition-colors"
-                      aria-label="Rafraîchir les données"
-                    >
-                        <RefreshCw size={14} />
-                        Forcer Pull
-                    </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/sync')}
+                    className="pressable inline-flex items-center justify-center h-10 rounded-md border border-border bg-bg-1 text-text-0 text-[12px] font-semibold active:scale-[0.97] transition-transform duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                  >
+                    Détails file
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => pullData()}
+                    aria-label="Rafraîchir les données"
+                    className="pressable inline-flex items-center justify-center gap-2 h-10 rounded-md bg-accent text-bg-0 text-[12px] font-semibold active:scale-[0.97] transition-transform duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 hover:bg-[color:var(--color-accent-dim)]"
+                  >
+                    <RefreshCw size={13} aria-hidden="true" />
+                    Forcer pull
+                  </button>
                 </div>
-            </div>
-          </div>
+              </div>
+            </section>
 
-          {/* ── AUDIT & PROTOCOLES ────────────────────────────────────── */}
-          <div className="space-y-3">
-            <h2 className="ft-heading text-gray-700 px-1">Audit & Performance</h2>
-            <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => navigate('/audit')}
-                  className="pressable rounded-xl border border-amber-100 bg-amber-50 p-5 text-left active:scale-[0.97] transition-transform duration-[160ms]"
-                >
-                    <AlertTriangle size={22} className="text-amber-500 mb-3" />
-                    <p className="text-[14px] font-bold text-gray-900">Audit</p>
-                    <p className="text-[11px] text-gray-400 mt-1">Cohérence données</p>
-                </button>
-                <button
-                  onClick={() => navigate('/protocoles')}
-                  className="pressable rounded-xl bg-accent-600 p-5 text-left active:scale-[0.97] transition-transform duration-[160ms]"
-                >
-                    <BookOpen size={22} className="text-accent-200 mb-3" />
-                    <p className="text-[14px] font-bold text-white">Protocoles</p>
-                    <p className="text-[11px] text-white/50 mt-1">Guide terrain</p>
-                </button>
-            </div>
-          </div>
+            {/* ── Audit & Protocoles (Hub tiles) ──────────────────────── */}
+            <section aria-label="Audit & protocoles" role="region">
+              <SectionDivider label="Audit & performance" />
+              <div className="grid grid-cols-1 gap-3">
+                <HubTile
+                  icon={<AlertTriangle size={18} aria-hidden="true" />}
+                  title="Audit"
+                  subtitle="Cohérence données"
+                  to="/audit"
+                  tone="amber"
+                />
+                <HubTile
+                  icon={<BookOpen size={18} aria-hidden="true" />}
+                  title="Protocoles"
+                  subtitle="Guide terrain"
+                  to="/protocoles"
+                  tone="accent"
+                />
+              </div>
+            </section>
 
-          {/* ── PARAMÈTRES SYSTÈME ────────────────────────────────────── */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <h2 className="ft-heading text-gray-700">Paramètres</h2>
-              <span className="text-[11px] text-gray-400">v{APP_VERSION}</span>
-            </div>
+            {/* ── Paramètres système ──────────────────────────────────── */}
+            <section aria-label="Paramètres système" role="region">
+              <SectionDivider label="Paramètres" />
 
-            <div className="premium-card overflow-hidden">
+              <div className="card-dense !p-0 overflow-hidden">
                 {/* Nom opérateur */}
-                <div className="p-5 border-b border-gray-200">
-                    <PremiumInput
-                        label="Nom de l'Opérateur"
-                        placeholder="Ex: Jean Martin"
-                        value={userName}
-                        onChange={setUserName}
-                        errorMsg={userRole === 'PORCHER' && !userName ? "Nom requis pour traçabilité" : ""}
-                        status={userRole === 'PORCHER' && !userName ? 'error' : 'idle'}
-                    />
+                <div className="px-4 py-4 border-b border-border">
+                  <label
+                    htmlFor="settings-operator"
+                    className="kpi-label block mb-2"
+                  >
+                    Nom de l'opérateur
+                  </label>
+                  <input
+                    id="settings-operator"
+                    type="text"
+                    value={userName}
+                    onChange={e => setUserName(e.target.value)}
+                    placeholder="Ex: Jean Martin"
+                    className="w-full h-11 px-3 rounded-md bg-bg-1 border border-border text-text-0 placeholder-text-2 text-[14px] outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+                  />
+                  {needsName ? (
+                    <p className="mt-2 font-mono text-[11px] text-red">
+                      Nom requis pour traçabilité
+                    </p>
+                  ) : null}
                 </div>
 
-                {/* API URL */}
-                <div className="p-5 border-b border-gray-200">
-                    <PremiumInput
-                        label="GAS API URL"
-                        value={url}
-                        onChange={setUrl}
-                    />
+                {/* GAS URL */}
+                <div className="px-4 py-4 border-b border-border">
+                  <label
+                    htmlFor="settings-gas-url"
+                    className="kpi-label block mb-2"
+                  >
+                    GAS API URL
+                  </label>
+                  <input
+                    id="settings-gas-url"
+                    type="text"
+                    value={url}
+                    onChange={e => setUrl(e.target.value)}
+                    placeholder="https://script.google.com/..."
+                    className="w-full h-11 px-3 rounded-md bg-bg-1 border border-border text-text-0 placeholder-text-2 font-mono text-[12px] outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+                  />
                 </div>
 
                 {/* Token */}
-                <div className="p-5 border-b border-gray-200">
-                    <PremiumInput
-                        label="Token d'Accès"
-                        type="text"
-                        value={token}
-                        onChange={setToken}
-                    />
+                <div className="px-4 py-4 border-b border-border">
+                  <label
+                    htmlFor="settings-token"
+                    className="kpi-label block mb-2"
+                  >
+                    Token d'accès
+                  </label>
+                  <input
+                    id="settings-token"
+                    type="text"
+                    value={token}
+                    onChange={e => setToken(e.target.value)}
+                    placeholder="Bearer…"
+                    className="w-full h-11 px-3 rounded-md bg-bg-1 border border-border text-text-0 placeholder-text-2 font-mono text-[12px] outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+                  />
                 </div>
 
                 {/* Debug toggle */}
-                <div className="p-5 border-b border-gray-200 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${debug ? 'bg-amber-50' : 'bg-gray-50'}`}>
-                            <Bug size={16} className={debug ? 'text-amber-500' : 'text-gray-400'} />
-                        </div>
-                        <div>
-                            <p className="text-[13px] font-bold text-gray-700">Mode Développeur</p>
-                            <p className="text-[11px] text-gray-400 mt-0.5">Traces & Logs détaillés</p>
-                        </div>
+                <div className="px-4 py-4 border-b border-border flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span
+                      className={
+                        'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-bg-2 ' +
+                        (debug ? 'text-amber' : 'text-text-2')
+                      }
+                      aria-hidden="true"
+                    >
+                      <Bug size={15} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-semibold text-text-0 truncate">
+                        Mode développeur
+                      </p>
+                      <p className="mt-0.5 font-mono text-[11px] text-text-2 truncate">
+                        Traces & logs détaillés
+                      </p>
                     </div>
-                    <IonToggle checked={debug} onIonChange={e => toggleDebug(e.detail.checked)} color="warning" />
+                  </div>
+                  <IonToggle
+                    checked={debug}
+                    onIonChange={e => toggleDebug(e.detail.checked)}
+                    aria-label="Mode développeur"
+                    style={
+                      {
+                        '--track-background': 'var(--color-bg-2)',
+                        '--track-background-checked': 'var(--color-accent)',
+                        '--handle-background': 'var(--color-text-0)',
+                        '--handle-background-checked': 'var(--color-bg-0)',
+                      } as React.CSSProperties
+                    }
+                  />
                 </div>
 
-                {/* Role switcher */}
-                <div className="p-5 flex items-center justify-between bg-white">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-accent-50 flex items-center justify-center">
-                            <Shield size={16} className="text-accent-500" />
-                        </div>
-                        <div>
-                            <p className="text-[13px] font-bold text-gray-700">Profil</p>
-                            <p className="text-[11px] text-gray-400 mt-0.5">{userRole === 'PORCHER' ? 'Opérateur Terrain' : 'Admin'}</p>
-                        </div>
+                {/* Profil */}
+                <div className="px-4 py-4 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span
+                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-bg-2 text-accent"
+                      aria-hidden="true"
+                    >
+                      <Shield size={15} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-semibold text-text-0 truncate">
+                        Profil
+                      </p>
+                      <p className="mt-0.5 font-mono text-[11px] text-text-2 truncate">
+                        {userRole === 'PORCHER' ? 'Opérateur terrain' : 'Administrateur'}
+                      </p>
                     </div>
-                    <div className="flex bg-white rounded-lg p-1 border border-gray-200">
-                        <button
-                            onClick={() => { localStorage.setItem('user_role', 'PORCHER'); window.location.reload(); }}
-                            className={`pressable px-3 py-1.5 rounded-md text-[11px] font-bold transition-colors duration-200 ${userRole === 'PORCHER' ? 'bg-accent-600 text-white shadow-sm' : 'text-gray-400'}`}
-                        >
-                            Terrain
-                        </button>
-                        <button
-                            onClick={() => { localStorage.setItem('user_role', 'ADMIN'); window.location.reload(); }}
-                            className={`pressable px-3 py-1.5 rounded-md text-[11px] font-bold transition-colors duration-200 ${userRole === 'ADMIN' ? 'bg-accent-600 text-white shadow-sm' : 'text-gray-400'}`}
-                        >
-                            Admin
-                        </button>
-                    </div>
+                  </div>
+                  <div
+                    className="flex rounded-md border border-border bg-bg-1 p-0.5"
+                    role="tablist"
+                    aria-label="Profil"
+                  >
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={userRole === 'PORCHER'}
+                      onClick={() => {
+                        void kvSet('user_role', 'PORCHER').then(() =>
+                          window.location.reload()
+                        );
+                      }}
+                      className={
+                        'pressable px-3 py-1.5 rounded text-[11px] font-semibold uppercase tracking-wide transition-colors duration-150 ' +
+                        (userRole === 'PORCHER'
+                          ? 'bg-accent text-bg-0'
+                          : 'text-text-2 hover:text-text-1')
+                      }
+                    >
+                      Terrain
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={userRole === 'ADMIN'}
+                      onClick={() => {
+                        void kvSet('user_role', 'ADMIN').then(() =>
+                          window.location.reload()
+                        );
+                      }}
+                      className={
+                        'pressable px-3 py-1.5 rounded text-[11px] font-semibold uppercase tracking-wide transition-colors duration-150 ' +
+                        (userRole === 'ADMIN'
+                          ? 'bg-accent text-bg-0'
+                          : 'text-text-2 hover:text-text-1')
+                      }
+                    >
+                      Admin
+                    </button>
+                  </div>
                 </div>
+              </div>
+
+              {/* Save button */}
+              <button
+                type="button"
+                onClick={handleSaveAndTest}
+                disabled={testStatus === 'testing'}
+                className="pressable mt-4 w-full h-12 rounded-md bg-accent text-bg-0 text-[13px] font-semibold flex items-center justify-center gap-2 active:scale-[0.97] disabled:opacity-40 transition-[transform,opacity] duration-150 hover:bg-[color:var(--color-accent-dim)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+              >
+                {testStatus === 'testing' ? (
+                  <IonSpinner name="bubbles" className="w-5 h-5" />
+                ) : (
+                  <>
+                    <Save size={15} aria-hidden="true" />
+                    Enregistrer & vérifier
+                  </>
+                )}
+              </button>
+
+              {/* Reset */}
+              <button
+                type="button"
+                onClick={() => setShowAlert(true)}
+                className="pressable mt-3 w-full h-11 rounded-md border border-dashed border-red/40 bg-transparent text-red text-[12px] font-semibold flex items-center justify-center gap-2 active:opacity-70 transition-opacity duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red focus-visible:outline-offset-2"
+              >
+                <Trash2 size={13} aria-hidden="true" />
+                Réinitialiser la session
+              </button>
+            </section>
+
+            {/* Footer */}
+            <div className="text-center pt-2">
+              <p className="font-mono text-[11px] text-text-2">
+                PorcTrack · Infrastructure
+              </p>
             </div>
-
-            {/* Save button */}
-            <button
-              onClick={handleSaveAndTest}
-              disabled={testStatus === 'testing'}
-              className="pressable w-full h-[52px] rounded-xl bg-accent-600 text-white text-[14px] font-bold flex items-center justify-center gap-2 active:scale-[0.97] disabled:opacity-40 transition-[transform,opacity]"
-            >
-                {testStatus === 'testing' ? <IonSpinner name="bubbles" className="w-5 h-5" /> : <><Save size={16} /> Enregistrer & Vérifier</>}
-            </button>
-
-            {/* Reset */}
-            <button onClick={() => setShowAlert(true)} className="pressable w-full py-3 px-4 text-[12px] text-red-500 flex items-center justify-center gap-2 border border-dashed border-red-100 rounded-lg bg-transparent active:opacity-70 transition-colors duration-200">
-                <Trash2 size={14} />
-                Réinitialiser la Session
-            </button>
           </div>
+        </AgritechLayout>
 
-          {/* Footer */}
-          <div className="text-center pb-6">
-              <p className="text-[11px] text-gray-400">PorcTrack · Infrastructure</p>
-          </div>
-        </div>
-
-        <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message={testMessage} duration={3000} position="top" />
-        <IonAlert isOpen={showAlert} onDidDismiss={() => setShowAlert(false)} header="Réinitialisation" message="Effacer toutes les données locales et se déconnecter ?" buttons={[{ text: 'Annuler', role: 'cancel' }, { text: 'Réinitialiser', cssClass: 'text-red-500', handler: handleReset }]} />
+        <IonToast
+          isOpen={showToast}
+          onDidDismiss={() => setShowToast(false)}
+          message={testMessage}
+          duration={3000}
+          position="top"
+        />
+        <IonAlert
+          isOpen={showAlert}
+          onDidDismiss={() => setShowAlert(false)}
+          header="Réinitialisation"
+          message="Effacer toutes les données locales et se déconnecter ?"
+          buttons={[
+            { text: 'Annuler', role: 'cancel' },
+            {
+              text: 'Réinitialiser',
+              cssClass: 'text-red-500',
+              handler: handleReset,
+            },
+          ]}
+        />
       </IonContent>
     </IonPage>
   );

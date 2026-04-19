@@ -25,13 +25,11 @@ const QUEUE_KEY = 'porctrack_sync_queue_v7';
 // Les callers existants (Dashboard, Header, etc.) appellent getQueueStatus() de
 // façon synchrone. On maintient une copie mémoire mise à jour à chaque write.
 let _memCache: QueueItem[] = [];
-let _initialized = false;
 
 async function loadQueue(): Promise<QueueItem[]> {
   try {
     const { value } = await Preferences.get({ key: QUEUE_KEY });
     _memCache = value ? JSON.parse(value) : [];
-    _initialized = true;
     return _memCache;
   } catch {
     return _memCache;

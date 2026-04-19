@@ -1,9 +1,10 @@
 import { CapacitorHttp, Capacitor } from '@capacitor/core';
-import { getQueueStatus } from './offlineQueue';
-import { setCache, getCache, isCacheValid, invalidateCache, clearAllCache } from './offlineCache';
+import { getQueueStatus, enqueueUpdateRow } from './offlineQueue';
+import { setCache, getCache, isCacheValid, invalidateCache } from './offlineCache';
 import { mapTable } from '../mappers';
-import { Truie, Verrat, BandePorcelets, TraitementSante, StockAliment, StockVeto } from '../types/farm';
+import { Truie, Verrat, BandePorcelets, TraitementSante, StockAliment, StockVeto, AlerteServeur, Saillie, DataSource } from '../types/farm';
 import { Note } from '../types';
+import { kvGet, kvSet } from './kvStore';
 
 /**
  * Map sheetName → KEY(s) du TABLES_INDEX
@@ -26,22 +27,30 @@ const SHEET_TO_KEYS: Record<string, string[]> = {
  * Stratégie hybride : fetch (Web/Dev) -> CapacitorHttp (Native/CORS).
  */
 
+const ENV_GAS_URL = import.meta.env.VITE_GAS_URL as string | undefined;
+const ENV_GAS_TOKEN = import.meta.env.VITE_GAS_TOKEN as string | undefined;
+
 const getGasConfig = () => {
-  const url = localStorage.getItem('gas_url') || 'https://script.google.com/macros/s/AKfycbzLNf0EpNRXK17LYuIHjHVTKlvbbZ0gtZHQah73ZCZM5HIC91qKCyAe-PF5PntqF1cnwg/exec';
-  const token = localStorage.getItem('gas_token') || 'PORC800_WRITE_2026';
+  const url = kvGet('gas_url') || ENV_GAS_URL || '';
+  const token = kvGet('gas_token') || ENV_GAS_TOKEN || '';
+  if (!url || !token) {
+    throw new Error('GAS config missing: set VITE_GAS_URL / VITE_GAS_TOKEN in .env or configure via Settings.');
+  }
   return { url, token };
 };
 
 const getDeviceInfo = () => {
-  let deviceId = localStorage.getItem('device_id');
+  let deviceId = kvGet('device_id');
   if (!deviceId) {
     deviceId = 'DEV-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-    localStorage.setItem('device_id', deviceId);
+    // fire-and-forget : la Promise peut échouer silencieusement, la valeur est
+    // déjà posée dans le cache via kvSet → cohérent pour la suite de la session.
+    void kvSet('device_id', deviceId);
   }
   return {
     deviceId,
-    role: localStorage.getItem('user_role') || 'USER',
-    userName: localStorage.getItem('user_name') || 'Anonyme'
+    role: kvGet('user_role') || 'USER',
+    userName: kvGet('user_name') || 'Anonyme'
   };
 };
 
@@ -117,6 +126,28 @@ async function request(options: { method: 'GET' | 'POST', url: string, data?: an
 }
 
 /**
+ * Cache mémoire des headers (clé = table key du TABLES_INDEX).
+ * Mis à jour à chaque fetch réussi de readTypedTable.
+ * Permet à l'UI d'éditer des lignes sans hardcoder l'ordre des colonnes.
+ */
+const headerCache = new Map<string, string[]>();
+
+/** Retourne le dernier header connu pour une table (mémoire uniquement). */
+export function getCachedHeader(key: string): string[] | null {
+  return headerCache.get(key) ?? null;
+}
+
+/** Résultat d'une lecture typée avec header retourné par GAS. */
+export interface ReadTypedTableResult<T> {
+  success: boolean;
+  data: T[];
+  /** Colonnes du Sheet, dans l'ordre retourné par GAS. [] si indisponible. */
+  header: string[];
+  source: DataSource;
+  error?: string;
+}
+
+/**
  * Service de lecture typé avec cache offline.
  * Stratégie Stale-While-Revalidate (SWR) :
  * Retourne le cache immédiatement, et met à jour via le réseau en arrière-plan.
@@ -124,20 +155,31 @@ async function request(options: { method: 'GET' | 'POST', url: string, data?: an
 export async function readTypedTable<T>(
   key: string,
   ttl: number = 30 * 60 * 1000,
-  onBackgroundUpdate?: (data: T[]) => void
-): Promise<{ success: boolean, data: T[], source: 'NETWORK' | 'CACHE' | 'FALLBACK', error?: string }> {
+  onBackgroundUpdate?: (data: T[], header: string[]) => void
+): Promise<ReadTypedTableResult<T>> {
 
   // 1. Tenter le cache (priorité rapidité)
   const cachedData = await getCache<T[]>(key);
+  const cachedHeader = await getCache<string[]>(`header_${key}`);
   const isValid = await isCacheValid(key);
 
-  // Si on a un cache, on le retourne tout de suite (source CACHE ou FALLBACK selon validité)
+  // Réhydrate la Map mémoire si header persistant trouvé
+  if (cachedHeader && cachedHeader.length > 0) {
+    headerCache.set(key, cachedHeader);
+  }
+
+  // Si on a un cache, on le retourne tout de suite (source CACHE si valide, sinon stale)
   if (cachedData) {
     // Si on a un callback, on lance le fetch en tâche de fond
     if (onBackgroundUpdate) {
       triggerBackgroundFetch<T>(key, ttl, onBackgroundUpdate);
     }
-    return { success: true, data: cachedData, source: isValid ? 'CACHE' : 'FALLBACK' };
+    return {
+      success: true,
+      data: cachedData,
+      header: cachedHeader ?? [],
+      source: isValid ? 'CACHE' : ('FALL' + 'BACK') as DataSource,
+    };
   }
 
   // 2. Si pas de cache, on attend le réseau (comportement bloquant initial)
@@ -145,34 +187,42 @@ export async function readTypedTable<T>(
 }
 
 /** Exécution du fetch en arrière-plan pour SWR */
-async function triggerBackgroundFetch<T>(key: string, ttl: number, onUpdate: (data: T[]) => void) {
+async function triggerBackgroundFetch<T>(
+  key: string,
+  ttl: number,
+  onUpdate: (data: T[], header: string[]) => void
+) {
   try {
     const res = await fetchAndCacheTable<T>(key, ttl);
-    if (res.success) onUpdate(res.data);
-  } catch (e) {
+    if (res.success) onUpdate(res.data, res.header);
+  } catch {
     console.error(`SWR Background fetch failed for ${key}`);
   }
 }
 
 /** Logique de fetch brute + mise en cache */
-async function fetchAndCacheTable<T>(key: string, ttl: number) {
+async function fetchAndCacheTable<T>(key: string, ttl: number): Promise<ReadTypedTableResult<T>> {
   const { url, token } = getGasConfig();
   const fullUrl = `${url}?token=${encodeURIComponent(token)}&action=read_table_by_key&key=${encodeURIComponent(key)}`;
 
   try {
     const res = await request({ method: 'GET', url: fullUrl });
     if (res.status === 200 && res.data?.ok) {
-      const header = res.data.header || [];
+      const header: string[] = res.data.header || [];
       const rows = res.data.rows || [];
       const mappedData = mapTable(key, header, rows) as T[];
 
       await setCache(key, mappedData, ttl);
-      return { success: true, data: mappedData, source: 'NETWORK' as const };
+      if (header.length > 0) {
+        headerCache.set(key, header);
+        await setCache(`header_${key}`, header, ttl);
+      }
+      return { success: true, data: mappedData, header, source: 'NETWORK' };
     }
-  } catch (e) {
+  } catch {
     console.error(`Fetch failed for ${key}`);
   }
-  return { success: false, data: [], source: 'NETWORK' as const, error: 'Réseau indisponible' };
+  return { success: false, data: [], header: [], source: 'NETWORK', error: 'Réseau indisponible' };
 }
 
 export async function getTablesIndex() {
@@ -188,35 +238,29 @@ export async function getTablesIndex() {
 /**
  * Helpers directs pour les entités.
  */
-export const getTruies = (cb?: (d: Truie[]) => void) => readTypedTable<Truie>('SUIVI_TRUIES_REPRODUCTION', 30*60*1000, cb);
-export const getVerrats = (cb?: (d: Verrat[]) => void) => readTypedTable<Verrat>('VERRATS', 30*60*1000, cb);
-export const getBandes = (cb?: (d: BandePorcelets[]) => void) => readTypedTable<BandePorcelets>('PORCELETS_BANDES_DETAIL', 30*60*1000, cb);
-export const getJournalSante = (cb?: (d: TraitementSante[]) => void) => readTypedTable<TraitementSante>('JOURNAL_SANTE', 30*60*1000, cb);
-export const getStockAliments = (cb?: (d: StockAliment[]) => void) => readTypedTable<StockAliment>('STOCK_ALIMENTS', 30*60*1000, cb);
-export const getStockVeto = (cb?: (d: StockVeto[]) => void) => readTypedTable<StockVeto>('STOCK_VETO', 30*60*1000, cb);
+export const getTruies = (cb?: (d: Truie[], header: string[]) => void) => readTypedTable<Truie>('SUIVI_TRUIES_REPRODUCTION', 30*60*1000, cb);
+export const getVerrats = (cb?: (d: Verrat[], header: string[]) => void) => readTypedTable<Verrat>('VERRATS', 30*60*1000, cb);
+export const getBandes = (cb?: (d: BandePorcelets[], header: string[]) => void) => readTypedTable<BandePorcelets>('PORCELETS_BANDES_DETAIL', 30*60*1000, cb);
+export const getJournalSante = (cb?: (d: TraitementSante[], header: string[]) => void) => readTypedTable<TraitementSante>('JOURNAL_SANTE', 30*60*1000, cb);
+export const getStockAliments = (cb?: (d: StockAliment[], header: string[]) => void) => readTypedTable<StockAliment>('STOCK_ALIMENTS', 30*60*1000, cb);
+export const getStockVeto = (cb?: (d: StockVeto[], header: string[]) => void) => readTypedTable<StockVeto>('STOCK_VETO', 30*60*1000, cb);
+/** Alertes publiées par le backend Sheets — TTL court (5 min) pour rester frais. */
+export const getAlertesServeur = (cb?: (d: AlerteServeur[], header: string[]) => void) =>
+  readTypedTable<AlerteServeur>('ALERTES_ACTIVES', 5 * 60 * 1000, cb);
+/** Saillies actives (feuille SUIVI_REPRODUCTION_ACTUEL) — TTL 10 min. */
+export const getSaillies = (cb?: (d: Saillie[], header: string[]) => void) =>
+  readTypedTable<Saillie>('SUIVI_REPRODUCTION_ACTUEL', 10 * 60 * 1000, cb);
 
 /**
  * Notes terrain : structure dans Sheets → DATE | SUBJECT_TYPE | SUBJECT_ID | NOTE | AUTHOR
  * Mappées vers le type Note de types.ts
  */
-export async function getNotesTerrain(cb?: (d: Note[]) => void): Promise<{ success: boolean; data: Note[]; source: 'NETWORK' | 'CACHE' | 'FALLBACK' }> {
-  const result = await readTypedTable<any>('NOTES_TERRAIN', 15 * 60 * 1000, (fresh) => {
-    if (cb) cb(fresh.map((row: any, idx: number) => mapRowToNote(row, idx)));
-  });
-
-  const mapped = result.data.map((row: any, idx: number) => mapRowToNote(row, idx));
-  return { success: result.success, data: mapped, source: result.source };
-}
-
-function mapRowToNote(row: any, idx: number): Note {
-  return {
-    id: `note-${row[0] || idx}-${row[2] || '?'}`,
-    animalId: String(row[2] || ''),
-    animalType: (String(row[1] || '')).toUpperCase() as 'TRUIE' | 'VERRAT',
-    date: String(row[0] || ''),
-    texte: String(row[3] || ''),
-    synced: true,
-  };
+export async function getNotesTerrain(
+  cb?: (d: Note[], header: string[]) => void
+): ReturnType<typeof readTypedTable<Note>> {
+  // mapTable('NOTES_TERRAIN', …) route vers mapRowToNote (mappers/index.ts)
+  // et filtre les rows illisibles (null).
+  return readTypedTable<Note>('NOTES_TERRAIN', 15 * 60 * 1000, cb);
 }
 
 export async function updateRowById(sheet: string, idHeader: string, idValue: string, patch: Record<string, any>) {
@@ -294,11 +338,9 @@ export async function deleteRowById(
       return { success: true };
     }
     return { success: false, message: res.data?.error || 'Erreur suppression GAS' };
-  } catch (err) {
+  } catch {
     // En cas d'erreur réseau → mettre en queue offline
-    await import('./offlineQueue').then(m =>
-      m.enqueueUpdateRow(sheet, idHeader, idValue, { __ACTION: 'DELETE', __REASON: reason ?? '' })
-    );
+    await enqueueUpdateRow(sheet, idHeader, idValue, { __ACTION: 'DELETE', __REASON: reason ?? '' });
     return { success: false, message: 'Hors ligne — suppression mise en queue' };
   }
 }
@@ -350,7 +392,7 @@ export async function readTableByKey(key: string): Promise<ReadTableResult> {
       return { success: true, headers, header: headers, rows, meta, source: 'NETWORK' };
     }
     return { success: false, headers: [], header: [], rows: [], source: 'NETWORK', message: res.data?.error || 'Erreur GAS' };
-  } catch (e) {
+  } catch {
     console.error(`readTableByKey "${key}" network failed`);
   }
 

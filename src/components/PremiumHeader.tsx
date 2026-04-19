@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { IonToast, IonSpinner } from '@ionic/react';
-import { ChevronLeft, Wifi, WifiOff, CloudOff, CheckCircle2, RefreshCw, AlertTriangle } from 'lucide-react';
+import { IonToast } from '@ionic/react';
+import { ChevronLeft, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useFarm } from '../context/FarmContext';
-import { appendRow } from '../services/googleSheets';
 import { getQueueStatus } from '../services/offlineQueue';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -19,39 +18,20 @@ const PremiumHeader: React.FC<PremiumHeaderProps> = ({
   title = "PorcTrack",
   subtitle = "Ferme A130 · Terrain",
   showStatus = true,
-  cibleId,
-  module,
   children
 }) => {
-  const { syncStatus, dataSource, criticalAlertCount } = useFarm();
+  const { dataSource, criticalAlertCount } = useFarm();
   const navigate = useNavigate();
   const location = useLocation();
-  const userRole  = localStorage.getItem('user_role') || 'PORCHER';
   const userName  = localStorage.getItem('user_name') || '';
-  const [loading, setLoading] = useState(false);
   const [toast, setToast]     = useState(false);
 
   const pendingCount = getQueueStatus().pending;
   const showBack = location.pathname !== '/';
 
   const handleBack = () => {
-    window.history.length > 1 ? navigate(-1) : navigate('/', { replace: true });
-  };
-
-  const handleOkTerrain = async () => {
-    if (loading) return;
-    setLoading(true);
-    try {
-      await appendRow('NOTES_TERRAIN', [
-        new Date().toISOString(), 'OK_TERRAIN', cibleId || title,
-        'OK', `Validé par ${userName || userRole} (${module || 'Global'})`
-      ]);
-      setToast(true);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+    if (window.history.length > 1) navigate(-1);
+    else navigate('/', { replace: true });
   };
 
   const isLive = dataSource === 'NETWORK';

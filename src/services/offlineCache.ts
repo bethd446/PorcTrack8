@@ -1,4 +1,5 @@
 import { Preferences } from '@capacitor/preferences';
+import { logger } from './logger';
 
 /**
  * Enhanced cache service with TTL and metadata support.
@@ -30,12 +31,10 @@ export const getCache = async <T>(key: string): Promise<T | null> => {
 
   try {
     const entry: CacheEntry<T> = JSON.parse(value);
-    const isStale = Date.now() - entry.timestamp > entry.ttl;
-
     // In a real offline app, we might return stale data if offline,
     // but for now we follow the "staleWhileRevalidate" logic in the service.
     return entry.data;
-  } catch (e) {
+  } catch {
     return null;
   }
 };
@@ -101,7 +100,7 @@ export async function staleWhileRevalidate<T>(
       await setCache(key, freshData, ttl);
       onUpdate(freshData);
     }
-  }).catch(err => console.error(`SWR Refresh failed for ${key}:`, err));
+  }).catch(err => logger.error('offlineCache', `SWR Refresh failed for ${key}`, err));
 
   return cached;
 }

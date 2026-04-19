@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { IonApp, IonRouterOutlet } from '@ionic/react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { IonApp } from '@ionic/react';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -15,11 +15,12 @@ import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
 
 import { FarmProvider } from './context/FarmContext';
-import Navigation from './components/Navigation';
+import AgritechNav from './components/AgritechNav';
 import { loadChecklistDefinitions } from './services/checklistService';
 
 // Lazy loading — chaque écran dans son propre chunk pour réduire le bundle initial
-const Dashboard = React.lazy(() => import(/* webpackChunkName: "dashboard" */ './components/Dashboard'));
+// Cockpit agritech remplace Dashboard (Dashboard legacy supprimé — Cockpit = route `/`).
+const Cockpit = React.lazy(() => import(/* webpackChunkName: "cockpit" */ './components/Cockpit'));
 const TableView = React.lazy(() => import(/* webpackChunkName: "table-view" */ './features/tables/TableView'));
 const BandesView = React.lazy(() => import(/* webpackChunkName: "bandes" */ './features/tables/BandesView'));
 const CheptelView = React.lazy(() => import(/* webpackChunkName: "cheptel" */ './features/tables/CheptelView'));
@@ -31,6 +32,25 @@ const SyncView = React.lazy(() => import(/* webpackChunkName: "sync" */ './featu
 const ProtocolsView = React.lazy(() => import(/* webpackChunkName: "protocoles" */ './features/protocoles/ProtocolsView'));
 const AlertsView = React.lazy(() => import(/* webpackChunkName: "alertes" */ './features/tables/AlertsView'));
 const SettingsPage = React.lazy(() => import(/* webpackChunkName: "settings" */ './components/SystemManagement').then(m => ({ default: m.SettingsPage })));
+
+// New agritech hub placeholders (lazy).
+const TroupeauHub = React.lazy(() => import(/* webpackChunkName: "troupeau-hub" */ './features/hubs/TroupeauHub'));
+const CyclesHub = React.lazy(() => import(/* webpackChunkName: "cycles-hub" */ './features/hubs/CyclesHub'));
+const RessourcesHub = React.lazy(() => import(/* webpackChunkName: "ressources-hub" */ './features/hubs/RessourcesHub'));
+const PilotageHub = React.lazy(() => import(/* webpackChunkName: "pilotage-hub" */ './features/hubs/PilotageHub'));
+const ComingSoon = React.lazy(() => import(/* webpackChunkName: "coming-soon" */ './features/hubs/ComingSoon'));
+
+// Agritech troupeau sub-screens (new dense lists — coexist with /cheptel).
+const TruiesListView = React.lazy(() => import(/* webpackChunkName: "truies-list" */ './features/troupeau/TruiesListView'));
+
+// Agritech ressources sub-screens.
+const PlanAlimentationView = React.lazy(() => import(/* webpackChunkName: "plan-alim" */ './features/ressources/PlanAlimentationView'));
+
+// Agritech cycles sub-screens (Sprint 2 livrés).
+const ReproCalendarView = React.lazy(() => import(/* webpackChunkName: "cycle-repro" */ './features/cycles/ReproCalendarView'));
+const MaterniteView = React.lazy(() => import(/* webpackChunkName: "cycle-maternite" */ './features/cycles/MaterniteView'));
+const PostSevrageView = React.lazy(() => import(/* webpackChunkName: "cycle-postsevrage" */ './features/cycles/PostSevrageView'));
+const EngraissementView = React.lazy(() => import(/* webpackChunkName: "cycle-engraissement" */ './features/cycles/EngraissementView'));
 
 // Placeholder for missing components
 const StockHub = () => (
@@ -56,7 +76,8 @@ const AppContent = () => {
         </div>
       }>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          {/* ── Legacy routes (preserved for compat) ─────────────────── */}
+          <Route path="/" element={<Cockpit />} />
           <Route path="/controle" element={<ControleQuotidien />} />
           <Route path="/cheptel" element={<CheptelView />} />
           <Route path="/cheptel/truie/:id" element={<AnimalDetailView mode="TRUIE" />} />
@@ -73,9 +94,59 @@ const AppContent = () => {
           <Route path="/alerts" element={<AlertsView />} />
           <Route path="/sync" element={<SyncView />} />
           <Route path="/more" element={<SettingsPage />} />
+
+          {/* ── New agritech hubs ─────────────────────────────────────── */}
+          <Route path="/troupeau" element={<TroupeauHub />} />
+          <Route path="/cycles" element={<CyclesHub />} />
+          <Route path="/ressources" element={<RessourcesHub />} />
+          <Route path="/pilotage" element={<PilotageHub />} />
+
+          {/* ── Troupeau sub-routes (new dense lists — coexist with /cheptel) ── */}
+          <Route path="/troupeau/truies" element={<TruiesListView />} />
+          <Route path="/troupeau/verrats" element={<CheptelView initialTab="VERRAT" />} />
+          <Route path="/troupeau/truies/:id" element={<AnimalDetailView mode="TRUIE" />} />
+          <Route path="/troupeau/verrats/:id" element={<AnimalDetailView mode="VERRAT" />} />
+          <Route path="/troupeau/bandes" element={<BandesView />} />
+          <Route path="/troupeau/bandes/:bandeId" element={<BandesView />} />
+
+          {/* ── Cycles sub-routes (Sprint 2 livrés — vues opérationnelles) ─ */}
+          <Route path="/cycles/repro" element={<ReproCalendarView />} />
+          <Route path="/cycles/maternite" element={<MaterniteView />} />
+          <Route path="/cycles/post-sevrage" element={<PostSevrageView />} />
+          <Route path="/cycles/engraissement" element={<EngraissementView />} />
+
+          {/* ── Pilotage sub-routes (redirects onto legacy + ComingSoon) ── */}
+          <Route path="/pilotage/alertes" element={<Navigate to="/alerts" replace />} />
+          <Route path="/pilotage/reglages" element={<Navigate to="/more" replace />} />
+          <Route path="/pilotage/audit" element={<Navigate to="/audit" replace />} />
+          <Route
+            path="/pilotage/perf"
+            element={
+              <ComingSoon
+                title="Performance"
+                subtitle="GMQ · IC · productivité"
+                backTo="/pilotage"
+              />
+            }
+          />
+          <Route
+            path="/pilotage/finances"
+            element={
+              <ComingSoon
+                title="Finances"
+                subtitle="Marges · charges"
+                backTo="/pilotage"
+              />
+            }
+          />
+
+          {/* ── Ressources sub-routes ─────────────────────────────────── */}
+          <Route path="/ressources/aliments" element={<TableView tableKey="STOCK_ALIMENTS" />} />
+          <Route path="/ressources/aliments/plan" element={<PlanAlimentationView />} />
+          <Route path="/ressources/veto" element={<TableView tableKey="STOCK_VETO" />} />
         </Routes>
       </React.Suspense>
-      <Navigation />
+      <AgritechNav />
     </IonApp>
   );
 };

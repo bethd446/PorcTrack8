@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="PorcTrack mark">
+  <!-- Hexagone ingénieur -->
+  <path d="M32 4 L56 18 L56 46 L32 60 L8 46 L8 18 Z" />
+  <!-- Triangle interne évoquant un groin / boucle d'oreille stylisée -->
+  <path d="M22 26 L42 26 L32 44 Z" />
+  <!-- Point signal (ear-tag marker) -->
+  <circle cx="32" cy="22" r="1.25" fill="#10B981" stroke="none" />
+</svg>

@@ -1,0 +1,157 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PorcTrack 8 — Agritech Moderne · Utility Classes
+   Dense-dashboard primitives: KPI blocks, chips, cards, tables.
+   Uses tokens declared in agritech-tokens.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer components {
+  /* ── KPI Blocks ──────────────────────────────────────────────────────── */
+  .kpi-label {
+    font-family: var(--font-mono-jb);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-2);
+  }
+
+  .kpi-value {
+    font-family: var(--font-mono-jb);
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    color: var(--color-text-0);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "zero" 1;
+  }
+
+  .kpi-delta-up {
+    font-family: var(--font-mono-jb);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .kpi-delta-down {
+    font-family: var(--font-mono-jb);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-red);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Chips (status / filter / meta) ──────────────────────────────────── */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 2px 8px;
+    font-family: var(--font-mono-jb);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-text-1);
+    background: transparent;
+  }
+  .chip--accent { color: var(--color-accent); border-color: var(--color-accent-dim); }
+  .chip--amber  { color: var(--color-amber);  border-color: color-mix(in srgb, var(--color-amber) 40%, transparent); }
+  .chip--red    { color: var(--color-red);    border-color: color-mix(in srgb, var(--color-red) 40%, transparent); }
+  .chip--blue   { color: var(--color-blue);   border-color: color-mix(in srgb, var(--color-blue) 40%, transparent); }
+  .chip--gold   { color: var(--color-gold);   border-color: color-mix(in srgb, var(--color-gold) 40%, transparent); }
+
+  /* ── Agritech root surface ─────────────────────────────────────────────
+     Applied by `<AgritechLayout>`. Opt-in dark cockpit surface — does NOT
+     affect legacy screens that don't wrap with this component.
+     ──────────────────────────────────────────────────────────────────── */
+  .agritech-root {
+    background: var(--color-bg-0);
+    color: var(--color-text-0);
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  .agritech-root input,
+  .agritech-root textarea,
+  .agritech-root select {
+    color-scheme: dark;
+  }
+
+  /* ── Dense card (dashboard surface) ──────────────────────────────────── */
+  .card-dense {
+    background: var(--color-bg-1);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    transition: background-color 160ms var(--ease-out-expo),
+                border-color 160ms var(--ease-out-expo);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .card-dense:hover {
+      background: var(--color-bg-2);
+    }
+  }
+
+  /* ── Data tables (mono, tight, zebra on hover) ───────────────────────── */
+  .data-table {
+    width: 100%;
+    font-family: var(--font-mono-jb);
+    font-size: 12px;
+    color: var(--color-text-1);
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+  }
+  .data-table thead th {
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-2);
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg-0);
+  }
+  .data-table tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .data-table tbody tr:last-child td { border-bottom: 0; }
+
+  .data-row {
+    transition: background-color 160ms var(--ease-out-expo),
+                box-shadow 160ms var(--ease-out-expo);
+    border-left: 2px solid transparent;
+  }
+  .data-row:hover {
+    background: var(--color-bg-2);
+    border-left-color: var(--color-accent);
+  }
+
+  /* ── Surface helpers (useful as raw utilities) ───────────────────────── */
+  .surface-0 { background: var(--color-bg-0); color: var(--color-text-0); }
+  .surface-1 { background: var(--color-bg-1); color: var(--color-text-0); }
+  .surface-2 { background: var(--color-bg-2); color: var(--color-text-0); }
+
+  /* ── Display heading (Big Shoulders) ─────────────────────────────────── */
+  .agritech-heading {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--color-text-0);
+    text-transform: none;
+  }
+
+  /* ── Hairline divider ────────────────────────────────────────────────── */
+  .agritech-hairline {
+    height: 1px;
+    background: var(--color-border);
+    border: 0;
+  }
+}
