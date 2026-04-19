@@ -5,6 +5,9 @@ import { TruieIcon, VerratIcon, BandeIcon } from '../../components/icons';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { HubTile, Chip, SectionDivider } from '../../components/agritech';
+import TruieStatutPipeline, {
+  type TruieEtape,
+} from '../../components/truie/TruieStatutPipeline';
 import { useFarm } from '../../context/FarmContext';
 import { FARM_CONFIG } from '../../config/farm';
 import {
@@ -66,6 +69,21 @@ const TroupeauHub: React.FC = () => {
       engraissementOcc,
     };
   }, [truies, verrats, bandes]);
+
+  /**
+   * Funnel reproductif — ordre : attente → pleine → maternité → à surveiller.
+   * "À surveiller" est positionné en bout de chaîne : cycle interrompu / à
+   * investiguer (refus allaitement, réforme…).
+   */
+  const pipelineEtapes: TruieEtape[] = useMemo(
+    () => [
+      { key: 'attente',    label: 'En attente',   count: stats.truiesAttente, tone: 'default' },
+      { key: 'pleine',     label: 'Pleines',      count: stats.truiesPleines, tone: 'accent'  },
+      { key: 'maternite',  label: 'Maternité',    count: stats.truiesMater,   tone: 'gold'    },
+      { key: 'surveiller', label: 'À surveiller', count: stats.truiesSurv,    tone: 'amber'   },
+    ],
+    [stats.truiesAttente, stats.truiesPleines, stats.truiesMater, stats.truiesSurv],
+  );
 
   return (
     <IonPage>
@@ -133,6 +151,15 @@ const TroupeauHub: React.FC = () => {
                 occupation={stats.engraissementOcc}
               />
             </div>
+
+            <SectionDivider label="Reproduction" />
+
+            {/* Pipeline reproduction — funnel visuel cliquable */}
+            <TruieStatutPipeline
+              basePath="/troupeau/truies"
+              total={truies.length}
+              etapes={pipelineEtapes}
+            />
 
             <SectionDivider label="Sous-sections" />
 

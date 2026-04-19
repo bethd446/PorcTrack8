@@ -3,6 +3,47 @@
 
 ---
 
+## Leçons Techniques — Sprint 5 (19/04/2026)
+
+### Pattern pipeline statut (Troupeau + Cycles)
+Un "pipeline" UI est un funnel horizontal d'étapes cliquables, chaque étape ayant :
+- `key` (identifiant URL), `label` (FR), `count` (valeur numérique live), `tone` (default/accent/gold/amber)
+- Un `basePath` prop pour construire la route cible (ex : `/troupeau/truies?statut=attente`)
+- Calcul `count` via `useMemo()` sur `useFarm()` pour éviter les re-renders
+
+Structure réutilisable : `TruieStatutPipeline` (Troupeau) et `PipelineBar` (Cycles inline) suivent le même pattern. Extraire en composant `<StagePipeline>` générique lors du Sprint 6 si un troisième cas apparaît.
+
+### Bug mapAlerteServeur avec rows GAS malformées → regex filter
+Le script Apps Script côté Google Sheets injecte parfois des lignes ALERTES_ACTIVES corrompues :
+> `"Mortalité élevée: 100% (1729876543210/..GMT+0100 Mon Apr..."`
+
+Signature reconnaissable : `100%` suivi d'un timestamp Unix 13 digits entre parenthèses. Solution :
+```ts
+if (/mortalit[eé]\s*(?:\w+\s*)?:\s*100\s*%.*\(\d{10,}\s*\/.*GMT/i.test(descRaw)) return null;
+```
+Plus `mapTable` filtre `null` via `.filter((a): a is AlerteServeur => a !== null)`. Signature du mapper changée : retourne `AlerteServeur | null`.
+
+### GAS API limits (connector v5)
+- Pas de `create_sheet` programmatique sur les Sheets `EDITABLE=false`
+- Pas de `delete` sur les Sheets `EDITABLE=false` — contournement : filtrer côté mapper
+- Les colonnes d'agrégat RECAP/TOTAL apparaissent dans les requêtes — filtrer par `.id.toUpperCase().startsWith('TOTAL')`
+- Les lignes squelettes (libellé vide) sortent aussi — filtrer par `v.produit && v.produit.trim() !== ''`
+
+### Nested worktrees → eslint ignore ne marche pas par défaut
+Les worktrees Claude (`.claude/worktrees/<branch>/`) contiennent l'arbre complet du repo — ESLint lint récursivement ces fichiers et spam les warnings. Solutions :
+- `eslint.config.js` : `ignores: ['.claude/**/*', '**/.claude/**/*', 'worktrees/**/*']`
+- `package.json` script : `"lint": "tsc --noEmit && eslint src scripts --ignore-pattern '.claude/**' --ignore-pattern 'node_modules/**'"`
+- Scoper ESLint à `src scripts` au lieu de `.` global
+- Les deux mécanismes sont redondants (défense en profondeur) car `ignores` ne s'applique pas toujours aux chemins passés explicitement en CLI
+
+### `cd` dans Bash : main vs worktree
+Le CWD ne persiste PAS entre commandes Bash — toujours utiliser paths absolus. Mais ATTENTION : un worktree Claude à `.claude/worktrees/<branch>/` est SUR UNE AUTRE BRANCHE. Un `git diff` depuis main ne verra pas les mods du worktree sauf si explicitement on `cd` dans le worktree et `git diff`. Pour QA inter-agents, vérifier `git worktree list` puis aller voir dans chaque worktree.
+
+### Les fixes mapper + filtrage → 85 produits véto deviennent 7
+Avant : `STOCK_VETO` retournait 85 rows (dont 78 squelettes). Après filtrage : ~7 produits réels. Même logique `STOCK_ALIMENTS`. À retenir : une source Sheets peut retourner BEAUCOUP de bruit — toujours filtrer au mapper, pas au composant.
+
+---
+
 ## Préférences du Client
 
 ### Style de travail

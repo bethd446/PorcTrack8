@@ -1,7 +1,19 @@
-import React, { useMemo, useState } from 'react';
-import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
-import { Search } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  IonContent,
+  IonPage,
+  IonRefresher,
+  IonRefresherContent,
+} from '@ionic/react';
+import {
+  Search,
+  MoreVertical,
+  Baby,
+  PackageCheck,
+  AlertTriangle,
+  Eye,
+} from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useFarm } from '../../context/FarmContext';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
@@ -11,6 +23,7 @@ import type { ChipTone } from '../../components/agritech';
 import { TruieIcon } from '../../components/icons';
 import type { Truie } from '../../types/farm';
 import { FARM_CONFIG } from '../../config/farm';
+import { enqueueUpdateRow } from '../../services/offlineQueue';
 
 /** Filter bucket keys. `all` shows every truie. */
 type FilterKey = 'all' | 'pleine' | 'maternite' | 'attente' | 'surveiller';
@@ -29,6 +42,19 @@ const FILTERS: FilterDef[] = [
   { key: 'surveiller',  label: 'À surveiller',  match: (t) => /surveill|réform|reforme/i.test(t.statut) },
 ];
 
+/** Valid filter keys parsed from ?statut=X. */
+const FILTER_KEYS: readonly FilterKey[] = [
+  'all',
+  'pleine',
+  'maternite',
+  'attente',
+  'surveiller',
+];
+
+function isFilterKey(s: string | null): s is FilterKey {
+  return !!s && (FILTER_KEYS as readonly string[]).includes(s);
+}
+
 /** Chip tone mapping derived from the truie statut. */
 function toneForStatut(statut: string): ChipTone {
   const s = statut.toLowerCase();
@@ -38,6 +64,71 @@ function toneForStatut(statut: string): ChipTone {
   if (s.includes('surveill') || s.includes('réform') ||
       s.includes('reforme'))                                 return 'amber';
   return 'default';
+}
+
+/** DD/MM/YYYY → Date | null (local time, midnight). */
+function parseFrDate(value: string | undefined): Date | null {
+  if (!value) return null;
+  const m = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!m) return null;
+  const d = Number(m[1]);
+  const mo = Number(m[2]);
+  const y = Number(m[3]);
+  if (!d || !mo || !y) return null;
+  const dt = new Date(y, mo - 1, d);
+  return Number.isNaN(dt.getTime()) ? null : dt;
+}
+
+/** Integer day offset from today (negative = past, positive = future). */
+function daysUntilFr(frDate: string | undefined): number | null {
+  const dt = parseFrDate(frDate);
+  if (!dt) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  dt.setHours(0, 0, 0, 0);
+  return Math.round((dt.getTime() - today.getTime()) / 86_400_000);
+}
+
+interface EcheanceBadge {
+  label: string;
+  tone: ChipTone;
+}
+
+/**
+ * Derive a single "échéance" badge for a truie.
+ * Priorité :
+ *   1. Maternité → "Sevrage J+X/21" (J+ depuis J0 de la lactation, approximé
+ *      par `dateMBPrevue` faute de `dateMBReelle` côté SUIVI_TRUIES).
+ *   2. Pleine/Attente → MB prévue (red ≤14j, amber ≤30j, default >30j).
+ */
+function echeanceFor(t: Truie): EcheanceBadge | null {
+  const isMater = /mater|allait|lactation/i.test(t.statut);
+  const offset = daysUntilFr(t.dateMBPrevue);
+
+  if (isMater) {
+    if (offset === null) return null;
+    // En maternité : MB est dans le passé → offset négatif. J+ = -offset.
+    const dayInLactation = Math.max(0, -offset);
+    // Cycle canonique 21 jours ; on borne l'affichage.
+    const display = Math.min(dayInLactation, 99);
+    const tone: ChipTone =
+      dayInLactation >= 21 ? 'red' : dayInLactation >= 18 ? 'amber' : 'gold';
+    return { label: `Sevrage J+${display}/21`, tone };
+  }
+
+  if (offset === null) return null;
+  if (offset < 0) {
+    // MB prévue dépassée sans être en maternité → urgence rouge
+    return { label: `MB J${offset}`, tone: 'red' };
+  }
+  if (offset <= 14) return { label: `MB J-${offset}`, tone: 'red' };
+  if (offset <= 30) return { label: `MB J-${offset}`, tone: 'amber' };
+  // >30j : rappel discret
+  if (t.dateMBPrevue) {
+    const short = t.dateMBPrevue.split('/').slice(0, 2).join('/');
+    return { label: `MB ${short}`, tone: 'default' };
+  }
+  return null;
 }
 
 /** Skeleton placeholder row. Declared at module scope so React 19 does not
@@ -55,18 +146,111 @@ const SkeletonRow: React.FC = () => (
   </div>
 );
 
+/** Quick action target statuts (value written back to Sheets). */
+const STATUT_PLEINE = 'Pleine';
+const STATUT_SEVREE = 'En attente saillie'; // Post-sevrage → cycle redémarre
+const STATUT_SURVEILLER = 'À surveiller';
+
+type ActionKey = 'pleine' | 'sevree' | 'surveiller' | 'detail';
+
+interface ActionDef {
+  key: ActionKey;
+  label: string;
+  Icon: React.ComponentType<{ size?: number }>;
+  available: (t: Truie) => boolean;
+}
+
+const ACTIONS: ActionDef[] = [
+  {
+    key: 'pleine',
+    label: 'Marquer pleine',
+    Icon: Baby,
+    available: (t) => /attente|saillie|vide/i.test(t.statut),
+  },
+  {
+    key: 'sevree',
+    label: 'Marquer sevrée',
+    Icon: PackageCheck,
+    available: (t) => /mater|allait|lactation/i.test(t.statut),
+  },
+  {
+    key: 'surveiller',
+    label: 'À surveiller',
+    Icon: AlertTriangle,
+    available: () => true,
+  },
+  {
+    key: 'detail',
+    label: 'Voir détail',
+    Icon: Eye,
+    available: () => true,
+  },
+];
+
 /**
  * TruiesListView — liste dense des truies (Agritech cockpit).
  *
  * N.B. Ce composant coexiste avec `CheptelView` qui reste monté sur `/cheptel`.
  * Monté sur `/troupeau/truies`.
+ *
+ * Query params :
+ *   ?statut=pleine|maternite|attente|surveiller  → filtre pré-sélectionné
+ *   (provient typiquement du `TruieStatutPipeline` sur TroupeauHub).
  */
 const TruiesListView: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { truies, loading, refreshData } = useFarm();
 
-  const [filter, setFilter]       = useState<FilterKey>('all');
+  const initialFilter: FilterKey = useMemo(() => {
+    const q = new URLSearchParams(location.search).get('statut');
+    return isFilterKey(q) ? q : 'all';
+  }, [location.search]);
+
+  const [filter, setFilter]       = useState<FilterKey>(initialFilter);
   const [searchText, setSearchText] = useState('');
+  const [menuFor, setMenuFor]     = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // Keep local filter in sync if the URL changes (e.g. second tap on pipeline)
+  useEffect(() => {
+    setFilter(initialFilter);
+  }, [initialFilter]);
+
+  // Reflect current filter in URL without navigation history spam
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const current = params.get('statut');
+    const target = filter === 'all' ? null : filter;
+    if (current === target) return;
+    if (target) params.set('statut', target);
+    else params.delete('statut');
+    const next = params.toString();
+    navigate(
+      { pathname: location.pathname, search: next ? `?${next}` : '' },
+      { replace: true },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter]);
+
+  // Close dropdown on outside-click / Escape
+  useEffect(() => {
+    if (!menuFor) return;
+    const onDown = (e: MouseEvent): void => {
+      if (!menuRef.current) return;
+      if (!menuRef.current.contains(e.target as Node)) setMenuFor(null);
+    };
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') setMenuFor(null);
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [menuFor]);
 
   const activeFilter = useMemo(
     () => FILTERS.find(f => f.key === filter) ?? FILTERS[0],
@@ -93,6 +277,24 @@ const TruiesListView: React.FC = () => {
       );
   }, [truies, activeFilter, searchText]);
 
+  // Compteurs live par bucket (basés sur la liste COMPLÈTE, pas la recherche)
+  const counts = useMemo(() => {
+    const acc: Record<FilterKey, number> = {
+      all: truies.length,
+      pleine: 0,
+      maternite: 0,
+      attente: 0,
+      surveiller: 0,
+    };
+    for (const t of truies) {
+      for (const f of FILTERS) {
+        if (f.key === 'all') continue;
+        if (f.match(t)) acc[f.key] += 1;
+      }
+    }
+    return acc;
+  }, [truies]);
+
   // Ration moyenne sur TOUTES les truies (pas le filtre)
   const rationMoy = useMemo(() => {
     if (truies.length === 0) return 0;
@@ -103,6 +305,37 @@ const TruiesListView: React.FC = () => {
   const handleRefresh = async (e: CustomEvent<{ complete: () => void }>) => {
     await refreshData();
     e.detail.complete();
+  };
+
+  const runAction = async (t: Truie, action: ActionKey): Promise<void> => {
+    setMenuFor(null);
+    if (action === 'detail') {
+      navigate(`/troupeau/truies/${t.id}`);
+      return;
+    }
+
+    const nextStatut =
+      action === 'pleine'     ? STATUT_PLEINE    :
+      action === 'sevree'     ? STATUT_SEVREE    :
+      action === 'surveiller' ? STATUT_SURVEILLER : null;
+    if (!nextStatut) return;
+
+    setPendingAction(t.id);
+    try {
+      await enqueueUpdateRow(
+        'TRUIES_REPRODUCTION',
+        'ID',
+        t.id,
+        { Statut: nextStatut },
+      );
+      // Refresh pour refléter le changement dès le retour worker.
+      await refreshData();
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[TruiesListView] action error', err);
+    } finally {
+      setPendingAction(null);
+    }
   };
 
   return (
@@ -120,24 +353,24 @@ const TruiesListView: React.FC = () => {
           />
 
           <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
-            {/* Filter bar (horizontal scroll) */}
+            {/* Filter chips (horizontal scroll, role=tablist) */}
             <div
               className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1"
-              role="group"
-              aria-label="Filtres statut"
+              role="tablist"
+              aria-label="Filtres statut truie"
               style={{ scrollbarWidth: 'none' }}
             >
               {FILTERS.map(f => {
-                const count = f.key === 'all'
-                  ? truies.length
-                  : truies.filter(f.match).length;
+                const count = counts[f.key];
                 const isActive = f.key === filter;
                 return (
                   <button
                     key={f.key}
                     type="button"
+                    role="tab"
                     onClick={() => setFilter(f.key)}
-                    aria-pressed={isActive}
+                    aria-selected={isActive}
+                    aria-controls="truies-liste"
                     className={[
                       'pressable shrink-0 inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5',
                       'transition-colors duration-150',
@@ -227,9 +460,10 @@ const TruiesListView: React.FC = () => {
               </div>
             ) : (
               <div
+                id="truies-liste"
                 role="list"
                 aria-label="Liste des truies"
-                className="rounded-md border border-border bg-bg-1 overflow-hidden"
+                className="rounded-md border border-border bg-bg-1 overflow-hidden relative"
               >
                 {filteredTruies.map(t => {
                   const boucle = t.boucle ? `B.${t.boucle}` : '—';
@@ -237,28 +471,104 @@ const TruiesListView: React.FC = () => {
                   const primary = `${boucle} · ${t.displayId}${namePart}`;
 
                   const secondaryParts: string[] = [t.statut];
-                  if (t.dateMBPrevue) {
-                    secondaryParts.push(`MB prév. ${t.dateMBPrevue}`);
-                  }
                   if (t.ration) {
                     secondaryParts.push(`${t.ration}kg`);
                   }
                   const secondary = secondaryParts.join(' · ');
 
+                  const echeance = echeanceFor(t);
+                  const isMenuOpen = menuFor === t.id;
+                  const isPending = pendingAction === t.id;
+                  const availableActions = ACTIONS.filter(a => a.available(t));
+
                   return (
-                    <div role="listitem" key={t.id}>
+                    <div role="listitem" key={t.id} className="relative">
                       <DataRow
                         primary={primary}
                         secondary={secondary}
                         accessory={
-                          <Chip
-                            label={t.statut}
-                            tone={toneForStatut(t.statut)}
-                            size="xs"
-                          />
+                          <div className="flex items-center gap-1.5">
+                            {echeance ? (
+                              <Chip
+                                label={echeance.label}
+                                tone={echeance.tone}
+                                size="xs"
+                              />
+                            ) : null}
+                            <Chip
+                              label={t.statut}
+                              tone={toneForStatut(t.statut)}
+                              size="xs"
+                            />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setMenuFor(isMenuOpen ? null : t.id);
+                              }}
+                              aria-label={`Actions pour ${t.displayId}`}
+                              aria-haspopup="menu"
+                              aria-expanded={isMenuOpen}
+                              disabled={isPending}
+                              className={[
+                                'pressable inline-flex h-8 w-8 items-center justify-center rounded-md',
+                                'text-text-2 hover:bg-bg-2 hover:text-text-0',
+                                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
+                                isPending ? 'opacity-40 cursor-not-allowed' : '',
+                              ].join(' ')}
+                            >
+                              {isPending ? (
+                                <span className="animate-pulse font-mono text-[10px]">
+                                  …
+                                </span>
+                              ) : (
+                                <MoreVertical size={14} aria-hidden="true" />
+                              )}
+                            </button>
+                          </div>
                         }
                         onClick={() => navigate(`/troupeau/truies/${t.id}`)}
                       />
+
+                      {isMenuOpen ? (
+                        <div
+                          ref={menuRef}
+                          role="menu"
+                          aria-label={`Actions ${t.displayId}`}
+                          className={[
+                            'absolute right-2 top-[calc(100%-6px)] z-20',
+                            'min-w-[200px] rounded-md border border-border bg-bg-1',
+                            'shadow-lg overflow-hidden',
+                            'animate-scale-in origin-top-right',
+                          ].join(' ')}
+                        >
+                          {availableActions.map((a, idx) => {
+                            const Icon = a.Icon;
+                            return (
+                              <button
+                                key={a.key}
+                                type="button"
+                                role="menuitem"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void runAction(t, a.key);
+                                }}
+                                style={{ transitionDelay: `${idx * 30}ms` }}
+                                className={[
+                                  'pressable w-full flex items-center gap-2.5 px-3 py-2.5 text-left',
+                                  'text-text-0 hover:bg-bg-2',
+                                  'font-mono text-[12px] uppercase tracking-wide',
+                                  'border-b border-border last:border-b-0',
+                                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-2px]',
+                                ].join(' ')}
+                              >
+                                <Icon size={14} aria-hidden="true" />
+                                <span>{a.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : null}
                     </div>
                   );
                 })}

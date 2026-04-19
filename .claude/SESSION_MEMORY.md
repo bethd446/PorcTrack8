@@ -1,8 +1,60 @@
 # PorcTrack 8 — Mémoire de Session
-> Dernière mise à jour : 17 avril 2026 (Session 5 — Cowork: Audit Complet Phase 1)
-> Sessions complétées : UX/UI, Design System, Animations, Assets, Modernisation Design Tokens, Refonte Complète Tailwind, Phase 1+2 Audit UI/UX (worktree), **Session 5 Cowork: Audit Phase 1 Complet (branche main)**
+> Dernière mise à jour : 19 avril 2026 (Sprint 5 — pipelines Troupeau/Cycles/Ressources + nouvelles vues)
+> Sessions complétées : UX/UI, Design System, Animations, Assets, Modernisation Design Tokens, Refonte Complète Tailwind, Phase 1+2 Audit UI/UX (worktree), Session 5 Cowork: Audit Phase 1 Complet (branche main), Sprint 2 (Cycles), Sprint 3 (Pilotage), Sprint 4 (Intelligence), **Sprint 5 (pipelines + PharmacieView + FinitionView)**
 
-## DERNIÈRE SESSION — Cowork Audit Phase 1 Complet (17 avril 2026)
+## DERNIÈRE SESSION — Sprint 5 Pipelines (19 avril 2026)
+
+### Contexte
+4 agents parallèles : Agent 1 Troupeau, Agent 2 Cycles, Agent 3 Ressources, Agent 4 QA (moi). Travail en branche main directe.
+
+### Travail effectué (4 agents)
+
+**Agent 1 — Troupeau** (`src/features/hubs/TroupeauHub.tsx`, `src/components/truie/TruieStatutPipeline.tsx`)
+- Nouveau composant `TruieStatutPipeline` (143 LOC) — funnel reproductif 4 étapes : attente → pleine → maternité → à surveiller
+- TroupeauHub affiche le pipeline cliquable (chaque étape navigue vers `/troupeau/truies?statut=…`)
+- TruiesListView déjà existante — mémorisé côté TruieStatutPipeline via `basePath` prop
+
+**Agent 2 — Cycles** (`src/features/hubs/CyclesHub.tsx`, `src/features/cycles/FinitionView.tsx`)
+- CyclesHub refondu (+336 LOC) — pipeline visuel horizontal 5 étapes : Gestation → Maternité → Post-sevrage → Engraissement → Finition
+- Summary strip : porcelets vivants + sorties abattoir
+- Nouvelle `FinitionView.tsx` (400 LOC) — étape finale avant abattoir
+- Route : `/cycles/finition`
+
+**Agent 3 — Ressources** (`src/features/hubs/RessourcesHub.tsx`, `src/features/ressources/PharmacieView.tsx`)
+- RessourcesHub enrichi : bannière alertes RUPTURE (Aliments + Véto) + HubTile Pharmacie
+- Nouvelle `PharmacieView.tsx` (241 LOC) — vue stock vétérinaire
+- Route : `/ressources/pharmacie`
+
+**Agent 4 — QA** (moi)
+- Vérifications globales + audit routes App.tsx + audit design coherence
+- Mises à jour mémoires projet + commit final + install APK
+
+### Fichiers touchés (synthèse)
+- Modifiés : `eslint.config.js`, `package.json`, `src/features/hubs/CyclesHub.tsx`, `src/features/hubs/TroupeauHub.tsx`, `src/mappers/index.ts`, `src/App.tsx`, `src/features/hubs/RessourcesHub.tsx`
+- Créés : `src/components/truie/TruieStatutPipeline.tsx`, `src/features/cycles/FinitionView.tsx`, `src/features/ressources/PharmacieView.tsx`
+
+### Métriques finales
+- `npx tsc --noEmit` : 0 erreur
+- `npm run test:unit` : 264 tests passed (13 files)
+- `npm run build` : OK 2.04s (vendor-ionic 1113kb gzip 229kb — warning chunk size acceptable)
+- `npm run lint` : 0 erreur 0 warning
+
+### État des Sheets (après fixes mapper commit 10abb86)
+- `STOCK_VETO` : variantes en-têtes acceptées (LIBELLÉ/LIBELLE/STOCK_ACTUEL/STOCK_MIN/ALERTE_STOCK_BAS) + filtre rows squelettes (85 → ~7 produits réels)
+- `PORCELETS_BANDES_DETAIL` : filtre ligne RECAP (ID startsWith `TOTAL`)
+- `ALERTES_ACTIVES` : filtre bug GAS "Mortalité 100% + timestamp GMT" (mapper retourne `null`)
+- `STOCK_ALIMENTS` : filtre rows squelettes sans libellé
+
+### Points restants pour Sprint 6
+- Pipeline TroupeauHub : statuts "à surveiller" nécessite hook FarmContext dédié (pour l'instant compte 0)
+- FinitionView : cible abattage (J+180) à connecter au vrai calendrier sortie
+- PharmacieView : liaison bouton commande → formulaire approvisionnement
+- Bundle ionic 1.1 MB : envisager code-splitting plus agressif
+- Nested worktrees (`.claude/worktrees/*`) polluent ESLint et git status — tenir ignore lists à jour
+
+---
+
+## SESSION PRÉCÉDENTE — Cowork Audit Phase 1 Complet (17 avril 2026)
 
 ### Travail effectué (branche main directe, pas worktree)
 - **111 IonIcon → Lucide React** migré dans 19 fichiers (0 IonIcon restant, ionicons/icons éliminé)

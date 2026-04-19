@@ -282,13 +282,13 @@ export const mapStockAliment = (header: string[], row: RawRow): StockAliment => 
 // ─── STOCK VETO ──────────────────────────────────────────────────────────────
 export const mapStockVeto = (header: string[], row: RawRow): StockVeto => {
   const idIdx = findIdx(header, 'ID');
-  const pIdx = findIdx(header, 'PRODUIT', 'NOM');
+  const pIdx = findIdx(header, 'LIBELLÉ', 'LIBELLE', 'PRODUIT', 'NOM');
   const tIdx = findIdx(header, 'TYPE');
   const usIdx = findIdx(header, 'USAGE');
-  const qIdx = findIdx(header, 'STOCK ACTUEL', 'STOCK');
+  const qIdx = findIdx(header, 'STOCK_ACTUEL', 'STOCK ACTUEL', 'STOCK');
   const uIdx = findIdx(header, 'UNITÉ', 'UNITE');
-  const smIdx = findIdx(header, 'STOCK MIN', 'STOCK_MIN');
-  const aIdx = findIdx(header, 'SEUIL ALERTE', 'SEUIL_ALERTE', 'ALERTE');
+  const smIdx = findIdx(header, 'STOCK_MIN', 'STOCK MIN');
+  const aIdx = findIdx(header, 'ALERTE_STOCK_BAS', 'SEUIL ALERTE', 'SEUIL_ALERTE', 'ALERTE');
   const sIdx = findIdx(header, 'STATUT');
   const noIdx = findIdx(header, 'NOTES');
 
@@ -493,13 +493,21 @@ export const mapFormuleRow = (
  *
  * Schéma : Priorité · Catégorie · Sujet · Alerte · Action requise · Date.
  */
-export const mapAlerteServeur = (header: string[], row: RawRow): AlerteServeur => {
+export const mapAlerteServeur = (header: string[], row: RawRow): AlerteServeur | null => {
   const prIdx = findIdx(header, 'PRIORITÉ', 'PRIORITE', 'PRIO');
   const caIdx = findIdx(header, 'CATÉGORIE', 'CATEGORIE', 'CAT');
   const suIdx = findIdx(header, 'SUJET');
-  const deIdx = findIdx(header, 'ALERTE', 'DESCRIPTION');
+  const deIdx = findIdx(header, 'ALERTE', 'DESCRIPTION', 'DÉTAIL', 'DETAIL');
   const acIdx = findIdx(header, 'ACTION REQUISE', 'ACTION_REQUISE', 'ACTION');
   const daIdx = findIdx(header, 'DATE');
+
+  const descRaw = readStr(row, deIdx);
+  // Filtre rows fantômes : le GAS script émet des alertes "Mortalité élevée: 100%" avec
+  // des timestamps Unix en lieu et place des champs morts/nv. Signature : "100%" suivi
+  // de "(1xxxxxxxxxx…/" (timestamp 13 digits) + GMT date.
+  if (/mortalit[eé]\s*(?:\w+\s*)?:\s*100\s*%.*\(\d{10,}\s*\/.*GMT/i.test(descRaw)) {
+    return null;
+  }
 
   const rawPri = readStr(row, prIdx).toUpperCase().trim();
   const priorite: AlerteServeur['priorite'] =
@@ -621,11 +629,21 @@ export const mapTable = (key: string, header: string[], rows: RawRow[]): unknown
     case 'VERRATS': return rows.map(r => mapVerrat(header, r));
     case 'PORCELETS_BANDES_DETAIL': return rows
       .map(r => mapBande(header, r))
-      .filter((b): b is BandePorcelets => b !== null);
+      .filter((b): b is BandePorcelets => b !== null)
+      // Exclut les lignes RECAP/TOTAL (agrégat Sheets, pas une vraie portée)
+      .filter(b => !b.id.toUpperCase().startsWith('TOTAL'));
     case 'JOURNAL_SANTE': return rows.map(r => mapSante(header, r));
-    case 'STOCK_ALIMENTS': return rows.map(r => mapStockAliment(header, r));
-    case 'STOCK_VETO': return rows.map(r => mapStockVeto(header, r));
-    case 'ALERTES_ACTIVES': return rows.map(r => mapAlerteServeur(header, r));
+    case 'STOCK_ALIMENTS': return rows
+      .map(r => mapStockAliment(header, r))
+      // Exclut les lignes squelettes sans libellé
+      .filter(s => s.libelle && s.libelle.trim() !== '');
+    case 'STOCK_VETO': return rows
+      .map(r => mapStockVeto(header, r))
+      // Exclut les lignes squelettes sans produit (85 → ~7 vrais produits)
+      .filter(v => v.produit && v.produit.trim() !== '');
+    case 'ALERTES_ACTIVES': return rows
+      .map(r => mapAlerteServeur(header, r))
+      .filter((a): a is AlerteServeur => a !== null);
     case 'SUIVI_REPRODUCTION_ACTUEL': return rows.map(r => mapSaillie(header, r));
     case 'FINANCES': return rows
       .map(r => mapFinance(header, r))

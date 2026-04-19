@@ -48,6 +48,7 @@ const TruiesListView = React.lazy(() => import(/* webpackChunkName: "truies-list
 // Agritech ressources sub-screens.
 const PlanAlimentationView = React.lazy(() => import(/* webpackChunkName: "plan-alim" */ './features/ressources/PlanAlimentationView'));
 const FormulesView = React.lazy(() => import(/* webpackChunkName: "formules" */ './features/ressources/FormulesView'));
+const PharmacieView = React.lazy(() => import(/* webpackChunkName: "pharmacie" */ './features/ressources/PharmacieView'));
 
 // Agritech pilotage sub-screens (Sprint 3 livrés).
 const PerfKpiView = React.lazy(() => import(/* webpackChunkName: "pilotage-perf" */ './features/pilotage/PerfKpiView'));
@@ -59,6 +60,7 @@ const ReproCalendarView = React.lazy(() => import(/* webpackChunkName: "cycle-re
 const MaterniteView = React.lazy(() => import(/* webpackChunkName: "cycle-maternite" */ './features/cycles/MaterniteView'));
 const PostSevrageView = React.lazy(() => import(/* webpackChunkName: "cycle-postsevrage" */ './features/cycles/PostSevrageView'));
 const EngraissementView = React.lazy(() => import(/* webpackChunkName: "cycle-engraissement" */ './features/cycles/EngraissementView'));
+const FinitionView = React.lazy(() => import(/* webpackChunkName: "cycle-finition" */ './features/cycles/FinitionView'));
 
 // Aide / Support (non lazy : petit, consulté fréquemment par porcher).
 const AideView = React.lazy(() => import(/* webpackChunkName: "aide" */ './features/help/AideView'));
@@ -140,6 +142,7 @@ const AppContent = () => {
           <Route path="/cycles/maternite" element={<MaterniteView />} />
           <Route path="/cycles/post-sevrage" element={<PostSevrageView />} />
           <Route path="/cycles/engraissement" element={<EngraissementView />} />
+          <Route path="/cycles/finition" element={<FinitionView />} />
 
           {/* ── Pilotage sub-routes (redirects onto legacy + ComingSoon) ── */}
           <Route path="/pilotage/alertes" element={<Navigate to="/alerts" replace />} />
@@ -154,6 +157,7 @@ const AppContent = () => {
           <Route path="/ressources/aliments/plan" element={<PlanAlimentationView />} />
           <Route path="/ressources/aliments/formules" element={<FormulesView />} />
           <Route path="/ressources/veto" element={<TableView tableKey="STOCK_VETO" />} />
+          <Route path="/ressources/pharmacie" element={<PharmacieView />} />
         </Routes>
       </React.Suspense>
       <AgritechNav />
