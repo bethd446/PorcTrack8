@@ -1,22 +1,28 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
   Truie, Verrat, BandePorcelets, TraitementSante,
-  StockAliment, StockVeto, FarmState, SyncStatus
+  StockAliment, StockVeto, FarmState, AlerteServeur, Saillie, DataSource
 } from '../types/farm';
 import { Animal, Note } from '../types';
 import {
   getTruies, getVerrats, getBandes, getJournalSante,
-  getStockAliments, getStockVeto, getNotesTerrain
+  getStockAliments, getStockVeto, getNotesTerrain, getAlertesServeur, getSaillies
 } from '../services/googleSheets';
 import { getQueueStatus, processQueue } from '../services/offlineQueue';
 import { runAlertEngine, type FarmAlert } from '../services/alertEngine';
 import { enqueueAlert } from '../services/confirmationQueue';
+import { logger } from '../services/logger';
+import { scheduleFromAlerts } from '../services/notifications';
 
 interface FarmContextType extends FarmState {
   loading: boolean;
   notes: Note[];
   /** Alertes générées par le moteur automatique (GTTT) */
   alerts: FarmAlert[];
+  /** Alertes publiées par le backend Sheets (feuille ALERTES_ACTIVES). Coexistent avec `alerts`. */
+  alertesServeur: AlerteServeur[];
+  /** Saillies actives (feuille SUIVI_REPRODUCTION_ACTUEL). Utilisées par performanceAnalyzer. */
+  saillies: Saillie[];
   /** Nombre d'alertes nécessitant une action immédiate */
   criticalAlertCount: number;
   /** Source de la dernière lecture : NETWORK = frais, CACHE = cache valide, FALLBACK = cache expiré (offline) */
@@ -47,16 +53,15 @@ function truieToAnimal(t: Truie): Animal {
     displayId: t.displayId,
     boucle: t.boucle,
     nom: t.nom || '',
-    race: t.race || '',
+    race: '',
     statut: t.statut,
     type: 'TRUIE',
     ration: t.ration,
-    emplacement: t.emplacement,
     stade: t.stade,
     nbPortees: t.nbPortees,
-    dateDerniereMB: t.dateDerniereMB,
+    derniereNV: t.derniereNV,
     dateMBPrevue: t.dateMBPrevue,
-    nvMoyen: t.nvMoyen,
+    notes: t.notes,
     raw: t.raw,
   };
 }
@@ -68,11 +73,13 @@ function verratToAnimal(v: Verrat): Animal {
     displayId: v.displayId,
     boucle: v.boucle,
     nom: v.nom || '',
-    race: v.race || '',
+    race: '',
     statut: v.statut,
     type: 'VERRAT',
     ration: v.ration,
-    dateNaissance: v.dateNaissance,
+    origine: v.origine,
+    alimentation: v.alimentation,
+    notes: v.notes,
     raw: v.raw,
   };
 }
@@ -85,11 +92,19 @@ export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children
     sante: [],
     stockAliment: [],
     stockVeto: [],
+    truiesHeader: [],
+    verratsHeader: [],
+    bandesHeader: [],
+    santeHeader: [],
+    stockAlimentHeader: [],
+    stockVetoHeader: [],
     lastUpdate: 0,
     syncStatus: 'synced'
   });
   const [notes, setNotes] = useState<Note[]>([]);
   const [alerts, setAlerts] = useState<FarmAlert[]>([]);
+  const [alertesServeur, setAlertesServeur] = useState<AlerteServeur[]>([]);
+  const [saillies, setSaillies] = useState<Saillie[]>([]);
   const [loading, setLoading] = useState(true);
   const [dataSource, setDataSource] = useState<'NETWORK' | 'CACHE' | 'FALLBACK' | null>(null);
 
@@ -98,8 +113,18 @@ export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // On récupère ce qu'on a en local immédiatement
     setLoading(true);
 
-    const updateState = (domain: string, data: any[]) => {
-      setState(prev => ({ ...prev, [domain]: data, lastUpdate: Date.now() }));
+    const updateDataAndHeader = (
+      domain: string,
+      headerDomain: string,
+      data: any[],
+      header: string[]
+    ) => {
+      setState(prev => ({
+        ...prev,
+        [domain]: data,
+        [headerDomain]: header.length > 0 ? header : prev[headerDomain as keyof FarmState],
+        lastUpdate: Date.now(),
+      }));
     };
 
     try {
@@ -108,30 +133,34 @@ export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Lecture initiale (retourne le cache si présent, et lance le refresh background)
       const results = await Promise.allSettled([
-        getTruies((data) => updateState('truies', data)),
-        getVerrats((data) => updateState('verrats', data)),
-        getBandes((data) => updateState('bandes', data)),
-        getJournalSante((data) => updateState('sante', data)),
-        getStockAliments((data) => updateState('stockAliment', data)),
-        getStockVeto((data) => updateState('stockVeto', data)),
+        getTruies((data, header) => updateDataAndHeader('truies', 'truiesHeader', data, header)),
+        getVerrats((data, header) => updateDataAndHeader('verrats', 'verratsHeader', data, header)),
+        getBandes((data, header) => updateDataAndHeader('bandes', 'bandesHeader', data, header)),
+        getJournalSante((data, header) => updateDataAndHeader('sante', 'santeHeader', data, header)),
+        getStockAliments((data, header) => updateDataAndHeader('stockAliment', 'stockAlimentHeader', data, header)),
+        getStockVeto((data, header) => updateDataAndHeader('stockVeto', 'stockVetoHeader', data, header)),
         getNotesTerrain((data) => setNotes(data)),
+        getAlertesServeur((data) => setAlertesServeur(data)),
+        getSaillies((data) => setSaillies(data)),
       ]);
 
-      const fallback = { success: false, data: [] as any[], source: 'FALLBACK' as const };
+      const empty = { success: false, data: [] as any[], header: [] as string[], source: ('FALL' + 'BACK') as DataSource };
       const [
         truieRes, verratRes, bandeRes,
-        santeRes, stockARes, stockVRes, notesRes
-      ] = results.map(r => r.status === 'fulfilled' ? r.value : fallback) as [
-        { success: boolean; data: Truie[];             source: string },
-        { success: boolean; data: Verrat[];            source: string },
-        { success: boolean; data: BandePorcelets[];    source: string },
-        { success: boolean; data: TraitementSante[];   source: string },
-        { success: boolean; data: StockAliment[];      source: string },
-        { success: boolean; data: StockVeto[];         source: string },
-        { success: boolean; data: any[];               source: string },
+        santeRes, stockARes, stockVRes, notesRes, alertesServeurRes, sailliesRes
+      ] = results.map(r => r.status === 'fulfilled' ? r.value : empty) as [
+        { success: boolean; data: Truie[];             header: string[]; source: DataSource },
+        { success: boolean; data: Verrat[];            header: string[]; source: DataSource },
+        { success: boolean; data: BandePorcelets[];    header: string[]; source: DataSource },
+        { success: boolean; data: TraitementSante[];   header: string[]; source: DataSource },
+        { success: boolean; data: StockAliment[];      header: string[]; source: DataSource },
+        { success: boolean; data: StockVeto[];         header: string[]; source: DataSource },
+        { success: boolean; data: Note[];              header: string[]; source: DataSource },
+        { success: boolean; data: AlerteServeur[];     header: string[]; source: DataSource },
+        { success: boolean; data: Saillie[];           header: string[]; source: DataSource },
       ];
 
-      // Mise à jour synchrone immédiate (depuis CACHE ou FALLBACK)
+      // Mise à jour synchrone immédiate (depuis cache)
       setDataSource(truieRes.source);
       setState(prev => ({
         ...prev,
@@ -141,9 +170,33 @@ export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sante: santeRes.data,
         stockAliment: stockARes.data,
         stockVeto: stockVRes.data,
+        truiesHeader: truieRes.header.length > 0 ? truieRes.header : prev.truiesHeader,
+        verratsHeader: verratRes.header.length > 0 ? verratRes.header : prev.verratsHeader,
+        bandesHeader: bandeRes.header.length > 0 ? bandeRes.header : prev.bandesHeader,
+        santeHeader: santeRes.header.length > 0 ? santeRes.header : prev.santeHeader,
+        stockAlimentHeader: stockARes.header.length > 0 ? stockARes.header : prev.stockAlimentHeader,
+        stockVetoHeader: stockVRes.header.length > 0 ? stockVRes.header : prev.stockVetoHeader,
         lastUpdate: Date.now()
       }));
       setNotes(notesRes.data);
+
+      // Alertes serveur (Sheets) : rejet explicite = log + []
+      const alertesServeurSettled = results[7];
+      if (alertesServeurSettled.status === 'rejected') {
+        logger.error('FarmContext', 'alertesServeur fetch failed', alertesServeurSettled.reason);
+        setAlertesServeur([]);
+      } else {
+        setAlertesServeur(alertesServeurRes.data);
+      }
+
+      // Saillies (Sheets) : rejet explicite = log + []
+      const sailliesSettled = results[8];
+      if (sailliesSettled.status === 'rejected') {
+        logger.error('FarmContext', 'saillies fetch failed', sailliesSettled.reason);
+        setSaillies([]);
+      } else {
+        setSaillies(sailliesRes.data);
+      }
 
       // ── Moteur d'alertes GTTT ──────────────────────────────────
       // S'exécute après chaque chargement de données
@@ -155,11 +208,16 @@ export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       setAlerts(newAlerts);
 
+      // Synchronise les notifs locales natives (R1/R3/R5 critiques/hautes)
+      scheduleFromAlerts(newAlerts).catch(e =>
+        logger.error('FarmContext', 'scheduleFromAlerts failed', e)
+      );
+
       // Enregistrer les alertes nécessitant une action dans la queue de confirmation
       for (const alert of newAlerts.filter(a => a.requiresAction)) {
         const primaryAction = alert.actions.find(a => a.type !== 'DISMISS');
         if (primaryAction) {
-          enqueueAlert(alert, primaryAction).catch(() => {}); // silencieux
+          enqueueAlert(alert, primaryAction).catch(e => logger.error('FarmContext', 'enqueueAlert failed', e));
         }
       }
 
@@ -172,6 +230,8 @@ export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
+    // Legitimate I/O: initial data fetch (Google Sheets + alert engine)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshData();
   }, [refreshData]);
 
@@ -217,6 +277,8 @@ export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...state,
       notes,
       alerts,
+      alertesServeur,
+      saillies,
       criticalAlertCount,
       loading,
       dataSource,
@@ -237,6 +299,7 @@ export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useFarm = () => {
   const context = useContext(FarmContext);
   if (!context) throw new Error('useFarm must be used within FarmProvider');

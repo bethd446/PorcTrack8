@@ -28,7 +28,7 @@ export async function takePhoto(subjectType: PhotoEntry['subjectType'], subjectI
     });
 
     const fileName = `PH-${Date.now()}.jpeg`;
-    const savedFile = await Filesystem.writeFile({
+    await Filesystem.writeFile({
       path: fileName,
       data: await base64FromPath(photo.webPath!),
       directory: Directory.Data

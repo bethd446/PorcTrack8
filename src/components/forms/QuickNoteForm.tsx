@@ -3,8 +3,15 @@ import { IonSpinner, IonToast } from '@ionic/react';
 import { Send, ClipboardList } from 'lucide-react';
 import { appendRow } from '../../services/googleSheets';
 
+/**
+ * QuickNoteForm — Saisie rapide d'une note terrain (Agritech Dark)
+ *
+ * Rendu inline dans une card ou dans un <BottomSheet>.
+ * Types acceptés par le schéma canonique NOTES_TERRAIN (TYPE_ANIMAL, col 2).
+ * 'PORTEE' volontairement absent (n'existe pas dans le schéma) — utiliser 'BANDE'.
+ */
 interface QuickNoteFormProps {
-  subjectType: 'BANDE' | 'TRUIE' | 'PORTEE' | 'VERRAT';
+  subjectType: 'BANDE' | 'TRUIE' | 'VERRAT';
   subjectId: string;
   onSuccess?: () => void;
 }
@@ -12,21 +19,33 @@ interface QuickNoteFormProps {
 const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, onSuccess }) => {
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState<{show: boolean, message: string}>({show: false, message: ''});
+  const [toast, setToast] = useState<{ show: boolean; message: string }>({
+    show: false,
+    message: '',
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const author = typeof window !== 'undefined'
+    ? (localStorage.getItem('user_name') || 'Anonyme')
+    : 'Anonyme';
+
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    if (!note.trim()) return;
+    const nextErrors: Record<string, string> = {};
+    if (!note.trim()) nextErrors.note = 'Note requise';
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
 
     setLoading(true);
     try {
-      // Structure NOTES_TERRAIN: DATE, SUBJECT_TYPE, SUBJECT_ID, NOTE, AUTHOR
+      // Schéma canonique NOTES_TERRAIN (5 colonnes) :
+      //   DATE | TYPE_ANIMAL | ID_ANIMAL | NOTE | AUTEUR
       const values = [
-        new Date().toISOString(),
+        new Date().toISOString().slice(0, 10),
         subjectType,
         subjectId,
         note.trim(),
-        localStorage.getItem('user_name') || 'Anonyme'
+        author,
       ];
 
       const res = await appendRow('NOTES_TERRAIN', values);
@@ -37,7 +56,7 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
       } else {
         setToast({ show: true, message: 'Erreur: ' + res.message });
       }
-    } catch (err) {
+    } catch {
       setToast({ show: true, message: 'Erreur réseau' });
     } finally {
       setLoading(false);
@@ -45,40 +64,112 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
   };
 
   return (
-    <div className="premium-card p-6 bg-white border-gray-100 shadow-sm transition-transform duration-[160ms] focus-within:shadow-xl focus-within:shadow-accent-900/5 focus-within:border-accent-200">
+    <div className="card-dense !p-5">
+      {/* ── Header ──────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 rounded-xl bg-accent-50 flex items-center justify-center">
-            <ClipboardList size={18} className="text-accent-700" />
+        <div className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-bg-2 text-accent">
+          <ClipboardList size={16} aria-hidden="true" />
         </div>
-        <h3 className="ft-heading text-[11px] font-bold uppercase text-accent-900">Saisie Rapide Note</h3>
+        <h3 className="font-mono text-[11px] font-bold uppercase tracking-wide text-text-1">
+          Saisie rapide note
+        </h3>
       </div>
 
+      {/* ── Form ────────────────────────────────────────────────────────── */}
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="relative">
+        {/* Sujet read-only (info) */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <label className="block font-mono text-[11px] uppercase tracking-wide text-text-2">
+              Sujet
+            </label>
+            <div
+              className={[
+                'inline-flex items-center h-9 w-full px-3 rounded-md',
+                'bg-bg-0 border border-border',
+                'font-mono text-[12px] uppercase tracking-wide text-text-1 tabular-nums truncate',
+              ].join(' ')}
+              aria-label={`Sujet ${subjectType} ${subjectId}`}
+            >
+              {subjectType} · {subjectId}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block font-mono text-[11px] uppercase tracking-wide text-text-2">
+              Auteur
+            </label>
+            <div
+              className={[
+                'inline-flex items-center h-9 w-full px-3 rounded-md',
+                'bg-bg-0 border border-border',
+                'font-mono text-[12px] uppercase tracking-wide text-text-1 truncate',
+              ].join(' ')}
+              aria-label={`Auteur ${author}`}
+            >
+              {author}
+            </div>
+          </div>
+        </div>
+
+        {/* Textarea */}
+        <div className="space-y-1.5">
+          <label
+            htmlFor="quick-note-text"
+            className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+          >
+            Observation
+          </label>
           <textarea
-            className="w-full bg-gray-50 border border-gray-100 rounded-[20px] px-5 py-4 text-sm font-medium text-gray-800 outline-none focus:bg-white focus:border-accent-400 transition-colors min-h-[100px] placeholder-gray-400"
-            placeholder="Écrivez votre observation ici..."
+            id="quick-note-text"
+            aria-label="Note terrain"
+            aria-invalid={!!errors.note}
+            aria-describedby={errors.note ? 'quick-note-error' : undefined}
+            className={[
+              'w-full rounded-md px-3 py-3',
+              'bg-bg-0 border text-text-0 placeholder:text-text-2',
+              'font-mono text-[13px]',
+              'outline-none transition-colors duration-[160ms]',
+              'focus:border-accent focus:ring-1 focus:ring-accent',
+              'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-1px]',
+              'min-h-[120px] resize-y',
+              errors.note ? 'border-red' : 'border-border hover:border-text-2',
+            ].join(' ')}
+            placeholder="Écrivez votre observation ici…"
             value={note}
-            onChange={(e) => setNote(e.target.value)}
+            onChange={e => setNote(e.target.value)}
             disabled={loading}
           />
+          {errors.note && (
+            <p
+              id="quick-note-error"
+              role="alert"
+              className="font-mono text-[11px] text-red mt-1"
+            >
+              {errors.note}
+            </p>
+          )}
         </div>
 
         <button
           type="submit"
           disabled={loading || !note.trim()}
-          className={`w-full py-4 rounded-xl font-bold uppercase text-[11px] flex items-center justify-center gap-3 transition-[transform,colors] ${
-            loading || !note.trim()
-              ? 'bg-gray-100 text-gray-400 opacity-50'
-              : 'bg-accent-600 text-white shadow-lg shadow-accent-600/15 active:scale-95 pressable'
-          }`}
+          aria-label="Enregistrer la note"
+          className={[
+            'pressable w-full h-[48px] rounded-md',
+            'inline-flex items-center justify-center gap-2',
+            'bg-accent text-bg-0 font-mono text-[12px] font-bold uppercase tracking-wide',
+            'transition-colors duration-[160ms]',
+            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
+            (loading || !note.trim()) ? 'opacity-40 cursor-not-allowed' : '',
+          ].join(' ')}
         >
           {loading ? (
-            <IonSpinner name="bubbles" className="w-5 h-5" />
+            <IonSpinner name="bubbles" className="w-5 h-5" aria-hidden="true" />
           ) : (
             <>
-              <span>Enregistrer Note</span>
-              <Send size={14} className="flex-shrink-0" />
+              <span>Enregistrer note</span>
+              <Send size={14} className="flex-shrink-0" aria-hidden="true" />
             </>
           )}
         </button>
@@ -88,9 +179,8 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
         isOpen={toast.show}
         message={toast.message}
         duration={3000}
-        onDidDismiss={() => setToast({show: false, message: ''})}
+        onDidDismiss={() => setToast({ show: false, message: '' })}
         position="bottom"
-        className="premium-toast"
       />
     </div>
   );

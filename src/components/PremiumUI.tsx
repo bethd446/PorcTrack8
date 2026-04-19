@@ -426,20 +426,21 @@ export interface StatusConfig {
   label: string;
 }
 
+// Clés normalisées (sans accents, lowercase) utilisées pour la recherche par `includes()`.
+// Label affiché = valeur Sheets exacte (accents + casse conservés).
 const STATUS_MAP: Record<string, StatusConfig> = {
-  'gestation':  { bg: 'bg-blue-50', text: 'text-blue-500', dot: 'bg-blue-500', badge: 'bg-blue-50 text-blue-500 border-blue-100', label: 'Gestation' },
-  'lactation':  { bg: 'bg-amber-50', text: 'text-amber-600', dot: 'bg-amber-600', badge: 'bg-amber-50 text-amber-600 border-amber-200', label: 'Lactation' },
-  'allaitante': { bg: 'bg-amber-50', text: 'text-amber-600', dot: 'bg-amber-600', badge: 'bg-amber-50 text-amber-600 border-amber-200', label: 'Allaitante' },
-  'vide':       { bg: 'bg-gray-50', text: 'text-gray-500', dot: 'bg-gray-400', badge: 'bg-gray-50 text-gray-500 border-gray-100', label: 'Vide' },
-  'flushing':   { bg: 'bg-purple-50', text: 'text-purple-500', dot: 'bg-purple-500', badge: 'bg-purple-50 text-purple-500 border-purple-200', label: 'Flushing' },
-  'reforme':    { bg: 'bg-red-50', text: 'text-red-500', dot: 'bg-red-500', badge: 'bg-red-50 text-red-500 border-red-100', label: 'Réforme' },
-  'réforme':    { bg: 'bg-red-50', text: 'text-red-500', dot: 'bg-red-500', badge: 'bg-red-50 text-red-500 border-red-100', label: 'Réforme' },
-  'observation':{ bg: 'bg-amber-50', text: 'text-amber-600', dot: 'bg-amber-500', badge: 'bg-amber-50 text-amber-600 border-amber-50', label: 'Observation' },
-  'morte':      { bg: 'bg-gray-50', text: 'text-gray-500', dot: 'bg-gray-400', badge: 'bg-gray-50 text-gray-500 border-gray-100', label: 'Morte' },
-  'saillie':    { bg: 'bg-indigo-50',  text: 'text-indigo-700',  dot: 'bg-indigo-500',  badge: 'bg-indigo-50 text-indigo-700 border-indigo-200', label: 'Saillie' },
-  'sevrage':    { bg: 'bg-teal-50',    text: 'text-teal-700',    dot: 'bg-teal-500',    badge: 'bg-teal-50 text-teal-700 border-teal-200',    label: 'Sevrage' },
-  'actif':      { bg: 'bg-accent-50', text: 'text-accent-600', dot: 'bg-accent-500', badge: 'bg-accent-50 text-accent-600 border-accent-100', label: 'Actif' },
-  'inactif':    { bg: 'bg-gray-50', text: 'text-gray-500', dot: 'bg-gray-300', badge: 'bg-gray-50 text-gray-500 border-gray-100', label: 'Inactif' },
+  // Truies — statuts cibles (schéma Sheets 2026)
+  'pleine':              { bg: 'bg-accent-50', text: 'text-accent-600', dot: 'bg-accent-500', badge: 'bg-accent-50 text-accent-600 border-accent-100', label: 'Pleine' },
+  'maternit':            { bg: 'bg-amber-50',  text: 'text-amber-600',  dot: 'bg-amber-500',  badge: 'bg-amber-50 text-amber-600 border-amber-200',   label: 'En maternité' },
+  'en attente saillie':  { bg: 'bg-gray-50',   text: 'text-gray-500',   dot: 'bg-gray-400',   badge: 'bg-gray-50 text-gray-500 border-gray-100',      label: 'En attente saillie' },
+  'a surveiller':        { bg: 'bg-amber-50',  text: 'text-amber-600',  dot: 'bg-amber-500',  badge: 'bg-amber-50 text-amber-600 border-amber-200',   label: 'À surveiller' },
+  // Verrats + statuts transverses (ordre important : clés plus longues d'abord pour éviter
+  // qu'un `includes()` partiel ne capture à tort, ex: 'inactif' doit matcher avant 'actif').
+  'inactif':             { bg: 'bg-gray-50',   text: 'text-gray-500',   dot: 'bg-gray-300',   badge: 'bg-gray-50 text-gray-500 border-gray-100',      label: 'Inactif' },
+  'reforme':             { bg: 'bg-red-50',    text: 'text-red-500',    dot: 'bg-red-500',    badge: 'bg-red-50 text-red-500 border-red-100',         label: 'Réforme' },
+  'morte':               { bg: 'bg-gray-50',   text: 'text-gray-500',   dot: 'bg-gray-400',   badge: 'bg-gray-50 text-gray-500 border-gray-100',      label: 'Morte' },
+  'mort':                { bg: 'bg-gray-50',   text: 'text-gray-500',   dot: 'bg-gray-400',   badge: 'bg-gray-50 text-gray-500 border-gray-100',      label: 'Mort' },
+  'actif':               { bg: 'bg-accent-50', text: 'text-accent-600', dot: 'bg-accent-500', badge: 'bg-accent-50 text-accent-600 border-accent-100', label: 'Actif' },
 };
 
 const STATUS_DEFAULT: StatusConfig = {
@@ -447,6 +448,7 @@ const STATUS_DEFAULT: StatusConfig = {
   badge: 'bg-gray-50 text-gray-500 border-gray-100', label: '—'
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function getStatusConfig(statut?: string): StatusConfig {
   if (!statut) return STATUS_DEFAULT;
   const key = statut.toLowerCase()

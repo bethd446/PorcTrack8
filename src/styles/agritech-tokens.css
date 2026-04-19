@@ -1,0 +1,51 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PorcTrack 8 — Agritech Moderne · Design Tokens
+   Dark-first cockpit style (Linear / Vercel / Bloomberg Terminal vibes)
+
+   This file is ADDITIVE. It coexists with the existing "Ultra Clean" system
+   in src/index.css. Use the agritech-* tokens for the new dark dashboard
+   surfaces; existing .premium-* / .ft-* classes remain untouched.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@theme {
+  /* ── Surfaces (dark-first) ───────────────────────────────────────────── */
+  --color-bg-0: #0A0D0C;           /* Page background — deep forest-black */
+  --color-bg-1: #12171A;           /* Primary cards */
+  --color-bg-2: #1A2025;           /* Secondary cards / row hover */
+  --color-border: #2A3239;         /* 1px subtle separators */
+
+  /* ── Text scale ──────────────────────────────────────────────────────── */
+  --color-text-0: #F4F7F6;         /* Primary (near-white) */
+  --color-text-1: #A8B3B8;         /* Secondary */
+  --color-text-2: #6B7880;         /* Tertiary / muted / axes */
+
+  /* ── Brand accents ───────────────────────────────────────────────────── */
+  --color-accent: #10B981;         /* Emerald vif — primary signal */
+  --color-accent-dim: #065F46;     /* Forest — gradients, active border */
+
+  /* ── Semantic signals ────────────────────────────────────────────────── */
+  --color-amber: #F4A261;          /* Warning (modéré) */
+  --color-red: #EF4444;            /* Critical, mortality, rupture */
+  --color-blue: #60A5FA;           /* Info, neutral data */
+  --color-gold: #D4A056;           /* Premium metrics (GMQ, margin) */
+
+  /* ── Typography stacks ───────────────────────────────────────────────────
+     display → screen titles (Big Shoulders Display 800)
+     body    → UI text (Inter 400–600)
+     mono    → IDs, KPI labels, axes (JetBrains Mono 500)
+     values  → (reused) BricolageGrotesque for big numbers on light surfaces
+     ───────────────────────────────────────────────────────────────────── */
+  --font-display: "Big Shoulders Display", "BigShoulders", "Impact", sans-serif;
+  --font-body:    "Inter", "InstrumentSans", -apple-system, system-ui, sans-serif;
+  --font-mono-jb: "JetBrains Mono", "DMMono", ui-monospace, monospace;
+  /* --font-values is already defined in index.css — not overridden here */
+
+  /* ── Easings ─────────────────────────────────────────────────────────── */
+  --ease-out-expo: cubic-bezier(0.23, 1, 0.32, 1);   /* UI state changes */
+
+  /* ── Radii (tight, engineered) ──────────────────────────────────────────
+     Cap at 10px. No rounded-xl/2xl in the agritech surfaces.
+     ───────────────────────────────────────────────────────────────────── */
+  --radius-sm: 6px;                /* Chips, inline pills */
+  --radius-md: 10px;                /* Cards, tables, inputs */
+}

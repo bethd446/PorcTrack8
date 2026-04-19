@@ -20,9 +20,8 @@ export type {
 // Fusion de Truie + Verrat en un type générique pour l'UI
 
 export type AnimalStatus =
-  | 'Gestante' | 'Allaitante' | 'Flushing' | 'Observation'
-  | 'Saillie'  | 'Vide'       | 'Réforme'  | 'Actif'
-  | 'Mise bas à confirmer'    | string;
+  | 'En attente saillie' | 'En maternité' | 'Pleine' | 'À surveiller'
+  | 'Actif' | 'Réforme' | 'Mort' | string;
 
 export interface Animal {
   id:          string;
@@ -37,23 +36,40 @@ export interface Animal {
   // Truie-specific
   stade?:          string;
   nbPortees?:      number;
-  dateDerniereMB?: string;
+  derniereNV?:     number;
   dateMBPrevue?:   string;
-  nvMoyen?:        number;
+  notes?:          string;
   // Verrat-specific
-  dateNaissance?: string;
+  origine?:        string;
+  alimentation?:   string;
   // Données brutes pour TableRowEdit
   raw?: any[];
 }
 
 // ── Notes terrain ─────────────────────────────────────────────────────────────
-// Lues depuis NOTES_TERRAIN (DATE | SUBJECT_TYPE | SUBJECT_ID | NOTE | AUTHOR)
+// Schéma canonique NOTES_TERRAIN (5 colonnes) :
+//   DATE | TYPE_ANIMAL | ID_ANIMAL | NOTE | AUTEUR
+//
+// TYPE_ANIMAL = 'TRUIE' | 'VERRAT' | 'BANDE' | 'CONTROLE' | 'CHECKLIST' | 'GENERAL'
+// - TRUIE/VERRAT/BANDE : note attachée à un animal ou une bande
+// - CONTROLE           : réponse audit quotidien (ID_ANIMAL = clef question)
+// - CHECKLIST          : état d'une checklist (ID_ANIMAL = nom checklist)
+// - GENERAL            : fourre-tout / legacy (inclut ancien CHECKLIST_DONE)
+export type NoteAnimalType =
+  | 'TRUIE'
+  | 'VERRAT'
+  | 'BANDE'
+  | 'CONTROLE'
+  | 'CHECKLIST'
+  | 'GENERAL';
+
 export interface Note {
   id:          string;
   animalId:    string;
-  animalType:  'TRUIE' | 'VERRAT';
+  animalType:  NoteAnimalType;
   date:        string;
   texte:       string;
+  auteur?:     string;
   synced:      boolean;
 }
 

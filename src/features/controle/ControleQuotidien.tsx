@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  IonPage, IonContent, IonTextarea, IonToast, IonLoading, IonButton
+  IonPage, IonContent, IonToast, IonLoading
 } from '@ionic/react';
-import { ChevronRight, Box, CheckCircle2 } from 'lucide-react';
+import { ChevronRight, Box, CheckCircle2, Shield } from 'lucide-react';
 import { CONTROLE_QUESTIONS } from './questions';
 import { appendRow } from '../../services/googleSheets';
 import { enqueueAppendRow } from '../../services/offlineQueue';
+import AgritechLayout from '../../components/AgritechLayout';
+import AgritechHeader from '../../components/AgritechHeader';
+import { Chip } from '../../components/agritech';
 
 const ControleQuotidien: React.FC = () => {
   const navigate = useNavigate();
@@ -20,38 +23,40 @@ const ControleQuotidien: React.FC = () => {
 
   const question = CONTROLE_QUESTIONS[currentStep];
 
-  const handleAnswer = async (answer: string) => {
+  const handleAnswer = async (answer: string): Promise<void> => {
     setLoading(true);
     setLastAnswer(answer);
     const now = new Date();
-    const dateStr = now.toLocaleDateString('fr-FR');
-    const timeStr = now.toLocaleTimeString('fr-FR');
     const porcher = localStorage.getItem('user_name') || 'Porcher A130';
     const deviceId = localStorage.getItem('device_id') || 'DEV-UNKNOWN';
-    const noteId = `NOTE-${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}-${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // Schéma canonique NOTES_TERRAIN (5 colonnes) :
+    //   DATE | TYPE_ANIMAL | ID_ANIMAL | NOTE | AUTEUR
+    // TYPE_ANIMAL = 'CONTROLE' pour les audits quotidiens.
+    // ID_ANIMAL   = clef de la question (Q1, Q2, …).
+    // NOTE        = texte structuré Question / Réponse / Détails.
+    const noteText =
+      `Question: ${question.text}\n` +
+      `Réponse: ${answer}` +
+      (details ? `\nDétails: ${details}` : '') +
+      `\n[device: ${deviceId}]`;
 
     const values = [
-      noteId,
-      now.toISOString(),
-      dateStr,
-      timeStr,
-      porcher,
-      'CONTROLE_QUOTIDIEN',
-      question.text,
-      answer,
-      details,
-      'APP',
-      deviceId
+      now.toISOString().slice(0, 10), // DATE YYYY-MM-DD
+      'CONTROLE',                     // TYPE_ANIMAL
+      question.id || 'Q',             // ID_ANIMAL = clef question
+      noteText,                       // NOTE
+      porcher,                        // AUTEUR
     ];
 
     try {
       const res = await appendRow('NOTES_TERRAIN', values);
       if (!res.success) {
-          enqueueAppendRow('NOTES_TERRAIN', values);
-          setToastMsg('Enregistré (file d\'attente)');
-          setShowToast(true);
+        enqueueAppendRow('NOTES_TERRAIN', values);
+        setToastMsg("Enregistré (file d'attente)");
+        setShowToast(true);
       }
-    } catch (e) {
+    } catch {
       enqueueAppendRow('NOTES_TERRAIN', values);
       setToastMsg('Enregistré (hors ligne)');
       setShowToast(true);
@@ -67,111 +72,159 @@ const ControleQuotidien: React.FC = () => {
     }
   };
 
+  // ── Écran de fin ──────────────────────────────────────────────────────
   if (isFinished) {
     return (
       <IonPage>
-        <IonContent fullscreen>
-          <div className="premium-header-full flex flex-col items-center justify-center p-10 text-center text-white">
-            <div className="w-24 h-24 bg-white/10 rounded-[24px] flex items-center justify-center mb-8 shadow-2xl shadow-black/20">
-              <CheckCircle2 size={52} className="text-accent-400" />
-            </div>
-            <h1 className="ft-heading text-3xl mb-2 uppercase tracking-tight">Contrôle Terminé</h1>
-            <p className="text-accent-100/40 text-[11px] font-bold uppercase mb-12">Données synchronisées avec succès</p>
-
-            <div className="w-full space-y-4">
-              {lastAnswer === 'Oui' && (
-                  <button
-                      onClick={() => navigate('/stock')}
-                      className="pressable premium-btn bg-white text-accent-600 w-full font-bold uppercase py-5 rounded-xl shadow-xl flex items-center justify-center gap-3"
-                  >
-                      <Box size={20} />
-                      Ouvrir les Stocks
-                  </button>
-              )}
-
-              <button
-                  onClick={() => navigate('/')}
-                  className="pressable w-full py-4 text-[11px] font-bold uppercase text-accent-400"
+        <IonContent fullscreen className="ion-no-padding">
+          <AgritechLayout withNav={false}>
+            <AgritechHeader
+              title="Contrôle terminé"
+              subtitle="Données synchronisées"
+            />
+            <div className="px-4 pt-8 pb-8 flex flex-col items-center text-center">
+              <div
+                className="inline-flex h-20 w-20 items-center justify-center rounded-md bg-bg-1 border border-accent/40 text-accent mb-6"
+                aria-hidden="true"
               >
-                  Retour au Dashboard
-              </button>
+                <CheckCircle2 size={44} />
+              </div>
+              <h2 className="agritech-heading text-[24px] uppercase leading-none mb-2">
+                Tour validé
+              </h2>
+              <p className="font-mono text-[12px] text-text-2 mb-10">
+                Toutes les réponses ont été transmises au registre.
+              </p>
+
+              <div className="w-full space-y-3">
+                {lastAnswer === 'Oui' && (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/stock')}
+                    className="pressable w-full h-12 rounded-md bg-accent text-bg-0 text-[13px] font-semibold flex items-center justify-center gap-2 active:scale-[0.97] transition-transform duration-150 hover:bg-[color:var(--color-accent-dim)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                  >
+                    <Box size={16} aria-hidden="true" />
+                    Ouvrir les stocks
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => navigate('/')}
+                  className="pressable w-full h-11 rounded-md border border-border bg-bg-1 text-text-0 text-[12px] font-semibold active:scale-[0.97] transition-transform duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                >
+                  Retour au cockpit
+                </button>
+              </div>
             </div>
-          </div>
+          </AgritechLayout>
         </IonContent>
       </IonPage>
     );
   }
 
+  // ── Écran principal / question ────────────────────────────────────────
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
-        <div className="premium-header-full p-8 pt-20">
-          {/* Decorative background elements */}
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-accent-400/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-teal-400/10 rounded-full blur-3xl pointer-events-none" />
+        <AgritechLayout withNav={false}>
+          <AgritechHeader
+            title="Audit terrain"
+            subtitle={`Contrôle quotidien · ${currentStep + 1}/${CONTROLE_QUESTIONS.length}`}
+            backTo="/"
+            action={
+              <Chip
+                label={`Q${currentStep + 1}/${CONTROLE_QUESTIONS.length}`}
+                size="xs"
+                tone="accent"
+              />
+            }
+          />
 
-          {/* Progress Indicator */}
-          <div className="mb-12 relative z-10">
-            <div className="flex gap-2 mb-4">
-               {CONTROLE_QUESTIONS.map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-1.5 flex-1 rounded-full transition-colors duration-[160ms] ${
-                       i <= currentStep ? 'bg-accent-400 shadow-[0_0_10px_rgba(52,211,153,0.3)]' : 'bg-white/10'
-                    }`}
-                  />
-               ))}
+          <div className="px-4 pt-5 pb-10">
+            {/* Progress bar */}
+            <div
+              className="relative h-1.5 w-full rounded-full bg-bg-2 overflow-hidden"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={CONTROLE_QUESTIONS.length}
+              aria-valuenow={currentStep + 1}
+              aria-label="Progression de l'audit"
+            >
+              <div
+                className="absolute inset-y-0 left-0 bg-accent rounded-full transition-all duration-300 ease-out"
+                style={{
+                  width: `${((currentStep + 1) / CONTROLE_QUESTIONS.length) * 100}%`,
+                }}
+              />
             </div>
-            <p className="text-[11px] font-bold tracking-[4px] text-accent-400 uppercase">
-              Audit Terrain • {currentStep + 1} / {CONTROLE_QUESTIONS.length}
+            <p className="mt-2 font-mono text-[11px] uppercase tracking-wide text-text-2">
+              Étape {currentStep + 1} sur {CONTROLE_QUESTIONS.length}
+            </p>
+
+            {/* CTA / question card */}
+            <section
+              className="card-dense mt-5 border-l-2 border-l-accent"
+              aria-label="Question en cours"
+            >
+              <div className="flex items-start gap-3 mb-4">
+                <span
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-bg-2 text-accent"
+                  aria-hidden="true"
+                >
+                  <Shield size={16} />
+                </span>
+                <div className="min-w-0">
+                  <div className="kpi-label">Question</div>
+                  <h2 className="agritech-heading mt-1 text-[20px] leading-tight text-text-0">
+                    {question.text}
+                  </h2>
+                </div>
+              </div>
+
+              {question.type === 'mixed' && (
+                <div className="mb-4">
+                  <label htmlFor="ctrl-details" className="kpi-label block mb-2">
+                    Détails
+                  </label>
+                  <textarea
+                    id="ctrl-details"
+                    placeholder={question.placeholder}
+                    value={details}
+                    onChange={e => setDetails(e.target.value)}
+                    rows={4}
+                    className="w-full rounded-md bg-bg-0 border border-border p-3 text-text-0 placeholder-text-2 text-[14px] outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+                  />
+                </div>
+              )}
+
+              {/* Response options */}
+              <div className="space-y-2" role="group" aria-label="Réponses possibles">
+                {question.options.map(opt => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => handleAnswer(opt)}
+                    className="pressable w-full flex items-center justify-between gap-3 px-4 py-3 rounded-md bg-bg-0 border border-border text-text-0 text-[14px] font-semibold text-left transition-colors duration-150 hover:border-accent/60 hover:bg-bg-2 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                  >
+                    <span>{opt}</span>
+                    <ChevronRight size={16} className="text-text-2" aria-hidden="true" />
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <p className="mt-6 text-center font-mono text-[10px] uppercase tracking-wide text-text-2">
+              PorcTrack · registre audité
             </p>
           </div>
+        </AgritechLayout>
 
-          {/* Question Text */}
-          <div className="flex-1 relative z-10">
-            <h1 className="ft-heading text-white text-4xl leading-tight mb-12 tracking-tighter">
-              {question.text}
-            </h1>
-
-            {question.type === 'mixed' && (
-                <div className="mb-8">
-                    <textarea
-                        placeholder={question.placeholder}
-                        value={details}
-                        onChange={e => setDetails(e.target.value)}
-                        rows={4}
-                        className="w-full bg-white/5 border border-white/10 rounded-[20px] p-6 text-white placeholder-white/20 text-lg outline-none focus:ring-2 focus:ring-accent-600 transition-shadow shadow-inner"
-                    />
-                </div>
-            )}
-
-            {/* Response Options */}
-            <div className="space-y-4">
-              {question.options.map((opt) => (
-                <button
-                    key={opt}
-                    onClick={() => handleAnswer(opt)}
-                    className="pressable w-full bg-white/10 backdrop-blur-md border border-white/10 rounded-[20px] p-8 text-white text-xl font-bold text-left flex justify-between items-center active:scale-[0.97] active:bg-white/20 transition-[transform,background-color] group shadow-lg"
-                >
-                    <span className="tracking-tight">{opt}</span>
-                    <ChevronRight size={20} className="text-white/20 group-active:translate-x-1 transition-transform" />
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Footer Branding */}
-          <div className="mt-12 text-center relative z-10">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-black/20 rounded-full border border-white/5">
-               <div className="w-1.5 h-1.5 rounded-full bg-accent-400 animate-pulse" />
-               <p className="text-[11px] font-bold tracking-[3px] text-white/30 uppercase">
-                 PorcTrack Engineering • Secure V5
-               </p>
-            </div>
-          </div>
-        </div>
-
-        <IonLoading isOpen={loading} message="Transmission sécurisée..." spinner="crescent" cssClass="premium-loading" />
+        <IonLoading
+          isOpen={loading}
+          message="Transmission sécurisée..."
+          spinner="crescent"
+        />
         <IonToast
           isOpen={showToast}
           message={toastMsg}

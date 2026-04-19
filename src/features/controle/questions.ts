@@ -9,7 +9,7 @@ export interface Question {
 export const CONTROLE_QUESTIONS: Question[] = [
   {
     id: 'Q1',
-    text: 'Gestantes imminentes : mise bas confirmée ?',
+    text: 'Truies pleines proches du terme : mise bas confirmée ?',
     options: ['Oui', 'Non', 'En cours'],
     type: 'choice'
   },

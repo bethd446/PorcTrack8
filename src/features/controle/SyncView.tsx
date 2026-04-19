@@ -1,109 +1,205 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
-  IonPage, IonHeader, IonContent, IonSpinner, IonToast
+  IonPage, IonContent, IonSpinner, IonToast
 } from '@ionic/react';
 import { RefreshCw, CloudCheck, AlertCircle, Clock, ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { getQueueStatus, flushQueue, clearQueue } from '../../services/offlineQueue';
-import PremiumHeader from '../../components/PremiumHeader';
+import AgritechLayout from '../../components/AgritechLayout';
+import AgritechHeader from '../../components/AgritechHeader';
+import { Chip, SectionDivider } from '../../components/agritech';
 
 const SyncView: React.FC = () => {
-  const navigate = useNavigate();
   const [status, setStatus] = useState(getQueueStatus());
   const [syncing, setSyncing] = useState(false);
   const [toast, setToast] = useState('');
 
-  const refresh = () => setStatus(getQueueStatus());
+  const refresh = (): void => setStatus(getQueueStatus());
 
-  const handleFlush = async () => {
+  const handleFlush = async (): Promise<void> => {
     setSyncing(true);
     try {
       const res = await flushQueue();
       refresh();
       if (res.processed > 0) {
-          setToast(`${res.processed} actions synchronisées !`);
+        setToast(`${res.processed} actions synchronisées !`);
       } else if (res.remaining > 0) {
-          setToast('Certaines actions n\'ont pas pu être envoyées.');
+        setToast("Certaines actions n'ont pas pu être envoyées.");
       }
-    } catch (e) {
+    } catch {
       setToast('Erreur de synchronisation');
     } finally {
       setSyncing(false);
     }
   };
 
-  const handleClearQueue = async () => {
+  const handleClearQueue = async (): Promise<void> => {
     await clearQueue();
     refresh();
-    setToast('File d\'attente vidée.');
+    setToast("File d'attente vidée.");
   };
+
+  const isEmpty = status.pending === 0;
 
   return (
     <IonPage>
-      <IonHeader className="ion-no-border">
-        <PremiumHeader title="Synchronisation" subtitle={`${status.pending} actions en attente`} showStatus={false} />
-      </IonHeader>
+      <IonContent fullscreen className="ion-no-padding">
+        <AgritechLayout withNav={true}>
+          <AgritechHeader
+            title="Synchronisation"
+            subtitle={`${status.pending} action${status.pending > 1 ? 's' : ''} en attente`}
+            backTo="/"
+          />
 
-      <IonContent className="bg-white">
-        <div className="px-5 py-8 pb-32">
-
-            <div className="premium-card p-8 bg-white border-gray-100 mb-8 text-center shadow-sm">
-                <div className={`w-20 h-20 mx-auto rounded-[24px] flex items-center justify-center mb-6 ${status.pending > 0 ? 'bg-amber-50 text-amber-600' : 'bg-accent-50 text-accent-600'}`}>
-                    {status.pending > 0 ? <RefreshCw size={32} className={syncing ? 'animate-spin' : ''} /> : <CloudCheck size={32} />}
+          <div className="px-4 pt-4 pb-8 space-y-5">
+            {/* ── État global ─────────────────────────────────────────── */}
+            <section aria-label="État de la synchronisation" role="region">
+              <div
+                className={
+                  'card-dense flex flex-col items-center text-center py-8 border-l-2 ' +
+                  (isEmpty ? 'border-l-accent' : 'border-l-amber')
+                }
+              >
+                <div
+                  className={
+                    'inline-flex h-16 w-16 items-center justify-center rounded-md bg-bg-2 mb-4 ' +
+                    (isEmpty ? 'text-accent' : 'text-amber')
+                  }
+                  aria-hidden="true"
+                >
+                  {isEmpty ? (
+                    <CloudCheck size={28} />
+                  ) : (
+                    <RefreshCw
+                      size={28}
+                      className={syncing ? 'animate-spin' : ''}
+                    />
+                  )}
                 </div>
-                <h2 className="ft-heading text-xl mb-2">
-                    {status.pending > 0 ? 'Actions Différées' : 'Base à jour'}
+                <h2 className="agritech-heading text-[22px] uppercase leading-none mb-2">
+                  {isEmpty ? 'Base à jour' : 'Actions différées'}
                 </h2>
-                <p className="text-[13px] text-gray-600 leading-relaxed mb-8">
-                    {status.pending > 0
-                        ? `Vous avez ${status.pending} modifications enregistrées localement qui attendent une connexion stable.`
-                        : 'Toutes vos saisies terrain ont été transmises au serveur Google Sheets.'}
+                <p className="font-mono text-[12px] text-text-2 leading-relaxed max-w-sm mb-6">
+                  {isEmpty
+                    ? 'Toutes vos saisies terrain ont été transmises au serveur Google Sheets.'
+                    : `Vous avez ${status.pending} modifications enregistrées localement qui attendent une connexion stable.`}
                 </p>
 
-                {status.pending > 0 && (
-                    <button
-                        onClick={handleFlush}
-                        disabled={syncing}
-                        className="pressable premium-btn premium-btn-primary w-full shadow-xl shadow-accent-600/15"
-                    >
-                        {syncing ? <IonSpinner name="bubbles" /> : <><RefreshCw size={18} /><span>Forcer l'envoi</span></>}
-                    </button>
+                {!isEmpty && (
+                  <button
+                    type="button"
+                    onClick={handleFlush}
+                    disabled={syncing}
+                    className="pressable inline-flex items-center justify-center gap-2 h-11 px-6 rounded-md bg-accent text-bg-0 text-[13px] font-semibold active:scale-[0.97] disabled:opacity-40 transition-[transform,opacity] duration-150 hover:bg-[color:var(--color-accent-dim)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                  >
+                    {syncing ? (
+                      <IonSpinner name="crescent" />
+                    ) : (
+                      <>
+                        <RefreshCw size={14} aria-hidden="true" />
+                        <span>Forcer l'envoi</span>
+                      </>
+                    )}
+                  </button>
                 )}
-            </div>
+              </div>
+            </section>
 
+            {/* ── File d'attente ──────────────────────────────────────── */}
             {status.items.length > 0 && (
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between px-2">
-                        <h3 className="text-[13px] font-bold text-gray-700">Détail de la file</h3>
-                        <button onClick={handleClearQueue} className="pressable text-[12px] font-medium text-red-500">Tout effacer</button>
-                    </div>
-                    {status.items.map((item) => (
-                        <div key={item.id} className="premium-card p-4 bg-white border-gray-100 flex items-center justify-between shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-500">
-                                    {item.action === 'append_row' ? <ArrowRight size={18} /> : <RefreshCw size={18} />}
-                                </div>
-                                <div>
-                                    <p className="text-[13px] font-bold text-gray-900 leading-none mb-1">{item.payload.sheet}</p>
-                                    <div className="flex items-center gap-2">
-                                        <Clock size={11} className="text-gray-400" />
-                                        <p className="text-[11px] font-bold text-gray-500 uppercase">{new Date(item.timestamp).toLocaleTimeString()}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            {item.tries > 0 && (
-                                <div className="flex items-center gap-1 text-red-500">
-                                    <AlertCircle size={14} />
-                                    <span className="text-[11px] font-bold">{item.tries}</span>
-                                </div>
+              <section aria-label="File d'attente" role="region">
+                <SectionDivider
+                  label="Détail de la file"
+                  action={
+                    <button
+                      type="button"
+                      onClick={handleClearQueue}
+                      className="pressable font-mono text-[11px] uppercase tracking-wide text-red rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-red focus-visible:outline-offset-2"
+                    >
+                      Tout effacer
+                    </button>
+                  }
+                />
+                <ul className="card-dense !p-0 overflow-hidden" aria-label="Actions en attente">
+                  {status.items.map((item, idx) => {
+                    const isAppend = item.action === 'append_row';
+                    const retryFailed = item.tries > 0;
+                    return (
+                      <li
+                        key={item.id}
+                        className={
+                          'flex items-center justify-between gap-3 px-3 py-3 ' +
+                          (idx < status.items.length - 1
+                            ? 'border-b border-border'
+                            : '')
+                        }
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span
+                            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-bg-2 text-text-2"
+                            aria-hidden="true"
+                          >
+                            {isAppend ? (
+                              <ArrowRight size={14} />
+                            ) : (
+                              <RefreshCw size={14} />
                             )}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate font-mono text-[13px] font-semibold text-text-0">
+                              {item.payload.sheet}
+                            </p>
+                            <div className="mt-0.5 flex items-center gap-1.5 text-text-2">
+                              <Clock size={10} aria-hidden="true" />
+                              <span className="font-mono text-[11px] tabular-nums">
+                                {new Date(item.timestamp).toLocaleTimeString()}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                    ))}
-                </div>
-            )}
-        </div>
 
-        <IonToast isOpen={!!toast} message={toast} duration={3000} onDidDismiss={() => setToast('')} className="premium-toast" />
+                        {retryFailed ? (
+                          <Chip
+                            label={`RETRY ${item.tries}`}
+                            tone="red"
+                            size="xs"
+                            className="shrink-0"
+                          />
+                        ) : (
+                          <Chip
+                            label="PENDING"
+                            tone="amber"
+                            size="xs"
+                            className="shrink-0"
+                          />
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            )}
+
+            {status.items.length === 0 && !isEmpty && (
+              <div className="card-dense flex items-center gap-3">
+                <AlertCircle
+                  size={16}
+                  className="text-amber shrink-0"
+                  aria-hidden="true"
+                />
+                <p className="font-mono text-[12px] text-text-1">
+                  Compteur en avance — actualiser pour relire la file.
+                </p>
+              </div>
+            )}
+          </div>
+        </AgritechLayout>
+
+        <IonToast
+          isOpen={!!toast}
+          message={toast}
+          duration={3000}
+          onDidDismiss={() => setToast('')}
+        />
       </IonContent>
     </IonPage>
   );

@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { IonModal } from '@ionic/react';
-import { Heart, X, Check } from 'lucide-react';
+import { Heart, Check, CheckCircle2 } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
 import { enqueueAppendRow } from '../../services/offlineQueue';
+import { BottomSheet } from '../agritech';
 
 /**
  * QuickSaillieForm — Modal rapide pour enregistrer une saillie
  *
- * Le porcher sélectionne la truie et le verrat, confirme, et c'est enregistré.
- * 2 taps au lieu de 5 clics. Accessible depuis le Dashboard "Aujourd'hui".
+ * Agritech Dark : utilise <BottomSheet> wrapper.
+ * 2 taps au lieu de 5 clics. Accessible depuis le Cockpit "Aujourd'hui".
  */
 
 interface QuickSaillieFormProps {
@@ -23,12 +23,14 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose }) 
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  // Truies disponibles pour saillie : celles en "En attente saillie" (ex-Vide/Flushing)
+  // ou toute truie non en gestation ("Pleine") ou en maternité.
   const truiesDisponibles = truies.filter(t => {
     const s = t.statut?.toUpperCase() || '';
-    return s.includes('VIDE') || s.includes('FLUSH') || !s.includes('GEST');
+    return s.includes('ATTENTE') || (!s.includes('PLEINE') && !s.includes('MATERNIT'));
   });
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     if (!selectedTruie || !selectedVerrat) return;
     setSaving(true);
     try {
@@ -54,7 +56,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose }) 
     }
   };
 
-  const handleClose = () => {
+  const handleClose = (): void => {
     setSelectedTruie('');
     setSelectedVerrat('');
     setSuccess(false);
@@ -62,110 +64,174 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose }) 
   };
 
   return (
-    <IonModal isOpen={isOpen} onDidDismiss={handleClose} initialBreakpoint={0.65} breakpoints={[0, 0.65, 0.9]}>
-      <div className="bg-white h-full rounded-t-[24px] overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
-              <Heart size={20} className="text-purple-600" />
-            </div>
-            <div>
-              <h2 className="ft-heading text-[16px]">Enregistrer une saillie</h2>
-              <p className="text-[12px] text-gray-500">Sélectionnez la truie et le verrat</p>
-            </div>
-          </div>
-          <button onClick={handleClose} className="pressable w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center active:scale-[0.95] transition-transform duration-[160ms]" aria-label="Fermer">
-            <X size={16} className="text-gray-600" />
-          </button>
+    <BottomSheet
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Enregistrer une saillie"
+      height="full"
+    >
+      {success ? (
+        /* ── Success state ───────────────────────────────────────────── */
+        <div
+          className="flex flex-col items-center justify-center py-20 animate-scale-in"
+          role="status"
+          aria-live="polite"
+        >
+          <CheckCircle2
+            size={64}
+            className="text-accent mb-4"
+            aria-hidden="true"
+            strokeWidth={1.5}
+          />
+          <p className="agritech-heading text-[18px] uppercase tracking-wide">
+            Saillie enregistrée
+          </p>
+          <p className="mt-2 font-mono text-[12px] uppercase tracking-wide text-text-2">
+            {selectedTruie} × {selectedVerrat}
+          </p>
         </div>
-
-        {success ? (
-          /* Success state */
-          <div className="flex flex-col items-center justify-center py-16 animate-scale-in">
-            <div className="w-16 h-16 rounded-xl bg-accent-50 flex items-center justify-center mb-4">
-              <Check size={28} className="text-accent-600" />
+      ) : (
+        /* ── Form ────────────────────────────────────────────────────── */
+        <div className="space-y-6">
+          {/* Header description */}
+          <div className="flex items-center gap-3">
+            <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
+              <Heart size={18} aria-hidden="true" />
             </div>
-            <p className="ft-heading text-[16px]">Saillie enregistrée</p>
-            <p className="text-[13px] text-gray-500 mt-1">{selectedTruie} × {selectedVerrat}</p>
+            <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+              Sélectionnez la truie et le verrat
+            </p>
           </div>
-        ) : (
-          /* Form */
-          <div className="px-5 py-5 space-y-5">
-            {/* Truie selection */}
-            <div className="space-y-2">
-              <label className="text-[13px] font-bold text-gray-700">Truie</label>
-              <div className="flex gap-2 flex-wrap">
-                {truiesDisponibles.length > 0 ? (
-                  truiesDisponibles.map(t => (
+
+          {/* ── Truie selection ───────────────────────────────────────── */}
+          <div className="space-y-2">
+            <span
+              id="saillie-truie-label"
+              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+            >
+              Truie
+            </span>
+            {truiesDisponibles.length > 0 ? (
+              <div
+                className="flex flex-wrap gap-2"
+                role="radiogroup"
+                aria-labelledby="saillie-truie-label"
+              >
+                {truiesDisponibles.map(t => {
+                  const isSelected = selectedTruie === t.displayId;
+                  return (
                     <button
                       key={t.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={isSelected}
+                      aria-label={`Sélectionner la truie ${t.displayId}`}
                       onClick={() => setSelectedTruie(t.displayId)}
-                      className={`pressable px-4 py-2.5 rounded-xl text-[13px] font-medium transition-transform duration-[160ms] active:scale-[0.97] ${
-                        selectedTruie === t.displayId
-                          ? 'bg-accent-600 text-white'
-                          : 'bg-gray-50 text-gray-700 border border-gray-100'
-                      }`}
+                      className={[
+                        'pressable inline-flex items-center justify-center',
+                        'h-9 px-3 rounded-md border',
+                        'font-mono text-[12px] uppercase tracking-wide tabular-nums',
+                        'transition-colors duration-[160ms]',
+                        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
+                        isSelected
+                          ? 'bg-accent text-bg-0 border-accent font-semibold'
+                          : 'bg-bg-0 text-text-1 border-border hover:border-text-2',
+                      ].join(' ')}
                     >
                       {t.displayId}
                     </button>
-                  ))
-                ) : (
-                  <p className="text-[13px] text-gray-500">Aucune truie disponible</p>
-                )}
+                  );
+                })}
               </div>
-            </div>
-
-            {/* Verrat selection */}
-            <div className="space-y-2">
-              <label className="text-[13px] font-bold text-gray-700">Verrat</label>
-              <div className="flex gap-2 flex-wrap">
-                {verrats.length > 0 ? (
-                  verrats.map(v => (
-                    <button
-                      key={v.id}
-                      onClick={() => setSelectedVerrat(v.displayId)}
-                      className={`pressable px-4 py-2.5 rounded-xl text-[13px] font-medium transition-transform duration-[160ms] active:scale-[0.97] ${
-                        selectedVerrat === v.displayId
-                          ? 'bg-accent-600 text-white'
-                          : 'bg-gray-50 text-gray-700 border border-gray-100'
-                      }`}
-                    >
-                      {v.displayId}
-                    </button>
-                  ))
-                ) : (
-                  <p className="text-[13px] text-gray-500">Aucun verrat actif</p>
-                )}
-              </div>
-            </div>
-
-            {/* Confirm button */}
-            <button
-              onClick={handleSave}
-              disabled={!selectedTruie || !selectedVerrat || saving}
-              className="pressable w-full h-[52px] rounded-xl bg-accent-600 text-white text-[14px] font-bold flex items-center justify-center gap-2 active:scale-[0.97] transition-transform duration-[160ms] disabled:opacity-40"
-              style={{ boxShadow: '0 4px 14px -2px rgba(5,150,105,0.3)' }}
-            >
-              {saving ? (
-                <span className="animate-pulse">Enregistrement...</span>
-              ) : (
-                <>
-                  <Check size={18} />
-                  Confirmer la saillie
-                </>
-              )}
-            </button>
-
-            {selectedTruie && selectedVerrat && (
-              <p className="text-center text-[12px] text-gray-500">
-                {selectedTruie} × {selectedVerrat} · {new Date().toLocaleDateString('fr-FR')}
+            ) : (
+              <p className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+                Aucune truie disponible
               </p>
             )}
           </div>
-        )}
-      </div>
-    </IonModal>
+
+          {/* ── Verrat selection ──────────────────────────────────────── */}
+          <div className="space-y-2">
+            <span
+              id="saillie-verrat-label"
+              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+            >
+              Verrat
+            </span>
+            {verrats.length > 0 ? (
+              <div
+                className="flex flex-wrap gap-2"
+                role="radiogroup"
+                aria-labelledby="saillie-verrat-label"
+              >
+                {verrats.map(v => {
+                  const isSelected = selectedVerrat === v.displayId;
+                  return (
+                    <button
+                      key={v.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={isSelected}
+                      aria-label={`Sélectionner le verrat ${v.displayId}`}
+                      onClick={() => setSelectedVerrat(v.displayId)}
+                      className={[
+                        'pressable inline-flex items-center justify-center',
+                        'h-9 px-3 rounded-md border',
+                        'font-mono text-[12px] uppercase tracking-wide tabular-nums',
+                        'transition-colors duration-[160ms]',
+                        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
+                        isSelected
+                          ? 'bg-accent text-bg-0 border-accent font-semibold'
+                          : 'bg-bg-0 text-text-1 border-border hover:border-text-2',
+                      ].join(' ')}
+                    >
+                      {v.displayId}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+                Aucun verrat actif
+              </p>
+            )}
+          </div>
+
+          {/* ── Confirm button ────────────────────────────────────────── */}
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!selectedTruie || !selectedVerrat || saving}
+            aria-label="Confirmer la saillie"
+            className={[
+              'pressable w-full h-[52px] rounded-md',
+              'inline-flex items-center justify-center gap-2',
+              'bg-accent text-bg-0 font-mono text-[12px] font-bold uppercase tracking-wide',
+              'transition-colors duration-[160ms]',
+              'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
+              (!selectedTruie || !selectedVerrat || saving)
+                ? 'opacity-40 cursor-not-allowed'
+                : '',
+            ].join(' ')}
+          >
+            {saving ? (
+              <span className="animate-pulse">Enregistrement…</span>
+            ) : (
+              <>
+                <Check size={16} aria-hidden="true" />
+                Confirmer la saillie
+              </>
+            )}
+          </button>
+
+          {selectedTruie && selectedVerrat && (
+            <p className="text-center font-mono text-[11px] uppercase tracking-wide text-text-2 tabular-nums">
+              {selectedTruie} × {selectedVerrat} · {new Date().toLocaleDateString('fr-FR')}
+            </p>
+          )}
+        </div>
+      )}
+    </BottomSheet>
   );
 };
 

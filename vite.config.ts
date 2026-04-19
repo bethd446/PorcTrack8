@@ -24,16 +24,20 @@ export default defineConfig(({mode}) => {
       rollupOptions: {
         output: {
           manualChunks: {
-            'vendor-react':     ['react', 'react-dom'],
-            'vendor-capacitor': ['@capacitor/core', '@capacitor/preferences'],
-            // Split feature-tables into smaller chunks
-            'bandes':           ['./src/features/tables/BandesView'],
-            'cheptel':          ['./src/features/tables/CheptelView', './src/features/tables/AnimalDetailView'],
-            'tables-misc':      ['./src/features/tables/TableView'],
-            'feature-controle': [
+            'vendor-react':      ['react', 'react-dom', 'react-router-dom'],
+            'vendor-ionic':      ['@ionic/react', '@ionic/core'],
+            'vendor-capacitor':  ['@capacitor/core', '@capacitor/preferences', '@capacitor/app', '@capacitor/camera', '@capacitor/local-notifications', '@capacitor/status-bar'],
+            'vendor-dates':      ['date-fns'],
+            'vendor-icons':      ['lucide-react', 'ionicons'],
+            'bandes':            ['./src/features/tables/BandesView'],
+            'cheptel':           ['./src/features/tables/CheptelView', './src/features/tables/AnimalDetailView'],
+            'alertes':           ['./src/features/tables/AlertsView'],
+            'table-view':        ['./src/features/tables/TableView', './src/features/tables/TableRowEdit'],
+            'feature-controle':  [
               './src/features/controle/ControleQuotidien',
               './src/features/controle/ChecklistFlow',
               './src/features/controle/AuditView',
+              './src/features/controle/SyncView',
             ],
           },
         },

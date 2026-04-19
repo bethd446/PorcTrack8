@@ -1,0 +1,55 @@
+import type { SVGProps } from "react";
+
+export interface AgritechIconProps extends Omit<SVGProps<SVGSVGElement>, "size"> {
+  size?: number;
+  className?: string;
+}
+
+/**
+ * VerratIcon — profil verrat adulte (silhouette plus musclée, dos bombé,
+ * épaule marquée, défenses). Style "tracé ingénieur".
+ */
+export function VerratIcon({ size = 20, className, ...props }: AgritechIconProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      {/* Dos bombé + épaule marquée */}
+      <path d="M3 15 C3 13 4 11.5 5.5 10.5 C7 9.2 8.5 8.5 10 8.5 L16 8.5 C18.5 8.5 20.5 10 20.5 12.5 L20.5 15" />
+      {/* Ventre */}
+      <path d="M3 15 L3 16 C3 16.8 3.6 17 4.2 17 L19.5 17 C20.2 17 20.5 16.5 20.5 15.8 L20.5 15" />
+      {/* Tête/groin proéminent */}
+      <path d="M20.5 12.5 L22.5 12 L23 13.5 L22.5 14.8 L20.5 14.5" />
+      {/* Défense (crochet) */}
+      <path d="M22 14 L22.6 15.2" />
+      {/* Oreille dressée */}
+      <path d="M18.5 9.5 L19 7 L20.5 9" />
+      {/* Œil */}
+      <circle cx="20.8" cy="12.8" r="0.35" fill="currentColor" stroke="none" />
+      {/* Crinière / soies au garrot */}
+      <path d="M8 8.8 L8 7" />
+      <path d="M10 8.5 L10 7" />
+      <path d="M12 8.5 L12 7" />
+      {/* Queue courte droite */}
+      <path d="M3 14 L1.5 13.5" />
+      {/* Pattes robustes */}
+      <path d="M6.5 17 L6.5 21" />
+      <path d="M9 17 L9 21" />
+      <path d="M15 17 L15 21" />
+      <path d="M18 17 L18 21" />
+    </svg>
+  );
+}
+
+export default VerratIcon;
