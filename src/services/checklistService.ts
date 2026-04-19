@@ -63,17 +63,19 @@ export function getChecklistItems(name: string): ChecklistItem[] {
     const { data } = JSON.parse(cached);
     if (!data || data.length < 2) return [];
 
-    const [headers, ...rows] = data;
-    const items: ChecklistItem[] = rows
-      .map((row: any[]) => {
-          const item: any = {};
+    const [headers, ...rows] = data as [string[], ...unknown[][]];
+    type RawRow = Record<string, unknown> & { CHECKLIST?: string; NR?: string | number };
+    const items: ChecklistItem[] = (rows as unknown[][])
+      .map((row) => {
+          const item: RawRow = {};
           headers.forEach((h: string, i: number) => {
               item[h.trim()] = row[i];
           });
-          return item as ChecklistItem;
+          return item;
       })
-      .filter((item: any) => item.CHECKLIST === name)
-      .sort((a: any, b: any) => parseInt(a.NR) - parseInt(b.NR));
+      .filter((item) => item.CHECKLIST === name)
+      .sort((a, b) => parseInt(String(a.NR ?? '0'), 10) - parseInt(String(b.NR ?? '0'), 10))
+      .map((item) => item as unknown as ChecklistItem);
 
     return items;
   } catch {

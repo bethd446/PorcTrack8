@@ -130,10 +130,13 @@ export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // On récupère ce qu'on a en local immédiatement
     setLoading(true);
 
+    // Setter générique : accepte tous les domaines listés dans FarmState
+    // (truies | verrats | bandes | sante | stockAliment | stockVeto).
+    // Le type unknown[] suffit car chaque caller fournit déjà le bon type via getTruies/getVerrats/etc.
     const updateDataAndHeader = (
       domain: string,
       headerDomain: string,
-      data: any[],
+      data: unknown[],
       header: string[]
     ) => {
       setState(prev => ({
@@ -166,7 +169,7 @@ export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }),
       ]);
 
-      const empty = { success: false, data: [] as any[], header: [] as string[], source: ('FALL' + 'BACK') as DataSource };
+      const empty = { success: false, data: [] as unknown[], header: [] as string[], source: ('FALL' + 'BACK') as DataSource };
       const [
         truieRes, verratRes, bandeRes,
         santeRes, stockARes, stockVRes, notesRes, alertesServeurRes, sailliesRes, financesRes, formulesRes

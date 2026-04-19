@@ -64,7 +64,6 @@ export interface FormuleAliment {
  * Utilisées si la feuille `ALIMENT_FORMULES` est indisponible ou vide.
  * Le nom FORMULES_ALIMENT_FALLBACK est requis par le contrat public.
  */
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const FORMULES_ALIMENT_FALLBACK: FormuleAliment[] = [
   {
     code: 'DEMARRAGE_1',

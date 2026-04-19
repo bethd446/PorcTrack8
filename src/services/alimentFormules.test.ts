@@ -42,7 +42,7 @@ function row(
   unite: string,
   ordre: number | string,
   notes: string = '',
-): any[] {
+): (string | number)[] {
   return [codePhase, nomPhase, poidsRange, type, nom, valeur, unite, ordre, notes];
 }
 

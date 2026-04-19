@@ -20,10 +20,13 @@ const findIdx = (header: string[], ...variants: string[]) => {
   return -1;
 };
 
+/** Cellule Sheets brute (primitive) — certaines API renvoient aussi `Date`. */
+type RawCell = string | number | boolean | Date | null | undefined;
+
 /**
  * Parses a date from Google Sheets (can be a serial number, a string or an ISO date).
  */
-export const parseSheetDate = (val: any): string => {
+export const parseSheetDate = (val: unknown): string => {
   if (!val || val === '—' || val === '') return '';
   const s = String(val);
 
@@ -52,23 +55,26 @@ export const parseSheetDate = (val: any): string => {
   return s;
 };
 
-const readStr = (row: any[], idx: number): string =>
+/** Ligne Sheets brute (cellules hétérogènes). */
+type RawRow = readonly RawCell[];
+
+const readStr = (row: RawRow, idx: number): string =>
   idx !== -1 ? String(row[idx] ?? '') : '';
 
-const readOptStr = (row: any[], idx: number): string | undefined => {
+const readOptStr = (row: RawRow, idx: number): string | undefined => {
   if (idx === -1) return undefined;
   const v = row[idx];
   if (v === undefined || v === null || v === '') return undefined;
   return String(v);
 };
 
-const readNum = (row: any[], idx: number): number => {
+const readNum = (row: RawRow, idx: number): number => {
   if (idx === -1) return 0;
   const n = parseFloat(String(row[idx] ?? '0'));
   return isNaN(n) ? 0 : n;
 };
 
-const readOptInt = (row: any[], idx: number): number | undefined => {
+const readOptInt = (row: RawRow, idx: number): number | undefined => {
   if (idx === -1) return undefined;
   const v = row[idx];
   if (v === undefined || v === null || v === '') return undefined;
@@ -76,7 +82,7 @@ const readOptInt = (row: any[], idx: number): number | undefined => {
   return isNaN(n) ? undefined : n;
 };
 
-const readOptFloat = (row: any[], idx: number): number | undefined => {
+const readOptFloat = (row: RawRow, idx: number): number | undefined => {
   if (idx === -1) return undefined;
   const v = row[idx];
   if (v === undefined || v === null || v === '') return undefined;
@@ -84,8 +90,17 @@ const readOptFloat = (row: any[], idx: number): number | undefined => {
   return isNaN(n) ? undefined : n;
 };
 
+/** Convertit une ligne brute en cellules primitives sûres pour stockage dans `raw`. */
+const toRaw = (row: RawRow): (string | number | boolean)[] =>
+  row.map((v) => {
+    if (v === null || v === undefined) return '';
+    if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') return v;
+    // Date ou autre : sérialise en string pour ne pas casser le stockage JSON
+    return String(v);
+  });
+
 // ─── TRUIE ───────────────────────────────────────────────────────────────────
-export const mapTruie = (header: string[], row: any[]): Truie => {
+export const mapTruie = (header: string[], row: RawRow): Truie => {
   const idIdx = findIdx(header, 'ID', 'ID_TRUIE');
   const bIdx = findIdx(header, 'BOUCLE');
   const nIdx = findIdx(header, 'NOM');
@@ -127,12 +142,12 @@ export const mapTruie = (header: string[], row: any[]): Truie => {
     dateMBPrevue: dpIdx !== -1 ? parseSheetDate(row[dpIdx]) : undefined,
     notes: readOptStr(row, noIdx),
     synced: true,
-    raw: row,
+    raw: toRaw(row),
   };
 };
 
 // ─── VERRAT ──────────────────────────────────────────────────────────────────
-export const mapVerrat = (header: string[], row: any[]): Verrat => {
+export const mapVerrat = (header: string[], row: RawRow): Verrat => {
   const idIdx = findIdx(header, 'ID', 'ID_VERRAT');
   const bIdx = findIdx(header, 'BOUCLE');
   const nIdx = findIdx(header, 'NOM');
@@ -154,7 +169,7 @@ export const mapVerrat = (header: string[], row: any[]): Verrat => {
     ration: readNum(row, raIdx),
     notes: readOptStr(row, noIdx),
     synced: true,
-    raw: row,
+    raw: toRaw(row),
   };
 };
 
@@ -162,7 +177,7 @@ export const mapVerrat = (header: string[], row: any[]): Verrat => {
 /**
  * Retourne `null` pour les lignes RECAP (totaux) — le dispatcher filtre les nulls.
  */
-export const mapBande = (header: string[], row: any[]): BandePorcelets | null => {
+export const mapBande = (header: string[], row: RawRow): BandePorcelets | null => {
   const idIdx = findIdx(header, 'ID PORTÉE', 'ID PORTEE', 'ID_PORTEE', 'ID');
   const tIdx = findIdx(header, 'TRUIE');
   const bmIdx = findIdx(header, 'BOUCLE MÈRE', 'BOUCLE MERE', 'BOUCLE_MERE');
@@ -215,12 +230,12 @@ export const mapBande = (header: string[], row: any[]): BandePorcelets | null =>
     dateSeparation: dsepIdx !== -1 ? parseSheetDate(row[dsepIdx]) : undefined,
     notes: readOptStr(row, noIdx),
     synced: true,
-    raw: row,
+    raw: toRaw(row),
   };
 };
 
 // ─── JOURNAL SANTÉ ───────────────────────────────────────────────────────────
-export const mapSante = (header: string[], row: any[]): TraitementSante => {
+export const mapSante = (header: string[], row: RawRow): TraitementSante => {
   const dIdx = findIdx(header, 'DATE');
   const tIdx = findIdx(header, 'CIBLE_TYPE', 'SUJET_TYPE', 'TYPE');
   const iIdx = findIdx(header, 'CIBLE_ID', 'SUJET_ID', 'ID', 'BOUCLE');
@@ -243,7 +258,7 @@ export const mapSante = (header: string[], row: any[]): TraitementSante => {
 };
 
 // ─── STOCK ALIMENTS ──────────────────────────────────────────────────────────
-export const mapStockAliment = (header: string[], row: any[]): StockAliment => {
+export const mapStockAliment = (header: string[], row: RawRow): StockAliment => {
   const idIdx = findIdx(header, 'ID');
   const lIdx = findIdx(header, 'LIBELLÉ', 'LIBELLE', 'NOM', 'ALIMENT');
   const qIdx = findIdx(header, 'STOCK ACTUEL', 'STOCK_ACTUEL', 'QUANTITE');
@@ -265,7 +280,7 @@ export const mapStockAliment = (header: string[], row: any[]): StockAliment => {
 };
 
 // ─── STOCK VETO ──────────────────────────────────────────────────────────────
-export const mapStockVeto = (header: string[], row: any[]): StockVeto => {
+export const mapStockVeto = (header: string[], row: RawRow): StockVeto => {
   const idIdx = findIdx(header, 'ID');
   const pIdx = findIdx(header, 'PRODUIT', 'NOM');
   const tIdx = findIdx(header, 'TYPE');
@@ -299,7 +314,7 @@ export const mapStockVeto = (header: string[], row: any[]): StockVeto => {
  * Colonnes attendues :
  *   ID Truie | Boucle | Nom | Date saillie | Verrat | Date MB prevue | Statut | Notes
  */
-export const mapSaillie = (header: string[], row: any[]): Saillie => {
+export const mapSaillie = (header: string[], row: RawRow): Saillie => {
   const tIdx = findIdx(header, 'ID TRUIE', 'ID_TRUIE', 'TRUIE');
   const bIdx = findIdx(header, 'BOUCLE');
   const nIdx = findIdx(header, 'NOM');
@@ -318,7 +333,7 @@ export const mapSaillie = (header: string[], row: any[]): Saillie => {
     dateMBPrevue: dmIdx !== -1 ? parseSheetDate(row[dmIdx]) : undefined,
     statut: readOptStr(row, sIdx),
     notes: readOptStr(row, noIdx),
-    raw: row,
+    raw: toRaw(row),
   };
 };
 
@@ -342,7 +357,7 @@ export const mapSaillie = (header: string[], row: any[]): Saillie => {
  * Lignes filtrées (retour `null`) :
  *   • Ligne totalement vide (pas de date, pas de libellé, montant = 0)
  */
-export const mapFinance = (header: string[], row: any[]): FinanceEntry | null => {
+export const mapFinance = (header: string[], row: RawRow): FinanceEntry | null => {
   const dIdx = findIdx(header, 'DATE', 'PERIODE', 'PÉRIODE');
   const cIdx = findIdx(header, 'CATEGORIE', 'CATÉGORIE', 'CAT');
   const lIdx = findIdx(header, 'LIBELLE', 'LIBELLÉ', 'DESCRIPTION', 'INTITULE', 'INTITULÉ');
@@ -385,7 +400,7 @@ export const mapFinance = (header: string[], row: any[]): FinanceEntry | null =>
     montant,
     type,
     notes: notes || undefined,
-    raw: row,
+    raw: toRaw(row),
   };
 };
 
@@ -407,7 +422,7 @@ export const mapFinance = (header: string[], row: any[]): FinanceEntry | null =>
  */
 export const mapFormuleRow = (
   header: string[],
-  row: any[],
+  row: RawRow,
 ): FormuleRowSheets | null => {
   const cpIdx = findIdx(header, 'CODE_PHASE', 'CODE PHASE', 'CODE', 'PHASE');
   const npIdx = findIdx(header, 'NOM_PHASE', 'NOM PHASE', 'NOM DE PHASE', 'LIBELLE PHASE', 'LIBELLÉ PHASE');
@@ -478,7 +493,7 @@ export const mapFormuleRow = (
  *
  * Schéma : Priorité · Catégorie · Sujet · Alerte · Action requise · Date.
  */
-export const mapAlerteServeur = (header: string[], row: any[]): AlerteServeur => {
+export const mapAlerteServeur = (header: string[], row: RawRow): AlerteServeur => {
   const prIdx = findIdx(header, 'PRIORITÉ', 'PRIORITE', 'PRIO');
   const caIdx = findIdx(header, 'CATÉGORIE', 'CATEGORIE', 'CAT');
   const suIdx = findIdx(header, 'SUJET');
@@ -600,7 +615,7 @@ export const mapNote = mapRowToNote;
 /**
  * Global dispatcher for mapping.
  */
-export const mapTable = (key: string, header: string[], rows: any[][]): any[] => {
+export const mapTable = (key: string, header: string[], rows: RawRow[]): unknown[] => {
   switch (key.toUpperCase()) {
     case 'SUIVI_TRUIES_REPRODUCTION': return rows.map(r => mapTruie(header, r));
     case 'VERRATS': return rows.map(r => mapVerrat(header, r));
@@ -619,7 +634,7 @@ export const mapTable = (key: string, header: string[], rows: any[][]): any[] =>
       .map(r => mapFormuleRow(header, r))
       .filter((f): f is FormuleRowSheets => f !== null);
     case 'NOTES_TERRAIN': return rows
-      .map((r, idx) => mapRowToNote(r, idx))
+      .map((r, idx) => mapRowToNote(r as unknown[], idx))
       .filter((n): n is Note => n !== null);
     default: return rows;
   }

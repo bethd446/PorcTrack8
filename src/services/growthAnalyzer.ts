@@ -96,7 +96,7 @@ const POIDS_MAX_KG = 200;
  *   3: écart-type (kg, décimal, optionnel)
  */
 const PESEE_REGEX =
-  /pes[ée]e?\s+(\d+)\s+porc\w*\s*[·\-]\s*([\d.,]+)\s*kg(?:[^·±]*±\s*([\d.,]+))?/i;
+  /pes[ée]e?\s+(\d+)\s+porc\w*\s*[·-]\s*([\d.,]+)\s*kg(?:[^·±]*±\s*([\d.,]+))?/i;
 
 /**
  * Convertit une chaîne numérique française ("5,4") ou anglo ("5.4") en number.

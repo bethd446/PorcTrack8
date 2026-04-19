@@ -42,8 +42,8 @@ export interface Animal {
   // Verrat-specific
   origine?:        string;
   alimentation?:   string;
-  // Données brutes pour TableRowEdit
-  raw?: any[];
+  // Données brutes pour TableRowEdit (ligne Sheets : cellules = string|number|boolean)
+  raw?: (string | number | boolean)[];
 }
 
 // ── Notes terrain ─────────────────────────────────────────────────────────────

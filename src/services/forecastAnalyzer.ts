@@ -257,7 +257,6 @@ export function buildForecast(
 ): ForecastReport {
   const { truies, bandes, saillies } = params;
   const todayStart = startOfDay(today);
-  const horizonEnd = addDays(todayStart, horizonJours);
 
   const events: ForecastEvent[] = [];
 

@@ -10,7 +10,7 @@ import {
   TrendingUp, Activity, ClipboardList, Bug, ChevronDown,
   ChevronUp, Stethoscope, ChevronLeft, CheckCheck, X, CheckSquare
 } from 'lucide-react';
-import { readTableByKey, updateRowById, appendRow } from '../../services/googleSheets';
+import { readTableByKey, updateRowById, appendRow, type SheetRawRow } from '../../services/googleSheets';
 import TableRowEdit from './TableRowEdit';
 import PhotoStrip from '../../components/PhotoStrip';
 import AgritechHeader from '../../components/AgritechHeader';
@@ -28,26 +28,37 @@ import { isDebugEnabled } from '../../config';
 interface BandesEBProps { children: React.ReactNode; onReset: () => void; }
 interface BandesEBState { hasError: boolean; error: Error | null; }
 
+// Typage React.Component avec `useDefineForClassFields: false` + experimentalDecorators
+// provoque une perte des propriétés `state/props/setState` sur `this` → on caste localement.
+// Comportement inchangé (Error Boundary) — seulement les refs à `this`.
+interface BoundaryThis {
+  state: BandesEBState;
+  setState: (s: BandesEBState) => void;
+  props: BandesEBProps;
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 class BandesErrorBoundary extends (React.Component as any) {
   constructor(props: BandesEBProps) {
     super(props);
-    (this as any).state = { hasError: false, error: null };
+    (this as unknown as BoundaryThis).state = { hasError: false, error: null };
   }
   static getDerivedStateFromError(error: Error): BandesEBState { return { hasError: true, error }; }
 
-  private handleReset = () => {
-    (this as any).setState({ hasError: false, error: null });
-    (this as any).props.onReset();
+  private handleReset = (): void => {
+    const self = this as unknown as BoundaryThis;
+    self.setState({ hasError: false, error: null });
+    self.props.onReset();
   };
 
-  render() {
-    if ((this as any).state.hasError) {
+  render(): React.ReactNode {
+    const self = this as unknown as BoundaryThis;
+    if (self.state.hasError) {
       return (
         <div className="agritech-root p-10 text-center space-y-6 flex flex-col items-center justify-center min-h-[60vh]">
           <AlertTriangle size={48} className="text-red mb-4" />
           <h2 className="agritech-heading text-xl uppercase">Erreur d'affichage</h2>
           <p className="font-mono text-[12px] text-text-2 leading-relaxed max-w-xs">
-            {(this as any).state.error?.message || 'Une erreur critique est survenue dans le module Portées.'}
+            {self.state.error?.message || 'Une erreur critique est survenue dans le module Portées.'}
           </p>
           <div className="flex flex-col gap-3 w-full max-w-xs">
             <button
@@ -66,11 +77,12 @@ class BandesErrorBoundary extends (React.Component as any) {
         </div>
       );
     }
-    return (this as any).props.children;
+    return self.props.children;
   }
 }
 
-const DebugPanel: React.FC<{meta: any, header: string[], rowsCount: number, error: any, bandeKey: string}> = ({ meta, header, rowsCount, error, bandeKey }) => {
+interface DebugMeta { sheetName?: string; idHeader?: string; headerRow?: number; key?: string }
+const DebugPanel: React.FC<{meta: DebugMeta | null | undefined, header: string[], rowsCount: number, error: string | null, bandeKey: string}> = ({ meta, header, rowsCount, error, bandeKey }) => {
     const [open, setOpen] = useState(false);
     if (!isDebugEnabled()) return null;
     return (
@@ -151,8 +163,8 @@ const BandesView: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
   const [header, setHeader] = useState<string[]>([]);
-  const [rows, setRows] = useState<any[][]>([]);
-  const [meta, setMeta] = useState<any>(null);
+  const [rows, setRows] = useState<SheetRawRow[]>([]);
+  const [meta, setMeta] = useState<DebugMeta | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchText, setSearchText] = useState('');
   const [selectionMode, setSelectionMode] = useState(false);
@@ -199,7 +211,7 @@ const BandesView: React.FC = () => {
 
   const aggregatedBandes = useMemo(() => {
       if (rows.length === 0 || bandeIdIndex === -1) return [];
-      const groups: Record<string, any[]> = {};
+      const groups: Record<string, SheetRawRow[]> = {};
 
       rows.forEach(row => {
           const id = String(row[bandeIdIndex] || '').trim();
@@ -665,21 +677,41 @@ const CycleTimeline: React.FC<{ age: number | null, status: string }> = ({ age, 
     );
 };
 
+// Bande agrégée construite dans aggregatedBandes ci-dessus.
+interface AggregatedBande {
+    id: string;
+    count: number;
+    truie: unknown;
+    boucleMere: unknown;
+    dateMB: unknown;
+    age: number | null;
+    nv: unknown;
+    morts: number;
+    vivants: unknown;
+    status: unknown;
+    hasAlert: boolean;
+    rows: SheetRawRow[];
+}
+
 const BandeDetailView: React.FC<{
-    bande: any,
+    bande: AggregatedBande,
     header: string[],
-    meta: any,
+    meta: DebugMeta | null,
     onClose: () => void,
     onRefresh: () => void
 }> = ({ bande, header, meta, onClose, onRefresh }) => {
     const [tab, setTab] = useState('resumé');
-    const [editRow, setEditRow] = useState<any[] | null>(null);
+    const [editRow, setEditRow] = useState<SheetRawRow | null>(null);
     const [loading, setLoading] = useState(false);
-    const [healthData, setHealthData] = useState<any[][]>([]);
+    const [healthData, setHealthData] = useState<SheetRawRow[]>([]);
     const [healthHeader, setHealthHeader] = useState<string[]>([]);
-    const [notesData, setNotesData] = useState<any[][]>([]);
+    const [notesData, setNotesData] = useState<SheetRawRow[]>([]);
     const [notesHeader, setNotesHeader] = useState<string[]>([]);
-    const { notes: notesAsNotes } = useFarm();
+    const { notes: notesAsNotes, getBandeById } = useFarm();
+    // Bande typée (BandePorcelets) depuis le FarmContext — BandeCroissanceCard
+    // a besoin des champs `statut`, `dateSevrageReelle`, `dateSevragePrevue`
+    // absents de l'objet agrégé construit ici depuis les lignes brutes Sheets.
+    const bandeTyped = getBandeById(bande.id);
 
     const loadRelatedData = useCallback(async () => {
         setLoading(true);
@@ -780,7 +812,9 @@ const BandeDetailView: React.FC<{
 
                             <CycleTimeline age={bande.age} status={bande.status || ''} />
 
-                            <BandeCroissanceCard bande={bande} notes={notesAsNotes} />
+                            {bandeTyped ? (
+                              <BandeCroissanceCard bande={bandeTyped} notes={notesAsNotes} />
+                            ) : null}
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="card-dense">
@@ -838,7 +872,7 @@ const BandeDetailView: React.FC<{
                                 <Chip label={`${bande.rows.length} lignes`} tone="accent" size="xs" />
                             </div>
                             {bande.rows && bande.rows.length > 0 ? (
-                                bande.rows.map((row: any[], i: number) => (
+                                bande.rows.map((row: SheetRawRow, i: number) => (
                                     <button
                                         type="button"
                                         key={i}
@@ -974,10 +1008,10 @@ const BandeDetailView: React.FC<{
 };
 
 const BatchWeaningModal: React.FC<{
-    selectedBandes: any[],
+    selectedBandes: AggregatedBande[],
     onClose: () => void,
     onSuccess: () => void,
-    meta: any,
+    meta: DebugMeta,
     header: string[]
 }> = ({ selectedBandes, onClose, onSuccess, meta, header }) => {
     const [loading, setLoading] = useState(false);
@@ -998,7 +1032,7 @@ const BatchWeaningModal: React.FC<{
         try {
             // Détection dynamique de l'ID pour PORCELETS_BANDES
             // Si header[0] est "ID Portée", on utilise ça comme idHeader
-            const effectiveIdHeader = (header[0] === "ID Portée" || header[0] === "ID_PORTEE") ? header[0] : meta.idHeader;
+            const effectiveIdHeader = (header[0] === "ID Portée" || header[0] === "ID_PORTEE") ? header[0] : meta.idHeader ?? 'ID';
 
             // Load Truies meta for update
             setProgress({ current: 0, total: totalSteps, phase: 'Chargement référentiel Truies...' });
@@ -1018,7 +1052,7 @@ const BatchWeaningModal: React.FC<{
                         const idValue = idIdx !== -1 ? row[idIdx] : null;
 
                         if (idValue) {
-                            const patch: any = {
+                            const patch: Record<string, string> = {
                                 'STATUT': 'SEVRÉ',
                                 'DATE SEVRAGE RÉELLE': dateSevrage,
                             };
@@ -1028,7 +1062,7 @@ const BatchWeaningModal: React.FC<{
                             // On utilise updateRowById en direct pour avoir le feedback,
                             // mais on pourrait passer par la queue si on voulait du pur offline.
                             // Ici le "Batch" demande un succès visuel immédiat.
-                            const res = await updateRowById(meta.sheetName, effectiveIdHeader, String(idValue), patch);
+                            const res = await updateRowById(meta.sheetName ?? '', effectiveIdHeader, String(idValue), patch);
                             if (!res.success) throw new Error(res.message);
                         }
                     }
@@ -1050,10 +1084,11 @@ const BatchWeaningModal: React.FC<{
                             patch[truiesHeader[tNoteIdx]] = `[SEVRAGE ${dateSevrage}] ${note}`.trim();
                         }
 
-                        await updateRowById(truiesMeta.sheetName, truiesMeta.idHeader, bande.boucleMere, patch);
+                        await updateRowById(truiesMeta.sheetName, truiesMeta.idHeader, String(bande.boucleMere), patch);
                     }
-                } catch (err: any) {
-                    setErrors(prev => [...prev, `Erreur sur ${bande.id}: ${err.message}`]);
+                } catch (err) {
+                    const msg = err instanceof Error ? err.message : String(err);
+                    setErrors(prev => [...prev, `Erreur sur ${bande.id}: ${msg}`]);
                 }
             }
 
@@ -1078,8 +1113,9 @@ const BatchWeaningModal: React.FC<{
             if (errors.length === 0) {
                 onSuccess();
             }
-        } catch (e: any) {
-            setErrors(prev => [...prev, `Erreur critique: ${e.message}`]);
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            setErrors(prev => [...prev, `Erreur critique: ${msg}`]);
         } finally {
             setLoading(false);
         }

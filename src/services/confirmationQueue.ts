@@ -15,6 +15,54 @@
 import { Preferences } from '@capacitor/preferences';
 import { updateRowById, appendRow } from './googleSheets';
 import type { FarmAlert, AlertAction } from './alertEngine';
+import type { SheetCell } from './offlineQueue';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TYPE GUARDS — narrow les payloads dynamiques des actions d'alerte.
+// Les payloads sont Record<string, unknown> côté alertEngine pour éviter
+// d'exploser un discriminated union complexe. On narrow ici à l'usage.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function isStringField(obj: Record<string, unknown>, key: string): obj is Record<string, unknown> & Record<typeof key, string> {
+  return typeof obj[key] === 'string';
+}
+
+function asSheetCellArray(v: unknown): SheetCell[] | null {
+  if (!Array.isArray(v)) return null;
+  // Autorise les cellules primitives Sheets ; rejette les sous-objets.
+  for (const cell of v) {
+    if (cell === null) continue;
+    const t = typeof cell;
+    if (t !== 'string' && t !== 'number' && t !== 'boolean') return null;
+  }
+  return v as SheetCell[];
+}
+
+function asPatchRecord(v: unknown): Record<string, SheetCell> | null {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
+  const entries = Object.entries(v as Record<string, unknown>);
+  for (const [, val] of entries) {
+    if (val === null) continue;
+    const t = typeof val;
+    if (t !== 'string' && t !== 'number' && t !== 'boolean') return null;
+  }
+  return v as Record<string, SheetCell>;
+}
+
+interface TruieUpdate {
+  sheet: string;
+  idHeader: string;
+  idValue: string;
+  patch: Record<string, SheetCell>;
+}
+
+function asTruieUpdate(v: unknown): TruieUpdate | null {
+  if (!v || typeof v !== 'object') return null;
+  const o = v as Record<string, unknown>;
+  const patch = asPatchRecord(o.patch);
+  if (typeof o.sheet !== 'string' || typeof o.idHeader !== 'string' || typeof o.idValue !== 'string' || !patch) return null;
+  return { sheet: o.sheet, idHeader: o.idHeader, idValue: o.idValue, patch };
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -126,11 +174,24 @@ export async function confirmAction(itemId: string, note?: string): Promise<{ su
     // Exécuter l'action principale
     let result: { success: boolean; message?: string };
 
-    if (payload.action === 'append_row' || payload.values) {
-      result = await appendRow(payload.sheet, payload.values);
+    const values = asSheetCellArray(payload.values);
+    if (payload.action === 'append_row' || values !== null) {
+      if (!isStringField(payload, 'sheet') || !values) {
+        throw new Error('Payload append_row invalide (sheet ou values manquants/mal typés)');
+      }
+      result = await appendRow(payload.sheet, values);
     } else {
+      const patch = asPatchRecord(payload.patch);
+      if (
+        !isStringField(payload, 'sheet') ||
+        !isStringField(payload, 'idHeader') ||
+        !isStringField(payload, 'idValue') ||
+        !patch
+      ) {
+        throw new Error('Payload update_row_by_id invalide (champs sheet/idHeader/idValue/patch)');
+      }
       result = await updateRowById(payload.sheet, payload.idHeader, payload.idValue, {
-        ...payload.patch,
+        ...patch,
         ...(note ? { NOTES: note } : {}),
       });
     }
@@ -138,27 +199,29 @@ export async function confirmAction(itemId: string, note?: string): Promise<{ su
     if (!result.success) throw new Error(result.message ?? 'Erreur Sheets');
 
     // Action secondaire (ex: mise à jour de la truie mère lors du sevrage)
-    if (payload.truieUpdate) {
-      const tu = payload.truieUpdate;
-      await updateRowById(tu.sheet, tu.idHeader, tu.idValue, tu.patch);
+    const truieUpdate = asTruieUpdate(payload.truieUpdate);
+    if (truieUpdate) {
+      await updateRowById(truieUpdate.sheet, truieUpdate.idHeader, truieUpdate.idValue, truieUpdate.patch);
     }
 
     // Si regroupement → créer une nouvelle bande
-    if (item.action.type === 'CONFIRM_REGROUPEMENT_BANDE' && payload.bandeIds) {
+    if (item.action.type === 'CONFIRM_REGROUPEMENT_BANDE' && Array.isArray(payload.bandeIds)) {
+      const bandeIds = (payload.bandeIds as unknown[]).filter((x): x is string => typeof x === 'string');
+      const totalVivants = typeof payload.totalVivants === 'number' ? payload.totalVivants : 0;
       const nomBande = `BANDE-${new Date().toISOString().slice(0, 10)}-SEV`;
       await appendRow('PORCELETS_BANDES_DETAIL', [
         nomBande,
         '',
         '',
         new Date().toLocaleDateString('fr-FR'),
-        payload.totalVivants,
+        totalVivants,
         0,
-        payload.totalVivants,
+        totalVivants,
         'En cours',
         '',
         '',
         '',
-        note ?? `Regroupement automatique : ${payload.bandeIds.join(', ')}`,
+        note ?? `Regroupement automatique : ${bandeIds.join(', ')}`,
       ]);
     }
 

@@ -47,7 +47,7 @@ export async function loadTablesIndex(): Promise<Record<string, TableMeta>> {
       const [, ...rows] = result.values;
       const mapping: Record<string, TableMeta> = {};
 
-      rows.forEach((row: any[]) => {
+      rows.forEach((row: unknown[]) => {
         const key = String(row[0] || '').trim();
         if (key) {
           mapping[key] = {

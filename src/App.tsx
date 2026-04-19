@@ -41,7 +41,6 @@ const TroupeauHub = React.lazy(() => import(/* webpackChunkName: "troupeau-hub" 
 const CyclesHub = React.lazy(() => import(/* webpackChunkName: "cycles-hub" */ './features/hubs/CyclesHub'));
 const RessourcesHub = React.lazy(() => import(/* webpackChunkName: "ressources-hub" */ './features/hubs/RessourcesHub'));
 const PilotageHub = React.lazy(() => import(/* webpackChunkName: "pilotage-hub" */ './features/hubs/PilotageHub'));
-const ComingSoon = React.lazy(() => import(/* webpackChunkName: "coming-soon" */ './features/hubs/ComingSoon'));
 
 // Agritech troupeau sub-screens (new dense lists — coexist with /cheptel).
 const TruiesListView = React.lazy(() => import(/* webpackChunkName: "truies-list" */ './features/troupeau/TruiesListView'));

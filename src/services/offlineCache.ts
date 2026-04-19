@@ -43,7 +43,7 @@ export const isCacheValid = async (key: string): Promise<boolean> => {
   const { value } = await Preferences.get({ key: `cache_${key}` });
   if (!value) return false;
   try {
-    const entry: CacheEntry<any> = JSON.parse(value);
+    const entry: CacheEntry<unknown> = JSON.parse(value);
     return (Date.now() - entry.timestamp < entry.ttl);
   } catch {
     return false;

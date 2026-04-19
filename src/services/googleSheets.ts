@@ -54,12 +54,32 @@ const getDeviceInfo = () => {
   };
 };
 
+/**
+ * Ligne Sheets brute — cellules hétérogènes (string | number | boolean | null).
+ * Typée `any[]` intentionnellement : les callers UI (AuditView, TableView,
+ * ChecklistFlow, etc.) indexent et castent librement selon les headers connus
+ * au runtime. Un type strict forcerait à narrow à chaque accès, sans gain
+ * réel car le schéma d'une feuille vit côté Google Sheets.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type SheetRawRow = any[];
+
+/** Réponse GAS typique : wrapper `{ success, data|result, error? }`. */
+type GasResponse = {
+  success?: boolean;
+  data?: unknown;
+  result?: unknown;
+  error?: string;
+  message?: string;
+  [k: string]: unknown;
+};
+
 // Système de Cache Mémoire pour éviter les doubles appels
-const memoryCache = new Map<string, { data: any, timestamp: number }>();
-const pendingRequests = new Map<string, Promise<any>>();
+const memoryCache = new Map<string, { data: GasResponse; timestamp: number }>();
+const pendingRequests = new Map<string, Promise<{ status: number; data: GasResponse; fromCache?: boolean }>>();
 const CACHE_TTL = 30000; // 30 secondes
 
-async function request(options: { method: 'GET' | 'POST', url: string, data?: any, skipCache?: boolean }) {
+async function request(options: { method: 'GET' | 'POST', url: string, data?: unknown, skipCache?: boolean }): Promise<{ status: number; data: GasResponse; fromCache?: boolean }> {
   const isNative = Capacitor.isNativePlatform();
   const cacheKey = options.url + (options.data ? JSON.stringify(options.data) : '');
 
@@ -81,9 +101,9 @@ async function request(options: { method: 'GET' | 'POST', url: string, data?: an
 
   const executeRequest = async () => {
     try {
-      let result;
+      let result: { status: number; data: GasResponse };
       if (!isNative) {
-        const fetchOptions: any = {
+        const fetchOptions: RequestInit = {
           method: options.method,
           headers: { 'Content-Type': 'text/plain;charset=utf-8' }
         };
@@ -208,8 +228,8 @@ async function fetchAndCacheTable<T>(key: string, ttl: number): Promise<ReadType
   try {
     const res = await request({ method: 'GET', url: fullUrl });
     if (res.status === 200 && res.data?.ok) {
-      const header: string[] = res.data.header || [];
-      const rows = res.data.rows || [];
+      const header: string[] = (res.data.header as string[]) || [];
+      const rows = (res.data.rows as SheetRawRow[]) || [];
       const mappedData = mapTable(key, header, rows) as T[];
 
       await setCache(key, mappedData, ttl);
@@ -225,14 +245,14 @@ async function fetchAndCacheTable<T>(key: string, ttl: number): Promise<ReadType
   return { success: false, data: [], header: [], source: 'NETWORK', error: 'Réseau indisponible' };
 }
 
-export async function getTablesIndex() {
+export async function getTablesIndex(): Promise<{ success: boolean; values: SheetRawRow[]; message?: string }> {
   const { url, token } = getGasConfig();
   const fullUrl = `${url}?token=${encodeURIComponent(token)}&action=get_tables_index`;
   const res = await request({ method: 'GET', url: fullUrl, skipCache: true });
   if (res.status === 200 && res.data?.ok) {
-    return { success: true, values: res.data.values || [] };
+    return { success: true, values: (res.data.values as SheetRawRow[]) || [] };
   }
-  return { success: false, values: [], message: res.data?.error || 'Erreur Index' };
+  return { success: false, values: [], message: (res.data?.error as string) || 'Erreur Index' };
 }
 
 /**
@@ -274,7 +294,7 @@ export async function getNotesTerrain(
   return readTypedTable<Note>('NOTES_TERRAIN', 15 * 60 * 1000, cb);
 }
 
-export async function updateRowById(sheet: string, idHeader: string, idValue: string, patch: Record<string, any>) {
+export async function updateRowById(sheet: string, idHeader: string, idValue: string, patch: Record<string, unknown>) {
   const { url, token } = getGasConfig();
   const payload = {
     token,
@@ -294,10 +314,10 @@ export async function updateRowById(sheet: string, idHeader: string, idValue: st
     const keysToInvalidate = SHEET_TO_KEYS[sheet] ?? [sheet];
     await Promise.all(keysToInvalidate.map(k => invalidateCache(k)));
   }
-  return { success: res.status === 200 && res.data?.ok, message: res.data?.error || res.data?.message };
+  return { success: Boolean(res.status === 200 && res.data?.ok), message: String(res.data?.error || res.data?.message || '') };
 }
 
-export async function appendRow(sheet: string, values: any[]) {
+export async function appendRow(sheet: string, values: unknown[]) {
   const { url, token } = getGasConfig();
   const payload = {
     token,
@@ -313,7 +333,7 @@ export async function appendRow(sheet: string, values: any[]) {
     const keysToInvalidate = SHEET_TO_KEYS[sheet] ?? [sheet];
     await Promise.all(keysToInvalidate.map(k => invalidateCache(k)));
   }
-  return { success: res.status === 200 && res.data?.ok, message: res.data?.error || res.data?.message };
+  return { success: Boolean(res.status === 200 && res.data?.ok), message: String(res.data?.error || res.data?.message || '') };
 }
 
 /**
@@ -375,7 +395,7 @@ export interface ReadTableResult {
   headers: string[];
   /** Alias de headers — compatibilité avec l'ancien code */
   header: string[];
-  rows: any[][];
+  rows: SheetRawRow[];
   /** Métadonnées de la table depuis TABLES_INDEX */
   meta?: { key: string; sheetName: string; headerRow: number; idHeader: string };
   source: 'NETWORK' | 'CACHE' | 'FALLBACK';
@@ -387,7 +407,7 @@ export async function readTableByKey(key: string): Promise<ReadTableResult> {
   const CACHE_KEY = `raw_${key}`;
   const isValid = await isCacheValid(CACHE_KEY);
   if (isValid) {
-    const cached = await getCache<{ headers: string[]; rows: any[][] }>(CACHE_KEY);
+    const cached = await getCache<{ headers: string[]; rows: SheetRawRow[] }>(CACHE_KEY);
     if (cached) return { success: true, headers: cached.headers, header: cached.headers, rows: cached.rows, source: 'CACHE' };
   }
 
@@ -396,9 +416,9 @@ export async function readTableByKey(key: string): Promise<ReadTableResult> {
   try {
     const res = await request({ method: 'GET', url: fullUrl });
     if (res.status === 200 && res.data?.ok) {
-      const headers: string[] = res.data.header || res.data.headers || [];
-      const rows: any[][] = res.data.rows || [];
-      const meta = res.data.meta;
+      const headers: string[] = (res.data.header as string[]) || (res.data.headers as string[]) || [];
+      const rows: SheetRawRow[] = (res.data.rows as SheetRawRow[]) || [];
+      const meta = res.data.meta as ReadTableResult['meta'];
       await setCache(CACHE_KEY, { headers, rows }, 10 * 60 * 1000);
       return { success: true, headers, header: headers, rows, meta, source: 'NETWORK' };
     }
@@ -407,8 +427,8 @@ export async function readTableByKey(key: string): Promise<ReadTableResult> {
     console.error(`readTableByKey "${key}" network failed`);
   }
 
-  const fallback = await getCache<{ headers: string[]; rows: any[][] }>(CACHE_KEY);
-  if (fallback) return { success: true, headers: fallback.headers, header: fallback.headers, rows: fallback.rows, source: 'FALLBACK' };
+  const stale = await getCache<{ headers: string[]; rows: SheetRawRow[] }>(CACHE_KEY);
+  if (stale) return { success: true, headers: stale.headers, header: stale.headers, rows: stale.rows, source: 'FALLBACK' };
   return { success: false, headers: [], header: [], rows: [], source: 'NETWORK', message: 'Données indisponibles' };
 }
 
@@ -416,19 +436,19 @@ export async function readTableByKey(key: string): Promise<ReadTableResult> {
  * readRange — lecture d'une plage nommée ou d'une feuille brute.
  * Utilisé par ensureHeaders.ts.
  */
-export async function readRange(sheet: string): Promise<{ success: boolean; values: any[][] }> {
+export async function readRange(sheet: string): Promise<{ success: boolean; values: SheetRawRow[] }> {
   const { url, token } = getGasConfig();
   const fullUrl = `${url}?token=${encodeURIComponent(token)}&action=read_sheet&sheet=${encodeURIComponent(sheet)}`;
   const res = await request({ method: 'GET', url: fullUrl });
-  if (res.status === 200 && res.data?.ok) return { success: true, values: res.data.values || [] };
+  if (res.status === 200 && res.data?.ok) return { success: true, values: (res.data.values as SheetRawRow[]) || [] };
   return { success: false, values: [] };
 }
 
 /**
  * postAction — envoi générique d'une action GAS (utilisé par ensureHeaders.ts).
  */
-export async function postAction(payload: Record<string, any>): Promise<{ success: boolean; message?: string }> {
+export async function postAction(payload: Record<string, unknown>): Promise<{ success: boolean; message?: string }> {
   const { url, token } = getGasConfig();
   const res = await request({ method: 'POST', url, data: { token, ...payload } });
-  return { success: res.status === 200 && res.data?.ok, message: res.data?.error };
+  return { success: Boolean(res.status === 200 && res.data?.ok), message: res.data?.error };
 }

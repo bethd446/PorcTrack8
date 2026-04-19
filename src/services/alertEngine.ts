@@ -46,8 +46,10 @@ export type AlertActionType =
 export interface AlertAction {
   type: AlertActionType;
   label: string;
-  /** Données pré-remplies à envoyer dans Sheets si l'action est confirmée */
-  payload?: Record<string, any>;
+  /** Données pré-remplies à envoyer dans Sheets si l'action est confirmée.
+   *  Structure dynamique (append_row vs update_row + actions secondaires) :
+   *  consommée par `confirmationQueue.confirmAction` qui narrow par champs. */
+  payload?: Record<string, unknown>;
   /** Variante visuelle du bouton */
   variant?: 'primary' | 'danger' | 'secondary';
 }
@@ -178,7 +180,6 @@ function checkMiseBas(truie: Truie, today: Date): FarmAlert | null {
   if (offset < -BIO.ALERTE_MB_AVANCE_JOURS || offset > BIO.ALERTE_MB_RETARD_JOURS + 5) return null;
 
   const isRetard = offset > BIO.ALERTE_MB_RETARD_JOURS;
-  const isImminente = offset >= -BIO.ALERTE_MB_AVANCE_JOURS && offset <= 0;
 
   return {
     id: alertId('MB', truie.id, String(mbPrevue.getTime())),

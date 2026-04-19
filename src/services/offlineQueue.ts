@@ -10,14 +10,38 @@
 import { Preferences } from '@capacitor/preferences';
 import { updateRowById, appendRow } from './googleSheets';
 
-export type QueueItem = {
-  id: string;
-  action: 'update_row_by_id' | 'append_row';
-  payload: any;
-  timestamp: string;
-  tries: number;
-  lastError?: string;
+/** Cellule Sheets : primitives acceptées par l'API Values.append/batchUpdate. */
+export type SheetCell = string | number | boolean | null;
+
+export type UpdateRowPayload = {
+  sheet: string;
+  idHeader: string;
+  idValue: string;
+  patch: Record<string, SheetCell>;
 };
+
+export type AppendRowPayload = {
+  sheet: string;
+  values: SheetCell[];
+};
+
+export type QueueItem =
+  | {
+      id: string;
+      action: 'update_row_by_id';
+      payload: UpdateRowPayload;
+      timestamp: string;
+      tries: number;
+      lastError?: string;
+    }
+  | {
+      id: string;
+      action: 'append_row';
+      payload: AppendRowPayload;
+      timestamp: string;
+      tries: number;
+      lastError?: string;
+    };
 
 const QUEUE_KEY = 'porctrack_sync_queue_v7';
 
@@ -53,7 +77,7 @@ export async function initQueue(): Promise<void> {
 // ── API publique ─────────────────────────────────────────────────────────────
 
 export async function enqueueUpdateRow(
-  sheet: string, idHeader: string, idValue: string, patch: Record<string, any>
+  sheet: string, idHeader: string, idValue: string, patch: Record<string, SheetCell>
 ): Promise<void> {
   const queue = await loadQueue();
   queue.push({
@@ -66,7 +90,7 @@ export async function enqueueUpdateRow(
   await saveQueue(queue);
 }
 
-export async function enqueueAppendRow(sheet: string, values: any[]): Promise<void> {
+export async function enqueueAppendRow(sheet: string, values: SheetCell[]): Promise<void> {
   const queue = await loadQueue();
   queue.push({
     id: `AP-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,

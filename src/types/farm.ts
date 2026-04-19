@@ -39,7 +39,7 @@ export interface Truie {
   dateMBPrevue?: string;
   notes?: string;
   synced: boolean;
-  raw?: any[];
+  raw?: (string | number | boolean)[];
 }
 
 export interface Verrat {
@@ -53,7 +53,7 @@ export interface Verrat {
   ration: number;
   notes?: string;
   synced: boolean;
-  raw?: any[];
+  raw?: (string | number | boolean)[];
 }
 
 export interface BandePorcelets {
@@ -78,7 +78,7 @@ export interface BandePorcelets {
   dateSeparation?: string;
   notes?: string;
   synced: boolean;
-  raw?: any[];
+  raw?: (string | number | boolean)[];
 }
 
 export interface TraitementSante {
