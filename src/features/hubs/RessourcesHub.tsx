@@ -1,6 +1,6 @@
 import React from 'react';
 import { IonContent, IonPage } from '@ionic/react';
-import { Wheat, Syringe, Calculator } from 'lucide-react';
+import { Wheat, Syringe, Calculator, ClipboardList } from 'lucide-react';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { HubTile } from '../../components/agritech';
@@ -33,6 +33,14 @@ const RessourcesHub: React.FC = () => {
               subtitle="Couverture · rations/j"
               to="/ressources/aliments/plan"
               tone="accent"
+            />
+            <HubTile
+              icon={<ClipboardList size={22} />}
+              title="Formules"
+              subtitle="5 recettes validées"
+              count={5}
+              to="/ressources/aliments/formules"
+              tone="amber"
             />
             <HubTile
               icon={<Syringe size={22} />}

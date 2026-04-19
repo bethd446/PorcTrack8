@@ -48,6 +48,7 @@ const TruiesListView = React.lazy(() => import(/* webpackChunkName: "truies-list
 
 // Agritech ressources sub-screens.
 const PlanAlimentationView = React.lazy(() => import(/* webpackChunkName: "plan-alim" */ './features/ressources/PlanAlimentationView'));
+const FormulesView = React.lazy(() => import(/* webpackChunkName: "formules" */ './features/ressources/FormulesView'));
 
 // Agritech pilotage sub-screens (Sprint 3 livrés).
 const PerfKpiView = React.lazy(() => import(/* webpackChunkName: "pilotage-perf" */ './features/pilotage/PerfKpiView'));
@@ -152,6 +153,7 @@ const AppContent = () => {
           {/* ── Ressources sub-routes ─────────────────────────────────── */}
           <Route path="/ressources/aliments" element={<TableView tableKey="STOCK_ALIMENTS" />} />
           <Route path="/ressources/aliments/plan" element={<PlanAlimentationView />} />
+          <Route path="/ressources/aliments/formules" element={<FormulesView />} />
           <Route path="/ressources/veto" element={<TableView tableKey="STOCK_VETO" />} />
         </Routes>
       </React.Suspense>
