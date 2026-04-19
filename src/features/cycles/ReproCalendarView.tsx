@@ -23,7 +23,7 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonPage, IonContent, IonRefresher, IonRefresherContent } from '@ionic/react';
-import { Heart, Baby, CalendarClock, Inbox, Info } from 'lucide-react';
+import { Heart, Baby, CalendarClock, Info } from 'lucide-react';
 
 import { useFarm } from '../../context/FarmContext';
 import AgritechLayout from '../../components/AgritechLayout';
@@ -371,20 +371,25 @@ const ReproCalendarView: React.FC = () => {
             {/* ── Empty state global ───────────────────────────────────── */}
             {nothingAtAll ? (
               <div
-                className="card-dense text-center py-10 animate-fade-in-up stagger-4"
+                className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up stagger-4"
                 role="status"
               >
-                <Inbox
-                  size={36}
-                  className="text-text-2 mx-auto mb-3 opacity-60"
-                  aria-hidden="true"
-                />
-                <h3 className="agritech-heading text-[14px] uppercase mb-1">
-                  Aucun évènement
+                <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
+                  <Heart size={40} aria-hidden="true" />
+                </div>
+                <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
+                  Aucune échéance dans les 14 prochains jours
                 </h3>
-                <p className="font-mono text-[11px] text-text-2 tracking-wide">
-                  Aucune saillie récente ni mise-bas prévue
+                <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
+                  Profitez du calme — rien à faire cette quinzaine côté repro.
                 </p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/cycles/repro')}
+                  className="pressable mt-5 h-11 px-5 rounded-md bg-accent text-bg-0 text-[13px] font-medium transition-colors"
+                >
+                  Voir historique
+                </button>
               </div>
             ) : null}
 

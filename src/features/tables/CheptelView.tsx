@@ -50,6 +50,30 @@ const SkeletonRow: React.FC = () => (
   </div>
 );
 
+/** Empty state enrichi — icône custom + copy chaleureuse. */
+const EmptyStateV2: React.FC<{
+  icon: React.ReactNode;
+  title: string;
+  description?: string;
+}> = ({ icon, title, description }) => (
+  <div
+    className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up"
+    role="status"
+  >
+    <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
+      {icon}
+    </div>
+    <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
+      {title}
+    </h3>
+    {description ? (
+      <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
+        {description}
+      </p>
+    ) : null}
+  </div>
+);
+
 const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -222,15 +246,27 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                 <SkeletonRow />
               </div>
             ) : filteredItems.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-                <EmptyIcon size={48} className="text-text-2" />
-                <p className="text-[14px] font-medium text-text-1">Aucun sujet trouvé</p>
-                {searchText ? (
-                  <p className="font-mono text-[11px] text-text-2">
-                    Essayez d'autres termes de recherche
-                  </p>
-                ) : null}
-              </div>
+              tab === 'TRUIE' ? (
+                <EmptyStateV2
+                  icon={<EmptyIcon size={48} />}
+                  title="Aucune truie trouvée"
+                  description={
+                    searchText
+                      ? "Modifiez la recherche ou vérifiez que Google Sheets est à jour."
+                      : "Votre cheptel n'a pas encore de truies enregistrées."
+                  }
+                />
+              ) : (
+                <EmptyStateV2
+                  icon={<EmptyIcon size={48} />}
+                  title="Aucun verrat"
+                  description={
+                    searchText
+                      ? "Modifiez la recherche ou vérifiez que Google Sheets est à jour."
+                      : "Votre cheptel n'a pas encore de verrats enregistrés."
+                  }
+                />
+              )
             ) : (
               <div
                 role="list"

@@ -333,15 +333,19 @@ const AlertsView: React.FC = () => {
 
             {/* ── Empty state global ────────────────────────────────────── */}
             {showEmpty && (
-              <div className="card-dense flex flex-col items-center justify-center py-16 gap-3 text-center">
-                <CheckCircle2 size={40} className="text-accent" />
-                <p
-                  className="text-[14px] font-bold uppercase tracking-wide text-text-0"
-                  style={{ fontFamily: 'var(--font-display)' }}
-                >
-                  Aucune alerte en cours
+              <div
+                className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up"
+                role="status"
+              >
+                <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-accent">
+                  <CheckCircle2 size={44} aria-hidden="true" />
+                </div>
+                <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
+                  Aucune alerte active
+                </h3>
+                <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
+                  Votre élevage tourne bien. Le troupeau est sous contrôle.
                 </p>
-                <p className="text-[12px] text-text-2">Le troupeau est sous contrôle.</p>
               </div>
             )}
 

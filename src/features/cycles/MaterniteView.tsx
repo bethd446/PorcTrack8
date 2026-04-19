@@ -252,15 +252,23 @@ const MaterniteView: React.FC = () => {
             {/* ── Liste des truies en maternité ───────────────────────── */}
             {rows.length === 0 ? (
               <div
-                className="flex flex-col items-center justify-center gap-3 py-16 text-center"
+                className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up"
                 role="status"
               >
-                <TruieIcon size={48} className="text-text-2" />
-                <p className="text-[14px] font-medium text-text-1">
-                  Aucune truie en maternité actuellement
-                </p>
-                <p className="font-mono text-[11px] text-text-2">
-                  Les prochaines mises-bas apparaîtront ici
+                <div className="relative w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
+                  <TruieIcon size={48} />
+                  <span
+                    className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-bg-0 border border-border flex items-center justify-center text-accent"
+                    aria-hidden="true"
+                  >
+                    <Baby size={14} />
+                  </span>
+                </div>
+                <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
+                  Aucune truie en maternité
+                </h3>
+                <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
+                  Les prochaines mises-bas apparaîtront ici.
                 </p>
               </div>
             ) : (

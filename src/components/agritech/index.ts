@@ -21,3 +21,14 @@ export type { ChipProps, ChipTone, ChipSize } from './Chip';
 
 export { default as SectionDivider } from './SectionDivider';
 export type { SectionDividerProps } from './SectionDivider';
+
+/* ── v2 primitives (additifs) ────────────────────────────────────────────── */
+export { default as SparklineCard } from './SparklineCard';
+export type {
+  SparklineCardProps,
+  SparklinePoint,
+  SparklineTone,
+} from './SparklineCard';
+
+export { default as FAB } from './FAB';
+export type { FABProps, FABAction, FABActionTone } from './FAB';

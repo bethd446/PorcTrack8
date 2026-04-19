@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
-import { Package, Syringe, Box, AlertOctagon } from 'lucide-react';
+import { Package, Box, AlertOctagon } from 'lucide-react';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import AgritechNav from '../../components/AgritechNav';
 import { Chip, DataRow, SectionDivider, KpiCard } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
+import { SeringueIcon } from '../../components/icons';
 import { useFarm } from '../../context/FarmContext';
 import type { StockVeto, StockStatut } from '../../types/farm';
 
@@ -158,9 +159,19 @@ const PharmacieView: React.FC = () => {
 
             {/* ── Empty state ─────────────────────────────────────── */}
             {isEmpty ? (
-              <div className="card-dense flex items-center justify-center gap-2 py-6 text-[13px] text-text-2">
-                <Syringe size={14} className="text-text-2" aria-hidden="true" />
-                <span>Aucun produit vétérinaire actif.</span>
+              <div
+                className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up"
+                role="status"
+              >
+                <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
+                  <SeringueIcon size={48} />
+                </div>
+                <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
+                  Pharmacie vide
+                </h3>
+                <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
+                  Aucun produit vétérinaire enregistré. Renseignez vos antibiotiques, antiparasitaires et compléments dans Google Sheets.
+                </p>
               </div>
             ) : (
               <>

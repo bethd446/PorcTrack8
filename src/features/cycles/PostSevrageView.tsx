@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
-import { PackageCheck, ChevronRight, Sprout } from 'lucide-react';
+import { PackageCheck, ChevronRight } from 'lucide-react';
+import { PorceletIcon } from '../../components/icons';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import {
@@ -312,16 +313,17 @@ const LogesOccupationCard: React.FC<LogesOccupationCardProps> = ({
 
 const EmptyState: React.FC = () => (
   <div
-    className="card-dense flex flex-col items-center justify-center gap-3 py-10 text-center"
+    className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up"
     role="status"
   >
-    <Sprout size={36} className="text-text-2" aria-hidden="true" />
-    <p className="font-mono text-[12px] uppercase tracking-wide text-text-2">
-      Aucune portée en post-sevrage
-    </p>
-    <p className="font-mono text-[11px] text-text-2 max-w-xs leading-relaxed">
-      Les portées apparaîtront ici dès qu'une mise-bas aura été sevrée
-      (statut «&nbsp;Sevrés&nbsp;» · &lt; 60 j post-sevrage).
+    <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
+      <PorceletIcon size={48} aria-hidden="true" />
+    </div>
+    <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
+      Aucune portée post-sevrage
+    </h3>
+    <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
+      Les portées arriveront après sevrage (J+21). Elles resteront ici jusqu'à J+81.
     </p>
   </div>
 );

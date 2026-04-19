@@ -276,23 +276,19 @@ const FormulesView: React.FC = () => {
 
             {alimentFormules.length === 0 ? (
               <section
-                className="card-dense flex flex-col items-center gap-2 text-center py-6"
+                className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up"
                 role="status"
               >
-                <AlertTriangle
-                  size={20}
-                  className="text-amber"
-                  aria-hidden="true"
-                />
-                <div className="agritech-heading text-[14px] uppercase">
-                  Aucune formule disponible
+                <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
+                  <ClipboardList size={40} aria-hidden="true" />
                 </div>
-                <p className="text-[12px] text-text-2 leading-relaxed max-w-[320px]">
-                  Ajouter des lignes dans la feuille Google Sheets
-                  {' '}
-                  <span className="font-mono">ALIMENT_FORMULES</span>
-                  {' '}
-                  puis rafraîchir l'écran.
+                <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
+                  Aucune formule
+                </h3>
+                <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
+                  Ajoutez l'onglet{' '}
+                  <span className="font-mono text-text-1">ALIMENT_FORMULES</span>{' '}
+                  dans Sheets, ou utilisez les formules de démo.
                 </p>
               </section>
             ) : (

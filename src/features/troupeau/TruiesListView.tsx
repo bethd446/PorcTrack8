@@ -447,15 +447,35 @@ const TruiesListView: React.FC = () => {
                 <SkeletonRow />
               </div>
             ) : filteredTruies.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-                <TruieIcon size={48} className="text-text-2" />
-                <p className="text-[14px] font-medium text-text-1">
-                  Aucune truie trouvée
+              <div
+                className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up"
+                role="status"
+              >
+                <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
+                  <TruieIcon size={48} />
+                </div>
+                <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
+                  {filter !== 'all'
+                    ? `Aucune truie · filtre ${activeFilter.label}`
+                    : searchText
+                      ? 'Aucune truie trouvée'
+                      : 'Aucune truie'}
+                </h3>
+                <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
+                  {filter !== 'all'
+                    ? 'Essayez un autre filtre ou réinitialisez.'
+                    : searchText
+                      ? "Modifiez la recherche ou vérifiez que Google Sheets est à jour."
+                      : "Votre cheptel est vide pour l'instant."}
                 </p>
-                {searchText || filter !== 'all' ? (
-                  <p className="font-mono text-[11px] text-text-2">
-                    Essayez d'élargir les filtres
-                  </p>
+                {filter !== 'all' ? (
+                  <button
+                    type="button"
+                    onClick={() => setFilter('all')}
+                    className="pressable mt-5 h-11 px-5 rounded-md bg-accent text-bg-0 text-[13px] font-medium transition-colors"
+                  >
+                    Réinitialiser le filtre
+                  </button>
                 ) : null}
               </div>
             ) : (

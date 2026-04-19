@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { IonContent, IonPage } from '@ionic/react';
+import React, { useMemo, useState } from 'react';
+import { IonContent, IonPage, IonToast } from '@ionic/react';
 import {
   Package,
   AlertOctagon,
@@ -131,16 +131,22 @@ function sortAliments(items: StockAliment[]): StockAliment[] {
 interface AlimentSectionProps {
   title: string;
   icon: React.ReactNode;
+  emptyIcon: React.ReactNode;
+  emptyTitle: string;
+  emptyDescription: string;
+  emptyAction?: { label: string; onClick: () => void };
   items: StockAliment[];
-  emptyHint: string;
   onSelect: (item: StockAliment) => void;
 }
 
 const AlimentSection: React.FC<AlimentSectionProps> = ({
   title,
   icon,
+  emptyIcon,
+  emptyTitle,
+  emptyDescription,
+  emptyAction,
   items,
-  emptyHint,
   onSelect,
 }) => {
   const isEmpty = items.length === 0;
@@ -149,13 +155,32 @@ const AlimentSection: React.FC<AlimentSectionProps> = ({
       <SectionDivider label={title} />
       {isEmpty ? (
         <div
-          className="card-dense flex items-center justify-center gap-2 py-5 text-[13px] text-text-2"
-          aria-label={`${title} — ${emptyHint}`}
+          className="flex flex-col items-center justify-center py-10 px-6 text-center animate-fade-in-up"
+          role="status"
+          aria-label={`${title} — ${emptyTitle}`}
         >
-          <span className="shrink-0 text-text-2" aria-hidden="true">
+          <div className="w-16 h-16 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-3 text-text-2">
+            {emptyIcon}
+          </div>
+          <h4 className="ft-heading text-text-0 text-[15px] mb-1.5 uppercase tracking-wide">
+            {emptyTitle}
+          </h4>
+          <p className="text-text-2 text-[12px] max-w-xs leading-relaxed">
+            {emptyDescription}
+          </p>
+          {emptyAction ? (
+            <button
+              type="button"
+              onClick={emptyAction.onClick}
+              className="pressable mt-4 h-10 px-4 rounded-md bg-accent text-bg-0 text-[12px] font-medium transition-colors"
+            >
+              {emptyAction.label}
+            </button>
+          ) : null}
+          {/* Icon legacy (keeps hint for screen readers) */}
+          <span className="sr-only" aria-hidden="true">
             {icon}
           </span>
-          <span>{emptyHint}</span>
         </div>
       ) : (
         <div className="card-dense !p-0 overflow-hidden">
@@ -192,6 +217,7 @@ const AlimentSection: React.FC<AlimentSectionProps> = ({
 
 const AlimentsView: React.FC = () => {
   const { stockAliment } = useFarm();
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const grouped = useMemo(() => {
     const matieres: StockAliment[] = [];
@@ -284,32 +310,52 @@ const AlimentsView: React.FC = () => {
             {/* ── Empty state global ──────────────────────────────── */}
             {isEmpty ? (
               <div
-                className="card-dense flex flex-col items-center justify-center gap-2 py-10 text-center"
+                className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up"
                 role="status"
               >
-                <Package size={32} className="text-text-2" aria-hidden="true" />
-                <p className="text-[14px] font-semibold text-text-0">
+                <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
+                  <Package size={40} />
+                </div>
+                <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
                   Stock aliments vide
+                </h3>
+                <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
+                  Aucun aliment n'est enregistré dans la feuille STOCK_ALIMENTS. Ajoutez matières premières et concentrés depuis Google Sheets.
                 </p>
-                <p className="font-mono text-[11px] text-text-2 max-w-xs">
-                  Aucun aliment n'est enregistré dans la feuille STOCK_ALIMENTS.
-                </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setToastMsg('Édite STOCK_ALIMENTS dans Google Sheets')
+                  }
+                  className="pressable mt-5 h-11 px-5 rounded-md bg-accent text-bg-0 text-[13px] font-medium transition-colors"
+                >
+                  Voir Sheets
+                </button>
               </div>
             ) : (
               <>
                 <AlimentSection
                   title="Matières premières"
                   icon={<Wheat size={14} />}
+                  emptyIcon={<Wheat size={40} />}
+                  emptyTitle="Aucune matière première"
+                  emptyDescription="Ajoutez maïs, tourteau de soja ou son de blé dans Google Sheets."
                   items={grouped.matieres}
-                  emptyHint="Aucune matière première enregistrée."
                   onSelect={handleSelect}
                 />
 
                 <AlimentSection
                   title="Concentrés & compléments"
                   icon={<FlaskConical size={14} />}
+                  emptyIcon={<FlaskConical size={40} />}
+                  emptyTitle="Aucun concentré"
+                  emptyDescription="Ajoutez KPC, Mycofix, Lysine… dans Google Sheets."
+                  emptyAction={{
+                    label: 'Voir Sheets',
+                    onClick: () =>
+                      setToastMsg('Édite STOCK_ALIMENTS dans Google Sheets'),
+                  }}
                   items={grouped.concentres}
-                  emptyHint="Aucun concentré enregistré."
                   onSelect={handleSelect}
                 />
 
@@ -317,8 +363,10 @@ const AlimentsView: React.FC = () => {
                   <AlimentSection
                     title="Autres aliments"
                     icon={<Box size={14} />}
+                    emptyIcon={<Box size={40} />}
+                    emptyTitle="Aucun autre aliment"
+                    emptyDescription="Les aliments composés (TRUIE-GEST, PORCELET…) apparaîtront ici."
                     items={grouped.autres}
-                    emptyHint="Aucun autre aliment."
                     onSelect={handleSelect}
                   />
                 ) : null}
@@ -327,6 +375,13 @@ const AlimentsView: React.FC = () => {
           </div>
         </AgritechLayout>
         <AgritechNav />
+
+        <IonToast
+          isOpen={toastMsg !== null}
+          message={toastMsg ?? ''}
+          duration={2400}
+          onDidDismiss={() => setToastMsg(null)}
+        />
       </IonContent>
     </IonPage>
   );

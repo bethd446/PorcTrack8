@@ -1,0 +1,86 @@
+/**
+ * PorcTrack v2 — Tokens d'évolution (additifs).
+ * Ne remplace PAS theme-tokens.css ni agritech-tokens.css.
+ * Les composants v2 opt-in via ces tokens spécifiques.
+ *
+ * Hierarchy:
+ *   theme-tokens.css       → couleurs jour/nuit de base (--bg-0, --text-0...)
+ *   agritech-tokens.css    → @theme Tailwind (tight radii 6-10px, dark cockpit)
+ *   theme-v2-tokens.css    → évolution v2 : radii plus doux, easings spring,
+ *                            accents par onglet, typo étendue
+ *
+ * Les anciens tokens (--radius-sm, --radius-md, --ease-out-expo) restent
+ * intacts. v2 ajoute --radius-lg / --radius-xl / --radius-2xl sans conflit.
+ */
+
+:root {
+  /* Radii élargis pour chaleur (v2 opt-in) */
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+
+  /* Easings — spring physics */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-gentle: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-snappy: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Couleurs accent PAR ONGLET (signalétique v2) */
+  --accent-cockpit:    #10B981; /* emerald (inchangé) */
+  --accent-troupeau:   #10B981;
+  --accent-cycles:     #F4A261; /* amber */
+  --accent-ressources: #60A5FA; /* blue */
+  --accent-pilotage:   #D4A056; /* gold */
+
+  /* Typographie étendue (v2 plus hiérarchique) */
+  --text-display-xl: 44px;
+  --text-display-lg: 36px;
+  --text-display-md: 28px;
+  --text-body-lg: 15px;
+  --text-body-md: 13px;
+  --text-body-sm: 12px;
+  --text-label-xs: 11px;
+}
+
+:root.theme-day {
+  /* Les accent-* restent les mêmes en jour (cohérence signalétique) */
+}
+
+/* Utilitaires v2 */
+.rounded-lg-v2 { border-radius: var(--radius-lg); }
+.rounded-xl-v2 { border-radius: var(--radius-xl); }
+.rounded-2xl-v2 { border-radius: var(--radius-2xl); }
+
+.transition-spring { transition-timing-function: var(--ease-spring); }
+.transition-gentle { transition-timing-function: var(--ease-gentle); }
+.transition-snappy { transition-timing-function: var(--ease-snappy); }
+
+/* Card v2 — glass subtil + rounded plus doux */
+.card-v2 {
+  background: var(--color-bg-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  transition:
+    transform 200ms var(--ease-spring),
+    border-color 200ms var(--ease-gentle);
+}
+.card-v2:active { transform: scale(0.98); }
+
+/* KPI v2 — chiffres plus grands */
+.kpi-v2-value {
+  font-family: var(--font-mono-jb), 'DM Mono', monospace;
+  font-feature-settings: "tnum" 1;
+  font-weight: 700;
+  font-size: var(--text-display-lg);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--color-text-0);
+}
+
+.kpi-v2-label {
+  font-family: var(--font-mono-jb), monospace;
+  font-size: var(--text-label-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-2);
+  font-weight: 500;
+}

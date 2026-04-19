@@ -18,7 +18,7 @@ import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
 
 import { FarmProvider } from './context/FarmContext';
-import AgritechNav from './components/AgritechNav';
+import AgritechNavV2, { QuickActionsProvider } from './components/AgritechNavV2';
 import { loadChecklistDefinitions } from './services/checklistService';
 
 // Lazy loading — chaque écran dans son propre chunk pour réduire le bundle initial
@@ -98,6 +98,7 @@ const AppContent = () => {
           </div>
         </div>
       }>
+        <QuickActionsProvider>
         <Routes>
           {/* ── Legacy routes (preserved for compat) ─────────────────── */}
           <Route path="/" element={<Cockpit />} />
@@ -155,8 +156,9 @@ const AppContent = () => {
           <Route path="/ressources/veto" element={<TableView tableKey="STOCK_VETO" />} />
           <Route path="/ressources/pharmacie" element={<PharmacieView />} />
         </Routes>
+        <AgritechNavV2 />
+        </QuickActionsProvider>
       </React.Suspense>
-      <AgritechNav />
     </IonApp>
   );
 };

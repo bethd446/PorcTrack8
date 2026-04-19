@@ -10,7 +10,7 @@ import {
   ClipboardList, Camera, RefreshCw,
   Stethoscope, Apple, CheckCircle2,
   Info, Tag, Baby, PackageCheck, CalendarClock,
-  Syringe, History, Heart, Trophy,
+  Syringe, History, Heart, Trophy, Clock,
 } from 'lucide-react';
 import {
   computeTruiePerformance,
@@ -691,9 +691,18 @@ const AnimalDetailView: React.FC<{ mode: Mode }> = ({ mode }) => {
                     }
                   />
                   {timeline.length === 0 ? (
-                    <div className="card-dense text-center">
-                      <p className="font-mono text-[12px] text-text-2">
+                    <div
+                      className="flex flex-col items-center justify-center py-14 px-8 text-center animate-fade-in-up"
+                      role="status"
+                    >
+                      <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
+                        <Clock size={44} aria-hidden="true" />
+                      </div>
+                      <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
                         Aucun événement enregistré
+                      </h3>
+                      <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
+                        Les saillies, mises-bas et soins apparaîtront ici.
                       </p>
                     </div>
                   ) : (

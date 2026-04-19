@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
-import { Trophy, ChevronRight, Coins } from 'lucide-react';
+import { ChevronRight, Coins } from 'lucide-react';
+import { BalanceIcon } from '../../components/icons';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import {
@@ -311,16 +312,17 @@ const ProjectionCard: React.FC<ProjectionCardProps> = ({ projection }) => {
 
 const EmptyState: React.FC = () => (
   <div
-    className="card-dense flex flex-col items-center justify-center gap-3 py-10 text-center"
+    className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up"
     role="status"
   >
-    <Trophy size={36} className="text-text-2" aria-hidden="true" />
-    <p className="font-mono text-[12px] uppercase tracking-wide text-text-2">
+    <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
+      <BalanceIcon size={48} aria-hidden="true" />
+    </div>
+    <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
       Aucune bande en finition
-    </p>
-    <p className="font-mono text-[11px] text-text-2 max-w-xs leading-relaxed">
-      Les bandes apparaîtront ici quand leur poids estimé dépassera{' '}
-      {FINITION_SEUIL_KG} kg (~{Math.round((FINITION_SEUIL_KG - POIDS_SEVRAGE_KG) / GMQ_POST_SEVRAGE_KG)} j post-sevrage).
+    </h3>
+    <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
+      Les porcelets arrivent en finition vers {FINITION_SEUIL_KG} kg (~{Math.round((FINITION_SEUIL_KG - POIDS_SEVRAGE_KG) / GMQ_POST_SEVRAGE_KG)} j post-sevrage).
     </p>
   </div>
 );

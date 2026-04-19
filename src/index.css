@@ -14,6 +14,12 @@
 @import "./styles/agritech-tokens.css";
 @import "./styles/agritech-utilities.css";
 
+/* ── v2 tokens (additifs, opt-in) ──────────────────────────────────────────
+   Élargit radii (12/16/20), ajoute easings spring/gentle/snappy, accents par
+   onglet et échelle typo étendue. N'écrase aucun token existant.
+   ──────────────────────────────────────────────────────────────────────── */
+@import "./styles/theme-v2-tokens.css";
+
 /* ── Polices ──────────────────────────────────────────────────────────────── */
 @font-face { font-family: 'BigShoulders'; src: url('/fonts/BigShoulders-Bold.ttf') format('truetype'); font-weight: 700; font-display: block; }
 @font-face { font-family: 'BigShoulders'; src: url('/fonts/BigShoulders-Regular.ttf') format('truetype'); font-weight: 400; font-display: block; }
