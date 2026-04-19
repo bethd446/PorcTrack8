@@ -1,8 +1,8 @@
 /**
- * Formules aliment validées par technicien — Ferme K13, avril 2026.
- * ═════════════════════════════════════════════════════════════════
+ * Formules aliment — typage + valeurs par défaut + agrégation depuis Sheets.
+ * ═════════════════════════════════════════════════════════════════════════
  *
- * 5 formules couvrant tous les stades du cycle :
+ * 5 phases couvrant tous les stades du cycle :
  *  - Porcelets : Démarrage 1 (post-sevrage, 7-15 kg)
  *  - Engraissement : Croissance (25-50 kg) + Finition (50-100 kg)
  *  - Reproduction : Truie gestante + Truie lactation
@@ -11,10 +11,15 @@
  * (`src/services/rationCalculator.ts`) et l'écran
  * `src/features/ressources/FormulesView.tsx`.
  *
- * NOTE : ces formules sont des constantes métier (pas des données de
- * référence côté Sheets). Toute modification nécessite validation
- * technicien + mise à jour de ce fichier.
+ * Source de vérité **runtime** : feuille Google Sheets `ALIMENT_FORMULES`
+ * (long format — cf. `FormuleRowSheets` dans `src/types/farm.ts`).
+ * Les valeurs par défaut ci-dessous sont utilisées si la feuille est
+ * indisponible ou vide — l'app reste fonctionnelle hors-ligne.
+ *
+ * Pipeline : Sheets (long rows) → `mapFormuleRow` → `aggregateFormulesFromRows`
+ *         → `FormuleAliment[]` → `FormulesView` + `calculerRation`.
  */
+import type { FormuleRowSheets } from '../types/farm';
 
 export type PhaseCode =
   | 'DEMARRAGE_1'
@@ -54,8 +59,13 @@ export interface FormuleAliment {
   additifs: AdditifLigne[];
 }
 
-/** Catalogue des 5 formules validées — source de vérité unique. */
-export const FORMULES_ALIMENT: FormuleAliment[] = [
+/**
+ * Valeurs par défaut (5 formules validées technicien K13 · 04/2026).
+ * Utilisées si la feuille `ALIMENT_FORMULES` est indisponible ou vide.
+ * Le nom FORMULES_ALIMENT_FALLBACK est requis par le contrat public.
+ */
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export const FORMULES_ALIMENT_FALLBACK: FormuleAliment[] = [
   {
     code: 'DEMARRAGE_1',
     nom: 'Porcelets — Démarrage 1',
@@ -155,7 +165,121 @@ export const PHASE_TONES: Record<PhaseCode, 'accent' | 'amber' | 'blue' | 'gold'
   TRUIE_LACTATION: 'gold',
 };
 
+/**
+ * Alias rétro-compatible — conserve l'ancien symbole exporté.
+ * Les anciens appelants (tests, alimentationPlanner, etc.) continuent
+ * à fonctionner sans breaking change d'API.
+ */
+export const FORMULES_ALIMENT: FormuleAliment[] = FORMULES_ALIMENT_FALLBACK;
+
 /** Lookup sur code — undefined si code inconnu. */
 export function findFormuleByPhase(code: PhaseCode): FormuleAliment | undefined {
-  return FORMULES_ALIMENT.find((f) => f.code === code);
+  return FORMULES_ALIMENT_FALLBACK.find((f) => f.code === code);
+}
+
+// ─── Agrégation long-format Sheets → FormuleAliment[] ────────────────────────
+
+/** Codes phase connus — utilisé pour filtrer / typer à l'agrégation. */
+const KNOWN_PHASE_CODES: readonly PhaseCode[] = [
+  'DEMARRAGE_1',
+  'CROISSANCE',
+  'FINITION',
+  'TRUIE_GESTATION',
+  'TRUIE_LACTATION',
+];
+
+/** Libellés phase par défaut si Sheets ne renseigne pas `NOM_PHASE`. */
+const PHASE_DEFAULT_NOMS: Record<PhaseCode, { nom: string; phase: string; poidsRange: string }> = {
+  DEMARRAGE_1: {
+    nom: 'Porcelets — Démarrage 1',
+    phase: 'Post-sevrage (J21-J42)',
+    poidsRange: '7 → 15 kg',
+  },
+  CROISSANCE: {
+    nom: 'Croissance',
+    phase: 'Engraissement — phase 1',
+    poidsRange: '25 → 50 kg',
+  },
+  FINITION: {
+    nom: 'Finition',
+    phase: 'Engraissement — phase 2',
+    poidsRange: '50 → 100 kg',
+  },
+  TRUIE_GESTATION: {
+    nom: 'Truie gestante',
+    phase: 'Gestation (J0-J113)',
+    poidsRange: 'Truies pleines',
+  },
+  TRUIE_LACTATION: {
+    nom: 'Truie lactation',
+    phase: 'Maternité (J0-J21 post-mise bas)',
+    poidsRange: 'Truies allaitantes',
+  },
+};
+
+/**
+ * Agrège les lignes long-format lues depuis `ALIMENT_FORMULES` en objets
+ * `FormuleAliment`.
+ *
+ * Règles :
+ *  - Groupement par `codePhase` (seuls les codes connus sont retenus).
+ *  - Tri intra-groupe par `ordre` asc (stable pour égaux).
+ *  - Sépare INGREDIENT (→ `ingredients` avec `%`) vs ADDITIF (→ `additifs` avec kg/T ou g/T).
+ *  - Un composant avec unité incohérente (ingrédient non-%, additif en %) est ignoré.
+ *  - `nomPhase` / `poidsRange` : pris du 1er row rencontré ; sinon constantes locales.
+ *  - Ordre des phases de sortie : suit `KNOWN_PHASE_CODES` (stable).
+ *
+ * Retourne un tableau vide si aucune ligne exploitable — l'appelant
+ * bascule alors sur `FORMULES_ALIMENT_FALLBACK`.
+ */
+export function aggregateFormulesFromRows(rows: FormuleRowSheets[]): FormuleAliment[] {
+  const groups = new Map<PhaseCode, FormuleRowSheets[]>();
+
+  for (const row of rows) {
+    const code = row.codePhase.trim().toUpperCase() as PhaseCode;
+    if (!KNOWN_PHASE_CODES.includes(code)) continue;
+    const bucket = groups.get(code);
+    if (bucket) bucket.push(row);
+    else groups.set(code, [row]);
+  }
+
+  const out: FormuleAliment[] = [];
+
+  for (const code of KNOWN_PHASE_CODES) {
+    const bucket = groups.get(code);
+    if (!bucket || bucket.length === 0) continue;
+
+    // Tri stable par ordre asc
+    const sorted = [...bucket].sort((a, b) => a.ordre - b.ordre);
+
+    const ingredients: IngredientLigne[] = [];
+    const additifs: AdditifLigne[] = [];
+
+    for (const r of sorted) {
+      if (r.typeComposant === 'INGREDIENT') {
+        if (r.unite !== '%') continue; // un ingrédient doit être exprimé en %
+        ingredients.push({ nom: r.nom, pourcent: r.valeur });
+      } else {
+        if (r.unite === '%') continue; // un additif doit être en kg/T ou g/T
+        additifs.push({ nom: r.nom, dose: r.valeur, unite: r.unite });
+      }
+    }
+
+    // Skip si aucun ingrédient (une phase sans base n'est pas calculable)
+    if (ingredients.length === 0) continue;
+
+    const defaults = PHASE_DEFAULT_NOMS[code];
+    const first = sorted[0];
+
+    out.push({
+      code,
+      nom: first.nomPhase?.trim() || defaults.nom,
+      phase: defaults.phase,
+      poidsRange: first.poidsRange?.trim() || defaults.poidsRange,
+      ingredients,
+      additifs,
+    });
+  }
+
+  return out;
 }

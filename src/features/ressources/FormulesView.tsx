@@ -1,17 +1,17 @@
 import React, { useMemo, useState } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
-import { ClipboardList, Calculator, AlertTriangle } from 'lucide-react';
+import { ClipboardList, Calculator, AlertTriangle, Database, HardDrive } from 'lucide-react';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import AgritechNav from '../../components/AgritechNav';
 import { Chip, SectionDivider } from '../../components/agritech';
 import {
-  FORMULES_ALIMENT,
   PHASE_LABELS,
   PHASE_TONES,
   type FormuleAliment,
 } from '../../config/aliments';
 import { calculerRation, type CalculResult } from '../../services/rationCalculator';
+import { useFarm } from '../../context/FarmContext';
 import { cn } from '../../lib/utils';
 
 /** Presets quantité — 100 kg (sac), 500 kg, 1 tonne, 2 tonnes. */
@@ -163,16 +163,24 @@ const FormuleCard: React.FC<{
  */
 const FormulesView: React.FC = () => {
   const [masseKg, setMasseKg] = useState<number>(1000);
+  const { alimentFormules, dataSource } = useFarm();
 
-  // Calcul réactif des 5 formules — clef de stabilité = [masseKg].
+  // Calcul réactif des formules — recalcul si masse OU formules changent.
   const calculs = useMemo(
     () =>
-      FORMULES_ALIMENT.map((f) => ({
+      alimentFormules.map((f) => ({
         formule: f,
         calcul: calculerRation(f, masseKg),
       })),
-    [masseKg],
+    [masseKg, alimentFormules],
   );
+
+  // Indicateur discret de la source des formules (Sheets vs cache local).
+  const sourceLabel =
+    dataSource === 'NETWORK' ? 'Google Sheets'
+    : dataSource === 'CACHE' ? 'Cache local'
+    : 'Valeurs par défaut';
+  const SourceIcon = dataSource === 'NETWORK' ? Database : HardDrive;
 
   const handleMasseChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const v = Number(e.target.value);
@@ -253,21 +261,55 @@ const FormulesView: React.FC = () => {
               </div>
             </section>
 
-            {/* ── 5 formules ──────────────────────────────────────── */}
-            <SectionDivider label={`${FORMULES_ALIMENT.length} formules`} />
+            {/* ── Formules + indicateur source ─────────────────────── */}
+            <SectionDivider label={`${alimentFormules.length} formules`} />
+
+            {/* Chip source — discret, mono, text-text-2 */}
             <div
-              className="flex flex-col gap-3"
-              aria-live="polite"
-              aria-atomic="false"
+              className="flex items-center gap-1.5 -mt-1 font-mono text-[11px] text-text-2"
+              role="status"
+              aria-label={`Source des formules : ${sourceLabel}`}
             >
-              {calculs.map(({ formule, calcul }) => (
-                <FormuleCard
-                  key={formule.code}
-                  formule={formule}
-                  calcul={calcul}
-                />
-              ))}
+              <SourceIcon size={11} aria-hidden="true" />
+              <span>Source : {sourceLabel}</span>
             </div>
+
+            {alimentFormules.length === 0 ? (
+              <section
+                className="card-dense flex flex-col items-center gap-2 text-center py-6"
+                role="status"
+              >
+                <AlertTriangle
+                  size={20}
+                  className="text-amber"
+                  aria-hidden="true"
+                />
+                <div className="agritech-heading text-[14px] uppercase">
+                  Aucune formule disponible
+                </div>
+                <p className="text-[12px] text-text-2 leading-relaxed max-w-[320px]">
+                  Ajouter des lignes dans la feuille Google Sheets
+                  {' '}
+                  <span className="font-mono">ALIMENT_FORMULES</span>
+                  {' '}
+                  puis rafraîchir l'écran.
+                </p>
+              </section>
+            ) : (
+              <div
+                className="flex flex-col gap-3"
+                aria-live="polite"
+                aria-atomic="false"
+              >
+                {calculs.map(({ formule, calcul }) => (
+                  <FormuleCard
+                    key={formule.code}
+                    formule={formule}
+                    calcul={calcul}
+                  />
+                ))}
+              </div>
+            )}
 
             {/* ── Footer — lien vers Plan Alimentation ─────────────── */}
             <footer className="card-dense flex items-start gap-2">

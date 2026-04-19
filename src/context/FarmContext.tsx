@@ -1,13 +1,18 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
   Truie, Verrat, BandePorcelets, TraitementSante,
-  StockAliment, StockVeto, FarmState, AlerteServeur, Saillie, FinanceEntry, DataSource
+  StockAliment, StockVeto, FarmState, AlerteServeur, Saillie, FinanceEntry, FormuleRowSheets, DataSource
 } from '../types/farm';
 import { Animal, Note } from '../types';
 import {
   getTruies, getVerrats, getBandes, getJournalSante,
-  getStockAliments, getStockVeto, getNotesTerrain, getAlertesServeur, getSaillies, getFinances
+  getStockAliments, getStockVeto, getNotesTerrain, getAlertesServeur, getSaillies, getFinances, getAlimentFormules
 } from '../services/googleSheets';
+import {
+  FORMULES_ALIMENT_FALLBACK,
+  aggregateFormulesFromRows,
+  type FormuleAliment,
+} from '../config/aliments';
 import { getQueueStatus, processQueue } from '../services/offlineQueue';
 import { runAlertEngine, type FarmAlert } from '../services/alertEngine';
 import { enqueueAlert } from '../services/confirmationQueue';
@@ -25,6 +30,12 @@ interface FarmContextType extends FarmState {
   saillies: Saillie[];
   /** Journal financier (feuille FINANCES) — entrées brutes dépenses/revenus. */
   finances: FinanceEntry[];
+  /**
+   * Formules aliment — agrégées depuis la feuille `ALIMENT_FORMULES`.
+   * Si Sheets indisponible / vide → valeurs par défaut locales
+   * (`FORMULES_ALIMENT_FALLBACK`) pour que l'écran reste fonctionnel.
+   */
+  alimentFormules: FormuleAliment[];
   /** Nombre d'alertes nécessitant une action immédiate */
   criticalAlertCount: number;
   /** Source de la dernière lecture : NETWORK = frais, CACHE = cache valide, FALLBACK = cache expiré (offline) */
@@ -108,6 +119,9 @@ export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [alertesServeur, setAlertesServeur] = useState<AlerteServeur[]>([]);
   const [saillies, setSaillies] = useState<Saillie[]>([]);
   const [finances, setFinances] = useState<FinanceEntry[]>([]);
+  const [alimentFormules, setAlimentFormules] = useState<FormuleAliment[]>(
+    FORMULES_ALIMENT_FALLBACK
+  );
   const [loading, setLoading] = useState(true);
   const [dataSource, setDataSource] = useState<'NETWORK' | 'CACHE' | 'FALLBACK' | null>(null);
 
@@ -146,12 +160,16 @@ export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children
         getAlertesServeur((data) => setAlertesServeur(data)),
         getSaillies((data) => setSaillies(data)),
         getFinances((data) => setFinances(data)),
+        getAlimentFormules((data) => {
+          const aggregated = aggregateFormulesFromRows(data);
+          setAlimentFormules(aggregated.length > 0 ? aggregated : FORMULES_ALIMENT_FALLBACK);
+        }),
       ]);
 
       const empty = { success: false, data: [] as any[], header: [] as string[], source: ('FALL' + 'BACK') as DataSource };
       const [
         truieRes, verratRes, bandeRes,
-        santeRes, stockARes, stockVRes, notesRes, alertesServeurRes, sailliesRes, financesRes
+        santeRes, stockARes, stockVRes, notesRes, alertesServeurRes, sailliesRes, financesRes, formulesRes
       ] = results.map(r => r.status === 'fulfilled' ? r.value : empty) as [
         { success: boolean; data: Truie[];             header: string[]; source: DataSource },
         { success: boolean; data: Verrat[];            header: string[]; source: DataSource },
@@ -163,6 +181,7 @@ export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children
         { success: boolean; data: AlerteServeur[];     header: string[]; source: DataSource },
         { success: boolean; data: Saillie[];           header: string[]; source: DataSource },
         { success: boolean; data: FinanceEntry[];      header: string[]; source: DataSource },
+        { success: boolean; data: FormuleRowSheets[];  header: string[]; source: DataSource },
       ];
 
       // Mise à jour synchrone immédiate (depuis cache)
@@ -210,6 +229,17 @@ export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setFinances([]);
       } else {
         setFinances(financesRes.data);
+      }
+
+      // Formules aliment (Sheets) : agrégation + bascule sur valeurs locales
+      // si vide/échec. L'app reste toujours fonctionnelle côté UI.
+      const formulesSettled = results[10];
+      if (formulesSettled.status === 'rejected') {
+        logger.error('FarmContext', 'alimentFormules fetch failed', formulesSettled.reason);
+        setAlimentFormules(FORMULES_ALIMENT_FALLBACK);
+      } else {
+        const aggregated = aggregateFormulesFromRows(formulesRes.data);
+        setAlimentFormules(aggregated.length > 0 ? aggregated : FORMULES_ALIMENT_FALLBACK);
       }
 
       // ── Moteur d'alertes GTTT ──────────────────────────────────
@@ -294,6 +324,7 @@ export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children
       alertesServeur,
       saillies,
       finances,
+      alimentFormules,
       criticalAlertCount,
       loading,
       dataSource,

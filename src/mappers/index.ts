@@ -1,4 +1,4 @@
-import { Truie, Verrat, BandePorcelets, TraitementSante, StockAliment, StockVeto, AlerteServeur, Saillie, FinanceEntry, FinanceType } from '../types/farm';
+import { Truie, Verrat, BandePorcelets, TraitementSante, StockAliment, StockVeto, AlerteServeur, Saillie, FinanceEntry, FinanceType, FormuleRowSheets } from '../types/farm';
 import type { Note, NoteAnimalType } from '../types';
 import { logger } from '../services/logger';
 
@@ -389,6 +389,88 @@ export const mapFinance = (header: string[], row: any[]): FinanceEntry | null =>
   };
 };
 
+// ─── ALIMENT FORMULES (feuille ALIMENT_FORMULES) ─────────────────────────────
+/**
+ * Mappe une ligne long-format `ALIMENT_FORMULES` vers `FormuleRowSheets`.
+ *
+ * Colonnes attendues (tolérantes aux variantes) :
+ *   CODE_PHASE | NOM_PHASE | POIDS_RANGE | TYPE_COMPOSANT | NOM | VALEUR | UNITE | ORDRE | NOTES
+ *
+ * Règles de filtrage (retourne `null`) :
+ *  - pas de CODE_PHASE et pas de NOM → ligne vide / séparateur
+ *  - TYPE_COMPOSANT non reconnu (ni INGREDIENT ni ADDITIF)
+ *  - UNITE non reconnue (ni %, kg/T, g/T)
+ *
+ * Normalisation :
+ *  - `typeComposant` / `unite` UPPERCASE puis mappés sur union stricte
+ *  - `valeur` / `ordre` : parseFloat/parseInt tolérants (vide → 0)
+ */
+export const mapFormuleRow = (
+  header: string[],
+  row: any[],
+): FormuleRowSheets | null => {
+  const cpIdx = findIdx(header, 'CODE_PHASE', 'CODE PHASE', 'CODE', 'PHASE');
+  const npIdx = findIdx(header, 'NOM_PHASE', 'NOM PHASE', 'NOM DE PHASE', 'LIBELLE PHASE', 'LIBELLÉ PHASE');
+  const prIdx = findIdx(header, 'POIDS_RANGE', 'POIDS RANGE', 'POIDS', 'PLAGE POIDS', 'RANGE');
+  const tcIdx = findIdx(header, 'TYPE_COMPOSANT', 'TYPE COMPOSANT', 'TYPE');
+  const nIdx = findIdx(header, 'NOM', 'COMPOSANT', 'INGREDIENT', 'INGRÉDIENT', 'ADDITIF');
+  const vIdx = findIdx(header, 'VALEUR', 'VAL', 'QUANTITE', 'QUANTITÉ', 'DOSE', 'POURCENT', '%');
+  const uIdx = findIdx(header, 'UNITE', 'UNITÉ', 'UNIT');
+  const oIdx = findIdx(header, 'ORDRE', 'ORDER', 'ORDRE AFFICHAGE');
+  const noIdx = findIdx(header, 'NOTES', 'NOTE', 'REMARQUE');
+
+  const codePhase = readStr(row, cpIdx).trim().toUpperCase();
+  const nom = readStr(row, nIdx).trim();
+
+  // Ligne vide / séparateur → null
+  if (!codePhase && !nom) return null;
+
+  // TYPE_COMPOSANT — obligatoire pour classification
+  const rawType = readStr(row, tcIdx).trim().toUpperCase();
+  let typeComposant: 'INGREDIENT' | 'ADDITIF';
+  if (rawType === 'INGREDIENT' || rawType === 'INGRÉDIENT' || rawType.startsWith('ING')) {
+    typeComposant = 'INGREDIENT';
+  } else if (rawType === 'ADDITIF' || rawType.startsWith('ADD')) {
+    typeComposant = 'ADDITIF';
+  } else {
+    logger.warn('ALIMENT_FORMULES', 'TYPE_COMPOSANT inconnu → ligne ignorée', { rawType, codePhase, nom });
+    return null;
+  }
+
+  // UNITE — normalisée
+  const rawUnite = readStr(row, uIdx).trim().toLowerCase().replace(/\s+/g, '');
+  let unite: '%' | 'kg/T' | 'g/T';
+  if (rawUnite === '%' || rawUnite === 'pct' || rawUnite === 'pourcent') {
+    unite = '%';
+  } else if (rawUnite === 'kg/t' || rawUnite === 'kg/tonne' || rawUnite === 'kgt') {
+    unite = 'kg/T';
+  } else if (rawUnite === 'g/t' || rawUnite === 'g/tonne' || rawUnite === 'gt') {
+    unite = 'g/T';
+  } else if (typeComposant === 'INGREDIENT') {
+    // Par défaut pour ingrédient : %
+    unite = '%';
+  } else {
+    logger.warn('ALIMENT_FORMULES', 'UNITE inconnue → ligne ignorée', { rawUnite, codePhase, nom });
+    return null;
+  }
+
+  const valeur = readNum(row, vIdx);
+  const ordreParsed = readOptInt(row, oIdx);
+  const ordre = ordreParsed ?? 0;
+
+  return {
+    codePhase,
+    nomPhase: readStr(row, npIdx),
+    poidsRange: readStr(row, prIdx),
+    typeComposant,
+    nom,
+    valeur,
+    unite,
+    ordre,
+    notes: readOptStr(row, noIdx),
+  };
+};
+
 // ─── ALERTES SERVEUR (feuille ALERTES_ACTIVES) ───────────────────────────────
 /**
  * Mappe une ligne de la feuille `ALERTES_ACTIVES` (backend Sheets) vers
@@ -533,6 +615,9 @@ export const mapTable = (key: string, header: string[], rows: any[][]): any[] =>
     case 'FINANCES': return rows
       .map(r => mapFinance(header, r))
       .filter((f): f is FinanceEntry => f !== null);
+    case 'ALIMENT_FORMULES': return rows
+      .map(r => mapFormuleRow(header, r))
+      .filter((f): f is FormuleRowSheets => f !== null);
     case 'NOTES_TERRAIN': return rows
       .map((r, idx) => mapRowToNote(r, idx))
       .filter((n): n is Note => n !== null);

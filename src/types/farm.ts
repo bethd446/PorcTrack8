@@ -249,6 +249,41 @@ export interface FinanceEntry {
   raw?: unknown[];
 }
 
+// ─── ALIMENT FORMULES (feuille ALIMENT_FORMULES) ─────────────────────────────
+
+/**
+ * Ligne brute (long format) lue depuis la feuille Sheets `ALIMENT_FORMULES`.
+ * 1 ligne = 1 composant (ingrédient ou additif) pour 1 phase donnée.
+ *
+ * Clé logique unique : `codePhase + typeComposant + nom`.
+ * L'agrégation en objets `FormuleAliment` est faite côté client via
+ * `aggregateFormulesFromRows` (cf. src/config/aliments.ts).
+ *
+ * Unités :
+ *  - INGREDIENT : `unite = '%'` toujours, `valeur` ∈ [0, 100]
+ *  - ADDITIF    : `unite = 'kg/T' | 'g/T'`, `valeur` = dose
+ */
+export interface FormuleRowSheets {
+  /** Code machine de la phase : DEMARRAGE_1, CROISSANCE, FINITION, TRUIE_GESTATION, TRUIE_LACTATION. */
+  codePhase: string;
+  /** Libellé affichable (ex. "Porcelets — Démarrage 1"). */
+  nomPhase: string;
+  /** Plage de poids (ex. "7 → 15 kg"). */
+  poidsRange: string;
+  /** Sépare ingrédients (composition base) et additifs (dosés). */
+  typeComposant: 'INGREDIENT' | 'ADDITIF';
+  /** Nom du composant (ex. "Romelko", "Lysine"). */
+  nom: string;
+  /** Valeur numérique — pourcent si INGREDIENT, dose si ADDITIF. */
+  valeur: number;
+  /** Unité d'expression. */
+  unite: '%' | 'kg/T' | 'g/T';
+  /** Ordre d'affichage intra-phase (1, 2, 3…). */
+  ordre: number;
+  /** Notes libres (optionnel). */
+  notes?: string;
+}
+
 /**
  * Synthèse financière agrégée sur une période donnée (ex: "2026-04" ou "all").
  * Utilisée par l'UI FinancesView pour les KpiCard + bar chart par catégorie.

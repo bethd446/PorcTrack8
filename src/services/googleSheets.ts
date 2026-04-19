@@ -2,7 +2,7 @@ import { CapacitorHttp, Capacitor } from '@capacitor/core';
 import { getQueueStatus, enqueueUpdateRow } from './offlineQueue';
 import { setCache, getCache, isCacheValid, invalidateCache } from './offlineCache';
 import { mapTable } from '../mappers';
-import { Truie, Verrat, BandePorcelets, TraitementSante, StockAliment, StockVeto, AlerteServeur, Saillie, FinanceEntry, DataSource } from '../types/farm';
+import { Truie, Verrat, BandePorcelets, TraitementSante, StockAliment, StockVeto, AlerteServeur, Saillie, FinanceEntry, FormuleRowSheets, DataSource } from '../types/farm';
 import { Note } from '../types';
 import { kvGet, kvSet } from './kvStore';
 
@@ -253,6 +253,14 @@ export const getSaillies = (cb?: (d: Saillie[], header: string[]) => void) =>
 /** Journal financier (feuille FINANCES) — TTL 30 min (les écritures sont rares). */
 export const getFinances = (cb?: (d: FinanceEntry[], header: string[]) => void) =>
   readTypedTable<FinanceEntry>('FINANCES', 30 * 60 * 1000, cb);
+/**
+ * Formules aliment (feuille ALIMENT_FORMULES) — long format, 1 ligne par
+ * composant. TTL 1h car les formules sont quasi-constantes (validation
+ * technicien rare). Agrégation en `FormuleAliment[]` côté context via
+ * `aggregateFormulesFromRows`.
+ */
+export const getAlimentFormules = (cb?: (d: FormuleRowSheets[], header: string[]) => void) =>
+  readTypedTable<FormuleRowSheets>('ALIMENT_FORMULES', 60 * 60 * 1000, cb);
 
 /**
  * Notes terrain : structure dans Sheets → DATE | SUBJECT_TYPE | SUBJECT_ID | NOTE | AUTHOR
