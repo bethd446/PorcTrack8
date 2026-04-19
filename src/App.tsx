@@ -49,6 +49,7 @@ const TruiesListView = React.lazy(() => import(/* webpackChunkName: "truies-list
 const PlanAlimentationView = React.lazy(() => import(/* webpackChunkName: "plan-alim" */ './features/ressources/PlanAlimentationView'));
 const FormulesView = React.lazy(() => import(/* webpackChunkName: "formules" */ './features/ressources/FormulesView'));
 const PharmacieView = React.lazy(() => import(/* webpackChunkName: "pharmacie" */ './features/ressources/PharmacieView'));
+const AlimentsView = React.lazy(() => import(/* webpackChunkName: "aliments" */ './features/ressources/AlimentsView'));
 
 // Agritech pilotage sub-screens (Sprint 3 livrés).
 const PerfKpiView = React.lazy(() => import(/* webpackChunkName: "pilotage-perf" */ './features/pilotage/PerfKpiView'));
@@ -64,11 +65,6 @@ const FinitionView = React.lazy(() => import(/* webpackChunkName: "cycle-finitio
 
 // Aide / Support (non lazy : petit, consulté fréquemment par porcher).
 const AideView = React.lazy(() => import(/* webpackChunkName: "aide" */ './features/help/AideView'));
-
-// Placeholder for missing components
-const StockHub = () => (
-  <TableView tableKey="STOCK_ALIMENTS" />
-);
 
 const AppContent = () => {
   useEffect(() => {
@@ -112,8 +108,8 @@ const AppContent = () => {
           <Route path="/bandes" element={<BandesView />} />
           <Route path="/bandes/:bandeId" element={<BandesView />} />
           <Route path="/sante" element={<TableView tableKey="JOURNAL_SANTE" />} />
-          <Route path="/stock" element={<StockHub />} />
-          <Route path="/stock/aliments" element={<TableView tableKey="STOCK_ALIMENTS" />} />
+          <Route path="/stock" element={<AlimentsView />} />
+          <Route path="/stock/aliments" element={<AlimentsView />} />
           <Route path="/stock/veto" element={<TableView tableKey="STOCK_VETO" />} />
           <Route path="/protocoles" element={<ProtocolsView />} />
           <Route path="/checklist/:name" element={<ChecklistFlow />} />
@@ -153,7 +149,7 @@ const AppContent = () => {
           <Route path="/pilotage/previsions" element={<ForecastView />} />
 
           {/* ── Ressources sub-routes ─────────────────────────────────── */}
-          <Route path="/ressources/aliments" element={<TableView tableKey="STOCK_ALIMENTS" />} />
+          <Route path="/ressources/aliments" element={<AlimentsView />} />
           <Route path="/ressources/aliments/plan" element={<PlanAlimentationView />} />
           <Route path="/ressources/aliments/formules" element={<FormulesView />} />
           <Route path="/ressources/veto" element={<TableView tableKey="STOCK_VETO" />} />

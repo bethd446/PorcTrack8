@@ -331,7 +331,7 @@ const TruiesListView: React.FC = () => {
       // Refresh pour refléter le changement dès le retour worker.
       await refreshData();
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error('[TruiesListView] action error', err);
     } finally {
       setPendingAction(null);

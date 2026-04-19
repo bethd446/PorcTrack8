@@ -13,6 +13,8 @@ import {
   RefreshCw,
   CloudOff,
   HelpCircle,
+  Users,
+  Baby,
 } from 'lucide-react';
 import { FARM_CONFIG } from '../config/farm';
 import { useFarm } from '../context/FarmContext';
@@ -122,6 +124,27 @@ const Cockpit: React.FC = () => {
     () => logesEngraissementOccupation(porteesReelles),
     [porteesReelles]
   );
+
+  // ── Stats élevage agrégées (Mon élevage) ───────────────────────────────
+  const cheptelStats = useMemo(() => {
+    const realBandes = porteesReelles;
+    const vivants = realBandes.reduce((sum, b) => sum + (b.vivants ?? 0), 0);
+    const sousMere = realBandes
+      .filter(b => /sous/i.test(b.statut ?? ''))
+      .reduce((sum, b) => sum + (b.vivants ?? 0), 0);
+    const sevres = realBandes
+      .filter(b => /sevr/i.test(b.statut ?? ''))
+      .reduce((sum, b) => sum + (b.vivants ?? 0), 0);
+
+    return {
+      nbTruies: truies.length,
+      nbVerrats: verrats.length,
+      nbPorcelets: vivants,
+      nbPorceletsSousMere: sousMere,
+      nbPorceletsSevres: sevres,
+      totalCheptel: truies.length + verrats.length + vivants,
+    };
+  }, [truies, verrats, porteesReelles]);
 
   // ── Alerte critique à afficher en strip ────────────────────────────────
   const criticalAlert = useMemo<
@@ -356,6 +379,71 @@ const Cockpit: React.FC = () => {
                 tone={kpiAlertesTotal > 0 ? 'warning' : 'default'}
                 onClick={() => navigate('/pilotage/alertes')}
               />
+            </section>
+
+            {/* ── Mon élevage ───────────────────────────────────────────── */}
+            <section role="region" aria-label="Résumé élevage">
+              <SectionDivider label="Mon élevage" />
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => navigate('/troupeau')}
+                  className="card-dense pressable w-full text-left flex flex-col gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                  aria-label={`Total cheptel : ${cheptelStats.totalCheptel} animaux`}
+                >
+                  <div className="flex items-center gap-1.5 text-text-2">
+                    <Users size={12} aria-hidden="true" />
+                    <span className="kpi-label">Total cheptel</span>
+                  </div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-mono text-[32px] leading-none font-semibold tabular-nums text-accent">
+                      {cheptelStats.totalCheptel}
+                    </span>
+                    <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+                      animaux
+                    </span>
+                  </div>
+                  <div className="font-mono text-[11px] tabular-nums text-text-2">
+                    {cheptelStats.nbTruies}T · {cheptelStats.nbVerrats}V ·{' '}
+                    {cheptelStats.nbPorcelets}P
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => navigate('/troupeau/bandes')}
+                  className="card-dense pressable w-full text-left flex flex-col gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                  aria-label={`Porcelets : ${cheptelStats.nbPorcelets} vivants`}
+                >
+                  <div className="flex items-center gap-1.5 text-text-2">
+                    <Baby size={12} aria-hidden="true" />
+                    <span className="kpi-label">Porcelets</span>
+                  </div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-mono text-[32px] leading-none font-semibold tabular-nums text-accent">
+                      {cheptelStats.nbPorcelets}
+                    </span>
+                    <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+                      vivants
+                    </span>
+                  </div>
+                  <div className="font-mono text-[11px] tabular-nums text-text-2 leading-snug">
+                    <span className="tabular-nums text-text-1">
+                      {cheptelStats.nbPorceletsSevres}
+                    </span>{' '}
+                    sevrés ·{' '}
+                    <span className="tabular-nums text-text-1">
+                      {cheptelStats.nbPorceletsSousMere}
+                    </span>{' '}
+                    sous mère
+                  </div>
+                </button>
+              </div>
+              <div className="mt-2 font-mono text-[11px] tabular-nums text-text-2 px-1">
+                {FARM_CONFIG.MATERNITE_LOGES_CAPACITY} loges maternité ·{' '}
+                {FARM_CONFIG.POST_SEVRAGE_LOGES_CAPACITY} loges post-sevrage ·{' '}
+                {FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY} loges engraissement
+              </div>
             </section>
 
             {/* ── Agenda 7 jours ────────────────────────────────────────── */}
