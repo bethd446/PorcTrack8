@@ -108,40 +108,41 @@
     -webkit-overflow-scrolling: touch;   /* Scroll fluide iOS */
   }
   :root {
-    --ion-font-family: "InstrumentSans", sans-serif;
-    --ion-color-primary: #059669;
-    --ion-color-primary-rgb: 5, 150, 105;
-    --ion-color-primary-contrast: #ffffff;
-    --ion-color-primary-shade: #047857;
-    --ion-color-primary-tint: #10B981;
+    --ion-font-family: var(--font-body);
+    --ion-color-primary: #C65D3D;
+    --ion-color-primary-rgb: 198, 93, 61;
+    --ion-color-primary-contrast: #FFF4EC;
+    --ion-color-primary-shade: #A84826;
+    --ion-color-primary-tint: #D97858;
     --ion-safe-area-top: env(safe-area-inset-top);
     --ion-safe-area-bottom: env(safe-area-inset-bottom);
   }
 }
 
-/* ── Hiérarchie typographique ──────────────────────────────────────────
-   4 polices, chacune avec un rôle précis :
-   1. BigShoulders (ft-heading) → TITRES DE PAGE UNIQUEMENT (Dashboard, Cheptel, etc.)
-   2. InstrumentSans (body)     → Tout le texte courant, labels, boutons
-   3. BricolageGrotesque (ft-values) → Nombres, KPIs, statistiques
-   4. DMMono (ft-code)          → IDs, timestamps, codes, metadata technique
+/* ── Hiérarchie typographique — V2 Terra (2026-04-20) ──────────────────
+   Stack Editorial Terra :
+   1. Instrument Serif (--font-display) → Titres, labels uppercase, chiffres clés
+   2. Geist (--font-body)               → Body, labels, boutons, UI courante
+   3. Geist Mono (--font-mono)          → IDs, dates, codes, données tabulaires
    ──────────────────────────────────────────────────────────────────── */
 .ft-heading {
-  font-family: "BigShoulders", sans-serif !important;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  /* Rendu optimisé pour les gros titres */
+  font-family: var(--font-display) !important;
+  font-weight: 500;
+  letter-spacing: 0.005em;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
 .ft-values {
-  font-family: "BricolageGrotesque", sans-serif !important;
-  font-feature-settings: "tnum" 1; /* Chiffres tabulaires alignés */
+  font-family: var(--font-body) !important;
+  font-weight: 600;
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
 }
 .ft-code {
-  font-family: "DMMono", monospace !important;
-  letter-spacing: 0.02em;
+  font-family: var(--font-mono) !important;
+  letter-spacing: 0.01em;
   font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
 }
 .text-xxs    { font-size: 0.7rem; line-height: 1rem; }
 .tracking-ultra   { letter-spacing: 0.12em; }
