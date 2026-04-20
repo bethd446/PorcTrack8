@@ -54,6 +54,7 @@ const AlimentsView = React.lazy(() => import(/* webpackChunkName: "aliments" */ 
 // Agritech pilotage sub-screens (Sprint 3 livrés).
 const PerfKpiView = React.lazy(() => import(/* webpackChunkName: "pilotage-perf" */ './features/pilotage/PerfKpiView'));
 const FinancesView = React.lazy(() => import(/* webpackChunkName: "pilotage-finances" */ './features/pilotage/FinancesView'));
+const RapportFinancierView = React.lazy(() => import(/* webpackChunkName: "pilotage-rapport" */ './features/pilotage/RapportFinancierView'));
 const ForecastView = React.lazy(() => import(/* webpackChunkName: "pilotage-previsions" */ './features/pilotage/ForecastView'));
 
 // Agritech cycles sub-screens (Sprint 2 livrés).
@@ -147,6 +148,8 @@ const AppContent = () => {
           <Route path="/pilotage/audit" element={<Navigate to="/audit" replace />} />
           <Route path="/pilotage/perf" element={<PerfKpiView />} />
           <Route path="/pilotage/finances" element={<FinancesView />} />
+          <Route path="/pilotage/finances/rapport" element={<RapportFinancierView />} />
+          <Route path="/pilotage/rapports" element={<RapportFinancierView />} />
           <Route path="/pilotage/previsions" element={<ForecastView />} />
 
           {/* ── Ressources sub-routes ─────────────────────────────────── */}
