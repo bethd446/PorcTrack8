@@ -1,0 +1,210 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PorcTrack 8 — Agritech Dark · Colors & Type
+   Calm, data-dense dark theme. Dark-first; `.theme-day` flips to ivory mode.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Fonts ─────────────────────────────────────────────────────────────── */
+@font-face {
+  font-family: "BigShoulders";
+  src: url("fonts/BigShoulders-Regular.ttf") format("truetype");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "BigShoulders";
+  src: url("fonts/BigShoulders-Bold.ttf") format("truetype");
+  font-weight: 700 900; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "InstrumentSans";
+  src: url("fonts/InstrumentSans-Regular.ttf") format("truetype");
+  font-weight: 400 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "InstrumentSans";
+  src: url("fonts/InstrumentSans-Bold.ttf") format("truetype");
+  font-weight: 600 800; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "BricolageGrotesque";
+  src: url("fonts/BricolageGrotesque-Regular.ttf") format("truetype");
+  font-weight: 400 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "BricolageGrotesque";
+  src: url("fonts/BricolageGrotesque-Bold.ttf") format("truetype");
+  font-weight: 600 800; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "DMMono";
+  src: url("fonts/DMMono-Regular.ttf") format("truetype");
+  font-weight: 400 500; font-style: normal; font-display: swap;
+}
+
+/* ── Tokens: NIGHT (default) ───────────────────────────────────────────── */
+:root {
+  /* Surfaces */
+  --bg-0: #0A0E0B;
+  --bg-1: #121714;
+  --bg-2: #1A211E;
+  --border: #2A3239;
+
+  /* Text scale */
+  --text-0: #E8EFE8;
+  --text-1: #9FB0A6;
+  --text-2: #6B7E74;
+
+  /* Accent (emerald) */
+  --accent: #10B981;
+  --accent-fg: #04392D;
+  --accent-dim: #065F46;
+
+  /* Status signals */
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --danger:  #EF4444;
+  --info:    #3B82F6;
+
+  /* Extra semantic (from codebase) */
+  --amber: #F4A261;
+  --red:   #EF4444;
+  --blue:  #60A5FA;
+  --gold:  #D4A056;
+  --coral: #FB7185;
+  --teal:  #2DD4BF;
+  --cyan:  #22D3EE;
+
+  /* Per-tab accents (one accent per tab rule) */
+  --accent-cockpit:    #10B981; /* emerald */
+  --accent-troupeau:   #2DD4BF; /* teal   */
+  --accent-cycles:     #22D3EE; /* cyan   */
+  --accent-ressources: #F59E0B; /* amber  */
+  --accent-pilotage:   #FB7185; /* coral  */
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+
+  /* Spacing (4pt grid) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Elevation — prefer border + bg-1 → bg-2 over shadow on dark */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.35);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.40);
+  --shadow-lg: 0 12px 24px rgba(0,0,0,0.50);
+  --shadow-glow-accent: 0 0 0 1px rgba(16,185,129,0.25), 0 8px 24px rgba(16,185,129,0.15);
+
+  /* Easings */
+  --ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-gentle:  cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-snappy:  cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-expo: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* Font stacks */
+  --font-display: "BigShoulders", "Big Shoulders Display", Impact, sans-serif;
+  --font-body:    "InstrumentSans", -apple-system, system-ui, sans-serif;
+  --font-values:  "BricolageGrotesque", "InstrumentSans", sans-serif;
+  --font-mono:    "DMMono", "JetBrains Mono", ui-monospace, Menlo, monospace;
+
+  /* Type scale */
+  --text-display-xl: 44px;
+  --text-display-lg: 36px;
+  --text-display-md: 28px;
+  --text-display-sm: 22px;
+  --text-body-lg: 15px;
+  --text-body-md: 13px;
+  --text-body-sm: 12px;
+  --text-label-xs: 11px;
+
+  color-scheme: dark;
+}
+
+/* ── Tokens: DAY (optional flip) ───────────────────────────────────────── */
+:root.theme-day {
+  --bg-0: #FAFAF7;
+  --bg-1: #FFFFFF;
+  --bg-2: #F5F3EE;
+  --border: #E5E7EB;
+  --text-0: #0F172A;
+  --text-1: #4B5563;
+  --text-2: #9CA3AF;
+  --accent: #065F46;
+  --accent-fg: #FFFFFF;
+  --accent-dim: #047857;
+  color-scheme: light;
+}
+
+/* ── Semantic typography classes ───────────────────────────────────────── */
+
+/* Display headings — BigShoulders Bold, uppercase. Used for screen titles,
+   KPI values when paired with .ft-heading, section titles on large surfaces. */
+.ft-heading,
+h1.ds, h2.ds, h3.ds {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-0);
+  line-height: 1;
+}
+h1.ds { font-size: var(--text-display-lg); }
+h2.ds { font-size: var(--text-display-md); }
+h3.ds { font-size: var(--text-display-sm); }
+
+/* Body — InstrumentSans */
+body, p.ds, .ft-body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: var(--text-body-lg);
+  line-height: 1.45;
+  color: var(--text-0);
+}
+
+/* Values — BricolageGrotesque for large non-mono numbers (rare — prefer mono) */
+.ft-values {
+  font-family: var(--font-values);
+  font-weight: 700;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -0.02em;
+}
+
+/* Mono — DMMono. Used for IDs, dates, percentages, ALL numeric data */
+.ft-code, .ft-mono, code.ds {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1, "zero" 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+/* KPI label — uppercase mono 11px */
+.kpi-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-label-xs);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+/* KPI value — big tabular mono */
+.kpi-value {
+  font-family: var(--font-mono);
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--text-0);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "zero" 1;
+}

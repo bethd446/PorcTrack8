@@ -1,0 +1,229 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PorcTrack 8 — Agritech Dark · Components CSS
+   Dense-dashboard primitives: chips, cards, data rows, buttons, inputs.
+   Relies on tokens from colors_and_type.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Base reset ──────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg-0); color: var(--text-0); }
+body { font-family: var(--font-body); }
+button { font-family: inherit; }
+
+/* ── Surface helpers ─────────────────────────────────────────────────── */
+.surface-0 { background: var(--bg-0); color: var(--text-0); }
+.surface-1 { background: var(--bg-1); color: var(--text-0); }
+.surface-2 { background: var(--bg-2); color: var(--text-0); }
+
+/* ── Hairline divider ────────────────────────────────────────────────── */
+.hairline {
+  height: 1px;
+  background: var(--border);
+  border: 0;
+}
+
+/* ── Card (dense dashboard surface) ──────────────────────────────────── */
+.card-dense {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  transition: background-color 160ms var(--ease-out-expo),
+              border-color 160ms var(--ease-out-expo);
+}
+@media (hover: hover) and (pointer: fine) {
+  .card-dense:hover { border-color: color-mix(in srgb, var(--text-2) 50%, var(--border)); }
+}
+
+.card-flat {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+
+/* ── Pressable (mobile tap affordance) ───────────────────────────────── */
+.pressable { transition: transform 120ms var(--ease-snappy), opacity 120ms var(--ease-gentle); cursor: pointer; }
+.pressable:active { transform: scale(0.98); opacity: 0.9; }
+
+/* ── Chips ───────────────────────────────────────────────────────────── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: var(--text-label-xs);
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-1);
+  background: transparent;
+}
+.chip--accent { color: var(--accent);  border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+.chip--amber  { color: var(--amber);   border-color: color-mix(in srgb, var(--amber)  40%, transparent); }
+.chip--red    { color: var(--red);     border-color: color-mix(in srgb, var(--red)    40%, transparent); }
+.chip--blue   { color: var(--blue);    border-color: color-mix(in srgb, var(--blue)   40%, transparent); }
+.chip--gold   { color: var(--gold);    border-color: color-mix(in srgb, var(--gold)   40%, transparent); }
+.chip--coral  { color: var(--coral);   border-color: color-mix(in srgb, var(--coral)  40%, transparent); }
+.chip--teal   { color: var(--teal);    border-color: color-mix(in srgb, var(--teal)   40%, transparent); }
+.chip--cyan   { color: var(--cyan);    border-color: color-mix(in srgb, var(--cyan)   40%, transparent); }
+
+/* Solid variants for stronger emphasis (rare) */
+.chip--solid-accent { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 15px;
+  cursor: pointer;
+  transition: transform 120ms var(--ease-snappy),
+              background-color 160ms var(--ease-gentle),
+              border-color 160ms var(--ease-gentle);
+}
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: var(--accent); color: var(--accent-fg); }
+.btn-primary:hover { background: color-mix(in srgb, var(--accent) 90%, white); }
+.btn-secondary { background: var(--bg-2); color: var(--text-0); border-color: var(--border); }
+.btn-secondary:hover { border-color: color-mix(in srgb, var(--text-2) 50%, var(--border)); }
+.btn-ghost { background: transparent; color: var(--text-1); }
+.btn-ghost:hover { color: var(--text-0); background: var(--bg-2); }
+.btn-danger { background: var(--danger); color: white; }
+
+/* ── Inputs ──────────────────────────────────────────────────────────── */
+.input {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-0);
+  font-family: var(--font-body);
+  font-size: var(--text-body-lg);
+  transition: border-color 150ms var(--ease-gentle);
+  color-scheme: dark;
+}
+.input::placeholder { color: var(--text-2); }
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.input--mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.label-ui {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--text-label-xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-2);
+  margin-bottom: 6px;
+}
+
+/* ── Data rows (vertical list, zebra on hover) ───────────────────────── */
+.data-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  transition: background-color 160ms var(--ease-out-expo),
+              border-left-color 160ms var(--ease-out-expo);
+  border-left: 2px solid transparent;
+}
+.data-row:last-child { border-bottom: 0; }
+.data-row--hover:hover,
+.data-row.pressable:hover {
+  background: var(--bg-2);
+  border-left-color: var(--accent);
+}
+
+/* ── Section divider (accent tick + label + hairline) ────────────────── */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0;
+}
+.section-divider::before {
+  content: "";
+  display: block;
+  height: 1px;
+  width: 16px;
+  background: var(--accent);
+}
+.section-divider .label { flex-shrink: 0; }
+.section-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── KPI delta chips ─────────────────────────────────────────────────── */
+.kpi-delta-up {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.kpi-delta-down {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--red);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Progress bar (loge occupation) ──────────────────────────────────── */
+.progress {
+  height: 6px;
+  width: 100%;
+  background: var(--bg-1);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress__fill { height: 100%; background: var(--accent); transition: width 240ms var(--ease-gentle); }
+.progress__fill--amber { background: var(--amber); }
+.progress__fill--red   { background: var(--red); }
+
+/* ── Tab accent helpers (one accent per tab) ─────────────────────────── */
+.tab-cockpit    { --tab-accent: var(--accent-cockpit); }
+.tab-troupeau   { --tab-accent: var(--accent-troupeau); }
+.tab-cycles     { --tab-accent: var(--accent-cycles); }
+.tab-ressources { --tab-accent: var(--accent-ressources); }
+.tab-pilotage   { --tab-accent: var(--accent-pilotage); }
+
+/* ── Phone frame (for previews only) ─────────────────────────────────── */
+.phone-frame {
+  width: 390px;
+  height: 844px;
+  background: var(--bg-0);
+  border: 1px solid var(--border);
+  border-radius: 44px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: var(--shadow-lg);
+}
