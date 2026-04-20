@@ -20,6 +20,12 @@
    ──────────────────────────────────────────────────────────────────────── */
 @import "./styles/theme-v2-tokens.css";
 
+/* ── v2 Terra (Claude Design 2026-04-20) — override final layer ────────────
+   Swap accent emerald → terracotta, surfaces sage-leaning, Geist + Instrument
+   Serif. Chargé EN DERNIER pour dominer les tokens précédents.
+   ──────────────────────────────────────────────────────────────────────── */
+@import "./styles/terra-v2-tokens.css";
+
 /* ── Polices ──────────────────────────────────────────────────────────────── */
 @font-face { font-family: 'BigShoulders'; src: url('/fonts/BigShoulders-Bold.ttf') format('truetype'); font-weight: 700; font-display: block; }
 @font-face { font-family: 'BigShoulders'; src: url('/fonts/BigShoulders-Regular.ttf') format('truetype'); font-weight: 400; font-display: block; }

@@ -9,10 +9,11 @@ _delivery/
 ├── _shared/                         # Socle commun (tokens + CSS + composants)
 │   ├── tokens.json                  # Style Dictionary — source de vérité
 │   ├── tailwind.config.js           # Preset Tailwind (CSS vars)
-│   ├── colors_and_type.css          # Variables CSS + fonts
+│   ├── colors_and_type.css          # Variables CSS + fonts (défaut : emerald)
+│   ├── theme-terracotta.css         # ★ Override accent → terracotta (optionnel)
 │   ├── components.css               # Classes utilitaires (.card, .btn, .input, ...)
 │   ├── fonts/                       # 7 .ttf (BigShoulders, InstrumentSans, BricolageGrotesque, DMMono)
-│   ├── assets/                      # Logos + 6 icons livestock
+│   ├── assets/                      # Logo PorcTrack + icons métier porc + livestock
 │   ├── components/
 │   │   ├── Primitives.jsx           # Card, Button, Chip, DataRow, KpiCard, SparkCard, Icon, Progress, HubTile
 │   │   └── Chrome.jsx               # AgritechHeader, BottomNav, FAB, BottomSheet, FinancesFAB, PhoneFrame
@@ -63,6 +64,32 @@ _delivery/
    - `<BottomSheet>` → `<IonModal breakpoints={[0, 0.9]}>`
    - `<PhoneFrame>` → supprimer (c'est un device frame de mockup)
 4. Garder toutes les classes CSS et usages de tokens (`var(--bg-1)`, etc.)
+
+## ★ Switch theme · Emerald → Terracotta
+
+Par défaut l'app est en **emerald** (#10B981). Pour basculer en **terracotta** (#D96F4C) :
+
+```html
+<!-- Dans ton index.html ou layout root, en ordre strict : -->
+<link rel="stylesheet" href="/theme/colors_and_type.css"/>
+<link rel="stylesheet" href="/theme/theme-terracotta.css"/>
+<link rel="stylesheet" href="/theme/components.css"/>
+```
+
+Ou côté Ionic (`src/theme/variables.scss`) :
+
+```scss
+@import 'colors_and_type.css';
+@import 'theme-terracotta.css';   // ← à commenter pour revenir à emerald
+@import 'components.css';
+```
+
+**Impact du swap** :
+- `--accent` · `--accent-fg` · `--accent-dim` repaints terracotta
+- `--accent-cockpit` suit (les 4 autres tabs gardent leurs hues — teal, cyan, amber, coral)
+- Surfaces dark +2% de chaleur (charbon légèrement warm)
+- Chips, boutons primary, KPI accentués, FAB, progress bars, focus rings : tous repeints
+- Zéro changement structurel. 0 breakage côté layout.
 
 ## Conventions
 

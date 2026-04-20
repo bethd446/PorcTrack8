@@ -1,0 +1,32 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  
+  <rect width="512" height="512" fill="#059669" rx="120" ry="120"></rect>
+
+  
+  
+  <circle cx="256" cy="240" r="80" fill="white"></circle>
+
+  
+  <circle cx="256" cy="280" r="25" fill="white"></circle>
+
+  
+  <ellipse cx="200" cy="170" rx="22" ry="45" fill="white" transform="rotate(-25 200 170)"></ellipse>
+  <ellipse cx="312" cy="170" rx="22" ry="45" fill="white" transform="rotate(25 312 170)"></ellipse>
+
+  
+  <circle cx="235" cy="225" r="8" fill="#059669"></circle>
+  <circle cx="277" cy="225" r="8" fill="#059669"></circle>
+
+  
+  <circle cx="248" cy="285" r="4" fill="#059669"></circle>
+  <circle cx="264" cy="285" r="4" fill="#059669"></circle>
+
+  
+  <rect x="210" y="310" width="92" height="85" rx="15" ry="15" fill="white"></rect>
+
+  
+  <rect x="220" y="390" width="18" height="50" rx="9" ry="9" fill="white"></rect>
+  <rect x="274" y="390" width="18" height="50" rx="9" ry="9" fill="white"></rect>
+  <rect x="234" y="390" width="18" height="50" rx="9" ry="9" fill="white"></rect>
+  <rect x="260" y="390" width="18" height="50" rx="9" ry="9" fill="white"></rect>
+</svg>

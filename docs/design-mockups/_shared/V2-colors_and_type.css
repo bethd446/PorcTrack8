@@ -1,0 +1,262 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PorcTrack 8 — V2 · Terra System
+   Dual palette: Sage (dark, default) · Crème (light, alt)
+   Typography: two stacks — Editorial Terra · Linear Precise
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Fonts (Google Fonts) ─────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap');
+
+/* ── TERRA SAGE (default, dark) ────────────────────────────────────────── */
+:root {
+  /* Surfaces — earthy dark with sage undertone */
+  --bg-0:   #0F1310;   /* deepest — nearly black, tiny green warmth */
+  --bg-1:   #161B18;   /* card surface */
+  --bg-2:   #1E2420;   /* elevated */
+  --bg-3:   #262D28;   /* hover / emphasized */
+  --border: #2B332E;   /* hairline */
+  --border-strong: #3A443D;
+
+  /* Text */
+  --text-0: #EDEAE3;   /* primary — warm off-white */
+  --text-1: #A8A69C;   /* secondary */
+  --text-2: #6E6D65;   /* tertiary */
+  --text-3: #4A4944;   /* quaternary, placeholders */
+
+  /* Primary accent — Terracotta */
+  --accent:      #C65D3D;
+  --accent-hi:   #D97858;
+  --accent-lo:   #A84826;
+  --accent-fg:   #FFF4EC;
+  --accent-wash: rgba(198, 93, 61, 0.08);
+  --accent-wash-strong: rgba(198, 93, 61, 0.16);
+
+  /* Secondary accent — Sage */
+  --sage:      #6B7E55;
+  --sage-hi:   #8C9F72;
+  --sage-lo:   #4F5F3E;
+  --sage-fg:   #F1F4E8;
+  --sage-wash: rgba(107, 126, 85, 0.10);
+
+  /* Tertiary accent — Ochre (warnings, warm data) */
+  --ochre:      #D4A056;
+  --ochre-hi:   #E0B270;
+  --ochre-lo:   #A87B38;
+  --ochre-fg:   #2A1F0F;
+
+  /* Signals — muted, not candy */
+  --success: #7A9960;   /* sage-leaning green */
+  --warning: #D4A056;   /* ochre */
+  --danger:  #B8493A;   /* deep terracotta-red, not pure red */
+  --info:    #6B8AA8;   /* dusty blue */
+
+  /* Radii — sharp-first, soft when needed */
+  --radius-xs:  3px;
+  --radius-sm:  5px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
+  --radius-xl:  16px;
+  --radius-2xl: 24px;
+  --radius-full: 999px;
+
+  /* Spacing (4pt) */
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Elevation — hairline first, shadows rare */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.35);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.45);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.55);
+  --shadow-accent: 0 0 0 1px rgba(198, 93, 61, 0.25), 0 8px 24px rgba(198, 93, 61, 0.12);
+
+  /* Motion — targeted, never all */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
+  --dur-slow: 280ms;
+
+  /* Font stacks — two options, selector via [data-typo] */
+  --font-serif:   'Instrument Serif', 'Iowan Old Style', 'Palatino', serif;
+  --font-sans:    'Geist', -apple-system, 'SF Pro Text', system-ui, sans-serif;
+  --font-mono:    'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Default typo binding: Editorial Terra (stack A) */
+  --font-display: var(--font-serif);
+  --font-body:    var(--font-sans);
+  --font-data:    var(--font-mono);
+
+  /* Type scale */
+  --text-4xl: 44px;
+  --text-3xl: 36px;
+  --text-2xl: 28px;
+  --text-xl:  22px;
+  --text-lg:  18px;
+  --text-md:  15px;
+  --text-sm:  13px;
+  --text-xs:  12px;
+  --text-2xs: 11px;  /* minimum — plein soleil compatible */
+
+  color-scheme: dark;
+}
+
+/* ── TERRA CRÈME (light) ───────────────────────────────────────────────── */
+:root[data-theme="creme"] {
+  --bg-0:   #FAF6F0;    /* warm ivory */
+  --bg-1:   #FFFFFF;
+  --bg-2:   #F2EDE4;    /* warm surface */
+  --bg-3:   #E9E2D4;
+  --border: #E5DECF;
+  --border-strong: #D4C9AE;
+
+  --text-0: #2D3A2A;    /* deep forest ink */
+  --text-1: #5A6B54;
+  --text-2: #8A9485;
+  --text-3: #B5BCA9;
+
+  --accent:      #B84F2E;
+  --accent-hi:   #C65D3D;
+  --accent-lo:   #8F3A1F;
+  --accent-fg:   #FFFFFF;
+  --accent-wash: rgba(184, 79, 46, 0.06);
+  --accent-wash-strong: rgba(184, 79, 46, 0.14);
+
+  --sage:      #556944;
+  --sage-hi:   #6B7E55;
+  --sage-lo:   #3D4E30;
+  --sage-fg:   #FFFFFF;
+  --sage-wash: rgba(85, 105, 68, 0.08);
+
+  --ochre:      #B8873E;
+  --ochre-hi:   #D4A056;
+  --ochre-lo:   #8C6425;
+  --ochre-fg:   #FFFFFF;
+
+  --success: #5A7D40;
+  --warning: #B8873E;
+  --danger:  #A03825;
+  --info:    #4F6B8A;
+
+  --shadow-sm: 0 1px 2px rgba(45,58,42,0.05);
+  --shadow-md: 0 4px 12px rgba(45,58,42,0.08);
+  --shadow-lg: 0 12px 32px rgba(45,58,42,0.12);
+
+  color-scheme: light;
+}
+
+/* ── Typo stack: Linear Precise (stack B) ──────────────────────────────── */
+:root[data-typo="precise"] {
+  --font-display: var(--font-sans);
+  --font-body:    var(--font-sans);
+  --font-data:    var(--font-mono);
+}
+
+/* ── Base ──────────────────────────────────────────────────────────────── */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  line-height: 1.5;
+  color: var(--text-0);
+  background: var(--bg-0);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "ss01" 1, "cv11" 1;
+}
+
+/* ── Semantic type classes ─────────────────────────────────────────────── */
+
+/* Display — editorial headlines, screen titles */
+.t-display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--text-0);
+}
+.t-display-italic {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+  color: var(--text-0);
+}
+
+/* When Linear Precise is active, display becomes tight sans */
+:root[data-typo="precise"] .t-display {
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+:root[data-typo="precise"] .t-display-italic {
+  font-style: normal;
+  font-weight: 500;
+}
+
+/* Heading — section titles, card titles */
+.t-heading {
+  font-family: var(--font-body);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  color: var(--text-0);
+}
+
+/* Body */
+.t-body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text-0);
+}
+
+/* Data — all numeric, IDs, dates, codes */
+.t-data {
+  font-family: var(--font-data);
+  font-feature-settings: "tnum" 1, "zero" 1, "ss01" 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Label — uppercase tiny, meta */
+.t-label {
+  font-family: var(--font-data);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+/* KPI values — giant tabular data */
+.t-kpi {
+  font-family: var(--font-data);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "zero" 1;
+  color: var(--text-0);
+}
+
+/* Caption — small muted context */
+.t-caption {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--text-1);
+  line-height: 1.45;
+}

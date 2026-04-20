@@ -1,0 +1,171 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PorcTrack 8 — V2 · Components
+   Targeted transitions only. Never transition-all.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Card ──────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+.card--flat {
+  background: transparent;
+  border: 1px solid var(--border);
+}
+.card--raised {
+  background: var(--bg-2);
+  border-color: var(--border-strong);
+}
+.card--accent {
+  background: var(--accent-wash);
+  border-color: color-mix(in oklab, var(--accent) 40%, transparent);
+}
+.card--pressable {
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out),
+              transform var(--dur-fast) var(--ease-out);
+}
+.card--pressable:hover { background: var(--bg-2); border-color: var(--border-strong); }
+.card--pressable:active { transform: scale(0.995); }
+
+/* ── Button ────────────────────────────────────────────────────────────── */
+.btn {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  transition: background var(--dur-fast) var(--ease-out),
+              color     var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out),
+              transform var(--dur-fast) var(--ease-out);
+  white-space: nowrap;
+  user-select: none;
+}
+.btn:active { transform: scale(0.97); }
+
+.btn--primary {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: var(--accent);
+}
+.btn--primary:hover { background: var(--accent-hi); border-color: var(--accent-hi); }
+
+.btn--secondary {
+  background: var(--bg-2);
+  color: var(--text-0);
+  border-color: var(--border);
+}
+.btn--secondary:hover { background: var(--bg-3); border-color: var(--border-strong); }
+
+.btn--ghost {
+  background: transparent;
+  color: var(--text-1);
+  border-color: transparent;
+}
+.btn--ghost:hover { color: var(--text-0); background: var(--bg-2); }
+
+.btn--sage {
+  background: var(--sage);
+  color: var(--sage-fg);
+  border-color: var(--sage);
+}
+.btn--sage:hover { background: var(--sage-hi); border-color: var(--sage-hi); }
+
+.btn--lg { padding: 14px 20px; font-size: var(--text-md); border-radius: var(--radius-lg); }
+.btn--xl { padding: 18px 24px; font-size: var(--text-lg); border-radius: var(--radius-lg); }
+.btn--block { width: 100%; }
+
+/* ── Chip / Tag ────────────────────────────────────────────────────────── */
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  font-family: var(--font-data);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-1);
+}
+.chip--accent { color: var(--accent-hi); border-color: color-mix(in oklab, var(--accent) 40%, transparent); background: var(--accent-wash); }
+.chip--sage   { color: var(--sage-hi);   border-color: color-mix(in oklab, var(--sage) 40%, transparent);   background: var(--sage-wash); }
+.chip--ochre  { color: var(--ochre-hi);  border-color: color-mix(in oklab, var(--ochre) 40%, transparent);  background: rgba(212, 160, 86, 0.08); }
+.chip--danger { color: var(--danger);    border-color: color-mix(in oklab, var(--danger) 40%, transparent); background: rgba(184, 73, 58, 0.08); }
+.chip--solid  { background: var(--bg-2); color: var(--text-0); border-color: var(--border-strong); }
+
+/* Status dot */
+.dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.dot--accent  { background: var(--accent); }
+.dot--sage    { background: var(--sage); }
+.dot--ochre   { background: var(--ochre); }
+.dot--danger  { background: var(--danger); }
+.dot--success { background: var(--success); }
+
+/* ── Input ─────────────────────────────────────────────────────────────── */
+.input {
+  width: 100%;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  color: var(--text-0);
+  transition: border-color var(--dur-fast) var(--ease-out),
+              background   var(--dur-fast) var(--ease-out);
+}
+.input::placeholder { color: var(--text-3); }
+.input:focus { outline: none; border-color: var(--accent); background: var(--bg-2); }
+.input--data { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+
+/* ── Divider ───────────────────────────────────────────────────────────── */
+.divider { height: 1px; background: var(--border); border: 0; margin: 0; }
+.divider--dashed { height: 0; border-top: 1px dashed var(--border-strong); background: none; }
+
+/* ── List row ──────────────────────────────────────────────────────────── */
+.row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.row:last-child { border-bottom: none; }
+.row--pressable { cursor: pointer; }
+.row--pressable:hover { background: var(--bg-2); }
+
+/* ── Progress ──────────────────────────────────────────────────────────── */
+.progress {
+  width: 100%; height: 3px; background: var(--bg-2); border-radius: 2px; overflow: hidden;
+}
+.progress__bar {
+  height: 100%; background: var(--accent); border-radius: 2px;
+  transition: width var(--dur-slow) var(--ease-out-expo);
+}
+.progress--sage .progress__bar { background: var(--sage); }
+.progress--ochre .progress__bar { background: var(--ochre); }
+
+/* ── Keyline (subtle section separator) ────────────────────────────────── */
+.keyline {
+  display: flex; align-items: center; gap: 12px;
+  font-family: var(--font-data); font-size: var(--text-2xs);
+  font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-2);
+  padding: var(--space-5) var(--space-4) var(--space-3);
+}
+.keyline::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* ── Pressable base ───────────────────────────────────────────────────── */
+.pressable {
+  transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+.pressable:active { transform: scale(0.97); opacity: 0.8; }

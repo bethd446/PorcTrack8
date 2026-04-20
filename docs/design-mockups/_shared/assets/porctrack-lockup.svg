@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 64">
+  <defs>
+    <linearGradient id="lg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#12D394"></stop>
+      <stop offset="1" stop-color="#10B981"></stop>
+    </linearGradient>
+  </defs>
+  
+  <g>
+    <rect width="64" height="64" rx="14" fill="url(#lg)"></rect>
+    <circle cx="32" cy="32" r="24" fill="none" stroke="#0A2E1F" stroke-width="1.5" opacity="0.18"></circle>
+    <circle cx="32" cy="8" r="2" fill="#0A2E1F" opacity="0.6"></circle>
+    <g fill="#0A2E1F">
+      <path d="M32 18 C 22 18, 16 24, 16 32 C 16 40, 22 46, 32 46 C 42 46, 48 40, 48 32 C 48 24, 42 18, 32 18 Z"></path>
+      <path d="M18 22 L22 16 L26 22 Z"></path>
+      <path d="M46 22 L42 16 L38 22 Z"></path>
+    </g>
+    <ellipse cx="32" cy="35" rx="9" ry="7" fill="#F4D9C8"></ellipse>
+    <ellipse cx="32" cy="35" rx="9" ry="7" fill="none" stroke="#0A2E1F" stroke-width="1.4"></ellipse>
+    <ellipse cx="29" cy="35" rx="1.4" ry="2" fill="#0A2E1F"></ellipse>
+    <ellipse cx="35" cy="35" rx="1.4" ry="2" fill="#0A2E1F"></ellipse>
+    <circle cx="25" cy="28" r="1.6" fill="#F4F4F4"></circle>
+    <circle cx="39" cy="28" r="1.6" fill="#F4F4F4"></circle>
+    <circle cx="25" cy="28" r="0.8" fill="#0A2E1F"></circle>
+    <circle cx="39" cy="28" r="0.8" fill="#0A2E1F"></circle>
+  </g>
+  
+  <g font-family="&#39;Inter Tight&#39;,&#39;Helvetica Neue&#39;,Arial,sans-serif" font-weight="800" letter-spacing="-0.01em">
+    <text x="82" y="40" font-size="28" fill="#F4F4F4">PORC</text>
+    <text x="158" y="40" font-size="28" fill="#10B981">TRACK</text>
+  </g>
+  
+  <g transform="translate(258, 18)">
+    <rect width="22" height="28" rx="5" fill="none" stroke="#10B981" stroke-width="1.6"></rect>
+    <text x="11" y="21" font-family="&#39;IBM Plex Mono&#39;,&#39;Menlo&#39;,monospace" font-size="14" font-weight="700" fill="#10B981" text-anchor="middle">8</text>
+  </g>
+</svg>

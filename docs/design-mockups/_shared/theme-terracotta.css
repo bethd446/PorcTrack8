@@ -1,0 +1,60 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PorcTrack 8 — THEME: TERRACOTTA
+   Override layer. Import AFTER colors_and_type.css to swap the accent family
+   from emerald to terracotta while keeping every other token intact.
+
+   Usage:
+     <link rel="stylesheet" href="colors_and_type.css"/>
+     <link rel="stylesheet" href="theme-terracotta.css"/>
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Primary accent — terracotta ───────────────────────────────────── */
+  /* Warm clay, earthy, mediterranean — references the soil of the
+     exploitation and the color of grilled terre cuite tiles. */
+  --accent:     #D96F4C;   /* terracotta brûlée */
+  --accent-fg:  #2A0F06;   /* charbon brun très foncé pour contraste */
+  --accent-dim: #A64A2C;   /* terracotta profonde pour hover/focus */
+
+  /* ── Cockpit tab stays aligned with new primary ────────────────────── */
+  --accent-cockpit: #D96F4C;
+
+  /* ── Glow shadow repaint (emerald → terracotta) ────────────────────── */
+  --shadow-glow-accent:
+    0 0 0 1px rgba(217, 111, 76, 0.25),
+    0 8px 24px rgba(217, 111, 76, 0.15);
+
+  /* ── Surface warmer pull (subtle — 2% warmth in the charcoal) ──────── */
+  /* We shift the dark surfaces very slightly warmer to support the accent.
+     Still reads as dark charcoal, not brown. Flip back to emerald cold
+     greys if you prefer a pure neutral base. */
+  --bg-0: #0B0A09;
+  --bg-1: #14120F;
+  --bg-2: #1D1915;
+  --border: #2F2A24;
+
+  /* Text stays near-neutral with a whisper of warm */
+  --text-0: #EFEAE1;
+  --text-1: #B0A699;
+  --text-2: #7A6F62;
+}
+
+/* ── Day mode flip (terracotta on ivory) ─────────────────────────────── */
+:root.theme-day {
+  --bg-0: #FAF5EC;
+  --bg-1: #FFFFFF;
+  --bg-2: #F2EBDC;
+  --border: #E3DBC9;
+  --text-0: #1C140D;
+  --text-1: #5A4E3E;
+  --text-2: #8E8270;
+  --accent:     #B85934;   /* deeper terracotta on light — legibility */
+  --accent-fg:  #FFFFFF;
+  --accent-dim: #8E3F1F;
+  --accent-cockpit: #B85934;
+}
+
+/* ── Accent tint for per-tab when cockpit === primary ────────────────── */
+/* Tabs other than cockpit keep their own hues (teal / cyan / amber /
+   coral) for visual orientation — this is the one-accent-per-tab rule.
+   Cockpit tab uses the primary, which is now terracotta. */
