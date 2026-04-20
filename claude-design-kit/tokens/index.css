@@ -1,0 +1,366 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PorcTrack — Design System · Ultra Clean
+   Inspiration : Linear, Apple Health, Notion
+   Principe : blanc pur, une couleur d'accent, zéro bruit visuel
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Theme tokens (Jour/Nuit) — défini AVANT agritech-tokens car celui-ci
+   référence les --bg-0, --text-0, etc. via var(). ───────────────────────── */
+@import "./styles/theme-tokens.css";
+
+/* ── Agritech Moderne overlay (dark cockpit tokens + utilities) ────────────
+   Additive system — cohabite avec les classes .premium-* / .ft-* ci-dessous.
+   ──────────────────────────────────────────────────────────────────────── */
+@import "./styles/agritech-tokens.css";
+@import "./styles/agritech-utilities.css";
+
+/* ── v2 tokens (additifs, opt-in) ──────────────────────────────────────────
+   Élargit radii (12/16/20), ajoute easings spring/gentle/snappy, accents par
+   onglet et échelle typo étendue. N'écrase aucun token existant.
+   ──────────────────────────────────────────────────────────────────────── */
+@import "./styles/theme-v2-tokens.css";
+
+/* ── Polices ──────────────────────────────────────────────────────────────── */
+@font-face { font-family: 'BigShoulders'; src: url('/fonts/BigShoulders-Bold.ttf') format('truetype'); font-weight: 700; font-display: block; }
+@font-face { font-family: 'BigShoulders'; src: url('/fonts/BigShoulders-Regular.ttf') format('truetype'); font-weight: 400; font-display: block; }
+@font-face { font-family: 'BricolageGrotesque'; src: url('/fonts/BricolageGrotesque-Bold.ttf') format('truetype'); font-weight: 700; font-display: block; }
+@font-face { font-family: 'BricolageGrotesque'; src: url('/fonts/BricolageGrotesque-Regular.ttf') format('truetype'); font-weight: 400; font-display: block; }
+@font-face { font-family: 'DMMono'; src: url('/fonts/DMMono-Regular.ttf') format('truetype'); font-weight: 400; font-display: block; }
+@font-face { font-family: 'InstrumentSans'; src: url('/fonts/InstrumentSans-Bold.ttf') format('truetype'); font-weight: 700; font-display: block; }
+@font-face { font-family: 'InstrumentSans'; src: url('/fonts/InstrumentSans-Regular.ttf') format('truetype'); font-weight: 400; font-display: block; }
+
+@import "tailwindcss";
+
+@theme {
+  --font-sans:    "InstrumentSans", -apple-system, system-ui, sans-serif;
+  --font-heading: "BigShoulders", "InstrumentSans", sans-serif;
+  --font-values:  "BricolageGrotesque", "InstrumentSans", sans-serif;
+  --font-mono:    "DMMono", ui-monospace, monospace;
+
+  /* ── Palette Ultra Clean ──────────────────────────────────────────────
+     Une seule couleur d'accent : vert émeraude
+     Tout le reste : niveaux de gris
+     ──────────────────────────────────────────────────────────────────── */
+  --color-accent-700: #047857;
+  --color-accent-600: #059669;
+  --color-accent-500: #10B981;
+  --color-accent-400: #34D399;
+  --color-accent-100: #D1FAE5;
+  --color-accent-50:  #ECFDF5;
+
+  --color-gray-900: #111827;
+  --color-gray-800: #1F2937;
+  --color-gray-700: #374151;
+  --color-gray-600: #4B5563;
+  --color-gray-500: #6B7280;
+  --color-gray-400: #9CA3AF;
+  --color-gray-300: #D1D5DB;
+  --color-gray-200: #E5E7EB;
+  --color-gray-100: #F3F4F6;
+  --color-gray-50:  #F9FAFB;
+
+  --color-red-500:    #EF4444;
+  --color-red-100:    #FEE2E2;
+  --color-red-50:     #FEF2F2;
+  --color-amber-500:  #F59E0B;
+  --color-amber-100:  #FEF3C7;
+  --color-amber-50:   #FFFBEB;
+  --color-blue-500:   #3B82F6;
+  --color-blue-100:   #DBEAFE;
+  --color-blue-50:    #EFF6FF;
+  --color-purple-500: #8B5CF6;
+  --color-purple-50:  #F5F3FF;
+
+  /* Legacy aliases */
+  --color-emerald-premium: #059669;
+  --color-forest-mid: #10B981;
+  --color-forest-light: #D1FAE5;
+  --color-amber-pork: #F59E0B;
+  --color-amber-deep: #D97706;
+
+  /* Ombres — quasi invisibles */
+  --shadow-card:     0 1px 2px rgba(0,0,0,0.04);
+  --shadow-card-hover: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-premium:  0 1px 3px rgba(0,0,0,0.06);
+  --shadow-header:   0 1px 0 rgba(0,0,0,0.04);
+  --shadow-nav:      0 -1px 0 rgba(0,0,0,0.04);
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────── */
+@layer base {
+  body {
+    background-color: #FFFFFF;
+    color: #111827;
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    font-size: 15px;
+    line-height: 1.5;
+    /* UI/UX Pro Max — Touch & Performance */
+    touch-action: manipulation;          /* Zéro délai 300ms sur tout le body */
+    overscroll-behavior: contain;        /* Pas de pull-to-refresh accidentel */
+    -webkit-overflow-scrolling: touch;   /* Scroll fluide iOS */
+  }
+  :root {
+    --ion-font-family: "InstrumentSans", sans-serif;
+    --ion-color-primary: #059669;
+    --ion-color-primary-rgb: 5, 150, 105;
+    --ion-color-primary-contrast: #ffffff;
+    --ion-color-primary-shade: #047857;
+    --ion-color-primary-tint: #10B981;
+    --ion-safe-area-top: env(safe-area-inset-top);
+    --ion-safe-area-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ── Hiérarchie typographique ──────────────────────────────────────────
+   4 polices, chacune avec un rôle précis :
+   1. BigShoulders (ft-heading) → TITRES DE PAGE UNIQUEMENT (Dashboard, Cheptel, etc.)
+   2. InstrumentSans (body)     → Tout le texte courant, labels, boutons
+   3. BricolageGrotesque (ft-values) → Nombres, KPIs, statistiques
+   4. DMMono (ft-code)          → IDs, timestamps, codes, metadata technique
+   ──────────────────────────────────────────────────────────────────── */
+.ft-heading {
+  font-family: "BigShoulders", sans-serif !important;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  /* Rendu optimisé pour les gros titres */
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+.ft-values {
+  font-family: "BricolageGrotesque", sans-serif !important;
+  font-feature-settings: "tnum" 1; /* Chiffres tabulaires alignés */
+}
+.ft-code {
+  font-family: "DMMono", monospace !important;
+  letter-spacing: 0.02em;
+  font-feature-settings: "tnum" 1;
+}
+.text-xxs    { font-size: 0.7rem; line-height: 1rem; }
+.tracking-ultra   { letter-spacing: 0.12em; }
+.tracking-premium { letter-spacing: 0.04em; }
+.tracking-wide    { letter-spacing: 0.05em; }
+
+/* ── Emil Kowalski Easing Curves ───────────────────────────────────────
+   Strong ease-out: starts fast, gives instant feedback
+   Strong ease-in-out: natural acceleration for on-screen movement
+   Never use ease-in for UI — it feels sluggish
+   ──────────────────────────────────────────────────────────────────── */
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Cards ─────────────────────────────────────────────────────────────── */
+.premium-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 1px solid #F3F4F6;
+  box-shadow: var(--shadow-card);
+  transition: transform 160ms var(--ease-out), box-shadow 200ms var(--ease-out);
+}
+.premium-card:active { transform: scale(0.97); }
+
+.premium-card-glass {
+  background: rgba(255,255,255,0.90);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  border: 1px solid #F3F4F6;
+}
+
+/* ── Buttons — 160ms ease-out, scale(0.97) active ─────────────────────── */
+.premium-btn {
+  font-family: "InstrumentSans", sans-serif;
+  font-weight: 600;
+  border-radius: 12px;
+  height: 48px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: transform 160ms var(--ease-out), background 200ms var(--ease-out);
+  font-size: 14px;
+}
+.premium-btn:active { transform: scale(0.97); }
+.premium-btn:disabled { opacity: 0.4; }
+.premium-btn-primary { background: #059669; color: #fff; }
+.premium-btn-primary:active { background: #047857; }
+.premium-btn-outline { border: 1px solid #E5E7EB; color: #374151; background: #fff; }
+.premium-btn-amber { background: #F59E0B; color: #fff; }
+
+/* ── Header ────────────────────────────────────────────────────────────── */
+.premium-header {
+  background: #FFFFFF;
+  padding-bottom: 16px;
+  padding-left: 20px;
+  padding-right: 20px;
+  position: relative;
+  border-bottom: 1px solid #F3F4F6;
+}
+.premium-header::before, .premium-header::after { display: none; }
+
+/* ── Badges ────────────────────────────────────────────────────────────── */
+.premium-badge {
+  font-family: "InstrumentSans", sans-serif;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  border: 1px solid;
+}
+
+/* ── Segment tabs ──────────────────────────────────────────────────────── */
+.premium-segment { --background: transparent; }
+.premium-segment ion-segment-button {
+  --color-checked: #059669;
+  --indicator-color: #059669;
+  --indicator-height: 2px;
+  font-family: "InstrumentSans", sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* ── Safe areas ────────────────────────────────────────────────────────── */
+.safe-area-top { padding-top: calc(var(--ion-safe-area-top, 20px) + 12px); }
+.pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+.scroll-hide::-webkit-scrollbar { display: none; }
+.scroll-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Navigation bar ────────────────────────────────────────────────────── */
+ion-tab-bar {
+  --border: 0;
+  --background: #FFFFFF;
+  border-top: 1px solid #F3F4F6;
+  height: 68px;
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 1000;
+}
+ion-tab-button { --color: #9CA3AF; --color-selected: #059669; }
+ion-tab-button ion-label {
+  font-family: "InstrumentSans", sans-serif !important;
+  font-size: 11px !important; font-weight: 600 !important;
+}
+ion-tab-button ion-icon { font-size: 22px; }
+ion-tab-button.tab-selected { position: relative; }
+ion-tab-button.tab-selected::after {
+  content: ""; position: absolute;
+  top: 0; left: 50%; transform: translateX(-50%);
+  width: 24px; height: 2px; background: #059669; border-radius: 0 0 2px 2px;
+}
+
+ion-toolbar { --background: transparent; --border-width: 0; }
+ion-content { --background: #FFFFFF; }
+ion-refresher { z-index: 10; }
+ion-modal { --border-radius: 20px; --backdrop-opacity: 0.4; }
+
+/* ── Animations (Emil Kowalski principles) ─────────────────────────────
+   - Never animate from scale(0) — start at scale(0.95) + opacity:0
+   - Use custom ease-out, not generic ease
+   - Stagger: 50ms between items (30-80ms range)
+   - UI animations under 300ms
+   ──────────────────────────────────────────────────────────────────── */
+
+/* Fade in + slight upward movement — standard list entry */
+@keyframes fade-in-up {
+  0%   { opacity: 0; transform: translateY(8px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 250ms var(--ease-out) both;
+}
+
+/* Stagger delays — 50ms increments (Emil: 30-80ms) */
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
+
+/* Fade in from scale(0.95) — for modals, cards appearing */
+@keyframes scale-in {
+  0%   { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.animate-scale-in {
+  animation: scale-in 200ms var(--ease-out) both;
+}
+
+/* Soft pulse — status indicators */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+.animate-pulse-soft { animation: pulse-soft 2s var(--ease-in-out) infinite; }
+
+/* Skeleton shimmer — loading states */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(90deg, #F3F4F6 25%, #E5E7EB 50%, #F3F4F6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s linear infinite;
+}
+
+/* ── Pressable — any interactive element ───────────────────────────────
+   Emil: "Add transform: scale(0.97) on :active. This gives instant
+   feedback, making the UI feel like it is truly listening."
+   ──────────────────────────────────────────────────────────────────── */
+.pressable {
+  transition: transform 160ms var(--ease-out);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  /* UI/UX Pro Max — Touch targets terrain (48×48px min pour usage gants) */
+  min-height: 44px;
+  min-width: 44px;
+}
+.pressable:active {
+  transform: scale(0.97);
+}
+
+/* ── Touch targets terrain — boutons/icônes accessibles avec gants ──── */
+.touch-target {
+  min-height: 48px;
+  min-width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Focus visible — accessibilité clavier ──────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-accent-600, #059669);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* ── Accessibility: respect reduced motion preference ──────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .animate-fade-in-up,
+  .animate-scale-in {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ── Touch device hover protection ─────────────────────────────────── */
+@media (hover: hover) and (pointer: fine) {
+  .premium-card:hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+  .premium-btn:hover {
+    filter: brightness(1.05);
+  }
+}
+
+/* ── Utility ───────────────────────────────────────────────────────────── */
+.gradient-text { -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; background-image: linear-gradient(135deg, #059669, #34D399); }
+.accent-pork { color: #F59E0B; }
+.bg-accent-pork { background-color: #F59E0B; }
+.border-accent-pork { border-color: #F59E0B; }

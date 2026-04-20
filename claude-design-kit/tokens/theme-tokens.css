@@ -22,17 +22,10 @@
   --border: #2A3239;
   --accent: #10B981;
   --accent-dim: #065F46;
-  --accent-fg: #04392D;
   --amber: #F4A261;
   --red: #EF4444;
   --blue: #60A5FA;
   --gold: #D4A056;
-  --coral: #FB7185;
-  --teal: #2DD4BF;
-  --cyan: #22D3EE;
-  --success: #22C55E;
-  --warning: #F59E0B;
-  --info: #3B82F6;
 
   /* StatusBar Android */
   --status-bar-bg: #0A0D0C;
@@ -52,17 +45,10 @@
   --border: #E5E7EB;
   --accent: #065F46;        /* vert plus profond pour contraste sur blanc */
   --accent-dim: #047857;
-  --accent-fg: #FFFFFF;
   --amber: #D97706;
   --red: #DC2626;
   --blue: #2563EB;
   --gold: #B45309;
-  --coral: #E11D48;
-  --teal: #0D9488;
-  --cyan: #0891B2;
-  --success: #16A34A;
-  --warning: #D97706;
-  --info: #2563EB;
 
   --status-bar-bg: #FAFAF7;
   --status-bar-style: light;

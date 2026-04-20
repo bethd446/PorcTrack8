@@ -1,0 +1,55 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PorcTrack 8 — Agritech Moderne · Design Tokens
+   Dark-first cockpit style (Linear / Vercel / Bloomberg Terminal vibes)
+
+   This file is ADDITIVE. It coexists with the existing "Ultra Clean" system
+   in src/index.css. Use the agritech-* tokens for the new dark dashboard
+   surfaces; existing .premium-* / .ft-* classes remain untouched.
+
+   Note : les valeurs hex des couleurs vivent désormais dans theme-tokens.css
+   (vars --bg-0, --text-0, etc.). @theme référence via var() pour que Tailwind
+   génère des utilities qui s'adaptent au thème actif (.theme-day / night).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@theme {
+  /* ── Surfaces (dynamiques : jour/nuit via theme-tokens.css) ──────────── */
+  --color-bg-0: var(--bg-0);
+  --color-bg-1: var(--bg-1);
+  --color-bg-2: var(--bg-2);
+  --color-border: var(--border);
+
+  /* ── Text scale ──────────────────────────────────────────────────────── */
+  --color-text-0: var(--text-0);
+  --color-text-1: var(--text-1);
+  --color-text-2: var(--text-2);
+
+  /* ── Brand accents ───────────────────────────────────────────────────── */
+  --color-accent: var(--accent);
+  --color-accent-dim: var(--accent-dim);
+
+  /* ── Semantic signals ────────────────────────────────────────────────── */
+  --color-amber: var(--amber);
+  --color-red: var(--red);
+  --color-blue: var(--blue);
+  --color-gold: var(--gold);
+
+  /* ── Typography stacks ───────────────────────────────────────────────────
+     display → screen titles (Big Shoulders Display 800)
+     body    → UI text (Inter 400–600)
+     mono    → IDs, KPI labels, axes (JetBrains Mono 500)
+     values  → (reused) BricolageGrotesque for big numbers on light surfaces
+     ───────────────────────────────────────────────────────────────────── */
+  --font-display: "Big Shoulders Display", "BigShoulders", "Impact", sans-serif;
+  --font-body:    "Inter", "InstrumentSans", -apple-system, system-ui, sans-serif;
+  --font-mono-jb: "JetBrains Mono", "DMMono", ui-monospace, monospace;
+  /* --font-values is already defined in index.css — not overridden here */
+
+  /* ── Easings ─────────────────────────────────────────────────────────── */
+  --ease-out-expo: cubic-bezier(0.23, 1, 0.32, 1);   /* UI state changes */
+
+  /* ── Radii (tight, engineered) ──────────────────────────────────────────
+     Cap at 10px. No rounded-xl/2xl in the agritech surfaces.
+     ───────────────────────────────────────────────────────────────────── */
+  --radius-sm: 6px;                /* Chips, inline pills */
+  --radius-md: 10px;                /* Cards, tables, inputs */
+}

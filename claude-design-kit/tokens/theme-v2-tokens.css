@@ -14,29 +14,22 @@
  */
 
 :root {
-  /* Radii élargis pour chaleur (v2 opt-in — aligné Claude Design 2026-04-20) */
-  --radius-lg: 14px;
-  --radius-xl: 20px;
-  --radius-2xl: 28px;
+  /* Radii élargis pour chaleur (v2 opt-in) */
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
 
   /* Easings — spring physics */
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-gentle: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-snappy: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-out-expo: cubic-bezier(0.23, 1, 0.32, 1);
 
-  /* Couleurs accent PAR ONGLET — aligné Claude Design (chaque tab = signal distinct) */
-  --accent-cockpit:    var(--accent); /* emerald */
-  --accent-troupeau:   var(--teal);
-  --accent-cycles:     var(--cyan);
-  --accent-ressources: var(--amber);
-  --accent-pilotage:   var(--coral);
-
-  /* Shadows agritech (dark theme — discrets + glow accent) */
-  --shadow-sm:         0 1px 2px rgba(0, 0, 0, 0.35);
-  --shadow-md:         0 4px 12px rgba(0, 0, 0, 0.40);
-  --shadow-lg:         0 12px 24px rgba(0, 0, 0, 0.50);
-  --shadow-glow-accent: 0 0 0 1px rgba(16, 185, 129, 0.25), 0 8px 24px rgba(16, 185, 129, 0.15);
+  /* Couleurs accent PAR ONGLET (signalétique v2) */
+  --accent-cockpit:    #10B981; /* emerald (inchangé) */
+  --accent-troupeau:   #10B981;
+  --accent-cycles:     #F4A261; /* amber */
+  --accent-ressources: #60A5FA; /* blue */
+  --accent-pilotage:   #D4A056; /* gold */
 
   /* Typographie étendue (v2 plus hiérarchique) */
   --text-display-xl: 44px;

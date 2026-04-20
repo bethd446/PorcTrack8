@@ -23,5 +23,7 @@
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "types": ["vite/client"]
-  }
+  },
+  "include": ["src", "scripts"],
+  "exclude": ["node_modules", "android", "ios", "dist", "claude-design-kit", "docs/design-mockups"]
 }
