@@ -1,70 +1,68 @@
 # docs/design-mockups/
 
-Livrables visuels produits par **Claude Design** et prêts à être implémentés par **Claude Code**.
+Livrables **Claude Design** — source, preview et tokens pour chaque écran.
 
-## Convention
+## Structure par écran
 
-Pour chaque écran du brief `design-briefs/XX-nom.md`, déposer ici :
+Chaque écran = 1 sous-dossier :
 
 ```
 docs/design-mockups/
-├── XX-nom.png           # Screenshot principal (mobile 390×844 idéalement)
-├── XX-nom-variante2.png # Si 2 variantes prototypées
-├── XX-nom.source.md     # Lien Claude Design + export JSX/HTML si disponible
-└── XX-nom.notes.md      # Notes optionnelles (détails hors brief)
+├── 01-finances/
+│   ├── source.jsx              # Code JSX vanilla React DOM de Claude Design
+│   ├── preview.html            # Bundle HTML standalone offline (archivable)
+│   ├── tokens.json             # Tokens utilisés par cet écran (dérivé du CSS vars)
+│   ├── screenshot.png          # Capture mobile 390×844
+│   ├── screenshot-v2.png       # Si variantes multiples
+│   └── README.md               # Brief résumé + lien Claude Design + notes
+├── 02-rapport-financier/
+│   └── …
+└── _shared/
+    ├── colors_and_type.css     # Tokens CSS globaux (source de vérité Claude Design)
+    ├── components.css          # Classes utilitaires partagées
+    └── tokens.json             # Bundle tokens complet (Style Dictionary format)
 ```
 
-**Exemple** :
+## Flux de livraison
 
-```
-01-finances.png
-01-finances-empile.png
-01-finances-synthese.png
-01-finances.source.md
-```
+1. Claude Design finit une maquette
+2. Claude Design génère un zip `NN-nom.zip` avec le contenu ci-dessus
+3. **Tu** télécharges le zip depuis le chat Claude Design
+4. **Tu** dézippes dans `docs/design-mockups/NN-nom/`
+5. **Tu** dis à Claude Code : *« code le mockup `NN-nom` »*
+6. Claude Code lit `design-briefs/NN-nom.md` + `docs/design-mockups/NN-nom/` → implémente en Ionic React
+7. Commit + APK + mise à jour brief status `🚀 shipped`
 
-## Format attendu
+## preview.html (bundle standalone)
 
-### Screenshots
+Fichier unique contenant fonts, CSS, JS inline → ouvrable dans n'importe quel navigateur sans serveur, sans connexion. Archivable durablement (survit aux URLs Claude Design qui expirent après ~1h).
 
-- **Résolution** : 390×844 (iPhone 14) ou 414×896 (iPhone Pro Max)
-- **Format** : PNG (pas de compression JPEG)
-- **Capture** : viewport Claude Design en mode aperçu mobile, plein écran (pas de chrome navigateur)
-- **Thème** : dark (Agritech Dark par défaut) — si un écran existe en light, suffixer `-light.png`
+**Convention** : `preview.html` ouvre directement sur l'écran principal. Si plusieurs variantes, suffixer `preview-v1.html`, `preview-v2.html`.
 
-### Fichier .source.md
+## tokens.json
 
-Exemple :
+Format **Style Dictionary** compatible (plat ou nested), permet :
+- Sync automatique possible côté Claude Code (script qui régénère `src/styles/agritech-tokens.css` depuis `_shared/tokens.json`)
+- Lecture par outils externes (Figma Tokens, FigMail, etc.)
 
-```markdown
-# Source — 01 Finances
+## source.jsx (React DOM → Ionic React)
 
-- **Lien Claude Design** : https://claude.ai/design/[id]
-- **Variante retenue** : 2 (SYNTHÈSE)
-- **Date design finalisé** : 2026-04-20
-- **Brief associé** : ../../design-briefs/01-finances.md
+Claude Design produit du React DOM + JSX + CSS inline. Portage vers Ionic ≈ 20 min / écran :
 
-## Export JSX (si Claude Design le fournit)
+| Claude Design | Ionic équivalent |
+|---------------|------------------|
+| `<div>` chrome (header fixe) | `<IonHeader>` + `<IonToolbar>` |
+| `<div>` scroll container | `<IonContent fullscreen>` |
+| `<div>` bottom sheet | `<IonModal>` avec `breakpoints` |
+| `<button>` onClick | `<IonButton>` ou `<button>` direct selon cas |
+| `<input>` | `<IonInput>` ou `<input>` direct |
 
-\`\`\`jsx
-[coller ici le code source produit par Claude Design si accessible]
-\`\`\`
+**Ce qu'on garde tel quel** : classes CSS, composants agritech (KpiCard, Chip…), logique d'état, structure JSX interne.
 
-## Notes d'implémentation
+## _shared/
 
-[À adapter côté code : remplacer les composants React DOM par les
-équivalents Ionic React, brancher FarmContext, etc.]
-```
+Tokens et CSS globaux partagés entre tous les écrans. Mise à jour seulement quand le design system évolue (ex. nouveau token ajouté).
 
-## Workflow de handoff
+## Sync tokens.json → src/styles/
 
-Quand un écran est prêt à être codé :
-
-1. Vérifier que le brief a `status: ✅ ready-to-code`
-2. Dire à Claude Code : *« implémente le mockup `01-finances` »*
-3. Claude Code lit :
-   - `design-briefs/01-finances.md`
-   - `docs/design-mockups/01-finances.png`
-   - `docs/design-mockups/01-finances.source.md` (si présent)
-4. Code + tests + APK
-5. Mettre à jour le brief : `status: 🚀 shipped`
+Script à créer : `scripts/sync-design-tokens.mjs` qui lit `docs/design-mockups/_shared/tokens.json` et régénère `src/styles/agritech-tokens.css`. À faire dans une itération future — pour l'instant on sync manuellement.
