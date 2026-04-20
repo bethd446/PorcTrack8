@@ -107,22 +107,25 @@
     { "titre": "Stock bas aliment",                "priorite": "CRITIQUE", "type": "R5", "cible": "ALIM-MAIS", "date": "19/04/2026", "note": "Vraie : 5 aliments à 0" }
   ],
   "divergences": {
-    "truies":            { "expected": 17,  "actual": 17, "ecart": 0,  "ok": true  },
-    "verrats":           { "expected": 2,   "actual": 2,  "ecart": 0,  "ok": true  },
-    "portees":           { "expected": 14,  "actual": 14, "ecart": 0,  "ok": true  },
-    "porcelets_vivants": { "expected": 102, "actual": 149,"ecart": 47, "ok": false, "note": "Attendu ~102 dans consigne, terrain réel 149 (106 sevrés + 43 sous mère). La consigne mentionne aussi ~100 dans 4 loges post-sevrage — à clarifier avec l'éleveur." }
+    "truies":            { "expected": 17,  "actual": 17, "ecart": 0,  "ok": true },
+    "verrats":           { "expected": 2,   "actual": 2,  "ecart": 0,  "ok": true },
+    "portees":           { "expected": 14,  "actual": 14, "ecart": 0,  "ok": true },
+    "porcelets_vivants_total":     { "expected_terrain": 145, "actual_sheets": 149, "ecart": 4,  "ok": false, "note": "Terrain (ground-truth-2026-04-20.md) : 43 sous mère + 102 post-sevrage = 145. Sheets : 43 sous mère + 106 sevrés = 149. Écart = 4 mortalités post-sevrage non enregistrées dans PORCELETS_BANDES_DETAIL." },
+    "porcelets_post_sevrage":      { "expected_terrain": 102, "actual_sheets": 106, "ecart": 4,  "ok": false, "note": "4 mortalités à saisir" },
+    "porcelets_sous_mere":         { "expected_terrain": 43,  "actual_sheets": 43,  "ecart": 0,  "ok": true }
   },
+  "ground_truth_file": "scripts/data-broker/ground-truth-2026-04-20.md",
   "validation": {
     "ok": true,
     "warnings": [
-      "Numérotation truies non contiguë : T08 et T17 absents (T08 était un doublon T09 REPRO résolu, T17 référencée dans REPRODUCTION boucle 86 mais absente de TRUIES — à vérifier terrain)",
-      "8 truies sans nom : T05, T06, T10, T12, T13, T14, T18, T19 (cosmétique)",
-      "Statuts non standards : 'Pleine' (utilisé pour gestation, à accepter dans app), 'À surveiller' (T04)",
-      "Rations uniformes à 6 kg/j sur 12/17 truies (placeholder ou réalité — à arbitrer)",
-      "Porcelets vivants 149 vs consigne 102 : divergence documentée",
+      "Numérotation truies non contiguë : T08 et T17 absents (T08 = doublon T09 REPRO résolu ; T17 référencée REPRODUCTION boucle 86 mais absente de TRUIES — à vérifier terrain)",
+      "8 truies sans nom : T05, T06, T10, T12, T13, T14, T18, T19 (cosmétique ; décision terrain : nommer plus tard)",
+      "Statuts non canoniques : 'Pleine' (alias accepté de 'Gestation'), 'À surveiller' (T04 Pistachette)",
+      "Rations uniformes à 6 kg/j sur 12/17 truies (placeholder, à arbitrer par stade)",
+      "Porcelets post-sevrage : 106 en Sheets vs 102 terrain → 4 mortalités non enregistrées dans PORCELETS_BANDES_DETAIL",
       "Stocks aliments : 5/5 en RUPTURE (réalité terrain)",
-      "ALERTES_ACTIVES : 10/12 alertes R4 sont des FAUX POSITIFS (bug règle mortalité)",
-      "Dates dd/MM/yyyy OK quand présentes, champs vides toléré sur truies sevrées sans nouvelle MB prévue"
+      "ALERTES_ACTIVES : 10/12 alertes R4 sont des FAUX POSITIFS (bug alertEngine.ts règle R4 : compare timestamps vs morts/nv)",
+      "T18 (B.85) sevrage prévu 18/04/2026 — dépassé de 2 jours à la date du snapshot, à sevrer d'urgence (ground-truth-2026-04-20.md)"
     ],
     "errors": [],
     "last_live_audit": "2026-04-19T07:31:40Z",

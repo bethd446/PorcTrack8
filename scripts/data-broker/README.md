@@ -9,8 +9,7 @@ Source de vérité live (lecture seule) des Google Sheets pour les agents autono
 | `build-snapshot.mjs` | Script Node 20 (lecture GAS uniquement) qui génère un snapshot daté |
 | `snapshot-YYYY-MM-DD.json` | Snapshot structuré (truies, verrats, portées, stocks, finances, alertes, validation) |
 | `snapshot-latest.json` | Copie du dernier snapshot (pour imports stables par d'autres agents) |
-| `summary-YYYY-MM-DD.md` | Résumé lisible du snapshot (tables markdown) |
-| `summary-latest.md` | Copie du dernier résumé |
+| `ground-truth-YYYY-MM-DD.md` | Référence terrain (fournie par le propriétaire) — vérité ultime si divergence |
 
 ## Régénérer le snapshot (live)
 
