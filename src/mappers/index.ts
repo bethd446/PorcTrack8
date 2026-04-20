@@ -504,8 +504,10 @@ export const mapAlerteServeur = (header: string[], row: RawRow): AlerteServeur |
   const descRaw = readStr(row, deIdx);
   // Filtre rows fantômes : le GAS script émet des alertes "Mortalité élevée: 100%" avec
   // des timestamps Unix en lieu et place des champs morts/nv. Signature : "100%" suivi
-  // de "(1xxxxxxxxxx…/" (timestamp 13 digits) + GMT date.
-  if (/mortalit[eé]\s*(?:\w+\s*)?:\s*100\s*%.*\(\d{10,}\s*\/.*GMT/i.test(descRaw)) {
+  // de "(1xxxxxxxxxx…/" (timestamp 10+ digits) + GMT date.
+  // Note: \w doesn't match French accents (é, è, etc.), so we use .* instead
+  // to catch "Mortalité élevée: 100%", "Mortalité urgente: 100%", etc.
+  if (/mortalit[eé].*:\s*100\s*%.*\(\d{10,}.*GMT/i.test(descRaw)) {
     return null;
   }
 

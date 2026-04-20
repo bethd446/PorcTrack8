@@ -39,9 +39,10 @@ T01 **Monette** · T02 **Fillaou** · T03 **Pénélope** · T06 · T13
 
 ## Porcelets — 150 total
 
-### Sous mère (maternité) — 43 porcelets dans 4 loges
+### Sous mère (maternité) — 48 porcelets dans 4 loges maternité
 
-- T10: 5, T18: 12, T14: 13, T19: 13 → total 43
+Confirmé par propriétaire 20/04/2026 (correction du précédent 43).
+Détail probable : T10: 5, T18: 12, T14: 13, T19: 13 + 5 porcelets supplémentaires non listés (nouveau-nés ou réajustement) → total **48**.
 
 ### Post-sevrage (4 loges) — 102 porcelets (terrain)
 

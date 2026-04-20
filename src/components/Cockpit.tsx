@@ -134,12 +134,19 @@ const Cockpit: React.FC = () => {
       .filter(b => /sevr/i.test(b.statut ?? ''))
       .reduce((sum, b) => sum + (b.vivants ?? 0), 0);
 
+    // Post-sevrage total from FARM_CONFIG (more reliable than Sheets for UI display)
+    const postSevrageTotal = FARM_CONFIG.POST_SEVRAGE_LOGES_REPARTITION.reduce(
+      (sum, loge) => sum + loge.porcelets,
+      0
+    );
+
     return {
       nbTruies: truies.length,
       nbVerrats: verrats.length,
       nbPorcelets: vivants,
       nbPorceletsSousMere: sousMere,
       nbPorceletsSevres: sevres,
+      postSevrageTotal,
       totalCheptel: truies.length + verrats.length + vivants,
     };
   }, [truies, verrats, porteesReelles]);
@@ -482,7 +489,7 @@ const Cockpit: React.FC = () => {
                 <HubTile
                   icon={<Baby size={20} aria-hidden="true" />}
                   title="Porcelets"
-                  subtitle={`${cheptelStats.nbPorceletsSousMere} s/m · ${cheptelStats.nbPorceletsSevres} sev.`}
+                  subtitle={`${cheptelStats.nbPorceletsSousMere} s/m · ${cheptelStats.postSevrageTotal} sev.`}
                   count={cheptelStats.nbPorcelets}
                   tone="gold"
                   to="/troupeau/bandes"
@@ -561,12 +568,28 @@ const Cockpit: React.FC = () => {
                   capacite={materniteOcc.capacite}
                   alerte={materniteOcc.alerte}
                 />
-                <LogeBar
-                  label={`Post-sevrage · ${FARM_CONFIG.POST_SEVRAGE_LOGES_CAPACITY} loges`}
-                  occupees={postSevrageOcc.occupees}
-                  capacite={postSevrageOcc.capacite}
-                  alerte={postSevrageOcc.alerte}
-                />
+                <div>
+                  <LogeBar
+                    label={`Post-sevrage · ${FARM_CONFIG.POST_SEVRAGE_LOGES_CAPACITY} loges`}
+                    occupees={postSevrageOcc.occupees}
+                    capacite={postSevrageOcc.capacite}
+                    alerte={postSevrageOcc.alerte}
+                  />
+                  {/* Post-sevrage loge breakdown */}
+                  <div className="mt-2.5 grid grid-cols-4 gap-2">
+                    {FARM_CONFIG.POST_SEVRAGE_LOGES_REPARTITION.map((loge) => (
+                      <div
+                        key={loge.id}
+                        className="rounded-lg bg-bg-2 p-2.5 flex flex-col items-center gap-1"
+                      >
+                        <span className="kpi-label text-[11px]">{loge.id}</span>
+                        <span className="ft-code text-[14px] font-semibold text-accent">
+                          {loge.porcelets}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
                 <LogeBar
                   label={`Croissance-finition · ${FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY} loges`}
                   occupees={engraissementOcc.occupees}
