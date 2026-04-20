@@ -30,6 +30,14 @@ describe('isArchivedTruie', () => {
   it('ID inconnu → false (on ne filtre que les archivées listées)', () => {
     expect(isArchivedTruie('T99')).toBe(false);
   });
+
+  it('T17 archivée + case-insensitive + match strict (pas de suffixe)', () => {
+    // Couvre les 3 cas en un test : canonique, variante casse, faux positif.
+    expect(isArchivedTruie('T17')).toBe(true);
+    expect(isArchivedTruie('t17')).toBe(true);
+    // Strict match : "T17-01" (ex. portée) ne doit PAS matcher T17.
+    expect(isArchivedTruie('T17-01')).toBe(false);
+  });
 });
 
 describe('normalizeTruieId', () => {

@@ -256,6 +256,32 @@ describe('R3 — Retour Chaleur Post-Sevrage', () => {
     const alerts = runAlertEngine(emptyInput({ truies: [truie], bandes: [bande] }));
     expect(alerts.find(a => a.id.startsWith('CHA-'))).toBeUndefined();
   });
+
+  // ─── Couverture normaliseStatut (migration Agent H) ────────────────────────
+  // Ces tests vérifient que la migration vers `normaliseStatut` préserve le
+  // comportement pour les variantes de libellé vues en Sheet.
+
+  it('déclenche pour une variante canonique VIDE ("Vide") — alias de "En attente saillie"', () => {
+    const { truie, bande } = truieSevreeIlYa(5, 'Vide');
+    const alerts = runAlertEngine(emptyInput({ truies: [truie], bandes: [bande] }));
+    const cha = alerts.find(a => a.id.startsWith('CHA-'));
+    expect(cha).toBeDefined();
+    expect(cha?.priority).toBe('NORMALE');
+    expect(cha?.daysOffset).toBe(5);
+  });
+
+  it('ne déclenche pas pour les statuts canoniques hors VIDE (PLEINE, MATERNITE, REFORME)', () => {
+    // Chaque statut doit être ignoré par R3 : on ne veut pas suggérer une
+    // saillie sur une truie pleine, allaitante ou réformée.
+    for (const statut of ['Pleine', 'Gestation', 'Maternité', 'Allaitante', 'Lactation', 'Réforme']) {
+      const { truie, bande } = truieSevreeIlYa(5, statut);
+      const alerts = runAlertEngine(emptyInput({ truies: [truie], bandes: [bande] }));
+      expect(
+        alerts.find(a => a.id.startsWith('CHA-')),
+        `statut "${statut}" ne doit pas déclencher R3`,
+      ).toBeUndefined();
+    }
+  });
 });
 
 // ─── R4 — Mortalité anormale ─────────────────────────────────────────────────

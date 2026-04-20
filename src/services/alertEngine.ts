@@ -20,6 +20,7 @@ import { Heart, Stethoscope, Layers, Box, Calendar } from 'lucide-react';
 import { differenceInCalendarDays, startOfDay } from 'date-fns';
 import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import type { Truie, BandePorcelets, TraitementSante, StockAliment } from '../types/farm';
+import { normaliseStatut } from '../lib/truieStatut';
 
 /** Fuseau horaire de référence pour toute la logique métier GTTT.
  *  L'élevage est en Côte d'Ivoire, mais les données Sheets sont saisies
@@ -288,12 +289,12 @@ function checkRetourChaleur(
   bandes: BandePorcelets[],
   today: Date,
 ): FarmAlert | null {
-  const statutNorm = truie.statut?.toLowerCase() ?? '';
-  const stadeNorm = truie.stade?.toLowerCase() ?? '';
+  // Canonique VIDE = "En attente saillie", "Vide", "Attente" (cf. normaliseStatut).
+  // On accepte aussi le champ `stade` (stades legacy type "En attente saillie
+  // (sevrée)"), ce qui donne la même canonique VIDE après normalisation.
   const isEnAttenteSaillie =
-    statutNorm === 'en attente saillie' ||
-    stadeNorm === 'en attente saillie' ||
-    stadeNorm === 'en attente saillie (sevrée)';
+    normaliseStatut(truie.statut) === 'VIDE' ||
+    normaliseStatut(truie.stade) === 'VIDE';
   if (!isEnAttenteSaillie) return null;
 
   // Bande la plus récente associée à cette truie (par id ou par boucle)

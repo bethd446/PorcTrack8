@@ -190,7 +190,7 @@ describe('buildRefillPayloads', () => {
     // Schema FINANCES : DATE · CATEGORIE · LIBELLE · MONTANT · TYPE · NOTES
     expect(values[0]).toBe('19/04/2026');
     expect(values[1]).toBe('ALIMENT');
-    expect(values[2]).toBe('Reapprovisionnement Truie gestation');
+    expect(values[2]).toBe('Réapprovisionnement Truie gestation');
     expect(values[3]).toBe(500 * 350); // 175 000
     expect(values[4]).toBe('DEPENSE');
     expect(String(values[5])).toContain('ref:ALIM-01');

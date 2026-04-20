@@ -103,7 +103,7 @@ export function buildRefillPayloads(args: {
     const dateFr = toFrDate(dateIso);
     const categorie = item.kind === 'ALIMENT' ? 'ALIMENT' : 'SANTE';
     const name = labelFor(item);
-    const libelle = `Reapprovisionnement ${name}`;
+    const libelle = `Réapprovisionnement ${name}`;
     const notesParts: string[] = [`ref:${item.id}`, `qty:${quantite}`];
     if (fournisseur && fournisseur.trim()) {
       notesParts.push(`fournisseur:${fournisseur.trim()}`);

@@ -10,6 +10,7 @@ import {
   validateTruieEdit,
   type TruieEditValidation,
 } from './quickEditTruieValidation';
+import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 
 /* ═════════════════════════════════════════════════════════════════════════
    QuickEditTruieForm · Édition rapide Nom + Ration d'une truie
@@ -61,6 +62,10 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
     if (saving) return;
     onClose();
   }, [onClose, saving]);
+
+  // ── A11y : Esc ferme la sheet + focus auto sur le 1er champ ────────────
+  useEscapeKey(isOpen && !saving, handleClose);
+  const firstFieldRef = useFocusFirstInput<HTMLInputElement>(isOpen);
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
@@ -145,11 +150,14 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
             </label>
             <input
               id="edit-truie-nom"
+              ref={firstFieldRef}
               type="text"
               maxLength={30}
-              aria-label="Nom de la truie"
+              aria-label={`Nom de la truie ${displayId}`}
               aria-invalid={!!errors.nom}
-              aria-describedby={errors.nom ? 'edit-truie-nom-error' : undefined}
+              aria-describedby={
+                errors.nom ? 'edit-truie-nom-error' : 'edit-truie-nom-hint'
+              }
               className={[
                 'w-full h-12 rounded-md px-3',
                 'bg-bg-0 border text-text-0 placeholder:text-text-2',
@@ -164,7 +172,10 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
               disabled={saving}
               autoComplete="off"
             />
-            <p className="font-mono text-[10px] text-text-2 tabular-nums">
+            <p
+              id="edit-truie-nom-hint"
+              className="font-mono text-[10px] text-text-2 tabular-nums"
+            >
               {nom.trim().length}/30 · laisser vide pour retirer
             </p>
             {errors.nom ? (
@@ -193,10 +204,13 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
               min={0}
               max={10}
               step={0.1}
-              aria-label="Ration en kilogrammes par jour"
+              aria-label="Ration alimentaire en kilogrammes par jour"
+              aria-required="true"
               aria-invalid={!!errors.ration}
               aria-describedby={
-                errors.ration ? 'edit-truie-ration-error' : undefined
+                errors.ration
+                  ? 'edit-truie-ration-error'
+                  : 'edit-truie-ration-hint'
               }
               className={[
                 'w-full h-14 rounded-md px-4',
@@ -213,7 +227,10 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
               onChange={e => setRation(e.target.value)}
               disabled={saving}
             />
-            <p className="font-mono text-[10px] text-text-2 tabular-nums">
+            <p
+              id="edit-truie-ration-hint"
+              className="font-mono text-[10px] text-text-2 tabular-nums"
+            >
               0 à 10 kg/j · pas 0.1
             </p>
             {errors.ration ? (
@@ -233,6 +250,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
               type="button"
               onClick={handleClose}
               disabled={saving}
+              aria-label="Annuler et fermer"
               className={[
                 'pressable flex-1 h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
@@ -248,7 +266,8 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
             <button
               type="submit"
               disabled={saving}
-              aria-label="Enregistrer les modifications"
+              aria-label="Enregistrer les modifications de la truie"
+              aria-busy={saving}
               className={[
                 'pressable flex-[2] h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',

@@ -8,6 +8,7 @@ import {
 } from '../../services/offlineQueue';
 import { BottomSheet } from '../agritech';
 import type { StockStatut } from '../../types/farm';
+import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import {
   buildRefillPayloads,
   labelFor,
@@ -97,6 +98,12 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
     setSuccess(false);
     onClose();
   }, [onClose]);
+
+  // ── A11y : Esc ferme la sheet + focus auto sur quantité ────────────────
+  useEscapeKey(isOpen && !saving, resetAndClose);
+  const firstFieldRef = useFocusFirstInput<HTMLInputElement>(
+    isOpen && !!stockItem && !success,
+  );
 
   const qtyNum = useMemo(() => {
     const n = parseFloat(quantite.replace(',', '.'));
@@ -286,11 +293,15 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
               <div className="flex items-center gap-2">
                 <input
                   id="refill-qty"
+                  ref={firstFieldRef}
                   type="text"
                   inputMode="decimal"
                   aria-label={`Quantité reçue en ${unite}`}
+                  aria-required="true"
                   aria-invalid={!!errors.quantite}
-                  aria-describedby={errors.quantite ? 'refill-qty-error' : undefined}
+                  aria-describedby={
+                    errors.quantite ? 'refill-qty-error' : 'refill-qty-hint'
+                  }
                   className={[
                     'flex-1 h-16 rounded-md px-4',
                     'bg-bg-0 border text-text-0 placeholder:text-text-2',
@@ -324,12 +335,23 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
 
               {/* Preview nouveau stock / statut */}
               {Number.isFinite(qtyNum) && qtyNum > 0 ? (
-                <p className="font-mono text-[11px] tabular-nums text-text-2">
+                <p
+                  id="refill-qty-hint"
+                  aria-live="polite"
+                  className="font-mono text-[11px] tabular-nums text-text-2"
+                >
                   Nouveau stock · <span className="text-text-0">{previewStock} {unite}</span>
                   {' · '}
                   Statut · <span className={statutTone}>{previewStatut}</span>
                 </p>
-              ) : null}
+              ) : (
+                <p
+                  id="refill-qty-hint"
+                  className="font-mono text-[10px] text-text-2"
+                >
+                  Saisis la quantité reçue en {unite}.
+                </p>
+              )}
             </div>
 
             {/* ── Fournisseur ────────────────────────────────────── */}
@@ -343,7 +365,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
               <input
                 id="refill-supplier"
                 type="text"
-                aria-label="Fournisseur"
+                aria-label="Fournisseur (optionnel)"
                 className={[
                   'w-full h-11 rounded-md px-3',
                   'bg-bg-0 border border-border text-text-0 placeholder:text-text-2',
@@ -373,7 +395,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                   id="refill-price"
                   type="text"
                   inputMode="decimal"
-                  aria-label="Prix unitaire en FCFA"
+                  aria-label="Prix unitaire en FCFA (optionnel)"
                   aria-invalid={!!errors.prix}
                   aria-describedby={errors.prix ? 'refill-price-error' : undefined}
                   className={[
@@ -413,7 +435,9 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                   id="refill-date"
                   type="date"
                   aria-label="Date de réception"
+                  aria-required="true"
                   aria-invalid={!!errors.date}
+                  aria-describedby={errors.date ? 'refill-date-error' : undefined}
                   className={[
                     'w-full h-11 rounded-md px-3',
                     'bg-bg-0 border text-text-0 placeholder:text-text-2',
@@ -426,6 +450,15 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                   onChange={e => setDateIso(e.target.value)}
                   disabled={saving}
                 />
+                {errors.date ? (
+                  <p
+                    id="refill-date-error"
+                    role="alert"
+                    className="font-mono text-[11px] text-red"
+                  >
+                    {errors.date}
+                  </p>
+                ) : null}
               </div>
             </div>
 
@@ -447,6 +480,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                 type="button"
                 onClick={resetAndClose}
                 disabled={saving}
+                aria-label="Annuler le réapprovisionnement"
                 className={[
                   'pressable flex-1 h-14 rounded-md',
                   'inline-flex items-center justify-center gap-2',
@@ -463,7 +497,8 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
               <button
                 type="submit"
                 disabled={saving || !isValid}
-                aria-label="Valider réception"
+                aria-label="Valider la réception du réapprovisionnement"
+                aria-busy={saving}
                 className={[
                   'pressable flex-[2] h-14 rounded-md',
                   'inline-flex items-center justify-center gap-2',

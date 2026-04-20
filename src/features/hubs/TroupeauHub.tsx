@@ -25,6 +25,7 @@ import { Chip, SectionDivider, type ChipTone } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
 import type { Truie } from '../../types/farm';
 import { normaliseStatut } from '../../lib/truieStatut';
+import { isArchivedTruie } from '../../lib/truieHelpers';
 
 // ─── Filters ────────────────────────────────────────────────────────────────
 
@@ -119,10 +120,28 @@ const TroupeauHub: React.FC = () => {
 
   const today = useMemo(() => new Date(), []);
 
+  /**
+   * Liste des truies ACTIVES uniquement.
+   *
+   * Les IDs réformés (T08, T17 — cf. `ARCHIVED_TRUIE_IDS` dans
+   * `src/lib/truieHelpers.ts`) ne sont plus sur le site mais restent
+   * référencés dans l'historique repro (feuille `SUIVI_REPRODUCTION_ACTUEL`
+   * et dérivées). Il ne faut PAS les afficher dans la liste du troupeau
+   * ni les compter dans le total du header / des segments — sinon on
+   * voit "19 truies" au lieu des 17 réellement en élevage.
+   *
+   * On filtre ici, en amont de tout (search, statut, compteurs), pour que
+   * TOUTES les vues dérivées soient cohérentes.
+   */
+  const activeTruies = useMemo(
+    () => truies.filter((t) => !isArchivedTruie(t.id)),
+    [truies],
+  );
+
   // Filtrage + recherche
   const filtered = useMemo(() => {
     const q = searchText.trim().toLowerCase();
-    return truies.filter((t) => {
+    return activeTruies.filter((t) => {
       const v = statutVisu(t.statut);
       if (filter !== 'tout' && v.filter !== filter) return false;
       if (q) {
@@ -131,23 +150,23 @@ const TroupeauHub: React.FC = () => {
       }
       return true;
     });
-  }, [truies, filter, searchText]);
+  }, [activeTruies, filter, searchText]);
 
   // Compteurs par filter bucket
   const counts = useMemo(() => {
     const c: Record<FilterKey, number> = {
-      tout: truies.length,
+      tout: activeTruies.length,
       pleines: 0,
       maternite: 0,
       vides: 0,
       reforme: 0,
     };
-    for (const t of truies) {
+    for (const t of activeTruies) {
       const v = statutVisu(t.statut);
       if (v.filter !== 'tout') c[v.filter] += 1;
     }
     return c;
-  }, [truies]);
+  }, [activeTruies]);
 
   const FILTERS: ReadonlyArray<{ id: FilterKey; label: string }> = [
     { id: 'tout', label: 'Tout' },
@@ -163,7 +182,7 @@ const TroupeauHub: React.FC = () => {
         <AgritechLayout>
           <AgritechHeader
             title="TROUPEAU"
-            subtitle={`${truies.length} truie${truies.length > 1 ? 's' : ''} · ferme K13`}
+            subtitle={`${activeTruies.length} truie${activeTruies.length > 1 ? 's' : ''} · ferme K13`}
           />
 
           <div className="px-4 pt-3 pb-32 flex flex-col gap-4">

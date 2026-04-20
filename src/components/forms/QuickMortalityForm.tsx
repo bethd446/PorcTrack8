@@ -7,6 +7,7 @@ import { useFarm } from '../../context/FarmContext';
 import { filterRealPortees } from '../../services/bandesAggregator';
 import { enqueueAppendRow, enqueueUpdateRow } from '../../services/offlineQueue';
 import type { BandePorcelets } from '../../types/farm';
+import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 
 /**
  * QuickMortalityForm — Déclaration rapide d'une mortalité porcelet post-sevrage.
@@ -163,6 +164,10 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
     onClose();
   };
 
+  // ── A11y : Esc ferme la sheet + focus auto sur le 1er input ────────────
+  useEscapeKey(isOpen && !saving, handleClose);
+  const firstFieldRef = useFocusFirstInput<HTMLSelectElement>(isOpen && !success);
+
   const handleSave = async (): Promise<void> => {
     setError('');
     if (!selectedBandeId) {
@@ -275,7 +280,13 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
               {bandesDispo.length > 0 ? (
                 <select
                   id="mortality-bande"
-                  aria-label="Sélectionner la bande"
+                  ref={firstFieldRef}
+                  aria-label="Sélectionner la bande concernée par la mortalité"
+                  aria-required="true"
+                  aria-invalid={!!(error && !selectedBandeId)}
+                  aria-describedby={
+                    error && !selectedBandeId ? 'mortality-error' : undefined
+                  }
                   className={[
                     'w-full h-10 rounded-md px-3',
                     'bg-bg-0 border text-text-0',
@@ -314,6 +325,12 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
               >
                 Nombre de morts (max {MAX_DEATHS})
               </label>
+              <p
+                id="mortality-count-hint"
+                className="sr-only"
+              >
+                Utilise les boutons plus et moins, ou saisis une valeur entre {MIN_DEATHS} et {MAX_DEATHS}.
+              </p>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -336,7 +353,11 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
                   min={MIN_DEATHS}
                   max={MAX_DEATHS}
                   step={1}
-                  aria-label="Nombre de porcelets morts"
+                  aria-label="Nombre de porcelets morts à déclarer"
+                  aria-describedby="mortality-count-hint"
+                  aria-valuemin={MIN_DEATHS}
+                  aria-valuemax={MAX_DEATHS}
+                  aria-valuenow={nbMorts}
                   className={[
                     'flex-1 h-10 rounded-md px-3 text-center',
                     'bg-bg-0 border text-text-0',
@@ -376,7 +397,8 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
               </label>
               <textarea
                 id="mortality-obs"
-                aria-label="Observation sur la mortalité"
+                aria-label="Observation sur la mortalité (optionnel)"
+                aria-describedby="mortality-obs-hint"
                 className={[
                   'w-full rounded-md px-3 py-3',
                   'bg-bg-0 border border-border text-text-0 placeholder:text-text-2',
@@ -391,10 +413,20 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
                 disabled={saving}
                 maxLength={240}
               />
+              <p
+                id="mortality-obs-hint"
+                className="font-mono text-[10px] text-text-2 tabular-nums"
+              >
+                {observation.length}/240 · détail loge, cause, contexte
+              </p>
             </div>
 
             {error && (
-              <p role="alert" className="font-mono text-[11px] text-coral">
+              <p
+                id="mortality-error"
+                role="alert"
+                className="font-mono text-[11px] text-coral"
+              >
                 {error}
               </p>
             )}
@@ -405,6 +437,8 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
               onClick={handleSave}
               disabled={saving || !selectedBandeId || bandesDispo.length === 0}
               aria-label="Enregistrer la mortalité"
+              aria-busy={saving}
+              aria-describedby={error ? 'mortality-error' : undefined}
               className={[
                 'pressable w-full h-[52px] rounded-md',
                 'inline-flex items-center justify-center gap-2',
