@@ -12,10 +12,11 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { IonContent, IonPage, IonToast } from '@ionic/react';
 import {
   Syringe, Scale, Heart, FileText, AlertCircle, Edit3,
+  PackageCheck, Baby, AlertOctagon,
 } from 'lucide-react';
 
 import AgritechHeader from '../../components/AgritechHeader';
@@ -29,7 +30,8 @@ import QuickNoteForm from '../../components/forms/QuickNoteForm';
 import QuickPeseeForm from '../../components/forms/QuickPeseeForm';
 import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
 import type { Truie, TraitementSante } from '../../types/farm';
-import { normaliseStatut } from '../../lib/truieStatut';
+import { normaliseStatut, type TruieStatutCanonique } from '../../lib/truieStatut';
+import { enqueueUpdateRow } from '../../services/offlineQueue';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -87,6 +89,7 @@ type QuickSheet = null | 'edit' | 'soin' | 'pesee' | 'saillie' | 'note';
 
 const TruieDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { truies, getHealthForAnimal } = useFarm();
   const [sheet, setSheet] = useState<QuickSheet>(null);
   const [toast, setToast] = useState<string>('');
@@ -143,6 +146,38 @@ const TruieDetailView: React.FC = () => {
   const success = (msg: string) => {
     setToast(msg);
     closeSheet();
+  };
+
+  // ── Actions métier contextuelles (selon statut canonique) ────────────
+  const statutCanon: TruieStatutCanonique = normaliseStatut(truie.statut);
+
+  /** Met à jour le STATUT en Sheet via la file d'attente offline-first. */
+  const updateStatut = (newStatut: string, msg: string) => {
+    enqueueUpdateRow('SUIVI_TRUIES_REPRODUCTION', 'ID', truie.id, {
+      STATUT: newStatut,
+    });
+    setToast(msg);
+  };
+
+  const handleSevrer = () => {
+    // Navigue vers la maternité avec la truie pré-sélectionnée (query).
+    navigate(`/cycles/maternite?truie=${encodeURIComponent(truie.id)}`);
+  };
+
+  const handleConfirmerMB = () => {
+    // Navigue vers le calendrier repro pour saisir les nés/morts/vivants.
+    navigate(`/cycles/repro?truie=${encodeURIComponent(truie.id)}`);
+  };
+
+  const handleReforme = () => {
+    const ok = typeof window !== 'undefined'
+      && window.confirm(`Passer la truie ${displayId} en réforme ?\n\nCette action marquera l'animal comme sorti du troupeau.`);
+    if (!ok) return;
+    updateStatut('Réforme', 'Truie passée en réforme');
+  };
+
+  const handleDetecterChaleur = () => {
+    updateStatut('Chaleur', 'Chaleur détectée');
   };
 
   return (
@@ -311,6 +346,50 @@ const TruieDetailView: React.FC = () => {
                 />
               </div>
             </section>
+
+            {/* ── Actions métier (contextuelles selon statut) ────────── */}
+            {statutCanon === 'MATERNITE'
+              || statutCanon === 'PLEINE'
+              || statutCanon === 'SURVEILLANCE'
+              || statutCanon === 'VIDE' ? (
+              <section aria-label="Actions métier">
+                <SectionDivider label="Actions métier" />
+                <div className="grid grid-cols-2 gap-2.5 mt-3">
+                  {statutCanon === 'MATERNITE' && (
+                    <ActionButton
+                      icon={<PackageCheck size={16} aria-hidden="true" />}
+                      label="Sevrer"
+                      tone="amber"
+                      onClick={handleSevrer}
+                    />
+                  )}
+                  {statutCanon === 'PLEINE' && (
+                    <ActionButton
+                      icon={<Baby size={16} aria-hidden="true" />}
+                      label="Confirmer MB"
+                      tone="gold"
+                      onClick={handleConfirmerMB}
+                    />
+                  )}
+                  {statutCanon === 'SURVEILLANCE' && (
+                    <ActionButton
+                      icon={<AlertOctagon size={16} aria-hidden="true" />}
+                      label="Passer en réforme"
+                      tone="red"
+                      onClick={handleReforme}
+                    />
+                  )}
+                  {statutCanon === 'VIDE' && (
+                    <ActionButton
+                      icon={<Heart size={16} aria-hidden="true" />}
+                      label="Détecter chaleur"
+                      tone="coral"
+                      onClick={handleDetecterChaleur}
+                    />
+                  )}
+                </div>
+              </section>
+            ) : null}
           </div>
         </AgritechLayout>
       </IonContent>
@@ -390,20 +469,34 @@ const DetailRow: React.FC<DetailRowProps> = ({ label, value, mono, accent }) => 
   </div>
 );
 
+type ActionTone = 'accent' | 'amber' | 'gold' | 'red' | 'coral';
+
 interface ActionButtonProps {
   icon: React.ReactNode;
   label: string;
   onClick: () => void;
+  tone?: ActionTone;
 }
 
-const ActionButton: React.FC<ActionButtonProps> = ({ icon, label, onClick }) => (
+const TONE_VAR: Record<ActionTone, string> = {
+  accent: 'var(--accent)',
+  amber:  'var(--amber)',
+  gold:   'var(--gold)',
+  red:    'var(--red)',
+  coral:  'var(--coral)',
+};
+
+const ActionButton: React.FC<ActionButtonProps> = ({ icon, label, onClick, tone = 'accent' }) => (
   <button
     type="button"
     onClick={onClick}
     className="pressable card-dense flex flex-col items-center gap-2 !py-3.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
     aria-label={label}
   >
-    <span className="inline-flex w-8 h-8 rounded-lg bg-bg-1 border border-border items-center justify-center text-accent">
+    <span
+      className="inline-flex w-8 h-8 rounded-lg bg-bg-1 border border-border items-center justify-center"
+      style={{ color: TONE_VAR[tone] }}
+    >
       {icon}
     </span>
     <span className="font-mono text-[11px] font-semibold uppercase tracking-wide text-text-1">

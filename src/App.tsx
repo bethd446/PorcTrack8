@@ -27,7 +27,6 @@ const Cockpit = React.lazy(() => import(/* webpackChunkName: "cockpit" */ './com
 const TableView = React.lazy(() => import(/* webpackChunkName: "table-view" */ './features/tables/TableView'));
 const BandesView = React.lazy(() => import(/* webpackChunkName: "bandes" */ './features/tables/BandesView'));
 const CheptelView = React.lazy(() => import(/* webpackChunkName: "cheptel" */ './features/tables/CheptelView'));
-const AnimalDetailView = React.lazy(() => import(/* webpackChunkName: "animal-detail" */ './features/tables/AnimalDetailView'));
 const ControleQuotidien = React.lazy(() => import(/* webpackChunkName: "controle" */ './features/controle/ControleQuotidien'));
 const ChecklistFlow = React.lazy(() => import(/* webpackChunkName: "checklist" */ './features/controle/ChecklistFlow'));
 const AuditView = React.lazy(() => import(/* webpackChunkName: "audit" */ './features/controle/AuditView'));
@@ -56,6 +55,7 @@ const PerfKpiView = React.lazy(() => import(/* webpackChunkName: "pilotage-perf"
 const FinancesView = React.lazy(() => import(/* webpackChunkName: "pilotage-finances" */ './features/pilotage/FinancesView'));
 const BandeDetailView = React.lazy(() => import(/* webpackChunkName: "troupeau-bande-detail" */ './features/troupeau/BandeDetailView'));
 const TruieDetailView = React.lazy(() => import(/* webpackChunkName: "troupeau-truie-detail" */ './features/troupeau/TruieDetailView'));
+const VerratDetailView = React.lazy(() => import(/* webpackChunkName: "troupeau-verrat-detail" */ './features/troupeau/VerratDetailView'));
 const BatimentsView = React.lazy(() => import(/* webpackChunkName: "troupeau-batiments" */ './features/troupeau/BatimentsView'));
 const RapportFinancierView = React.lazy(() => import(/* webpackChunkName: "pilotage-rapport" */ './features/pilotage/RapportFinancierView'));
 const ForecastView = React.lazy(() => import(/* webpackChunkName: "pilotage-previsions" */ './features/pilotage/ForecastView'));
@@ -138,7 +138,7 @@ const AppContent = () => {
           <Route path="/troupeau/truies" element={<TruiesListView />} />
           <Route path="/troupeau/verrats" element={<CheptelView initialTab="VERRAT" />} />
           <Route path="/troupeau/truies/:id" element={<TruieDetailView />} />
-          <Route path="/troupeau/verrats/:id" element={<AnimalDetailView mode="VERRAT" />} />
+          <Route path="/troupeau/verrats/:id" element={<VerratDetailView />} />
           <Route path="/troupeau/bandes" element={<BandesView />} />
           <Route path="/troupeau/bandes/:bandeId" element={<BandeDetailView />} />
           <Route path="/troupeau/batiments" element={<BatimentsView />} />

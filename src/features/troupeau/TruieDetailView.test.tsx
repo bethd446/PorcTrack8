@@ -19,9 +19,15 @@
 
 import React from 'react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, within, cleanup } from '@testing-library/react';
+import { render, screen, within, cleanup, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import type { Truie } from '../../types/farm';
+
+// Mock offlineQueue pour observer les updates de statut.
+const enqueueUpdateRowMock = vi.fn();
+vi.mock('../../services/offlineQueue', () => ({
+  enqueueUpdateRow: (...args: unknown[]) => enqueueUpdateRowMock(...args),
+}));
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
 const truieT14: Truie = {
@@ -53,10 +59,36 @@ const truieT07: Truie = {
   synced: true,
 };
 
+const truieSurveillance: Truie = {
+  id: 'T22',
+  displayId: 'T22',
+  boucle: 'FR-0022-11',
+  nom: 'Suzette',
+  statut: 'À surveiller',
+  stade: '',
+  ration: 3,
+  nbPortees: 4,
+  notes: '',
+  synced: true,
+};
+
+const truieVide: Truie = {
+  id: 'T05',
+  displayId: 'T05',
+  boucle: 'FR-0005-33',
+  nom: 'Violette',
+  statut: 'En attente saillie',
+  stade: '',
+  ration: 3,
+  nbPortees: 2,
+  notes: '',
+  synced: true,
+};
+
 // ── Mocks ───────────────────────────────────────────────────────────────────
 vi.mock('../../context/FarmContext', () => ({
   useFarm: () => ({
-    truies: [truieT14, truieT07],
+    truies: [truieT14, truieT07, truieSurveillance, truieVide],
     verrats: [],
     bandes: [],
     alerts: [],
@@ -191,5 +223,77 @@ describe('TruieDetailView', () => {
     expect(screen.getByRole('button', { name: 'Pesée' })).toBeDefined();
     expect(screen.getByRole('button', { name: 'Saillie' })).toBeDefined();
     expect(screen.getByRole('button', { name: 'Note' })).toBeDefined();
+  });
+
+  // ── Actions métier contextuelles ─────────────────────────────────────────
+
+  it('MATERNITE : affiche le bouton « Sevrer » dans Actions métier', () => {
+    renderAt('/troupeau/truies/T14');
+    const region = screen.getByRole('region', { name: /actions métier/i });
+    expect(within(region).getByRole('button', { name: 'Sevrer' })).toBeDefined();
+    // Pas d'autres boutons métier pour ce statut.
+    expect(within(region).queryByRole('button', { name: 'Confirmer MB' })).toBeNull();
+    expect(within(region).queryByRole('button', { name: 'Passer en réforme' })).toBeNull();
+  });
+
+  it('PLEINE : affiche le bouton « Confirmer MB » dans Actions métier', () => {
+    renderAt('/troupeau/truies/T07');
+    const region = screen.getByRole('region', { name: /actions métier/i });
+    expect(within(region).getByRole('button', { name: 'Confirmer MB' })).toBeDefined();
+    expect(within(region).queryByRole('button', { name: 'Sevrer' })).toBeNull();
+  });
+
+  it('SURVEILLANCE : bouton « Passer en réforme » avec confirm dialog', () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    enqueueUpdateRowMock.mockClear();
+
+    renderAt('/troupeau/truies/T22');
+    const region = screen.getByRole('region', { name: /actions métier/i });
+    const btn = within(region).getByRole('button', { name: 'Passer en réforme' });
+    expect(btn).toBeDefined();
+
+    fireEvent.click(btn);
+
+    expect(confirmSpy).toHaveBeenCalledTimes(1);
+    expect(enqueueUpdateRowMock).toHaveBeenCalledWith(
+      'SUIVI_TRUIES_REPRODUCTION',
+      'ID',
+      'T22',
+      { STATUT: 'Réforme' },
+    );
+
+    confirmSpy.mockRestore();
+  });
+
+  it('SURVEILLANCE : confirm annulé → pas d\'update', () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    enqueueUpdateRowMock.mockClear();
+
+    renderAt('/troupeau/truies/T22');
+    const region = screen.getByRole('region', { name: /actions métier/i });
+    fireEvent.click(within(region).getByRole('button', { name: 'Passer en réforme' }));
+
+    expect(confirmSpy).toHaveBeenCalledTimes(1);
+    expect(enqueueUpdateRowMock).not.toHaveBeenCalled();
+
+    confirmSpy.mockRestore();
+  });
+
+  it('VIDE : affiche le bouton « Détecter chaleur » qui met à jour le statut', () => {
+    enqueueUpdateRowMock.mockClear();
+
+    renderAt('/troupeau/truies/T05');
+    const region = screen.getByRole('region', { name: /actions métier/i });
+    const btn = within(region).getByRole('button', { name: 'Détecter chaleur' });
+    expect(btn).toBeDefined();
+
+    fireEvent.click(btn);
+
+    expect(enqueueUpdateRowMock).toHaveBeenCalledWith(
+      'SUIVI_TRUIES_REPRODUCTION',
+      'ID',
+      'T05',
+      { STATUT: 'Chaleur' },
+    );
   });
 });
