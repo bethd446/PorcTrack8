@@ -1,265 +1,254 @@
-import React, { useMemo } from 'react';
+/**
+ * TroupeauHub — /troupeau (tab 02)
+ * ══════════════════════════════════════════════════════════════════════════
+ * Refonte Claude Design v2 (2026-04-20) — "Troupeau" de la bottom nav.
+ *
+ * Structure (mockup 02-troupeau) :
+ *   1. Header
+ *   2. Barre de recherche (ID truie)
+ *   3. Segmented filters scrollables (TOUT · PLEINES · MATERNITÉ · VIDES · RÉFORME)
+ *   4. SectionDivider "{N} TRUIES"
+ *   5. Liste DataRow (icône TruieIcon + ID + meta + chip statut)
+ *
+ * Accès Verrats / Bandes → via HubTile Cockpit (Mon élevage).
+ */
+
+import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
-import { Home } from 'lucide-react';
-import { TruieIcon, VerratIcon, BandeIcon } from '../../components/icons';
+import { Search, Users } from 'lucide-react';
+
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import { HubTile, Chip, SectionDivider } from '../../components/agritech';
-import TruieStatutPipeline, {
-  type TruieEtape,
-} from '../../components/truie/TruieStatutPipeline';
+import { TruieIcon } from '../../components/icons';
+import { Chip, SectionDivider, type ChipTone } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
-import { FARM_CONFIG } from '../../config/farm';
-import {
-  filterRealPortees,
-  countSousMere,
-  countBandesByPhase,
-  logesMaterniteOccupation,
-  logesPostSevrageOccupation,
-  logesEngraissementOccupation,
-  type LogeOccupation,
-  type LogeOccupationAlerte,
-} from '../../services/bandesAggregator';
+import type { Truie } from '../../types/farm';
+
+// ─── Filters ────────────────────────────────────────────────────────────────
+
+type FilterKey = 'tout' | 'pleines' | 'maternite' | 'vides' | 'reforme';
+
+interface StatutVisu {
+  label: string;
+  tone: ChipTone;
+  filter: FilterKey;
+}
 
 /**
- * TroupeauHub — entrée sous-hubs : Truies · Verrats · Portées · Loges.
- *
- * Note data model :
- *  - "Portée" = lot issu d'une mise-bas (1 truie = 1 portée).
- *  - "Loge"   = unité physique post-sevrage regroupant plusieurs portées.
- *    La ferme K13 a 4 loges ; voir `bandesAggregator.countLoges`.
+ * Mappe un statut truie libre (depuis la feuille) vers :
+ *  - un libellé court pour la chip
+ *  - un tone de couleur (gold = maternité, accent = pleine, coral = chaleur/vide, red = réforme)
+ *  - un filter bucket
  */
+function statutVisu(statut: string | undefined): StatutVisu {
+  const s = (statut ?? '').toLowerCase();
+  if (/pleine|gest/i.test(s))
+    return { label: 'Pleine', tone: 'accent', filter: 'pleines' };
+  if (/maternit|allait|lactation/i.test(s))
+    return { label: 'Maternité', tone: 'gold', filter: 'maternite' };
+  if (/chaleur|saillie attend|retour/i.test(s))
+    return { label: 'Chaleur', tone: 'coral', filter: 'vides' };
+  if (/vide|attente|sev/i.test(s))
+    return { label: 'Vide', tone: 'default', filter: 'vides' };
+  if (/réform|reforme|mort|sortie/i.test(s))
+    return { label: 'Réforme', tone: 'red', filter: 'reforme' };
+  return { label: statut || '—', tone: 'default', filter: 'tout' };
+}
+
+// ─── Meta short text ────────────────────────────────────────────────────────
+
+function daysSince(dateFr: string | undefined, today: Date): number | null {
+  if (!dateFr) return null;
+  const parts = dateFr.split('/');
+  if (parts.length !== 3) return null;
+  const [d, m, y] = parts.map(Number);
+  if (!d || !m || !y) return null;
+  const dt = new Date(y, m - 1, d);
+  const diffMs = today.getTime() - dt.getTime();
+  const days = Math.floor(diffMs / 86_400_000);
+  return Number.isFinite(days) ? days : null;
+}
+
+function truieMeta(t: Truie, today: Date): string {
+  const v = statutVisu(t.statut);
+  if (v.filter === 'maternite' && t.dateMBPrevue) {
+    const j = daysSince(t.dateMBPrevue, today);
+    if (j === null) return `MB prévue ${t.dateMBPrevue}`;
+    if (j < 0) return `MB J${j}`;
+    if (j === 0) return `MB aujourd'hui`;
+    return `MB J+${j}`;
+  }
+  if (v.filter === 'pleines' && t.dateMBPrevue) {
+    const j = daysSince(t.dateMBPrevue, today);
+    return j !== null && j < 0
+      ? `MB prévue ${t.dateMBPrevue} · dans ${-j}j`
+      : `Gestation · MB ${t.dateMBPrevue}`;
+  }
+  if (v.filter === 'reforme') {
+    return typeof t.nbPortees === 'number'
+      ? `${t.nbPortees} portées · à sortir`
+      : 'À sortir';
+  }
+  if (v.filter === 'vides') {
+    return t.stade ? `Stade ${t.stade}` : 'En attente de saillie';
+  }
+  return t.stade || t.statut || '—';
+}
+
+// ─── Composant ──────────────────────────────────────────────────────────────
+
 const TroupeauHub: React.FC = () => {
-  const { truies, verrats, bandes } = useFarm();
+  const navigate = useNavigate();
+  const { truies } = useFarm();
 
-  const stats = useMemo(() => {
-    const isPleine = (s: string): boolean => /pleine/i.test(s);
-    const isMater = (s: string): boolean => /mater|allait|lactation/i.test(s);
-    const isAttente = (s: string): boolean => /attente|saillie|vide/i.test(s);
-    const isSurv = (s: string): boolean => /surveill|réform|reforme/i.test(s);
+  const [filter, setFilter] = useState<FilterKey>('tout');
+  const [searchText, setSearchText] = useState('');
 
-    const truiesPleines = truies.filter(t => isPleine(t.statut)).length;
-    const truiesMater = truies.filter(t => isMater(t.statut)).length;
-    const truiesAttente = truies.filter(t => isAttente(t.statut)).length;
-    const truiesSurv = truies.filter(t => isSurv(t.statut)).length;
+  const today = useMemo(() => new Date(), []);
 
-    const verratsActifs = verrats.filter(v => /actif/i.test(v.statut)).length;
+  // Filtrage + recherche
+  const filtered = useMemo(() => {
+    const q = searchText.trim().toLowerCase();
+    return truies.filter((t) => {
+      const v = statutVisu(t.statut);
+      if (filter !== 'tout' && v.filter !== filter) return false;
+      if (q) {
+        const id = (t.displayId || t.id || '').toLowerCase();
+        if (!id.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [truies, filter, searchText]);
 
-    // Portées réelles (exclut RECAP) — source de vérité pour le comptage.
-    const portees = filterRealPortees(bandes);
-    const sousMere = countSousMere(portees);
-    const phases = countBandesByPhase(portees);
-    const materniteOcc = logesMaterniteOccupation(truies);
-    const postSevrageOcc = logesPostSevrageOccupation(portees);
-    const engraissementOcc = logesEngraissementOccupation(portees);
-
-    return {
-      truiesPleines,
-      truiesMater,
-      truiesAttente,
-      truiesSurv,
-      verratsActifs,
-      porteesTotal: portees.length,
-      sousMerePortees: sousMere.portees,
-      postSevragePortees: phases.POST_SEVRAGE,
-      engraissementPortees: phases.ENGRAISSEMENT,
-      sevresPortees: phases.POST_SEVRAGE + phases.ENGRAISSEMENT,
-      materniteOcc,
-      postSevrageOcc,
-      engraissementOcc,
+  // Compteurs par filter bucket
+  const counts = useMemo(() => {
+    const c: Record<FilterKey, number> = {
+      tout: truies.length,
+      pleines: 0,
+      maternite: 0,
+      vides: 0,
+      reforme: 0,
     };
-  }, [truies, verrats, bandes]);
+    for (const t of truies) {
+      const v = statutVisu(t.statut);
+      if (v.filter !== 'tout') c[v.filter] += 1;
+    }
+    return c;
+  }, [truies]);
 
-  /**
-   * Funnel reproductif — ordre : attente → pleine → maternité → à surveiller.
-   * "À surveiller" est positionné en bout de chaîne : cycle interrompu / à
-   * investiguer (refus allaitement, réforme…).
-   */
-  const pipelineEtapes: TruieEtape[] = useMemo(
-    () => [
-      { key: 'attente',    label: 'En attente',   count: stats.truiesAttente, tone: 'default' },
-      { key: 'pleine',     label: 'Pleines',      count: stats.truiesPleines, tone: 'accent'  },
-      { key: 'maternite',  label: 'Maternité',    count: stats.truiesMater,   tone: 'gold'    },
-      { key: 'surveiller', label: 'À surveiller', count: stats.truiesSurv,    tone: 'amber'   },
-    ],
-    [stats.truiesAttente, stats.truiesPleines, stats.truiesMater, stats.truiesSurv],
-  );
+  const FILTERS: ReadonlyArray<{ id: FilterKey; label: string }> = [
+    { id: 'tout', label: 'Tout' },
+    { id: 'pleines', label: 'Pleines' },
+    { id: 'maternite', label: 'Maternité' },
+    { id: 'vides', label: 'Vides' },
+    { id: 'reforme', label: 'Réforme' },
+  ];
 
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
-          <AgritechHeader title="TROUPEAU" subtitle={`${FARM_CONFIG.FARM_ID} · Reproducteurs & descendance`} />
+          <AgritechHeader
+            title="TROUPEAU"
+            subtitle={`${truies.length} truie${truies.length > 1 ? 's' : ''} · ferme K13`}
+          />
 
-          <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
-            {/* Global stats strip */}
+          <div className="px-4 pt-3 pb-32 flex flex-col gap-4">
+            {/* ── Recherche ID truie ──────────────────────────────────── */}
+            <div className="relative">
+              <input
+                type="search"
+                inputMode="search"
+                autoComplete="off"
+                spellCheck={false}
+                placeholder="ID truie…"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                aria-label="Rechercher une truie"
+                className="w-full pl-10 pr-3 py-2.5 rounded-lg bg-bg-2 border border-border font-mono text-[13px] text-text-0 placeholder:text-text-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+              />
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-text-2 pointer-events-none"
+                aria-hidden="true"
+              />
+            </div>
+
+            {/* ── Segmented filters (scrollable) ──────────────────────── */}
             <div
-              role="group"
-              aria-label="Résumé troupeau"
-              className="card-dense flex items-center justify-between gap-3"
+              role="tablist"
+              aria-label="Filtrer par statut"
+              className="flex gap-1.5 overflow-x-auto -mx-4 px-4 pb-1 scrollbar-hide"
             >
-              <div className="flex flex-col items-start gap-0.5 min-w-0">
-                <span className="kpi-label">Truies</span>
-                <span className="font-mono tabular-nums text-[20px] font-bold text-text-0">
-                  {truies.length}
-                </span>
-              </div>
-              <div className="h-8 w-px bg-border shrink-0" aria-hidden="true" />
-              <div className="flex flex-col items-start gap-0.5 min-w-0">
-                <span className="kpi-label">Verrats</span>
-                <span className="font-mono tabular-nums text-[20px] font-bold text-text-0">
-                  {verrats.length}
-                </span>
-              </div>
-              <div className="h-8 w-px bg-border shrink-0" aria-hidden="true" />
-              <div className="flex flex-col items-start gap-0.5 min-w-0">
-                <span className="kpi-label">Portées</span>
-                <span className="font-mono tabular-nums text-[20px] font-bold text-text-0">
-                  {stats.porteesTotal}
-                </span>
-              </div>
-              <div className="h-8 w-px bg-border shrink-0" aria-hidden="true" />
-              <div className="flex flex-col items-start gap-0.5 min-w-0">
-                <span className="kpi-label">Loges</span>
-                <span className="font-mono tabular-nums text-[13px] font-bold text-text-0 leading-tight">
-                  Mat {stats.materniteOcc.occupees}
-                  <span className="text-text-2" aria-hidden="true"> · </span>
-                  P-Sevr {stats.postSevrageOcc.occupees}
-                  <span className="text-text-2" aria-hidden="true"> · </span>
-                  Engr {stats.engraissementOcc.occupees}
-                </span>
-              </div>
+              {FILTERS.map((f) => {
+                const active = filter === f.id;
+                const count = counts[f.id];
+                return (
+                  <button
+                    key={f.id}
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setFilter(f.id)}
+                    className={`pressable shrink-0 rounded-full px-3 py-2 font-mono text-[11px] font-medium uppercase tracking-wide border transition-colors flex items-center gap-1.5 ${
+                      active
+                        ? 'bg-bg-2 border-teal text-teal'
+                        : 'bg-transparent border-border text-text-1 hover:text-text-0'
+                    }`}
+                  >
+                    {f.label}
+                    <span className={`text-[10px] tabular-nums ${active ? 'text-teal/70' : 'text-text-2'}`}>
+                      {String(count).padStart(2, '0')}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
-            <SectionDivider label="Occupation loges" />
-
-            {/* Loges occupation — maternité + post-sevrage + engraissement */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <LogeOccupationCard
-                label="Loges maternité"
-                hint="Chauffage porcelet · 1 truie/loge"
-                occupation={stats.materniteOcc}
-              />
-              <LogeOccupationCard
-                label="Loges post-sevrage"
-                hint="Porcelets groupés · J21→~J81"
-                occupation={stats.postSevrageOcc}
-              />
-              <LogeOccupationCard
-                label="Loges engraissement"
-                hint="Séparation par sexe · finition"
-                occupation={stats.engraissementOcc}
-              />
-            </div>
-
-            <SectionDivider label="Reproduction" />
-
-            {/* Pipeline reproduction — funnel visuel cliquable */}
-            <TruieStatutPipeline
-              basePath="/troupeau/truies"
-              total={truies.length}
-              etapes={pipelineEtapes}
+            {/* ── Divider + compteur résultats ────────────────────────── */}
+            <SectionDivider
+              label={`${filtered.length} truie${filtered.length !== 1 ? 's' : ''}`}
             />
 
-            <SectionDivider label="Sous-sections" />
-
-            {/* Truies tile + chips */}
-            <div className="flex flex-col gap-2">
-              <HubTile
-                icon={<TruieIcon size={22} />}
-                title="Truies"
-                subtitle={`${stats.truiesPleines} pleines · ${stats.truiesMater} mater · ${stats.truiesAttente} attente`}
-                count={truies.length}
-                to="/troupeau/truies"
-                tone="accent"
-              />
-              <div className="flex flex-wrap gap-1.5 px-1" aria-hidden="true">
-                {stats.truiesPleines > 0 && (
-                  <Chip label={`${stats.truiesPleines} pleines`} tone="accent" size="xs" />
-                )}
-                {stats.truiesMater > 0 && (
-                  <Chip label={`${stats.truiesMater} maternité`} tone="gold" size="xs" />
-                )}
-                {stats.truiesAttente > 0 && (
-                  <Chip label={`${stats.truiesAttente} attente`} tone="default" size="xs" />
-                )}
-                {stats.truiesSurv > 0 && (
-                  <Chip label={`${stats.truiesSurv} à surveiller`} tone="amber" size="xs" />
-                )}
-              </div>
-            </div>
-
-            {/* Verrats tile + chip */}
-            <div className="flex flex-col gap-2">
-              <HubTile
-                icon={<VerratIcon size={22} />}
-                title="Verrats"
-                subtitle={`${stats.verratsActifs} actif${stats.verratsActifs > 1 ? 's' : ''}`}
-                count={verrats.length}
-                to="/troupeau/verrats"
-              />
-              <div className="flex flex-wrap gap-1.5 px-1" aria-hidden="true">
-                {stats.verratsActifs > 0 && (
-                  <Chip label={`${stats.verratsActifs} actifs`} tone="accent" size="xs" />
-                )}
-              </div>
-            </div>
-
-            {/* Portées tile + chips (ex-"Bandes") */}
-            <div className="flex flex-col gap-2">
-              <HubTile
-                icon={<BandeIcon size={22} />}
-                title="Portées"
-                subtitle={`${stats.sousMerePortees} sous mère · ${stats.postSevragePortees} post-sevrage · ${stats.engraissementPortees} engraissement`}
-                count={stats.porteesTotal}
-                to="/troupeau/bandes"
-                tone="amber"
-              />
-              <div className="flex flex-wrap gap-1.5 px-1" aria-hidden="true">
-                {stats.sousMerePortees > 0 && (
-                  <Chip label={`${stats.sousMerePortees} sous mère`} tone="amber" size="xs" />
-                )}
-                {stats.postSevragePortees > 0 && (
-                  <Chip label={`${stats.postSevragePortees} post-sevrage`} tone="blue" size="xs" />
-                )}
-                {stats.engraissementPortees > 0 && (
-                  <Chip label={`${stats.engraissementPortees} engraissement`} tone="accent" size="xs" />
-                )}
-              </div>
-            </div>
-
-            {/* Loges tile — 3 phases physiques : maternité · post-sevrage · engraissement */}
-            <div className="flex flex-col gap-2">
-              <HubTile
-                icon={<Home size={22} />}
-                title="Loges"
-                subtitle={`Mat ${stats.materniteOcc.occupees}/${stats.materniteOcc.capacite} · P-Sevr ${stats.postSevrageOcc.occupees}/${stats.postSevrageOcc.capacite} · Engr ${stats.engraissementOcc.occupees}/${stats.engraissementOcc.capacite}`}
-                count={
-                  stats.materniteOcc.occupees +
-                  stats.postSevrageOcc.occupees +
-                  stats.engraissementOcc.occupees
-                }
-                to="/troupeau/bandes"
-                tone="accent"
-              />
-              <div className="flex flex-wrap gap-1.5 px-1" aria-hidden="true">
-                <Chip
-                  label={`Maternité ${stats.materniteOcc.tauxPct}%`}
-                  tone={chipToneForAlerte(stats.materniteOcc.alerte)}
-                  size="xs"
-                />
-                <Chip
-                  label={`Post-sevrage ${stats.postSevrageOcc.tauxPct}%`}
-                  tone={chipToneForAlerte(stats.postSevrageOcc.alerte)}
-                  size="xs"
-                />
-                <Chip
-                  label={`Engraissement ${stats.engraissementOcc.tauxPct}%`}
-                  tone={chipToneForAlerte(stats.engraissementOcc.alerte)}
-                  size="xs"
-                />
-              </div>
-            </div>
+            {/* ── Liste ───────────────────────────────────────────────── */}
+            {filtered.length === 0 ? (
+              <EmptyState hasSearch={searchText.trim().length > 0} />
+            ) : (
+              <ul
+                role="list"
+                aria-label="Liste des truies"
+                className="card-dense !p-0 overflow-hidden"
+              >
+                {filtered.map((t) => {
+                  const v = statutVisu(t.statut);
+                  const meta = truieMeta(t, today);
+                  return (
+                    <li key={t.id} role="listitem">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate(`/troupeau/truies/${encodeURIComponent(t.id)}`)
+                        }
+                        className="pressable w-full text-left flex items-center gap-3 px-3 py-3 border-b border-border last:border-b-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                      >
+                        <div className="w-9 h-9 rounded-lg bg-bg-2 flex items-center justify-center text-text-1 shrink-0">
+                          <TruieIcon size={22} aria-hidden="true" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-mono text-[14px] font-semibold text-text-0">
+                            {t.displayId || t.id}
+                          </div>
+                          <div className="font-mono text-[11px] text-text-2 mt-0.5 truncate">
+                            {meta}
+                          </div>
+                        </div>
+                        <Chip label={v.label} tone={v.tone} size="xs" />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
         </AgritechLayout>
       </IonContent>
@@ -267,84 +256,25 @@ const TroupeauHub: React.FC = () => {
   );
 };
 
-// ─── Sous-composants locaux ─────────────────────────────────────────────────
+// ─── Empty state ─────────────────────────────────────────────────────────────
 
-function chipToneForAlerte(
-  alerte: LogeOccupationAlerte
-): 'accent' | 'amber' | 'red' {
-  if (alerte === 'FULL') return 'red';
-  if (alerte === 'HIGH') return 'amber';
-  return 'accent';
-}
-
-interface LogeOccupationCardProps {
-  label: string;
-  hint: string;
-  occupation: LogeOccupation;
-}
-
-const LogeOccupationCard: React.FC<LogeOccupationCardProps> = ({
-  label,
-  hint,
-  occupation,
-}) => {
-  const { occupees, capacite, tauxPct, alerte } = occupation;
-
-  const barFill =
-    alerte === 'FULL' ? 'bg-red' : alerte === 'HIGH' ? 'bg-amber' : 'bg-accent';
-
-  const statusLabel =
-    alerte === 'FULL' ? 'Saturé' : alerte === 'HIGH' ? 'Proche saturation' : 'OK';
-  const statusTone: 'accent' | 'amber' | 'red' =
-    alerte === 'FULL' ? 'red' : alerte === 'HIGH' ? 'amber' : 'accent';
-
-  // Width capé à 100 % pour l'affichage de la barre, mais on laisse tauxPct brut
-  // dans le texte pour signaler toute anomalie (>100%).
-  const barWidth = Math.min(tauxPct, 100);
-
-  return (
-    <div
-      className="card-dense flex flex-col gap-2"
-      role="group"
-      aria-label={`${label} : ${occupees} sur ${capacite}, ${tauxPct}%, ${statusLabel}`}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="kpi-label">{label}</div>
-          <div className="mt-0.5 font-mono text-[11px] text-text-2 leading-tight">
-            {hint}
-          </div>
-        </div>
-        <Chip label={statusLabel} tone={statusTone} size="xs" />
-      </div>
-
-      <div className="flex items-baseline gap-2">
-        <span className="font-mono tabular-nums text-[24px] font-bold text-text-0 leading-none">
-          {occupees}
-        </span>
-        <span className="font-mono text-[13px] text-text-2 leading-none">
-          / {capacite}
-        </span>
-        <span className="ml-auto font-mono tabular-nums text-[12px] text-text-2">
-          {tauxPct}%
-        </span>
-      </div>
-
-      <div
-        className="h-1.5 w-full bg-bg-2 rounded-full overflow-hidden"
-        role="progressbar"
-        aria-valuenow={tauxPct}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={`Occupation ${label} ${tauxPct}%`}
-      >
-        <div
-          className={`h-full ${barFill} rounded-full transition-[width]`}
-          style={{ width: `${barWidth}%` }}
-        />
-      </div>
+const EmptyState: React.FC<{ hasSearch: boolean }> = ({ hasSearch }) => (
+  <div
+    className="card-dense text-center py-12 animate-fade-in-up"
+    role="status"
+  >
+    <div className="inline-flex w-12 h-12 rounded-xl bg-bg-1 border border-border items-center justify-center text-text-2 mb-3">
+      <Users size={22} aria-hidden="true" />
     </div>
-  );
-};
+    <h3 className="ft-heading text-[14px] uppercase text-text-0">
+      {hasSearch ? 'Aucun résultat' : 'Aucune truie'}
+    </h3>
+    <p className="font-mono text-[11px] text-text-2 mt-2">
+      {hasSearch
+        ? 'Aucune truie ne correspond à ta recherche.'
+        : 'Ta feuille TRUIES est vide ou non accessible.'}
+    </p>
+  </div>
+);
 
 export default TroupeauHub;

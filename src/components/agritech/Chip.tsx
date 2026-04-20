@@ -1,7 +1,17 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
 
-export type ChipTone = 'default' | 'accent' | 'amber' | 'red' | 'blue' | 'gold';
+export type ChipTone =
+  | 'default'
+  | 'accent'
+  | 'amber'
+  | 'red'
+  | 'blue'
+  | 'gold'
+  | 'coral'
+  | 'teal'
+  | 'sage'
+  | 'ochre';
 export type ChipSize = 'xs' | 'sm';
 
 export interface ChipProps {
@@ -18,6 +28,10 @@ const toneClass: Record<ChipTone, string> = {
   red: 'chip chip--red',
   blue: 'chip chip--blue',
   gold: 'chip chip--gold',
+  coral: 'chip chip--coral',
+  teal: 'chip chip--teal',
+  sage: 'chip chip--teal',
+  ochre: 'chip chip--amber',
 };
 
 const sizeClass: Record<ChipSize, string> = {

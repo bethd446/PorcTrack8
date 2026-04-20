@@ -32,6 +32,15 @@
   --color-red: var(--red);
   --color-blue: var(--blue);
   --color-gold: var(--gold);
+  --color-coral: var(--coral);
+  --color-teal: var(--teal);
+  --color-cyan: var(--cyan);
+  --color-sage: var(--sage);
+  --color-ochre: var(--ochre);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
 
   /* ── Typography stacks ───────────────────────────────────────────────────
      display → screen titles (Big Shoulders Display 800)

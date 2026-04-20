@@ -8,17 +8,18 @@ import {
   Package,
   AlertTriangle,
   Plus,
+  RefreshCw,
   Syringe,
   Scale,
-  RefreshCw,
   CloudOff,
   HelpCircle,
   Users,
   Baby,
+  Home,
 } from 'lucide-react';
 import { FARM_CONFIG } from '../config/farm';
 import { useFarm } from '../context/FarmContext';
-import { KpiCard, BottomSheet, SectionDivider, DataRow } from './agritech';
+import { KpiCard, BottomSheet, SectionDivider, DataRow, HubTile } from './agritech';
 import AgritechLayout from './AgritechLayout';
 import QuickSaillieForm from './forms/QuickSaillieForm';
 import QuickHealthForm from './forms/QuickHealthForm';
@@ -297,23 +298,24 @@ const Cockpit: React.FC = () => {
             </div>
           </header>
 
-          <div className="px-4 pt-4 pb-32 space-y-8">
-            {/* ── Bannière hors ligne renforcée ─────────────────────────── */}
+          <div className="px-4 pt-4 pb-32 flex flex-col gap-5">
+            {/* ── Bannière hors ligne (mockup-aligned) ──────────────────── */}
             {dataSource && dataSource !== 'NETWORK' ? (
               <div
                 role="status"
                 aria-live="polite"
-                className="card-dense flex items-start gap-3 border-l-2 border-l-amber bg-bg-1"
+                className="card-dense flex items-center gap-2.5 !py-2.5 !px-3"
+                style={{
+                  borderColor: 'color-mix(in srgb, var(--amber) 40%, var(--border))',
+                }}
               >
-                <CloudOff
-                  size={18}
-                  className="mt-0.5 shrink-0 text-amber"
-                  aria-hidden="true"
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="kpi-label text-amber">Hors ligne</div>
-                  <p className="mt-1 text-[13px] text-text-1 leading-snug">
-                    Vos saisies seront synchronisées automatiquement dès le retour du réseau.
+                <CloudOff size={16} className="shrink-0 text-amber" aria-hidden="true" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-mono text-[10px] text-amber uppercase tracking-wide">
+                    Hors ligne
+                  </div>
+                  <p className="text-[11px] text-text-2 mt-0.5 leading-snug">
+                    Sync auto au retour du réseau
                   </p>
                 </div>
               </div>
@@ -348,32 +350,21 @@ const Cockpit: React.FC = () => {
               </button>
             ) : null}
 
-            {/* ── KPI Grid 2×2 ──────────────────────────────────────────── */}
-            <section aria-label="Indicateurs clés" role="region" className="grid grid-cols-2 gap-4">
+            {/* ── KPI Grid 2×2 (Pleines · Maternité · Alertes · Ruptures) ─ */}
+            <section aria-label="Indicateurs clés" role="region" className="grid grid-cols-2 gap-2.5">
               <KpiCard
                 label="Pleines"
                 value={loading && truies.length === 0 ? '—' : kpiPleines}
                 icon={<Heart size={14} aria-hidden="true" />}
+                tone="success"
                 onClick={() => navigate('/troupeau/truies')}
               />
               <KpiCard
                 label="Maternité"
                 value={loading && truies.length === 0 ? '—' : kpiMaternite}
-                icon={<Heart size={14} aria-hidden="true" />}
+                icon={<Baby size={14} aria-hidden="true" />}
+                tone="warning"
                 onClick={() => navigate('/troupeau/truies')}
-              />
-              <KpiCard
-                label="Stocks ruptures"
-                value={loading && stockAliment.length === 0 && stockVeto.length === 0 ? '—' : kpiStocksRuptures}
-                icon={<Package size={14} aria-hidden="true" />}
-                tone={
-                  kpiStocksRuptures > 2
-                    ? 'critical'
-                    : kpiStocksRuptures > 0
-                      ? 'warning'
-                      : 'default'
-                }
-                onClick={() => navigate('/ressources')}
               />
               <KpiCard
                 label="Alertes"
@@ -382,90 +373,55 @@ const Cockpit: React.FC = () => {
                 tone={kpiAlertesTotal > 0 ? 'warning' : 'default'}
                 onClick={() => navigate('/pilotage/alertes')}
               />
+              <KpiCard
+                label="Ruptures"
+                value={loading && stockAliment.length === 0 && stockVeto.length === 0 ? '—' : kpiStocksRuptures}
+                icon={<Package size={14} aria-hidden="true" />}
+                tone={kpiStocksRuptures > 0 ? 'critical' : 'default'}
+                onClick={() => navigate('/ressources')}
+              />
             </section>
 
-            {/* ── Mon élevage ───────────────────────────────────────────── */}
-            <section role="region" aria-label="Résumé élevage">
+            {/* ── Mon élevage (4 HubTiles — aligné mockup Terra V2) ────── */}
+            <section role="region" aria-label="Mon élevage">
               <SectionDivider label="Mon élevage" />
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => navigate('/troupeau')}
-                  className="card-dense pressable w-full text-left flex flex-col gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-                  aria-label={`Total cheptel : ${cheptelStats.totalCheptel} animaux`}
-                >
-                  <div className="flex items-center gap-1.5 text-text-2">
-                    <Users size={12} aria-hidden="true" />
-                    <span className="kpi-label">Total cheptel</span>
-                  </div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="font-mono text-[32px] leading-none font-semibold tabular-nums text-accent">
-                      {cheptelStats.totalCheptel}
-                    </span>
-                    <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
-                      animaux
-                    </span>
-                  </div>
-                  <div className="font-mono text-[11px] tabular-nums text-text-2">
-                    {cheptelStats.nbTruies}T · {cheptelStats.nbVerrats}V ·{' '}
-                    {cheptelStats.nbPorcelets}P
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => navigate('/troupeau/bandes')}
-                  className="card-dense pressable w-full text-left flex flex-col gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-                  aria-label={`Porcelets : ${cheptelStats.nbPorcelets} vivants`}
-                >
-                  <div className="flex items-center gap-1.5 text-text-2">
-                    <Baby size={12} aria-hidden="true" />
-                    <span className="kpi-label">Porcelets</span>
-                  </div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="font-mono text-[32px] leading-none font-semibold tabular-nums text-accent">
-                      {cheptelStats.nbPorcelets}
-                    </span>
-                    <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
-                      vivants
-                    </span>
-                  </div>
-                  <div className="font-mono text-[11px] tabular-nums text-text-2 leading-snug">
-                    <span className="tabular-nums text-text-1">
-                      {cheptelStats.nbPorceletsSevres}
-                    </span>{' '}
-                    sevrés ·{' '}
-                    <span className="tabular-nums text-text-1">
-                      {cheptelStats.nbPorceletsSousMere}
-                    </span>{' '}
-                    sous mère
-                  </div>
-                </button>
-              </div>
-              <div className="mt-2 font-mono text-[11px] tabular-nums text-text-2 px-1">
-                {FARM_CONFIG.MATERNITE_LOGES_CAPACITY} loges maternité ·{' '}
-                {FARM_CONFIG.POST_SEVRAGE_LOGES_CAPACITY} loges post-sevrage ·{' '}
-                {FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY} loges engraissement
-              </div>
-              {/* Répartition actuelle des 4 loges post-sevrage (relevé porcher) */}
-              <div className="mt-3 card-dense flex items-center justify-between gap-2 flex-wrap">
-                <span className="font-mono text-[10px] uppercase tracking-wide text-text-2">
-                  Répartition post-sevrage
-                </span>
-                <div className="flex gap-3 font-mono text-[12px] tabular-nums text-text-0">
-                  {FARM_CONFIG.POST_SEVRAGE_LOGES_REPARTITION.map(l => (
-                    <span key={l.id} className="flex items-baseline gap-1">
-                      <span className="text-text-2 text-[10px]">{l.id.replace('Loge ', 'L')}</span>
-                      <span className="font-semibold text-accent">{l.porcelets}</span>
-                    </span>
-                  ))}
-                  <span className="flex items-baseline gap-1 border-l border-border pl-3 ml-1">
-                    <span className="text-text-2 text-[10px]">TOTAL</span>
-                    <span className="font-bold text-accent">
-                      {FARM_CONFIG.POST_SEVRAGE_LOGES_REPARTITION.reduce((s, l) => s + l.porcelets, 0)}
-                    </span>
-                  </span>
-                </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <HubTile
+                  icon={<Users size={22} aria-hidden="true" />}
+                  title="Truies"
+                  subtitle="Reproductrices actives"
+                  count={cheptelStats.nbTruies}
+                  tone="accent"
+                  to="/troupeau"
+                />
+                <HubTile
+                  icon={<Heart size={22} aria-hidden="true" />}
+                  title="Verrats"
+                  subtitle="Reproducteurs"
+                  count={cheptelStats.nbVerrats}
+                  tone="coral"
+                  to="/troupeau"
+                />
+                <HubTile
+                  icon={<Baby size={22} aria-hidden="true" />}
+                  title="Porcelets"
+                  subtitle={`${cheptelStats.nbPorceletsSousMere} sous mère · ${cheptelStats.nbPorceletsSevres} sevrés`}
+                  count={cheptelStats.nbPorcelets}
+                  tone="gold"
+                  to="/troupeau/bandes"
+                />
+                <HubTile
+                  icon={<Home size={22} aria-hidden="true" />}
+                  title="Loges"
+                  subtitle={`${FARM_CONFIG.MATERNITE_LOGES_CAPACITY} mat · ${FARM_CONFIG.POST_SEVRAGE_LOGES_CAPACITY} sev · ${FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY} engr`}
+                  count={
+                    FARM_CONFIG.MATERNITE_LOGES_CAPACITY +
+                    FARM_CONFIG.POST_SEVRAGE_LOGES_CAPACITY +
+                    FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY
+                  }
+                  tone="teal"
+                  to="/troupeau"
+                />
               </div>
             </section>
 
@@ -516,6 +472,31 @@ const Cockpit: React.FC = () => {
               )}
             </section>
 
+            {/* ── Occupation loges (3 zones) ────────────────────────────── */}
+            <section aria-label="Occupation loges" role="region">
+              <SectionDivider label="Occupation loges" />
+              <div className="card-dense flex flex-col gap-3.5">
+                <LogeBar
+                  label={`Maternité · ${FARM_CONFIG.MATERNITE_LOGES_CAPACITY} loges`}
+                  occupees={materniteOcc.occupees}
+                  capacite={materniteOcc.capacite}
+                  alerte={materniteOcc.alerte}
+                />
+                <LogeBar
+                  label={`Post-sevrage · ${FARM_CONFIG.POST_SEVRAGE_LOGES_CAPACITY} loges`}
+                  occupees={postSevrageOcc.occupees}
+                  capacite={postSevrageOcc.capacite}
+                  alerte={postSevrageOcc.alerte}
+                />
+                <LogeBar
+                  label={`Croissance-finition · ${FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY} loges`}
+                  occupees={engraissementOcc.occupees}
+                  capacite={engraissementOcc.capacite}
+                  alerte={engraissementOcc.alerte}
+                />
+              </div>
+            </section>
+
             {/* ── Prévisions 14 jours ───────────────────────────────────── */}
             <ForecastWidget />
 
@@ -539,79 +520,6 @@ const Cockpit: React.FC = () => {
                   onClick={handleOpenPesee}
                 />
               </div>
-            </section>
-
-            {/* ── Troupeau snapshot ─────────────────────────────────────── */}
-            <section aria-label="Snapshot troupeau" role="region">
-              <SectionDivider label="Troupeau" />
-              <button
-                type="button"
-                onClick={() => navigate('/troupeau')}
-                className="card-dense pressable w-full text-left flex items-center gap-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-              >
-                <div className="min-w-0 flex-1 flex flex-col gap-1.5">
-                  <div className="flex items-baseline gap-3 flex-wrap">
-                    <SnapshotMetric value={truies.length} unit="truies" />
-                    <span className="text-text-2" aria-hidden="true">·</span>
-                    <SnapshotMetric value={verrats.length} unit="verrats" />
-                    <span className="text-text-2" aria-hidden="true">·</span>
-                    <SnapshotMetric value={porteesReelles.length} unit="portées" />
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-wrap font-mono text-[11px] text-text-2">
-                    <span className="tabular-nums text-text-1">
-                      Maternité {materniteOcc.occupees}/{materniteOcc.capacite}
-                    </span>
-                    {materniteOcc.alerte !== 'OK' ? (
-                      <AlertTriangle
-                        size={12}
-                        className={
-                          materniteOcc.alerte === 'FULL' ? 'text-red' : 'text-amber'
-                        }
-                        aria-label={
-                          materniteOcc.alerte === 'FULL'
-                            ? 'Loges maternité saturées'
-                            : 'Loges maternité proches saturation'
-                        }
-                      />
-                    ) : null}
-                    <span className="text-text-2" aria-hidden="true">·</span>
-                    <span className="tabular-nums text-text-1">
-                      Post-sevrage {postSevrageOcc.occupees}/{postSevrageOcc.capacite}
-                    </span>
-                    {postSevrageOcc.alerte !== 'OK' ? (
-                      <AlertTriangle
-                        size={12}
-                        className={
-                          postSevrageOcc.alerte === 'FULL' ? 'text-red' : 'text-amber'
-                        }
-                        aria-label={
-                          postSevrageOcc.alerte === 'FULL'
-                            ? 'Loges post-sevrage saturées'
-                            : 'Loges post-sevrage proches saturation'
-                        }
-                      />
-                    ) : null}
-                    <span className="text-text-2" aria-hidden="true">·</span>
-                    <span className="tabular-nums text-text-1">
-                      Engraissement {engraissementOcc.occupees}/{engraissementOcc.capacite}
-                    </span>
-                    {engraissementOcc.alerte !== 'OK' ? (
-                      <AlertTriangle
-                        size={12}
-                        className={
-                          engraissementOcc.alerte === 'FULL' ? 'text-red' : 'text-amber'
-                        }
-                        aria-label={
-                          engraissementOcc.alerte === 'FULL'
-                            ? 'Loges engraissement saturées'
-                            : 'Loges engraissement proches saturation'
-                        }
-                      />
-                    ) : null}
-                  </div>
-                </div>
-                <ChevronRight size={16} className="shrink-0 text-text-2" aria-hidden="true" />
-              </button>
             </section>
           </div>
         </AgritechLayout>
@@ -704,17 +612,34 @@ const QuickActionButton: React.FC<QuickActionButtonProps> = ({
   );
 };
 
-interface SnapshotMetricProps {
-  value: number;
-  unit: string;
+interface LogeBarProps {
+  label: string;
+  occupees: number;
+  capacite: number;
+  alerte: 'OK' | 'HIGH' | 'FULL';
 }
 
-const SnapshotMetric: React.FC<SnapshotMetricProps> = ({ value, unit }) => (
-  <span className="inline-flex items-baseline gap-1.5">
-    <span className="font-mono text-[18px] font-semibold tabular-nums text-text-0">{value}</span>
-    <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">{unit}</span>
-  </span>
-);
+const LogeBar: React.FC<LogeBarProps> = ({ label, occupees, capacite, alerte }) => {
+  const pct = capacite > 0 ? Math.min(100, Math.round((occupees / capacite) * 100)) : 0;
+  const fillClass =
+    alerte === 'FULL' ? 'bg-red' : alerte === 'HIGH' ? 'bg-amber' : 'bg-accent';
+  return (
+    <div>
+      <div className="flex justify-between items-baseline mb-1.5">
+        <span className="kpi-label">{label}</span>
+        <span className="font-mono text-[11px] text-text-1 tabular-nums">
+          {String(occupees).padStart(2, '0')} / {String(capacite).padStart(2, '0')}
+        </span>
+      </div>
+      <div className="h-1.5 w-full bg-bg-2 rounded-full overflow-hidden">
+        <div
+          className={`h-full ${fillClass} rounded-full transition-[width]`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+};
 
 interface OfflineChipProps {
   dataSource: DataSource | null;

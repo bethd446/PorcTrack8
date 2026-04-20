@@ -65,6 +65,8 @@
   .chip--red    { color: var(--color-red);    border-color: color-mix(in srgb, var(--color-red) 40%, transparent); }
   .chip--blue   { color: var(--color-blue);   border-color: color-mix(in srgb, var(--color-blue) 40%, transparent); }
   .chip--gold   { color: var(--color-gold);   border-color: color-mix(in srgb, var(--color-gold) 40%, transparent); }
+  .chip--coral  { color: var(--color-coral);  border-color: color-mix(in srgb, var(--color-coral) 40%, transparent); }
+  .chip--teal   { color: var(--color-teal);   border-color: color-mix(in srgb, var(--color-teal) 40%, transparent); }
 
   /* ── Agritech root surface ─────────────────────────────────────────────
      Applied by `<AgritechLayout>`. Opt-in dark cockpit surface — does NOT

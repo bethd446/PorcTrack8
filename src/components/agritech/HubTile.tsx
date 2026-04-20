@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 
-export type HubTileTone = 'default' | 'accent' | 'amber';
+export type HubTileTone = 'default' | 'accent' | 'amber' | 'coral' | 'teal' | 'gold' | 'sage' | 'ochre';
 
 export interface HubTileProps {
   /** Lucide or custom icon node (color inherits currentColor). */
@@ -26,12 +26,22 @@ const toneIcon: Record<HubTileTone, string> = {
   default: 'text-text-1',
   accent: 'text-accent',
   amber: 'text-amber',
+  coral: 'text-coral',
+  teal: 'text-teal',
+  gold: 'text-gold',
+  sage: 'text-teal',
+  ochre: 'text-amber',
 };
 
 const toneBorder: Record<HubTileTone, string> = {
   default: 'border-border',
   accent: 'border-accent/40',
   amber: 'border-amber/40',
+  coral: 'border-coral/40',
+  teal: 'border-teal/40',
+  gold: 'border-gold/40',
+  sage: 'border-teal/40',
+  ochre: 'border-amber/40',
 };
 
 /**
