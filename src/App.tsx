@@ -54,6 +54,7 @@ const AlimentsView = React.lazy(() => import(/* webpackChunkName: "aliments" */ 
 // Agritech pilotage sub-screens (Sprint 3 livrés).
 const PerfKpiView = React.lazy(() => import(/* webpackChunkName: "pilotage-perf" */ './features/pilotage/PerfKpiView'));
 const FinancesView = React.lazy(() => import(/* webpackChunkName: "pilotage-finances" */ './features/pilotage/FinancesView'));
+const BandeDetailView = React.lazy(() => import(/* webpackChunkName: "troupeau-bande-detail" */ './features/troupeau/BandeDetailView'));
 const RapportFinancierView = React.lazy(() => import(/* webpackChunkName: "pilotage-rapport" */ './features/pilotage/RapportFinancierView'));
 const ForecastView = React.lazy(() => import(/* webpackChunkName: "pilotage-previsions" */ './features/pilotage/ForecastView'));
 
@@ -133,7 +134,7 @@ const AppContent = () => {
           <Route path="/troupeau/truies/:id" element={<AnimalDetailView mode="TRUIE" />} />
           <Route path="/troupeau/verrats/:id" element={<AnimalDetailView mode="VERRAT" />} />
           <Route path="/troupeau/bandes" element={<BandesView />} />
-          <Route path="/troupeau/bandes/:bandeId" element={<BandesView />} />
+          <Route path="/troupeau/bandes/:bandeId" element={<BandeDetailView />} />
 
           {/* ── Cycles sub-routes (Sprint 2 livrés — vues opérationnelles) ─ */}
           <Route path="/cycles/repro" element={<ReproCalendarView />} />
