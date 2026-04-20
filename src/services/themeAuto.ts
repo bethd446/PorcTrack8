@@ -9,6 +9,14 @@
 export type ThemeMode = 'auto' | 'day' | 'night';
 export type ResolvedTheme = 'day' | 'night';
 
+/**
+ * Variante de palette (orthogonale au mode jour/nuit).
+ * - 'emerald'    : palette par défaut historique (vert émeraude).
+ * - 'terracotta' : variante chaude (clay/mediterranean), activée via la
+ *                  classe `.theme-terracotta` sur <html>.
+ */
+export type ThemeVariant = 'emerald' | 'terracotta';
+
 /** Heure (incluse) à partir de laquelle le mode auto bascule en JOUR. */
 const DAY_START_HOUR = 6;
 /** Heure (exclue) à partir de laquelle le mode auto bascule en NUIT. */
@@ -36,6 +44,17 @@ export function applyTheme(theme: ResolvedTheme): void {
   const html = document.documentElement;
   html.classList.toggle('theme-day', theme === 'day');
   html.classList.toggle('theme-night', theme === 'night');
+}
+
+/**
+ * Applique la variante de palette sur <html> via la classe
+ * `.theme-terracotta`. L'émeraude est le défaut : aucune classe posée =
+ * émeraude (theme-tokens.css). Opération live, sans reload.
+ */
+export function applyThemeVariant(variant: ThemeVariant): void {
+  if (typeof document === 'undefined') return;
+  const html = document.documentElement;
+  html.classList.toggle('theme-terracotta', variant === 'terracotta');
 }
 
 /**

@@ -21,44 +21,46 @@ import {
   HubTile, SectionDivider, SparklineCard,
 } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
-
-type PeriodeKey = '7J' | '30J' | '90J' | '1A';
+import {
+  computeSevresParPortee,
+  computeMortalitePorcelets,
+  computeIndiceConso,
+  computeCyclesReussis,
+  type PeriodeKey,
+} from '../../services/perfKpiAnalyzer';
 
 const PilotageHub: React.FC = () => {
-  const { criticalAlertCount, alertesServeur, finances } = useFarm();
+  const {
+    criticalAlertCount,
+    alertesServeur,
+    finances,
+    truies,
+    bandes,
+    stockAliment,
+  } = useFarm();
   const [periode, setPeriode] = useState<PeriodeKey>('30J');
 
   // Nombre de transactions récentes pour le count du HubTile Finances
   const nbTransactions = useMemo(() => finances.length, [finances]);
 
-  // Sparkline data (mock-réaliste — à remplacer par computePerf quand dispo)
-  const sparkData = useMemo(() => {
-    const base = {
-      '7J':  7,
-      '30J': 30,
-      '90J': 90,
-      '1A':  365,
-    }[periode];
-    const steps = Math.min(base, 7);
-    return {
-      sevresPortee: Array.from({ length: steps }, (_, i) => ({
-        x: i,
-        y: 10.2 + i * 0.2 + (Math.random() - 0.5) * 0.3,
-      })),
-      mortalite: Array.from({ length: steps }, (_, i) => ({
-        x: i,
-        y: 6.0 - i * 0.28 + (Math.random() - 0.5) * 0.2,
-      })),
-      ic: Array.from({ length: steps }, (_, i) => ({
-        x: i,
-        y: 2.70 + i * 0.025 + (Math.random() - 0.5) * 0.03,
-      })),
-      cyclesReussis: Array.from({ length: steps }, (_, i) => ({
-        x: i,
-        y: 85 + i * 1.2 + (Math.random() - 0.5) * 0.8,
-      })),
-    };
-  }, [periode]);
+  // KPI performance — calculs réels via perfKpiAnalyzer
+  // Dépendances : données brutes + période → recompute auto au switch de tab
+  const kpiSevres = useMemo(
+    () => computeSevresParPortee(bandes, periode),
+    [bandes, periode],
+  );
+  const kpiMortalite = useMemo(
+    () => computeMortalitePorcelets(bandes, periode),
+    [bandes, periode],
+  );
+  const kpiIC = useMemo(
+    () => computeIndiceConso(bandes, stockAliment, periode),
+    [bandes, stockAliment, periode],
+  );
+  const kpiCycles = useMemo(
+    () => computeCyclesReussis(truies, bandes, periode),
+    [truies, bandes, periode],
+  );
 
   const totalAlertes = criticalAlertCount + alertesServeur.length;
 
@@ -150,32 +152,32 @@ const PilotageHub: React.FC = () => {
               <div className="flex flex-col gap-2.5">
                 <SparklineCard
                   label="Sevrés / portée"
-                  value="11.4"
-                  data={sparkData.sevresPortee}
-                  delta={+5}
+                  value={kpiSevres.value.toFixed(1)}
+                  data={kpiSevres.series}
+                  delta={kpiSevres.delta}
                   tone="accent"
                 />
                 <SparklineCard
                   label="Mortalité porcelets"
-                  value="4.2"
+                  value={kpiMortalite.value.toFixed(1)}
                   unit="%"
-                  data={sparkData.mortalite}
-                  delta={-18}
+                  data={kpiMortalite.series}
+                  delta={kpiMortalite.delta}
                   tone="blue"
                 />
                 <SparklineCard
                   label="Indice conso. (IC)"
-                  value="2.85"
-                  data={sparkData.ic}
-                  delta={+1}
+                  value={kpiIC.value.toFixed(2)}
+                  data={kpiIC.series}
+                  delta={kpiIC.delta}
                   tone="amber"
                 />
                 <SparklineCard
                   label="Cycles réussis"
-                  value="92"
+                  value={kpiCycles.value.toFixed(0)}
                   unit="%"
-                  data={sparkData.cyclesReussis}
-                  delta={+3}
+                  data={kpiCycles.series}
+                  delta={kpiCycles.delta}
                   tone="gold"
                 />
               </div>

@@ -203,14 +203,6 @@ const NavTab: React.FC<NavTabProps> = ({ tab, isActive, onSelect }) => {
   const { Icon, label, accent, path } = tab;
   return (
     <li className="relative" role="presentation">
-      {/* Indicateur top (barre 2px width 20px, centré, même couleur accent) */}
-      {isActive && (
-        <span
-          aria-hidden="true"
-          className="absolute left-1/2 -translate-x-1/2 top-0 h-[2px] w-5 rounded-full transition-snappy"
-          style={{ backgroundColor: accent }}
-        />
-      )}
       <button
         type="button"
         role="tab"
@@ -219,30 +211,33 @@ const NavTab: React.FC<NavTabProps> = ({ tab, isActive, onSelect }) => {
         aria-label={label}
         onClick={() => onSelect(path)}
         className={cn(
-          'pressable flex h-full w-full flex-col items-center justify-center gap-1 px-1',
+          'pressable flex h-full w-full flex-col items-center justify-center gap-1 px-1 min-h-[56px]',
           'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px]',
-          isActive ? 'bg-bg-1' : ''
         )}
-        style={
-          isActive
-            ? ({
-                outlineColor: accent,
-                borderTop: `1px solid ${accent}33`,
-              } as React.CSSProperties)
-            : undefined
-        }
+        style={isActive ? ({ outlineColor: accent } as React.CSSProperties) : undefined}
       >
-        <Icon
-          size={20}
-          strokeWidth={isActive ? 2.2 : 1.7}
-          className="block transition-snappy"
-          style={{ color: isActive ? accent : 'var(--color-text-2)' }}
-        />
+        {/* Capsule tintée (18% accent) derrière l'icône quand actif */}
         <span
-          className={cn(
-            'font-mono text-[10.5px] font-semibold uppercase tracking-wide leading-none transition-snappy'
-          )}
-          style={{ color: isActive ? accent : 'var(--color-text-2)' }}
+          aria-hidden="true"
+          className="flex items-center justify-center rounded-full transition-[background-color] duration-[220ms]"
+          style={{
+            width: 50,
+            height: 28,
+            background: isActive
+              ? `color-mix(in srgb, ${accent} 18%, transparent)`
+              : 'transparent',
+          }}
+        >
+          <Icon
+            size={20}
+            strokeWidth={isActive ? 2.2 : 1.7}
+            className="block transition-[color] duration-[180ms]"
+            style={{ color: isActive ? accent : 'var(--color-text-2)' }}
+          />
+        </span>
+        <span
+          className="font-mono text-[9px] font-semibold uppercase tracking-[0.06em] leading-none transition-[color] duration-[180ms]"
+          style={{ color: isActive ? 'var(--color-text-0)' : 'var(--color-text-2)' }}
         >
           {label}
         </span>
@@ -322,14 +317,21 @@ const AgritechNavV2: React.FC = () => {
   return (
     <>
       <nav
-        className="fixed bottom-0 left-0 right-0 z-[1000] bg-bg-0 border-t border-border"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        className="fixed bottom-0 left-0 right-0 z-[1000]"
+        style={{
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          background: 'color-mix(in srgb, var(--bg-1) 92%, transparent)',
+          backdropFilter: 'blur(18px) saturate(140%)',
+          WebkitBackdropFilter: 'blur(18px) saturate(140%)',
+          boxShadow: '0 -1px 0 var(--border), 0 -14px 32px rgba(0,0,0,0.28)',
+        }}
         aria-label="Navigation principale"
       >
         <ul
           role="tablist"
           aria-label="Onglets principaux"
-          className="grid grid-cols-5 h-16"
+          className="grid grid-cols-5"
+          style={{ padding: '8px 4px 6px' }}
         >
           {TABS.map((tab) => (
             <NavTab

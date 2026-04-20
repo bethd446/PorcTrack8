@@ -8,6 +8,12 @@
    référence les --bg-0, --text-0, etc. via var(). ───────────────────────── */
 @import "./styles/theme-tokens.css";
 
+/* ── Variante terracotta (opt-in via <html class="theme-terracotta">) ─────
+   Neutre par défaut (aucune règle hors `.theme-terracotta`). Active la
+   palette terracotta quand l'utilisateur bascule via Réglages > Apparence.
+   ──────────────────────────────────────────────────────────────────────── */
+@import "./styles/theme-terracotta.css";
+
 /* ── Agritech Moderne overlay (dark cockpit tokens + utilities) ────────────
    Additive system — cohabite avec les classes .premium-* / .ft-* ci-dessous.
    ──────────────────────────────────────────────────────────────────────── */

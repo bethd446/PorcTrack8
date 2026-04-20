@@ -17,8 +17,12 @@ import {
   computeIEMMoyen,
   computeTauxMB,
   computeTauxRenouvellement,
+  computeSevresParPortee,
+  computeMortalitePorcelets,
+  computeIndiceConso,
+  computeCyclesReussis,
 } from './perfKpiAnalyzer';
-import type { Truie, BandePorcelets, Saillie } from '../types/farm';
+import type { Truie, BandePorcelets, Saillie, StockAliment } from '../types/farm';
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -497,5 +501,117 @@ describe('computeGlobalKpis — KPI repro avancés intégrés', () => {
     expect(kpis.nbSaillies12m).toBe(0);
     expect(kpis.nbMB12m).toBe(0);
     expect(kpis.nbTruiesAvecMBMultiples).toBe(0);
+  });
+});
+
+// ─── Sparkline KPIs PilotageHub ─────────────────────────────────────────────
+
+describe('computeSevresParPortee', () => {
+  it('happy path : moyenne vivants par portée sevrée sur la période 90J', () => {
+    // TODAY = 15/06/2025 → fenêtre 90J = [17/03/2025, 15/06/2025]
+    const bandes: BandePorcelets[] = [
+      // 2 portées sevrées dans la période : vivants 11 + 13 → moy 12
+      makeBande({ truie: 'T01', dateMB: '01/04/2025', dateSevrageReelle: '22/04/2025', nv: 12, morts: 1, vivants: 11 }),
+      makeBande({ truie: 'T02', dateMB: '01/05/2025', dateSevrageReelle: '22/05/2025', nv: 14, morts: 1, vivants: 13 }),
+      // 1 portée hors fenêtre (avant) → ignorée
+      makeBande({ truie: 'T03', dateMB: '01/01/2025', dateSevrageReelle: '22/01/2025', nv: 10, morts: 0, vivants: 10 }),
+      // 1 portée dans la fenêtre mais pas encore sevrée → ignorée
+      makeBande({ truie: 'T04', dateMB: '10/06/2025', nv: 11, morts: 0, vivants: 11 }),
+    ];
+    const result = computeSevresParPortee(bandes, '90J', TODAY);
+    expect(result.value).toBeCloseTo(12, 1);
+    expect(result.series).toHaveLength(7);
+    // Chaque bucket a x = son index
+    result.series.forEach((p, i) => expect(p.x).toBe(i));
+    // Toutes les valeurs y sont des nombres finis
+    result.series.forEach(p => expect(Number.isFinite(p.y)).toBe(true));
+  });
+
+  it('edge 0 data → value=0, delta=0, série de 7 zéros', () => {
+    const result = computeSevresParPortee([], '30J', TODAY);
+    expect(result.value).toBe(0);
+    expect(result.delta).toBe(0);
+    expect(result.series).toHaveLength(7);
+    expect(result.series.every(p => p.y === 0)).toBe(true);
+  });
+});
+
+describe('computeMortalitePorcelets', () => {
+  it('happy path : mortalité agrégée = morts / (morts+vivants) × 100', () => {
+    // Période 30J = [16/05/2025, 15/06/2025]
+    const bandes: BandePorcelets[] = [
+      // 2 morts + 8 vivants = 10 → 20%
+      makeBande({ truie: 'T01', dateMB: '20/05/2025', nv: 10, morts: 2, vivants: 8 }),
+      // 3 morts + 7 vivants = 10 → 30%
+      makeBande({ truie: 'T02', dateMB: '01/06/2025', nv: 10, morts: 3, vivants: 7 }),
+      // Hors fenêtre
+      makeBande({ truie: 'T03', dateMB: '01/01/2025', nv: 10, morts: 1, vivants: 9 }),
+    ];
+    const result = computeMortalitePorcelets(bandes, '30J', TODAY);
+    // (2+3) / (2+3+8+7) × 100 = 5/20 × 100 = 25
+    expect(result.value).toBeCloseTo(25, 1);
+    expect(result.series).toHaveLength(7);
+  });
+
+  it('edge 0 data → 0% mortalité, série constante à 0', () => {
+    const result = computeMortalitePorcelets([], '7J', TODAY);
+    expect(result.value).toBe(0);
+    expect(result.delta).toBe(0);
+    expect(result.series).toHaveLength(7);
+    expect(result.series.every(p => p.y === 0)).toBe(true);
+  });
+});
+
+describe('computeIndiceConso', () => {
+  it('sans données de pesée → retourne IC par défaut 2.85 constant', () => {
+    const bandes: BandePorcelets[] = [
+      makeBande({ truie: 'T01', dateMB: '01/06/2025', nv: 12, morts: 1, vivants: 11 }),
+    ];
+    const stock: StockAliment[] = [
+      { id: 'A01', libelle: 'Croissance', stockActuel: 500, unite: 'kg', seuilAlerte: 100, statutStock: 'OK' },
+    ];
+    const result = computeIndiceConso(bandes, stock, '30J', TODAY);
+    expect(result.value).toBeCloseTo(2.85, 2);
+    expect(result.delta).toBe(0);
+    expect(result.series).toHaveLength(7);
+    expect(result.series.every(p => p.y === 2.85)).toBe(true);
+  });
+
+  it('edge 0 bandes + 0 stock → IC par défaut, pas de crash', () => {
+    const result = computeIndiceConso([], [], '1A', TODAY);
+    expect(result.value).toBeCloseTo(2.85, 2);
+    expect(result.series).toHaveLength(7);
+    expect(Number.isFinite(result.value)).toBe(true);
+  });
+});
+
+describe('computeCyclesReussis', () => {
+  it('happy path : 3 portées dont 2 avec ≥1 vivant → 66.7%', () => {
+    const truies: Truie[] = [
+      makeTruie({ id: 'T01', boucle: 'B01' }),
+      makeTruie({ id: 'T02', boucle: 'B02' }),
+      makeTruie({ id: 'T03', boucle: 'B03' }),
+    ];
+    const bandes: BandePorcelets[] = [
+      // Réussie : nv=12, vivants=11
+      makeBande({ truie: 'T01', dateMB: '01/04/2025', nv: 12, morts: 1, vivants: 11 }),
+      // Réussie : nv=10, vivants=10
+      makeBande({ truie: 'T02', dateMB: '15/05/2025', nv: 10, morts: 0, vivants: 10 }),
+      // Échouée : mortinatalité totale (vivants=0)
+      makeBande({ truie: 'T03', dateMB: '01/06/2025', nv: 8, morts: 8, vivants: 0 }),
+    ];
+    const result = computeCyclesReussis(truies, bandes, '90J', TODAY);
+    // 2/3 = 66.666... → arrondi 1 décimale = 66.7
+    expect(result.value).toBeCloseTo(66.7, 1);
+    expect(result.series).toHaveLength(7);
+    result.series.forEach((p, i) => expect(p.x).toBe(i));
+  });
+
+  it('edge 0 data → 0% et série vide (que des 0)', () => {
+    const result = computeCyclesReussis([], [], '30J', TODAY);
+    expect(result.value).toBe(0);
+    expect(result.delta).toBe(0);
+    expect(result.series).toHaveLength(7);
+    expect(result.series.every(p => p.y === 0)).toBe(true);
   });
 });

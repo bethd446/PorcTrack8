@@ -12,7 +12,7 @@ import AgritechLayout from './AgritechLayout';
 import AgritechHeader from './AgritechHeader';
 import { HubTile, SectionDivider, Chip } from './agritech';
 import { useTheme } from '../context/ThemeContext';
-import type { ThemeMode } from '../services/themeAuto';
+import type { ThemeMode, ThemeVariant } from '../services/themeAuto';
 import { useNavigate } from 'react-router-dom';
 import { isDebugEnabled, setDebugEnabled, APP_VERSION } from '../config';
 import { getQueueStatus } from '../services/offlineQueue';
@@ -36,7 +36,13 @@ export const SettingsPage: React.FC = () => {
   const [debug, setDebug] = useState(isDebugEnabled());
   const [whatsapp, setWhatsapp] = useState<string>(getSupportWhatsapp());
   const [whatsappSaved, setWhatsappSaved] = useState(false);
-  const { mode: themeMode, resolved: themeResolved, setMode: setThemeMode } = useTheme();
+  const {
+    mode: themeMode,
+    resolved: themeResolved,
+    setMode: setThemeMode,
+    variant: themeVariant,
+    setVariant: setThemeVariant,
+  } = useTheme();
 
   const pendingCount = getQueueStatus().pending;
 
@@ -207,6 +213,43 @@ export const SettingsPage: React.FC = () => {
                   </div>
                   <p className="text-[11px] text-text-2 mt-2">
                     Auto : jour 6h-19h, nuit sinon.
+                  </p>
+                </div>
+
+                {/* ── Variante de palette (dev / exploration) ──────────── */}
+                <div className="border-t border-border px-4 py-4">
+                  <p className="kpi-label mb-3">
+                    Thème · {themeVariant === 'terracotta' ? 'Terracotta' : 'Émeraude'}
+                  </p>
+                  <div
+                    role="radiogroup"
+                    aria-label="Variante de palette"
+                    className="grid grid-cols-2 gap-2"
+                  >
+                    {(['emerald', 'terracotta'] as ThemeVariant[]).map((v) => {
+                      const active = themeVariant === v;
+                      const label = v === 'emerald' ? 'Émeraude' : 'Terracotta';
+                      return (
+                        <button
+                          key={v}
+                          type="button"
+                          role="radio"
+                          aria-checked={active}
+                          onClick={() => setThemeVariant(v)}
+                          className={
+                            'pressable h-11 rounded-md font-mono text-[12px] uppercase tracking-wide transition-colors ' +
+                            (active
+                              ? 'bg-accent text-bg-0'
+                              : 'bg-bg-1 border border-border text-text-1 hover:bg-bg-2')
+                          }
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[11px] text-text-2 mt-2">
+                    Variante expérimentale — change uniquement les couleurs d'accent.
                   </p>
                 </div>
               </div>

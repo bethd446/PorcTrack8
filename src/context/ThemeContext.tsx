@@ -25,10 +25,12 @@ import { kvGet, kvSet } from '../services/kvStore';
 import { logger } from '../services/logger';
 import {
   applyTheme,
+  applyThemeVariant,
   msUntilNextSwitch,
   resolveTheme,
   type ResolvedTheme,
   type ThemeMode,
+  type ThemeVariant,
 } from '../services/themeAuto';
 
 interface ThemeContextValue {
@@ -38,11 +40,16 @@ interface ThemeContextValue {
   resolved: ResolvedTheme;
   /** Change le mode et persiste dans kvStore. */
   setMode: (m: ThemeMode) => void;
+  /** Variante de palette persistée ('emerald' | 'terracotta'). */
+  variant: ThemeVariant;
+  /** Change la variante et persiste dans kvStore (clé `theme_variant`). */
+  setVariant: (v: ThemeVariant) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 const MODE_KEY = 'theme_mode';
+const VARIANT_KEY = 'theme_variant';
 const SCOPE = 'ThemeContext';
 
 function readInitialMode(): ThemeMode {
@@ -55,10 +62,22 @@ function readInitialMode(): ThemeMode {
   return 'auto';
 }
 
+function readInitialVariant(): ThemeVariant {
+  try {
+    const raw = kvGet(VARIANT_KEY);
+    if (raw === 'emerald' || raw === 'terracotta') return raw;
+  } catch (e) {
+    logger.warn(SCOPE, 'readInitialVariant failed', e);
+  }
+  return 'emerald';
+}
+
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const initialMode = readInitialMode();
+  const initialVariant = readInitialVariant();
   const [mode, setModeState] = useState<ThemeMode>(initialMode);
   const [resolved, setResolved] = useState<ResolvedTheme>(resolveTheme(initialMode));
+  const [variant, setVariantState] = useState<ThemeVariant>(initialVariant);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Applique le thème sur <html> à chaque changement de `resolved`.
@@ -66,10 +85,20 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     applyTheme(resolved);
   }, [resolved]);
 
+  // Applique la variante de palette (.theme-terracotta) à chaque changement.
+  useEffect(() => {
+    applyThemeVariant(variant);
+  }, [variant]);
+
   const setMode = useCallback((m: ThemeMode): void => {
     setModeState(m);
     void kvSet(MODE_KEY, m).catch((e) => logger.warn(SCOPE, 'kvSet theme_mode failed', e));
     setResolved(resolveTheme(m));
+  }, []);
+
+  const setVariant = useCallback((v: ThemeVariant): void => {
+    setVariantState(v);
+    void kvSet(VARIANT_KEY, v).catch((e) => logger.warn(SCOPE, 'kvSet theme_variant failed', e));
   }, []);
 
   // En mode 'auto', reprogramme un timer pour re-évaluer au prochain switch.
@@ -94,7 +123,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, [mode, resolved]);
 
   return (
-    <ThemeContext.Provider value={{ mode, resolved, setMode }}>
+    <ThemeContext.Provider value={{ mode, resolved, setMode, variant, setVariant }}>
       {children}
     </ThemeContext.Provider>
   );

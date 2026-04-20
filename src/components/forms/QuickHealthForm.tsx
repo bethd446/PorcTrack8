@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { IonSpinner, IonToast, IonSelect, IonSelectOption } from '@ionic/react';
 import { Stethoscope, Send } from 'lucide-react';
-import { appendRow } from '../../services/googleSheets';
+import { enqueueAppendRow } from '../../services/offlineQueue';
 
 /**
  * QuickHealthForm — Saisie rapide d'une intervention santé (Agritech Dark)
@@ -59,16 +59,16 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
         localStorage.getItem('user_name') || 'Anonyme',
       ];
 
-      const res = await appendRow('JOURNAL_SANTE', values);
-      if (res.success) {
-        setFormData({ type: 'Traitement', soin: '', obs: '' });
-        setToast({ show: true, message: 'Soin enregistré avec succès' });
-        if (onSuccess) onSuccess();
-      } else {
-        setToast({ show: true, message: 'Erreur: ' + res.message });
-      }
+      await enqueueAppendRow('JOURNAL_SANTE', values);
+      setFormData({ type: 'Traitement', soin: '', obs: '' });
+      const online = typeof navigator !== 'undefined' && navigator.onLine;
+      setToast({
+        show: true,
+        message: online ? 'Soin enregistré' : 'Soin mis en file · sync auto',
+      });
+      if (onSuccess) onSuccess();
     } catch {
-      setToast({ show: true, message: 'Erreur réseau' });
+      setToast({ show: true, message: 'Erreur enregistrement local' });
     } finally {
       setLoading(false);
     }

@@ -17,6 +17,7 @@ import type {
   Truie,
   BandePorcelets,
   Saillie,
+  StockAliment,
   TruiePerformance,
 } from '../types/farm';
 import { computeTruiePerformance, findPorteesForTruie } from './performanceAnalyzer';
@@ -589,4 +590,338 @@ export function detectTruiesAReformer(
   }
 
   return out;
+}
+
+// ─── KPI sparklines PilotageHub (période 7J/30J/90J/1A) ─────────────────────
+//
+// Ces fonctions alimentent les 4 SparklineCard du tab Pilotage.
+// Pour chaque KPI on retourne :
+//   • value  — agrégat sur la période courante
+//   • delta  — % variation vs période précédente équivalente
+//   • series — 7 points répartis sur la période (pour la mini-courbe)
+//
+// Principe : on découpe la période en 7 buckets de largeur égale, on agrège
+// par bucket, puis on compare la somme/moyenne des 7 buckets au même calcul
+// sur la période précédente (même durée, décalée en arrière).
+
+/** Clés de période supportées par le sélecteur Pilotage. */
+export type PeriodeKey = '7J' | '30J' | '90J' | '1A';
+
+/** Point de la mini-courbe — x = index 0-6, y = valeur du bucket. */
+export interface KpiSparkPoint {
+  x: number;
+  y: number;
+}
+
+/** Structure standard renvoyée par chaque computePerf*. */
+export interface KpiSparkline {
+  /** Valeur agrégée sur la période courante (arrondie 1 décimale). */
+  value: number;
+  /** Variation % vs période précédente (arrondie entier). 0 si pas de comparatif. */
+  delta: number;
+  /** 7 points répartis sur la période (bucket 0 = plus ancien, bucket 6 = le plus récent). */
+  series: KpiSparkPoint[];
+}
+
+/** Nombre de points dans la sparkline. Figé à 7 pour un rendu lisible. */
+const SPARK_POINTS = 7;
+
+/** IC technique par défaut retourné quand les données pesées manquent (GTTT naisseur-engraisseur). */
+const IC_PAR_DEFAUT = 2.85;
+
+/** Jours couverts par chaque période. */
+const PERIODE_JOURS: Record<PeriodeKey, number> = {
+  '7J': 7,
+  '30J': 30,
+  '90J': 90,
+  '1A': 365,
+};
+
+/** Retourne le nombre de jours d'une période. Export pour tests. */
+export function getPeriodeDays(p: PeriodeKey): number {
+  return PERIODE_JOURS[p];
+}
+
+/**
+ * Calcule la variation % entre `current` et `previous`.
+ * Conventions :
+ *   • previous = 0 & current = 0 → 0
+ *   • previous = 0 & current > 0 → +100 (évite Infinity)
+ *   • previous > 0 → ((current - previous) / previous) × 100, arrondi entier
+ */
+function computeDelta(current: number, previous: number): number {
+  if (previous === 0) {
+    if (current === 0) return 0;
+    return 100;
+  }
+  return Math.round(((current - previous) / previous) * 100);
+}
+
+/**
+ * Découpe une fenêtre temporelle [start, end) en N buckets de largeur égale.
+ * Retourne la liste des bornes : [{start, end}, ...] de taille N.
+ */
+function makeBuckets(
+  startTs: number,
+  endTs: number,
+  n: number,
+): Array<{ start: number; end: number }> {
+  const width = (endTs - startTs) / n;
+  const out: Array<{ start: number; end: number }> = [];
+  for (let i = 0; i < n; i += 1) {
+    out.push({ start: startTs + i * width, end: startTs + (i + 1) * width });
+  }
+  return out;
+}
+
+/**
+ * Filtre les bandes avec une `dateMB` parsable dans [startTs, endTs].
+ */
+function bandesInRange(
+  bandes: BandePorcelets[],
+  startTs: number,
+  endTs: number,
+): BandePorcelets[] {
+  const out: BandePorcelets[] = [];
+  for (const b of bandes) {
+    const ts = parseFr(b.dateMB);
+    if (ts > 0 && ts >= startTs && ts <= endTs) out.push(b);
+  }
+  return out;
+}
+
+// ── 1. Sevrés / portée ──────────────────────────────────────────────────────
+
+/**
+ * Moyenne de porcelets vivants par portée sevrée sur la période.
+ *
+ * Une portée compte comme "sevrée" si `dateSevrageReelle` est renseignée ;
+ * dans ce cas on additionne `vivants` (ou à défaut `nv - morts`). La date
+ * de référence pour le bucket est `dateMB` — moment où la portée est née,
+ * plus stable que la date de sevrage pour répartir 7 buckets sur la période.
+ *
+ * Retourne `{ value, delta, series }` avec value = moyenne sur la période
+ * courante, delta = % vs période précédente (même durée décalée), series =
+ * moyenne par bucket (7 points).
+ */
+export function computeSevresParPortee(
+  bandes: BandePorcelets[],
+  periode: PeriodeKey,
+  today: Date = new Date(),
+): KpiSparkline {
+  const days = PERIODE_JOURS[periode];
+  const nowTs = today.getTime();
+  const startTs = nowTs - days * 86_400_000;
+  const prevStartTs = nowTs - 2 * days * 86_400_000;
+
+  const moyenneSevres = (range: BandePorcelets[]): number => {
+    let total = 0;
+    let n = 0;
+    for (const b of range) {
+      if (!b.dateSevrageReelle) continue;
+      const v = typeof b.vivants === 'number'
+        ? b.vivants
+        : (b.nv ?? 0) - (b.morts ?? 0);
+      total += v;
+      n += 1;
+    }
+    return n > 0 ? total / n : 0;
+  };
+
+  const current = bandesInRange(bandes, startTs, nowTs);
+  const previous = bandesInRange(bandes, prevStartTs, startTs);
+
+  const value = round1(moyenneSevres(current));
+  const prevValue = moyenneSevres(previous);
+  const delta = computeDelta(value, prevValue);
+
+  const buckets = makeBuckets(startTs, nowTs, SPARK_POINTS);
+  const series: KpiSparkPoint[] = buckets.map((b, i) => {
+    const subset = current.filter(p => {
+      const ts = parseFr(p.dateMB);
+      return ts >= b.start && ts < b.end;
+    });
+    return { x: i, y: round1(moyenneSevres(subset)) };
+  });
+
+  return { value, delta, series };
+}
+
+// ── 2. Mortalité porcelets (%) ──────────────────────────────────────────────
+
+/**
+ * % porcelets morts sur total nés (NV + morts … mais ici `nv` inclut souvent
+ * les morts-nés selon la saisie ; pour rester compatible avec la convention
+ * de `performanceAnalyzer` on utilise `morts / (vivants + morts) × 100` —
+ * c'est le taux de mortalité "périnatale+lactation" observé sur la portée.
+ *
+ * Bucket par `dateMB`. Retourne `{ value, delta, series }`.
+ */
+export function computeMortalitePorcelets(
+  bandes: BandePorcelets[],
+  periode: PeriodeKey,
+  today: Date = new Date(),
+): KpiSparkline {
+  const days = PERIODE_JOURS[periode];
+  const nowTs = today.getTime();
+  const startTs = nowTs - days * 86_400_000;
+  const prevStartTs = nowTs - 2 * days * 86_400_000;
+
+  const mortalitePct = (range: BandePorcelets[]): number => {
+    let morts = 0;
+    let vivants = 0;
+    for (const b of range) {
+      morts += b.morts ?? 0;
+      vivants += b.vivants ?? 0;
+    }
+    const total = morts + vivants;
+    return total > 0 ? (morts * 100) / total : 0;
+  };
+
+  const current = bandesInRange(bandes, startTs, nowTs);
+  const previous = bandesInRange(bandes, prevStartTs, startTs);
+
+  const value = round1(mortalitePct(current));
+  const prevValue = mortalitePct(previous);
+  const delta = computeDelta(value, prevValue);
+
+  const buckets = makeBuckets(startTs, nowTs, SPARK_POINTS);
+  const series: KpiSparkPoint[] = buckets.map((b, i) => {
+    const subset = current.filter(p => {
+      const ts = parseFr(p.dateMB);
+      return ts >= b.start && ts < b.end;
+    });
+    return { x: i, y: round1(mortalitePct(subset)) };
+  });
+
+  return { value, delta, series };
+}
+
+// ── 3. Indice de consommation (kg aliment / kg gain) ────────────────────────
+
+/**
+ * IC = consommation aliment (kg) / gain de poids (kg).
+ *
+ * Limitation : nos données ne contiennent ni le poids à la naissance/sevrage
+ * ni le stock consommé. On utilise donc :
+ *   • numérateur = variation (non disponible) → on prend le stock actuel
+ *     comme proxy d'engagement, mais sans historique on ne peut que
+ *     retourner une valeur de référence.
+ *   • dénominateur = gain moyen supposé (GMQ standard 0.35 kg/j × âge).
+ *
+ * Décision pragmatique : retourne IC_PAR_DEFAUT (2.85) avec une série
+ * constante lorsque les données sont insuffisantes. Dès qu'un historique
+ * pesée/consommation est saisi dans Sheets, cette fonction sera étendue.
+ *
+ * Le delta est calculé sur la variation de stock (si > 1 point dispo)
+ * comme proxy grossier de la dynamique de consommation.
+ */
+export function computeIndiceConso(
+  bandes: BandePorcelets[],
+  _stockAliment: StockAliment[],
+  periode: PeriodeKey,
+  today: Date = new Date(),
+): KpiSparkline {
+  const days = PERIODE_JOURS[periode];
+  const nowTs = today.getTime();
+  const startTs = nowTs - days * 86_400_000;
+
+  // Hook d'extension : si un champ `aliment_consomme_kg` + `gain_poids_kg`
+  // devient dispo sur BandePorcelets, l'utiliser ici. Sinon → IC standard.
+  const current = bandesInRange(bandes, startTs, nowTs);
+  const hasFeedData = current.some(b => {
+    const r = b as unknown as Record<string, unknown>;
+    return typeof r.alimentConsommeKg === 'number' && typeof r.gainPoidsKg === 'number';
+  });
+
+  if (!hasFeedData) {
+    const series: KpiSparkPoint[] = Array.from({ length: SPARK_POINTS }, (_, i) => ({
+      x: i,
+      y: IC_PAR_DEFAUT,
+    }));
+    return { value: IC_PAR_DEFAUT, delta: 0, series };
+  }
+
+  // Branche active si data pesée dispo (cas futur).
+  const icForRange = (range: BandePorcelets[]): number => {
+    let aliment = 0;
+    let gain = 0;
+    for (const b of range) {
+      const r = b as unknown as Record<string, unknown>;
+      aliment += (r.alimentConsommeKg as number) ?? 0;
+      gain += (r.gainPoidsKg as number) ?? 0;
+    }
+    return gain > 0 ? aliment / gain : IC_PAR_DEFAUT;
+  };
+
+  const prevStartTs = nowTs - 2 * days * 86_400_000;
+  const previous = bandesInRange(bandes, prevStartTs, startTs);
+  const value = round1(icForRange(current));
+  const prevValue = icForRange(previous);
+  const delta = computeDelta(value, prevValue);
+
+  const buckets = makeBuckets(startTs, nowTs, SPARK_POINTS);
+  const series: KpiSparkPoint[] = buckets.map((b, i) => {
+    const subset = current.filter(p => {
+      const ts = parseFr(p.dateMB);
+      return ts >= b.start && ts < b.end;
+    });
+    return { x: i, y: round1(icForRange(subset)) };
+  });
+
+  return { value, delta, series };
+}
+
+// ── 4. Cycles réussis (%) ───────────────────────────────────────────────────
+
+/**
+ * % truies pleines revenues à terme avec ≥ 1 porcelet vivant.
+ *
+ * Cycle réussi = portée dans la période avec `nv > 0` ET `vivants ≥ 1`
+ *                (on exige au moins 1 vivant à la MB).
+ * Cycle échoué = portée dans la période avec vivants = 0 (mortinatalité
+ *                totale) OU nv = 0.
+ *
+ * Bucket par `dateMB`. `truies` n'est pas utilisé pour le calcul direct
+ * (la base est la portée née dans la période) — mais exposé dans la
+ * signature pour rester cohérent avec le spec et autoriser une évolution
+ * (ex. pondération par truies actives).
+ */
+export function computeCyclesReussis(
+  _truies: Truie[],
+  bandes: BandePorcelets[],
+  periode: PeriodeKey,
+  today: Date = new Date(),
+): KpiSparkline {
+  const days = PERIODE_JOURS[periode];
+  const nowTs = today.getTime();
+  const startTs = nowTs - days * 86_400_000;
+  const prevStartTs = nowTs - 2 * days * 86_400_000;
+
+  const tauxReussiPct = (range: BandePorcelets[]): number => {
+    if (range.length === 0) return 0;
+    let reussis = 0;
+    for (const b of range) {
+      if ((b.nv ?? 0) > 0 && (b.vivants ?? 0) >= 1) reussis += 1;
+    }
+    return (reussis * 100) / range.length;
+  };
+
+  const current = bandesInRange(bandes, startTs, nowTs);
+  const previous = bandesInRange(bandes, prevStartTs, startTs);
+
+  const value = round1(tauxReussiPct(current));
+  const prevValue = tauxReussiPct(previous);
+  const delta = computeDelta(value, prevValue);
+
+  const buckets = makeBuckets(startTs, nowTs, SPARK_POINTS);
+  const series: KpiSparkPoint[] = buckets.map((b, i) => {
+    const subset = current.filter(p => {
+      const ts = parseFr(p.dateMB);
+      return ts >= b.start && ts < b.end;
+    });
+    return { x: i, y: round1(tauxReussiPct(subset)) };
+  });
+
+  return { value, delta, series };
 }

@@ -39,19 +39,55 @@ function BottomNav({ active, onChange }) {
   return (
     <div style={{
       position: 'absolute', bottom: 0, left: 0, right: 0,
-      background: 'var(--bg-1)', borderTop: '1px solid var(--border)',
+      background: 'color-mix(in srgb, var(--bg-1) 92%, transparent)',
+      backdropFilter: 'blur(18px) saturate(140%)',
+      WebkitBackdropFilter: 'blur(18px) saturate(140%)',
+      boxShadow: '0 -1px 0 var(--border), 0 -14px 32px rgba(0,0,0,0.28)',
       paddingBottom: 'max(8px, env(safe-area-inset-bottom))',
       zIndex: 5
     }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', alignItems: 'flex-end', padding: '10px 2px 6px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', alignItems: 'flex-end', padding: '8px 4px 6px' }}>
         {NAV_TABS.map(t => {
           const isActive = t.id === active;
           const c = isActive ? t.accent : 'var(--text-2)';
           return (
-            <button key={t.id} onClick={() => onChange(t.id)} className="pressable" style={{ background: 'transparent', border: 0, padding: '4px 2px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'pointer', position: 'relative', minHeight: 52 }}>
-              {isActive && <span style={{ position: 'absolute', top: -10, width: 28, height: 2, background: c, borderRadius: 2 }} />}
-              <Icon name={t.icon} size={22} stroke={isActive ? 2.2 : 1.7} color={c} />
-              <span className="ft-code" style={{ fontSize: 9.5, letterSpacing: '0.04em', color: c, textTransform: 'uppercase', fontWeight: isActive ? 600 : 500 }}>{t.label}</span>
+            <button
+              key={t.id}
+              onClick={() => onChange(t.id)}
+              className="pressable"
+              style={{
+                background: 'transparent', border: 0,
+                padding: '4px 2px',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                cursor: 'pointer', position: 'relative', minHeight: 56,
+              }}
+            >
+              {/* icon capsule — tinted background when active, blank when not */}
+              <span
+                style={{
+                  width: 50, height: 28,
+                  borderRadius: 14,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: isActive ? `color-mix(in srgb, ${t.accent} 18%, transparent)` : 'transparent',
+                  transition: 'background 220ms var(--ease-gentle)',
+                  position: 'relative',
+                }}
+              >
+                <Icon name={t.icon} size={20} stroke={isActive ? 2.2 : 1.7} color={c} />
+              </span>
+              <span
+                className="ft-code"
+                style={{
+                  fontSize: 9,
+                  letterSpacing: '0.06em',
+                  color: isActive ? 'var(--text-0)' : 'var(--text-2)',
+                  textTransform: 'uppercase',
+                  fontWeight: isActive ? 600 : 500,
+                  transition: 'color 180ms var(--ease-gentle)',
+                }}
+              >
+                {t.label}
+              </span>
             </button>
           );
         })}

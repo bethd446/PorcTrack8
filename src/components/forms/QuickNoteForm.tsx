@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { IonSpinner, IonToast } from '@ionic/react';
 import { Send, ClipboardList } from 'lucide-react';
-import { appendRow } from '../../services/googleSheets';
+import { enqueueAppendRow } from '../../services/offlineQueue';
 
 /**
  * QuickNoteForm — Saisie rapide d'une note terrain (Agritech Dark)
@@ -48,16 +48,16 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
         author,
       ];
 
-      const res = await appendRow('NOTES_TERRAIN', values);
-      if (res.success) {
-        setNote('');
-        setToast({ show: true, message: 'Note enregistrée avec succès' });
-        if (onSuccess) onSuccess();
-      } else {
-        setToast({ show: true, message: 'Erreur: ' + res.message });
-      }
+      await enqueueAppendRow('NOTES_TERRAIN', values);
+      setNote('');
+      const online = typeof navigator !== 'undefined' && navigator.onLine;
+      setToast({
+        show: true,
+        message: online ? 'Note enregistrée' : 'Note mise en file · sync auto',
+      });
+      if (onSuccess) onSuccess();
     } catch {
-      setToast({ show: true, message: 'Erreur réseau' });
+      setToast({ show: true, message: 'Erreur enregistrement local' });
     } finally {
       setLoading(false);
     }

@@ -1,0 +1,134 @@
+{
+  "timestamp": "2026-04-20T15:30:00Z",
+  "farm": "K13",
+  "source": {
+    "gasUrl": "https://script.google.com/macros/s/***/exec",
+    "hasToken": true,
+    "stale": false,
+    "note": "Snapshot assemblé à partir des dernières lectures GAS vérifiées (audit 2026-04-19, référence figée dans PROMPT_AGENT_V6_CURRENT.md et SHEETS_DATA_INTEGRITY.json). Node exec sandbox restreint : voir scripts/data-broker/build-snapshot.mjs pour régénération live."
+  },
+  "counts": {
+    "truies": 17,
+    "verrats": 2,
+    "portees": 14,
+    "porcelets_vivants": 149,
+    "stocks_aliment": 5,
+    "stocks_veto": 7,
+    "finances": 18,
+    "alertes": 12
+  },
+  "truies": [
+    { "id": "T01", "boucle": "B.22", "nom": "Monette",      "race": "", "statut": "En attente saillie", "stade": "Sevrée",         "emplacement": "", "ration": 6, "poids": null, "nbPortees": 1, "dateDerniereMB": "", "dateMBPrevue": "",           "derniereNV": 11, "notes": "Sevrage ~10/04" },
+    { "id": "T02", "boucle": "B.38", "nom": "Fillaou",      "race": "", "statut": "En attente saillie", "stade": "Sevrée",         "emplacement": "", "ration": 6, "poids": null, "nbPortees": 1, "dateDerniereMB": "", "dateMBPrevue": "",           "derniereNV": 14, "notes": "Sevrage ~10/04" },
+    { "id": "T03", "boucle": "B.23", "nom": "Pénélope",     "race": "", "statut": "En attente saillie", "stade": "Sevrée",         "emplacement": "", "ration": 6, "poids": null, "nbPortees": 1, "dateDerniereMB": "", "dateMBPrevue": "",           "derniereNV": 13, "notes": "Sevrage ~10/04" },
+    { "id": "T04", "boucle": "B.19", "nom": "Pistachette",  "race": "", "statut": "À surveiller",       "stade": "Surveillance",   "emplacement": "", "ration": 3, "poids": null, "nbPortees": 1, "dateDerniereMB": "", "dateMBPrevue": "",           "derniereNV": 0,  "notes": "Refus allaitement" },
+    { "id": "T05", "boucle": "B.20", "nom": "",             "race": "", "statut": "Pleine",             "stade": "Gestation",      "emplacement": "", "ration": 3, "poids": null, "nbPortees": 0, "dateDerniereMB": "18/03/2026", "dateMBPrevue": "11/07/2026", "derniereNV": 0,  "notes": "Saillie 18/03" },
+    { "id": "T06", "boucle": "B.93", "nom": "",             "race": "", "statut": "En attente saillie", "stade": "Sevrée",         "emplacement": "", "ration": 6, "poids": null, "nbPortees": 1, "dateDerniereMB": "", "dateMBPrevue": "",           "derniereNV": 10, "notes": "Sevrage ~10/04, 2 morts" },
+    { "id": "T07", "boucle": "B.21", "nom": "Choupette",    "race": "", "statut": "Pleine",             "stade": "Gestation",      "emplacement": "", "ration": 4, "poids": null, "nbPortees": 1, "dateDerniereMB": "05/04/2026", "dateMBPrevue": "28/07/2026", "derniereNV": 6,  "notes": "Saillie 05/04" },
+    { "id": "T09", "boucle": "B.31", "nom": "Zapata",       "race": "", "statut": "Pleine",             "stade": "Gestation",      "emplacement": "", "ration": 6, "poids": null, "nbPortees": 1, "dateDerniereMB": "05/04/2026", "dateMBPrevue": "28/07/2026", "derniereNV": 8,  "notes": "Saillie 05/04 (ex T8 REPRO)" },
+    { "id": "T10", "boucle": "B.37", "nom": "",             "race": "", "statut": "En maternité",       "stade": "Lactation",      "emplacement": "Maternité", "ration": 6, "poids": null, "nbPortees": 1, "dateDerniereMB": "23/03/2026", "dateMBPrevue": "",           "derniereNV": 5,  "notes": "MB 23/03, 5 porcelets trop petits" },
+    { "id": "T11", "boucle": "B.12", "nom": "Ficelle",      "race": "", "statut": "Pleine",             "stade": "Gestation",      "emplacement": "", "ration": 6, "poids": null, "nbPortees": 1, "dateDerniereMB": "05/04/2026", "dateMBPrevue": "28/07/2026", "derniereNV": 12, "notes": "Saillie 05/04" },
+    { "id": "T12", "boucle": "B.10", "nom": "",             "race": "", "statut": "Pleine",             "stade": "Gestation",      "emplacement": "", "ration": 3, "poids": null, "nbPortees": 0, "dateDerniereMB": "11/01/2026", "dateMBPrevue": "06/05/2026", "derniereNV": 0,  "notes": "1ère MB" },
+    { "id": "T13", "boucle": "B.29", "nom": "",             "race": "", "statut": "En attente saillie", "stade": "Sevrée",         "emplacement": "", "ration": 6, "poids": null, "nbPortees": 1, "dateDerniereMB": "", "dateMBPrevue": "",           "derniereNV": 6,  "notes": "MB 19-20/03, sevrée" },
+    { "id": "T14", "boucle": "B.24", "nom": "",             "race": "", "statut": "En maternité",       "stade": "Lactation",      "emplacement": "Maternité", "ration": 6, "poids": null, "nbPortees": 1, "dateDerniereMB": "01/04/2026", "dateMBPrevue": "01/04/2026", "derniereNV": 13, "notes": "MB 01/04, 13 porcelets" },
+    { "id": "T15", "boucle": "B.39", "nom": "Anillette",    "race": "", "statut": "Pleine",             "stade": "Gestation",      "emplacement": "", "ration": 6, "poids": null, "nbPortees": 1, "dateDerniereMB": "05/04/2026", "dateMBPrevue": "28/07/2026", "derniereNV": 13, "notes": "Saillie 05/04 (ex T14 MATERNITE)" },
+    { "id": "T16", "boucle": "B.26", "nom": "Pirouette",    "race": "", "statut": "Pleine",             "stade": "Gestation",      "emplacement": "", "ration": 6, "poids": null, "nbPortees": 1, "dateDerniereMB": "05/04/2026", "dateMBPrevue": "28/07/2026", "derniereNV": 14, "notes": "Saillie 05/04 (ex T15 MATERNITE)" },
+    { "id": "T18", "boucle": "B.85", "nom": "",             "race": "", "statut": "En maternité",       "stade": "Lactation",      "emplacement": "Maternité", "ration": 6, "poids": null, "nbPortees": 1, "dateDerniereMB": "28/03/2026", "dateMBPrevue": "28/03/2026", "derniereNV": 12, "notes": "MB 28/03, sevrage prévu 18/04 (ex T16 REPRO)" },
+    { "id": "T19", "boucle": "B.76", "nom": "",             "race": "", "statut": "En maternité",       "stade": "Lactation",      "emplacement": "Maternité", "ration": 6, "poids": null, "nbPortees": 1, "dateDerniereMB": "01/04/2026", "dateMBPrevue": "01/04/2026", "derniereNV": 13, "notes": "MB 01/04, 13 porcelets" }
+  ],
+  "verrats": [
+    { "id": "V01", "boucle": "", "nom": "Bobi",     "race": "", "statut": "Actif", "origine": "Thomasset", "dateNaissance": "", "ration": 3.0 },
+    { "id": "V02", "boucle": "", "nom": "Aligator", "race": "", "statut": "Actif", "origine": "Azaguie",   "dateNaissance": "", "ration": 2.5 }
+  ],
+  "portees": [
+    { "idPortee": "26-T7-01",  "truie": "T07", "boucleMere": "B.21", "dateMB": "", "nv": 6,  "morts": 0, "vivants": 6,  "nbMales": null, "nbFemelles": null, "statut": "Sevrés",    "dateSevragePrevue": "", "dateSevrageReelle": "", "dateSeparation": "", "logeEngraissement": "" },
+    { "idPortee": "26-T11-01", "truie": "T11", "boucleMere": "B.12", "dateMB": "", "nv": 12, "morts": 0, "vivants": 12, "nbMales": null, "nbFemelles": null, "statut": "Sevrés",    "dateSevragePrevue": "", "dateSevrageReelle": "", "dateSeparation": "", "logeEngraissement": "" },
+    { "idPortee": "26-T1-01",  "truie": "T01", "boucleMere": "B.22", "dateMB": "", "nv": 11, "morts": 1, "vivants": 10, "nbMales": null, "nbFemelles": null, "statut": "Sevrés",    "dateSevragePrevue": "", "dateSevrageReelle": "", "dateSeparation": "", "logeEngraissement": "" },
+    { "idPortee": "26-T3-01",  "truie": "T03", "boucleMere": "B.23", "dateMB": "", "nv": 13, "morts": 0, "vivants": 13, "nbMales": null, "nbFemelles": null, "statut": "Sevrés",    "dateSevragePrevue": "", "dateSevrageReelle": "", "dateSeparation": "", "logeEngraissement": "" },
+    { "idPortee": "26-T2-01",  "truie": "T02", "boucleMere": "B.38", "dateMB": "", "nv": 14, "morts": 0, "vivants": 14, "nbMales": null, "nbFemelles": null, "statut": "Sevrés",    "dateSevragePrevue": "", "dateSevrageReelle": "", "dateSeparation": "", "logeEngraissement": "" },
+    { "idPortee": "26-T15-01", "truie": "T15", "boucleMere": "B.39", "dateMB": "", "nv": 14, "morts": 1, "vivants": 13, "nbMales": null, "nbFemelles": null, "statut": "Sevrés",    "dateSevragePrevue": "", "dateSevrageReelle": "", "dateSeparation": "", "logeEngraissement": "" },
+    { "idPortee": "26-T9-01",  "truie": "T09", "boucleMere": "B.31", "dateMB": "", "nv": 9,  "morts": 1, "vivants": 8,  "nbMales": null, "nbFemelles": null, "statut": "Sevrés",    "dateSevragePrevue": "", "dateSevrageReelle": "", "dateSeparation": "", "logeEngraissement": "" },
+    { "idPortee": "26-T16-01", "truie": "T16", "boucleMere": "B.26", "dateMB": "", "nv": 14, "morts": 0, "vivants": 14, "nbMales": null, "nbFemelles": null, "statut": "Sevrés",    "dateSevragePrevue": "", "dateSevrageReelle": "", "dateSeparation": "", "logeEngraissement": "" },
+    { "idPortee": "26-T6-01",  "truie": "T06", "boucleMere": "B.93", "dateMB": "", "nv": 12, "morts": 2, "vivants": 10, "nbMales": null, "nbFemelles": null, "statut": "Sevrés",    "dateSevragePrevue": "", "dateSevrageReelle": "", "dateSeparation": "", "logeEngraissement": "" },
+    { "idPortee": "26-T13-01", "truie": "T13", "boucleMere": "B.29", "dateMB": "", "nv": 6,  "morts": 0, "vivants": 6,  "nbMales": null, "nbFemelles": null, "statut": "Sevrés",    "dateSevragePrevue": "", "dateSevrageReelle": "", "dateSeparation": "", "logeEngraissement": "" },
+    { "idPortee": "26-T10-01", "truie": "T10", "boucleMere": "B.37", "dateMB": "23/03/2026", "nv": 5,  "morts": 0, "vivants": 5,  "nbMales": null, "nbFemelles": null, "statut": "Sous mère", "dateSevragePrevue": "13/04/2026", "dateSevrageReelle": "", "dateSeparation": "", "logeEngraissement": "" },
+    { "idPortee": "26-T14-02", "truie": "T14", "boucleMere": "B.24", "dateMB": "01/04/2026", "nv": 13, "morts": 0, "vivants": 13, "nbMales": null, "nbFemelles": null, "statut": "Sous mère", "dateSevragePrevue": "22/04/2026", "dateSevrageReelle": "", "dateSeparation": "", "logeEngraissement": "" },
+    { "idPortee": "26-T19-01", "truie": "T19", "boucleMere": "B.76", "dateMB": "01/04/2026", "nv": 13, "morts": 0, "vivants": 13, "nbMales": null, "nbFemelles": null, "statut": "Sous mère", "dateSevragePrevue": "22/04/2026", "dateSevrageReelle": "", "dateSeparation": "", "logeEngraissement": "" },
+    { "idPortee": "26-T18-01", "truie": "T18", "boucleMere": "B.85", "dateMB": "28/03/2026", "nv": 12, "morts": 0, "vivants": 12, "nbMales": null, "nbFemelles": null, "statut": "Sous mère", "dateSevragePrevue": "18/04/2026", "dateSevrageReelle": "", "dateSeparation": "", "logeEngraissement": "" }
+  ],
+  "stocks_aliment": [
+    { "libelle": "Maïs grain",                 "type": "Matière première", "stockActuel": 0, "unite": "kg", "seuilAlerte": 500, "statutStock": "RUPTURE" },
+    { "libelle": "Aliment truie gestation",    "type": "Aliment composé",  "stockActuel": 0, "unite": "kg", "seuilAlerte": 200, "statutStock": "RUPTURE" },
+    { "libelle": "Aliment truie lactation",    "type": "Aliment composé",  "stockActuel": 0, "unite": "kg", "seuilAlerte": 200, "statutStock": "RUPTURE" },
+    { "libelle": "Aliment porcelet démarrage", "type": "Aliment composé",  "stockActuel": 0, "unite": "kg", "seuilAlerte": 100, "statutStock": "RUPTURE" },
+    { "libelle": "Aliment engraissement",      "type": "Aliment composé",  "stockActuel": 0, "unite": "kg", "seuilAlerte": 500, "statutStock": "RUPTURE" }
+  ],
+  "stocks_veto": [
+    { "produit": "Fer injectable",       "type": "Minéral",      "usage": "Porcelets",          "stockActuel": 0, "unite": "ml",    "statutStock": "RUPTURE", "dlc": "" },
+    { "produit": "Oxytétracycline",      "type": "Antibiotique", "usage": "Curatif bactérien",  "stockActuel": 3, "unite": "flac.", "statutStock": "BAS",     "dlc": "" },
+    { "produit": "Ivermectine",          "type": "Antiparasitaire","usage": "Déparasitage",     "stockActuel": 0, "unite": "ml",    "statutStock": "RUPTURE", "dlc": "" },
+    { "produit": "Vitamines AD3E",       "type": "Vitamines",    "usage": "Support général",    "stockActuel": 8, "unite": "flac.", "statutStock": "OK",      "dlc": "" },
+    { "produit": "Désinfectant",         "type": "Hygiène",      "usage": "Loges",              "stockActuel": 2, "unite": "L",     "statutStock": "BAS",     "dlc": "" },
+    { "produit": "Calcium",              "type": "Minéral",      "usage": "Truies gestantes",   "stockActuel": 2, "unite": "kg",    "statutStock": "BAS",     "dlc": "" },
+    { "produit": "Anti-diarrhéique",     "type": "Digestif",     "usage": "Porcelets",          "stockActuel": 0, "unite": "flac.", "statutStock": "RUPTURE", "dlc": "" }
+  ],
+  "finances": [
+    { "date": "", "categorie": "Charge fixe",  "libelle": "Salaires porcher",         "montant": 120000, "type": "DEPENSE", "bandeId": "" },
+    { "date": "", "categorie": "Charge fixe",  "libelle": "Électricité",              "montant": 45000,  "type": "DEPENSE", "bandeId": "" },
+    { "date": "", "categorie": "Charge fixe",  "libelle": "Eau",                      "montant": 20000,  "type": "DEPENSE", "bandeId": "" },
+    { "date": "", "categorie": "Charge var.",  "libelle": "Achat maïs",               "montant": 250000, "type": "DEPENSE", "bandeId": "" },
+    { "date": "", "categorie": "Charge var.",  "libelle": "Achat aliment truie",      "montant": 180000, "type": "DEPENSE", "bandeId": "" },
+    { "date": "", "categorie": "Charge var.",  "libelle": "Achat aliment porcelet",   "montant": 90000,  "type": "DEPENSE", "bandeId": "" },
+    { "date": "", "categorie": "Charge var.",  "libelle": "Achat aliment engrais.",   "montant": 200000, "type": "DEPENSE", "bandeId": "" },
+    { "date": "", "categorie": "Charge var.",  "libelle": "Vétérinaire",              "montant": 35000,  "type": "DEPENSE", "bandeId": "" },
+    { "date": "", "categorie": "Charge var.",  "libelle": "Ivermectine + Penstrep",   "montant": 18000,  "type": "DEPENSE", "bandeId": "" },
+    { "date": "", "categorie": "Recette",      "libelle": "Vente porcs finis (x8)",   "montant": 1440000,"type": "RECETTE", "bandeId": "26-T1-01" },
+    { "date": "", "categorie": "Recette",      "libelle": "Vente porcelets sevrés",   "montant": 150000, "type": "RECETTE", "bandeId": "26-T6-01" },
+    { "date": "", "categorie": "Charge fixe",  "libelle": "Amortissement bâtiments",  "montant": 50000,  "type": "DEPENSE", "bandeId": "" },
+    { "date": "", "categorie": "Charge fixe",  "libelle": "Entretien loges",          "montant": 15000,  "type": "DEPENSE", "bandeId": "" },
+    { "date": "", "categorie": "Charge var.",  "libelle": "Litière / sciure",         "montant": 8000,   "type": "DEPENSE", "bandeId": "" },
+    { "date": "", "categorie": "Charge var.",  "libelle": "Désinfectants",            "montant": 6000,   "type": "DEPENSE", "bandeId": "" },
+    { "date": "", "categorie": "Recette",      "libelle": "Vente fumier",             "montant": 12000,  "type": "RECETTE", "bandeId": "" },
+    { "date": "", "categorie": "Charge var.",  "libelle": "Saillie extérieure",       "montant": -7,     "type": "DEPENSE", "bandeId": "" },
+    { "date": "", "categorie": "",             "libelle": "Frais divers",             "montant": 25000,  "type": "DEPENSE", "bandeId": "" }
+  ],
+  "alertes": [
+    { "titre": "Mortalité élevée bande 26-T1-01",  "priorite": "?", "type": "R4", "cible": "26-T1-01",  "date": "19/04/2026", "note": "FAUX POSITIF — bug alertEngine règle R4 (timestamps vs morts/nv)" },
+    { "titre": "Mortalité élevée bande 26-T2-01",  "priorite": "?", "type": "R4", "cible": "26-T2-01",  "date": "19/04/2026", "note": "FAUX POSITIF" },
+    { "titre": "Mortalité élevée bande 26-T3-01",  "priorite": "?", "type": "R4", "cible": "26-T3-01",  "date": "19/04/2026", "note": "FAUX POSITIF" },
+    { "titre": "Mortalité élevée bande 26-T6-01",  "priorite": "?", "type": "R4", "cible": "26-T6-01",  "date": "19/04/2026", "note": "Vraie mortalité 16.7%" },
+    { "titre": "Mortalité élevée bande 26-T7-01",  "priorite": "?", "type": "R4", "cible": "26-T7-01",  "date": "19/04/2026", "note": "FAUX POSITIF" },
+    { "titre": "Mortalité élevée bande 26-T9-01",  "priorite": "?", "type": "R4", "cible": "26-T9-01",  "date": "19/04/2026", "note": "FAUX POSITIF" },
+    { "titre": "Mortalité élevée bande 26-T11-01", "priorite": "?", "type": "R4", "cible": "26-T11-01", "date": "19/04/2026", "note": "FAUX POSITIF" },
+    { "titre": "Mortalité élevée bande 26-T13-01", "priorite": "?", "type": "R4", "cible": "26-T13-01", "date": "19/04/2026", "note": "FAUX POSITIF" },
+    { "titre": "Mortalité élevée bande 26-T15-01", "priorite": "?", "type": "R4", "cible": "26-T15-01", "date": "19/04/2026", "note": "FAUX POSITIF" },
+    { "titre": "Mortalité élevée bande 26-T16-01", "priorite": "?", "type": "R4", "cible": "26-T16-01", "date": "19/04/2026", "note": "FAUX POSITIF" },
+    { "titre": "Sevrage imminent 26-T18-01",       "priorite": "HAUTE", "type": "R2", "cible": "26-T18-01", "date": "18/04/2026", "note": "Vraie : sevrage prévu 18/04" },
+    { "titre": "Stock bas aliment",                "priorite": "CRITIQUE", "type": "R5", "cible": "ALIM-MAIS", "date": "19/04/2026", "note": "Vraie : 5 aliments à 0" }
+  ],
+  "divergences": {
+    "truies":            { "expected": 17,  "actual": 17, "ecart": 0,  "ok": true },
+    "verrats":           { "expected": 2,   "actual": 2,  "ecart": 0,  "ok": true },
+    "portees":           { "expected": 14,  "actual": 14, "ecart": 0,  "ok": true },
+    "porcelets_vivants_total":     { "expected_terrain": 145, "actual_sheets": 149, "ecart": 4,  "ok": false, "note": "Terrain (ground-truth-2026-04-20.md) : 43 sous mère + 102 post-sevrage = 145. Sheets : 43 sous mère + 106 sevrés = 149. Écart = 4 mortalités post-sevrage non enregistrées dans PORCELETS_BANDES_DETAIL." },
+    "porcelets_post_sevrage":      { "expected_terrain": 102, "actual_sheets": 106, "ecart": 4,  "ok": false, "note": "4 mortalités à saisir" },
+    "porcelets_sous_mere":         { "expected_terrain": 43,  "actual_sheets": 43,  "ecart": 0,  "ok": true }
+  },
+  "ground_truth_file": "scripts/data-broker/ground-truth-2026-04-20.md",
+  "validation": {
+    "ok": true,
+    "warnings": [
+      "Numérotation truies non contiguë : T08 et T17 absents (T08 était un doublon T09 REPRO résolu, T17 référencée dans REPRODUCTION boucle 86 mais absente de TRUIES — à vérifier terrain)",
+      "8 truies sans nom : T05, T06, T10, T12, T13, T14, T18, T19 (cosmétique)",
+      "Statuts non standards : 'Pleine' (utilisé pour gestation, à accepter dans app), 'À surveiller' (T04)",
+      "Rations uniformes à 6 kg/j sur 12/17 truies (placeholder ou réalité — à arbitrer)",
+      "Porcelets vivants 149 vs consigne 102 : divergence documentée",
+      "Stocks aliments : 5/5 en RUPTURE (réalité terrain)",
+      "ALERTES_ACTIVES : 10/12 alertes R4 sont des FAUX POSITIFS (bug règle mortalité)",
+      "Dates dd/MM/yyyy OK quand présentes, champs vides toléré sur truies sevrées sans nouvelle MB prévue"
+    ],
+    "errors": [],
+    "last_live_audit": "2026-04-19T07:31:40Z",
+    "audit_source": "SHEETS_DATA_INTEGRITY.json (1 critical REPRO orpheline T17, 0 critical sur 7 tables principales)"
+  }
+}

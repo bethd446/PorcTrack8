@@ -282,6 +282,20 @@ export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshData();
   }, [refreshData]);
 
+  // Auto-flush queue au retour réseau : les saisies offline remontent
+  // automatiquement dès que la connexion revient.
+  useEffect(() => {
+    const onOnline = (): void => {
+      void processQueue()
+        .then(() => refreshData())
+        .catch(() => {
+          /* silent : la prochaine tentative manuelle via /sync reste possible */
+        });
+    };
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+  }, [refreshData]);
+
   // ─── Accesseurs par ID ───────────────────────────────────────
   const getTruieById = (id: string) => state.truies.find(t => t.id === id || t.displayId === id);
   const getVerratById = (id: string) => state.verrats.find(v => v.id === id || v.displayId === id);

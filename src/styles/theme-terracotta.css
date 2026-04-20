@@ -1,0 +1,63 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PorcTrack 8 — THEME VARIANT: TERRACOTTA
+   ═══════════════════════════════════════════════════════════════════════════
+   Override layer, ACTIF UNIQUEMENT lorsque <html> porte la classe
+   `.theme-terracotta`. L'émeraude reste la palette par défaut ; ce fichier
+   est neutre tant que la classe n'est pas posée par l'utilisateur via le
+   toggle dans Réglages > Apparence.
+
+   Origine : copié de docs/design-mockups/_shared/theme-terracotta.css, puis
+   re-scopé (`:root` → `:root.theme-terracotta`, et `:root.theme-day` →
+   `:root.theme-terracotta.theme-day`) pour cohabiter avec theme-tokens.css
+   sans jamais écraser l'émeraude.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root.theme-terracotta {
+  /* ── Primary accent — terracotta ───────────────────────────────────── */
+  /* Warm clay, earthy, mediterranean — références la terre de
+     l'exploitation et la couleur des tuiles terre cuite grillées. */
+  --accent:      #D96F4C;   /* terracotta brûlée */
+  --accent-fg:   #2A0F06;   /* charbon brun très foncé pour contraste */
+  --accent-dim:  #A64A2C;   /* terracotta profonde pour hover/focus */
+
+  /* ── Cockpit tab reste aligné avec le nouvel accent ────────────────── */
+  --accent-cockpit: #D96F4C;
+
+  /* ── Glow shadow repaint (emerald → terracotta) ────────────────────── */
+  --shadow-glow-accent:
+    0 0 0 1px rgba(217, 111, 76, 0.25),
+    0 8px 24px rgba(217, 111, 76, 0.15);
+
+  /* ── Surfaces nuit : nuance légèrement chaude (2% warmth) ──────────── */
+  --bg-0: #0B0A09;
+  --bg-1: #14120F;
+  --bg-2: #1D1915;
+  --border: #2F2A24;
+
+  /* Texte nuit : presque neutre avec un chuchotement de chaleur */
+  --text-0: #EFEAE1;
+  --text-1: #B0A699;
+  --text-2: #7A6F62;
+}
+
+/* ── Mode jour en variante terracotta (terracotta sur ivoire) ───────── */
+:root.theme-terracotta.theme-day {
+  --bg-0: #FAF5EC;
+  --bg-1: #FFFFFF;
+  --bg-2: #F2EBDC;
+  --border: #E3DBC9;
+  --text-0: #1C140D;
+  --text-1: #5A4E3E;
+  --text-2: #8E8270;
+  --accent:     #B85934;   /* deeper terracotta on light — lisibilité */
+  --accent-fg:  #FFFFFF;
+  --accent-dim: #8E3F1F;
+  --accent-cockpit: #B85934;
+}
+
+/* ── Note ────────────────────────────────────────────────────────────────
+   Les onglets autres que Cockpit conservent leurs teintes propres
+   (teal / cyan / amber / coral) pour l'orientation visuelle — règle
+   "un accent par onglet". L'onglet Cockpit utilise l'accent primaire,
+   qui devient terracotta lorsque cette classe est posée.
+   ───────────────────────────────────────────────────────────────────── */
