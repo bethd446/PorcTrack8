@@ -26,11 +26,11 @@ import {
 
 import { SectionDivider } from '../agritech';
 import { useFarm } from '../../context/FarmContext';
-import {
-  buildForecast,
-  type ForecastEvent,
-  type ForecastEventType,
-  type ForecastPriority,
+import { Forecast } from '../../services/bandAnalysisEngine';
+import type {
+  ForecastEvent,
+  ForecastEventType,
+  ForecastPriority,
 } from '../../services/forecastAnalyzer';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -79,7 +79,7 @@ const ForecastWidget: React.FC = () => {
   const navigate = useNavigate();
 
   const report = useMemo(
-    () => buildForecast({ truies, bandes, saillies }),
+    () => Forecast.build({ truies, bandes, saillies }),
     [truies, bandes, saillies],
   );
 
