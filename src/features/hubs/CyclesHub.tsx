@@ -88,8 +88,8 @@ function bandePosition(b: BandePorcelets, today: Date): BandePosition | null {
   const vivants = b.vivants ?? 0;
 
   let def: PhaseDef | undefined;
-  let dayInPhase = 0;
-  let detail = '';
+  let dayInPhase: number;
+  let detail: string;
 
   if (phase === 'SOUS_MERE') {
     def = PHASES.find((p) => p.id === 'maternite');

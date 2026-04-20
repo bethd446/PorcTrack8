@@ -21,7 +21,6 @@ import AgritechLayout from '../../components/AgritechLayout';
 import { KpiCard, SectionDivider, Chip } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
 import {
-  summarizeByPeriode,
   formatMontant,
   detectCurrency,
   dateToPeriode,

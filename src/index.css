@@ -109,11 +109,11 @@
   }
   :root {
     --ion-font-family: var(--font-body);
-    --ion-color-primary: #C65D3D;
-    --ion-color-primary-rgb: 198, 93, 61;
-    --ion-color-primary-contrast: #FFF4EC;
-    --ion-color-primary-shade: #A84826;
-    --ion-color-primary-tint: #D97858;
+    --ion-color-primary: #10B981;
+    --ion-color-primary-rgb: 16, 185, 129;
+    --ion-color-primary-contrast: #00211A;
+    --ion-color-primary-shade: #059669;
+    --ion-color-primary-tint: #34D399;
     --ion-safe-area-top: env(safe-area-inset-top);
     --ion-safe-area-bottom: env(safe-area-inset-bottom);
   }

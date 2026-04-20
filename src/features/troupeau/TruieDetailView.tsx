@@ -12,7 +12,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { IonContent, IonPage, IonToast } from '@ionic/react';
 import {
   Syringe, Scale, Heart, FileText, AlertCircle,
@@ -80,7 +80,6 @@ type QuickSheet = null | 'soin' | 'pesee' | 'saillie' | 'note';
 
 const TruieDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { truies, getHealthForAnimal } = useFarm();
   const [sheet, setSheet] = useState<QuickSheet>(null);
   const [toast, setToast] = useState<string>('');
