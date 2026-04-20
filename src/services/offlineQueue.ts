@@ -65,7 +65,12 @@ async function saveQueue(queue: QueueItem[]): Promise<void> {
   try {
     await Preferences.set({ key: QUEUE_KEY, value: JSON.stringify(queue) });
   } catch (e) {
+    // Le cache mémoire a été mis à jour, mais la persistance a échoué.
+    // Relance l'erreur pour que l'UI puisse alerter l'utilisateur au lieu
+    // d'afficher un faux toast de succès (silent failure = bug perçu côté
+    // terrain : "j'enregistre mais rien ne remonte").
     console.error('[Queue] saveQueue failed:', e);
+    throw e instanceof Error ? e : new Error(String(e));
   }
 }
 

@@ -1,370 +1,217 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import {
-  Truie, Verrat, BandePorcelets, TraitementSante,
-  StockAliment, StockVeto, FarmState, AlerteServeur, Saillie, FinanceEntry, FormuleRowSheets, DataSource
-} from '../types/farm';
-import { Animal, Note } from '../types';
-import {
-  getTruies, getVerrats, getBandes, getJournalSante,
-  getStockAliments, getStockVeto, getNotesTerrain, getAlertesServeur, getSaillies, getFinances, getAlimentFormules
-} from '../services/googleSheets';
-import {
-  FORMULES_ALIMENT_FALLBACK,
-  aggregateFormulesFromRows,
-  type FormuleAliment,
-} from '../config/aliments';
-import { getQueueStatus, processQueue } from '../services/offlineQueue';
-import { runAlertEngine, type FarmAlert } from '../services/alertEngine';
-import { enqueueAlert } from '../services/confirmationQueue';
-import { logger } from '../services/logger';
-import { scheduleFromAlerts } from '../services/notifications';
+/**
+ * FarmContext — FAÇADE unifiée du state de l'exploitation.
+ *
+ * Historique : ce contexte gérait à lui seul 6 domaines (troupeau, santé,
+ * ressources, finances, alertes, meta) dans un `useState` unique — ce qui
+ * causait des re-renders globaux dès qu'un sous-domaine changeait.
+ *
+ * Refonte (Chantier 4) : le state est désormais split en 3 sous-contextes
+ * spécialisés :
+ *  - `TroupeauContext`    : truies / verrats / bandes
+ *  - `RessourcesContext`  : sante / stocks / notes / formules aliment
+ *  - `PilotageContext`    : alertes locales / serveur, saillies, finances
+ *
+ * Ce fichier est MAINTENANT une façade : le Provider orchestre les trois
+ * sous-providers + la meta (loading, dataSource, refreshData) et
+ * `useFarm()` compose les trois slices en un objet UNIQUE, identique à
+ * l'API publique pré-refonte.
+ *
+ * Contrat :
+ *  - `useFarm()` retourne EXACTEMENT la même shape qu'avant
+ *  - les tests qui mockent `FarmContext` (via `vi.mock('../context/FarmContext')`)
+ *    continuent de fonctionner sans modification
+ *  - App.tsx n'a pas été modifié : `<FarmProvider>` reste l'unique wrapper
+ *
+ * Pour la suite : les consommateurs peuvent progressivement migrer vers
+ * `useTroupeau()` / `useRessources()` / `usePilotage()` pour n'abonner qu'au
+ * slice nécessaire et éliminer les re-renders croisés.
+ */
 
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import type {
+  Truie, Verrat, BandePorcelets, TraitementSante,
+  StockAliment, StockVeto, FarmState, AlerteServeur, Saillie, FinanceEntry,
+} from '../types/farm';
+import type { Animal, Note } from '../types';
+import type { FormuleAliment } from '../config/aliments';
+import type { FarmAlert } from '../services/alertEngine';
+
+import { refreshAll, processQueueAndRefresh, subscribe, getSnapshot } from '../services/farmDataLoader';
+import { TroupeauProvider, useTroupeau } from './TroupeauContext';
+import { RessourcesProvider, useRessources } from './RessourcesContext';
+import { PilotageProvider, usePilotage } from './PilotageContext';
+
+// ── Shape publique (inchangée par rapport à l'existant) ────────────────────
 interface FarmContextType extends FarmState {
   loading: boolean;
   notes: Note[];
-  /** Alertes générées par le moteur automatique (GTTT) */
   alerts: FarmAlert[];
-  /** Alertes publiées par le backend Sheets (feuille ALERTES_ACTIVES). Coexistent avec `alerts`. */
   alertesServeur: AlerteServeur[];
-  /** Saillies actives (feuille SUIVI_REPRODUCTION_ACTUEL). Utilisées par performanceAnalyzer. */
   saillies: Saillie[];
-  /** Journal financier (feuille FINANCES) — entrées brutes dépenses/revenus. */
   finances: FinanceEntry[];
-  /**
-   * Formules aliment — agrégées depuis la feuille `ALIMENT_FORMULES`.
-   * Si Sheets indisponible / vide → valeurs par défaut locales
-   * (`FORMULES_ALIMENT_FALLBACK`) pour que l'écran reste fonctionnel.
-   */
   alimentFormules: FormuleAliment[];
-  /** Nombre d'alertes nécessitant une action immédiate */
   criticalAlertCount: number;
-  /** Source de la dernière lecture : NETWORK = frais, CACHE = cache valide, FALLBACK = cache expiré (offline) */
   dataSource: 'NETWORK' | 'CACHE' | 'FALLBACK' | null;
   refreshData: (force?: boolean) => Promise<void>;
-  // Accès par ID typé
   getTruieById: (id: string) => Truie | undefined;
   getVerratById: (id: string) => Verrat | undefined;
   getBandeById: (id: string) => BandePorcelets | undefined;
-  /** Unifie truies + verrats → Animal (utilisé par AnimalDetailView) */
   getAnimalById: (id: string, type: 'TRUIE' | 'VERRAT') => Animal | undefined;
-  /** Retourne les soins/traitements d'un animal */
   getHealthForAnimal: (id: string, type: 'TRUIE' | 'VERRAT') => TraitementSante[];
   getHealthForSubject: (id: string, type: string) => TraitementSante[];
-  /** Retourne les notes terrain d'un animal */
   getNotesForAnimal: (id: string, type: 'TRUIE' | 'VERRAT') => Note[];
   getNotesForSubject: (id: string, type: string) => TraitementSante[];
   pullData: () => Promise<void>;
   processQueue: () => Promise<void>;
 }
 
-const FarmContext = createContext<FarmContextType | undefined>(undefined);
-
-/** Convertit une Truie vers le type générique Animal */
-function truieToAnimal(t: Truie): Animal {
-  return {
-    id: t.id,
-    displayId: t.displayId,
-    boucle: t.boucle,
-    nom: t.nom || '',
-    race: '',
-    statut: t.statut,
-    type: 'TRUIE',
-    ration: t.ration,
-    stade: t.stade,
-    nbPortees: t.nbPortees,
-    derniereNV: t.derniereNV,
-    dateMBPrevue: t.dateMBPrevue,
-    notes: t.notes,
-    raw: t.raw,
-  };
+// ── Meta context (loading / dataSource / refreshData) ──────────────────────
+interface MetaContextType {
+  loading: boolean;
+  dataSource: 'NETWORK' | 'CACHE' | 'FALLBACK' | null;
+  syncStatus: FarmState['syncStatus'];
+  lastUpdate: number;
+  refreshData: (force?: boolean) => Promise<void>;
+  pullData: () => Promise<void>;
+  processQueue: () => Promise<void>;
 }
 
-/** Convertit un Verrat vers le type générique Animal */
-function verratToAnimal(v: Verrat): Animal {
-  return {
-    id: v.id,
-    displayId: v.displayId,
-    boucle: v.boucle,
-    nom: v.nom || '',
-    race: '',
-    statut: v.statut,
-    type: 'VERRAT',
-    ration: v.ration,
-    origine: v.origine,
-    alimentation: v.alimentation,
-    notes: v.notes,
-    raw: v.raw,
-  };
-}
+const MetaContext = createContext<MetaContextType | undefined>(undefined);
 
-export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<FarmState>({
-    truies: [],
-    verrats: [],
-    bandes: [],
-    sante: [],
-    stockAliment: [],
-    stockVeto: [],
-    truiesHeader: [],
-    verratsHeader: [],
-    bandesHeader: [],
-    santeHeader: [],
-    stockAlimentHeader: [],
-    stockVetoHeader: [],
-    lastUpdate: 0,
-    syncStatus: 'synced'
-  });
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [alerts, setAlerts] = useState<FarmAlert[]>([]);
-  const [alertesServeur, setAlertesServeur] = useState<AlerteServeur[]>([]);
-  const [saillies, setSaillies] = useState<Saillie[]>([]);
-  const [finances, setFinances] = useState<FinanceEntry[]>([]);
-  const [alimentFormules, setAlimentFormules] = useState<FormuleAliment[]>(
-    FORMULES_ALIMENT_FALLBACK
-  );
-  const [loading, setLoading] = useState(true);
-  const [dataSource, setDataSource] = useState<'NETWORK' | 'CACHE' | 'FALLBACK' | null>(null);
+const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [meta, setMeta] = useState(() => getSnapshot('meta'));
 
-  const refreshData = useCallback(async (_force: boolean = false) => {
-    // 1. CHARGEMENT INSTANTANÉ (Cache SWR)
-    // On récupère ce qu'on a en local immédiatement
-    setLoading(true);
-
-    // Setter générique : accepte tous les domaines listés dans FarmState
-    // (truies | verrats | bandes | sante | stockAliment | stockVeto).
-    // Le type unknown[] suffit car chaque caller fournit déjà le bon type via getTruies/getVerrats/etc.
-    const updateDataAndHeader = (
-      domain: string,
-      headerDomain: string,
-      data: unknown[],
-      header: string[]
-    ) => {
-      setState(prev => ({
-        ...prev,
-        [domain]: data,
-        [headerDomain]: header.length > 0 ? header : prev[headerDomain as keyof FarmState],
-        lastUpdate: Date.now(),
-      }));
-    };
-
-    try {
-      const qStatus = getQueueStatus();
-      setState(prev => ({ ...prev, syncStatus: qStatus.pending > 0 ? 'pending' : 'synced' }));
-
-      // Lecture initiale (retourne le cache si présent, et lance le refresh background)
-      const results = await Promise.allSettled([
-        getTruies((data, header) => updateDataAndHeader('truies', 'truiesHeader', data, header)),
-        getVerrats((data, header) => updateDataAndHeader('verrats', 'verratsHeader', data, header)),
-        getBandes((data, header) => updateDataAndHeader('bandes', 'bandesHeader', data, header)),
-        getJournalSante((data, header) => updateDataAndHeader('sante', 'santeHeader', data, header)),
-        getStockAliments((data, header) => updateDataAndHeader('stockAliment', 'stockAlimentHeader', data, header)),
-        getStockVeto((data, header) => updateDataAndHeader('stockVeto', 'stockVetoHeader', data, header)),
-        getNotesTerrain((data) => setNotes(data)),
-        getAlertesServeur((data) => setAlertesServeur(data)),
-        getSaillies((data) => setSaillies(data)),
-        getFinances((data) => setFinances(data)),
-        getAlimentFormules((data) => {
-          const aggregated = aggregateFormulesFromRows(data);
-          setAlimentFormules(aggregated.length > 0 ? aggregated : FORMULES_ALIMENT_FALLBACK);
-        }),
-      ]);
-
-      const empty = { success: false, data: [] as unknown[], header: [] as string[], source: ('FALL' + 'BACK') as DataSource };
-      const [
-        truieRes, verratRes, bandeRes,
-        santeRes, stockARes, stockVRes, notesRes, alertesServeurRes, sailliesRes, financesRes, formulesRes
-      ] = results.map(r => r.status === 'fulfilled' ? r.value : empty) as [
-        { success: boolean; data: Truie[];             header: string[]; source: DataSource },
-        { success: boolean; data: Verrat[];            header: string[]; source: DataSource },
-        { success: boolean; data: BandePorcelets[];    header: string[]; source: DataSource },
-        { success: boolean; data: TraitementSante[];   header: string[]; source: DataSource },
-        { success: boolean; data: StockAliment[];      header: string[]; source: DataSource },
-        { success: boolean; data: StockVeto[];         header: string[]; source: DataSource },
-        { success: boolean; data: Note[];              header: string[]; source: DataSource },
-        { success: boolean; data: AlerteServeur[];     header: string[]; source: DataSource },
-        { success: boolean; data: Saillie[];           header: string[]; source: DataSource },
-        { success: boolean; data: FinanceEntry[];      header: string[]; source: DataSource },
-        { success: boolean; data: FormuleRowSheets[];  header: string[]; source: DataSource },
-      ];
-
-      // Mise à jour synchrone immédiate (depuis cache)
-      setDataSource(truieRes.source);
-      setState(prev => ({
-        ...prev,
-        truies: truieRes.data,
-        verrats: verratRes.data,
-        bandes: bandeRes.data,
-        sante: santeRes.data,
-        stockAliment: stockARes.data,
-        stockVeto: stockVRes.data,
-        truiesHeader: truieRes.header.length > 0 ? truieRes.header : prev.truiesHeader,
-        verratsHeader: verratRes.header.length > 0 ? verratRes.header : prev.verratsHeader,
-        bandesHeader: bandeRes.header.length > 0 ? bandeRes.header : prev.bandesHeader,
-        santeHeader: santeRes.header.length > 0 ? santeRes.header : prev.santeHeader,
-        stockAlimentHeader: stockARes.header.length > 0 ? stockARes.header : prev.stockAlimentHeader,
-        stockVetoHeader: stockVRes.header.length > 0 ? stockVRes.header : prev.stockVetoHeader,
-        lastUpdate: Date.now()
-      }));
-      setNotes(notesRes.data);
-
-      // Alertes serveur (Sheets) : rejet explicite = log + []
-      const alertesServeurSettled = results[7];
-      if (alertesServeurSettled.status === 'rejected') {
-        logger.error('FarmContext', 'alertesServeur fetch failed', alertesServeurSettled.reason);
-        setAlertesServeur([]);
-      } else {
-        setAlertesServeur(alertesServeurRes.data);
-      }
-
-      // Saillies (Sheets) : rejet explicite = log + []
-      const sailliesSettled = results[8];
-      if (sailliesSettled.status === 'rejected') {
-        logger.error('FarmContext', 'saillies fetch failed', sailliesSettled.reason);
-        setSaillies([]);
-      } else {
-        setSaillies(sailliesRes.data);
-      }
-
-      // Finances (Sheets) : rejet explicite = log + []
-      const financesSettled = results[9];
-      if (financesSettled.status === 'rejected') {
-        logger.error('FarmContext', 'finances fetch failed', financesSettled.reason);
-        setFinances([]);
-      } else {
-        setFinances(financesRes.data);
-      }
-
-      // Formules aliment (Sheets) : agrégation + bascule sur valeurs locales
-      // si vide/échec. L'app reste toujours fonctionnelle côté UI.
-      const formulesSettled = results[10];
-      if (formulesSettled.status === 'rejected') {
-        logger.error('FarmContext', 'alimentFormules fetch failed', formulesSettled.reason);
-        setAlimentFormules(FORMULES_ALIMENT_FALLBACK);
-      } else {
-        const aggregated = aggregateFormulesFromRows(formulesRes.data);
-        setAlimentFormules(aggregated.length > 0 ? aggregated : FORMULES_ALIMENT_FALLBACK);
-      }
-
-      // ── Moteur d'alertes GTTT ──────────────────────────────────
-      // S'exécute après chaque chargement de données
-      const newAlerts = runAlertEngine({
-        truies: truieRes.data,
-        bandes: bandeRes.data,
-        sante: santeRes.data,
-        stockAliments: stockARes.data,
-      });
-      setAlerts(newAlerts);
-
-      // Synchronise les notifs locales natives (R1/R3/R5 critiques/hautes)
-      scheduleFromAlerts(newAlerts).catch(e =>
-        logger.error('FarmContext', 'scheduleFromAlerts failed', e)
-      );
-
-      // Enregistrer les alertes nécessitant une action dans la queue de confirmation
-      for (const alert of newAlerts.filter(a => a.requiresAction)) {
-        const primaryAction = alert.actions.find(a => a.type !== 'DISMISS');
-        if (primaryAction) {
-          enqueueAlert(alert, primaryAction).catch(e => logger.error('FarmContext', 'enqueueAlert failed', e));
-        }
-      }
-
-    } catch (e) {
-      console.error('Initial refresh error:', e);
-      setDataSource('FALLBACK');
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    return subscribe('meta', setMeta);
   }, []);
 
+  // Fetch initial + auto-flush queue au retour en ligne
   useEffect(() => {
     // Legitimate I/O: initial data fetch (Google Sheets + alert engine)
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    refreshData();
-  }, [refreshData]);
+    refreshAll();
 
-  // Auto-flush queue au retour réseau : les saisies offline remontent
-  // automatiquement dès que la connexion revient.
-  useEffect(() => {
     const onOnline = (): void => {
-      void processQueue()
-        .then(() => refreshData())
-        .catch(() => {
-          /* silent : la prochaine tentative manuelle via /sync reste possible */
-        });
+      void processQueueAndRefresh().catch(() => {
+        /* silent : retry possible via /sync */
+      });
     };
     window.addEventListener('online', onOnline);
     return () => window.removeEventListener('online', onOnline);
-  }, [refreshData]);
+  }, []);
 
-  // ─── Accesseurs par ID ───────────────────────────────────────
-  const getTruieById = (id: string) => state.truies.find(t => t.id === id || t.displayId === id);
-  const getVerratById = (id: string) => state.verrats.find(v => v.id === id || v.displayId === id);
-  const getBandeById = (id: string) => state.bandes.find(b => b.id === id);
+  const refreshData = useCallback(async (_force: boolean = false) => {
+    await refreshAll();
+  }, []);
 
-  const getAnimalById = (id: string, type: 'TRUIE' | 'VERRAT'): Animal | undefined => {
-    if (type === 'TRUIE') {
-      const t = getTruieById(id);
-      return t ? truieToAnimal(t) : undefined;
-    }
-    const v = getVerratById(id);
-    return v ? verratToAnimal(v) : undefined;
-  };
+  const pullData = useCallback(async () => {
+    await refreshAll();
+  }, []);
 
-  const getHealthForSubject = (id: string, type: string) =>
-    state.sante.filter(h => h.cibleId === id && h.cibleType.toUpperCase() === type.toUpperCase());
-
-  const getHealthForAnimal = (id: string, type: 'TRUIE' | 'VERRAT') =>
-    getHealthForSubject(id, type);
-
-  const getNotesForSubject = (id: string, type: string) =>
-    state.sante.filter(h => h.cibleId === id && h.cibleType.toUpperCase() === type.toUpperCase());
-
-  const getNotesForAnimal = (id: string, type: 'TRUIE' | 'VERRAT'): Note[] =>
-    notes.filter(n => n.animalId === id && n.animalType === type);
-
-  const pullData = async () => refreshData(true);
-
-  const handleProcessQueue = async () => {
-    await processQueue();
-    await refreshData();
-  };
-
-  const criticalAlertCount = alerts.filter(
-    a => a.requiresAction && (a.priority === 'CRITIQUE' || a.priority === 'HAUTE')
-  ).length;
+  const processQueue = useCallback(async () => {
+    await processQueueAndRefresh();
+  }, []);
 
   return (
-    <FarmContext.Provider value={{
-      ...state,
-      notes,
-      alerts,
-      alertesServeur,
-      saillies,
-      finances,
-      alimentFormules,
-      criticalAlertCount,
-      loading,
-      dataSource,
+    <MetaContext.Provider value={{
+      loading: meta.loading,
+      dataSource: meta.dataSource,
+      syncStatus: meta.syncStatus,
+      lastUpdate: meta.lastUpdate,
       refreshData,
-      getTruieById,
-      getVerratById,
-      getBandeById,
-      getAnimalById,
-      getHealthForAnimal,
-      getHealthForSubject,
-      getNotesForAnimal,
-      getNotesForSubject,
       pullData,
-      processQueue: handleProcessQueue,
+      processQueue,
     }}>
       {children}
-    </FarmContext.Provider>
+    </MetaContext.Provider>
   );
 };
 
+function useMeta(): MetaContextType {
+  const ctx = useContext(MetaContext);
+  if (!ctx) throw new Error('useMeta must be used within MetaProvider');
+  return ctx;
+}
+
+// ── FarmProvider (façade) ──────────────────────────────────────────────────
+/**
+ * Ordre de wrapping : Meta (= orchestre les fetch) puis les 3 slices. L'ordre
+ * des 3 slices est sans importance fonctionnelle (pas de dépendance croisée).
+ */
+export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <MetaProvider>
+    <TroupeauProvider>
+      <RessourcesProvider>
+        <PilotageProvider>
+          {children}
+        </PilotageProvider>
+      </RessourcesProvider>
+    </TroupeauProvider>
+  </MetaProvider>
+);
+
+/**
+ * Façade : compose les 4 sous-contextes en un objet unique, identique à la
+ * shape historique. Les consommateurs existants (Cockpit, TroupeauHub, etc.)
+ * continuent d'utiliser `useFarm()` sans modification.
+ *
+ * Les tests qui font `vi.mock('../context/FarmContext', () => ({ useFarm: ... }))`
+ * écrasent simplement cette fonction — les sous-contextes ne sont jamais
+ * consultés dans ce cas.
+ */
 // eslint-disable-next-line react-refresh/only-export-components
-export const useFarm = () => {
-  const context = useContext(FarmContext);
-  if (!context) throw new Error('useFarm must be used within FarmProvider');
-  return context;
+export const useFarm = (): FarmContextType => {
+  const troupeau = useTroupeau();
+  const ressources = useRessources();
+  const pilotage = usePilotage();
+  const meta = useMeta();
+
+  return {
+    // Troupeau
+    truies: troupeau.truies,
+    verrats: troupeau.verrats,
+    bandes: troupeau.bandes,
+    truiesHeader: troupeau.truiesHeader,
+    verratsHeader: troupeau.verratsHeader,
+    bandesHeader: troupeau.bandesHeader,
+    getTruieById: troupeau.getTruieById,
+    getVerratById: troupeau.getVerratById,
+    getBandeById: troupeau.getBandeById,
+    getAnimalById: troupeau.getAnimalById,
+
+    // Ressources
+    sante: ressources.sante,
+    stockAliment: ressources.stockAliment,
+    stockVeto: ressources.stockVeto,
+    santeHeader: ressources.santeHeader,
+    stockAlimentHeader: ressources.stockAlimentHeader,
+    stockVetoHeader: ressources.stockVetoHeader,
+    notes: ressources.notes,
+    alimentFormules: ressources.alimentFormules,
+    getHealthForAnimal: ressources.getHealthForAnimal,
+    getHealthForSubject: ressources.getHealthForSubject,
+    getNotesForAnimal: ressources.getNotesForAnimal,
+    getNotesForSubject: ressources.getNotesForSubject,
+
+    // Pilotage
+    alerts: pilotage.alerts,
+    alertesServeur: pilotage.alertesServeur,
+    saillies: pilotage.saillies,
+    finances: pilotage.finances,
+    criticalAlertCount: pilotage.criticalAlertCount,
+
+    // Meta
+    loading: meta.loading,
+    dataSource: meta.dataSource,
+    syncStatus: meta.syncStatus,
+    lastUpdate: meta.lastUpdate,
+    refreshData: meta.refreshData,
+    pullData: meta.pullData,
+    processQueue: meta.processQueue,
+  };
 };
+
+// Re-exports pour l'accès direct aux sous-contextes (migration progressive)
+export { useTroupeau } from './TroupeauContext';
+export { useRessources } from './RessourcesContext';
+export { usePilotage } from './PilotageContext';

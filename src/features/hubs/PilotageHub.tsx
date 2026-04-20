@@ -12,7 +12,7 @@
 import React, { useState, useMemo } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
 import {
-  Wallet, FileText, TrendingUp, AlertTriangle, FileCheck,
+  Wallet, FileText, TrendingUp, AlertTriangle, FileCheck, Settings,
 } from 'lucide-react';
 
 import AgritechHeader from '../../components/AgritechHeader';
@@ -135,13 +135,22 @@ const PilotageHub: React.FC = () => {
                   variant="compact"
                 />
               </div>
-              <div className="mt-2.5">
+              <div className="mt-2.5 grid grid-cols-2 gap-2.5">
                 <HubTile
                   icon={<FileCheck size={22} aria-hidden="true" />}
                   title="Audit"
                   subtitle="Historique actions terrain"
                   to="/pilotage/audit"
                   tone="teal"
+                  variant="compact"
+                />
+                <HubTile
+                  icon={<Settings size={22} aria-hidden="true" />}
+                  title="Réglages"
+                  subtitle="Thème · Sync · Config"
+                  to="/pilotage/reglages"
+                  tone="default"
+                  variant="compact"
                 />
               </div>
             </section>

@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { IonToast } from '@ionic/react';
+import React, { useMemo, useRef, useState } from 'react';
+import { IonToast, IonSelect, IonSelectOption } from '@ionic/react';
 import { Skull, Check, CheckCircle2 } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
@@ -148,6 +148,13 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
   });
   const [error, setError] = useState<string>('');
 
+  /**
+   * Ref du timer de fermeture auto (success state). Permet d'annuler le
+   * setTimeout si l'utilisateur ferme via backdrop/Escape avant les 1500ms,
+   * évitant un double appel à onClose().
+   */
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Resync default si prop change (ouverture depuis une bande précise)
   React.useEffect(() => {
     if (isOpen && defaultBandeId) {
@@ -155,7 +162,21 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
     }
   }, [isOpen, defaultBandeId]);
 
+  // Cleanup du timer à l'unmount (évite un onClose post-unmount)
+  React.useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+    };
+  }, []);
+
   const handleClose = (): void => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
     setSelectedBandeId(defaultBandeId ?? '');
     setNbMorts(MIN_DEATHS);
     setObservation('');
@@ -166,7 +187,13 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
 
   // ── A11y : Esc ferme la sheet + focus auto sur le 1er input ────────────
   useEscapeKey(isOpen && !saving, handleClose);
-  const firstFieldRef = useFocusFirstInput<HTMLSelectElement>(isOpen && !success);
+  // Note: l'élément réel est un <IonSelect> (web component). On déclare le
+  // type comme HTMLSelectElement pour réutiliser le hook générique tout en
+  // restant compat avec le ref passé au web component (qui l'ignore si pas
+  // de focus() natif — l'a11y dégrade gracefully).
+  const firstFieldRef = useFocusFirstInput<HTMLSelectElement>(
+    isOpen && !success,
+  ) as unknown as React.RefObject<HTMLSelectElement>;
 
   const handleSave = async (): Promise<void> => {
     setError('');
@@ -184,6 +211,15 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
       b => b.id === selectedBandeId || b.idPortee === selectedBandeId,
     );
     if (!bande) {
+      // En dev, aide à diagnostiquer les cas où defaultBandeId ne correspond
+      // à aucune bande filtrée (ex: bande RECAP exclue par filterRealPortees).
+      if (import.meta.env?.DEV) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          '[QuickMortalityForm] Bande introuvable dans bandesDispo',
+          { selectedBandeId, dispoIds: bandesDispo.map(b => b.id) },
+        );
+      }
       setError('Bande introuvable');
       return;
     }
@@ -208,15 +244,22 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
 
       if (onSuccess) onSuccess();
 
-      setTimeout(() => {
+      // Fermeture différée stockée dans un ref pour pouvoir être annulée
+      // si l'utilisateur ferme manuellement avant la fin du délai.
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
         setSuccess(false);
         setNbMorts(MIN_DEATHS);
         setObservation('');
         onClose();
       }, 1500);
     } catch (e) {
+      // Log explicite en dev pour debug sur device (Chrome devtools distant).
+      // eslint-disable-next-line no-console
       console.error('[QuickMortalityForm] enregistrement local échoué:', e);
-      setError('Erreur enregistrement local');
+      setError(
+        'Erreur enregistrement local · réessaie ou redémarre l\'application',
+      );
     } finally {
       setSaving(false);
     }
@@ -278,38 +321,52 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
                 Bande
               </label>
               {bandesDispo.length > 0 ? (
-                <select
-                  id="mortality-bande"
-                  ref={firstFieldRef}
-                  aria-label="Sélectionner la bande concernée par la mortalité"
-                  aria-required="true"
-                  aria-invalid={!!(error && !selectedBandeId)}
-                  aria-describedby={
-                    error && !selectedBandeId ? 'mortality-error' : undefined
-                  }
+                <div
                   className={[
-                    'w-full h-10 rounded-md px-3',
+                    'w-full h-10 rounded-md',
                     'bg-bg-0 border text-text-0',
                     'font-mono text-[12px] uppercase tracking-wide tabular-nums',
-                    'outline-none transition-colors duration-[160ms]',
-                    'focus:border-accent focus:ring-1 focus:ring-accent',
+                    'transition-colors duration-[160ms]',
+                    'focus-within:border-accent focus-within:ring-1 focus-within:ring-accent',
                     error && !selectedBandeId ? 'border-coral' : 'border-border',
                   ].join(' ')}
-                  value={selectedBandeId}
-                  onChange={e => setSelectedBandeId(e.target.value)}
-                  disabled={saving}
                 >
-                  <option value="" disabled>
-                    — Choisir une bande —
-                  </option>
-                  {bandesDispo.map(b => (
-                    <option key={b.id} value={b.id}>
-                      {idBandeDisplay(b)}
-                      {b.truie ? ` · ${b.truie}` : ''}
-                      {b.statut ? ` · ${b.statut}` : ''}
-                    </option>
-                  ))}
-                </select>
+                  <IonSelect
+                    id="mortality-bande"
+                    ref={firstFieldRef}
+                    aria-label="Sélectionner la bande concernée par la mortalité"
+                    aria-required="true"
+                    aria-invalid={!!(error && !selectedBandeId)}
+                    aria-describedby={
+                      error && !selectedBandeId ? 'mortality-error' : undefined
+                    }
+                    className="agritech-select"
+                    interface="popover"
+                    placeholder="— Choisir une bande —"
+                    value={selectedBandeId || undefined}
+                    disabled={saving}
+                    onIonChange={e => {
+                      const v = (e.detail.value as string | null | undefined) ?? '';
+                      setSelectedBandeId(v);
+                    }}
+                    style={{
+                      width: '100%',
+                      minHeight: '2.5rem',
+                      paddingInlineStart: '0.75rem',
+                      paddingInlineEnd: '0.75rem',
+                      ['--padding-start' as string]: '0',
+                      ['--padding-end' as string]: '0',
+                    }}
+                  >
+                    {bandesDispo.map(b => (
+                      <IonSelectOption key={b.id} value={b.id}>
+                        {idBandeDisplay(b)}
+                        {b.truie ? ` · ${b.truie}` : ''}
+                        {b.statut ? ` · ${b.statut}` : ''}
+                      </IonSelectOption>
+                    ))}
+                  </IonSelect>
+                </div>
               ) : (
                 <p className="font-mono text-[11px] uppercase tracking-wide text-text-2">
                   Aucune bande active

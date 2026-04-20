@@ -216,4 +216,106 @@ describe('submitMortality', () => {
     expect(result.online).toBe(false);
     expect(result.nbMorts).toBe(1);
   });
+
+  it('append précède update (ordre des 2 enqueues préservé pour audit trail)', async () => {
+    // Le journal (audit trail) doit être écrit avant la patch idempotente :
+    // si la patch échoue, on garde au moins une trace de l'intention.
+    const calls: string[] = [];
+    const appendRow = vi.fn().mockImplementation(async () => {
+      calls.push('append');
+    });
+    const updateRow = vi.fn().mockImplementation(async () => {
+      calls.push('update');
+    });
+
+    await submitMortality(
+      makeBande({ id: 'B-777', vivants: 10, morts: 0, nv: 10 }),
+      2,
+      'loge 2',
+      {
+        appendRow,
+        updateRow,
+        getAuteur: () => 'A',
+        isOnline: () => true,
+      },
+    );
+
+    expect(calls).toEqual(['append', 'update']);
+    // Vérifie aussi que les deux ont bien été invoqués une seule fois
+    expect(appendRow).toHaveBeenCalledTimes(1);
+    expect(updateRow).toHaveBeenCalledTimes(1);
+    // Le sheet cible de chaque enqueue reste correct
+    expect(appendRow.mock.calls[0][0]).toBe('JOURNAL_SANTE');
+    expect(updateRow.mock.calls[0][0]).toBe('PORCELETS_BANDES_DETAIL');
+  });
+
+  it('propage une erreur d\'enqueue (pas de faux succès silencieux)', async () => {
+    // Si le premier enqueue échoue (ex: Preferences.set KO sur Android),
+    // submitMortality doit rejeter pour que l'UI affiche une erreur plutôt
+    // qu'un toast "enregistré" mensonger.
+    const appendRow = vi.fn().mockRejectedValue(new Error('Preferences KO'));
+    const updateRow = vi.fn().mockResolvedValue(undefined);
+
+    await expect(
+      submitMortality(makeBande(), 1, '', {
+        appendRow,
+        updateRow,
+        getAuteur: () => 'A',
+        isOnline: () => true,
+      }),
+    ).rejects.toThrow('Preferences KO');
+
+    // L'update ne doit PAS avoir été tenté si l'append a échoué
+    expect(updateRow).not.toHaveBeenCalled();
+  });
+});
+
+// ─── Tests structurels (source-grep) ─────────────────────────────────────────
+// L'environnement node-only ne permet pas de render le composant (IonModal
+// a besoin du DOM Ionic). On vérifie donc à la source les contrats clés :
+//   - defaultBandeId est bien utilisé pour initialiser selectedBandeId
+//   - le bouton submit est désactivé si !selectedBandeId
+// Ces contrats sont critiques et seraient cassés par un refacto silencieux.
+
+describe('QuickMortalityForm · contrats UI (source-grep)', () => {
+  // Import FS au niveau du bloc pour ne pas polluer le top-level de tests
+  // déjà orienté logique métier pure.
+  const SRC = (() => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fs = require('node:fs') as typeof import('node:fs');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const path = require('node:path') as typeof import('node:path');
+    return fs.readFileSync(
+      path.resolve(__dirname, 'QuickMortalityForm.tsx'),
+      'utf-8',
+    );
+  })();
+
+  it('initialise selectedBandeId depuis defaultBandeId (pré-sélection bande)', () => {
+    // Contrat : useState<string>(defaultBandeId ?? '') — pré-sélection à l'ouverture
+    expect(SRC).toMatch(
+      /useState<string>\(\s*defaultBandeId\s*\?\?\s*''\s*\)/,
+    );
+    // Contrat : useEffect resync si defaultBandeId change pendant que isOpen
+    expect(SRC).toMatch(
+      /if\s*\(\s*isOpen\s*&&\s*defaultBandeId\s*\)\s*\{\s*setSelectedBandeId\(\s*defaultBandeId\s*\)/,
+    );
+  });
+
+  it('désactive le bouton submit quand aucune bande sélectionnée', () => {
+    // Contrat : disabled inclut !selectedBandeId
+    expect(SRC).toMatch(/disabled=\{[^}]*!selectedBandeId[^}]*\}/);
+    // Contrat : disabled inclut aussi saving + bandesDispo vide
+    expect(SRC).toMatch(/disabled=\{[^}]*saving[^}]*\}/);
+    expect(SRC).toMatch(/bandesDispo\.length\s*===\s*0/);
+  });
+
+  it('utilise IonSelect (pas un <select> natif, bugué sur Android Capacitor)', () => {
+    // Sur Android, <select> natif dans un IonModal avec breakpoints peut ne
+    // pas s'ouvrir correctement à cause des transforms. IonSelect avec
+    // interface="popover" est la solution éprouvée (cf. QuickHealthForm).
+    expect(SRC).toMatch(/<IonSelect\b/);
+    expect(SRC).toMatch(/interface="popover"/);
+    expect(SRC).not.toMatch(/<select\s/);
+  });
 });

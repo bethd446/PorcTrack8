@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { IonApp } from '@ionic/react';
 import { kvGet } from './services/kvStore';
 import OnboardingFlow from './features/onboarding/OnboardingFlow';
@@ -104,18 +104,22 @@ const AppContent = () => {
       }>
         <QuickActionsProvider>
         <Routes>
-          {/* ── Legacy routes (preserved for compat) ─────────────────── */}
+          {/* ── Legacy routes → redirections canoniques ─────────────── */}
           <Route path="/" element={<Cockpit />} />
           <Route path="/controle" element={<ControleQuotidien />} />
-          <Route path="/cheptel" element={<CheptelView />} />
-          <Route path="/cheptel/truie/:id" element={<AnimalDetailView mode="TRUIE" />} />
-          <Route path="/cheptel/verrat/:id" element={<AnimalDetailView mode="VERRAT" />} />
-          <Route path="/bandes" element={<BandesView />} />
-          <Route path="/bandes/:bandeId" element={<BandesView />} />
+          {/* Legacy Cheptel → Troupeau */}
+          <Route path="/cheptel" element={<Navigate to="/troupeau/truies" replace />} />
+          <Route path="/cheptel/truie/:id" element={<RedirectTruie />} />
+          <Route path="/cheptel/verrat/:id" element={<RedirectVerrat />} />
+          {/* Legacy Bandes → Troupeau/Bandes */}
+          <Route path="/bandes" element={<Navigate to="/troupeau/bandes" replace />} />
+          <Route path="/bandes/:bandeId" element={<RedirectBande />} />
+          {/* /sante : conservé (pas encore de cible canonique décidée) */}
           <Route path="/sante" element={<TableView tableKey="JOURNAL_SANTE" />} />
-          <Route path="/stock" element={<AlimentsView />} />
-          <Route path="/stock/aliments" element={<AlimentsView />} />
-          <Route path="/stock/veto" element={<TableView tableKey="STOCK_VETO" />} />
+          {/* Legacy Stock → Ressources */}
+          <Route path="/stock" element={<Navigate to="/ressources/aliments" replace />} />
+          <Route path="/stock/aliments" element={<Navigate to="/ressources/aliments" replace />} />
+          <Route path="/stock/veto" element={<Navigate to="/ressources/pharmacie" replace />} />
           <Route path="/protocoles" element={<ProtocolsView />} />
           <Route path="/checklist/:name" element={<ChecklistFlow />} />
           <Route path="/audit" element={<AuditView />} />
@@ -179,3 +183,19 @@ export default function App() {
     </Router>
   );
 }
+
+/* ── Helpers de redirection param-preserving pour routes legacy ────────── */
+const RedirectTruie: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={`/troupeau/truies/${id ?? ''}`} replace />;
+};
+
+const RedirectVerrat: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={`/troupeau/verrats/${id ?? ''}`} replace />;
+};
+
+const RedirectBande: React.FC = () => {
+  const { bandeId } = useParams<{ bandeId: string }>();
+  return <Navigate to={`/troupeau/bandes/${bandeId ?? ''}`} replace />;
+};

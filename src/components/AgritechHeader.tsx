@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
 
@@ -12,6 +12,12 @@ export interface AgritechHeaderProps {
   backTo?: string;
   /** Bouton d'action optionnel aligné à droite. */
   action?: React.ReactNode;
+  /**
+   * Si `true`, affiche un bouton engrenage (Réglages) à droite qui navigue
+   * vers `/more`. Opt-in (défaut `false`) : à activer uniquement sur les
+   * écrans où un accès permanent aux réglages a du sens (ex: Cockpit).
+   */
+  showSettings?: boolean;
   /** Slot pour intégrer search/filters/tabs sous le titre. */
   children?: React.ReactNode;
   /** className additionnel sur le wrapper. */
@@ -33,6 +39,7 @@ const AgritechHeader: React.FC<AgritechHeaderProps> = ({
   subtitle,
   backTo,
   action,
+  showSettings = false,
   children,
   className,
 }) => {
@@ -86,9 +93,21 @@ const AgritechHeader: React.FC<AgritechHeaderProps> = ({
           </div>
         </div>
 
-        {/* Right: optional action */}
-        {action ? (
-          <div className="shrink-0 pressable">{action}</div>
+        {/* Right: optional action + optional Réglages gear */}
+        {action || showSettings ? (
+          <div className="shrink-0 flex items-center gap-2">
+            {action ? <div className="pressable">{action}</div> : null}
+            {showSettings ? (
+              <button
+                type="button"
+                onClick={() => navigate('/more')}
+                aria-label="Ouvrir les réglages"
+                className="pressable inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-bg-2 text-text-2 hover:text-text-0 active:scale-[0.96] transition-transform duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+              >
+                <Settings size={18} aria-hidden="true" />
+              </button>
+            ) : null}
+          </div>
         ) : null}
       </div>
 

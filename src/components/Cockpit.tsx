@@ -13,6 +13,7 @@ import {
   Scale,
   CloudOff,
   HelpCircle,
+  Settings,
   Users,
   Baby,
   Home,
@@ -28,12 +29,7 @@ import QuickPeseeForm from './forms/QuickPeseeForm';
 import ForecastWidget from './cockpit/ForecastWidget';
 import type { FarmAlert, AlertPriority } from '../services/alertEngine';
 import type { AlerteServeur, DataSource } from '../types/farm';
-import {
-  filterRealPortees,
-  logesMaterniteOccupation,
-  logesPostSevrageOccupation,
-  logesEngraissementOccupation,
-} from '../services/bandesAggregator';
+import { Bandes } from '../services/bandAnalysisEngine';
 import { normaliseStatut } from '../lib/truieStatut';
 
 /* ═════════════════════════════════════════════════════════════════════════
@@ -112,14 +108,14 @@ const Cockpit: React.FC = () => {
   );
 
   // Portées réelles (exclut RECAP) + occupation des loges physiques (3 zones).
-  const porteesReelles = useMemo(() => filterRealPortees(bandes), [bandes]);
-  const materniteOcc = useMemo(() => logesMaterniteOccupation(truies), [truies]);
+  const porteesReelles = useMemo(() => Bandes.filterReal(bandes), [bandes]);
+  const materniteOcc = useMemo(() => Bandes.logesMaternite(truies), [truies]);
   const postSevrageOcc = useMemo(
-    () => logesPostSevrageOccupation(porteesReelles),
+    () => Bandes.logesPostSevrage(porteesReelles),
     [porteesReelles]
   );
   const engraissementOcc = useMemo(
-    () => logesEngraissementOccupation(porteesReelles),
+    () => Bandes.logesEngraissement(porteesReelles),
     [porteesReelles]
   );
 
@@ -320,6 +316,14 @@ const Cockpit: React.FC = () => {
                   className="pressable inline-flex h-9 w-9 items-center justify-center rounded-md bg-bg-2 text-text-1 active:scale-[0.96] transition-transform duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
                 >
                   <HelpCircle size={16} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/more')}
+                  aria-label="Ouvrir les réglages"
+                  className="pressable inline-flex h-9 w-9 items-center justify-center rounded-md bg-bg-2 text-text-2 hover:text-text-0 active:scale-[0.96] transition-transform duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                >
+                  <Settings size={18} aria-hidden="true" />
                 </button>
               </div>
             </div>
