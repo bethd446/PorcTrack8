@@ -55,6 +55,7 @@ const AlimentsView = React.lazy(() => import(/* webpackChunkName: "aliments" */ 
 const PerfKpiView = React.lazy(() => import(/* webpackChunkName: "pilotage-perf" */ './features/pilotage/PerfKpiView'));
 const FinancesView = React.lazy(() => import(/* webpackChunkName: "pilotage-finances" */ './features/pilotage/FinancesView'));
 const BandeDetailView = React.lazy(() => import(/* webpackChunkName: "troupeau-bande-detail" */ './features/troupeau/BandeDetailView'));
+const TruieDetailView = React.lazy(() => import(/* webpackChunkName: "troupeau-truie-detail" */ './features/troupeau/TruieDetailView'));
 const RapportFinancierView = React.lazy(() => import(/* webpackChunkName: "pilotage-rapport" */ './features/pilotage/RapportFinancierView'));
 const ForecastView = React.lazy(() => import(/* webpackChunkName: "pilotage-previsions" */ './features/pilotage/ForecastView'));
 
@@ -131,7 +132,7 @@ const AppContent = () => {
           {/* ── Troupeau sub-routes (new dense lists — coexist with /cheptel) ── */}
           <Route path="/troupeau/truies" element={<TruiesListView />} />
           <Route path="/troupeau/verrats" element={<CheptelView initialTab="VERRAT" />} />
-          <Route path="/troupeau/truies/:id" element={<AnimalDetailView mode="TRUIE" />} />
+          <Route path="/troupeau/truies/:id" element={<TruieDetailView />} />
           <Route path="/troupeau/verrats/:id" element={<AnimalDetailView mode="VERRAT" />} />
           <Route path="/troupeau/bandes" element={<BandesView />} />
           <Route path="/troupeau/bandes/:bandeId" element={<BandeDetailView />} />

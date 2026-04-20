@@ -1,234 +1,65 @@
+/**
+ * CyclesHub — /cycles (tab 03)
+ * ══════════════════════════════════════════════════════════════════════════
+ * Refonte Claude Design v2 (2026-04-20) — mockup _tabs/03-cycles.
+ *
+ * Structure :
+ *   1. Summary chips 5 phases (count par phase avec tone)
+ *   2. Pipeline horizontal 295 jours (bande 5 phases + labels + markers bandes)
+ *   3. Liste bandes actives (DataRow avec progress J+x/durée + chip phase)
+ */
+
 import React, { useMemo } from 'react';
-import { IonContent, IonPage } from '@ionic/react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Heart,
-  Baby,
-  PackageCheck,
-  TrendingUp,
-  Trophy,
-  ChevronRight,
-} from 'lucide-react';
+import { IonContent, IonPage } from '@ionic/react';
+import { ChevronRight } from 'lucide-react';
+
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import { KpiCard, SectionDivider, HubTile } from '../../components/agritech';
+import { SectionDivider, Chip } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
 import {
   computeBandePhase,
   filterRealPortees,
-  countSousMere,
-  countSevres,
 } from '../../services/bandesAggregator';
+import { FARM_CONFIG } from '../../config/farm';
 import type { BandePorcelets, Truie } from '../../types/farm';
 
-/**
- * CyclesHub — pipeline de production + accès sous-hubs.
- * ═══════════════════════════════════════════════════════
- *
- * Remplace l'ancien CyclesHub (4 HubTile statiques) par un pipeline visuel
- * horizontal à 5 étapes (Gestation → Maternité → Post-sevrage →
- * Croissance-finition → Finition) avec compteurs live calculés depuis
- * `useFarm()` + un summary rapide (porcelets vivants, sorties abattoir).
- *
- * Chaque étape du pipeline est cliquable et mène à sa vue dédiée :
- *  - Gestation            → /cycles/repro
- *  - Maternité            → /cycles/maternite
- *  - Post-sevrage         → /cycles/post-sevrage (J28 → J60, 4 loges)
- *  - Croissance-finition  → /cycles/engraissement (J60 → abattoir, séparé
- *                           par sexe, même loge)
- *  - Finition             → /cycles/finition (sous-vue ≥80 kg)
- *
- * Les 4 HubTiles historiques sont conservés en dessous pour la navigation
- * d'appoint ("Voir …"), cohérents avec le reste de l'UX hub.
- */
-const CyclesHub: React.FC = () => {
-  const { truies, bandes } = useFarm();
+// ─── Phases ─────────────────────────────────────────────────────────────────
 
-  const stats = useMemo(() => computePipelineStats(truies, bandes), [truies, bandes]);
+type PhaseId = 'gestation' | 'maternite' | 'postsevr' | 'croiss' | 'finition';
 
-  return (
-    <IonPage>
-      <IonContent fullscreen className="ion-no-padding">
-        <AgritechLayout>
-          <AgritechHeader
-            title="CYCLES"
-            subtitle="Pipeline de production · naisseur-engraisseur"
-          />
-
-          <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
-            {/* Summary strip — production globale */}
-            <div
-              role="group"
-              aria-label="Résumé pipeline"
-              className="grid grid-cols-2 gap-3"
-            >
-              <KpiCard
-                label="Porcelets vivants"
-                value={stats.totalPorcelets}
-                tone="success"
-              />
-              <KpiCard
-                label="Sorties abattoir"
-                value={stats.sortiesAbattoir}
-                unit="bandes"
-                tone={stats.sortiesAbattoir > 0 ? 'warning' : 'default'}
-              />
-            </div>
-
-            {/* Pipeline visuel 5 étapes */}
-            <SectionDivider label="Pipeline production" />
-            <PipelineBar stages={stats.stages} />
-
-            {/* Sous-hubs — accès détaillés */}
-            <SectionDivider label="Vues opérationnelles" />
-            <div className="flex flex-col gap-3">
-              <HubTile
-                icon={<Heart size={22} />}
-                title="Reproduction"
-                subtitle="Saillies · gestation · retours"
-                to="/cycles/repro"
-                tone="accent"
-                count={stats.stages.gestation}
-              />
-              <HubTile
-                icon={<Baby size={22} />}
-                title="Maternité"
-                subtitle="Truies allaitantes · sous mère"
-                to="/cycles/maternite"
-                tone="amber"
-                count={stats.stages.maternite}
-              />
-              <HubTile
-                icon={<PackageCheck size={22} />}
-                title="Post-sevrage"
-                subtitle="Porcelets sevrés · J+0 à J+32 · 4 loges"
-                to="/cycles/post-sevrage"
-                count={stats.stages.postSevrage}
-              />
-              <HubTile
-                icon={<TrendingUp size={22} />}
-                title="Croissance-finition"
-                subtitle="Séparés par sexe · même loge → abattoir"
-                to="/cycles/engraissement"
-                count={stats.stages.engraissement}
-              />
-              <HubTile
-                icon={<Trophy size={22} />}
-                title="Finition (≥80 kg)"
-                subtitle="Sous-vue · proches poids abattage"
-                to="/cycles/finition"
-                tone="amber"
-                count={stats.stages.finition}
-              />
-            </div>
-          </div>
-        </AgritechLayout>
-      </IonContent>
-    </IonPage>
-  );
-};
-
-// ─── Sous-composants locaux ────────────────────────────────────────────────
-
-interface PipelineStages {
-  gestation: number;
-  maternite: number;
-  postSevrage: number;
-  engraissement: number;
-  finition: number;
-}
-
-interface PipelineStats {
-  stages: PipelineStages;
-  totalPorcelets: number;
-  sortiesAbattoir: number;
-}
-
-interface PipelineStageDef {
-  key: keyof PipelineStages;
+interface PhaseDef {
+  id: PhaseId;
   label: string;
-  duration: string;
-  icon: React.ReactNode;
-  to: string;
+  short: string;
+  days: number;
+  varTone: string;
 }
 
-const STAGE_DEFS: readonly PipelineStageDef[] = [
-  { key: 'gestation', label: 'Gestation', duration: '115 j', icon: <Heart size={16} aria-hidden="true" />, to: '/cycles/repro' },
-  { key: 'maternite', label: 'Maternité', duration: '28 j', icon: <Baby size={16} aria-hidden="true" />, to: '/cycles/maternite' },
-  { key: 'postSevrage', label: 'Post-sevrage', duration: '32 j', icon: <PackageCheck size={16} aria-hidden="true" />, to: '/cycles/post-sevrage' },
-  { key: 'engraissement', label: 'Croissance-fin.', duration: 'J60→abat.', icon: <TrendingUp size={16} aria-hidden="true" />, to: '/cycles/engraissement' },
-  { key: 'finition', label: 'Finition', duration: '≥80 kg', icon: <Trophy size={16} aria-hidden="true" />, to: '/cycles/finition' },
-] as const;
+const PHASES: readonly PhaseDef[] = [
+  { id: 'gestation', label: 'Gestation', short: 'GEST.', days: 115, varTone: 'var(--cyan)' },
+  { id: 'maternite', label: 'Maternité', short: 'MAT.', days: FARM_CONFIG.SEVRAGE_AGE_JOURS ?? 28, varTone: 'var(--gold)' },
+  { id: 'postsevr',  label: 'Post-sevrage', short: 'P-SEV.', days: FARM_CONFIG.POST_SEVRAGE_DUREE_JOURS ?? 32, varTone: 'var(--teal)' },
+  { id: 'croiss',    label: 'Croissance', short: 'CROIS.', days: 60, varTone: 'var(--amber)' },
+  { id: 'finition',  label: 'Finition', short: 'FINIT.', days: 60, varTone: 'var(--coral)' },
+];
 
-interface PipelineBarProps {
-  stages: PipelineStages;
-}
+const TOTAL_DAYS = PHASES.reduce((s, p) => s + p.days, 0);
+const PHASE_OFFSETS: Record<PhaseId, number> = (() => {
+  const o: Record<PhaseId, number> = {
+    gestation: 0, maternite: 0, postsevr: 0, croiss: 0, finition: 0,
+  };
+  let acc = 0;
+  for (const p of PHASES) {
+    o[p.id] = acc;
+    acc += p.days;
+  }
+  return o;
+})();
 
-/**
- * Barre pipeline horizontale scrollable sur mobile.
- * Chaque étape = bouton accessible (role="link" natif via onClick navigation).
- */
-const PipelineBar: React.FC<PipelineBarProps> = ({ stages }) => {
-  const navigate = useNavigate();
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
-  return (
-    <div
-      className="card-dense !p-3 overflow-x-auto"
-      role="group"
-      aria-label="Pipeline de production porcine"
-    >
-      <ol className="flex items-stretch gap-1 min-w-max">
-        {STAGE_DEFS.map((stage, idx) => {
-          const count = stages[stage.key];
-          const isLast = idx === STAGE_DEFS.length - 1;
-          return (
-            <React.Fragment key={stage.key}>
-              <li className="flex flex-col items-stretch">
-                <button
-                  type="button"
-                  onClick={() => navigate(stage.to)}
-                  aria-label={`${stage.label} · ${count} · durée ${stage.duration}`}
-                  className="pressable group flex flex-col items-center gap-1 rounded-md px-3 py-2 bg-bg-2 hover:bg-bg-1 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 min-w-[84px]"
-                >
-                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-bg-0 text-accent" aria-hidden="true">
-                    {stage.icon}
-                  </span>
-                  <span className="agritech-heading uppercase text-[10px] tracking-wide text-text-1 text-center leading-tight">
-                    {stage.label}
-                  </span>
-                  <span className="font-mono tabular-nums text-[18px] font-bold text-text-0 leading-none">
-                    {count}
-                  </span>
-                  <span className="font-mono text-[9px] text-text-2 uppercase tracking-wide">
-                    {stage.duration}
-                  </span>
-                </button>
-              </li>
-              {!isLast ? (
-                <li
-                  className="flex items-center px-1 text-text-2"
-                  aria-hidden="true"
-                >
-                  <ChevronRight size={14} />
-                </li>
-              ) : null}
-            </React.Fragment>
-          );
-        })}
-      </ol>
-    </div>
-  );
-};
-
-// ─── Helpers métier ────────────────────────────────────────────────────────
-
-const FINITION_SEUIL_KG = 80;
-const POIDS_SEVRAGE_KG = 25;
-const GMQ_POST_SEVRAGE_KG = 0.65; // gain moyen quotidien (Large White tropical CI)
-
-/**
- * Parse date dd/MM/yyyy ou ISO.
- */
 function parseDate(s?: string): Date | null {
   if (!s) return null;
   const fr = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
@@ -239,80 +70,347 @@ function parseDate(s?: string): Date | null {
 }
 
 function daysBetween(from: Date, to: Date): number {
-  const diffMs = to.getTime() - from.getTime();
-  return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+  return Math.max(0, Math.floor((to.getTime() - from.getTime()) / 86_400_000));
 }
 
-/**
- * Estimation poids vif d'un porcelet (bande) depuis sa date de sevrage.
- * Heuristique linéaire simple : 25 kg au sevrage + 0.65 kg/j jusqu'à 110 kg.
- */
-function estimateWeightKg(bande: BandePorcelets, today: Date): number {
-  const sevrage = parseDate(bande.dateSevrageReelle || bande.dateSevragePrevue);
-  if (!sevrage) return 0;
-  const j = daysBetween(sevrage, today);
-  return Math.min(POIDS_SEVRAGE_KG + j * GMQ_POST_SEVRAGE_KG, 110);
+interface BandePosition {
+  id: string;
+  label: string;
+  truie: string;
+  phase: PhaseDef;
+  dayInPhase: number;
+  detail: string;
 }
 
-/**
- * Une bande est considérée en "finition" si son poids estimé ≥ 80 kg
- * (peu importe qu'elle soit catégorisée POST_SEVRAGE ou ENGRAISSEMENT par la
- * phase — la finition est une sous-catégorie de l'engraissement basée sur
- * le poids, pas la durée).
- */
-function isFinition(bande: BandePorcelets, today: Date): boolean {
-  if (!/sevr/i.test(bande.statut ?? '')) return false;
-  return estimateWeightKg(bande, today) >= FINITION_SEUIL_KG;
-}
+/** Détermine la position d'une bande dans le pipeline. */
+function bandePosition(b: BandePorcelets, today: Date): BandePosition | null {
+  const phase = computeBandePhase(b, today);
+  const vivants = b.vivants ?? 0;
 
-/**
- * Compteurs live du pipeline :
- *  - Gestation           : truies pleines/gestantes (statut contient "pleine" ou "gest")
- *  - Maternité           : truies allaitantes (statut "maternit" ou "allait" ou "lactat")
- *  - Post-sevrage        : bandes en phase POST_SEVRAGE (sevrées <32 j)
- *  - Croissance-finition : bandes en phase ENGRAISSEMENT (sevrées ≥32 j)
- *  - Finition            : sous-catégorie avec poids estimé ≥80 kg (prêts abattoir)
- *
- * Total porcelets = vivants (sous mère + sevrés). Sorties abattoir = bandes
- * en finition prêtes à la vente.
- */
-function computePipelineStats(
-  truies: readonly Truie[],
-  bandes: readonly BandePorcelets[]
-): PipelineStats {
-  const today = new Date();
-  const realPortees = filterRealPortees([...bandes]);
+  let def: PhaseDef | undefined;
+  let dayInPhase = 0;
+  let detail = '';
 
-  let gestation = 0;
-  let maternite = 0;
-  for (const t of truies) {
-    const s = (t.statut ?? '').toLowerCase();
-    if (/maternit|allait|lactat/i.test(s)) {
-      maternite += 1;
-    } else if (/pleine|gest/i.test(s)) {
-      gestation += 1;
+  if (phase === 'SOUS_MERE') {
+    def = PHASES.find((p) => p.id === 'maternite');
+    const mb = parseDate(b.dateMB);
+    dayInPhase = mb ? Math.min(daysBetween(mb, today), def?.days ?? 28) : 0;
+    detail = `${vivants} porcelets`;
+  } else if (phase === 'POST_SEVRAGE') {
+    def = PHASES.find((p) => p.id === 'postsevr');
+    const sev = parseDate(b.dateSevrageReelle || b.dateSevragePrevue);
+    dayInPhase = sev ? Math.min(daysBetween(sev, today), def?.days ?? 32) : 0;
+    detail = `${vivants} porcelets`;
+  } else if (phase === 'ENGRAISSEMENT') {
+    const sev = parseDate(b.dateSevrageReelle || b.dateSevragePrevue);
+    const dSinceSev = sev ? daysBetween(sev, today) : 0;
+    const dEngrais = Math.max(0, dSinceSev - (FARM_CONFIG.POST_SEVRAGE_DUREE_JOURS ?? 32));
+    const croissDays = PHASES.find((p) => p.id === 'croiss')?.days ?? 60;
+    if (dEngrais < croissDays) {
+      def = PHASES.find((p) => p.id === 'croiss');
+      dayInPhase = dEngrais;
+    } else {
+      def = PHASES.find((p) => p.id === 'finition');
+      dayInPhase = Math.min(dEngrais - croissDays, def?.days ?? 60);
     }
+    detail = `${vivants} têtes`;
+  } else {
+    return null;
   }
 
-  let postSevrage = 0;
-  let engraissement = 0;
-  let finition = 0;
-  for (const b of realPortees) {
-    const phase = computeBandePhase(b, today);
-    if (phase === 'POST_SEVRAGE') postSevrage += 1;
-    else if (phase === 'ENGRAISSEMENT') engraissement += 1;
-    if (isFinition(b, today)) finition += 1;
-  }
-
-  const sm = countSousMere(realPortees);
-  const sv = countSevres(realPortees);
-  const totalPorcelets = sm.porcelets + sv.porcelets;
-
+  if (!def) return null;
   return {
-    stages: { gestation, maternite, postSevrage, engraissement, finition },
-    totalPorcelets,
-    sortiesAbattoir: finition,
+    id: b.id,
+    label: b.idPortee || b.id,
+    truie: b.truie || b.boucleMere || '—',
+    phase: def,
+    dayInPhase,
+    detail,
   };
 }
+
+/** Position globale (j sur pipeline 295j). */
+function globalDay(b: BandePosition): number {
+  return PHASE_OFFSETS[b.phase.id] + b.dayInPhase;
+}
+
+/** Truies en gestation → pseudo-bandes pour le pipeline. */
+function truieToPosition(t: Truie, today: Date): BandePosition | null {
+  const s = (t.statut ?? '').toLowerCase();
+  if (!/pleine|gest/i.test(s)) return null;
+  const def = PHASES.find((p) => p.id === 'gestation');
+  if (!def) return null;
+  const mbPrev = parseDate(t.dateMBPrevue);
+  let dayInPhase = 0;
+  if (mbPrev) {
+    const diff = daysBetween(today, mbPrev);
+    dayInPhase = Math.max(0, def.days - diff);
+  }
+  return {
+    id: `T-${t.id}`,
+    label: t.displayId || t.id,
+    truie: t.displayId || t.id,
+    phase: def,
+    dayInPhase,
+    detail: t.dateMBPrevue ? `MB prévue ${t.dateMBPrevue}` : 'Gestation',
+  };
+}
+
+// ─── Composant ──────────────────────────────────────────────────────────────
+
+const CyclesHub: React.FC = () => {
+  const navigate = useNavigate();
+  const { truies, bandes } = useFarm();
+  const today = useMemo(() => new Date(), []);
+
+  const positions = useMemo<BandePosition[]>(() => {
+    const realBandes = filterRealPortees(bandes);
+    const fromBandes = realBandes
+      .map((b) => bandePosition(b, today))
+      .filter((x): x is BandePosition => x !== null);
+    const fromTruies = truies
+      .map((t) => truieToPosition(t, today))
+      .filter((x): x is BandePosition => x !== null);
+    return [...fromTruies, ...fromBandes];
+  }, [bandes, truies, today]);
+
+  const countByPhase = useMemo(() => {
+    const c: Record<PhaseId, number> = {
+      gestation: 0, maternite: 0, postsevr: 0, croiss: 0, finition: 0,
+    };
+    for (const p of positions) c[p.phase.id] += 1;
+    return c;
+  }, [positions]);
+
+  return (
+    <IonPage>
+      <IonContent fullscreen className="ion-no-padding">
+        <AgritechLayout>
+          <AgritechHeader
+            title="CYCLES"
+            subtitle={`Pipeline · ${TOTAL_DAYS} jours`}
+          />
+
+          <div className="px-4 pt-4 pb-32 flex flex-col gap-5">
+            {/* ── Summary chips 5 phases ──────────────────────────────── */}
+            <div className="grid grid-cols-5 gap-1.5">
+              {PHASES.map((p) => {
+                const count = countByPhase[p.id];
+                return (
+                  <div
+                    key={p.id}
+                    className="card-dense !p-2.5 text-center"
+                    style={{
+                      borderColor: count > 0
+                        ? `color-mix(in srgb, ${p.varTone} 40%, var(--border))`
+                        : undefined,
+                    }}
+                  >
+                    <div
+                      className="font-mono text-[9px] uppercase tracking-wide font-semibold"
+                      style={{ color: p.varTone }}
+                    >
+                      {p.short}
+                    </div>
+                    <div
+                      className="font-mono tabular-nums text-[20px] font-bold mt-1 leading-none"
+                      style={{ color: count > 0 ? p.varTone : 'var(--text-2)' }}
+                    >
+                      {String(count).padStart(2, '0')}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* ── Pipeline horizontal ─────────────────────────────────── */}
+            <section aria-label={`Pipeline ${TOTAL_DAYS} jours`}>
+              <SectionDivider label={`Pipeline · ${TOTAL_DAYS} jours`} />
+              <div className="card-dense !px-3.5 !pt-4 !pb-3.5 mt-3 overflow-hidden">
+                <PhaseBand />
+                <PhaseLabels />
+                <BandesMarkers
+                  positions={positions}
+                  onOpen={(id) => navigate(`/troupeau/bandes/${encodeURIComponent(id)}`)}
+                />
+              </div>
+            </section>
+
+            {/* ── Liste bandes actives ────────────────────────────────── */}
+            {positions.length > 0 ? (
+              <section aria-label={`Bandes actives · ${positions.length}`}>
+                <SectionDivider label={`Bandes actives · ${positions.length}`} />
+                <ul className="card-dense !p-0 overflow-hidden">
+                  {positions.map((pos) => (
+                    <BandeRow
+                      key={pos.id}
+                      pos={pos}
+                      onOpen={() =>
+                        navigate(`/troupeau/bandes/${encodeURIComponent(pos.id.replace(/^T-/, ''))}`)
+                      }
+                    />
+                  ))}
+                </ul>
+              </section>
+            ) : (
+              <div className="card-dense text-center py-8">
+                <p className="font-mono text-[12px] text-text-2">
+                  Aucune bande active dans le pipeline.
+                </p>
+              </div>
+            )}
+          </div>
+        </AgritechLayout>
+      </IonContent>
+    </IonPage>
+  );
+};
+
+// ─── Pipeline band (5 phases proportionnelles) ─────────────────────────────
+
+const PhaseBand: React.FC = () => (
+  <div
+    className="flex h-[10px] rounded-full overflow-hidden gap-[2px]"
+    aria-hidden="true"
+  >
+    {PHASES.map((p) => (
+      <div
+        key={p.id}
+        style={{
+          flex: p.days,
+          background: `color-mix(in srgb, ${p.varTone} 30%, var(--bg-1))`,
+          borderTop: `2px solid ${p.varTone}`,
+        }}
+      />
+    ))}
+  </div>
+);
+
+// ─── Phase labels sous la band ─────────────────────────────────────────────
+
+const PhaseLabels: React.FC = () => (
+  <div className="flex gap-[2px] mt-2">
+    {PHASES.map((p) => (
+      <div key={p.id} className="flex-1 text-center" style={{ flex: p.days }}>
+        <div
+          className="font-mono text-[9px] uppercase tracking-tight font-semibold leading-none"
+          style={{ color: p.varTone }}
+        >
+          {p.short}
+        </div>
+        <div className="font-mono text-[9px] text-text-2 tabular-nums mt-1 leading-none">
+          {p.days}j
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+// ─── Bandes markers (positions absolues) ──────────────────────────────────
+
+interface BandesMarkersProps {
+  positions: BandePosition[];
+  onOpen: (id: string) => void;
+}
+
+const BandesMarkers: React.FC<BandesMarkersProps> = ({ positions, onOpen }) => (
+  <div
+    className="relative mt-4 pt-3 border-t border-dashed border-border"
+    style={{ height: 110 }}
+    aria-label="Positions des bandes"
+  >
+    {positions.slice(0, 9).map((pos, i) => {
+      const leftPct = (globalDay(pos) / TOTAL_DAYS) * 100;
+      const row = i % 3;
+      return (
+        <button
+          key={pos.id}
+          type="button"
+          onClick={() => onOpen(pos.id)}
+          className="pressable absolute flex flex-col items-center -translate-x-1/2 z-[2]"
+          style={{ left: `${leftPct}%`, top: row * 30 }}
+          aria-label={`Bande ${pos.label}`}
+        >
+          <span
+            className="font-mono text-[10px] font-semibold px-1.5 py-[3px] rounded-md whitespace-nowrap"
+            style={{
+              background: 'var(--bg-2)',
+              border: `1px solid ${pos.phase.varTone}`,
+              color: pos.phase.varTone,
+            }}
+          >
+            {pos.label}
+          </span>
+          <span
+            className="w-px h-1.5"
+            style={{ background: pos.phase.varTone }}
+            aria-hidden="true"
+          />
+          <span
+            className="w-2 h-2 rounded-full"
+            style={{
+              background: pos.phase.varTone,
+              boxShadow: '0 0 0 2px var(--bg-2)',
+            }}
+            aria-hidden="true"
+          />
+        </button>
+      );
+    })}
+  </div>
+);
+
+// ─── BandeRow ───────────────────────────────────────────────────────────────
+
+interface BandeRowProps {
+  pos: BandePosition;
+  onOpen: () => void;
+}
+
+const BandeRow: React.FC<BandeRowProps> = ({ pos, onOpen }) => {
+  const pct = pos.phase.days > 0
+    ? Math.min(100, Math.round((pos.dayInPhase / pos.phase.days) * 100))
+    : 0;
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onOpen}
+        className="pressable w-full text-left flex items-center gap-3 px-3 py-3 border-b border-border last:border-b-0"
+      >
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className="font-mono text-[14px] font-semibold text-text-0">
+              {pos.label}
+            </span>
+            <span className="font-mono text-[11px] text-text-2">· {pos.truie}</span>
+            <Chip
+              label={pos.phase.label}
+              tone="default"
+              size="xs"
+              className="border"
+            />
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+            <div className="h-1.5 flex-1 bg-bg-2 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-[width]"
+                style={{
+                  width: `${pct}%`,
+                  background: pos.phase.varTone,
+                }}
+              />
+            </div>
+            <span className="font-mono text-[10px] text-text-2 tabular-nums min-w-[56px] text-right">
+              {pos.dayInPhase}/{pos.phase.days}j
+            </span>
+          </div>
+          <div className="text-[11px] text-text-2 mt-1 truncate">{pos.detail}</div>
+        </div>
+        <ChevronRight size={16} className="shrink-0 text-text-2" aria-hidden="true" />
+      </button>
+    </li>
+  );
+};
 
 export default CyclesHub;

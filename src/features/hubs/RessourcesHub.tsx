@@ -1,173 +1,249 @@
+/**
+ * RessourcesHub — /ressources (tab 04)
+ * ══════════════════════════════════════════════════════════════════════════
+ * Refonte Claude Design v2 (2026-04-20) — mockup _tabs/04-ressources.
+ *
+ * Structure :
+ *   1. Bannière RUPTURE (rouge) si ≥1 item en rupture
+ *   2. Section ALIMENTS — liste StockRow avec progress bar + bouton "+"
+ *   3. Section VACCINS & SOINS — idem
+ *   4. Section SOUS-ÉCRANS — HubTiles Plan Alim / Formules / Pharmacie (full)
+ */
+
 import React, { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import {
-  Wheat,
-  Syringe,
-  Calculator,
-  ClipboardList,
-  AlertOctagon,
-  Package,
-  ChevronRight,
+  AlertOctagon, Plus, Calculator, ClipboardList, Package,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import { HubTile, Chip } from '../../components/agritech';
+import { HubTile, SectionDivider } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
-import { cn } from '../../lib/utils';
+import type { StockAliment, StockVeto } from '../../types/farm';
 
-/**
- * RessourcesHub — entrée stocks : Aliments · Pharmacie · Formules · Plan Alim.
- *
- * Enrichi avec une bannière d'alertes RUPTURE (Aliments + Véto) au-dessus
- * des HubTiles, et des chips de statut sur chaque tuile.
- */
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+type StockTone = 'accent' | 'amber' | 'red';
+
+interface StockRowData {
+  id: string;
+  name: string;
+  qty: string;
+  pct: number;
+  tone: StockTone;
+  meta: string;
+}
+
+function fillClass(tone: StockTone): string {
+  if (tone === 'red') return 'bg-red';
+  if (tone === 'amber') return 'bg-amber';
+  return 'bg-accent';
+}
+
+function qtyColor(tone: StockTone): string {
+  if (tone === 'red') return 'text-red';
+  if (tone === 'amber') return 'text-amber';
+  return 'text-accent';
+}
+
+function toneFromStatut(statut: string | undefined): StockTone {
+  const s = (statut ?? '').toUpperCase();
+  if (s === 'RUPTURE') return 'red';
+  if (s === 'BAS') return 'amber';
+  return 'accent';
+}
+
+function pctFromStock(stockActuel: number, seuil: number): number {
+  if (seuil <= 0) return 100;
+  const ratio = (stockActuel / (seuil * 3)) * 100; // seuil = 33% par convention
+  return Math.max(0, Math.min(100, Math.round(ratio)));
+}
+
+function mapAliment(a: StockAliment): StockRowData {
+  const tone = toneFromStatut(a.statutStock);
+  const pct = pctFromStock(a.stockActuel, a.seuilAlerte);
+  const meta = a.seuilAlerte > 0
+    ? `Seuil alerte ${a.seuilAlerte} ${a.unite}`
+    : (a.notes?.trim() || 'Stock courant');
+  return {
+    id: a.id,
+    name: a.libelle,
+    qty: `${a.stockActuel} ${a.unite}`,
+    pct,
+    tone,
+    meta,
+  };
+}
+
+function mapVeto(v: StockVeto): StockRowData {
+  const tone = toneFromStatut(v.statutStock);
+  const pct = pctFromStock(v.stockActuel, v.seuilAlerte);
+  const meta = v.usage?.trim() || v.type?.trim() || (v.notes?.trim() ?? 'Vaccin / soin');
+  return {
+    id: v.id,
+    name: v.produit,
+    qty: `${v.stockActuel} ${v.unite}`,
+    pct,
+    tone,
+    meta,
+  };
+}
+
+// ─── Composant ──────────────────────────────────────────────────────────────
+
 const RessourcesHub: React.FC = () => {
-  const { stockAliment, stockVeto } = useFarm();
   const navigate = useNavigate();
+  const { stockAliment, stockVeto } = useFarm();
 
-  // Agrégations live (memo pour éviter recompute à chaque render parent).
-  const counts = useMemo(() => {
-    const alimentRupture = stockAliment.filter(s => s.statutStock === 'RUPTURE').length;
-    const alimentBas = stockAliment.filter(s => s.statutStock === 'BAS').length;
-    const vetoRupture = stockVeto.filter(v => v.statutStock === 'RUPTURE').length;
-    const vetoBas = stockVeto.filter(v => v.statutStock === 'BAS').length;
-    return {
-      alimentTotal: stockAliment.length,
-      alimentRupture,
-      alimentBas,
-      vetoTotal: stockVeto.length,
-      vetoRupture,
-      vetoBas,
-      hasAlerts: alimentRupture > 0 || vetoRupture > 0,
-    };
-  }, [stockAliment, stockVeto]);
+  const aliments = useMemo(() => stockAliment.map(mapAliment), [stockAliment]);
+  const vetos = useMemo(() => stockVeto.map(mapVeto), [stockVeto]);
+
+  const ruptures = useMemo(
+    () => [...aliments, ...vetos].filter((s) => s.tone === 'red'),
+    [aliments, vetos],
+  );
 
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
-          <AgritechHeader title="RESSOURCES" subtitle="Aliments · Pharmacie · Protocoles" />
+          <AgritechHeader
+            title="RESSOURCES"
+            subtitle="Aliments · vaccins · matériel"
+          />
 
-          <div className="px-4 pt-4 flex flex-col gap-3">
-            {/* ── Bannière alertes RUPTURE ────────────────────────── */}
-            {counts.hasAlerts ? (
+          <div className="px-4 pt-4 pb-32 flex flex-col gap-5">
+            {/* ── Bannière rupture ────────────────────────────────────── */}
+            {ruptures.length > 0 ? (
               <button
                 type="button"
                 onClick={() => navigate('/alerts')}
-                aria-label="Voir les alertes stock"
-                className={cn(
-                  'card-dense pressable w-full text-left flex items-center gap-3',
-                  'border-l-2 border-l-red',
-                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2'
-                )}
+                aria-label={`${ruptures.length} rupture${ruptures.length > 1 ? 's' : ''}`}
+                className="pressable card-dense flex items-start gap-3 text-left w-full !p-3.5"
+                style={{
+                  borderColor: 'color-mix(in srgb, var(--red) 40%, var(--border))',
+                  background: 'color-mix(in srgb, var(--red) 6%, var(--bg-2))',
+                }}
               >
-                <span
-                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-bg-2 text-red"
-                  aria-hidden="true"
-                >
-                  <AlertOctagon size={22} />
+                <span className="shrink-0 text-red">
+                  <AlertOctagon size={20} aria-hidden="true" />
                 </span>
-
-                <div className="min-w-0 flex-1">
-                  <div className="agritech-heading text-[15px] uppercase leading-tight text-red">
-                    Alertes stock
+                <div className="flex-1 min-w-0">
+                  <div className="ft-heading text-[14px] text-red uppercase">
+                    Rupture · {ruptures.length} item{ruptures.length > 1 ? 's' : ''}
                   </div>
-                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 font-mono text-[11px] text-text-2">
-                    {counts.alimentRupture > 0 ? (
-                      <span>
-                        Aliments : {counts.alimentRupture} en RUPTURE
-                      </span>
-                    ) : null}
-                    {counts.vetoRupture > 0 || counts.vetoBas > 0 ? (
-                      <span>
-                        Véto :
-                        {counts.vetoRupture > 0 ? ` ${counts.vetoRupture} en RUPTURE` : ''}
-                        {counts.vetoRupture > 0 && counts.vetoBas > 0 ? ' ·' : ''}
-                        {counts.vetoBas > 0 ? ` ${counts.vetoBas} en BAS` : ''}
-                      </span>
-                    ) : null}
+                  <div className="text-[12px] text-text-1 mt-1 leading-snug">
+                    {ruptures
+                      .slice(0, 2)
+                      .map((r) => r.name)
+                      .join(' · ')}
+                    {ruptures.length > 2 ? ` · +${ruptures.length - 2}` : ''}
                   </div>
                 </div>
-
-                <ChevronRight size={18} className="shrink-0 text-text-2" aria-hidden="true" />
               </button>
             ) : null}
 
-            {/* ── HubTile Aliments ────────────────────────────────── */}
-            <div className="relative">
-              <HubTile
-                icon={<Wheat size={22} />}
-                title="Aliments"
-                subtitle="Stocks · plan d'alimentation"
-                count={counts.alimentTotal}
-                to="/ressources/aliments"
-                tone="amber"
-              />
-              {counts.alimentRupture > 0 ? (
-                <div className="pointer-events-none absolute right-14 top-1/2 -translate-y-1/2">
-                  <Chip tone="red" label={`${counts.alimentRupture} rupture`} />
-                </div>
-              ) : null}
-            </div>
+            {/* ── Aliments ────────────────────────────────────────────── */}
+            {aliments.length > 0 ? (
+              <section aria-label="Stocks aliments">
+                <SectionDivider label="Aliments" />
+                <ul className="card-dense !p-0 overflow-hidden">
+                  {aliments.map((s) => (
+                    <StockRow key={`a-${s.id}`} row={s} onOpen={() => navigate('/ressources/aliments')} />
+                  ))}
+                </ul>
+              </section>
+            ) : null}
 
-            {/* ── HubTile Plan Alim ───────────────────────────────── */}
-            <HubTile
-              icon={<Calculator size={22} />}
-              title="Plan Alim"
-              subtitle="Couverture · rations/j"
-              to="/ressources/aliments/plan"
-              tone="accent"
-            />
+            {/* ── Vaccins & soins ─────────────────────────────────────── */}
+            {vetos.length > 0 ? (
+              <section aria-label="Stocks vaccins et soins">
+                <SectionDivider label="Vaccins & soins" />
+                <ul className="card-dense !p-0 overflow-hidden">
+                  {vetos.map((s) => (
+                    <StockRow key={`v-${s.id}`} row={s} onOpen={() => navigate('/ressources/pharmacie')} />
+                  ))}
+                </ul>
+              </section>
+            ) : null}
 
-            {/* ── HubTile Formules ────────────────────────────────── */}
-            <HubTile
-              icon={<ClipboardList size={22} />}
-              title="Formules"
-              subtitle="5 recettes validées"
-              count={5}
-              to="/ressources/aliments/formules"
-              tone="amber"
-            />
-
-            {/* ── HubTile Pharmacie (NOUVEAU) ─────────────────────── */}
-            <div className="relative">
-              <HubTile
-                icon={<Package size={22} />}
-                title="Pharmacie"
-                subtitle="Produits vétérinaires actifs"
-                count={counts.vetoTotal}
-                to="/ressources/pharmacie"
-                tone="accent"
-              />
-              {counts.vetoRupture > 0 || counts.vetoBas > 0 ? (
-                <div className="pointer-events-none absolute right-14 top-1/2 -translate-y-1/2">
-                  <Chip
-                    tone={counts.vetoRupture > 0 ? 'red' : 'amber'}
-                    label={
-                      counts.vetoRupture > 0
-                        ? `${counts.vetoRupture} rupture`
-                        : `${counts.vetoBas} bas`
-                    }
-                  />
-                </div>
-              ) : null}
-            </div>
-
-            {/* ── HubTile Véto (legacy — table brute) ─────────────── */}
-            <HubTile
-              icon={<Syringe size={22} />}
-              title="Véto"
-              subtitle="Vue tabulaire (brut)"
-              count={counts.vetoTotal}
-              to="/ressources/veto"
-              tone="accent"
-            />
+            {/* ── Sous-écrans ─────────────────────────────────────────── */}
+            <section aria-label="Sous-écrans">
+              <SectionDivider label="Détails & protocoles" />
+              <div className="grid grid-cols-1 gap-2.5">
+                <HubTile
+                  icon={<Calculator size={22} aria-hidden="true" />}
+                  title="Plan alim"
+                  subtitle="Couverture · rations/j"
+                  to="/ressources/aliments/plan"
+                  tone="accent"
+                />
+                <HubTile
+                  icon={<ClipboardList size={22} aria-hidden="true" />}
+                  title="Formules"
+                  subtitle="5 recettes validées"
+                  count={5}
+                  to="/ressources/aliments/formules"
+                  tone="ochre"
+                />
+                <HubTile
+                  icon={<Package size={22} aria-hidden="true" />}
+                  title="Pharmacie"
+                  subtitle="Catalogue complet véto"
+                  count={vetos.length}
+                  to="/ressources/pharmacie"
+                  tone="teal"
+                />
+              </div>
+            </section>
           </div>
         </AgritechLayout>
       </IonContent>
     </IonPage>
   );
 };
+
+// ─── StockRow ────────────────────────────────────────────────────────────────
+
+interface StockRowProps {
+  row: StockRowData;
+  onOpen: () => void;
+}
+
+const StockRow: React.FC<StockRowProps> = ({ row, onOpen }) => (
+  <li className="flex items-stretch gap-3 px-3.5 py-3.5 border-b border-border last:border-b-0">
+    <div className="flex-1 min-w-0">
+      <div className="flex items-baseline justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="text-[13px] text-text-0 font-medium truncate">{row.name}</div>
+          <div className="font-mono text-[11px] text-text-2 mt-0.5 tabular-nums truncate">
+            {row.meta}
+          </div>
+        </div>
+        <span
+          className={`font-mono text-[14px] font-semibold ${qtyColor(row.tone)} tabular-nums shrink-0`}
+        >
+          {row.qty}
+        </span>
+      </div>
+      <div className="h-1.5 w-full bg-bg-2 rounded-full overflow-hidden mt-2.5">
+        <div
+          className={`h-full ${fillClass(row.tone)} rounded-full transition-[width]`}
+          style={{ width: `${row.pct}%` }}
+        />
+      </div>
+    </div>
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={`Gérer ${row.name}`}
+      className="pressable self-center shrink-0 w-9 h-9 rounded-[10px] bg-bg-1 border border-border flex items-center justify-center text-text-1 hover:text-accent transition-colors"
+    >
+      <Plus size={16} aria-hidden="true" />
+    </button>
+  </li>
+);
 
 export default RessourcesHub;

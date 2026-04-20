@@ -387,31 +387,34 @@ const Cockpit: React.FC = () => {
               <SectionDivider label="Mon élevage" />
               <div className="grid grid-cols-2 gap-2.5">
                 <HubTile
-                  icon={<Users size={22} aria-hidden="true" />}
+                  icon={<Users size={20} aria-hidden="true" />}
                   title="Truies"
-                  subtitle="Reproductrices actives"
+                  subtitle="Reproductrices"
                   count={cheptelStats.nbTruies}
                   tone="accent"
                   to="/troupeau"
+                  variant="compact"
                 />
                 <HubTile
-                  icon={<Heart size={22} aria-hidden="true" />}
+                  icon={<Heart size={20} aria-hidden="true" />}
                   title="Verrats"
                   subtitle="Reproducteurs"
                   count={cheptelStats.nbVerrats}
                   tone="coral"
-                  to="/troupeau"
+                  to="/troupeau/verrats"
+                  variant="compact"
                 />
                 <HubTile
-                  icon={<Baby size={22} aria-hidden="true" />}
+                  icon={<Baby size={20} aria-hidden="true" />}
                   title="Porcelets"
-                  subtitle={`${cheptelStats.nbPorceletsSousMere} sous mère · ${cheptelStats.nbPorceletsSevres} sevrés`}
+                  subtitle={`${cheptelStats.nbPorceletsSousMere} s/m · ${cheptelStats.nbPorceletsSevres} sev.`}
                   count={cheptelStats.nbPorcelets}
                   tone="gold"
                   to="/troupeau/bandes"
+                  variant="compact"
                 />
                 <HubTile
-                  icon={<Home size={22} aria-hidden="true" />}
+                  icon={<Home size={20} aria-hidden="true" />}
                   title="Loges"
                   subtitle={`${FARM_CONFIG.MATERNITE_LOGES_CAPACITY} mat · ${FARM_CONFIG.POST_SEVRAGE_LOGES_CAPACITY} sev · ${FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY} engr`}
                   count={
@@ -421,6 +424,7 @@ const Cockpit: React.FC = () => {
                   }
                   tone="teal"
                   to="/troupeau"
+                  variant="compact"
                 />
               </div>
             </section>
