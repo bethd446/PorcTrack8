@@ -10,7 +10,7 @@
  *   4. Section SOUS-ÉCRANS — HubTiles Plan Alim / Formules / Pharmacie (full)
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import {
@@ -20,6 +20,10 @@ import {
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { HubTile, SectionDivider } from '../../components/agritech';
+import QuickRefillForm, {
+  toRefillItem,
+  type RefillStockItem,
+} from '../../components/forms/QuickRefillForm';
 import { useFarm } from '../../context/FarmContext';
 import type { StockAliment, StockVeto } from '../../types/farm';
 
@@ -95,7 +99,7 @@ function mapVeto(v: StockVeto): StockRowData {
 
 const RessourcesHub: React.FC = () => {
   const navigate = useNavigate();
-  const { stockAliment, stockVeto } = useFarm();
+  const { stockAliment, stockVeto, refreshData } = useFarm();
 
   const aliments = useMemo(() => stockAliment.map(mapAliment), [stockAliment]);
   const vetos = useMemo(() => stockVeto.map(mapVeto), [stockVeto]);
@@ -104,6 +108,35 @@ const RessourcesHub: React.FC = () => {
     () => [...aliments, ...vetos].filter((s) => s.tone === 'red'),
     [aliments, vetos],
   );
+
+  // ── Réappro : état du BottomSheet ───────────────────────────────────────
+  const [refillTarget, setRefillTarget] = useState<RefillStockItem | null>(null);
+
+  const handleOpenRefillAliment = useCallback(
+    (id: string): void => {
+      const raw = stockAliment.find((a) => a.id === id);
+      if (raw) setRefillTarget(toRefillItem(raw, 'ALIMENT'));
+    },
+    [stockAliment],
+  );
+
+  const handleOpenRefillVeto = useCallback(
+    (id: string): void => {
+      const raw = stockVeto.find((v) => v.id === id);
+      if (raw) setRefillTarget(toRefillItem(raw, 'VETO'));
+    },
+    [stockVeto],
+  );
+
+  const handleCloseRefill = useCallback((): void => {
+    setRefillTarget(null);
+  }, []);
+
+  const handleRefillSuccess = useCallback((): void => {
+    // Refresh est déjà déclenché par le form lui-même via useFarm.refreshData,
+    // mais on laisse ce hook en double-sécurité si besoin futur.
+    void refreshData();
+  }, [refreshData]);
 
   return (
     <IonPage>
@@ -151,7 +184,12 @@ const RessourcesHub: React.FC = () => {
                 <SectionDivider label="Aliments" />
                 <ul className="card-dense !p-0 overflow-hidden">
                   {aliments.map((s) => (
-                    <StockRow key={`a-${s.id}`} row={s} onOpen={() => navigate('/ressources/aliments')} />
+                    <StockRow
+                      key={`a-${s.id}`}
+                      row={s}
+                      onOpen={() => navigate('/ressources/aliments')}
+                      onRefill={() => handleOpenRefillAliment(s.id)}
+                    />
                   ))}
                 </ul>
               </section>
@@ -163,7 +201,12 @@ const RessourcesHub: React.FC = () => {
                 <SectionDivider label="Vaccins & soins" />
                 <ul className="card-dense !p-0 overflow-hidden">
                   {vetos.map((s) => (
-                    <StockRow key={`v-${s.id}`} row={s} onOpen={() => navigate('/ressources/pharmacie')} />
+                    <StockRow
+                      key={`v-${s.id}`}
+                      row={s}
+                      onOpen={() => navigate('/ressources/pharmacie')}
+                      onRefill={() => handleOpenRefillVeto(s.id)}
+                    />
                   ))}
                 </ul>
               </section>
@@ -199,6 +242,14 @@ const RessourcesHub: React.FC = () => {
               </div>
             </section>
           </div>
+
+          {/* ── Bottom sheet réapprovisionnement ──────────────────────── */}
+          <QuickRefillForm
+            isOpen={refillTarget !== null}
+            onClose={handleCloseRefill}
+            stockItem={refillTarget}
+            onSuccess={handleRefillSuccess}
+          />
         </AgritechLayout>
       </IonContent>
     </IonPage>
@@ -210,11 +261,17 @@ const RessourcesHub: React.FC = () => {
 interface StockRowProps {
   row: StockRowData;
   onOpen: () => void;
+  onRefill: () => void;
 }
 
-const StockRow: React.FC<StockRowProps> = ({ row, onOpen }) => (
+const StockRow: React.FC<StockRowProps> = ({ row, onOpen, onRefill }) => (
   <li className="flex items-stretch gap-3 px-3.5 py-3.5 border-b border-border last:border-b-0">
-    <div className="flex-1 min-w-0">
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={`Ouvrir ${row.name}`}
+      className="flex-1 min-w-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded-[8px]"
+    >
       <div className="flex items-baseline justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="text-[13px] text-text-0 font-medium truncate">{row.name}</div>
@@ -234,11 +291,11 @@ const StockRow: React.FC<StockRowProps> = ({ row, onOpen }) => (
           style={{ width: `${row.pct}%` }}
         />
       </div>
-    </div>
+    </button>
     <button
       type="button"
-      onClick={onOpen}
-      aria-label={`Gérer ${row.name}`}
+      onClick={onRefill}
+      aria-label={`Réapprovisionner ${row.name}`}
       className="pressable self-center shrink-0 w-9 h-9 rounded-[10px] bg-bg-1 border border-border flex items-center justify-center text-text-1 hover:text-accent transition-colors"
     >
       <Plus size={16} aria-hidden="true" />

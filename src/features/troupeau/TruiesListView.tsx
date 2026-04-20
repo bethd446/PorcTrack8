@@ -24,6 +24,7 @@ import { TruieIcon } from '../../components/icons';
 import type { Truie } from '../../types/farm';
 import { FARM_CONFIG } from '../../config/farm';
 import { enqueueUpdateRow } from '../../services/offlineQueue';
+import { normaliseStatut } from '../../lib/truieStatut';
 
 /** Filter bucket keys. `all` shows every truie. */
 type FilterKey = 'all' | 'pleine' | 'maternite' | 'attente' | 'surveiller';
@@ -36,10 +37,13 @@ interface FilterDef {
 
 const FILTERS: FilterDef[] = [
   { key: 'all',         label: 'Toutes',        match: () => true },
-  { key: 'pleine',      label: 'Pleines',       match: (t) => /pleine/i.test(t.statut) },
-  { key: 'maternite',   label: 'Maternité',     match: (t) => /mater|allait|lactation/i.test(t.statut) },
-  { key: 'attente',     label: 'En attente',    match: (t) => /attente|saillie|vide/i.test(t.statut) },
-  { key: 'surveiller',  label: 'À surveiller',  match: (t) => /surveill|réform|reforme/i.test(t.statut) },
+  { key: 'pleine',      label: 'Pleines',       match: (t) => normaliseStatut(t.statut) === 'PLEINE' },
+  { key: 'maternite',   label: 'Maternité',     match: (t) => normaliseStatut(t.statut) === 'MATERNITE' },
+  { key: 'attente',     label: 'En attente',    match: (t) => normaliseStatut(t.statut) === 'VIDE' },
+  { key: 'surveiller',  label: 'À surveiller',  match: (t) => {
+    const c = normaliseStatut(t.statut);
+    return c === 'SURVEILLANCE' || c === 'REFORME';
+  } },
 ];
 
 /** Valid filter keys parsed from ?statut=X. */
@@ -57,13 +61,17 @@ function isFilterKey(s: string | null): s is FilterKey {
 
 /** Chip tone mapping derived from the truie statut. */
 function toneForStatut(statut: string): ChipTone {
-  const s = statut.toLowerCase();
-  if (s.includes('pleine'))                                  return 'accent';
-  if (s.includes('mater') || s.includes('allait') ||
-      s.includes('lactation'))                               return 'gold';
-  if (s.includes('surveill') || s.includes('réform') ||
-      s.includes('reforme'))                                 return 'amber';
-  return 'default';
+  switch (normaliseStatut(statut)) {
+    case 'PLEINE':       return 'accent';
+    case 'MATERNITE':    return 'gold';
+    case 'SURVEILLANCE': return 'amber';
+    case 'REFORME':      return 'amber';
+    case 'FLUSHING':     return 'amber';
+    case 'CHALEUR':      return 'coral';
+    case 'VIDE':
+    case 'INCONNU':
+    default:             return 'default';
+  }
 }
 
 /** DD/MM/YYYY → Date | null (local time, midnight). */
@@ -102,7 +110,7 @@ interface EcheanceBadge {
  *   2. Pleine/Attente → MB prévue (red ≤14j, amber ≤30j, default >30j).
  */
 function echeanceFor(t: Truie): EcheanceBadge | null {
-  const isMater = /mater|allait|lactation/i.test(t.statut);
+  const isMater = normaliseStatut(t.statut) === 'MATERNITE';
   const offset = daysUntilFr(t.dateMBPrevue);
 
   if (isMater) {
@@ -165,13 +173,13 @@ const ACTIONS: ActionDef[] = [
     key: 'pleine',
     label: 'Marquer pleine',
     Icon: Baby,
-    available: (t) => /attente|saillie|vide/i.test(t.statut),
+    available: (t) => normaliseStatut(t.statut) === 'VIDE',
   },
   {
     key: 'sevree',
     label: 'Marquer sevrée',
     Icon: PackageCheck,
-    available: (t) => /mater|allait|lactation/i.test(t.statut),
+    available: (t) => normaliseStatut(t.statut) === 'MATERNITE',
   },
   {
     key: 'surveiller',

@@ -13,15 +13,16 @@
  *   7. CTA "Enregistrer un événement" (placeholder — pas encore de sheet EVENTS)
  */
 
-import React, { useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
-import { Plus, AlertCircle } from 'lucide-react';
+import { AlertCircle, Skull } from 'lucide-react';
 
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { BandeIcon } from '../../components/icons';
 import { Chip, SectionDivider, type ChipTone } from '../../components/agritech';
+import QuickMortalityForm from '../../components/forms/QuickMortalityForm';
 import { useFarm } from '../../context/FarmContext';
 import { computeBandePhase } from '../../services/bandesAggregator';
 import { FARM_CONFIG } from '../../config/farm';
@@ -190,8 +191,8 @@ function buildEvents(bande: BandePorcelets, today: Date): TimelineEvent[] {
 
 const BandeDetailView: React.FC = () => {
   const { bandeId } = useParams<{ bandeId: string }>();
-  const navigate = useNavigate();
   const { bandes } = useFarm();
+  const [mortalityOpen, setMortalityOpen] = useState(false);
 
   const decodedId = bandeId ? decodeURIComponent(bandeId) : '';
 
@@ -343,20 +344,25 @@ const BandeDetailView: React.FC = () => {
               </section>
             ) : null}
 
-            {/* ── CTA (placeholder — sheet EVENTS pas encore dispo) ──── */}
+            {/* ── CTA Déclarer mortalité ─────────────────────────────── */}
             <button
               type="button"
-              disabled
-              aria-label="Enregistrer un événement (bientôt disponible)"
-              className="pressable card-dense flex items-center justify-center gap-2 !py-3.5 opacity-60 cursor-not-allowed"
-              onClick={() => navigate(0)}
+              aria-label="Déclarer une mortalité porcelet sur cette bande"
+              className="pressable card-dense flex items-center justify-center gap-2 !py-3.5 text-coral hover:brightness-110"
+              onClick={() => setMortalityOpen(true)}
             >
-              <Plus size={18} aria-hidden="true" />
+              <Skull size={18} aria-hidden="true" />
               <span className="ft-heading text-[13px] uppercase tracking-wide">
-                Enregistrer un événement · bientôt
+                Déclarer mortalité
               </span>
             </button>
           </div>
+
+          <QuickMortalityForm
+            isOpen={mortalityOpen}
+            onClose={() => setMortalityOpen(false)}
+            defaultBandeId={bande.id}
+          />
         </AgritechLayout>
       </IonContent>
     </IonPage>

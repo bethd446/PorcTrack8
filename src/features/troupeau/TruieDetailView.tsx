@@ -15,7 +15,7 @@ import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { IonContent, IonPage, IonToast } from '@ionic/react';
 import {
-  Syringe, Scale, Heart, FileText, AlertCircle,
+  Syringe, Scale, Heart, FileText, AlertCircle, Edit3,
 } from 'lucide-react';
 
 import AgritechHeader from '../../components/AgritechHeader';
@@ -23,11 +23,13 @@ import AgritechLayout from '../../components/AgritechLayout';
 import { TruieIcon } from '../../components/icons';
 import { Chip, SectionDivider, BottomSheet, type ChipTone } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
+import QuickEditTruieForm from '../../components/forms/QuickEditTruieForm';
 import QuickHealthForm from '../../components/forms/QuickHealthForm';
 import QuickNoteForm from '../../components/forms/QuickNoteForm';
 import QuickPeseeForm from '../../components/forms/QuickPeseeForm';
 import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
 import type { Truie, TraitementSante } from '../../types/farm';
+import { normaliseStatut } from '../../lib/truieStatut';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -47,12 +49,17 @@ function formatDate(s?: string): string {
 }
 
 function statutTone(statut: string | undefined): ChipTone {
-  const s = (statut ?? '').toLowerCase();
-  if (/pleine|gest/i.test(s)) return 'accent';
-  if (/maternit|allait|lactat/i.test(s)) return 'gold';
-  if (/chaleur/i.test(s)) return 'coral';
-  if (/réform|reforme/i.test(s)) return 'red';
-  return 'default';
+  switch (normaliseStatut(statut)) {
+    case 'PLEINE':       return 'accent';
+    case 'MATERNITE':    return 'gold';
+    case 'CHALEUR':      return 'coral';
+    case 'REFORME':      return 'red';
+    case 'SURVEILLANCE': return 'amber';
+    case 'FLUSHING':     return 'amber';
+    case 'VIDE':
+    case 'INCONNU':
+    default:             return 'default';
+  }
 }
 
 function jourLabel(t: Truie, today: Date): string | null {
@@ -76,7 +83,7 @@ function toneFromSoin(type: string): ChipTone {
 
 // ─── Composant ──────────────────────────────────────────────────────────────
 
-type QuickSheet = null | 'soin' | 'pesee' | 'saillie' | 'note';
+type QuickSheet = null | 'edit' | 'soin' | 'pesee' | 'saillie' | 'note';
 
 const TruieDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -163,6 +170,14 @@ const TruieDetailView: React.FC = () => {
                   {jour ? <Chip label={jour} tone="default" size="xs" /> : null}
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={() => setSheet('edit')}
+                aria-label={`Éditer la truie ${displayId}`}
+                className="pressable inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-bg-1 border border-border text-text-1 hover:border-accent hover:text-accent transition-colors duration-[160ms] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+              >
+                <Edit3 size={16} aria-hidden="true" />
+              </button>
             </div>
 
             {/* ── Identité ───────────────────────────────────────────── */}
@@ -301,6 +316,13 @@ const TruieDetailView: React.FC = () => {
       </IonContent>
 
       {/* ── Sheets ──────────────────────────────────────────────────── */}
+      <QuickEditTruieForm
+        isOpen={sheet === 'edit'}
+        onClose={closeSheet}
+        truie={truie}
+        onSuccess={() => success('Truie mise à jour')}
+      />
+
       <BottomSheet
         isOpen={sheet === 'soin'}
         onClose={closeSheet}

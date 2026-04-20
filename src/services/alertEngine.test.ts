@@ -288,6 +288,49 @@ describe('R4 — Mortalité Anormale', () => {
     const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
     expect(alerts.find(a => a.id.startsWith('MORT-'))).toBeUndefined();
   });
+
+  // ─── Garde-fous contre les faux positifs "Mortalité 100%" ──────────────────
+
+  it('ne déclenche pas sur une ligne RECAP (agrégat du Sheet)', () => {
+    const bande = makeBande({ statut: 'RECAP', nv: 10, morts: 10 });
+    const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
+    expect(alerts.find(a => a.id.startsWith('MORT-'))).toBeUndefined();
+  });
+
+  it('ne déclenche pas sur une bande déjà Sevrés (porcelets sortis de maternité)', () => {
+    const bande = makeBande({ statut: 'Sevrés', nv: 10, morts: 10, vivants: 0 });
+    const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
+    expect(alerts.find(a => a.id.startsWith('MORT-'))).toBeUndefined();
+  });
+
+  it('ne déclenche pas sur une bande Sevrée (variante orthographique)', () => {
+    const bande = makeBande({ statut: 'Sevrée', nv: 10, morts: 10 });
+    const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
+    expect(alerts.find(a => a.id.startsWith('MORT-'))).toBeUndefined();
+  });
+
+  it('ne déclenche pas sur une bande Archivée (historique)', () => {
+    const bande = makeBande({ statut: 'Archivée', nv: 12, morts: 12 });
+    const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
+    expect(alerts.find(a => a.id.startsWith('MORT-'))).toBeUndefined();
+  });
+
+  it('ne déclenche pas si morts = 0 (aucune mortalité enregistrée)', () => {
+    const bande = makeBande({ nv: 10, morts: 0 });
+    const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
+    expect(alerts.find(a => a.id.startsWith('MORT-'))).toBeUndefined();
+  });
+
+  it('clamp morts > nv pour ne jamais afficher > 100% (donnée incohérente)', () => {
+    const bande = makeBande({ nv: 10, morts: 99 });
+    const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
+    const mort = alerts.find(a => a.id.startsWith('MORT-'));
+    expect(mort).toBeDefined();
+    // Clamp : 10/10 = 100%, pas 990%
+    expect(mort?.message).toContain('10 mort(s) sur 10');
+    expect(mort?.message).toContain('100%');
+    expect(mort?.priority).toBe('CRITIQUE');
+  });
 });
 
 // ─── R5 — Stock critique ─────────────────────────────────────────────────────

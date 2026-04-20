@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { FARM_CONFIG } from '../config/farm';
 import { useFarm } from '../context/FarmContext';
-import { KpiCard, BottomSheet, SectionDivider, DataRow, HubTile } from './agritech';
+import { KpiCard, BottomSheet, SectionDivider, DataRow, HubTile, Chip } from './agritech';
 import AgritechLayout from './AgritechLayout';
 import QuickSaillieForm from './forms/QuickSaillieForm';
 import QuickHealthForm from './forms/QuickHealthForm';
@@ -34,6 +34,7 @@ import {
   logesPostSevrageOccupation,
   logesEngraissementOccupation,
 } from '../services/bandesAggregator';
+import { normaliseStatut } from '../lib/truieStatut';
 
 /* ═════════════════════════════════════════════════════════════════════════
    COCKPIT · Agritech Moderne
@@ -90,16 +91,12 @@ const Cockpit: React.FC = () => {
 
   // ── KPIs ────────────────────────────────────────────────────────────────
   const kpiPleines = useMemo(
-    () => truies.filter(t => (t.statut ?? '').toLowerCase().includes('pleine')).length,
+    () => truies.filter(t => normaliseStatut(t.statut) === 'PLEINE').length,
     [truies]
   );
 
   const kpiMaternite = useMemo(
-    () =>
-      truies.filter(t => {
-        const s = (t.statut ?? '').toLowerCase();
-        return s.includes('maternit');
-      }).length,
+    () => truies.filter(t => normaliseStatut(t.statut) === 'MATERNITE').length,
     [truies]
   );
 
@@ -234,6 +231,29 @@ const Cockpit: React.FC = () => {
   }, [truies, bandes, alerts]);
 
   const agendaVisible = agenda.slice(0, 3);
+
+  // ── Sevrages en retard (dateSevragePrevue < today, statut != Sevrés) ────
+  interface SevrageRetard {
+    id: string;
+    idPortee: string;
+    daysLate: number;
+  }
+  const sevragesEnRetard = useMemo<SevrageRetard[]>(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const items: SevrageRetard[] = [];
+    for (const b of porteesReelles) {
+      if (b.statut === 'Sevrés' || b.statut === 'Sevrée' || b.statut === 'Archivée') continue;
+      const dt = parseFrDate(b.dateSevragePrevue);
+      if (!dt) continue;
+      if (dt < today) {
+        const daysLate = Math.round((today.getTime() - dt.getTime()) / DAY_MS);
+        items.push({ id: b.id, idPortee: b.idPortee || b.id, daysLate });
+      }
+    }
+    items.sort((a, b) => b.daysLate - a.daysLate);
+    return items;
+  }, [porteesReelles]);
 
   // ── Handlers ────────────────────────────────────────────────────────────
   const handleRefresh = (e: CustomEvent<{ complete: () => void }>): void => {
@@ -381,6 +401,61 @@ const Cockpit: React.FC = () => {
                 onClick={() => navigate('/ressources')}
               />
             </section>
+
+            {/* ── Sevrages en retard (URGENT · au-dessus de Mon élevage) ── */}
+            {sevragesEnRetard.length > 0 ? (
+              <section
+                aria-label="Sevrages en retard"
+                role="alert"
+                aria-live="polite"
+              >
+                <SectionDivider
+                  label={`⚠ Sevrages en retard · ${sevragesEnRetard.length}`}
+                />
+                <ul
+                  className="card-dense !p-0 overflow-hidden border-l-2 border-l-red"
+                  aria-label="Liste des sevrages en retard"
+                >
+                  {sevragesEnRetard.map((item) => (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate(`/troupeau/bandes/${encodeURIComponent(item.id)}`)
+                        }
+                        className="pressable flex w-full items-center gap-3 px-3 py-2.5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                        aria-label={`Sevrage en retard portée ${item.idPortee}, J+${item.daysLate}`}
+                      >
+                        <AlertOctagon
+                          size={16}
+                          className="shrink-0"
+                          aria-hidden="true"
+                          style={{ color: 'var(--red)' }}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div
+                            className="text-[13px] font-semibold truncate"
+                            style={{ color: 'var(--text-0)' }}
+                          >
+                            Sevrage retard ·{' '}
+                            <span className="font-mono">{item.idPortee}</span>
+                          </div>
+                          <div className="mt-0.5 font-mono text-[11px] text-text-2">
+                            J+{item.daysLate}
+                          </div>
+                        </div>
+                        <Chip label="EN RETARD" tone="red" size="xs" />
+                        <ChevronRight
+                          size={14}
+                          className="shrink-0 text-text-2"
+                          aria-hidden="true"
+                        />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
 
             {/* ── Mon élevage (4 HubTiles — aligné mockup Terra V2) ────── */}
             <section role="region" aria-label="Mon élevage">

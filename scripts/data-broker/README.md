@@ -86,6 +86,31 @@ Importer `snapshot-latest.json` directement comme fixture. **Ne pas** muter l'ob
 - Après toute modification manuelle dans le Sheet par l'éleveur.
 - Automatiquement en début de run CI si ajouté plus tard.
 
+## Truies archivées (IDs non séquentiels)
+
+La numérotation des truies n'est **pas séquentielle** — deux anciennes truies
+réformées (`T08` et `T17`) ne sont plus présentes dans `SUIVI_TRUIES_REPRODUCTION`,
+mais restent référencées dans l'historique repro (`SUIVI_REPRODUCTION_ACTUEL`
+et alertes dérivées). **Ce n'est pas un bug, c'est de l'historique normal.**
+
+Liste canonique actuelle (avril 2026, 17 truies actives) :
+
+```
+T01 · T02 · T03 · T04 · T05 · T06 · T07
+      T09 · T10 · T11 · T12 · T13 · T14 · T15 · T16
+            T18 · T19
+```
+
+IDs archivés (réformés) : `T08`, `T17`.
+
+Les mappers et scripts d'audit ne doivent pas émettre d'erreur pour ces IDs —
+utiliser `isArchivedTruie()` dans `src/lib/truieHelpers.ts`, et le flag
+`--include-archived` sur `audit-sheets-data-integrity.mjs` pour les inclure
+explicitement dans les warnings.
+
+Source de vérité : [`ground-truth-2026-04-20.md`](./ground-truth-2026-04-20.md).
+
 ## Historique
 
 - `2026-04-20` — Snapshot initial, aligné sur l'audit `SHEETS_DATA_INTEGRITY.json` du 2026-04-19. 17 truies, 2 verrats, 14 portées, 149 porcelets vivants, 5 aliments en rupture, 12 alertes (10 faux positifs R4). Validation `ok: true`, 8 warnings.
+- `2026-04` — Documentation de l'écart `T08` / `T17` (réformées). Ajout du helper `isArchivedTruie` (`src/lib/truieHelpers.ts`) et du flag `--include-archived` sur l'audit intégrité.

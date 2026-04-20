@@ -24,6 +24,7 @@ import { TruieIcon } from '../../components/icons';
 import { Chip, SectionDivider, type ChipTone } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
 import type { Truie } from '../../types/farm';
+import { normaliseStatut } from '../../lib/truieStatut';
 
 // ─── Filters ────────────────────────────────────────────────────────────────
 
@@ -38,22 +39,33 @@ interface StatutVisu {
 /**
  * Mappe un statut truie libre (depuis la feuille) vers :
  *  - un libellé court pour la chip
- *  - un tone de couleur (gold = maternité, accent = pleine, coral = chaleur/vide, red = réforme)
+ *  - un tone de couleur (gold = maternité, accent = pleine, coral = chaleur, red = réforme)
  *  - un filter bucket
+ *
+ * La sémantique passe par `normaliseStatut` (source unique). Le mapping
+ * visuel (label/tone/filter) reste local car propre à cette vue.
  */
 function statutVisu(statut: string | undefined): StatutVisu {
-  const s = (statut ?? '').toLowerCase();
-  if (/pleine|gest/i.test(s))
-    return { label: 'Pleine', tone: 'accent', filter: 'pleines' };
-  if (/maternit|allait|lactation/i.test(s))
-    return { label: 'Maternité', tone: 'gold', filter: 'maternite' };
-  if (/chaleur|saillie attend|retour/i.test(s))
-    return { label: 'Chaleur', tone: 'coral', filter: 'vides' };
-  if (/vide|attente|sev/i.test(s))
-    return { label: 'Vide', tone: 'default', filter: 'vides' };
-  if (/réform|reforme|mort|sortie/i.test(s))
-    return { label: 'Réforme', tone: 'red', filter: 'reforme' };
-  return { label: statut || '—', tone: 'default', filter: 'tout' };
+  const canon = normaliseStatut(statut);
+  switch (canon) {
+    case 'PLEINE':
+      return { label: 'Pleine', tone: 'accent', filter: 'pleines' };
+    case 'MATERNITE':
+      return { label: 'Maternité', tone: 'gold', filter: 'maternite' };
+    case 'CHALEUR':
+      return { label: 'Chaleur', tone: 'coral', filter: 'vides' };
+    case 'VIDE':
+      return { label: 'Vide', tone: 'default', filter: 'vides' };
+    case 'REFORME':
+      return { label: 'Réforme', tone: 'red', filter: 'reforme' };
+    case 'SURVEILLANCE':
+      return { label: 'Surveillance', tone: 'amber', filter: 'tout' };
+    case 'FLUSHING':
+      return { label: 'Flushing', tone: 'amber', filter: 'tout' };
+    case 'INCONNU':
+    default:
+      return { label: statut || '—', tone: 'default', filter: 'tout' };
+  }
 }
 
 // ─── Meta short text ────────────────────────────────────────────────────────

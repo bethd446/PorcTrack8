@@ -24,6 +24,7 @@ import {
 } from '../../services/bandesAggregator';
 import { FARM_CONFIG } from '../../config/farm';
 import type { BandePorcelets, Truie } from '../../types/farm';
+import { normaliseStatut } from '../../lib/truieStatut';
 
 // ─── Phases ─────────────────────────────────────────────────────────────────
 
@@ -136,8 +137,7 @@ function globalDay(b: BandePosition): number {
 
 /** Truies en gestation → pseudo-bandes pour le pipeline. */
 function truieToPosition(t: Truie, today: Date): BandePosition | null {
-  const s = (t.statut ?? '').toLowerCase();
-  if (!/pleine|gest/i.test(s)) return null;
+  if (normaliseStatut(t.statut) !== 'PLEINE') return null;
   const def = PHASES.find((p) => p.id === 'gestation');
   if (!def) return null;
   const mbPrev = parseDate(t.dateMBPrevue);

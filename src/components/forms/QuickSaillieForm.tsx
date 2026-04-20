@@ -3,6 +3,7 @@ import { Heart, Check, CheckCircle2 } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
 import { enqueueAppendRow } from '../../services/offlineQueue';
 import { BottomSheet } from '../agritech';
+import { normaliseStatut } from '../../lib/truieStatut';
 
 /**
  * QuickSaillieForm — Modal rapide pour enregistrer une saillie
@@ -23,11 +24,12 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose }) 
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Truies disponibles pour saillie : celles en "En attente saillie" (ex-Vide/Flushing)
-  // ou toute truie non en gestation ("Pleine") ou en maternité.
+  // Truies disponibles pour saillie : celles en VIDE (en attente saillie / post-sevrage)
+  // ou toute truie qui n'est ni en gestation ni en maternité (hors REFORME).
   const truiesDisponibles = truies.filter(t => {
-    const s = t.statut?.toUpperCase() || '';
-    return s.includes('ATTENTE') || (!s.includes('PLEINE') && !s.includes('MATERNIT'));
+    const c = normaliseStatut(t.statut);
+    if (c === 'VIDE') return true;
+    return c !== 'PLEINE' && c !== 'MATERNITE' && c !== 'REFORME';
   });
 
   const handleSave = async (): Promise<void> => {

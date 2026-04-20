@@ -28,6 +28,7 @@ import { TruieIcon, VerratIcon } from '../../components/icons';
 import PhotoStrip from '../../components/PhotoStrip';
 import TableRowEdit from './TableRowEdit';
 import QuickNoteForm from '../../components/forms/QuickNoteForm';
+import { normaliseStatut } from '../../lib/truieStatut';
 import QuickHealthForm from '../../components/forms/QuickHealthForm';
 
 type Mode = 'TRUIE' | 'VERRAT';
@@ -364,7 +365,7 @@ const AnimalDetailView: React.FC<{ mode: Mode }> = ({ mode }) => {
 
   // ── Gestation progress (truie enceinte) ─────────────────────────────────
   const gestation: { pct: number; isTerme: boolean; mbDateStr: string } | null = (() => {
-    if (mode !== 'TRUIE' || !animal.statut?.toUpperCase().includes('PLEINE') || !animal.dateMBPrevue) return null;
+    if (mode !== 'TRUIE' || normaliseStatut(animal.statut) !== 'PLEINE' || !animal.dateMBPrevue) return null;
     try {
       const parts = animal.dateMBPrevue.split('/');
       if (parts.length !== 3) return null;
@@ -380,7 +381,7 @@ const AnimalDetailView: React.FC<{ mode: Mode }> = ({ mode }) => {
 
   // ── CTA Mise-bas imminente ──────────────────────────────────────────────
   const mbImminentCta: { label: string; diff: number } | null = (() => {
-    if (mode !== 'TRUIE' || !animal.statut?.toUpperCase().includes('PLEINE') || !animal.dateMBPrevue) return null;
+    if (mode !== 'TRUIE' || normaliseStatut(animal.statut) !== 'PLEINE' || !animal.dateMBPrevue) return null;
     try {
       const parts = animal.dateMBPrevue.split('/');
       if (parts.length !== 3) return null;

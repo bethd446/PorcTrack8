@@ -13,6 +13,7 @@ import type { ChipTone } from '../../components/agritech';
 import { TruieIcon, VerratIcon } from '../../components/icons';
 import { getStatusConfig } from '../../components/PremiumUI';
 import { FARM_CONFIG } from '../../config/farm';
+import { normaliseStatut } from '../../lib/truieStatut';
 
 interface CheptelViewProps {
   /** Optional forced tab — used by the `/troupeau/truies` · `/troupeau/verrats` redirects. */
@@ -25,14 +26,26 @@ type TabKey = 'TRUIE' | 'VERRAT';
  *  with extra coverage for verrats (actif / inactif / réforme / mort). */
 function toneForStatut(statut?: string): ChipTone {
   if (!statut) return 'default';
-  const s = statut.toLowerCase();
-  if (s.includes('pleine')) return 'accent';
-  if (s.includes('mater') || s.includes('allait') || s.includes('lactation')) return 'gold';
-  if (s.includes('surveill') || s.includes('réform') || s.includes('reforme')) return 'amber';
-  if (s.includes('morte') || s.includes('mort'))                               return 'red';
-  if (s.includes('inactif'))                                                   return 'default';
-  if (s.includes('actif'))                                                     return 'accent';
-  return 'default';
+  // Truies : passage par la normalisation canonique
+  const canon = normaliseStatut(statut);
+  switch (canon) {
+    case 'PLEINE':       return 'accent';
+    case 'MATERNITE':    return 'gold';
+    case 'SURVEILLANCE': return 'amber';
+    case 'REFORME':      return 'amber';
+    case 'FLUSHING':     return 'amber';
+    case 'CHALEUR':      return 'coral';
+    case 'VIDE':         return 'default';
+    case 'INCONNU': {
+      // Hors taxonomie truie → tentative verrats (actif / inactif / mort).
+      const s = statut.toLowerCase();
+      if (s.includes('morte') || s.includes('mort')) return 'red';
+      if (s.includes('inactif'))                     return 'default';
+      if (s.includes('actif'))                       return 'accent';
+      return 'default';
+    }
+    default:             return 'default';
+  }
 }
 
 /** Skeleton row — dark. Module scope to avoid react-hooks/static-components. */
@@ -275,7 +288,7 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
               >
                 {filteredItems.map((item) => {
                   let gestPct: number | null = null;
-                  if (tab === 'TRUIE' && item.dateMBPrevue && item.statut?.toUpperCase().includes('PLEINE')) {
+                  if (tab === 'TRUIE' && item.dateMBPrevue && normaliseStatut(item.statut) === 'PLEINE') {
                     try {
                       const parts = item.dateMBPrevue.split('/');
                       if (parts.length === 3) {

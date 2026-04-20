@@ -359,23 +359,47 @@ function checkRetourChaleur(
 /**
  * R4 — Mortalité Anormale dans une Bande
  * Déclenché si morts > 15% des nés vivants
+ *
+ * Garde-fous importants (cf. bug "Mortalité 100%" x10 faux positifs) :
+ *  - Ignore les lignes RECAP (agrégats non-réels issus du Sheet).
+ *  - Ignore les bandes déjà Sevrés/Sevrée/Archivée (porcelets sortis de
+ *    maternité — un `vivants=0` y signifie "déjà transférés", pas "morts").
+ *  - Ignore les bandes sans naissances enregistrées (`nv === 0`) : diviser
+ *    par zéro ou traiter `0/0` comme 100% n'a pas de sens métier.
+ *  - Ignore les bandes sans mortalité enregistrée (`morts === 0`) : évite
+ *    tout risque d'arrondi ou de faux positif sur données vides.
+ *  - Clamp `morts` à `nv` (données incohérentes) pour ne pas afficher >100%.
  */
 function checkMortalite(bande: BandePorcelets): FarmAlert | null {
+  // Exclure les lignes RECAP et les bandes hors maternité (porcelets sortis)
+  const statut = bande.statut;
+  if (
+    statut === 'RECAP' ||
+    statut === 'Sevrés' ||
+    statut === 'Sevrée' ||
+    statut === 'Archivée'
+  ) return null;
+
   const nv = bande.nv ?? 0;
   const morts = bande.morts ?? 0;
-  if (nv === 0) return null;
 
-  const pct = (morts / nv) * 100;
+  // Pas de données de naissance ou de mortalité → rien à alerter
+  if (nv <= 0) return null;
+  if (morts <= 0) return null;
+
+  // Clamp morts à nv pour éviter des pourcentages > 100 sur données incohérentes
+  const mortsSafe = Math.min(morts, nv);
+  const pct = (mortsSafe / nv) * 100;
   if (pct < BIO.MORTALITE_SEUIL_PCT) return null;
 
   return {
-    id: alertId('MORT', bande.id, String(morts)),
+    id: alertId('MORT', bande.id, String(mortsSafe)),
     priority: pct > 30 ? 'CRITIQUE' : 'HAUTE',
     category: 'SANTE',
     subjectId: bande.id,
     subjectLabel: `Bande ${bande.id}`,
     title: `Mortalité Anormale — ${bande.id}`,
-    message: `${morts} mort(s) sur ${nv} nés vivants (${Math.round(pct)}%). Seuil d'alerte : ${BIO.MORTALITE_SEUIL_PCT}%.`,
+    message: `${mortsSafe} mort(s) sur ${nv} nés vivants (${Math.round(pct)}%). Seuil d'alerte : ${BIO.MORTALITE_SEUIL_PCT}%.`,
     requiresAction: true,
     actions: [
       {
@@ -386,7 +410,7 @@ function checkMortalite(bande: BandePorcelets): FarmAlert | null {
           sheet: 'JOURNAL_SANTE',
           values: [
             new Date().toISOString(), 'BANDE', bande.id,
-            'Urgent', 'Mortalité anormale', `${morts} morts / ${nv} NV (${Math.round(pct)}%)`, 'Auto'
+            'Urgent', 'Mortalité anormale', `${mortsSafe} morts / ${nv} NV (${Math.round(pct)}%)`, 'Auto'
           ],
         },
       },

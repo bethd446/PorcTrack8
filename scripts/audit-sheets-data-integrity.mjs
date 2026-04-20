@@ -8,7 +8,8 @@
  *
  * Usage :
  *   node scripts/audit-sheets-data-integrity.mjs
- *   node scripts/audit-sheets-data-integrity.mjs --fix   # applique les fixes "safe"
+ *   node scripts/audit-sheets-data-integrity.mjs --fix                # applique les fixes "safe"
+ *   node scripts/audit-sheets-data-integrity.mjs --include-archived   # inclut T08/T17 (réformées) dans les warnings
  *
  * Lit la connexion GAS depuis .env.local.
  */
@@ -33,6 +34,22 @@ if (!GAS_URL || !GAS_TOKEN) {
 }
 
 const FIX = process.argv.includes('--fix');
+const INCLUDE_ARCHIVED = process.argv.includes('--include-archived');
+
+/**
+ * Truies réformées : IDs absents de `SUIVI_TRUIES_REPRODUCTION` mais encore
+ * présents dans l'historique repro. Voir `src/lib/truieHelpers.ts` (source
+ * canonique) et `docs/sheets-schema.md`. Sans `--include-archived`, on ne
+ * warn pas pour ces IDs (c'est de l'historique normal, pas un bug).
+ */
+const ARCHIVED_TRUIE_IDS = new Set(['T08', 'T17']);
+const isArchivedTruie = (id) => {
+  if (!id) return false;
+  const s = String(id).trim().toUpperCase();
+  const m = s.match(/^T(\d+)$/);
+  const norm = m ? `T${m[1].padStart(2, '0')}` : s;
+  return ARCHIVED_TRUIE_IDS.has(norm);
+};
 
 // ─── GAS client ──────────────────────────────────────────────────────────────
 async function gasGet(action, params = {}) {
@@ -234,14 +251,22 @@ async function auditAll() {
     findings.counts.truiesProductives = productives;
     findings.counts.truiesEnMaternite = inMaternity;
     // Detect gaps in numbering (T01..Tmax)
+    // Par défaut, les IDs archivés (T08, T17) sont exclus des warnings — ce
+    // sont des truies réformées, pas un bug. Utiliser --include-archived pour
+    // les voir. Voir src/lib/truieHelpers.ts.
     const nums = [...truieById.keys()].map((id) => Number(id.replace(/^T/, ''))).filter((n) => !isNaN(n)).sort((a,b) => a-b);
     if (nums.length) {
       const max = nums[nums.length - 1];
-      const gaps = [];
-      for (let i = 1; i <= max; i++) if (!nums.includes(i)) gaps.push('T' + String(i).padStart(2, '0'));
-      if (gaps.length) {
-        findings.counts.truiesTrous = gaps;
-        add('medium', 'TRUIES', 'NUMEROTATION_TROUS', `Trous dans la numérotation T01..T${max} : ${gaps.join(', ')}`);
+      const allGaps = [];
+      for (let i = 1; i <= max; i++) if (!nums.includes(i)) allGaps.push('T' + String(i).padStart(2, '0'));
+      const realGaps = INCLUDE_ARCHIVED ? allGaps : allGaps.filter((g) => !isArchivedTruie(g));
+      const archivedInGaps = allGaps.filter((g) => isArchivedTruie(g));
+      if (archivedInGaps.length) {
+        findings.counts.truiesArchivees = archivedInGaps;
+      }
+      if (realGaps.length) {
+        findings.counts.truiesTrous = realGaps;
+        add('medium', 'TRUIES', 'NUMEROTATION_TROUS', `Trous dans la numérotation T01..T${max} : ${realGaps.join(', ')}`);
       }
     }
   } else {
@@ -472,8 +497,18 @@ async function auditAll() {
       mentionedTruies.add(truieId);
       const found = (truieId && truieById.has(truieId)) || (boucle && truieByBoucle.has(boucle));
       if (!found) {
-        orphanTruie++;
-        add('critical', 'REPRO', 'TRUIE_ORPHELINE', `Saillie → truie absente de TRUIES : id="${truieIdRaw}" boucle="${boucleRaw}"`, { verrat });
+        // IDs archivés (T08, T17) : historique normal, on ne warn pas sauf
+        // --include-archived. Voir docs/sheets-schema.md.
+        if (!INCLUDE_ARCHIVED && isArchivedTruie(truieId)) {
+          findings.info.push({
+            table: 'REPRO', code: 'TRUIE_ARCHIVEE',
+            msg: `Référence historique vers truie réformée ${truieId} (attendu, non-bug)`,
+            ctx: { boucle: boucleRaw, verrat },
+          });
+        } else {
+          orphanTruie++;
+          add('critical', 'REPRO', 'TRUIE_ORPHELINE', `Saillie → truie absente de TRUIES : id="${truieIdRaw}" boucle="${boucleRaw}"`, { verrat });
+        }
       }
       if (verrat) {
         const upV = UPPER(verrat);
@@ -660,7 +695,8 @@ function renderMd(f) {
   L.push('');
   const top5 = [];
   if (f.counts.truiesTrous?.length) top5.push(`🔴 **Trous truies** : ${f.counts.truiesTrous.join(', ')} absents de TRUIES mais référencés ailleurs (saillies). À créer ou renommer.`);
-  if (f.critical.find((x) => x.code === 'TRUIE_ORPHELINE')) top5.push(`🔴 **Saillie orpheline** : au moins 1 saillie pointe sur une truie absente (ex: T17/boucle 86).`);
+  if (f.counts.truiesArchivees?.length) top5.push(`ℹ️ **Truies archivées** : ${f.counts.truiesArchivees.join(', ')} (réformées, attendu — voir docs/sheets-schema.md).`);
+  if (f.critical.find((x) => x.code === 'TRUIE_ORPHELINE')) top5.push(`🔴 **Saillie orpheline** : au moins 1 saillie pointe sur une truie absente du cheptel actif.`);
   top5.push(`🔴 **SANTE inutilisable** : header cassé (12/14 colonnes vides). Feuille à refonder manuellement.`);
   top5.push(`🔴 **ALIMENT_FORMULES manquante** : à créer + entry TABLES_INDEX.`);
   const noNomCount = f.medium.filter((x) => x.code === 'NO_NOM').length;
