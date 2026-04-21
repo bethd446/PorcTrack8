@@ -14,14 +14,15 @@
  * Données : FarmContext.finances (FinanceEntry[]) + financesAnalyzer.
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   IonContent, IonPage, IonRefresher, IonRefresherContent,
 } from '@ionic/react';
 import {
   Wallet, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownLeft,
-  ArrowDownRight, ChevronRight, BarChart3, Coins,
+  ArrowDownRight, ChevronRight, BarChart3, Coins, Plus, MoreVertical,
+  Pencil, Trash2,
 } from 'lucide-react';
 
 import AgritechHeader from '../../components/AgritechHeader';
@@ -37,6 +38,10 @@ import {
   dateToPeriode,
 } from '../../services/financesAnalyzer';
 import type { FinanceEntry } from '../../types/farm';
+import QuickAddTransactionForm from '../../components/forms/QuickAddTransactionForm';
+import QuickEditTransactionForm, {
+  type FinanceEntryWithId,
+} from '../../components/forms/QuickEditTransactionForm';
 
 // ─── Période ─────────────────────────────────────────────────────────────────
 
@@ -86,10 +91,34 @@ function last6MonthsKeys(now: Date = new Date()): string[] {
 
 // ─── Composant principal ─────────────────────────────────────────────────────
 
+/**
+ * Extrait un identifiant stable depuis une FinanceEntry. La feuille Sheets
+ * expose une colonne `ID` (première colonne) mais le type `FinanceEntry` ne
+ * l'embarque pas explicitement — on la lit depuis `raw[0]` si le shape de la
+ * ligne correspond (FIN-*, TX-*, UUID, numérique). Si aucun ID identifiable
+ * n'est présent, la fonction renvoie `null` et l'UI masque le menu d'édition
+ * pour cette ligne (on n'émet pas d'update sans clé de ligne valide).
+ */
+function extractFinanceId(entry: FinanceEntry): string | null {
+  const raw = entry.raw;
+  if (Array.isArray(raw) && raw.length > 0) {
+    const first = raw[0];
+    if (typeof first === 'string' || typeof first === 'number') {
+      const s = String(first).trim();
+      if (/^(FIN|TX|T|F)[-_]?\w+/i.test(s) || /^[a-f0-9-]{8,}$/i.test(s)) {
+        return s;
+      }
+    }
+  }
+  return null;
+}
+
 const FinancesView: React.FC = () => {
   const navigate = useNavigate();
   const { finances, refreshData } = useFarm();
   const [periode, setPeriode] = useState<PeriodeKey>('mois');
+  const [addOpen, setAddOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<FinanceEntryWithId | null>(null);
 
   const entries = finances as FinanceEntry[];
 
@@ -296,13 +325,21 @@ const FinancesView: React.FC = () => {
                       label={`Dernières transactions · ${recentMovements.length}`}
                     />
                     <ul role="list" className="card-dense !p-0 overflow-hidden">
-                      {recentMovements.map((e, idx) => (
-                        <TransactionRow
-                          key={`${e.date}-${e.libelle}-${idx}`}
-                          entry={e}
-                          currency={currency}
-                        />
-                      ))}
+                      {recentMovements.map((e, idx) => {
+                        const id = extractFinanceId(e);
+                        return (
+                          <TransactionRow
+                            key={`${id ?? e.date}-${e.libelle}-${idx}`}
+                            entry={e}
+                            currency={currency}
+                            onEdit={
+                              id
+                                ? () => setEditTarget({ ...e, id })
+                                : undefined
+                            }
+                          />
+                        );
+                      })}
                     </ul>
                   </section>
                 ) : null}
@@ -340,7 +377,37 @@ const FinancesView: React.FC = () => {
             )}
           </div>
         </AgritechLayout>
+
+        {/* ── FAB Nouvelle transaction ──────────────────────────────── */}
+        <button
+          type="button"
+          onClick={() => setAddOpen(true)}
+          aria-label="Nouvelle transaction"
+          className="pressable fixed z-40 right-4 bottom-24 inline-flex h-14 w-14 items-center justify-center rounded-full bg-accent text-bg-0 shadow-lg hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)' }}
+        >
+          <Plus size={24} strokeWidth={2.4} aria-hidden="true" />
+        </button>
       </IonContent>
+
+      {/* ── Forms ─────────────────────────────────────────────────── */}
+      <QuickAddTransactionForm
+        isOpen={addOpen}
+        onClose={() => setAddOpen(false)}
+        onSuccess={() => {
+          void refreshData();
+        }}
+      />
+      {editTarget ? (
+        <QuickEditTransactionForm
+          isOpen={editTarget !== null}
+          onClose={() => setEditTarget(null)}
+          transaction={editTarget}
+          onSuccess={() => {
+            void refreshData();
+          }}
+        />
+      ) : null}
     </IonPage>
   );
 };
@@ -593,11 +660,38 @@ const DonutVentilation: React.FC<DonutVentilationProps> = ({ rows, total, curren
 interface TransactionRowProps {
   entry: FinanceEntry;
   currency: 'FCFA' | 'EUR';
+  onEdit?: () => void;
 }
 
-const TransactionRow: React.FC<TransactionRowProps> = ({ entry, currency }) => {
+const TransactionRow: React.FC<TransactionRowProps> = ({ entry, currency, onEdit }) => {
   const isIn = entry.type === 'REVENU';
   const tone = categorieToTone(entry.categorie);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // Fermeture au clic extérieur / Esc
+  React.useEffect(() => {
+    if (!menuOpen) return;
+    const handleClick = (e: MouseEvent): void => {
+      if (!menuRef.current) return;
+      if (!menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    const handleKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [menuOpen]);
+
+  const handleEdit = useCallback(() => {
+    setMenuOpen(false);
+    onEdit?.();
+  }, [onEdit]);
+
   return (
     <li className="flex items-center gap-3 px-3 py-3 border-b border-border last:border-b-0">
       <div
@@ -639,6 +733,49 @@ const TransactionRow: React.FC<TransactionRowProps> = ({ entry, currency }) => {
           {isIn ? '+' : '−'}{formatMontant(entry.montant, currency)}
         </span>
       </div>
+
+      {/* Menu kebab — visible uniquement si on a un ID exploitable */}
+      {onEdit ? (
+        <div ref={menuRef} className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => setMenuOpen(v => !v)}
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            aria-label="Actions sur la transaction"
+            className="pressable inline-flex h-8 w-8 items-center justify-center rounded-md text-text-2 hover:text-text-0 hover:bg-bg-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+          >
+            <MoreVertical size={16} aria-hidden="true" />
+          </button>
+          {menuOpen ? (
+            <div
+              role="menu"
+              className="absolute right-0 top-9 z-20 min-w-[160px] rounded-md border border-border bg-bg-2 shadow-lg overflow-hidden"
+            >
+              <button
+                type="button"
+                role="menuitem"
+                onClick={handleEdit}
+                className="pressable flex w-full items-center gap-2 px-3 py-2.5 text-left font-mono text-[12px] uppercase tracking-wide text-text-0 hover:bg-bg-1"
+              >
+                <Pencil size={14} aria-hidden="true" />
+                Modifier
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                disabled
+                aria-disabled="true"
+                title="Suppression serveur non implémentée (GAS delete_row_by_id)"
+                className="flex w-full items-center gap-2 px-3 py-2.5 text-left font-mono text-[12px] uppercase tracking-wide text-text-2 opacity-50 cursor-not-allowed border-t border-border"
+              >
+                <Trash2 size={14} aria-hidden="true" />
+                Supprimer
+              </button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </li>
   );
 };

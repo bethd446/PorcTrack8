@@ -20,10 +20,10 @@
  * rouge/ambre/accent-dim selon urgence, stagger 50ms. Zéro `any`.
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonPage, IonContent, IonRefresher, IonRefresherContent } from '@ionic/react';
-import { Heart, Baby, CalendarClock, Info } from 'lucide-react';
+import { Heart, Baby, CalendarClock, Info, Edit3 } from 'lucide-react';
 
 import { useFarm } from '../../context/FarmContext';
 import AgritechLayout from '../../components/AgritechLayout';
@@ -31,6 +31,7 @@ import AgritechHeader from '../../components/AgritechHeader';
 import { KpiCard, Chip, SectionDivider } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
 import type { Truie, BandePorcelets, Saillie } from '../../types/farm';
+import QuickEditSaillieForm from '../../components/forms/QuickEditSaillieForm';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers date
@@ -99,6 +100,8 @@ interface SaillieItem {
   primary: string;
   mbPrevueStr?: string;
   truieId: string;
+  /** Référence à la saillie brute pour édition rapide. */
+  source: Saillie;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -134,6 +137,9 @@ const ReproCalendarView: React.FC = () => {
   const navigate = useNavigate();
   const { truies, bandes, saillies, refreshData } = useFarm();
 
+  // ── State édition rapide d'une saillie ─────────────────────────────────
+  const [editTarget, setEditTarget] = useState<Saillie | null>(null);
+
   // Aujourd'hui normalisé à 0h — stable durant le render courant.
   const today = useMemo(() => {
     const now = new Date();
@@ -161,6 +167,7 @@ const ReproCalendarView: React.FC = () => {
         primary: `${truieLabel} × ${verratLabel}`,
         mbPrevueStr: s.dateMBPrevue,
         truieId: s.truieId,
+        source: s,
       });
     }
     items.sort((a, b) => b.date.getTime() - a.date.getTime());
@@ -503,30 +510,44 @@ const ReproCalendarView: React.FC = () => {
                         role="listitem"
                         className={`animate-fade-in-up ${staggerClass}`}
                       >
-                        <button
-                          type="button"
-                          onClick={() => goTruie(item.truieId)}
-                          className="pressable w-full flex items-center gap-3 px-3 py-3 text-left border-b border-border last:border-b-0 border-l-2 border-l-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-2px]"
+                        <div
+                          className="flex items-stretch border-b border-border last:border-b-0 border-l-2 border-l-accent"
                         >
-                          <div className="h-9 w-9 rounded-md bg-bg-2 border border-border flex items-center justify-center shrink-0">
-                            <Heart
-                              size={16}
-                              className="text-accent"
-                              aria-hidden="true"
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate text-[14px] font-medium text-text-0">
-                              {item.primary}
+                          <button
+                            type="button"
+                            onClick={() => goTruie(item.truieId)}
+                            aria-label={`Ouvrir la fiche truie ${item.truieId}`}
+                            className="pressable flex-1 min-w-0 flex items-center gap-3 px-3 py-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-2px]"
+                          >
+                            <div className="h-9 w-9 rounded-md bg-bg-2 border border-border flex items-center justify-center shrink-0">
+                              <Heart
+                                size={16}
+                                className="text-accent"
+                                aria-hidden="true"
+                              />
                             </div>
-                            <div className="mt-0.5 truncate font-mono text-[11px] text-text-2">
-                              {ago} · {mbLabel}
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-[14px] font-medium text-text-0">
+                                {item.primary}
+                              </div>
+                              <div className="mt-0.5 truncate font-mono text-[11px] text-text-2">
+                                {ago} · {mbLabel}
+                              </div>
                             </div>
-                          </div>
-                          <div className="shrink-0 font-mono text-[11px] tabular-nums text-text-2">
-                            {formatDateFr(item.date)}
-                          </div>
-                        </button>
+                            <div className="shrink-0 font-mono text-[11px] tabular-nums text-text-2">
+                              {formatDateFr(item.date)}
+                            </div>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditTarget(item.source)}
+                            aria-label={`Corriger la saillie ${item.primary} du ${formatDateFr(item.date)}`}
+                            title="Corriger la saillie"
+                            className="pressable shrink-0 w-11 flex items-center justify-center border-l border-border text-text-2 hover:text-accent hover:bg-bg-2 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-2px]"
+                          >
+                            <Edit3 size={15} aria-hidden="true" />
+                          </button>
+                        </div>
                       </li>
                     );
                   })}
@@ -535,6 +556,18 @@ const ReproCalendarView: React.FC = () => {
             ) : null}
           </div>
         </AgritechLayout>
+
+        {/* ── Modal édition rapide saillie ────────────────────────────── */}
+        {editTarget ? (
+          <QuickEditSaillieForm
+            isOpen={editTarget !== null}
+            onClose={() => setEditTarget(null)}
+            saillie={editTarget}
+            onSuccess={() => {
+              void refreshData();
+            }}
+          />
+        ) : null}
       </IonContent>
     </IonPage>
   );

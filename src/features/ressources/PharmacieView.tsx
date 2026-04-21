@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
-import { Package, Box, AlertOctagon } from 'lucide-react';
+import { Package, Box, AlertOctagon, Plus } from 'lucide-react';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import AgritechNav from '../../components/AgritechNav';
@@ -9,6 +9,7 @@ import type { ChipTone } from '../../components/agritech';
 import { SeringueIcon } from '../../components/icons';
 import { useFarm } from '../../context/FarmContext';
 import type { StockVeto, StockStatut } from '../../types/farm';
+import QuickAddVetoForm from '../../components/forms/QuickAddVetoForm';
 
 /**
  * Priorité d'affichage : RUPTURE (urgent) > BAS > OK.
@@ -86,6 +87,7 @@ function formatCurrency(n: number): string {
  */
 const PharmacieView: React.FC = () => {
   const { stockVeto } = useFarm();
+  const [addOpen, setAddOpen] = useState<boolean>(false);
 
   const summary = useMemo(() => {
     const total = stockVeto.length;
@@ -133,6 +135,17 @@ const PharmacieView: React.FC = () => {
             title="PHARMACIE"
             subtitle="Inventaire produits vétérinaires"
             backTo="/ressources"
+            action={
+              <button
+                type="button"
+                onClick={() => setAddOpen(true)}
+                aria-label="Ajouter un nouveau produit vétérinaire"
+                className="pressable inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-accent/40 text-accent font-mono text-[11px] uppercase tracking-wide hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-colors"
+              >
+                <Plus size={14} aria-hidden="true" />
+                Nouveau produit
+              </button>
+            }
           />
 
           <div className="px-4 pt-4 pb-8 flex flex-col gap-4">
@@ -245,6 +258,11 @@ const PharmacieView: React.FC = () => {
         </AgritechLayout>
         <AgritechNav />
       </IonContent>
+
+      <QuickAddVetoForm
+        isOpen={addOpen}
+        onClose={() => setAddOpen(false)}
+      />
     </IonPage>
   );
 };

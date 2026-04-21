@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
-import { ChevronRight, Coins } from 'lucide-react';
+import { ChevronRight, Coins, TrendingUp } from 'lucide-react';
 import { BalanceIcon } from '../../components/icons';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
@@ -18,6 +18,7 @@ import {
   filterRealPortees,
 } from '../../services/bandesAggregator';
 import type { BandePorcelets } from '../../types/farm';
+import QuickVenteForm from '../../components/forms/QuickVenteForm';
 
 /**
  * FinitionView — écran /cycles/finition.
@@ -48,6 +49,7 @@ const POIDS_MAX_KG = 110;
 const FinitionView: React.FC = () => {
   const navigate = useNavigate();
   const { bandes } = useFarm();
+  const [venteBande, setVenteBande] = useState<BandePorcelets | null>(null);
 
   const { portees, summary, projection } = useMemo(() => {
     const today = new Date();
@@ -156,15 +158,23 @@ const FinitionView: React.FC = () => {
                 aria-label="Bandes en finition"
                 className="card-dense !p-0 overflow-hidden"
               >
-                {portees.map((p) => (
-                  <PorteeFinitionRow
-                    key={p.id}
-                    row={p}
-                    onOpen={() =>
-                      navigate(`/troupeau/bandes/${encodeURIComponent(p.id)}`)
-                    }
-                  />
-                ))}
+                {portees.map((p) => {
+                  const bande = bandes.find((b) => b.id === p.id);
+                  return (
+                    <PorteeFinitionRow
+                      key={p.id}
+                      row={p}
+                      onOpen={() =>
+                        navigate(`/troupeau/bandes/${encodeURIComponent(p.id)}`)
+                      }
+                      onEnregistrerVente={
+                        bande && (bande.vivants ?? 0) > 0
+                          ? () => setVenteBande(bande)
+                          : undefined
+                      }
+                    />
+                  );
+                })}
               </div>
             )}
 
@@ -177,6 +187,15 @@ const FinitionView: React.FC = () => {
             ) : null}
           </div>
         </AgritechLayout>
+
+        {/* QuickVenteForm : ouvert quand une bande est sélectionnée. */}
+        {venteBande ? (
+          <QuickVenteForm
+            isOpen={!!venteBande}
+            onClose={() => setVenteBande(null)}
+            bande={venteBande}
+          />
+        ) : null}
       </IonContent>
     </IonPage>
   );
@@ -205,9 +224,13 @@ interface ProjectionData {
 interface PorteeFinitionRowProps {
   row: FinitionRow;
   onOpen: () => void;
+  /** Optionnel : si défini, affiche un bouton « Enregistrer vente » (tone gold). */
+  onEnregistrerVente?: () => void;
 }
 
-const PorteeFinitionRow: React.FC<PorteeFinitionRowProps> = ({ row, onOpen }) => {
+const PorteeFinitionRow: React.FC<PorteeFinitionRowProps> = ({
+  row, onOpen, onEnregistrerVente,
+}) => {
   const chipTone: ChipTone = row.sortieProche ? 'amber' : 'gold';
   const chipLabel = row.sortieProche
     ? 'À sortir'
@@ -233,7 +256,7 @@ const PorteeFinitionRow: React.FC<PorteeFinitionRowProps> = ({ row, onOpen }) =>
   );
 
   return (
-    <div role="listitem">
+    <div role="listitem" className="border-b border-border last:border-b-0">
       <DataRow
         primary={primary}
         secondary={secondary}
@@ -250,6 +273,31 @@ const PorteeFinitionRow: React.FC<PorteeFinitionRowProps> = ({ row, onOpen }) =>
         }
         onClick={onOpen}
       />
+      {onEnregistrerVente ? (
+        <div className="px-4 pb-3 -mt-1">
+          <button
+            type="button"
+            onClick={(e) => {
+              // Empêche le click de remonter à DataRow (navigation bande).
+              e.stopPropagation();
+              onEnregistrerVente();
+            }}
+            aria-label={`Enregistrer une vente pour la bande ${row.idPortee}`}
+            className={[
+              'pressable inline-flex items-center gap-1.5',
+              'h-8 px-3 rounded-md',
+              'bg-amber/10 text-amber border border-amber/30',
+              'font-mono text-[11px] font-bold uppercase tracking-wide',
+              'transition-colors duration-[160ms]',
+              'hover:bg-amber/20',
+              'focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber focus-visible:outline-offset-2',
+            ].join(' ')}
+          >
+            <TrendingUp size={12} aria-hidden="true" />
+            Enregistrer vente
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 };

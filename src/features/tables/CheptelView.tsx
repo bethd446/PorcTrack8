@@ -3,7 +3,7 @@ import {
   IonPage, IonContent,
   IonRefresher, IonRefresherContent,
 } from '@ionic/react';
-import { Search, ChevronRight, Tag } from 'lucide-react';
+import { Search, ChevronRight, Tag, Edit3 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFarm } from '../../context/FarmContext';
 import AgritechLayout from '../../components/AgritechLayout';
@@ -14,6 +14,9 @@ import { TruieIcon, VerratIcon } from '../../components/icons';
 import { getStatusConfig } from '../../components/PremiumUI';
 import { FARM_CONFIG } from '../../config/farm';
 import { normaliseStatut } from '../../lib/truieStatut';
+import QuickEditTruieForm from '../../components/forms/QuickEditTruieForm';
+import QuickEditVerratForm from '../../components/forms/QuickEditVerratForm';
+import type { Truie, Verrat } from '../../types/farm';
 
 interface CheptelViewProps {
   /** Optional forced tab — used by the `/troupeau/truies` · `/troupeau/verrats` redirects. */
@@ -98,6 +101,10 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
     initialTab ?? (queryTab === 'verrat' ? 'VERRAT' : 'TRUIE');
   const [tab, setTab] = useState<TabKey>(resolvedInitial);
   const [searchText, setSearchText] = useState('');
+
+  // Inline edit CTA — ouvre QuickEditTruieForm ou QuickEditVerratForm selon le type.
+  const [editTargetTruie, setEditTargetTruie] = useState<Truie | null>(null);
+  const [editTargetVerrat, setEditTargetVerrat] = useState<Verrat | null>(null);
 
   const filteredItems = useMemo(() => {
     const list = tab === 'TRUIE' ? truies : verrats;
@@ -315,15 +322,33 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                     ? `/cheptel/truie/${item.id}`
                     : `/cheptel/verrat/${item.id}`;
 
+                  // Libellé a11y : inclut la boucle si dispo, sinon le nom / displayId.
+                  const editAriaLabel = `Éditer ${item.displayId}${item.boucle ? ` · B.${item.boucle}` : ''}`;
+
+                  const handleEditClick = (e: React.MouseEvent) => {
+                    // Évite de déclencher la navigation sur le bouton parent.
+                    e.stopPropagation();
+                    if (tab === 'TRUIE') {
+                      setEditTargetTruie(item as Truie);
+                    } else {
+                      setEditTargetVerrat(item as Verrat);
+                    }
+                  };
+
                   return (
-                    <div role="listitem" key={item.id}>
+                    <div
+                      role="listitem"
+                      key={item.id}
+                      className="relative border-b border-border last:border-b-0"
+                    >
                       <button
                         type="button"
                         onClick={() => navigate(destination)}
                         aria-label={`Ouvrir la fiche de ${item.nom || item.displayId}`}
                         className={[
                           'data-row pressable flex w-full items-center gap-3 px-3 py-3 text-left',
-                          'border-b border-border last:border-b-0',
+                          // Laisse de la place au CTA Edit3 absolu à droite (avant le chevron).
+                          'pr-14',
                           'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-2px]',
                         ].join(' ')}
                       >
@@ -386,6 +411,22 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                           />
                         </div>
                       </button>
+
+                      {/* CTA Edit3 inline — ouvre QuickEditTruieForm / QuickEditVerratForm sans navigation. */}
+                      <button
+                        type="button"
+                        onClick={handleEditClick}
+                        aria-label={editAriaLabel}
+                        className={[
+                          'pressable absolute top-1/2 -translate-y-1/2 right-8',
+                          'h-8 w-8 rounded-md border border-border bg-bg-1',
+                          'flex items-center justify-center',
+                          'text-text-1 hover:bg-bg-2 active:bg-bg-2',
+                          'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
+                        ].join(' ')}
+                      >
+                        <Edit3 size={14} aria-hidden="true" />
+                      </button>
                     </div>
                   );
                 })}
@@ -393,6 +434,28 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
             )}
           </div>
         </AgritechLayout>
+
+        {/* ── BottomSheets édition inline ─────────────────────────────────
+            Montés systématiquement : `isOpen` pilote l'affichage. Le `truie`
+            / `verrat` est lu depuis le state local. Les deux formes sont
+            importées telles quelles (aucune modif de leur contrat).
+           ──────────────────────────────────────────────────────────────── */}
+        {editTargetTruie ? (
+          <QuickEditTruieForm
+            isOpen={editTargetTruie !== null}
+            onClose={() => setEditTargetTruie(null)}
+            truie={editTargetTruie}
+            onSuccess={() => setEditTargetTruie(null)}
+          />
+        ) : null}
+        {editTargetVerrat ? (
+          <QuickEditVerratForm
+            isOpen={editTargetVerrat !== null}
+            onClose={() => setEditTargetVerrat(null)}
+            verrat={editTargetVerrat}
+            onSuccess={() => setEditTargetVerrat(null)}
+          />
+        ) : null}
       </IonContent>
     </IonPage>
   );

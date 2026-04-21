@@ -7,6 +7,7 @@ import {
   FlaskConical,
   Box,
   Scale,
+  Plus,
 } from 'lucide-react';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
@@ -15,6 +16,7 @@ import { Chip, DataRow, SectionDivider, KpiCard } from '../../components/agritec
 import type { ChipTone } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
 import type { StockAliment, StockStatut } from '../../types/farm';
+import QuickAddAlimentForm from '../../components/forms/QuickAddAlimentForm';
 
 /**
  * AlimentsView — stock aliments structuré par catégorie métier.
@@ -218,6 +220,7 @@ const AlimentSection: React.FC<AlimentSectionProps> = ({
 const AlimentsView: React.FC = () => {
   const { stockAliment } = useFarm();
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
 
   const grouped = useMemo(() => {
     const matieres: StockAliment[] = [];
@@ -261,6 +264,17 @@ const AlimentsView: React.FC = () => {
             title="STOCK ALIMENTS"
             subtitle="Matières premières & concentrés"
             backTo="/ressources"
+            action={
+              <button
+                type="button"
+                onClick={() => setAddOpen(true)}
+                aria-label="Ajouter un nouvel aliment"
+                className="inline-flex h-9 items-center gap-1.5 px-3 rounded-md bg-accent text-bg-0 font-mono text-[11px] font-bold uppercase tracking-wide transition-colors duration-150 hover:brightness-110 active:scale-[0.96] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+              >
+                <Plus size={14} aria-hidden="true" />
+                <span>Nouvel aliment</span>
+              </button>
+            }
           />
 
           <div className="px-4 pt-4 pb-8 flex flex-col gap-4">
@@ -324,12 +338,11 @@ const AlimentsView: React.FC = () => {
                 </p>
                 <button
                   type="button"
-                  onClick={() =>
-                    setToastMsg('Édite STOCK_ALIMENTS dans Google Sheets')
-                  }
-                  className="pressable mt-5 h-11 px-5 rounded-md bg-accent text-bg-0 text-[13px] font-medium transition-colors"
+                  onClick={() => setAddOpen(true)}
+                  className="pressable mt-5 h-11 px-5 rounded-md bg-accent text-bg-0 text-[13px] font-medium transition-colors inline-flex items-center gap-2"
                 >
-                  Voir Sheets
+                  <Plus size={16} aria-hidden="true" />
+                  Ajouter un aliment
                 </button>
               </div>
             ) : (
@@ -375,6 +388,11 @@ const AlimentsView: React.FC = () => {
           </div>
         </AgritechLayout>
         <AgritechNav />
+
+        <QuickAddAlimentForm
+          isOpen={addOpen}
+          onClose={() => setAddOpen(false)}
+        />
 
         <IonToast
           isOpen={toastMsg !== null}

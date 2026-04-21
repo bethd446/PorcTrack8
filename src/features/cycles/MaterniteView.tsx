@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
 import { useNavigate } from 'react-router-dom';
-import { Baby } from 'lucide-react';
+import { Baby, Edit3, Plus } from 'lucide-react';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import AgritechNav from '../../components/AgritechNav';
@@ -14,6 +14,7 @@ import {
   type KpiTone,
 } from '../../components/agritech';
 import { TruieIcon } from '../../components/icons';
+import QuickMiseBasForm from '../../components/forms/QuickMiseBasForm';
 import { useFarm } from '../../context/FarmContext';
 import {
   logesMaterniteOccupation,
@@ -123,6 +124,15 @@ const MaterniteView: React.FC = () => {
   const navigate = useNavigate();
   const { truies, bandes, refreshData } = useFarm();
 
+  // Modal QuickMiseBasForm — ouvert via bouton principal ou depuis une row
+  const [miseBasOpen, setMiseBasOpen] = useState(false);
+  const [miseBasDefaultTruieId, setMiseBasDefaultTruieId] = useState<string | undefined>();
+
+  const openMiseBas = (truieId?: string): void => {
+    setMiseBasDefaultTruieId(truieId);
+    setMiseBasOpen(true);
+  };
+
   const today = useMemo(() => new Date(), []);
 
   // Truies actuellement en maternité
@@ -207,6 +217,24 @@ const MaterniteView: React.FC = () => {
           />
 
           <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
+            {/* ── Primary action : saisir mise-bas ───────────────────── */}
+            <button
+              type="button"
+              onClick={() => openMiseBas()}
+              aria-label="Saisir une nouvelle mise-bas"
+              className={[
+                'pressable w-full h-[58px] rounded-md',
+                'inline-flex items-center justify-center gap-2',
+                'bg-accent text-bg-0',
+                'font-mono text-[13px] font-bold uppercase tracking-wide',
+                'transition-colors duration-[160ms] hover:brightness-110',
+                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
+              ].join(' ')}
+            >
+              <Plus size={18} aria-hidden="true" />
+              <span>Saisir mise-bas</span>
+            </button>
+
             {/* ── Summary strip : 4 KPI ───────────────────────────────── */}
             <div
               role="group"
@@ -317,6 +345,31 @@ const MaterniteView: React.FC = () => {
                         }
                         onClick={() => navigate(`/troupeau/truies/${truie.id}`)}
                       />
+                      {portee ? (
+                        <div className="px-3 pb-2 -mt-1 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(
+                                `/troupeau/bandes/${encodeURIComponent(portee.id)}`,
+                              );
+                            }}
+                            aria-label={`Éditer portée ${portee.idPortee || portee.id}`}
+                            className={[
+                              'pressable inline-flex items-center gap-1.5',
+                              'h-8 px-3 rounded-md border border-border',
+                              'bg-bg-0 text-text-1',
+                              'font-mono text-[10px] uppercase tracking-wide',
+                              'transition-colors duration-[160ms] hover:border-text-2',
+                              'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
+                            ].join(' ')}
+                          >
+                            <Edit3 size={12} aria-hidden="true" />
+                            Éditer portée
+                          </button>
+                        </div>
+                      ) : null}
                     </div>
                   );
                 })}
@@ -346,6 +399,15 @@ const MaterniteView: React.FC = () => {
           </div>
         </AgritechLayout>
         <AgritechNav />
+
+        <QuickMiseBasForm
+          isOpen={miseBasOpen}
+          onClose={() => setMiseBasOpen(false)}
+          defaultTruieId={miseBasDefaultTruieId}
+          onSuccess={() => {
+            void refreshData();
+          }}
+        />
       </IonContent>
     </IonPage>
   );
