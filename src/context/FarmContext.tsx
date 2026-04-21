@@ -100,8 +100,12 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     return () => window.removeEventListener('online', onOnline);
   }, []);
 
-  const refreshData = useCallback(async (_force: boolean = false) => {
-    await refreshAll();
+  const refreshData = useCallback(async (force: boolean = false) => {
+    if (force) {
+      await processQueueAndRefresh();
+    } else {
+      await refreshAll();
+    }
   }, []);
 
   const pullData = useCallback(async () => {

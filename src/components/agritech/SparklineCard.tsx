@@ -135,8 +135,8 @@ const SparklineCard: React.FC<SparklineCardProps> = ({
   );
 
   const chart = (
-    <div className="mt-3 h-[44px] w-full" aria-hidden="true">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="mt-3 h-[44px] w-full" aria-hidden="true" style={{ minWidth: '100px' }}>
+      <ResponsiveContainer width="99%" height="100%">
         <LineChart data={chartData} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
           {/* Y axis cachée mais utilisée pour scale correct */}
           <YAxis hide domain={['dataMin', 'dataMax']} />

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { IonSpinner, IonToast, IonSelect, IonSelectOption } from '@ionic/react';
 import { Stethoscope, Send } from 'lucide-react';
 import { enqueueAppendRow } from '../../services/offlineQueue';
+import { useFarm } from '../../context/FarmContext';
 
 /**
  * QuickHealthForm — Saisie rapide d'une intervention santé (Agritech Dark)
@@ -26,6 +27,7 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
   subjectId,
   onSuccess,
 }) => {
+  const { refreshData } = useFarm();
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ show: boolean; message: string }>({
     show: false,
@@ -66,6 +68,11 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
         show: true,
         message: online ? 'Soin enregistré' : 'Soin mis en file · sync auto',
       });
+      try {
+        await refreshData(true);
+      } catch {
+        /* noop */
+      }
       if (onSuccess) onSuccess();
     } catch {
       setToast({ show: true, message: 'Erreur enregistrement local' });

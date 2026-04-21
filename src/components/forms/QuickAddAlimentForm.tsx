@@ -270,7 +270,7 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
         online ? 'Aliment ajouté' : 'Aliment en file · sync auto',
       );
       try {
-        await refreshData();
+        await refreshData(true); // Force process queue + refresh
       } catch {
         /* noop */
       }

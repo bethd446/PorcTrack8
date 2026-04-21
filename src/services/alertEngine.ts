@@ -502,35 +502,38 @@ export function runAlertEngine(input: AlertEngineInput): FarmAlert[] {
   // R1 — Mise-bas
   for (const truie of input.truies) {
     const a = checkMiseBas(truie, today);
-    if (a) alerts.push(a);
+    if (a && a.title && a.message) alerts.push(a);
   }
 
   // R2 — Sevrage
   for (const bande of input.bandes) {
     const a = checkSevrage(bande, today);
-    if (a) alerts.push(a);
+    if (a && a.title && a.message) alerts.push(a);
   }
 
   // R3 — Retour chaleur
   for (const truie of input.truies) {
     const a = checkRetourChaleur(truie, input.bandes, today);
-    if (a) alerts.push(a);
+    if (a && a.title && a.message) alerts.push(a);
   }
 
   // R4 — Mortalité
   for (const bande of input.bandes) {
     const a = checkMortalite(bande);
-    if (a) alerts.push(a);
+    if (a && a.title && a.message) alerts.push(a);
   }
 
   // R5 — Stocks
   for (const stock of input.stockAliments) {
     const a = checkStock(stock);
-    if (a) alerts.push(a);
+    if (a && a.title && a.message) alerts.push(a);
   }
 
   // R6 — Regroupement
-  alerts.push(...checkRegroupementBandes(input.bandes, today));
+  const regroupementAlerts = checkRegroupementBandes(input.bandes, today);
+  for (const a of regroupementAlerts) {
+    if (a && a.title && a.message) alerts.push(a);
+  }
 
   // Tri : CRITIQUE > HAUTE > NORMALE > INFO, puis par daysOffset
   const PRIORITY_ORDER: Record<AlertPriority, number> = { CRITIQUE: 0, HAUTE: 1, NORMALE: 2, INFO: 3 };

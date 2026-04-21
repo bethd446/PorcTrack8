@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { IonSpinner, IonToast } from '@ionic/react';
 import { Send, ClipboardList } from 'lucide-react';
 import { enqueueAppendRow } from '../../services/offlineQueue';
+import { useFarm } from '../../context/FarmContext';
 
 /**
  * QuickNoteForm — Saisie rapide d'une note terrain (Agritech Dark)
@@ -17,6 +18,7 @@ interface QuickNoteFormProps {
 }
 
 const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, onSuccess }) => {
+  const { refreshData } = useFarm();
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ show: boolean; message: string }>({
@@ -55,6 +57,11 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
         show: true,
         message: online ? 'Note enregistrée' : 'Note mise en file · sync auto',
       });
+      try {
+        await refreshData(true);
+      } catch {
+        /* noop */
+      }
       if (onSuccess) onSuccess();
     } catch {
       setToast({ show: true, message: 'Erreur enregistrement local' });

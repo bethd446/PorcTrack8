@@ -70,7 +70,11 @@ const readOptStr = (row: RawRow, idx: number): string | undefined => {
 
 const readNum = (row: RawRow, idx: number): number => {
   if (idx === -1) return 0;
-  const n = parseFloat(String(row[idx] ?? '0'));
+  const val = String(row[idx] ?? '0');
+  // Support des formats "3 000", "1.234,50", "3t", etc.
+  // On enlève tout ce qui n'est pas chiffre, point ou virgule
+  const clean = val.replace(/[^\d.,-]/g, '').replace(',', '.');
+  const n = parseFloat(clean);
   return isNaN(n) ? 0 : n;
 };
 
@@ -100,7 +104,7 @@ const toRaw = (row: RawRow): (string | number | boolean)[] =>
   });
 
 // ─── TRUIE ───────────────────────────────────────────────────────────────────
-export const mapTruie = (header: string[], row: RawRow): Truie => {
+export const mapTruie = (header: string[], row: RawRow): Truie | null => {
   const idIdx = findIdx(header, 'ID', 'ID_TRUIE');
   const bIdx = findIdx(header, 'BOUCLE');
   const nIdx = findIdx(header, 'NOM');
@@ -130,10 +134,13 @@ export const mapTruie = (header: string[], row: RawRow): Truie => {
   const poIdx = findIdx(header, 'POIDS KG', 'POIDS_KG', 'POIDS');
   const rcIdx = findIdx(header, 'RACE');
 
-  const rawId = readStr(row, idIdx);
+  const rawId = readStr(row, idIdx).trim().toUpperCase();
+  // Filtrer les lignes de résumé Sheets
+  if (!rawId || rawId === 'TOTAL' || rawId === 'RECAP' || rawId.startsWith('=')) return null;
+
   return {
     id: rawId,
-    displayId: rawId.toUpperCase().startsWith('T') ? rawId : `T${rawId}`,
+    displayId: rawId.startsWith('T') ? rawId : `T${rawId}`,
     boucle: readStr(row, bIdx),
     nom: readOptStr(row, nIdx),
     statut: readStr(row, sIdx) || 'En attente saillie',
@@ -151,7 +158,7 @@ export const mapTruie = (header: string[], row: RawRow): Truie => {
 };
 
 // ─── VERRAT ──────────────────────────────────────────────────────────────────
-export const mapVerrat = (header: string[], row: RawRow): Verrat => {
+export const mapVerrat = (header: string[], row: RawRow): Verrat | null => {
   const idIdx = findIdx(header, 'ID', 'ID_VERRAT');
   const bIdx = findIdx(header, 'BOUCLE');
   const nIdx = findIdx(header, 'NOM');
@@ -161,10 +168,13 @@ export const mapVerrat = (header: string[], row: RawRow): Verrat => {
   const raIdx = findIdx(header, 'RATION KG/J', 'RATION');
   const noIdx = findIdx(header, 'NOTES');
 
-  const rawId = readStr(row, idIdx);
+  const rawId = readStr(row, idIdx).trim().toUpperCase();
+  // Filtrer les lignes de résumé Sheets
+  if (!rawId || rawId === 'TOTAL' || rawId === 'RECAP' || rawId.startsWith('=')) return null;
+
   return {
     id: rawId,
-    displayId: rawId.toUpperCase().startsWith('V') ? rawId : `V${rawId}`,
+    displayId: rawId.startsWith('V') ? rawId : `V${rawId}`,
     boucle: readStr(row, bIdx),
     nom: readOptStr(row, nIdx),
     statut: readStr(row, sIdx) || 'Actif',
@@ -631,13 +641,20 @@ export const mapNote = mapRowToNote;
  */
 export const mapTable = (key: string, header: string[], rows: RawRow[]): unknown[] => {
   switch (key.toUpperCase()) {
-    case 'SUIVI_TRUIES_REPRODUCTION': return rows.map(r => mapTruie(header, r));
-    case 'VERRATS': return rows.map(r => mapVerrat(header, r));
+    case 'SUIVI_TRUIES_REPRODUCTION': return rows
+      .map(r => mapTruie(header, r))
+      .filter((t): t is Truie => t !== null);
+    case 'VERRATS': return rows
+      .map(r => mapVerrat(header, r))
+      .filter((v): v is Verrat => v !== null);
     case 'PORCELETS_BANDES_DETAIL': return rows
       .map(r => mapBande(header, r))
       .filter((b): b is BandePorcelets => b !== null)
       // Exclut les lignes RECAP/TOTAL (agrégat Sheets, pas une vraie portée)
-      .filter(b => !b.id.toUpperCase().startsWith('TOTAL'));
+      .filter(b => {
+        const id = b.id.toUpperCase();
+        return !id.startsWith('TOTAL') && !id.startsWith('RECAP');
+      });
     case 'JOURNAL_SANTE': return rows.map(r => mapSante(header, r));
     case 'STOCK_ALIMENTS': return rows
       .map(r => mapStockAliment(header, r))

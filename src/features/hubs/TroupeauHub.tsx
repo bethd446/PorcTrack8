@@ -53,41 +53,9 @@ import { Bandes } from '../../services/bandAnalysisEngine';
 import type { LogeOccupation, LogeOccupationAlerte } from '../../services/bandesAggregator';
 import { kvGet, kvSet } from '../../services/kvStore';
 
-// ─── Lazy views (créées en parallèle par Agents 2/3/4) ───────────────────────
-// Les modules Verrats / Porcelets / Loges sont chargés en lazy via dynamic
-// import. Si un module n'existe pas encore (Agent 3/4 en cours), le catch
-// retourne un placeholder au lieu de crasher la vue entière.
-//
-// NB : on ignore le type-resolve via un helper `loadModule` car TS est strict
-// sur les imports statiques — les modules Porcelets/Loges sont créés en
-// parallèle et peuvent ne pas exister au moment du typecheck.
-
-type LazyModule = { default: React.ComponentType };
-
-function lazyWithFallback(path: string, name: string): React.LazyExoticComponent<React.ComponentType> {
-  return React.lazy(async (): Promise<LazyModule> => {
-    try {
-      // @vite-ignore : chemin dynamique résolu runtime
-      const mod = (await import(/* @vite-ignore */ path)) as LazyModule;
-      return mod;
-    } catch {
-      return { default: () => <SubViewPlaceholder name={name} /> };
-    }
-  });
-}
-
-const TroupeauVerratsView = lazyWithFallback(
-  '../troupeau/TroupeauVerratsView',
-  'Verrats',
-);
-const TroupeauPorceletsView = lazyWithFallback(
-  '../troupeau/TroupeauPorceletsView',
-  'Porcelets',
-);
-const TroupeauLogesView = lazyWithFallback(
-  '../troupeau/TroupeauLogesView',
-  'Loges',
-);
+import TroupeauVerratsView from '../troupeau/TroupeauVerratsView';
+import TroupeauPorceletsView from '../troupeau/TroupeauPorceletsView';
+import TroupeauLogesView from '../troupeau/TroupeauLogesView';
 
 // ─── Sub-tabs ────────────────────────────────────────────────────────────────
 
@@ -342,28 +310,15 @@ const TroupeauHub: React.FC = () => {
                 <TruiesPanel activeTruies={activeTruies} today={today} />
               </div>
             ) : (
-              <Suspense
-                fallback={
-                  <div
-                    role="tabpanel"
-                    id={`troupeau-panel-${activeSubTab}`}
-                    aria-labelledby={`troupeau-tab-${activeSubTab}`}
-                    className="card-dense text-center py-10 font-mono text-[12px] text-text-2"
-                  >
-                    Chargement…
-                  </div>
-                }
+              <div
+                role="tabpanel"
+                id={`troupeau-panel-${activeSubTab}`}
+                aria-labelledby={`troupeau-tab-${activeSubTab}`}
               >
-                <div
-                  role="tabpanel"
-                  id={`troupeau-panel-${activeSubTab}`}
-                  aria-labelledby={`troupeau-tab-${activeSubTab}`}
-                >
-                  {activeSubTab === 'verrats' && <TroupeauVerratsView />}
-                  {activeSubTab === 'porcelets' && <TroupeauPorceletsView />}
-                  {activeSubTab === 'loges' && <TroupeauLogesView />}
-                </div>
-              </Suspense>
+                {activeSubTab === 'verrats' && <TroupeauVerratsView />}
+                {activeSubTab === 'porcelets' && <TroupeauPorceletsView />}
+                {activeSubTab === 'loges' && <TroupeauLogesView />}
+              </div>
             )}
           </div>
         </AgritechLayout>
