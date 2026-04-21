@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PorcTrack 8 — GTTT Porcin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;500;700&family=Crimson+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --color-primary: #2563EB;
+    --color-secondary: #3B82F6;
+    --color-accent: #059669;
+    --color-accent-light: #D1FAE5;
+    --color-background: #F8FAFC;
+    --color-foreground: #0F172A;
+    --color-muted: #F1F5FD;
+    --color-border: #E4ECFC;
+    --color-text-secondary: #475569;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.05);
+    --shadow-lg: 0 10px 25px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.04);
+    --shadow-xl: 0 20px 40px rgba(0,0,0,0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Crimson Pro', Georgia, serif;
+    color: var(--color-foreground);
+    background: var(--color-background);
+    line-height: 1.7;
+    font-size: 18px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Cormorant Garamond', 'Times New Roman', serif;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  /* ===== NAV ===== */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(248, 250, 252, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--color-border);
+    padding: 0 48px;
+    height: 72px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700; font-size: 1.6rem;
+    color: var(--color-primary);
+    text-decoration: none;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .nav-logo svg { width: 32px; height: 32px; }
+  .nav-links { display: flex; gap: 32px; align-items: center; }
+  .nav-links a {
+    font-family: 'Crimson Pro', serif;
+    font-size: 1rem; font-weight: 400;
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    transition: color 200ms;
+  }
+  .nav-links a:hover { color: var(--color-primary); }
+  .nav-cta {
+    background: var(--color-accent) !important;
+    color: white !important;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-weight: 600 !important;
+    transition: all 200ms;
+    cursor: pointer;
+  }
+  .nav-cta:hover { opacity: 0.9; transform: translateY(-1px); }
+
+  /* ===== HERO ===== */
+  .hero {
+    min-height: 100vh;
+    display: flex; align-items: center;
+    padding: 120px 48px 80px;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 50%, #F0FDF4 100%);
+  }
+  .hero-inner {
+    max-width: 1200px; margin: 0 auto; width: 100%;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 64px; align-items: center;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--color-accent-light);
+    color: var(--color-accent);
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-size: 0.85rem; font-weight: 600;
+    margin-bottom: 24px;
+  }
+  .hero-badge svg { width: 16px; height: 16px; }
+  .hero h1 {
+    font-size: 3.8rem;
+    color: var(--color-foreground);
+    margin-bottom: 24px;
+  }
+  .hero h1 span { color: var(--color-primary); }
+  .hero p {
+    font-size: 1.2rem;
+    color: var(--color-text-secondary);
+    max-width: 500px;
+    margin-bottom: 40px;
+  }
+  .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
+  .btn-primary {
+    background: var(--color-accent);
+    color: white;
+    padding: 14px 32px;
+    border-radius: 10px;
+    font-family: 'Crimson Pro', serif;
+    font-size: 1rem; font-weight: 600;
+    border: none; cursor: pointer;
+    transition: all 200ms;
+    text-decoration: none;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--color-primary);
+    padding: 14px 32px;
+    border-radius: 10px;
+    font-family: 'Crimson Pro', serif;
+    font-size: 1rem; font-weight: 600;
+    border: 2px solid var(--color-primary);
+    cursor: pointer;
+    transition: all 200ms;
+    text-decoration: none;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-secondary:hover { background: var(--color-primary); color: white; }
+
+  /* Phone mockup */
+  .hero-visual {
+    display: flex; justify-content: center; align-items: center;
+    position: relative;
+  }
+  .phone-mockup {
+    width: 300px; height: 600px;
+    background: white;
+    border-radius: 40px;
+    box-shadow: var(--shadow-xl), 0 0 0 8px #1e293b, 0 0 0 10px #334155;
+    overflow: hidden;
+    position: relative;
+  }
+  .phone-screen {
+    width: 100%; height: 100%;
+    background: linear-gradient(180deg, #064e3b 0%, #065f46 30%, #f0f4f3 30%);
+    padding: 0;
+    display: flex; flex-direction: column;
+  }
+  .phone-header {
+    background: linear-gradient(135deg, #064e3b, #065f46);
+    padding: 50px 20px 24px;
+    border-radius: 0 0 28px 28px;
+    color: white;
+    text-align: center;
+  }
+  .phone-header h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem; font-weight: 700;
+    color: white;
+  }
+  .phone-header p {
+    font-size: 0.75rem; opacity: 0.8; color: white;
+    margin-top: 4px;
+  }
+  .phone-body { padding: 16px; flex: 1; background: #f0f4f3; }
+  .phone-card {
+    background: white;
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .phone-card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.85rem; font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .phone-card-value {
+    font-size: 1.4rem; font-weight: 700;
+    color: var(--color-accent);
+  }
+  .phone-card-sub { font-size: 0.7rem; color: #64748b; }
+  .phone-alert {
+    background: #FEF3C7;
+    border-left: 3px solid #F59E0B;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+  .phone-alert-title { font-size: 0.75rem; font-weight: 600; color: #92400E; }
+  .phone-alert-desc { font-size: 0.65rem; color: #A16207; }
+
+  /* Floating elements */
+  .float-shape {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.1;
+  }
+  .float-1 { width: 300px; height: 300px; background: var(--color-primary); top: -50px; right: -100px; }
+  .float-2 { width: 200px; height: 200px; background: var(--color-accent); bottom: 50px; left: -80px; }
+
+  /* ===== STATS ===== */
+  .stats {
+    padding: 64px 48px;
+    background: white;
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .stats-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 32px; text-align: center;
+  }
+  .stat-item h3 {
+    font-size: 2.5rem;
+    color: var(--color-primary);
+    margin-bottom: 4px;
+  }
+  .stat-item p {
+    font-size: 0.95rem;
+    color: var(--color-text-secondary);
+  }
+
+  /* ===== FEATURES ===== */
+  .features {
+    padding: 100px 48px;
+    background: var(--color-background);
+  }
+  .section-header {
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto 64px;
+  }
+  .section-label {
+    font-family: 'Crimson Pro', serif;
+    font-size: 0.9rem; font-weight: 600;
+    color: var(--color-accent);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+  .section-header h2 {
+    font-size: 2.8rem;
+    margin-bottom: 16px;
+  }
+  .section-header p {
+    font-size: 1.1rem;
+    color: var(--color-text-secondary);
+  }
+  .features-grid {
+    max-width: 1200px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+  }
+  .feature-card {
+    background: white;
+    border-radius: 16px;
+    padding: 36px 28px;
+    border: 1px solid var(--color-border);
+    transition: all 300ms ease;
+    cursor: pointer;
+  }
+  .feature-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
+    border-color: transparent;
+  }
+  .feature-icon {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+  }
+  .feature-icon svg { width: 28px; height: 28px; }
+  .feature-icon.green { background: #D1FAE5; color: #059669; }
+  .feature-icon.blue { background: #DBEAFE; color: #2563EB; }
+  .feature-icon.amber { background: #FEF3C7; color: #D97706; }
+  .feature-icon.rose { background: #FFE4E6; color: #E11D48; }
+  .feature-icon.purple { background: #EDE9FE; color: #7C3AED; }
+  .feature-icon.cyan { background: #CFFAFE; color: #0891B2; }
+  .feature-card h3 {
+    font-size: 1.4rem;
+    margin-bottom: 10px;
+  }
+  .feature-card p {
+    font-size: 0.95rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+  }
+
+  /* ===== WHY SECTION ===== */
+  .why {
+    padding: 100px 48px;
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+    color: white;
+  }
+  .why-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 80px; align-items: center;
+  }
+  .why h2 {
+    font-size: 2.8rem;
+    margin-bottom: 24px;
+    color: white;
+  }
+  .why > .why-inner > .why-text > p {
+    color: #94A3B8;
+  }
+  .why-text p {
+    font-size: 1.1rem;
+    color: #94A3B8;
+    margin-bottom: 32px;
+  }
+  .why-list { list-style: none; display: flex; flex-direction: column; gap: 20px; }
+  .why-list li {
+    display: flex; gap: 16px; align-items: flex-start;
+    font-size: 1rem; color: #CBD5E1;
+  }
+  .why-list-icon {
+    width: 36px; height: 36px; min-width: 36px;
+    border-radius: 10px;
+    background: rgba(5, 150, 105, 0.15);
+    display: flex; align-items: center; justify-content: center;
+    color: #34D399;
+  }
+  .why-list-icon svg { width: 18px; height: 18px; }
+
+  .why-visual {
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .why-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 24px;
+    backdrop-filter: blur(8px);
+  }
+  .why-card h4 { font-size: 1.1rem; color: white; margin-bottom: 6px; }
+  .why-card p { font-size: 0.9rem; color: #94A3B8; }
+  .why-card .highlight { color: #34D399; font-weight: 600; font-size: 1.3rem; }
+
+  /* ===== TESTIMONIAL ===== */
+  .testimonial {
+    padding: 80px 48px;
+    background: white;
+    text-align: center;
+  }
+  .testimonial-inner { max-width: 800px; margin: 0 auto; }
+  .testimonial blockquote {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem;
+    font-style: italic;
+    font-weight: 500;
+    color: var(--color-foreground);
+    line-height: 1.5;
+    margin-bottom: 24px;
+  }
+  .testimonial cite {
+    font-style: normal;
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+  }
+  .testimonial cite strong { color: var(--color-foreground); }
+
+  /* ===== CTA / CONTACT ===== */
+  .cta-section {
+    padding: 100px 48px;
+    background: linear-gradient(135deg, #EEF2FF 0%, #F0FDF4 100%);
+  }
+  .cta-inner {
+    max-width: 700px; margin: 0 auto;
+    text-align: center;
+  }
+  .cta-inner h2 {
+    font-size: 2.6rem;
+    margin-bottom: 16px;
+  }
+  .cta-inner > p {
+    font-size: 1.1rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 40px;
+  }
+  .contact-form {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: var(--shadow-lg);
+    text-align: left;
+  }
+  .form-row {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; margin-bottom: 16px;
+  }
+  .form-group { margin-bottom: 16px; }
+  .form-group label {
+    display: block;
+    font-size: 0.85rem; font-weight: 600;
+    color: var(--color-foreground);
+    margin-bottom: 6px;
+  }
+  .form-group input, .form-group textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    font-family: 'Crimson Pro', serif;
+    font-size: 1rem;
+    transition: border-color 200ms;
+    background: var(--color-background);
+  }
+  .form-group input:focus, .form-group textarea:focus {
+    border-color: var(--color-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+  .form-group textarea { min-height: 120px; resize: vertical; }
+  .form-submit {
+    width: 100%;
+    background: var(--color-accent);
+    color: white;
+    padding: 16px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Crimson Pro', serif;
+    font-size: 1.05rem; font-weight: 600;
+    cursor: pointer;
+    transition: all 200ms;
+  }
+  .form-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+
+  /* ===== FOOTER ===== */
+  footer {
+    background: #0F172A;
+    color: #94A3B8;
+    padding: 64px 48px 32px;
+  }
+  .footer-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 48px;
+    margin-bottom: 48px;
+  }
+  .footer-brand h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem; color: white;
+    margin-bottom: 12px;
+  }
+  .footer-brand p {
+    font-size: 0.9rem; line-height: 1.7;
+    color: #64748b;
+  }
+  .footer-col h4 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem; color: white;
+    margin-bottom: 16px;
+  }
+  .footer-col a {
+    display: block;
+    color: #64748b;
+    text-decoration: none;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    transition: color 200ms;
+  }
+  .footer-col a:hover { color: #34D399; }
+  .footer-bottom {
+    max-width: 1200px; margin: 0 auto;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding-top: 24px;
+    display: flex; justify-content: space-between;
+    font-size: 0.85rem;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    nav { padding: 0 24px; }
+    .nav-links { display: none; }
+    .hero { padding: 100px 24px 60px; }
+    .hero-inner { grid-template-columns: 1fr; text-align: center; }
+    .hero h1 { font-size: 2.5rem; }
+    .hero p { margin: 0 auto 32px; }
+    .hero-actions { justify-content: center; }
+    .hero-visual { margin-top: 40px; }
+    .phone-mockup { width: 240px; height: 480px; }
+    .stats-inner { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+    .features, .why, .cta-section { padding: 64px 24px; }
+    .features-grid { grid-template-columns: 1fr; }
+    .why-inner { grid-template-columns: 1fr; gap: 40px; }
+    .section-header h2, .why h2, .cta-inner h2 { font-size: 2rem; }
+    .form-row { grid-template-columns: 1fr; }
+    .footer-inner { grid-template-columns: 1fr; gap: 32px; }
+    .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="32" height="32" rx="8" fill="#2563EB"/>
+      <path d="M8 16C8 11.6 11.6 8 16 8s8 3.6 8 8-3.6 8-8 8" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="16" cy="16" r="3" fill="white"/>
+    </svg>
+    PorcTrack 8
+  </a>
+  <div class="nav-links">
+    <a href="#features">Fonctionnalites</a>
+    <a href="#why">Pourquoi</a>
+    <a href="#contact">Contact</a>
+    <a href="#contact" class="nav-cta">Demander une demo</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="float-shape float-1"></div>
+  <div class="float-shape float-2"></div>
+  <div class="hero-inner">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l2 5h5l-4 3.5 1.5 5L8 10.5 3.5 13.5 5 8.5 1 5h5z"/></svg>
+        Application GTTT Porcin
+      </div>
+      <h1>Gestion technique de votre <span>troupeau porcin</span></h1>
+      <p>PorcTrack 8 integre les constantes biologiques porcines et automatise le suivi de votre elevage. Interface mobile intuitive, fonctionnement hors-ligne, synchronisation Google Sheets.</p>
+      <div class="hero-actions">
+        <a href="#contact" class="btn-primary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Demander une demo
+        </a>
+        <a href="#features" class="btn-secondary">Decouvrir les fonctionnalites</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="phone-mockup">
+        <div class="phone-screen">
+          <div class="phone-header">
+            <h3>PorcTrack 8</h3>
+            <p>Ferme A130 — Secteur Nord</p>
+          </div>
+          <div class="phone-body">
+            <div class="phone-card">
+              <div class="phone-card-title">Troupeau</div>
+              <div class="phone-card-value">17 truies</div>
+              <div class="phone-card-sub">2 verrats actifs</div>
+            </div>
+            <div class="phone-alert">
+              <div class="phone-alert-title">Mise-bas imminente</div>
+              <div class="phone-alert-desc">Truie #FR0412 — J-2</div>
+            </div>
+            <div class="phone-card">
+              <div class="phone-card-title">Bandes actives</div>
+              <div class="phone-card-value">12</div>
+              <div class="phone-card-sub">Prochaine action: sevrage B7</div>
+            </div>
+            <div class="phone-alert" style="background:#DCFCE7; border-left-color:#059669;">
+              <div class="phone-alert-title" style="color:#065F46;">Sevrage prevu</div>
+              <div class="phone-alert-desc" style="color:#047857;">Bande B7 — J+21 le 22/04</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="stats">
+  <div class="stats-inner">
+    <div class="stat-item">
+      <h3>115 j</h3>
+      <p>Gestation automatisee</p>
+    </div>
+    <div class="stat-item">
+      <h3>21 j</h3>
+      <p>Suivi lactation / sevrage</p>
+    </div>
+    <div class="stat-item">
+      <h3>6</h3>
+      <p>Regles d'alertes GTTT</p>
+    </div>
+    <div class="stat-item">
+      <h3>100%</h3>
+      <p>Fonctionnel hors-ligne</p>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="section-header">
+    <div class="section-label">Fonctionnalites</div>
+    <h2>Tout ce dont votre elevage a besoin</h2>
+    <p>Six modules integres couvrant l'ensemble du cycle de production porcin, de l'insemination au sevrage.</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      </div>
+      <h3>Suivi Reproduction</h3>
+      <p>Suivi complet du cycle de reproduction : gestation (115 jours), mise-bas, lactation et sevrage. Alertes automatiques pour ne manquer aucune echeance critique.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <h3>Gestion des Bandes</h3>
+      <p>Organisez vos truies en bandes synchronisees pour optimiser la rotation maternite-engraissement. Planification automatique des dates cles.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon amber">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <h3>Alertes Sanitaires</h3>
+      <p>Surveillance en temps reel de la sante du troupeau. Detection automatique des taux de mortalite anormaux (seuil >15%), alertes mise-bas et retours chaleur.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon rose">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </div>
+      <h3>Protocoles Metier</h3>
+      <p>Guides et SOPs integres directement dans l'application. Procedures standardisees pour chaque etape du cycle de production.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon purple">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </div>
+      <h3>Notes Terrain</h3>
+      <p>Prenez des notes directement en porcherie, meme sans connexion. Synchronisation automatique des que le reseau revient.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon cyan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      </div>
+      <h3>Sync Google Sheets</h3>
+      <p>Toutes vos donnees synchronisees avec Google Sheets en temps reel. Exportez, analysez et partagez vos indicateurs de production.</p>
+    </div>
+  </div>
+</section>
+
+<!-- WHY -->
+<section class="why" id="why">
+  <div class="why-inner">
+    <div class="why-text">
+      <div class="section-label" style="color: #34D399;">Pourquoi PorcTrack 8</div>
+      <h2>Concu par des eleveurs, pour des eleveurs</h2>
+      <p>PorcTrack 8 n'est pas un logiciel generique adapte a l'elevage. C'est un outil specialise qui integre nativement les constantes biologiques porcines et les bonnes pratiques GTTT.</p>
+      <ul class="why-list">
+        <li>
+          <div class="why-list-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div><strong style="color:white">Hors-ligne natif</strong> — Fonctionne sans Wi-Fi en porcherie. Les donnees se synchronisent automatiquement.</div>
+        </li>
+        <li>
+          <div class="why-list-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div><strong style="color:white">Constantes biologiques integrees</strong> — Gestation 115j, sevrage J+21, retour chaleur J+5 post-sevrage.</div>
+        </li>
+        <li>
+          <div class="why-list-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div><strong style="color:white">Interface mobile-first</strong> — Concu pour etre utilise avec des gants, sur le terrain, en un coup d'oeil.</div>
+        </li>
+        <li>
+          <div class="why-list-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div><strong style="color:white">Alertes intelligentes</strong> — 6 regles GTTT actives 24h/24 pour ne rien manquer.</div>
+        </li>
+      </ul>
+    </div>
+    <div class="why-visual">
+      <div class="why-card">
+        <h4>Gestation automatisee</h4>
+        <div class="highlight">115 jours</div>
+        <p>Calcul automatique des dates prevues de mise-bas a partir de l'insemination.</p>
+      </div>
+      <div class="why-card">
+        <h4>Seuil mortalite</h4>
+        <div class="highlight" style="color:#F59E0B;">&gt;15% = alerte</div>
+        <p>Detection immediate des lots en anomalie sanitaire.</p>
+      </div>
+      <div class="why-card">
+        <h4>Retour chaleur</h4>
+        <div class="highlight">J+5 post-sevrage</div>
+        <p>Rappel automatique pour ne manquer aucune fenetre d'insemination.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIAL -->
+<section class="testimonial">
+  <div class="testimonial-inner">
+    <div class="section-label">Temoignage</div>
+    <blockquote>"Depuis qu'on utilise PorcTrack 8, on ne rate plus aucune mise-bas. L'application tourne meme quand le Wi-Fi tombe en porcherie."</blockquote>
+    <cite><strong>Eleveur porcin</strong> — Exploitation de 120 truies, Bretagne</cite>
+  </div>
+</section>
+
+<!-- CTA / CONTACT -->
+<section class="cta-section" id="contact">
+  <div class="cta-inner">
+    <div class="section-label">Contact</div>
+    <h2>Demandez une demonstration</h2>
+    <p>Remplissez le formulaire ci-dessous et nous vous recontacterons sous 24h pour organiser une demonstration personnalisee de PorcTrack 8.</p>
+    <form class="contact-form" onsubmit="event.preventDefault()">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prenom</label>
+          <input type="text" placeholder="Votre prenom">
+        </div>
+        <div class="form-group">
+          <label>Nom</label>
+          <input type="text" placeholder="Votre nom">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>E-mail</label>
+        <input type="email" placeholder="votre@email.com">
+      </div>
+      <div class="form-group">
+        <label>Message</label>
+        <textarea placeholder="Decrivez votre elevage et vos besoins..."></textarea>
+      </div>
+      <button type="submit" class="form-submit">Envoyer la demande</button>
+    </form>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <h3>PorcTrack 8</h3>
+      <p>Application mobile de gestion technique de troupeau porcin (GTTT). Concue pour les eleveurs professionnels.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Produit</h4>
+      <a href="#features">Fonctionnalites</a>
+      <a href="#why">Pourquoi PorcTrack</a>
+      <a href="#contact">Demo</a>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <a href="#">Mentions legales</a>
+      <a href="#">Politique de confidentialite</a>
+      <a href="#">CGU</a>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <a href="#">contact@porctrack.fr</a>
+      <a href="#">Bretagne, France</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>&copy; 2026 PorcTrack 8 — GTTT Porcin</span>
+    <span>Fait avec soin pour les eleveurs</span>
+  </div>
+</footer>
+
+</body>
+</html>

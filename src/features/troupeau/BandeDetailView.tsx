@@ -16,13 +16,14 @@
 import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
-import { AlertCircle, Skull } from 'lucide-react';
+import { AlertCircle, Edit3, Skull } from 'lucide-react';
 
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { BandeIcon } from '../../components/icons';
 import { Chip, SectionDivider, type ChipTone } from '../../components/agritech';
 import QuickMortalityForm from '../../components/forms/QuickMortalityForm';
+import QuickEditBandeForm from '../../components/forms/QuickEditBandeForm';
 import { useFarm } from '../../context/FarmContext';
 import { computeBandePhase } from '../../services/bandesAggregator';
 import { FARM_CONFIG } from '../../config/farm';
@@ -193,6 +194,7 @@ const BandeDetailView: React.FC = () => {
   const { bandeId } = useParams<{ bandeId: string }>();
   const { bandes } = useFarm();
   const [mortalityOpen, setMortalityOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   const decodedId = bandeId ? decodeURIComponent(bandeId) : '';
 
@@ -265,6 +267,14 @@ const BandeDetailView: React.FC = () => {
                   </div>
                 </div>
                 <Chip label={meta.label} tone={meta.tone} size="xs" />
+                <button
+                  type="button"
+                  onClick={() => setEditOpen(true)}
+                  aria-label="Éditer la portée"
+                  className="pressable inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-bg-1 border border-border text-text-1 hover:border-text-2 transition-colors duration-[160ms] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                >
+                  <Edit3 size={14} aria-hidden="true" />
+                </button>
               </div>
 
               <div className="hairline" />
@@ -362,6 +372,12 @@ const BandeDetailView: React.FC = () => {
             isOpen={mortalityOpen}
             onClose={() => setMortalityOpen(false)}
             defaultBandeId={bande.id}
+          />
+
+          <QuickEditBandeForm
+            isOpen={editOpen}
+            onClose={() => setEditOpen(false)}
+            bande={bande}
           />
         </AgritechLayout>
       </IonContent>

@@ -38,6 +38,10 @@ export interface Truie {
   derniereNV?: number;
   dateMBPrevue?: string;
   notes?: string;
+  /** Poids vif en kg (colonne Sheets `POIDS` ou `POIDS KG`). Optionnel. */
+  poids?: number;
+  /** Race / lignée génétique (ex. Large White, Landrace, Duroc). Optionnel. */
+  race?: string;
   synced: boolean;
   raw?: (string | number | boolean)[];
 }

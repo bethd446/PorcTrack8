@@ -277,7 +277,7 @@ const VerratCard: React.FC<VerratCardProps> = ({
   onCardClick,
   onSaillieClick,
 }) => {
-  const meta1 = `Boucle: ${boucle || '—'} · Origine: ${origine || '—'}`;
+  const meta1 = `Origine: ${origine || '—'}`;
   const meta2 = `Ration: ${typeof ration === 'number' && ration > 0 ? `${ration} kg/j` : '—'} · Alimentation: ${alimentation || '—'}`;
   const statsLabel = nbSaillies > 0
     ? `${nbSaillies} saillie${nbSaillies > 1 ? 's' : ''}${derniereDate ? ` · dernière ${derniereDate}` : ''}`
@@ -289,7 +289,7 @@ const VerratCard: React.FC<VerratCardProps> = ({
       <button
         type="button"
         onClick={onCardClick}
-        aria-label={`Voir le détail de ${displayId}`}
+        aria-label={`Voir le détail de ${displayId}${boucle ? ` boucle ${boucle}` : ''}`}
         className="pressable w-full text-left flex items-start gap-3 px-4 py-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-2px]"
       >
         <div className="w-11 h-11 rounded-md bg-bg-2 border border-border flex items-center justify-center shrink-0 text-accent">
@@ -301,6 +301,23 @@ const VerratCard: React.FC<VerratCardProps> = ({
               {title}
             </div>
             <Chip label={statutLabel} tone={statutTone} size="xs" />
+          </div>
+          {/* displayId · boucle — bien visible pour l'identification terrain */}
+          <div className="flex items-baseline gap-1.5 flex-wrap">
+            <span className="ft-code text-[13px] text-text-0 font-semibold tabular-nums">
+              {displayId}
+            </span>
+            {boucle ? (
+              <>
+                <span className="font-mono text-[12px] text-text-2" aria-hidden="true">·</span>
+                <span
+                  className="ft-code text-[13px] text-text-1 tabular-nums"
+                  aria-label={`Boucle ${boucle}`}
+                >
+                  {boucle}
+                </span>
+              </>
+            ) : null}
           </div>
           <div className="font-mono text-[11px] text-text-2 leading-relaxed">
             {meta1}

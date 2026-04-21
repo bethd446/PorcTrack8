@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audit Google Sheet — PROJET_PORC800</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; line-height: 1.6; }
+  .container { max-width: 960px; margin: 0 auto; padding: 24px 20px; }
+  h1 { font-size: 28px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+  .subtitle { color: #64748b; font-size: 14px; margin-bottom: 32px; }
+  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 32px; }
+  .summary-card { background: white; border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0; text-align: center; }
+  .summary-card .number { font-size: 32px; font-weight: 800; }
+  .summary-card .label { font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+  .critical .number { color: #dc2626; }
+  .warning .number { color: #d97706; }
+  .info .number { color: #2563eb; }
+  .ok .number { color: #059669; }
+
+  .section { background: white; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; overflow: hidden; }
+  .section-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 10px; }
+  .section-header h2 { font-size: 16px; font-weight: 700; }
+  .badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+  .badge-critical { background: #fef2f2; color: #dc2626; }
+  .badge-warning { background: #fffbeb; color: #d97706; }
+  .badge-info { background: #eff6ff; color: #2563eb; }
+  .badge-ok { background: #f0fdf4; color: #059669; }
+
+  .issue { padding: 12px 20px; border-bottom: 1px solid #f1f5f9; }
+  .issue:last-child { border-bottom: none; }
+  .issue-title { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+  .issue-desc { font-size: 13px; color: #64748b; }
+  .issue-tag { display: inline-block; padding: 1px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 4px; }
+  .tag-critique { background: #fef2f2; color: #dc2626; }
+  .tag-important { background: #fffbeb; color: #d97706; }
+  .tag-mineur { background: #eff6ff; color: #2563eb; }
+  .tag-structure { background: #f5f3ff; color: #7c3aed; }
+
+  .tab-name { font-family: 'SF Mono', 'Fira Code', monospace; background: #f1f5f9; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+
+  .reco { padding: 16px 20px; background: #f0fdf4; border-left: 4px solid #059669; margin: 12px 20px; border-radius: 0 8px 8px 0; font-size: 13px; }
+  .reco strong { color: #059669; }
+
+  @media (max-width: 640px) {
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>🔍 Audit Google Sheet — PROJET_PORC800</h1>
+<p class="subtitle">Date : 17 avril 2026 · Classeur : PROJET_PORC800 v5.0 · 25+ onglets audités</p>
+
+<div class="summary-grid">
+  <div class="summary-card critical"><div class="number">12</div><div class="label">Critiques</div></div>
+  <div class="summary-card warning"><div class="number">18</div><div class="label">Importants</div></div>
+  <div class="summary-card info"><div class="number">15</div><div class="label">Mineurs</div></div>
+  <div class="summary-card ok"><div class="number">25</div><div class="label">Onglets audités</div></div>
+</div>
+
+<!-- ═══════════════ SECTION 1 : INCOHÉRENCES CRITIQUES ENTRE ONGLETS ═══════════════ -->
+<div class="section">
+  <div class="section-header">
+    <h2>🚨 Incohérences critiques entre onglets</h2>
+    <span class="badge badge-critical">CRITIQUE</span>
+  </div>
+
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-critique">CRITIQUE</span> Statuts contradictoires CHEPTEL vs TRUIES_REPRODUCTION</div>
+    <div class="issue-desc">
+      Les statuts reproductifs diffèrent entre les 2 onglets pour de nombreuses truies :<br>
+      • <strong>T5</strong> : "Saillie" dans <span class="tab-name">CHEPTEL</span> → "Observation" dans <span class="tab-name">TRUIES_REPRODUCTION</span><br>
+      • <strong>T6</strong> : "Allaitante" dans CHEPTEL → "Flushing" dans TRUIES_REPRODUCTION<br>
+      • <strong>T10</strong> : "Allaitante" dans CHEPTEL → "Flushing" dans TRUIES_REPRODUCTION (avec date MB 19/04 !)<br>
+      • <strong>T13</strong> : "Gestante" dans CHEPTEL → "Flushing" dans TRUIES_REPRODUCTION (avec date MB 05/05 !)<br>
+      → <em>Il n'y a pas de source de vérité unique pour le statut des truies.</em>
+    </div>
+  </div>
+
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-critique">CRITIQUE</span> Truies présentes dans un onglet mais absentes de l'autre</div>
+    <div class="issue-desc">
+      • <strong>T8</strong> et <strong>T17</strong> : présentes dans <span class="tab-name">CHEPTEL</span> mais ABSENTES de <span class="tab-name">TRUIES_REPRODUCTION</span><br>
+      • <strong>T18</strong> et <strong>T19</strong> : présentes dans TRUIES_REPRODUCTION mais ABSENTES de CHEPTEL<br>
+      → <em>Le cheptel total est incertain : 17 ou 19 truies ?</em>
+    </div>
+  </div>
+
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-critique">CRITIQUE</span> Format des identifiants incohérent</div>
+    <div class="issue-desc">
+      • <span class="tab-name">CHEPTEL</span> utilise "T1, T2, T3..." (sans zéro)<br>
+      • <span class="tab-name">TRUIES_REPRODUCTION</span> utilise "T01, T02, T03..." (avec zéro)<br>
+      • <span class="tab-name">MATERNITE</span> utilise "T1, T2, T3..." (sans zéro)<br>
+      → <em>Des jointures entre onglets risquent de ne pas fonctionner (T1 ≠ T01).</em>
+    </div>
+  </div>
+
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-critique">CRITIQUE</span> MATERNITE montre 9 truies allaitantes — TRUIES_REPRODUCTION dit 0</div>
+    <div class="issue-desc">
+      <span class="tab-name">MATERNITE</span> montre 9 loges occupées (T1, T2, T3, T6, T8, T10, T13, T14, T15) avec des porcelets sous mère.<br>
+      Or dans <span class="tab-name">TRUIES_REPRODUCTION</span>, TOUTES ces truies sont en "Flushing" — aucune n'est "Allaitante".<br>
+      → <em>L'onglet TRUIES_REPRODUCTION n'est pas synchronisé avec la maternité.</em>
+    </div>
+  </div>
+
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-critique">CRITIQUE</span> 3 sevrages en retard non traités</div>
+    <div class="issue-desc">
+      Loges L1 (T1), L2 (T3), L3 (T2) : sevrage prévu 24-28/03/2026 — <strong>3 semaines de retard au 17/04</strong>.<br>
+      Statut "SEVRAGE EN RETARD" dans <span class="tab-name">MATERNITE</span> et <span class="tab-name">POST_SEVRAGE</span> mais aucune action corrective visible.<br>
+      → <em>Situation urgente pour le bien-être animal et la productivité.</em>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ SECTION 2 : TRUIES_REPRODUCTION ═══════════════ -->
+<div class="section">
+  <div class="section-header">
+    <h2>📋 TRUIES_REPRODUCTION</h2>
+    <span class="badge badge-warning">8 problèmes</span>
+  </div>
+
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-important">IMPORTANT</span> 6 truies sans nom</div>
+    <div class="issue-desc">T06, T10, T11, T13, T14 n'ont pas de nom (colonne "Nom" vide). Seules T01-T03, T09, T15-T16 ont un nom.</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-critique">CRITIQUE</span> Colonnes "Nb portees" et "Derniere portee NV" entièrement vides</div>
+    <div class="issue-desc">Ces colonnes sont essentielles pour le suivi GTTT. Aucune truie n'a de données de portée — l'historique reproductif est absent.</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-important">IMPORTANT</span> T10 et T13 en "Flushing" mais ont des dates MB futures</div>
+    <div class="issue-desc">T10 (MB 19/04/2026) et T13 (MB 05/05/2026) — si elles sont en flushing, elles ne devraient pas avoir de date MB prévue. Soit le statut est faux, soit la date.</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-important">IMPORTANT</span> T04/T05 en "Observation" avec alimentation "Gestation"</div>
+    <div class="issue-desc">Le statut "Observation" signifie saillie à confirmer, mais l'alimentation est déjà sur "Gestation" (3 kg/j au lieu de flushing 6 kg/j).</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-mineur">MINEUR</span> T19 : MB prévue le 17/04/2026 = AUJOURD'HUI</div>
+    <div class="issue-desc">Pas d'alerte spéciale visible pour cette mise-bas imminente. Devrait être en surveillance prioritaire.</div>
+  </div>
+</div>
+
+<!-- ═══════════════ SECTION 3 : CHEPTEL ═══════════════ -->
+<div class="section">
+  <div class="section-header">
+    <h2>📋 CHEPTEL</h2>
+    <span class="badge badge-warning">4 problèmes</span>
+  </div>
+
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-important">IMPORTANT</span> 7 truies sans nom</div>
+    <div class="issue-desc">T5, T6, T9, T10, T12, T13, T16, T17 → colonne "Nom" = "—". Plus de truies sans nom ici que dans TRUIES_REPRODUCTION.</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-important">IMPORTANT</span> Données JSON debug en lignes 24-25</div>
+    <div class="issue-desc">Deux lignes contiennent du JSON brut : {"id":"V01","boucle":89,"nom":"Verrat"...} — ce sont des données de debug laissées en production.</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-mineur">MINEUR</span> Colonne "date_naissance" absente</div>
+    <div class="issue-desc">Pas de date de naissance pour les animaux. Important pour calculer l'âge et planifier les réformes.</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-mineur">MINEUR</span> Mise à jour datée du 05/04/2026</div>
+    <div class="issue-desc">12 jours sans mise à jour. Les statuts ne reflètent probablement plus la réalité terrain.</div>
+  </div>
+</div>
+
+<!-- ═══════════════ SECTION 4 : VERRATS ═══════════════ -->
+<div class="section">
+  <div class="section-header">
+    <h2>📋 VERRATS</h2>
+    <span class="badge badge-warning">3 problèmes</span>
+  </div>
+
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-important">IMPORTANT</span> Colonnes "Boucle", "Race", "Date_naissance" absentes</div>
+    <div class="issue-desc">V01 Bobi et V02 Aligator n'ont pas de numéro de boucle, race ni date de naissance dans l'onglet VERRATS (contrairement à CHEPTEL qui a ces infos).</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-critique">CRITIQUE</span> Alimentation = "Gestation" pour les verrats</div>
+    <div class="issue-desc">Les 2 verrats ont "Gestation" comme type d'alimentation. C'est une erreur — devrait être "Entretien" ou "Verrat".</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-mineur">MINEUR</span> Pas d'historique de saillies par verrat</div>
+    <div class="issue-desc">Aucun suivi du nombre de saillies, du taux de fertilité par verrat, ou de la dernière utilisation.</div>
+  </div>
+</div>
+
+<!-- ═══════════════ SECTION 5 : STOCK ═══════════════ -->
+<div class="section">
+  <div class="section-header">
+    <h2>📋 STOCK_ALIMENTS + STOCK_VETO</h2>
+    <span class="badge badge-critical">5 problèmes</span>
+  </div>
+
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-critique">CRITIQUE</span> STOCK_ALIMENTS : tous les stocks à 0,0</div>
+    <div class="issue-desc">Les 5 aliments (Maïs, Aliment truie gestation, lactation, porcelets, engraissement) ont un stock actuel de 0,0 kg. Si c'est réel, c'est une RUPTURE TOTALE.</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-critique">CRITIQUE</span> STOCK_VETO : 4 produits en ALERTE STOCK BAS</div>
+    <div class="issue-desc">Ivermectine (50), Calcium injectable (30), Anti-diarrhéique (50), Désinfectant (10) — tous en alerte. Seuls le Fer injectable et l'Oxytetracycline sont OK.</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-structure">STRUCTURE</span> STOCK_VETO mélange 4 types de données</div>
+    <div class="issue-desc">Un seul onglet contient : stock vétérinaire + registre des traitements + protocole biosécurité + protocole prophylactique. Devrait être séparé en onglets distincts.</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-important">IMPORTANT</span> Colonne DLC entièrement vide dans STOCK_VETO</div>
+    <div class="issue-desc">Aucune date limite de consommation renseignée pour les médicaments. Risque d'utilisation de produits périmés.</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-mineur">MINEUR</span> STOCK_ALIMENTS_MOUVEMENTS : 1 seul mouvement enregistré</div>
+    <div class="issue-desc">Seulement 1 entrée (100 kg Maïs le 12/04). L'historique des mouvements n'est pas utilisé.</div>
+  </div>
+</div>
+
+<!-- ═══════════════ SECTION 6 : PORCELETS_BANDES ═══════════════ -->
+<div class="section">
+  <div class="section-header">
+    <h2>📋 PORCELETS_BANDES</h2>
+    <span class="badge badge-warning">2 problèmes</span>
+  </div>
+
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-important">IMPORTANT</span> Toutes les 11 bandes sont "Sevrés"</div>
+    <div class="issue-desc">Aucune bande en maternité ni en post-sevrage. Or l'onglet MATERNITE montre 9 loges occupées avec porcelets sous mère. Données désynchronisées.</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-mineur">MINEUR</span> Pas de suivi individuel des porcelets</div>
+    <div class="issue-desc">Les bandes comptent des NV totaux mais pas de suivi individuel (poids, sexe, adoption croisée, etc.).</div>
+  </div>
+</div>
+
+<!-- ═══════════════ SECTION 7 : DATA_EXPORT / KPI ═══════════════ -->
+<div class="section">
+  <div class="section-header">
+    <h2>📋 DATA_EXPORT (KPIs)</h2>
+    <span class="badge badge-critical">4 problèmes</span>
+  </div>
+
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-critique">CRITIQUE</span> Valeur corrompue : "Truies flushing" = 21 900 200 921</div>
+    <div class="issue-desc">La ligne 16 affiche un nombre aberrant (21 milliards) pour le nombre de truies en flushing. Bug de formule ou données corrompues.</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-critique">CRITIQUE</span> Marge négative : -7 FCFA/kg</div>
+    <div class="issue-desc">Le coût de production (2107 FCFA/kg) dépasse le prix de vente moyen (2100 FCFA/kg). L'exploitation perd de l'argent sur chaque kg vendu.</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-important">IMPORTANT</span> ROI annuel estimé : -3,5%</div>
+    <div class="issue-desc">Retour sur investissement négatif. Combiné au délai de récupération de 0 année, indique une exploitation non rentable actuellement.</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-important">IMPORTANT</span> Taux occupation maternité : 100% — statut Critique</div>
+    <div class="issue-desc">Maternité pleine à 100% (9 loges / 9 disponibles). Pas de marge pour les prochaines mises-bas (T18 le 20/04, T19 le 17/04).</div>
+  </div>
+</div>
+
+<!-- ═══════════════ SECTION 8 : ALERTES_ACTIVES ═══════════════ -->
+<div class="section">
+  <div class="section-header">
+    <h2>📋 ALERTES_ACTIVES</h2>
+    <span class="badge badge-warning">2 problèmes</span>
+  </div>
+
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-critique">CRITIQUE</span> Mortalité corrompue : "177761879999..."</div>
+    <div class="issue-desc">Ligne 15 "Sous mère — Mortalité élevée: 100% (177761879999...)" — valeur clairement corrompue dans la formule de calcul de mortalité.</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-mineur">MINEUR</span> Toutes les alertes sont de type "ATTENTION" sans priorité différenciée</div>
+    <div class="issue-desc">12 alertes actives mais toutes au même niveau "ATTENTION" — impossible de distinguer les urgences des simples suivis.</div>
+  </div>
+</div>
+
+<!-- ═══════════════ SECTION 9 : NOTES_TERRAIN ═══════════════ -->
+<div class="section">
+  <div class="section-header">
+    <h2>📋 NOTES_TERRAIN</h2>
+    <span class="badge badge-info">3 problèmes</span>
+  </div>
+
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-mineur">MINEUR</span> Formats de date mixtes</div>
+    <div class="issue-desc">"05/04/2026" (DD/MM/YYYY), "2026-04-12" (ISO), "2026-04-15T1..." (timestamp) — 3 formats différents dans la même colonne.</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-mineur">MINEUR</span> Colonnes supplémentaires non documentées (J, K)</div>
+    <div class="issue-desc">Les lignes récentes (8-12) utilisent des colonnes I, J, K qui ne sont pas dans l'en-tête (row 3). Structure incohérente.</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-mineur">MINEUR</span> Seulement 9 notes en 2 semaines</div>
+    <div class="issue-desc">Pour un élevage de 17 truies, 9 notes en 2 semaines est très peu. L'outil n'est peut-être pas assez utilisé au quotidien.</div>
+  </div>
+</div>
+
+<!-- ═══════════════ SECTION 10 : SANTE ═══════════════ -->
+<div class="section">
+  <div class="section-header">
+    <h2>📋 SANTE</h2>
+    <span class="badge badge-warning">2 problèmes</span>
+  </div>
+
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-important">IMPORTANT</span> Onglet quasi vide (2 entrées)</div>
+    <div class="issue-desc">Seulement 2 événements santé enregistrés (1 traitement + 1 observation). Les colonnes n'ont pas de header visible (row 1-2 = rouge sans texte). L'historique sanitaire est inexistant.</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-important">IMPORTANT</span> Doublon avec STOCK_VETO</div>
+    <div class="issue-desc">Le registre des traitements existe dans STOCK_VETO (lignes 11-14) ET dans SANTE — duplication d'information incohérente.</div>
+  </div>
+</div>
+
+<!-- ═══════════════ SECTION 11 : PARAMETRES ═══════════════ -->
+<div class="section">
+  <div class="section-header">
+    <h2>📋 PARAMETRES</h2>
+    <span class="badge badge-info">2 problèmes</span>
+  </div>
+
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-important">IMPORTANT</span> Durée gestation = 114 jours (vs 115 dans l'app)</div>
+    <div class="issue-desc">Le paramètre "Duree gestation" est à 114 jours, mais l'application PorcTrack utilise 115 jours. Cette différence décale toutes les dates MB prévues d'1 jour.</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-mineur">MINEUR</span> Fertilité réelle 92,3% dépasse l'objectif 85%</div>
+    <div class="issue-desc">Bon signe, mais la source indique "Terrain (dépasse)" — à vérifier si c'est un calcul réel ou une estimation.</div>
+  </div>
+</div>
+
+<!-- ═══════════════ SECTION 12 : FINANCES ═══════════════ -->
+<div class="section">
+  <div class="section-header">
+    <h2>📋 FINANCES</h2>
+    <span class="badge badge-critical">2 problèmes</span>
+  </div>
+
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-critique">CRITIQUE</span> Marge NEGATIVE : -7 FCFA/kg</div>
+    <div class="issue-desc">Coût kg vif = 2 107 FCFA vs prix vente moyen = 2 100 FCFA. L'exploitation perd 7 FCFA par kg vendu. Statut : DEFICIT.</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-important">IMPORTANT</span> Alimentation = 81,4% des coûts</div>
+    <div class="issue-desc">1 206 033 FCFA/mois sur 1 481 033 total. Le poste alimentation est le levier principal d'optimisation.</div>
+  </div>
+</div>
+
+<!-- ═══════════════ SECTION 13 : STRUCTURE GÉNÉRALE ═══════════════ -->
+<div class="section">
+  <div class="section-header">
+    <h2>🏗️ Problèmes de structure générale</h2>
+    <span class="badge badge-info">ARCHITECTURE</span>
+  </div>
+
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-structure">STRUCTURE</span> Trop d'onglets (25+) avec redondance</div>
+    <div class="issue-desc">
+      Doublons identifiés :<br>
+      • <strong>CHEPTEL</strong> vs <strong>TRUIES_REPRODUCTION</strong> → même info, formats différents<br>
+      • <strong>SANTE</strong> vs <strong>STOCK_VETO</strong> (registre traitements) → même info, 2 endroits<br>
+      • <strong>PORCELETS_BANDES</strong> vs <strong>LIFECYCLE</strong> vs <strong>MATERNITE</strong> → 3 vues des mêmes porcelets<br>
+      • <strong>DATA_EXPORT</strong> vs <strong>KPI_PROJECTIONS</strong> vs <strong>FINANCES</strong> → KPIs dispersés
+    </div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-structure">STRUCTURE</span> Pas de validation de données</div>
+    <div class="issue-desc">Aucune liste déroulante pour les statuts, aucun format imposé pour les dates, pas de formule de vérification entre onglets liés.</div>
+  </div>
+  <div class="issue">
+    <div class="issue-title"><span class="issue-tag tag-structure">STRUCTURE</span> Dates dans 3+ formats différents</div>
+    <div class="issue-desc">"05/04/2026" (FR), "2026-04-12" (ISO), "2026-04-07T08:00:00.000Z" (timestamp), "07/03/2026" (ambigüe). Devrait être uniformisé en ISO ou FR.</div>
+  </div>
+</div>
+
+<!-- ═══════════════ RECOMMANDATIONS ═══════════════ -->
+<div class="section">
+  <div class="section-header">
+    <h2>✅ Recommandations prioritaires</h2>
+    <span class="badge badge-ok">PLAN D'ACTION</span>
+  </div>
+
+  <div class="reco">
+    <strong>1. URGENT — Synchroniser les statuts truies</strong><br>
+    Choisir UN SEUL onglet comme source de vérité (recommandé : CHEPTEL) et supprimer la redondance avec TRUIES_REPRODUCTION. Mettre à jour les statuts pour refléter la réalité terrain (9 truies en maternité, pas en flushing).
+  </div>
+  <div class="reco">
+    <strong>2. URGENT — Traiter les 3 sevrages en retard</strong><br>
+    T1, T2, T3 doivent être sevrées immédiatement (3 semaines de retard). Mettre à jour MATERNITE et POST_SEVRAGE après le sevrage.
+  </div>
+  <div class="reco">
+    <strong>3. URGENT — Corriger les données corrompues</strong><br>
+    Fixer la valeur "21900200921" dans DATA_EXPORT (truies flushing) et "177761879999" dans ALERTES_ACTIVES (mortalité). Ce sont des bugs de formule.
+  </div>
+  <div class="reco">
+    <strong>4. IMPORTANT — Uniformiser les identifiants</strong><br>
+    Choisir "T01" ou "T1" et appliquer partout. Recommandé : "T01" (avec zéro) pour un tri alphanumérique correct.
+  </div>
+  <div class="reco">
+    <strong>5. IMPORTANT — Compléter les données manquantes</strong><br>
+    • Noms des truies (6-7 sans nom)<br>
+    • Historique portées (Nb portees, NV dernière portée)<br>
+    • DLC des médicaments<br>
+    • Dates de naissance des animaux<br>
+    • Alimentation verrats (corriger "Gestation" → "Entretien")
+  </div>
+  <div class="reco">
+    <strong>6. IMPORTANT — Réapprovisionner les stocks</strong><br>
+    5 aliments à 0 kg + 4 produits véto en alerte stock bas = situation critique pour la continuité de l'élevage.
+  </div>
+  <div class="reco">
+    <strong>7. MOYEN TERME — Simplifier l'architecture</strong><br>
+    Réduire de 25+ à ~12 onglets essentiels. Fusionner CHEPTEL/TRUIES_REPRODUCTION, séparer STOCK_VETO en 2 onglets, supprimer les doublons KPI.
+  </div>
+  <div class="reco">
+    <strong>8. MOYEN TERME — Ajouter des validations</strong><br>
+    Listes déroulantes pour les statuts, format de date imposé, formules de vérification croisée entre onglets, mise en forme conditionnelle pour les alertes.
+  </div>
+</div>
+
+<p style="text-align: center; color: #94a3b8; font-size: 12px; margin-top: 24px; padding-bottom: 20px;">
+  Audit généré le 17/04/2026 par PorcTrack Intelligence · Ferme A130 · Secteur Nord
+</p>
+
+</div>
+</body>
+</html>

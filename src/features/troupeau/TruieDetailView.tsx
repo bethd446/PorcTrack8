@@ -11,11 +11,11 @@
  *   5. Grille actions 2×2 : Soin · Pesée · Saillie · Note (bientôt)
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { IonContent, IonPage, IonToast } from '@ionic/react';
 import {
-  Syringe, Scale, Heart, FileText, AlertCircle, Edit3,
+  Syringe, Scale, Heart, FileText, AlertCircle, Edit3, ChevronRight,
   PackageCheck, Baby, AlertOctagon,
 } from 'lucide-react';
 
@@ -93,6 +93,14 @@ const TruieDetailView: React.FC = () => {
   const { truies, getHealthForAnimal } = useFarm();
   const [sheet, setSheet] = useState<QuickSheet>(null);
   const [toast, setToast] = useState<string>('');
+  const [recentlyEdited, setRecentlyEdited] = useState<boolean>(false);
+  const editedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (editedTimerRef.current) {
+      clearTimeout(editedTimerRef.current);
+    }
+  }, []);
 
   const decodedId = id ? decodeURIComponent(id) : '';
   const today = useMemo(() => new Date(), []);
@@ -146,6 +154,17 @@ const TruieDetailView: React.FC = () => {
   const success = (msg: string) => {
     setToast(msg);
     closeSheet();
+  };
+
+  /** Succès d'édition : toast + highlight pulse temporaire sur la carte Identité. */
+  const handleEditSuccess = () => {
+    success('Truie mise à jour');
+    setRecentlyEdited(true);
+    if (editedTimerRef.current) clearTimeout(editedTimerRef.current);
+    editedTimerRef.current = setTimeout(() => {
+      setRecentlyEdited(false);
+      editedTimerRef.current = null;
+    }, 1500);
   };
 
   // ── Actions métier contextuelles (selon statut canonique) ────────────
@@ -218,9 +237,24 @@ const TruieDetailView: React.FC = () => {
             {/* ── Identité ───────────────────────────────────────────── */}
             <section aria-label="Identité">
               <SectionDivider label="Identité" />
-              <div className="card-dense !p-0 overflow-hidden mt-3">
+              <div
+                data-testid="identite-card"
+                className={`card-dense !p-0 overflow-hidden mt-3 transition-shadow ${
+                  recentlyEdited ? 'animate-pulse-soft ring-2 ring-accent/40' : ''
+                }`}
+              >
                 <DetailRow label="Boucle" value={truie.boucle || '—'} mono />
                 <DetailRow label="Nom" value={truie.nom || '—'} />
+                <DetailRow label="Race" value={truie.race || '—'} />
+                <DetailRow
+                  label="Poids"
+                  value={
+                    typeof truie.poids === 'number' && truie.poids > 0
+                      ? `${truie.poids} kg`
+                      : '—'
+                  }
+                  mono
+                />
                 <DetailRow label="Stade" value={truie.stade || '—'} />
                 <DetailRow
                   label="Ration/j"
@@ -321,6 +355,33 @@ const TruieDetailView: React.FC = () => {
               )}
             </section>
 
+            {/* ── CTA « Modifier toutes les infos » ──────────────────── */}
+            <button
+              type="button"
+              onClick={() => setSheet('edit')}
+              aria-label={`Modifier toutes les infos de la truie ${displayId}`}
+              className="pressable card-dense w-full text-left flex items-center gap-3 !py-3.5 border border-accent/40 hover:border-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-colors"
+            >
+              <span
+                className="inline-flex w-10 h-10 rounded-xl-v2 bg-bg-1 border border-accent/40 items-center justify-center shrink-0"
+                style={{ color: 'var(--accent)' }}
+              >
+                <Edit3 size={18} aria-hidden="true" />
+              </span>
+              <span className="flex-1 min-w-0">
+                <span
+                  className="block ft-heading text-[13px] uppercase tracking-wide"
+                  style={{ color: 'var(--accent)' }}
+                >
+                  Modifier toutes les infos
+                </span>
+                <span className="block font-mono text-[11px] text-text-2 mt-0.5 truncate">
+                  Nom · Boucle · Race · Poids · Stade · Statut · Ration · Portées
+                </span>
+              </span>
+              <ChevronRight size={16} aria-hidden="true" className="text-text-2 shrink-0" />
+            </button>
+
             {/* ── Actions 2×2 ────────────────────────────────────────── */}
             <section aria-label="Actions">
               <div className="grid grid-cols-2 gap-2.5">
@@ -399,7 +460,7 @@ const TruieDetailView: React.FC = () => {
         isOpen={sheet === 'edit'}
         onClose={closeSheet}
         truie={truie}
-        onSuccess={() => success('Truie mise à jour')}
+        onSuccess={handleEditSuccess}
       />
 
       <BottomSheet

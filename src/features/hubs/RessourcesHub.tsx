@@ -14,7 +14,7 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import {
-  AlertOctagon, Plus, Calculator, ClipboardList, Package,
+  AlertOctagon, Plus, Calculator, ClipboardList, Package, Edit3,
 } from 'lucide-react';
 
 import AgritechHeader from '../../components/AgritechHeader';
@@ -24,6 +24,9 @@ import QuickRefillForm, {
   toRefillItem,
   type RefillStockItem,
 } from '../../components/forms/QuickRefillForm';
+import QuickEditStockForm, {
+  type StockKind,
+} from '../../components/forms/QuickEditStockForm';
 import { useFarm } from '../../context/FarmContext';
 import type { StockAliment, StockVeto } from '../../types/farm';
 
@@ -138,6 +141,36 @@ const RessourcesHub: React.FC = () => {
     void refreshData();
   }, [refreshData]);
 
+  // ── Édition admin : état du BottomSheet ────────────────────────────────
+  const [editTarget, setEditTarget] = useState<
+    | { item: StockAliment | StockVeto; kind: StockKind }
+    | null
+  >(null);
+
+  const handleOpenEditAliment = useCallback(
+    (id: string): void => {
+      const raw = stockAliment.find((a) => a.id === id);
+      if (raw) setEditTarget({ item: raw, kind: 'ALIMENT' });
+    },
+    [stockAliment],
+  );
+
+  const handleOpenEditVeto = useCallback(
+    (id: string): void => {
+      const raw = stockVeto.find((v) => v.id === id);
+      if (raw) setEditTarget({ item: raw, kind: 'VETO' });
+    },
+    [stockVeto],
+  );
+
+  const handleCloseEdit = useCallback((): void => {
+    setEditTarget(null);
+  }, []);
+
+  const handleEditSuccess = useCallback((): void => {
+    void refreshData();
+  }, [refreshData]);
+
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
@@ -189,6 +222,7 @@ const RessourcesHub: React.FC = () => {
                       row={s}
                       onOpen={() => navigate('/ressources/aliments')}
                       onRefill={() => handleOpenRefillAliment(s.id)}
+                      onEdit={() => handleOpenEditAliment(s.id)}
                     />
                   ))}
                 </ul>
@@ -206,6 +240,7 @@ const RessourcesHub: React.FC = () => {
                       row={s}
                       onOpen={() => navigate('/ressources/pharmacie')}
                       onRefill={() => handleOpenRefillVeto(s.id)}
+                      onEdit={() => handleOpenEditVeto(s.id)}
                     />
                   ))}
                 </ul>
@@ -250,6 +285,17 @@ const RessourcesHub: React.FC = () => {
             stockItem={refillTarget}
             onSuccess={handleRefillSuccess}
           />
+
+          {/* ── Bottom sheet édition admin ────────────────────────────── */}
+          {editTarget ? (
+            <QuickEditStockForm
+              isOpen={editTarget !== null}
+              onClose={handleCloseEdit}
+              stockItem={editTarget.item}
+              kind={editTarget.kind}
+              onSuccess={handleEditSuccess}
+            />
+          ) : null}
         </AgritechLayout>
       </IonContent>
     </IonPage>
@@ -262,10 +308,11 @@ interface StockRowProps {
   row: StockRowData;
   onOpen: () => void;
   onRefill: () => void;
+  onEdit: () => void;
 }
 
-const StockRow: React.FC<StockRowProps> = ({ row, onOpen, onRefill }) => (
-  <li className="flex items-stretch gap-3 px-3.5 py-3.5 border-b border-border last:border-b-0">
+const StockRow: React.FC<StockRowProps> = ({ row, onOpen, onRefill, onEdit }) => (
+  <li className="flex items-stretch gap-2 px-3.5 py-3.5 border-b border-border last:border-b-0">
     <button
       type="button"
       onClick={onOpen}
@@ -299,6 +346,14 @@ const StockRow: React.FC<StockRowProps> = ({ row, onOpen, onRefill }) => (
       className="pressable self-center shrink-0 w-9 h-9 rounded-[10px] bg-bg-1 border border-border flex items-center justify-center text-text-1 hover:text-accent transition-colors"
     >
       <Plus size={16} aria-hidden="true" />
+    </button>
+    <button
+      type="button"
+      onClick={onEdit}
+      aria-label={`Éditer ${row.name}`}
+      className="pressable self-center shrink-0 w-9 h-9 rounded-[10px] bg-bg-1 border border-border flex items-center justify-center text-text-1 hover:text-accent transition-colors"
+    >
+      <Edit3 size={15} aria-hidden="true" />
     </button>
   </li>
 );

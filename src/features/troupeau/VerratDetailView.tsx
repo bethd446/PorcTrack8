@@ -15,7 +15,7 @@ import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { IonContent, IonPage, IonToast } from '@ionic/react';
 import {
-  Syringe, Scale, Heart, FileText, AlertCircle,
+  Syringe, Scale, Heart, FileText, AlertCircle, Edit3,
 } from 'lucide-react';
 
 import AgritechHeader from '../../components/AgritechHeader';
@@ -27,6 +27,7 @@ import QuickHealthForm from '../../components/forms/QuickHealthForm';
 import QuickNoteForm from '../../components/forms/QuickNoteForm';
 import QuickPeseeForm from '../../components/forms/QuickPeseeForm';
 import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
+import QuickEditVerratForm from '../../components/forms/QuickEditVerratForm';
 import type { Verrat, TraitementSante, Saillie, Truie } from '../../types/farm';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -79,6 +80,7 @@ const VerratDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { verrats, truies, saillies, getHealthForAnimal } = useFarm();
   const [sheet, setSheet] = useState<QuickSheet>(null);
+  const [editOpen, setEditOpen] = useState<boolean>(false);
   const [toast, setToast] = useState<string>('');
 
   const decodedId = id ? decodeURIComponent(id) : '';
@@ -166,8 +168,16 @@ const VerratDetailView: React.FC = () => {
                 <div className="ft-heading text-[22px] text-text-0 leading-none truncate">
                   {title}
                 </div>
-                <div className="flex gap-1.5 mt-2 flex-wrap">
+                <div className="flex gap-1.5 mt-2 flex-wrap items-center">
                   <Chip label={verrat.statut || '—'} tone={tone} size="xs" />
+                  <button
+                    type="button"
+                    onClick={() => setEditOpen(true)}
+                    aria-label={`Éditer le verrat ${displayId}`}
+                    className="pressable inline-flex items-center justify-center w-7 h-7 rounded-md bg-bg-1 border border-border text-text-1 hover:text-accent hover:border-accent transition-colors duration-[160ms] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                  >
+                    <Edit3 size={14} aria-hidden="true" />
+                  </button>
                 </div>
               </div>
             </div>
@@ -322,6 +332,13 @@ const VerratDetailView: React.FC = () => {
       </IonContent>
 
       {/* ── Sheets ──────────────────────────────────────────────────── */}
+      <QuickEditVerratForm
+        isOpen={editOpen}
+        onClose={() => setEditOpen(false)}
+        verrat={verrat}
+        onSuccess={() => setToast('Verrat mis à jour')}
+      />
+
       <QuickSaillieForm
         isOpen={sheet === 'saillie'}
         onClose={closeSheet}

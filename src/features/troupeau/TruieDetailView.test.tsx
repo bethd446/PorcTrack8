@@ -41,6 +41,8 @@ const truieT14: Truie = {
   nbPortees: 3,
   derniereNV: 12,
   dateMBPrevue: '2026-05-10',
+  race: 'Large White',
+  poids: 235,
   notes: '',
   synced: true,
 };
@@ -295,5 +297,46 @@ describe('TruieDetailView', () => {
       'T05',
       { STATUT: 'Chaleur' },
     );
+  });
+
+  // ── CTA « Modifier toutes les infos » + highlight ────────────────────────
+
+  it('CTA « Modifier toutes les infos » présent et cliquable', () => {
+    renderAt('/troupeau/truies/T14');
+    const btn = screen.getByRole('button', {
+      name: /modifier toutes les infos de la truie t14/i,
+    });
+    expect(btn).toBeDefined();
+    expect(btn.tagName).toBe('BUTTON');
+    // Le sous-titre mono liste les champs couverts.
+    expect(btn.textContent).toMatch(/Nom/);
+    expect(btn.textContent).toMatch(/Boucle/);
+    expect(btn.textContent).toMatch(/Race/);
+    expect(btn.textContent).toMatch(/Poids/);
+    expect(btn.textContent).toMatch(/Ration/);
+    expect(btn.textContent).toMatch(/Portées/);
+  });
+
+  it('CTA « Modifier toutes les infos » : click ouvre le sheet edit (dialog)', () => {
+    renderAt('/troupeau/truies/T14');
+    // Avant click : pas de dialog visible (IonModal mocké rend rien si !isOpen).
+    expect(screen.queryByRole('dialog')).toBeNull();
+
+    const btn = screen.getByRole('button', {
+      name: /modifier toutes les infos de la truie t14/i,
+    });
+    fireEvent.click(btn);
+
+    // Après click, le BottomSheet QuickEditTruieForm (via IonModal) est monté.
+    expect(screen.getByRole('dialog')).toBeDefined();
+  });
+
+  it('section « Identité » affiche la race et le poids si définis', () => {
+    renderAt('/troupeau/truies/T14');
+    const identite = screen.getByRole('region', { name: /identité/i });
+    expect(within(identite).getByText('Race')).toBeDefined();
+    expect(within(identite).getByText('Large White')).toBeDefined();
+    expect(within(identite).getByText('Poids')).toBeDefined();
+    expect(within(identite).getByText('235 kg')).toBeDefined();
   });
 });

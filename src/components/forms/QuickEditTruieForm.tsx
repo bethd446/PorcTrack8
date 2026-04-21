@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
 import { Edit3, Save } from 'lucide-react';
 
@@ -7,24 +7,101 @@ import { enqueueUpdateRow } from '../../services/offlineQueue';
 import { useFarm } from '../../context/FarmContext';
 import type { Truie } from '../../types/farm';
 import {
-  validateTruieEdit,
+  validateTruieEditFull,
+  frDateToIso,
+  type TruieEditDraft,
+  type TruieEditInitial,
   type TruieEditValidation,
 } from './quickEditTruieValidation';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 
 /* ═════════════════════════════════════════════════════════════════════════
-   QuickEditTruieForm · Édition rapide Nom + Ration d'une truie
+   QuickEditTruieForm · Édition complète d'une truie
    ─────────────────────────────────────────────────────────────────────────
-   - Nom (texte, 0..30 chars, vide autorisé → retire le nom)
-   - Ration (nombre, 0..10 kg/j, pas 0.1)
-   - Submit → enqueueUpdateRow('SUIVI_TRUIES_REPRODUCTION', 'ID', truie.id, patch)
-   - Toast online : "Modifications enregistrées"
-     Toast offline : "Modifications en file · sync auto"
+   Sections : Identité · Reproduction · Notes
+     • Identité     : Nom · Boucle* · Race · Poids
+     • Reproduction : Stade · Statut · Ration · Nb Portées · Dernière NV ·
+                      Date MB prévue
+     • Notes
+
+   Seule la Boucle est obligatoire. Submit → enqueueUpdateRow avec patch
+   diff (uniquement les champs modifiés).
    ═════════════════════════════════════════════════════════════════════════ */
 
-// Re-export pour compat (API publique inchangée pour les imports existants)
-export { validateTruieEdit } from './quickEditTruieValidation';
-export type { TruieEditPatch, TruieEditValidation } from './quickEditTruieValidation';
+// Re-export pour compat (API publique v1 inchangée pour les imports legacy)
+export {
+  validateTruieEdit,
+  validateTruieEditFull,
+  frDateToIso,
+  isoDateToFr,
+} from './quickEditTruieValidation';
+export type {
+  TruieEditPatch,
+  TruieEditValidation,
+  TruieEditDraft,
+  TruieEditInitial,
+} from './quickEditTruieValidation';
+
+// ─── Options stades / statuts ──────────────────────────────────────────────
+const STADE_OPTIONS = [
+  '',
+  'Jeune',
+  'Adulte',
+  'Reproductrice',
+  'Gestante',
+  'Allaitante',
+] as const;
+
+const STATUT_OPTIONS = [
+  '',
+  'Pleine',
+  'Maternité',
+  'En attente saillie',
+  'Chaleur',
+  'Surveillance',
+  'Réforme',
+] as const;
+
+const RACE_SUGGESTIONS = [
+  'Large White',
+  'Landrace',
+  'Duroc',
+  'Large White × Landrace',
+  'Autre',
+];
+
+// ─── Helpers de normalisation initial ──────────────────────────────────────
+
+/** Construit le snapshot initial depuis la truie courante. */
+function buildInitial(truie: Truie): TruieEditInitial {
+  const ration =
+    truie.ration > 0 ? String(Math.round(truie.ration * 10) / 10) : '';
+  const poids =
+    truie.poids !== undefined && truie.poids !== null
+      ? String(truie.poids)
+      : '';
+  return {
+    nom: truie.nom ?? '',
+    boucle: truie.boucle ?? '',
+    race: truie.race ?? '',
+    poids,
+    stade: truie.stade ?? '',
+    statut: truie.statut ?? '',
+    ration,
+    nbPortees:
+      truie.nbPortees !== undefined && truie.nbPortees !== null
+        ? String(truie.nbPortees)
+        : '',
+    derniereNV:
+      truie.derniereNV !== undefined && truie.derniereNV !== null
+        ? String(truie.derniereNV)
+        : '',
+    dateMBPrevue: frDateToIso(truie.dateMBPrevue ?? ''),
+    notes: truie.notes ?? '',
+  };
+}
+
+// ─── Props ──────────────────────────────────────────────────────────────────
 
 export interface QuickEditTruieFormProps {
   isOpen: boolean;
@@ -32,6 +109,8 @@ export interface QuickEditTruieFormProps {
   truie: Truie;
   onSuccess?: () => void;
 }
+
+// ─── Component ─────────────────────────────────────────────────────────────
 
 const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
   isOpen,
@@ -41,40 +120,53 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
 }) => {
   const { refreshData } = useFarm();
 
-  const [nom, setNom] = useState<string>(truie.nom ?? '');
-  const [ration, setRation] = useState<string>(
-    truie.ration > 0 ? String(truie.ration) : '',
-  );
+  const initial = useMemo(() => buildInitial(truie), [truie]);
+
+  const [draft, setDraft] = useState<TruieEditDraft>(initial);
   const [errors, setErrors] = useState<TruieEditValidation['errors']>({});
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string>('');
 
-  // Reset quand on (re)ouvre la sheet avec une nouvelle truie
+  // Reset à chaque (re)ouverture / changement de truie
   useEffect(() => {
     if (!isOpen) return;
-    setNom(truie.nom ?? '');
-    setRation(truie.ration > 0 ? String(truie.ration) : '');
+    setDraft(initial);
     setErrors({});
     setSaving(false);
-  }, [isOpen, truie]);
+  }, [isOpen, initial]);
 
   const handleClose = useCallback(() => {
     if (saving) return;
     onClose();
   }, [onClose, saving]);
 
-  // ── A11y : Esc ferme la sheet + focus auto sur le 1er champ ────────────
+  // A11y : Esc ferme + focus auto premier input
   useEscapeKey(isOpen && !saving, handleClose);
   const firstFieldRef = useFocusFirstInput<HTMLInputElement>(isOpen);
 
+  const update = useCallback(
+    <K extends keyof TruieEditDraft>(key: K, value: TruieEditDraft[K]) => {
+      setDraft(prev => ({ ...prev, [key]: value }));
+    },
+    [],
+  );
+
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    const result = validateTruieEdit(nom, ration);
+    const result = validateTruieEditFull(draft, initial);
     if (!result.ok || !result.patch) {
       setErrors(result.errors);
       return;
     }
     setErrors({});
+
+    // Si aucun champ modifié → rien à envoyer, on ferme juste avec toast
+    if (Object.keys(result.patch).length === 0) {
+      setToast('Aucune modification');
+      onClose();
+      return;
+    }
+
     setSaving(true);
     try {
       await enqueueUpdateRow(
@@ -89,7 +181,6 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
           ? 'Modifications enregistrées'
           : 'Modifications en file · sync auto',
       );
-      // Rafraîchit le contexte Farm — best effort (ne bloque pas le close)
       try {
         await refreshData();
       } catch {
@@ -110,17 +201,29 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
 
   const displayId = truie.displayId || truie.id;
 
+  // ─── Classes réutilisables ────────────────────────────────────────────
+  const inputBase =
+    'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2 font-mono text-[14px] outline-none transition-colors duration-[160ms] focus:border-accent focus:ring-1 focus:ring-accent';
+  const inputOk = 'border-border hover:border-text-2';
+  const inputErr = 'border-red';
+  const labelCls =
+    'block font-mono text-[11px] uppercase tracking-wide text-text-2';
+  const hintCls = 'font-mono text-[10px] text-text-2 tabular-nums';
+  const errCls = 'font-mono text-[11px] text-red';
+  const sectionTitleCls =
+    'font-mono text-[10px] uppercase tracking-wider text-text-2 pb-1 border-b border-border';
+
   return (
     <>
       <BottomSheet
         isOpen={isOpen}
         onClose={handleClose}
         title={`Éditer · ${displayId}`}
-        height="auto"
+        height="full"
       >
         <form
           onSubmit={handleSubmit}
-          className="space-y-5"
+          className="space-y-6"
           noValidate
           aria-label="Édition truie"
         >
@@ -131,7 +234,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
             </div>
             <div className="min-w-0">
               <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
-                Modifier nom & ration
+                Modifier la truie
               </p>
               <p className="font-mono text-[10px] uppercase tracking-wide text-text-2 tabular-nums mt-0.5">
                 {displayId}
@@ -140,112 +243,405 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
             </div>
           </div>
 
-          {/* Nom */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="edit-truie-nom"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
-            >
-              Nom <span className="text-text-2 normal-case">· optionnel</span>
-            </label>
-            <input
-              id="edit-truie-nom"
-              ref={firstFieldRef}
-              type="text"
-              maxLength={30}
-              aria-label={`Nom de la truie ${displayId}`}
-              aria-invalid={!!errors.nom}
-              aria-describedby={
-                errors.nom ? 'edit-truie-nom-error' : 'edit-truie-nom-hint'
-              }
-              className={[
-                'w-full h-12 rounded-md px-3',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[14px]',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.nom ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
-              placeholder="Ex: Berthe"
-              value={nom}
-              onChange={e => setNom(e.target.value)}
-              disabled={saving}
-              autoComplete="off"
-            />
-            <p
-              id="edit-truie-nom-hint"
-              className="font-mono text-[10px] text-text-2 tabular-nums"
-            >
-              {nom.trim().length}/30 · laisser vide pour retirer
-            </p>
-            {errors.nom ? (
-              <p
-                id="edit-truie-nom-error"
-                role="alert"
-                className="font-mono text-[11px] text-red"
-              >
-                {errors.nom}
-              </p>
-            ) : null}
-          </div>
+          {/* ── Section 1 : Identité ─────────────────────────────────── */}
+          <section className="space-y-4" aria-labelledby="sect-identite">
+            <h3 id="sect-identite" className={sectionTitleCls}>
+              Identité
+            </h3>
 
-          {/* Ration */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="edit-truie-ration"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
-            >
-              Ration (kg/j)
-            </label>
-            <input
-              id="edit-truie-ration"
-              type="number"
-              inputMode="decimal"
-              min={0}
-              max={10}
-              step={0.1}
-              aria-label="Ration alimentaire en kilogrammes par jour"
-              aria-required="true"
-              aria-invalid={!!errors.ration}
-              aria-describedby={
-                errors.ration
-                  ? 'edit-truie-ration-error'
-                  : 'edit-truie-ration-hint'
-              }
-              className={[
-                'w-full h-14 rounded-md px-4',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[22px] tabular-nums text-center',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.ration
-                  ? 'border-red'
-                  : 'border-border hover:border-text-2',
-              ].join(' ')}
-              placeholder="0.0"
-              value={ration}
-              onChange={e => setRation(e.target.value)}
-              disabled={saving}
-            />
-            <p
-              id="edit-truie-ration-hint"
-              className="font-mono text-[10px] text-text-2 tabular-nums"
-            >
-              0 à 10 kg/j · pas 0.1
-            </p>
-            {errors.ration ? (
-              <p
-                id="edit-truie-ration-error"
-                role="alert"
-                className="font-mono text-[11px] text-red"
-              >
-                {errors.ration}
+            {/* Nom */}
+            <div className="space-y-1.5">
+              <label htmlFor="edit-truie-nom" className={labelCls}>
+                Nom <span className="text-text-2 normal-case">· optionnel</span>
+              </label>
+              <input
+                id="edit-truie-nom"
+                ref={firstFieldRef}
+                type="text"
+                maxLength={30}
+                aria-label={`Nom de la truie ${displayId}`}
+                aria-invalid={!!errors.nom}
+                aria-describedby={
+                  errors.nom ? 'edit-truie-nom-error' : 'edit-truie-nom-hint'
+                }
+                className={[inputBase, errors.nom ? inputErr : inputOk].join(' ')}
+                placeholder="Ex: Berthe"
+                value={draft.nom}
+                onChange={e => update('nom', e.target.value)}
+                disabled={saving}
+                autoComplete="off"
+              />
+              <p id="edit-truie-nom-hint" className={hintCls}>
+                {draft.nom.trim().length}/30 · laisser vide pour retirer
               </p>
-            ) : null}
-          </div>
+              {errors.nom ? (
+                <p id="edit-truie-nom-error" role="alert" className={errCls}>
+                  {errors.nom}
+                </p>
+              ) : null}
+            </div>
+
+            {/* Boucle (obligatoire) */}
+            <div className="space-y-1.5">
+              <label htmlFor="edit-truie-boucle" className={labelCls}>
+                Boucle <span className="text-red normal-case">· requis</span>
+              </label>
+              <input
+                id="edit-truie-boucle"
+                type="text"
+                maxLength={30}
+                aria-label="Boucle de la truie"
+                aria-required="true"
+                aria-invalid={!!errors.boucle}
+                aria-describedby={
+                  errors.boucle
+                    ? 'edit-truie-boucle-error'
+                    : 'edit-truie-boucle-hint'
+                }
+                className={[
+                  inputBase,
+                  errors.boucle ? inputErr : inputOk,
+                ].join(' ')}
+                placeholder="Ex: FR-001-1234"
+                value={draft.boucle}
+                onChange={e => update('boucle', e.target.value)}
+                disabled={saving}
+                autoComplete="off"
+              />
+              <p id="edit-truie-boucle-hint" className={hintCls}>
+                Identifiant physique (obligatoire)
+              </p>
+              {errors.boucle ? (
+                <p id="edit-truie-boucle-error" role="alert" className={errCls}>
+                  {errors.boucle}
+                </p>
+              ) : null}
+            </div>
+
+            {/* Race */}
+            <div className="space-y-1.5">
+              <label htmlFor="edit-truie-race" className={labelCls}>
+                Race <span className="text-text-2 normal-case">· optionnel</span>
+              </label>
+              <input
+                id="edit-truie-race"
+                type="text"
+                list="edit-truie-race-list"
+                maxLength={40}
+                aria-label="Race de la truie"
+                aria-invalid={!!errors.race}
+                aria-describedby={
+                  errors.race ? 'edit-truie-race-error' : 'edit-truie-race-hint'
+                }
+                className={[inputBase, errors.race ? inputErr : inputOk].join(' ')}
+                placeholder="Ex: Large White"
+                value={draft.race}
+                onChange={e => update('race', e.target.value)}
+                disabled={saving}
+                autoComplete="off"
+              />
+              <datalist id="edit-truie-race-list">
+                {RACE_SUGGESTIONS.map(r => (
+                  <option key={r} value={r} />
+                ))}
+              </datalist>
+              <p id="edit-truie-race-hint" className={hintCls}>
+                {draft.race.trim().length}/40 · suggestions dans la liste
+              </p>
+              {errors.race ? (
+                <p id="edit-truie-race-error" role="alert" className={errCls}>
+                  {errors.race}
+                </p>
+              ) : null}
+            </div>
+
+            {/* Poids */}
+            <div className="space-y-1.5">
+              <label htmlFor="edit-truie-poids" className={labelCls}>
+                Poids (kg)
+                <span className="text-text-2 normal-case"> · optionnel</span>
+              </label>
+              <input
+                id="edit-truie-poids"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={350}
+                step={0.5}
+                aria-label="Poids de la truie en kilogrammes"
+                aria-invalid={!!errors.poids}
+                aria-describedby={
+                  errors.poids
+                    ? 'edit-truie-poids-error'
+                    : 'edit-truie-poids-hint'
+                }
+                className={[inputBase, errors.poids ? inputErr : inputOk].join(' ')}
+                placeholder="0"
+                value={draft.poids}
+                onChange={e => update('poids', e.target.value)}
+                disabled={saving}
+              />
+              <p id="edit-truie-poids-hint" className={hintCls}>
+                0 à 350 kg · pas 0.5
+              </p>
+              {errors.poids ? (
+                <p id="edit-truie-poids-error" role="alert" className={errCls}>
+                  {errors.poids}
+                </p>
+              ) : null}
+            </div>
+          </section>
+
+          {/* ── Section 2 : Reproduction ─────────────────────────────── */}
+          <section className="space-y-4" aria-labelledby="sect-repro">
+            <h3 id="sect-repro" className={sectionTitleCls}>
+              Reproduction
+            </h3>
+
+            {/* Stade */}
+            <div className="space-y-1.5">
+              <label htmlFor="edit-truie-stade" className={labelCls}>
+                Stade
+              </label>
+              <select
+                id="edit-truie-stade"
+                aria-label="Stade physiologique"
+                className={[inputBase, inputOk].join(' ')}
+                value={draft.stade}
+                onChange={e => update('stade', e.target.value)}
+                disabled={saving}
+              >
+                {STADE_OPTIONS.map(opt => (
+                  <option key={opt} value={opt}>
+                    {opt === '' ? '—' : opt}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Statut */}
+            <div className="space-y-1.5">
+              <label htmlFor="edit-truie-statut" className={labelCls}>
+                Statut
+              </label>
+              <select
+                id="edit-truie-statut"
+                aria-label="Statut reproducteur"
+                className={[inputBase, inputOk].join(' ')}
+                value={draft.statut}
+                onChange={e => update('statut', e.target.value)}
+                disabled={saving}
+              >
+                {STATUT_OPTIONS.map(opt => (
+                  <option key={opt} value={opt}>
+                    {opt === '' ? '—' : opt}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Ration */}
+            <div className="space-y-1.5">
+              <label htmlFor="edit-truie-ration" className={labelCls}>
+                Ration (kg/j)
+              </label>
+              <input
+                id="edit-truie-ration"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={10}
+                step={0.1}
+                aria-label="Ration alimentaire en kilogrammes par jour"
+                aria-required="true"
+                aria-invalid={!!errors.ration}
+                aria-describedby={
+                  errors.ration
+                    ? 'edit-truie-ration-error'
+                    : 'edit-truie-ration-hint'
+                }
+                className={[
+                  inputBase,
+                  errors.ration ? inputErr : inputOk,
+                ].join(' ')}
+                placeholder="0.0"
+                value={draft.ration}
+                onChange={e => update('ration', e.target.value)}
+                disabled={saving}
+              />
+              <p id="edit-truie-ration-hint" className={hintCls}>
+                0 à 10 kg/j · pas 0.1
+              </p>
+              {errors.ration ? (
+                <p id="edit-truie-ration-error" role="alert" className={errCls}>
+                  {errors.ration}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {/* Nb portées */}
+              <div className="space-y-1.5">
+                <label htmlFor="edit-truie-nbportees" className={labelCls}>
+                  Nb portées
+                </label>
+                <input
+                  id="edit-truie-nbportees"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={20}
+                  step={1}
+                  aria-label="Nombre total de portées"
+                  aria-invalid={!!errors.nbPortees}
+                  aria-describedby={
+                    errors.nbPortees
+                      ? 'edit-truie-nbportees-error'
+                      : 'edit-truie-nbportees-hint'
+                  }
+                  className={[
+                    inputBase,
+                    errors.nbPortees ? inputErr : inputOk,
+                  ].join(' ')}
+                  placeholder="0"
+                  value={draft.nbPortees}
+                  onChange={e => update('nbPortees', e.target.value)}
+                  disabled={saving}
+                />
+                <p id="edit-truie-nbportees-hint" className={hintCls}>
+                  0 à 20
+                </p>
+                {errors.nbPortees ? (
+                  <p
+                    id="edit-truie-nbportees-error"
+                    role="alert"
+                    className={errCls}
+                  >
+                    {errors.nbPortees}
+                  </p>
+                ) : null}
+              </div>
+
+              {/* Dernière NV */}
+              <div className="space-y-1.5">
+                <label htmlFor="edit-truie-nv" className={labelCls}>
+                  Dernière NV
+                </label>
+                <input
+                  id="edit-truie-nv"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={25}
+                  step={1}
+                  aria-label="Nés vivants de la dernière portée"
+                  aria-invalid={!!errors.derniereNV}
+                  aria-describedby={
+                    errors.derniereNV
+                      ? 'edit-truie-nv-error'
+                      : 'edit-truie-nv-hint'
+                  }
+                  className={[
+                    inputBase,
+                    errors.derniereNV ? inputErr : inputOk,
+                  ].join(' ')}
+                  placeholder="0"
+                  value={draft.derniereNV}
+                  onChange={e => update('derniereNV', e.target.value)}
+                  disabled={saving}
+                />
+                <p id="edit-truie-nv-hint" className={hintCls}>
+                  0 à 25
+                </p>
+                {errors.derniereNV ? (
+                  <p id="edit-truie-nv-error" role="alert" className={errCls}>
+                    {errors.derniereNV}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+
+            {/* Date MB prévue */}
+            <div className="space-y-1.5">
+              <label htmlFor="edit-truie-datemb" className={labelCls}>
+                Date MB prévue
+              </label>
+              <input
+                id="edit-truie-datemb"
+                type="date"
+                aria-label="Date de mise-bas prévue"
+                aria-invalid={!!errors.dateMBPrevue}
+                aria-describedby={
+                  errors.dateMBPrevue
+                    ? 'edit-truie-datemb-error'
+                    : 'edit-truie-datemb-hint'
+                }
+                className={[
+                  inputBase,
+                  errors.dateMBPrevue ? inputErr : inputOk,
+                ].join(' ')}
+                value={draft.dateMBPrevue}
+                onChange={e => update('dateMBPrevue', e.target.value)}
+                disabled={saving}
+              />
+              <p id="edit-truie-datemb-hint" className={hintCls}>
+                Laisser vide si inconnu
+              </p>
+              {errors.dateMBPrevue ? (
+                <p id="edit-truie-datemb-error" role="alert" className={errCls}>
+                  {errors.dateMBPrevue}
+                </p>
+              ) : null}
+            </div>
+          </section>
+
+          {/* ── Section 3 : Notes ────────────────────────────────────── */}
+          <section className="space-y-4" aria-labelledby="sect-notes">
+            <h3 id="sect-notes" className={sectionTitleCls}>
+              Notes
+            </h3>
+
+            <div className="space-y-1.5">
+              <label htmlFor="edit-truie-notes" className={labelCls}>
+                Notes <span className="text-text-2 normal-case">· optionnel</span>
+              </label>
+              <textarea
+                id="edit-truie-notes"
+                maxLength={200}
+                rows={3}
+                aria-label="Notes libres sur la truie"
+                aria-invalid={!!errors.notes}
+                aria-describedby={
+                  errors.notes
+                    ? 'edit-truie-notes-error'
+                    : 'edit-truie-notes-hint'
+                }
+                className={[
+                  'w-full rounded-md px-3 py-2',
+                  'bg-bg-0 border text-text-0 placeholder:text-text-2',
+                  'font-mono text-[13px]',
+                  'outline-none transition-colors duration-[160ms]',
+                  'focus:border-accent focus:ring-1 focus:ring-accent',
+                  errors.notes ? inputErr : inputOk,
+                ].join(' ')}
+                placeholder="Observations, remarques…"
+                value={draft.notes}
+                onChange={e => update('notes', e.target.value)}
+                disabled={saving}
+              />
+              <p id="edit-truie-notes-hint" className={hintCls}>
+                {draft.notes.trim().length}/200
+              </p>
+              {errors.notes ? (
+                <p id="edit-truie-notes-error" role="alert" className={errCls}>
+                  {errors.notes}
+                </p>
+              ) : null}
+            </div>
+          </section>
 
           {/* Actions */}
-          <div className="flex items-center gap-2 pt-2">
+          <div className="flex items-center gap-2 pt-2 sticky bottom-0 bg-bg-1 -mx-4 px-4 pb-2 border-t border-border">
             <button
               type="button"
               onClick={handleClose}

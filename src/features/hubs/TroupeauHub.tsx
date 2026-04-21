@@ -495,6 +495,28 @@ function idSortKey(t: Truie): string {
   return raw.replace(/\d+/g, (n) => n.padStart(6, '0')).toUpperCase();
 }
 
+/**
+ * Retourne `true` si la recherche cible manifestement une boucle :
+ * - la recherche contient au moins 1 chiffre, OU
+ * - la recherche commence par "b." / "b" / "fr-" (préfixes courants de
+ *   boucles d'oreille dans la ferme)
+ *
+ * Sert à mettre en highlight `t.boucle` dans la card quand le porcher tape
+ * un numéro physique ("20", "B.20", "FR-13-01"…).
+ */
+function isBoucleLikeQuery(q: string): boolean {
+  const s = q.trim().toLowerCase();
+  if (s.length === 0) return false;
+  if (/\d/.test(s)) return true;
+  return s.startsWith('b.') || s.startsWith('b ') || s === 'b' || s.startsWith('fr-');
+}
+
+/** La boucle de cette truie matche-t-elle la recherche ? */
+function boucleMatches(boucle: string | undefined, q: string): boolean {
+  if (!boucle || !q) return false;
+  return boucle.toLowerCase().includes(q.trim().toLowerCase());
+}
+
 interface TruiesPanelProps {
   activeTruies: Truie[];
   today: Date;
@@ -625,7 +647,7 @@ const TruiesPanel: React.FC<TruiesPanelProps> = ({ activeTruies, today }) => {
           inputMode="search"
           autoComplete="off"
           spellCheck={false}
-          placeholder="ID, nom, boucle, stade…"
+          placeholder="ID, boucle, nom, stade…"
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           aria-label="Rechercher une truie par ID, nom, boucle ou stade"
@@ -722,6 +744,12 @@ const TruiesPanel: React.FC<TruiesPanelProps> = ({ activeTruies, today }) => {
           {filtered.map((t) => {
             const v = statutVisu(t.statut);
             const meta = truieMeta(t, today);
+            const q = searchText.trim();
+            const highlightBoucle =
+              isBoucleLikeQuery(q) && boucleMatches(t.boucle, q);
+            const boucleClass = highlightBoucle
+              ? 'text-accent'
+              : 'text-text-1';
             return (
               <li key={t.id} role="listitem">
                 <button
@@ -729,14 +757,26 @@ const TruiesPanel: React.FC<TruiesPanelProps> = ({ activeTruies, today }) => {
                   onClick={() =>
                     navigate(`/troupeau/truies/${encodeURIComponent(t.id)}`)
                   }
-                  aria-label={`Truie ${t.displayId || t.id} · ${v.label}`}
-                  className="pressable w-full flex flex-col items-center gap-2 rounded-xl bg-bg-1 border border-border p-3 aspect-square justify-between focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                  aria-label={`Truie ${t.displayId || t.id}${t.boucle ? ` boucle ${t.boucle}` : ''} · ${v.label}`}
+                  className="pressable w-full flex flex-col items-center gap-1.5 rounded-xl bg-bg-1 border border-border p-3 aspect-square justify-between focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
                 >
-                  <TruieIcon size={32} aria-hidden="true" />
+                  <TruieIcon size={30} aria-hidden="true" />
                   <div className="font-mono text-[14px] font-semibold text-text-0 tabular-nums">
                     {t.displayId || t.id}
                   </div>
                   <Chip label={v.label} tone={v.tone} size="xs" />
+                  {t.boucle ? (
+                    <div
+                      className={`ft-code text-[18px] font-semibold tabular-nums leading-none ${boucleClass}`}
+                      aria-label={`Boucle ${t.boucle}`}
+                    >
+                      {t.boucle}
+                    </div>
+                  ) : (
+                    <div className="ft-code text-[18px] text-text-2 leading-none" aria-hidden="true">
+                      —
+                    </div>
+                  )}
                   <div className="font-mono text-[10px] text-text-2 truncate w-full text-center">
                     {meta}
                   </div>
@@ -754,6 +794,12 @@ const TruiesPanel: React.FC<TruiesPanelProps> = ({ activeTruies, today }) => {
           {filtered.map((t) => {
             const v = statutVisu(t.statut);
             const meta = truieMeta(t, today);
+            const q = searchText.trim();
+            const highlightBoucle =
+              isBoucleLikeQuery(q) && boucleMatches(t.boucle, q);
+            const boucleClass = highlightBoucle
+              ? 'text-accent'
+              : 'text-text-1';
             return (
               <IonItemSliding key={t.id}>
                 <li role="listitem">
@@ -762,14 +808,33 @@ const TruiesPanel: React.FC<TruiesPanelProps> = ({ activeTruies, today }) => {
                     onClick={() =>
                       navigate(`/troupeau/truies/${encodeURIComponent(t.id)}`)
                     }
+                    aria-label={`Truie ${t.displayId || t.id}${t.boucle ? ` boucle ${t.boucle}` : ''} · ${v.label}`}
                     className="pressable w-full text-left flex items-center gap-3 px-3 py-3 border-b border-border last:border-b-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
                   >
                     <div className="w-9 h-9 rounded-lg bg-bg-2 flex items-center justify-center text-text-1 shrink-0">
                       <TruieIcon size={22} aria-hidden="true" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-mono text-[14px] font-semibold text-text-0">
-                        {t.displayId || t.id}
+                      <div className="flex items-baseline gap-1.5 flex-wrap">
+                        <span className="font-mono text-[14px] font-semibold text-text-0 tabular-nums">
+                          {t.displayId || t.id}
+                        </span>
+                        {t.boucle ? (
+                          <>
+                            <span
+                              className="font-mono text-[12px] text-text-2"
+                              aria-hidden="true"
+                            >
+                              ·
+                            </span>
+                            <span
+                              className={`ft-code text-[13px] tabular-nums ${boucleClass}`}
+                              aria-label={`Boucle ${t.boucle}`}
+                            >
+                              {t.boucle}
+                            </span>
+                          </>
+                        ) : null}
                       </div>
                       <div className="font-mono text-[11px] text-text-2 mt-0.5 truncate">
                         {meta}

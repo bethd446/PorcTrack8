@@ -127,6 +127,8 @@ export const mapTruie = (header: string[], row: RawRow): Truie => {
   );
   const raIdx = findIdx(header, 'RATION KG/J', 'RATION');
   const noIdx = findIdx(header, 'NOTES');
+  const poIdx = findIdx(header, 'POIDS KG', 'POIDS_KG', 'POIDS');
+  const rcIdx = findIdx(header, 'RACE');
 
   const rawId = readStr(row, idIdx);
   return {
@@ -141,6 +143,8 @@ export const mapTruie = (header: string[], row: RawRow): Truie => {
     derniereNV: readOptFloat(row, nvIdx),
     dateMBPrevue: dpIdx !== -1 ? parseSheetDate(row[dpIdx]) : undefined,
     notes: readOptStr(row, noIdx),
+    poids: readOptFloat(row, poIdx),
+    race: readOptStr(row, rcIdx),
     synced: true,
     raw: toRaw(row),
   };

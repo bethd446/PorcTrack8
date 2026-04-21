@@ -156,13 +156,13 @@ describe('TroupeauVerratsView', () => {
     expect(screen.getByText(/V01.*Bobi/)).toBeDefined();
     expect(screen.getByText(/V02.*Aligator/)).toBeDefined();
 
-    // Meta lignes 1 & 2 — on vérifie la présence des tokens caractéristiques
-    expect(document.body.textContent).toContain('Boucle: FR-V01-001');
+    // Meta : boucle affichée en 1er plan (format V01 · FR-V01-001, sans préfixe "Boucle:")
+    expect(document.body.textContent).toContain('FR-V01-001');
     expect(document.body.textContent).toContain('Origine: Thomasset');
     expect(document.body.textContent).toContain('Ration: 3 kg/j');
     expect(document.body.textContent).toContain('Alimentation: Verrat standard');
 
-    expect(document.body.textContent).toContain('Boucle: FR-V02-002');
+    expect(document.body.textContent).toContain('FR-V02-002');
     expect(document.body.textContent).toContain('Origine: Azaguie');
     expect(document.body.textContent).toContain('Ration: 2.5 kg/j');
     expect(document.body.textContent).toContain('Alimentation: Verrat premium');
@@ -186,11 +186,12 @@ describe('TroupeauVerratsView', () => {
 
     renderView();
 
-    const cardV01 = screen.getByLabelText('Voir le détail de V01');
+    // aria-label inclut désormais la boucle : "Voir le détail de V01 boucle FR-V01-001"
+    const cardV01 = screen.getByLabelText(/Voir le détail de V01/);
     fireEvent.click(cardV01);
     expect(navigateSpy).toHaveBeenCalledWith('/troupeau/verrats/V01');
 
-    const cardV02 = screen.getByLabelText('Voir le détail de V02');
+    const cardV02 = screen.getByLabelText(/Voir le détail de V02/);
     fireEvent.click(cardV02);
     expect(navigateSpy).toHaveBeenCalledWith('/troupeau/verrats/V02');
 
