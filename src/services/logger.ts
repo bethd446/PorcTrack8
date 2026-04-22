@@ -11,7 +11,9 @@ interface LogEntry {
 type ErrorHook = (entry: LogEntry) => void;
 
 const RING_SIZE = 50;
-const isDev = import.meta.env.DEV;
+const isDev = (typeof import.meta !== 'undefined' && import.meta.env)
+  ? import.meta.env.DEV
+  : process.env.NODE_ENV !== 'production';
 
 const ring: LogEntry[] = [];
 let errorHook: ErrorHook | null = null;

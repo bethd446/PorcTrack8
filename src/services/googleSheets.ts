@@ -27,8 +27,12 @@ const SHEET_TO_KEYS: Record<string, string[]> = {
  * Stratégie hybride : fetch (Web/Dev) -> CapacitorHttp (Native/CORS).
  */
 
-const ENV_GAS_URL = import.meta.env.VITE_GAS_URL as string | undefined;
-const ENV_GAS_TOKEN = import.meta.env.VITE_GAS_TOKEN as string | undefined;
+const ENV_GAS_URL = (typeof import.meta !== 'undefined' && import.meta.env)
+  ? import.meta.env.VITE_GAS_URL as string | undefined
+  : process.env.VITE_GAS_URL;
+const ENV_GAS_TOKEN = (typeof import.meta !== 'undefined' && import.meta.env)
+  ? import.meta.env.VITE_GAS_TOKEN as string | undefined
+  : process.env.VITE_GAS_TOKEN;
 
 const getGasConfig = () => {
   const url = kvGet('gas_url') || ENV_GAS_URL || '';
@@ -80,7 +84,7 @@ const pendingRequests = new Map<string, Promise<{ status: number; data: GasRespo
 const CACHE_TTL = 30000; // 30 secondes
 
 async function request(options: { method: 'GET' | 'POST', url: string, data?: unknown, skipCache?: boolean }): Promise<{ status: number; data: GasResponse; fromCache?: boolean }> {
-  const isNative = Capacitor.isNativePlatform();
+  const isNative = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform();
   const cacheKey = options.url + (options.data ? JSON.stringify(options.data) : '');
 
   // 1. DÉDOUBLONNAGE : Si une requête identique est déjà en cours, on s'y abonne
@@ -311,8 +315,10 @@ export async function updateRowById(sheet: string, idHeader: string, idValue: st
     // 1. Vider le cache mémoire (immédiat)
     memoryCache.clear();
     // 2. Invalider le cache Preferences pour cette table (persistant)
-    const keysToInvalidate = SHEET_TO_KEYS[sheet] ?? [sheet];
-    await Promise.all(keysToInvalidate.map(k => invalidateCache(k)));
+    if (typeof window !== 'undefined') {
+      const keysToInvalidate = SHEET_TO_KEYS[sheet] ?? [sheet];
+      await Promise.all(keysToInvalidate.map(k => invalidateCache(k)));
+    }
   }
   return { success: Boolean(res.status === 200 && res.data?.ok), message: String(res.data?.error || res.data?.message || '') };
 }
@@ -405,10 +411,12 @@ export interface ReadTableResult {
 
 export async function readTableByKey(key: string): Promise<ReadTableResult> {
   const CACHE_KEY = `raw_${key}`;
-  const isValid = await isCacheValid(CACHE_KEY);
-  if (isValid) {
-    const cached = await getCache<{ headers: string[]; rows: SheetRawRow[] }>(CACHE_KEY);
-    if (cached) return { success: true, headers: cached.headers, header: cached.headers, rows: cached.rows, source: 'CACHE' };
+  if (typeof window !== 'undefined') {
+    const isValid = await isCacheValid(CACHE_KEY);
+    if (isValid) {
+      const cached = await getCache<{ headers: string[]; rows: SheetRawRow[] }>(CACHE_KEY);
+      if (cached) return { success: true, headers: cached.headers, header: cached.headers, rows: cached.rows, source: 'CACHE' };
+    }
   }
 
   const { url, token } = getGasConfig();
@@ -419,7 +427,9 @@ export async function readTableByKey(key: string): Promise<ReadTableResult> {
       const headers: string[] = (res.data.header as string[]) || (res.data.headers as string[]) || [];
       const rows: SheetRawRow[] = (res.data.rows as SheetRawRow[]) || [];
       const meta = res.data.meta as ReadTableResult['meta'];
-      await setCache(CACHE_KEY, { headers, rows }, 10 * 60 * 1000);
+      if (typeof window !== 'undefined') {
+        await setCache(CACHE_KEY, { headers, rows }, 10 * 60 * 1000);
+      }
       return { success: true, headers, header: headers, rows, meta, source: 'NETWORK' };
     }
     return { success: false, headers: [], header: [], rows: [], source: 'NETWORK', message: res.data?.error || 'Erreur GAS' };
@@ -427,7 +437,9 @@ export async function readTableByKey(key: string): Promise<ReadTableResult> {
     console.error(`readTableByKey "${key}" network failed`);
   }
 
-  const stale = await getCache<{ headers: string[]; rows: SheetRawRow[] }>(CACHE_KEY);
+  const stale = (typeof window !== 'undefined')
+    ? await getCache<{ headers: string[]; rows: SheetRawRow[] }>(CACHE_KEY)
+    : null;
   if (stale) return { success: true, headers: stale.headers, header: stale.headers, rows: stale.rows, source: 'FALLBACK' };
   return { success: false, headers: [], header: [], rows: [], source: 'NETWORK', message: 'Données indisponibles' };
 }

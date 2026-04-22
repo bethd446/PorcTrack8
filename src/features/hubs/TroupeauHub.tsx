@@ -53,6 +53,7 @@ import { Bandes } from '../../services/bandAnalysisEngine';
 import type { LogeOccupation, LogeOccupationAlerte } from '../../services/bandesAggregator';
 import { kvGet, kvSet } from '../../services/kvStore';
 
+import TruieStatutPipeline, { type TruieEtape } from '../../components/truie/TruieStatutPipeline';
 import TroupeauVerratsView from '../troupeau/TroupeauVerratsView';
 import TroupeauPorceletsView from '../troupeau/TroupeauPorceletsView';
 import TroupeauLogesView from '../troupeau/TroupeauLogesView';
@@ -234,6 +235,19 @@ const TroupeauHub: React.FC = () => {
     [realBandes],
   );
 
+  // ── Pipeline reproduction (Sprint 6)
+  const pipelineEtapes = useMemo<TruieEtape[]>(() => {
+    const getCount = (codes: string[]) =>
+      activeTruies.filter(t => codes.includes(normaliseStatut(t.statut))).length;
+
+    return [
+      { key: 'attente',    label: 'Attente',   count: getCount(['VIDE', 'CHALEUR', 'FLUSHING']), tone: 'default' },
+      { key: 'pleine',     label: 'Pleines',   count: getCount(['PLEINE']),                      tone: 'accent' },
+      { key: 'maternite',  label: 'Maternité', count: getCount(['MATERNITE']),                 tone: 'gold' },
+      { key: 'surveiller', label: 'À surveiller', count: getCount(['SURVEILLANCE', 'REFORME']),  tone: 'amber' },
+    ];
+  }, [activeTruies]);
+
   // Compteurs affichés dans les sous-onglets (badges)
   const tabCounts: Record<SubTab, number> = {
     truies: activeTruies.length,
@@ -261,6 +275,13 @@ const TroupeauHub: React.FC = () => {
               mat={summary.mat}
               post={summary.post}
               eng={summary.eng}
+            />
+
+            {/* ── Pipeline reproduction (Sprint 6) ────────────────────── */}
+            <TruieStatutPipeline
+              basePath="/troupeau/truies"
+              etapes={pipelineEtapes}
+              total={activeTruies.length}
             />
 
             {/* ── P1 Sous-onglets ──────────────────────────────────────── */}

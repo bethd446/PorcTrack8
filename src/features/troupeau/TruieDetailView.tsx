@@ -23,6 +23,7 @@ import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { TruieIcon } from '../../components/icons';
 import { Chip, SectionDivider, BottomSheet, type ChipTone } from '../../components/agritech';
+import SaillieSuiviPanel from './SaillieSuiviPanel';
 import { useFarm } from '../../context/FarmContext';
 import QuickEditTruieForm from '../../components/forms/QuickEditTruieForm';
 import QuickHealthForm from '../../components/forms/QuickHealthForm';
@@ -90,7 +91,7 @@ type QuickSheet = null | 'edit' | 'soin' | 'pesee' | 'saillie' | 'note';
 const TruieDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { truies, getHealthForAnimal } = useFarm();
+  const { truies, saillies, getHealthForAnimal, refreshData } = useFarm();
   const [sheet, setSheet] = useState<QuickSheet>(null);
   const [toast, setToast] = useState<string>('');
   const [recentlyEdited, setRecentlyEdited] = useState<boolean>(false);
@@ -140,6 +141,15 @@ const TruieDetailView: React.FC = () => {
   const jour = jourLabel(truie, today);
   const tone = statutTone(truie.statut);
   const displayId = truie.displayId || truie.id;
+
+  /** Active saillie tracking panel logic. */
+  const activeSaillie = useMemo(
+    () => saillies.find(s =>
+      (s.truieId === truie.id || s.truieId === truie.displayId) &&
+      /active/i.test(s.statut || '')
+    ),
+    [saillies, truie.id, truie.displayId],
+  );
 
   // Gestation : jours depuis dateMBPrevue - 115
   const gestJours = (() => {
@@ -210,6 +220,15 @@ const TruieDetailView: React.FC = () => {
           />
 
           <div className="px-4 pt-4 pb-32 flex flex-col gap-5">
+            {/* ── Active Saillie Tracker (Sprint 6) ───────────────────── */}
+            {activeSaillie ? (
+              <SaillieSuiviPanel
+                truie={truie}
+                saillie={activeSaillie}
+                onSuccess={() => refreshData(true)}
+              />
+            ) : null}
+
             {/* ── Hero ───────────────────────────────────────────────── */}
             <div className="card-dense flex items-center gap-3.5 !p-4">
               <div className="w-14 h-14 rounded-2xl-v2 bg-bg-1 border border-border flex items-center justify-center shrink-0 text-gold">
