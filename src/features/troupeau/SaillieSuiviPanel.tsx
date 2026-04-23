@@ -348,7 +348,7 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
           err,
         );
         setToast(
-          '⚠ ÉCHEC CRITIQUE : Saillie annulée mais statut truie NON mis à jour. Veuillez corriger manuellement le statut Truie en "En attente saillie".',
+          '⚠ Saillie marquée Non confirmée mais statut truie non mis à jour — ressayez',
         );
         throw err;
       }
