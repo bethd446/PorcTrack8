@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
-import { ChevronRight, Coins, TrendingUp } from 'lucide-react';
+import { ChevronRight, Coins, TrendingUp, Calendar } from 'lucide-react';
 import { BalanceIcon } from '../../components/icons';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
@@ -120,6 +120,17 @@ const FinitionView: React.FC = () => {
             title="FINITION"
             subtitle="Bandes proches du poids abattage"
             backTo="/cycles"
+            action={
+              <button
+                type="button"
+                onClick={() => navigate('/cycles/sortie')}
+                aria-label="Voir le calendrier des sorties"
+                className="pressable inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-accent/40 text-accent font-mono text-[11px] uppercase tracking-wide hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-colors"
+              >
+                <Calendar size={14} aria-hidden="true" />
+                Calendrier
+              </button>
+            }
           />
 
           <div className="px-4 pt-4 pb-6 flex flex-col gap-4">

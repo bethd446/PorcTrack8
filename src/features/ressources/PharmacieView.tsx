@@ -10,6 +10,8 @@ import { SeringueIcon } from '../../components/icons';
 import { useFarm } from '../../context/FarmContext';
 import type { StockVeto, StockStatut } from '../../types/farm';
 import QuickAddVetoForm from '../../components/forms/QuickAddVetoForm';
+import QuickRefillForm from '../../components/forms/QuickRefillForm';
+import { toRefillItem, type RefillStockItem } from '../../components/forms/quickRefillLogic';
 
 /**
  * Priorité d'affichage : RUPTURE (urgent) > BAS > OK.
@@ -88,6 +90,7 @@ function formatCurrency(n: number): string {
 const PharmacieView: React.FC = () => {
   const { stockVeto } = useFarm();
   const [addOpen, setAddOpen] = useState<boolean>(false);
+  const [refillItem, setRefillItem] = useState<RefillStockItem | null>(null);
 
   const summary = useMemo(() => {
     const total = stockVeto.length;
@@ -215,6 +218,7 @@ const PharmacieView: React.FC = () => {
                               ? `${item.stockActuel}/${seuil} ${item.unite}`
                               : `${item.stockActuel} ${item.unite}`
                           }
+                          onClick={() => setRefillItem(toRefillItem(item, 'VETO'))}
                           accessory={
                             <Chip
                               tone={tone}
@@ -262,6 +266,12 @@ const PharmacieView: React.FC = () => {
       <QuickAddVetoForm
         isOpen={addOpen}
         onClose={() => setAddOpen(false)}
+      />
+
+      <QuickRefillForm
+        isOpen={!!refillItem}
+        onClose={() => setRefillItem(null)}
+        stockItem={refillItem}
       />
     </IonPage>
   );

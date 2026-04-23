@@ -48,7 +48,7 @@ export interface EditTransactionDraft {
   notes: string;
 }
 
-export interface EditTransactionInitial extends EditTransactionDraft {}
+export type EditTransactionInitial = EditTransactionDraft;
 
 export type EditTransactionPatch = Partial<{
   DATE: string;

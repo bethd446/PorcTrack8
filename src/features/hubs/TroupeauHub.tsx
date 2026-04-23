@@ -48,12 +48,12 @@ import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
 import { useFarm } from '../../context/FarmContext';
 import type { Truie } from '../../types/farm';
 import { normaliseStatut } from '../../lib/truieStatut';
-import { isArchivedTruie } from '../../lib/truieHelpers';
 import { Bandes } from '../../services/bandAnalysisEngine';
 import type { LogeOccupation, LogeOccupationAlerte } from '../../services/bandesAggregator';
 import { kvGet, kvSet } from '../../services/kvStore';
 
-import TruieStatutPipeline, { type TruieEtape } from '../../components/truie/TruieStatutPipeline';
+import { useTroupeauPipeline } from '../../hooks/useTroupeauStats';
+import TruieStatutPipeline from '../../components/truie/TruieStatutPipeline';
 import TroupeauVerratsView from '../troupeau/TroupeauVerratsView';
 import TroupeauPorceletsView from '../troupeau/TroupeauPorceletsView';
 import TroupeauLogesView from '../troupeau/TroupeauLogesView';
@@ -161,8 +161,9 @@ function truieMeta(t: Truie, today: Date): string {
 // ─── Composant ──────────────────────────────────────────────────────────────
 
 const TroupeauHub: React.FC = () => {
-  const { truies, verrats, bandes } = useFarm();
+  const { verrats, bandes } = useFarm();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { activeTruies, pipelineEtapes, total: totalTruies } = useTroupeauPipeline();
 
   // ── Sous-onglet (persisté en query ?view=…)
   const viewParam = searchParams.get('view');
@@ -194,18 +195,6 @@ const TroupeauHub: React.FC = () => {
 
   const today = useMemo(() => new Date(), []);
 
-  /**
-   * Liste des truies ACTIVES uniquement.
-   *
-   * Les IDs réformés (T08, T17 — cf. `ARCHIVED_TRUIE_IDS` dans
-   * `src/lib/truieHelpers.ts`) ne sont plus sur le site mais restent
-   * référencés dans l'historique repro. On filtre en amont.
-   */
-  const activeTruies = useMemo(
-    () => truies.filter((t) => !isArchivedTruie(t.id)),
-    [truies],
-  );
-
   // ── Summary strip (P6) — loges occupation
   const realBandes = useMemo(() => Bandes.filterReal(bandes), [bandes]);
 
@@ -234,19 +223,6 @@ const TroupeauHub: React.FC = () => {
       }, 0),
     [realBandes],
   );
-
-  // ── Pipeline reproduction (Sprint 6)
-  const pipelineEtapes = useMemo<TruieEtape[]>(() => {
-    const getCount = (codes: string[]) =>
-      activeTruies.filter(t => codes.includes(normaliseStatut(t.statut))).length;
-
-    return [
-      { key: 'attente',    label: 'Attente',   count: getCount(['VIDE', 'CHALEUR', 'FLUSHING']), tone: 'default' },
-      { key: 'pleine',     label: 'Pleines',   count: getCount(['PLEINE']),                      tone: 'accent' },
-      { key: 'maternite',  label: 'Maternité', count: getCount(['MATERNITE']),                 tone: 'gold' },
-      { key: 'surveiller', label: 'À surveiller', count: getCount(['SURVEILLANCE', 'REFORME']),  tone: 'amber' },
-    ];
-  }, [activeTruies]);
 
   // Compteurs affichés dans les sous-onglets (badges)
   const tabCounts: Record<SubTab, number> = {
@@ -281,7 +257,7 @@ const TroupeauHub: React.FC = () => {
             <TruieStatutPipeline
               basePath="/troupeau/truies"
               etapes={pipelineEtapes}
-              total={activeTruies.length}
+              total={totalTruies}
             />
 
             {/* ── P1 Sous-onglets ──────────────────────────────────────── */}

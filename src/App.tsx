@@ -66,6 +66,7 @@ const MaterniteView = React.lazy(() => import(/* webpackChunkName: "cycle-matern
 const PostSevrageView = React.lazy(() => import(/* webpackChunkName: "cycle-postsevrage" */ './features/cycles/PostSevrageView'));
 const EngraissementView = React.lazy(() => import(/* webpackChunkName: "cycle-engraissement" */ './features/cycles/EngraissementView'));
 const FinitionView = React.lazy(() => import(/* webpackChunkName: "cycle-finition" */ './features/cycles/FinitionView'));
+const SortieCalendarView = React.lazy(() => import(/* webpackChunkName: "cycle-sortie" */ './features/cycles/SortieCalendarView'));
 
 // Aide / Support (non lazy : petit, consulté fréquemment par porcher).
 const AideView = React.lazy(() => import(/* webpackChunkName: "aide" */ './features/help/AideView'));
@@ -149,6 +150,7 @@ const AppContent = () => {
           <Route path="/cycles/post-sevrage" element={<PostSevrageView />} />
           <Route path="/cycles/engraissement" element={<EngraissementView />} />
           <Route path="/cycles/finition" element={<FinitionView />} />
+          <Route path="/cycles/sortie" element={<SortieCalendarView />} />
 
           {/* ── Pilotage sub-routes (redirects onto legacy + ComingSoon) ── */}
           <Route path="/pilotage/alertes" element={<Navigate to="/alerts" replace />} />

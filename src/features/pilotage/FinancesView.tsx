@@ -565,27 +565,31 @@ const DonutVentilation: React.FC<DonutVentilationProps> = ({ rows, total, curren
   const size = 96, stroke = 14;
   const r = (size - stroke) / 2;
   const C = 2 * Math.PI * r;
-  let offset = 0;
-  const arcs = rows.map((row) => {
-    const len = (row.montant / total) * C;
-    const arc = (
-      <circle
-        key={row.cat}
-        cx={size / 2}
-        cy={size / 2}
-        r={r}
-        fill="none"
-        stroke={toneVarFor(row.cat)}
-        strokeWidth={stroke}
-        strokeDasharray={`${len} ${C - len}`}
-        strokeDashoffset={-offset}
-        transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        strokeLinecap="butt"
-      />
-    );
-    offset += len;
-    return arc;
-  });
+  const { arcs } = rows.reduce(
+    (acc, row) => {
+      const len = (row.montant / total) * C;
+      const arc = (
+        <circle
+          key={row.cat}
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={toneVarFor(row.cat)}
+          strokeWidth={stroke}
+          strokeDasharray={`${len} ${C - len}`}
+          strokeDashoffset={-acc.offset}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          strokeLinecap="butt"
+        />
+      );
+      return {
+        offset: acc.offset + len,
+        arcs: [...acc.arcs, arc],
+      };
+    },
+    { offset: 0, arcs: [] as React.ReactNode[] },
+  );
 
   return (
     <div className="card-dense mt-3">
