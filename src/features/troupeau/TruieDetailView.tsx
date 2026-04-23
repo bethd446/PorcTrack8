@@ -116,6 +116,15 @@ const TruieDetailView: React.FC = () => {
     [truie, getHealthForAnimal],
   );
 
+  /** Active saillie tracking panel logic. */
+  const activeSaillie = useMemo(
+    () => truie ? saillies.find(s =>
+      (s.truieId === truie.id || s.truieId === truie.displayId) &&
+      /active/i.test(s.statut || '')
+    ) : undefined,
+    [saillies, truie],
+  );
+
   if (!truie) {
     return (
       <IonPage>
@@ -141,15 +150,6 @@ const TruieDetailView: React.FC = () => {
   const jour = jourLabel(truie, today);
   const tone = statutTone(truie.statut);
   const displayId = truie.displayId || truie.id;
-
-  /** Active saillie tracking panel logic. */
-  const activeSaillie = useMemo(
-    () => saillies.find(s =>
-      (s.truieId === truie.id || s.truieId === truie.displayId) &&
-      /active/i.test(s.statut || '')
-    ),
-    [saillies, truie.id, truie.displayId],
-  );
 
   // Gestation : jours depuis dateMBPrevue - 115
   const gestJours = (() => {

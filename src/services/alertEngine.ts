@@ -19,7 +19,7 @@ import React from 'react';
 import { Heart, Stethoscope, Layers, Box, Calendar } from 'lucide-react';
 import { differenceInCalendarDays, startOfDay } from 'date-fns';
 import { fromZonedTime, toZonedTime } from 'date-fns-tz';
-import type { Truie, BandePorcelets, TraitementSante, StockAliment } from '../types/farm';
+import type { Truie, BandePorcelets, TraitementSante, StockAliment, Saillie } from '../types/farm';
 import { normaliseStatut } from '../lib/truieStatut';
 
 /** Fuseau horaire de référence pour toute la logique métier GTTT.
@@ -90,6 +90,8 @@ const BIO = {
   RE_SAILLIE_MOYENNE_JOURS: 2,
   RE_SAILLIE_URGENTE_JOURS: 10,
   RE_SAILLIE_LIMITE_JOURS: 20,
+  ECHO_DEBUT_JOURS: 25,
+  ECHO_FIN_JOURS: 35,
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -488,6 +490,42 @@ function checkRegroupementBandes(bandes: BandePorcelets[], today: Date): FarmAle
 }
 
 /**
+ * R7 — Fenêtre Échographie (INFO)
+ * Déclenché entre J+25 et J+35 de la saillie pour les truies en gestation.
+ */
+function checkFenetreEcho(truie: Truie, saillies: Saillie[], today: Date): FarmAlert | null {
+  if (normaliseStatut(truie.statut) !== 'PLEINE') return null;
+
+  // Trouve la saillie active pour cette truie
+  const saillie = saillies.find(s =>
+    (s.truieId === truie.id || s.truieId === truie.displayId) &&
+    /active/i.test(s.statut || '')
+  );
+  if (!saillie) return null;
+
+  const dateSaillie = parseFrDate(saillie.dateSaillie);
+  if (!dateSaillie) return null;
+
+  const ageJours = daysDiff(dateSaillie, today);
+
+  if (ageJours < BIO.ECHO_DEBUT_JOURS || ageJours > BIO.ECHO_FIN_JOURS) return null;
+
+  return {
+    id: alertId('ECH', truie.id, String(dateSaillie.getTime())),
+    priority: 'INFO',
+    category: 'REPRO',
+    subjectId: truie.id,
+    subjectLabel: truie.displayId,
+    title: `Fenêtre Écho — ${truie.displayId}`,
+    message: `${truie.displayId} est à J+${ageJours} de saillie. Fenêtre d'échographie ouverte (J+25 à J+35) pour confirmer la gestation.`,
+    requiresAction: false,
+    daysOffset: ageJours,
+    actions: [{ type: 'DISMISS', label: 'Compris', variant: 'secondary' }],
+    createdAt: new Date(),
+  };
+}
+
+/**
  * R8 — Re-Saillie Proactive (après retour chaleur signalé)
  * Déclenché si la truie est VIDE et porte un tag "Retour chaleur dd/MM/yyyy".
  */
@@ -544,6 +582,7 @@ export interface AlertEngineInput {
   bandes: BandePorcelets[];
   sante: TraitementSante[];
   stockAliments: StockAliment[];
+  saillies: Saillie[];
 }
 
 export function runAlertEngine(input: AlertEngineInput): FarmAlert[] {
@@ -583,6 +622,12 @@ export function runAlertEngine(input: AlertEngineInput): FarmAlert[] {
   // R6 — Regroupement
   const regroupementAlerts = checkRegroupementBandes(input.bandes, today);
   for (const a of regroupementAlerts) {
+    if (a && a.title && a.message) alerts.push(a);
+  }
+
+  // R7 — Fenêtre Écho
+  for (const truie of input.truies) {
+    const a = checkFenetreEcho(truie, input.saillies, today);
     if (a && a.title && a.message) alerts.push(a);
   }
 

@@ -11,7 +11,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runAlertEngine, type AlertEngineInput } from './alertEngine';
-import type { BandePorcelets, StockAliment, Truie } from '../types/farm';
+import type { BandePorcelets, StockAliment, Truie, Saillie } from '../types/farm';
 
 // ─── Utilitaires de fixture ──────────────────────────────────────────────────
 
@@ -70,12 +70,23 @@ function makeStock(overrides: Partial<StockAliment> = {}): StockAliment {
   };
 }
 
+function makeSaillie(overrides: Partial<Saillie> = {}): Saillie {
+  return {
+    truieId: 'T001',
+    dateSaillie: '01/01/2026',
+    verratId: 'V001',
+    statut: 'Active',
+    ...overrides,
+  };
+}
+
 function emptyInput(overrides: Partial<AlertEngineInput> = {}): AlertEngineInput {
   return {
     truies: [],
     bandes: [],
     sante: [],
     stockAliments: [],
+    saillies: [],
     ...overrides,
   };
 }
@@ -434,6 +445,58 @@ describe('R6 — Regroupement Bandes', () => {
     });
     const alerts = runAlertEngine(emptyInput({ bandes: [b1, b2] }));
     expect(alerts.find(a => a.id.startsWith('REG-'))).toBeUndefined();
+  });
+});
+
+// ─── R7 — Fenêtre Échographie ────────────────────────────────────────────────
+
+describe('R7 — Fenêtre Échographie', () => {
+  it('déclenche INFO à J+25 post saillie (début fenêtre)', () => {
+    const truie = makeTruie({ id: 'T1', statut: 'Pleine' });
+    const saillie = makeSaillie({ truieId: 'T1', dateSaillie: toFrDate(dayOffset(NOW, -25)) });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie], saillies: [saillie] }));
+    const ech = alerts.find(a => a.id.startsWith('ECH-'));
+    expect(ech).toBeDefined();
+    expect(ech?.priority).toBe('INFO');
+    expect(ech?.daysOffset).toBe(25);
+  });
+
+  it('déclenche INFO à J+35 post saillie (fin fenêtre)', () => {
+    const truie = makeTruie({ id: 'T1', statut: 'Pleine' });
+    const saillie = makeSaillie({ truieId: 'T1', dateSaillie: toFrDate(dayOffset(NOW, -35)) });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie], saillies: [saillie] }));
+    const ech = alerts.find(a => a.id.startsWith('ECH-'));
+    expect(ech).toBeDefined();
+    expect(ech?.priority).toBe('INFO');
+    expect(ech?.daysOffset).toBe(35);
+  });
+
+  it('ne déclenche pas à J+24 (veille)', () => {
+    const truie = makeTruie({ id: 'T1', statut: 'Pleine' });
+    const saillie = makeSaillie({ truieId: 'T1', dateSaillie: toFrDate(dayOffset(NOW, -24)) });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie], saillies: [saillie] }));
+    expect(alerts.find(a => a.id.startsWith('ECH-'))).toBeUndefined();
+  });
+
+  it('ne déclenche pas à J+36 (lendemain)', () => {
+    const truie = makeTruie({ id: 'T1', statut: 'Pleine' });
+    const saillie = makeSaillie({ truieId: 'T1', dateSaillie: toFrDate(dayOffset(NOW, -36)) });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie], saillies: [saillie] }));
+    expect(alerts.find(a => a.id.startsWith('ECH-'))).toBeUndefined();
+  });
+
+  it('ne déclenche pas si la truie n\'est pas PLEINE', () => {
+    const truie = makeTruie({ id: 'T1', statut: 'En maternité' });
+    const saillie = makeSaillie({ truieId: 'T1', dateSaillie: toFrDate(dayOffset(NOW, -30)) });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie], saillies: [saillie] }));
+    expect(alerts.find(a => a.id.startsWith('ECH-'))).toBeUndefined();
+  });
+
+  it('ne déclenche pas si aucune saillie active n\'est trouvée', () => {
+    const truie = makeTruie({ id: 'T1', statut: 'Pleine' });
+    const saillie = makeSaillie({ truieId: 'T1', dateSaillie: toFrDate(dayOffset(NOW, -30)), statut: 'Echec' });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie], saillies: [saillie] }));
+    expect(alerts.find(a => a.id.startsWith('ECH-'))).toBeUndefined();
   });
 });
 

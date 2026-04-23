@@ -267,6 +267,7 @@ export async function refreshAll(): Promise<void> {
       bandes: bandeRes.data,
       sante: santeRes.data,
       stockAliments: stockARes.data,
+      saillies: sailliesFinal,
     });
 
     patch('pilotage', {
