@@ -87,6 +87,9 @@ const BIO = {
   ALERTE_MB_AVANCE_JOURS: 3,  // alerter J-3 avant la MB prévue
   ALERTE_MB_RETARD_JOURS: 2,  // alerter J+2 si pas encore de MB
   REGROUPEMENT_BANDE_FENETRE: 3, // porcelets sevrés à ±3 jours → même bande possible
+  RE_SAILLIE_MOYENNE_JOURS: 2,
+  RE_SAILLIE_URGENTE_JOURS: 10,
+  RE_SAILLIE_LIMITE_JOURS: 20,
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -484,6 +487,54 @@ function checkRegroupementBandes(bandes: BandePorcelets[], today: Date): FarmAle
   }];
 }
 
+/**
+ * R8 — Re-Saillie Proactive (après retour chaleur signalé)
+ * Déclenché si la truie est VIDE et porte un tag "Retour chaleur dd/MM/yyyy".
+ */
+function checkReSaillieProactive(truie: Truie, today: Date): FarmAlert | null {
+  if (normaliseStatut(truie.statut) !== 'VIDE') return null;
+
+  // Extraction du DERNIER tag de date (priorité au plus récent)
+  const matches = Array.from((truie.notes || '').matchAll(/Retour chaleur (\d{2}\/\d{2}\/\d{4})/g));
+  if (matches.length === 0) return null;
+
+  const lastMatch = matches[matches.length - 1];
+  const dateStr = lastMatch[1];
+  const dateRetour = parseFrDate(dateStr);
+  if (!dateRetour) return null;
+
+  const joursDepuisRetour = daysDiff(dateRetour, today);
+
+  // Ladder : J0-J2 NORMALE · J3-J10 HAUTE · J11-J20 CRITIQUE · >J20 null
+  if (joursDepuisRetour < 0 || joursDepuisRetour > BIO.RE_SAILLIE_LIMITE_JOURS) return null;
+
+  let priority: AlertPriority = 'NORMALE';
+  if (joursDepuisRetour > BIO.RE_SAILLIE_URGENTE_JOURS) priority = 'CRITIQUE';
+  else if (joursDepuisRetour > BIO.RE_SAILLIE_MOYENNE_JOURS) priority = 'HAUTE';
+
+  return {
+    id: alertId('RSA', truie.id, dateStr.replace(/\//g, '')),
+    priority,
+    category: 'REPRO',
+    subjectId: truie.id,
+    subjectLabel: truie.displayId,
+    title: `Re-Saillie Attendue — ${truie.displayId}`,
+    message: `${truie.displayId} est en retour chaleur depuis ${joursDepuisRetour} jour(s). Une nouvelle saillie est requise pour relancer le cycle.`,
+    requiresAction: true,
+    daysOffset: joursDepuisRetour,
+    actions: [
+      {
+        type: 'CONFIRM_SAILLIE',
+        label: 'Re-Saillir',
+        variant: 'primary',
+        payload: { truieId: truie.id },
+      },
+      { type: 'DISMISS', label: 'Plus tard', variant: 'secondary' },
+    ],
+    createdAt: new Date(),
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // MOTEUR PRINCIPAL
 // ─────────────────────────────────────────────────────────────────────────────
@@ -532,6 +583,12 @@ export function runAlertEngine(input: AlertEngineInput): FarmAlert[] {
   // R6 — Regroupement
   const regroupementAlerts = checkRegroupementBandes(input.bandes, today);
   for (const a of regroupementAlerts) {
+    if (a && a.title && a.message) alerts.push(a);
+  }
+
+  // R8 — Re-Saillie Proactive
+  for (const truie of input.truies) {
+    const a = checkReSaillieProactive(truie, today);
     if (a && a.title && a.message) alerts.push(a);
   }
 

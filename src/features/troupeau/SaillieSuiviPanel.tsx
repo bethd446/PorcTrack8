@@ -27,7 +27,7 @@
  * chargera de produire l'alerte lors du prochain passage.
  */
 
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { IonToast } from '@ionic/react';
 import {
   CheckCircle2,
@@ -168,8 +168,23 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
   // enqueueUpdateRow dupliqués.
   const savingRef = useRef<boolean>(false);
 
-  // ── Calculs temporels ──────────────────────────────────────────────────
-  const today = useMemo(() => new Date(), []);
+  // ── Horloge système (Sprint 6 fix minuit) ───────────────────────────────
+  // today passe de useMemo à useState pour forcer le recalcul des fenêtres
+  // J18-J24 / J25-J35 quand la date change (veille ou minuit passé).
+  const [today, setToday] = useState(() => new Date());
+
+  useEffect(() => {
+    const update = () => setToday(new Date());
+    // Resync à chaque retour au premier plan (mobile)
+    document.addEventListener('visibilitychange', update);
+    // Garde-fou horaire pour sessions prolongées
+    const interval = setInterval(update, 3600_000);
+
+    return () => {
+      document.removeEventListener('visibilitychange', update);
+      clearInterval(interval);
+    };
+  }, []);
 
   const dateSaillie = useMemo(() => parseFrDate(saillie.dateSaillie), [saillie.dateSaillie]);
   const dateMBPrevue = useMemo(

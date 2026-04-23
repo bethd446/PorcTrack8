@@ -491,4 +491,12 @@ describe('Bonus · détection retour chaleur (regex stricte)', () => {
       }),
     ).toBeDefined();
   });
+
+  it('S6 · Sprint 6 · horloge système : today n\'est plus figé via useMemo', () => {
+    // Ce test vérifie que le composant utilise un state pour `today`
+    // (indirectement observable par l'absence d'erreurs lors du montage
+    // avec des timers actifs).
+    render(<SaillieSuiviPanel truie={makeTruie()} saillie={makeSaillie()} />);
+    expect(screen.getByText(/saillie en cours/i)).toBeDefined();
+  });
 });

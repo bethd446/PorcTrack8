@@ -437,6 +437,97 @@ describe('R6 — Regroupement Bandes', () => {
   });
 });
 
+// ─── R8 — Re-Saillie Proactive ───────────────────────────────────────────────
+
+describe('R8 — Re-Saillie Proactive', () => {
+  it('déclenche NORMALE à J+0 post retour chaleur', () => {
+    const truie = makeTruie({
+      statut: 'En attente saillie',
+      notes: 'Retour chaleur 15/06/2026',
+    });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie] }));
+    const rsa = alerts.find(a => a.id.startsWith('RSA-'));
+    expect(rsa).toBeDefined();
+    expect(rsa?.priority).toBe('NORMALE');
+    expect(rsa?.daysOffset).toBe(0);
+  });
+
+  it('déclenche HAUTE à J+3 post retour chaleur', () => {
+    const truie = makeTruie({
+      statut: 'En attente saillie',
+      notes: 'Observation · Retour chaleur 12/06/2026',
+    });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie] }));
+    const rsa = alerts.find(a => a.id.startsWith('RSA-'));
+    expect(rsa?.priority).toBe('HAUTE');
+    expect(rsa?.daysOffset).toBe(3);
+  });
+
+  it('déclenche CRITIQUE à J+11 post retour chaleur', () => {
+    const truie = makeTruie({
+      statut: 'Vide',
+      notes: 'Retour chaleur 04/06/2026',
+    });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie] }));
+    const rsa = alerts.find(a => a.id.startsWith('RSA-'));
+    expect(rsa?.priority).toBe('CRITIQUE');
+    expect(rsa?.daysOffset).toBe(11);
+  });
+
+  it('ne déclenche pas au-delà de J+20 (cycle suivant)', () => {
+    const truie = makeTruie({
+      statut: 'En attente saillie',
+      notes: 'Retour chaleur 20/05/2026',
+    });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie] }));
+    expect(alerts.find(a => a.id.startsWith('RSA-'))).toBeUndefined();
+  });
+
+  it('ne déclenche pas si le statut n\'est pas VIDE (ex: Pleine)', () => {
+    const truie = makeTruie({
+      statut: 'Pleine',
+      notes: 'Retour chaleur 15/06/2026',
+    });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie] }));
+    expect(alerts.find(a => a.id.startsWith('RSA-'))).toBeUndefined();
+  });
+
+  it('ne déclenche pas si le tag de date est mal formé', () => {
+    const truie = makeTruie({
+      statut: 'Vide',
+      notes: 'Retour chaleur juin 2026',
+    });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie] }));
+    expect(alerts.find(a => a.id.startsWith('RSA-'))).toBeUndefined();
+  });
+
+  it('propose l\'action "Re-Saillir" avec le bon payload', () => {
+    const truie = makeTruie({
+      id: 'T07',
+      statut: 'En attente saillie',
+      notes: 'Retour chaleur 15/06/2026',
+    });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie] }));
+    const rsa = alerts.find(a => a.id.startsWith('RSA-'));
+    const action = rsa?.actions.find(a => a.type === 'CONFIRM_SAILLIE');
+    expect(action).toBeDefined();
+    expect(action?.label).toBe('Re-Saillir');
+    expect(action?.payload).toEqual({ truieId: 'T07' });
+  });
+
+  it('priorise le tag le plus récent si plusieurs tags sont présents', () => {
+    // Cas où le porcher a noté deux retours chaleur successifs (échec saillie intermédiaire)
+    const truie = makeTruie({
+      statut: 'En attente saillie',
+      notes: 'Retour chaleur 20/05/2026 · Retour chaleur 15/06/2026',
+    });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie] }));
+    const rsa = alerts.find(a => a.id.startsWith('RSA-'));
+    expect(rsa).toBeDefined();
+    expect(rsa?.daysOffset).toBe(0); // Basé sur le tag du 15/06 (today)
+  });
+});
+
 // ─── Robustesse temporelle (DST, minuit, fuseaux) ────────────────────────────
 
 describe('Robustesse calcul de dates (DST / fuseaux)', () => {

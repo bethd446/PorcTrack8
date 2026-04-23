@@ -79,30 +79,30 @@ import {
  * POST_SEVRAGE / ENGRAISSEMENT), comptage par phase, occupation des
  * 3 types de loges physiques (maternité, post-sevrage, engraissement).
  */
-export namespace Bandes {
+export const Bandes = {
   /** Exclut les lignes `RECAP` pour ne garder que les portées biologiques. */
-  export const filterReal: typeof filterRealPortees = filterRealPortees;
+  filterReal: filterRealPortees,
   /** Dérive la phase d'élevage d'une bande (SOUS_MERE / POST_SEVRAGE / ENGRAISSEMENT / INCONNU). */
-  export const computePhase: typeof computeBandePhase = computeBandePhase;
+  computePhase: computeBandePhase,
   /** Compte les bandes ventilées par phase (hors INCONNU). */
-  export const countByPhase: typeof countBandesByPhase = countBandesByPhase;
+  countByPhase: countBandesByPhase,
   /** Occupation des loges de maternité (1 truie = 1 loge, capacité 9). */
-  export const logesMaternite: typeof logesMaterniteOccupation = logesMaterniteOccupation;
+  logesMaternite: logesMaterniteOccupation,
   /** Occupation des loges post-sevrage (capacité 4). */
-  export const logesPostSevrage: typeof logesPostSevrageOccupation = logesPostSevrageOccupation;
+  logesPostSevrage: logesPostSevrageOccupation,
   /** Occupation des loges croissance-finition (1 mâles, 1 femelles — capacité 2). */
-  export const logesEngraissement: typeof logesEngraissementOccupation = logesEngraissementOccupation;
+  logesEngraissement: logesEngraissementOccupation,
   /** Nombre de portées sous mère + somme des porcelets vivants associés. */
-  export const countSm: typeof countSousMere = countSousMere;
+  countSm: countSousMere,
   /** Nombre de portées sevrées (post-sevrage + engraissement) + porcelets. */
-  export const countSv: typeof countSevres = countSevres;
+  countSv: countSevres,
   /** Nombre de truies actuellement en maternité (match statut "maternité"). */
-  export const countTruiesMat: typeof countTruiesEnMaternite = countTruiesEnMaternite;
+  countTruiesMat: countTruiesEnMaternite,
   /** Ventilation engraissement par sexe (mâles / femelles / non-séparés). */
-  export const countEngBySex: typeof countEngraissementBySex = countEngraissementBySex;
+  countEngBySex: countEngraissementBySex,
   /** Bandes engraissement éligibles à la saisie d'une séparation par sexe. */
-  export const eligibleSeparation: typeof bandesAEligibleSeparation = bandesAEligibleSeparation;
-}
+  eligibleSeparation: bandesAEligibleSeparation,
+} as const;
 
 // ─── Growth — suivi croissance (pesées + GMQ) ───────────────────────────────
 
@@ -113,20 +113,20 @@ export namespace Bandes {
  * synthèse complète d'une bande (pesées + alerte SOUS_CIBLE + projection
  * poids finition pour les bandes en ENGRAISSEMENT).
  */
-export namespace Growth {
+export const Growth = {
   /** Calcule les GMQ (g/j) entre chaque paire de pesées consécutives. */
-  export const gmq: typeof computeGMQ = computeGMQ;
+  gmq: computeGMQ,
   /** Synthèse complète d'une bande : pesées + GMQ moyen + alerte + projection. */
-  export const growthStats: typeof computeBandeGrowthStats = computeBandeGrowthStats;
+  growthStats: computeBandeGrowthStats,
   /** Projette le poids finition en kg (bandes en ENGRAISSEMENT). */
-  export const projectFinition: typeof projectPoidsFinition = projectPoidsFinition;
+  projectFinition: projectPoidsFinition,
   /** Parse une note terrain en `PeseeRecord` (retourne null si pas une pesée). */
-  export const parsePesee: typeof parsePeseeFromNote = parsePeseeFromNote;
+  parsePesee: parsePeseeFromNote,
   /** Extrait toutes les pesées d'une bande (triées ASC par date). */
-  export const peseesForBande: typeof extractPeseesForBande = extractPeseesForBande;
+  peseesForBande: extractPeseesForBande,
   /** Retourne la fourchette cible (min/max g/j) pour une phase. */
-  export const cibleForPhase: typeof gmqCibleForPhase = gmqCibleForPhase;
-}
+  cibleForPhase: gmqCibleForPhase,
+} as const;
 
 // ─── Forecast — prévisions 14 jours ─────────────────────────────────────────
 
@@ -137,12 +137,12 @@ export namespace Growth {
  * chaleur / finitions / saturations) + pression maternité par semaine ISO
  * sur 4 semaines.
  */
-export namespace Forecast {
+export const Forecast = {
   /** Construit le rapport de prévisions (défaut : horizon 14 jours). */
-  export const build: typeof buildForecast = buildForecast;
+  build: buildForecast,
   /** Retourne le code ISO 8601 "YYYY-Www" pour une date donnée. */
-  export const week: typeof isoWeek = isoWeek;
-}
+  week: isoWeek,
+} as const;
 
 // ─── Perf — KPI performance troupeau (GTTT) ─────────────────────────────────
 
@@ -154,29 +154,29 @@ export namespace Forecast {
  * à la réforme, et sparklines Pilotage (sevrés/portée, mortalité, IC,
  * cycles réussis) sur 4 périodes (7J / 30J / 90J / 1A).
  */
-export namespace Perf {
+export const Perf = {
   /** Sparkline "sevrés par portée" sur une période donnée. */
-  export const sevresParPortee: typeof computeSevresParPortee = computeSevresParPortee;
+  sevresParPortee: computeSevresParPortee,
   /** Sparkline "mortalité porcelets %" sur une période donnée. */
-  export const mortalite: typeof computeMortalitePorcelets = computeMortalitePorcelets;
+  mortalite: computeMortalitePorcelets,
   /** Sparkline "indice de consommation" sur une période donnée. */
-  export const indiceConso: typeof computeIndiceConso = computeIndiceConso;
+  indiceConso: computeIndiceConso,
   /** Sparkline "% cycles réussis" sur une période donnée. */
-  export const cyclesReussis: typeof computeCyclesReussis = computeCyclesReussis;
+  cyclesReussis: computeCyclesReussis,
   /** Agrégat des KPI globaux du troupeau (sevrés/truie/an, ISSE, IEM, taux MB…). */
-  export const globalKpis: typeof computeGlobalKpis = computeGlobalKpis;
+  globalKpis: computeGlobalKpis,
   /** Top 3 / flop 3 des truies par score composite. */
-  export const ranking: typeof rankTruiesByPerformance = rankTruiesByPerformance;
+  ranking: rankTruiesByPerformance,
   /** Détection des truies candidates à la réforme (perf / inactivité / ISSE). */
-  export const aReformer: typeof detectTruiesAReformer = detectTruiesAReformer;
+  aReformer: detectTruiesAReformer,
   /** ISSE moyen troupeau (Intervalle Sevrage-Saillie, j). */
-  export const isseMoyen: typeof computeISSEMoyen = computeISSEMoyen;
+  isseMoyen: computeISSEMoyen,
   /** IEM moyen troupeau (Intervalle Entre Mise-Bas, j). */
-  export const iemMoyen: typeof computeIEMMoyen = computeIEMMoyen;
+  iemMoyen: computeIEMMoyen,
   /** Taux MB (%) : MB effectives / saillies sur 12 mois. */
-  export const tauxMB: typeof computeTauxMB = computeTauxMB;
+  tauxMB: computeTauxMB,
   /** Taux de renouvellement (%) : 1res portées < 12 mois / total truies. */
-  export const tauxRenouvellement: typeof computeTauxRenouvellement = computeTauxRenouvellement;
+  tauxRenouvellement: computeTauxRenouvellement,
   /** Nombre de jours couvert par une clé de période ('7J' → 7, etc.). */
-  export const periodeDays: typeof getPeriodeDays = getPeriodeDays;
-}
+  periodeDays: getPeriodeDays,
+} as const;
