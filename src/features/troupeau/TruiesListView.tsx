@@ -216,15 +216,18 @@ const TruiesListView: React.FC = () => {
   }, [location.search]);
 
   const [filter, setFilter]       = useState<FilterKey>(initialFilter);
+  const [lastInitialFilter, setLastInitialFilter] = useState<FilterKey>(initialFilter);
   const [searchText, setSearchText] = useState('');
   const [menuFor, setMenuFor]     = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   // Keep local filter in sync if the URL changes (e.g. second tap on pipeline)
-  useEffect(() => {
+  // Render-time sync — avoids cascading renders from setState-in-effect.
+  if (lastInitialFilter !== initialFilter) {
+    setLastInitialFilter(initialFilter);
     setFilter(initialFilter);
-  }, [initialFilter]);
+  }
 
   // Reflect current filter in URL without navigation history spam
   useEffect(() => {

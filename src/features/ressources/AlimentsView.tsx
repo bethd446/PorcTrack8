@@ -55,7 +55,7 @@ type AlimentCategorie = 'MATIERE_PREMIERE' | 'CONCENTRE' | 'AUTRE';
  * Autres           : aliments composés déjà formulés (TRUIE-GEST, PORCELET…)
  *                    et tout ce qui ne matche pas.
  */
-export function categoriserAliment(libelle: string, id?: string): AlimentCategorie {
+function categoriserAliment(libelle: string, id?: string): AlimentCategorie {
   const s = `${libelle} ${id ?? ''}`.toLowerCase();
   if (
     /ma[iï]s|tourteau.*soja|soja.*tourteau|son.*bl[eé]|son.*riz|orge|\bbl[eé]\b/i.test(

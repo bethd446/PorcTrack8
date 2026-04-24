@@ -14,7 +14,7 @@
  * Données : FarmContext.finances (FinanceEntry[]) + financesAnalyzer.
  */
 
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   IonContent, IonPage, IonRefresher, IonRefresherContent,
@@ -691,10 +691,10 @@ const TransactionRow: React.FC<TransactionRowProps> = ({ entry, currency, onEdit
     };
   }, [menuOpen]);
 
-  const handleEdit = useCallback(() => {
+  const handleEdit = (): void => {
     setMenuOpen(false);
     onEdit?.();
-  }, [onEdit]);
+  };
 
   return (
     <li className="flex items-center gap-3 px-3 py-3 border-b border-border last:border-b-0">
