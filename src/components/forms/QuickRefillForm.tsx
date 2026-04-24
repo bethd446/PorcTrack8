@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { IonToast } from '@ionic/react';
 import { Package, Send, CheckCircle2 } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
@@ -14,22 +14,8 @@ import {
   labelFor,
   recomputeStatut,
   toIsoDateInput,
-  toFrDate,
-  toRefillItem,
   type RefillStockItem,
-  type RefillPayloads,
 } from './quickRefillLogic';
-
-// Ré-exports pour les imports existants (RessourcesHub, tests, etc.)
-export {
-  buildRefillPayloads,
-  labelFor,
-  recomputeStatut,
-  toIsoDateInput,
-  toFrDate,
-  toRefillItem,
-};
-export type { RefillStockItem, RefillPayloads };
 
 /* ═════════════════════════════════════════════════════════════════════════
    QuickRefillForm · Réapprovisionnement rapide d'un aliment ou véto
@@ -48,7 +34,7 @@ export type { RefillStockItem, RefillPayloads };
 
 // ─── Composant ──────────────────────────────────────────────────────────────
 
-export interface QuickRefillFormProps {
+interface QuickRefillFormProps {
   isOpen: boolean;
   onClose: () => void;
   stockItem: RefillStockItem | null;
@@ -75,8 +61,14 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
     message: '',
   });
 
-  // Reset quand la sheet s'ouvre / l'item change
-  useEffect(() => {
+  // Reset quand la sheet s'ouvre / l'item change — render-time sync
+  const currentItemId = stockItem?.id ?? '';
+  const [lastKey, setLastKey] = useState<{ isOpen: boolean; itemId: string }>({
+    isOpen,
+    itemId: currentItemId,
+  });
+  if (lastKey.isOpen !== isOpen || lastKey.itemId !== currentItemId) {
+    setLastKey({ isOpen, itemId: currentItemId });
     if (isOpen) {
       setQuantite('');
       setFournisseur('');
@@ -86,7 +78,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
       setSaving(false);
       setSuccess(false);
     }
-  }, [isOpen, stockItem?.id]);
+  }
 
   const resetAndClose = useCallback((): void => {
     setQuantite('');

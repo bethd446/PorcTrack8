@@ -20,13 +20,13 @@ import {
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { HubTile, SectionDivider } from '../../components/agritech';
-import QuickRefillForm, {
+import QuickRefillForm from '../../components/forms/QuickRefillForm';
+import {
   toRefillItem,
   type RefillStockItem,
-} from '../../components/forms/QuickRefillForm';
-import QuickEditStockForm, {
-  type StockKind,
-} from '../../components/forms/QuickEditStockForm';
+} from '../../components/forms/quickRefillLogic';
+import QuickEditStockForm from '../../components/forms/QuickEditStockForm';
+import type { StockKind } from '../../components/forms/quickEditStockLogic';
 import { useFarm } from '../../context/FarmContext';
 import type { StockAliment, StockVeto } from '../../types/farm';
 

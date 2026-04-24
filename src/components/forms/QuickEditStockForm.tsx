@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
 import { Edit3, Save, RefreshCw } from 'lucide-react';
 
@@ -31,24 +31,9 @@ import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
      • Notes            : textarea max 200 chars
    ═════════════════════════════════════════════════════════════════════════ */
 
-// Ré-exports pour tests & intégration
-export {
-  recomputeStatut,
-  stockLabelFor,
-  toStockEditInput,
-  validateStockEdit,
-} from './quickEditStockLogic';
-export type {
-  EditableStatut,
-  StockEditErrors,
-  StockEditInput,
-  StockEditValidation,
-  StockKind,
-} from './quickEditStockLogic';
-
 const UNITE_SUGGESTIONS = ['kg', 'mL', 'doses', 'sacs', 'unités'];
 
-export interface QuickEditStockFormProps {
+interface QuickEditStockFormProps {
   isOpen: boolean;
   onClose: () => void;
   stockItem: StockAliment | StockVeto;
@@ -85,21 +70,27 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string>('');
 
-  // Reset à chaque (re)ouverture avec un nouvel item
-  useEffect(() => {
-    if (!isOpen) return;
-    setLibelle(initial.libelle ?? '');
-    setProduit(initial.produit ?? '');
-    setTypeVeto(initial.type ?? '');
-    setUsageVeto(initial.usage ?? '');
-    setStockActuel(initial.stockActuel);
-    setUnite(initial.unite);
-    setSeuilAlerte(initial.seuilAlerte);
-    setStatut(initial.statut);
-    setNotes(initial.notes);
-    setErrors({});
-    setSaving(false);
-  }, [isOpen, initial]);
+  // Reset à chaque (re)ouverture avec un nouvel item — render-time sync
+  const [lastKey, setLastKey] = useState<{ isOpen: boolean; itemId: string }>({
+    isOpen,
+    itemId: stockItem.id,
+  });
+  if (lastKey.isOpen !== isOpen || lastKey.itemId !== stockItem.id) {
+    setLastKey({ isOpen, itemId: stockItem.id });
+    if (isOpen) {
+      setLibelle(initial.libelle ?? '');
+      setProduit(initial.produit ?? '');
+      setTypeVeto(initial.type ?? '');
+      setUsageVeto(initial.usage ?? '');
+      setStockActuel(initial.stockActuel);
+      setUnite(initial.unite);
+      setSeuilAlerte(initial.seuilAlerte);
+      setStatut(initial.statut);
+      setNotes(initial.notes);
+      setErrors({});
+      setSaving(false);
+    }
+  }
 
   const handleClose = useCallback(() => {
     if (saving) return;
