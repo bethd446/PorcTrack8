@@ -16,7 +16,7 @@ import {
   validateAddAliment,
   buildAddAlimentRow,
   UNITE_SUGGESTIONS,
-} from './QuickAddAlimentForm';
+} from './quickAddAlimentLogic';
 import type { SheetCell } from '../../services/offlineQueue';
 
 // ── Mock global de offlineQueue ──────────────────────────────────────────

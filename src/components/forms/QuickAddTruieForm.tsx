@@ -24,146 +24,25 @@
  *   - suggestNextTruieId()
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
 import { Plus, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { enqueueAppendRow, type SheetCell } from '../../services/offlineQueue';
+import { enqueueAppendRow } from '../../services/offlineQueue';
 import { useFarm } from '../../context/FarmContext';
-import type { Truie } from '../../types/farm';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-export type StadeChoice = 'Jeune' | 'Adulte' | 'Reproductrice';
-
-export const STADES: ReadonlyArray<StadeChoice> = [
-  'Jeune',
-  'Adulte',
-  'Reproductrice',
-];
-
-export interface AddTruieDraft {
-  id: string;
-  boucle: string;
-  nom: string;
-  stade: StadeChoice;
-  ration: string;
-}
-
-export interface AddTruieValidation {
-  ok: boolean;
-  errors: {
-    id?: string;
-    boucle?: string;
-    ration?: string;
-  };
-  row?: SheetCell[];
-}
-
-// ─── Pure helpers (testés unitairement) ──────────────────────────────────────
-
-/**
- * Suggère un nouvel ID truie sous forme `T<n>` à partir de la liste existante.
- * - Extrait la partie numérique (T05 → 5, 12 → 12, T-17 → 17)
- * - Prend le max + 1
- * - Fallback "T20" si aucune truie existante ou parse échoue
- */
-export function suggestNextTruieId(truies: ReadonlyArray<Pick<Truie, 'id'>>): string {
-  let maxN = 0;
-  for (const t of truies) {
-    const m = String(t.id ?? '').match(/(\d+)/);
-    if (m) {
-      const n = parseInt(m[1], 10);
-      if (Number.isFinite(n) && n > maxN) maxN = n;
-    }
-  }
-  const next = maxN > 0 ? maxN + 1 : 20;
-  return `T${String(next).padStart(2, '0')}`;
-}
-
-/** Parse une valeur ration (accepte virgule décimale FR). */
-function parseRation(raw: string): number | null {
-  if (raw == null) return null;
-  const s = String(raw).trim().replace(',', '.');
-  if (s === '') return null;
-  const n = Number(s);
-  return Number.isFinite(n) ? n : null;
-}
-
-/**
- * Validation + construction de la ligne Sheets.
- *
- * Règles :
- *   - id : /^T\d+$/i (après trim + upper)
- *   - boucle : non vide après trim
- *   - ration : 0 <= n <= 10 (finite)
- *
- * Colonnes renvoyées (ordre canonique SUIVI_TRUIES_REPRODUCTION) :
- *   [ID, NOM, BOUCLE, STATUT, STADE, NB_PORTEES, DERNIERE_PORTEE_NV,
- *    DATE_MB_PREVUE, RATION, NOTES]
- *
- * Valeurs par défaut pour une nouvelle truie :
- *   - statut = "En attente saillie"
- *   - nb portées = 0
- *   - autres champs dérivés = ""
- */
-export function validateAddTruie(draft: AddTruieDraft): AddTruieValidation {
-  const errors: AddTruieValidation['errors'] = {};
-
-  const id = String(draft.id ?? '').trim().toUpperCase();
-  if (!id) {
-    errors.id = 'ID requis';
-  } else if (!/^T\d+$/.test(id)) {
-    errors.id = 'Format invalide (ex: T20)';
-  }
-
-  const boucle = String(draft.boucle ?? '').trim();
-  if (!boucle) errors.boucle = 'Boucle requise';
-
-  const ration = parseRation(draft.ration);
-  if (ration === null) {
-    errors.ration = 'Ration requise';
-  } else if (ration < 0 || ration > 10) {
-    errors.ration = 'Ration entre 0 et 10';
-  }
-
-  if (Object.keys(errors).length > 0) {
-    return { ok: false, errors };
-  }
-
-  const nom = String(draft.nom ?? '').trim();
-  const stade: StadeChoice = draft.stade ?? 'Adulte';
-
-  const row: SheetCell[] = [
-    id,                         // ID
-    nom,                        // NOM
-    boucle,                     // BOUCLE
-    'En attente saillie',       // STATUT (défaut)
-    stade,                      // STADE
-    0,                          // NB_PORTEES
-    '',                         // DERNIERE_PORTEE_NV
-    '',                         // DATE_MB_PREVUE
-    ration as number,           // RATION KG/J
-    '',                         // NOTES
-  ];
-
-  return { ok: true, errors: {}, row };
-}
-
-/**
- * Helper exposé pour les tests : construit la row uniquement (sans valider).
- * Utile pour tester l'ordre canonique.
- */
-export function buildAddTruieRow(draft: AddTruieDraft): SheetCell[] | null {
-  const v = validateAddTruie(draft);
-  return v.row ?? null;
-}
+import {
+  STADES,
+  suggestNextTruieId,
+  validateAddTruie,
+  type AddTruieValidation,
+  type StadeChoice,
+} from './quickAddTruieLogic';
 
 // ─── Composant ───────────────────────────────────────────────────────────────
 
-export interface QuickAddTruieFormProps {
+interface QuickAddTruieFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
@@ -187,18 +66,23 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string>('');
 
-  // Reset à l'ouverture (et re-calcule l'ID auto-suggéré quand les truies
-  // changent entre deux ouvertures)
-  useEffect(() => {
-    if (!isOpen) return;
-    setId(suggestedId);
-    setBoucle('');
-    setNom('');
-    setStade('Adulte');
-    setRation('3.0');
-    setErrors({});
-    setSaving(false);
-  }, [isOpen, suggestedId]);
+  // Reset à l'ouverture (render-time sync)
+  const [lastKey, setLastKey] = useState<{ isOpen: boolean; suggestedId: string }>({
+    isOpen,
+    suggestedId,
+  });
+  if (lastKey.isOpen !== isOpen || lastKey.suggestedId !== suggestedId) {
+    setLastKey({ isOpen, suggestedId });
+    if (isOpen) {
+      setId(suggestedId);
+      setBoucle('');
+      setNom('');
+      setStade('Adulte');
+      setRation('3.0');
+      setErrors({});
+      setSaving(false);
+    }
+  }
 
   const handleClose = useCallback(() => {
     if (saving) return;

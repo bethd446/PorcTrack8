@@ -30,172 +30,27 @@
  *   - TYPE_SUGGESTIONS / USAGE_SUGGESTIONS / UNITE_SUGGESTIONS
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
 import { Plus, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { enqueueAppendRow, type SheetCell } from '../../services/offlineQueue';
+import { enqueueAppendRow } from '../../services/offlineQueue';
 import { useFarm } from '../../context/FarmContext';
-import type { StockVeto } from '../../types/farm';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
+import {
+  TYPE_SUGGESTIONS,
+  USAGE_SUGGESTIONS,
+  UNITE_SUGGESTIONS,
+  suggestNextVetoId,
+  validateAddVeto,
+  type AddVetoValidation,
+} from './quickAddVetoLogic';
 import { recomputeStatut } from './quickRefillLogic';
-
-// ─── Constantes (suggestions datalist) ───────────────────────────────────────
-
-export const TYPE_SUGGESTIONS: ReadonlyArray<string> = [
-  'Antiparasitaire',
-  'Antibiotique',
-  'Vaccin',
-  'Vitamine',
-  'Hormone',
-  'Désinfectant',
-];
-
-export const USAGE_SUGGESTIONS: ReadonlyArray<string> = [
-  'Prévention',
-  'Traitement',
-  'Curatif',
-  'Maintenance',
-];
-
-export const UNITE_SUGGESTIONS: ReadonlyArray<string> = [
-  'mL',
-  'doses',
-  'unités',
-  'flacons',
-  'sachets',
-];
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-export interface AddVetoDraft {
-  id: string;
-  produit: string;
-  type: string;
-  usage: string;
-  stockActuel: string;
-  unite: string;
-  seuilAlerte: string;
-  notes: string;
-}
-
-export interface AddVetoValidation {
-  ok: boolean;
-  errors: {
-    id?: string;
-    produit?: string;
-    unite?: string;
-    stockActuel?: string;
-    seuilAlerte?: string;
-  };
-  row?: SheetCell[];
-}
-
-// ─── Pure helpers (testés unitairement) ──────────────────────────────────────
-
-/**
- * Suggère un nouvel ID véto sous forme `V<NN>` à partir de la liste existante.
- * - Extrait la partie numérique (V03 → 3, VET-12 → 12, 7 → 7)
- * - Prend le max + 1
- * - Fallback "V01" si aucun produit existant ou parse échoue
- */
-export function suggestNextVetoId(vetos: ReadonlyArray<Pick<StockVeto, 'id'>>): string {
-  let maxN = 0;
-  for (const v of vetos) {
-    const m = String(v.id ?? '').match(/(\d+)/);
-    if (m) {
-      const n = parseInt(m[1], 10);
-      if (Number.isFinite(n) && n > maxN) maxN = n;
-    }
-  }
-  const next = maxN > 0 ? maxN + 1 : 1;
-  return `V${String(next).padStart(2, '0')}`;
-}
-
-/** Parse un nombre non-négatif (accepte virgule décimale FR). */
-function parseNonNegative(raw: string): number | null {
-  if (raw == null) return null;
-  const s = String(raw).trim().replace(',', '.');
-  if (s === '') return null;
-  const n = Number(s);
-  if (!Number.isFinite(n) || n < 0) return null;
-  return n;
-}
-
-/**
- * Validation + construction de la ligne Sheets.
- *
- * Règles :
- *   - id : non vide après trim (format libre, "V01" suggéré par défaut)
- *   - produit : non vide après trim (max 80 via maxLength input)
- *   - unite : non vide après trim
- *   - stockActuel : ≥ 0 (finite)
- *   - seuilAlerte : ≥ 0 (finite, défaut 5 côté UI)
- *
- * Colonnes renvoyées (ordre canonique STOCK_VETO, cf. mapStockVeto) :
- *   [ID, PRODUIT, TYPE, USAGE, STOCK_ACTUEL, UNITE, SEUIL_ALERTE,
- *    STATUT, NOTES]
- *
- * STATUT est auto-calculé via `recomputeStatut(stockActuel, seuilAlerte)`.
- */
-export function validateAddVeto(draft: AddVetoDraft): AddVetoValidation {
-  const errors: AddVetoValidation['errors'] = {};
-
-  const id = String(draft.id ?? '').trim().toUpperCase();
-  if (!id) errors.id = 'ID requis';
-
-  const produit = String(draft.produit ?? '').trim();
-  if (!produit) errors.produit = 'Produit requis';
-
-  const unite = String(draft.unite ?? '').trim();
-  if (!unite) errors.unite = 'Unité requise';
-
-  const stockActuel = parseNonNegative(draft.stockActuel);
-  if (stockActuel === null) {
-    errors.stockActuel = 'Stock ≥ 0 requis';
-  }
-
-  const seuilAlerte = parseNonNegative(draft.seuilAlerte);
-  if (seuilAlerte === null) {
-    errors.seuilAlerte = 'Seuil ≥ 0 requis';
-  }
-
-  if (Object.keys(errors).length > 0) {
-    return { ok: false, errors };
-  }
-
-  const stockNum = stockActuel as number;
-  const seuilNum = seuilAlerte as number;
-  const type = String(draft.type ?? '').trim();
-  const usage = String(draft.usage ?? '').trim();
-  const notes = String(draft.notes ?? '').trim();
-  const statut = recomputeStatut(stockNum, seuilNum);
-
-  const row: SheetCell[] = [
-    id,          // ID
-    produit,     // PRODUIT / LIBELLÉ
-    type,        // TYPE
-    usage,       // USAGE
-    stockNum,    // STOCK_ACTUEL
-    unite,       // UNITE
-    seuilNum,    // SEUIL_ALERTE
-    statut,      // STATUT (auto)
-    notes,       // NOTES
-  ];
-
-  return { ok: true, errors: {}, row };
-}
-
-/** Helper pour tests : construit la row si la validation passe, sinon null. */
-export function buildAddVetoRow(draft: AddVetoDraft): SheetCell[] | null {
-  const v = validateAddVeto(draft);
-  return v.row ?? null;
-}
 
 // ─── Composant ───────────────────────────────────────────────────────────────
 
-export interface QuickAddVetoFormProps {
+interface QuickAddVetoFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
@@ -222,20 +77,23 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string>('');
 
-  // Reset à l'ouverture + re-calcule l'ID auto-suggéré
-  useEffect(() => {
-    if (!isOpen) return;
-    setId(suggestedId);
-    setProduit('');
-    setType('');
-    setUsage('');
-    setStockActuel('0');
-    setUnite('mL');
-    setSeuilAlerte('5');
-    setNotes('');
-    setErrors({});
-    setSaving(false);
-  }, [isOpen, suggestedId]);
+  // Render-time sync: reset on (re)open (avoids setState-in-effect cascading renders).
+  const [lastOpen, setLastOpen] = useState<boolean>(isOpen);
+  if (lastOpen !== isOpen) {
+    setLastOpen(isOpen);
+    if (isOpen) {
+      setId(suggestedId);
+      setProduit('');
+      setType('');
+      setUsage('');
+      setStockActuel('0');
+      setUnite('mL');
+      setSeuilAlerte('5');
+      setNotes('');
+      setErrors({});
+      setSaving(false);
+    }
+  }
 
   const handleClose = useCallback(() => {
     if (saving) return;

@@ -17,7 +17,7 @@ import {
   validateAddTruie,
   buildAddTruieRow,
   STADES,
-} from './QuickAddTruieForm';
+} from './quickAddTruieLogic';
 import type { SheetCell } from '../../services/offlineQueue';
 
 // ── Mock global de offlineQueue ──────────────────────────────────────────

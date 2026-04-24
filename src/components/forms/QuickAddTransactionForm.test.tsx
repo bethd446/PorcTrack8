@@ -20,7 +20,7 @@ import {
   CATEGORIES,
   TYPES,
   type AddTransactionDraft,
-} from './QuickAddTransactionForm';
+} from './quickAddTransactionLogic';
 import type { SheetCell } from '../../services/offlineQueue';
 
 // ── Mock global de offlineQueue ─────────────────────────────────────────────

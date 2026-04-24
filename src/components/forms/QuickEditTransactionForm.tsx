@@ -32,7 +32,7 @@ import {
   TYPES,
   isoToFrDate,
   type TransactionCategorie,
-} from './QuickAddTransactionForm';
+} from './quickAddTransactionLogic';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 

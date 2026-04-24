@@ -30,70 +30,22 @@
  *   - suggestNextAlimentId()
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
 import { Plus, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { enqueueAppendRow, type SheetCell } from '../../services/offlineQueue';
+import { enqueueAppendRow } from '../../services/offlineQueue';
 import { useFarm } from '../../context/FarmContext';
-import type { StockAliment, StockStatut } from '../../types/farm';
+import type { StockStatut } from '../../types/farm';
 import { recomputeStatut } from './quickRefillLogic';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-export const UNITE_SUGGESTIONS: ReadonlyArray<string> = [
-  'kg',
-  'sac',
-  'tonne',
-];
-
-export interface AddAlimentDraft {
-  id: string;
-  libelle: string;
-  stockActuel: string;
-  unite: string;
-  seuilAlerte: string;
-  notes: string;
-}
-
-export interface AddAlimentValidation {
-  ok: boolean;
-  errors: {
-    id?: string;
-    libelle?: string;
-    stockActuel?: string;
-    unite?: string;
-    seuilAlerte?: string;
-    notes?: string;
-  };
-  row?: SheetCell[];
-  statut?: StockStatut;
-}
-
-// ─── Pure helpers (testés unitairement) ──────────────────────────────────────
-
-/**
- * Suggère un nouvel ID aliment sous forme `A<nn>` à partir de la liste existante.
- * - Extrait la partie numérique (A05 → 5, ALIM-12 → 12, A-17 → 17)
- * - Prend le max + 1
- * - Fallback "A01" si aucun aliment existant ou parse échoue
- */
-export function suggestNextAlimentId(
-  aliments: ReadonlyArray<Pick<StockAliment, 'id'>>,
-): string {
-  let maxN = 0;
-  for (const a of aliments) {
-    const m = String(a.id ?? '').match(/(\d+)/);
-    if (m) {
-      const n = parseInt(m[1], 10);
-      if (Number.isFinite(n) && n > maxN) maxN = n;
-    }
-  }
-  const next = maxN > 0 ? maxN + 1 : 1;
-  return `A${String(next).padStart(2, '0')}`;
-}
+import {
+  UNITE_SUGGESTIONS,
+  suggestNextAlimentId,
+  validateAddAliment,
+  type AddAlimentValidation,
+} from './quickAddAlimentLogic';
 
 /** Parse une valeur numérique (accepte virgule décimale FR). */
 function parseNum(raw: string): number | null {
@@ -104,100 +56,9 @@ function parseNum(raw: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/**
- * Validation + construction de la ligne Sheets.
- *
- * Règles :
- *   - id : /^A\d+$/i (après trim + upper)
- *   - libelle : non vide après trim, max 60
- *   - stockActuel : nombre fini >= 0
- *   - unite : non vide après trim
- *   - seuilAlerte : nombre fini >= 0
- *   - notes : max 200 caractères
- *
- * Colonnes renvoyées (ordre canonique STOCK_ALIMENTS) :
- *   [ID, LIBELLE, STOCK_ACTUEL, UNITE, SEUIL_ALERTE, STATUT, NOTES]
- *
- * Statut auto-calculé :
- *   - stock <= 0 → RUPTURE
- *   - 0 < stock <= seuilAlerte → BAS (si seuilAlerte > 0)
- *   - sinon → OK
- */
-export function validateAddAliment(
-  draft: AddAlimentDraft,
-): AddAlimentValidation {
-  const errors: AddAlimentValidation['errors'] = {};
-
-  const id = String(draft.id ?? '').trim().toUpperCase();
-  if (!id) {
-    errors.id = 'ID requis';
-  } else if (!/^A\d+$/.test(id)) {
-    errors.id = 'Format invalide (ex: A01)';
-  }
-
-  const libelle = String(draft.libelle ?? '').trim();
-  if (!libelle) {
-    errors.libelle = 'Libellé requis';
-  } else if (libelle.length > 60) {
-    errors.libelle = 'Libellé trop long (max 60)';
-  }
-
-  const stockActuel = parseNum(draft.stockActuel);
-  if (stockActuel === null) {
-    errors.stockActuel = 'Stock requis';
-  } else if (stockActuel < 0) {
-    errors.stockActuel = 'Stock doit être ≥ 0';
-  }
-
-  const unite = String(draft.unite ?? '').trim();
-  if (!unite) {
-    errors.unite = 'Unité requise';
-  }
-
-  const seuilAlerte = parseNum(draft.seuilAlerte);
-  if (seuilAlerte === null) {
-    errors.seuilAlerte = 'Seuil requis';
-  } else if (seuilAlerte < 0) {
-    errors.seuilAlerte = 'Seuil doit être ≥ 0';
-  }
-
-  const notes = String(draft.notes ?? '').trim();
-  if (notes.length > 200) {
-    errors.notes = 'Notes trop longues (max 200)';
-  }
-
-  if (Object.keys(errors).length > 0) {
-    return { ok: false, errors };
-  }
-
-  const stockRounded = Math.round((stockActuel as number) * 10) / 10;
-  const seuilRounded = Math.round((seuilAlerte as number) * 10) / 10;
-  const statut = recomputeStatut(stockRounded, seuilRounded);
-
-  const row: SheetCell[] = [
-    id,             // ID
-    libelle,        // LIBELLE
-    stockRounded,   // STOCK_ACTUEL
-    unite,          // UNITE
-    seuilRounded,   // SEUIL_ALERTE
-    statut,         // STATUT
-    notes,          // NOTES
-  ];
-
-  return { ok: true, errors: {}, row, statut };
-}
-
-/**
- * Helper exposé pour les tests : construit la row uniquement (sans valider).
- */
-export function buildAddAlimentRow(draft: AddAlimentDraft): SheetCell[] | null {
-  const v = validateAddAliment(draft);
-  return v.row ?? null;
-}
-
 // ─── Composant ───────────────────────────────────────────────────────────────
 
-export interface QuickAddAlimentFormProps {
+interface QuickAddAlimentFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
@@ -225,18 +86,24 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string>('');
 
-  // Reset à l'ouverture (et re-calcule l'ID auto-suggéré)
-  useEffect(() => {
-    if (!isOpen) return;
-    setId(suggestedId);
-    setLibelle('');
-    setStockActuel('0');
-    setUnite('kg');
-    setSeuilAlerte('50');
-    setNotes('');
-    setErrors({});
-    setSaving(false);
-  }, [isOpen, suggestedId]);
+  // Reset à l'ouverture (render-time sync) — re-calcule l'ID auto-suggéré
+  const [lastKey, setLastKey] = useState<{ isOpen: boolean; suggestedId: string }>({
+    isOpen,
+    suggestedId,
+  });
+  if (lastKey.isOpen !== isOpen || lastKey.suggestedId !== suggestedId) {
+    setLastKey({ isOpen, suggestedId });
+    if (isOpen) {
+      setId(suggestedId);
+      setLibelle('');
+      setStockActuel('0');
+      setUnite('kg');
+      setSeuilAlerte('50');
+      setNotes('');
+      setErrors({});
+      setSaving(false);
+    }
+  }
 
   const handleClose = useCallback(() => {
     if (saving) return;

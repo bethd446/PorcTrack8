@@ -21,7 +21,7 @@ import {
   TYPE_SUGGESTIONS,
   USAGE_SUGGESTIONS,
   UNITE_SUGGESTIONS,
-} from './QuickAddVetoForm';
+} from './quickAddVetoLogic';
 import type { SheetCell } from '../../services/offlineQueue';
 
 // ── Mock global de offlineQueue ──────────────────────────────────────────
