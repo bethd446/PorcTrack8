@@ -33,5 +33,5 @@ export type {
 export { default as FAB } from './FAB';
 export type { FABProps, FABAction, FABActionTone } from './FAB';
 
-export { default as IsoBarn, iso, pathFrom, U, COS, SIN } from './IsoBarn';
+export { default as IsoBarn } from './IsoBarn';
 export type { IsoBarnProps, Building, Arrow, Point2D } from './IsoBarn';

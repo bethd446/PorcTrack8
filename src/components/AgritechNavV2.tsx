@@ -44,7 +44,7 @@ interface QuickActionsContextValue {
 
 const QuickActionsCtx = createContext<QuickActionsContextValue | null>(null);
 
-export const useQuickActions = (): QuickActionsContextValue => {
+const useQuickActions = (): QuickActionsContextValue => {
   const ctx = useContext(QuickActionsCtx);
   if (!ctx) {
     throw new Error('useQuickActions must be used within QuickActionsProvider');

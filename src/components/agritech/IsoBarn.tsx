@@ -15,11 +15,11 @@
 import React from 'react';
 
 /** Base unit in screen pixels — DO NOT change (proportions are calibrated). */
-export const U = 22;
+const U = 22;
 /** cos(30°) — isometric horizontal factor. */
-export const COS = 0.866;
+const COS = 0.866;
 /** sin(30°) — isometric vertical factor. */
-export const SIN = 0.5;
+const SIN = 0.5;
 
 /** A 2D screen-space point after isometric projection. */
 export type Point2D = readonly [number, number];
@@ -28,12 +28,12 @@ export type Point2D = readonly [number, number];
  * Project a grid (gx, gy, gz) coordinate to screen (sx, sy).
  * Origin is centred by the caller via `offsetX` / `offsetY`.
  */
-export function iso(gx: number, gy: number, gz = 0): Point2D {
+function iso(gx: number, gy: number, gz = 0): Point2D {
   return [U * COS * (gx - gy), U * SIN * (gx + gy) - U * gz];
 }
 
 /** Build an SVG `d` path string "M x,y L x,y … Z" from a list of points. */
-export function pathFrom(pts: readonly Point2D[]): string {
+function pathFrom(pts: readonly Point2D[]): string {
   return 'M ' + pts.map((p) => `${p[0]},${p[1]}`).join(' L ') + ' Z';
 }
 
@@ -117,11 +117,11 @@ const IsoBuilding: React.FC<IsoBuildingProps> = ({
     return [sx + offsetX, sy + offsetY];
   };
 
-  // Corners — floor (A,B,Cc,D) and roof (Ap,Bp,Cp,Dp)
+  // Corners — floor (A, B, Cc) and roof (Ap, Bp, Cp, Dp).
+  // Floor D corner inutilisé (remplacé par door polygon dA..dD).
   const A = C(x, y, 0);
   const B = C(x + w, y, 0);
   const Cc = C(x + w, y + d, 0);
-  const D = C(x, y + d, 0);
   const Ap = C(x, y, h);
   const Bp = C(x + w, y, h);
   const Cp = C(x + w, y + d, h);

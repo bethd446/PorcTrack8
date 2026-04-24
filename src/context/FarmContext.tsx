@@ -30,7 +30,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import type {
   Truie, Verrat, BandePorcelets, TraitementSante,
-  StockAliment, StockVeto, FarmState, AlerteServeur, Saillie, FinanceEntry,
+  FarmState, AlerteServeur, Saillie, FinanceEntry,
 } from '../types/farm';
 import type { Animal, Note } from '../types';
 import type { FormuleAliment } from '../config/aliments';
@@ -88,7 +88,6 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   // Fetch initial + auto-flush queue au retour en ligne
   useEffect(() => {
     // Legitimate I/O: initial data fetch (Google Sheets + alert engine)
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshAll();
 
     const onOnline = (): void => {
@@ -215,7 +214,5 @@ export const useFarm = (): FarmContextType => {
   };
 };
 
-// Re-exports pour l'accès direct aux sous-contextes (migration progressive)
-export { useTroupeau } from './TroupeauContext';
-export { useRessources } from './RessourcesContext';
-export { usePilotage } from './PilotageContext';
+// Les consommateurs souhaitant un accès ciblé doivent importer directement
+// depuis ./TroupeauContext, ./RessourcesContext ou ./PilotageContext.
