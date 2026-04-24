@@ -18,7 +18,8 @@
  *   - transactionToDraft()
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import React, { useCallback, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
 import { Edit3, Save } from 'lucide-react';
 
@@ -209,13 +210,19 @@ const QuickEditTransactionForm: React.FC<QuickEditTransactionFormProps> = ({
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string>('');
 
-  // Reset à chaque (re)ouverture / changement de transaction
-  useEffect(() => {
-    if (!isOpen) return;
-    setDraft(initial);
-    setErrors({});
-    setSaving(false);
-  }, [isOpen, initial]);
+  // Render-time sync: reset when (re)opening or transaction changes.
+  const [lastInitial, setLastInitial] = useState<{ isOpen: boolean; txId: string }>({
+    isOpen,
+    txId: transaction.id,
+  });
+  if (lastInitial.isOpen !== isOpen || lastInitial.txId !== transaction.id) {
+    setLastInitial({ isOpen, txId: transaction.id });
+    if (isOpen) {
+      setDraft(initial);
+      setErrors({});
+      setSaving(false);
+    }
+  }
 
   const handleClose = useCallback(() => {
     if (saving) return;

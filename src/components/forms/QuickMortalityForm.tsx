@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { useMemo, useRef, useState } from 'react';
 import { IonToast, IonSelect, IonSelectOption } from '@ionic/react';
 import { Skull, Check, CheckCircle2 } from 'lucide-react';
@@ -155,12 +156,20 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
    */
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Resync default si prop change (ouverture depuis une bande précise)
-  React.useEffect(() => {
+  // Render-time sync: resync default si prop change (évite setState-in-effect).
+  const [lastDefault, setLastDefault] = useState<{
+    isOpen: boolean;
+    defaultBandeId: string | undefined;
+  }>({ isOpen, defaultBandeId });
+  if (
+    lastDefault.isOpen !== isOpen ||
+    lastDefault.defaultBandeId !== defaultBandeId
+  ) {
+    setLastDefault({ isOpen, defaultBandeId });
     if (isOpen && defaultBandeId) {
       setSelectedBandeId(defaultBandeId);
     }
-  }, [isOpen, defaultBandeId]);
+  }
 
   // Cleanup du timer à l'unmount (évite un onClose post-unmount)
   React.useEffect(() => {
@@ -214,7 +223,6 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
       // En dev, aide à diagnostiquer les cas où defaultBandeId ne correspond
       // à aucune bande filtrée (ex: bande RECAP exclue par filterRealPortees).
       if (import.meta.env?.DEV) {
-        // eslint-disable-next-line no-console
         console.warn(
           '[QuickMortalityForm] Bande introuvable dans bandesDispo',
           { selectedBandeId, dispoIds: bandesDispo.map(b => b.id) },
@@ -255,7 +263,6 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
       }, 1500);
     } catch (e) {
       // Log explicite en dev pour debug sur device (Chrome devtools distant).
-      // eslint-disable-next-line no-console
       console.error('[QuickMortalityForm] enregistrement local échoué:', e);
       setError(
         'Erreur enregistrement local · réessaie ou redémarre l\'application',

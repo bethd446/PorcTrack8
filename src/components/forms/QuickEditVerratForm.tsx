@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
 import { Edit3, Save } from 'lucide-react';
 
@@ -11,7 +11,6 @@ import {
   ORIGINE_SUGGESTIONS,
   ALIMENTATION_SUGGESTIONS,
   STATUT_OPTIONS,
-  type VerratEditForm,
   type VerratEditInitial,
   type VerratEditValidation,
 } from './quickEditVerratValidation';
@@ -31,21 +30,7 @@ import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
    · NOTES. Le patch est PARTIEL : seuls les champs modifiés sont envoyés.
    ═════════════════════════════════════════════════════════════════════════ */
 
-// Re-export pour accès depuis les tests / autres modules
-export {
-  validateVerratEdit,
-  ORIGINE_SUGGESTIONS,
-  ALIMENTATION_SUGGESTIONS,
-  STATUT_OPTIONS,
-} from './quickEditVerratValidation';
-export type {
-  VerratEditPatch,
-  VerratEditValidation,
-  VerratEditForm,
-  VerratEditInitial,
-} from './quickEditVerratValidation';
-
-export interface QuickEditVerratFormProps {
+interface QuickEditVerratFormProps {
   isOpen: boolean;
   onClose: () => void;
   verrat: Verrat;
@@ -86,19 +71,25 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string>('');
 
-  // Reset à chaque (ré)ouverture
-  useEffect(() => {
-    if (!isOpen) return;
-    setNom(initial.nom);
-    setBoucle(initial.boucle);
-    setOrigine(initial.origine);
-    setAlimentation(initial.alimentation);
-    setRation(initial.ration > 0 ? String(initial.ration) : '');
-    setStatut(initial.statut);
-    setNotes(initial.notes);
-    setErrors({});
-    setSaving(false);
-  }, [isOpen, initial]);
+  // Render-time sync: reset on (re)open or verrat change (avoids setState-in-effect).
+  const [lastKey, setLastKey] = useState<{ isOpen: boolean; verratId: string }>({
+    isOpen,
+    verratId: verrat.id,
+  });
+  if (lastKey.isOpen !== isOpen || lastKey.verratId !== verrat.id) {
+    setLastKey({ isOpen, verratId: verrat.id });
+    if (isOpen) {
+      setNom(initial.nom);
+      setBoucle(initial.boucle);
+      setOrigine(initial.origine);
+      setAlimentation(initial.alimentation);
+      setRation(initial.ration > 0 ? String(initial.ration) : '');
+      setStatut(initial.statut);
+      setNotes(initial.notes);
+      setErrors({});
+      setSaving(false);
+    }
+  }
 
   const handleClose = useCallback(() => {
     if (saving) return;

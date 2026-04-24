@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 /**
  * QuickMiseBasForm — Saisie rapide d'une mise-bas (naissance d'une portée)
  * ════════════════════════════════════════════════════════════════════════
@@ -446,9 +447,16 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
   // Ref timer fermeture auto (success)
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Auto-calcul nés totaux tant que l'utilisateur n'a pas saisi manuellement
-  useEffect(() => {
-    if (nesTotauxEditedManually) return;
+  // Render-time auto-calcul nés totaux tant que l'utilisateur n'a pas saisi manuellement
+  const [lastAutoInputs, setLastAutoInputs] = useState<{ nesVivants: string; mortsNes: string }>({
+    nesVivants,
+    mortsNes,
+  });
+  if (
+    !nesTotauxEditedManually &&
+    (lastAutoInputs.nesVivants !== nesVivants || lastAutoInputs.mortsNes !== mortsNes)
+  ) {
+    setLastAutoInputs({ nesVivants, mortsNes });
     const v = parseInt(nesVivants, 10);
     const m = parseInt(mortsNes, 10);
     if (Number.isFinite(v) && Number.isFinite(m)) {
@@ -456,7 +464,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
     } else if (Number.isFinite(v)) {
       setNesTotaux(String(v));
     }
-  }, [nesVivants, mortsNes, nesTotauxEditedManually]);
+  }
 
   // ID portée auto-suggéré (dépend de la truie et des bandes courantes)
   const suggestedIdPortee = useMemo(() => {
@@ -467,29 +475,36 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
   const [idPortee, setIdPortee] = useState<string>(suggestedIdPortee);
   const [idPorteeEditedManually, setIdPorteeEditedManually] = useState(false);
 
-  // Resync ID portée si suggestion change et pas d'édition manuelle
-  useEffect(() => {
-    if (idPorteeEditedManually) return;
+  // Render-time resync ID portée si suggestion change et pas d'édition manuelle
+  const [lastSuggestedIdPortee, setLastSuggestedIdPortee] = useState<string>(suggestedIdPortee);
+  if (!idPorteeEditedManually && lastSuggestedIdPortee !== suggestedIdPortee) {
+    setLastSuggestedIdPortee(suggestedIdPortee);
     setIdPortee(suggestedIdPortee);
-  }, [suggestedIdPortee, idPorteeEditedManually]);
+  }
 
-  // Reset à l'ouverture
-  useEffect(() => {
-    if (!isOpen) return;
-    setTruieId(defaultTruieId ?? '');
-    setDateIso(todayIsoLocal());
-    setHeure(nowHoursMinutes());
-    setNesVivants('');
-    setMortsNes('0');
-    setNesTotaux('');
-    setNesTotauxEditedManually(false);
-    setPoidsMoyen('');
-    setNotes('');
-    setIdPorteeEditedManually(false);
-    setErrors({});
-    setSuccess(false);
-    setSaving(false);
-  }, [isOpen, defaultTruieId]);
+  // Render-time reset à l'ouverture
+  const [lastOpenKey, setLastOpenKey] = useState<{ isOpen: boolean; defaultTruieId: string | undefined }>({
+    isOpen,
+    defaultTruieId,
+  });
+  if (lastOpenKey.isOpen !== isOpen || lastOpenKey.defaultTruieId !== defaultTruieId) {
+    setLastOpenKey({ isOpen, defaultTruieId });
+    if (isOpen) {
+      setTruieId(defaultTruieId ?? '');
+      setDateIso(todayIsoLocal());
+      setHeure(nowHoursMinutes());
+      setNesVivants('');
+      setMortsNes('0');
+      setNesTotaux('');
+      setNesTotauxEditedManually(false);
+      setPoidsMoyen('');
+      setNotes('');
+      setIdPorteeEditedManually(false);
+      setErrors({});
+      setSuccess(false);
+      setSaving(false);
+    }
+  }
 
   // Cleanup timer au unmount
   useEffect(() => {
@@ -578,7 +593,6 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
         onClose();
       }, 1500);
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error('[QuickMiseBasForm] enregistrement local échoué:', err);
       setToast({
         show: true,

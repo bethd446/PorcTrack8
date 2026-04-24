@@ -20,7 +20,7 @@
  * P6 : summary strip header avec barres compactes loges OK/HIGH/FULL.
  */
 
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   IonContent,
@@ -170,17 +170,10 @@ const TroupeauHub: React.FC = () => {
   const initialSubTab: SubTab = isSubTab(viewParam) ? viewParam : 'truies';
   const [activeSubTab, setActiveSubTab] = useState<SubTab>(initialSubTab);
 
-  // Sync query ↔ state si l'URL change (ex : deep link, back button).
-  // L'effet ne déclenche un re-render que si la valeur DIFFÈRE vraiment (pas
-  // de boucle). Le setState-in-effect est volontaire et idiomatique ici : on
-  // synchronise la source externe (URL) avec le state local.
-  useEffect(() => {
-    if (isSubTab(viewParam) && viewParam !== activeSubTab) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setActiveSubTab(viewParam);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewParam]);
+  // Render-time sync: update state if URL query param changed (e.g. back button).
+  if (isSubTab(viewParam) && viewParam !== activeSubTab) {
+    setActiveSubTab(viewParam);
+  }
 
   const handleSubTabChange = (tab: SubTab): void => {
     setActiveSubTab(tab);
@@ -897,17 +890,6 @@ const EmptyState: React.FC<{ hasSearch: boolean }> = ({ hasSearch }) => (
       {hasSearch
         ? 'Aucune truie ne correspond à ta recherche.'
         : 'Ta feuille TRUIES est vide ou non accessible.'}
-    </p>
-  </div>
-);
-
-// ─── Sub-view placeholder (pour les vues Agents 2/3/4 pas encore créées) ─────
-
-const SubViewPlaceholder: React.FC<{ name: string }> = ({ name }) => (
-  <div className="card-dense text-center py-12" role="status">
-    <h3 className="ft-heading text-[14px] uppercase text-text-0">{name}</h3>
-    <p className="font-mono text-[11px] text-text-2 mt-2">
-      Vue en cours de création…
     </p>
   </div>
 );

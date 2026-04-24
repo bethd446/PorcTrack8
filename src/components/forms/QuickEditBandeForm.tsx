@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
 import { Edit3, Save } from 'lucide-react';
 
@@ -35,21 +35,7 @@ import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
    Patch partiel : seules les valeurs modifiées sont envoyées.
    ═════════════════════════════════════════════════════════════════════════ */
 
-// Re-exports pour compat / consommateurs externes
-export {
-  validateBandeEdit,
-  bandeToRawInput,
-  BANDE_STATUTS,
-} from './quickEditBandeValidation';
-export type {
-  BandeEditPatch,
-  BandeEditErrors,
-  BandeEditValidation,
-  BandeEditRawInput,
-  BandeStatutOption,
-} from './quickEditBandeValidation';
-
-export interface QuickEditBandeFormProps {
+interface QuickEditBandeFormProps {
   isOpen: boolean;
   onClose: () => void;
   bande: BandePorcelets;
@@ -71,13 +57,19 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string>('');
 
-  // Reset quand la sheet (re)s'ouvre ou que la bande change
-  useEffect(() => {
-    if (!isOpen) return;
-    setForm(bandeToRawInput(bande));
-    setErrors({});
-    setSaving(false);
-  }, [isOpen, bande]);
+  // Render-time sync: reset on (re)open or bande change (avoids setState-in-effect).
+  const [lastKey, setLastKey] = useState<{ isOpen: boolean; bandeId: string }>({
+    isOpen,
+    bandeId: bande.id,
+  });
+  if (lastKey.isOpen !== isOpen || lastKey.bandeId !== bande.id) {
+    setLastKey({ isOpen, bandeId: bande.id });
+    if (isOpen) {
+      setForm(bandeToRawInput(bande));
+      setErrors({});
+      setSaving(false);
+    }
+  }
 
   const handleClose = useCallback(() => {
     if (saving) return;

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
 import { Edit3, Save } from 'lucide-react';
 
@@ -28,19 +28,6 @@ import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
    diff (uniquement les champs modifiés).
    ═════════════════════════════════════════════════════════════════════════ */
 
-// Re-export pour compat (API publique v1 inchangée pour les imports legacy)
-export {
-  validateTruieEdit,
-  validateTruieEditFull,
-  frDateToIso,
-  isoDateToFr,
-} from './quickEditTruieValidation';
-export type {
-  TruieEditPatch,
-  TruieEditValidation,
-  TruieEditDraft,
-  TruieEditInitial,
-} from './quickEditTruieValidation';
 
 // ─── Options stades / statuts ──────────────────────────────────────────────
 const STADE_OPTIONS = [
@@ -127,13 +114,19 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string>('');
 
-  // Reset à chaque (re)ouverture / changement de truie
-  useEffect(() => {
-    if (!isOpen) return;
-    setDraft(initial);
-    setErrors({});
-    setSaving(false);
-  }, [isOpen, initial]);
+  // Render-time sync: reset on (re)open or truie change (avoids setState-in-effect).
+  const [lastKey, setLastKey] = useState<{ isOpen: boolean; truieId: string }>({
+    isOpen,
+    truieId: truie.id,
+  });
+  if (lastKey.isOpen !== isOpen || lastKey.truieId !== truie.id) {
+    setLastKey({ isOpen, truieId: truie.id });
+    if (isOpen) {
+      setDraft(initial);
+      setErrors({});
+      setSaving(false);
+    }
+  }
 
   const handleClose = useCallback(() => {
     if (saving) return;

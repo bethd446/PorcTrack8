@@ -13,11 +13,11 @@ async function findIds() {
   const repro = await readTableByKey('SUIVI_TRUIES_REPRODUCTION');
   if (repro.success) {
     const idIdx = repro.headers.indexOf('ID');
-    const boucleIdx = repro.headers.indexOf('BOUCLE');
-    const nomIdx = repro.headers.indexOf('NOM');
+    const boucleIdx = repro.headers.indexOf('Boucle');
+    const nomIdx = repro.headers.indexOf('Nom');
     repro.rows.forEach(r => {
-      if (r[idIdx] === 'T11' || r[boucleIdx] === '12' || r[boucleIdx] === 12 || r[boucleIdx] === '38' || r[boucleIdx] === 38) {
-        console.log(`TRUIE Found: ID=${r[idIdx]}, BOUCLE=${r[boucleIdx]}, NOM=${r[nomIdx]}`);
+      if (r[idIdx] === 'T11' || String(r[boucleIdx]) === '12' || String(r[boucleIdx]) === '38') {
+        console.log(`TRUIE Found: ID=${r[idIdx]}, Boucle=${r[boucleIdx]}, Nom=${r[nomIdx]}`);
       }
     });
   }
@@ -25,6 +25,7 @@ async function findIds() {
   console.log('--- BANDES ---');
   const bandes = await readTableByKey('PORCELETS_BANDES_DETAIL');
   if (bandes.success) {
+    console.log('Headers:', bandes.headers);
     const idIdx = bandes.headers.indexOf('ID');
     bandes.rows.forEach(r => {
       if (String(r[idIdx]).includes('26-T18-01')) {

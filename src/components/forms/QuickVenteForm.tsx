@@ -16,28 +16,7 @@ import {
   toIsoDateInput,
   validateVente,
   VENTE_ACHETEUR_MAX,
-  VENTE_MAX_POIDS_KG,
   VENTE_NOTES_MAX,
-} from './quickVenteLogic';
-
-// Re-exports pour les tests et consommateurs externes
-export {
-  buildVentePayloads,
-  buildBandeNotes,
-  computeVenteMontant,
-  toFrDate,
-  toIsoDateInput,
-  validateVente,
-  VENTE_ACHETEUR_MAX,
-  VENTE_MAX_POIDS_KG,
-  VENTE_NOTES_MAX,
-  VENTE_STATUT_VENDUE,
-} from './quickVenteLogic';
-export type {
-  BuildVentePayloadsArgs,
-  VentePayloads,
-  VenteValidationInput,
-  VenteValidationResult,
 } from './quickVenteLogic';
 
 /**
@@ -57,7 +36,7 @@ export type {
  * bande passe avant l'append finance (pas de comptabilité orpheline).
  */
 
-export interface QuickVenteFormProps {
+interface QuickVenteFormProps {
   isOpen: boolean;
   onClose: () => void;
   bande: BandePorcelets;
@@ -89,8 +68,13 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
 
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Reset quand la sheet s'ouvre ou que la bande change
-  useEffect(() => {
+  // Render-time sync: reset quand la sheet s'ouvre ou que la bande change
+  const [lastKey, setLastKey] = useState<{ isOpen: boolean; bandeId: string }>({
+    isOpen,
+    bandeId: bande.id,
+  });
+  if (lastKey.isOpen !== isOpen || lastKey.bandeId !== bande.id) {
+    setLastKey({ isOpen, bandeId: bande.id });
     if (isOpen) {
       setNbVendus('');
       setPoidsMoyen('90');
@@ -102,7 +86,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
       setSaving(false);
       setSuccess(false);
     }
-  }, [isOpen, bande.id]);
+  }
 
   // Cleanup timer à l'unmount
   useEffect(() => {
@@ -224,7 +208,6 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
         resetAndClose();
       }, 1500);
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error('[QuickVenteForm] enregistrement local échoué:', err);
       const msg = err instanceof Error ? err.message : 'Erreur enregistrement';
       setToast({ show: true, message: msg });

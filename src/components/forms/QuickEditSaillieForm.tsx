@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
 import { Edit3, Save, Calendar, Heart } from 'lucide-react';
 
@@ -12,7 +12,6 @@ import {
   frToIso,
   STATUT_OPTIONS,
   GESTATION_DAYS,
-  type SaillieEditForm,
   type SaillieEditInitial,
   type SaillieEditValidation,
 } from './quickEditSaillieValidation';
@@ -38,24 +37,7 @@ import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
    Patch PARTIEL : seuls les champs modifiés sont envoyés.
    ═════════════════════════════════════════════════════════════════════════ */
 
-// Re-exports
-export {
-  validateSaillieEdit,
-  STATUT_OPTIONS,
-  GESTATION_DAYS,
-  addDaysIso,
-  frToIso,
-  isoToFr,
-} from './quickEditSaillieValidation';
-export type {
-  SaillieEditPatch,
-  SaillieEditValidation,
-  SaillieEditForm,
-  SaillieEditInitial,
-  SaillieStatutOption,
-} from './quickEditSaillieValidation';
-
-export interface QuickEditSaillieFormProps {
+interface QuickEditSaillieFormProps {
   isOpen: boolean;
   onClose: () => void;
   saillie: Saillie;
@@ -95,29 +77,41 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string>('');
 
-  // Reset à chaque (ré)ouverture
-  useEffect(() => {
-    if (!isOpen) return;
-    setVerratId(initial.verratId);
-    setDateSaillie(initial.dateSaillie);
-    setDateMBPrevue(initial.dateMBPrevue);
-    setMbManuallyEdited(false);
-    setStatut(initial.statut);
-    setNotes(initial.notes);
-    setErrors({});
-    setSaving(false);
-  }, [isOpen, initial]);
-
-  // ── Auto-calc dateMBPrevue quand dateSaillie change (sauf si édité) ──
-  useEffect(() => {
-    if (mbManuallyEdited) return;
-    if (!dateSaillie) return;
-    const computed = addDaysIso(dateSaillie, GESTATION_DAYS);
-    if (computed && computed !== dateMBPrevue) {
-      setDateMBPrevue(computed);
+  // Render-time sync: reset on (re)open + auto-calc dateMBPrevue when dateSaillie
+  // changes (unless manually edited). Avoids setState-in-effect cascading renders.
+  const [lastKey, setLastKey] = useState<{
+    isOpen: boolean;
+    truieId: string;
+    dateSaillie: string;
+  }>({
+    isOpen,
+    truieId: saillie.truieId,
+    dateSaillie,
+  });
+  const openOrEntityChanged =
+    lastKey.isOpen !== isOpen || lastKey.truieId !== saillie.truieId;
+  const dateSaillieChanged = lastKey.dateSaillie !== dateSaillie;
+  if (openOrEntityChanged) {
+    setLastKey({ isOpen, truieId: saillie.truieId, dateSaillie });
+    if (isOpen) {
+      setVerratId(initial.verratId);
+      setDateSaillie(initial.dateSaillie);
+      setDateMBPrevue(initial.dateMBPrevue);
+      setMbManuallyEdited(false);
+      setStatut(initial.statut);
+      setNotes(initial.notes);
+      setErrors({});
+      setSaving(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateSaillie, mbManuallyEdited]);
+  } else if (dateSaillieChanged) {
+    setLastKey({ isOpen, truieId: saillie.truieId, dateSaillie });
+    if (!mbManuallyEdited && dateSaillie) {
+      const computed = addDaysIso(dateSaillie, GESTATION_DAYS);
+      if (computed && computed !== dateMBPrevue) {
+        setDateMBPrevue(computed);
+      }
+    }
+  }
 
   const handleClose = useCallback(() => {
     if (saving) return;
