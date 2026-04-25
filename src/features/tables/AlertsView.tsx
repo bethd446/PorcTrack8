@@ -38,6 +38,7 @@ import type { ChipTone } from '../../components/agritech';
 import { type FarmAlert, type AlertPriority, type AlertCategory } from '../../services/alertEngine';
 import { getPendingConfirmations, type PendingConfirmation } from '../../services/confirmationQueue';
 import { ConfirmationModal } from '../../components/ConfirmationModal';
+import type { AlerteServeur } from '../../types/farm';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Priority → color (garde la map corrigée de l'ancien fichier)
@@ -80,6 +81,167 @@ const FILTERS: FilterDef[] = [
   { id: 'BANDES', label: 'Bandes',  icon: Layers },
   { id: 'STOCK',  label: 'Stock',   icon: Box },
 ];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// formatAlertServeurMessage — transforme les données brutes Sheets en
+// phrases lisibles par un porcher. Gère les sujets/descriptions encodés
+// en JSON ainsi que les codes courts (MISEBAS, MORTALITE, STOCK…).
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface ParsedAlertePayload {
+  sujet?: string;
+  message?: string;
+  description?: string;
+  priorite?: string;
+  truieId?: string;
+  truie?: string;
+  bandeId?: string;
+  bande?: string;
+  produit?: string;
+  quantite?: number | string;
+  tauxMortalite?: number | string;
+  taux?: number | string;
+  jours?: number | string;
+  date?: string;
+  [k: string]: unknown;
+}
+
+const tryParseJson = (raw: string): ParsedAlertePayload | null => {
+  const trimmed = raw.trim();
+  if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) return null;
+  try {
+    const parsed: unknown = JSON.parse(trimmed);
+    if (parsed && typeof parsed === 'object') return parsed as ParsedAlertePayload;
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+/** Première valeur non vide parmi une liste — retourne `undefined` sinon. */
+const pickFirst = (...vals: Array<string | number | undefined | null>): string | undefined => {
+  for (const v of vals) {
+    if (v === undefined || v === null) continue;
+    const s = String(v).trim();
+    if (s.length > 0) return s;
+  }
+  return undefined;
+};
+
+/** Reformate un sujet brut (`MORTALITE_LOT`, `MISE_BAS`…) en phrase capitalisée. */
+const humanizeSubject = (raw: string): string => {
+  const cleaned = raw.replace(/[_-]+/g, ' ').toLowerCase().trim();
+  if (!cleaned) return 'Alerte serveur';
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+};
+
+interface FormattedAlerte {
+  title: string;
+  description: string;
+}
+
+/**
+ * Convertit un `AlerteServeur` (potentiellement encodé en JSON ou en codes
+ * courts) vers un titre + une description lisibles en français.
+ */
+const formatAlertServeurMessage = (a: AlerteServeur): FormattedAlerte => {
+  // Les champs serveur peuvent être du JSON brut — on tente le parse sur
+  // chaque champ texte et on fusionne.
+  const parsedSujet = tryParseJson(a.sujet);
+  const parsedDesc = tryParseJson(a.description);
+  const parsedAction = tryParseJson(a.actionRequise);
+  const merged: ParsedAlertePayload = {
+    ...(parsedSujet ?? {}),
+    ...(parsedDesc ?? {}),
+    ...(parsedAction ?? {}),
+  };
+
+  // Sujet effectif : champ JSON `sujet` > sujet brut nettoyé.
+  const rawSujet = pickFirst(merged.sujet, parsedSujet ? undefined : a.sujet) ?? '';
+  const sujetUpper = rawSujet.toUpperCase();
+
+  const truieId = pickFirst(merged.truieId, merged.truie);
+  const bandeId = pickFirst(merged.bandeId, merged.bande);
+  const produit = pickFirst(merged.produit);
+  const quantite = pickFirst(merged.quantite as string | number | undefined);
+  const taux = pickFirst(
+    merged.tauxMortalite as string | number | undefined,
+    merged.taux as string | number | undefined,
+  );
+  const jours = pickFirst(merged.jours as string | number | undefined);
+  const datePayload = pickFirst(merged.date, a.date);
+
+  // Mise-bas
+  if (sujetUpper.includes('MISEBAS') || sujetUpper.includes('MISE_BAS') || sujetUpper.includes('MISE BAS')) {
+    const who = truieId ?? 'truie inconnue';
+    const when = datePayload ? ` le ${datePayload}` : '';
+    return {
+      title: 'Mise-bas prévue',
+      description: `Mise-bas prévue pour ${who}${when}.`,
+    };
+  }
+
+  // Mortalité
+  if (sujetUpper.includes('MORTALIT')) {
+    const lot = bandeId ? `lot ${bandeId}` : 'lot inconnu';
+    const tauxStr = taux !== undefined ? ` (${taux}%)` : '';
+    return {
+      title: 'Mortalité élevée',
+      description: `Taux de mortalité élevé — ${lot}${tauxStr}.`,
+    };
+  }
+
+  // Stock
+  if (sujetUpper.includes('STOCK')) {
+    const prod = produit ? produit : 'aliment';
+    const qte = quantite !== undefined ? ` — ${quantite} kg restants` : '';
+    return {
+      title: `Stock ${prod} critique`,
+      description: `Stock ${prod} critique${qte}.`,
+    };
+  }
+
+  // Sevrage
+  if (sujetUpper.includes('SEVRAGE')) {
+    const lot = bandeId ? `bande ${bandeId}` : 'bande inconnue';
+    const j = jours !== undefined ? ` (J+${jours})` : '';
+    return {
+      title: 'Sevrage à confirmer',
+      description: `Sevrage à confirmer — ${lot}${j}.`,
+    };
+  }
+
+  // Retour chaleur
+  if (sujetUpper.includes('RETOUR_CHALEUR') || sujetUpper.includes('RETOUR CHALEUR') || sujetUpper.includes('CHALEUR')) {
+    const who = truieId ?? 'truie inconnue';
+    return {
+      title: 'Retour chaleur',
+      description: `Retour chaleur à surveiller — ${who}.`,
+    };
+  }
+
+  // Échographie
+  if (sujetUpper.includes('ECHO')) {
+    const who = truieId ?? 'truie inconnue';
+    const j = jours !== undefined ? ` (${jours} jours post-saillie)` : '';
+    return {
+      title: 'Fenêtre échographie',
+      description: `Fenêtre échographie — ${who}${j}.`,
+    };
+  }
+
+  // Aucune règle ne matche : on retourne le message JSON s'il existe,
+  // sinon la description Sheets, sinon le sujet humanisé.
+  const generic =
+    pickFirst(merged.message, merged.description, parsedDesc ? undefined : a.description) ??
+    pickFirst(parsedAction ? undefined : a.actionRequise) ??
+    '';
+  const titleGeneric = humanizeSubject(rawSujet || 'Alerte serveur');
+  return {
+    title: titleGeneric,
+    description: generic || `${titleGeneric}.`,
+  };
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AlertDenseRow — line item dans les sections Serveur / Locales
@@ -362,23 +524,31 @@ const AlertsView: React.FC = () => {
                   }
                 />
                 <ul className="flex flex-col gap-2" aria-label="Liste alertes serveur">
-                  {alertesServeur.map((a, i) => (
-                    <li key={`srv-${i}-${a.sujet}-${a.date}`}>
-                      <AlertDenseRow
-                        priority={a.priorite}
-                        title={a.sujet}
-                        description={
-                          a.actionRequise
-                            ? `${a.description} — ${a.actionRequise}`
-                            : a.description
-                        }
-                        categoryLabel={a.categorie}
-                        metaLabel={a.date || undefined}
-                        extraChip={{ label: 'SRV', tone: 'blue' }}
-                        ariaRole={a.priorite === 'CRITIQUE' ? 'alert' : 'listitem'}
-                      />
-                    </li>
-                  ))}
+                  {alertesServeur.map((a, i) => {
+                    const formatted = formatAlertServeurMessage(a);
+                    // Si l'action requise est elle-même du JSON, on la rejette ;
+                    // sinon on la concatène à la description pour donner le
+                    // contexte d'action au porcher.
+                    const actionTrimmed = a.actionRequise?.trim() ?? '';
+                    const actionIsJson = actionTrimmed.startsWith('{') && actionTrimmed.endsWith('}');
+                    const description =
+                      !actionIsJson && actionTrimmed.length > 0
+                        ? `${formatted.description} — ${actionTrimmed}`
+                        : formatted.description;
+                    return (
+                      <li key={`srv-${i}-${a.sujet}-${a.date}`}>
+                        <AlertDenseRow
+                          priority={a.priorite}
+                          title={formatted.title}
+                          description={description}
+                          categoryLabel={a.categorie}
+                          metaLabel={a.date || undefined}
+                          extraChip={{ label: 'SRV', tone: 'blue' }}
+                          ariaRole={a.priorite === 'CRITIQUE' ? 'alert' : 'listitem'}
+                        />
+                      </li>
+                    );
+                  })}
                 </ul>
               </section>
             )}

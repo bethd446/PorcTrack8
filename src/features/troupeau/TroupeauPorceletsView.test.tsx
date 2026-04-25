@@ -108,11 +108,11 @@ describe('TroupeauPorceletsView — logique de dérivation', () => {
     expect(sm.porcelets).toBe(11 + 13 + 10 + 14);
   });
 
-  it('section Post-sevrage : 4 loges avec les bons chiffres (23 / 22 / 28 / 29)', () => {
+  it('section Post-sevrage : 6 loges (4 occupées 23/22/28/29, 2 vides)', () => {
     const repart = FARM_CONFIG.POST_SEVRAGE_LOGES_REPARTITION;
-    expect(repart.length).toBe(4);
-    expect(repart.map(l => l.id)).toEqual(['Loge 1', 'Loge 2', 'Loge 3', 'Loge 4']);
-    expect(repart.map(l => l.porcelets)).toEqual([23, 22, 28, 29]);
-    expect(computePostSevrageTotal()).toBe(102);
+    expect(repart.length).toBe(6);
+    expect(repart.map(l => l.id)).toEqual(['Loge 1', 'Loge 2', 'Loge 3', 'Loge 4', 'Loge 5', 'Loge 6']);
+    expect(repart.map(l => l.porcelets)).toEqual([23, 22, 28, 29, 0, 0]);
+    expect(computePostSevrageTotal()).toBe(102); // total inchangé (loges 5+6 = 0)
   });
 });

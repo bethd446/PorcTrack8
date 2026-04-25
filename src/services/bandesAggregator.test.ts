@@ -175,15 +175,15 @@ describe('logesMaterniteOccupation', () => {
 });
 
 describe('logesPostSevrageOccupation', () => {
-  it('retourne OK à 75% quand 3 portées sevrées sur 4 loges', () => {
+  it('retourne OK à 50% quand 3 portées sevrées sur 6 loges', () => {
     const bandes: BandePorcelets[] = [
       ...Array.from({ length: 3 }, () => makeBande('Sevrés')),
       makeBande('Sous mère'),
     ];
     const r = logesPostSevrageOccupation(bandes);
     expect(r.occupees).toBe(3);
-    expect(r.capacite).toBe(4);
-    expect(r.tauxPct).toBe(75);
+    expect(r.capacite).toBe(6);
+    expect(r.tauxPct).toBe(50);
     expect(r.alerte).toBe('OK');
   });
 
@@ -199,7 +199,7 @@ describe('logesPostSevrageOccupation', () => {
     };
     const r = logesPostSevrageOccupation([engr, recent], today);
     expect(r.occupees).toBe(1); // uniquement la bande post-sevrage
-    expect(r.capacite).toBe(4);
+    expect(r.capacite).toBe(6);
   });
 });
 
@@ -290,7 +290,7 @@ describe('countBandesByPhase', () => {
 });
 
 describe('logesEngraissementOccupation', () => {
-  it('retourne FULL à 100% quand 2 bandes saturent les 2 loges', () => {
+  it('retourne OK à 33% quand 2 bandes occupent 6 loges engraissement', () => {
     const today = new Date(2026, 3, 17);
     const bandes: BandePorcelets[] = [
       { ...makeBande('Sevrés'), dateSevrageReelle: '05/02/2026' }, // 70j → engraissement (post-DST)
@@ -298,9 +298,9 @@ describe('logesEngraissementOccupation', () => {
     ];
     const r = logesEngraissementOccupation(bandes, today);
     expect(r.occupees).toBe(2);
-    expect(r.capacite).toBe(2);
-    expect(r.tauxPct).toBe(100);
-    expect(r.alerte).toBe('FULL');
+    expect(r.capacite).toBe(6);
+    expect(r.tauxPct).toBe(33);
+    expect(r.alerte).toBe('OK');
   });
 
   it('retourne OK à 0% quand aucune bande en engraissement', () => {
@@ -311,7 +311,7 @@ describe('logesEngraissementOccupation', () => {
     ];
     const r = logesEngraissementOccupation(bandes, today);
     expect(r.occupees).toBe(0);
-    expect(r.capacite).toBe(2);
+    expect(r.capacite).toBe(6);
     expect(r.tauxPct).toBe(0);
     expect(r.alerte).toBe('OK');
   });

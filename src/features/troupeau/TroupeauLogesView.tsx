@@ -316,7 +316,7 @@ const TroupeauLogesView: React.FC = () => {
         </div>
       </div>
 
-      {/* ── Post-sevrage (4 loges, teal) ─────────────────────────────────── */}
+      {/* ── Post-sevrage (6 loges, teal) ─────────────────────────────────── */}
       <div>
         <SectionDivider
           label={`Post-sevrage · ${FARM_CONFIG.POST_SEVRAGE_LOGES_CAPACITY} loges`}
@@ -324,6 +324,11 @@ const TroupeauLogesView: React.FC = () => {
         <div className="grid grid-cols-2 gap-2">
           {FARM_CONFIG.POST_SEVRAGE_LOGES_REPARTITION.map((rep, i) => {
             const pct = Math.min(100, Math.round((rep.porcelets / 30) * 100));
+            // @ts-ignore - props added in config
+            const aliment = rep.aliment === 'DEMARRAGE_2' ? 'Démarrage 2' : '';
+            // @ts-ignore
+            const debut = rep.debutAliment;
+
             return (
               <div
                 key={rep.id}
@@ -356,12 +361,20 @@ const TroupeauLogesView: React.FC = () => {
                     }}
                   />
                 </div>
-                <span
-                  className="font-mono text-[10px]"
-                  style={{ color: 'var(--text-2)' }}
-                >
-                  {rep.porcelets} / 30 porcelets
-                </span>
+                <div className="flex justify-between items-end">
+                  <span
+                    className="font-mono text-[10px]"
+                    style={{ color: 'var(--text-2)' }}
+                  >
+                    {rep.porcelets} / 30 têtes
+                  </span>
+                  {aliment && (
+                    <div className="text-right">
+                      <p className="font-mono text-[9px] uppercase text-accent font-bold">{aliment}</p>
+                      {debut && <p className="font-mono text-[8px] text-text-2">depuis {debut}</p>}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}

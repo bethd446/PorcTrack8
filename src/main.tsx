@@ -23,6 +23,8 @@ import { logger } from './services/logger';
 import { requestPermission as requestNotifPermission } from './services/notifications';
 import { hydrateKvStore, migrateLegacyLocalStorage, kvGet, kvSet } from './services/kvStore';
 import { applyThemeVariant, type ThemeVariant } from './services/themeAuto';
+import { FARM_CONFIG } from './config/farm';
+import { getSupportWhatsapp, setSupportWhatsapp } from './services/supportContact';
 
 setupIonicReact();
 
@@ -56,6 +58,24 @@ applyThemeVariant(readVariantSync());
     // la variante pour couvrir le cas où la valeur n'était pas encore lisible
     // au démarrage synchrone ci-dessus.
     applyThemeVariant(readVariantSync());
+
+    // Seed du numéro WhatsApp support si non configuré → l'écran Aide est
+    // utilisable dès le premier lancement. L'admin peut surcharger dans Réglages.
+    if (!getSupportWhatsapp() && FARM_CONFIG.SUPPORT_WHATSAPP_DEFAULT) {
+      setSupportWhatsapp(FARM_CONFIG.SUPPORT_WHATSAPP_DEFAULT);
+    }
+
+    // Pré-configuration GAS depuis l'env de build (VITE_GAS_URL / VITE_GAS_TOKEN).
+    // Si présents au build et absents du kvStore → seed automatique pour que
+    // l'app soit fonctionnelle dès l'installation, sans saisie manuelle.
+    const envGasUrl = import.meta.env.VITE_GAS_URL as string | undefined;
+    const envGasToken = import.meta.env.VITE_GAS_TOKEN as string | undefined;
+    if (envGasUrl && !kvGet('gas_url')) {
+      void kvSet('gas_url', envGasUrl);
+    }
+    if (envGasToken && !kvGet('gas_token')) {
+      void kvSet('gas_token', envGasToken);
+    }
   } catch (e) {
     logger.warn('Init', 'kvStore bootstrap failed', e);
   }

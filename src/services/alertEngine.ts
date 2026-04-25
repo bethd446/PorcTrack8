@@ -366,10 +366,15 @@ function checkRetourChaleur(
  * R4 — Mortalité Anormale dans une Bande
  * Déclenché si morts > 15% des nés vivants
  *
- * Garde-fous importants (cf. bug "Mortalité 100%" x10 faux positifs) :
+ * Garde-fous importants (cf. bug "Mortalité 100%" x12 faux positifs) :
  *  - Ignore les lignes RECAP (agrégats non-réels issus du Sheet).
- *  - Ignore les bandes déjà Sevrés/Sevrée/Archivée (porcelets sortis de
- *    maternité — un `vivants=0` y signifie "déjà transférés", pas "morts").
+ *  - Ignore TOUTE bande déjà sevrée — détection multi-critères :
+ *      • `dateSevrageReelle` non vide (indicateur principal du sevrage),
+ *      • `statut` matche /sevr/i (Sevrés, Sevrée, Post-sevrage, Engraissement
+ *        post-sevrage…) ou Archivée,
+ *      • séparation par sexe déjà faite (`nbMales`/`nbFemelles`/
+ *        `dateSeparation`/`logeEngraissement`) — toujours post-sevrage.
+ *    Sur ces bandes, un `vivants=0` signifie "déjà transférés", pas "morts".
  *  - Ignore les bandes sans naissances enregistrées (`nv === 0`) : diviser
  *    par zéro ou traiter `0/0` comme 100% n'a pas de sens métier.
  *  - Ignore les bandes sans mortalité enregistrée (`morts === 0`) : évite
@@ -379,12 +384,20 @@ function checkRetourChaleur(
 function checkMortalite(bande: BandePorcelets): FarmAlert | null {
   // Exclure les lignes RECAP et les bandes hors maternité (porcelets sortis)
   const statut = bande.statut;
-  if (
-    statut === 'RECAP' ||
-    statut === 'Sevrés' ||
-    statut === 'Sevrée' ||
-    statut === 'Archivée'
-  ) return null;
+  if (statut === 'RECAP') return null;
+
+  // Garde sevrage — la bande est déjà sortie de maternité dès qu'un de ces
+  // signaux est présent. Couvre les variantes Sheet : "Sevrés", "Sevrée",
+  // "Post-sevrage", "Engraissement", "Finition", etc.
+  const isSevree =
+    !!bande.dateSevrageReelle ||
+    /sevr/i.test(statut || '') ||
+    /archiv/i.test(statut || '') ||
+    bande.nbMales != null ||
+    bande.nbFemelles != null ||
+    !!bande.dateSeparation ||
+    !!bande.logeEngraissement;
+  if (isSevree) return null;
 
   const nv = bande.nv ?? 0;
   const morts = bande.morts ?? 0;

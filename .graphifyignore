@@ -1,0 +1,13 @@
+# graphifyignore — exclure les dossiers non pertinents pour le graphe de code
+node_modules/
+dist/
+build/
+coverage/
+graphify-out/
+android/
+ios/
+.claude/
+*.test.tsx
+*.test.ts
+*.spec.ts
+*.d.ts

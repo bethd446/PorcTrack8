@@ -516,12 +516,13 @@ export const mapAlerteServeur = (header: string[], row: RawRow): AlerteServeur |
   const daIdx = findIdx(header, 'DATE');
 
   const descRaw = readStr(row, deIdx);
-  // Filtre rows fantômes : le GAS script émet des alertes "Mortalité élevée: 100%" avec
-  // des timestamps Unix en lieu et place des champs morts/nv. Signature : "100%" suivi
-  // de "(1xxxxxxxxxx…/" (timestamp 10+ digits) + GMT date.
-  // Note: \w doesn't match French accents (é, è, etc.), so we use .* instead
-  // to catch "Mortalité élevée: 100%", "Mortalité urgente: 100%", etc.
-  if (/mortalit[eé].*:\s*100\s*%.*\(\d{10,}.*GMT/i.test(descRaw)) {
+  // Le GAS script calcule la mortalité via (NV-VIVANTS)/NV au lieu de lire la colonne
+  // MORTS. Les portées sevrées ont VIVANTS=0 → le script génère "Mortalité élevée: 100%"
+  // pour TOUTES les bandes sevrées. Ces alertes sont de faux positifs : la détection
+  // locale (alertEngine.ts R4) utilise la colonne MORTS directement et est fiable.
+  // On filtre toute alerte GAS atteignant 100% de mortalité, quel que soit son format
+  // (ancien format avec timestamp Unix+GMT, nouveau format sans timestamp).
+  if (/mortalit[eé].*:\s*100\s*%/i.test(descRaw)) {
     return null;
   }
 

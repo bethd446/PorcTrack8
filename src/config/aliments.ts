@@ -23,6 +23,7 @@ import type { FormuleRowSheets } from '../types/farm';
 
 export type PhaseCode =
   | 'DEMARRAGE_1'
+  | 'DEMARRAGE_2'
   | 'CROISSANCE'
   | 'FINITION'
   | 'TRUIE_GESTATION'
@@ -60,7 +61,7 @@ export interface FormuleAliment {
 }
 
 /**
- * Valeurs par défaut (5 formules validées technicien K13 · 04/2026).
+ * Valeurs par défaut (6 formules validées technicien K13 · 04/2026).
  * Utilisées si la feuille `ALIMENT_FORMULES` est indisponible ou vide.
  * Le nom FORMULES_ALIMENT_FALLBACK est requis par le contrat public.
  */
@@ -81,6 +82,21 @@ export const FORMULES_ALIMENT_FALLBACK: FormuleAliment[] = [
       { nom: 'Lysine', dose: 1, unite: 'kg/T' },
       { nom: 'Méthionine', dose: 0.5, unite: 'kg/T' },
       { nom: 'Enzymes', dose: 300, unite: 'g/T' },
+    ],
+  },
+  {
+    code: 'DEMARRAGE_2',
+    nom: 'Porcelets — Démarrage 2',
+    phase: 'Post-sevrage tardif (> J42)',
+    poidsRange: '15 → 25 kg',
+    ingredients: [
+      { nom: 'KPC 5', pourcent: 6 },
+      { nom: 'Maïs', pourcent: 66 },
+      { nom: 'Son de blé', pourcent: 8 },
+      { nom: 'Tourteau de soja', pourcent: 20 },
+    ],
+    additifs: [
+      { nom: 'BIMESTIMUL', dose: 1.5, unite: 'kg/T' },
     ],
   },
   {
@@ -149,6 +165,7 @@ export const FORMULES_ALIMENT_FALLBACK: FormuleAliment[] = [
 /** Libellés courts (chip / labels UI) indexés par code. */
 export const PHASE_LABELS: Record<PhaseCode, string> = {
   DEMARRAGE_1: 'Démarrage 1',
+  DEMARRAGE_2: 'Démarrage 2',
   CROISSANCE: 'Croissance',
   FINITION: 'Finition',
   TRUIE_GESTATION: 'Gestation',
@@ -158,6 +175,7 @@ export const PHASE_LABELS: Record<PhaseCode, string> = {
 /** Tone Chip associée à chaque phase (cohérence visuelle transverse). */
 export const PHASE_TONES: Record<PhaseCode, 'accent' | 'amber' | 'blue' | 'gold'> = {
   DEMARRAGE_1: 'amber',
+  DEMARRAGE_2: 'amber',
   CROISSANCE: 'accent',
   FINITION: 'accent',
   TRUIE_GESTATION: 'blue',
@@ -181,6 +199,7 @@ export function findFormuleByPhase(code: PhaseCode): FormuleAliment | undefined 
 /** Codes phase connus — utilisé pour filtrer / typer à l'agrégation. */
 const KNOWN_PHASE_CODES: readonly PhaseCode[] = [
   'DEMARRAGE_1',
+  'DEMARRAGE_2',
   'CROISSANCE',
   'FINITION',
   'TRUIE_GESTATION',
@@ -193,6 +212,11 @@ const PHASE_DEFAULT_NOMS: Record<PhaseCode, { nom: string; phase: string; poidsR
     nom: 'Porcelets — Démarrage 1',
     phase: 'Post-sevrage (J21-J42)',
     poidsRange: '7 → 15 kg',
+  },
+  DEMARRAGE_2: {
+    nom: 'Porcelets — Démarrage 2',
+    phase: 'Post-sevrage tardif (> J42)',
+    poidsRange: '15 → 25 kg',
   },
   CROISSANCE: {
     nom: 'Croissance',

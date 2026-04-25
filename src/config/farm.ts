@@ -23,18 +23,23 @@ export const FARM_CONFIG = {
   FARM_ID: 'K13',
   /** Nom affiché de la ferme. */
   FARM_NAME: 'Ferme K13',
-  /** Numéro WhatsApp par défaut du support (vide = non configuré, à saisir dans Réglages). */
-  SUPPORT_WHATSAPP_DEFAULT: '',
+  /**
+   * Numéro WhatsApp par défaut du support (placeholder).
+   * Pré-rempli au premier boot via `main.tsx` si aucun numéro n'est configuré.
+   * Format libre — `buildWhatsappUrl` normalise (ne garde que les chiffres).
+   * Admin peut surcharger dans Réglages → Contact support.
+   */
+  SUPPORT_WHATSAPP_DEFAULT: '+225 07 07 07 07 07',
   /** Nombre de loges de maternité (chauffage porcelets) — 1 loge = 1 truie + portée sous-mère J0→J28. */
   MATERNITE_LOGES_CAPACITY: 9,
   /** Nombre de loges post-sevrage — porcelets groupés après sevrage (J28), jusqu'à ~2 mois d'âge (J60). */
-  POST_SEVRAGE_LOGES_CAPACITY: 4,
+  POST_SEVRAGE_LOGES_CAPACITY: 6,
   /**
    * Nombre de loges croissance-finition — porcelets séparés par sexe (1 loge mâles, 1 loge femelles).
    * Même loge utilisée de la croissance (J60) à la finition (J180).
    * Nommée "engraissement" historiquement dans le code ; désigne la phase complète croissance→finition.
    */
-  ENGRAISSEMENT_LOGES_CAPACITY: 2,
+  ENGRAISSEMENT_LOGES_CAPACITY: 6,
   /**
    * Âge au sevrage (jours depuis la mise-bas). Sortie de loge maternité.
    * Ferme K13 : sevrage à J28 (4 semaines).
@@ -52,14 +57,16 @@ export const FARM_CONFIG = {
    */
   POST_SEVRAGE_DUREE_JOURS: 32,
   /**
-   * Répartition manuelle des porcelets dans les 4 loges post-sevrage.
-   * Source : relevé porcher du 19/04/2026 · à synchroniser via Sheets quand colonne dédiée.
-   * Total attendu : 102 porcelets.
+   * Répartition manuelle des porcelets dans les 6 loges post-sevrage.
+   * Source : relevé porcher du 25/04/2026 · à synchroniser via Sheets quand colonne dédiée.
+   * Total attendu : 102 porcelets (sur les 4 premières).
    */
   POST_SEVRAGE_LOGES_REPARTITION: [
-    { id: 'Loge 1', porcelets: 23 },
-    { id: 'Loge 2', porcelets: 22 },
-    { id: 'Loge 3', porcelets: 28 },
-    { id: 'Loge 4', porcelets: 29 },
+    { id: 'Loge 1', porcelets: 23, aliment: 'DEMARRAGE_2', debutAliment: '28/03/2026' },
+    { id: 'Loge 2', porcelets: 22, aliment: 'DEMARRAGE_2', debutAliment: '28/03/2026' },
+    { id: 'Loge 3', porcelets: 28, aliment: 'DEMARRAGE_2', debutAliment: '28/03/2026' },
+    { id: 'Loge 4', porcelets: 29, aliment: 'DEMARRAGE_2', debutAliment: '25/04/2026' },
+    { id: 'Loge 5', porcelets: 0 },
+    { id: 'Loge 6', porcelets: 0 },
   ] as const,
 } as const;

@@ -93,11 +93,11 @@ describe('TroupeauLogesView', () => {
     cleanup();
   });
 
-  it('affiche le summary strip (totaux 15 loges + chips par phase)', () => {
+  it('affiche le summary strip (totaux 21 loges + chips par phase)', () => {
     render(<TroupeauLogesView />);
     const strip = screen.getByTestId('loges-summary-strip');
-    // Total loges = 9 + 4 + 2 = 15
-    expect(within(strip).getByText('15')).toBeTruthy();
+    // Total loges = 9 maternité + 6 post-sevrage + 6 engraissement = 21
+    expect(within(strip).getByText('21')).toBeTruthy();
     // Chips par phase (2 truies en maternité dans les fixtures)
     expect(within(strip).getByText(/2 truies en mat/i)).toBeTruthy();
     expect(within(strip).getByText(/bandes post-sev/i)).toBeTruthy();
