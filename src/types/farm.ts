@@ -22,7 +22,7 @@ export type TruieStatut =
 
 export type VerratStatut = 'Actif' | string;
 
-export type BandeStatut = 'Sous mère' | 'Sevrés' | 'RECAP' | string;
+export type BandeStatut = 'Sous mère' | 'Sevrés' | 'En croissance' | 'En finition' | 'RECAP' | string;
 
 export type StockStatut = 'OK' | 'BAS' | 'RUPTURE' | string;
 
@@ -157,6 +157,18 @@ export interface Saillie {
   statut?: string;
   notes?: string;
   raw?: unknown[];
+}
+
+/** Enregistrement d'une transition de phase confirmée par l'utilisateur. */
+export interface TransitionBande {
+  bandeId: string;
+  anciennePhase: string;   // ex: 'SOUS_MERE'
+  nouvellePhase: string;   // ex: 'POST_SEVRAGE' ou 'SORTIE'
+  date: string;            // 'DD/MM/YYYY'
+  utilisateur: string;     // rôle ou nom (ex: 'PORCHER')
+  poidsKg?: number;
+  ageJours?: number;
+  notes?: string;
 }
 
 /** Niveau de performance synthétique — code couleur dans l'UI. */

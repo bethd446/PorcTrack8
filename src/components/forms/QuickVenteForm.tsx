@@ -195,7 +195,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
 
       // Refresh parent (non-bloquant)
       try {
-        await refreshData();
+        await refreshData(true);
       } catch {
         /* queue offline applique déjà */
       }

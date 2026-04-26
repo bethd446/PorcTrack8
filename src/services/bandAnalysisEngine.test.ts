@@ -38,7 +38,9 @@ describe('bandAnalysisEngine — namespaces', () => {
       expect(Bandes.countByPhase(emptyBandes)).toEqual({
         SOUS_MERE: 0,
         POST_SEVRAGE: 0,
+        CROISSANCE: 0,
         ENGRAISSEMENT: 0,
+        FINITION: 0,
       });
     });
 

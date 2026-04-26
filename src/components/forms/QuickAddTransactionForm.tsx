@@ -117,7 +117,7 @@ const QuickAddTransactionForm: React.FC<QuickAddTransactionFormProps> = ({
       const online = typeof navigator !== 'undefined' && navigator.onLine;
       setToast(online ? 'Transaction ajoutée' : 'Transaction en file · sync auto');
       try {
-        await refreshData();
+        await refreshData(true);
       } catch {
         /* noop */
       }

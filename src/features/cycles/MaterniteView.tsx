@@ -1,17 +1,17 @@
 import React, { useMemo, useState } from 'react';
 import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
 import { useNavigate } from 'react-router-dom';
-import { Baby, Edit3, Plus } from 'lucide-react';
+import {
+  Baby, Plus, Scale, Droplets,
+  ArrowUpRight, AlertCircle, Lock
+} from 'lucide-react';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import AgritechNav from '../../components/AgritechNav';
 import {
   KpiCard,
   Chip,
-  DataRow,
   SectionDivider,
-  type ChipTone,
-  type KpiTone,
 } from '../../components/agritech';
 import { TruieIcon } from '../../components/icons';
 import QuickMiseBasForm from '../../components/forms/QuickMiseBasForm';
@@ -19,112 +19,33 @@ import { useFarm } from '../../context/FarmContext';
 import {
   logesMaterniteOccupation,
   filterRealPortees,
-  type LogeOccupation,
-  type LogeOccupationAlerte,
 } from '../../services/bandesAggregator';
+import { FARM_CONFIG } from '../../config/farm';
+import {
+  computePhaseTerrain,
+  detectPendingTransitions,
+  PHASE_LABEL
+} from '../../services/phaseEngine';
 import type { BandePorcelets, Truie } from '../../types/farm';
 
 /**
- * MaterniteView — vue opérationnelle "maternité" (K13).
- *
- * Pour chaque truie en maternité (statut "En maternité" / "allaitante" / "lactation"),
- * affiche :
- *  - sa portée sous-mère (reliée via `bande.truie === truie.id` OU
- *    `bande.boucleMere === truie.boucle`)
- *  - le nb de jours depuis la mise-bas (J+X)
- *  - un état chip (récent / proche sevrage J+18+ / mortalité >15%)
- *
- * Source de capacité : `FARM_CONFIG.MATERNITE_LOGES_CAPACITY` (9 loges chauffage).
- * Pas de pesées J3/J7/J14/J28 à ce sprint (placeholder UX).
+ * MaterniteView — Hub Cycles / Maternité
+ * ════════════════════════════════════════════════════════════════════════════
+ * Refonte Premium Agritech :
+ * - Intégration Phase Engine (Sevrage J28)
+ * - Monitoring nutritionnel (Truie Lactation)
+ * - Suivi des pesées milestones
  */
 
-// ─── Constantes métier (ferme K13 · sevrage J28) ────────────────────────────
-const SEVRAGE_JOURS = 28;
+// ─── Constantes métier ──────────────────────────────────────────────────────
 const SEVRAGE_PROCHE_JOURS = 25;
 const MORTALITE_SEUIL_PCT = 15;
-
-// ─── Helpers internes ───────────────────────────────────────────────────────
-
-/** Parse une date au format `dd/MM/yyyy` ou `YYYY-MM-DD[…]`. */
-function parseDate(s?: string): Date | null {
-  if (!s) return null;
-  const fr = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (fr) return new Date(Number(fr[3]), Number(fr[2]) - 1, Number(fr[1]));
-  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (iso) return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
-  return null;
-}
-
-/** Diff en jours entier (today − date). `null` si date invalide. */
-function daysSince(s: string | undefined, today: Date): number | null {
-  const d = parseDate(s);
-  if (!d) return null;
-  const diffMs = today.getTime() - d.getTime();
-  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
-}
-
-/** Retourne la portée sous-mère associée à une truie (match par id ou boucle). */
-function getTruiePortee(
-  truie: Truie,
-  bandes: BandePorcelets[]
-): BandePorcelets | undefined {
-  const sm = bandes.filter(b => /sous.m/i.test(b.statut ?? ''));
-  return sm.find(b => {
-    if (b.truie && b.truie === truie.id) return true;
-    if (b.boucleMere && truie.boucle && b.boucleMere === truie.boucle) return true;
-    return false;
-  });
-}
-
-/** Pourcentage de mortalité d'une portée (0 si NV = 0). */
-function mortsPercent(bande: BandePorcelets | undefined): number {
-  if (!bande) return 0;
-  const nv = bande.nv ?? 0;
-  const morts = bande.morts ?? 0;
-  if (nv <= 0) return 0;
-  return (morts / nv) * 100;
-}
-
-/** Tone pour la Chip d'état porté par chaque row. */
-function porteeStateChip(
-  bande: BandePorcelets | undefined,
-  jSinceMB: number | null
-): { label: string; tone: ChipTone } {
-  if (!bande) return { label: 'Sans portée', tone: 'default' };
-  if (mortsPercent(bande) > MORTALITE_SEUIL_PCT) {
-    return { label: `Mortalité ${Math.round(mortsPercent(bande))}%`, tone: 'red' };
-  }
-  if (jSinceMB !== null && jSinceMB >= SEVRAGE_PROCHE_JOURS) {
-    return { label: `Sevrage J+${jSinceMB}`, tone: 'gold' };
-  }
-  return { label: 'Sous mère', tone: 'accent' };
-}
-
-/** Couleur de bordure gauche — gold si proche sevrage, red si mortalité, accent sinon. */
-function rowBorderColor(
-  bande: BandePorcelets | undefined,
-  jSinceMB: number | null
-): string {
-  if (!bande) return 'border-l-border';
-  if (mortsPercent(bande) > MORTALITE_SEUIL_PCT) return 'border-l-red';
-  if (jSinceMB !== null && jSinceMB >= SEVRAGE_PROCHE_JOURS) return 'border-l-gold';
-  return 'border-l-accent';
-}
-
-/** Tone de Chip pour le badge d'alerte loges (réutilisé de TroupeauHub). */
-function chipToneForAlerte(alerte: LogeOccupationAlerte): ChipTone {
-  if (alerte === 'FULL') return 'red';
-  if (alerte === 'HIGH') return 'amber';
-  return 'accent';
-}
-
-// ─── Composant principal ────────────────────────────────────────────────────
+const PESEE_MILESTONES = [3, 7, 14, 21, 28];
 
 const MaterniteView: React.FC = () => {
   const navigate = useNavigate();
   const { truies, bandes, refreshData } = useFarm();
 
-  // Modal QuickMiseBasForm — ouvert via bouton principal ou depuis une row
   const [miseBasOpen, setMiseBasOpen] = useState(false);
   const [miseBasDefaultTruieId, setMiseBasDefaultTruieId] = useState<string | undefined>();
 
@@ -135,7 +56,6 @@ const MaterniteView: React.FC = () => {
 
   const today = useMemo(() => new Date(), []);
 
-  // Truies actuellement en maternité
   const truiesEnMat = useMemo<Truie[]>(
     () =>
       truies
@@ -149,31 +69,34 @@ const MaterniteView: React.FC = () => {
     [truies]
   );
 
-  // Portées réelles (exclut RECAP) pour éviter les doublons d'agrégat
   const porteesReelles = useMemo(() => filterRealPortees(bandes), [bandes]);
+  const pendingTransitions = useMemo(() => detectPendingTransitions(porteesReelles, today), [porteesReelles, today]);
 
-  // Pour chaque truie : portée + J+X + pcts
   const rows = useMemo(() => {
     return truiesEnMat.map(truie => {
       const portee = getTruiePortee(truie, porteesReelles);
       const jSinceMB = daysSince(portee?.dateMB, today);
-      return { truie, portee, jSinceMB };
-    });
-  }, [truiesEnMat, porteesReelles, today]);
+      const terrainPhase = portee ? computePhaseTerrain(portee, today) : null;
 
-  // Agrégations summary
+      const transition = portee ? pendingTransitions.find(t => t.bandeId === portee.id) : null;
+      const status = {
+        isBloquant: transition?.isBloquant ?? false,
+        joursEnRetard: transition?.joursEnRetard ?? 0,
+        urgence: transition?.urgence ?? 'NORMALE'
+      };
+
+      return { truie, portee, jSinceMB, terrainPhase, status };
+    });
+  }, [truiesEnMat, porteesReelles, today, pendingTransitions]);
+
   const summary = useMemo(() => {
-    const occupation: LogeOccupation = logesMaterniteOccupation(truies);
-    const totalVivants = rows.reduce(
-      (acc, r) => acc + (r.portee?.vivants ?? 0),
-      0
-    );
+    const occupation = logesMaterniteOccupation(truies);
+    const totalVivants = rows.reduce((acc, r) => acc + (r.portee?.vivants ?? 0), 0);
     const totalMorts = rows.reduce((acc, r) => acc + (r.portee?.morts ?? 0), 0);
     const totalNV = rows.reduce((acc, r) => acc + (r.portee?.nv ?? 0), 0);
     const mortsGlobalPct = totalNV > 0 ? (totalMorts / totalNV) * 100 : 0;
-    const procheSevrage = rows.some(
-      r => r.jSinceMB !== null && r.jSinceMB >= SEVRAGE_PROCHE_JOURS
-    );
+    const procheSevrage = rows.some(r => r.jSinceMB !== null && r.jSinceMB >= SEVRAGE_PROCHE_JOURS);
+
     return {
       occupation,
       nbTruies: truiesEnMat.length,
@@ -182,25 +105,12 @@ const MaterniteView: React.FC = () => {
       mortsGlobalPct,
       procheSevrage,
     };
-  }, [truies, truiesEnMat, rows]);
+  }, [truies, rows, truiesEnMat.length]);
 
-  const handleRefresh = async (
-    e: CustomEvent<{ complete: () => void }>
-  ): Promise<void> => {
+  const handleRefresh = async (e: CustomEvent<{ complete: () => void }>): Promise<void> => {
     await refreshData();
     e.detail.complete();
   };
-
-  // Tons KPI
-  const kpiTruiesTone: KpiTone = summary.procheSevrage ? 'warning' : 'default';
-  const kpiLogesTone: KpiTone =
-    summary.occupation.alerte === 'FULL'
-      ? 'critical'
-      : summary.occupation.alerte === 'HIGH'
-        ? 'warning'
-        : 'default';
-  const kpiMortsTone: KpiTone =
-    summary.mortsGlobalPct > MORTALITE_SEUIL_PCT ? 'critical' : 'default';
 
   return (
     <IonPage>
@@ -212,266 +122,252 @@ const MaterniteView: React.FC = () => {
         <AgritechLayout>
           <AgritechHeader
             title="MATERNITÉ"
-            subtitle="Suivi truies en maternité · loges & portées"
+            subtitle="Pilotage allaitement & sevrage"
             backTo="/cycles"
           />
 
-          <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
-            {/* ── Primary action : saisir mise-bas ───────────────────── */}
+          <div className="px-4 pt-4 pb-32 flex flex-col gap-5">
+            {/* ── Primary Action ───────────────────────────────────────── */}
             <button
               type="button"
               onClick={() => openMiseBas()}
-              aria-label="Saisir une nouvelle mise-bas"
-              className={[
-                'pressable w-full h-[58px] rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-accent text-bg-0',
-                'font-mono text-[13px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms] hover:brightness-110',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-              ].join(' ')}
+              className="pressable w-full h-[58px] rounded-xl bg-accent text-bg-0 font-mono text-[13px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-accent/20"
             >
-              <Plus size={18} aria-hidden="true" />
+              <Plus size={20} />
               <span>Saisir mise-bas</span>
             </button>
 
-            {/* ── Summary strip : 4 KPI ───────────────────────────────── */}
-            <div
-              role="group"
-              aria-label="Résumé maternité"
-              className="grid grid-cols-2 sm:grid-cols-4 gap-3"
-            >
+            {/* ── Summary KPI ─────────────────────────────────────────── */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <KpiCard
-                label="Truies en mat"
+                label="Truies"
                 value={summary.nbTruies}
-                icon={<TruieIcon size={14} />}
-                tone={kpiTruiesTone}
+                icon={<TruieIcon size={14} className="text-accent" />}
               />
               <KpiCard
-                label="Loges capa"
-                value={`${summary.occupation.occupees}/${summary.occupation.capacite}`}
-                icon={<Baby size={14} />}
-                tone={kpiLogesTone}
-                deltaLabel={`${summary.occupation.tauxPct}% occ.`}
+                label="Saturation"
+                value={`${summary.occupation.tauxPct}%`}
+                tone={summary.occupation.alerte === 'FULL' ? 'critical' : summary.occupation.alerte === 'HIGH' ? 'warning' : 'success'}
               />
               <KpiCard
                 label="Porcelets s/m"
                 value={summary.totalVivants}
-                unit="vivants"
-                tone="default"
+                tone="success"
               />
               <KpiCard
-                label="Morts cumulés"
-                value={summary.totalMorts}
-                unit={
-                  summary.mortsGlobalPct > 0
-                    ? `${summary.mortsGlobalPct.toFixed(1)}%`
-                    : undefined
-                }
-                tone={kpiMortsTone}
+                label="Mortalité"
+                value={`${summary.mortsGlobalPct.toFixed(1)}%`}
+                tone={summary.mortsGlobalPct > MORTALITE_SEUIL_PCT ? 'critical' : 'default'}
               />
             </div>
 
-            {/* ── Loges occupation card (reprise pattern TroupeauHub) ──── */}
-            <LogesMaterniteCard occupation={summary.occupation} />
+            {/* ── Liste des Truies ────────────────────────────────────── */}
+            <SectionDivider label={`Suivi Allaitement · ${summary.nbTruies}`} />
 
-            <SectionDivider label={`Truies en maternité · ${summary.nbTruies}`} />
-
-            {/* ── Liste des truies en maternité ───────────────────────── */}
             {rows.length === 0 ? (
-              <div
-                className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up"
-                role="status"
-              >
-                <div className="relative w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
-                  <TruieIcon size={48} />
-                  <span
-                    className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-bg-0 border border-border flex items-center justify-center text-accent"
-                    aria-hidden="true"
-                  >
-                    <Baby size={14} />
-                  </span>
-                </div>
-                <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
-                  Aucune truie en maternité
-                </h3>
-                <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
-                  Les prochaines mises-bas apparaîtront ici.
-                </p>
-              </div>
+              <EmptyState />
             ) : (
-              <div
-                role="list"
-                aria-label="Liste des truies en maternité"
-                className="rounded-md border border-border bg-bg-1 overflow-hidden"
-              >
-                {rows.map((r, idx) => {
-                  const { truie, portee, jSinceMB } = r;
-                  const boucle = truie.boucle ? `B.${truie.boucle}` : '—';
-                  const namePart = truie.nom ? ` · ${truie.nom}` : '';
-                  const primary = `${boucle} · ${truie.displayId}${namePart}`;
-
-                  const nv = portee?.nv ?? 0;
-                  const vivants = portee?.vivants ?? 0;
-                  const morts = portee?.morts ?? 0;
-
-                  const secondary = portee
-                    ? `Portée ${portee.idPortee || portee.id} · NV ${nv} · Vivants ${vivants} · Morts ${morts}`
-                    : 'Aucune portée sous-mère liée';
-
-                  const meta =
-                    jSinceMB !== null
-                      ? `J+${jSinceMB}`
-                      : portee
-                        ? 'MB ?'
-                        : '—';
-
-                  const state = porteeStateChip(portee, jSinceMB);
-                  const border = rowBorderColor(portee, jSinceMB);
-                  const staggerIdx = Math.min(idx + 1, 5);
-
-                  return (
-                    <div
-                      role="listitem"
-                      key={truie.id}
-                      className={`animate-fade-in-up stagger-${staggerIdx} border-l-2 ${border}`}
-                    >
-                      <DataRow
-                        primary={primary}
-                        secondary={secondary}
-                        meta={meta}
-                        accessory={
-                          <Chip label={state.label} tone={state.tone} size="xs" />
-                        }
-                        onClick={() => navigate(`/troupeau/truies/${truie.id}`)}
-                      />
-                      {portee ? (
-                        <div className="px-3 pb-2 -mt-1 flex justify-end">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(
-                                `/troupeau/bandes/${encodeURIComponent(portee.id)}`,
-                              );
-                            }}
-                            aria-label={`Éditer portée ${portee.idPortee || portee.id}`}
-                            className={[
-                              'pressable inline-flex items-center gap-1.5',
-                              'h-8 px-3 rounded-md border border-border',
-                              'bg-bg-0 text-text-1',
-                              'font-mono text-[10px] uppercase tracking-wide',
-                              'transition-colors duration-[160ms] hover:border-text-2',
-                              'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                            ].join(' ')}
-                          >
-                            <Edit3 size={12} aria-hidden="true" />
-                            Éditer portée
-                          </button>
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })}
+              <div className="flex flex-col gap-4">
+                {rows.map((r) => (
+                  <MaterniteCard
+                    key={r.truie.id}
+                    data={r}
+                    onDetail={() => navigate(`/troupeau/truies/${r.truie.id}`)}
+                  />
+                ))}
               </div>
             )}
-
-            {/* ── Placeholder quick actions (sprint futur) ─────────────── */}
-            <div
-              className="card-dense flex flex-col gap-2"
-              aria-label="Pesées porcelets (à venir)"
-            >
-              <div className="flex items-center gap-2">
-                <Baby size={14} className="text-text-2" aria-hidden="true" />
-                <span className="kpi-label">Pesées porcelets</span>
-              </div>
-              <p className="font-mono text-[11px] text-text-2 leading-snug">
-                Les pesées J3 · J7 · J14 · J28 seront accessibles depuis cette vue
-                dans une prochaine mise à jour.
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                <Chip label="J3" tone="default" size="xs" />
-                <Chip label="J7" tone="default" size="xs" />
-                <Chip label="J14" tone="default" size="xs" />
-                <Chip label={`J${SEVRAGE_JOURS}`} tone="default" size="xs" />
-              </div>
-            </div>
           </div>
+          <AgritechNav />
         </AgritechLayout>
-        <AgritechNav />
 
         <QuickMiseBasForm
           isOpen={miseBasOpen}
           onClose={() => setMiseBasOpen(false)}
           defaultTruieId={miseBasDefaultTruieId}
-          onSuccess={() => {
-            void refreshData();
-          }}
+          onSuccess={() => refreshData()}
         />
       </IonContent>
     </IonPage>
   );
 };
 
-// ─── Sous-composants locaux ─────────────────────────────────────────────────
+// ─── Sous-composants ────────────────────────────────────────────────────────
 
-interface LogesMaterniteCardProps {
-  occupation: LogeOccupation;
-}
+const MaterniteCard: React.FC<{
+  data: { truie: Truie; portee?: BandePorcelets; jSinceMB: number | null; terrainPhase: string | null; status: any };
+  onDetail: () => void;
+}> = ({ data, onDetail }) => {
+  const navigate = useNavigate();
+  const { truie, portee, jSinceMB, terrainPhase, status } = data;
+  const { isBloquant, joursEnRetard } = status;
 
-const LogesMaterniteCard: React.FC<LogesMaterniteCardProps> = ({ occupation }) => {
-  const { occupees, capacite, tauxPct, alerte } = occupation;
-
-  const barFill =
-    alerte === 'FULL' ? 'bg-red' : alerte === 'HIGH' ? 'bg-amber' : 'bg-accent';
-  const statusLabel =
-    alerte === 'FULL' ? 'Saturé' : alerte === 'HIGH' ? 'Proche saturation' : 'OK';
-  const statusTone = chipToneForAlerte(alerte);
-  const barWidth = Math.min(tauxPct, 100);
+  const isTransitionRequired = terrainPhase && terrainPhase !== 'SOUS_MERE';
+  const mortsPct = mortsPercent(portee);
+  const feedConfig = FARM_CONFIG.FEED_CONFIG.TRUIE_LACTATION;
 
   return (
     <div
-      className="card-dense flex flex-col gap-2"
-      role="group"
-      aria-label={`Loges maternité : ${occupees} sur ${capacite}, ${tauxPct}%, ${statusLabel}`}
+      onClick={onDetail}
+      className={`card-dense flex flex-col gap-4 p-4 border-l-4 transition-all active:scale-[0.98] cursor-pointer ${
+        isBloquant ? 'border-l-red-500 bg-red-500/5 ring-1 ring-red-500/20' :
+        mortsPct > MORTALITE_SEUIL_PCT ? 'border-l-red' :
+        isTransitionRequired ? 'border-l-gold animate-pulse-slow' : 'border-l-accent'
+      }`}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex justify-between items-start">
         <div className="min-w-0">
-          <div className="kpi-label">Loges maternité</div>
-          <div className="mt-0.5 font-mono text-[11px] text-text-2 leading-tight">
-            Chauffage porcelet · 1 truie / loge · J0 → J{SEVRAGE_JOURS}
+          <div className="flex items-center gap-2">
+            <h3 className={`text-[15px] font-bold text-text-0 font-mono ${isBloquant ? 'text-red-600' : ''}`}>{truie.displayId}</h3>
+            {truie.nom && <span className="text-[12px] text-text-2 truncate max-w-[80px]">{truie.nom}</span>}
+            <Chip tone={isBloquant ? 'red' : 'default'} label={isBloquant ? 'BLOCAGE' : `B.${truie.boucle}`} size="xs" />
+          </div>
+          <p className="text-[11px] text-text-2 mt-0.5">
+            {portee ? `Portée: ${portee.idPortee}` : 'Aucune portée liée'}
+          </p>
+          {isBloquant && (
+            <div className="flex items-center gap-1.5 mt-1 text-red-600 animate-pulse">
+              <AlertCircle size={14} />
+              <span className="text-[10px] font-bold uppercase">Urgence Critique</span>
+            </div>
+          )}
+        </div>
+        {isTransitionRequired ? (
+          <Chip tone={isBloquant ? 'red' : 'gold'} label={isBloquant ? 'RETARD' : `➜ SEVRAGE J${jSinceMB}`} size="sm" icon={<ArrowUpRight size={10} />} />
+        ) : (
+          <Chip tone="accent" label={`J+${jSinceMB || 0} Lactation`} size="sm" />
+        )}
+      </div>
+
+      {/* Message de blocage */}
+      {isBloquant && (
+        <div className="bg-red-500/10 rounded-lg p-3 border border-red-500/20">
+          <p className="text-[11px] text-red-700 leading-tight">
+            <strong>Action bloquée :</strong> Retard critique de sevrage (+{joursEnRetard}j).
+            Veuillez déclarer le sevrage de cette portée pour débloquer les saisies.
+          </p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-4">
+        {/* Portée Stats */}
+        <div className="bg-bg-1 rounded-xl p-3 border border-border/50">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-[10px] uppercase font-mono text-text-2">Portée</span>
+            <Baby size={12} className="text-accent" />
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-[20px] font-bold font-mono text-text-0">{portee?.vivants || 0}</span>
+            <span className="text-[10px] text-text-2 uppercase">vivants</span>
+          </div>
+          {mortsPct > 0 && (
+            <div className={`text-[10px] mt-1 font-mono ${mortsPct > MORTALITE_SEUIL_PCT ? 'text-red font-bold' : 'text-text-2'}`}>
+              Mortalité: {Math.round(mortsPct)}%
+            </div>
+          )}
+        </div>
+
+        {/* Nutrition Truie */}
+        <div className="bg-bg-1 rounded-xl p-3 border border-border/50">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-[10px] uppercase font-mono text-text-2">Ration</span>
+            <Droplets size={12} className="text-accent" />
+          </div>
+          <div className="text-[14px] font-bold text-accent">
+            {truie.ration} kg/j
+          </div>
+          <div className="mt-1 text-[9px] text-text-2 font-mono leading-tight">
+            Plan: {feedConfig.label}
           </div>
         </div>
-        <Chip label={statusLabel} tone={statusTone} size="xs" />
       </div>
 
-      <div className="flex items-baseline gap-2">
-        <span className="font-mono tabular-nums text-[24px] font-bold text-text-0 leading-none">
-          {occupees}
-        </span>
-        <span className="font-mono text-[13px] text-text-2 leading-none">
-          / {capacite} occupées
-        </span>
-        <span className="ml-auto font-mono tabular-nums text-[12px] text-text-2">
-          {tauxPct}%
-        </span>
+      {/* Milestones de pesées */}
+      <div className="flex items-center justify-between px-1">
+        <div className="flex gap-1.5">
+          {PESEE_MILESTONES.map(m => {
+            const isPast = jSinceMB !== null && jSinceMB > m;
+            const isCurrent = jSinceMB === m;
+            return (
+              <div
+                key={m}
+                className={`w-6 h-6 rounded-lg flex items-center justify-center text-[9px] font-bold border transition-all ${
+                  isCurrent ? 'bg-amber border-amber text-bg-0 shadow-md scale-110' :
+                  isPast ? 'bg-bg-2 border-border text-text-2 opacity-50' :
+                  'bg-bg-1 border-dashed border-border text-text-2'
+                }`}
+              >
+                {m}
+              </div>
+            );
+          })}
+        </div>
+        <button
+          disabled={isBloquant}
+          onClick={(e) => { e.stopPropagation(); navigate(`/troupeau/truies/${truie.id}?tab=sante`); }}
+          className="w-8 h-8 rounded-lg bg-bg-2 flex items-center justify-center text-text-2 hover:text-accent transition-colors disabled:opacity-30 disabled:grayscale"
+        >
+          {isBloquant ? <Lock size={14} /> : <Scale size={14} />}
+        </button>
       </div>
 
-      <div
-        className="h-1.5 w-full bg-bg-2 rounded-full overflow-hidden"
-        role="progressbar"
-        aria-valuenow={tauxPct}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={`Occupation loges maternité ${tauxPct}%`}
-      >
-        <div
-          className={`h-full ${barFill} rounded-full transition-[width]`}
-          style={{ width: `${barWidth}%` }}
-        />
-      </div>
+      {isTransitionRequired && (
+        <button
+          className={`w-full py-2.5 rounded-xl font-bold text-[12px] uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg ${
+            isBloquant ? 'bg-red-500 text-white shadow-red-500/20' : 'bg-gold text-bg-0 shadow-gold/20'
+          }`}
+          onClick={(e) => { e.stopPropagation(); navigate(`/troupeau/bandes/${portee?.id}?action=sevrage`); }}
+        >
+          <ArrowUpRight size={16} />
+          {isBloquant ? 'Sevrage Immédiat' : 'Confirmer Sevrage'}
+        </button>
+      )}
     </div>
   );
 };
+
+const EmptyState: React.FC = () => (
+  <div className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up">
+    <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
+      <TruieIcon size={48} />
+    </div>
+    <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
+      Maternité vide
+    </h3>
+    <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
+      Dès qu'une truie met bas, elle apparaîtra ici pour son suivi d'allaitement.
+    </p>
+  </div>
+);
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function parseDate(s?: string): Date | null {
+  if (!s) return null;
+  const fr = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (fr) return new Date(Number(fr[3]), Number(fr[2]) - 1, Number(fr[1]));
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+  return null;
+}
+
+function daysSince(s: string | undefined, today: Date): number | null {
+  const d = parseDate(s);
+  if (!d) return null;
+  return Math.floor((today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function getTruiePortee(truie: Truie, bandes: BandePorcelets[]): BandePorcelets | undefined {
+  const sm = bandes.filter(b => /sous.m/i.test(b.statut ?? ''));
+  return sm.find(b =>
+    (b.truie && b.truie === truie.id) ||
+    (b.boucleMere && truie.boucle && b.boucleMere === truie.boucle)
+  );
+}
+
+function mortsPercent(bande?: BandePorcelets): number {
+  if (!bande || !bande.nv) return 0;
+  return (bande.morts ?? 0) / bande.nv * 100;
+}
 
 export default MaterniteView;

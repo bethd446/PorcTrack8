@@ -127,7 +127,7 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
       const online = typeof navigator !== 'undefined' && navigator.onLine;
       setToast(online ? 'Produit ajouté' : 'Produit en file · sync auto');
       try {
-        await refreshData();
+        await refreshData(true);
       } catch {
         /* non-bloquant : queue offline applique déjà */
       }

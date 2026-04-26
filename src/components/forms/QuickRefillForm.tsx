@@ -170,7 +170,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
 
       // Refresh data pour que l'UI reflète le nouveau stock / statut
       try {
-        await refreshData();
+        await refreshData(true);
       } catch {
         /* non-bloquant : la queue offline applique déjà */
       }

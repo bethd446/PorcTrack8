@@ -187,11 +187,11 @@ describe('logesPostSevrageOccupation', () => {
     expect(r.alerte).toBe('OK');
   });
 
-  it('exclut les bandes en engraissement (sevrées >= 32j)', () => {
+  it('exclut les bandes en engraissement (sevrées >= 35j)', () => {
     const today = new Date(2026, 3, 17); // 17 avril 2026
     const engr: BandePorcelets = {
       ...makeBande('Sevrés'),
-      dateSevrageReelle: '01/01/2026', // >32j avant today → engraissement
+      dateSevrageReelle: '01/01/2026', // >35j avant today → croissance/engraissement
     };
     const recent: BandePorcelets = {
       ...makeBande('Sevrés'),
@@ -219,28 +219,28 @@ describe('computeBandePhase', () => {
     expect(computeBandePhase(b, today)).toBe('POST_SEVRAGE');
   });
 
-  it('retourne ENGRAISSEMENT pour une bande sevrée il y a 70 jours', () => {
+  it('retourne CROISSANCE pour une bande sevrée il y a 70 jours', () => {
     const b: BandePorcelets = {
       ...makeBande('Sevrés'),
-      // DST : bascule heure d'été fin mars ⇒ on recule au 05/02 pour couvrir
-      // le seuil de façon robuste (floor sur diffMs tronque l'offset 1h).
-      dateSevrageReelle: '05/02/2026', // 70 jours avant today (≥32j)
+      // 70 jours : entre 35 et 72 → CROISSANCE
+      dateSevrageReelle: '05/02/2026',
     };
-    expect(computeBandePhase(b, today)).toBe('ENGRAISSEMENT');
+    expect(computeBandePhase(b, today)).toBe('CROISSANCE');
   });
 
-  it('retourne ENGRAISSEMENT à partir de 32 jours (limite)', () => {
+  it('retourne CROISSANCE à partir de 35 jours (limite)', () => {
     const b: BandePorcelets = {
       ...makeBande('Sevrés'),
-      dateSevrageReelle: '14/03/2026', // ≥32j avant today (17/04/2026) post-DST
+      // On utilise une date qui donne 36 jours pour être robuste au DST
+      dateSevrageReelle: '12/03/2026',
     };
-    expect(computeBandePhase(b, today)).toBe('ENGRAISSEMENT');
+    expect(computeBandePhase(b, today)).toBe('CROISSANCE');
   });
 
-  it('reste POST_SEVRAGE à 31 jours (juste avant seuil 32)', () => {
+  it('reste POST_SEVRAGE à 34 jours (juste avant seuil 35)', () => {
     const b: BandePorcelets = {
       ...makeBande('Sevrés'),
-      dateSevrageReelle: '18/03/2026', // 30j avant today (17/04/2026)
+      dateSevrageReelle: '14/03/2026', // 34j avant today (17/04/2026)
     };
     expect(computeBandePhase(b, today)).toBe('POST_SEVRAGE');
   });
@@ -258,9 +258,9 @@ describe('computeBandePhase', () => {
   it('utilise dateSevragePrevue si dateSevrageReelle est absente', () => {
     const b: BandePorcelets = {
       ...makeBande('Sevrés'),
-      dateSevragePrevue: '05/02/2026', // 70 jours avant today (post-DST)
+      dateSevragePrevue: '05/02/2026', // 70 jours avant today
     };
-    expect(computeBandePhase(b, today)).toBe('ENGRAISSEMENT');
+    expect(computeBandePhase(b, today)).toBe('CROISSANCE');
   });
 
   it('supporte le format ISO YYYY-MM-DD', () => {
@@ -268,7 +268,7 @@ describe('computeBandePhase', () => {
       ...makeBande('Sevrés'),
       dateSevrageReelle: '2026-02-05',
     };
-    expect(computeBandePhase(b, today)).toBe('ENGRAISSEMENT');
+    expect(computeBandePhase(b, today)).toBe('CROISSANCE');
   });
 });
 
@@ -285,7 +285,7 @@ describe('countBandesByPhase', () => {
     const r = countBandesByPhase(bandes, today);
     expect(r.SOUS_MERE).toBe(2);
     expect(r.POST_SEVRAGE).toBe(1);
-    expect(r.ENGRAISSEMENT).toBe(1);
+    expect(r.CROISSANCE).toBe(1);
   });
 });
 
@@ -293,8 +293,8 @@ describe('logesEngraissementOccupation', () => {
   it('retourne OK à 33% quand 2 bandes occupent 6 loges engraissement', () => {
     const today = new Date(2026, 3, 17);
     const bandes: BandePorcelets[] = [
-      { ...makeBande('Sevrés'), dateSevrageReelle: '05/02/2026' }, // 70j → engraissement (post-DST)
-      { ...makeBande('Sevrés'), dateSevrageReelle: '01/01/2026' }, // >100j → engraissement
+      { ...makeBande('Sevrés'), dateSevrageReelle: '01/01/2026' }, // 106j → engraissement
+      { ...makeBande('Sevrés'), dateSevrageReelle: '01/12/2025' }, // >130j → engraissement
     ];
     const r = logesEngraissementOccupation(bandes, today);
     expect(r.occupees).toBe(2);
@@ -339,7 +339,7 @@ describe('countEngraissementBySex', () => {
       },
       {
         ...makeBande('Sevrés', 35),
-        dateSevrageReelle: '05/02/2026', // engraissement (70j post-DST), pas encore séparé
+        dateSevrageReelle: '01/01/2026', // engraissement
       },
       makeBande('Sous mère', 10), // ignorée
     ];

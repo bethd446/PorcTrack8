@@ -5,20 +5,21 @@ import { detectPendingTransitions, computePhaseTerrain } from './phaseEngine';
 function makeBande(overrides: Partial<BandePorcelets> = {}): BandePorcelets {
   return {
     id: 'B01', idPortee: 'P01', statut: 'Sous mère',
+    dateMB: '28/03/2026', // Défaut: J0
     vivants: 12, synced: true, ...overrides,
   };
 }
 
 describe('computePhaseTerrain', () => {
   it('retourne POST_SEVRAGE pour une bande à J30 post-MB (>SEVRAGE_AGE=28)', () => {
-    const today = new Date(2026, 3, 25);
+    const today = new Date(2026, 3, 25); // 25 Avril
     const b = makeBande({ dateMB: '26/03/2026' }); // J30 (25/04 - 26/03)
     expect(computePhaseTerrain(b, today)).toBe('POST_SEVRAGE');
   });
 
   it('retourne CROISSANCE pour J70 post-MB (> 28+35=63)', () => {
     const today = new Date(2026, 3, 25);
-    const b = makeBande({ dateMB: '15/02/2026' }); // ~J69
+    const b = makeBande({ dateMB: '14/02/2026' }); // J70
     expect(computePhaseTerrain(b, today)).toBe('CROISSANCE');
   });
 
@@ -49,19 +50,22 @@ describe('detectPendingTransitions', () => {
     const today = new Date(2026, 3, 25);
     const b = makeBande({
       statut: 'Sevrés',
-      dateSevrageReelle: '20/03/2026', // J36 post-sevrage = POST_SEVRAGE ✓
+      dateMB: '15/03/2026', // Age = 41j -> POST_SEVRAGE biologique attendue
+      dateSevrageReelle: '12/04/2026', // J13 post-sevrage = POST_SEVRAGE déclaré ✓
     });
     const transitions = detectPendingTransitions([b], today);
     expect(transitions).toHaveLength(0);
   });
 
-  it('détecte POST_SEVRAGE→CROISSANCE quand J40 post-sevrage et statut=Sevrés', () => {
+  it('détecte POST_SEVRAGE→CROISSANCE quand biologique=CROISSANCE et déclaré=POST_SEVRAGE', () => {
     const today = new Date(2026, 3, 25);
     const b = makeBande({
       statut: 'Sevrés',
-      dateSevrageReelle: '15/03/2026', // J41 post-sevrage > 35
+      dateMB: '10/02/2026', // Age = 74j -> CROISSANCE biologique
+      dateSevrageReelle: '10/04/2026', // J15 post-sevrage = POST_SEVRAGE déclaré
     });
     const transitions = detectPendingTransitions([b], today);
+    expect(transitions).toHaveLength(1);
     expect(transitions[0].fromPhase).toBe('POST_SEVRAGE');
     expect(transitions[0].toPhase).toBe('CROISSANCE');
   });

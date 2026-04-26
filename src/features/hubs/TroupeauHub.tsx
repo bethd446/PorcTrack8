@@ -1,59 +1,17 @@
-/**
- * TroupeauHub — /troupeau (tab 02)
- * ══════════════════════════════════════════════════════════════════════════
- * Refonte multi-vues (2026-04-19) — Hub "Troupeau" avec 4 sous-onglets :
- *
- *   [ TRUIES ]  [ VERRATS ]  [ PORCELETS ]  [ LOGES ]
- *
- * Structure :
- *   1. AgritechHeader
- *   2. Summary strip (P6) — 4 KPI rapides + 3 barres occupation loges
- *   3. Barre segmented 4-tabs — sous-onglets persistés en query `?view=…`
- *   4. Vue selon activeSubTab :
- *      - 'truies'    → logique historique (search + filters + liste DataRow)
- *      - 'verrats'   → <TroupeauVerratsView/>  (lazy, créé par Agent 2)
- *      - 'porcelets' → <TroupeauPorceletsView/> (lazy, créé par Agent 3)
- *      - 'loges'     → <TroupeauLogesView/>     (lazy, créé par Agent 4)
- *
- * P2 : filtre CHALEUR ajouté, filtres à count=0 cachés (sauf 'tout').
- * P5 : search étendue (displayId/id/nom/boucle/stade).
- * P6 : summary strip header avec barres compactes loges OK/HIGH/FULL.
- */
-
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  IonContent,
-  IonItemOption,
-  IonItemOptions,
-  IonItemSliding,
-  IonPage,
-} from '@ionic/react';
-import {
-  Heart,
-  LayoutGrid,
-  List as ListIcon,
-  Plus,
-  Search,
-  Syringe,
-  Users,
-} from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { IonContent, IonPage } from '@ionic/react';
 
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import { TruieIcon } from '../../components/icons';
-import { Chip, SectionDivider, type ChipTone } from '../../components/agritech';
-import QuickAddTruieForm from '../../components/forms/QuickAddTruieForm';
-import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
 import { useFarm } from '../../context/FarmContext';
-import type { Truie } from '../../types/farm';
 import { normaliseStatut } from '../../lib/truieStatut';
 import { Bandes } from '../../services/bandAnalysisEngine';
 import type { LogeOccupation, LogeOccupationAlerte } from '../../services/bandesAggregator';
-import { kvGet, kvSet } from '../../services/kvStore';
-
 import { useTroupeauPipeline } from '../../hooks/useTroupeauStats';
-import TruieStatutPipeline from '../../components/truie/TruieStatutPipeline';
+import { FARM_CONFIG } from '../../config/farm';
+
+import TroupeauTruiesView from '../troupeau/TroupeauTruiesView';
 import TroupeauVerratsView from '../troupeau/TroupeauVerratsView';
 import TroupeauPorceletsView from '../troupeau/TroupeauPorceletsView';
 import TroupeauLogesView from '../troupeau/TroupeauLogesView';
@@ -73,133 +31,47 @@ function isSubTab(v: string | null): v is SubTab {
   return v === 'truies' || v === 'verrats' || v === 'porcelets' || v === 'loges';
 }
 
-// ─── Filters (vue Truies) ────────────────────────────────────────────────────
-
-type FilterKey = 'tout' | 'pleines' | 'maternite' | 'chaleur' | 'vides' | 'reforme';
-
-interface StatutVisu {
-  label: string;
-  tone: ChipTone;
-  filter: FilterKey;
-}
-
-/**
- * Mappe un statut truie libre (depuis la feuille) vers :
- *  - un libellé court pour la chip
- *  - un tone de couleur (gold = maternité, accent = pleine, coral = chaleur, red = réforme)
- *  - un filter bucket
- *
- * La sémantique passe par `normaliseStatut` (source unique). Le mapping
- * visuel (label/tone/filter) reste local car propre à cette vue.
- */
-function statutVisu(statut: string | undefined): StatutVisu {
-  const canon = normaliseStatut(statut);
-  switch (canon) {
-    case 'PLEINE':
-      return { label: 'Pleine', tone: 'accent', filter: 'pleines' };
-    case 'MATERNITE':
-      return { label: 'Maternité', tone: 'gold', filter: 'maternite' };
-    case 'CHALEUR':
-      return { label: 'Chaleur', tone: 'coral', filter: 'chaleur' };
-    case 'VIDE':
-      return { label: 'Vide', tone: 'default', filter: 'vides' };
-    case 'REFORME':
-      return { label: 'Réforme', tone: 'red', filter: 'reforme' };
-    case 'SURVEILLANCE':
-      return { label: 'Surveillance', tone: 'amber', filter: 'tout' };
-    case 'FLUSHING':
-      return { label: 'Flushing', tone: 'amber', filter: 'tout' };
-    case 'INCONNU':
-    default:
-      return { label: statut || '—', tone: 'default', filter: 'tout' };
-  }
-}
-
-// ─── Meta short text ────────────────────────────────────────────────────────
-
-function daysSince(dateFr: string | undefined, today: Date): number | null {
-  if (!dateFr) return null;
-  const parts = dateFr.split('/');
-  if (parts.length !== 3) return null;
-  const [d, m, y] = parts.map(Number);
-  if (!d || !m || !y) return null;
-  const dt = new Date(y, m - 1, d);
-  const diffMs = today.getTime() - dt.getTime();
-  const days = Math.floor(diffMs / 86_400_000);
-  return Number.isFinite(days) ? days : null;
-}
-
-function truieMeta(t: Truie, today: Date): string {
-  const v = statutVisu(t.statut);
-  if (v.filter === 'maternite' && t.dateMBPrevue) {
-    const j = daysSince(t.dateMBPrevue, today);
-    if (j === null) return `MB prévue ${t.dateMBPrevue}`;
-    if (j < 0) return `MB J${j}`;
-    if (j === 0) return `MB aujourd'hui`;
-    return `MB J+${j}`;
-  }
-  if (v.filter === 'pleines' && t.dateMBPrevue) {
-    const j = daysSince(t.dateMBPrevue, today);
-    return j !== null && j < 0
-      ? `MB prévue ${t.dateMBPrevue} · dans ${-j}j`
-      : `Gestation · MB ${t.dateMBPrevue}`;
-  }
-  if (v.filter === 'reforme') {
-    return typeof t.nbPortees === 'number'
-      ? `${t.nbPortees} portées · à sortir`
-      : 'À sortir';
-  }
-  if (v.filter === 'vides') {
-    return t.stade ? `Stade ${t.stade}` : 'En attente de saillie';
-  }
-  if (v.filter === 'chaleur') {
-    return t.stade ? `Chaleur · ${t.stade}` : 'Chaleur détectée';
-  }
-  return t.stade || t.statut || '—';
-}
-
-// ─── Composant ──────────────────────────────────────────────────────────────
-
 const TroupeauHub: React.FC = () => {
   const { verrats, bandes } = useFarm();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { activeTruies, pipelineEtapes, total: totalTruies } = useTroupeauPipeline();
+  const { activeTruies } = useTroupeauPipeline();
 
-  // ── Sous-onglet (persisté en query ?view=…)
   const viewParam = searchParams.get('view');
   const initialSubTab: SubTab = isSubTab(viewParam) ? viewParam : 'truies';
   const [activeSubTab, setActiveSubTab] = useState<SubTab>(initialSubTab);
 
-  // Render-time sync: update state if URL query param changed (e.g. back button).
-  if (isSubTab(viewParam) && viewParam !== activeSubTab) {
-    setActiveSubTab(viewParam);
-  }
+  // Sync state with URL parameter
+  useEffect(() => {
+    if (isSubTab(viewParam) && viewParam !== activeSubTab) {
+      setActiveSubTab(viewParam);
+    }
+  }, [viewParam, activeSubTab]);
 
   const handleSubTabChange = (tab: SubTab): void => {
     setActiveSubTab(tab);
     const next = new URLSearchParams(searchParams);
-    if (tab === 'truies') {
-      next.delete('view'); // 'truies' = défaut, garde l'URL propre
-    } else {
-      next.set('view', tab);
-    }
+    if (tab === 'truies') next.delete('view');
+    else next.set('view', tab);
     setSearchParams(next, { replace: true });
   };
 
-  const today = useMemo(() => new Date(), []);
+  // Search states lifted to Hub to persist during tab changes
+  const [searchTruies, setSearchTruies] = useState('');
+  const [searchVerrats, setSearchVerrats] = useState('');
+  const [searchPorcelets, setSearchPorcelets] = useState('');
 
-  // ── Summary strip (P6) — loges occupation
+  const today = useMemo(() => new Date(), []);
   const realBandes = useMemo(() => Bandes.filterReal(bandes), [bandes]);
 
   const summary = useMemo(() => {
-    const countByFilter = (f: FilterKey): number =>
-      activeTruies.filter((t) => statutVisu(t.statut).filter === f).length;
+    const isCanon = (statut: string | undefined, canon: string) =>
+      normaliseStatut(statut) === canon;
 
     return {
       total: activeTruies.length,
-      pleines: countByFilter('pleines'),
-      maternite: countByFilter('maternite'),
-      vides: countByFilter('vides'),
+      pleines: activeTruies.filter(t => isCanon(t.statut, 'PLEINE')).length,
+      maternite: activeTruies.filter(t => isCanon(t.statut, 'MATERNITE')).length,
+      vides: activeTruies.filter(t => isCanon(t.statut, 'VIDE')).length,
       mat: Bandes.logesMaternite(activeTruies),
       post: Bandes.logesPostSevrage(realBandes, today),
       eng: Bandes.logesEngraissement(realBandes, today),
@@ -207,22 +79,21 @@ const TroupeauHub: React.FC = () => {
   }, [activeTruies, realBandes, today]);
 
   const porceletCount = useMemo(
-    () =>
-      realBandes.reduce((acc, b) => {
-        const v = (b as unknown as { vivants?: number; effectif?: number }).vivants
-          ?? (b as unknown as { vivants?: number; effectif?: number }).effectif
-          ?? 0;
-        return acc + (typeof v === 'number' ? v : 0);
-      }, 0),
+    () => realBandes.reduce((acc, b) => acc + (b.vivants ?? 0), 0),
     [realBandes],
   );
 
-  // Compteurs affichés dans les sous-onglets (badges)
+  const totalLogesCapacity = useMemo(() =>
+    FARM_CONFIG.MATERNITE_LOGES_CAPACITY +
+    FARM_CONFIG.POST_SEVRAGE_LOGES_CAPACITY +
+    FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY,
+  []);
+
   const tabCounts: Record<SubTab, number> = {
     truies: activeTruies.length,
     verrats: verrats.length,
     porcelets: porceletCount,
-    loges: summary.mat.capacite + summary.post.capacite + summary.eng.capacite,
+    loges: summary.mat.occupees + summary.post.occupees + summary.eng.occupees,
   };
 
   return (
@@ -234,8 +105,8 @@ const TroupeauHub: React.FC = () => {
             subtitle={`Ferme K13 · ${activeTruies.length + verrats.length} animaux`}
           />
 
-          <div className="px-4 pt-3 pb-32 flex flex-col gap-4">
-            {/* ── P6 Summary strip ─────────────────────────────────────── */}
+          <div className="px-4 pt-3 pb-32 flex flex-col gap-5">
+            {/* ── Summary strip ─────────────────────────────────────── */}
             <SummaryStrip
               total={summary.total}
               pleines={summary.pleines}
@@ -246,18 +117,11 @@ const TroupeauHub: React.FC = () => {
               eng={summary.eng}
             />
 
-            {/* ── Pipeline reproduction (Sprint 6) ────────────────────── */}
-            <TruieStatutPipeline
-              basePath="/troupeau/truies"
-              etapes={pipelineEtapes}
-              total={totalTruies}
-            />
-
-            {/* ── P1 Sous-onglets ──────────────────────────────────────── */}
+            {/* ── Sub-tabs ─────────────────────────────────────────── */}
             <div
               role="tablist"
               aria-label="Sélectionner une vue du troupeau"
-              className="flex gap-1.5 overflow-x-auto -mx-4 px-4 pb-1 scrollbar-hide"
+              className="flex gap-1 overflow-x-auto -mx-4 px-4 pb-1 scrollbar-hide border-b border-border bg-bg-0 sticky top-0 z-10"
             >
               {SUB_TABS.map((t) => {
                 const active = activeSubTab === t.id;
@@ -270,46 +134,40 @@ const TroupeauHub: React.FC = () => {
                     aria-controls={`troupeau-panel-${t.id}`}
                     id={`troupeau-tab-${t.id}`}
                     onClick={() => handleSubTabChange(t.id)}
-                    className={`pressable shrink-0 rounded-full px-3.5 py-2 ft-heading text-[12px] uppercase tracking-wide border transition-colors flex items-center gap-2 ${
-                      active
-                        ? 'bg-accent/10 border-accent text-accent'
-                        : 'bg-transparent border-border text-text-1 hover:text-text-0'
+                    className={`pressable shrink-0 px-3.5 py-2.5 ft-heading text-[11px] uppercase tracking-wider transition-colors flex items-center gap-1.5 relative font-bold ${
+                      active ? 'text-accent' : 'text-text-2 hover:text-text-0'
                     }`}
                   >
                     {t.label}
-                    <span
-                      className={`font-mono tabular-nums text-[10px] ${
-                        active ? 'text-accent/70' : 'text-text-2'
-                      }`}
-                    >
-                      {String(count).padStart(2, '0')}
+                    <span className="font-mono tabular-nums text-[9px] opacity-60">
+                      {t.id === 'loges' ? `${count}/${totalLogesCapacity}` : String(count).padStart(2, '0')}
                     </span>
+                    {active && (
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-t-full" />
+                    )}
                   </button>
                 );
               })}
             </div>
 
             {/* ── Panels ───────────────────────────────────────────────── */}
-            {activeSubTab === 'truies' ? (
-              <div
-                role="tabpanel"
-                id="troupeau-panel-truies"
-                aria-labelledby="troupeau-tab-truies"
-                className="flex flex-col gap-4"
-              >
-                <TruiesPanel activeTruies={activeTruies} today={today} />
-              </div>
-            ) : (
-              <div
-                role="tabpanel"
-                id={`troupeau-panel-${activeSubTab}`}
-                aria-labelledby={`troupeau-tab-${activeSubTab}`}
-              >
-                {activeSubTab === 'verrats' && <TroupeauVerratsView />}
-                {activeSubTab === 'porcelets' && <TroupeauPorceletsView />}
-                {activeSubTab === 'loges' && <TroupeauLogesView />}
-              </div>
-            )}
+            <div
+              role="tabpanel"
+              id={`troupeau-panel-${activeSubTab}`}
+              aria-labelledby={`troupeau-tab-${activeSubTab}`}
+              className="animate-fade-in"
+            >
+              {activeSubTab === 'truies' && (
+                <TroupeauTruiesView searchText={searchTruies} setSearchText={setSearchTruies} />
+              )}
+              {activeSubTab === 'verrats' && (
+                <TroupeauVerratsView searchText={searchVerrats} setSearchText={setSearchVerrats} />
+              )}
+              {activeSubTab === 'porcelets' && (
+                <TroupeauPorceletsView searchText={searchPorcelets} setSearchText={setSearchPorcelets} />
+              )}
+              {activeSubTab === 'loges' && <TroupeauLogesView />}
+            </div>
           </div>
         </AgritechLayout>
       </IonContent>
@@ -317,7 +175,7 @@ const TroupeauHub: React.FC = () => {
   );
 };
 
-// ─── P6 Summary strip ────────────────────────────────────────────────────────
+// ─── Summary strip ───────────────────────────────────────────────────────────
 
 interface SummaryStripProps {
   total: number;
@@ -339,36 +197,29 @@ const SummaryStrip: React.FC<SummaryStripProps> = ({
   eng,
 }) => (
   <div
-    className="card-dense flex flex-col gap-2.5"
+    className="card-dense flex flex-col gap-3 p-3.5"
     role="group"
     aria-label="Synthèse troupeau et occupation des loges"
   >
-    {/* Ligne 1 — comptages */}
     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 font-mono tabular-nums text-[12px] text-text-1">
-      <span className="text-text-0 font-semibold">
+      <span className="text-text-0 font-bold uppercase tracking-tight">
         {total} truie{total > 1 ? 's' : ''}
       </span>
-      <span className="text-text-2">·</span>
+      <span className="text-text-2 opacity-40">|</span>
       <span>{pleines} pleines</span>
-      <span className="text-text-2">·</span>
+      <span className="text-text-2 opacity-40">|</span>
       <span>{maternite} maternité</span>
-      <span className="text-text-2">·</span>
+      <span className="text-text-2 opacity-40">|</span>
       <span>{vides} vides</span>
     </div>
 
-    {/* Ligne 2 — barres loges */}
-    <div className="grid grid-cols-3 gap-2">
-      <LogesMiniBar label="Maternité" occ={mat} />
-      <LogesMiniBar label="Post-sev." occ={post} />
-      <LogesMiniBar label="Engr." occ={eng} />
+    <div className="grid grid-cols-3 gap-3">
+      <LogesMiniBar label="Mat." occ={mat} />
+      <LogesMiniBar label="PS" occ={post} />
+      <LogesMiniBar label="Eng." occ={eng} />
     </div>
   </div>
 );
-
-interface LogesMiniBarProps {
-  label: string;
-  occ: LogeOccupation;
-}
 
 const ALERT_BAR_CLASS: Record<LogeOccupationAlerte, string> = {
   OK: 'bg-accent',
@@ -376,522 +227,26 @@ const ALERT_BAR_CLASS: Record<LogeOccupationAlerte, string> = {
   FULL: 'bg-red',
 };
 
-const LogesMiniBar: React.FC<LogesMiniBarProps> = ({ label, occ }) => {
+const LogesMiniBar: React.FC<{ label: string; occ: LogeOccupation }> = ({ label, occ }) => {
   const width = Math.min(occ.tauxPct, 100);
-  const pad2 = (n: number): string => String(n).padStart(2, '0');
   return (
-    <div className="flex flex-col gap-1 min-w-0">
+    <div className="flex flex-col gap-1.5 min-w-0">
       <div className="flex items-baseline justify-between gap-1">
-        <span className="font-mono text-[10px] uppercase tracking-wide text-text-2 truncate">
+        <span className="font-mono text-[9px] uppercase tracking-widest text-text-2 font-bold">
           {label}
         </span>
-        <span className="font-mono tabular-nums text-[11px] text-text-0 shrink-0">
-          {pad2(occ.occupees)}/{pad2(occ.capacite)}
+        <span className="font-mono tabular-nums text-[10px] text-text-0 font-bold">
+          {occ.occupees}/{occ.capacite}
         </span>
       </div>
-      <div
-        className="h-1 w-full bg-bg-2 rounded-full overflow-hidden"
-        role="progressbar"
-        aria-valuenow={occ.tauxPct}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={`Loges ${label} ${occ.tauxPct}%`}
-      >
+      <div className="h-1.5 w-full bg-bg-2 rounded-full overflow-hidden">
         <div
-          className={`h-full ${ALERT_BAR_CLASS[occ.alerte]} rounded-full transition-[width]`}
+          className={`h-full ${ALERT_BAR_CLASS[occ.alerte]} transition-[width] duration-700 ease-out`}
           style={{ width: `${width}%` }}
         />
       </div>
     </div>
   );
 };
-
-// ─── Vue Truies (logique historique inlined) ─────────────────────────────────
-
-type SortKey = 'recent' | 'mbPrevue' | 'parite' | 'id';
-
-const SORT_OPTIONS: ReadonlyArray<{ id: SortKey; label: string }> = [
-  { id: 'recent', label: 'Récent' },
-  { id: 'mbPrevue', label: 'MB prévue' },
-  { id: 'parite', label: 'Parité' },
-  { id: 'id', label: 'ID' },
-];
-
-type ViewMode = 'list' | 'grid';
-
-const VIEW_MODE_KEY = 'troupeau_view_mode';
-
-/** Parse dd/mm/yyyy → timestamp (ms). null si non parseable. */
-function parseDateMsFR(dateFr: string | undefined): number | null {
-  if (!dateFr) return null;
-  const parts = dateFr.split('/');
-  if (parts.length !== 3) return null;
-  const [d, m, y] = parts.map(Number);
-  if (!d || !m || !y) return null;
-  const dt = new Date(y, m - 1, d);
-  const ms = dt.getTime();
-  return Number.isFinite(ms) ? ms : null;
-}
-
-/** Natural sort clé pour les IDs ("T2" < "T10"). */
-function idSortKey(t: Truie): string {
-  const raw = String(t.displayId || t.id || '');
-  // Zero-pad la partie numérique pour un compare lexicographique stable
-  return raw.replace(/\d+/g, (n) => n.padStart(6, '0')).toUpperCase();
-}
-
-/**
- * Retourne `true` si la recherche cible manifestement une boucle :
- * - la recherche contient au moins 1 chiffre, OU
- * - la recherche commence par "b." / "b" / "fr-" (préfixes courants de
- *   boucles d'oreille dans la ferme)
- *
- * Sert à mettre en highlight `t.boucle` dans la card quand le porcher tape
- * un numéro physique ("20", "B.20", "FR-13-01"…).
- */
-function isBoucleLikeQuery(q: string): boolean {
-  const s = q.trim().toLowerCase();
-  if (s.length === 0) return false;
-  if (/\d/.test(s)) return true;
-  return s.startsWith('b.') || s.startsWith('b ') || s === 'b' || s.startsWith('fr-');
-}
-
-/** La boucle de cette truie matche-t-elle la recherche ? */
-function boucleMatches(boucle: string | undefined, q: string): boolean {
-  if (!boucle || !q) return false;
-  return boucle.toLowerCase().includes(q.trim().toLowerCase());
-}
-
-interface TruiesPanelProps {
-  activeTruies: Truie[];
-  today: Date;
-}
-
-const TruiesPanel: React.FC<TruiesPanelProps> = ({ activeTruies, today }) => {
-  const navigate = useNavigate();
-  const [filter, setFilter] = useState<FilterKey>('tout');
-  const [searchText, setSearchText] = useState('');
-  const [sortBy, setSortBy] = useState<SortKey>('recent');
-
-  // P8 — View mode (liste vs grille), persisté via kvStore
-  const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    const stored = kvGet(VIEW_MODE_KEY);
-    return stored === 'grid' ? 'grid' : 'list';
-  });
-
-  useEffect(() => {
-    // fire-and-forget : persist change
-    kvSet(VIEW_MODE_KEY, viewMode).catch(() => {
-      /* silent — un fail de persistance ne casse pas la vue */
-    });
-  }, [viewMode]);
-
-  // P7 — Bottom sheets
-  const [addOpen, setAddOpen] = useState(false);
-  const [saillieOpen, setSaillieOpen] = useState(false);
-
-  // P5 — Filtrage + recherche étendue + P3 — Tri
-  const filtered = useMemo(() => {
-    const q = searchText.trim().toLowerCase();
-    const base = activeTruies.filter((t) => {
-      const v = statutVisu(t.statut);
-      if (filter !== 'tout' && v.filter !== filter) return false;
-      if (q) {
-        const haystack = [t.displayId, t.id, t.nom, t.boucle, t.stade]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-        if (!haystack.includes(q)) return false;
-      }
-      return true;
-    });
-
-    // P3 — Tri (copie défensive pour ne pas muter `activeTruies`)
-    if (sortBy === 'recent') return base;
-    const arr = [...base];
-    if (sortBy === 'mbPrevue') {
-      arr.sort((a, b) => {
-        const da = parseDateMsFR(a.dateMBPrevue);
-        const db = parseDateMsFR(b.dateMBPrevue);
-        if (da === null && db === null) return 0;
-        if (da === null) return 1; // null à la fin
-        if (db === null) return -1;
-        return da - db; // ascendant : les plus proches d'abord
-      });
-    } else if (sortBy === 'parite') {
-      arr.sort((a, b) => (b.nbPortees ?? -1) - (a.nbPortees ?? -1));
-    } else if (sortBy === 'id') {
-      arr.sort((a, b) => idSortKey(a).localeCompare(idSortKey(b)));
-    }
-    return arr;
-  }, [activeTruies, filter, searchText, sortBy]);
-
-  // Compteurs par filter bucket
-  const counts = useMemo(() => {
-    const c: Record<FilterKey, number> = {
-      tout: activeTruies.length,
-      pleines: 0,
-      maternite: 0,
-      chaleur: 0,
-      vides: 0,
-      reforme: 0,
-    };
-    for (const t of activeTruies) {
-      const v = statutVisu(t.statut);
-      if (v.filter !== 'tout') c[v.filter] += 1;
-    }
-    return c;
-  }, [activeTruies]);
-
-  // P2 — filtres à count=0 cachés (sauf 'tout')
-  const ALL_FILTERS: ReadonlyArray<{ id: FilterKey; label: string }> = [
-    { id: 'tout', label: 'Tout' },
-    { id: 'pleines', label: 'Pleines' },
-    { id: 'maternite', label: 'Maternité' },
-    { id: 'chaleur', label: 'Chaleur' },
-    { id: 'vides', label: 'Vides' },
-    { id: 'reforme', label: 'Réforme' },
-  ];
-  const visibleFilters = ALL_FILTERS.filter(
-    (f) => f.id === 'tout' || counts[f.id] > 0,
-  );
-
-  // ── Swipe-action handlers (P4) ───────────────────────────────────────
-  const handleSaillir = (t: Truie): void => {
-    navigate(
-      `/troupeau/truies/${encodeURIComponent(t.id)}?action=saillie`,
-    );
-  };
-  const handleSoigner = (t: Truie): void => {
-    navigate(`/troupeau/truies/${encodeURIComponent(t.id)}?action=soin`);
-  };
-
-  return (
-    <>
-      {/* ── Toolbar : toggle viewMode + bouton "Nouvelle truie" ─────── */}
-      <div className="flex items-center justify-between gap-2">
-        <ViewModeToggle
-          mode={viewMode}
-          onChange={setViewMode}
-        />
-        <button
-          type="button"
-          onClick={() => setAddOpen(true)}
-          aria-label="Ajouter une nouvelle truie"
-          className="pressable inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-accent/40 text-accent font-mono text-[11px] uppercase tracking-wide hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-colors"
-        >
-          <Plus size={14} aria-hidden="true" />
-          Nouvelle truie
-        </button>
-      </div>
-
-      {/* ── Recherche ───────────────────────────────────────────── */}
-      <div className="relative">
-        <input
-          type="search"
-          inputMode="search"
-          autoComplete="off"
-          spellCheck={false}
-          placeholder="ID, boucle, nom, stade…"
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          aria-label="Rechercher une truie par ID, nom, boucle ou stade"
-          className="w-full pl-10 pr-3 py-2.5 rounded-lg bg-bg-2 border border-border font-mono text-[13px] text-text-0 placeholder:text-text-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-        />
-        <Search
-          size={16}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-text-2 pointer-events-none"
-          aria-hidden="true"
-        />
-      </div>
-
-      {/* ── P3 Tri segmented ────────────────────────────────────── */}
-      <div className="flex items-center gap-2">
-        <span
-          id="truies-sort-label"
-          className="shrink-0 font-mono text-[10px] uppercase tracking-wide text-text-2"
-        >
-          Trier par
-        </span>
-        <div
-          role="radiogroup"
-          aria-labelledby="truies-sort-label"
-          className="flex gap-1.5 overflow-x-auto scrollbar-hide"
-        >
-          {SORT_OPTIONS.map((o) => {
-            const active = sortBy === o.id;
-            return (
-              <button
-                key={o.id}
-                role="radio"
-                aria-checked={active}
-                aria-label={`Trier par ${o.label}`}
-                onClick={() => setSortBy(o.id)}
-                className={`pressable shrink-0 rounded-full px-3 py-1.5 font-mono text-[11px] uppercase tracking-wide border transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 ${
-                  active
-                    ? 'bg-accent/10 border-accent text-accent'
-                    : 'bg-transparent border-border text-text-1 hover:text-text-0'
-                }`}
-              >
-                {o.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ── Segmented filters (scrollable) ──────────────────────── */}
-      <div
-        role="tablist"
-        aria-label="Filtrer par statut"
-        className="flex gap-1.5 overflow-x-auto -mx-4 px-4 pb-1 scrollbar-hide"
-      >
-        {visibleFilters.map((f) => {
-          const active = filter === f.id;
-          const count = counts[f.id];
-          return (
-            <button
-              key={f.id}
-              role="tab"
-              aria-selected={active}
-              onClick={() => setFilter(f.id)}
-              className={`pressable shrink-0 rounded-full px-3 py-2 font-mono text-[11px] font-medium uppercase tracking-wide border transition-colors flex items-center gap-1.5 ${
-                active
-                  ? 'bg-bg-2 border-teal text-teal'
-                  : 'bg-transparent border-border text-text-1 hover:text-text-0'
-              }`}
-            >
-              {f.label}
-              <span
-                className={`text-[10px] tabular-nums ${active ? 'text-teal/70' : 'text-text-2'}`}
-              >
-                {String(count).padStart(2, '0')}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ── Divider + compteur résultats ────────────────────────── */}
-      <SectionDivider
-        label={`${filtered.length} truie${filtered.length !== 1 ? 's' : ''}`}
-      />
-
-      {/* ── Liste ou Grille ─────────────────────────────────────── */}
-      {filtered.length === 0 ? (
-        <EmptyState hasSearch={searchText.trim().length > 0} />
-      ) : viewMode === 'grid' ? (
-        <ul
-          role="list"
-          aria-label="Grille des truies"
-          className="grid grid-cols-2 gap-2"
-        >
-          {filtered.map((t) => {
-            const v = statutVisu(t.statut);
-            const meta = truieMeta(t, today);
-            const q = searchText.trim();
-            const highlightBoucle =
-              isBoucleLikeQuery(q) && boucleMatches(t.boucle, q);
-            const boucleClass = highlightBoucle
-              ? 'text-accent'
-              : 'text-text-1';
-            return (
-              <li key={t.id} role="listitem">
-                <button
-                  type="button"
-                  onClick={() =>
-                    navigate(`/troupeau/truies/${encodeURIComponent(t.id)}`)
-                  }
-                  aria-label={`Truie ${t.displayId || t.id}${t.boucle ? ` boucle ${t.boucle}` : ''} · ${v.label}`}
-                  className="pressable w-full flex flex-col items-center gap-1.5 rounded-xl bg-bg-1 border border-border p-3 aspect-square justify-between focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-                >
-                  <TruieIcon size={30} aria-hidden="true" />
-                  <div className="font-mono text-[14px] font-semibold text-text-0 tabular-nums">
-                    {t.displayId || t.id}
-                  </div>
-                  <Chip label={v.label} tone={v.tone} size="xs" />
-                  {t.boucle ? (
-                    <div
-                      className={`ft-code text-[18px] font-semibold tabular-nums leading-none ${boucleClass}`}
-                      aria-label={`Boucle ${t.boucle}`}
-                    >
-                      {t.boucle}
-                    </div>
-                  ) : (
-                    <div className="ft-code text-[18px] text-text-2 leading-none" aria-hidden="true">
-                      —
-                    </div>
-                  )}
-                  <div className="font-mono text-[10px] text-text-2 truncate w-full text-center">
-                    {meta}
-                  </div>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      ) : (
-        <ul
-          role="list"
-          aria-label="Liste des truies"
-          className="card-dense !p-0 overflow-hidden"
-        >
-          {filtered.map((t) => {
-            const v = statutVisu(t.statut);
-            const meta = truieMeta(t, today);
-            const q = searchText.trim();
-            const highlightBoucle =
-              isBoucleLikeQuery(q) && boucleMatches(t.boucle, q);
-            const boucleClass = highlightBoucle
-              ? 'text-accent'
-              : 'text-text-1';
-            return (
-              <IonItemSliding key={t.id}>
-                <li role="listitem">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      navigate(`/troupeau/truies/${encodeURIComponent(t.id)}`)
-                    }
-                    aria-label={`Truie ${t.displayId || t.id}${t.boucle ? ` boucle ${t.boucle}` : ''} · ${v.label}`}
-                    className="pressable w-full text-left flex items-center gap-3 px-3 py-3 border-b border-border last:border-b-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-                  >
-                    <div className="w-9 h-9 rounded-lg bg-bg-2 flex items-center justify-center text-text-1 shrink-0">
-                      <TruieIcon size={22} aria-hidden="true" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-1.5 flex-wrap">
-                        <span className="font-mono text-[14px] font-semibold text-text-0 tabular-nums">
-                          {t.displayId || t.id}
-                        </span>
-                        {t.boucle ? (
-                          <>
-                            <span
-                              className="font-mono text-[12px] text-text-2"
-                              aria-hidden="true"
-                            >
-                              ·
-                            </span>
-                            <span
-                              className={`ft-code text-[13px] tabular-nums ${boucleClass}`}
-                              aria-label={`Boucle ${t.boucle}`}
-                            >
-                              {t.boucle}
-                            </span>
-                          </>
-                        ) : null}
-                      </div>
-                      <div className="font-mono text-[11px] text-text-2 mt-0.5 truncate">
-                        {meta}
-                      </div>
-                    </div>
-                    <Chip label={v.label} tone={v.tone} size="xs" />
-                  </button>
-                </li>
-                <IonItemOptions side="end">
-                  <IonItemOption
-                    color="warning"
-                    aria-label={`Enregistrer une saillie pour ${t.displayId || t.id}`}
-                    onClick={() => handleSaillir(t)}
-                  >
-                    <div className="flex flex-col items-center gap-1 px-2">
-                      <Heart size={18} aria-hidden="true" />
-                      <span className="font-mono text-[10px] uppercase tracking-wide">
-                        Saillir
-                      </span>
-                    </div>
-                  </IonItemOption>
-                  <IonItemOption
-                    color="danger"
-                    aria-label={`Enregistrer un soin pour ${t.displayId || t.id}`}
-                    onClick={() => handleSoigner(t)}
-                  >
-                    <div className="flex flex-col items-center gap-1 px-2">
-                      <Syringe size={18} aria-hidden="true" />
-                      <span className="font-mono text-[10px] uppercase tracking-wide">
-                        Soigner
-                      </span>
-                    </div>
-                  </IonItemOption>
-                </IonItemOptions>
-              </IonItemSliding>
-            );
-          })}
-        </ul>
-      )}
-
-      {/* ── BottomSheets ────────────────────────────────────────── */}
-      <QuickAddTruieForm
-        isOpen={addOpen}
-        onClose={() => setAddOpen(false)}
-      />
-      <QuickSaillieForm
-        isOpen={saillieOpen}
-        onClose={() => setSaillieOpen(false)}
-      />
-    </>
-  );
-};
-
-// ─── ViewMode toggle (P8) ───────────────────────────────────────────────────
-
-interface ViewModeToggleProps {
-  mode: ViewMode;
-  onChange: (m: ViewMode) => void;
-}
-
-const ViewModeToggle: React.FC<ViewModeToggleProps> = ({ mode, onChange }) => (
-  <div
-    role="radiogroup"
-    aria-label="Mode d'affichage de la liste des truies"
-    className="inline-flex rounded-full border border-border bg-bg-1 p-0.5"
-  >
-    <button
-      type="button"
-      role="radio"
-      aria-checked={mode === 'list'}
-      aria-label="Affichage en liste"
-      onClick={() => onChange('list')}
-      className={`pressable inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 ${
-        mode === 'list' ? 'bg-accent text-bg-0' : 'text-text-1 hover:text-text-0'
-      }`}
-    >
-      <ListIcon size={18} aria-hidden="true" />
-    </button>
-    <button
-      type="button"
-      role="radio"
-      aria-checked={mode === 'grid'}
-      aria-label="Affichage en grille"
-      onClick={() => onChange('grid')}
-      className={`pressable inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 ${
-        mode === 'grid' ? 'bg-accent text-bg-0' : 'text-text-1 hover:text-text-0'
-      }`}
-    >
-      <LayoutGrid size={18} aria-hidden="true" />
-    </button>
-  </div>
-);
-
-// ─── Empty state ─────────────────────────────────────────────────────────────
-
-const EmptyState: React.FC<{ hasSearch: boolean }> = ({ hasSearch }) => (
-  <div
-    className="card-dense text-center py-12 animate-fade-in-up"
-    role="status"
-  >
-    <div className="inline-flex w-12 h-12 rounded-xl bg-bg-1 border border-border items-center justify-center text-text-2 mb-3">
-      <Users size={22} aria-hidden="true" />
-    </div>
-    <h3 className="ft-heading text-[14px] uppercase text-text-0">
-      {hasSearch ? 'Aucun résultat' : 'Aucune truie'}
-    </h3>
-    <p className="font-mono text-[11px] text-text-2 mt-2">
-      {hasSearch
-        ? 'Aucune truie ne correspond à ta recherche.'
-        : 'Ta feuille TRUIES est vide ou non accessible.'}
-    </p>
-  </div>
-);
 
 export default TroupeauHub;

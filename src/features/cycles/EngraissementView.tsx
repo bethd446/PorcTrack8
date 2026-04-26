@@ -1,33 +1,39 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
-import { TrendingUp, ChevronRight } from 'lucide-react';
+import {
+  TrendingUp, ChevronRight, Droplets, ArrowUpRight,
+  Scale, AlertCircle, PackageCheck
+} from 'lucide-react';
 import { PorceletIcon } from '../../components/icons';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import {
   KpiCard,
-  DataRow,
   Chip,
   SectionDivider,
-  type ChipTone,
 } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
 import {
   computeBandePhase,
   filterRealPortees,
   logesEngraissementOccupation,
-  type LogeOccupation,
-  type LogeOccupationAlerte,
 } from '../../services/bandesAggregator';
+import { FARM_CONFIG } from '../../config/farm';
+import {
+  computePhaseTerrain,
+  determinerAliment,
+  PHASE_LABEL
+} from '../../services/phaseEngine';
+import type { BandePorcelets } from '../../types/farm';
 
 /**
- * EngraissementView — écran /cycles/engraissement.
- *
- * Liste les portées en phase ENGRAISSEMENT (sevrées depuis ≥60 j, séparées par
- * sexe, jusqu'à finition). Affiche occupation des 2 loges d'engraissement et
- * J+X depuis sevrage (pas de cap fixe côté biologique : la finition dépend du
- * poids commercial et non d'une durée stricte).
+ * EngraissementView — Hub Cycles / Engraissement
+ * ════════════════════════════════════════════════════════════════════════════
+ * Refonte Premium Agritech :
+ * - Intégration Phase Engine (J100 -> J180)
+ * - Monitoring nutritionnel (Aliment Finition)
+ * - Visualisation de l'avancement poids
  */
 const EngraissementView: React.FC = () => {
   const navigate = useNavigate();
@@ -40,46 +46,37 @@ const EngraissementView: React.FC = () => {
       (b) => computeBandePhase(b, today) === 'ENGRAISSEMENT'
     );
 
-    const rows: EngraissementRow[] = inPhase.map((b) => {
-      const sevrageRaw = b.dateSevrageReelle || b.dateSevragePrevue || '';
-      const sevrageDate = parseDateFr(sevrageRaw);
-      const joursDepuisSevrage =
-        sevrageDate !== null ? daysBetween(sevrageDate, today) : null;
+    const rows: EngraissementRowData[] = inPhase.map((b) => {
+      const mbDate = parseDateFr(b.dateMB || '');
+      const ageJours = mbDate ? daysBetween(mbDate, today) : null;
+      const terrainPhase = computePhaseTerrain(b, today);
+
+      // Estimation poids linéaire
+      const weight = mbDate ? Math.min(25 + (daysBetween(parseDateFr(b.dateSevrageReelle || b.dateSevragePrevue || '') || today, today) * 0.7), 110) : 60;
+
       return {
         id: b.id,
         idPortee: b.idPortee || b.id,
-        boucleMere: b.boucleMere,
+        truie: b.truie,
         vivants: b.vivants ?? 0,
-        sevrageLabel: sevrageRaw ? formatDateShort(sevrageRaw) : null,
-        joursDepuisSevrage,
+        ageJours,
+        terrainPhase,
+        weight,
+        bande: b
       };
     });
 
-    // Tri : plus avancées d'abord (proche finition)
-    rows.sort((a, b) => {
-      const ja = a.joursDepuisSevrage ?? -1;
-      const jb = b.joursDepuisSevrage ?? -1;
-      return jb - ja;
-    });
-
     const totalVivants = rows.reduce((acc, r) => acc + r.vivants, 0);
-    const rowsAvecJours = rows.filter((r) => r.joursDepuisSevrage !== null);
-    const moyJours =
-      rowsAvecJours.length > 0
-        ? Math.round(
-            rowsAvecJours.reduce(
-              (acc, r) => acc + (r.joursDepuisSevrage as number),
-              0
-            ) / rowsAvecJours.length
-          )
-        : 0;
+    const avgWeight = rows.length > 0
+      ? Math.round(rows.reduce((acc, r) => acc + r.weight, 0) / rows.length)
+      : 0;
 
     return {
       portees: rows,
       summary: {
         nbPortees: rows.length,
         totalVivants,
-        moyJours,
+        avgWeight,
       },
       occupation: logesEngraissementOccupation(realPortees, today),
     };
@@ -90,65 +87,48 @@ const EngraissementView: React.FC = () => {
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
           <AgritechHeader
-            title="CROISSANCE & FINITION"
-            subtitle="Porcelets séparés par sexe · même loge jusqu'à l'abattoir"
+            title="ENGRAISSEMENT"
+            subtitle="Phase de finition · J100 → J180"
             backTo="/cycles"
           />
 
-          <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
-            {/* Summary strip — 4 KPI */}
-            <div
-              role="group"
-              aria-label="Résumé croissance-finition"
-              className="grid grid-cols-2 gap-3 sm:grid-cols-4"
-            >
+          <div className="px-4 pt-4 pb-32 flex flex-col gap-5">
+            {/* ── Summary Stats ────────────────────────────────────────── */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <KpiCard
-                label="Portées"
+                label="Bandes"
                 value={summary.nbPortees}
-                icon={<TrendingUp size={14} aria-hidden="true" />}
+                icon={<TrendingUp size={14} className="text-accent" />}
               />
               <KpiCard
-                label="Porcelets vivants"
+                label="Effectif"
                 value={summary.totalVivants}
                 tone="success"
               />
               <KpiCard
-                label="J. moy. sevrage"
-                value={summary.moyJours}
-                unit="j"
+                label="Poids Moyen"
+                value={summary.avgWeight}
+                unit="kg"
               />
               <KpiCard
-                label="Loges"
+                label="Loges Occ."
                 value={`${occupation.occupees}/${occupation.capacite}`}
-                tone={kpiToneForAlerte(occupation.alerte)}
+                tone={occupation.alerte === 'FULL' ? 'critical' : 'success'}
               />
             </div>
 
-            {/* Loges occupation */}
-            <LogesOccupationCard occupation={occupation} />
-
-            {/* Liste portées */}
-            <SectionDivider
-              label={`Portées en croissance-finition${
-                portees.length > 0 ? ` · ${portees.length}` : ''
-              }`}
-            />
+            {/* ── Liste des Bandes (EngraissementCard) ─────────────────── */}
+            <SectionDivider label={`Suivi Engraissement · ${summary.nbPortees}`} />
 
             {portees.length === 0 ? (
               <EmptyState />
             ) : (
-              <div
-                role="list"
-                aria-label="Portées en croissance-finition"
-                className="card-dense !p-0 overflow-hidden"
-              >
+              <div className="flex flex-col gap-4">
                 {portees.map((p) => (
-                  <PorteeRow
+                  <EngraissementCard
                     key={p.id}
-                    row={p}
-                    onOpen={() =>
-                      navigate(`/troupeau/bandes/${encodeURIComponent(p.id)}`)
-                    }
+                    data={p}
+                    onOpen={() => navigate(`/troupeau/bandes/${encodeURIComponent(p.id)}`)}
                   />
                 ))}
               </div>
@@ -160,171 +140,113 @@ const EngraissementView: React.FC = () => {
   );
 };
 
-// ─── Sous-composants locaux ─────────────────────────────────────────────────
+// ─── Sous-composants ────────────────────────────────────────────────────────
 
-interface EngraissementRow {
+interface EngraissementRowData {
   id: string;
   idPortee: string;
-  boucleMere?: string;
+  truie?: string;
   vivants: number;
-  sevrageLabel: string | null;
-  joursDepuisSevrage: number | null;
+  ageJours: number | null;
+  terrainPhase: string | null;
+  weight: number;
+  bande: any;
 }
 
-interface PorteeRowProps {
-  row: EngraissementRow;
-  onOpen: () => void;
-}
+const EngraissementCard: React.FC<{ data: EngraissementRowData; onOpen: () => void }> = ({ data, onOpen }) => {
+  const isTransitionRequired = data.terrainPhase && data.terrainPhase === 'FINITION';
+  const currentAliment = determinerAliment(data.weight);
+  const feedConfig = FARM_CONFIG.FEED_CONFIG[currentAliment as keyof typeof FARM_CONFIG.FEED_CONFIG];
 
-const PorteeRow: React.FC<PorteeRowProps> = ({ row, onOpen }) => {
-  const jours = row.joursDepuisSevrage;
-  // Phase engraissement = ton spécifique `gold` (métrique premium, finition).
-  // Seul distinguo : si J+>=120 post-sevrage, on bascule en `amber` (séjour
-  // anormalement long, finition à vérifier).
-  const chipTone: ChipTone =
-    jours !== null && jours >= 120 ? 'amber' : 'gold';
-  const chipLabel = jours !== null ? `J+${jours}` : 'Engrais.';
-
-  const primaryParts = [row.idPortee];
-  if (row.boucleMere) primaryParts.push(`(${row.boucleMere})`);
-  const primary = primaryParts.join(' · ');
-
-  const secondaryParts: string[] = [];
-  secondaryParts.push(`Vivants ${row.vivants}`);
-  if (row.sevrageLabel) secondaryParts.push(`Sevrage ${row.sevrageLabel}`);
-  if (jours !== null) secondaryParts.push(`J+${jours} post-sevrage`);
-  const secondary = secondaryParts.join(' · ');
-
-  // Pas de cap fixe côté biologique : la finition dépend du poids commercial.
-  // On affiche simplement "J+X / —" pour signifier l'absence de durée cible.
-  const meta =
-    jours !== null ? (
-      <span aria-label={`Jour ${jours} depuis sevrage`}>J+{jours}/—</span>
-    ) : (
-      <span className="text-text-2">—</span>
-    );
-
-  return (
-    <div role="listitem">
-      <DataRow
-        primary={primary}
-        secondary={secondary}
-        meta={meta}
-        accessory={
-          <div className="flex items-center gap-2">
-            <Chip label={chipLabel} tone={chipTone} size="xs" />
-            <ChevronRight
-              size={14}
-              className="text-text-2"
-              aria-hidden="true"
-            />
-          </div>
-        }
-        onClick={onOpen}
-      />
-    </div>
-  );
-};
-
-interface LogesOccupationCardProps {
-  occupation: LogeOccupation;
-}
-
-const LogesOccupationCard: React.FC<LogesOccupationCardProps> = ({
-  occupation,
-}) => {
-  const { occupees, capacite, tauxPct, alerte } = occupation;
-  const barFill =
-    alerte === 'FULL' ? 'bg-red' : alerte === 'HIGH' ? 'bg-amber' : 'bg-accent';
-  const statusLabel =
-    alerte === 'FULL'
-      ? 'Saturé'
-      : alerte === 'HIGH'
-        ? 'Proche saturation'
-        : 'OK';
-  const barWidth = Math.min(tauxPct, 100);
+  const weightTarget = 100;
+  const weightProgress = Math.min(100, (data.weight / weightTarget) * 100);
 
   return (
     <div
-      className="card-dense flex flex-col gap-2"
-      role="group"
-      aria-label={`Loges croissance-finition : ${occupees} sur ${capacite}, ${tauxPct}%, ${statusLabel}`}
+      onClick={onOpen}
+      className={`card-dense flex flex-col gap-4 p-4 border-l-4 transition-all active:scale-[0.98] cursor-pointer ${
+        isTransitionRequired ? 'border-l-accent animate-pulse-slow' : 'border-l-bg-2'
+      }`}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex justify-between items-start">
         <div className="min-w-0">
-          <div className="kpi-label">Loges croissance-finition</div>
-          <div className="mt-0.5 font-mono text-[11px] text-text-2 leading-tight">
-            1 loge mâles · 1 loge femelles · J60 → abattoir
+          <div className="flex items-center gap-2">
+            <h3 className="text-[15px] font-bold text-text-0 font-mono">{data.idPortee}</h3>
+            <Chip tone="default" label={`${data.vivants} porcs`} size="xs" />
+          </div>
+          <p className="text-[11px] text-text-2 mt-0.5">
+            Mère: {data.truie || '—'} · Âge: <span className="text-text-1 font-mono">{data.ageJours}j</span>
+          </p>
+        </div>
+        {isTransitionRequired ? (
+          <Chip tone="accent" label={`➜ ${PHASE_LABEL.FINITION}`} size="sm" icon={<ArrowUpRight size={10} />} />
+        ) : (
+          <Chip tone="default" label="Engraissement" size="sm" />
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        {/* Weight Gauge */}
+        <div className="bg-bg-1 rounded-xl p-3 border border-border/50">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-[10px] uppercase font-mono text-text-2">Poids Estimé</span>
+            <Scale size={12} className="text-accent" />
+          </div>
+          <div className="flex items-baseline gap-1">
+            <span className="text-[20px] font-bold font-mono text-text-0">{Math.round(data.weight)}</span>
+            <span className="text-[10px] text-text-2">kg</span>
+          </div>
+          <div className="mt-2 h-1 w-full bg-bg-2 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-accent"
+              style={{ width: `${weightProgress}%` }}
+            />
           </div>
         </div>
-        <Chip
-          label={statusLabel}
-          tone={chipToneForAlerte(alerte)}
-          size="xs"
-        />
+
+        {/* Nutrition Info */}
+        <div className="bg-bg-1 rounded-xl p-3 border border-border/50">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-[10px] uppercase font-mono text-text-2">Alimentation</span>
+            <Droplets size={12} className="text-accent" />
+          </div>
+          <div className="text-[12px] font-bold text-accent truncate">
+            {feedConfig?.label || currentAliment}
+          </div>
+          <div className="mt-1 text-[9px] text-text-2 font-mono leading-tight">
+            Maïs: {feedConfig?.formule.mais}% | KPC: {feedConfig?.formule.kpc_5}%
+          </div>
+        </div>
       </div>
 
-      <div className="flex items-baseline gap-2">
-        <span className="font-mono tabular-nums text-[24px] font-bold text-text-0 leading-none">
-          {occupees}
-        </span>
-        <span className="font-mono text-[13px] text-text-2 leading-none">
-          / {capacite}
-        </span>
-        <span className="ml-auto font-mono tabular-nums text-[12px] text-text-2">
-          {tauxPct}%
-        </span>
-      </div>
-
-      <div
-        className="h-1.5 w-full bg-bg-2 rounded-full overflow-hidden"
-        role="progressbar"
-        aria-valuenow={tauxPct}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={`Occupation loges croissance-finition ${tauxPct}%`}
-      >
-        <div
-          className={`h-full ${barFill} rounded-full transition-[width]`}
-          style={{ width: `${barWidth}%` }}
-        />
-      </div>
+      {isTransitionRequired && (
+        <button
+          className="w-full bg-accent text-bg-0 py-2.5 rounded-xl font-bold text-[12px] uppercase tracking-wider flex items-center justify-center gap-2"
+          onClick={(e) => { e.stopPropagation(); /* TODO: Transition to Finition */ }}
+        >
+          <PackageCheck size={16} />
+          Passer en Finition
+        </button>
+      )}
     </div>
   );
 };
 
 const EmptyState: React.FC = () => (
-  <div
-    className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up"
-    role="status"
-  >
+  <div className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up">
     <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
-      <PorceletIcon size={48} aria-hidden="true" />
+      <TrendingUp size={48} />
     </div>
     <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
-      Aucune portée en croissance-finition
+      Engraissement vide
     </h3>
     <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
-      Les porcelets basculent en croissance-finition (~J60 de vie, après séparation par sexe) et y restent jusqu'à l'abattoir.
+      Les porcs entrent en engraissement vers J100.
     </p>
   </div>
 );
 
-// ─── Helpers (non exportés) ─────────────────────────────────────────────────
-
-function kpiToneForAlerte(
-  alerte: LogeOccupationAlerte
-): 'default' | 'warning' | 'critical' | 'success' {
-  if (alerte === 'FULL') return 'critical';
-  if (alerte === 'HIGH') return 'warning';
-  return 'success';
-}
-
-function chipToneForAlerte(alerte: LogeOccupationAlerte): ChipTone {
-  if (alerte === 'FULL') return 'red';
-  if (alerte === 'HIGH') return 'amber';
-  return 'accent';
-}
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
 function parseDateFr(s: string): Date | null {
   if (!s) return null;
@@ -338,15 +260,6 @@ function parseDateFr(s: string): Date | null {
 function daysBetween(from: Date, to: Date): number {
   const diffMs = to.getTime() - from.getTime();
   return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
-}
-
-function formatDateShort(s: string): string {
-  const d = parseDateFr(s);
-  if (!d) return s;
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const yy = String(d.getFullYear()).slice(-2);
-  return `${dd}/${mm}/${yy}`;
 }
 
 export default EngraissementView;

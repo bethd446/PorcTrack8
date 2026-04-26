@@ -28,7 +28,7 @@ import { normaliseStatut } from '../../lib/truieStatut';
 
 // ─── Phases ─────────────────────────────────────────────────────────────────
 
-type PhaseId = 'gestation' | 'maternite' | 'postsevr' | 'croiss' | 'finition';
+type PhaseId = 'gestation' | 'maternite' | 'postsevr' | 'croiss' | 'engrais' | 'finition';
 
 interface PhaseDef {
   id: PhaseId;
@@ -36,20 +36,29 @@ interface PhaseDef {
   short: string;
   days: number;
   varTone: string;
+  route?: string;
 }
 
 const PHASES: readonly PhaseDef[] = [
   { id: 'gestation', label: 'Gestation', short: 'GEST.', days: 115, varTone: 'var(--cyan)' },
-  { id: 'maternite', label: 'Maternité', short: 'MAT.', days: FARM_CONFIG.SEVRAGE_AGE_JOURS ?? 28, varTone: 'var(--gold)' },
-  { id: 'postsevr',  label: 'Post-sevrage', short: 'P-SEV.', days: FARM_CONFIG.POST_SEVRAGE_DUREE_JOURS ?? 32, varTone: 'var(--teal)' },
-  { id: 'croiss',    label: 'Croissance', short: 'CROIS.', days: 60, varTone: 'var(--amber)' },
-  { id: 'finition',  label: 'Finition', short: 'FINIT.', days: 60, varTone: 'var(--coral)' },
+  { id: 'maternite', label: 'Maternité', short: 'MAT.', days: FARM_CONFIG.SEVRAGE_AGE_JOURS ?? 28, varTone: 'var(--gold)', route: '/cycles/maternite' },
+  { id: 'postsevr',  label: 'Post-sevrage', short: 'P-SEV.', days: FARM_CONFIG.POST_SEVRAGE_DUREE_JOURS ?? 35, varTone: 'var(--teal)', route: '/cycles/post-sevrage' },
+  { id: 'croiss',    label: 'Croissance', short: 'CROIS.', days: FARM_CONFIG.CROISSANCE_DUREE_JOURS ?? 37, varTone: 'var(--amber)', route: '/cycles/croissance' },
+  { id: 'engrais',   label: 'Engrais.', short: 'ENGR.', days: FARM_CONFIG.ENGRAISSEMENT_DUREE_JOURS ?? 80, varTone: 'var(--accent)', route: '/cycles/engraissement' },
+  {
+    id: 'finition',
+    label: 'Finition',
+    short: 'FINIT.',
+    days: Math.round((FARM_CONFIG.FINITION_POIDS_MAX_KG - FARM_CONFIG.FINITION_POIDS_MIN_KG) / 0.90),
+    varTone: 'var(--coral)',
+    route: '/cycles/finition',
+  },
 ];
 
 const TOTAL_DAYS = PHASES.reduce((s, p) => s + p.days, 0);
 const PHASE_OFFSETS: Record<PhaseId, number> = (() => {
   const o: Record<PhaseId, number> = {
-    gestation: 0, maternite: 0, postsevr: 0, croiss: 0, finition: 0,
+    gestation: 0, maternite: 0, postsevr: 0, croiss: 0, engrais: 0, finition: 0,
   };
   let acc = 0;
   for (const p of PHASES) {
@@ -100,20 +109,29 @@ function bandePosition(b: BandePorcelets, today: Date): BandePosition | null {
   } else if (phase === 'POST_SEVRAGE') {
     def = PHASES.find((p) => p.id === 'postsevr');
     const sev = parseDate(b.dateSevrageReelle || b.dateSevragePrevue);
-    dayInPhase = sev ? Math.min(daysBetween(sev, today), def?.days ?? 32) : 0;
+    dayInPhase = sev ? Math.min(daysBetween(sev, today), def?.days ?? 35) : 0;
     detail = `${vivants} porcelets`;
-  } else if (phase === 'ENGRAISSEMENT') {
+  } else if (phase === 'CROISSANCE') {
+    def = PHASES.find((p) => p.id === 'croiss');
     const sev = parseDate(b.dateSevrageReelle || b.dateSevragePrevue);
     const dSinceSev = sev ? daysBetween(sev, today) : 0;
-    const dEngrais = Math.max(0, dSinceSev - (FARM_CONFIG.POST_SEVRAGE_DUREE_JOURS ?? 32));
-    const croissDays = PHASES.find((p) => p.id === 'croiss')?.days ?? 60;
-    if (dEngrais < croissDays) {
-      def = PHASES.find((p) => p.id === 'croiss');
-      dayInPhase = dEngrais;
-    } else {
-      def = PHASES.find((p) => p.id === 'finition');
-      dayInPhase = Math.min(dEngrais - croissDays, def?.days ?? 60);
-    }
+    dayInPhase = Math.max(0, dSinceSev - (FARM_CONFIG.POST_SEVRAGE_DUREE_JOURS ?? 35));
+    dayInPhase = Math.min(dayInPhase, def?.days ?? 37);
+    detail = `${vivants} têtes`;
+  } else if (phase === 'ENGRAISSEMENT') {
+    def = PHASES.find((p) => p.id === 'engrais');
+    const sev = parseDate(b.dateSevrageReelle || b.dateSevragePrevue);
+    const dSinceSev = sev ? daysBetween(sev, today) : 0;
+    dayInPhase = Math.max(0, dSinceSev - (FARM_CONFIG.POST_SEVRAGE_DUREE_JOURS ?? 35) - (FARM_CONFIG.CROISSANCE_DUREE_JOURS ?? 37));
+    dayInPhase = Math.min(dayInPhase, def?.days ?? 80);
+    detail = `${vivants} têtes`;
+  } else if (phase === 'FINITION') {
+    def = PHASES.find((p) => p.id === 'finition');
+    const sev = parseDate(b.dateSevrageReelle || b.dateSevragePrevue);
+    const dSinceSev = sev ? daysBetween(sev, today) : 0;
+    const FINITION_DAYS = Math.round((FARM_CONFIG.FINITION_POIDS_MAX_KG - FARM_CONFIG.FINITION_POIDS_MIN_KG) / 0.90);
+    dayInPhase = Math.max(0, dSinceSev - (FARM_CONFIG.POST_SEVRAGE_DUREE_JOURS ?? 35) - (FARM_CONFIG.CROISSANCE_DUREE_JOURS ?? 37) - (FARM_CONFIG.ENGRAISSEMENT_DUREE_JOURS ?? 80));
+    dayInPhase = Math.min(dayInPhase, def?.days ?? FINITION_DAYS);
     detail = `${vivants} têtes`;
   } else {
     return null;
@@ -176,11 +194,13 @@ const CyclesHub: React.FC = () => {
 
   const countByPhase = useMemo(() => {
     const c: Record<PhaseId, number> = {
-      gestation: 0, maternite: 0, postsevr: 0, croiss: 0, finition: 0,
+      gestation: 0, maternite: 0, postsevr: 0, croiss: 0, engrais: 0, finition: 0,
     };
     for (const p of positions) c[p.phase.id] += 1;
     return c;
   }, [positions]);
+
+  const gridCols = PHASES.length === 6 ? 'grid-cols-6' : 'grid-cols-5';
 
   return (
     <IonPage>
@@ -192,20 +212,12 @@ const CyclesHub: React.FC = () => {
           />
 
           <div className="px-4 pt-4 pb-32 flex flex-col gap-5">
-            {/* ── Summary chips 5 phases ──────────────────────────────── */}
-            <div className="grid grid-cols-5 gap-1.5">
+            {/* ── Summary chips phases ────────────────────────────────── */}
+            <div className={`grid ${gridCols} gap-1`}>
               {PHASES.map((p) => {
                 const count = countByPhase[p.id];
-                return (
-                  <div
-                    key={p.id}
-                    className="card-dense !p-2.5 text-center"
-                    style={{
-                      borderColor: count > 0
-                        ? `color-mix(in srgb, ${p.varTone} 40%, var(--border))`
-                        : undefined,
-                    }}
-                  >
+                const content = (
+                  <>
                     <div
                       className="font-mono text-[9px] uppercase tracking-wide font-semibold"
                       style={{ color: p.varTone }}
@@ -218,6 +230,38 @@ const CyclesHub: React.FC = () => {
                     >
                       {String(count).padStart(2, '0')}
                     </div>
+                  </>
+                );
+
+                const baseClasses = "card-dense !p-2.5 text-center transition-transform duration-[160ms] active:scale-[0.97]";
+                const borderStyle = {
+                  borderColor: count > 0
+                    ? `color-mix(in srgb, ${p.varTone} 40%, var(--border))`
+                    : undefined,
+                };
+
+                if (p.route) {
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => navigate(p.route!)}
+                      className={`${baseClasses} pressable`}
+                      style={borderStyle}
+                      aria-label={`Voir le détail ${p.label} (${count} bandes)`}
+                    >
+                      {content}
+                    </button>
+                  );
+                }
+
+                return (
+                  <div
+                    key={p.id}
+                    className={baseClasses}
+                    style={borderStyle}
+                  >
+                    {content}
                   </div>
                 );
               })}

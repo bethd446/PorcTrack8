@@ -116,7 +116,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
           : 'Modifications en file · sync auto',
       );
       try {
-        await refreshData();
+        await refreshData(true);
       } catch {
         /* noop */
       }

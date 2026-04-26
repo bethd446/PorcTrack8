@@ -1,43 +1,52 @@
 /**
- * phaseEngine — Moteur de détection des transitions de phase biologiques.
+ * phaseEngine — Moteur de détection des transitions de phase biologiques et alimentaires.
  *
  * Principe :
- *   computePhaseTerrain() calcule la phase biologiquement attendue
- *   uniquement par l'âge depuis la mise-bas (jamais le statut GAS).
- *
- *   detectPendingTransitions() compare phaseTerrain vs phaseDeclaree
- *   (computeBandePhase, qui respecte le statut explicite).
- *   Si terrain > declaree → transition en attente.
+ * computePhaseTerrain() calcule la phase biologiquement attendue par l'âge.
+ * detectPendingTransitions() compare phaseTerrain vs phaseDeclaree.
+ * determinerAliment() prescrit l'aliment en fonction du poids.
  */
 
 import { FARM_CONFIG } from '../config/farm';
 import { computeBandePhase, type BandePhase } from './bandesAggregator';
 import type { BandePorcelets } from '../types/farm';
+import { enqueueAppendRow } from './offlineQueue';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type PhaseAvecSortie = BandePhase | 'SORTIE';
 
+// Type pour les phases alimentaires définies dans FARM_CONFIG
+export type FeedPhase = keyof typeof FARM_CONFIG.FEED_CONFIG;
+
 export interface PendingTransition {
-  /** ID de la bande concernée. */
   bandeId: string;
-  /** Label court pour l'UI (idPortee ou id). */
   label: string;
-  /** Phase actuelle déclarée. */
   fromPhase: BandePhase;
-  /** Phase cible suggérée. */
   toPhase: PhaseAvecSortie;
-  /** Âge de la bande en jours (depuis dateMB), ou null si dateMB absente. */
   ageJours: number | null;
-  /** Poids estimé en kg, null si non applicable. */
   poidsEstimeKg: number | null;
-  /** Référence vers la bande pour faciliter la confirmation. */
   bande: BandePorcelets;
+  alimentRecommande?: FeedPhase;
+  // Champs de dette biologique
+  joursEnRetard: number;
+  isBloquant: boolean;
+  urgence: 'NORMALE' | 'HAUTE' | 'CRITIQUE';
 }
+
+// ─── Labels FR pour chaque phase ─────────────────────────────────────────────
+
+export const PHASE_LABEL: Record<string, string> = {
+  SOUS_MERE:     'Maternité',
+  POST_SEVRAGE:  'Post-sevrage',
+  CROISSANCE:    'Croissance',
+  ENGRAISSEMENT: 'Engraissement',
+  FINITION:      'Finition',
+  SORTIE:        '🚚 Sortie abattoir',
+};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/** Parse "DD/MM/YYYY" ou "YYYY-MM-DD" → Date | null. */
 function parseDateFr(s: string | undefined): Date | null {
   if (!s) return null;
   const fr = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
@@ -51,23 +60,53 @@ function floorDays(from: Date, to: Date): number {
   return Math.floor((to.getTime() - from.getTime()) / 86_400_000);
 }
 
-// ─── Seuils (dérivés de FARM_CONFIG, aucune valeur hardcodée) ─────────────
+// ─── Seuils (dérivés de FARM_CONFIG) ─────────────────────────────────────────
 
-function seuils() {
-  const PS  = FARM_CONFIG.SEVRAGE_AGE_JOURS;                          // 28
-  const CR  = PS + FARM_CONFIG.POST_SEVRAGE_DUREE_JOURS;             // 63
-  const ENG = CR + FARM_CONFIG.CROISSANCE_DUREE_JOURS;               // 100
-  const FIN = ENG + FARM_CONFIG.ENGRAISSEMENT_DUREE_JOURS;           // 180
+export function getSeuilsAgeJours() {
+  const PS  = FARM_CONFIG.SEVRAGE_AGE_JOURS;
+  const CR  = PS + FARM_CONFIG.POST_SEVRAGE_DUREE_JOURS;
+  const ENG = CR + FARM_CONFIG.CROISSANCE_DUREE_JOURS;
+  const FIN = ENG + FARM_CONFIG.ENGRAISSEMENT_DUREE_JOURS;
   return { PS, CR, ENG, FIN };
+}
+
+export function getSeuilFinPhase(p: BandePhase): number | null {
+  const { PS, CR, ENG, FIN } = getSeuilsAgeJours();
+  switch (p) {
+    case 'SOUS_MERE':     return PS;
+    case 'POST_SEVRAGE':  return CR;
+    case 'CROISSANCE':    return ENG;
+    case 'ENGRAISSEMENT': return FIN;
+    case 'FINITION':      return 999;
+    default:              return null;
+  }
+}
+
+// ─── Moteur Nutritionnel ─────────────────────────────────────────────────────
+
+/**
+ * Prescrit l'aliment optimal basé sur le poids réel (ou estimé).
+ */
+export function determinerAliment(poidsMoyenKg: number): FeedPhase {
+  const feedRules = FARM_CONFIG.FEED_CONFIG;
+
+  if (poidsMoyenKg <= feedRules.DEMARRAGE_1.poids_max_kg) return 'DEMARRAGE_1';
+  if (poidsMoyenKg <= feedRules.DEMARRAGE_2.poids_max_kg) return 'DEMARRAGE_2';
+  if (poidsMoyenKg <= feedRules.CROISSANCE.poids_max_kg) return 'CROISSANCE';
+  return 'FINITION';
+}
+
+/**
+ * Calcule le nombre de jours passés sur l'aliment actuel.
+ */
+export function joursSurAlimentActuel(dateDebutAliment?: string): number | null {
+  const debut = parseDateFr(dateDebutAliment);
+  if (!debut) return null;
+  return Math.max(0, floorDays(debut, new Date()));
 }
 
 // ─── computePhaseTerrain ─────────────────────────────────────────────────────
 
-/**
- * Calcule la phase biologique attendue uniquement par l'âge depuis la MB.
- * N'utilise PAS le statut GAS — c'est ce que la biologie "dit".
- * Retourne null si dateMB absente (impossible de calculer).
- */
 export function computePhaseTerrain(
   bande: BandePorcelets,
   today: Date = new Date(),
@@ -76,7 +115,7 @@ export function computePhaseTerrain(
   if (!mbDate) return null;
 
   const ageJours = floorDays(mbDate, today);
-  const { PS, CR, ENG, FIN } = seuils();
+  const { PS, CR, ENG, FIN } = getSeuilsAgeJours();
 
   if (ageJours < PS)  return 'SOUS_MERE';
   if (ageJours < CR)  return 'POST_SEVRAGE';
@@ -85,13 +124,11 @@ export function computePhaseTerrain(
   return 'FINITION';
 }
 
-// ─── ORDRE des phases (pour comparer terrain > déclarée) ─────────────────────
-
 const PHASE_ORDER: Record<BandePhase, number> = {
   SOUS_MERE:    0,
   POST_SEVRAGE: 1,
   CROISSANCE:   2,
-  ENGRAISSEMENT: 3,
+  ENGRAISSEMENT:3,
   FINITION:     4,
   INCONNU:      -1,
 };
@@ -99,8 +136,6 @@ const PHASE_ORDER: Record<BandePhase, number> = {
 function phaseOrder(p: BandePhase): number {
   return PHASE_ORDER[p] ?? -1;
 }
-
-// ─── nextPhase ────────────────────────────────────────────────────────────────
 
 function nextPhase(current: BandePhase): PhaseAvecSortie | null {
   switch (current) {
@@ -115,25 +150,17 @@ function nextPhase(current: BandePhase): PhaseAvecSortie | null {
 
 // ─── Estimation poids ────────────────────────────────────────────────────────
 
-/** Estimation linéaire simple du poids courant (kg) depuis sevrage. */
 function estimerPoids(bande: BandePorcelets, today: Date): number | null {
   const sevDate = parseDateFr(bande.dateSevrageReelle ?? bande.dateSevragePrevue);
   if (!sevDate) return null;
-  const POIDS_SEVRAGE = 25; // kg à J28 (norme K13 corrigée dans FinitionView)
-  const GMQ_AVG = 0.65;    // kg/j moyen post-sevrage
+  const POIDS_SEVRAGE = 25;
+  const GMQ_AVG = 0.65;
   const jours = Math.max(0, floorDays(sevDate, today));
   return Math.min(POIDS_SEVRAGE + jours * GMQ_AVG, 120);
 }
 
 // ─── detectPendingTransitions ────────────────────────────────────────────────
 
-/**
- * Détecte toutes les bandes dont la biologie (âge/poids) indique
- * qu'elles devraient passer à la phase suivante, mais dont le statut GAS
- * ne l'a pas encore enregistré.
- *
- * Ignore les bandes RECAP et celles sans dateMB.
- */
 export function detectPendingTransitions(
   bandes: BandePorcelets[],
   today: Date = new Date(),
@@ -144,47 +171,93 @@ export function detectPendingTransitions(
     if (!b || b.statut === 'RECAP') continue;
 
     const terrain = computePhaseTerrain(b, today);
-    if (!terrain) continue; // pas de dateMB → impossible de calculer
+    if (!terrain) continue;
 
     const declaree = computeBandePhase(b, today);
     if (declaree === 'INCONNU') continue;
 
-    // Cas FINITION → SORTIE (basé sur poids)
+    const poids = estimerPoids(b, today);
+    const mbDate = parseDateFr(b.dateMB);
+    const ageJours = mbDate ? floorDays(mbDate, today) : null;
+
+    // Cas FINITION → SORTIE
     if (declaree === 'FINITION') {
-      const poids = estimerPoids(b, today);
       if (poids !== null && poids >= FARM_CONFIG.FINITION_POIDS_MAX_KG) {
         result.push({
           bandeId: b.id,
           label: b.idPortee ?? b.id,
           fromPhase: 'FINITION',
           toPhase: 'SORTIE',
-          ageJours: parseDateFr(b.dateMB)
-            ? floorDays(parseDateFr(b.dateMB)!, today)
-            : null,
+          ageJours,
           poidsEstimeKg: poids,
           bande: b,
+          joursEnRetard: 0,
+          isBloquant: false,
+          urgence: 'NORMALE'
         });
       }
       continue;
     }
 
-    // Cas standard : terrain > déclarée → proposer nextPhase
+    // Cas standard : terrain > déclarée
     if (phaseOrder(terrain) > phaseOrder(declaree)) {
       const next = nextPhase(declaree);
       if (!next) continue;
 
-      const mbDate = parseDateFr(b.dateMB);
+      const threshold = getSeuilFinPhase(declaree);
+      const retard = (threshold && ageJours !== null) ? Math.max(0, ageJours - threshold) : 0;
+      const isCritique = retard > 5;
+
       result.push({
         bandeId: b.id,
         label: b.idPortee ?? b.id,
         fromPhase: declaree,
         toPhase: next,
-        ageJours: mbDate ? floorDays(mbDate, today) : null,
-        poidsEstimeKg: estimerPoids(b, today),
+        ageJours,
+        poidsEstimeKg: poids,
         bande: b,
+        alimentRecommande: poids ? determinerAliment(poids) : undefined,
+        joursEnRetard: retard,
+        isBloquant: isCritique,
+        urgence: isCritique ? 'CRITIQUE' : (retard > 2 ? 'HAUTE' : 'NORMALE')
       });
     }
   }
 
   return result;
+}
+
+// ─── Enregistrement ──────────────────────────────────────────────────────────
+
+export async function enqueueTransition(
+  transition: PendingTransition,
+  utilisateur: string,
+  poidsKg?: number,
+): Promise<void> {
+  // Génération UUID pour idempotence
+  const syncId = crypto.randomUUID?.() || `local-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+  const mbDate = parseDateFr(transition.bande.dateMB);
+  const ageJours = mbDate
+    ? floorDays(mbDate, new Date())
+    : transition.ageJours ?? undefined;
+
+  const today = new Date();
+  const dateStr = [
+    String(today.getDate()).padStart(2, '0'),
+    String(today.getMonth() + 1).padStart(2, '0'),
+    today.getFullYear(),
+  ].join('/');
+
+  await enqueueAppendRow('HISTORIQUE_TRANSITIONS', [
+    syncId, // Colonne A : ID de synchronisation unique
+    transition.bandeId,
+    transition.fromPhase,
+    transition.toPhase,
+    dateStr,
+    utilisateur,
+    poidsKg ?? '',
+    ageJours ?? '',
+    transition.alimentRecommande ?? ''
+  ]);
 }

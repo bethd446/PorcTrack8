@@ -1,50 +1,39 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
-import { ChevronRight, Coins, TrendingUp, Calendar } from 'lucide-react';
+import {
+  ChevronRight, Coins, TrendingUp, Calendar,
+  ArrowUpRight, Droplets, Scale, ShoppingCart
+} from 'lucide-react';
 import { BalanceIcon } from '../../components/icons';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import {
   KpiCard,
-  DataRow,
   Chip,
   SectionDivider,
-  type ChipTone,
 } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
+import { filterRealPortees } from '../../services/bandesAggregator';
 import {
-  computeBandePhase,
-  filterRealPortees,
-} from '../../services/bandesAggregator';
+  determinerAliment,
+} from '../../services/phaseEngine';
+import { FARM_CONFIG } from '../../config/farm';
 import type { BandePorcelets } from '../../types/farm';
 import QuickVenteForm from '../../components/forms/QuickVenteForm';
 
 /**
- * FinitionView — écran /cycles/finition.
- *
- * Affiche les bandes proches du poids d'abattage (≥80 kg estimé). La finition
- * est une sous-catégorie de l'engraissement basée sur le poids (et non la
- * durée stricte post-sevrage). La ferme K13 pratique un abattage vers 90 kg
- * vif (race Large White × Duroc tropical Côte d'Ivoire).
- *
- * Heuristique poids : 25 kg au sevrage + 650 g/j (GMQ moyen post-sevrage),
- * cap à 110 kg. Pour un porcelet sevré depuis ~100 j, le poids estimé est
- * de ~90 kg — seuil commercial d'abattage.
- *
- * Affichage :
- *  - Summary : nb bandes · poids moyen · jours avant abattage moyen
- *  - Liste bandes triées par poids décroissant (proches abattage en tête)
- *  - Projection ventes : total porcelets × poids moyen × 2 100 FCFA/kg
+ * FinitionView — Hub Cycles / Finition
+ * ════════════════════════════════════════════════════════════════════════════
+ * Refonte Premium Agritech :
+ * - Intégration Phase Engine & Nutrition (Aliment Finition)
+ * - Projections de vente financières
+ * - Déclenchement "Sortie Abattoir"
  */
 
 // ─── Constantes métier ──────────────────────────────────────────────────────
-const FINITION_SEUIL_KG = 80;
-const POIDS_ABATTAGE_CIBLE_KG = 90;
-const POIDS_SEVRAGE_KG = 25;
-const GMQ_POST_SEVRAGE_KG = 0.65;
 const PRIX_KG_VIF_FCFA = 2100;
-const POIDS_MAX_KG = 110;
+const FINITION_SEUIL_KG = 100;
 
 const FinitionView: React.FC = () => {
   const navigate = useNavigate();
@@ -55,58 +44,45 @@ const FinitionView: React.FC = () => {
     const today = new Date();
     const realPortees = filterRealPortees(bandes);
 
-    const inFinition = realPortees.filter((b) => isFinition(b, today));
+    // Une bande est en finition si poids estimé >= 100 kg
+    const inFinition = realPortees.filter((b) => {
+      const weight = estimateWeightKg(b, today);
+      return weight >= FINITION_SEUIL_KG;
+    });
 
-    const rows: FinitionRow[] = inFinition.map((b) => {
-      const sevrageRaw = b.dateSevrageReelle || b.dateSevragePrevue || '';
-      const sevrageDate = parseDate(sevrageRaw);
-      const joursDepuisSevrage =
-        sevrageDate !== null ? daysBetween(sevrageDate, today) : null;
-      const poidsKg = estimateWeightKg(b, today);
-      const joursAvantAbattage = computeJoursAvantAbattage(poidsKg);
+    const rows: FinitionRowData[] = inFinition.map((b) => {
+      const weight = estimateWeightKg(b, today);
+      const isReadyForExit = weight >= FARM_CONFIG.FINITION_POIDS_MAX_KG;
+
       return {
         id: b.id,
         idPortee: b.idPortee || b.id,
-        boucleMere: b.boucleMere,
-        dateMB: b.dateMB ? formatDateShort(b.dateMB) : null,
+        truie: b.truie,
         vivants: b.vivants ?? 0,
-        joursDepuisSevrage,
-        poidsKg,
-        joursAvantAbattage,
-        sortieProche: joursAvantAbattage <= 0,
+        weight,
+        isReadyForExit,
+        bande: b
       };
     });
 
-    // Tri : poids décroissant (plus proches abattage en tête)
-    rows.sort((a, b) => b.poidsKg - a.poidsKg);
+    rows.sort((a, b) => b.weight - a.weight);
 
     const nbBandes = rows.length;
     const totalVivants = rows.reduce((acc, r) => acc + r.vivants, 0);
-    const poidsMoyen =
-      nbBandes > 0
-        ? Math.round(rows.reduce((acc, r) => acc + r.poidsKg, 0) / nbBandes)
-        : 0;
-    const joursAbattageMoyen =
-      nbBandes > 0
-        ? Math.round(
-            rows.reduce((acc, r) => acc + Math.max(0, r.joursAvantAbattage), 0) /
-              nbBandes
-          )
-        : 0;
+    const avgWeight = nbBandes > 0
+      ? Math.round(rows.reduce((acc, r) => acc + r.weight, 0) / nbBandes)
+      : 0;
 
-    // Projection ventes : total vivants × poids moyen × prix kg vif
-    const revenuEstime = totalVivants * poidsMoyen * PRIX_KG_VIF_FCFA;
+    const revenuEstime = rows.reduce((acc, r) => acc + (r.vivants * r.weight * PRIX_KG_VIF_FCFA), 0);
 
     return {
       portees: rows,
       summary: {
         nbBandes,
-        poidsMoyen,
-        joursAbattageMoyen,
+        avgWeight,
+        totalVivants
       },
       projection: {
-        totalVivants,
-        poidsMoyen,
         revenuEstime,
       },
     };
@@ -118,95 +94,88 @@ const FinitionView: React.FC = () => {
         <AgritechLayout>
           <AgritechHeader
             title="FINITION"
-            subtitle="Bandes proches du poids abattage"
+            subtitle="Prêt pour abattage · 110 kg"
             backTo="/cycles"
             action={
               <button
-                type="button"
                 onClick={() => navigate('/cycles/sortie')}
-                aria-label="Voir le calendrier des sorties"
-                className="pressable inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-accent/40 text-accent font-mono text-[11px] uppercase tracking-wide hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-colors"
+                className="pressable inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-accent/40 text-accent font-mono text-[11px] uppercase tracking-wide transition-colors"
               >
-                <Calendar size={14} aria-hidden="true" />
+                <Calendar size={14} />
                 Calendrier
               </button>
             }
           />
 
-          <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
-            {/* Summary — 3 KPI */}
-            <div
-              role="group"
-              aria-label="Résumé finition"
-              className="grid grid-cols-3 gap-3"
-            >
+          <div className="px-4 pt-4 pb-32 flex flex-col gap-5">
+            {/* ── Summary Stats ────────────────────────────────────────── */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <KpiCard
                 label="Bandes"
                 value={summary.nbBandes}
                 tone={summary.nbBandes > 0 ? 'warning' : 'default'}
               />
               <KpiCard
-                label="Poids moy."
-                value={summary.poidsMoyen}
+                label="Effectif"
+                value={summary.totalVivants}
+                tone="success"
+              />
+              <KpiCard
+                label="Poids Moyen"
+                value={summary.avgWeight}
                 unit="kg"
               />
               <KpiCard
-                label="Jours avant abattage"
-                value={summary.joursAbattageMoyen}
-                unit="j"
+                label="Valeur Est."
+                value={formatFCFA(projection.revenuEstime)}
+                unit="FCFA"
+                tone="success"
               />
             </div>
 
-            <SectionDivider
-              label={`Bandes en finition${portees.length > 0 ? ` · ${portees.length}` : ''}`}
-            />
+            {/* ── Liste des Bandes (FinitionCard) ─────────────────────── */}
+            <SectionDivider label={`Suivi Finition · ${summary.nbBandes}`} />
 
             {portees.length === 0 ? (
               <EmptyState />
             ) : (
-              <div
-                role="list"
-                aria-label="Bandes en finition"
-                className="card-dense !p-0 overflow-hidden"
-              >
-                {portees.map((p) => {
-                  const bande = bandes.find((b) => b.id === p.id);
-                  return (
-                    <PorteeFinitionRow
-                      key={p.id}
-                      row={p}
-                      onOpen={() =>
-                        navigate(`/troupeau/bandes/${encodeURIComponent(p.id)}`)
-                      }
-                      onEnregistrerVente={
-                        bande && (bande.vivants ?? 0) > 0
-                          ? () => setVenteBande(bande)
-                          : undefined
-                      }
-                    />
-                  );
-                })}
+              <div className="flex flex-col gap-4">
+                {portees.map((p) => (
+                  <FinitionCard
+                    key={p.id}
+                    data={p}
+                    onOpen={() => navigate(`/troupeau/bandes/${encodeURIComponent(p.id)}`)}
+                    onSell={() => setVenteBande(p.bande)}
+                  />
+                ))}
               </div>
             )}
 
-            {/* Projection ventes */}
-            {portees.length > 0 ? (
-              <>
-                <SectionDivider label="Projections ventes" />
-                <ProjectionCard projection={projection} />
-              </>
-            ) : null}
+            {/* ── Projection Finale ───────────────────────────────────── */}
+            {portees.length > 0 && (
+              <div className="card-dense bg-success/5 border-success/20 p-4 mt-2">
+                <div className="flex items-center gap-2 mb-3">
+                  <Coins size={18} className="text-success" />
+                  <span className="font-mono text-[11px] font-bold uppercase text-success">Projection de vente brute</span>
+                </div>
+                <div className="text-[28px] font-bold font-mono text-text-0 mb-1">
+                  {formatFCFA(projection.revenuEstime)} <span className="text-[14px] text-text-2">FCFA</span>
+                </div>
+                <p className="text-[11px] text-text-2 leading-tight">
+                  Basé sur un poids moyen de {summary.avgWeight}kg et un prix de {PRIX_KG_VIF_FCFA} FCFA/kg.
+                </p>
+              </div>
+            )}
           </div>
         </AgritechLayout>
 
-        {/* QuickVenteForm : ouvert quand une bande est sélectionnée. */}
-        {venteBande ? (
+        {venteBande && (
           <QuickVenteForm
             isOpen={!!venteBande}
             onClose={() => setVenteBande(null)}
             bande={venteBande}
           />
-        ) : null}
+        )}
       </IonContent>
     </IonPage>
   );
@@ -214,183 +183,111 @@ const FinitionView: React.FC = () => {
 
 // ─── Sous-composants ────────────────────────────────────────────────────────
 
-interface FinitionRow {
+interface FinitionRowData {
   id: string;
   idPortee: string;
-  boucleMere?: string;
-  dateMB: string | null;
+  truie?: string;
   vivants: number;
-  joursDepuisSevrage: number | null;
-  poidsKg: number;
-  joursAvantAbattage: number;
-  sortieProche: boolean;
+  weight: number;
+  isReadyForExit: boolean;
+  bande: any;
 }
 
-interface ProjectionData {
-  totalVivants: number;
-  poidsMoyen: number;
-  revenuEstime: number;
-}
+const FinitionCard: React.FC<{ data: FinitionRowData; onOpen: () => void; onSell: () => void }> = ({ data, onOpen, onSell }) => {
+  const currentAliment = determinerAliment(data.weight);
+  const feedConfig = FARM_CONFIG.FEED_CONFIG[currentAliment as keyof typeof FARM_CONFIG.FEED_CONFIG];
 
-interface PorteeFinitionRowProps {
-  row: FinitionRow;
-  onOpen: () => void;
-  /** Optionnel : si défini, affiche un bouton « Enregistrer vente » (tone gold). */
-  onEnregistrerVente?: () => void;
-}
-
-const PorteeFinitionRow: React.FC<PorteeFinitionRowProps> = ({
-  row, onOpen, onEnregistrerVente,
-}) => {
-  const chipTone: ChipTone = row.sortieProche ? 'amber' : 'gold';
-  const chipLabel = row.sortieProche
-    ? 'À sortir'
-    : `J-${row.joursAvantAbattage}`;
-
-  const primaryParts = [row.idPortee];
-  if (row.boucleMere) primaryParts.push(`(${row.boucleMere})`);
-  const primary = primaryParts.join(' · ');
-
-  const secondaryParts: string[] = [];
-  if (row.joursDepuisSevrage !== null) {
-    secondaryParts.push(`J+${row.joursDepuisSevrage} post-sevrage`);
-  }
-  secondaryParts.push(`~${Math.round(row.poidsKg)} kg estimé`);
-  secondaryParts.push(`${row.vivants} vivants`);
-  if (row.dateMB) secondaryParts.push(`MB ${row.dateMB}`);
-  const secondary = secondaryParts.join(' · ');
-
-  const meta = (
-    <span aria-label={`Poids estimé ${Math.round(row.poidsKg)} kilogrammes`}>
-      {Math.round(row.poidsKg)} kg
-    </span>
-  );
-
-  return (
-    <div role="listitem" className="border-b border-border last:border-b-0">
-      <DataRow
-        primary={primary}
-        secondary={secondary}
-        meta={meta}
-        accessory={
-          <div className="flex items-center gap-2">
-            <Chip label={chipLabel} tone={chipTone} size="xs" />
-            <ChevronRight
-              size={14}
-              className="text-text-2"
-              aria-hidden="true"
-            />
-          </div>
-        }
-        onClick={onOpen}
-      />
-      {onEnregistrerVente ? (
-        <div className="px-4 pb-3 -mt-1">
-          <button
-            type="button"
-            onClick={(e) => {
-              // Empêche le click de remonter à DataRow (navigation bande).
-              e.stopPropagation();
-              onEnregistrerVente();
-            }}
-            aria-label={`Enregistrer une vente pour la bande ${row.idPortee}`}
-            className={[
-              'pressable inline-flex items-center gap-1.5',
-              'h-8 px-3 rounded-md',
-              'bg-amber/10 text-amber border border-amber/30',
-              'font-mono text-[11px] font-bold uppercase tracking-wide',
-              'transition-colors duration-[160ms]',
-              'hover:bg-amber/20',
-              'focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber focus-visible:outline-offset-2',
-            ].join(' ')}
-          >
-            <TrendingUp size={12} aria-hidden="true" />
-            Enregistrer vente
-          </button>
-        </div>
-      ) : null}
-    </div>
-  );
-};
-
-interface ProjectionCardProps {
-  projection: ProjectionData;
-}
-
-const ProjectionCard: React.FC<ProjectionCardProps> = ({ projection }) => {
-  const { totalVivants, poidsMoyen, revenuEstime } = projection;
-  const revenuFormatted = formatFCFA(revenuEstime);
+  const targetWeight = FARM_CONFIG.FINITION_POIDS_MAX_KG;
+  const progress = Math.min(100, (data.weight / targetWeight) * 100);
 
   return (
     <div
-      className="card-dense flex flex-col gap-3"
-      role="group"
-      aria-label={`Projection ventes : ${totalVivants} porcelets, poids moyen ${poidsMoyen} kilogrammes, revenu estimé ${revenuFormatted}`}
+      onClick={onOpen}
+      className={`card-dense flex flex-col gap-4 p-4 border-l-4 transition-all active:scale-[0.98] cursor-pointer ${
+        data.isReadyForExit ? 'border-l-success animate-pulse-slow' : 'border-l-gold'
+      }`}
     >
-      <div className="flex items-center gap-2">
-        <span
-          className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-bg-2 text-amber"
-          aria-hidden="true"
+      {/* Header Card */}
+      <div className="flex justify-between items-start">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="text-[15px] font-bold text-text-0 font-mono">{data.idPortee}</h3>
+            <Chip tone="default" label={`${data.vivants} porcs`} size="xs" />
+          </div>
+          <p className="text-[11px] text-text-2 mt-0.5">
+            Mère: {data.truie || '—'} · Poids: <span className="text-text-0 font-bold">{Math.round(data.weight)}kg</span>
+          </p>
+        </div>
+        {data.isReadyForExit ? (
+          <Chip tone="success" label="PRÊT SORTIE" size="sm" icon={<ShoppingCart size={10} />} />
+        ) : (
+          <Chip tone="gold" label="Finition" size="sm" />
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        {/* Progress Gauge */}
+        <div className="bg-bg-1 rounded-xl p-3 border border-border/50">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-[10px] uppercase font-mono text-text-2">Obj. 110kg</span>
+            <TrendingUp size={12} className={data.isReadyForExit ? 'text-success' : 'text-gold'} />
+          </div>
+          <div className="flex items-baseline gap-1">
+            <span className="text-[18px] font-bold font-mono text-text-0">{Math.round(progress)}</span>
+            <span className="text-[10px] text-text-2">%</span>
+          </div>
+          <div className="mt-2 h-1 w-full bg-bg-2 rounded-full overflow-hidden">
+            <div
+              className={`h-full ${data.isReadyForExit ? 'bg-success' : 'bg-gold'}`}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Nutrition Info */}
+        <div className="bg-bg-1 rounded-xl p-3 border border-border/50">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-[10px] uppercase font-mono text-text-2">Alimentation</span>
+            <Droplets size={12} className="text-accent" />
+          </div>
+          <div className="text-[12px] font-bold text-accent truncate">
+            {feedConfig?.label || currentAliment}
+          </div>
+          <div className="mt-1 text-[9px] text-text-2 font-mono leading-tight">
+            Maïs: {feedConfig?.formule.mais}% | KPC: {feedConfig?.formule.kpc_5}%
+          </div>
+        </div>
+      </div>
+
+      {data.isReadyForExit && (
+        <button
+          className="w-full bg-success text-bg-0 py-2.5 rounded-xl font-bold text-[12px] uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-success/20"
+          onClick={(e) => { e.stopPropagation(); onSell(); }}
         >
-          <Coins size={16} />
-        </span>
-        <div>
-          <div className="kpi-label">Revenu brut estimé</div>
-          <div className="font-mono text-[11px] text-text-2 leading-tight">
-            À 2 100 FCFA / kg vif
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-baseline gap-2">
-        <span className="font-mono tabular-nums text-[24px] font-bold text-accent leading-none">
-          {revenuFormatted}
-        </span>
-        <span className="font-mono text-[11px] text-text-2 leading-none">
-          FCFA
-        </span>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
-        <div>
-          <div className="kpi-label">Porcelets</div>
-          <div className="mt-1 font-mono tabular-nums text-[16px] font-semibold text-text-0">
-            {totalVivants}
-          </div>
-        </div>
-        <div>
-          <div className="kpi-label">Poids moy.</div>
-          <div className="mt-1 font-mono tabular-nums text-[16px] font-semibold text-text-0">
-            {poidsMoyen} kg
-          </div>
-        </div>
-      </div>
+          <ShoppingCart size={16} />
+          Déclarer Vente
+        </button>
+      )}
     </div>
   );
 };
 
 const EmptyState: React.FC = () => (
-  <div
-    className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up"
-    role="status"
-  >
-    <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
-      <BalanceIcon size={48} aria-hidden="true" />
+  <div className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up">
+    <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-gold">
+      <BalanceIcon size={48} />
     </div>
     <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
-      Aucune bande en finition
+      Finition vide
     </h3>
     <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
-      Les porcelets arrivent en finition vers {FINITION_SEUIL_KG} kg (~{Math.round((FINITION_SEUIL_KG - POIDS_SEVRAGE_KG) / GMQ_POST_SEVRAGE_KG)} j post-sevrage).
+      Les porcs entrent en finition lorsqu'ils dépassent les 100 kg.
     </p>
   </div>
 );
 
-// ─── Helpers métier (non exportés) ──────────────────────────────────────────
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
-/**
- * Parse date dd/MM/yyyy ou ISO.
- */
 function parseDate(s?: string): Date | null {
   if (!s) return null;
   const fr = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
@@ -405,57 +302,16 @@ function daysBetween(from: Date, to: Date): number {
   return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
 }
 
-/**
- * Estimation poids vif (kg) d'une bande depuis la date de sevrage.
- * 25 kg au sevrage + GMQ 0.65 kg/j, cap 110 kg.
- */
 function estimateWeightKg(bande: BandePorcelets, today: Date): number {
   const sevrage = parseDate(bande.dateSevrageReelle || bande.dateSevragePrevue);
   if (!sevrage) return 0;
   const j = daysBetween(sevrage, today);
-  return Math.min(POIDS_SEVRAGE_KG + j * GMQ_POST_SEVRAGE_KG, POIDS_MAX_KG);
+  // Heuristique K13 : 25kg au sevrage + 650g/j en croissance/finition
+  return Math.min(25 + j * 0.65, 120);
 }
 
-/**
- * Une bande est en finition si elle est sevrée ET poids estimé ≥ 80 kg.
- * Volontairement tolérant sur la phase (couvre POST_SEVRAGE + ENGRAISSEMENT).
- */
-function isFinition(bande: BandePorcelets, today: Date): boolean {
-  if (!/sevr/i.test(bande.statut ?? '')) return false;
-  // Exclut explicitement les bandes INCONNU / sans phase définie
-  const phase = computeBandePhase(bande, today);
-  if (phase !== 'POST_SEVRAGE' && phase !== 'ENGRAISSEMENT') return false;
-  return estimateWeightKg(bande, today) >= FINITION_SEUIL_KG;
-}
-
-/**
- * Jours restants avant atteinte du poids commercial d'abattage (90 kg).
- * Retourne 0 si déjà atteint.
- */
-function computeJoursAvantAbattage(poidsKg: number): number {
-  if (poidsKg >= POIDS_ABATTAGE_CIBLE_KG) return 0;
-  const deltaKg = POIDS_ABATTAGE_CIBLE_KG - poidsKg;
-  return Math.max(0, Math.ceil(deltaKg / GMQ_POST_SEVRAGE_KG));
-}
-
-function formatDateShort(s: string): string {
-  const d = parseDate(s);
-  if (!d) return s;
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const yy = String(d.getFullYear()).slice(-2);
-  return `${dd}/${mm}/${yy}`;
-}
-
-/**
- * Formatage FCFA avec espace comme séparateur de milliers.
- * Ex : 1250000 → "1 250 000"
- */
 function formatFCFA(n: number): string {
-  if (!Number.isFinite(n) || n === 0) return '0';
-  return Math.round(n)
-    .toString()
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return Math.round(n).toLocaleString('fr-FR').replace(/\s/g, ' ');
 }
 
 export default FinitionView;

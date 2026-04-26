@@ -1,9 +1,11 @@
 import React, { useMemo, useState, useCallback } from 'react';
+import { useIonAlert } from '@ionic/react';
 import { Scale, Search, CheckCircle2, ChevronRight, ArrowLeft } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
 import { enqueueAppendRow } from '../../services/offlineQueue';
 import { BottomSheet, DataRow } from '../agritech';
 import type { BandePorcelets } from '../../types/farm';
+import { biologyValidators } from '../../utils/biologyValidators';
 
 /* ═════════════════════════════════════════════════════════════════════════
    QuickPeseeForm · Pesée rapide d'une bande de porcelets (bulk poids moyen)
@@ -58,7 +60,8 @@ function jFrom(frDate: string | undefined): number | null {
 }
 
 const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
-  const { bandes } = useFarm();
+  const { bandes, refreshData } = useFarm();
+  const [presentAlert] = useIonAlert();
 
   const [step, setStep] = useState<Step>(1);
   const [query, setQuery] = useState('');
@@ -147,6 +150,39 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
     if (!selectedBande) return;
     if (!validate()) return;
 
+    const poids = Number(form.poidsMoyen.replace(',', '.'));
+    const jMB = jFrom(selectedBande.dateMB) ?? 0;
+
+    // 1. Appel du validateur biologique
+    const validation = biologyValidators.validatePoidsPlausible(poids, jMB);
+
+    if (!validation.isValid) {
+      // 2. Déclenchement de l'alerte d'interception
+      presentAlert({
+        header: 'Alerte Plausibilité',
+        subHeader: 'Anomalie de poids détectée',
+        message: validation.message,
+        cssClass: 'agritech-alert',
+        buttons: [
+          {
+            text: 'Annuler',
+            role: 'cancel',
+          },
+          {
+            text: 'Forcer la saisie',
+            role: 'confirm',
+            handler: () => executeSubmit(), // L'utilisateur confirme l'exception
+          },
+        ],
+      });
+      return;
+    }
+
+    await executeSubmit();
+  };
+
+  const executeSubmit = async (): Promise<void> => {
+    if (!selectedBande) return;
     setSaving(true);
     setSubmitError('');
 
@@ -179,6 +215,12 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
 
       await enqueueAppendRow('NOTES_TERRAIN', row);
       setStep(3);
+
+      try {
+        await refreshData(true);
+      } catch {
+        // non-blocking
+      }
     } catch (err) {
       setSubmitError(
         err instanceof Error ? err.message : 'Erreur enregistrement pesée',

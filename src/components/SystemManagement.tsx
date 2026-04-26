@@ -12,6 +12,7 @@ import AgritechLayout from './AgritechLayout';
 import AgritechHeader from './AgritechHeader';
 import { HubTile, SectionDivider, Chip } from './agritech';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import type { ThemeMode, ThemeVariant } from '../services/themeAuto';
 import { useNavigate } from 'react-router-dom';
 import { isDebugEnabled, setDebugEnabled, APP_VERSION } from '../config';
@@ -21,6 +22,7 @@ import { getSupportWhatsapp, setSupportWhatsapp } from '../services/supportConta
 
 export const SettingsPage: React.FC = () => {
   const { syncStatus, pullData, processQueue } = useFarm();
+  const { role: userRole, setRole } = useAuth();
   const navigate = useNavigate();
 
   const defaultUrl = (import.meta.env.VITE_GAS_URL as string | undefined) || '';
@@ -81,9 +83,8 @@ export const SettingsPage: React.FC = () => {
     setDebugEnabled(val);
   };
 
-  const userRole = kvGet('user_role') || 'PORCHER';
   const isSynced = syncStatus === 'synced';
-  const needsName = userRole === 'PORCHER' && !userName;
+  const needsName = userRole === 'WORKER' && !userName;
 
   return (
     <IonPage>
@@ -426,7 +427,7 @@ export const SettingsPage: React.FC = () => {
                         Profil
                       </p>
                       <p className="mt-0.5 font-mono text-[11px] text-text-2 truncate">
-                        {userRole === 'PORCHER' ? 'Opérateur terrain' : 'Administrateur'}
+                        {userRole === 'OWNER' ? 'Propriétaire' : 'Ouvrier'}
                       </p>
                     </div>
                   </div>
@@ -438,38 +439,36 @@ export const SettingsPage: React.FC = () => {
                     <button
                       type="button"
                       role="tab"
-                      aria-selected={userRole === 'PORCHER'}
-                      onClick={() => {
-                        void kvSet('user_role', 'PORCHER').then(() =>
-                          window.location.reload()
-                        );
+                      aria-selected={userRole === 'WORKER'}
+                      onClick={async () => {
+                        setRole('WORKER');
+                        setTimeout(() => window.location.reload(), 100);
                       }}
                       className={
                         'pressable px-3 py-1.5 rounded text-[11px] font-semibold uppercase tracking-wide transition-colors duration-150 ' +
-                        (userRole === 'PORCHER'
+                        (userRole === 'WORKER'
                           ? 'bg-accent text-bg-0'
                           : 'text-text-2 hover:text-text-1')
                       }
                     >
-                      Terrain
+                      Ouvrier
                     </button>
                     <button
                       type="button"
                       role="tab"
-                      aria-selected={userRole === 'ADMIN'}
-                      onClick={() => {
-                        void kvSet('user_role', 'ADMIN').then(() =>
-                          window.location.reload()
-                        );
+                      aria-selected={userRole === 'OWNER'}
+                      onClick={async () => {
+                        setRole('OWNER');
+                        setTimeout(() => window.location.reload(), 100);
                       }}
                       className={
                         'pressable px-3 py-1.5 rounded text-[11px] font-semibold uppercase tracking-wide transition-colors duration-150 ' +
-                        (userRole === 'ADMIN'
+                        (userRole === 'OWNER'
                           ? 'bg-accent text-bg-0'
                           : 'text-text-2 hover:text-text-1')
                       }
                     >
-                      Admin
+                      Propriétaire
                     </button>
                   </div>
                 </div>

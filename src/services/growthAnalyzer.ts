@@ -69,7 +69,9 @@ export interface BandeGrowthStats {
 const GMQ_CIBLES: Record<BandePhase, { min: number; max: number }> = {
   SOUS_MERE: { min: 180, max: 250 },
   POST_SEVRAGE: { min: 400, max: 500 },
+  CROISSANCE: { min: 600, max: 750 },
   ENGRAISSEMENT: { min: 750, max: 900 },
+  FINITION: { min: 850, max: 1000 },
   INCONNU: { min: 0, max: 0 },
 };
 

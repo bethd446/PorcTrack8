@@ -19,7 +19,6 @@ import { TruieIcon } from '../../components/icons';
 import { Chip, SectionDivider, type ChipTone } from '../../components/agritech';
 import QuickAddTruieForm from '../../components/forms/QuickAddTruieForm';
 import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
-import { useFarm } from '../../context/FarmContext';
 import type { Truie } from '../../types/farm';
 import { normaliseStatut } from '../../lib/truieStatut';
 import { kvGet, kvSet } from '../../services/kvStore';
@@ -139,15 +138,19 @@ function boucleMatches(boucle: string | undefined, q: string): boolean {
   return boucle.toLowerCase().includes(q.trim().toLowerCase());
 }
 
+interface TroupeauTruiesViewProps {
+  searchText: string;
+  setSearchText: (val: string) => void;
+}
+
 // ─── Composant ──────────────────────────────────────────────────────────────
 
-const TroupeauTruiesView: React.FC = () => {
+const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, setSearchText }) => {
   const navigate = useNavigate();
   const { activeTruies, pipelineEtapes, total: totalTruiesCount } = useTroupeauPipeline();
   const today = useMemo(() => new Date(), []);
 
   const [filter, setFilter] = useState<FilterKey>('tout');
-  const [searchText, setSearchText] = useState('');
   const [sortBy, setSortBy] = useState<SortKey>('recent');
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     const stored = kvGet(VIEW_MODE_KEY);

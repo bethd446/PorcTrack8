@@ -352,6 +352,28 @@ describe('R4 — Mortalité Anormale', () => {
     expect(alerts.find(a => a.id.startsWith('MORT-'))).toBeUndefined();
   });
 
+  it('ne déclenche pas sur une bande "En croissance" avec date sevrage réelle', () => {
+    const bande = makeBande({
+      statut: 'En croissance',
+      nv: 10,
+      morts: 10,
+      dateSevrageReelle: '01/01/2026'
+    });
+    const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
+    expect(alerts.find(a => a.id.startsWith('MORT-'))).toBeUndefined();
+  });
+
+  it('ne déclenche pas sur une bande "En finition" avec date sevrage réelle', () => {
+    const bande = makeBande({
+      statut: 'En finition',
+      nv: 12,
+      morts: 12,
+      dateSevrageReelle: '01/01/2026'
+    });
+    const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
+    expect(alerts.find(a => a.id.startsWith('MORT-'))).toBeUndefined();
+  });
+
   it('ne déclenche pas si morts = 0 (aucune mortalité enregistrée)', () => {
     const bande = makeBande({ nv: 10, morts: 0 });
     const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
@@ -588,6 +610,71 @@ describe('R8 — Re-Saillie Proactive', () => {
     const rsa = alerts.find(a => a.id.startsWith('RSA-'));
     expect(rsa).toBeDefined();
     expect(rsa?.daysOffset).toBe(0); // Basé sur le tag du 15/06 (today)
+  });
+});
+
+// ─── R9 — Retard de phase ───────────────────────────────────────────────────
+
+describe('R9 — Retard de phase', () => {
+  it('génère une alerte si retard > 3j sans mise à jour statut', () => {
+    const today = NOW;
+    const b = makeBande({
+      id: 'B01', idPortee: 'P01',
+      statut: 'Sous mère',
+      dateMB: toFrDate(dayOffset(today, -36)), // J36 — devrait être POST_SEVRAGE depuis J28
+    });
+    const alerts = runAlertEngine(emptyInput({ bandes: [b] }));
+    const retard = alerts.find(a => a.id.startsWith('retard-'));
+    expect(retard).toBeDefined();
+    expect(retard?.priority).toBe('NORMALE');
+    expect(retard?.daysOffset).toBe(36 - 28); // 8 jours de retard
+  });
+
+  it('ne génère pas d\'alerte si retard <= 3j (tolérance)', () => {
+    const today = NOW;
+    const b = makeBande({
+      id: 'B01',
+      statut: 'Sous mère',
+      dateMB: toFrDate(dayOffset(today, -30)), // J30 — 2j de retard théorique (<3j)
+    });
+    const alerts = runAlertEngine(emptyInput({ bandes: [b] }));
+    expect(alerts.find(a => a.id.startsWith('retard-'))).toBeUndefined();
+  });
+});
+
+// ─── R10 — Surdensité ────────────────────────────────────────────────────────
+
+describe('R10 — Surdensité', () => {
+  it('génère une alerte si > ENGRAISSEMENT_LOGES_CAPACITY bandes', () => {
+    // 7 bandes en CROISSANCE/ENGRAISSEMENT/FINITION pour 6 loges
+    const bandes = Array.from({ length: 7 }, (_, i) => makeBande({
+      id: `B${i}`,
+      statut: 'Sevrés',
+      dateMB: toFrDate(dayOffset(NOW, -80)), // Age = 80j -> CROISSANCE biologique
+      dateSevrageReelle: toFrDate(dayOffset(NOW, -20)), // J20 post-sevrage -> POST_SEVRAGE declaré ?
+      // Attends, si age MB = 80, et sevrage J28, alors post-sevrage diff = 52j.
+      // 52 > 35 -> CROISSANCE declaré.
+    }));
+    // Note: makeBande uses dateMB. If I set dateMB to -80, age is 80.
+    // computeBandePhase uses sevrage date. If not present, fallback on POST_SEVRAGE.
+    // If I want them to be in CROISSANCE+ for R10:
+    bandes.forEach(b => {
+      b.statut = 'En croissance'; // Force phase CROISSANCE
+    });
+
+    const alerts = runAlertEngine(emptyInput({ bandes }));
+    const surdensite = alerts.find(a => a.id === 'surdensite-engraissement');
+    expect(surdensite).toBeDefined();
+    expect(surdensite?.priority).toBe('HAUTE');
+  });
+
+  it('ne génère pas d\'alerte si <= capacité', () => {
+    const bandes = Array.from({ length: 6 }, (_, i) => makeBande({
+      id: `B${i}`,
+      statut: 'En croissance',
+    }));
+    const alerts = runAlertEngine(emptyInput({ bandes }));
+    expect(alerts.find(a => a.id === 'surdensite-engraissement')).toBeUndefined();
   });
 });
 

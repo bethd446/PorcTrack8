@@ -16,11 +16,11 @@ export const biologyValidators = {
 
     // 1. Calcul du poids théorique selon la phase
     if (ageJours <= 28) {
-      // Phase Maternité : gain de ~250g/j
+      // Phase Maternité : gain de ~250g/j -> 8.5kg à J28
       poidsTheorique = 1.5 + (ageJours * 0.25);
     } else {
-      // Phase Post-Sevrage & Engraissement : départ 25kg (sevrage J28) + gain ~650g/j
-      poidsTheorique = 25 + ((ageJours - 28) * 0.65);
+      // Phase Post-Sevrage & Engraissement : continuité à 8.5kg + gain ~650g/j
+      poidsTheorique = 8.5 + ((ageJours - 28) * 0.65);
     }
 
     // 2. Application de la marge de tolérance (30%)

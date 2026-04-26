@@ -1,25 +1,25 @@
 /**
  * RessourcesHub — /ressources (tab 04)
  * ══════════════════════════════════════════════════════════════════════════
- * Refonte Claude Design v2 (2026-04-20) — mockup _tabs/04-ressources.
+ * Refonte Premium Agritech (2026-04-26)
  *
- * Structure :
- *   1. Bannière RUPTURE (rouge) si ≥1 item en rupture
- *   2. Section ALIMENTS — liste StockRow avec progress bar + bouton "+"
- *   3. Section VACCINS & SOINS — idem
- *   4. Section SOUS-ÉCRANS — HubTiles Plan Alim / Formules / Pharmacie (full)
+ * Changements :
+ *   1. Système d'onglets [ Aliments ] [ Pharmacie ]
+ *   2. Cartes visuelles (Grid) avec jauge de stock
+ *   3. Badges d'autonomie et de statut
+ *   4. Accès rapide aux protocoles en bas
  */
 
 import React, { useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import {
-  AlertOctagon, Plus, Calculator, ClipboardList, Package, Edit3,
+  AlertTriangle, Plus, Calculator, ClipboardList, Package, Edit3, Droplets, FlaskConical, Search
 } from 'lucide-react';
 
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import { HubTile, SectionDivider } from '../../components/agritech';
+import { SectionDivider, Chip, HubTile } from '../../components/agritech';
 import QuickRefillForm from '../../components/forms/QuickRefillForm';
 import {
   toRefillItem,
@@ -30,146 +30,56 @@ import type { StockKind } from '../../components/forms/quickEditStockLogic';
 import { useFarm } from '../../context/FarmContext';
 import type { StockAliment, StockVeto } from '../../types/farm';
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// ─── Types & Helpers ────────────────────────────────────────────────────────
 
-type StockTone = 'accent' | 'amber' | 'red';
+type ResourceTab = 'aliments' | 'pharmacie';
 
-interface StockRowData {
+interface ResourceCardData {
   id: string;
   name: string;
-  qty: string;
-  pct: number;
-  tone: StockTone;
-  meta: string;
+  qty: number;
+  unit: string;
+  seuil: number;
+  statut: string;
+  category?: string;
+  notes?: string;
 }
 
-function fillClass(tone: StockTone): string {
-  if (tone === 'red') return 'bg-red';
-  if (tone === 'amber') return 'bg-amber';
-  return 'bg-accent';
-}
-
-function qtyColor(tone: StockTone): string {
-  if (tone === 'red') return 'text-red';
-  if (tone === 'amber') return 'text-amber';
-  return 'text-accent';
-}
-
-function toneFromStatut(statut: string | undefined): StockTone {
-  const s = (statut ?? '').toUpperCase();
-  if (s === 'RUPTURE') return 'red';
-  if (s === 'BAS') return 'amber';
-  return 'accent';
-}
-
-function pctFromStock(stockActuel: number, seuil: number): number {
-  if (seuil <= 0) return 100;
-  const ratio = (stockActuel / (seuil * 3)) * 100; // seuil = 33% par convention
-  return Math.max(0, Math.min(100, Math.round(ratio)));
-}
-
-function mapAliment(a: StockAliment): StockRowData {
-  const tone = toneFromStatut(a.statutStock);
-  const pct = pctFromStock(a.stockActuel, a.seuilAlerte);
-  const meta = a.seuilAlerte > 0
-    ? `Seuil alerte ${a.seuilAlerte} ${a.unite}`
-    : (a.notes?.trim() || 'Stock courant');
-  return {
-    id: a.id,
-    name: a.libelle,
-    qty: `${a.stockActuel} ${a.unite}`,
-    pct,
-    tone,
-    meta,
-  };
-}
-
-function mapVeto(v: StockVeto): StockRowData {
-  const tone = toneFromStatut(v.statutStock);
-  const pct = pctFromStock(v.stockActuel, v.seuilAlerte);
-  const meta = v.usage?.trim() || v.type?.trim() || (v.notes?.trim() ?? 'Vaccin / soin');
-  return {
-    id: v.id,
-    name: v.produit,
-    qty: `${v.stockActuel} ${v.unite}`,
-    pct,
-    tone,
-    meta,
-  };
-}
-
-// ─── Composant ──────────────────────────────────────────────────────────────
+// ─── Composant Principal ─────────────────────────────────────────────────────
 
 const RessourcesHub: React.FC = () => {
   const navigate = useNavigate();
   const { stockAliment, stockVeto, refreshData } = useFarm();
 
-  const aliments = useMemo(() => stockAliment.map(mapAliment), [stockAliment]);
-  const vetos = useMemo(() => stockVeto.map(mapVeto), [stockVeto]);
+  const [activeTab, setActiveTab] = useState<ResourceTab>('aliments');
+  const [searchQuery, setSearchSearchQuery] = useState('');
 
-  const ruptures = useMemo(
-    () => [...aliments, ...vetos].filter((s) => s.tone === 'red'),
-    [aliments, vetos],
-  );
+  // ── Filtrage ────────────────────────────────────────────────────────────
+  const filteredAliments = useMemo(() => {
+    return stockAliment.filter(a =>
+      a.libelle.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [stockAliment, searchQuery]);
 
-  // ── Réappro : état du BottomSheet ───────────────────────────────────────
+  const filteredVetos = useMemo(() => {
+    return stockVeto.filter(v =>
+      v.produit.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [stockVeto, searchQuery]);
+
+  const rupturesCount = useMemo(() => {
+    const r1 = stockAliment.filter(a => a.statutStock === 'RUPTURE').length;
+    const r2 = stockVeto.filter(v => v.statutStock === 'RUPTURE').length;
+    return r1 + r2;
+  }, [stockAliment, stockVeto]);
+
+  // ── Forms Logic ─────────────────────────────────────────────────────────
   const [refillTarget, setRefillTarget] = useState<RefillStockItem | null>(null);
+  const [editTarget, setEditTarget] = useState<{ item: any; kind: StockKind } | null>(null);
 
-  const handleOpenRefillAliment = useCallback(
-    (id: string): void => {
-      const raw = stockAliment.find((a) => a.id === id);
-      if (raw) setRefillTarget(toRefillItem(raw, 'ALIMENT'));
-    },
-    [stockAliment],
-  );
-
-  const handleOpenRefillVeto = useCallback(
-    (id: string): void => {
-      const raw = stockVeto.find((v) => v.id === id);
-      if (raw) setRefillTarget(toRefillItem(raw, 'VETO'));
-    },
-    [stockVeto],
-  );
-
-  const handleCloseRefill = useCallback((): void => {
-    setRefillTarget(null);
-  }, []);
-
-  const handleRefillSuccess = useCallback((): void => {
-    // Refresh est déjà déclenché par le form lui-même via useFarm.refreshData,
-    // mais on laisse ce hook en double-sécurité si besoin futur.
-    void refreshData();
-  }, [refreshData]);
-
-  // ── Édition admin : état du BottomSheet ────────────────────────────────
-  const [editTarget, setEditTarget] = useState<
-    | { item: StockAliment | StockVeto; kind: StockKind }
-    | null
-  >(null);
-
-  const handleOpenEditAliment = useCallback(
-    (id: string): void => {
-      const raw = stockAliment.find((a) => a.id === id);
-      if (raw) setEditTarget({ item: raw, kind: 'ALIMENT' });
-    },
-    [stockAliment],
-  );
-
-  const handleOpenEditVeto = useCallback(
-    (id: string): void => {
-      const raw = stockVeto.find((v) => v.id === id);
-      if (raw) setEditTarget({ item: raw, kind: 'VETO' });
-    },
-    [stockVeto],
-  );
-
-  const handleCloseEdit = useCallback((): void => {
-    setEditTarget(null);
-  }, []);
-
-  const handleEditSuccess = useCallback((): void => {
-    void refreshData();
-  }, [refreshData]);
+  const handleOpenRefill = (item: any, kind: StockKind) => {
+    setRefillTarget(toRefillItem(item, kind));
+  };
 
   return (
     <IonPage>
@@ -177,185 +87,226 @@ const RessourcesHub: React.FC = () => {
         <AgritechLayout>
           <AgritechHeader
             title="RESSOURCES"
-            subtitle="Aliments · vaccins · matériel"
+            subtitle="Inventaire & Approvisionnement"
           />
 
-          <div className="px-4 pt-4 pb-32 flex flex-col gap-5">
-            {/* ── Bannière rupture ────────────────────────────────────── */}
-            {ruptures.length > 0 ? (
-              <button
-                type="button"
-                onClick={() => navigate('/alerts')}
-                aria-label={`${ruptures.length} rupture${ruptures.length > 1 ? 's' : ''}`}
-                className="pressable card-dense flex items-start gap-3 text-left w-full !p-3.5"
-                style={{
-                  borderColor: 'color-mix(in srgb, var(--red) 40%, var(--border))',
-                  background: 'color-mix(in srgb, var(--red) 6%, var(--bg-2))',
-                }}
-              >
-                <span className="shrink-0 text-red">
-                  <AlertOctagon size={20} aria-hidden="true" />
-                </span>
-                <div className="flex-1 min-w-0">
-                  <div className="ft-heading text-[14px] text-red uppercase">
-                    Rupture · {ruptures.length} item{ruptures.length > 1 ? 's' : ''}
-                  </div>
-                  <div className="text-[12px] text-text-1 mt-1 leading-snug">
-                    {ruptures
-                      .slice(0, 2)
-                      .map((r) => r.name)
-                      .join(' · ')}
-                    {ruptures.length > 2 ? ` · +${ruptures.length - 2}` : ''}
-                  </div>
+          <div className="px-4 pt-4 pb-32 flex flex-col gap-6">
+
+            {/* ── Summary & Tabs ────────────────────────────────────────── */}
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <div className="flex bg-bg-2 p-1 rounded-xl w-full max-w-[320px]">
+                  <TabButton
+                    active={activeTab === 'aliments'}
+                    label="Aliments"
+                    icon={<Droplets size={14} />}
+                    onClick={() => setActiveTab('aliments')}
+                  />
+                  <TabButton
+                    active={activeTab === 'pharmacie'}
+                    label="Pharmacie"
+                    icon={<FlaskConical size={14} />}
+                    onClick={() => setActiveTab('pharmacie')}
+                  />
                 </div>
-              </button>
-            ) : null}
+                {rupturesCount > 0 && (
+                  <Chip
+                    label={`${rupturesCount} RUPTURE${rupturesCount > 1 ? 'S' : ''}`}
+                    tone="red"
+                    size="sm"
+                    className="animate-pulse"
+                  />
+                )}
+              </div>
 
-            {/* ── Aliments ────────────────────────────────────────────── */}
-            {aliments.length > 0 ? (
-              <section aria-label="Stocks aliments">
-                <SectionDivider label="Aliments" />
-                <ul className="card-dense !p-0 overflow-hidden">
-                  {aliments.map((s) => (
-                    <StockRow
-                      key={`a-${s.id}`}
-                      row={s}
-                      onOpen={() => navigate('/ressources/aliments')}
-                      onRefill={() => handleOpenRefillAliment(s.id)}
-                      onEdit={() => handleOpenEditAliment(s.id)}
-                    />
-                  ))}
-                </ul>
-              </section>
-            ) : null}
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder={`Rechercher un ${activeTab === 'aliments' ? 'aliment' : 'produit'}...`}
+                  value={searchQuery}
+                  onChange={(e) => setSearchSearchQuery(e.target.value)}
+                  className="w-full h-11 bg-bg-1 border border-border rounded-xl pl-10 pr-4 font-mono text-[13px] focus:border-accent outline-none transition-colors"
+                />
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-2" />
+              </div>
+            </div>
 
-            {/* ── Vaccins & soins ─────────────────────────────────────── */}
-            {vetos.length > 0 ? (
-              <section aria-label="Stocks vaccins et soins">
-                <SectionDivider label="Vaccins & soins" />
-                <ul className="card-dense !p-0 overflow-hidden">
-                  {vetos.map((s) => (
-                    <StockRow
-                      key={`v-${s.id}`}
-                      row={s}
-                      onOpen={() => navigate('/ressources/pharmacie')}
-                      onRefill={() => handleOpenRefillVeto(s.id)}
-                      onEdit={() => handleOpenEditVeto(s.id)}
-                    />
-                  ))}
-                </ul>
-              </section>
-            ) : null}
+            {/* ── Grid of Cards ─────────────────────────────────────────── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {activeTab === 'aliments' ? (
+                filteredAliments.map(a => (
+                  <ResourceCard
+                    key={a.id}
+                    name={a.libelle}
+                    qty={a.stockActuel}
+                    unit={a.unite}
+                    seuil={a.seuilAlerte}
+                    statut={a.statutStock}
+                    notes={a.notes}
+                    onRefill={() => handleOpenRefill(a, 'ALIMENT')}
+                    onEdit={() => setEditTarget({ item: a, kind: 'ALIMENT' })}
+                    onClick={() => navigate('/ressources/aliments')}
+                  />
+                ))
+              ) : (
+                filteredVetos.map(v => (
+                  <ResourceCard
+                    key={v.id}
+                    name={v.produit}
+                    qty={v.stockActuel}
+                    unit={v.unite}
+                    seuil={v.seuilAlerte}
+                    statut={v.statutStock || 'OK'}
+                    category={v.type}
+                    notes={v.usage}
+                    onRefill={() => handleOpenRefill(v, 'VETO')}
+                    onEdit={() => setEditTarget({ item: v, kind: 'VETO' })}
+                    onClick={() => navigate('/ressources/pharmacie')}
+                  />
+                ))
+              )}
+            </div>
 
-            {/* ── Sous-écrans ─────────────────────────────────────────── */}
-            <section aria-label="Sous-écrans">
-              <SectionDivider label="Détails & protocoles" />
-              <div className="grid grid-cols-1 gap-2.5">
+            {/* ── Bottom Hub Tiles ──────────────────────────────────────── */}
+            <section className="mt-2">
+              <SectionDivider label="Accès Rapides" />
+              <div className="grid grid-cols-2 gap-3 mt-3">
                 <HubTile
-                  icon={<Calculator size={22} aria-hidden="true" />}
-                  title="Plan alim"
-                  subtitle="Couverture · rations/j"
+                  icon={<Calculator size={20} />}
+                  title="Plan Alim"
+                  subtitle="Rations/j"
                   to="/ressources/aliments/plan"
                   tone="accent"
+                  variant="compact"
                 />
                 <HubTile
-                  icon={<ClipboardList size={22} aria-hidden="true" />}
+                  icon={<ClipboardList size={20} />}
                   title="Formules"
-                  subtitle="5 recettes validées"
-                  count={5}
+                  subtitle="Recettes"
                   to="/ressources/aliments/formules"
                   tone="ochre"
-                />
-                <HubTile
-                  icon={<Package size={22} aria-hidden="true" />}
-                  title="Pharmacie"
-                  subtitle="Catalogue complet véto"
-                  count={vetos.length}
-                  to="/ressources/pharmacie"
-                  tone="teal"
+                  variant="compact"
                 />
               </div>
             </section>
           </div>
 
-          {/* ── Bottom sheet réapprovisionnement ──────────────────────── */}
+          {/* Forms */}
           <QuickRefillForm
             isOpen={refillTarget !== null}
-            onClose={handleCloseRefill}
+            onClose={() => setRefillTarget(null)}
             stockItem={refillTarget}
-            onSuccess={handleRefillSuccess}
+            onSuccess={() => { refreshData(); setRefillTarget(null); }}
           />
 
-          {/* ── Bottom sheet édition admin ────────────────────────────── */}
-          {editTarget ? (
+          {editTarget && (
             <QuickEditStockForm
               isOpen={editTarget !== null}
-              onClose={handleCloseEdit}
+              onClose={() => setEditTarget(null)}
               stockItem={editTarget.item}
               kind={editTarget.kind}
-              onSuccess={handleEditSuccess}
+              onSuccess={() => { refreshData(); setEditTarget(null); }}
             />
-          ) : null}
+          )}
         </AgritechLayout>
       </IonContent>
     </IonPage>
   );
 };
 
-// ─── StockRow ────────────────────────────────────────────────────────────────
+// ─── Sous-composants ────────────────────────────────────────────────────────
 
-interface StockRowProps {
-  row: StockRowData;
-  onOpen: () => void;
+const TabButton: React.FC<{ active: boolean; label: string; icon: React.ReactNode; onClick: () => void }> = ({
+  active, label, icon, onClick
+}) => (
+  <button
+    onClick={onClick}
+    className={`flex-1 flex items-center justify-center gap-2 h-9 rounded-lg font-mono text-[11px] uppercase tracking-wide transition-all ${
+      active ? 'bg-bg-0 text-accent shadow-sm font-bold' : 'text-text-2 hover:text-text-1'
+    }`}
+  >
+    {icon}
+    {label}
+  </button>
+);
+
+interface ResourceCardProps {
+  name: string;
+  qty: number;
+  unit: string;
+  seuil: number;
+  statut: string;
+  category?: string;
+  notes?: string;
   onRefill: () => void;
   onEdit: () => void;
+  onClick: () => void;
 }
 
-const StockRow: React.FC<StockRowProps> = ({ row, onOpen, onRefill, onEdit }) => (
-  <li className="flex items-stretch gap-2 px-3.5 py-3.5 border-b border-border last:border-b-0">
-    <button
-      type="button"
-      onClick={onOpen}
-      aria-label={`Ouvrir ${row.name}`}
-      className="flex-1 min-w-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded-[8px]"
-    >
-      <div className="flex items-baseline justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="text-[13px] text-text-0 font-medium truncate">{row.name}</div>
-          <div className="font-mono text-[11px] text-text-2 mt-0.5 tabular-nums truncate">
-            {row.meta}
+const ResourceCard: React.FC<ResourceCardProps> = ({
+  name, qty, unit, seuil, statut, category, notes, onRefill, onEdit, onClick
+}) => {
+  const isRupture = statut === 'RUPTURE';
+  const isBas = statut === 'BAS';
+
+  const tone = isRupture ? 'red' : isBas ? 'amber' : 'accent';
+  const progress = seuil > 0 ? Math.min(100, (qty / (seuil * 2.5)) * 100) : 100;
+
+  return (
+    <div className="card-dense flex flex-col gap-3 p-4 group hover:border-accent/40 transition-colors">
+      <div className="flex justify-between items-start">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h3 className="text-[14px] font-bold text-text-0 truncate">{name}</h3>
+            {isRupture && <AlertTriangle size={12} className="text-red" />}
           </div>
+          {category && <p className="text-[10px] text-text-2 uppercase font-mono mt-0.5">{category}</p>}
         </div>
-        <span
-          className={`font-mono text-[14px] font-semibold ${qtyColor(row.tone)} tabular-nums shrink-0`}
-        >
-          {row.qty}
+        <div className="flex gap-1.5">
+          <button
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            className="w-8 h-8 rounded-lg bg-bg-2 flex items-center justify-center text-text-2 hover:text-text-0 transition-colors"
+          >
+            <Edit3 size={14} />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onRefill(); }}
+            className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center text-accent hover:bg-accent/20 transition-colors"
+          >
+            <Plus size={16} />
+          </button>
+        </div>
+      </div>
+
+      <div className="flex items-baseline gap-2">
+        <span className={`text-[22px] font-bold font-mono tabular-nums ${isRupture ? 'text-red' : 'text-text-0'}`}>
+          {qty}
         </span>
+        <span className="text-[12px] text-text-2 font-mono uppercase">{unit}</span>
       </div>
-      <div className="h-1.5 w-full bg-bg-2 rounded-full overflow-hidden mt-2.5">
-        <div
-          className={`h-full ${fillClass(row.tone)} rounded-full transition-[width]`}
-          style={{ width: `${row.pct}%` }}
-        />
+
+      <div className="space-y-1.5">
+        <div className="flex justify-between text-[10px] font-mono uppercase text-text-2">
+          <span>Stock</span>
+          <span>Seuil: {seuil} {unit}</span>
+        </div>
+        <div className="h-1.5 w-full bg-bg-2 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-1000 ${
+              isRupture ? 'bg-red' : isBas ? 'bg-amber' : 'bg-accent'
+            }`}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </div>
-    </button>
-    <button
-      type="button"
-      onClick={onRefill}
-      aria-label={`Réapprovisionner ${row.name}`}
-      className="pressable self-center shrink-0 w-9 h-9 rounded-[10px] bg-bg-1 border border-border flex items-center justify-center text-text-1 hover:text-accent transition-colors"
-    >
-      <Plus size={16} aria-hidden="true" />
-    </button>
-    <button
-      type="button"
-      onClick={onEdit}
-      aria-label={`Éditer ${row.name}`}
-      className="pressable self-center shrink-0 w-9 h-9 rounded-[10px] bg-bg-1 border border-border flex items-center justify-center text-text-1 hover:text-accent transition-colors"
-    >
-      <Edit3 size={15} aria-hidden="true" />
-    </button>
-  </li>
-);
+
+      {notes && (
+        <p className="text-[11px] text-text-2 italic line-clamp-1 border-t border-border/50 pt-2 mt-1">
+          {notes}
+        </p>
+      )}
+    </div>
+  );
+};
 
 export default RessourcesHub;

@@ -14,7 +14,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import { AlertCircle, Edit3, Skull } from 'lucide-react';
 
@@ -24,7 +24,11 @@ import { BandeIcon } from '../../components/icons';
 import { Chip, SectionDivider, type ChipTone } from '../../components/agritech';
 import QuickMortalityForm from '../../components/forms/QuickMortalityForm';
 import QuickEditBandeForm from '../../components/forms/QuickEditBandeForm';
+import QuickPeseeForm from '../../components/forms/QuickPeseeForm';
+import BandeFinanceCard from './BandeFinanceCard';
+import BandeActionToolbar from './BandeActionToolbar';
 import { useFarm } from '../../context/FarmContext';
+import { useAuth } from '../../context/AuthContext';
 import { computeBandePhase } from '../../services/bandesAggregator';
 import { FARM_CONFIG } from '../../config/farm';
 import type { BandePorcelets } from '../../types/farm';
@@ -192,9 +196,12 @@ function buildEvents(bande: BandePorcelets, today: Date): TimelineEvent[] {
 
 const BandeDetailView: React.FC = () => {
   const { bandeId } = useParams<{ bandeId: string }>();
-  const { bandes } = useFarm();
+  const navigate = useNavigate();
+  const { bandes, transitions, refreshData } = useFarm();
+  const { isOwner } = useAuth();
   const [mortalityOpen, setMortalityOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [peseeOpen, setPeseeOpen] = useState(false);
 
   const decodedId = bandeId ? decodeURIComponent(bandeId) : '';
 
@@ -204,6 +211,15 @@ const BandeDetailView: React.FC = () => {
   );
 
   const today = useMemo(() => new Date(), []);
+
+  const currentEstWeight = useMemo(() => {
+    if (!bande) return 0;
+    // Heuristique simple K13
+    const sevDate = parseDate(bande.dateSevrageReelle || bande.dateSevragePrevue);
+    if (!sevDate) return 5; // Fallback
+    const days = daysBetween(sevDate, today);
+    return Math.min(25 + days * 0.65, 120);
+  }, [bande, today]);
 
   if (!bande) {
     return (
@@ -317,26 +333,21 @@ const BandeDetailView: React.FC = () => {
                 />
                 <KpiTile label="Morts" value={morts} tone="var(--coral)" />
               </div>
-              {nv > 0 ? (
-                <div className="card-dense mt-3">
-                  <div className="flex justify-between items-baseline mb-2">
-                    <span className="kpi-label">Taux de survie</span>
-                    <span className="font-mono tabular-nums text-[15px] font-semibold text-accent">
-                      {survival}%
-                    </span>
-                  </div>
-                  <div className="h-1.5 w-full bg-bg-2 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-accent rounded-full transition-[width]"
-                      style={{ width: `${Math.min(100, survival)}%` }}
-                    />
-                  </div>
-                  <div className="font-mono text-[11px] text-text-2 mt-2">
-                    Moyenne ferme K13 : 92% · objectif ≥ 90%
-                  </div>
-                </div>
-              ) : null}
             </section>
+
+            {/* ── Finance ROI ── */}
+            {isOwner && (
+              <section aria-label="Rentabilité">
+                <SectionDivider label="Rentabilité de la bande" />
+                <div className="mt-3">
+                    <BandeFinanceCard
+                      bande={bande}
+                      historique={transitions}
+                      poidsActuel={currentEstWeight}
+                    />
+                </div>
+              </section>
+            )}
 
             {/* ── Timeline événements ─────────────────────────────────── */}
             {events.length > 0 ? (
@@ -378,6 +389,17 @@ const BandeDetailView: React.FC = () => {
             isOpen={editOpen}
             onClose={() => setEditOpen(false)}
             bande={bande}
+          />
+
+          <QuickPeseeForm
+            isOpen={peseeOpen}
+            onClose={() => setPeseeOpen(false)}
+          />
+
+          <BandeActionToolbar
+            onPesee={() => setPeseeOpen(true)}
+            onMortalite={() => setMortalityOpen(true)}
+            onSoin={() => navigate(`/sante/nouveau?bande=${bande.id}`)}
           />
         </AgritechLayout>
       </IonContent>

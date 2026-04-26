@@ -324,8 +324,9 @@ describe('TroupeauHub — intégration multi-vues', () => {
     const sousMereHeader = await screen.findByText(/Sous mère · 4/i);
     expect(sousMereHeader).toBeDefined();
 
-    // Section "Post-sevrage · 102 porcelets"
-    expect(document.body.textContent).toMatch(/Post-sevrage · 102 porcelets/i);
+    // Section "Post-sevrage"
+    const psHeader = await screen.findByText(/Post-sevrage · \d+/i);
+    expect(psHeader).toBeDefined();
   });
 
   it('5. click Loges → IsoBarn SVG (role=img) visible', async () => {

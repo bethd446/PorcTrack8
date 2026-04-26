@@ -115,7 +115,7 @@ import TroupeauVerratsView from './TroupeauVerratsView';
 function renderView() {
   return render(
     <MemoryRouter initialEntries={['/troupeau/verrats-list']}>
-      <TroupeauVerratsView />
+      <TroupeauVerratsView searchText="" setSearchText={vi.fn()} />
     </MemoryRouter>,
   );
 }

@@ -269,7 +269,7 @@ const QuickEditTransactionForm: React.FC<QuickEditTransactionFormProps> = ({
           : 'Modifications en file · sync auto',
       );
       try {
-        await refreshData();
+        await refreshData(true);
       } catch {
         /* noop */
       }

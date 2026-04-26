@@ -21,6 +21,9 @@ import { differenceInCalendarDays, startOfDay } from 'date-fns';
 import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import type { Truie, BandePorcelets, TraitementSante, StockAliment, Saillie } from '../types/farm';
 import { normaliseStatut } from '../lib/truieStatut';
+import { detectPendingTransitions, getSeuilFinPhase, PHASE_LABEL } from './phaseEngine';
+import { countBandesByPhase } from './bandesAggregator';
+import { FARM_CONFIG } from '../config/farm';
 
 /** Fuseau horaire de référence pour toute la logique métier GTTT.
  *  L'élevage est en Côte d'Ivoire, mais les données Sheets sont saisies
@@ -226,7 +229,9 @@ function checkMiseBas(truie: Truie, today: Date): FarmAlert | null {
  * Déclenché à J+28 de la mise-bas réelle (sevrage ferme K13, constante BIO.LACTATION_JOURS)
  */
 function checkSevrage(bande: BandePorcelets, today: Date): FarmAlert | null {
-  if (bande.statut === 'Sevrés' || bande.statut === 'Sevrée' || bande.statut === 'Archivée') return null;
+  if (bande.dateSevrageReelle) return null;
+  const statut = (bande.statut || '').toLowerCase();
+  if (statut.includes('sevr') || statut.includes('croissance') || statut.includes('finition') || statut.includes('engraiss') || statut.includes('archiv')) return null;
   const dateMB = parseFrDate(bande.dateMB);
   if (!dateMB) return null;
 
@@ -468,7 +473,9 @@ function checkStock(stock: StockAliment): FarmAlert | null {
  */
 function checkRegroupementBandes(bandes: BandePorcelets[], today: Date): FarmAlert[] {
   const sevrablesSoon = bandes.filter(b => {
-    if (b.statut === 'Sevrés' || b.statut === 'Sevrée' || b.statut === 'Archivée') return false;
+    if (b.dateSevrageReelle) return false;
+    const statut = (b.statut || '').toLowerCase();
+    if (statut.includes('sevr') || statut.includes('croissance') || statut.includes('finition') || statut.includes('engraiss') || statut.includes('archiv')) return false;
     const dateMB = parseFrDate(b.dateMB);
     if (!dateMB) return false;
     const ageJours = daysDiff(dateMB, today);
@@ -586,6 +593,90 @@ function checkReSaillieProactive(truie: Truie, today: Date): FarmAlert | null {
   };
 }
 
+/**
+ * R9 — Alerte retard de phase.
+ * Déclenchée si une bande dépasse de > 3 jours le seuil de transition
+ * et que le statut n'a pas été mis à jour.
+ */
+export function checkRetardPhase(bande: BandePorcelets, today: Date): FarmAlert | null {
+  const pending = detectPendingTransitions([bande], today);
+  if (pending.length === 0) return null;
+  const t = pending[0];
+
+  const TOLERANCE_JOURS = 3;
+  const ageJours = t.ageJours ?? 0;
+  const seuilPhase = getSeuilFinPhase(t.fromPhase);
+
+  if (seuilPhase === null || ageJours <= seuilPhase + TOLERANCE_JOURS) return null;
+
+  return {
+    id: `retard-${bande.id}`,
+    priority: 'NORMALE',
+    category: 'BANDES',
+    subjectId: bande.id,
+    subjectLabel: t.label,
+    title: `Retard transfert — ${t.label}`,
+    message: `${t.label} devrait être en ${PHASE_LABEL[t.toPhase]} depuis ${ageJours - seuilPhase}j.`,
+    requiresAction: true,
+    actions: [{ type: 'DISMISS', label: 'Compris', variant: 'secondary' }],
+    createdAt: new Date(),
+    daysOffset: ageJours - seuilPhase,
+  };
+}
+
+/**
+ * R10 — Surdensité loge engraissement.
+ * Déclenchée si CROISSANCE + ENGRAISSEMENT + FINITION > ENGRAISSEMENT_LOGES_CAPACITY.
+ */
+export function checkSurdensiteLoges(bandes: BandePorcelets[], today: Date): FarmAlert | null {
+  const counts = countBandesByPhase(bandes, today);
+  const total = counts.CROISSANCE + counts.ENGRAISSEMENT + counts.FINITION;
+  const capacity = FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY;
+  if (total <= capacity) return null;
+
+  return {
+    id: 'surdensite-engraissement',
+    priority: 'HAUTE',
+    category: 'BANDES',
+    subjectId: 'LOGES_ENG',
+    subjectLabel: 'Loges Engraissement',
+    title: 'Surdensité loges engraissement',
+    message: `${total} bandes pour ${capacity} loges (${total - capacity} en trop).`,
+    requiresAction: false,
+    actions: [{ type: 'DISMISS', label: 'Compris', variant: 'secondary' }],
+    createdAt: new Date(),
+  };
+}
+
+/**
+ * R11 — Alerte Sanitaire de Bande (Mortalité > 3%).
+ * Déclenchée si le taux de mortalité d'une bande dépasse le seuil de vigilance.
+ */
+function checkAlerteSanitaireBande(bande: BandePorcelets): FarmAlert | null {
+  const nv = bande.nv ?? 0;
+  const morts = bande.morts ?? 0;
+  if (nv <= 0 || (bande.statut || '').toLowerCase().includes('vendu')) return null;
+
+  const tauxPct = (morts / nv) * 100;
+  if (tauxPct <= 3) return null;
+
+  return {
+    id: alertId('SANTE', bande.id, '3PCT'),
+    priority: 'CRITIQUE',
+    category: 'SANTE',
+    subjectId: bande.id,
+    subjectLabel: bande.idPortee || bande.id,
+    title: 'Alerte Sanitaire de Bande',
+    message: `Taux de mortalité alarmant (${tauxPct.toFixed(1)}%). Prévoir une inspection sanitaire immédiate.`,
+    requiresAction: true,
+    actions: [
+      { type: 'CONFIRM_SOIN', label: 'Déclarer Soin Groupé', variant: 'danger' },
+      { type: 'DISMISS', label: 'Ignorer' },
+    ],
+    createdAt: new Date(),
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // MOTEUR PRINCIPAL
 // ─────────────────────────────────────────────────────────────────────────────
@@ -648,6 +739,22 @@ export function runAlertEngine(input: AlertEngineInput): FarmAlert[] {
   for (const truie of input.truies) {
     const a = checkReSaillieProactive(truie, today);
     if (a && a.title && a.message) alerts.push(a);
+  }
+
+  // R9 — Retard Phase
+  for (const bande of input.bandes) {
+    const a = checkRetardPhase(bande, today);
+    if (a && a.title && a.message) alerts.push(a);
+  }
+
+  // R10 — Surdensité
+  const surdensite = checkSurdensiteLoges(input.bandes, today);
+  if (surdensite) alerts.push(surdensite);
+
+  // R11 — Alerte Sanitaire
+  for (const bande of input.bandes) {
+    const a = checkAlerteSanitaireBande(bande);
+    if (a) alerts.push(a);
   }
 
   // Tri : CRITIQUE > HAUTE > NORMALE > INFO, puis par daysOffset

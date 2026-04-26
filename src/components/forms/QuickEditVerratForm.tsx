@@ -127,7 +127,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
           : 'Modifications en file · sync auto',
       );
       try {
-        await refreshData();
+        await refreshData(true);
       } catch {
         /* noop */
       }

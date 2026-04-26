@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
-import { Home } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Home, ChevronDown, ChevronUp, AlertCircle, Info, Lightbulb } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
 import { IsoBarn, Chip, SectionDivider } from '../../components/agritech';
 import { FARM_CONFIG } from '../../config/farm';
 import { Bandes } from '../../services/bandAnalysisEngine';
 import type { Truie, BandePorcelets } from '../../types/farm';
+import { WEIGHTS_RELEVE, ANALYSE_RECOMMANDATIONS } from '../../config/weightsReleve';
 import {
   buildLogesBuildings,
   buildLogesArrows,
@@ -57,6 +58,7 @@ function isEnMaternite(t: Truie): boolean {
 
 const TroupeauLogesView: React.FC = () => {
   const { truies, bandes } = useFarm();
+  const [expandedLoge, setExpandedLoge] = useState<string | null>(null);
 
   const buildings = useMemo(() => buildLogesBuildings(), []);
   const arrows = useMemo(() => buildLogesArrows(), []);
@@ -321,10 +323,32 @@ const TroupeauLogesView: React.FC = () => {
         <SectionDivider
           label={`Post-sevrage · ${FARM_CONFIG.POST_SEVRAGE_LOGES_CAPACITY} loges`}
         />
-        <div className="grid grid-cols-2 gap-2">
+
+        {/* Analyse Terrain Banner */}
+        <div className="mb-4 flex flex-col gap-2">
+          {ANALYSE_RECOMMANDATIONS.map((rec, i) => (
+            <div key={i} className="bg-accent/10 border border-accent/20 rounded-xl p-3 flex gap-3">
+              <Lightbulb size={18} className="text-accent shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <p className="text-[12px] font-bold text-accent uppercase font-mono">{rec.titre}</p>
+                <p className="text-[11px] text-text-1 mt-1 leading-relaxed">
+                  <span className="font-bold">Constat:</span> {rec.constat}
+                  {rec.diagnostic && <><br /><span className="font-bold">Diag:</span> {rec.diagnostic}</>}
+                  <br /><span className="font-bold text-accent">Action:</span> {rec.action}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
           {FARM_CONFIG.POST_SEVRAGE_LOGES_REPARTITION.map((rep, i) => {
+            const key = `LOGE_${i + 1}`;
+            const releve = WEIGHTS_RELEVE[key];
+            const isExpanded = expandedLoge === key;
             const pct = Math.min(100, Math.round((rep.porcelets / 30) * 100));
-            // @ts-ignore - props added in config
+
+            // @ts-ignore
             const aliment = rep.aliment === 'DEMARRAGE_2' ? 'Démarrage 2' : '';
             // @ts-ignore
             const debut = rep.debutAliment;
@@ -332,48 +356,58 @@ const TroupeauLogesView: React.FC = () => {
             return (
               <div
                 key={rep.id}
-                className="card-dense p-2.5 flex flex-col gap-1.5"
+                onClick={() => setExpandedLoge(isExpanded ? null : key)}
+                className={`card-dense p-3 flex flex-col gap-2 transition-all cursor-pointer border-l-4 ${
+                  isExpanded ? 'col-span-2' : ''
+                } ${releve?.moyenne > 15 ? 'border-l-accent' : 'border-l-teal'}`}
                 data-testid={`ps-loge-${i + 1}`}
               >
                 <div className="flex items-center justify-between">
-                  <span
-                    className="font-mono text-[11px] uppercase tracking-wide"
-                    style={{ color: 'var(--text-2)' }}
-                  >
-                    {rep.id}
-                  </span>
-                  <Chip tone="teal" label={`${rep.porcelets}`} size="xs" />
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[11px] uppercase tracking-wide font-bold text-text-0">
+                      {rep.id}
+                    </span>
+                    {releve && (
+                      <Chip
+                        tone={releve.moyenne > 15 ? 'accent' : 'default'}
+                        label={`${releve.moyenne} kg`}
+                        size="xs"
+                      />
+                    )}
+                  </div>
+                  {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                 </div>
-                <div
-                  className="h-1.5 w-full overflow-hidden rounded-full"
-                  style={{ background: 'var(--bg-1)' }}
-                  role="progressbar"
-                  aria-valuenow={rep.porcelets}
-                  aria-valuemin={0}
-                  aria-valuemax={30}
-                  aria-label={`${rep.id} · ${rep.porcelets} porcelets / seuil 30`}
-                >
-                  <div
-                    className="h-full"
-                    style={{
-                      width: `${pct}%`,
-                      background: LOGES_TONES.postSevrage,
-                    }}
-                  />
-                </div>
-                <div className="flex justify-between items-end">
-                  <span
-                    className="font-mono text-[10px]"
-                    style={{ color: 'var(--text-2)' }}
-                  >
-                    {rep.porcelets} / 30 têtes
-                  </span>
-                  {aliment && (
-                    <div className="text-right">
-                      <p className="font-mono text-[9px] uppercase text-accent font-bold">{aliment}</p>
-                      {debut && <p className="font-mono text-[8px] text-text-2">depuis {debut}</p>}
+
+                {!isExpanded && (
+                  <div className="h-1 w-full bg-bg-2 rounded-full overflow-hidden">
+                    <div className="h-full bg-teal" style={{ width: `${pct}%` }} />
+                  </div>
+                )}
+
+                {isExpanded && releve && (
+                  <div className="bg-bg-1 rounded-lg p-2 space-y-2 mt-1 animate-fade-in">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle size={12} className="text-amber shrink-0 mt-0.5" />
+                      <p className="text-[10px] text-text-1 italic leading-tight">{releve.alerte}</p>
                     </div>
-                  )}
+                    <div className="flex flex-wrap gap-1">
+                      {releve.weights.map((w, idx) => (
+                        <span key={idx} className="text-[9px] font-mono bg-bg-2 px-1.5 py-0.5 rounded text-text-2">
+                          {w}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-between items-end mt-0.5">
+                   <div className="flex flex-col">
+                      <span className="font-mono text-[10px] text-text-2">
+                        {rep.porcelets} têtes
+                      </span>
+                      {aliment && <span className="font-mono text-[9px] uppercase text-accent font-bold mt-0.5">{aliment}</span>}
+                   </div>
+                   {debut && <span className="font-mono text-[8px] text-text-2 opacity-60">depuis {debut}</span>}
                 </div>
               </div>
             );

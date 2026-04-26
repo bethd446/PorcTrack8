@@ -31,6 +31,8 @@ import type { FarmAlert, AlertPriority } from '../services/alertEngine';
 import type { AlerteServeur, DataSource } from '../types/farm';
 import { Bandes } from '../services/bandAnalysisEngine';
 import { normaliseStatut } from '../lib/truieStatut';
+import { usePhaseTransitions } from '../hooks/usePhaseTransitions';
+import PhaseTransitionModal from './modals/PhaseTransitionModal';
 
 /* ═════════════════════════════════════════════════════════════════════════
    COCKPIT · Agritech Moderne
@@ -84,6 +86,8 @@ const Cockpit: React.FC = () => {
   const [showSaillie, setShowSaillie] = useState(false);
   const [peseeOpen, setPeseeOpen] = useState(false);
   const [toast, setToast] = useState<{ open: boolean; message: string }>({ open: false, message: '' });
+
+  const { current, confirm, dismiss } = usePhaseTransitions();
 
   // ── KPIs ────────────────────────────────────────────────────────────────
   const kpiPleines = useMemo(
@@ -673,6 +677,13 @@ const Cockpit: React.FC = () => {
         duration={1800}
         onDidDismiss={() => setToast({ open: false, message: '' })}
         position="bottom"
+      />
+
+      <PhaseTransitionModal
+        transition={current}
+        isOpen={current !== null}
+        onConfirm={confirm}
+        onDismiss={() => current && dismiss(current.bandeId)}
       />
     </IonPage>
   );

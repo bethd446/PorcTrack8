@@ -146,7 +146,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
           : 'Modifications en file · sync auto',
       );
       try {
-        await refreshData();
+        await refreshData(true);
       } catch {
         /* noop */
       }

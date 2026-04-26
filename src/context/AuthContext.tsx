@@ -12,7 +12,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [role, setInternalRole] = useState<UserRole>((kvGet('user_role') as UserRole) || 'WORKER');
+  const [role, setInternalRole] = useState<UserRole>('OWNER');
   const [userName, setUserName] = useState<string>(kvGet('user_name') || 'Utilisateur');
 
   const setRole = useCallback((newRole: UserRole) => {

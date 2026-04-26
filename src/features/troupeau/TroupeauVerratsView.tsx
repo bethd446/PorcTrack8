@@ -1,25 +1,7 @@
-/**
- * TroupeauVerratsView — Vue dédiée aux verrats de la ferme
- * ══════════════════════════════════════════════════════════════════════════
- * Complément du `CheptelView` (tab VERRAT) et du `AnimalDetailView` — ici on
- * affiche une vue optimisée "carte par verrat" (2 verrats attendus en prod :
- * V01 Bobi, V02 Aligator). La densité < 5 lignes favorise une carte riche :
- * chips statut, meta multi-ligne, CTA "Saisir saillie avec ce verrat".
- *
- * Props : aucune. Consomme `useFarm()` directement.
- *
- * Routes de destination :
- *   - Card click → /troupeau/verrats/:id (détail)
- *   - CTA saillie → /troupeau/verrats/:id?action=saillie (le détail gère l'ouverture)
- */
-
 import React, { useMemo, useState } from 'react';
-import { IonContent, IonPage } from '@ionic/react';
 import { useNavigate } from 'react-router-dom';
-import { Heart } from 'lucide-react';
+import { Heart, Search } from 'lucide-react';
 
-import AgritechHeader from '../../components/AgritechHeader';
-import AgritechLayout from '../../components/AgritechLayout';
 import { VerratIcon } from '../../components/icons';
 import { Chip, SectionDivider, type ChipTone } from '../../components/agritech';
 import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
@@ -28,10 +10,6 @@ import type { Verrat, Saillie } from '../../types/farm';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-/**
- * Normalise le statut d'un verrat : 'ACTIF' | 'REFORME' | 'INCONNU'.
- * Verrat.statut est un `VerratStatut` (string tolérant), donc regex safe.
- */
 function normaliseVerratStatut(statut: string | undefined): 'ACTIF' | 'REFORME' | 'INCONNU' {
   if (!statut) return 'INCONNU';
   if (/r[ée]form/i.test(statut)) return 'REFORME';
@@ -47,7 +25,6 @@ function statutTone(statut: string | undefined): ChipTone {
   }
 }
 
-/** dd/MM/yyyy ou ISO → Date | null. */
 function parseSaillieDate(s: string | undefined): Date | null {
   if (!s) return null;
   const fr = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
@@ -66,10 +43,6 @@ function formatDateFr(s: string | undefined): string {
   return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
 }
 
-/**
- * Compte les saillies du mois courant (mois civil, pas roulant-30j).
- * Tolère dateSaillie manquante.
- */
 function countSailliesThisMonth(saillies: Saillie[], now: Date): number {
   const y = now.getFullYear();
   const m = now.getMonth();
@@ -80,16 +53,20 @@ function countSailliesThisMonth(saillies: Saillie[], now: Date): number {
   }, 0);
 }
 
+interface TroupeauVerratsViewProps {
+  searchText: string;
+  setSearchText: (val: string) => void;
+}
+
 // ─── Composant ──────────────────────────────────────────────────────────────
 
-const TroupeauVerratsView: React.FC = () => {
+const TroupeauVerratsView: React.FC<TroupeauVerratsViewProps> = ({ searchText, setSearchText }) => {
   const navigate = useNavigate();
   const { verrats, saillies } = useFarm();
   const [sheetVerratId, setSheetVerratId] = useState<string | null>(null);
 
   const now = useMemo(() => new Date(), []);
 
-  /** Index saillies par verratId (id ou displayId). */
   const sailliesByVerrat = useMemo(() => {
     const idx = new Map<string, Saillie[]>();
     for (const s of saillies) {
@@ -105,9 +82,18 @@ const TroupeauVerratsView: React.FC = () => {
   const totalSaillies = saillies.length;
   const sailliesCeMois = useMemo(() => countSailliesThisMonth(saillies, now), [saillies, now]);
 
-  /** Tri : actifs d'abord, puis par displayId. */
-  const sortedVerrats = useMemo(() => {
-    return [...verrats].sort((a, b) => {
+  const filteredVerrats = useMemo(() => {
+    const q = searchText.trim().toLowerCase();
+    const base = verrats.filter((v) => {
+      if (!q) return true;
+      const haystack = [v.displayId, v.id, v.nom, v.boucle, v.origine]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+
+    return [...base].sort((a, b) => {
       const aActif = normaliseVerratStatut(a.statut) === 'ACTIF' ? 0 : 1;
       const bActif = normaliseVerratStatut(b.statut) === 'ACTIF' ? 0 : 1;
       if (aActif !== bActif) return aActif - bActif;
@@ -116,133 +102,141 @@ const TroupeauVerratsView: React.FC = () => {
         sensitivity: 'base',
       });
     });
-  }, [verrats]);
+  }, [verrats, searchText]);
 
   const goToDetail = (v: Verrat): void => {
     navigate(`/troupeau/verrats/${v.id}`);
   };
 
   const openSaillieFor = (v: Verrat): void => {
-    // QuickSaillieForm ne supporte pas prefill → on ouvre depuis ici mais on
-    // guide l'utilisateur (tri verrats avec celui-ci d'abord implicitement).
-    // Fallback simple : si le form n'est pas accessible, on pourrait
-    // navigate(`/troupeau/verrats/${v.id}`). Ici on ouvre le sheet.
     setSheetVerratId(v.displayId);
   };
 
   return (
-    <IonPage>
-      <IonContent fullscreen className="ion-no-padding">
-        <AgritechLayout>
-          <AgritechHeader
-            title="VERRATS"
-            subtitle={`${verrats.length} enregistré${verrats.length > 1 ? 's' : ''}`}
-            backTo="/troupeau"
-          />
+    <div className="flex flex-col gap-5">
+      {/* ── Summary strip ──────────────────────────────────────── */}
+      <section
+        role="region"
+        aria-label="Résumé verrats"
+        className="card-dense flex items-center justify-between gap-3 py-3"
+      >
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <span className="kpi-label">Verrats</span>
+          <span className="font-mono tabular-nums text-[15px] font-bold text-text-0">
+            {verrats.length}
+          </span>
+        </div>
+        <div className="h-8 w-px bg-border shrink-0" aria-hidden="true" />
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <span className="kpi-label">Saillies totales</span>
+          <span className="font-mono tabular-nums text-[15px] font-bold text-text-0">
+            {totalSaillies}
+          </span>
+        </div>
+        <div className="h-8 w-px bg-border shrink-0" aria-hidden="true" />
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <span className="kpi-label">Ce mois</span>
+          <span className="font-mono tabular-nums text-[15px] font-bold text-text-0">
+            {sailliesCeMois}
+          </span>
+        </div>
+      </section>
 
-          <div className="px-4 pt-4 pb-32 flex flex-col gap-5">
-            {/* ── Summary strip ──────────────────────────────────────── */}
-            <section
-              role="region"
-              aria-label="Résumé verrats"
-              className="card-dense flex items-center justify-between gap-3 py-3"
-            >
-              <div className="flex flex-col gap-0.5 min-w-0">
-                <span className="kpi-label">Verrats</span>
-                <span className="font-mono tabular-nums text-[15px] font-bold text-text-0">
-                  {verrats.length}
-                </span>
-              </div>
-              <div className="h-8 w-px bg-border shrink-0" aria-hidden="true" />
-              <div className="flex flex-col gap-0.5 min-w-0">
-                <span className="kpi-label">Saillies totales</span>
-                <span className="font-mono tabular-nums text-[15px] font-bold text-text-0">
-                  {totalSaillies}
-                </span>
-              </div>
-              <div className="h-8 w-px bg-border shrink-0" aria-hidden="true" />
-              <div className="flex flex-col gap-0.5 min-w-0">
-                <span className="kpi-label">Ce mois</span>
-                <span className="font-mono tabular-nums text-[15px] font-bold text-text-0">
-                  {sailliesCeMois}
-                </span>
-              </div>
-            </section>
+      {/* ── Recherche ───────────────────────────────────────────── */}
+      <div className="relative">
+        <input
+          type="search"
+          inputMode="search"
+          autoComplete="off"
+          spellCheck={false}
+          placeholder="ID, nom, boucle, origine…"
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          aria-label="Rechercher un verrat"
+          className="w-full pl-10 pr-3 py-2.5 rounded-lg bg-bg-2 border border-border font-mono text-[13px] text-text-0 placeholder:text-text-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+        />
+        <Search
+          size={16}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-text-2 pointer-events-none"
+          aria-hidden="true"
+        />
+      </div>
 
-            {/* ── Liste verrats ──────────────────────────────────────── */}
-            {verrats.length === 0 ? (
-              <div
-                className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up"
-                role="status"
-              >
-                <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
-                  <VerratIcon size={48} />
-                </div>
-                <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
-                  Aucun verrat enregistré
-                </h3>
-                <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
-                  Les verrats de la ferme apparaîtront ici dès qu'ils seront
-                  saisis dans la feuille VERRATS.
-                </p>
-              </div>
-            ) : (
-              <section
-                role="region"
-                aria-label="Liste des verrats"
-                className="flex flex-col gap-3"
-              >
-                <SectionDivider label={`Verrats · ${sortedVerrats.length}`} />
-
-                {sortedVerrats.map((v) => {
-                  const vSaillies = sailliesByVerrat.get(v.displayId)
-                    ?? sailliesByVerrat.get(v.id)
-                    ?? [];
-                  const nbSaillies = vSaillies.length;
-                  const derniere = vSaillies
-                    .map((s) => parseSaillieDate(s.dateSaillie))
-                    .filter((d): d is Date => d !== null)
-                    .sort((a, b) => b.getTime() - a.getTime())[0];
-
-                  const statutLabel = v.statut || '—';
-                  const tone = statutTone(v.statut);
-                  const displayId = v.displayId || v.id;
-                  const nomPart = v.nom ? ` · ${v.nom}` : '';
-                  const title = `${displayId}${nomPart}`;
-
-                  return (
-                    <VerratCard
-                      key={v.id}
-                      title={title}
-                      displayId={displayId}
-                      statutLabel={statutLabel}
-                      statutTone={tone}
-                      boucle={v.boucle}
-                      origine={v.origine}
-                      ration={v.ration}
-                      alimentation={v.alimentation}
-                      nbSaillies={nbSaillies}
-                      derniereDate={derniere ? formatDateFr(
-                        `${String(derniere.getDate()).padStart(2, '0')}/${String(derniere.getMonth() + 1).padStart(2, '0')}/${derniere.getFullYear()}`,
-                      ) : null}
-                      onCardClick={() => goToDetail(v)}
-                      onSaillieClick={() => openSaillieFor(v)}
-                    />
-                  );
-                })}
-              </section>
-            )}
+      {/* ── Liste verrats ──────────────────────────────────────── */}
+      {verrats.length === 0 ? (
+        <div
+          className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up"
+          role="status"
+        >
+          <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
+            <VerratIcon size={48} />
           </div>
-        </AgritechLayout>
-      </IonContent>
+          <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
+            Aucun verrat enregistré
+          </h3>
+          <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
+            Les verrats de la ferme apparaîtront ici dès qu'ils seront
+            saisis dans la feuille VERRATS.
+          </p>
+        </div>
+      ) : (
+        <section
+          role="region"
+          aria-label="Liste des verrats"
+          className="flex flex-col gap-3"
+        >
+          <SectionDivider label={`Verrats · ${filteredVerrats.length}`} />
 
-      {/* QuickSaillieForm ne supporte pas prefill verratId — on l'ouvre
-          simplement ; l'utilisateur devra re-sélectionner le verrat. */}
+          {filteredVerrats.map((v) => {
+            const vSaillies = sailliesByVerrat.get(v.displayId)
+              ?? sailliesByVerrat.get(v.id)
+              ?? [];
+            const nbSaillies = vSaillies.length;
+            const derniere = vSaillies
+              .map((s) => parseSaillieDate(s.dateSaillie))
+              .filter((d): d is Date => d !== null)
+              .sort((a, b) => b.getTime() - a.getTime())[0];
+
+            const statutLabel = v.statut || '—';
+            const tone = statutTone(v.statut);
+            const displayId = v.displayId || v.id;
+            const nomPart = v.nom ? ` · ${v.nom}` : '';
+            const title = `${displayId}${nomPart}`;
+
+            return (
+              <VerratCard
+                key={v.id}
+                title={title}
+                displayId={displayId}
+                statutLabel={statutLabel}
+                statutTone={tone}
+                boucle={v.boucle}
+                origine={v.origine}
+                ration={v.ration}
+                alimentation={v.alimentation}
+                nbSaillies={nbSaillies}
+                derniereDate={derniere ? formatDateFr(
+                  `${String(derniere.getDate()).padStart(2, '0')}/${String(derniere.getMonth() + 1).padStart(2, '0')}/${derniere.getFullYear()}`,
+                ) : null}
+                onCardClick={() => goToDetail(v)}
+                onSaillieClick={() => openSaillieFor(v)}
+              />
+            );
+          })}
+
+          {filteredVerrats.length === 0 && (
+            <p className="text-center py-8 font-mono text-[12px] text-text-2">
+              Aucun verrat ne correspond à ta recherche.
+            </p>
+          )}
+        </section>
+      )}
+
       <QuickSaillieForm
         isOpen={sheetVerratId !== null}
         onClose={() => setSheetVerratId(null)}
       />
-    </IonPage>
+    </div>
   );
 };
 
@@ -285,7 +279,6 @@ const VerratCard: React.FC<VerratCardProps> = ({
 
   return (
     <div className="card-dense !p-0 overflow-hidden">
-      {/* Zone cliquable (hors CTA) */}
       <button
         type="button"
         onClick={onCardClick}
@@ -302,7 +295,6 @@ const VerratCard: React.FC<VerratCardProps> = ({
             </div>
             <Chip label={statutLabel} tone={statutTone} size="xs" />
           </div>
-          {/* displayId · boucle — bien visible pour l'identification terrain */}
           <div className="flex items-baseline gap-1.5 flex-wrap">
             <span className="ft-code text-[13px] text-text-0 font-semibold tabular-nums">
               {displayId}
@@ -331,7 +323,6 @@ const VerratCard: React.FC<VerratCardProps> = ({
         </div>
       </button>
 
-      {/* CTA ghost bas de carte */}
       <div className="px-4 pb-3 pt-0">
         <button
           type="button"

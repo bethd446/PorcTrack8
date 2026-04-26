@@ -1,13 +1,15 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
-import { Calendar, Truck, Scale } from 'lucide-react';
+import { Calendar, Truck, Scale, TrendingUp } from 'lucide-react';
 
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { KpiCard, DataRow, Chip, SectionDivider, type ChipTone } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
 import { filterRealPortees } from '../../services/bandesAggregator';
+import type { BandePorcelets } from '../../types/farm';
+import QuickVenteForm from '../../components/forms/QuickVenteForm';
 
 /**
  * SortieCalendarView — Calendrier prévisionnel des sorties abattoir.
@@ -43,6 +45,7 @@ const SortieCalendarView: React.FC = () => {
   const navigate = useNavigate();
   const { bandes, refreshData } = useFarm();
   const today = useMemo(() => new Date(), []);
+  const [venteBande, setVenteBande] = useState<BandePorcelets | null>(null);
 
   const calendar = useMemo(() => {
     const realBandes = filterRealPortees(bandes);
@@ -119,14 +122,28 @@ const SortieCalendarView: React.FC = () => {
                     const label = daysAhead <= 0 ? 'À SORTIR' : daysAhead === 1 ? 'DEMAIN' : `J-${daysAhead}`;
 
                     return (
-                      <DataRow
-                        key={bande.id}
-                        primary={bande.idPortee || bande.id}
-                        secondary={`~${Math.round(poidsActuel)} kg · ${bande.vivants} têtes · MB ${bande.dateMB || '?'}`}
-                        meta={formatDate(dateSortiePrevue)}
-                        accessory={<Chip label={label} tone={tone} size="xs" />}
-                        onClick={() => navigate(`/troupeau/bandes/${encodeURIComponent(bande.id)}`)}
-                      />
+                      <div key={bande.id} className="border-b border-border last:border-b-0">
+                        <DataRow
+                          primary={bande.idPortee || bande.id}
+                          secondary={`~${Math.round(poidsActuel)} kg · ${bande.vivants} têtes · MB ${bande.dateMB || '?'}`}
+                          meta={formatDate(dateSortiePrevue)}
+                          accessory={<Chip label={label} tone={tone} size="xs" />}
+                          onClick={() => navigate(`/troupeau/bandes/${encodeURIComponent(bande.id)}`)}
+                        />
+                        <div className="px-4 pb-3 -mt-1 flex gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setVenteBande(bande);
+                            }}
+                            className="pressable inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-amber/10 text-amber border border-amber/30 font-mono text-[11px] font-bold uppercase tracking-wide transition-colors hover:bg-amber/20"
+                          >
+                            <TrendingUp size={12} aria-hidden="true" />
+                            Saisir sortie abattoir
+                          </button>
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
@@ -134,6 +151,14 @@ const SortieCalendarView: React.FC = () => {
             </section>
           </div>
         </AgritechLayout>
+
+        {venteBande && (
+          <QuickVenteForm
+            isOpen={!!venteBande}
+            onClose={() => setVenteBande(null)}
+            bande={venteBande}
+          />
+        )}
       </IonContent>
     </IonPage>
   );

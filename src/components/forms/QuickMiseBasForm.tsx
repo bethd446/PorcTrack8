@@ -580,7 +580,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
       });
 
       try {
-        await refreshData();
+        await refreshData(true);
       } catch {
         /* noop */
       }

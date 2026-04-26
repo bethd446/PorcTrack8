@@ -18,6 +18,8 @@ import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
 
 import { FarmProvider } from './context/FarmContext';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 import AgritechNavV2, { QuickActionsProvider } from './components/AgritechNavV2';
 import { loadChecklistDefinitions } from './services/checklistService';
 
@@ -64,6 +66,7 @@ const ForecastView = React.lazy(() => import(/* webpackChunkName: "pilotage-prev
 const ReproCalendarView = React.lazy(() => import(/* webpackChunkName: "cycle-repro" */ './features/cycles/ReproCalendarView'));
 const MaterniteView = React.lazy(() => import(/* webpackChunkName: "cycle-maternite" */ './features/cycles/MaterniteView'));
 const PostSevrageView = React.lazy(() => import(/* webpackChunkName: "cycle-postsevrage" */ './features/cycles/PostSevrageView'));
+const CroissanceView = React.lazy(() => import(/* webpackChunkName: "cycle-croissance" */ './features/cycles/CroissanceView'));
 const EngraissementView = React.lazy(() => import(/* webpackChunkName: "cycle-engraissement" */ './features/cycles/EngraissementView'));
 const FinitionView = React.lazy(() => import(/* webpackChunkName: "cycle-finition" */ './features/cycles/FinitionView'));
 const SortieCalendarView = React.lazy(() => import(/* webpackChunkName: "cycle-sortie" */ './features/cycles/SortieCalendarView'));
@@ -133,7 +136,14 @@ const AppContent = () => {
           <Route path="/troupeau" element={<TroupeauHub />} />
           <Route path="/cycles" element={<CyclesHub />} />
           <Route path="/ressources" element={<RessourcesHub />} />
-          <Route path="/pilotage" element={<PilotageHub />} />
+          <Route
+            path="/pilotage"
+            element={
+              <ProtectedRoute allowedRoles={['OWNER']}>
+                <PilotageHub />
+              </ProtectedRoute>
+            }
+          />
 
           {/* ── Troupeau sub-routes (new dense lists — coexist with /cheptel) ── */}
           <Route path="/troupeau/truies" element={<TruiesListView />} />
@@ -148,6 +158,7 @@ const AppContent = () => {
           <Route path="/cycles/repro" element={<ReproCalendarView />} />
           <Route path="/cycles/maternite" element={<MaterniteView />} />
           <Route path="/cycles/post-sevrage" element={<PostSevrageView />} />
+          <Route path="/cycles/croissance" element={<CroissanceView />} />
           <Route path="/cycles/engraissement" element={<EngraissementView />} />
           <Route path="/cycles/finition" element={<FinitionView />} />
           <Route path="/cycles/sortie" element={<SortieCalendarView />} />
@@ -156,11 +167,46 @@ const AppContent = () => {
           <Route path="/pilotage/alertes" element={<Navigate to="/alerts" replace />} />
           <Route path="/pilotage/reglages" element={<Navigate to="/more" replace />} />
           <Route path="/pilotage/audit" element={<Navigate to="/audit" replace />} />
-          <Route path="/pilotage/perf" element={<PerfKpiView />} />
-          <Route path="/pilotage/finances" element={<FinancesView />} />
-          <Route path="/pilotage/finances/rapport" element={<RapportFinancierView />} />
-          <Route path="/pilotage/rapports" element={<RapportFinancierView />} />
-          <Route path="/pilotage/previsions" element={<ForecastView />} />
+          <Route
+            path="/pilotage/perf"
+            element={
+              <ProtectedRoute allowedRoles={['OWNER']}>
+                <PerfKpiView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pilotage/finances"
+            element={
+              <ProtectedRoute allowedRoles={['OWNER']}>
+                <FinancesView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pilotage/finances/rapport"
+            element={
+              <ProtectedRoute allowedRoles={['OWNER']}>
+                <RapportFinancierView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pilotage/rapports"
+            element={
+              <ProtectedRoute allowedRoles={['OWNER']}>
+                <RapportFinancierView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pilotage/previsions"
+            element={
+              <ProtectedRoute allowedRoles={['OWNER']}>
+                <ForecastView />
+              </ProtectedRoute>
+            }
+          />
 
           {/* ── Ressources sub-routes ─────────────────────────────────── */}
           <Route path="/ressources/aliments" element={<AlimentsView />} />
@@ -179,9 +225,11 @@ const AppContent = () => {
 export default function App() {
   return (
     <Router>
-      <FarmProvider>
-        <AppContent />
-      </FarmProvider>
+      <AuthProvider>
+        <FarmProvider>
+          <AppContent />
+        </FarmProvider>
+      </AuthProvider>
     </Router>
   );
 }

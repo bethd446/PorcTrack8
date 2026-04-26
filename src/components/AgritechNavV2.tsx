@@ -19,6 +19,7 @@ import {
   Activity,
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { cn } from '../lib/utils';
 import { FAB, BottomSheet } from './agritech';
 import type { FABAction } from './agritech';
@@ -267,8 +268,17 @@ const AgritechNavV2: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { openAction } = useQuickActions();
+  // const { isOwner } = useAuth();
+  const isOwner = true; // FORCE FOR TEST
 
   const activeTabId = resolveActiveTab(location.pathname);
+
+  const visibleTabs = useMemo(() => {
+    return TABS.filter(tab => {
+      if (tab.id === 'pilotage') return isOwner;
+      return true;
+    });
+  }, [isOwner]);
 
   /* ── FAB actions ────────────────────────────────────────────────────── */
   const fabActions: FABAction[] = useMemo(
@@ -330,10 +340,10 @@ const AgritechNavV2: React.FC = () => {
         <ul
           role="tablist"
           aria-label="Onglets principaux"
-          className="grid grid-cols-5"
+          className={cn("grid", isOwner ? "grid-cols-5" : "grid-cols-4")}
           style={{ padding: '8px 4px 6px' }}
         >
-          {TABS.map((tab) => (
+          {visibleTabs.map((tab) => (
             <NavTab
               key={tab.id}
               tab={tab}

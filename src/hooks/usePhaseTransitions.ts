@@ -41,7 +41,7 @@ export function usePhaseTransitions() {
 
   const dismiss = useCallback((bandeId: string): void => {
     setDismissed((prev) => {
-      const next = new Set(prev).add(bandeId);
+      const next = new Set<string>(prev).add(bandeId);
       saveDismissed(next);
       return next;
     });

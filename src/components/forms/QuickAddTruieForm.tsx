@@ -112,7 +112,7 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
           : 'Truie en file · sync auto',
       );
       try {
-        await refreshData();
+        await refreshData(true);
       } catch {
         /* noop */
       }

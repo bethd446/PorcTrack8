@@ -118,3 +118,54 @@ export function genererRapportFinancierBande(
     statutRentabilite
   };
 }
+
+/**
+ * Consolide les données financières de toutes les bandes actives
+ */
+export function genererRapportGlobal(
+  bandes: BandePorcelets[],
+  historique: TransitionBande[]
+) {
+  const today = new Date();
+
+  // Heuristique de poids actuel par défaut pour les bandes actives
+  const estimateWeight = (b: BandePorcelets) => {
+    const sevDate = b.dateSevrageReelle || b.dateSevragePrevue;
+    if (!sevDate) return 5;
+    const parts = sevDate.split('/');
+    const d = new Date(+parts[2], +parts[1] - 1, +parts[0]);
+    const days = Math.floor((today.getTime() - d.getTime()) / 86400000);
+    return Math.min(25 + days * 0.65, 110);
+  };
+
+  const reports = bandes
+    .filter(b => (b.vivants ?? 0) > 0 && !/vendu|archiv/i.test(b.statut || ''))
+    .map(b => ({
+      bande: b,
+      report: genererRapportFinancierBande(b, historique, estimateWeight(b))
+    }));
+
+  const totalRevenuProjete = reports.reduce((acc, r) => acc + r.report.revenuBrutProjete, 0);
+  const totalCoutAlimentaire = reports.reduce((acc, r) => acc + r.report.coutAlimentaireEstime, 0);
+  const totalCoutFixe = reports.reduce((acc, r) => acc + r.report.coutFixeEstime, 0);
+  const totalCout = totalCoutAlimentaire + totalCoutFixe;
+  const margeGlobaleEstimee = totalRevenuProjete - totalCout;
+
+  const totalNV = bandes.reduce((acc, b) => acc + (b.nv ?? 0), 0);
+  const totalMorts = bandes.reduce((acc, b) => acc + (b.morts ?? 0), 0);
+  const tauxMortaliteMoyen = totalNV > 0 ? (totalMorts / totalNV) * 100 : 0;
+
+  // Top / Flop
+  const sortedByROI = [...reports].sort((a, b) => b.report.roiPct - a.report.roiPct);
+
+  return {
+    totalRevenuProjete,
+    totalCoutAlimentaire,
+    totalCoutFixe,
+    totalCout,
+    margeGlobaleEstimee,
+    tauxMortaliteMoyen,
+    topBande: sortedByROI[0],
+    flopBande: sortedByROI[sortedByROI.length - 1]
+  };
+}

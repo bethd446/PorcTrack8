@@ -30,7 +30,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import type {
   Truie, Verrat, BandePorcelets, TraitementSante,
-  FarmState, AlerteServeur, Saillie, FinanceEntry,
+  FarmState, AlerteServeur, Saillie, FinanceEntry, TransitionBande,
 } from '../types/farm';
 import type { Animal, Note } from '../types';
 import type { FormuleAliment } from '../config/aliments';
@@ -49,6 +49,7 @@ interface FarmContextType extends FarmState {
   alertesServeur: AlerteServeur[];
   saillies: Saillie[];
   finances: FinanceEntry[];
+  transitions: TransitionBande[];
   alimentFormules: FormuleAliment[];
   criticalAlertCount: number;
   dataSource: 'NETWORK' | 'CACHE' | 'FALLBACK' | null;
@@ -174,6 +175,7 @@ export const useFarm = (): FarmContextType => {
     truies: troupeau.truies,
     verrats: troupeau.verrats,
     bandes: troupeau.bandes,
+    transitions: troupeau.transitions,
     truiesHeader: troupeau.truiesHeader,
     verratsHeader: troupeau.verratsHeader,
     bandesHeader: troupeau.bandesHeader,

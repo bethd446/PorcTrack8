@@ -20,6 +20,7 @@ const SHEET_TO_KEYS: Record<string, string[]> = {
   'JOURNAL_SANTE':             ['JOURNAL_SANTE'],
   'STOCK_ALIMENTS':            ['STOCK_ALIMENTS'],
   'STOCK_VETO':                ['STOCK_VETO'],
+  'HISTORIQUE_TRANSITIONS':    ['HISTORIQUE_TRANSITIONS'],
 };
 
 /**
