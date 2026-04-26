@@ -57,7 +57,7 @@ export function useEscapeKey(isOpen: boolean, onClose: () => void): void {
  * Générique pour accepter input, textarea ou select.
  */
 export function useFocusFirstInput<
-  T extends HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
+  T extends HTMLElement,
 >(isOpen: boolean, delayMs = 120): RefObject<T | null> {
   const ref = useRef<T | null>(null);
   useEffect(() => {
