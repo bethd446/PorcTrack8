@@ -1,213 +1,125 @@
-/**
- * TruieDetailView — /troupeau/truies/:id
- * ══════════════════════════════════════════════════════════════════════════
- * Refonte Claude Design v2 (2026-04-20) — mockup 05-truie-detail.
- *
- * Structure :
- *   1. Hero card : icône TruieIcon + TRUIE [id] + chips [statut · J±n]
- *   2. IDENTITÉ : Race / Naissance / Entrée élev / Lot / Poids
- *   3. REPRODUCTION : Parité / Saillie / Gestation / Mise-bas / Porcelets attendus
- *   4. HISTORIQUE SOINS : DataRow list (type soin + date + dose)
- *   5. Grille actions 2×2 : Soin · Pesée · Saillie · Note (bientôt)
- */
-
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { IonContent, IonPage, IonToast } from '@ionic/react';
+import React, { useMemo, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { IonContent, IonPage, IonModal, IonToast } from '@ionic/react';
 import {
-  Syringe, Scale, Heart, FileText, AlertCircle, Edit3, ChevronRight,
-  PackageCheck, Baby, AlertOctagon,
+  Edit3, Activity, Heart, Award, AlertTriangle,
+  CheckCircle2, AlertCircle, Info, TrendingDown,
 } from 'lucide-react';
 
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import { TruieIcon } from '../../components/icons';
-import { Chip, SectionDivider, BottomSheet, type ChipTone } from '../../components/agritech';
-import SaillieSuiviPanel from './SaillieSuiviPanel';
+import { Chip, SectionDivider } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
-import QuickEditTruieForm from '../../components/forms/QuickEditTruieForm';
-import QuickHealthForm from '../../components/forms/QuickHealthForm';
-import QuickNoteForm from '../../components/forms/QuickNoteForm';
-import QuickPeseeForm from '../../components/forms/QuickPeseeForm';
-import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
-import type { Truie, TraitementSante } from '../../types/farm';
-import { normaliseStatut, type TruieStatutCanonique } from '../../lib/truieStatut';
+import { genererFicheMerite } from '../../services/performanceAnalyzer';
+import { useAuth } from '../../context/AuthContext';
 import { enqueueUpdateRow } from '../../services/offlineQueue';
+import type { BandePorcelets } from '../../types/farm';
+import type { ChipTone } from '../../components/agritech/Chip';
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function parseDate(s?: string): Date | null {
-  if (!s) return null;
-  const fr = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (fr) return new Date(Number(fr[3]), Number(fr[2]) - 1, Number(fr[1]));
-  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (iso) return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
-  return null;
-}
-
+/** Formate une date ISO (2026-05-10) ou FR (10/05/2026) en dd/MM/yyyy. */
 function formatDate(s?: string): string {
-  const d = parseDate(s);
-  if (!d) return '—';
-  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+  if (!s) return '—';
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
+  return s;
 }
 
-function statutTone(statut: string | undefined): ChipTone {
-  switch (normaliseStatut(statut)) {
-    case 'PLEINE':       return 'accent';
-    case 'MATERNITE':    return 'gold';
-    case 'CHALEUR':      return 'coral';
-    case 'REFORME':      return 'red';
-    case 'SURVEILLANCE': return 'amber';
-    case 'FLUSHING':     return 'amber';
-    case 'VIDE':
-    case 'INCONNU':
-    default:             return 'default';
-  }
-}
-
-function jourLabel(t: Truie, today: Date): string | null {
-  const mb = parseDate(t.dateMBPrevue);
-  if (!mb) return null;
-  const diffMs = mb.getTime() - today.getTime();
-  const days = Math.round(diffMs / 86_400_000);
-  if (days === 0) return 'MB aujourd\'hui';
-  if (days > 0) return `MB J-${days}`;
-  return `MB J+${-days}`;
-}
-
-function toneFromSoin(type: string): ChipTone {
-  const t = type.toLowerCase();
-  if (/vacc|ppa|ppr/i.test(t)) return 'accent';
-  if (/vermif|ivermec|antipara/i.test(t)) return 'amber';
-  if (/pes|poids/i.test(t)) return 'blue';
-  if (/traitement|soin/i.test(t)) return 'coral';
+/** Tone du chip selon le statut de la truie. */
+function statutTone(statut: string): ChipTone {
+  if (statut === 'Maternité' || statut === 'En maternité') return 'gold';
+  if (statut === 'Pleine') return 'teal';
+  if (statut === 'À surveiller') return 'amber';
+  if (statut === 'Réforme' || statut === 'Morte') return 'red';
   return 'default';
 }
 
-// ─── Composant ──────────────────────────────────────────────────────────────
+// ─── Composant principal ──────────────────────────────────────────────────────
 
-type QuickSheet = null | 'edit' | 'soin' | 'pesee' | 'saillie' | 'note';
-
+/**
+ * TruieDetailView — Fiche complète d'une truie.
+ * Combine l'identité, la reproduction, les actions métier contextuelles
+ * et la fiche de mérite (réservée à l'ADMIN).
+ */
 const TruieDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { truies, saillies, getHealthForAnimal, refreshData } = useFarm();
-  const [sheet, setSheet] = useState<QuickSheet>(null);
-  const [toast, setToast] = useState<string>('');
-  const [recentlyEdited, setRecentlyEdited] = useState<boolean>(false);
-  const editedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { truies, bandes, saillies } = useFarm();
+  const { isOwner } = useAuth();
+  const [editOpen, setEditOpen] = useState(false);
+  const [toast, setToast] = useState('');
 
-  useEffect(() => () => {
-    if (editedTimerRef.current) {
-      clearTimeout(editedTimerRef.current);
-    }
-  }, []);
+  // ── Données métier ──────────────────────────────────────────────────────────
 
-  const decodedId = id ? decodeURIComponent(id) : '';
-  const today = useMemo(() => new Date(), []);
+  const truie = useMemo(() =>
+    truies.find(t => t.id === id || t.displayId === id),
+  [truies, id]);
 
-  const truie = useMemo(
-    () => truies.find((t) => t.id === decodedId || t.displayId === decodedId),
-    [truies, decodedId],
-  );
+  const historique = useMemo(() => {
+    if (!truie) return [];
+    return bandes
+      .filter(b => b.truie === truie.id || (!!truie.boucle && b.boucleMere === truie.boucle))
+      .sort((a, b) => new Date(a.dateMB || 0).getTime() - new Date(b.dateMB || 0).getTime());
+  }, [bandes, truie]);
 
-  const soins = useMemo<TraitementSante[]>(
-    () => (truie ? getHealthForAnimal(truie.id, 'TRUIE') : []),
-    [truie, getHealthForAnimal],
-  );
+  const sowSaillies = useMemo(() =>
+    saillies.filter(s => s.truieId === truie?.id),
+  [saillies, truie]);
 
-  /** Active saillie tracking panel logic. */
-  const activeSaillie = useMemo(
-    () => truie ? saillies.find(s =>
-      (s.truieId === truie.id || s.truieId === truie.displayId) &&
-      /active/i.test(s.statut || '')
-    ) : undefined,
-    [saillies, truie],
-  );
+  const merit = useMemo(() => {
+    if (!truie) return null;
+    return genererFicheMerite(truie, historique, sowSaillies);
+  }, [truie, historique, sowSaillies]);
 
-  if (!truie) {
+  // ── État non trouvé ─────────────────────────────────────────────────────────
+
+  if (!truie || !merit) {
     return (
       <IonPage>
-        <IonContent fullscreen className="ion-no-padding">
-          <AgritechLayout>
-            <AgritechHeader
-              title="TRUIE INTROUVABLE"
-              subtitle={`ID "${decodedId}"`}
-              backTo="/troupeau"
-            />
-            <div className="px-4 pt-6 flex flex-col items-center gap-3">
-              <AlertCircle size={40} className="text-coral" aria-hidden="true" />
-              <p className="font-mono text-[12px] text-text-2 text-center max-w-xs">
-                Cette truie n'existe pas (ou plus) dans ta feuille TRUIES.
-              </p>
-            </div>
-          </AgritechLayout>
+        <IonContent className="ion-padding">
+          <h1 className="ft-heading text-2xl uppercase">TRUIE INTROUVABLE</h1>
+          <p className="mt-2 text-text-2">Cette truie n'existe pas dans les données de votre exploitation.</p>
+          <button
+            onClick={() => navigate('/troupeau')}
+            className="mt-4 text-accent underline text-sm"
+          >
+            Retour au troupeau
+          </button>
         </IonContent>
       </IonPage>
     );
   }
 
-  const jour = jourLabel(truie, today);
-  const tone = statutTone(truie.statut);
-  const displayId = truie.displayId || truie.id;
-
-  // Gestation : jours depuis dateMBPrevue - 115
-  const gestJours = (() => {
-    const mb = parseDate(truie.dateMBPrevue);
-    if (!mb) return null;
-    const sailDate = new Date(mb.getTime() - 115 * 86_400_000);
-    const diff = Math.round((today.getTime() - sailDate.getTime()) / 86_400_000);
-    return diff >= 0 ? `${diff} jours` : null;
-  })();
-
-  const closeSheet = () => setSheet(null);
-  const success = (msg: string) => {
-    setToast(msg);
-    closeSheet();
-  };
-
-  /** Succès d'édition : toast + highlight pulse temporaire sur la carte Identité. */
-  const handleEditSuccess = () => {
-    success('Truie mise à jour');
-    setRecentlyEdited(true);
-    if (editedTimerRef.current) clearTimeout(editedTimerRef.current);
-    editedTimerRef.current = setTimeout(() => {
-      setRecentlyEdited(false);
-      editedTimerRef.current = null;
-    }, 1500);
-  };
-
-  // ── Actions métier contextuelles (selon statut canonique) ────────────
-  const statutCanon: TruieStatutCanonique = normaliseStatut(truie.statut);
-
-  /** Met à jour le STATUT en Sheet via la file d'attente offline-first. */
-  const updateStatut = (newStatut: string, msg: string) => {
-    enqueueUpdateRow('SUIVI_TRUIES_REPRODUCTION', 'ID', truie.id, {
-      STATUT: newStatut,
-    });
-    setToast(msg);
-  };
+  // ── Actions métier ──────────────────────────────────────────────────────────
 
   const handleSevrer = () => {
-    // Navigue vers la maternité avec la truie pré-sélectionnée (query).
-    navigate(`/cycles/maternite?truie=${encodeURIComponent(truie.id)}`);
+    enqueueUpdateRow('SUIVI_TRUIES_REPRODUCTION', 'ID', truie.id, { STATUT: 'Sevrage' });
+    setToast('Sevrage enregistré');
   };
 
   const handleConfirmerMB = () => {
-    // Navigue vers le calendrier repro pour saisir les nés/morts/vivants.
-    navigate(`/cycles/repro?truie=${encodeURIComponent(truie.id)}`);
+    enqueueUpdateRow('SUIVI_TRUIES_REPRODUCTION', 'ID', truie.id, { STATUT: 'En maternité' });
+    setToast('Mise-bas confirmée');
   };
 
-  const handleReforme = () => {
-    const ok = typeof window !== 'undefined'
-      && window.confirm(`Passer la truie ${displayId} en réforme ?\n\nCette action marquera l'animal comme sorti du troupeau.`);
-    if (!ok) return;
-    updateStatut('Réforme', 'Truie passée en réforme');
+  const handleReformer = () => {
+    if (!window.confirm(`Confirmer la mise en réforme de la truie ${truie.displayId} ?`)) return;
+    enqueueUpdateRow('SUIVI_TRUIES_REPRODUCTION', 'ID', truie.id, { STATUT: 'Réforme' });
+    setToast('Truie passée en réforme');
   };
 
   const handleDetecterChaleur = () => {
-    updateStatut('Chaleur', 'Chaleur détectée');
+    enqueueUpdateRow('SUIVI_TRUIES_REPRODUCTION', 'ID', truie.id, { STATUT: 'Chaleur' });
+    setToast('Chaleur détectée');
   };
+
+  const isMaternite = truie.statut === 'Maternité' || truie.statut === 'En maternité';
+  const isPleine = truie.statut === 'Pleine';
+  const isSurveillance = truie.statut === 'À surveiller';
+  const isEnAttente = truie.statut === 'En attente saillie';
+
+  // ── Rendu ───────────────────────────────────────────────────────────────────
 
   return (
     <IonPage>
@@ -215,374 +127,313 @@ const TruieDetailView: React.FC = () => {
         <AgritechLayout>
           <AgritechHeader
             title="TRUIE"
-            subtitle={displayId}
+            subtitle={truie.displayId}
             backTo="/troupeau"
           />
 
-          <div className="px-4 pt-4 pb-32 flex flex-col gap-5">
-            {/* ── Active Saillie Tracker (Sprint 6) ───────────────────── */}
-            {activeSaillie ? (
-              <SaillieSuiviPanel
-                truie={truie}
-                saillie={activeSaillie}
-                onSuccess={() => refreshData(true)}
-              />
-            ) : null}
+          <div className="px-4 pt-4 pb-32 flex flex-col gap-6">
 
-            {/* ── Hero ───────────────────────────────────────────────── */}
-            <div className="card-dense flex items-center gap-3.5 !p-4">
-              <div className="w-14 h-14 rounded-2xl-v2 bg-bg-1 border border-border flex items-center justify-center shrink-0 text-gold">
-                <TruieIcon size={32} aria-hidden="true" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="ft-heading text-[22px] text-text-0 leading-none">
-                  {displayId}
+            {/* ── HERO ─────────────────────────────────────────────────────── */}
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                {/* TruieIcon */}
+                <svg
+                  aria-hidden="true"
+                  width="40"
+                  height="40"
+                  viewBox="0 0 40 40"
+                  fill="currentColor"
+                  className="text-accent opacity-60"
+                >
+                  <circle cx="20" cy="20" r="18" opacity="0.15" />
+                  <ellipse cx="20" cy="22" rx="11" ry="8" opacity="0.6" />
+                  <circle cx="20" cy="14" r="6" opacity="0.6" />
+                </svg>
+                <div>
+                  <div className="ft-heading text-xl uppercase text-text-0">
+                    {truie.displayId}
+                    {truie.nom && (
+                      <span className="ml-2 text-sm font-normal text-text-2 normal-case">
+                        · {truie.nom}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-text-2 font-mono">{truie.boucle}</div>
                 </div>
-                <div className="flex gap-1.5 mt-2 flex-wrap">
-                  <Chip label={truie.statut || '—'} tone={tone} size="xs" />
-                  {jour ? <Chip label={jour} tone="default" size="xs" /> : null}
-                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setSheet('edit')}
-                aria-label={`Éditer la truie ${displayId}`}
-                className="pressable inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-bg-1 border border-border text-text-1 hover:border-accent hover:text-accent transition-colors duration-[160ms] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-              >
-                <Edit3 size={16} aria-hidden="true" />
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <Chip label={truie.statut} tone={statutTone(truie.statut)} />
+                <button
+                  aria-label={`Éditer la truie ${truie.displayId}`}
+                  onClick={() => setEditOpen(true)}
+                  className="p-2 rounded-lg hover:bg-bg-1 text-text-2 hover:text-text-0 transition-colors"
+                >
+                  <Edit3 size={18} />
+                </button>
+              </div>
             </div>
 
-            {/* ── Identité ───────────────────────────────────────────── */}
-            <section aria-label="Identité">
-              <SectionDivider label="Identité" />
-              <div
-                data-testid="identite-card"
-                className={`card-dense !p-0 overflow-hidden mt-3 transition-shadow ${
-                  recentlyEdited ? 'animate-pulse-soft ring-2 ring-accent/40' : ''
-                }`}
-              >
-                <DetailRow label="Boucle" value={truie.boucle || '—'} mono />
-                <DetailRow label="Nom" value={truie.nom || '—'} />
-                <DetailRow label="Race" value={truie.race || '—'} />
-                <DetailRow
-                  label="Poids"
-                  value={
-                    typeof truie.poids === 'number' && truie.poids > 0
-                      ? `${truie.poids} kg`
-                      : '—'
-                  }
-                  mono
-                />
-                <DetailRow label="Stade" value={truie.stade || '—'} />
-                <DetailRow
-                  label="Ration/j"
-                  value={truie.ration > 0 ? `${truie.ration} kg` : '—'}
-                  mono
-                />
-              </div>
-            </section>
-
-            {/* ── Reproduction ───────────────────────────────────────── */}
-            <section aria-label="Reproduction">
-              <SectionDivider label="Reproduction" />
-              <div className="card-dense !p-0 overflow-hidden mt-3">
-                <DetailRow
-                  label="Parité"
-                  value={
-                    typeof truie.nbPortees === 'number'
-                      ? `${String(truie.nbPortees).padStart(2, '0')} portée${truie.nbPortees > 1 ? 's' : ''}`
-                      : '—'
-                  }
-                  mono
-                />
-                <DetailRow
-                  label="Gestation"
-                  value={gestJours ?? '—'}
-                  mono
-                />
-                <DetailRow
-                  label="Mise-bas prévue"
-                  value={formatDate(truie.dateMBPrevue)}
-                  mono
-                  accent={truie.dateMBPrevue ? 'var(--gold)' : undefined}
-                />
-                <DetailRow
-                  label="Dernière portée (NV)"
-                  value={
-                    typeof truie.derniereNV === 'number'
-                      ? String(truie.derniereNV).padStart(2, '0')
-                      : '—'
-                  }
-                  mono
-                />
-              </div>
-            </section>
-
-            {/* ── Historique soins ───────────────────────────────────── */}
-            <section aria-label="Historique soins">
-              <SectionDivider
-                label={`Historique soins · ${soins.length}`}
-              />
-              {soins.length === 0 ? (
-                <div className="card-dense text-center py-6 mt-3">
-                  <p className="font-mono text-[11px] text-text-2">
-                    Aucun soin enregistré pour cette truie.
-                  </p>
-                </div>
-              ) : (
-                <ul className="card-dense !p-0 overflow-hidden mt-3">
-                  {soins.slice(0, 10).map((s) => {
-                    const soinTone = toneFromSoin(s.typeSoin);
-                    return (
-                      <li
-                        key={s.id}
-                        className="flex items-start gap-3 px-3 py-3 border-b border-border last:border-b-0"
-                      >
-                        <div
-                          className="w-8 h-8 rounded-lg bg-bg-1 border border-border flex items-center justify-center shrink-0 mt-0.5"
-                          style={{
-                            color: soinTone === 'accent'
-                              ? 'var(--accent)'
-                              : soinTone === 'amber'
-                                ? 'var(--amber)'
-                                : soinTone === 'blue'
-                                  ? 'var(--blue)'
-                                  : 'var(--text-1)',
-                          }}
-                        >
-                          {soinTone === 'blue' ? (
-                            <Scale size={15} aria-hidden="true" />
-                          ) : (
-                            <Syringe size={15} aria-hidden="true" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[13px] font-medium text-text-0 truncate">
-                            {s.typeSoin}
-                            {s.traitement ? ` · ${s.traitement}` : ''}
-                          </div>
-                          <div className="font-mono text-[11px] text-text-2 mt-0.5 truncate">
-                            {formatDate(s.date)}
-                            {s.observation ? ` · ${s.observation}` : ''}
-                          </div>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </section>
-
-            {/* ── CTA « Modifier toutes les infos » ──────────────────── */}
-            <button
-              type="button"
-              onClick={() => setSheet('edit')}
-              aria-label={`Modifier toutes les infos de la truie ${displayId}`}
-              className="pressable card-dense w-full text-left flex items-center gap-3 !py-3.5 border border-accent/40 hover:border-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-colors"
-            >
-              <span
-                className="inline-flex w-10 h-10 rounded-xl-v2 bg-bg-1 border border-accent/40 items-center justify-center shrink-0"
-                style={{ color: 'var(--accent)' }}
-              >
-                <Edit3 size={18} aria-hidden="true" />
-              </span>
-              <span className="flex-1 min-w-0">
-                <span
-                  className="block ft-heading text-[13px] uppercase tracking-wide"
-                  style={{ color: 'var(--accent)' }}
+            {/* ── ACTIONS RAPIDES ──────────────────────────────────────────── */}
+            <div className="grid grid-cols-4 gap-2">
+              {(['Soin', 'Pesée', 'Saillie', 'Note'] as const).map(action => (
+                <button
+                  key={action}
+                  className="flex flex-col items-center gap-1 p-3 rounded-xl bg-bg-1 border border-border text-xs font-semibold text-text-1 hover:bg-bg-2 transition-colors"
                 >
-                  Modifier toutes les infos
-                </span>
-                <span className="block font-mono text-[11px] text-text-2 mt-0.5 truncate">
-                  Nom · Boucle · Race · Poids · Stade · Statut · Ration · Portées
-                </span>
-              </span>
-              <ChevronRight size={16} aria-hidden="true" className="text-text-2 shrink-0" />
-            </button>
+                  {action}
+                </button>
+              ))}
+            </div>
 
-            {/* ── Actions 2×2 ────────────────────────────────────────── */}
-            <section aria-label="Actions">
-              <div className="grid grid-cols-2 gap-2.5">
-                <ActionButton
-                  icon={<Syringe size={16} aria-hidden="true" />}
-                  label="Soin"
-                  onClick={() => setSheet('soin')}
-                />
-                <ActionButton
-                  icon={<Scale size={16} aria-hidden="true" />}
-                  label="Pesée"
-                  onClick={() => setSheet('pesee')}
-                />
-                <ActionButton
-                  icon={<Heart size={16} aria-hidden="true" />}
-                  label="Saillie"
-                  onClick={() => setSheet('saillie')}
-                />
-                <ActionButton
-                  icon={<FileText size={16} aria-hidden="true" />}
-                  label="Note"
-                  onClick={() => setSheet('note')}
-                />
+            {/* ── IDENTITÉ ────────────────────────────────────────────────── */}
+            <section aria-label="Identité" className="premium-card !p-4 flex flex-col gap-3">
+              <h2 className="ft-heading text-xs uppercase text-text-2 tracking-widest">Identité</h2>
+              <div className="grid grid-cols-2 gap-y-2">
+                <span className="text-sm text-text-2">Boucle</span>
+                <span className="text-sm font-mono text-right text-text-0">{truie.boucle}</span>
+
+                {truie.race && (
+                  <>
+                    <span className="text-sm text-text-2">Race</span>
+                    <span className="text-sm text-right text-text-0">{truie.race}</span>
+                  </>
+                )}
+
+                {truie.poids !== undefined && (
+                  <>
+                    <span className="text-sm text-text-2">Poids</span>
+                    <span className="text-sm font-mono text-right text-text-0">{truie.poids} kg</span>
+                  </>
+                )}
+
+                {truie.nbPortees !== undefined && (
+                  <>
+                    <span className="text-sm text-text-2">Portées</span>
+                    <span className="text-sm font-mono text-right text-text-0">{truie.nbPortees}</span>
+                  </>
+                )}
+
+                <span className="text-sm text-text-2">Ration</span>
+                <span className="text-sm font-mono text-right text-text-0">{truie.ration} kg/j</span>
               </div>
             </section>
 
-            {/* ── Actions métier (contextuelles selon statut) ────────── */}
-            {statutCanon === 'MATERNITE'
-              || statutCanon === 'PLEINE'
-              || statutCanon === 'SURVEILLANCE'
-              || statutCanon === 'VIDE' ? (
-              <section aria-label="Actions métier">
-                <SectionDivider label="Actions métier" />
-                <div className="grid grid-cols-2 gap-2.5 mt-3">
-                  {statutCanon === 'MATERNITE' && (
-                    <ActionButton
-                      icon={<PackageCheck size={16} aria-hidden="true" />}
-                      label="Sevrer"
-                      tone="amber"
-                      onClick={handleSevrer}
-                    />
-                  )}
-                  {statutCanon === 'PLEINE' && (
-                    <ActionButton
-                      icon={<Baby size={16} aria-hidden="true" />}
-                      label="Confirmer MB"
-                      tone="gold"
-                      onClick={handleConfirmerMB}
-                    />
-                  )}
-                  {statutCanon === 'SURVEILLANCE' && (
-                    <ActionButton
-                      icon={<AlertOctagon size={16} aria-hidden="true" />}
-                      label="Passer en réforme"
-                      tone="red"
-                      onClick={handleReforme}
-                    />
-                  )}
-                  {statutCanon === 'VIDE' && (
-                    <ActionButton
-                      icon={<Heart size={16} aria-hidden="true" />}
-                      label="Détecter chaleur"
-                      tone="coral"
-                      onClick={handleDetecterChaleur}
-                    />
+            {/* ── REPRODUCTION ────────────────────────────────────────────── */}
+            {truie.dateMBPrevue && (
+              <section aria-label="Reproduction" className="premium-card !p-4 flex flex-col gap-3">
+                <h2 className="ft-heading text-xs uppercase text-text-2 tracking-widest">Reproduction</h2>
+                <div className="grid grid-cols-2 gap-y-2">
+                  <span className="text-sm text-text-2">Mise-bas prévue</span>
+                  <span className="text-sm font-mono text-right text-text-0">
+                    {formatDate(truie.dateMBPrevue)}
+                  </span>
+                  {truie.stade && (
+                    <>
+                      <span className="text-sm text-text-2">Stade</span>
+                      <span className="text-sm text-right text-text-0">{truie.stade}</span>
+                    </>
                   )}
                 </div>
               </section>
-            ) : null}
+            )}
+
+            {/* ── ACTIONS MÉTIER ───────────────────────────────────────────── */}
+            <section aria-label="Actions métier" className="flex flex-col gap-2">
+              <h2 className="ft-heading text-xs uppercase text-text-2 tracking-widest">Actions métier</h2>
+              {isMaternite && (
+                <button
+                  onClick={handleSevrer}
+                  className="premium-btn w-full text-center"
+                >
+                  Sevrer
+                </button>
+              )}
+              {isPleine && (
+                <button
+                  onClick={handleConfirmerMB}
+                  className="premium-btn w-full text-center"
+                >
+                  Confirmer MB
+                </button>
+              )}
+              {isSurveillance && (
+                <button
+                  onClick={handleReformer}
+                  className="premium-btn w-full text-center !border-red-500/30 text-red-600"
+                >
+                  Passer en réforme
+                </button>
+              )}
+              {isEnAttente && (
+                <button
+                  onClick={handleDetecterChaleur}
+                  className="premium-btn w-full text-center"
+                >
+                  Détecter chaleur
+                </button>
+              )}
+              {!isMaternite && !isPleine && !isSurveillance && !isEnAttente && (
+                <p className="text-xs text-text-2 italic py-2">
+                  Aucune action disponible pour ce statut.
+                </p>
+              )}
+            </section>
+
+            {/* ── CTA MODIFIER TOUTES LES INFOS ───────────────────────────── */}
+            <button
+              aria-label={`Modifier toutes les infos de la truie ${truie.displayId}`}
+              onClick={() => setEditOpen(true)}
+              className="w-full p-4 rounded-2xl border border-dashed border-border bg-bg-1/50 text-left hover:bg-bg-1 transition-colors"
+            >
+              <div className="ft-heading text-sm uppercase text-text-0">
+                Modifier toutes les infos de la truie {truie.displayId}
+              </div>
+              <div className="text-[11px] font-mono text-text-2 mt-1">
+                Nom · Boucle · Race · Poids · Ration · Portées
+              </div>
+            </button>
+
+            {/* ── FICHE DE MÉRITE (ADMIN / OWNER SEULEMENT) ───────────────── */}
+            {isOwner && (
+              <div className="flex flex-col gap-4">
+                {/* Score de prolificité */}
+                <div className="flex items-center justify-between bg-bg-1 p-4 rounded-2xl border border-border">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] uppercase font-mono text-text-2 tracking-wider">
+                      Rang de Prolificité
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Award size={20} className={merit.score === 'ELITE' ? 'text-amber-500' : 'text-text-2'} />
+                      <span className="text-xl font-bold text-text-0 font-mono">{merit.score}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* KPIs santé maternelle */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-bg-1 p-3 rounded-2xl border border-border flex flex-col gap-2">
+                    <span className="text-[9px] uppercase font-mono tracking-wider text-text-2">ISSE Moyen</span>
+                    <div className="text-lg font-bold text-text-0 font-mono">
+                      {merit.isseMoyen ? `${merit.isseMoyen} j` : '—'}
+                    </div>
+                  </div>
+                  <div className="bg-bg-1 p-3 rounded-2xl border border-border flex flex-col gap-2">
+                    <span className="text-[9px] uppercase font-mono tracking-wider text-text-2">Survie Globale</span>
+                    <div className="text-lg font-bold text-text-0 font-mono">
+                      {merit.tauxSurvieGlobal}%
+                    </div>
+                  </div>
+                </div>
+
+                {/* Verdict biologique */}
+                <div className={`p-4 rounded-2xl border-2 flex gap-3 ${
+                  merit.decision === 'GARDER'
+                    ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-700'
+                    : merit.decision === 'A_SURVEILLER'
+                    ? 'bg-amber-500/5 border-amber-500/20 text-amber-700'
+                    : 'bg-red-500/5 border-red-500/20 text-red-700'
+                }`}>
+                  <div className="shrink-0 pt-0.5">
+                    {merit.decision === 'REFORMER'
+                      ? <AlertTriangle size={18} />
+                      : <CheckCircle2 size={18} />}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] uppercase font-bold font-mono tracking-widest opacity-70">
+                      Verdict Biologique
+                    </span>
+                    <p className="text-[13px] font-medium leading-relaxed">{merit.verdictBio}</p>
+                  </div>
+                </div>
+
+                {/* Timeline NV */}
+                <section className="space-y-4">
+                  <SectionDivider label="Évolution Carrière (Nés Vivants)" />
+                  <PorteesTimeline portees={historique} />
+                </section>
+              </div>
+            )}
+
           </div>
         </AgritechLayout>
+
+        {/* ── MODAL ÉDITION ───────────────────────────────────────────────── */}
+        <IonModal isOpen={editOpen} onDidDismiss={() => setEditOpen(false)}>
+          <div className="p-6 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h2 className="ft-heading text-lg uppercase">
+                Modifier {truie.displayId}
+              </h2>
+              <button
+                onClick={() => setEditOpen(false)}
+                className="p-2 rounded-lg text-text-2 hover:text-text-0"
+                aria-label="Fermer"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-sm text-text-2">
+              Formulaire d'édition complet disponible prochainement.
+            </p>
+            <button
+              onClick={() => setEditOpen(false)}
+              className="premium-btn w-full"
+            >
+              Fermer
+            </button>
+          </div>
+        </IonModal>
+
+        <IonToast
+          isOpen={!!toast}
+          message={toast}
+          duration={2000}
+          onDidDismiss={() => setToast('')}
+        />
       </IonContent>
-
-      {/* ── Sheets ──────────────────────────────────────────────────── */}
-      <QuickEditTruieForm
-        isOpen={sheet === 'edit'}
-        onClose={closeSheet}
-        truie={truie}
-        onSuccess={handleEditSuccess}
-      />
-
-      <BottomSheet
-        isOpen={sheet === 'soin'}
-        onClose={closeSheet}
-        title={`Soin · ${displayId}`}
-        height="full"
-      >
-        <QuickHealthForm
-          subjectType="TRUIE"
-          subjectId={truie.id}
-          onSuccess={() => success('Soin enregistré')}
-        />
-      </BottomSheet>
-
-      <QuickPeseeForm
-        isOpen={sheet === 'pesee'}
-        onClose={closeSheet}
-      />
-
-      <QuickSaillieForm
-        isOpen={sheet === 'saillie'}
-        onClose={closeSheet}
-      />
-
-      <BottomSheet
-        isOpen={sheet === 'note'}
-        onClose={closeSheet}
-        title={`Note · ${displayId}`}
-      >
-        <QuickNoteForm
-          subjectType="TRUIE"
-          subjectId={truie.id}
-          onSuccess={() => success('Note enregistrée')}
-        />
-      </BottomSheet>
-
-      <IonToast
-        isOpen={toast !== ''}
-        message={toast}
-        duration={1800}
-        onDidDismiss={() => setToast('')}
-        position="bottom"
-      />
     </IonPage>
   );
 };
 
-// ─── Sous-composants ─────────────────────────────────────────────────────────
+// ─── Sous-composant : timeline portées ──────────────────────────────────────
 
-interface DetailRowProps {
-  label: string;
-  value: string;
-  mono?: boolean;
-  accent?: string;
-}
+const PorteesTimeline: React.FC<{ portees: BandePorcelets[] }> = ({ portees }) => {
+  if (portees.length === 0) {
+    return (
+      <div className="p-8 text-center text-text-2 text-xs italic bg-bg-1 rounded-2xl border border-dashed border-border">
+        Aucune portée enregistrée
+      </div>
+    );
+  }
 
-const DetailRow: React.FC<DetailRowProps> = ({ label, value, mono, accent }) => (
-  <div className="flex items-center justify-between px-3.5 py-3 border-b border-border last:border-b-0">
-    <span className="text-[13px] text-text-1">{label}</span>
-    <span
-      className={`${mono ? 'font-mono tabular-nums' : ''} text-[13px] font-medium`}
-      style={{ color: accent || 'var(--text-0)' }}
-    >
-      {value}
-    </span>
-  </div>
-);
+  const maxNV = Math.max(...portees.map(p => p.nv || 0), 15);
 
-type ActionTone = 'accent' | 'amber' | 'gold' | 'red' | 'coral';
-
-interface ActionButtonProps {
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-  tone?: ActionTone;
-}
-
-const TONE_VAR: Record<ActionTone, string> = {
-  accent: 'var(--accent)',
-  amber:  'var(--amber)',
-  gold:   'var(--gold)',
-  red:    'var(--red)',
-  coral:  'var(--coral)',
+  return (
+    <div className="bg-bg-1 p-5 rounded-2xl border border-border">
+      <div className="flex items-end justify-around h-32 gap-2">
+        {portees.map((p, idx) => {
+          const nv = p.nv || 0;
+          const heightPct = (nv / maxNV) * 100;
+          return (
+            <div key={p.id} className="flex-1 flex flex-col items-center gap-2 group">
+              <div className="relative w-full flex justify-center items-end h-full">
+                <div
+                  className={`w-full max-w-[24px] rounded-t-md ${
+                    nv > 12 ? 'bg-amber-500' : nv >= 9 ? 'bg-teal-500' : 'bg-red-500'
+                  }`}
+                  style={{ height: `${heightPct}%` }}
+                />
+              </div>
+              <span className="text-[8px] font-mono text-text-2 uppercase">C{idx + 1}</span>
+            </div>
+          );
+        })}
+      </div>
+      <p className="mt-4 text-center text-[10px] text-text-2 font-mono uppercase tracking-widest">
+        Cycles de production
+      </p>
+    </div>
+  );
 };
-
-const ActionButton: React.FC<ActionButtonProps> = ({ icon, label, onClick, tone = 'accent' }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className="pressable card-dense flex flex-col items-center gap-2 !py-3.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-    aria-label={label}
-  >
-    <span
-      className="inline-flex w-8 h-8 rounded-lg bg-bg-1 border border-border items-center justify-center"
-      style={{ color: TONE_VAR[tone] }}
-    >
-      {icon}
-    </span>
-    <span className="font-mono text-[11px] font-semibold uppercase tracking-wide text-text-1">
-      {label}
-    </span>
-  </button>
-);
 
 export default TruieDetailView;

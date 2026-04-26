@@ -1,4 +1,4 @@
-import { Truie, Verrat, BandePorcelets, TraitementSante, StockAliment, StockVeto, AlerteServeur, Saillie, FinanceEntry, FinanceType, FormuleRowSheets } from '../types/farm';
+import { Truie, Verrat, BandePorcelets, TraitementSante, StockAliment, StockVeto, AlerteServeur, Saillie, FinanceEntry, FinanceType, FormuleRowSheets, TransitionBande } from '../types/farm';
 import type { Note, NoteAnimalType } from '../types';
 import { logger } from '../services/logger';
 
@@ -637,6 +637,29 @@ export const mapRowToNote = (row: unknown[], idx: number): Note | null => {
 /** Alias historique — certains appelants utilisent `mapNote`. */
 export const mapNote = mapRowToNote;
 
+// ─── TRANSITIONS DE PHASE (feuille HISTORIQUE_TRANSITIONS) ──────────────────
+export const mapTransition = (header: string[], row: RawRow): TransitionBande => {
+  const bIdx = findIdx(header, 'BANDE_ID', 'ID_BANDE', 'BANDE', 'ID');
+  const fpIdx = findIdx(header, 'FROM_PHASE', 'ANCIENNE_PHASE', 'DE_PHASE');
+  const tpIdx = findIdx(header, 'TO_PHASE', 'NOUVELLE_PHASE', 'A_PHASE');
+  const dIdx = findIdx(header, 'DATE_TRANSITION', 'DATE', 'TS');
+  const uIdx = findIdx(header, 'UTILISATEUR', 'USER', 'AUTEUR');
+  const pIdx = findIdx(header, 'POIDS_KG', 'POIDS', 'KG');
+  const aIdx = findIdx(header, 'AGE_JOURS', 'AGE', 'JOURS');
+  const noIdx = findIdx(header, 'NOTES');
+
+  return {
+    bandeId: readStr(row, bIdx),
+    anciennePhase: readStr(row, fpIdx),
+    nouvellePhase: readStr(row, tpIdx),
+    date: parseSheetDate(row[dIdx]),
+    utilisateur: readStr(row, uIdx),
+    poidsKg: readOptFloat(row, pIdx),
+    ageJours: readOptInt(row, aIdx),
+    notes: readOptStr(row, noIdx),
+  };
+};
+
 /**
  * Global dispatcher for mapping.
  */
@@ -678,6 +701,7 @@ export const mapTable = (key: string, header: string[], rows: RawRow[]): unknown
     case 'NOTES_TERRAIN': return rows
       .map((r, idx) => mapRowToNote(r as unknown[], idx))
       .filter((n): n is Note => n !== null);
+    case 'HISTORIQUE_TRANSITIONS': return rows.map(r => mapTransition(header, r));
     default: return rows;
   }
 };

@@ -12,10 +12,11 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { Animal } from '../types';
-import type { Truie, Verrat, BandePorcelets } from '../types/farm';
+import type { Truie, Verrat, BandePorcelets, TransitionBande } from '../types/farm';
 import { subscribe, getSnapshot, type TroupeauSnapshot } from '../services/farmDataLoader';
 
 export interface TroupeauContextType extends TroupeauSnapshot {
+  transitions: TransitionBande[];
   getTruieById: (id: string) => Truie | undefined;
   getVerratById: (id: string) => Verrat | undefined;
   getBandeById: (id: string) => BandePorcelets | undefined;

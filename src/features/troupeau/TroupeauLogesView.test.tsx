@@ -120,9 +120,9 @@ describe('TroupeauLogesView', () => {
     const loge3 = screen.getByTestId('ps-loge-3');
     const loge4 = screen.getByTestId('ps-loge-4');
 
-    expect(within(loge1).getByText('23')).toBeTruthy();
-    expect(within(loge2).getByText('22')).toBeTruthy();
-    expect(within(loge3).getByText('28')).toBeTruthy();
-    expect(within(loge4).getByText('29')).toBeTruthy();
+    expect(within(loge1).getByText(/\b23\b/)).toBeTruthy();
+    expect(within(loge2).getByText(/\b22\b/)).toBeTruthy();
+    expect(within(loge3).getByText(/\b28\b/)).toBeTruthy();
+    expect(within(loge4).getByText(/\b29\b/)).toBeTruthy();
   });
 });

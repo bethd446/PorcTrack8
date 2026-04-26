@@ -83,6 +83,7 @@ vi.mock('@ionic/react', () => ({
     isOpen?: boolean;
     children: React.ReactNode;
   }) => (isOpen ? <div role="dialog">{children}</div> : null),
+  useIonAlert: () => [vi.fn()],
 }));
 
 import VerratDetailView from './VerratDetailView';

@@ -21,6 +21,7 @@ import {
   getTruies, getVerrats, getBandes, getJournalSante,
   getStockAliments, getStockVeto, getNotesTerrain, getAlertesServeur,
   getSaillies, getFinances, getAlimentFormules,
+  readTypedTable
 } from './googleSheets';
 import {
   FORMULES_ALIMENT_FALLBACK,
@@ -35,7 +36,7 @@ import { scheduleFromAlerts } from './notifications';
 import type {
   Truie, Verrat, BandePorcelets, TraitementSante,
   StockAliment, StockVeto, AlerteServeur, Saillie, FinanceEntry,
-  FormuleRowSheets, DataSource, SyncStatus,
+  FormuleRowSheets, DataSource, SyncStatus, TransitionBande
 } from '../types/farm';
 import type { Note } from '../types';
 
@@ -44,6 +45,7 @@ export interface TroupeauSnapshot {
   truies: Truie[];
   verrats: Verrat[];
   bandes: BandePorcelets[];
+  transitions: TransitionBande[];
   truiesHeader: string[];
   verratsHeader: string[];
   bandesHeader: string[];
@@ -86,7 +88,7 @@ type Listener<K extends keyof DomainMap> = (snap: DomainMap[K]) => void;
 // ── État interne ────────────────────────────────────────────────────────────
 const state: DomainMap = {
   troupeau: {
-    truies: [], verrats: [], bandes: [],
+    truies: [], verrats: [], bandes: [], transitions: [],
     truiesHeader: [], verratsHeader: [], bandesHeader: [],
   },
   ressources: {
@@ -166,6 +168,9 @@ export async function refreshAll(): Promise<void> {
           bandesHeader: header.length > 0 ? header : state.troupeau.bandesHeader,
         });
       }),
+      readTypedTable<TransitionBande>('HISTORIQUE_TRANSITIONS', 30 * 60 * 1000, (data) => {
+        patch('troupeau', { transitions: data });
+      }),
       getJournalSante((data, header) => {
         patch('ressources', {
           sante: data,
@@ -198,12 +203,13 @@ export async function refreshAll(): Promise<void> {
 
     const empty = { success: false, data: [] as unknown[], header: [] as string[], source: ('FALL' + 'BACK') as DataSource };
     const [
-      truieRes, verratRes, bandeRes,
+      truieRes, verratRes, bandeRes, transitionRes,
       santeRes, stockARes, stockVRes, notesRes, alertesServeurRes, sailliesRes, financesRes, formulesRes,
     ] = results.map(r => r.status === 'fulfilled' ? r.value : empty) as [
       { success: boolean; data: Truie[];             header: string[]; source: DataSource },
       { success: boolean; data: Verrat[];            header: string[]; source: DataSource },
       { success: boolean; data: BandePorcelets[];    header: string[]; source: DataSource },
+      { success: boolean; data: TransitionBande[];   header: string[]; source: DataSource },
       { success: boolean; data: TraitementSante[];   header: string[]; source: DataSource },
       { success: boolean; data: StockAliment[];      header: string[]; source: DataSource },
       { success: boolean; data: StockVeto[];         header: string[]; source: DataSource },
@@ -221,6 +227,7 @@ export async function refreshAll(): Promise<void> {
       truies: truieRes.data,
       verrats: verratRes.data,
       bandes: bandeRes.data,
+      transitions: transitionRes.data,
       truiesHeader: truieRes.header.length > 0 ? truieRes.header : state.troupeau.truiesHeader,
       verratsHeader: verratRes.header.length > 0 ? verratRes.header : state.troupeau.verratsHeader,
       bandesHeader: bandeRes.header.length > 0 ? bandeRes.header : state.troupeau.bandesHeader,
@@ -313,7 +320,7 @@ export async function processQueueAndRefresh(): Promise<void> {
  */
 export function __resetForTests(): void {
   state.troupeau = {
-    truies: [], verrats: [], bandes: [],
+    truies: [], verrats: [], bandes: [], transitions: [],
     truiesHeader: [], verratsHeader: [], bandesHeader: [],
   };
   state.ressources = {

@@ -23,6 +23,11 @@ import { render, screen, within, cleanup, fireEvent } from '@testing-library/rea
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import type { Truie } from '../../types/farm';
 
+// Mock AuthContext (requis depuis l'ajout du rôle utilisateur).
+vi.mock('../../context/AuthContext', () => ({
+  useAuth: () => ({ role: 'PORCHER', userName: 'Test', setRole: vi.fn(), isOwner: false }),
+}));
+
 // Mock offlineQueue pour observer les updates de statut.
 const enqueueUpdateRowMock = vi.fn();
 vi.mock('../../services/offlineQueue', () => ({

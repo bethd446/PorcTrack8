@@ -1,70 +1,160 @@
 /**
- * performanceAnalyzer — calculs purs de performance (Truie / Verrat).
- * ─────────────────────────────────────────────────────────────────
- * Pas de dépendance React, pas d'I/O. 100 % stateless, 100 % testable.
- *
- * Les fonctions publiques :
- *   • `computeTruiePerformance`  — synthèse technique d'une truie
- *   • `computeVerratPerformance` — synthèse technique d'un verrat
- *
- * Les formules de score et les seuils de tier sont documentés dans chaque
- * fonction (voir JSDoc). Ils sont volontairement simples et explicables
- * au porcher — on préfère la transparence à une optimisation statistique.
+ * performanceAnalyzer.ts — Moteur d'analyse génétique et aide à la décision
  */
 
+import type { BandePorcelets, PerformanceTier, Saillie, Truie, TruiePerformance, Verrat } from '../types/farm';
 import type {
-  Truie,
-  Verrat,
-  BandePorcelets,
-  Saillie,
-  TruiePerformance,
-  VerratPerformance,
-  PerformanceTier,
-} from '../types/farm';
+  TruiePerformanceReport,
+  ScoreProlificite,
+  DecisionReforme
+} from '../types/performance.types';
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers de Date ─────────────────────────────────────────────────────────
 
-/** Parse une date dd/MM/yyyy → timestamp. 0 si invalide. */
-const parseFr = (s?: string | null): number => {
-  if (!s) return 0;
-  const parts = s.split('/');
-  if (parts.length !== 3) return 0;
-  const d = new Date(+parts[2], +parts[1] - 1, +parts[0]);
-  const ts = d.getTime();
-  return Number.isFinite(ts) ? ts : 0;
-};
+function parseFrDate(s: string | undefined): Date | null {
+  if (!s) return null;
+  const fr = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (fr) return new Date(+fr[3], +fr[2] - 1, +fr[1]);
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return new Date(+iso[1], +iso[2] - 1, +iso[3]);
+  return null;
+}
 
-/** Division sûre : retourne 0 si dénominateur = 0. */
-const safeDiv = (num: number, den: number): number => (den === 0 ? 0 : num / den);
+function diffDays(d1: Date, d2: Date): number {
+  return Math.round(Math.abs(d2.getTime() - d1.getTime()) / 86400000);
+}
 
-/** Clamp un nombre dans [min, max]. */
-const clamp = (n: number, min: number, max: number): number => Math.max(min, Math.min(max, n));
-
-/** Arrondi à 1 décimale. */
-const round1 = (n: number): number => Math.round(n * 10) / 10;
+// ─── Logique Pure ────────────────────────────────────────────────────────────
 
 /**
- * Retourne la date la plus récente (format dd/MM/yyyy) parmi une liste.
- * `undefined` si toutes les dates sont vides/invalides.
+ * Calcule le score basé sur la prolificité moyenne (Nés Vivants)
  */
-const latestDate = (dates: (string | undefined)[]): string | undefined => {
-  let best = 0;
-  let bestStr: string | undefined;
-  for (const d of dates) {
-    const ts = parseFr(d);
-    if (ts > best) {
-      best = ts;
-      bestStr = d;
+export function calculerScoreProlificite(portees: BandePorcelets[]): ScoreProlificite {
+  if (portees.length === 0) return 'STANDARD';
+
+  const nésVivants = portees.map(p => p.nv ?? 0);
+  const moyenne = nésVivants.reduce((a, b) => a + b, 0) / nésVivants.length;
+
+  if (moyenne > 12) return 'ELITE';
+  if (moyenne >= 9) return 'STANDARD';
+  return 'SOUS_PERF';
+}
+
+/**
+ * Analyse si les performances sont en baisse sur les 3 dernières portées
+ */
+export function analyserTendanceCarriere(portees: BandePorcelets[]): boolean {
+  if (portees.length < 3) return false;
+
+  // Tri par date de mise-bas (plus récente en dernier pour l'ordre temporel)
+  const sorted = [...portees].sort((a, b) => {
+    const da = parseFrDate(a.dateMB)?.getTime() || 0;
+    const db = parseFrDate(b.dateMB)?.getTime() || 0;
+    return da - db;
+  });
+
+  const last3 = sorted.slice(-3);
+  // NV : P1 > P2 > P3
+  return (last3[0].nv ?? 0) > (last3[1].nv ?? 0) && (last3[1].nv ?? 0) > (last3[2].nv ?? 0);
+}
+
+/**
+ * Calcule l'Intervalle Sevrage-Saillie moyen
+ */
+export function calculerISSEMoyen(portees: BandePorcelets[], saillies: Saillie[]): number | null {
+  const isses: number[] = [];
+
+  portees.forEach(p => {
+    if (!p.dateSevrageReelle) return;
+    const dSevrage = parseFrDate(p.dateSevrageReelle);
+    if (!dSevrage) return;
+
+    // Trouver la première saillie après ce sevrage
+    const sSuivante = saillies
+      .map(s => ({ ...s, date: parseFrDate(s.dateSaillie) }))
+      .filter(s => s.date && s.date > dSevrage)
+      .sort((a, b) => a.date!.getTime() - b.date!.getTime())[0];
+
+    if (sSuivante && sSuivante.date) {
+      isses.push(diffDays(dSevrage, sSuivante.date));
     }
-  }
-  return bestStr;
-};
+  });
+
+  if (isses.length === 0) return null;
+  return Math.round(isses.reduce((a, b) => a + b, 0) / isses.length);
+}
 
 /**
- * Convertit un score numérique en tier. Appliqué à tous les scores composites.
- *
- *  ≥ 85 → ELITE | ≥ 70 → BON | ≥ 55 → MOYEN | ≥ 40 → FAIBLE | < 40 → INSUFFISANT
+ * Calcule le taux de survie global (Naissance -> Sevrage)
  */
+export function calculerSurvieGlobale(portees: BandePorcelets[]): number {
+  const totalNV = portees.reduce((acc, p) => acc + (p.nv ?? 0), 0);
+  const totalVivants = portees.reduce((acc, p) => acc + (p.vivants ?? 0), 0);
+
+  if (totalNV === 0) return 100;
+  return Math.round((totalVivants / totalNV) * 100);
+}
+
+// ─── Fonction Principale Consolidée ──────────────────────────────────────────
+
+/**
+ * Génère une fiche de mérite complète pour une truie
+ */
+export function genererFicheMerite(
+  truie: Truie,
+  portees: BandePorcelets[],
+  saillies: Saillie[]
+): TruiePerformanceReport {
+  const score = calculerScoreProlificite(portees);
+  const isDeclining = analyserTendanceCarriere(portees);
+  const isse = calculerISSEMoyen(portees, saillies);
+  const survie = calculerSurvieGlobale(portees);
+
+  let decision: DecisionReforme = 'GARDER';
+  let verdictBio = '';
+
+  // Logique de décision et verdict
+  if (isDeclining) {
+    decision = 'REFORMER';
+    verdictBio = 'Baisse de performance détectée sur 3 cycles consécutifs. Recommandation : Réforme après sevrage.';
+  } else if (score === 'SOUS_PERF') {
+    decision = 'REFORMER';
+    verdictBio = 'Prolificité trop faible (< 9 NV). Truie non rentable.';
+  } else if (isse !== null && isse > 10) {
+    decision = 'A_SURVEILLER';
+    verdictBio = `Retour en chaleur tardif (ISSE: ${isse}j). Surveiller le prochain cycle.`;
+  } else if (score === 'ELITE') {
+    decision = 'GARDER';
+    verdictBio = `Truie exceptionnelle (Élite). ${isse ? `ISSE excellent (${isse}j).` : ''} À conserver prioritairement.`;
+  } else {
+    decision = 'GARDER';
+    verdictBio = 'Performances stables. Truie productive.';
+  }
+
+  // Cas cochette (pas encore de portée)
+  if (portees.length === 0) {
+    verdictBio = 'Jeune truie (Cochette). En attente de ses premières performances.';
+    decision = 'GARDER';
+  }
+
+  return {
+    score,
+    isseMoyen: isse,
+    tauxSurvieGlobal: survie,
+    isDeclining,
+    verdictBio,
+    decision
+  };
+}
+
+/** Trouve les portées d'une truie (par ID ou boucle). */
+export function findPorteesForTruie(truie: Truie, bandes: BandePorcelets[]): BandePorcelets[] {
+  return bandes.filter(b =>
+    b.truie === truie.id || (!!truie.boucle && b.boucleMere === truie.boucle)
+  );
+}
+
+/** Mappe un score composite (0-100) vers un PerformanceTier. */
 export function scoreToTier(score: number): PerformanceTier {
   if (score >= 85) return 'ELITE';
   if (score >= 70) return 'BON';
@@ -73,237 +163,100 @@ export function scoreToTier(score: number): PerformanceTier {
   return 'INSUFFISANT';
 }
 
-// ─── Matching portées ↔ saillies ─────────────────────────────────────────────
-
-/**
- * Retourne les portées (bandes) attribuables à une truie donnée.
- *
- * Deux critères disjoints (OR) :
- *   1. `b.truie === truie.id` (match direct par ID)
- *   2. `b.boucleMere === truie.boucle` (match via boucle — legacy)
- */
-export function findPorteesForTruie(truie: Truie, bandes: BandePorcelets[]): BandePorcelets[] {
-  return bandes.filter(
-    b =>
-      (b.truie && b.truie === truie.id) ||
-      (!!truie.boucle && b.boucleMere === truie.boucle),
-  );
-}
-
-/**
- * Détermine si une saillie a abouti à une portée enregistrée.
- * Match : même truie ET date MB de la bande ±5j de la date MB prévue de la saillie.
- * Si `dateMBPrevue` est absente, on accepte toute bande de la même truie dans
- * les 115+20 jours suivant la saillie (fenêtre large de secours).
- */
-export function saillieHasPortee(
-  saillie: Saillie,
-  bandes: BandePorcelets[],
-): boolean {
-  return bandes.some(b => {
-    const matchId = !!saillie.truieId && b.truie === saillie.truieId;
-    const matchBoucle = !!saillie.truieBoucle && b.boucleMere === saillie.truieBoucle;
-    if (!matchId && !matchBoucle) return false;
-    const bandeTs = parseFr(b.dateMB);
-    if (!bandeTs) return false;
-    const prevuTs = parseFr(saillie.dateMBPrevue);
-    if (prevuTs) {
-      const deltaDays = Math.abs(bandeTs - prevuTs) / 86_400_000;
-      return deltaDays <= 5;
-    }
-    // Fallback : fenêtre [saillie + 95j, saillie + 135j] ≈ gestation ±
-    const saillieTs = parseFr(saillie.dateSaillie);
-    if (!saillieTs) return false;
-    const deltaDays = (bandeTs - saillieTs) / 86_400_000;
-    return deltaDays >= 95 && deltaDays <= 135;
-  });
-}
-
-/**
- * Retourne les portées engendrées par un verrat : pour chaque saillie du verrat,
- * cherche la bande matchée (si elle existe).
- */
-export function findPorteesForVerrat(
-  verrat: Verrat,
-  saillies: Saillie[],
-  bandes: BandePorcelets[],
-): BandePorcelets[] {
-  const verratSaillies = saillies.filter(
-    s => s.verratId === verrat.id || s.verratId === verrat.displayId,
-  );
-  const result: BandePorcelets[] = [];
-  const seen = new Set<string>();
-  for (const s of verratSaillies) {
-    for (const b of bandes) {
-      if (seen.has(b.id)) continue;
-      const matchId = !!s.truieId && b.truie === s.truieId;
-      const matchBoucle = !!s.truieBoucle && b.boucleMere === s.truieBoucle;
-      if (!matchId && !matchBoucle) continue;
-      const bandeTs = parseFr(b.dateMB);
-      if (!bandeTs) continue;
-      const prevuTs = parseFr(s.dateMBPrevue);
-      if (prevuTs) {
-        if (Math.abs(bandeTs - prevuTs) / 86_400_000 <= 5) {
-          result.push(b);
-          seen.add(b.id);
-        }
-      } else {
-        const saillieTs = parseFr(s.dateSaillie);
-        if (saillieTs) {
-          const deltaDays = (bandeTs - saillieTs) / 86_400_000;
-          if (deltaDays >= 95 && deltaDays <= 135) {
-            result.push(b);
-            seen.add(b.id);
-          }
-        }
-      }
-    }
-  }
-  return result;
-}
-
-// ─── Score composite ────────────────────────────────────────────────────────
-
-/**
- * Calcul du score composite d'une truie (0-100).
- *
- * Formule :
- *   score = moyNV × 5
- *         + tauxSurvieNaissance × 0.5
- *         + tauxSevrage × 0.3
- *         + (tauxFertilite - 50) × 0.4
- *
- * Le biais -50 sur la fertilité récompense > 50 % et pénalise < 50 %.
- * Ordre de grandeur visé : une truie « bonne » (NV=12, survie=95 %, sevrage=90 %,
- * fertilité=80 %) → 60 + 47.5 + 27 + 12 = 146.5 → capé à 100 = ELITE.
- */
-function computeTruieScore(perf: {
-  moyNV: number;
-  tauxSurvieNaissance: number;
-  tauxSevrage: number;
-  tauxFertilite: number;
-}): number {
-  const raw =
-    perf.moyNV * 5 +
-    perf.tauxSurvieNaissance * 0.5 +
-    perf.tauxSevrage * 0.3 +
-    (perf.tauxFertilite - 50) * 0.4;
-  return clamp(round1(raw), 0, 100);
-}
-
-/**
- * Score composite d'un verrat (0-100).
- *
- * Formule :
- *   score = tauxSuccesSaillie × 0.5 + moyNVEngendrees × 4
- *
- * Un verrat avec 80 % de réussite et NV moyen 12 → 40 + 48 = 88 → ELITE.
- */
-function computeVerratScore(perf: {
-  tauxSuccesSaillie: number;
-  moyNVEngendrees: number;
-}): number {
-  const raw = perf.tauxSuccesSaillie * 0.5 + perf.moyNVEngendrees * 4;
-  return clamp(round1(raw), 0, 100);
-}
-
-// ─── API publique ────────────────────────────────────────────────────────────
-
-/**
- * Calcule la performance composite d'une truie à partir des portées et des
- * saillies connues.
- *
- * Les portées sont matchées via `findPorteesForTruie` (id OU boucleMere).
- * On filtre les lignes RECAP en amont (déjà fait par mapBande).
- *
- * Si aucune portée : tier = `INSUFFISANT`, score = 0, toutes les métriques à 0.
- */
+/** Calcule la performance brute d'une truie. */
 export function computeTruiePerformance(
   truie: Truie,
   bandes: BandePorcelets[],
-  saillies: Saillie[],
+  saillies: Saillie[]
 ): TruiePerformance {
   const portees = findPorteesForTruie(truie, bandes);
-  const porteesAvecMB = portees.filter(p => !!p.dateMB);
-
-  const totalNV = porteesAvecMB.reduce((acc, p) => acc + (p.nv ?? 0), 0);
-  const totalMorts = porteesAvecMB.reduce((acc, p) => acc + (p.morts ?? 0), 0);
-  const totalVivants = porteesAvecMB.reduce((acc, p) => acc + (p.vivants ?? 0), 0);
-  const totalSevres = porteesAvecMB
-    .filter(p => !!p.dateSevrageReelle)
-    .reduce((acc, p) => acc + (p.vivants ?? 0), 0);
-
   const nbPortees = portees.length;
-  const nbPorteesAvecMB = porteesAvecMB.length;
-  const moyNV = round1(safeDiv(totalNV, nbPorteesAvecMB));
-  const moyMortsParPortee = round1(safeDiv(totalMorts, nbPorteesAvecMB));
-  const tauxSurvieNaissance = round1(safeDiv(totalVivants * 100, totalNV));
-  const tauxSevrage = round1(safeDiv(totalSevres * 100, totalNV));
 
-  const mySaillies = saillies.filter(
-    s => s.truieId === truie.id || (!!truie.boucle && s.truieBoucle === truie.boucle),
-  );
-  const nbSaillies = mySaillies.length;
-  const nbSailliesReussies = mySaillies.filter(s => saillieHasPortee(s, bandes)).length;
-  const tauxFertilite = round1(safeDiv(nbSailliesReussies * 100, nbSaillies));
-
-  const dernierSailliesDate = latestDate(mySaillies.map(s => s.dateSaillie));
-  const dernierMBDate = latestDate(porteesAvecMB.map(p => p.dateMB));
-
-  // Données insuffisantes → tier explicite, score 0.
   if (nbPortees === 0) {
     return {
-      nbPortees: 0,
-      nbPorteesAvecMB: 0,
-      moyNV: 0,
-      moyMortsParPortee: 0,
-      tauxSurvieNaissance: 0,
-      tauxSevrage: 0,
-      nbSaillies,
-      nbSailliesReussies,
-      tauxFertilite,
-      dernierSailliesDate,
-      dernierMBDate: undefined,
-      scoreCompetence: 0,
-      tier: 'INSUFFISANT',
+      nbPortees: 0, nbPorteesAvecMB: 0, moyNV: 0, moyMortsParPortee: 0,
+      tauxSurvieNaissance: 0, tauxSevrage: 0,
+      nbSaillies: 0, nbSailliesReussies: 0, tauxFertilite: 0,
+      scoreCompetence: 0, tier: 'INSUFFISANT',
     };
   }
 
-  const scoreCompetence = computeTruieScore({
-    moyNV,
-    tauxSurvieNaissance,
-    tauxSevrage,
-    tauxFertilite,
-  });
+  const nbPorteesAvecMB = portees.filter(p => !!p.dateMB).length;
+  const totalNV = portees.reduce((acc, p) => acc + (p.nv ?? 0), 0);
+  const totalVivants = portees.reduce((acc, p) => acc + (p.vivants ?? 0), 0);
+  const totalMorts = portees.reduce((acc, p) => acc + (p.morts ?? 0), 0);
+
+  const moyNV = totalNV / nbPortees;
+  const moyMortsParPortee = totalMorts / nbPortees;
+  const tauxSurvieNaissance = totalNV > 0 ? (totalVivants / totalNV) * 100 : 0;
+  const tauxSevrage = totalNV > 0 ? (totalVivants / totalNV) * 100 : 0;
+
+  const myTruieSaillies = saillies.filter(
+    s => s.truieId === truie.id || s.truieId === truie.displayId
+  );
+  const nbSaillies = myTruieSaillies.length;
+  const nbSailliesReussies = nbPortees;
+  const tauxFertilite = nbSaillies > 0
+    ? Math.min(100, Math.round((nbSailliesReussies / nbSaillies) * 100))
+    : 0;
+
+  const mbDates = portees.map(p => p.dateMB).filter(Boolean).sort().reverse();
+  const dernierMBDate = mbDates[0];
+
+  // Score composite 0-100
+  const scoreNV = Math.min(100, (moyNV / 14) * 100);
+  const scoreCompetence = Math.round(scoreNV * 0.4 + tauxSurvieNaissance * 0.4 + tauxFertilite * 0.2);
 
   return {
-    nbPortees,
-    nbPorteesAvecMB,
-    moyNV,
-    moyMortsParPortee,
-    tauxSurvieNaissance,
-    tauxSevrage,
-    nbSaillies,
-    nbSailliesReussies,
-    tauxFertilite,
-    dernierSailliesDate,
+    nbPortees, nbPorteesAvecMB, moyNV, moyMortsParPortee,
+    tauxSurvieNaissance, tauxSevrage,
+    nbSaillies, nbSailliesReussies, tauxFertilite,
     dernierMBDate,
     scoreCompetence,
     tier: scoreToTier(scoreCompetence),
   };
 }
 
+/** Trouve les portées issues des saillies d'un verrat (par truieId + dateMBPrevue ±5j). */
+export function findPorteesForVerrat(
+  verrat: Verrat,
+  saillies: Saillie[],
+  bandes: BandePorcelets[],
+): BandePorcelets[] {
+  const vSaillies = saillies.filter(
+    s => s.verratId === verrat.id || s.verratId === verrat.displayId,
+  );
+  const found = new Map<string, BandePorcelets>();
+
+  for (const s of vSaillies) {
+    const prevDate = parseSaillieDate(s.dateMBPrevue);
+    if (!prevDate) continue;
+
+    for (const b of bandes) {
+      if (b.truie !== s.truieId) continue;
+      const mbDate = parseSaillieDate(b.dateMB);
+      if (!mbDate) continue;
+      const delta = Math.abs((mbDate.getTime() - prevDate.getTime()) / 86_400_000);
+      if (delta <= 5) found.set(b.id, b);
+    }
+  }
+  return [...found.values()];
+}
+
+// ─── VerratPerformance ────────────────────────────────────────────────────────
+
+export interface VerratPerformance {
+  nbSaillies: number;
+  tauxSuccesSaillie: number;   // %
+  nbPorteesEngendrees: number;
+  moyNVEngendrees: number;
+  scoreFertilite: number;      // 0-100
+  tier: PerformanceTier;
+}
+
 /**
- * Calcule la performance d'un verrat : saillies effectuées + portées engendrées.
- *
- * Une portée est attribuée au verrat si elle correspond à une de ses saillies
- * via `findPorteesForVerrat` (match truie + date MB).
- *
- * Si aucune saillie : tier = `INSUFFISANT`, score = 0.
- *
- * Note : le paramètre `_truies` est conservé dans la signature pour des usages
- * futurs (enrichissement affichage saillie → nom truie) — actuellement non utilisé
- * dans la logique de calcul.
+ * Calcule la performance d'un verrat à partir de son historique de saillies
+ * et des portées qui en ont résulté (même truie, mise-bas dans les 120j).
  */
 export function computeVerratPerformance(
   verrat: Verrat,
@@ -311,42 +264,55 @@ export function computeVerratPerformance(
   saillies: Saillie[],
   _truies: Truie[],
 ): VerratPerformance {
-  const mySaillies = saillies.filter(
-    s => s.verratId === verrat.id || s.verratId === verrat.displayId,
+  const vSaillies = saillies.filter(
+    (s) => s.verratId === verrat.id || s.verratId === verrat.displayId,
   );
-  const nbSaillies = mySaillies.length;
 
-  const porteesEngendrees = findPorteesForVerrat(verrat, saillies, bandes);
-  const porteesAvecMB = porteesEngendrees.filter(p => !!p.dateMB);
-  const nbPorteesEngendrees = porteesAvecMB.length;
-
-  const totalNV = porteesAvecMB.reduce((acc, p) => acc + (p.nv ?? 0), 0);
-  const moyNVEngendrees = round1(safeDiv(totalNV, nbPorteesEngendrees));
-  const tauxSuccesSaillie = round1(safeDiv(nbPorteesEngendrees * 100, nbSaillies));
-
-  const derniereSailliesDate = latestDate(mySaillies.map(s => s.dateSaillie));
-
+  const nbSaillies = vSaillies.length;
   if (nbSaillies === 0) {
-    return {
-      nbSaillies: 0,
-      nbPorteesEngendrees: 0,
-      moyNVEngendrees: 0,
-      tauxSuccesSaillie: 0,
-      derniereSailliesDate: undefined,
-      scoreFertilite: 0,
-      tier: 'INSUFFISANT',
-    };
+    return { nbSaillies: 0, tauxSuccesSaillie: 0, nbPorteesEngendrees: 0, moyNVEngendrees: 0, scoreFertilite: 0, tier: 'INSUFFISANT' };
   }
 
-  const scoreFertilite = computeVerratScore({ tauxSuccesSaillie, moyNVEngendrees });
+  // Associe chaque saillie à une portée via truieId + dateMBPrevue ±5j
+  let porteesTrouvees = 0;
+  let totalNV = 0;
+
+  for (const s of vSaillies) {
+    const prevDate = parseSaillieDate(s.dateMBPrevue);
+    if (!prevDate) continue;
+
+    const portee = bandes.find((b) => {
+      if (b.truie !== s.truieId) return false;
+      const mbDate = parseSaillieDate(b.dateMB);
+      if (!mbDate) return false;
+      const delta = Math.abs((mbDate.getTime() - prevDate.getTime()) / 86_400_000);
+      return delta <= 5;
+    });
+
+    if (portee) {
+      porteesTrouvees++;
+      totalNV += portee.nv ?? 0;
+    }
+  }
+
+  const tauxSucces = Math.round((porteesTrouvees / nbSaillies) * 100);
+  const moyNV = porteesTrouvees > 0 ? totalNV / porteesTrouvees : 0;
+  const score = Math.round(tauxSucces * 0.6 + Math.min((moyNV / 14) * 100, 100) * 0.4);
 
   return {
     nbSaillies,
-    nbPorteesEngendrees,
-    moyNVEngendrees,
-    tauxSuccesSaillie,
-    derniereSailliesDate,
-    scoreFertilite,
-    tier: scoreToTier(scoreFertilite),
+    tauxSuccesSaillie: tauxSucces,
+    nbPorteesEngendrees: porteesTrouvees,
+    moyNVEngendrees: Math.round(moyNV * 10) / 10,
+    scoreFertilite: score,
+    tier: scoreToTier(score),
   };
+}
+
+function parseSaillieDate(s: string | undefined): Date | null {
+  if (!s) return null;
+  const fr = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (fr) return new Date(+fr[3], +fr[2] - 1, +fr[1]);
+  const iso = Date.parse(s);
+  return Number.isNaN(iso) ? null : new Date(iso);
 }
