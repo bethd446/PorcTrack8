@@ -20,6 +20,8 @@ import '@ionic/react/css/display.css';
 import { FarmProvider } from './context/FarmContext';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import SupabaseProtectedRoute from './components/auth/ProtectedRoute';
+import Login from './components/auth/Login';
 import AgritechNavV2, { QuickActionsProvider } from './components/AgritechNavV2';
 import { loadChecklistDefinitions } from './services/checklistService';
 
@@ -108,6 +110,13 @@ const AppContent = () => {
       }>
         <QuickActionsProvider>
         <Routes>
+          {/* ── Authentification ─────────────────────────────────────── */}
+          <Route path="/login" element={<Login />} />
+
+          {/* ── App protégée (session Supabase requise) ──────────────── */}
+          <Route path="/*" element={
+            <SupabaseProtectedRoute>
+              <Routes>
           {/* ── Legacy routes → redirections canoniques ─────────────── */}
           <Route path="/" element={<Cockpit />} />
           <Route path="/controle" element={<ControleQuotidien />} />
@@ -214,6 +223,9 @@ const AppContent = () => {
           <Route path="/ressources/aliments/formules" element={<FormulesView />} />
           <Route path="/ressources/veto" element={<TableView tableKey="STOCK_VETO" />} />
           <Route path="/ressources/pharmacie" element={<PharmacieView />} />
+              </Routes>
+            </SupabaseProtectedRoute>
+          } />
         </Routes>
         <AgritechNavV2 />
         </QuickActionsProvider>
