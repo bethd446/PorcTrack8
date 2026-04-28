@@ -69,3 +69,13 @@ export const logger = {
 };
 
 export type { LogEntry, LogLevel };
+
+// ── Supabase remote logging ───────────────────────────────────────────────────
+import { supabase } from './supabaseClient';
+
+export const logAction = async (action: string, details: unknown): Promise<void> => {
+  const { error } = await supabase.from('admin_logs').insert([
+    { action, details, created_at: new Date().toISOString() },
+  ]);
+  if (error) console.error('Erreur lors du log:', error);
+};
