@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage, IonRefresher, IonRefresherContent, IonToast } from '@ionic/react';
 import {
@@ -19,7 +19,10 @@ import {
   Home,
 } from 'lucide-react';
 import { FARM_CONFIG } from '../config/farm';
-import { useFarm } from '../context/FarmContext';
+import { useFarm, useMeta } from '../context/FarmContext';
+import { useTroupeau } from '../context/TroupeauContext';
+import { usePilotage } from '../context/PilotageContext';
+import { useRessources } from '../context/RessourcesContext';
 import { KpiCard, BottomSheet, SectionDivider, DataRow, HubTile, Chip } from './agritech';
 import AgritechLayout from './AgritechLayout';
 import QuickSaillieForm from './forms/QuickSaillieForm';
@@ -69,25 +72,40 @@ type QuickSheetKind = 'saillie' | 'soin' | 'note' | null;
 
 const Cockpit: React.FC = () => {
   const navigate = useNavigate();
-  const {
-    truies,
-    verrats,
-    bandes,
-    stockAliment,
-    stockVeto,
-    alerts,
-    alertesServeur,
-    loading,
-    refreshData,
-    dataSource,
-  } = useFarm();
+  const { truies, verrats, bandes } = useTroupeau();
+  const { stockAliment, stockVeto } = useRessources();
+  const { alerts, alertesServeur } = usePilotage();
+  const { loading, refreshData, dataSource, recomputeAlerts } = useMeta();
 
   const [sheet, setSheet] = useState<QuickSheetKind>(null);
   const [showSaillie, setShowSaillie] = useState(false);
   const [peseeOpen, setPeseeOpen] = useState(false);
   const [toast, setToast] = useState<{ open: boolean; message: string }>({ open: false, message: '' });
+  const [pulse, setPulse] = useState(false);
 
   const { current, confirm, dismiss } = usePhaseTransitions();
+
+  // ── Auto-refresh alertes (Temps Réel) ───────────────────────────────────
+  useEffect(() => {
+    const timer = setInterval(() => {
+      recomputeAlerts();
+    }, 60000);
+    return () => clearInterval(timer);
+  }, [recomputeAlerts]);
+
+  // Animation pulse quand le nombre d'alertes change
+  const kpiAlertesTotal = useMemo(
+    () => alerts.length + alertesServeur.length,
+    [alerts, alertesServeur]
+  );
+
+  useEffect(() => {
+    if (kpiAlertesTotal > 0) {
+      setPulse(true);
+      const t = setTimeout(() => setPulse(false), 2000);
+      return () => clearTimeout(t);
+    }
+  }, [kpiAlertesTotal]);
 
   // ── KPIs ────────────────────────────────────────────────────────────────
   const kpiPleines = useMemo(
@@ -105,11 +123,6 @@ const Cockpit: React.FC = () => {
     const v = stockVeto.filter(s => s.statutStock === 'RUPTURE').length;
     return a + v;
   }, [stockAliment, stockVeto]);
-
-  const kpiAlertesTotal = useMemo(
-    () => alerts.length + alertesServeur.length,
-    [alerts, alertesServeur]
-  );
 
   // Portées réelles (exclut RECAP) + occupation des loges physiques (3 zones).
   const porteesReelles = useMemo(() => Bandes.filterReal(bandes), [bandes]);
@@ -407,6 +420,7 @@ const Cockpit: React.FC = () => {
                 icon={<AlertTriangle size={14} aria-hidden="true" />}
                 tone={kpiAlertesTotal > 0 ? 'warning' : 'default'}
                 onClick={() => navigate('/pilotage/alertes')}
+                className={pulse ? 'animate-pulse' : ''}
               />
               <KpiCard
                 label="Ruptures"

@@ -42,6 +42,7 @@ import { BottomSheet } from '../agritech';
 import { enqueueAppendRow, enqueueUpdateRow, type SheetCell } from '../../services/offlineQueue';
 import { useFarm } from '../../context/FarmContext';
 import { normaliseStatut } from '../../lib/truieStatut';
+import { safeDate } from '../../lib/truieHelpers';
 import type { BandePorcelets, Truie } from '../../types/farm';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 
@@ -170,12 +171,8 @@ export function isoToSheetsDate(iso: string): string {
 export function addDaysToSheetsDate(ddmmyyyy: string, days: number): string {
   const m = ddmmyyyy.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (!m) return '';
-  const d = new Date(
-    Number(m[3]),
-    Number(m[2]) - 1,
-    Number(m[1]),
-  );
-  if (Number.isNaN(d.getTime())) return '';
+  const d = safeDate(`${m[3]}-${m[2]}-${m[1]}`);
+  if (!d) return '';
   d.setDate(d.getDate() + days);
   const dd = String(d.getDate()).padStart(2, '0');
   const mm = String(d.getMonth() + 1).padStart(2, '0');

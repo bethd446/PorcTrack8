@@ -3,6 +3,7 @@ import { IonSpinner, IonToast, IonSelect, IonSelectOption } from '@ionic/react';
 import { Stethoscope, Send } from 'lucide-react';
 import { enqueueAppendRow } from '../../services/offlineQueue';
 import { useFarm } from '../../context/FarmContext';
+import { kvGet } from '../../services/kvStore';
 
 /**
  * QuickHealthForm — Saisie rapide d'une intervention santé (Agritech Dark)
@@ -58,7 +59,7 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
         formData.type,
         formData.soin.trim(),
         formData.obs.trim(),
-        localStorage.getItem('user_name') || 'Anonyme',
+        kvGet('user_name') || 'Anonyme',
       ];
 
       await enqueueAppendRow('JOURNAL_SANTE', values);

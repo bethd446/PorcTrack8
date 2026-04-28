@@ -3,7 +3,6 @@ import { IonContent, IonPage } from '@ionic/react';
 import { Package, Box, AlertOctagon, Plus } from 'lucide-react';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import AgritechNav from '../../components/AgritechNav';
 import { Chip, DataRow, SectionDivider, KpiCard } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
 import { SeringueIcon } from '../../components/icons';
@@ -260,7 +259,6 @@ const PharmacieView: React.FC = () => {
             )}
           </div>
         </AgritechLayout>
-        <AgritechNav />
       </IonContent>
 
       <QuickAddVetoForm

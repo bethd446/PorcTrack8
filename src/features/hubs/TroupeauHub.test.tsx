@@ -169,7 +169,24 @@ vi.mock('../../context/FarmContext', () => ({
     pullData: vi.fn(),
     processQueue: vi.fn(),
   }),
+  useMeta: () => ({
+    loading: false,
+    dataSource: 'NETWORK',
+    refreshData: vi.fn(),
+  }),
   FarmProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+vi.mock('../../context/TroupeauContext', () => ({
+  useTroupeau: () => ({
+    truies: mockTruies,
+    verrats: mockVerrats,
+    bandes: mockBandes,
+    transitions: [],
+    truiesHeader: [],
+    verratsHeader: [],
+    bandesHeader: [],
+  }),
 }));
 
 // Passthrough Ionic (y compris Refresher utilisé par TroupeauPorceletsView)

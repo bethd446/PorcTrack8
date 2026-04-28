@@ -4,7 +4,7 @@ import { IonContent, IonPage } from '@ionic/react';
 
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import { useFarm } from '../../context/FarmContext';
+import { useTroupeau } from '../../context/TroupeauContext';
 import { normaliseStatut } from '../../lib/truieStatut';
 import { Bandes } from '../../services/bandAnalysisEngine';
 import type { LogeOccupation, LogeOccupationAlerte } from '../../services/bandesAggregator';
@@ -32,7 +32,7 @@ function isSubTab(v: string | null): v is SubTab {
 }
 
 const TroupeauHub: React.FC = () => {
-  const { verrats, bandes } = useFarm();
+  const { verrats, bandes } = useTroupeau();
   const [searchParams, setSearchParams] = useSearchParams();
   const { activeTruies } = useTroupeauPipeline();
 

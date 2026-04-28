@@ -27,10 +27,10 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
-import { useFarm } from '../../context/FarmContext';
+import { useMeta } from '../../context/FarmContext';
+import { usePilotage } from '../../context/PilotageContext';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import AgritechNav from '../../components/AgritechNav';
 import {
   KpiCard, Chip, SectionDivider,
 } from '../../components/agritech';
@@ -347,7 +347,8 @@ const AlertDenseRow: React.FC<AlertDenseRowProps> = ({
 // ─────────────────────────────────────────────────────────────────────────────
 
 const AlertsView: React.FC = () => {
-  const { alerts, alertesServeur, refreshData } = useFarm();
+  const { alerts, alertesServeur } = usePilotage();
+  const { refreshData } = useMeta();
   const [pendingConfirmations, setPendingConfirmations] = useState<PendingConfirmation[]>([]);
   const [selectedAlert, setSelectedAlert] = useState<{ alert: FarmAlert; confirmId: string } | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterId>('ALL');
@@ -654,7 +655,6 @@ const AlertsView: React.FC = () => {
             )}
           </div>
         </AgritechLayout>
-        <AgritechNav />
 
         <ConfirmationModal
           isOpen={!!selectedAlert}

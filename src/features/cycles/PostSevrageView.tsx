@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import {
@@ -30,6 +30,7 @@ import {
 } from '../../services/phaseEngine';
 import { WEIGHTS_RELEVE, ANALYSE_RECOMMANDATIONS } from '../../config/weightsReleve';
 import { AlertCircle, Lock } from 'lucide-react';
+import QuickPeseeForm from '../../components/forms/QuickPeseeForm';
 
 /**
  * PostSevrageView — Hub Cycles / Post-sevrage
@@ -197,6 +198,7 @@ interface PostSevrageRowData {
 
 const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }> = ({ data, onOpen }) => {
   const navigate = useNavigate();
+  const [peseeOpen, setPeseeOpen] = useState(false);
   const isTransitionRequired = data.terrainPhase && data.terrainPhase !== 'POST_SEVRAGE';
   const { isBloquant, joursEnRetard } = data.status;
 
@@ -305,7 +307,7 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
         <button
           disabled={isBloquant}
           className="flex items-center justify-center gap-2 py-2 border border-dashed border-border rounded-lg text-[11px] text-text-2 hover:bg-bg-2 transition-colors disabled:opacity-30 disabled:grayscale"
-          onClick={(e) => { e.stopPropagation(); /* TODO: Open Weighing Form */ }}
+          onClick={(e) => { e.stopPropagation(); setPeseeOpen(true); }}
         >
           {isBloquant ? <Lock size={12} /> : <Scale size={12} />}
           Saisir une pesée
@@ -318,12 +320,14 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
           className={`w-full py-2.5 rounded-xl font-bold text-[12px] uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg ${
             isBloquant ? 'bg-red-500 text-white shadow-red-500/20' : 'bg-amber text-bg-0 shadow-amber/20'
           }`}
-          onClick={(e) => { e.stopPropagation(); navigate('/troupeau/loges'); }}
+          onClick={(e) => { e.stopPropagation(); navigate('/troupeau/batiments'); }}
         >
           <ArrowUpRight size={16} />
           {isBloquant ? 'Transférer maintenant' : 'Préparer loge croissance'}
         </button>
       )}
+
+      <QuickPeseeForm isOpen={peseeOpen} onClose={() => setPeseeOpen(false)} />
     </div>
   );
 };

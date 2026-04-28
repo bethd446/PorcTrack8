@@ -117,18 +117,37 @@ export function getQueueStatus(): { pending: number; items: QueueItem[] } {
   return { pending: _memCache.length, items: [..._memCache] };
 }
 
+/** Retourne le nombre d'actions en attente */
+export function getQueueLength(): number {
+  return _memCache.length;
+}
+
+/** Vérifie si des actions ont échoué (tries > 0) */
+export function hasFailedSync(): boolean {
+  return _memCache.some(item => item.tries > 0);
+}
+
+/**
+ * Nombre maximal de tentatives avant abandon d'une action en queue.
+ * Au-delà, l'item est retiré de la queue pour éviter une accumulation non bornée.
+ * L'utilisateur peut consulter l'historique des erreurs dans /sync.
+ */
+const MAX_TRIES = 5;
+
 /**
  * Traite toute la queue vers GAS.
- * Succès → retirés. Échecs → conservés pour retry.
+ * Succès → retirés. Échecs → conservés pour retry (jusqu'à MAX_TRIES).
+ * Abandon → retirés de la queue après MAX_TRIES échecs consécutifs.
  */
 export async function processQueue(): Promise<{
-  success: boolean; processed: number; remaining: number;
+  success: boolean; processed: number; remaining: number; abandoned: number;
 }> {
   const queue = await loadQueue();
-  if (queue.length === 0) return { success: true, processed: 0, remaining: 0 };
+  if (queue.length === 0) return { success: true, processed: 0, remaining: 0, abandoned: 0 };
 
   const remaining: QueueItem[] = [];
   let processed = 0;
+  let abandoned = 0;
   let hasError = false;
 
   for (const item of queue) {
@@ -147,19 +166,29 @@ export async function processQueue(): Promise<{
       } else {
         item.tries++;
         item.lastError = result.message;
-        remaining.push(item);
+        if (item.tries >= MAX_TRIES) {
+          console.error(`[Queue] item ${item.id} abandonné après ${MAX_TRIES} essais :`, item.lastError);
+          abandoned++;
+        } else {
+          remaining.push(item);
+        }
         hasError = true;
       }
     } catch (e) {
       item.tries++;
       item.lastError = String(e);
-      remaining.push(item);
+      if (item.tries >= MAX_TRIES) {
+        console.error(`[Queue] item ${item.id} abandonné après ${MAX_TRIES} essais :`, item.lastError);
+        abandoned++;
+      } else {
+        remaining.push(item);
+      }
       hasError = true;
     }
   }
 
   await saveQueue(remaining);
-  return { success: !hasError, processed, remaining: remaining.length };
+  return { success: !hasError, processed, remaining: remaining.length, abandoned };
 }
 
 /** Alias rétrocompatibilité */

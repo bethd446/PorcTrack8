@@ -83,6 +83,9 @@ vi.mock('@ionic/react', () => ({
     isOpen?: boolean;
     children: React.ReactNode;
   }) => (isOpen ? <div role="dialog">{children}</div> : null),
+  IonSegment: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  IonSegmentButton: ({ children }: { children: React.ReactNode }) => <button>{children}</button>,
+  IonLabel: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
   useIonAlert: () => [vi.fn()],
 }));
 

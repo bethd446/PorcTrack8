@@ -28,6 +28,8 @@
  * Patch PARTIEL : uniquement les champs modifiés (diff vs initial).
  */
 
+import { safeDate } from '../../lib/truieHelpers';
+
 /** Durée de gestation truie en jours (cf. CLAUDE.md). */
 export const GESTATION_DAYS = 115;
 
@@ -95,17 +97,7 @@ function isIsoDate(s: string): boolean {
 
 /** Convertit ISO yyyy-MM-dd → Date local 0h, null si invalide. */
 function parseIsoDate(s: string): Date | null {
-  if (!isIsoDate(s)) return null;
-  const [y, m, d] = s.split('-').map(Number);
-  const date = new Date(y, m - 1, d);
-  if (
-    date.getFullYear() !== y ||
-    date.getMonth() !== m - 1 ||
-    date.getDate() !== d
-  ) {
-    return null;
-  }
-  return date;
+  return safeDate(s);
 }
 
 /** ISO yyyy-MM-dd → dd/MM/yyyy (format Sheets FR). Si invalide, retourne ''. */

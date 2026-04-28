@@ -268,8 +268,7 @@ const AgritechNavV2: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { openAction } = useQuickActions();
-  // const { isOwner } = useAuth();
-  const isOwner = true; // FORCE FOR TEST
+  const { isOwner } = useAuth();
 
   const activeTabId = resolveActiveTab(location.pathname);
 

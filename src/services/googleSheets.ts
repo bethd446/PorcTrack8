@@ -84,20 +84,37 @@ const memoryCache = new Map<string, { data: GasResponse; timestamp: number }>();
 const pendingRequests = new Map<string, Promise<{ status: number; data: GasResponse; fromCache?: boolean }>>();
 const CACHE_TTL = 30000; // 30 secondes
 
-async function request(options: { method: 'GET' | 'POST', url: string, data?: unknown, skipCache?: boolean }): Promise<{ status: number; data: GasResponse; fromCache?: boolean }> {
+/**
+ * Options de la fonction `request`.
+ * `readCache` — activer le cache mémoire 30s et le dédoublonnage sur les
+ * requêtes POST de lecture (les opérations d'écriture ne doivent jamais être
+ * mises en cache ni dédoublonnées).
+ */
+type RequestOptions = {
+  method: 'GET' | 'POST';
+  url: string;
+  data?: unknown;
+  skipCache?: boolean;
+  /** true pour les requêtes POST qui sont des lectures (token dans le body, pas de mutation). */
+  readCache?: boolean;
+};
+
+async function request(options: RequestOptions): Promise<{ status: number; data: GasResponse; fromCache?: boolean }> {
   const isNative = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform();
+  // Pour les POST de lecture, la clé inclut le body sérialisé pour l'unicité.
   const cacheKey = options.url + (options.data ? JSON.stringify(options.data) : '');
+  const isCacheable = options.method === 'GET' || options.readCache === true;
 
   // 1. DÉDOUBLONNAGE : Si une requête identique est déjà en cours, on s'y abonne
-  if (options.method === 'GET' && pendingRequests.has(cacheKey)) {
-    return pendingRequests.get(cacheKey);
+  if (isCacheable && pendingRequests.has(cacheKey)) {
+    return pendingRequests.get(cacheKey)!;
   }
 
   // 2. CACHE MÉMOIRE
   const pendingCount = getQueueStatus().pending;
   const shouldSkipCache = options.skipCache || pendingCount > 0;
 
-  if (options.method === 'GET' && !shouldSkipCache) {
+  if (isCacheable && !shouldSkipCache) {
     const cached = memoryCache.get(cacheKey);
     if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
       return { status: 200, data: cached.data, fromCache: true };
@@ -108,43 +125,39 @@ async function request(options: { method: 'GET' | 'POST', url: string, data?: un
     try {
       let result: { status: number; data: GasResponse };
       if (!isNative) {
-        const fetchOptions: RequestInit = {
-          method: options.method,
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-        };
-        if (options.method === 'POST') fetchOptions.body = JSON.stringify(options.data);
-
-        const resp = await fetch(options.url, fetchOptions);
+        // Toutes les requêtes passent désormais en POST — le token reste dans
+        // le body et n'apparaît jamais dans l'URL ni dans les logs réseau.
+        const resp = await fetch(options.url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(options.data ?? {}),
+        });
         const data = await resp.json();
         result = { status: resp.status, data };
       } else {
-        if (options.method === 'GET') {
-          result = await CapacitorHttp.get({ url: options.url });
-        } else {
-          result = await CapacitorHttp.post({
-            url: options.url,
-            headers: { 'Content-Type': 'application/json' },
-            data: options.data
-          });
-        }
+        // Capacitor : toujours POST pour la même raison.
+        result = await CapacitorHttp.post({
+          url: options.url,
+          headers: { 'Content-Type': 'application/json' },
+          data: options.data ?? {},
+        });
       }
 
-      if (options.method === 'GET' && result.status === 200 && result.data?.ok) {
-          memoryCache.set(cacheKey, { data: result.data, timestamp: Date.now() });
+      if (isCacheable && result.status === 200 && result.data?.ok) {
+        memoryCache.set(cacheKey, { data: result.data, timestamp: Date.now() });
       }
 
       return result;
     } catch (err) {
-      console.error(`Network error (${options.method} ${options.url}):`, err);
+      console.error(`Network error (POST ${options.url}):`, err);
       return { status: 0, data: { ok: false, error: String(err) } };
     } finally {
-      // Nettoyage de la requête pendante
       pendingRequests.delete(cacheKey);
     }
   };
 
   const promise = executeRequest();
-  if (options.method === 'GET') {
+  if (isCacheable) {
     pendingRequests.set(cacheKey, promise);
   }
   return promise;
@@ -228,10 +241,9 @@ async function triggerBackgroundFetch<T>(
 /** Logique de fetch brute + mise en cache */
 async function fetchAndCacheTable<T>(key: string, ttl: number): Promise<ReadTypedTableResult<T>> {
   const { url, token } = getGasConfig();
-  const fullUrl = `${url}?token=${encodeURIComponent(token)}&action=read_table_by_key&key=${encodeURIComponent(key)}`;
-
+  // POST sécurisé — token dans le body, jamais dans l'URL.
   try {
-    const res = await request({ method: 'GET', url: fullUrl });
+    const res = await request({ method: 'POST', url, data: { token, action: 'read_table_by_key', key }, readCache: true });
     if (res.status === 200 && res.data?.ok) {
       const header: string[] = (res.data.header as string[]) || [];
       const rows = (res.data.rows as SheetRawRow[]) || [];
@@ -252,8 +264,8 @@ async function fetchAndCacheTable<T>(key: string, ttl: number): Promise<ReadType
 
 export async function getTablesIndex(): Promise<{ success: boolean; values: SheetRawRow[]; message?: string }> {
   const { url, token } = getGasConfig();
-  const fullUrl = `${url}?token=${encodeURIComponent(token)}&action=get_tables_index`;
-  const res = await request({ method: 'GET', url: fullUrl, skipCache: true });
+  // POST sécurisé — token dans le body, skipCache car l'index peut changer.
+  const res = await request({ method: 'POST', url, data: { token, action: 'get_tables_index' }, skipCache: true });
   if (res.status === 200 && res.data?.ok) {
     return { success: true, values: (res.data.values as SheetRawRow[]) || [] };
   }
@@ -385,8 +397,8 @@ export async function deleteRowById(
 
 export async function fetchData(sheet: string) {
   const { url, token } = getGasConfig();
-  const fullUrl = `${url}?token=${encodeURIComponent(token)}&action=read_sheet&sheet=${encodeURIComponent(sheet)}`;
-  const res = await request({ method: 'GET', url: fullUrl });
+  // POST sécurisé — token dans le body.
+  const res = await request({ method: 'POST', url, data: { token, action: 'read_sheet', sheet }, readCache: true });
   if (res.status === 200 && res.data?.ok) return { success: true, data: res.data.values || [] };
   return { success: false, data: [] };
 }
@@ -421,9 +433,9 @@ export async function readTableByKey(key: string): Promise<ReadTableResult> {
   }
 
   const { url, token } = getGasConfig();
-  const fullUrl = `${url}?token=${encodeURIComponent(token)}&action=read_table_by_key&key=${encodeURIComponent(key)}`;
+  // POST sécurisé — token dans le body.
   try {
-    const res = await request({ method: 'GET', url: fullUrl });
+    const res = await request({ method: 'POST', url, data: { token, action: 'read_table_by_key', key }, readCache: true });
     if (res.status === 200 && res.data?.ok) {
       const headers: string[] = (res.data.header as string[]) || (res.data.headers as string[]) || [];
       const rows: SheetRawRow[] = (res.data.rows as SheetRawRow[]) || [];
@@ -451,8 +463,8 @@ export async function readTableByKey(key: string): Promise<ReadTableResult> {
  */
 export async function readRange(sheet: string): Promise<{ success: boolean; values: SheetRawRow[] }> {
   const { url, token } = getGasConfig();
-  const fullUrl = `${url}?token=${encodeURIComponent(token)}&action=read_sheet&sheet=${encodeURIComponent(sheet)}`;
-  const res = await request({ method: 'GET', url: fullUrl });
+  // POST sécurisé — token dans le body.
+  const res = await request({ method: 'POST', url, data: { token, action: 'read_sheet', sheet }, readCache: true });
   if (res.status === 200 && res.data?.ok) return { success: true, values: (res.data.values as SheetRawRow[]) || [] };
   return { success: false, values: [] };
 }

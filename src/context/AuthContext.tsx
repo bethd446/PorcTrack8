@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import { kvGet, kvSet } from '../services/kvStore';
 import { UserRole } from '../types/user.types';
 
@@ -12,7 +12,9 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [role, setInternalRole] = useState<UserRole>('OWNER');
+  const [role, setInternalRole] = useState<UserRole>(
+    () => (kvGet('user_role') as UserRole | null) ?? 'OWNER',
+  );
   const [userName, setUserName] = useState<string>(kvGet('user_name') || 'Utilisateur');
 
   const setRole = useCallback((newRole: UserRole) => {

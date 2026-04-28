@@ -3,7 +3,6 @@ import { IonContent, IonPage } from '@ionic/react';
 import { Wheat, Calculator, AlertTriangle } from 'lucide-react';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import AgritechNav from '../../components/AgritechNav';
 import { Chip, DataRow, SectionDivider, KpiCard } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
 import {
@@ -223,7 +222,6 @@ const PlanAlimentationView: React.FC = () => {
             </section>
           </div>
         </AgritechLayout>
-        <AgritechNav />
       </IonContent>
     </IonPage>
   );

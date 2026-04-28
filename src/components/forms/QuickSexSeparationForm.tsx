@@ -2,9 +2,11 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { SplitSquareHorizontal, Search, CheckCircle2, ChevronRight, ArrowLeft } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
 import { enqueueAppendRow, enqueueUpdateRow } from '../../services/offlineQueue';
+import { safeDate } from '../../lib/truieHelpers';
 import { BottomSheet, DataRow } from '../agritech';
 import { bandesAEligibleSeparation } from '../../services/bandesAggregator';
 import type { BandePorcelets } from '../../types/farm';
+import { kvGet } from '../../services/kvStore';
 
 /* ═════════════════════════════════════════════════════════════════════════
    QuickSexSeparationForm · Séparation par sexe d'une bande d'engraissement
@@ -62,10 +64,8 @@ function parseFrDate(value: string | undefined): Date | null {
   if (!value) return null;
   const parts = value.split('/');
   if (parts.length !== 3) return null;
-  const [d, m, y] = parts.map(Number);
-  if (!d || !m || !y) return null;
-  const dt = new Date(y, m - 1, d);
-  return Number.isNaN(dt.getTime()) ? null : dt;
+  const [d, m, y] = parts;
+  return safeDate(`${y}-${m}-${d}`);
 }
 
 /** Jours écoulés depuis une date DD/MM/YYYY (positif = passé). */
@@ -178,10 +178,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
 
       const note = `Séparation sexe · ${males} mâles · ${femelles} femelles · date=${dateShort}${obsTag}`;
 
-      const author =
-        typeof window !== 'undefined'
-          ? localStorage.getItem('user_name') || 'Anonyme'
-          : 'Anonyme';
+      const author = kvGet('user_name') || 'Anonyme';
 
       const row: string[] = [
         form.dateSeparation,     // DATE (ISO YYYY-MM-DD)

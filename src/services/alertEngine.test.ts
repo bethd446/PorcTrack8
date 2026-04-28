@@ -87,6 +87,7 @@ function emptyInput(overrides: Partial<AlertEngineInput> = {}): AlertEngineInput
     sante: [],
     stockAliments: [],
     saillies: [],
+    notes: [],
     ...overrides,
   };
 }

@@ -275,6 +275,7 @@ export async function refreshAll(): Promise<void> {
       sante: santeRes.data,
       stockAliments: stockARes.data,
       saillies: sailliesFinal,
+      notes: notesRes.data,
     });
 
     patch('pilotage', {
@@ -311,6 +312,24 @@ export async function refreshAll(): Promise<void> {
 export async function processQueueAndRefresh(): Promise<void> {
   await processQueue();
   await refreshAll();
+}
+
+/**
+ * Relance le moteur d'alertes GTTT sur les données actuellement en mémoire
+ * et notifie les abonnés 'pilotage'. Utile pour rafraîchir les compteurs
+ * (ex: sevrage en retard qui change à minuit) sans fetch réseau.
+ */
+export function recomputeAlerts(): void {
+  const newAlerts = runAlertEngine({
+    truies: state.troupeau.truies,
+    bandes: state.troupeau.bandes,
+    sante: state.ressources.sante,
+    stockAliments: state.ressources.stockAliment,
+    saillies: state.pilotage.saillies,
+    notes: state.ressources.notes,
+  });
+
+  patch('pilotage', { alerts: newAlerts });
 }
 
 // ── Helpers testables ───────────────────────────────────────────────────────

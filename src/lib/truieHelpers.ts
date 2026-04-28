@@ -64,3 +64,38 @@ export function isArchivedTruie(id: string): boolean {
   const normalized = normalizeTruieId(id);
   return ARCHIVED_TRUIE_IDS.includes(normalized);
 }
+
+/**
+ * Convertit une chaîne de date en objet Date de façon sécurisée et STRICTE.
+ * Supporte ISO (yyyy-MM-dd) et FR (dd/MM/yyyy).
+ * Retourne null si la chaîne est vide, nulle ou invalide (ex: 30 fév).
+ * Évite les crashs "toISOString of undefined/null" sur les saisies partielles.
+ */
+export function safeDate(d: string | null | undefined): Date | null {
+  if (!d || d.trim() === '') return null;
+  const s = d.trim();
+
+  // Tentative ISO: yyyy-MM-dd
+  const isoMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    const [y, m, dd] = isoMatch.slice(1).map(Number);
+    const date = new Date(y, m - 1, dd);
+    if (date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === dd) {
+      return date;
+    }
+    return null;
+  }
+
+  // Tentative FR: dd/MM/yyyy
+  const frMatch = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (frMatch) {
+    const [dd, m, y] = frMatch.slice(1).map(Number);
+    const date = new Date(y, m - 1, dd);
+    if (date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === dd) {
+      return date;
+    }
+    return null;
+  }
+
+  return null;
+}

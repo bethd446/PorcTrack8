@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import AgritechNav from '../../components/AgritechNav';
 import {
   KpiCard,
   Chip,
@@ -178,7 +177,6 @@ const MaterniteView: React.FC = () => {
               </div>
             )}
           </div>
-          <AgritechNav />
         </AgritechLayout>
 
         <QuickMiseBasForm

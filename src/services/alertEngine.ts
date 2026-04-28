@@ -20,10 +20,12 @@ import { Heart, Stethoscope, Layers, Box, Calendar } from 'lucide-react';
 import { differenceInCalendarDays, startOfDay } from 'date-fns';
 import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import type { Truie, BandePorcelets, TraitementSante, StockAliment, Saillie } from '../types/farm';
+import type { Note } from '../types';
 import { normaliseStatut } from '../lib/truieStatut';
-import { detectPendingTransitions, getSeuilFinPhase, PHASE_LABEL } from './phaseEngine';
-import { countBandesByPhase } from './bandesAggregator';
+import { countBandesByPhase, computeBandePhase } from './bandesAggregator';
 import { FARM_CONFIG } from '../config/farm';
+import { detectTruiesAReformer } from './perfKpiAnalyzer';
+import { extractPeseesForBande } from './growthAnalyzer';
 
 /** Fuseau horaire de référence pour toute la logique métier GTTT.
  *  L'élevage est en Côte d'Ivoire, mais les données Sheets sont saisies
@@ -50,9 +52,7 @@ export type AlertActionType =
 export interface AlertAction {
   type: AlertActionType;
   label: string;
-  /** Données pré-remplies à envoyer dans Sheets si l'action est confirmée.
-   *  Structure dynamique (append_row vs update_row + actions secondaires) :
-   *  consommée par `confirmationQueue.confirmAction` qui narrow par champs. */
+  /** Données pré-remplies à envoyer dans Sheets si l'action est confirmée. */
   payload?: Record<string, unknown>;
   /** Variante visuelle du bouton */
   variant?: 'primary' | 'danger' | 'secondary';
@@ -104,32 +104,23 @@ const BIO = {
 /**
  * Parse une date sérialisée Sheets (DD/MM/YYYY, YYYY-MM-DD ou serial Excel)
  * en traitant la date comme étant saisie dans le fuseau `Europe/Paris`.
- *
- * Exemple : "27/03/2026" → l'instant correspondant à 00:00:00 à Paris
- * le 27 mars 2026, quel que soit le fuseau du runtime.
  */
 function parseFrDate(dateStr?: string): Date | null {
   if (!dateStr || dateStr === '—' || dateStr === '') return null;
 
   const toFarmMidnight = (y: number, m: number, d: number): Date => {
-    // Construit l'ISO "YYYY-MM-DDT00:00:00" et l'interprète comme Europe/Paris
     const iso = `${y.toString().padStart(4, '0')}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}T00:00:00`;
     return fromZonedTime(iso, FARM_TIMEZONE);
   };
 
-  // DD/MM/YYYY
   const dmy = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (dmy) return toFarmMidnight(+dmy[3], +dmy[2], +dmy[1]);
 
-  // YYYY-MM-DD
   const ymd = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (ymd) return toFarmMidnight(+ymd[1], +ymd[2], +ymd[3]);
 
-  // Serial Sheets (jours depuis 1899-12-30, epoch Excel/Sheets)
   const serial = Number(dateStr);
   if (!isNaN(serial) && serial > 20000) {
-    // Le serial Sheets représente une date civile, pas un instant UTC.
-    // On reconstruit la date civile puis on la réinterprète en Europe/Paris.
     const utcProxy = new Date(Date.UTC(1899, 11, 30) + serial * 86400000);
     return toFarmMidnight(
       utcProxy.getUTCFullYear(),
@@ -140,30 +131,16 @@ function parseFrDate(dateStr?: string): Date | null {
   return null;
 }
 
-/**
- * Différence en JOURS CIVILS (calendaires) entre deux dates, en se plaçant
- * dans le fuseau Europe/Paris. Robuste aux changements d'heure (DST) et
- * aux différences de fuseau de l'utilisateur : un 27 mars et un 30 mars
- * retournent toujours 3 jours d'écart, même si la nuit du 28-29 ne fait
- * que 23h (passage heure d'été).
- *
- * Retourne un entier positif si `to` > `from`, négatif sinon.
- */
 function daysDiff(from: Date, to: Date = new Date()): number {
   const fromFarm = startOfDay(toZonedTime(from, FARM_TIMEZONE));
   const toFarm = startOfDay(toZonedTime(to, FARM_TIMEZONE));
   return differenceInCalendarDays(toFarm, fromFarm);
 }
 
-/**
- * Ajoute N jours CIVILS à une date en raisonnant dans le fuseau Europe/Paris.
- * Évite les dérives DST de `setDate` sur 24h*N millisecondes.
- */
 function addDays(date: Date, days: number): Date {
   const farmLocal = toZonedTime(date, FARM_TIMEZONE);
   const midnight = startOfDay(farmLocal);
   midnight.setDate(midnight.getDate() + days);
-  // Ré-interprète la date civile résultante comme instant Europe/Paris
   const iso = `${midnight.getFullYear()}-${String(midnight.getMonth() + 1).padStart(2, '0')}-${String(midnight.getDate()).padStart(2, '0')}T00:00:00`;
   return fromZonedTime(iso, FARM_TIMEZONE);
 }
@@ -176,17 +153,13 @@ function alertId(prefix: string, subjectId: string, suffix: string): string {
 // RÈGLES D'ALERTE
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * R1 — Mise-Bas Imminente ou en Retard
- * Fenêtre : J-3 à J+2 par rapport à la date prévue
- */
 function checkMiseBas(truie: Truie, today: Date): FarmAlert | null {
+  if (truie.statut === 'Morte' || truie.statut === 'Réforme') return null;
   const mbPrevue = parseFrDate(truie.dateMBPrevue);
   if (!mbPrevue) return null;
 
-  const offset = daysDiff(mbPrevue, today); // positif = retard
-
-  if (offset < -BIO.ALERTE_MB_AVANCE_JOURS || offset > BIO.ALERTE_MB_RETARD_JOURS + 5) return null;
+  const offset = daysDiff(mbPrevue, today);
+  if (offset < -BIO.ALERTE_MB_AVANCE_JOURS || offset > BIO.ALERTE_MB_RETARD_JOURS + 15) return null;
 
   const isRetard = offset > BIO.ALERTE_MB_RETARD_JOURS;
 
@@ -196,9 +169,7 @@ function checkMiseBas(truie: Truie, today: Date): FarmAlert | null {
     category: 'REPRO',
     subjectId: truie.id,
     subjectLabel: truie.displayId,
-    title: isRetard
-      ? `Mise-Bas en Retard — ${truie.displayId}`
-      : `Mise-Bas Imminente — ${truie.displayId}`,
+    title: isRetard ? `Mise-Bas en Retard — ${truie.displayId}` : `Mise-Bas Imminente — ${truie.displayId}`,
     message: isRetard
       ? `La mise-bas était prévue il y a ${offset} jour(s). Vérifier l'animal immédiatement.`
       : `Mise-bas prévue dans ${Math.abs(offset)} jour(s) (${truie.dateMBPrevue}).`,
@@ -214,7 +185,6 @@ function checkMiseBas(truie: Truie, today: Date): FarmAlert | null {
           sheet: 'SUIVI_TRUIES_REPRODUCTION',
           idHeader: 'ID',
           idValue: truie.id,
-          // Noms exacts des colonnes du Sheet SUIVI_TRUIES_REPRODUCTION
           patch: { STATUT: 'En maternité', DATE_DERNIERE_MB: new Date().toLocaleDateString('fr-FR') },
         },
       },
@@ -224,14 +194,11 @@ function checkMiseBas(truie: Truie, today: Date): FarmAlert | null {
   };
 }
 
-/**
- * R2 — Sevrage à Confirmer
- * Déclenché à J+28 de la mise-bas réelle (sevrage ferme K13, constante BIO.LACTATION_JOURS)
- */
 function checkSevrage(bande: BandePorcelets, today: Date): FarmAlert | null {
   if (bande.dateSevrageReelle) return null;
   const statut = (bande.statut || '').toLowerCase();
   if (statut.includes('sevr') || statut.includes('croissance') || statut.includes('finition') || statut.includes('engraiss') || statut.includes('archiv')) return null;
+
   const dateMB = parseFrDate(bande.dateMB);
   if (!dateMB) return null;
 
@@ -239,6 +206,8 @@ function checkSevrage(bande: BandePorcelets, today: Date): FarmAlert | null {
   if (ageJours < BIO.LACTATION_JOURS) return null;
 
   const retard = ageJours - BIO.LACTATION_JOURS;
+  if (retard > 30) return null;
+
   const nbVivants = bande.vivants ?? 0;
 
   return {
@@ -263,18 +232,15 @@ function checkSevrage(bande: BandePorcelets, today: Date): FarmAlert | null {
           sheet: 'PORCELETS_BANDES_DETAIL',
           idHeader: 'ID',
           idValue: bande.id,
-          // Noms exacts des colonnes du Sheet PORCELETS_BANDES_DETAIL
           patch: {
             STATUT: 'Sevrés',
             DATE_SEVRAGE_REELLE: new Date().toLocaleDateString('fr-FR'),
             SEVRES: nbVivants,
           },
-          // Mise à jour truie mère si connue
           truieUpdate: bande.truie ? {
             sheet: 'SUIVI_TRUIES_REPRODUCTION',
             idHeader: 'ID',
             idValue: bande.truie,
-            // STATUT → En attente saillie (sevrée), et on efface la date MB prévue
             patch: { STATUT: 'En attente saillie', DATE_MB_PREVUE: '' },
           } : null,
         },
@@ -285,34 +251,12 @@ function checkSevrage(bande: BandePorcelets, today: Date): FarmAlert | null {
   };
 }
 
-/**
- * R3 — Retour en Chaleur Post-Sevrage
- * Déclenché J+5 après le sevrage si la truie est encore "En attente saillie".
- *
- * Le schéma Sheets V20 n'expose plus `dateDerniereMB` sur la truie : la date
- * de sevrage est donc dérivée de la bande la plus récente liée à cette truie
- * (via `bande.truie === truie.id` ou le rapprochement par boucle mère),
- * en préférant `dateSevrageReelle` puis en retombant sur `dateMB + 21j`.
- */
-function checkRetourChaleur(
-  truie: Truie,
-  bandes: BandePorcelets[],
-  today: Date,
-): FarmAlert | null {
-  // Canonique VIDE = "En attente saillie", "Vide", "Attente" (cf. normaliseStatut).
-  // On accepte aussi le champ `stade` (stades legacy type "En attente saillie
-  // (sevrée)"), ce qui donne la même canonique VIDE après normalisation.
-  const isEnAttenteSaillie =
-    normaliseStatut(truie.statut) === 'VIDE' ||
-    normaliseStatut(truie.stade) === 'VIDE';
+function checkRetourChaleur(truie: Truie, bandes: BandePorcelets[], today: Date): FarmAlert | null {
+  if (truie.statut === 'Morte' || truie.statut === 'Réforme') return null;
+  const isEnAttenteSaillie = normaliseStatut(truie.statut) === 'VIDE';
   if (!isEnAttenteSaillie) return null;
 
-  // Bande la plus récente associée à cette truie (par id ou par boucle)
-  const bandesTruie = bandes.filter(b =>
-    b.truie === truie.id ||
-    b.truie === truie.displayId ||
-    b.boucleMere === truie.boucle,
-  );
+  const bandesTruie = bandes.filter(b => b.truie === truie.id || b.truie === truie.displayId || b.boucleMere === truie.boucle);
   if (bandesTruie.length === 0) return null;
 
   let dateSevrage: Date | null = null;
@@ -331,8 +275,7 @@ function checkRetourChaleur(
   if (!dateSevrage) return null;
 
   const joursSevrage = daysDiff(dateSevrage, today);
-  if (joursSevrage < BIO.CHALEUR_POST_SEVRAGE_JOURS - 1) return null;
-  if (joursSevrage > 14) return null; // trop tard, autre problème
+  if (joursSevrage < BIO.CHALEUR_POST_SEVRAGE_JOURS - 1 || joursSevrage > 14) return null;
 
   return {
     id: alertId('CHA', truie.id, String(dateSevrage.getTime())),
@@ -353,7 +296,6 @@ function checkRetourChaleur(
           sheet: 'SUIVI_TRUIES_REPRODUCTION',
           idHeader: 'ID',
           idValue: truie.id,
-          // Noms exacts des colonnes du Sheet SUIVI_TRUIES_REPRODUCTION
           patch: {
             STATUT: 'Pleine',
             DATE_SAILLIE: new Date().toLocaleDateString('fr-FR'),
@@ -367,319 +309,293 @@ function checkRetourChaleur(
   };
 }
 
-/**
- * R4 — Mortalité Anormale dans une Bande
- * Déclenché si morts > 15% des nés vivants
- *
- * Garde-fous importants (cf. bug "Mortalité 100%" x12 faux positifs) :
- *  - Ignore les lignes RECAP (agrégats non-réels issus du Sheet).
- *  - Ignore TOUTE bande déjà sevrée — détection multi-critères :
- *      • `dateSevrageReelle` non vide (indicateur principal du sevrage),
- *      • `statut` matche /sevr/i (Sevrés, Sevrée, Post-sevrage, Engraissement
- *        post-sevrage…) ou Archivée,
- *      • séparation par sexe déjà faite (`nbMales`/`nbFemelles`/
- *        `dateSeparation`/`logeEngraissement`) — toujours post-sevrage.
- *    Sur ces bandes, un `vivants=0` signifie "déjà transférés", pas "morts".
- *  - Ignore les bandes sans naissances enregistrées (`nv === 0`) : diviser
- *    par zéro ou traiter `0/0` comme 100% n'a pas de sens métier.
- *  - Ignore les bandes sans mortalité enregistrée (`morts === 0`) : évite
- *    tout risque d'arrondi ou de faux positif sur données vides.
- *  - Clamp `morts` à `nv` (données incohérentes) pour ne pas afficher >100%.
- */
 function checkMortalite(bande: BandePorcelets): FarmAlert | null {
-  // Exclure les lignes RECAP et les bandes hors maternité (porcelets sortis)
-  const statut = bande.statut;
-  if (statut === 'RECAP') return null;
-
-  // Garde sevrage — la bande est déjà sortie de maternité dès qu'un de ces
-  // signaux est présent. Couvre les variantes Sheet : "Sevrés", "Sevrée",
-  // "Post-sevrage", "Engraissement", "Finition", etc.
-  const isSevree =
-    !!bande.dateSevrageReelle ||
-    /sevr/i.test(statut || '') ||
-    /archiv/i.test(statut || '') ||
-    bande.nbMales != null ||
-    bande.nbFemelles != null ||
-    !!bande.dateSeparation ||
-    !!bande.logeEngraissement;
+  if (bande.statut === 'RECAP') return null;
+  const isSevree = !!bande.dateSevrageReelle || /sevr/i.test(bande.statut || '') || /archiv/i.test(bande.statut || '') || !!bande.dateSeparation;
   if (isSevree) return null;
 
   const nv = bande.nv ?? 0;
   const morts = bande.morts ?? 0;
+  if (nv <= 0 || morts <= 0) return null;
 
-  // Pas de données de naissance ou de mortalité → rien à alerter
-  if (nv <= 0) return null;
-  if (morts <= 0) return null;
-
-  // Clamp morts à nv pour éviter des pourcentages > 100 sur données incohérentes
   const mortsSafe = Math.min(morts, nv);
   const pct = (mortsSafe / nv) * 100;
   if (pct < BIO.MORTALITE_SEUIL_PCT) return null;
 
+  let priority: AlertPriority = 'HAUTE';
+  if (pct >= 30) priority = 'CRITIQUE';
+
   return {
     id: alertId('MORT', bande.id, String(mortsSafe)),
-    priority: pct > 30 ? 'CRITIQUE' : 'HAUTE',
+    priority,
     category: 'SANTE',
     subjectId: bande.id,
     subjectLabel: `Bande ${bande.id}`,
-    title: `Mortalité Anormale — ${bande.id}`,
-    message: `${mortsSafe} mort(s) sur ${nv} nés vivants (${Math.round(pct)}%). Seuil d'alerte : ${BIO.MORTALITE_SEUIL_PCT}%.`,
+    title: `Mortalité Portée ${Math.round(pct)}%`,
+    message: `${mortsSafe} mort(s) sur ${nv} nés vivants (${Math.round(pct)}%). Seuil d'alerte dépassé.`,
     requiresAction: true,
-    actions: [
-      {
-        type: 'CONFIRM_SOIN',
-        label: 'Signaler à la Vétérinaire',
-        variant: 'danger',
-        payload: {
-          sheet: 'JOURNAL_SANTE',
-          values: [
-            new Date().toISOString(), 'BANDE', bande.id,
-            'Urgent', 'Mortalité anormale', `${mortsSafe} morts / ${nv} NV (${Math.round(pct)}%)`, 'Auto'
-          ],
-        },
-      },
-      { type: 'DISMISS', label: 'Noté', variant: 'secondary' },
-    ],
+    actions: [{ type: 'DISMISS', label: 'Noté', variant: 'secondary' }],
     createdAt: new Date(),
   };
 }
 
-/**
- * R5 — Stock Critique
- */
 function checkStock(stock: StockAliment): FarmAlert | null {
-  if (stock.statutStock === 'OK') return null;
-  const isRupture = stock.statutStock === 'RUPTURE';
-
-  return {
-    id: alertId('STK', stock.id, stock.statutStock),
-    priority: isRupture ? 'CRITIQUE' : 'HAUTE',
-    category: 'STOCK',
-    subjectId: stock.id,
-    subjectLabel: stock.libelle,
-    title: `Stock ${isRupture ? 'Épuisé' : 'Bas'} — ${stock.libelle}`,
-    message: isRupture
-      ? `${stock.libelle} est en rupture (${stock.stockActuel} ${stock.unite} restant).`
-      : `${stock.libelle} est en dessous du seuil d'alerte (${stock.stockActuel}/${stock.seuilAlerte} ${stock.unite}).`,
-    requiresAction: false,
-    actions: [{ type: 'DISMISS', label: 'Compris', variant: 'secondary' }],
-    createdAt: new Date(),
-  };
+  if (stock.statutStock === 'RUPTURE') {
+    return {
+      id: alertId('STK', stock.id, 'RUPTURE'),
+      priority: 'CRITIQUE',
+      category: 'STOCK',
+      subjectId: stock.id,
+      subjectLabel: stock.libelle,
+      title: `Stock Épuisé — ${stock.libelle}`,
+      message: `Rupture de stock détectée. Commander immédiatement.`,
+      requiresAction: true,
+      actions: [{ type: 'DISMISS', label: 'C\'est fait' }],
+      createdAt: new Date(),
+    };
+  }
+  if (stock.statutStock === 'BAS') {
+    return {
+      id: alertId('STK', stock.id, 'BAS'),
+      priority: 'HAUTE',
+      category: 'STOCK',
+      subjectId: stock.id,
+      subjectLabel: stock.libelle,
+      title: `Stock Bas — ${stock.libelle}`,
+      message: `Niveau de stock sous le seuil d'alerte (${stock.stockActuel}${stock.unite}).`,
+      requiresAction: true,
+      actions: [{ type: 'DISMISS', label: 'Noté' }],
+      createdAt: new Date(),
+    };
+  }
+  return null;
 }
 
-/**
- * R6 — Regroupement de Bandes Suggéré
- * Si ≥2 bandes sevrées à ±3 jours → suggérer regroupement
- */
 function checkRegroupementBandes(bandes: BandePorcelets[], today: Date): FarmAlert[] {
-  const sevrablesSoon = bandes.filter(b => {
-    if (b.dateSevrageReelle) return false;
-    const statut = (b.statut || '').toLowerCase();
-    if (statut.includes('sevr') || statut.includes('croissance') || statut.includes('finition') || statut.includes('engraiss') || statut.includes('archiv')) return false;
-    const dateMB = parseFrDate(b.dateMB);
-    if (!dateMB) return false;
-    const ageJours = daysDiff(dateMB, today);
-    return ageJours >= BIO.LACTATION_JOURS - BIO.REGROUPEMENT_BANDE_FENETRE;
+  const sevrables = bandes.filter(b => {
+    if (b.dateSevrageReelle || (b.statut || '').toLowerCase().includes('sevr')) return false;
+    const dMB = parseFrDate(b.dateMB);
+    if (!dMB) return false;
+    const age = daysDiff(dMB, today);
+    return age >= BIO.LACTATION_JOURS - BIO.REGROUPEMENT_BANDE_FENETRE && age <= BIO.LACTATION_JOURS + BIO.REGROUPEMENT_BANDE_FENETRE;
   });
 
-  if (sevrablesSoon.length < 2) return [];
+  if (sevrables.length < 2) return [];
 
-  const ids = sevrablesSoon.map(b => b.id).join(', ');
-  const totalVivants = sevrablesSoon.reduce((s, b) => s + (b.vivants ?? 0), 0);
-
+  const totalVivants = sevrables.reduce((acc, b) => acc + (b.vivants || 0), 0);
   return [{
-    id: alertId('REG', 'multi', ids.slice(0, 20)),
+    id: alertId('REG', 'GLOBAL', String(today.getTime())),
     priority: 'INFO',
     category: 'BANDES',
-    subjectId: 'multi',
-    subjectLabel: `${sevrablesSoon.length} bandes`,
-    title: `Regroupement Bande Possible`,
-    message: `${sevrablesSoon.length} bandes sevrées à ±${BIO.REGROUPEMENT_BANDE_FENETRE}j (${totalVivants} porcelets). Regrouper en une même bande post-sevrage ?`,
-    requiresAction: true,
-    actions: [
-      {
-        type: 'CONFIRM_REGROUPEMENT_BANDE',
-        label: `Créer Bande Post-Sevrage (${totalVivants})`,
-        variant: 'primary',
-        payload: { bandeIds: sevrablesSoon.map(b => b.id), totalVivants },
-      },
-      { type: 'DISMISS', label: 'Garder séparées', variant: 'secondary' },
-    ],
+    subjectId: 'GROUP',
+    subjectLabel: `${sevrables.length} bandes sevrables`,
+    title: 'Suggestion Regroupement',
+    message: `Opportunité de regrouper ${sevrables.length} portées sevrables à ±${BIO.REGROUPEMENT_BANDE_FENETRE}j (total ${totalVivants} porcelets).`,
+    requiresAction: false,
+    actions: [{ type: 'DISMISS', label: 'Noté' }],
     createdAt: new Date(),
   }];
 }
 
-/**
- * R7 — Fenêtre Échographie (INFO)
- * Déclenché entre J+25 et J+35 de la saillie pour les truies en gestation.
- */
 function checkFenetreEcho(truie: Truie, saillies: Saillie[], today: Date): FarmAlert | null {
   if (normaliseStatut(truie.statut) !== 'PLEINE') return null;
+  const active = saillies.find(s => (s.truieId === truie.id || s.truieId === truie.displayId) && s.statut === 'Active');
+  if (!active) return null;
+  const dSaillie = parseFrDate(active.dateSaillie);
+  if (!dSaillie) return null;
+  const jours = daysDiff(dSaillie, today);
 
-  // Trouve la saillie active pour cette truie
-  const saillie = saillies.find(s =>
-    (s.truieId === truie.id || s.truieId === truie.displayId) &&
-    /active/i.test(s.statut || '')
-  );
-  if (!saillie) return null;
-
-  const dateSaillie = parseFrDate(saillie.dateSaillie);
-  if (!dateSaillie) return null;
-
-  const ageJours = daysDiff(dateSaillie, today);
-
-  if (ageJours < BIO.ECHO_DEBUT_JOURS || ageJours > BIO.ECHO_FIN_JOURS) return null;
-
-  return {
-    id: alertId('ECH', truie.id, String(dateSaillie.getTime())),
-    priority: 'INFO',
-    category: 'REPRO',
-    subjectId: truie.id,
-    subjectLabel: truie.displayId,
-    title: `Fenêtre Écho — ${truie.displayId}`,
-    message: `${truie.displayId} est à J+${ageJours} de saillie. Fenêtre d'échographie ouverte (J+25 à J+35) pour confirmer la gestation.`,
-    requiresAction: false,
-    daysOffset: ageJours,
-    actions: [{ type: 'DISMISS', label: 'Compris', variant: 'secondary' }],
-    createdAt: new Date(),
-  };
+  if (jours >= BIO.ECHO_DEBUT_JOURS && jours <= BIO.ECHO_FIN_JOURS) {
+    return {
+      id: alertId('ECH', truie.id, String(dSaillie.getTime())),
+      priority: 'INFO',
+      category: 'REPRO',
+      subjectId: truie.id,
+      subjectLabel: truie.displayId,
+      title: 'Fenêtre Échographie',
+      message: `${truie.displayId} est à J+${jours} post-saillie. Période idéale pour l'écho (J25-J35).`,
+      requiresAction: false,
+      actions: [{ type: 'DISMISS', label: 'Fait' }],
+      createdAt: new Date(),
+      daysOffset: jours
+    };
+  }
+  return null;
 }
 
-/**
- * R8 — Re-Saillie Proactive (après retour chaleur signalé)
- * Déclenché si la truie est VIDE et porte un tag "Retour chaleur dd/MM/yyyy".
- */
 function checkReSaillieProactive(truie: Truie, today: Date): FarmAlert | null {
   if (normaliseStatut(truie.statut) !== 'VIDE') return null;
+  if (!truie.notes) return null;
+  const match = truie.notes.match(/Retour chaleur (\d{2}\/\d{2}\/\d{4})/g);
+  if (!match) return null;
+  const lastDateStr = match[match.length - 1].replace('Retour chaleur ', '');
+  const dRetour = parseFrDate(lastDateStr);
+  if (!dRetour) return null;
+  const jours = daysDiff(dRetour, today);
 
-  // Extraction du DERNIER tag de date (priorité au plus récent)
-  const matches = Array.from((truie.notes || '').matchAll(/Retour chaleur (\d{2}\/\d{2}\/\d{4})/g));
-  if (matches.length === 0) return null;
+  if (jours >= 0 && jours <= BIO.RE_SAILLIE_LIMITE_JOURS) {
+    let priority: AlertPriority = 'NORMALE';
+    if (jours >= BIO.RE_SAILLIE_URGENTE_JOURS) priority = 'CRITIQUE';
+    else if (jours >= BIO.RE_SAILLIE_MOYENNE_JOURS) priority = 'HAUTE';
 
-  const lastMatch = matches[matches.length - 1];
-  const dateStr = lastMatch[1];
-  const dateRetour = parseFrDate(dateStr);
-  if (!dateRetour) return null;
-
-  const joursDepuisRetour = daysDiff(dateRetour, today);
-
-  // Ladder : J0-J2 NORMALE · J3-J10 HAUTE · J11-J20 CRITIQUE · >J20 null
-  if (joursDepuisRetour < 0 || joursDepuisRetour > BIO.RE_SAILLIE_LIMITE_JOURS) return null;
-
-  let priority: AlertPriority = 'NORMALE';
-  if (joursDepuisRetour > BIO.RE_SAILLIE_URGENTE_JOURS) priority = 'CRITIQUE';
-  else if (joursDepuisRetour > BIO.RE_SAILLIE_MOYENNE_JOURS) priority = 'HAUTE';
-
-  return {
-    id: alertId('RSA', truie.id, dateStr.replace(/\//g, '')),
-    priority,
-    category: 'REPRO',
-    subjectId: truie.id,
-    subjectLabel: truie.displayId,
-    title: `Re-Saillie Attendue — ${truie.displayId}`,
-    message: `${truie.displayId} est en retour chaleur depuis ${joursDepuisRetour} jour(s). Une nouvelle saillie est requise pour relancer le cycle.`,
-    requiresAction: true,
-    daysOffset: joursDepuisRetour,
-    actions: [
-      {
-        type: 'CONFIRM_SAILLIE',
-        label: 'Re-Saillir',
-        variant: 'primary',
-        payload: { truieId: truie.id },
-      },
-      { type: 'DISMISS', label: 'Plus tard', variant: 'secondary' },
-    ],
-    createdAt: new Date(),
-  };
+    return {
+      id: alertId('RSA', truie.id, String(dRetour.getTime())),
+      priority,
+      category: 'REPRO',
+      subjectId: truie.id,
+      subjectLabel: truie.displayId,
+      title: 'Re-Saillie Proactive',
+      message: `${truie.displayId} a eu un retour en chaleur il y a ${jours} jour(s).`,
+      requiresAction: true,
+      actions: [
+        { type: 'CONFIRM_SAILLIE', label: 'Re-Saillir', payload: { truieId: truie.id } },
+        { type: 'DISMISS', label: 'Plus tard' }
+      ],
+      createdAt: new Date(),
+      daysOffset: jours
+    };
+  }
+  return null;
 }
 
-/**
- * R9 — Alerte retard de phase.
- * Déclenchée si une bande dépasse de > 3 jours le seuil de transition
- * et que le statut n'a pas été mis à jour.
- */
-export function checkRetardPhase(bande: BandePorcelets, today: Date): FarmAlert | null {
-  const pending = detectPendingTransitions([bande], today);
-  if (pending.length === 0) return null;
-  const t = pending[0];
+function checkRetardPhase(bande: BandePorcelets, today: Date): FarmAlert | null {
+  if (bande.dateSevrageReelle || (bande.statut || '').toLowerCase().includes('sevr')) return null;
+  const dMB = parseFrDate(bande.dateMB);
+  if (!dMB) return null;
+  const age = daysDiff(dMB, today);
 
-  const TOLERANCE_JOURS = 3;
-  const ageJours = t.ageJours ?? 0;
-  const seuilPhase = getSeuilFinPhase(t.fromPhase);
+  if (age > BIO.LACTATION_JOURS + 3) {
+    return {
+      id: alertId('retard', bande.id, 'phase'),
+      priority: 'NORMALE',
+      category: 'BANDES',
+      subjectId: bande.id,
+      subjectLabel: bande.idPortee || bande.id,
+      title: 'Retard de Sevrage',
+      message: `Bande en maternité depuis ${age} jours (sevrage théorique J28).`,
+      requiresAction: true,
+      actions: [{ type: 'DISMISS', label: 'Noté' }],
+      createdAt: new Date(),
+      daysOffset: age - BIO.LACTATION_JOURS
+    };
+  }
+  return null;
+}
 
-  if (seuilPhase === null || ageJours <= seuilPhase + TOLERANCE_JOURS) return null;
+function checkSurdensiteLoges(bandes: BandePorcelets[], today: Date): FarmAlert | null {
+  const engraissement = bandes.filter(b => {
+     const s = (b.statut || '').toLowerCase();
+     return s.includes('croissance') || s.includes('finition') || s.includes('engraiss');
+  });
+  const CAPACITY = 6;
+
+  if (engraissement.length > CAPACITY) {
+    return {
+      id: 'surdensite-engraissement',
+      priority: 'HAUTE',
+      category: 'BANDES',
+      subjectId: 'GLOBAL',
+      subjectLabel: 'Engraissement',
+      title: 'Surdensité Loges',
+      message: `${engraissement.length} bandes en engraissement pour ${CAPACITY} loges dispos. Risque de mélange ou stress.`,
+      requiresAction: true,
+      actions: [{ type: 'DISMISS', label: 'OK' }],
+      createdAt: new Date(),
+    };
+  }
+  return null;
+}
+
+function checkTruiesAReformer(truies: Truie[], bandes: BandePorcelets[], saillies: Saillie[], today: Date): FarmAlert[] {
+  try {
+    const candidates = detectTruiesAReformer(truies, bandes, saillies, today);
+    return candidates.map(c => ({
+      id: alertId('REF', c.truie.id, c.motif),
+      priority: c.motif === 'PERF_INSUFFISANTE' ? 'HAUTE' : 'NORMALE',
+      category: 'REPRO',
+      subjectId: c.truie.id,
+      subjectLabel: c.truie.displayId,
+      title: `Réforme Suggérée — ${c.truie.displayId}`,
+      message: `Motif : ${c.motif}. Détail : ${c.detail}. La productivité de cette truie est sous les standards.`,
+      requiresAction: true,
+      actions: [
+        {
+          type: 'CONFIRM_REFORME',
+          label: 'Passer en Réforme',
+          variant: 'danger',
+          payload: { sheet: 'SUIVI_TRUIES_REPRODUCTION', idHeader: 'ID', idValue: c.truie.id, patch: { STATUT: 'Réforme' } }
+        },
+        { type: 'DISMISS', label: 'Garder', variant: 'secondary' }
+      ],
+      createdAt: new Date()
+    }));
+  } catch (e) {
+    console.error('[AlertEngine] R12 error:', e);
+    return [];
+  }
+}
+
+function checkManquePesee(bande: BandePorcelets, notes: Note[], today: Date): FarmAlert | null {
+  const phase = computeBandePhase(bande, today);
+  if (phase !== 'POST_SEVRAGE' && phase !== 'ENGRAISSEMENT' && phase !== 'CROISSANCE' && phase !== 'FINITION') return null;
+
+  const pesees = extractPeseesForBande(bande.id, notes || []);
+  const derniere = pesees.length > 0 ? pesees[pesees.length - 1] : null;
+
+  let joursSansPesee: number;
+  if (!derniere) {
+    const dateRef = parseFrDate(bande.dateSevrageReelle || bande.dateSevragePrevue);
+    if (!dateRef) return null;
+    joursSansPesee = daysDiff(dateRef, today);
+  } else {
+    joursSansPesee = daysDiff(new Date(derniere.date), today);
+  }
+
+  const SEUIL_VIGILANCE = 21;
+  if (joursSansPesee <= SEUIL_VIGILANCE) return null;
 
   return {
-    id: `retard-${bande.id}`,
-    priority: 'NORMALE',
+    id: alertId('PES', bande.id, 'LATE'),
+    priority: joursSansPesee > 35 ? 'HAUTE' : 'NORMALE',
     category: 'BANDES',
-    subjectId: bande.id,
-    subjectLabel: t.label,
-    title: `Retard transfert — ${t.label}`,
-    message: `${t.label} devrait être en ${PHASE_LABEL[t.toPhase]} depuis ${ageJours - seuilPhase}j.`,
-    requiresAction: true,
-    actions: [{ type: 'DISMISS', label: 'Compris', variant: 'secondary' }],
-    createdAt: new Date(),
-    daysOffset: ageJours - seuilPhase,
-  };
-}
-
-/**
- * R10 — Surdensité loge engraissement.
- * Déclenchée si CROISSANCE + ENGRAISSEMENT + FINITION > ENGRAISSEMENT_LOGES_CAPACITY.
- */
-export function checkSurdensiteLoges(bandes: BandePorcelets[], today: Date): FarmAlert | null {
-  const counts = countBandesByPhase(bandes, today);
-  const total = counts.CROISSANCE + counts.ENGRAISSEMENT + counts.FINITION;
-  const capacity = FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY;
-  if (total <= capacity) return null;
-
-  return {
-    id: 'surdensite-engraissement',
-    priority: 'HAUTE',
-    category: 'BANDES',
-    subjectId: 'LOGES_ENG',
-    subjectLabel: 'Loges Engraissement',
-    title: 'Surdensité loges engraissement',
-    message: `${total} bandes pour ${capacity} loges (${total - capacity} en trop).`,
-    requiresAction: false,
-    actions: [{ type: 'DISMISS', label: 'Compris', variant: 'secondary' }],
-    createdAt: new Date(),
-  };
-}
-
-/**
- * R11 — Alerte Sanitaire de Bande (Mortalité > 3%).
- * Déclenchée si le taux de mortalité d'une bande dépasse le seuil de vigilance.
- */
-function checkAlerteSanitaireBande(bande: BandePorcelets): FarmAlert | null {
-  const nv = bande.nv ?? 0;
-  const morts = bande.morts ?? 0;
-  if (nv <= 0 || (bande.statut || '').toLowerCase().includes('vendu')) return null;
-
-  const tauxPct = (morts / nv) * 100;
-  if (tauxPct <= 3) return null;
-
-  return {
-    id: alertId('SANTE', bande.id, '3PCT'),
-    priority: 'CRITIQUE',
-    category: 'SANTE',
     subjectId: bande.id,
     subjectLabel: bande.idPortee || bande.id,
-    title: 'Alerte Sanitaire de Bande',
-    message: `Taux de mortalité alarmant (${tauxPct.toFixed(1)}%). Prévoir une inspection sanitaire immédiate.`,
+    title: 'Manque de Pesée',
+    message: `Aucune pesée enregistrée depuis ${joursSansPesee} jours pour ce lot.`,
     requiresAction: true,
-    actions: [
-      { type: 'CONFIRM_SOIN', label: 'Déclarer Soin Groupé', variant: 'danger' },
-      { type: 'DISMISS', label: 'Ignorer' },
-    ],
+    actions: [{ type: 'DISMISS', label: 'Ignorer' }],
     createdAt: new Date(),
+    daysOffset: joursSansPesee
   };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MOTEUR PRINCIPAL
-// ─────────────────────────────────────────────────────────────────────────────
+function checkPorteesOrphelines(truies: Truie[], bandes: BandePorcelets[]): FarmAlert[] {
+  const mortes = truies.filter(t => t.statut === 'Morte');
+  if (mortes.length === 0) return [];
+
+  const alerts: FarmAlert[] = [];
+  for (const t of mortes) {
+    const orpheline = bandes.find(b => (b.truie === t.id || b.boucleMere === t.boucle) && (b.statut || '').toLowerCase().includes('sous'));
+    if (orpheline) {
+      alerts.push({
+        id: alertId('ORPH', orpheline.id, t.id),
+        priority: 'CRITIQUE',
+        category: 'BANDES',
+        subjectId: orpheline.id,
+        subjectLabel: orpheline.idPortee || orpheline.id,
+        title: 'Portée Orpheline',
+        message: `La truie ${t.displayId} est morte. ${orpheline.vivants || 0} porcelets sont sans mère. Action requise : adoption ou sevrage précoce.`,
+        requiresAction: true,
+        actions: [
+          { type: 'CONFIRM_SEVRAGE', label: 'Sevrage Précoce', variant: 'primary' },
+          { type: 'DISMISS', label: 'Noté', variant: 'secondary' }
+        ],
+        createdAt: new Date()
+      });
+    }
+  }
+  return alerts;
+}
 
 export interface AlertEngineInput {
   truies: Truie[];
@@ -687,77 +603,61 @@ export interface AlertEngineInput {
   sante: TraitementSante[];
   stockAliments: StockAliment[];
   saillies: Saillie[];
+  notes: Note[];
 }
 
 export function runAlertEngine(input: AlertEngineInput): FarmAlert[] {
   const today = new Date();
   const alerts: FarmAlert[] = [];
 
-  // R1 — Mise-bas
   for (const truie of input.truies) {
     const a = checkMiseBas(truie, today);
-    if (a && a.title && a.message) alerts.push(a);
+    if (a) alerts.push(a);
   }
-
-  // R2 — Sevrage
   for (const bande of input.bandes) {
     const a = checkSevrage(bande, today);
-    if (a && a.title && a.message) alerts.push(a);
+    if (a) alerts.push(a);
   }
-
-  // R3 — Retour chaleur
   for (const truie of input.truies) {
     const a = checkRetourChaleur(truie, input.bandes, today);
-    if (a && a.title && a.message) alerts.push(a);
+    if (a) alerts.push(a);
   }
-
-  // R4 — Mortalité
   for (const bande of input.bandes) {
     const a = checkMortalite(bande);
-    if (a && a.title && a.message) alerts.push(a);
+    if (a) alerts.push(a);
   }
-
-  // R5 — Stocks
   for (const stock of input.stockAliments) {
     const a = checkStock(stock);
-    if (a && a.title && a.message) alerts.push(a);
+    if (a) alerts.push(a);
   }
-
-  // R6 — Regroupement
   const regroupementAlerts = checkRegroupementBandes(input.bandes, today);
-  for (const a of regroupementAlerts) {
-    if (a && a.title && a.message) alerts.push(a);
-  }
+  for (const a of regroupementAlerts) alerts.push(a);
 
-  // R7 — Fenêtre Écho
   for (const truie of input.truies) {
     const a = checkFenetreEcho(truie, input.saillies, today);
-    if (a && a.title && a.message) alerts.push(a);
+    if (a) alerts.push(a);
   }
-
-  // R8 — Re-Saillie Proactive
   for (const truie of input.truies) {
     const a = checkReSaillieProactive(truie, today);
-    if (a && a.title && a.message) alerts.push(a);
+    if (a) alerts.push(a);
   }
-
-  // R9 — Retard Phase
   for (const bande of input.bandes) {
     const a = checkRetardPhase(bande, today);
-    if (a && a.title && a.message) alerts.push(a);
+    if (a) alerts.push(a);
   }
-
-  // R10 — Surdensité
   const surdensite = checkSurdensiteLoges(input.bandes, today);
   if (surdensite) alerts.push(surdensite);
 
-  // R11 — Alerte Sanitaire
+  const reformeAlerts = checkTruiesAReformer(input.truies, input.bandes, input.saillies, today);
+  for (const a of reformeAlerts) alerts.push(a);
+
   for (const bande of input.bandes) {
-    const a = checkAlerteSanitaireBande(bande);
+    const a = checkManquePesee(bande, input.notes, today);
     if (a) alerts.push(a);
   }
+  const orphelines = checkPorteesOrphelines(input.truies, input.bandes);
+  for (const a of orphelines) alerts.push(a);
 
-  // Tri : CRITIQUE > HAUTE > NORMALE > INFO, puis par daysOffset
   const PRIORITY_ORDER: Record<AlertPriority, number> = { CRITIQUE: 0, HAUTE: 1, NORMALE: 2, INFO: 3 };
   alerts.sort((a, b) => {
     const pd = PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
@@ -767,10 +667,6 @@ export function runAlertEngine(input: AlertEngineInput): FarmAlert[] {
 
   return alerts;
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS D'AFFICHAGE
-// ─────────────────────────────────────────────────────────────────────────────
 
 export function alertPriorityColor(priority: AlertPriority): string {
   return { CRITIQUE: 'rose', HAUTE: 'amber', NORMALE: 'blue', INFO: 'slate' }[priority];

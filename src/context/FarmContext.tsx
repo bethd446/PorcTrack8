@@ -36,7 +36,13 @@ import type { Animal, Note } from '../types';
 import type { FormuleAliment } from '../config/aliments';
 import type { FarmAlert } from '../services/alertEngine';
 
-import { refreshAll, processQueueAndRefresh, subscribe, getSnapshot } from '../services/farmDataLoader';
+import {
+  refreshAll,
+  processQueueAndRefresh,
+  recomputeAlerts,
+  subscribe,
+  getSnapshot,
+} from '../services/farmDataLoader';
 import { TroupeauProvider, useTroupeau } from './TroupeauContext';
 import { RessourcesProvider, useRessources } from './RessourcesContext';
 import { PilotageProvider, usePilotage } from './PilotageContext';
@@ -64,6 +70,7 @@ interface FarmContextType extends FarmState {
   getNotesForSubject: (id: string, type: string) => TraitementSante[];
   pullData: () => Promise<void>;
   processQueue: () => Promise<void>;
+  recomputeAlerts: () => void;
 }
 
 // ── Meta context (loading / dataSource / refreshData) ──────────────────────
@@ -75,6 +82,7 @@ interface MetaContextType {
   refreshData: (force?: boolean) => Promise<void>;
   pullData: () => Promise<void>;
   processQueue: () => Promise<void>;
+  recomputeAlerts: () => void;
 }
 
 const MetaContext = createContext<MetaContextType | undefined>(undefined);
@@ -125,13 +133,14 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       refreshData,
       pullData,
       processQueue,
+      recomputeAlerts,
     }}>
       {children}
     </MetaContext.Provider>
   );
 };
 
-function useMeta(): MetaContextType {
+export function useMeta(): MetaContextType {
   const ctx = useContext(MetaContext);
   if (!ctx) throw new Error('useMeta must be used within MetaProvider');
   return ctx;
@@ -213,6 +222,7 @@ export const useFarm = (): FarmContextType => {
     refreshData: meta.refreshData,
     pullData: meta.pullData,
     processQueue: meta.processQueue,
+    recomputeAlerts: meta.recomputeAlerts,
   };
 };
 

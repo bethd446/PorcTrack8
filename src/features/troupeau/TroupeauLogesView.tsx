@@ -348,9 +348,9 @@ const TroupeauLogesView: React.FC = () => {
             const isExpanded = expandedLoge === key;
             const pct = Math.min(100, Math.round((rep.porcelets / 30) * 100));
 
-            // @ts-ignore
+            // @ts-expect-error — optional fields (aliment/debutAliment absent on empty loges)
             const aliment = rep.aliment === 'DEMARRAGE_2' ? 'Démarrage 2' : '';
-            // @ts-ignore
+            // @ts-expect-error — optional fields (aliment/debutAliment absent on empty loges)
             const debut = rep.debutAliment;
 
             return (

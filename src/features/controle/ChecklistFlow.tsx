@@ -19,6 +19,7 @@ import { enqueueAppendRow, enqueueUpdateRow } from '../../services/offlineQueue'
 import AgritechLayout from '../../components/AgritechLayout';
 import AgritechHeader from '../../components/AgritechHeader';
 import { Chip } from '../../components/agritech';
+import { kvGet } from '../../services/kvStore';
 
 // Consumed shape: the service-provided ChecklistItem + legacy UPPERCASE aliases
 // still emitted by some sheets paths.
@@ -159,7 +160,7 @@ const ChecklistFlow: React.FC = () => {
       const table = String(currentQuestion.CIBLE_TABLE).toUpperCase();
       const now = new Date();
       const timestamp = now.toISOString();
-      const porcher = localStorage.getItem('user_name') || 'Porcher K13';
+      const porcher = kvGet('user_name') || 'Porcher K13';
 
       // Memory for session
       if (table === 'PORCELETS_BANDES' || table === 'PORCELETS_BANDES_DETAIL') {

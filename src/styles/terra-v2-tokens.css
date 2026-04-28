@@ -12,8 +12,6 @@
    (noir pur en nuit, blanc pur en jour, accent émeraude dans les deux).
    ═══════════════════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap');
-
 :root {
   /* ── Font stacks ─────────────────────────────────────────────────── */
   --font-serif: 'Instrument Serif', 'Iowan Old Style', 'Palatino', serif;

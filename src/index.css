@@ -1,3 +1,7 @@
+@charset "UTF-8";
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap');
+@import "tailwindcss";
+
 /* ═══════════════════════════════════════════════════════════════════════════
    PorcTrack — Design System · Ultra Clean
    Inspiration : Linear, Apple Health, Notion
@@ -40,8 +44,6 @@
 @font-face { font-family: 'DMMono'; src: url('/fonts/DMMono-Regular.ttf') format('truetype'); font-weight: 400; font-display: block; }
 @font-face { font-family: 'InstrumentSans'; src: url('/fonts/InstrumentSans-Bold.ttf') format('truetype'); font-weight: 700; font-display: block; }
 @font-face { font-family: 'InstrumentSans'; src: url('/fonts/InstrumentSans-Regular.ttf') format('truetype'); font-weight: 400; font-display: block; }
-
-@import "tailwindcss";
 
 @theme {
   --font-sans:    "InstrumentSans", -apple-system, system-ui, sans-serif;

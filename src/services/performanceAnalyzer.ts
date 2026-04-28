@@ -110,8 +110,9 @@ export function genererFicheMerite(
   const isse = calculerISSEMoyen(portees, saillies);
   const survie = calculerSurvieGlobale(portees);
 
+  // Valeurs par défaut (chemin « aucune condition particulière »)
   let decision: DecisionReforme = 'GARDER';
-  let verdictBio = '';
+  let verdictBio = 'Performances stables. Truie productive.';
 
   // Logique de décision et verdict
   if (isDeclining) {
@@ -124,11 +125,7 @@ export function genererFicheMerite(
     decision = 'A_SURVEILLER';
     verdictBio = `Retour en chaleur tardif (ISSE: ${isse}j). Surveiller le prochain cycle.`;
   } else if (score === 'ELITE') {
-    decision = 'GARDER';
     verdictBio = `Truie exceptionnelle (Élite). ${isse ? `ISSE excellent (${isse}j).` : ''} À conserver prioritairement.`;
-  } else {
-    decision = 'GARDER';
-    verdictBio = 'Performances stables. Truie productive.';
   }
 
   // Cas cochette (pas encore de portée)

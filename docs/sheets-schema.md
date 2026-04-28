@@ -26,9 +26,10 @@
 9. [FINANCES](#8-finances)
 10. [SUIVI_REPRODUCTION_ACTUEL](#9-suivi_reproduction_actuel-saillies)
 11. [ALERTES_ACTIVES](#10-alertes_actives)
-12. [Annexe A — Alias `sheetName` → `tableKey`](#annexe-a--alias-sheetname--tablekey)
-13. [Annexe B — Truies archivées](#annexe-b--truies-archivées-t08-t17)
-14. [Annexe C — Variants `findIdx`](#annexe-c--comment-findidx-matche-les-variantes)
+12. [HISTORIQUE_TRANSITIONS](#11-historique_transitions)
+13. [Annexe A — Alias `sheetName` → `tableKey`](#annexe-a--alias-sheetname--tablekey)
+14. [Annexe B — Truies archivées](#annexe-b--truies-archivées-t08-t17)
+15. [Annexe C — Variants `findIdx`](#annexe-c--comment-findidx-matche-les-variantes)
 
 ---
 
@@ -496,6 +497,37 @@ Clé TABLES_INDEX : `ALERTES_ACTIVES`. **Actions** : READ (pour l'app).
 Bug connu côté GAS sur la règle R4 (mortalité) : 10/12 alertes du snapshot
 2026-04-20 sont des **faux positifs**. Le moteur local `alertEngine.ts`
 réimplémente la règle correctement — préférer ses résultats pour l'UI.
+
+---
+
+## 11. HISTORIQUE_TRANSITIONS
+
+**Objet** : journal des passages de phases biologiques (moteur PhaseEngine).
+Clé TABLES_INDEX : `HISTORIQUE_TRANSITIONS`.
+
+**Actions** : READ · APPEND.
+
+| Colonne canonique | Type | Obl. | Variantes acceptées |
+|-------------------|------|:---:|--------------------|
+| `BANDE_ID` | string (FK) | ✅ | `BANDE_ID`, `ID_BANDE`, `BANDE`, `ID` |
+| `FROM_PHASE` | enum | ✅ | `FROM_PHASE`, `ANCIENNE_PHASE`, `DE_PHASE` |
+| `TO_PHASE` | enum | ✅ | `TO_PHASE`, `NOUVELLE_PHASE`, `A_PHASE` |
+| `DATE_TRANSITION` | date | ✅ | `DATE_TRANSITION`, `DATE`, `TS` |
+| `UTILISATEUR` | string | ⭕ | `UTILISATEUR`, `USER`, `AUTEUR` |
+| `POIDS_KG` | number | ⭕ | `POIDS_KG`, `POIDS`, `KG` |
+| `AGE_JOURS` | int | ⭕ | `AGE_JOURS`, `AGE`, `JOURS` |
+| `NOTES` | string | ⭕ | `NOTES` |
+
+### Enums
+- **`FROM_PHASE`** / **`TO_PHASE`** :
+  `SOUS_MERE` · `POST_SEVRAGE` · `CROISSANCE` · `ENGRAISSEMENT` · `FINITION` · `SORTIE`.
+
+### Exemple
+
+| BANDE_ID | FROM_PHASE | TO_PHASE | DATE_TRANSITION | UTILISATEUR | POIDS_KG | AGE_JOURS |
+|----------|------------|----------|-----------------|-------------|----------|-----------|
+| 26-T18-01| SOUS_MERE  | POST_SEVRAGE | 18/04/2026  | PORCHER     | 7.5      | 28        |
+| 26-T7-01 | FINITION   | SORTIE   | 19/04/2026      | ADMIN       | 105      | 185       |
 
 ---
 

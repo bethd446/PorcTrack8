@@ -48,6 +48,7 @@ npx cap open android   # ou: npx cap run android
 /src
 ├── components/           # Composants réutilisables
 │   ├── PremiumHeader.tsx    # Header principal (gradient vert, children slot)
+│   ├── SyncStatusBadge.tsx  # Badge Sync (gris/orange/rouge)
 │   ├── Navigation.tsx       # Bottom tab bar (Ionic)
 │   ├── Dashboard.tsx        # Écran Home / Cockpit
 │   ├── PremiumUI.tsx        # Design system (PremiumCard, PremiumButton, etc.)
@@ -61,12 +62,17 @@ npx cap open android   # ou: npx cap run android
 │   ├── protocoles/          # Guide métier / SOPs
 │   └── notes/               # Notes terrain
 │
-├── context/FarmContext.tsx   # State global (truies, bandes, alertes, etc.)
+├── context/
+│   ├── TroupeauContext.tsx   # State troupeau (truies, verrats, bandes)
+│   ├── RessourcesContext.tsx # State ressources (aliments, stocks, veto)
+│   └── PilotageContext.tsx   # State pilotage (KPIs, finances, alertes)
+│
 ├── services/
-│   ├── alertEngine.ts       # 6 règles GTTT biologiques
+│   ├── alertEngine.ts       # 14 règles GTTT biologiques
 │   ├── googleSheets.ts      # Backend Google Sheets
 │   ├── offlineQueue.ts      # File d'attente offline
-│   └── offlineCache.ts      # Cache local
+│   ├── offlineCache.ts      # Cache local
+│   └── kvStore.ts           # Persistance clé-valeur (Preferences)
 │
 ├── index.css                # Design system CSS + Tailwind v4
 ├── App.tsx                  # Router (17 routes)
@@ -77,9 +83,10 @@ npx cap open android   # ou: npx cap run android
 - **Framework** : Ionic 8 + React 18 + TypeScript
 - **Build** : Vite
 - **CSS** : Tailwind CSS v4 (@theme, @layer)
+- **Persistance** : kvStore (Capacitor Preferences) pour les clés critiques, Google Sheets pour le métier
 - **Déploiement** : Capacitor (Android/iOS)
 - **Backend** : Google Sheets API
-- **State** : React Context (FarmContext)
+- **State** : React Context (Architecture granulaire Troupeau/Ressources/Pilotage)
 - **Icons** : Ionicons + Lucide React
 - **Dates** : date-fns (locale fr)
 
@@ -127,19 +134,27 @@ Le header accepte un slot `children` pour intégrer des éléments (tabs, barre 
 
 ### Constantes biologiques
 - Gestation : **115 jours** (±2)
-- Lactation / Sevrage : **21 jours**
+- Lactation / Sevrage : **28 jours**
 - Retour chaleur post-sevrage : **3-7 jours**
 - Seuil mortalité anormale : **>15%** du lot
 
-### 6 règles d'alerte (`alertEngine.ts`)
+### 14 règles d'alerte (`alertEngine.ts`)
 | # | Règle | Déclencheur | Priorité |
 |---|-------|-------------|----------|
 | R1 | Mise-Bas | J-3 à J+2 de date prévue | HAUTE→CRITIQUE |
-| R2 | Sevrage | J+21 post naissance | HAUTE→NORMALE |
+| R2 | Sevrage | J+28 post naissance | HAUTE→NORMALE |
 | R3 | Retour Chaleur | J+5 post sevrage | HAUTE→NORMALE |
 | R4 | Mortalité | >15% morts dans lot | HAUTE→CRITIQUE |
-| R5 | Stock Critique | Stock bas ou à 0 | HAUTE→CRITIQUE |
+| R5 | Stock Critique | Rupture ou seuil bas atteint | HAUTE→CRITIQUE |
 | R6 | Regroupement | 2+ bandes sevrables ±3j | INFO |
+| R7 | Échographie | J25 à J35 post-saillie | INFO |
+| R8 | Re-Saillie | Retour chaleur détecté | HAUTE |
+| R9 | Retard Phase | Maternité prolongée (>J31) | NORMALE |
+| R10 | Surdensité | >6 bandes en engraissement | HAUTE |
+| R11 | Réforme (Perf) | Productivité insuffisante | HAUTE |
+| R12 | Réforme (Inact.) | Longue inactivité (90j+) | NORMALE |
+| R13 | Manque Pesée | Aucun poids depuis 21j | NORMALE |
+| R14 | Portée Orpheline| Truie morte avec porcelets | CRITIQUE |
 
 ### Statuts animaux
 - **Truies** : Gestation, Allaitante/Lactation, Flushing, Vide, Réforme, Morte
@@ -156,8 +171,9 @@ Le header accepte un slot `children` pour intégrer des éléments (tabs, barre 
 - **Toujours lire un fichier avant de l'éditer** (Read → Edit, jamais Write direct sur existant)
 - **Imports** : Ionic d'abord, puis lucide-react, puis internes
 - **Styles** : Utiliser les classes du design system (.ft-heading, .premium-card) + Tailwind utilities
-- **Pas de localStorage pour le state** — utiliser FarmContext
+- **Pas de localStorage** — utiliser kvStore (Preferences) pour le persistant et les Contextes pour le state
 - **Pas de negative margins** pour le layout — utiliser flex/grid/children slots
+- **Dates** : TOUJOURS utiliser `safeDate()` de `truieHelpers.ts` pour parser les dates utilisateur.
 - **French UI** : Tout le texte visible est en français
 - **Monospace pour les données** : IDs, dates, codes → `.ft-code`
 - **Uppercase headings** : Tous les titres/labels → `.ft-heading` + `uppercase`

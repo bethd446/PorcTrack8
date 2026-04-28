@@ -98,6 +98,11 @@ describe('parsePeseeFromNote', () => {
     const n = makeNote('B1', 'not-a-date', 'Pesée 10 porcelets · 5kg · J+21');
     expect(parsePeseeFromNote(n)).toBeNull();
   });
+
+  it('ignore une pesée si animalType n\'est pas BANDE (ex: truie)', () => {
+    const n = makeNote('T1', '2026-04-14', 'Pesée individuelle · 185kg', 'TRUIE');
+    expect(parsePeseeFromNote(n)).toBeNull();
+  });
 });
 
 // ─── extractPeseesForBande ──────────────────────────────────────────────────

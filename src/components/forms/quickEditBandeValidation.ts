@@ -27,6 +27,7 @@
  */
 
 import type { BandePorcelets } from '../../types/farm';
+import { safeDate } from '../../lib/truieHelpers';
 
 export type BandeEditPatch = Partial<{
   TRUIE: string;
@@ -131,10 +132,7 @@ export function frToIsoDate(fr: string | undefined): string {
 
 /** Parse ISO yyyy-MM-dd en Date (local) ou null. */
 function parseIsoDate(iso: string): Date | null {
-  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return null;
-  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  return Number.isNaN(d.getTime()) ? null : d;
+  return safeDate(iso);
 }
 
 function parseIntStrict(raw: string): number | null {

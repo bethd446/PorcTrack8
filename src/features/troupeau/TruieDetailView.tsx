@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { IonContent, IonPage, IonModal, IonToast } from '@ionic/react';
+import { IonContent, IonPage, IonToast, useIonAlert } from '@ionic/react';
 import {
   Edit3, Activity, Heart, Award, AlertTriangle,
   CheckCircle2, AlertCircle, Info, TrendingDown,
@@ -13,6 +13,7 @@ import { useFarm } from '../../context/FarmContext';
 import { genererFicheMerite } from '../../services/performanceAnalyzer';
 import { useAuth } from '../../context/AuthContext';
 import { enqueueUpdateRow } from '../../services/offlineQueue';
+import QuickEditTruieForm from '../../components/forms/QuickEditTruieForm';
 import type { BandePorcelets } from '../../types/farm';
 import type { ChipTone } from '../../components/agritech/Chip';
 
@@ -47,6 +48,7 @@ const TruieDetailView: React.FC = () => {
   const navigate = useNavigate();
   const { truies, bandes, saillies } = useFarm();
   const { isOwner } = useAuth();
+  const [presentAlert] = useIonAlert();
   const [editOpen, setEditOpen] = useState(false);
   const [toast, setToast] = useState('');
 
@@ -71,6 +73,26 @@ const TruieDetailView: React.FC = () => {
     if (!truie) return null;
     return genererFicheMerite(truie, historique, sowSaillies);
   }, [truie, historique, sowSaillies]);
+
+  // ── handleReformer déclaré ici (avant le early return) car useCallback est un hook ──
+  const handleReformer = useCallback(() => {
+    if (!truie) return;
+    presentAlert({
+      header: 'Mise en réforme',
+      message: `Confirmer la mise en réforme de la truie ${truie.displayId} ?`,
+      buttons: [
+        { text: 'Annuler', role: 'cancel' },
+        {
+          text: 'Confirmer',
+          role: 'destructive',
+          handler: () => {
+            void enqueueUpdateRow('SUIVI_TRUIES_REPRODUCTION', 'ID', truie.id, { STATUT: 'Réforme' });
+            setToast('Truie passée en réforme');
+          },
+        },
+      ],
+    });
+  }, [presentAlert, truie]);
 
   // ── État non trouvé ─────────────────────────────────────────────────────────
 
@@ -101,12 +123,6 @@ const TruieDetailView: React.FC = () => {
   const handleConfirmerMB = () => {
     enqueueUpdateRow('SUIVI_TRUIES_REPRODUCTION', 'ID', truie.id, { STATUT: 'En maternité' });
     setToast('Mise-bas confirmée');
-  };
-
-  const handleReformer = () => {
-    if (!window.confirm(`Confirmer la mise en réforme de la truie ${truie.displayId} ?`)) return;
-    enqueueUpdateRow('SUIVI_TRUIES_REPRODUCTION', 'ID', truie.id, { STATUT: 'Réforme' });
-    setToast('Truie passée en réforme');
   };
 
   const handleDetecterChaleur = () => {
@@ -357,32 +373,12 @@ const TruieDetailView: React.FC = () => {
           </div>
         </AgritechLayout>
 
-        {/* ── MODAL ÉDITION ───────────────────────────────────────────────── */}
-        <IonModal isOpen={editOpen} onDidDismiss={() => setEditOpen(false)}>
-          <div className="p-6 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h2 className="ft-heading text-lg uppercase">
-                Modifier {truie.displayId}
-              </h2>
-              <button
-                onClick={() => setEditOpen(false)}
-                className="p-2 rounded-lg text-text-2 hover:text-text-0"
-                aria-label="Fermer"
-              >
-                ✕
-              </button>
-            </div>
-            <p className="text-sm text-text-2">
-              Formulaire d'édition complet disponible prochainement.
-            </p>
-            <button
-              onClick={() => setEditOpen(false)}
-              className="premium-btn w-full"
-            >
-              Fermer
-            </button>
-          </div>
-        </IonModal>
+        {/* ── FORMULAIRE ÉDITION TRUIE ──────────────────────────────────── */}
+        <QuickEditTruieForm
+          isOpen={editOpen}
+          onClose={() => setEditOpen(false)}
+          truie={truie}
+        />
 
         <IonToast
           isOpen={!!toast}

@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import AgritechNav from '../../components/AgritechNav';
 import { Chip, DataRow, SectionDivider, KpiCard } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
@@ -387,7 +386,6 @@ const AlimentsView: React.FC = () => {
             )}
           </div>
         </AgritechLayout>
-        <AgritechNav />
 
         <QuickAddAlimentForm
           isOpen={addOpen}

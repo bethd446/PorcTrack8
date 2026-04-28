@@ -17,7 +17,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useFarm } from '../../context/FarmContext';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import AgritechNav from '../../components/AgritechNav';
 import { DataRow, Chip, SectionDivider } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
 import { TruieIcon } from '../../components/icons';
@@ -607,7 +606,6 @@ const TruiesListView: React.FC = () => {
             )}
           </div>
         </AgritechLayout>
-        <AgritechNav />
       </IonContent>
     </IonPage>
   );

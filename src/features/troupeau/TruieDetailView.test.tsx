@@ -34,6 +34,10 @@ vi.mock('../../services/offlineQueue', () => ({
   enqueueUpdateRow: (...args: unknown[]) => enqueueUpdateRowMock(...args),
 }));
 
+// Mock useIonAlert : expose presentAlertMock pour pouvoir simuler la confirmation
+// ou l'annulation dans les tests sans web-component natif.
+const presentAlertMock = vi.fn();
+
 // ── Fixtures ────────────────────────────────────────────────────────────────
 const truieT14: Truie = {
   id: 'T14',
@@ -141,6 +145,8 @@ vi.mock('@ionic/react', () => ({
     isOpen?: boolean;
     children: React.ReactNode;
   }) => (isOpen ? <div role="dialog">{children}</div> : null),
+  // useIonAlert : retourne le mock exposé en haut de fichier.
+  useIonAlert: () => [presentAlertMock],
 }));
 
 import TruieDetailView from './TruieDetailView';
@@ -251,7 +257,13 @@ describe('TruieDetailView', () => {
   });
 
   it('SURVEILLANCE : bouton « Passer en réforme » avec confirm dialog', () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    // Simule l'appui sur « Confirmer » en appelant le handler du bouton destructif.
+    presentAlertMock.mockImplementationOnce((opts: {
+      buttons: { role?: string; handler?: () => void }[];
+    }) => {
+      const destructive = opts.buttons.find(b => b.role === 'destructive');
+      destructive?.handler?.();
+    });
     enqueueUpdateRowMock.mockClear();
 
     renderAt('/troupeau/truies/T22');
@@ -261,7 +273,7 @@ describe('TruieDetailView', () => {
 
     fireEvent.click(btn);
 
-    expect(confirmSpy).toHaveBeenCalledTimes(1);
+    expect(presentAlertMock).toHaveBeenCalledTimes(1);
     expect(enqueueUpdateRowMock).toHaveBeenCalledWith(
       'SUIVI_TRUIES_REPRODUCTION',
       'ID',
@@ -269,21 +281,22 @@ describe('TruieDetailView', () => {
       { STATUT: 'Réforme' },
     );
 
-    confirmSpy.mockRestore();
+    presentAlertMock.mockReset();
   });
 
-  it('SURVEILLANCE : confirm annulé → pas d\'update', () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+  it("SURVEILLANCE : confirm annulé → pas d'update", () => {
+    // Simule l'appui sur « Annuler » — on ne déclenche aucun handler.
+    presentAlertMock.mockImplementationOnce(() => { /* annulé — rien */ });
     enqueueUpdateRowMock.mockClear();
 
     renderAt('/troupeau/truies/T22');
     const region = screen.getByRole('region', { name: /actions métier/i });
     fireEvent.click(within(region).getByRole('button', { name: 'Passer en réforme' }));
 
-    expect(confirmSpy).toHaveBeenCalledTimes(1);
+    expect(presentAlertMock).toHaveBeenCalledTimes(1);
     expect(enqueueUpdateRowMock).not.toHaveBeenCalled();
 
-    confirmSpy.mockRestore();
+    presentAlertMock.mockReset();
   });
 
   it('VIDE : affiche le bouton « Détecter chaleur » qui met à jour le statut', () => {

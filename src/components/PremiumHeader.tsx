@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { IonToast } from '@ionic/react';
 import { ChevronLeft, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useFarm } from '../context/FarmContext';
-import { getQueueStatus } from '../services/offlineQueue';
+import SyncStatusBadge from './SyncStatusBadge';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FARM_CONFIG } from '../config/farm';
+import { kvGet } from '../services/kvStore';
 
 interface PremiumHeaderProps {
   title?: string;
@@ -24,10 +25,9 @@ const PremiumHeader: React.FC<PremiumHeaderProps> = ({
   const { dataSource, criticalAlertCount } = useFarm();
   const navigate = useNavigate();
   const location = useLocation();
-  const userName  = localStorage.getItem('user_name') || '';
+  const userName  = kvGet('user_name') || '';
   const [toast, setToast]     = useState(false);
 
-  const pendingCount = getQueueStatus().pending;
   const showBack = location.pathname !== '/';
 
   const handleBack = () => {
@@ -71,18 +71,6 @@ const PremiumHeader: React.FC<PremiumHeaderProps> = ({
 
         {/* Right: compact status */}
         <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-
-          {/* Pending sync */}
-          {pendingCount > 0 && (
-            <button
-              onClick={() => navigate('/sync')}
-              className="h-8 px-2.5 rounded-lg bg-amber-100 border border-amber-200 flex items-center gap-1.5 active:scale-[0.95] transition-transform duration-[160ms] pressable"
-              aria-label="État de synchronisation"
-            >
-              <RefreshCw size={12} className="text-amber-500 animate-spin" />
-              <span className="ft-code text-[11px] text-amber-500">{pendingCount}</span>
-            </button>
-          )}
 
           {/* Critical alerts */}
           {criticalAlertCount > 0 && (
@@ -129,11 +117,10 @@ const PremiumHeader: React.FC<PremiumHeaderProps> = ({
       </div>
 
       {/* ── Slot children (tabs, filters…) ──────────────────────── */}
-      {children && (
-        <div className="mt-3">
-          {children}
-        </div>
-      )}
+      <div className="mt-3 flex items-center gap-3 overflow-x-auto no-scrollbar">
+        <SyncStatusBadge />
+        {children}
+      </div>
 
       <IonToast
         isOpen={toast}

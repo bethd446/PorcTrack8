@@ -67,6 +67,7 @@ interface MockFarmValue {
   getNotesForSubject: () => unknown[];
   pullData: () => Promise<void>;
   processQueue: () => Promise<void>;
+  recomputeAlerts: () => void;
   lastUpdate: number;
   syncStatus: 'synced' | 'pending' | 'offline';
   truiesHeader: string[];
@@ -81,7 +82,20 @@ let mockFarmValue: MockFarmValue;
 
 vi.mock('../context/FarmContext', () => ({
   useFarm: () => mockFarmValue,
+  useMeta: () => mockFarmValue,
   FarmProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+vi.mock('../context/TroupeauContext', () => ({
+  useTroupeau: () => mockFarmValue,
+}));
+
+vi.mock('../context/PilotageContext', () => ({
+  usePilotage: () => mockFarmValue,
+}));
+
+vi.mock('../context/RessourcesContext', () => ({
+  useRessources: () => mockFarmValue,
 }));
 
 // ForecastWidget fait des calculs lourds hors sujet pour ces tests ; on le
@@ -200,6 +214,7 @@ function defaultFarmValue(): MockFarmValue {
     getNotesForSubject: () => [],
     pullData: vi.fn().mockResolvedValue(undefined),
     processQueue: vi.fn().mockResolvedValue(undefined),
+    recomputeAlerts: vi.fn(),
     lastUpdate: 0,
     syncStatus: 'synced',
     truiesHeader: [],

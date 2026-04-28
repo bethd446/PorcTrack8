@@ -10,6 +10,7 @@ import { enqueueAppendRow } from '../../services/offlineQueue';
 import AgritechLayout from '../../components/AgritechLayout';
 import AgritechHeader from '../../components/AgritechHeader';
 import { Chip } from '../../components/agritech';
+import { kvGet } from '../../services/kvStore';
 
 const ControleQuotidien: React.FC = () => {
   const navigate = useNavigate();
@@ -27,8 +28,8 @@ const ControleQuotidien: React.FC = () => {
     setLoading(true);
     setLastAnswer(answer);
     const now = new Date();
-    const porcher = localStorage.getItem('user_name') || 'Porcher K13';
-    const deviceId = localStorage.getItem('device_id') || 'DEV-UNKNOWN';
+    const porcher = kvGet('user_name') || 'Porcher K13';
+    const deviceId = kvGet('device_id') || 'DEV-UNKNOWN';
 
     // Schéma canonique NOTES_TERRAIN (5 colonnes) :
     //   DATE | TYPE_ANIMAL | ID_ANIMAL | NOTE | AUTEUR

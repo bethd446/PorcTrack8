@@ -3,6 +3,7 @@ import { IonSpinner, IonToast } from '@ionic/react';
 import { Send, ClipboardList } from 'lucide-react';
 import { enqueueAppendRow } from '../../services/offlineQueue';
 import { useFarm } from '../../context/FarmContext';
+import { kvGet } from '../../services/kvStore';
 
 /**
  * QuickNoteForm — Saisie rapide d'une note terrain (Agritech Dark)
@@ -27,9 +28,7 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const author = typeof window !== 'undefined'
-    ? (localStorage.getItem('user_name') || 'Anonyme')
-    : 'Anonyme';
+  const author = kvGet('user_name') || 'Anonyme';
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();

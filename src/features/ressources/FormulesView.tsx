@@ -3,7 +3,6 @@ import { IonContent, IonPage } from '@ionic/react';
 import { ClipboardList, Calculator, AlertTriangle, Database, HardDrive } from 'lucide-react';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import AgritechNav from '../../components/AgritechNav';
 import { Chip, SectionDivider } from '../../components/agritech';
 import {
   PHASE_LABELS,
@@ -328,7 +327,6 @@ const FormulesView: React.FC = () => {
             </footer>
           </div>
         </AgritechLayout>
-        <AgritechNav />
       </IonContent>
     </IonPage>
   );

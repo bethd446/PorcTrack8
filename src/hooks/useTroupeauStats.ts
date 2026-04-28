@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useFarm } from '../context/FarmContext';
+import { useTroupeau } from '../context/TroupeauContext';
 import { normaliseStatut } from '../lib/truieStatut';
 import { isArchivedTruie } from '../lib/truieHelpers';
 import type { TruieEtape } from '../components/truie/TruieStatutPipeline';
@@ -9,7 +9,7 @@ import type { TruieEtape } from '../components/truie/TruieStatutPipeline';
  * Centralise la logique de filtrage "À surveiller" et les compteurs du funnel.
  */
 export function useTroupeauPipeline() {
-  const { truies } = useFarm();
+  const { truies } = useTroupeau();
 
   const activeTruies = useMemo(
     () => truies.filter((t) => !isArchivedTruie(t.id)),

@@ -19,6 +19,12 @@ const config: CapacitorConfig = {
       smallIcon: 'ic_stat_notification',
       iconColor: '#064e3b',
     },
+    SplashScreen: {
+      launchAutoHide: false,
+      backgroundColor: "#ffffff",
+      androidScaleType: "CENTER_CROP",
+      showSpinner: false,
+    },
   },
 };
 

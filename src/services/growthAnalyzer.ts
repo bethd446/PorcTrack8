@@ -140,6 +140,18 @@ function isValidIsoDate(date: string): boolean {
  */
 export function parsePeseeFromNote(note: Note): PeseeRecord | null {
   if (!note || typeof note.texte !== 'string') return null;
+
+  // Sécurité : ignorer si la note ne concerne pas une bande (ex: pesée individuelle truie)
+  if (note.animalType !== 'BANDE') {
+    if (note.texte.toLowerCase().includes('pesée')) {
+      logger.warn('growthAnalyzer', 'Pesée individuelle ignorée pour les stats de bande', {
+        type: note.animalType,
+        id: note.animalId,
+      });
+    }
+    return null;
+  }
+
   const match = PESEE_REGEX.exec(note.texte);
   if (!match) return null;
 

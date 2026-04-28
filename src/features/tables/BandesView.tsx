@@ -23,6 +23,7 @@ import QuickSexSeparationForm from '../../components/forms/QuickSexSeparationFor
 import BandeCroissanceCard from '../../components/bande/BandeCroissanceCard';
 import { useFarm } from '../../context/FarmContext';
 import { isDebugEnabled } from '../../config';
+import { kvGet } from '../../services/kvStore';
 
 // Error Boundary locale pour le module Portées
 interface BandesEBProps { children: React.ReactNode; onReset: () => void; }
@@ -1116,7 +1117,7 @@ const BatchWeaningModal: React.FC<{
                     'BATCH',
                     'SEVRAGE',
                     summary,
-                    localStorage.getItem('user_name') || 'Système'
+                    kvGet('user_name') || 'Système'
                 ]);
             }
 

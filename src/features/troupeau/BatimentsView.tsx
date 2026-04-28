@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import AgritechNav from '../../components/AgritechNav';
 import { IsoBarn, SectionDivider } from '../../components/agritech';
 import type { Building, Arrow } from '../../components/agritech';
 import { FARM_CONFIG } from '../../config/farm';
@@ -226,7 +225,6 @@ const BatimentsView: React.FC = () => {
             </div>
           </div>
         </AgritechLayout>
-        <AgritechNav />
       </IonContent>
     </IonPage>
   );
