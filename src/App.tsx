@@ -22,6 +22,8 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import SupabaseProtectedRoute from './components/auth/ProtectedRoute';
 import Login from './components/auth/Login';
+import AdminRoute from './components/auth/AdminRoute';
+const AdminDashboard = React.lazy(() => import('./features/admin/AdminDashboard'));
 import AgritechNavV2, { QuickActionsProvider } from './components/AgritechNavV2';
 import { loadChecklistDefinitions } from './services/checklistService';
 
@@ -223,6 +225,16 @@ const AppContent = () => {
           <Route path="/ressources/aliments/formules" element={<FormulesView />} />
           <Route path="/ressources/veto" element={<TableView tableKey="STOCK_VETO" />} />
           <Route path="/ressources/pharmacie" element={<PharmacieView />} />
+
+          {/* ── Admin (rôle ADMIN requis) ─────────────────────────────── */}
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            }
+          />
               </Routes>
             </SupabaseProtectedRoute>
           } />
