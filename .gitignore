@@ -1,6 +1,7 @@
 node_modules/
 build/
-dist/
+# dist/ inclus volontairement pour déploiement VPS statique
+# dist/
 coverage/
 .DS_Store
 graphify-out/
