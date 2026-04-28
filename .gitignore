@@ -13,3 +13,7 @@ graphify-out/
 # APK release artifacts (ne pas committer les binaires)
 releases/*.apk
 releases/*.aab
+
+# Keystore de production — NE JAMAIS COMMITTER
+android/porctrack-release.jks
+android/keystore.properties
