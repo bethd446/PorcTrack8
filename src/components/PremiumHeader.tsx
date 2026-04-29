@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { IonToast } from '@ionic/react';
 import { ChevronLeft, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useFarm } from '../context/FarmContext';
-import SyncStatusBadge from './SyncStatusBadge';
+import { SyncStatusBadge } from './SyncStatusBadge';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FARM_CONFIG } from '../config/farm';
 import { kvGet } from '../services/kvStore';
