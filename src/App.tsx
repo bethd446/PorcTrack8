@@ -26,6 +26,7 @@ import AdminRoute from './components/auth/AdminRoute';
 const AdminDashboard = React.lazy(() => import('./features/admin/AdminDashboard'));
 import AgritechNavV2, { QuickActionsProvider } from './components/AgritechNavV2';
 import { loadChecklistDefinitions } from './services/checklistService';
+import { ChatbotWidget } from './features/chatbot';
 
 // Lazy loading — chaque écran dans son propre chunk pour réduire le bundle initial
 // Cockpit agritech remplace Dashboard (Dashboard legacy supprimé — Cockpit = route `/`).
@@ -240,6 +241,8 @@ const AppContent = () => {
           } />
         </Routes>
         <AgritechNavV2 />
+        {/* Chatbot IA flottant — visible sur toutes les routes protégées */}
+        <ChatbotWidget />
         </QuickActionsProvider>
       </React.Suspense>
     </IonApp>
