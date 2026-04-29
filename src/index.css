@@ -55,12 +55,12 @@
      Une seule couleur d'accent : vert émeraude
      Tout le reste : niveaux de gris
      ──────────────────────────────────────────────────────────────────── */
-  --color-accent-700: #047857;
-  --color-accent-600: #059669;
-  --color-accent-500: #10B981;
-  --color-accent-400: #34D399;
-  --color-accent-100: #D1FAE5;
-  --color-accent-50:  #ECFDF5;
+  --color-accent-700: #1a3d10;
+  --color-accent-600: #235016;
+  --color-accent-500: #2d5a1b;
+  --color-accent-400: #4b8529;
+  --color-accent-100: #d9ebbf;
+  --color-accent-50:  #eef5e0;
 
   --color-gray-900: #111827;
   --color-gray-800: #1F2937;
@@ -76,9 +76,9 @@
   --color-red-500:    #EF4444;
   --color-red-100:    #FEE2E2;
   --color-red-50:     #FEF2F2;
-  --color-amber-500:  #F59E0B;
-  --color-amber-100:  #FEF3C7;
-  --color-amber-50:   #FFFBEB;
+  --color-amber-500:  #d4920f;
+  --color-amber-100:  #fef6c2;
+  --color-amber-50:   #fff8e1;
   --color-blue-500:   #3B82F6;
   --color-blue-100:   #DBEAFE;
   --color-blue-50:    #EFF6FF;
@@ -86,11 +86,17 @@
   --color-purple-50:  #F5F3FF;
 
   /* Legacy aliases */
-  --color-emerald-premium: #059669;
-  --color-forest-mid: #10B981;
-  --color-forest-light: #D1FAE5;
-  --color-amber-pork: #F59E0B;
-  --color-amber-deep: #D97706;
+  --color-emerald-premium: #2d5a1b;
+  --color-forest-mid: #3a6e22;
+  --color-forest-light: #d9ebbf;
+  --color-amber-pork: #d4920f;
+  --color-amber-deep: #a87a0c;
+
+  /* Nouveau — Terre / Boue */
+  --color-terre:       #7a4a28;
+  --color-terre-light: rgba(122,74,40,0.12);
+  /* Fond ivoire chaud */
+  --bg-app: #f5f0e6;
 
   /* Ombres — quasi invisibles */
   --shadow-card:     0 1px 2px rgba(0,0,0,0.04);
@@ -117,11 +123,11 @@
   }
   :root {
     --ion-font-family: var(--font-body);
-    --ion-color-primary: #10B981;
-    --ion-color-primary-rgb: 16, 185, 129;
-    --ion-color-primary-contrast: #00211A;
-    --ion-color-primary-shade: #059669;
-    --ion-color-primary-tint: #34D399;
+    --ion-color-primary: #2d5a1b;
+    --ion-color-primary-rgb: 45, 90, 27;
+    --ion-color-primary-contrast: #ffffff;
+    --ion-color-primary-shade: #235016;
+    --ion-color-primary-tint: #4b8529;
     --ion-safe-area-top: env(safe-area-inset-top);
     --ion-safe-area-bottom: env(safe-area-inset-bottom);
   }
