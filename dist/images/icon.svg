@@ -1,6 +1,6 @@
 <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <!-- Fond arrondi -->
-  <rect width="512" height="512" fill="#059669" rx="120" ry="120"/>
+  <rect width="512" height="512" fill="#235016" rx="120" ry="120"/>
 
   <!-- Cochon géométrique minimaliste -->
   <!-- Tête (cercle) -->
@@ -14,12 +14,12 @@
   <ellipse cx="312" cy="170" rx="22" ry="45" fill="white" transform="rotate(25 312 170)"/>
 
   <!-- Yeux -->
-  <circle cx="235" cy="225" r="8" fill="#059669"/>
-  <circle cx="277" cy="225" r="8" fill="#059669"/>
+  <circle cx="235" cy="225" r="8" fill="#235016"/>
+  <circle cx="277" cy="225" r="8" fill="#235016"/>
 
   <!-- Narines du museau -->
-  <circle cx="248" cy="285" r="4" fill="#059669"/>
-  <circle cx="264" cy="285" r="4" fill="#059669"/>
+  <circle cx="248" cy="285" r="4" fill="#235016"/>
+  <circle cx="264" cy="285" r="4" fill="#235016"/>
 
   <!-- Corps (rectangle arrondi) -->
   <rect x="210" y="310" width="92" height="85" rx="15" ry="15" fill="white"/>

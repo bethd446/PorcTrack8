@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 64">
   <defs>
     <linearGradient id="lg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#12D394"></stop>
-      <stop offset="1" stop-color="#10B981"></stop>
+      <stop offset="0" stop-color="#3a6e22"></stop>
+      <stop offset="1" stop-color="#2d5a1b"></stop>
     </linearGradient>
   </defs>
   
@@ -27,11 +27,11 @@
   
   <g font-family="&#39;Inter Tight&#39;,&#39;Helvetica Neue&#39;,Arial,sans-serif" font-weight="800" letter-spacing="-0.01em">
     <text x="82" y="40" font-size="28" fill="#F4F4F4">PORC</text>
-    <text x="158" y="40" font-size="28" fill="#10B981">TRACK</text>
+    <text x="158" y="40" font-size="28" fill="#2d5a1b">TRACK</text>
   </g>
   
   <g transform="translate(258, 18)">
-    <rect width="22" height="28" rx="5" fill="none" stroke="#10B981" stroke-width="1.6"></rect>
-    <text x="11" y="21" font-family="&#39;IBM Plex Mono&#39;,&#39;Menlo&#39;,monospace" font-size="14" font-weight="700" fill="#10B981" text-anchor="middle">8</text>
+    <rect width="22" height="28" rx="5" fill="none" stroke="#2d5a1b" stroke-width="1.6"></rect>
+    <text x="11" y="21" font-family="&#39;IBM Plex Mono&#39;,&#39;Menlo&#39;,monospace" font-size="14" font-weight="700" fill="#2d5a1b" text-anchor="middle">8</text>
   </g>
 </svg>
