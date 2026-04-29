@@ -3,16 +3,17 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.porc800.porctrack',
   appName: 'PorcTrack',
-  webDir: 'dist',
+  // On passe en mode Live Production (on pointe sur le VPS)
   server: {
-    androidScheme: 'https'
+    url: 'https://app.porctrack.tech',
+    cleartext: true
   },
   plugins: {
     CapacitorHttp: {
       enabled: true,
     },
     StatusBar: {
-      backgroundColor: '#FAFAF7',
+      backgroundColor: '#064e3b', // Couleur Émeraude-Premium
       style: 'LIGHT',
     },
     LocalNotifications: {
@@ -20,8 +21,8 @@ const config: CapacitorConfig = {
       iconColor: '#064e3b',
     },
     SplashScreen: {
-      launchAutoHide: false,
-      backgroundColor: "#ffffff",
+      launchAutoHide: true,
+      backgroundColor: "#064e3b",
       androidScaleType: "CENTER_CROP",
       showSpinner: false,
     },
