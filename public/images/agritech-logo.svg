@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 64" width="260" height="64" fill="none" role="img" aria-label="PorcTrack">
   <!-- Mark (32px) — hexagone + triangle interne, stroke accent -->
-  <g transform="translate(4 16)" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <g transform="translate(4 16)" stroke="#2d5a1b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
     <path d="M16 2 L28 9 L28 23 L16 30 L4 23 L4 9 Z" />
     <path d="M11 13 L21 13 L16 22 Z" />
-    <circle cx="16" cy="11" r="0.75" fill="#10B981" stroke="none" />
+    <circle cx="16" cy="11" r="0.75" fill="#2d5a1b" stroke="none" />
   </g>
   <!-- Wordmark — Big Shoulders Display 900 -->
   <text

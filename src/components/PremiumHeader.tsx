@@ -57,12 +57,21 @@ const PremiumHeader: React.FC<PremiumHeaderProps> = ({
           )}
 
           <div className="min-w-0">
-            <h1
-              className="ft-heading text-gray-900 uppercase leading-none truncate"
-              style={{ fontSize: 'clamp(24px, 6vw, 32px)', letterSpacing: '0.02em' }}
-            >
-              {title}
-            </h1>
+            {title === 'PorcTrack' ? (
+              <img
+                src="/images/agritech-logo.svg"
+                alt="PorcTrack"
+                className="h-7 w-auto"
+                loading="eager"
+              />
+            ) : (
+              <h1
+                className="ft-heading text-gray-900 uppercase leading-none truncate"
+                style={{ fontSize: 'clamp(24px, 6vw, 32px)', letterSpacing: '0.02em' }}
+              >
+                {title}
+              </h1>
+            )}
             <p className="text-[12px] text-gray-400 mt-1" style={{ fontFamily: 'InstrumentSans, sans-serif' }}>
               {subtitle}
             </p>

@@ -6,14 +6,14 @@
   <!-- Groupe logo centré verticalement plus haut -->
   <g transform="translate(540, 850)">
     <!-- Tête (cercle) -->
-    <circle cx="0" cy="-30" r="40" fill="#059669"/>
+    <circle cx="0" cy="-30" r="40" fill="#235016"/>
 
     <!-- Snout (museau - petit cercle) -->
-    <circle cx="0" cy="10" r="12" fill="#059669"/>
+    <circle cx="0" cy="10" r="12" fill="#235016"/>
 
     <!-- Oreilles -->
-    <ellipse cx="-25" cy="-60" rx="11" ry="22" fill="#059669" transform="rotate(-25 -25 -60)"/>
-    <ellipse cx="25" cy="-60" rx="11" ry="22" fill="#059669" transform="rotate(25 25 -60)"/>
+    <ellipse cx="-25" cy="-60" rx="11" ry="22" fill="#235016" transform="rotate(-25 -25 -60)"/>
+    <ellipse cx="25" cy="-60" rx="11" ry="22" fill="#235016" transform="rotate(25 25 -60)"/>
 
     <!-- Yeux -->
     <circle cx="-12" cy="-40" r="4" fill="white"/>
@@ -24,13 +24,13 @@
     <circle cx="5" cy="12" r="2" fill="white"/>
 
     <!-- Corps (rectangle arrondi) -->
-    <rect x="-30" y="25" width="60" height="50" rx="10" ry="10" fill="#059669"/>
+    <rect x="-30" y="25" width="60" height="50" rx="10" ry="10" fill="#235016"/>
 
     <!-- 4 pattes -->
-    <rect x="-20" y="75" width="10" height="30" rx="5" ry="5" fill="#059669"/>
-    <rect x="10" y="75" width="10" height="30" rx="5" ry="5" fill="#059669"/>
-    <rect x="-10" y="75" width="10" height="30" rx="5" ry="5" fill="#059669"/>
-    <rect x="0" y="75" width="10" height="30" rx="5" ry="5" fill="#059669"/>
+    <rect x="-20" y="75" width="10" height="30" rx="5" ry="5" fill="#235016"/>
+    <rect x="10" y="75" width="10" height="30" rx="5" ry="5" fill="#235016"/>
+    <rect x="-10" y="75" width="10" height="30" rx="5" ry="5" fill="#235016"/>
+    <rect x="0" y="75" width="10" height="30" rx="5" ry="5" fill="#235016"/>
   </g>
 
   <!-- Texte "PorcTrack" -->
