@@ -75,52 +75,73 @@ export type Database = {
       }
       batches: {
         Row: {
+          aliment_actuel: string | null
           boar_id: string | null
           code_id: string
           date_mise_bas: string | null
+          date_prochain_event: string | null
           date_saillie: string | null
           date_sevrage: string | null
           farm_id: string
           id: string
+          loge: string | null
+          nb_mort_nes: number | null
           notes: string | null
+          phase: string | null
           poids_moyen_sevrage_kg: number | null
           poids_portee_naissance_kg: number | null
           porcelets_nes_total: number
           porcelets_nes_vivants: number
           porcelets_sevrene_total: number
+          prochain_event: string | null
           sow_id: string | null
+          statut: string | null
         }
         Insert: {
+          aliment_actuel?: string | null
           boar_id?: string | null
           code_id: string
           date_mise_bas?: string | null
+          date_prochain_event?: string | null
           date_saillie?: string | null
           date_sevrage?: string | null
           farm_id: string
           id?: string
+          loge?: string | null
+          nb_mort_nes?: number | null
           notes?: string | null
+          phase?: string | null
           poids_moyen_sevrage_kg?: number | null
           poids_portee_naissance_kg?: number | null
           porcelets_nes_total?: number
           porcelets_nes_vivants?: number
           porcelets_sevrene_total?: number
+          prochain_event?: string | null
           sow_id?: string | null
+          statut?: string | null
         }
         Update: {
+          aliment_actuel?: string | null
           boar_id?: string | null
           code_id?: string
           date_mise_bas?: string | null
+          date_prochain_event?: string | null
           date_saillie?: string | null
           date_sevrage?: string | null
           farm_id?: string
           id?: string
+          loge?: string | null
+          nb_mort_nes?: number | null
           notes?: string | null
+          phase?: string | null
           poids_moyen_sevrage_kg?: number | null
           poids_portee_naissance_kg?: number | null
           porcelets_nes_total?: number
           porcelets_nes_vivants?: number
           porcelets_sevrene_total?: number
+          prochain_event?: string | null
           sow_id?: string | null
+          statut?: string | null
         }
         Relationships: [
           {
@@ -148,28 +169,46 @@ export type Database = {
       }
       boars: {
         Row: {
+          alimentation: string | null
+          boucle: string | null
           breed: string | null
           code_id: string
           created_on: string
           farm_id: string
           id: string
           name: string | null
+          notes: string | null
+          origine: string | null
+          ration_kg_j: number | null
+          statut: string | null
         }
         Insert: {
+          alimentation?: string | null
+          boucle?: string | null
           breed?: string | null
           code_id: string
           created_on?: string
           farm_id: string
           id?: string
           name?: string | null
+          notes?: string | null
+          origine?: string | null
+          ration_kg_j?: number | null
+          statut?: string | null
         }
         Update: {
+          alimentation?: string | null
+          boucle?: string | null
           breed?: string | null
           code_id?: string
           created_on?: string
           farm_id?: string
           id?: string
           name?: string | null
+          notes?: string | null
+          origine?: string | null
+          ration_kg_j?: number | null
+          statut?: string | null
         }
         Relationships: [
           {
@@ -221,6 +260,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "feed_inventory_farm_id_fkey"
+            columns: ["farm_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finances: {
+        Row: {
+          annuel_fcfa: number | null
+          created_at: string | null
+          farm_id: string
+          id: string
+          mensuel_fcfa: number | null
+          notes: string | null
+          pct_total: number | null
+          poste: string
+          type: string | null
+        }
+        Insert: {
+          annuel_fcfa?: number | null
+          created_at?: string | null
+          farm_id: string
+          id?: string
+          mensuel_fcfa?: number | null
+          notes?: string | null
+          pct_total?: number | null
+          poste: string
+          type?: string | null
+        }
+        Update: {
+          annuel_fcfa?: number | null
+          created_at?: string | null
+          farm_id?: string
+          id?: string
+          mensuel_fcfa?: number | null
+          notes?: string | null
+          pct_total?: number | null
+          poste?: string
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finances_farm_id_fkey"
             columns: ["farm_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -334,6 +417,192 @@ export type Database = {
           },
         ]
       }
+      notes: {
+        Row: {
+          author_id: string | null
+          category: string | null
+          content: string
+          created_at: string
+          farm_id: string
+          id: string
+        }
+        Insert: {
+          author_id?: string | null
+          category?: string | null
+          content: string
+          created_at?: string
+          farm_id: string
+          id?: string
+        }
+        Update: {
+          author_id?: string | null
+          category?: string | null
+          content?: string
+          created_at?: string
+          farm_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      plan_alimentation: {
+        Row: {
+          aliment: string | null
+          categorie: string
+          cout_kg_fcfa: number | null
+          cout_mois_fcfa: number | null
+          created_at: string | null
+          effectif: number | null
+          farm_id: string
+          id: string
+          phase: string | null
+          ration_j_kg: number | null
+          total_j_kg: number | null
+        }
+        Insert: {
+          aliment?: string | null
+          categorie: string
+          cout_kg_fcfa?: number | null
+          cout_mois_fcfa?: number | null
+          created_at?: string | null
+          effectif?: number | null
+          farm_id: string
+          id?: string
+          phase?: string | null
+          ration_j_kg?: number | null
+          total_j_kg?: number | null
+        }
+        Update: {
+          aliment?: string | null
+          categorie?: string
+          cout_kg_fcfa?: number | null
+          cout_mois_fcfa?: number | null
+          created_at?: string | null
+          effectif?: number | null
+          farm_id?: string
+          id?: string
+          phase?: string | null
+          ration_j_kg?: number | null
+          total_j_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_alimentation_farm_id_fkey"
+            columns: ["farm_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      produits_aliments: {
+        Row: {
+          code_id: string
+          created_at: string | null
+          en_alerte: boolean | null
+          farm_id: string
+          id: string
+          libelle: string
+          notes: string | null
+          seuil_alerte: number | null
+          stock_actuel: number | null
+          unite: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          code_id: string
+          created_at?: string | null
+          en_alerte?: boolean | null
+          farm_id: string
+          id?: string
+          libelle: string
+          notes?: string | null
+          seuil_alerte?: number | null
+          stock_actuel?: number | null
+          unite?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          code_id?: string
+          created_at?: string | null
+          en_alerte?: boolean | null
+          farm_id?: string
+          id?: string
+          libelle?: string
+          notes?: string | null
+          seuil_alerte?: number | null
+          stock_actuel?: number | null
+          unite?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produits_aliments_farm_id_fkey"
+            columns: ["farm_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      produits_veto: {
+        Row: {
+          alerte_stock_bas: boolean | null
+          code_id: string
+          created_at: string | null
+          dlc: string | null
+          farm_id: string
+          id: string
+          libelle: string
+          notes: string | null
+          stock_actuel: number | null
+          stock_min: number | null
+          type: string | null
+          unite: string | null
+          updated_at: string | null
+          usage: string | null
+        }
+        Insert: {
+          alerte_stock_bas?: boolean | null
+          code_id: string
+          created_at?: string | null
+          dlc?: string | null
+          farm_id: string
+          id?: string
+          libelle: string
+          notes?: string | null
+          stock_actuel?: number | null
+          stock_min?: number | null
+          type?: string | null
+          unite?: string | null
+          updated_at?: string | null
+          usage?: string | null
+        }
+        Update: {
+          alerte_stock_bas?: boolean | null
+          code_id?: string
+          created_at?: string | null
+          dlc?: string | null
+          farm_id?: string
+          id?: string
+          libelle?: string
+          notes?: string | null
+          stock_actuel?: number | null
+          stock_min?: number | null
+          type?: string | null
+          unite?: string | null
+          updated_at?: string | null
+          usage?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produits_veto_farm_id_fkey"
+            columns: ["farm_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           email: string | null
@@ -357,28 +626,58 @@ export type Database = {
       }
       sows: {
         Row: {
+          alimentation: string | null
+          boucle: string | null
           breed: string | null
           code_id: string
           created_on: string
+          date_mb_prevue: string | null
           farm_id: string
           id: string
+          localisation: string | null
           name: string | null
+          nb_portees: number | null
+          notes: string | null
+          origine: string | null
+          ration_kg_j: number | null
+          statut: string | null
+          statut_repro: string | null
         }
         Insert: {
+          alimentation?: string | null
+          boucle?: string | null
           breed?: string | null
           code_id: string
           created_on?: string
+          date_mb_prevue?: string | null
           farm_id: string
           id?: string
+          localisation?: string | null
           name?: string | null
+          nb_portees?: number | null
+          notes?: string | null
+          origine?: string | null
+          ration_kg_j?: number | null
+          statut?: string | null
+          statut_repro?: string | null
         }
         Update: {
+          alimentation?: string | null
+          boucle?: string | null
           breed?: string | null
           code_id?: string
           created_on?: string
+          date_mb_prevue?: string | null
           farm_id?: string
           id?: string
+          localisation?: string | null
           name?: string | null
+          nb_portees?: number | null
+          notes?: string | null
+          origine?: string | null
+          ration_kg_j?: number | null
+          statut?: string | null
+          statut_repro?: string | null
         }
         Relationships: [
           {
