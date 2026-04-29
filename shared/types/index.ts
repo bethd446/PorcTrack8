@@ -48,6 +48,7 @@ export interface Truie {
   notes?: string;
   created_at?: string;
   updated_at?: string;
+  dateNaissance?: string;
 }
 
 // ── Entité Bande ──────────────────────────────────────────────

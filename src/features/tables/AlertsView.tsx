@@ -66,7 +66,7 @@ const PRIORITY_CHIP_TONE: Record<AlertPriority, ChipTone> = {
 // Filter chips definition
 // ─────────────────────────────────────────────────────────────────────────────
 
-type FilterId = 'ALL' | AlertCategory;
+type FilterId = 'ALL' | 'REPRO' | 'SANTE' | 'BANDES' | 'STOCK' | AlertCategory;
 
 interface FilterDef {
   id: FilterId;

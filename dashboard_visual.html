@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Principal | PorcTrack 8</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700&family=Instrument+Sans:wght@400;500;700&display=swap');
+        body { font-family: 'Instrument Sans', sans-serif; background-color: #f0f4f3; }
+        .font-heading { font-family: 'Big Shoulders Display', cursive; }
+        .card { background: white; border-radius: 28px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+    </style>
+</head>
+<body class="p-4">
+    <div class="max-w-md mx-auto">
+        <header class="mb-6 flex justify-between items-center">
+            <div>
+                <h1 class="font-heading text-3xl uppercase text-emerald-900">Dashboard</h1>
+                <p class="text-sm text-gray-500">Secteur Nord · PorcTrack 8</p>
+            </div>
+            <div class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold uppercase flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Sync: OK
+            </div>
+        </header>
+
+        <section class="card p-6 mb-6">
+            <h2 class="font-heading text-xl uppercase mb-4">Vue d'ensemble</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-emerald-50 p-4 rounded-2xl">
+                    <p class="text-xs text-emerald-600">Truies actives</p>
+                    <p class="font-heading text-2xl text-emerald-900">17</p>
+                </div>
+                <div class="bg-amber-50 p-4 rounded-2xl">
+                    <p class="text-xs text-amber-700">Alertes</p>
+                    <p class="font-heading text-2xl text-amber-900">3</p>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

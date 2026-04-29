@@ -85,7 +85,18 @@ document.querySelectorAll('.nm-link').forEach((link) => {
   });
 });
 
-// ── Smooth scroll polyfill for anchor links ───────────────────
+// ── Changelog Auto ──────────────────────────────────────────
+fetch('/docs/CHANGELOG_TECHNIQUE.md')
+  .then(res => res.text())
+  .then(text => {
+    const lines = text.split('\n');
+    const recentUpdate = lines.find(line => line.startsWith('## ')) || 'Mise à jour récente...';
+    document.getElementById('changelog-content').textContent = recentUpdate.replace('## ', '');
+  })
+  .catch(() => {
+    document.getElementById('changelog-content').textContent = 'Changelog indisponible.';
+  });
+
 document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
   anchor.addEventListener('click', (e) => {
     const target = document.querySelector(anchor.getAttribute('href'));

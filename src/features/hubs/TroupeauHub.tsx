@@ -7,18 +7,22 @@ import AgritechLayout from '../../components/AgritechLayout';
 import { useTroupeau } from '../../context/TroupeauContext';
 import { normaliseStatut } from '../../lib/truieStatut';
 import { Bandes } from '../../services/bandAnalysisEngine';
+import { supabase } from '../../services/supabaseClient';
 import type { LogeOccupation, LogeOccupationAlerte } from '../../services/bandesAggregator';
 import { useTroupeauPipeline } from '../../hooks/useTroupeauStats';
 import { FARM_CONFIG } from '../../config/farm';
+import EmergencyButton from '../../components/EmergencyButton';
+import QuickMiseBasForm from '../../components/forms/QuickMiseBasForm';
+import QuickMortalityForm from '../../components/forms/QuickMortalityForm';
 
 import TroupeauTruiesView from '../troupeau/TroupeauTruiesView';
 import TroupeauVerratsView from '../troupeau/TroupeauVerratsView';
 import TroupeauPorceletsView from '../troupeau/TroupeauPorceletsView';
 import TroupeauLogesView from '../troupeau/TroupeauLogesView';
 
-// ─── Sub-tabs ────────────────────────────────────────────────────────────────
-
 type SubTab = 'truies' | 'verrats' | 'porcelets' | 'loges';
+
+// ─── Sub-tabs ────────────────────────────────────────────────────────────────
 
 const SUB_TABS: ReadonlyArray<{ id: SubTab; label: string }> = [
   { id: 'truies', label: 'Truies' },
@@ -39,6 +43,20 @@ const TroupeauHub: React.FC = () => {
   const viewParam = searchParams.get('view');
   const initialSubTab: SubTab = isSubTab(viewParam) ? viewParam : 'truies';
   const [activeSubTab, setActiveSubTab] = useState<SubTab>(initialSubTab);
+  const [showMiseBas, setShowMiseBas] = useState(false);
+  const [showMortality, setShowMortality] = useState(false);
+  const [mortalityRate, setMortalityRate] = useState(0);
+
+  useEffect(() => {
+    async function fetchMortality() {
+      const { data, error } = await supabase.from('health_logs').select('*');
+      if (data) {
+        const morts = data.filter(l => l.log_type === 'MORTALITE').length;
+        setMortalityRate(data.length > 0 ? (morts / data.length) * 100 : 0);
+      }
+    }
+    fetchMortality();
+  }, []);
 
   // Sync state with URL parameter
   useEffect(() => {
@@ -107,6 +125,10 @@ const TroupeauHub: React.FC = () => {
 
           <div className="px-4 pt-3 pb-32 flex flex-col gap-5">
             {/* ── Summary strip ─────────────────────────────────────── */}
+            <div className="card-dense p-3.5 mb-2">
+              <p className="font-mono text-[10px] uppercase text-text-2 mb-1">Taux de mortalité</p>
+              <p className="font-mono text-[18px] text-rose-500 font-bold">{mortalityRate.toFixed(1)}%</p>
+            </div>
             <SummaryStrip
               total={summary.total}
               pleines={summary.pleines}
@@ -169,6 +191,9 @@ const TroupeauHub: React.FC = () => {
               {activeSubTab === 'loges' && <TroupeauLogesView />}
             </div>
           </div>
+          <EmergencyButton onClick={() => setShowMortality(true)} label="Urgence Mortalité" />
+          <QuickMiseBasForm isOpen={showMiseBas} onClose={() => setShowMiseBas(false)} />
+          <QuickMortalityForm isOpen={showMortality} onClose={() => setShowMortality(false)} />
         </AgritechLayout>
       </IonContent>
     </IonPage>

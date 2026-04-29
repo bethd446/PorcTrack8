@@ -238,6 +238,8 @@ function UsersPanel() {
   );
 }
 
+import { WebhookPanel } from "./AdminDashboardWebhook";
+
 // ── Panel 3 : Monitoring ─────────────────────────────────────────────────────
 
 function MonitoringPanel({ logs }: { logs: AdminLog[] }) {
@@ -357,6 +359,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <UsersPanel />
           <MonitoringPanel logs={logs} />
+          <WebhookPanel />
         </div>
 
         {/* Lien retour app */}

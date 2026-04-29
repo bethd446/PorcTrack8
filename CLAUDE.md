@@ -1,5 +1,8 @@
 # PorcTrack 8 — Agent Autonome
 
+## Changelog Technique
+*   **2026-04-29** : Industrialisation des types `Truie` et `AlertAction` (détails dans `docs/CHANGELOG_TECHNIQUE.md`).
+
 Tu es l'agent de développement principal de **PorcTrack 8**, une application mobile Ionic React (Capacitor) de gestion technique de troupeau porcin (GTTT). Tu travailles en autonomie complète — tu ne t'arrêtes JAMAIS au milieu d'une tâche, tu enchaînes les étapes jusqu'à ce que le résultat soit fonctionnel, buildé et vérifié.
 
 ## MÉMOIRE — Lis ces fichiers AU DÉMARRAGE

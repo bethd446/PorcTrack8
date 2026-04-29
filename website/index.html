@@ -29,6 +29,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
+  <!-- Plausible Analytics -->
+  <script defer data-domain="porctrack.tech" src="https://plausible.io/js/script.js"></script>
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="/images/favicon-32x32.png" />
 
@@ -43,9 +45,10 @@
       <img src="/images/logo.png" alt="PorcTrack" class="w-32" />
     </a>
     <div class="nav-links" id="navLinks">
-      <a href="#features">Fonctionnalités</a>
-      <a href="#pourquoi">Avantages</a>
-      <a href="#download">Télécharger</a>
+    <a href="#demo" class="nav-link" aria-label="Voir la démo">Démo</a>
+    <a href="#features" class="nav-link" aria-label="Fonctionnalités du produit">Fonctionnalités</a>
+    <a href="#pourquoi" class="nav-link" aria-label="Pourquoi choisir PorcTrack">Avantages</a>
+    <a href="#download" class="nav-link" aria-label="Télécharger l'application">Télécharger</a>
     </div>
     <div class="nav-actions">
       <a href="https://app.porctrack.tech" class="btn-nav" target="_blank" rel="noopener">
@@ -57,6 +60,7 @@
     </button>
   </div>
   <div class="nav-mobile" id="navMobile" aria-hidden="true">
+    <a href="#demo" class="nm-link">Démo</a>
     <a href="#features" class="nm-link">Fonctionnalités</a>
     <a href="#pourquoi" class="nm-link">Avantages</a>
     <a href="#download" class="nm-link">Télécharger</a>
@@ -79,12 +83,12 @@
       v8.2.0 · Offline-first · GTTT certifié
     </div>
 
-    <h1 class="hero-h1 reveal rv-d1">
+    <h1 class="hero-h1 reveal rv-d1" id="hero-title">
       Gérez votre élevage<br />
-      <em>avec précision</em>
+      <em id="hero-emphasis">avec précision</em>
     </h1>
 
-    <p class="hero-sub reveal rv-d2">
+    <p class="hero-sub reveal rv-d2" aria-describedby="hero-title">
       PorcTrack&nbsp;8 est la solution Agritech conçue pour les éleveurs porcins exigeants —
       alertes biologiques en temps réel, suivi complet des bandes et gestion alimentaire,
       <strong>même sans connexion réseau.</strong>
@@ -144,6 +148,21 @@
     </div>
   </div>
 </div>
+
+<section class="section demo" id="demo">
+  <div class="container">
+    <header class="section-hd">
+      <span class="eyebrow">Démonstration</span>
+      <h2>Découvrez PorcTrack 8<br/>en action</h2>
+    </header>
+    <div class="demo-wrapper reveal">
+      <div class="demo-placeholder">
+        <p>Simulation du Cockpit PorcTrack 8</p>
+        <span class="demo-hint">[Vidéo/GIF à intégrer ici]</span>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- ═══════════════════════════════════ FEATURES ══ -->
 <section class="features section" id="features">
@@ -438,6 +457,10 @@
     </div>
   </div>
   <div class="footer-bottom container">
+    <div id="changelog-footer">
+      <h4>Dernières mises à jour :</h4>
+      <div id="changelog-content">Chargement du changelog...</div>
+    </div>
     <p>© 2026 PorcTrack — Tous droits réservés. Données hébergées en France · RGPD conforme · Token d'auth chiffré en transit</p>
   </div>
 </footer>

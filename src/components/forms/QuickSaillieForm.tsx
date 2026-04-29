@@ -1,17 +1,14 @@
 import React, { useState } from 'react';
-import { Heart, Check, CheckCircle2 } from 'lucide-react';
+import { Heart, Check, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
 import { enqueueAppendRow } from '../../services/offlineQueue';
 import { BottomSheet } from '../agritech';
 import { normaliseStatut } from '../../lib/truieStatut';
+import { biologyValidators } from '../../utils/biologyValidators';
 
 /**
  * QuickSaillieForm — Modal rapide pour enregistrer une saillie
- *
- * Agritech Dark : utilise <BottomSheet> wrapper.
- * 2 taps au lieu de 5 clics. Accessible depuis le Cockpit "Aujourd'hui".
  */
-
 interface QuickSaillieFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -21,8 +18,29 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose }) 
   const { truies, verrats } = useFarm();
   const [selectedTruie, setSelectedTruie] = useState('');
   const [selectedVerrat, setSelectedVerrat] = useState('');
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  const validateSaillie = (truieId: string): boolean => {
+    const truie = truies.find(t => t.displayId === truieId);
+    if (!truie || !truie.dateNaissance) {
+      setErrorMsg(null);
+      return true;
+    }
+    const result = biologyValidators.validateDateSaillie(truie.dateNaissance, new Date().toISOString());
+    if (!result.isValid) {
+      setErrorMsg(result.message || 'Erreur de validation biologique');
+      return false;
+    }
+    setErrorMsg(null);
+    return true;
+  };
+
+  const handleTruieChange = (truieId: string) => {
+    setSelectedTruie(truieId);
+    validateSaillie(truieId);
+  };
 
   // Truies disponibles pour saillie : celles en VIDE (en attente saillie / post-sevrage)
   // ou toute truie qui n'est ni en gestation ni en maternité (hors REFORME).
@@ -105,6 +123,14 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose }) 
             </p>
           </div>
 
+          {/* Validation biological message */}
+          {errorMsg && (
+            <div className="flex items-center gap-2 text-rose-500 bg-rose-500/10 p-3 rounded-md">
+              <AlertCircle size={16} />
+              <p className="font-mono text-[11px] uppercase tracking-wide">{errorMsg}</p>
+            </div>
+          )}
+
           {/* ── Truie selection ───────────────────────────────────────── */}
           <div className="space-y-2">
             <span
@@ -128,7 +154,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose }) 
                       role="radio"
                       aria-checked={isSelected}
                       aria-label={`Sélectionner la truie ${t.displayId}`}
-                      onClick={() => setSelectedTruie(t.displayId)}
+                      onClick={() => handleTruieChange(t.displayId)}
                       className={[
                         'pressable inline-flex items-center justify-center',
                         'h-9 px-3 rounded-md border',
@@ -203,7 +229,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose }) 
           <button
             type="button"
             onClick={handleSave}
-            disabled={!selectedTruie || !selectedVerrat || saving}
+            disabled={!selectedTruie || !selectedVerrat || saving || !!errorMsg}
             aria-label="Confirmer la saillie"
             className={[
               'pressable w-full h-[52px] rounded-md',

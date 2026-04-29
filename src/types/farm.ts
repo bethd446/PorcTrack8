@@ -42,6 +42,7 @@ export interface Truie {
   poids?: number;
   /** Race / lignée génétique (ex. Large White, Landrace, Duroc). Optionnel. */
   race?: string;
+  dateNaissance?: string;
   synced: boolean;
   raw?: (string | number | boolean)[];
 }

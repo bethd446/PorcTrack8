@@ -36,5 +36,19 @@ export const biologyValidators = {
     }
 
     return { isValid: true };
+  },
+
+  /**
+   * Vérifie la date de la saillie par rapport à la date de naissance (min 180 jours)
+   */
+  validateDateSaillie(dateNaissance: string, dateSaillie: string): { isValid: boolean; message?: string } {
+    const dN = new Date(dateNaissance);
+    const dS = new Date(dateSaillie);
+    const diffTime = dS.getTime() - dN.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays < 180) {
+      return { isValid: false, message: `La truie est trop jeune (âge actuel: ${diffDays} jours). Min: 180 jours.` };
+    }
+    return { isValid: true };
   }
 };
