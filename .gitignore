@@ -1,14 +1,28 @@
 node_modules/
 build/
-# dist/ inclus volontairement pour déploiement VPS statique
+# dist/ app inclus volontairement pour déploiement VPS statique
 # dist/
 coverage/
 .DS_Store
 graphify-out/
 *.log
-.env*
+
+# Variables d'environnement (NE JAMAIS COMMITTER)
+.env
+.env.local
+.env.production
+.env.development
 !.env.example
-.claude/worktrees/
+!website/.env.example
+
+# Website node_modules (build commité pour VPS sans Node)
+website/node_modules/
+# website/dist/ inclus volontairement — déployé depuis GitHub
+
+# Shared
+shared/*.js
+shared/*.d.ts
+
 .claude/worktrees/
 
 # APK release artifacts — bloqués par défaut, sauf releases officielles
