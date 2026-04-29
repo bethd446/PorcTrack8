@@ -1,28 +1,50 @@
 /**
- * farmDataLoader — singleton d'orchestration des données GAS pour PorcTrack.
+ * farmDataLoader — singleton d'orchestration des données Supabase pour PorcTrack.
  *
- * Rôle : centraliser les appels vers `services/googleSheets.ts`, conserver le
+ * Rôle : centraliser les appels vers `services/supabaseService.ts`, conserver le
  * dernier instantané en mémoire, et notifier les Providers abonnés domaine par
  * domaine. Cela permet de splitter `FarmContext` en sous-contextes (Troupeau,
  * Ressources, Pilotage) sans dupliquer la logique de fetch / SWR / alert engine.
  *
  * API :
  *  - `subscribe(domain, listener)` → s'abonner à un slice précis
- *  - `refreshAll()` → relancer un fetch complet (équivalent de l'ancien
- *    `refreshData(true)` dans `FarmContext`)
+ *  - `refreshAll()` → relancer un fetch complet
  *  - `processQueueAndRefresh()` → flush la queue offline puis refresh
  *
- * La logique (SWR, moteur d'alertes, notifications locales, confirmation queue)
- * est identique à ce que faisait `FarmContext.refreshData` avant le split —
- * seul le véhicule de diffusion change (pub/sub au lieu d'un setState unique).
+ * La logique (moteur d'alertes, notifications locales, confirmation queue)
+ * est identique — seule la source de données change (Supabase au lieu de GAS).
  */
 
 import {
   getTruies, getVerrats, getBandes, getJournalSante,
-  getStockAliments, getStockVeto, getNotesTerrain, getAlertesServeur,
-  getSaillies, getFinances, getAlimentFormules,
-  readTypedTable
-} from './googleSheets';
+  getStockAliments, getStockVeto, getNotesTerrain,
+  getSaillies, getFinances,
+} from './supabaseService';
+
+// ── Stubs pour fonctions GAS abandonnées (retournent données vides) ──────────
+// getAlertesServeur : alertes serveur remplacées par le moteur local (alertEngine)
+// getAlimentFormules : formules utilisent la config locale (config/aliments)
+// readTypedTable : HISTORIQUE_TRANSITIONS sans équivalent Supabase pour l'instant
+async function getAlertesServeur(
+  cb?: (data: AlerteServeur[]) => void
+): Promise<{ success: boolean; data: AlerteServeur[]; header: string[]; source: DataSource }> {
+  cb?.([]);
+  return { success: true, data: [], header: [], source: 'NETWORK' };
+}
+async function getAlimentFormules(
+  cb?: (data: FormuleRowSheets[]) => void
+): Promise<{ success: boolean; data: FormuleRowSheets[]; header: string[]; source: DataSource }> {
+  cb?.([]);
+  return { success: true, data: [], header: [], source: 'NETWORK' };
+}
+async function readTypedTable<T>(
+  _table: string,
+  _ttl: number,
+  cb?: (data: T[]) => void
+): Promise<{ success: boolean; data: T[]; header: string[]; source: DataSource }> {
+  cb?.([]);
+  return { success: true, data: [], header: [], source: 'NETWORK' };
+}
 import {
   FORMULES_ALIMENT_FALLBACK,
   aggregateFormulesFromRows,
