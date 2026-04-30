@@ -23,27 +23,20 @@ import { initRegistry } from './features/tables/tablesRegistry';
 import { logger } from './services/logger';
 import { requestPermission as requestNotifPermission } from './services/notifications';
 import { hydrateKvStore, migrateLegacyLocalStorage, kvGet, kvSet } from './services/kvStore';
-import { applyThemeVariant, type ThemeVariant } from './services/themeAuto';
 import { FARM_CONFIG } from './config/farm';
 import { getSupportWhatsapp, setSupportWhatsapp } from './services/supportContact';
 
 setupIonicReact();
 
-// ── Applique la variante de palette AVANT le premier rendu ───────────────────
-// Sur web : kvGet est synchrone (localStorage), on peut lire tout de suite.
-// Sur native : le cache kvStore n'est hydraté qu'après `hydrateKvStore()`, donc
-// on ré-applique la variante juste après l'hydratation pour couvrir le cas
-// natif (le ThemeProvider la réappliquera aussi via useEffect).
-function readVariantSync(): ThemeVariant {
-  try {
-    const raw = kvGet('theme_variant');
-    if (raw === 'terracotta' || raw === 'emerald') return raw;
-  } catch {
-    /* noop */
-  }
-  return 'emerald';
+// ── Force le thème jour AVANT le premier rendu (Terrain Vivant v6, light-first).
+// L'app n'expose plus de surface dark — quel que soit le mode OS, on reste
+// en clair. Voir src/services/themeAuto.ts (mode 'night' désormais no-op).
+if (typeof document !== 'undefined') {
+  const html = document.documentElement;
+  html.classList.add('theme-day');
+  html.classList.remove('theme-night');
+  html.style.colorScheme = 'light';
 }
-applyThemeVariant(readVariantSync());
 
 // ── Initialisation au démarrage ───────────────────────────────────────────────
 // 1. Hydrate le KV store (Capacitor Preferences → cache mémoire sync) AVANT
@@ -55,10 +48,6 @@ applyThemeVariant(readVariantSync());
   try {
     await hydrateKvStore();
     await migrateLegacyLocalStorage();
-    // Natif : le cache vient d'être hydraté depuis Preferences, re-applique
-    // la variante pour couvrir le cas où la valeur n'était pas encore lisible
-    // au démarrage synchrone ci-dessus.
-    applyThemeVariant(readVariantSync());
 
     // Seed du numéro WhatsApp support si non configuré → l'écran Aide est
     // utilisable dès le premier lancement. L'admin peut surcharger dans Réglages.

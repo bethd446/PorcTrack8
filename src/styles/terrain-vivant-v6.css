@@ -1,0 +1,84 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PorcTrack — Design v6 « Terrain Vivant » (Final layer · 2026-04-30)
+   Source : porctrack-design.zip validé par client.
+   Loaded LAST in src/index.css → these tokens dominate.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── @theme : extension Tailwind v4 (utilitaires bg-pig-* etc.) ────────── */
+@theme {
+  /* Override alignement v6 (était #d4920f en legacy) */
+  --color-amber-pork:      #F4A261;
+  --color-amber-pork-soft: #FCE4C9;
+  --color-amber-pork-deep: #B0703D;
+
+  /* Pig — RÉSERVÉ statut "Retour chaleur" + actions lourdes (rétrograder, supprimer) */
+  --color-pig:      #D4806B;
+  --color-pig-soft: #F2D8CC;
+  --color-pig-deep: #A85A40;
+
+  /* Secondary terre (alias --color-terre existant, ajout shades) */
+  --color-secondary:      #7a4a28;
+  --color-secondary-soft: #d9c9a8;
+  --color-secondary-deep: #5d3a1f;
+
+  /* Accent re-aligné sur shades v6 (notre #d9ebbf → #e3edd9 plus pastel) */
+  --color-accent-100: #e3edd9;
+}
+
+/* ── :root variables non-Tailwind (animations, layout) ─────────────────── */
+:root {
+  /* Animations — Emil Kowalski standard */
+  --ease-emil:           cubic-bezier(0.23, 1, 0.32, 1);
+  --duration-press:      160ms;
+  --duration-transition: 240ms;
+
+  /* Layout */
+  --touch-min:    44px;
+  --radius-card:  12px;
+  --radius-pill:  9999px;
+  --radius-premium: 28px;
+
+  /* Lignes / filets */
+  --line:   rgba(17, 24, 39, 0.10);
+  --line-2: rgba(17, 24, 39, 0.05);
+
+  /* Aliases courts pour tokens fréquents (compatibilité avec tokens designer) */
+  --bg-surface:   #FFFFFF;
+  --bg-surface-2: #F7F5F0;
+  --ink:          #111827;
+  --ink-soft:     #374151;
+  --muted:        #6B7280;
+
+  /* Aliases sémantiques (mapping vers Tailwind v4 vars) */
+  --accent-500: var(--color-accent-500);
+  --accent-100: var(--color-accent-100);
+  --pig:        var(--color-pig);
+  --pig-soft:   var(--color-pig-soft);
+  --pig-deep:   var(--color-pig-deep);
+  --amber-pork: var(--color-amber-pork);
+  --amber-pork-soft: var(--color-amber-pork-soft);
+  --amber-pork-deep: var(--color-amber-pork-deep);
+}
+
+/* ── @keyframes pulse — utilisés par repro tracker, sync indicator ──────── */
+@keyframes pulse-green {
+  0%   { box-shadow: 0 0 0 0   rgba(45, 90, 27, 0.5); }
+  70%  { box-shadow: 0 0 0 7px rgba(45, 90, 27, 0); }
+  100% { box-shadow: 0 0 0 0   rgba(45, 90, 27, 0); }
+}
+
+@keyframes pulse-amber {
+  0%   { box-shadow: 0 0 0 0   rgba(244, 162, 97, 0.5); }
+  70%  { box-shadow: 0 0 0 6px rgba(244, 162, 97, 0); }
+  100% { box-shadow: 0 0 0 0   rgba(244, 162, 97, 0); }
+}
+
+.pulse-green { animation: pulse-green 1.8s infinite; }
+.pulse-amber { animation: pulse-amber 1.8s infinite; }
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .pulse-green, .pulse-amber {
+    animation: none;
+  }
+}
