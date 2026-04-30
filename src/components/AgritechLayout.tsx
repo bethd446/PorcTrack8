@@ -3,22 +3,18 @@ import { cn } from '../lib/utils';
 
 export interface AgritechLayoutProps {
   children: React.ReactNode;
-  /** When true, reserves space at the bottom for AgritechNav (64px + safe-area). */
+  /** When true, reserves space at the bottom for AgritechNav (68px + safe-area). */
   withNav?: boolean;
   /** Extra className on the inner surface. */
   className?: string;
 }
 
 /**
- * AgritechLayout — opt-in dark cockpit surface wrapper.
+ * AgritechLayout — Terrain Vivant v6 (light) surface wrapper.
  *
- * Apply only on the NEW agritech screens. Legacy screens keep their
- * existing white "Ultra Clean" surface untouched (no global override).
- *
- * Responsibilities:
- *  - Applies `.agritech-root` (bg-bg-0 + text-text-0 + min-h 100dvh)
- *  - Respects safe-areas (top/bottom)
- *  - Reserves bottom space for `<AgritechNav>` when `withNav`
+ * Refonte 2026-04-30 : retrait de `.agritech-root` (dark cockpit) au profit
+ * d'une surface claire alignée v6 : --bg-app + --ink. Les sites d'appel
+ * (≈30) restent inchangés.
  */
 const AgritechLayout: React.FC<AgritechLayoutProps> = ({
   children,
@@ -27,11 +23,14 @@ const AgritechLayout: React.FC<AgritechLayoutProps> = ({
 }) => {
   return (
     <div
-      className={cn('agritech-root', className)}
+      className={cn('min-h-screen', className)}
       style={{
+        background: 'var(--bg-app)',
+        color: 'var(--ink)',
+        minHeight: '100dvh',
         paddingTop: 'env(safe-area-inset-top)',
         paddingBottom: withNav
-          ? 'calc(64px + env(safe-area-inset-bottom))'
+          ? 'calc(68px + env(safe-area-inset-bottom))'
           : 'env(safe-area-inset-bottom)',
       }}
     >

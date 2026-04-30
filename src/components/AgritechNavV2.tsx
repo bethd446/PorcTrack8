@@ -7,8 +7,8 @@ import React, {
 } from 'react';
 import { IonToast } from '@ionic/react';
 import {
-  LayoutDashboard,
-  Users,
+  LayoutGrid,
+  PawPrint,
   Package,
   BarChart3,
   Heart,
@@ -16,7 +16,7 @@ import {
   FileText,
   Scale,
   AlertOctagon,
-  Activity,
+  RotateCcw,
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -150,28 +150,30 @@ interface NavTabDef {
   match?: string[];
 }
 
+const ACCENT = 'var(--color-accent-500)';
+
 const TABS: NavTabDef[] = [
   {
     id: 'cockpit',
     path: '/',
     label: 'Cockpit',
-    Icon: LayoutDashboard,
-    accent: 'var(--accent-cockpit)',
+    Icon: LayoutGrid,
+    accent: ACCENT,
   },
   {
     id: 'troupeau',
     path: '/troupeau',
     label: 'Troupeau',
-    Icon: Users,
-    accent: 'var(--accent-troupeau)',
+    Icon: PawPrint,
+    accent: ACCENT,
     match: ['/troupeau', '/cheptel', '/bandes'],
   },
   {
     id: 'cycles',
     path: '/cycles',
     label: 'Cycles',
-    Icon: Activity,
-    accent: 'var(--accent-cycles)',
+    Icon: RotateCcw,
+    accent: ACCENT,
     match: ['/cycles', '/controle'],
   },
   {
@@ -179,7 +181,7 @@ const TABS: NavTabDef[] = [
     path: '/ressources',
     label: 'Ressources',
     Icon: Package,
-    accent: 'var(--accent-ressources)',
+    accent: ACCENT,
     match: ['/ressources', '/stock'],
   },
   {
@@ -187,7 +189,7 @@ const TABS: NavTabDef[] = [
     path: '/pilotage',
     label: 'Pilotage',
     Icon: BarChart3,
-    accent: 'var(--accent-pilotage)',
+    accent: ACCENT,
     match: ['/pilotage', '/alerts', '/more', '/audit', '/sync'],
   },
 ];
@@ -204,6 +206,19 @@ const NavTab: React.FC<NavTabProps> = ({ tab, isActive, onSelect }) => {
   const { Icon, label, accent, path } = tab;
   return (
     <li className="relative" role="presentation">
+      {/* Top border 2px accent quand actif */}
+      {isActive && (
+        <span
+          aria-hidden="true"
+          className="absolute left-1/2 -translate-x-1/2 top-0"
+          style={{
+            width: 32,
+            height: 2,
+            background: accent,
+            borderRadius: '0 0 2px 2px',
+          }}
+        />
+      )}
       <button
         type="button"
         role="tab"
@@ -217,28 +232,18 @@ const NavTab: React.FC<NavTabProps> = ({ tab, isActive, onSelect }) => {
         )}
         style={isActive ? ({ outlineColor: accent } as React.CSSProperties) : undefined}
       >
-        {/* Capsule tintée (18% accent) derrière l'icône quand actif */}
+        <Icon
+          size={24}
+          strokeWidth={2}
+          className="block transition-[color] duration-[180ms]"
+          style={{ color: isActive ? accent : 'var(--muted)' }}
+        />
         <span
-          aria-hidden="true"
-          className="flex items-center justify-center rounded-full transition-[background-color] duration-[220ms]"
+          className="text-[11px] font-semibold leading-none transition-[color] duration-[180ms]"
           style={{
-            width: 50,
-            height: 28,
-            background: isActive
-              ? `color-mix(in srgb, ${accent} 18%, transparent)`
-              : 'transparent',
+            fontFamily: 'InstrumentSans, sans-serif',
+            color: isActive ? accent : 'var(--muted)',
           }}
-        >
-          <Icon
-            size={20}
-            strokeWidth={isActive ? 2.2 : 1.7}
-            className="block transition-[color] duration-[180ms]"
-            style={{ color: isActive ? accent : 'var(--color-text-2)' }}
-          />
-        </span>
-        <span
-          className="font-mono text-[11px] font-semibold uppercase tracking-[0.04em] leading-none transition-[color] duration-[180ms]"
-          style={{ color: isActive ? 'var(--color-text-0)' : 'var(--color-text-2)' }}
         >
           {label}
         </span>
@@ -329,10 +334,9 @@ const AgritechNavV2: React.FC = () => {
         className="fixed bottom-0 left-0 right-0 z-[1000]"
         style={{
           paddingBottom: 'env(safe-area-inset-bottom)',
-          background: 'color-mix(in srgb, var(--bg-1) 92%, transparent)',
-          backdropFilter: 'blur(18px) saturate(140%)',
-          WebkitBackdropFilter: 'blur(18px) saturate(140%)',
-          boxShadow: '0 -1px 0 var(--border), 0 -14px 32px rgba(0,0,0,0.28)',
+          background: 'var(--bg-surface)',
+          borderTop: '1px solid var(--line)',
+          boxShadow: '0 -1px 0 rgba(0,0,0,0.04)',
         }}
         aria-label="Navigation principale"
       >
@@ -340,7 +344,7 @@ const AgritechNavV2: React.FC = () => {
           role="tablist"
           aria-label="Onglets principaux"
           className={cn("grid", isOwner ? "grid-cols-5" : "grid-cols-4")}
-          style={{ padding: '8px 4px 6px' }}
+          style={{ padding: '8px 4px 6px', minHeight: 68 }}
         >
           {visibleTabs.map((tab) => (
             <NavTab
