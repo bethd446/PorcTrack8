@@ -2,8 +2,8 @@ import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import {
-  Activity, ChevronRight, Droplets, ArrowUpRight,
-  TrendingUp, Scale, Info
+  Activity, Droplets, ArrowUpRight,
+  TrendingUp, Scale
 } from 'lucide-react';
 import { PorceletIcon } from '../../components/icons';
 import AgritechHeader from '../../components/AgritechHeader';
@@ -24,7 +24,7 @@ import {
   computePhaseTerrain,
   PHASE_LABEL
 } from '../../services/phaseEngine';
-import { WEIGHTS_RELEVE } from '../../config/weightsReleve';
+import { WEIGHTS_RELEVE, type LogeReleve } from '../../config/weightsReleve';
 import type { BandePorcelets } from '../../types/farm';
 
 /**
@@ -151,8 +151,8 @@ interface CroissanceRowData {
   vivants: number;
   ageJours: number | null;
   terrainPhase: string | null;
-  releve?: any;
-  bande: any;
+  releve?: LogeReleve;
+  bande: BandePorcelets;
 }
 
 const CroissanceCard: React.FC<{ data: CroissanceRowData; onOpen: () => void }> = ({ data, onOpen }) => {

@@ -19,10 +19,11 @@ import {
   Home,
 } from 'lucide-react';
 import { FARM_CONFIG } from '../config/farm';
-import { useFarm, useMeta } from '../context/FarmContext';
+import { useMeta } from '../context/FarmContext';
 import { useTroupeau } from '../context/TroupeauContext';
 import { usePilotage } from '../context/PilotageContext';
 import { useRessources } from '../context/RessourcesContext';
+import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { KpiCard, BottomSheet, SectionDivider, DataRow, HubTile, Chip } from './agritech';
 import AgritechLayout from './AgritechLayout';
 import QuickSaillieForm from './forms/QuickSaillieForm';
@@ -75,7 +76,8 @@ const Cockpit: React.FC = () => {
   const { truies, verrats, bandes } = useTroupeau();
   const { stockAliment, stockVeto } = useRessources();
   const { alerts, alertesServeur } = usePilotage();
-  const { loading, refreshData, dataSource, recomputeAlerts } = useMeta();
+  const { loading, dataSource, recomputeAlerts } = useMeta();
+  const { handleRefresh } = useAutoRefresh();
 
   const [sheet, setSheet] = useState<QuickSheetKind>(null);
   const [showSaillie, setShowSaillie] = useState(false);
@@ -101,6 +103,8 @@ const Cockpit: React.FC = () => {
 
   useEffect(() => {
     if (kpiAlertesTotal > 0) {
+      // Pulse animation effect when alert count changes — must reflect derived state in render.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPulse(true);
       const t = setTimeout(() => setPulse(false), 2000);
       return () => clearTimeout(t);
@@ -276,10 +280,6 @@ const Cockpit: React.FC = () => {
   }, [porteesReelles]);
 
   // ── Handlers ────────────────────────────────────────────────────────────
-  const handleRefresh = (e: CustomEvent<{ complete: () => void }>): void => {
-    refreshData().finally(() => e.detail.complete());
-  };
-
   const handleOpenPesee = (): void => setPeseeOpen(true);
 
   const handleOpenSoin = (): void => setSheet('soin');

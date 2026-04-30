@@ -11,13 +11,15 @@
 
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { IonContent, IonPage } from '@ionic/react';
+import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
 import { ChevronRight } from 'lucide-react';
 
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
+import DataAgeIndicator from '../../components/DataAgeIndicator';
 import { SectionDivider, Chip } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
+import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import {
   computeBandePhase,
   filterRealPortees,
@@ -179,6 +181,7 @@ function truieToPosition(t: Truie, today: Date): BandePosition | null {
 const CyclesHub: React.FC = () => {
   const navigate = useNavigate();
   const { truies, bandes } = useFarm();
+  const { handleRefresh } = useAutoRefresh();
   const today = useMemo(() => new Date(), []);
 
   const positions = useMemo<BandePosition[]>(() => {
@@ -206,9 +209,14 @@ const CyclesHub: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
+          <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+            <IonRefresherContent />
+          </IonRefresher>
+
           <AgritechHeader
             title="CYCLES"
             subtitle={`Pipeline · ${TOTAL_DAYS} jours`}
+            action={<DataAgeIndicator />}
           />
 
           <div className="px-4 pt-4 pb-32 flex flex-col gap-5">

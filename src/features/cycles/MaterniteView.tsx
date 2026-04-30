@@ -23,7 +23,6 @@ import { FARM_CONFIG } from '../../config/farm';
 import {
   computePhaseTerrain,
   detectPendingTransitions,
-  PHASE_LABEL
 } from '../../services/phaseEngine';
 import type { BandePorcelets, Truie } from '../../types/farm';
 
@@ -192,8 +191,14 @@ const MaterniteView: React.FC = () => {
 
 // ─── Sous-composants ────────────────────────────────────────────────────────
 
+interface MaterniteStatus {
+  isBloquant: boolean;
+  joursEnRetard: number;
+  urgence: string;
+}
+
 const MaterniteCard: React.FC<{
-  data: { truie: Truie; portee?: BandePorcelets; jSinceMB: number | null; terrainPhase: string | null; status: any };
+  data: { truie: Truie; portee?: BandePorcelets; jSinceMB: number | null; terrainPhase: string | null; status: MaterniteStatus };
   onDetail: () => void;
 }> = ({ data, onDetail }) => {
   const navigate = useNavigate();

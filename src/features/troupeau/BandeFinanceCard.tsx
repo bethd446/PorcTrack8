@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import {
-  TrendingUp, Coins, Info, AlertTriangle,
-  CheckCircle2, ArrowRightLeft
+  Coins, Info,
 } from 'lucide-react';
 import { genererRapportFinancierBande } from '../../services/financialAnalyzer';
 import type { BandePorcelets, TransitionBande } from '../../types/farm';

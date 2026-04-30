@@ -10,16 +10,18 @@
  *   4. Accès rapide aux protocoles en bas
  */
 
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { IonContent, IonPage } from '@ionic/react';
+import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
 import {
-  AlertTriangle, Plus, Calculator, ClipboardList, Package, Edit3, Droplets, FlaskConical, Search
+  AlertTriangle, Plus, Calculator, ClipboardList, Edit3, Droplets, FlaskConical, Search
 } from 'lucide-react';
 
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
+import DataAgeIndicator from '../../components/DataAgeIndicator';
 import { SectionDivider, Chip, HubTile } from '../../components/agritech';
+import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import QuickRefillForm from '../../components/forms/QuickRefillForm';
 import {
   toRefillItem,
@@ -33,26 +35,17 @@ import type { StockAliment, StockVeto } from '../../types/farm';
 // ─── Types & Helpers ────────────────────────────────────────────────────────
 
 type ResourceTab = 'aliments' | 'pharmacie';
-
-interface ResourceCardData {
-  id: string;
-  name: string;
-  qty: number;
-  unit: string;
-  seuil: number;
-  statut: string;
-  category?: string;
-  notes?: string;
-}
+type StockItem = StockAliment | StockVeto;
 
 // ─── Composant Principal ─────────────────────────────────────────────────────
 
 const RessourcesHub: React.FC = () => {
   const navigate = useNavigate();
   const { stockAliment, stockVeto, refreshData } = useFarm();
+  const { handleRefresh } = useAutoRefresh();
 
   const [activeTab, setActiveTab] = useState<ResourceTab>('aliments');
-  const [searchQuery, setSearchSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // ── Filtrage ────────────────────────────────────────────────────────────
   const filteredAliments = useMemo(() => {
@@ -75,9 +68,9 @@ const RessourcesHub: React.FC = () => {
 
   // ── Forms Logic ─────────────────────────────────────────────────────────
   const [refillTarget, setRefillTarget] = useState<RefillStockItem | null>(null);
-  const [editTarget, setEditTarget] = useState<{ item: any; kind: StockKind } | null>(null);
+  const [editTarget, setEditTarget] = useState<{ item: StockItem; kind: StockKind } | null>(null);
 
-  const handleOpenRefill = (item: any, kind: StockKind) => {
+  const handleOpenRefill = (item: StockItem, kind: StockKind) => {
     setRefillTarget(toRefillItem(item, kind));
   };
 
@@ -85,9 +78,14 @@ const RessourcesHub: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
+          <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+            <IonRefresherContent />
+          </IonRefresher>
+
           <AgritechHeader
             title="RESSOURCES"
             subtitle="Inventaire & Approvisionnement"
+            action={<DataAgeIndicator />}
           />
 
           <div className="px-4 pt-4 pb-32 flex flex-col gap-6">
@@ -124,7 +122,7 @@ const RessourcesHub: React.FC = () => {
                   type="text"
                   placeholder={`Rechercher un ${activeTab === 'aliments' ? 'aliment' : 'produit'}...`}
                   value={searchQuery}
-                  onChange={(e) => setSearchSearchQuery(e.target.value)}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full h-11 bg-bg-1 border border-border rounded-xl pl-10 pr-4 font-mono text-[13px] focus:border-accent outline-none transition-colors"
                 />
                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-2" />
@@ -240,16 +238,15 @@ interface ResourceCardProps {
   notes?: string;
   onRefill: () => void;
   onEdit: () => void;
-  onClick: () => void;
+  onClick?: () => void;
 }
 
 const ResourceCard: React.FC<ResourceCardProps> = ({
-  name, qty, unit, seuil, statut, category, notes, onRefill, onEdit, onClick
+  name, qty, unit, seuil, statut, category, notes, onRefill, onEdit
 }) => {
   const isRupture = statut === 'RUPTURE';
   const isBas = statut === 'BAS';
 
-  const tone = isRupture ? 'red' : isBas ? 'amber' : 'accent';
   const progress = seuil > 0 ? Math.min(100, (qty / (seuil * 2.5)) * 100) : 100;
 
   return (

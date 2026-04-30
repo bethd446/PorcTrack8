@@ -2,8 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import {
-  PackageCheck, ChevronRight, Droplets, Info,
-  ArrowUpRight, TrendingUp, AlertTriangle, Lightbulb, Scale
+  PackageCheck, Droplets,
+  ArrowUpRight, TrendingUp, Lightbulb, Scale
 } from 'lucide-react';
 import { PorceletIcon } from '../../components/icons';
 import AgritechHeader from '../../components/AgritechHeader';
@@ -12,14 +12,12 @@ import {
   KpiCard,
   Chip,
   SectionDivider,
-  type ChipTone,
 } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
 import {
   computeBandePhase,
   filterRealPortees,
   logesPostSevrageOccupation,
-  type LogeOccupation,
 } from '../../services/bandesAggregator';
 import { FARM_CONFIG } from '../../config/farm';
 import {
@@ -187,8 +185,8 @@ interface PostSevrageRowData {
   vivants: number;
   ageJours: number | null;
   terrainPhase: string | null;
-  releve?: any;
-  bande: any;
+  releve?: import('../../config/weightsReleve').LogeReleve;
+  bande: import('../../types/farm').BandePorcelets;
   status: {
     isBloquant: boolean;
     joursEnRetard: number;

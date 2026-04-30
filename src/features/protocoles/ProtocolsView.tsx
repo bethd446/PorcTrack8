@@ -31,7 +31,7 @@ interface ProductionStage {
   action?: string;
   destination?: string;
   tone: 'gold' | 'teal' | 'amber' | 'accent' | 'blue';
-  icon: any;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
 }
 
 interface ProtocolItem {
@@ -316,7 +316,7 @@ const ProtocolsView: React.FC = () => {
                 </div>
 
                 <div className="relative pl-4 ml-4 border-l-2 border-dashed border-border space-y-6">
-                  {protocols.cycle.map((s, idx) => (
+                  {protocols.cycle.map((s, _idx) => (
                     <div key={s.id} className="relative">
                       {/* Dot connector */}
                       <div className={`absolute -left-[25px] top-4 h-4 w-4 rounded-full border-2 border-bg-app bg-white ring-2 ring-offset-2 ring-transparent flex items-center justify-center`}

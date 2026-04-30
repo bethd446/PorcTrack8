@@ -1,24 +1,19 @@
 import React, { useState, useMemo } from 'react';
-import { IonContent, IonPage, IonSkeletonText } from '@ionic/react';
+import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
 import {
-  Wallet, FileText, TrendingUp, AlertTriangle, FileCheck, Settings,
-  Coins, Activity, Skull, ShieldCheck, ArrowRight, Zap, Target
+  Wallet, FileText, TrendingUp, AlertTriangle,
+  Coins, Skull, ShieldCheck, ArrowRight, Zap, Target
 } from 'lucide-react';
 
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
+import DataAgeIndicator from '../../components/DataAgeIndicator';
 import {
-  HubTile, SectionDivider, SparklineCard, KpiCard, Chip
+  HubTile, SectionDivider, KpiCard, Chip
 } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
+import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import { genererRapportGlobal } from '../../services/financialAnalyzer';
-import {
-  computeSevresParPortee,
-  computeMortalitePorcelets,
-  computeIndiceConso,
-  computeCyclesReussis,
-  type PeriodeKey,
-} from '../../services/perfKpiAnalyzer';
 import { prepareAuditSnapshot } from '../../services/exportService';
 import AuditPrintTemplate from '../pilotage/AuditPrintTemplate';
 
@@ -26,16 +21,11 @@ const PilotageHub: React.FC = () => {
   const {
     loading,
     alerts,
-    criticalAlertCount,
-    alertesServeur,
-    finances,
-    truies,
     bandes,
     transitions,
-    stockAliment,
   } = useFarm();
-  const [periode, setPeriode] = useState<PeriodeKey>('30J');
-  const [isPrinting, setIsPrinting] = useState(false);
+  const { handleRefresh } = useAutoRefresh();
+  const [, setIsPrinting] = useState(false);
 
   // 1. Moteur de Consolidation Financière
   const globalReport = useMemo(() => {
@@ -62,20 +52,19 @@ const PilotageHub: React.FC = () => {
     return alerts.filter(a => a.priority === 'CRITIQUE' || a.priority === 'HAUTE').slice(0, 5);
   }, [alerts]);
 
-  // KPIs performance existants
-  const kpiSevres = useMemo(() => computeSevresParPortee(bandes, periode), [bandes, periode]);
-  const kpiMortalite = useMemo(() => computeMortalitePorcelets(bandes, periode), [bandes, periode]);
-  const kpiIC = useMemo(() => computeIndiceConso(bandes, stockAliment, periode), [bandes, stockAliment, periode]);
-  const kpiCycles = useMemo(() => computeCyclesReussis(truies, bandes, periode), [truies, bandes, periode]);
-
-  const totalAlertes = criticalAlertCount + alertesServeur.length;
-
   if (loading || !globalReport) {
     return (
       <IonPage>
         <IonContent fullscreen className="ion-no-padding">
            <AgritechLayout>
-             <AgritechHeader title="PILOTAGE" subtitle="Consolidation des données..." />
+             <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+               <IonRefresherContent />
+             </IonRefresher>
+             <AgritechHeader
+               title="PILOTAGE"
+               subtitle="Consolidation des données..."
+               action={<DataAgeIndicator />}
+             />
              <div className="p-4 space-y-6">
                 <div className="h-32 bg-bg-1 rounded-2xl animate-pulse" />
                 <div className="grid grid-cols-2 gap-4">
@@ -97,19 +86,27 @@ const PilotageHub: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
+          <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+            <IonRefresherContent />
+          </IonRefresher>
+
           <AgritechHeader
             title="COCKPIT PILOTAGE"
             subtitle="Vue globale de l'exploitation"
             action={
-              auditData && (
-                <button
-                  onClick={handlePrint}
-                  className="pressable h-10 px-4 rounded-full bg-accent text-bg-0 font-mono text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-accent/20"
-                >
-                  <FileText size={14} />
-                  Export PDF
-                </button>
-              )
+              <div className="flex items-center gap-3">
+                <DataAgeIndicator />
+                {auditData && (
+                  <button
+                    onClick={handlePrint}
+                    aria-label="Exporter le rapport PDF"
+                    className="pressable h-10 px-4 rounded-full bg-accent text-bg-0 font-mono text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-accent/20"
+                  >
+                    <FileText size={14} />
+                    Export PDF
+                  </button>
+                )}
+              </div>
             }
           />
 

@@ -2,10 +2,9 @@ import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import {
-  TrendingUp, ChevronRight, Droplets, ArrowUpRight,
-  Scale, AlertCircle, PackageCheck
+  TrendingUp, Droplets, ArrowUpRight,
+  Scale, PackageCheck
 } from 'lucide-react';
-import { PorceletIcon } from '../../components/icons';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import {
@@ -150,7 +149,7 @@ interface EngraissementRowData {
   ageJours: number | null;
   terrainPhase: string | null;
   weight: number;
-  bande: any;
+  bande: BandePorcelets;
 }
 
 const EngraissementCard: React.FC<{ data: EngraissementRowData; onOpen: () => void }> = ({ data, onOpen }) => {

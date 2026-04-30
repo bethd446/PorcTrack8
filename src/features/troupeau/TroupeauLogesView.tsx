@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Home, ChevronDown, ChevronUp, AlertCircle, Info, Lightbulb } from 'lucide-react';
+import { Home, ChevronDown, ChevronUp, AlertCircle, Lightbulb } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
 import { IsoBarn, Chip, SectionDivider } from '../../components/agritech';
 import { FARM_CONFIG } from '../../config/farm';

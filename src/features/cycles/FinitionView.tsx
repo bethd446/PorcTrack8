@@ -2,8 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import {
-  ChevronRight, Coins, TrendingUp, Calendar,
-  ArrowUpRight, Droplets, Scale, ShoppingCart
+  Coins, TrendingUp, Calendar,
+  Droplets, ShoppingCart
 } from 'lucide-react';
 import { BalanceIcon } from '../../components/icons';
 import AgritechHeader from '../../components/AgritechHeader';
@@ -190,7 +190,7 @@ interface FinitionRowData {
   vivants: number;
   weight: number;
   isReadyForExit: boolean;
-  bande: any;
+  bande: BandePorcelets;
 }
 
 const FinitionCard: React.FC<{ data: FinitionRowData; onOpen: () => void; onSell: () => void }> = ({ data, onOpen, onSell }) => {

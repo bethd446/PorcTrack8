@@ -263,7 +263,7 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({ searchTex
 interface BandeRowProps {
   bande: BandePorcelets;
   phase: string;
-  tone: any;
+  tone: import('../../components/agritech').ChipTone;
   onClick: () => void;
   pendingTransition?: PendingTransition;
   onTransition?: (t: PendingTransition) => void;

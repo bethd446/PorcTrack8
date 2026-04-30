@@ -1,14 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { IonContent, IonPage } from '@ionic/react';
+import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
 
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
+import DataAgeIndicator from '../../components/DataAgeIndicator';
 import { useTroupeau } from '../../context/TroupeauContext';
 import { normaliseStatut } from '../../lib/truieStatut';
 import { Bandes } from '../../services/bandAnalysisEngine';
 import type { LogeOccupation, LogeOccupationAlerte } from '../../services/bandesAggregator';
 import { useTroupeauPipeline } from '../../hooks/useTroupeauStats';
+import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import { FARM_CONFIG } from '../../config/farm';
 
 import TroupeauTruiesView from '../troupeau/TroupeauTruiesView';
@@ -35,14 +37,16 @@ const TroupeauHub: React.FC = () => {
   const { verrats, bandes } = useTroupeau();
   const [searchParams, setSearchParams] = useSearchParams();
   const { activeTruies } = useTroupeauPipeline();
+  const { handleRefresh } = useAutoRefresh();
 
   const viewParam = searchParams.get('view');
   const initialSubTab: SubTab = isSubTab(viewParam) ? viewParam : 'truies';
   const [activeSubTab, setActiveSubTab] = useState<SubTab>(initialSubTab);
 
-  // Sync state with URL parameter
+  // Sync state with URL parameter (deep links / back nav)
   useEffect(() => {
     if (isSubTab(viewParam) && viewParam !== activeSubTab) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveSubTab(viewParam);
     }
   }, [viewParam, activeSubTab]);
@@ -100,9 +104,14 @@ const TroupeauHub: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
+          <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+            <IonRefresherContent />
+          </IonRefresher>
+
           <AgritechHeader
             title="TROUPEAU"
             subtitle={`Ferme K13 · ${activeTruies.length + verrats.length} animaux`}
+            action={<DataAgeIndicator />}
           />
 
           <div className="px-4 pt-3 pb-32 flex flex-col gap-5">
