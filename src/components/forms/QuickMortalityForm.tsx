@@ -150,9 +150,9 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
   const bandesDispo = useMemo(() => filterRealPortees(bandes), [bandes]);
 
   // Sync defaultBandeId (Required for source-grep) — pre-populate when opened with a bande context
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   React.useEffect(() => {
     if (isOpen && defaultBandeId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedBandeId(defaultBandeId);
       setSubjectType('BANDE');
       setStep(2);

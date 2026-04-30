@@ -1,18 +1,13 @@
 // @vitest-environment jsdom
 /**
- * Tests unitaires — TruieDetailView
+ * Tests unitaires — TruieDetailView (refonte v6 « Diane T19 »)
  * ════════════════════════════════════════════════════════════════════════════
- * Vérifie la page détail d'une truie (`/troupeau/truies/:id`) :
- *   - Titre « TRUIE » + sous-titre displayId
- *   - Hero affiche TruieIcon + displayId + chip statut (tone gold pour
- *     « Maternité »)
- *   - Section « Identité » rend la boucle
- *   - Section « Reproduction » rend dateMBPrevue (format FR)
- *   - Cas d'erreur : truie inexistante → « TRUIE INTROUVABLE »
- *   - Bouton Edit3 (aria-label « Éditer la truie T14 »)
+ * Vérifie la page détail d'une truie (`/troupeau/truies/:id`) dans sa
+ * nouvelle structure : SowHero + ReproTracker + DecisionBinaire +
+ * TimelineVerticale + MariusFAB.
  *
  * Mocks :
- *   - `useFarm` → renvoie 2 truies fixtures + getHealthForAnimal vide
+ *   - `useFarm` → renvoie 4 truies fixtures + sante:[] + saillies:[]
  *   - `useParams` (react-router-dom) → id sélectionné via MemoryRouter
  *   - `@ionic/react` → passthrough (évite les web-components)
  */
@@ -32,6 +27,13 @@ vi.mock('../../context/AuthContext', () => ({
 const enqueueUpdateRowMock = vi.fn();
 vi.mock('../../services/offlineQueue', () => ({
   enqueueUpdateRow: (...args: unknown[]) => enqueueUpdateRowMock(...args),
+}));
+
+// Mock supabaseWrites — non utilisé directement par les tests mais importé
+// par le composant.
+vi.mock('../../services/supabaseWrites', () => ({
+  updateSow: vi.fn(async () => ({ success: true })),
+  updateBatch: vi.fn(async () => ({ success: true })),
 }));
 
 // Mock useIonAlert : expose presentAlertMock pour pouvoir simuler la confirmation
@@ -102,6 +104,7 @@ vi.mock('../../context/FarmContext', () => ({
     truies: [truieT14, truieT07, truieSurveillance, truieVide],
     verrats: [],
     bandes: [],
+    sante: [],
     alerts: [],
     criticalAlertCount: 0,
     loading: false,
@@ -171,90 +174,95 @@ describe('TruieDetailView', () => {
     cleanup();
   });
 
-  it('affiche le titre « TRUIE » et le sous-titre T14', () => {
+  it('affiche le nom de la truie comme h1 et son displayId dans le breadcrumb', () => {
     renderAt('/troupeau/truies/T14');
     const heading = screen.getByRole('heading', { level: 1 });
-    expect(heading.textContent).toContain('TRUIE');
-    // Le displayId apparaît dans le sous-titre du header.
+    // En v6, h1 = nom de la truie (Marguerite) et non plus "TRUIE T14".
+    expect(heading.textContent).toContain('Marguerite');
+    // Le displayId apparaît dans le breadcrumb / vitales.
     expect(document.body.textContent).toContain('T14');
   });
 
-  it('rend le hero avec TruieIcon et le displayId', () => {
+  it('rend le hero avec le displayId et au moins un svg', () => {
     renderAt('/troupeau/truies/T14');
-    // Hero card affiche displayId (plusieurs fois possible : subtitle header +
-    // aria-label edit). Au moins une présence.
-    const t14 = screen.getAllByText('T14');
+    // displayId apparaît plusieurs fois (breadcrumb, eyebrow, photoStamp).
+    const t14 = screen.getAllByText(/T14/);
     expect(t14.length).toBeGreaterThanOrEqual(1);
-    // TruieIcon est rendu en SVG (aria-hidden), on vérifie qu'au moins un
-    // svg existe dans le hero card.
+    // Le hero contient au minimum un SVG (icônes lucide : Plus, Printer, Sparkles).
     expect(document.querySelector('svg')).not.toBeNull();
   });
 
-  it('affiche la chip de statut « Maternité » avec le ton gold', () => {
+  it('affiche la chip de statut « Maternité » avec le ton green', () => {
     renderAt('/troupeau/truies/T14');
-    // Chip rend <span class="chip chip--gold ...">Maternité</span>
-    const chip = screen.getByText('Maternité');
-    expect(chip.tagName.toLowerCase()).toBe('span');
-    expect(chip.className).toContain('chip--gold');
+    // "Maternité" apparaît à 2 endroits : chip du SowHero + valeur Statut
+    // dans Vitales. La chip est un <span> avec le style tone green
+    // (chip--gold n'existe plus en v6).
+    const matches = screen.getAllByText('Maternité');
+    const chip = matches.find(el => {
+      const style = el.getAttribute('style') ?? '';
+      return el.tagName.toLowerCase() === 'span' && /color-accent/.test(style);
+    });
+    expect(chip).toBeDefined();
   });
 
   it('section « Identité » affiche la boucle FR-0014-42', () => {
     renderAt('/troupeau/truies/T14');
     const identite = screen.getByRole('region', { name: /identité/i });
-    expect(within(identite).getByText('FR-0014-42')).toBeDefined();
-    expect(within(identite).getByText('Boucle')).toBeDefined();
+    // La boucle est concaténée avec le displayId : "T14 · FR-0014-42".
+    expect(within(identite).getByText(/FR-0014-42/)).toBeDefined();
+    expect(within(identite).getByText(/Code · Boucle/i)).toBeDefined();
   });
 
-  it('section « Reproduction » affiche la date de mise-bas prévue au format FR', () => {
-    renderAt('/troupeau/truies/T14');
-    const repro = screen.getByRole('region', { name: /reproduction/i });
-    // formatDate("2026-05-10") → "10/05/2026"
-    expect(within(repro).getByText('10/05/2026')).toBeDefined();
-    expect(within(repro).getByText('Mise-bas prévue')).toBeDefined();
-  });
+  it.skip(
+    "section « Reproduction » affiche la date de mise-bas prévue au format FR",
+    // SKIP: feature retirée v6 — la section "Reproduction en cours" ne s'affiche
+    // qu'avec une saillie active (lastSaillie). dateMBPrevue n'est plus rendue
+    // directement. À reprendre en feature follow-up si besoin.
+    () => {},
+  );
 
-  it('truie introuvable : affiche « TRUIE INTROUVABLE » + message', () => {
+  it('truie introuvable : affiche « Truie introuvable » + message', () => {
     renderAt('/troupeau/truies/T99');
     const heading = screen.getByRole('heading', { level: 1 });
-    expect(heading.textContent).toContain('TRUIE INTROUVABLE');
+    // En v6, le texte n'est plus en uppercase (le CSS le passe en uppercase
+    // visuellement via text-transform mais textContent reste en casse mixte).
+    expect(heading.textContent).toContain('Truie introuvable');
     expect(document.body.textContent).toMatch(
       /cette truie n'existe pas/i,
     );
   });
 
-  it('expose un bouton Edit3 avec aria-label « Éditer la truie T14 »', () => {
+  it('expose un bouton « Modifier toutes les infos de la truie T14 »', () => {
     renderAt('/troupeau/truies/T14');
-    const editBtn = screen.getByLabelText('Éditer la truie T14');
+    // En v6, le bouton edit pastille a été remplacé par le CTA texte
+    // "Modifier toutes les infos" (aria-label inchangé en concept).
+    const editBtn = screen.getByLabelText(/modifier toutes les infos de la truie t14/i);
     expect(editBtn.tagName).toBe('BUTTON');
-    // Le bouton doit contenir l'icône Edit3 (svg lucide)
-    expect(editBtn.querySelector('svg')).not.toBeNull();
   });
 
-  it('affiche les 4 actions rapides (Soin · Pesée · Saillie · Note)', () => {
-    renderAt('/troupeau/truies/T14');
-    expect(screen.getByRole('button', { name: 'Soin' })).toBeDefined();
-    expect(screen.getByRole('button', { name: 'Pesée' })).toBeDefined();
-    expect(screen.getByRole('button', { name: 'Saillie' })).toBeDefined();
-    expect(screen.getByRole('button', { name: 'Note' })).toBeDefined();
-  });
+  it.skip(
+    'affiche les 4 actions rapides (Soin · Pesée · Saillie · Note)',
+    // SKIP: feature retirée v6 — les 4 quick-actions ont été remplacées par
+    // les CTA du SowHero (Nouvel évènement / Imprimer) + le MariusFAB.
+    () => {},
+  );
 
   // ── Actions métier contextuelles ─────────────────────────────────────────
 
-  it('MATERNITE : affiche le bouton « Sevrer » dans Actions métier', () => {
-    renderAt('/troupeau/truies/T14');
-    const region = screen.getByRole('region', { name: /actions métier/i });
-    expect(within(region).getByRole('button', { name: 'Sevrer' })).toBeDefined();
-    // Pas d'autres boutons métier pour ce statut.
-    expect(within(region).queryByRole('button', { name: 'Confirmer MB' })).toBeNull();
-    expect(within(region).queryByRole('button', { name: 'Passer en réforme' })).toBeNull();
-  });
+  it.skip(
+    'MATERNITE : affiche le bouton « Sevrer » dans Actions métier',
+    // SKIP: feature retirée v6 — le bouton "Sevrer" n'existe plus dans Actions
+    // métier. Le sevrage se gère via "Nouvel évènement" / Marius. À reprendre
+    // en feature follow-up.
+    () => {},
+  );
 
-  it('PLEINE : affiche le bouton « Confirmer MB » dans Actions métier', () => {
-    renderAt('/troupeau/truies/T07');
-    const region = screen.getByRole('region', { name: /actions métier/i });
-    expect(within(region).getByRole('button', { name: 'Confirmer MB' })).toBeDefined();
-    expect(within(region).queryByRole('button', { name: 'Sevrer' })).toBeNull();
-  });
+  it.skip(
+    'PLEINE : affiche le bouton « Confirmer MB » dans Actions métier',
+    // SKIP: feature retirée v6 — "Confirmer MB" ne figure plus dans Actions
+    // métier. Action gérée par DecisionBinaire en fenêtre de retour chaleur.
+    () => {},
+  );
 
   it('SURVEILLANCE : bouton « Passer en réforme » avec confirm dialog', () => {
     // Simule l'appui sur « Confirmer » en appelant le handler du bouton destructif.
@@ -268,7 +276,7 @@ describe('TruieDetailView', () => {
 
     renderAt('/troupeau/truies/T22');
     const region = screen.getByRole('region', { name: /actions métier/i });
-    const btn = within(region).getByRole('button', { name: 'Passer en réforme' });
+    const btn = within(region).getByRole('button', { name: /passer en réforme/i });
     expect(btn).toBeDefined();
 
     fireEvent.click(btn);
@@ -291,7 +299,7 @@ describe('TruieDetailView', () => {
 
     renderAt('/troupeau/truies/T22');
     const region = screen.getByRole('region', { name: /actions métier/i });
-    fireEvent.click(within(region).getByRole('button', { name: 'Passer en réforme' }));
+    fireEvent.click(within(region).getByRole('button', { name: /passer en réforme/i }));
 
     expect(presentAlertMock).toHaveBeenCalledTimes(1);
     expect(enqueueUpdateRowMock).not.toHaveBeenCalled();
@@ -299,23 +307,12 @@ describe('TruieDetailView', () => {
     presentAlertMock.mockReset();
   });
 
-  it('VIDE : affiche le bouton « Détecter chaleur » qui met à jour le statut', () => {
-    enqueueUpdateRowMock.mockClear();
-
-    renderAt('/troupeau/truies/T05');
-    const region = screen.getByRole('region', { name: /actions métier/i });
-    const btn = within(region).getByRole('button', { name: 'Détecter chaleur' });
-    expect(btn).toBeDefined();
-
-    fireEvent.click(btn);
-
-    expect(enqueueUpdateRowMock).toHaveBeenCalledWith(
-      'SUIVI_TRUIES_REPRODUCTION',
-      'ID',
-      'T05',
-      { STATUT: 'Chaleur' },
-    );
-  });
+  it.skip(
+    'VIDE : affiche le bouton « Détecter chaleur » qui met à jour le statut',
+    // SKIP: feature retirée v6 — "Détecter chaleur" n'existe plus dans Actions
+    // métier. La détection se fait via "Nouvel évènement" sur le SowHero.
+    () => {},
+  );
 
   // ── CTA « Modifier toutes les infos » + highlight ────────────────────────
 
@@ -326,13 +323,9 @@ describe('TruieDetailView', () => {
     });
     expect(btn).toBeDefined();
     expect(btn.tagName).toBe('BUTTON');
-    // Le sous-titre mono liste les champs couverts.
-    expect(btn.textContent).toMatch(/Nom/);
-    expect(btn.textContent).toMatch(/Boucle/);
-    expect(btn.textContent).toMatch(/Race/);
-    expect(btn.textContent).toMatch(/Poids/);
-    expect(btn.textContent).toMatch(/Ration/);
-    expect(btn.textContent).toMatch(/Portées/);
+    // En v6, le label texte est uniquement "Modifier toutes les infos"
+    // (le sous-titre listant les champs a été retiré).
+    expect(btn.textContent).toMatch(/modifier toutes les infos/i);
   });
 
   it('CTA « Modifier toutes les infos » : click ouvre le sheet edit (dialog)', () => {
@@ -349,12 +342,16 @@ describe('TruieDetailView', () => {
     expect(screen.getByRole('dialog')).toBeDefined();
   });
 
-  it('section « Identité » affiche la race et le poids si définis', () => {
+  it('section « Identité » affiche la race et le poids dans les vitales', () => {
     renderAt('/troupeau/truies/T14');
     const identite = screen.getByRole('region', { name: /identité/i });
+    // Race est dans la section Identité.
     expect(within(identite).getByText('Race')).toBeDefined();
     expect(within(identite).getByText('Large White')).toBeDefined();
-    expect(within(identite).getByText('Poids')).toBeDefined();
-    expect(within(identite).getByText('235 kg')).toBeDefined();
+    // Le poids est désormais affiché dans les Vitales (KPI cards).
+    const vitales = screen.getByRole('region', { name: /vitales/i });
+    expect(within(vitales).getByText('Poids')).toBeDefined();
+    // Valeur 235 affichée séparément de l'unité "kg" (split valeur/small).
+    expect(within(vitales).getByText('235')).toBeDefined();
   });
 });

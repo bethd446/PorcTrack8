@@ -251,6 +251,18 @@ vi.mock('../../components/forms/QuickSaillieForm', () => ({
     isOpen ? <div data-testid="quick-saillie-form-open" /> : null,
 }));
 
+// kvStore : Vitest 4 ne fournit plus de localStorage fonctionnel par défaut
+// (object stub sans getItem). On mocke kvGet/kvSet pour TroupeauTruiesView.
+vi.mock('../../services/kvStore', () => ({
+  kvGet: () => null,
+  kvSet: () => Promise.resolve(),
+  kvRemove: () => Promise.resolve(),
+  kvClear: () => Promise.resolve(),
+  hydrateKvStore: () => Promise.resolve(),
+  migrateLegacyLocalStorage: () => Promise.resolve(),
+  __resetKvCacheForTests: () => {},
+}));
+
 // Import APRÈS les vi.mock (hoistés par Vitest mais ordre explicite plus clair)
 import TroupeauHub from './TroupeauHub';
 
