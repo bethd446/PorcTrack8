@@ -1,11 +1,13 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { useIonAlert, IonSegment, IonSegmentButton, IonLabel } from '@ionic/react';
-import { Scale, Search, CheckCircle2, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Search, CheckCircle2, ChevronRight, ArrowLeft } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
 import { enqueueAppendRow, enqueueUpdateRow } from '../../services/offlineQueue';
 import { safeDate } from '../../lib/truieHelpers';
 import { BottomSheet, DataRow } from '../agritech';
 import type { BandePorcelets, Truie, Verrat } from '../../types/farm';
+
+type PeseeSubject = BandePorcelets | Truie | Verrat;
 import { biologyValidators } from '../../utils/biologyValidators';
 import { kvGet } from '../../services/kvStore';
 import { getMetaSync } from '../../features/tables/tablesRegistry';
@@ -70,7 +72,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
   const [form, setForm] = useState<PeseeFormState>(INITIAL_STATE);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
-  const [submitError, setSubmitError] = useState<string>('');
+  const [, setSubmitError] = useState<string>('');
 
   // ── Filtrage des sujets ──────────────────────────────────────────────
   const filteredSubjects = useMemo(() => {
@@ -111,12 +113,13 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
     onClose();
   }, [onClose, resetAll]);
 
-  const handleSelect = (s: any): void => {
+  const handleSelect = (s: PeseeSubject): void => {
     setSelectedSubject(s);
     if (subjectType === 'BANDE') {
+      const sb = s as BandePorcelets;
       setForm(prev => ({
         ...prev,
-        nbPeses: s.vivants !== undefined ? String(s.vivants) : '',
+        nbPeses: sb.vivants !== undefined ? String(sb.vivants) : '',
       }));
     } else {
       setForm(prev => ({ ...prev, nbPeses: '1' }));
@@ -237,9 +240,11 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
   };
 
   // ── UI Helpers ───────────────────────────────────────────────────────
-  const subjectDisplay = (s: any) => {
-    if (subjectType === 'BANDE') return (s.idPortee || s.id) + (s.truie ? ` · ${s.truie}` : '');
-    return (s.displayId || s.id) + (s.nom ? ` · ${s.nom}` : '');
+  const subjectDisplay = (s: PeseeSubject) => {
+    const sb = s as BandePorcelets;
+    const sr = s as Truie | Verrat;
+    if (subjectType === 'BANDE') return (sb.idPortee || sb.id) + (sb.truie ? ` · ${sb.truie}` : '');
+    return (sr.displayId || sr.id) + (sr.nom ? ` · ${sr.nom}` : '');
   };
 
   const successSummary = useMemo(() => {
@@ -284,7 +289,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
                 <li key={s.id}>
                   <DataRow
                     primary={subjectDisplay(s)}
-                    secondary={subjectType === 'BANDE' ? `${(s as BandePorcelets).vivants || 0} vivants` : `Boucle: ${(s as any).boucle || '—'}`}
+                    secondary={subjectType === 'BANDE' ? `${(s as BandePorcelets).vivants || 0} vivants` : `Boucle: ${(s as Truie | Verrat).boucle || '—'}`}
                     accessory={<ChevronRight size={14} className="text-text-2" />}
                     onClick={() => handleSelect(s)}
                   />

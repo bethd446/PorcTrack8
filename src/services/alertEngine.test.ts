@@ -164,6 +164,28 @@ describe('R1 — Mise-Bas', () => {
     const alerts = runAlertEngine(emptyInput({ truies: [truie] }));
     expect(alerts.find(a => a.id.startsWith('MB-'))).toBeUndefined();
   });
+
+  // ─── Cas frontières supplémentaires (J-5, J-2) ─────────────────────────────
+
+  it('ne déclenche pas à J-5 (avant fenêtre J-3)', () => {
+    const truie = makeTruie({
+      dateMBPrevue: toFrDate(dayOffset(NOW, 5)), // MB dans 5 jours
+    });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie] }));
+    expect(alerts.find(a => a.id.startsWith('MB-'))).toBeUndefined();
+  });
+
+  it('déclenche HAUTE à J-2 (dans la fenêtre J-3 à J-1)', () => {
+    const truie = makeTruie({
+      dateMBPrevue: toFrDate(dayOffset(NOW, 2)), // MB dans 2 jours
+    });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie] }));
+    const mb = alerts.find(a => a.id.startsWith('MB-'));
+    expect(mb).toBeDefined();
+    expect(mb?.priority).toBe('HAUTE');
+    expect(mb?.title).toContain('Imminente');
+    expect(mb?.daysOffset).toBe(-2);
+  });
 });
 
 // ─── R2 — Sevrage ────────────────────────────────────────────────────────────
@@ -521,6 +543,25 @@ describe('R7 — Fenêtre Échographie', () => {
     const alerts = runAlertEngine(emptyInput({ truies: [truie], saillies: [saillie] }));
     expect(alerts.find(a => a.id.startsWith('ECH-'))).toBeUndefined();
   });
+
+  // ─── Cas frontières supplémentaires (J+20, J+30) ───────────────────────────
+
+  it('ne déclenche pas à J+20 (avant fenêtre J+25)', () => {
+    const truie = makeTruie({ id: 'T1', statut: 'Pleine' });
+    const saillie = makeSaillie({ truieId: 'T1', dateSaillie: toFrDate(dayOffset(NOW, -20)) });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie], saillies: [saillie] }));
+    expect(alerts.find(a => a.id.startsWith('ECH-'))).toBeUndefined();
+  });
+
+  it('déclenche INFO à J+30 post saillie (milieu fenêtre)', () => {
+    const truie = makeTruie({ id: 'T1', statut: 'Pleine' });
+    const saillie = makeSaillie({ truieId: 'T1', dateSaillie: toFrDate(dayOffset(NOW, -30)) });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie], saillies: [saillie] }));
+    const ech = alerts.find(a => a.id.startsWith('ECH-'));
+    expect(ech).toBeDefined();
+    expect(ech?.priority).toBe('INFO');
+    expect(ech?.daysOffset).toBe(30);
+  });
 });
 
 // ─── R8 — Re-Saillie Proactive ───────────────────────────────────────────────
@@ -727,6 +768,56 @@ describe('Robustesse calcul de dates (DST / fuseaux)', () => {
     expect(mb?.daysOffset).toBe(-1);
     expect(mb?.priority).toBe('HAUTE');
     expect(mb?.title).toContain('Imminente');
+  });
+});
+
+// ─── R14 — Portée Orpheline ──────────────────────────────────────────────────
+
+describe('R14 — Portée Orpheline', () => {
+  it('déclenche CRITIQUE quand truie Morte avec portée sous mère vivante', () => {
+    const truie = makeTruie({ id: 'T14', boucle: 'B-014', statut: 'Morte' });
+    const bande = makeBande({
+      id: 'BP-014',
+      idPortee: 'P-014',
+      truie: 'T14',
+      boucleMere: 'B-014',
+      statut: 'Sous mère',
+      vivants: 9,
+    });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie], bandes: [bande] }));
+    const orph = alerts.find(a => a.id.startsWith('ORPH-'));
+    expect(orph).toBeDefined();
+    expect(orph?.priority).toBe('CRITIQUE');
+    expect(orph?.category).toBe('BANDES');
+    expect(orph?.requiresAction).toBe(true);
+    expect(orph?.message).toContain('9 porcelets');
+  });
+
+  it('ne déclenche pas si la truie est Active (statut Pleine)', () => {
+    const truie = makeTruie({ id: 'T14', boucle: 'B-014', statut: 'Pleine' });
+    const bande = makeBande({
+      id: 'BP-014',
+      truie: 'T14',
+      boucleMere: 'B-014',
+      statut: 'Sous mère',
+      vivants: 9,
+    });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie], bandes: [bande] }));
+    expect(alerts.find(a => a.id.startsWith('ORPH-'))).toBeUndefined();
+  });
+
+  it('ne déclenche pas si la truie est Morte mais la portée est déjà sevrée', () => {
+    const truie = makeTruie({ id: 'T14', boucle: 'B-014', statut: 'Morte' });
+    const bande = makeBande({
+      id: 'BP-014',
+      truie: 'T14',
+      boucleMere: 'B-014',
+      statut: 'Sevrés',
+      dateSevrageReelle: toFrDate(dayOffset(NOW, -5)),
+      vivants: 9,
+    });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie], bandes: [bande] }));
+    expect(alerts.find(a => a.id.startsWith('ORPH-'))).toBeUndefined();
   });
 });
 

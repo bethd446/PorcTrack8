@@ -63,8 +63,8 @@ export function calculerRapportPhases(
     const joursInPhase = diffDays(currentRefDate, endDate);
 
     if (joursInPhase > 0) {
-      const consoJ = (config.CONSO_MOYENNE_J as any)[feed] || 0;
-      const prixKg = (config.COUT_ALIMENT_KG as any)[feed] || 0;
+      const consoJ = (config.CONSO_MOYENNE_J as Record<string, number>)[feed] || 0;
+      const prixKg = (config.COUT_ALIMENT_KG as Record<string, number>)[feed] || 0;
 
       const totalKg = joursInPhase * nbPorcs * consoJ;
 

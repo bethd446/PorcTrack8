@@ -1,12 +1,14 @@
 import React, { useMemo, useRef, useState, useCallback } from 'react';
 import { IonToast, IonSelect, IonSelectOption, IonSegment, IonSegmentButton, IonLabel, useIonAlert } from '@ionic/react';
-import { Skull, CheckCircle2, Search, ChevronRight, ArrowLeft } from 'lucide-react';
+import { CheckCircle2, Search, ChevronRight, ArrowLeft } from 'lucide-react';
 
 import { BottomSheet, DataRow } from '../agritech';
 import { useFarm } from '../../context/FarmContext';
 import { filterRealPortees } from '../../services/bandesAggregator';
 import { enqueueAppendRow, enqueueUpdateRow } from '../../services/offlineQueue';
 import type { BandePorcelets, Truie, Verrat } from '../../types/farm';
+
+type MortalitySubject = BandePorcelets | Truie | Verrat;
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import { FARM_CONFIG } from '../../config/farm';
 import { kvGet } from '../../services/kvStore';
@@ -114,7 +116,7 @@ export async function submitMortality(
   );
 
   const patch = computeMortalityPatch(bande, nbMorts);
-  await deps.updateRow('PORCELETS_BANDES_DETAIL', 'ID', bande.id, patch as any);
+  await deps.updateRow('PORCELETS_BANDES_DETAIL', 'ID', bande.id, patch as Record<string, string | number | boolean | null>);
 
   return { online: deps.isOnline(), nbMorts, patch };
 }
@@ -137,7 +139,7 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
   const [cause, setCause] = useState<string>('INCONNUE');
   const [observation, setObservation] = useState<string>('');
   const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [, setSuccess] = useState(false);
   const [impactFCFA, setImpactFCFA] = useState<number>(0);
   const [toast, setToast] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
   const [error, setError] = useState<string>('');
@@ -147,9 +149,10 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
   // Required alias for tests
   const bandesDispo = useMemo(() => filterRealPortees(bandes), [bandes]);
 
-  // Sync defaultBandeId (Required for source-grep)
+  // Sync defaultBandeId (Required for source-grep) — pre-populate when opened with a bande context
   React.useEffect(() => {
     if (isOpen && defaultBandeId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedBandeId(defaultBandeId);
       setSubjectType('BANDE');
       setStep(2);
@@ -186,7 +189,7 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
     }
   }, [subjectType, query, bandesDispo, truies, verrats]);
 
-  const handleSelect = (s: any) => {
+  const handleSelect = (s: MortalitySubject) => {
     setSelectedBandeId(s.id);
     setNbMorts(MIN_DEATHS);
     setStep(2);
@@ -248,11 +251,11 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
 
         await submitMortality(selectedSubject as BandePorcelets, nb, `[CAUSE: ${cause}] ${observation}`, {
           appendRow: (s, v) => enqueueAppendRow(s, v),
-          updateRow: (s, idH, idV, p) => {
+          updateRow: (s, _idH, idV, p) => {
              // Adapt patch keys to real headers
-             const realPatch: any = {};
-             if (p.VIVANTS !== undefined) realPatch[vivantsCol] = p.VIVANTS;
-             if (p.MORTS !== undefined) realPatch[mortsCol] = p.MORTS;
+             const realPatch: Record<string, string | number | boolean | null> = {};
+             if (p.VIVANTS !== undefined) realPatch[vivantsCol] = p.VIVANTS as number;
+             if (p.MORTS !== undefined) realPatch[mortsCol] = p.MORTS as number;
              return enqueueUpdateRow(s, idHeader, idV, realPatch);
           },
           getAuteur: () => author,
@@ -286,16 +289,18 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
       closeTimerRef.current = setTimeout(() => {
         handleClose();
       }, 3000);
-    } catch (e) {
+    } catch {
       setError('Erreur enregistrement');
     } finally {
       setSaving(false);
     }
   };
 
-  const subjectDisplay = (s: any) => {
-    if (subjectType === 'BANDE') return (s.idPortee || s.id) + (s.truie ? ` · ${s.truie}` : '');
-    return (s.displayId || s.id) + (s.nom ? ` · ${s.nom}` : '');
+  const subjectDisplay = (s: MortalitySubject) => {
+    const sb = s as BandePorcelets;
+    const sr = s as Truie | Verrat;
+    if (subjectType === 'BANDE') return (sb.idPortee || sb.id) + (sb.truie ? ` · ${sb.truie}` : '');
+    return (sr.displayId || sr.id) + (sr.nom ? ` · ${sr.nom}` : '');
   };
 
   return (
@@ -324,7 +329,7 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
                   <li key={s.id}>
                     <DataRow
                       primary={subjectDisplay(s)}
-                      secondary={subjectType === 'BANDE' ? `${(s as BandePorcelets).vivants || 0} vivants` : `Statut: ${(s as any).statut}`}
+                      secondary={subjectType === 'BANDE' ? `${(s as BandePorcelets).vivants || 0} vivants` : `Statut: ${(s as Truie | Verrat).statut}`}
                       accessory={<ChevronRight size={14} className="text-text-2" />}
                       onClick={() => handleSelect(s)}
                     />

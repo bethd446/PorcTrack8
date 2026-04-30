@@ -5,7 +5,7 @@
 import { FARM_CONFIG } from '../config/farm';
 import { genererRapportGlobal } from './financialAnalyzer';
 import { countBandesByPhase } from './bandesAggregator';
-import type { BandePorcelets, TransitionBande, Truie, Saillie } from '../types/farm';
+import type { BandePorcelets, TransitionBande } from '../types/farm';
 import type { FarmAlert } from './alertEngine';
 
 export interface AuditSnapshot {

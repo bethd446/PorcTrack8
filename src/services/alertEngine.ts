@@ -22,8 +22,7 @@ import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import type { Truie, BandePorcelets, TraitementSante, StockAliment, Saillie } from '../types/farm';
 import type { Note } from '../types';
 import { normaliseStatut } from '../lib/truieStatut';
-import { countBandesByPhase, computeBandePhase } from './bandesAggregator';
-import { FARM_CONFIG } from '../config/farm';
+import { computeBandePhase } from './bandesAggregator';
 import { detectTruiesAReformer } from './perfKpiAnalyzer';
 import { extractPeseesForBande } from './growthAnalyzer';
 
@@ -482,7 +481,7 @@ function checkRetardPhase(bande: BandePorcelets, today: Date): FarmAlert | null 
   return null;
 }
 
-function checkSurdensiteLoges(bandes: BandePorcelets[], today: Date): FarmAlert | null {
+function checkSurdensiteLoges(bandes: BandePorcelets[], _today: Date): FarmAlert | null {
   const engraissement = bandes.filter(b => {
      const s = (b.statut || '').toLowerCase();
      return s.includes('croissance') || s.includes('finition') || s.includes('engraiss');
