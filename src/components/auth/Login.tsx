@@ -23,7 +23,7 @@ export default function Login() {
       setError(authError.message);
       setLoading(false);
     } else {
-      navigate('/');
+      navigate('/cockpit');
     }
   };
 
