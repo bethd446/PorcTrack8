@@ -139,7 +139,7 @@ export async function getBandes(
                              ? r.porcelets_nes_vivants - r.nb_mort_nes
                              : r.porcelets_nes_vivants ?? 0,
       statut:              r.statut ?? 'Sous mère',
-      dateSevragePrevue:   r.date_sevrage ?? undefined,
+      dateSevragePrevue:   r.date_sevrage_prevue ?? undefined,
       dateSevrageReelle:   r.date_sevrage ?? undefined,
       notes:               r.notes ?? undefined,
       synced:              true,
@@ -152,16 +152,15 @@ export async function getBandes(
   }
 }
 
-// ── SAILLIES (batches avec date_saillie → Saillie) ────────────────────────────
+// ── SAILLIES (saillies → Saillie) ─────────────────────────────────────────────
 
 export async function getSaillies(
   cb?: (data: Saillie[], header: string[]) => void
 ): Promise<SupabaseReadResult<Saillie>> {
   try {
     const { data, error } = await supabase
-      .from('batches')
+      .from('saillies')
       .select('*, sows(code_id, boucle, name), boars(code_id)')
-      .not('date_saillie', 'is', null)
       .order('date_saillie', { ascending: false });
 
     if (error) return fail<Saillie>(error.message);
@@ -170,12 +169,12 @@ export async function getSaillies(
       'DATE_MB_PREVUE', 'STATUT', 'NOTES'];
 
     const mapped: Saillie[] = (data ?? []).map(r => ({
-      truieId:      (r.sows as { code_id: string } | null)?.code_id ?? r.sow_id ?? '',
-      truieBoucle:  (r.sows as { boucle: string } | null)?.boucle ?? undefined,
-      truieNom:     (r.sows as { name: string } | null)?.name ?? undefined,
+      truieId:      r.sows?.code_id ?? r.sow_id ?? '',
+      truieBoucle:  r.sows?.boucle ?? undefined,
+      truieNom:     r.sows?.name ?? undefined,
       dateSaillie:  r.date_saillie ?? '',
-      verratId:     (r.boars as { code_id: string } | null)?.code_id ?? r.boar_id ?? '',
-      dateMBPrevue: r.date_mise_bas ?? undefined,
+      verratId:     r.boars?.code_id ?? r.boar_id ?? '',
+      dateMBPrevue: r.date_mb_prevue ?? undefined,
       statut:       r.statut ?? undefined,
       notes:        r.notes ?? undefined,
     }));

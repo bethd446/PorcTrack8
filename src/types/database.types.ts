@@ -82,6 +82,7 @@ export type Database = {
           date_prochain_event: string | null
           date_saillie: string | null
           date_sevrage: string | null
+          date_sevrage_prevue: string | null
           farm_id: string
           id: string
           loge: string | null
@@ -105,6 +106,7 @@ export type Database = {
           date_prochain_event?: string | null
           date_saillie?: string | null
           date_sevrage?: string | null
+          date_sevrage_prevue?: string | null
           farm_id: string
           id?: string
           loge?: string | null
@@ -128,6 +130,7 @@ export type Database = {
           date_prochain_event?: string | null
           date_saillie?: string | null
           date_sevrage?: string | null
+          date_sevrage_prevue?: string | null
           farm_id?: string
           id?: string
           loge?: string | null
@@ -623,6 +626,73 @@ export type Database = {
           role?: string | null
         }
         Relationships: []
+      }
+      saillies: {
+        Row: {
+          boar_code_id: string | null
+          boar_id: string | null
+          created_at: string | null
+          date_mb_prevue: string | null
+          date_saillie: string | null
+          farm_id: string
+          id: string
+          notes: string | null
+          sow_code_id: string | null
+          sow_id: string | null
+          statut: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          boar_code_id?: string | null
+          boar_id?: string | null
+          created_at?: string | null
+          date_mb_prevue?: string | null
+          date_saillie?: string | null
+          farm_id: string
+          id?: string
+          notes?: string | null
+          sow_code_id?: string | null
+          sow_id?: string | null
+          statut?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          boar_code_id?: string | null
+          boar_id?: string | null
+          created_at?: string | null
+          date_mb_prevue?: string | null
+          date_saillie?: string | null
+          farm_id?: string
+          id?: string
+          notes?: string | null
+          sow_code_id?: string | null
+          sow_id?: string | null
+          statut?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saillies_farm_id_fkey"
+            columns: ["farm_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saillies_sow_id_fkey"
+            columns: ["sow_id"]
+            isOneToOne: false
+            referencedRelation: "sows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saillies_boar_id_fkey"
+            columns: ["boar_id"]
+            isOneToOne: false
+            referencedRelation: "boars"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sows: {
         Row: {
