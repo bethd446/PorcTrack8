@@ -20,9 +20,12 @@ import {
 
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
+import EditableNumber from '../../components/EditableNumber';
+import EditableText from '../../components/EditableText';
 import { VerratIcon } from '../../components/icons';
 import { Chip, SectionDivider, BottomSheet, type ChipTone } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
+import { updateBoar } from '../../services/supabaseWrites';
 import QuickHealthForm from '../../components/forms/QuickHealthForm';
 import QuickNoteForm from '../../components/forms/QuickNoteForm';
 import QuickPeseeForm from '../../components/forms/QuickPeseeForm';
@@ -78,7 +81,7 @@ type QuickSheet = null | 'soin' | 'pesee' | 'saillie' | 'note';
 
 const VerratDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { verrats, truies, saillies, getHealthForAnimal } = useFarm();
+  const { verrats, truies, saillies, getHealthForAnimal, refreshData } = useFarm();
   const [sheet, setSheet] = useState<QuickSheet>(null);
   const [editOpen, setEditOpen] = useState<boolean>(false);
   const [toast, setToast] = useState<string>('');
@@ -187,13 +190,54 @@ const VerratDetailView: React.FC = () => {
               <SectionDivider label="Identité" />
               <div className="card-dense !p-0 overflow-hidden mt-3">
                 <DetailRow label="Boucle" value={verrat.boucle || '—'} mono />
-                <DetailRow label="Nom" value={verrat.nom || '—'} />
+                <EditableDetailRow label="Nom">
+                  <EditableText
+                    value={verrat.nom ?? null}
+                    maxLength={60}
+                    ariaLabel={`Modifier le nom du verrat ${displayId}`}
+                    placeholder="—"
+                    onSave={async (v) => {
+                      const res = await updateBoar(verrat.id, { name: v });
+                      if (res.success) await refreshData();
+                      return res;
+                    }}
+                  />
+                </EditableDetailRow>
                 <DetailRow label="Origine" value={verrat.origine || '—'} />
                 <DetailRow label="Alimentation" value={verrat.alimentation || '—'} />
-                <DetailRow
-                  label="Ration/j"
-                  value={verrat.ration > 0 ? `${verrat.ration} kg` : '—'}
-                  mono
+                <EditableDetailRow label="Ration/j">
+                  <EditableNumber
+                    value={verrat.ration > 0 ? verrat.ration : null}
+                    min={0}
+                    max={20}
+                    step={0.1}
+                    unit="kg/j"
+                    ariaLabel={`Modifier la ration du verrat ${displayId}`}
+                    onSave={async (v) => {
+                      const res = await updateBoar(verrat.id, { ration_kg_j: v });
+                      if (res.success) await refreshData();
+                      return res;
+                    }}
+                  />
+                </EditableDetailRow>
+              </div>
+            </section>
+
+            {/* ── Notes (édition inline texte) ───────────────────────── */}
+            <section aria-label="Notes verrat">
+              <SectionDivider label="Notes" />
+              <div className="card-dense mt-3 !p-3">
+                <EditableText
+                  value={verrat.notes ?? null}
+                  multiline
+                  maxLength={500}
+                  ariaLabel={`Modifier les notes du verrat ${displayId}`}
+                  placeholder="Ajouter une note (Cmd+Entrée pour sauver)…"
+                  onSave={async (v) => {
+                    const res = await updateBoar(verrat.id, { notes: v });
+                    if (res.success) await refreshData();
+                    return res;
+                  }}
                 />
               </div>
             </section>
@@ -403,6 +447,18 @@ const DetailRow: React.FC<DetailRowProps> = ({ label, value, mono, accent }) => 
     >
       {value}
     </span>
+  </div>
+);
+
+interface EditableDetailRowProps {
+  label: string;
+  children: React.ReactNode;
+}
+
+const EditableDetailRow: React.FC<EditableDetailRowProps> = ({ label, children }) => (
+  <div className="flex items-center justify-between gap-2 px-3.5 py-2 border-b border-border last:border-b-0 min-h-[44px]">
+    <span className="text-[13px] text-text-1 shrink-0">{label}</span>
+    <span className="text-[13px] font-medium text-right">{children}</span>
   </div>
 );
 

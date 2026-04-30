@@ -3,10 +3,13 @@ import { IonContent, IonPage } from '@ionic/react';
 import { Package, Box, AlertOctagon, Plus } from 'lucide-react';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
+import EditableNumber from '../../components/EditableNumber';
+import EditableText from '../../components/EditableText';
 import { Chip, DataRow, SectionDivider, KpiCard } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
 import { SeringueIcon } from '../../components/icons';
 import { useFarm } from '../../context/FarmContext';
+import { updateProduitVeto } from '../../services/supabaseWrites';
 import type { StockVeto, StockStatut } from '../../types/farm';
 import QuickAddVetoForm from '../../components/forms/QuickAddVetoForm';
 import QuickRefillForm from '../../components/forms/QuickRefillForm';
@@ -87,7 +90,7 @@ function formatCurrency(n: number): string {
  * Lecture seule — aucune mutation du FarmContext.
  */
 const PharmacieView: React.FC = () => {
-  const { stockVeto } = useFarm();
+  const { stockVeto, refreshData } = useFarm();
   const [addOpen, setAddOpen] = useState<boolean>(false);
   const [refillItem, setRefillItem] = useState<RefillStockItem | null>(null);
 
@@ -196,34 +199,21 @@ const PharmacieView: React.FC = () => {
                   <div className="card-dense !p-0 overflow-hidden">
                     {sorted.map(item => {
                       const tone = chipToneForStatut(item.statutStock);
-                      const seuil =
-                        typeof item.seuilAlerte === 'number' && item.seuilAlerte > 0
-                          ? item.seuilAlerte
-                          : null;
                       const secondaryParts: string[] = [];
                       if (item.type) secondaryParts.push(item.type);
                       if (item.usage) secondaryParts.push(item.usage);
                       return (
-                        <DataRow
+                        <VetoEditableRow
                           key={item.id || item.produit}
-                          primary={item.produit}
+                          item={item}
+                          tone={tone}
                           secondary={
                             secondaryParts.length > 0
                               ? secondaryParts.join(' · ')
                               : undefined
                           }
-                          meta={
-                            seuil !== null
-                              ? `${item.stockActuel}/${seuil} ${item.unite}`
-                              : `${item.stockActuel} ${item.unite}`
-                          }
-                          onClick={() => setRefillItem(toRefillItem(item, 'VETO'))}
-                          accessory={
-                            <Chip
-                              tone={tone}
-                              label={labelForStatut(item.statutStock)}
-                            />
-                          }
+                          onRefresh={refreshData}
+                          onRefill={() => setRefillItem(toRefillItem(item, 'VETO'))}
                         />
                       );
                     })}
@@ -272,6 +262,89 @@ const PharmacieView: React.FC = () => {
         stockItem={refillItem}
       />
     </IonPage>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Editable row : stock_actuel / stock_min / notes inline
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface VetoEditableRowProps {
+  item: StockVeto;
+  tone: ChipTone;
+  secondary?: string;
+  onRefresh: () => Promise<void>;
+  onRefill: () => void;
+}
+
+const VetoEditableRow: React.FC<VetoEditableRowProps> = ({
+  item,
+  tone,
+  secondary,
+  onRefresh,
+}) => {
+  // `seuilAlerte` UI = `stock_min` DB. On préfère `stockMin` si fourni, sinon
+  // on retombe sur `seuilAlerte` (legacy mapper).
+  const minValue =
+    typeof item.stockMin === 'number' ? item.stockMin : item.seuilAlerte ?? null;
+
+  return (
+    <div className="flex flex-col gap-1.5 px-3 py-3 border-b border-border last:border-b-0">
+      <div className="flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[14px] font-medium text-text-0">
+            {item.produit}
+          </div>
+          {secondary ? (
+            <div className="mt-0.5 truncate font-mono text-[11px] text-text-2">
+              {secondary}
+            </div>
+          ) : null}
+        </div>
+        <div className="shrink-0 flex items-center gap-1 font-mono text-[12px] tabular-nums text-text-1">
+          <EditableNumber
+            value={item.stockActuel ?? null}
+            min={0}
+            step={1}
+            ariaLabel={`Modifier le stock actuel de ${item.produit}`}
+            onSave={async (v) => {
+              const res = await updateProduitVeto(item.id, { stock_actuel: v });
+              if (res.success) await onRefresh();
+              return res;
+            }}
+          />
+          <span className="text-text-2">/</span>
+          <EditableNumber
+            value={minValue}
+            min={0}
+            step={1}
+            ariaLabel={`Modifier le stock minimum de ${item.produit}`}
+            onSave={async (v) => {
+              const res = await updateProduitVeto(item.id, { stock_min: v });
+              if (res.success) await onRefresh();
+              return res;
+            }}
+          />
+          <span className="text-text-2 ml-0.5">{item.unite}</span>
+        </div>
+        <div className="shrink-0">
+          <Chip tone={tone} label={labelForStatut(item.statutStock)} />
+        </div>
+      </div>
+      <div className="font-mono text-[11px] text-text-2 pl-0.5">
+        <EditableText
+          value={item.notes ?? null}
+          maxLength={200}
+          ariaLabel={`Modifier les notes de ${item.produit}`}
+          placeholder="Ajouter une note…"
+          onSave={async (v) => {
+            const res = await updateProduitVeto(item.id, { notes: v });
+            if (res.success) await onRefresh();
+            return res;
+          }}
+        />
+      </div>
+    </div>
   );
 };
 

@@ -31,6 +31,9 @@ import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
 import { computeBandePhase } from '../../services/bandesAggregator';
 import { FARM_CONFIG } from '../../config/farm';
+import { updateBatch } from '../../services/supabaseWrites';
+import EditableNumber from '../../components/EditableNumber';
+import EditableText from '../../components/EditableText';
 import type { BandePorcelets } from '../../types/farm';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -252,7 +255,6 @@ const BandeDetailView: React.FC = () => {
   const vivants = bande.vivants ?? 0;
   const morts = bande.morts ?? Math.max(0, nv - vivants);
   const sevres = bande.dateSevrageReelle ? vivants : null;
-  const survival = nv > 0 ? Math.round((vivants / nv) * 100) : 0;
 
   const idDisplay = bande.idPortee || bande.id;
 
@@ -324,14 +326,53 @@ const BandeDetailView: React.FC = () => {
             <section aria-label="Indicateurs portée">
               <SectionDivider label="Indicateurs portée" />
               <div className="grid grid-cols-4 gap-2 mt-3">
-                <KpiTile label="Nés" value={nv} tone="var(--text-0)" />
+                <EditableKpiTile
+                  label="Nés vivants"
+                  value={nv}
+                  ariaLabel={`Nés vivants de la portée ${idDisplay}`}
+                  onSave={async (v) => {
+                    const res = await updateBatch(bande.id, {
+                      porcelets_nes_vivants: v,
+                    });
+                    if (res.success) await refreshData();
+                    return res;
+                  }}
+                />
                 <KpiTile label="Vivants" value={vivants} tone="var(--accent)" />
                 <KpiTile
                   label="Sevrés"
                   value={sevres === null ? '—' : sevres}
                   tone={sevres === null ? 'var(--text-2)' : 'var(--text-0)'}
                 />
-                <KpiTile label="Morts" value={morts} tone="var(--coral)" />
+                <EditableKpiTile
+                  label="Morts"
+                  value={morts}
+                  ariaLabel={`Morts-nés de la portée ${idDisplay}`}
+                  onSave={async (v) => {
+                    const res = await updateBatch(bande.id, { nb_mort_nes: v });
+                    if (res.success) await refreshData();
+                    return res;
+                  }}
+                />
+              </div>
+            </section>
+
+            {/* ── Notes (édition inline) ──────────────────────────────── */}
+            <section aria-label="Notes portée">
+              <SectionDivider label="Notes" />
+              <div className="card-dense mt-3 !p-3">
+                <EditableText
+                  value={bande.notes ?? null}
+                  multiline
+                  maxLength={500}
+                  ariaLabel={`Notes de la portée ${idDisplay}`}
+                  placeholder="Ajouter une note (Cmd+Entrée pour sauver)…"
+                  onSave={async (v) => {
+                    const res = await updateBatch(bande.id, { notes: v });
+                    if (res.success) await refreshData();
+                    return res;
+                  }}
+                />
               </div>
             </section>
 
@@ -421,6 +462,27 @@ const KpiTile: React.FC<{ label: string; value: number | string; tone: string }>
       style={{ color: tone }}
     >
       {typeof value === 'number' ? String(value).padStart(2, '0') : value}
+    </div>
+  </div>
+);
+
+const EditableKpiTile: React.FC<{
+  label: string;
+  value: number;
+  ariaLabel: string;
+  onSave: (v: number) => Promise<{ success: boolean; error?: string }>;
+}> = ({ label, value, ariaLabel, onSave }) => (
+  <div className="card-dense !p-2.5">
+    <div className="kpi-label text-[9px]">{label}</div>
+    <div className="mt-1 leading-none">
+      <EditableNumber
+        value={value}
+        min={0}
+        max={30}
+        step={1}
+        ariaLabel={ariaLabel}
+        onSave={onSave}
+      />
     </div>
   </div>
 );

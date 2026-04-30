@@ -2,8 +2,8 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { IonContent, IonPage, IonToast, useIonAlert } from '@ionic/react';
 import {
-  Edit3, Activity, Heart, Award, AlertTriangle,
-  CheckCircle2, AlertCircle, Info, TrendingDown,
+  Edit3, Award, AlertTriangle,
+  CheckCircle2,
 } from 'lucide-react';
 
 import AgritechHeader from '../../components/AgritechHeader';
@@ -13,6 +13,9 @@ import { useFarm } from '../../context/FarmContext';
 import { genererFicheMerite } from '../../services/performanceAnalyzer';
 import { useAuth } from '../../context/AuthContext';
 import { enqueueUpdateRow } from '../../services/offlineQueue';
+import { updateSow, updateBatch } from '../../services/supabaseWrites';
+import EditableNumber from '../../components/EditableNumber';
+import EditableText from '../../components/EditableText';
 import QuickEditTruieForm from '../../components/forms/QuickEditTruieForm';
 import type { BandePorcelets } from '../../types/farm';
 import type { ChipTone } from '../../components/agritech/Chip';
@@ -46,7 +49,7 @@ function statutTone(statut: string): ChipTone {
 const TruieDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { truies, bandes, saillies } = useFarm();
+  const { truies, bandes, saillies, refreshData } = useFarm();
   const { isOwner } = useAuth();
   const [presentAlert] = useIonAlert();
   const [editOpen, setEditOpen] = useState(false);
@@ -73,6 +76,12 @@ const TruieDetailView: React.FC = () => {
     if (!truie) return null;
     return genererFicheMerite(truie, historique, sowSaillies);
   }, [truie, historique, sowSaillies]);
+
+  /** Bande la plus récente (édition inline du NV portée courante). */
+  const lastBande = useMemo(() => {
+    if (historique.length === 0) return null;
+    return historique[historique.length - 1] ?? null;
+  }, [historique]);
 
   // ── handleReformer déclaré ici (avant le early return) car useCallback est un hook ──
   const handleReformer = useCallback(() => {
@@ -230,8 +239,76 @@ const TruieDetailView: React.FC = () => {
                 )}
 
                 <span className="text-sm text-text-2">Ration</span>
-                <span className="text-sm font-mono text-right text-text-0">{truie.ration} kg/j</span>
+                <span className="text-sm text-right">
+                  <EditableNumber
+                    value={truie.ration ?? null}
+                    min={0}
+                    max={20}
+                    step={0.1}
+                    unit="kg/j"
+                    ariaLabel={`Ration journalière de la truie ${truie.displayId}`}
+                    onSave={async (v) => {
+                      const res = await updateSow(truie.id, { ration_kg_j: v });
+                      if (res.success) await refreshData();
+                      return res;
+                    }}
+                  />
+                </span>
               </div>
+            </section>
+
+            {/* ── PORTÉE COURANTE (édition inline NV) ─────────────────────── */}
+            {lastBande && (
+              <section
+                aria-label="Portée courante"
+                className="premium-card !p-4 flex flex-col gap-3"
+              >
+                <h2 className="ft-heading text-xs uppercase text-text-2 tracking-widest">
+                  Portée courante · {lastBande.idPortee || lastBande.id}
+                </h2>
+                <div className="grid grid-cols-2 gap-y-2 items-center">
+                  <span className="text-sm text-text-2">Nés vivants</span>
+                  <span className="text-sm text-right">
+                    <EditableNumber
+                      value={lastBande.nv ?? null}
+                      min={0}
+                      max={30}
+                      step={1}
+                      unit="porcelets"
+                      ariaLabel={`Nés vivants de la portée ${lastBande.idPortee || lastBande.id}`}
+                      onSave={async (v) => {
+                        const res = await updateBatch(lastBande.id, {
+                          porcelets_nes_vivants: v,
+                        });
+                        if (res.success) await refreshData();
+                        return res;
+                      }}
+                    />
+                  </span>
+                </div>
+              </section>
+            )}
+
+            {/* ── NOTES (édition inline texte) ────────────────────────────── */}
+            <section
+              aria-label="Notes truie"
+              className="premium-card !p-4 flex flex-col gap-2"
+            >
+              <h2 className="ft-heading text-xs uppercase text-text-2 tracking-widest">
+                Notes
+              </h2>
+              <EditableText
+                value={truie.notes ?? null}
+                multiline
+                maxLength={500}
+                ariaLabel={`Notes de la truie ${truie.displayId}`}
+                placeholder="Ajouter une note (Cmd+Entrée pour sauver)…"
+                onSave={async (v) => {
+                  const res = await updateSow(truie.id, { notes: v });
+                  if (res.success) await refreshData();
+                  return res;
+                }}
+              />
             </section>
 
             {/* ── REPRODUCTION ────────────────────────────────────────────── */}

@@ -11,9 +11,12 @@ import {
 } from 'lucide-react';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import { Chip, DataRow, SectionDivider, KpiCard } from '../../components/agritech';
+import EditableNumber from '../../components/EditableNumber';
+import EditableText from '../../components/EditableText';
+import { Chip, SectionDivider, KpiCard } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
+import { updateProduitAliment } from '../../services/supabaseWrites';
 import type { StockAliment, StockStatut } from '../../types/farm';
 import QuickAddAlimentForm from '../../components/forms/QuickAddAlimentForm';
 
@@ -138,6 +141,7 @@ interface AlimentSectionProps {
   emptyAction?: { label: string; onClick: () => void };
   items: StockAliment[];
   onSelect: (item: StockAliment) => void;
+  onRefresh: () => Promise<void>;
 }
 
 const AlimentSection: React.FC<AlimentSectionProps> = ({
@@ -149,6 +153,7 @@ const AlimentSection: React.FC<AlimentSectionProps> = ({
   emptyAction,
   items,
   onSelect,
+  onRefresh,
 }) => {
   const isEmpty = items.length === 0;
   return (
@@ -187,22 +192,13 @@ const AlimentSection: React.FC<AlimentSectionProps> = ({
         <div className="card-dense !p-0 overflow-hidden">
           {items.map(item => {
             const tone = chipToneForStatut(item.statutStock);
-            const seuil =
-              typeof item.seuilAlerte === 'number' && item.seuilAlerte > 0
-                ? item.seuilAlerte
-                : null;
-            const meta =
-              seuil !== null
-                ? `${item.stockActuel}/${seuil} ${item.unite}`
-                : `${item.stockActuel} ${item.unite}`;
             return (
-              <DataRow
+              <AlimentEditableRow
                 key={item.id || item.libelle}
-                primary={item.libelle || item.id}
-                secondary={item.notes || undefined}
-                meta={meta}
-                accessory={<Chip tone={tone} label={labelForStatut(item.statutStock)} />}
-                onClick={() => onSelect(item)}
+                item={item}
+                tone={tone}
+                onRefresh={onRefresh}
+                onSelect={onSelect}
               />
             );
           })}
@@ -213,11 +209,82 @@ const AlimentSection: React.FC<AlimentSectionProps> = ({
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Editable row : stock_actuel / seuil_alerte / notes inline
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface AlimentEditableRowProps {
+  item: StockAliment;
+  tone: ChipTone;
+  onRefresh: () => Promise<void>;
+  onSelect: (item: StockAliment) => void;
+}
+
+const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
+  item,
+  tone,
+  onRefresh,
+}) => {
+  return (
+    <div className="flex flex-col gap-1.5 px-3 py-3 border-b border-border last:border-b-0">
+      <div className="flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[14px] font-medium text-text-0">
+            {item.libelle || item.id}
+          </div>
+        </div>
+        <div className="shrink-0 flex items-center gap-1 font-mono text-[12px] tabular-nums text-text-1">
+          <EditableNumber
+            value={item.stockActuel ?? null}
+            min={0}
+            step={1}
+            ariaLabel={`Modifier le stock actuel de ${item.libelle || item.id}`}
+            onSave={async (v) => {
+              const res = await updateProduitAliment(item.id, { stock_actuel: v });
+              if (res.success) await onRefresh();
+              return res;
+            }}
+          />
+          <span className="text-text-2">/</span>
+          <EditableNumber
+            value={item.seuilAlerte ?? null}
+            min={0}
+            step={1}
+            ariaLabel={`Modifier le seuil d'alerte de ${item.libelle || item.id}`}
+            onSave={async (v) => {
+              const res = await updateProduitAliment(item.id, { seuil_alerte: v });
+              if (res.success) await onRefresh();
+              return res;
+            }}
+          />
+          <span className="text-text-2 ml-0.5">{item.unite}</span>
+        </div>
+        <div className="shrink-0">
+          <Chip tone={tone} label={labelForStatut(item.statutStock)} />
+        </div>
+      </div>
+      <div className="font-mono text-[11px] text-text-2 pl-0.5">
+        <EditableText
+          value={item.notes ?? null}
+          maxLength={200}
+          ariaLabel={`Modifier les notes de ${item.libelle || item.id}`}
+          placeholder="Ajouter une note…"
+          onSave={async (v) => {
+            const res = await updateProduitAliment(item.id, { notes: v });
+            if (res.success) await onRefresh();
+            return res;
+          }}
+        />
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Main
 // ─────────────────────────────────────────────────────────────────────────────
 
 const AlimentsView: React.FC = () => {
-  const { stockAliment } = useFarm();
+  const { stockAliment, refreshData } = useFarm();
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
 
@@ -354,6 +421,7 @@ const AlimentsView: React.FC = () => {
                   emptyDescription="Ajoutez maïs, tourteau de soja ou son de blé dans Google Sheets."
                   items={grouped.matieres}
                   onSelect={handleSelect}
+                  onRefresh={refreshData}
                 />
 
                 <AlimentSection
@@ -369,6 +437,7 @@ const AlimentsView: React.FC = () => {
                   }}
                   items={grouped.concentres}
                   onSelect={handleSelect}
+                  onRefresh={refreshData}
                 />
 
                 {grouped.autres.length > 0 ? (
@@ -380,6 +449,7 @@ const AlimentsView: React.FC = () => {
                     emptyDescription="Les aliments composés (TRUIE-GEST, PORCELET…) apparaîtront ici."
                     items={grouped.autres}
                     onSelect={handleSelect}
+                    onRefresh={refreshData}
                   />
                 ) : null}
               </>
