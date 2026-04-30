@@ -37,13 +37,13 @@
 @import "./styles/terra-v2-tokens.css";
 
 /* ── Polices ──────────────────────────────────────────────────────────────── */
-@font-face { font-family: 'BigShoulders'; src: url('/fonts/BigShoulders-Bold.ttf') format('truetype'); font-weight: 700; font-display: block; }
-@font-face { font-family: 'BigShoulders'; src: url('/fonts/BigShoulders-Regular.ttf') format('truetype'); font-weight: 400; font-display: block; }
-@font-face { font-family: 'BricolageGrotesque'; src: url('/fonts/BricolageGrotesque-Bold.ttf') format('truetype'); font-weight: 700; font-display: block; }
-@font-face { font-family: 'BricolageGrotesque'; src: url('/fonts/BricolageGrotesque-Regular.ttf') format('truetype'); font-weight: 400; font-display: block; }
-@font-face { font-family: 'DMMono'; src: url('/fonts/DMMono-Regular.ttf') format('truetype'); font-weight: 400; font-display: block; }
-@font-face { font-family: 'InstrumentSans'; src: url('/fonts/InstrumentSans-Bold.ttf') format('truetype'); font-weight: 700; font-display: block; }
-@font-face { font-family: 'InstrumentSans'; src: url('/fonts/InstrumentSans-Regular.ttf') format('truetype'); font-weight: 400; font-display: block; }
+@font-face { font-family: 'BigShoulders'; src: url('/fonts/BigShoulders-Bold.ttf') format('truetype'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'BigShoulders'; src: url('/fonts/BigShoulders-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'BricolageGrotesque'; src: url('/fonts/BricolageGrotesque-Bold.ttf') format('truetype'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'BricolageGrotesque'; src: url('/fonts/BricolageGrotesque-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'DMMono'; src: url('/fonts/DMMono-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'InstrumentSans'; src: url('/fonts/InstrumentSans-Bold.ttf') format('truetype'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'InstrumentSans'; src: url('/fonts/InstrumentSans-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
 
 @theme {
   --font-sans:    "InstrumentSans", -apple-system, system-ui, sans-serif;
@@ -140,9 +140,9 @@
    3. Geist Mono (--font-mono)          → IDs, dates, codes, données tabulaires
    ──────────────────────────────────────────────────────────────────── */
 .ft-heading {
-  font-family: var(--font-display) !important;
-  font-weight: 500;
-  letter-spacing: 0.005em;
+  font-family: var(--font-heading) !important; /* BigShoulders Bold — titres condensed impact */
+  font-weight: 700;
+  letter-spacing: 0.02em;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -203,8 +203,8 @@
 }
 .premium-btn:active { transform: scale(0.97); }
 .premium-btn:disabled { opacity: 0.4; }
-.premium-btn-primary { background: #059669; color: #fff; }
-.premium-btn-primary:active { background: #047857; }
+.premium-btn-primary { background: var(--color-accent-500); color: #fff; }
+.premium-btn-primary:active { background: var(--color-accent-600); }
 .premium-btn-outline { border: 1px solid #E5E7EB; color: #374151; background: #fff; }
 .premium-btn-amber { background: #F59E0B; color: #fff; }
 
@@ -232,8 +232,8 @@
 /* ── Segment tabs ──────────────────────────────────────────────────────── */
 .premium-segment { --background: transparent; }
 .premium-segment ion-segment-button {
-  --color-checked: #059669;
-  --indicator-color: #059669;
+  --color-checked: var(--color-accent-500);
+  --indicator-color: var(--color-accent-500);
   --indicator-height: 2px;
   font-family: "InstrumentSans", sans-serif;
   font-weight: 600;
@@ -255,7 +255,7 @@ ion-tab-bar {
   padding-bottom: env(safe-area-inset-bottom);
   z-index: 1000;
 }
-ion-tab-button { --color: #9CA3AF; --color-selected: #059669; }
+ion-tab-button { --color: #9CA3AF; --color-selected: var(--color-accent-500); }
 ion-tab-button ion-label {
   font-family: "InstrumentSans", sans-serif !important;
   font-size: 11px !important; font-weight: 600 !important;
@@ -265,7 +265,7 @@ ion-tab-button.tab-selected { position: relative; }
 ion-tab-button.tab-selected::after {
   content: ""; position: absolute;
   top: 0; left: 50%; transform: translateX(-50%);
-  width: 24px; height: 2px; background: #059669; border-radius: 0 0 2px 2px;
+  width: 24px; height: 2px; background: var(--color-accent-500); border-radius: 0 0 2px 2px;
 }
 
 ion-toolbar { --background: transparent; --border-width: 0; }
@@ -381,7 +381,7 @@ ion-modal { --border-radius: 20px; --backdrop-opacity: 0.4; }
 }
 
 /* ── Utility ───────────────────────────────────────────────────────────── */
-.gradient-text { -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; background-image: linear-gradient(135deg, #059669, #34D399); }
+.gradient-text { -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; background-image: linear-gradient(135deg, var(--color-accent-500), var(--color-accent-400)); }
 .accent-pork { color: #F59E0B; }
 .bg-accent-pork { background-color: #F59E0B; }
 .border-accent-pork { border-color: #F59E0B; }

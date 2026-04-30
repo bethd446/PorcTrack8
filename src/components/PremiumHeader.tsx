@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { IonToast } from '@ionic/react';
-import { ChevronLeft, RefreshCw, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, AlertTriangle } from 'lucide-react';
 import { useFarm } from '../context/FarmContext';
-import { SyncStatusBadge } from './SyncStatusBadge';
+import SyncStatusBadge from './SyncStatusBadge';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FARM_CONFIG } from '../config/farm';
 import { kvGet } from '../services/kvStore';
@@ -49,7 +49,7 @@ const PremiumHeader: React.FC<PremiumHeaderProps> = ({
           {showBack && (
             <button
               onClick={handleBack}
-              className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center active:scale-[0.95] active:bg-gray-100 transition-transform duration-[160ms] flex-shrink-0 pressable"
+              className="w-11 h-11 rounded-xl bg-gray-50 flex items-center justify-center active:scale-[0.95] active:bg-gray-100 transition-transform duration-[160ms] flex-shrink-0 pressable"
               aria-label="Retour"
             >
               <ChevronLeft size={18} className="text-gray-700" />
@@ -85,7 +85,7 @@ const PremiumHeader: React.FC<PremiumHeaderProps> = ({
           {criticalAlertCount > 0 && (
             <button
               onClick={() => navigate('/audit')}
-              className="h-8 w-8 rounded-lg bg-red-50 border border-red-200 flex items-center justify-center relative active:scale-[0.95] transition-transform duration-[160ms] pressable"
+              className="h-11 w-11 rounded-lg bg-red-50 border border-red-200 flex items-center justify-center relative active:scale-[0.95] transition-transform duration-[160ms] pressable"
               aria-label="Voir l'audit"
             >
               <AlertTriangle size={14} className="text-red-500" />

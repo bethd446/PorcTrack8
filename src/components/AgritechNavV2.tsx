@@ -237,7 +237,7 @@ const NavTab: React.FC<NavTabProps> = ({ tab, isActive, onSelect }) => {
           />
         </span>
         <span
-          className="font-mono text-[9px] font-semibold uppercase tracking-[0.06em] leading-none transition-[color] duration-[180ms]"
+          className="font-mono text-[11px] font-semibold uppercase tracking-[0.04em] leading-none transition-[color] duration-[180ms]"
           style={{ color: isActive ? 'var(--color-text-0)' : 'var(--color-text-2)' }}
         >
           {label}

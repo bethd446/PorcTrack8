@@ -42,6 +42,32 @@
    sudo systemctl restart nginx
    ```
 
+## Plugins & Skills installés (2026-04-29)
+
+| Plugin/Skill | Chemin | Rôle |
+|---|---|---|
+| **caveman** | `~/.claude/plugins/cache/caveman/` | Réduit output tokens ~75% (`/caveman`) |
+| **hyperframes** | `~/.claude/skills/hyperframes/SKILL.md` | HTML/CSS/GSAP pro design (`/hyperframes`) |
+| **frontend-design** | `~/.claude/plugins/cache/claude-plugins-official/` | Design frontend pro |
+| **superpowers** | `~/.claude/plugins/cache/superpowers-marketplace/` | TDD, plans, debug skills |
+
+**Browser Agent :** `mcp__Claude_Preview__*` outils disponibles pour preview HTML/CSS/GSAP en direct.
+Usage : `preview_start(path)` → `preview_screenshot()` → itération → `preview_stop()`
+
+## Déploiement Hostinger (solution htaccess)
+- **Contrainte :** hPanel Hostinger ne permet pas de changer le dossier du sous-domaine `app.porctrack.tech`
+- **Solution adoptée :** Vite base `/app/` + app déployée dans `public_html/app/` + `.htaccess` HTTP_HOST routing
+- **porctrack.tech** → `public_html/index.html` (vitrine)
+- **app.porctrack.tech** → `public_html/app/index.html` (SPA React)
+
+## Google Play — Prêt pour publication
+- `applicationId: com.porc800.porctrack`, `versionCode: 8`, `versionName: 8.2.0`
+- Checklist : `google-play/CHECKLIST_GOOGLE_PLAY.md`
+- Fiche Play Store : `google-play/store-listing/FICHE_PLAY_STORE.md`
+- **Étapes manuelles restantes :** Keystore Android Studio → AAB signé → Console Play
+
 ## Prochaines étapes
-1. **Validation de stabilité :** Tester l'App Ionic en conditions réelles (après rafraîchissement cache).
-2. **Flux d'authentification :** Implémenter le login testeur pour débloquer l'accès aux données privées (sows, troupeaux, bandes).
+1. **Google Play :** Créer keystore + générer AAB signé dans Android Studio
+2. **Feature Graphic :** Créer bandeau 1024×500 (`#2d5a1b`) pour Play Store
+3. **Screenshots :** 4-6 captures d'écran app pour Play Store
+4. **Flux d'authentification :** Implémenter login testeur (sows, troupeaux, bandes)
