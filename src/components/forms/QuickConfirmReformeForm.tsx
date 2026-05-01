@@ -2,14 +2,15 @@
  * QuickConfirmReformeForm — Confirmation rapide d'une réforme suggérée
  * ════════════════════════════════════════════════════════════════════
  * Ouvert depuis /today (cards "Confirmations en attente · CONFIRM REFORME").
- * Délègue à `confirmAction()` du confirmationQueue ; ajoute le motif retenu
- * et la date de sortie dans la note.
+ * Délègue à `confirmAction()` du confirmationQueue ; le shell saving/error/
+ * toast est factorisé via `useConfirmFlow`.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
 
 import { BottomSheet } from '../agritech';
-import { confirmAction, type PendingConfirmation } from '../../services/confirmationQueue';
+import type { PendingConfirmation } from '../../services/confirmationQueue';
+import { useConfirmFlow } from './useConfirmFlow';
 
 export interface QuickConfirmReformeFormProps {
   isOpen: boolean;
@@ -48,41 +49,29 @@ const QuickConfirmReformeForm: React.FC<QuickConfirmReformeFormProps> = ({
   const [motif, setMotif] = useState<string>(motifSuggere);
   const [motifAutre, setMotifAutre] = useState<string>('');
   const [dateSortie, setDateSortie] = useState<string>(todayIso());
-  const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
-  const [error, setError] = useState<string>('');
+  const { saving, error, toast, submit, dismissToast, resetError } = useConfirmFlow({
+    pending,
+    onClose,
+    onSuccess,
+  });
 
   useEffect(() => {
     if (isOpen) {
       setMotif(motifSuggere);
       setDateSortie(todayIso());
       setMotifAutre('');
-      setError('');
+      resetError();
     }
+    // resetError est stable (setter), pas besoin dans les deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, motifSuggere]);
 
   const handleConfirm = async (): Promise<void> => {
-    if (!pending) return;
-    setSaving(true);
-    setError('');
-    try {
-      const motifLabel = motif === 'AUTRE'
-        ? `Autre — ${motifAutre.trim() || 'non précisé'}`
-        : (REFORME_MOTIFS.find(m => m.value === motif)?.label ?? motif);
-      const note = `Réforme confirmée le ${dateSortie} · Motif : ${motifLabel}`;
-      const result = await confirmAction(pending.id, note);
-      if (result.success) {
-        setToast({ show: true, message: `Réforme confirmée pour ${truieId}` });
-        if (onSuccess) onSuccess();
-        setTimeout(() => onClose(), 800);
-      } else {
-        setError(result.error ?? 'Erreur enregistrement');
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erreur enregistrement');
-    } finally {
-      setSaving(false);
-    }
+    const motifLabel = motif === 'AUTRE'
+      ? `Autre — ${motifAutre.trim() || 'non précisé'}`
+      : (REFORME_MOTIFS.find(m => m.value === motif)?.label ?? motif);
+    const note = `Réforme confirmée le ${dateSortie} · Motif : ${motifLabel}`;
+    await submit(note, `Réforme confirmée pour ${truieId}`);
   };
 
   if (!pending) return null;
@@ -175,7 +164,7 @@ const QuickConfirmReformeForm: React.FC<QuickConfirmReformeFormProps> = ({
         message={toast.message}
         duration={2200}
         position="bottom"
-        onDidDismiss={() => setToast({ show: false, message: '' })}
+        onDidDismiss={dismissToast}
       />
     </>
   );

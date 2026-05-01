@@ -26,7 +26,8 @@ export default function MariusFAB({ online = true, onClick, className = '' }: Ma
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        boxShadow: '0 4px 12px rgba(244, 162, 97, 0.4)',
+        boxShadow:
+          '0 4px 12px color-mix(in srgb, var(--amber-pork) 40%, transparent)',
         zIndex: 50,
         border: 0,
         cursor: 'pointer',

@@ -283,7 +283,7 @@ const TableRowEdit: React.FC<TableRowEditProps> = ({ meta, header, rowData, onCl
         <div className="min-w-0 text-center px-3">
           <h2
             className="agritech-heading text-[14px] uppercase tracking-wide leading-none truncate"
-            style={{ fontFamily: 'var(--font-display)' }}
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             Édition
           </h2>

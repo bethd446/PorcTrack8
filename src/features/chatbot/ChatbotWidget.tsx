@@ -189,7 +189,7 @@ export const ChatbotWidget: React.FC = () => {
       role="dialog"
       aria-label="Conversation avec Marius"
       className="fixed bottom-20 right-4 z-50 w-[340px] max-h-[520px]
-                 rounded-3xl shadow-2xl flex flex-col overflow-hidden
+                 rounded-2xl shadow-2xl flex flex-col overflow-hidden
                  border border-[var(--color-accent-100)]"
       style={{ background: 'var(--bg-surface)' }}
     >

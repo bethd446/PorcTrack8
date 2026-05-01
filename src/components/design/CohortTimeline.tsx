@@ -2,7 +2,7 @@
  * CohortTimeline — frise horizontale 7 phases d'une bande.
  *
  * Tokens v6 PorcTrack : var(--phase-X) / var(--phase-X-soft),
- * var(--bg-surface), var(--ink), var(--muted), var(--font-display),
+ * var(--bg-surface), var(--ink), var(--muted), var(--font-heading),
  * var(--radius-card), var(--line).
  *
  * Le curseur AUJ. est calé sur la phase courante avec un overlay de progression.
@@ -107,7 +107,7 @@ export const CohortTimeline: React.FC<Props> = ({
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, minWidth: 0 }}>
           <div
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-heading)',
               fontWeight: 700,
               fontSize: 36,
               lineHeight: 1,

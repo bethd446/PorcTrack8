@@ -38,6 +38,9 @@
   --font-display: var(--font-heading);
   --font-values:  var(--font-heading);
 
+  /* === Foreground sur fond accent (FAB, badges pleins) === */
+  --on-accent: #fff;
+
   /* ── Palette Tailwind v4 — accent vert v6 + neutres ──────────────────── */
   --color-accent-700: #1a3d10;
   --color-accent-600: #235016;

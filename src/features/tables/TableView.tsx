@@ -348,7 +348,7 @@ const TableView: React.FC<TableViewProps> = ({ tableKey }) => {
                 </span>
                 <p
                   className="text-[14px] font-bold uppercase tracking-wide text-text-0"
-                  style={{ fontFamily: 'var(--font-display)' }}
+                  style={{ fontFamily: 'var(--font-heading)' }}
                 >
                   Erreur de flux
                 </p>
@@ -367,7 +367,7 @@ const TableView: React.FC<TableViewProps> = ({ tableKey }) => {
                 <EmptyIcon size={40} className="text-text-2" aria-hidden="true" />
                 <p
                   className="text-[14px] font-bold uppercase tracking-wide text-text-0"
-                  style={{ fontFamily: 'var(--font-display)' }}
+                  style={{ fontFamily: 'var(--font-heading)' }}
                 >
                   {searchText.trim() ? 'Aucun résultat' : descriptor.emptyLabel}
                 </p>

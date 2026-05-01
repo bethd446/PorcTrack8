@@ -5,10 +5,13 @@ import SaisirSheet from './forms/SaisirSheet';
 
 interface SaisirFABProps {
   className?: string;
+  hidden?: boolean;
 }
 
-const SaisirFAB: React.FC<SaisirFABProps> = ({ className = '' }) => {
+const SaisirFAB: React.FC<SaisirFABProps> = ({ className = '', hidden = false }) => {
   const [open, setOpen] = useState(false);
+
+  if (hidden) return null;
 
   return (
     <>
@@ -26,7 +29,7 @@ const SaisirFAB: React.FC<SaisirFABProps> = ({ className = '' }) => {
           width: 56,
           height: 56,
           background: 'var(--color-accent-500)',
-          color: '#fff',
+          color: 'var(--on-accent)',
           border: 0,
           cursor: 'pointer',
           boxShadow:

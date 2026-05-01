@@ -94,7 +94,7 @@ export const SettingsPage: React.FC = () => {
               <Eyebrow dotColor="accent">Plus · Paramètres</Eyebrow>
               <h1
                 style={{
-                  fontFamily: 'var(--font-display, BigShoulders), system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
                   fontSize: 34,
                   fontWeight: 700,
                   lineHeight: 1,
@@ -122,7 +122,7 @@ export const SettingsPage: React.FC = () => {
               <div style={{ ...cardStyle, marginTop: 12 }}>
                 <h2
                   style={{
-                    fontFamily: 'var(--font-display, BigShoulders), system-ui, sans-serif',
+                    fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
                     fontSize: 26,
                     fontWeight: 700,
                     lineHeight: 1.05,

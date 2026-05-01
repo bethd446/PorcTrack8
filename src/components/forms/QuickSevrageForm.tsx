@@ -145,7 +145,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
               aria-hidden="true"
               strokeWidth={1.5}
             />
-            <p className="agritech-heading text-[18px] uppercase tracking-wide">
+            <p className="font-heading text-[18px] uppercase tracking-wide">
               Sevrage enregistré
             </p>
             {selected && (

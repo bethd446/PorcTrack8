@@ -140,7 +140,7 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
 
       <div
         ref={sheetRef}
-        className="relative w-full max-w-[520px] rounded-t-3xl shadow-2xl animate-fade-in-up"
+        className="relative w-full max-w-[520px] rounded-t-2xl shadow-2xl animate-fade-in-up"
         style={{
           background: 'var(--bg-app, #f0f4f3)',
           borderTop: '1px solid var(--line, rgba(0,0,0,0.08))',
@@ -164,11 +164,12 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
             type="button"
             onClick={onClose}
             aria-label="Fermer"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full transition-transform active:scale-[0.94] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full active:scale-[0.94] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
             style={{
               background: 'var(--bg-2, #f3f4f6)',
               color: 'var(--ink, #111827)',
               outlineColor: 'var(--color-accent-500)',
+              transition: 'transform var(--duration-press) var(--ease-emil)',
             }}
           >
             <X size={18} aria-hidden="true" />
@@ -181,11 +182,12 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
               key={kind}
               type="button"
               onClick={() => handlePick(kind)}
-              className="flex w-full items-center gap-3 rounded-2xl px-4 py-4 text-left transition-transform active:scale-[0.985] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+              className="flex w-full items-center gap-3 rounded-2xl px-4 py-4 text-left active:scale-[0.985] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
               style={{
                 background: 'var(--bg-surface, #fff)',
                 border: '1px solid var(--line, rgba(0,0,0,0.08))',
                 outlineColor: 'var(--color-accent-500)',
+                transition: 'transform var(--duration-press) var(--ease-emil)',
               }}
             >
               <span

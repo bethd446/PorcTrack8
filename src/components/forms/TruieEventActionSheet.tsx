@@ -58,7 +58,7 @@ const baseActions: Record<TruieEventAction, ActionItem> = {
   },
 };
 
-function orderActions(canonique: TruieStatutCanonique): TruieEventAction[] {
+export function orderActions(canonique: TruieStatutCanonique): TruieEventAction[] {
   switch (canonique) {
     case 'VIDE':
     case 'CHALEUR':
@@ -127,7 +127,7 @@ const TruieEventActionSheet: React.FC<TruieEventActionSheetProps> = ({
                     {a.icon}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block ft-heading text-[14px] uppercase tracking-wide text-text-0">
+                    <span className="block font-heading text-[14px] uppercase tracking-wide text-text-0">
                       {a.title}
                     </span>
                     <span className="block font-mono text-[11px] text-text-2 mt-0.5">

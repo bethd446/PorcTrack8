@@ -2,16 +2,15 @@
  * QuickConfirmSevrageForm — Confirmation rapide d'un sevrage en attente
  * ════════════════════════════════════════════════════════════════════
  * Ouvert depuis /today (cards "Confirmations en attente · CONFIRM SEVRAGE").
- * Ne réinvente pas la persistance : délègue à `confirmAction()` du
- * confirmationQueue qui sait déjà patcher la batch + la truie associée.
- * Le form ajoute simplement une UX riche (date sevrage réelle, nb sevrés)
- * qui est sérialisée dans la note du queue item.
+ * Délègue à `confirmAction()` du confirmationQueue ; le shell saving/error/
+ * toast est factorisé via `useConfirmFlow`.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
 
 import { BottomSheet } from '../agritech';
-import { confirmAction, type PendingConfirmation } from '../../services/confirmationQueue';
+import type { PendingConfirmation } from '../../services/confirmationQueue';
+import { useConfirmFlow } from './useConfirmFlow';
 
 export interface QuickConfirmSevrageFormProps {
   isOpen: boolean;
@@ -41,39 +40,25 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
 
   const [dateSevrage, setDateSevrage] = useState<string>(todayIso());
   const [nbSevres, setNbSevres] = useState<number>(sevresDefault);
-  const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
-  const [error, setError] = useState<string>('');
+  const { saving, error, toast, submit, dismissToast, resetError } = useConfirmFlow({
+    pending,
+    onClose,
+    onSuccess,
+  });
 
   useEffect(() => {
     if (isOpen) {
       setDateSevrage(todayIso());
       setNbSevres(sevresDefault);
-      setError('');
+      resetError();
     }
     // sevresDefault est dérivé de [pending?.id, isOpen] donc retiré des deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, pending?.id]);
 
   const handleConfirm = async (): Promise<void> => {
-    if (!pending) return;
-    setSaving(true);
-    setError('');
-    try {
-      const note = `Sevrage confirmé le ${dateSevrage} · ${nbSevres} porcelet(s) sevré(s)`;
-      const result = await confirmAction(pending.id, note);
-      if (result.success) {
-        setToast({ show: true, message: `Sevrage confirmé pour ${bandeId}` });
-        if (onSuccess) onSuccess();
-        setTimeout(() => onClose(), 800);
-      } else {
-        setError(result.error ?? 'Erreur enregistrement');
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erreur enregistrement');
-    } finally {
-      setSaving(false);
-    }
+    const note = `Sevrage confirmé le ${dateSevrage} · ${nbSevres} porcelet(s) sevré(s)`;
+    await submit(note, `Sevrage confirmé pour ${bandeId}`);
   };
 
   if (!pending) return null;
@@ -150,7 +135,7 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
         message={toast.message}
         duration={2200}
         position="bottom"
-        onDidDismiss={() => setToast({ show: false, message: '' })}
+        onDidDismiss={dismissToast}
       />
     </>
   );

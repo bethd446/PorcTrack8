@@ -443,7 +443,7 @@ const TodayHub: React.FC = () => {
               <Eyebrow dotColor="accent">Aujourd&rsquo;hui</Eyebrow>
               <h1
                 style={{
-                  fontFamily: 'var(--font-display, BigShoulders), system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
                   fontSize: 34,
                   fontWeight: 700,
                   lineHeight: 1,
@@ -505,7 +505,7 @@ const TodayHub: React.FC = () => {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <h2
                       style={{
-                        fontFamily: 'var(--font-display, BigShoulders), system-ui, sans-serif',
+                        fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
                         fontSize: 22,
                         fontWeight: 700,
                         color: 'var(--ink)',
@@ -679,7 +679,7 @@ const TodayHub: React.FC = () => {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div
                     style={{
-                      fontFamily: 'var(--font-display, BigShoulders), system-ui, sans-serif',
+                      fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
                       fontSize: 16,
                       fontWeight: 600,
                       color: 'var(--ink)',
@@ -741,7 +741,7 @@ const TodayHub: React.FC = () => {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div
                       style={{
-                        fontFamily: 'var(--font-display, BigShoulders), system-ui, sans-serif',
+                        fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
                         fontSize: 16,
                         fontWeight: 600,
                         color: 'var(--ink)',

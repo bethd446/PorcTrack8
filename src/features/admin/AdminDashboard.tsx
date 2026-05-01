@@ -695,7 +695,7 @@ function OnboardingHero({ onInvite }: OnboardingHeroProps) {
 
       <h2
         style={{
-          fontFamily: 'var(--font-display, BigShoulders), system-ui, sans-serif',
+          fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
           fontSize: 'clamp(24px, 4vw, 32px)',
           lineHeight: 1.1,
           letterSpacing: '-0.01em',
@@ -896,7 +896,7 @@ export default function AdminDashboard() {
             <Eyebrow>Console d'administration</Eyebrow>
             <h1
               style={{
-                fontFamily: 'var(--font-display, BigShoulders), system-ui, sans-serif',
+                fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
                 fontSize: 'clamp(32px, 5vw, 44px)',
                 lineHeight: 1.05,
                 letterSpacing: '-0.01em',
