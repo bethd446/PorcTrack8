@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import type { ThemeMode } from '../services/themeAuto';
 import { isDebugEnabled, setDebugEnabled, APP_VERSION } from '../config';
 import { kvGet, kvSet, kvClear } from '../services/kvStore';
+import { supabase } from '../services/supabaseClient';
 import { getSupportWhatsapp, setSupportWhatsapp } from '../services/supportContact';
 
 const cardStyle: React.CSSProperties = {
@@ -55,6 +56,11 @@ export const SettingsPage: React.FC = () => {
   };
 
   const handleReset = async (): Promise<void> => {
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // ignore — on doit tout de même purger le store local
+    }
     await kvClear();
     window.location.href = '/';
   };

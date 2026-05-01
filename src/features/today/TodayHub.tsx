@@ -110,7 +110,7 @@ const TodayHub: React.FC = () => {
   const handleDismissAussi = useCallback(async (alertId: string) => {
     if (!user) return;
     try {
-      await dismissAlert(user.id, user.id, alertId, 'manual');
+      await dismissAlert(user.id, alertId, 'manual');
       setDismissToast({ show: true, message: 'Alerte ignorée pour 30 jours' });
       await recomputeAlerts();
     } catch (e) {
@@ -215,7 +215,7 @@ const TodayHub: React.FC = () => {
         title: `${retardCritiques.length} sevrage${plural ? 's' : ''} en retard à confirmer`,
         detail: `Le plus ancien : ${formatBandeLabel(plusAncien.bande.idPortee || plusAncien.bande.id)} (J+${plusAncien.daysOver})`,
         cta: 'Confirmer maintenant',
-        to: '/alerts',
+        to: '/cycles/maternite',
       };
     }
 
@@ -242,8 +242,8 @@ const TodayHub: React.FC = () => {
         kind: 'STOCK_RUPTURE',
         title: `${stocksRupture.length} stock${plural ? 's' : ''} en rupture, à commander`,
         detail: stocksRupture.slice(0, 2).map(s => s.libelle).join(' · '),
-        cta: 'Commander maintenant',
-        to: '/ressources',
+        cta: 'Voir le stock',
+        to: '/ressources/aliments?filter=stock-bas',
       };
     }
 
@@ -255,8 +255,8 @@ const TodayHub: React.FC = () => {
         kind: 'STOCK_BAS_SEVRAGE',
         title: `Risque alimentaire : ${lib} bas, ${sevragesProches.length} sevrage${plural ? 's' : ''} dans 7 jours`,
         detail: 'Anticiper la commande pour éviter la rupture en lactation',
-        cta: 'Voir les ressources',
-        to: '/ressources',
+        cta: 'Voir le stock',
+        to: '/ressources/aliments?filter=stock-bas',
       };
     }
 
@@ -284,41 +284,16 @@ const TodayHub: React.FC = () => {
   }
 
   const aussiATraiter = useMemo<AussiItem[]>(() => {
+    // Keyspace distinct : 'confirm:<alertId>' vs 'alert:<alertId>' vs 'srv:<idx>:<sujet>'
+    // Évite que la confirmation actionable soit avalée par une alerte locale partageant le même alertId.
     const seen = new Set<string>();
     const out: AussiItem[] = [];
 
-    for (const a of alerts) {
-      if (a.priority !== 'CRITIQUE' && a.priority !== 'HAUTE') continue;
-      if (seen.has(a.id)) continue;
-      seen.add(a.id);
-      out.push({
-        id: a.id,
-        priority: a.priority,
-        label: resolveAlertSubject(a.title, lookup),
-        kind: 'navigate',
-        to: alertHref(a),
-        dismissableAlertId: a.id,
-      });
-    }
-
-    alertesServeur
-      .filter(a => a.priorite === 'CRITIQUE' || a.priorite === 'HAUTE')
-      .forEach((a, i) => {
-        const id = `srv-${i}-${a.sujet}`;
-        if (seen.has(id)) return;
-        seen.add(id);
-        out.push({
-          id,
-          priority: a.priorite as AlertPriority,
-          label: a.sujet,
-          kind: 'navigate',
-          to: '/alerts',
-        });
-      });
-
+    // 1. Confirmations en attente d'abord — elles sont actionables (form direct).
     for (const c of pendingConfirmations) {
-      if (seen.has(c.alertId)) continue;
-      seen.add(c.alertId);
+      const key = `confirm:${c.alertId}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
       const isSevrage = c.action.type === 'CONFIRM_SEVRAGE';
       const isReforme = c.action.type === 'CONFIRM_REFORME';
       out.push({
@@ -330,6 +305,38 @@ const TodayHub: React.FC = () => {
         confirmation: c,
       });
     }
+
+    // 2. Alertes locales (CRITIQUE/HAUTE) — navigate vers la vue ciblée.
+    for (const a of alerts) {
+      if (a.priority !== 'CRITIQUE' && a.priority !== 'HAUTE') continue;
+      const key = `alert:${a.id}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({
+        id: a.id,
+        priority: a.priority,
+        label: resolveAlertSubject(a.title, lookup),
+        kind: 'navigate',
+        to: alertHref(a),
+        dismissableAlertId: a.id,
+      });
+    }
+
+    // 3. Alertes serveur (rare, fallback).
+    alertesServeur
+      .filter(a => a.priorite === 'CRITIQUE' || a.priorite === 'HAUTE')
+      .forEach((a, i) => {
+        const key = `srv:${i}:${a.sujet}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        out.push({
+          id: key,
+          priority: a.priorite as AlertPriority,
+          label: a.sujet,
+          kind: 'navigate',
+          to: '/alerts',
+        });
+      });
 
     out.sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]);
     return out.slice(0, 5);

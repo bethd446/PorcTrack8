@@ -530,7 +530,7 @@ const AlertsView: React.FC = () => {
   const handleDismiss = useCallback(async (alertId: string) => {
     if (!user) return;
     try {
-      await dismissAlert(user.id, user.id, alertId, 'manual');
+      await dismissAlert(user.id, alertId, 'manual');
       setDismissToast({ show: true, message: 'Alerte ignorée pour 30 jours' });
       await recomputeAlerts();
     } catch (e) {

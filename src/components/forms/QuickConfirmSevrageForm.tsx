@@ -7,7 +7,7 @@
  * Le form ajoute simplement une UX riche (date sevrage réelle, nb sevrés)
  * qui est sérialisée dans la note du queue item.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
 
 import { BottomSheet } from '../agritech';
@@ -30,11 +30,14 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
 }) => {
   const payload = pending?.action.payload ?? {};
   const bandeId = String(payload.idValue ?? '');
-  const sevresDefault = (() => {
+  // Stabilise la valeur entre re-renders du parent : ne change que si on
+  // bascule sur une autre confirmation (autre id) ou si on (ré)ouvre le sheet.
+  const sevresDefault = useMemo(() => {
     const patch = payload.patch as Record<string, unknown> | undefined;
     const v = patch?.SEVRES;
     return typeof v === 'number' ? v : 0;
-  })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pending?.id, isOpen]);
 
   const [dateSevrage, setDateSevrage] = useState<string>(todayIso());
   const [nbSevres, setNbSevres] = useState<number>(sevresDefault);
@@ -48,7 +51,9 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
       setNbSevres(sevresDefault);
       setError('');
     }
-  }, [isOpen, sevresDefault]);
+    // sevresDefault est dérivé de [pending?.id, isOpen] donc retiré des deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, pending?.id]);
 
   const handleConfirm = async (): Promise<void> => {
     if (!pending) return;

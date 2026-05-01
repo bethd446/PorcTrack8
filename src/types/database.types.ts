@@ -47,7 +47,7 @@ export type Database = {
           dismissed_at: string
           dismissed_by: string
           expires_at: string
-          farm_id: string
+          user_id: string
           id: string
           reason: string | null
         }
@@ -56,7 +56,7 @@ export type Database = {
           dismissed_at?: string
           dismissed_by: string
           expires_at?: string
-          farm_id: string
+          user_id: string
           id?: string
           reason?: string | null
         }
@@ -65,7 +65,7 @@ export type Database = {
           dismissed_at?: string
           dismissed_by?: string
           expires_at?: string
-          farm_id?: string
+          user_id?: string
           id?: string
           reason?: string | null
         }

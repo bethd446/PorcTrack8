@@ -115,9 +115,13 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   const handlePick = (kind: QuickActionKind): void => {
+    // Ouvre le form cible AVANT de fermer le sheet : ainsi le state du
+    // QuickActionsProvider est posé en synchrone, et la fermeture du sheet
+    // (qui re-focus l'élément précédent) n'interfère pas avec le mount du
+    // form. L'ancien setTimeout perdait l'ouverture si le sheet était
+    // déjà unmount au moment du flush.
+    openAction(kind);
     onClose();
-    // Petit délai pour laisser le sheet se fermer avant d'ouvrir le form cible.
-    setTimeout(() => openAction(kind), 80);
   };
 
   return (

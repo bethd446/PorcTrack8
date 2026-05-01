@@ -6,8 +6,18 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
+if (!isSupabaseConfigured && import.meta.env.PROD) {
+  if (typeof document !== 'undefined') {
+    document.body.innerHTML =
+      '<div style="padding: 40px; font-family: sans-serif;">' +
+      '<h1>Configuration manquante</h1>' +
+      '<p>Variables d\'environnement Supabase absentes en build prod. Contactez le support.</p>' +
+      '</div>';
+  }
+  throw new Error('SUPABASE_NOT_CONFIGURED');
+}
+
 if (!isSupabaseConfigured) {
-   
   console.warn(
     '[supabase] VITE_SUPABASE_URL ou VITE_SUPABASE_ANON_KEY manquante — auth désactivée. Créez .env.local pour activer.',
   );

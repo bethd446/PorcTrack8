@@ -9,22 +9,16 @@ interface Message {
   content: string;
 }
 
-const DEFAULT_API_BASE = 'http://187.127.225.24:8081';
-const DEFAULT_API_KEY = 'marius-secret-key-2026';
-
-const API_BASE: string =
-  (import.meta.env.VITE_MARIUS_API_BASE as string | undefined) ?? DEFAULT_API_BASE;
-
 // SECURITY: VITE_* env vars are inlined into the client bundle at build time
 // and visible to anyone inspecting the JS. Acceptable for MVP, but for prod
 // route requests through a backend proxy that holds the real secret.
-const API_KEY: string =
-  (import.meta.env.VITE_MARIUS_API_KEY as string | undefined) ?? DEFAULT_API_KEY;
+const API_BASE = import.meta.env.VITE_MARIUS_API_BASE as string | undefined;
+const API_KEY = import.meta.env.VITE_MARIUS_API_KEY as string | undefined;
 
-const ENV_CONFIGURED = Boolean(API_BASE);
+export const isMariusConfigured: boolean = Boolean(API_BASE && API_KEY);
 
 function warnMixedContent(): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || !API_BASE) return;
   if (window.location.protocol === 'https:' && API_BASE.startsWith('http://')) {
     console.warn(
       '[Marius] Mixed Content: la page est servie en HTTPS mais API_BASE est en HTTP. ' +
@@ -51,7 +45,7 @@ export const ChatbotWidget: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (open) {
+    if (open && isMariusConfigured) {
       warnMixedContent();
       setTimeout(() => inputRef.current?.focus(), 50);
     }
@@ -80,10 +74,10 @@ export const ChatbotWidget: React.FC = () => {
     const text = input.trim();
     if (!text || loading) return;
 
-    if (!ENV_CONFIGURED) {
+    if (!isMariusConfigured || !API_BASE || !API_KEY) {
       setMessages(prev => [
         ...prev,
-        { role: 'system', content: 'Configurez l\'URL Marius dans .env (VITE_MARIUS_API_BASE).' },
+        { role: 'system', content: 'Marius n\'est pas configuré sur cette instance.' },
       ]);
       return;
     }
@@ -181,6 +175,10 @@ export const ChatbotWidget: React.FC = () => {
     abortRef.current?.abort();
     setOpen(false);
   };
+
+  if (!isMariusConfigured) {
+    return null;
+  }
 
   if (!open) {
     return <MariusFAB online onClick={() => setOpen(true)} />;

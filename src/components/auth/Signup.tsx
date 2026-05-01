@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { IonPage, IonContent } from '@ionic/react';
 import { ArrowRight, Mail, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
+import { getAuthRedirectURL } from '../../lib/authRedirect';
 import Eyebrow from '../design/Eyebrow';
 import Button from '../design/Button';
 
@@ -85,7 +86,7 @@ export default function Signup() {
     }
 
     setLoading(true);
-    const redirectTo = `${window.location.origin}/auth/callback`;
+    const redirectTo = getAuthRedirectURL('/auth/callback');
     const { error: err } =
       mode === 'magic'
         ? await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } })
@@ -112,7 +113,7 @@ export default function Signup() {
     if (resendCooldown > 0 || resendLoading) return;
     setResendLoading(true);
     setResendNotice(null);
-    const redirectTo = `${window.location.origin}/auth/callback`;
+    const redirectTo = getAuthRedirectURL('/auth/callback');
     const { error: err } = await supabase.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: redirectTo },
