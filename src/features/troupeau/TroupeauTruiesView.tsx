@@ -24,7 +24,6 @@ import type { Truie } from '../../types/farm';
 import { normaliseStatut } from '../../lib/truieStatut';
 import { kvGet, kvSet } from '../../services/kvStore';
 import { useTroupeauPipeline } from '../../hooks/useTroupeauStats';
-import TruieStatutPipeline from '../../components/truie/TruieStatutPipeline';
 
 // ─── Types & Helpers ─────────────────────────────────────────────────────────
 
@@ -148,7 +147,7 @@ interface TroupeauTruiesViewProps {
 
 const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, setSearchText }) => {
   const navigate = useNavigate();
-  const { activeTruies, pipelineEtapes, total: totalTruiesCount } = useTroupeauPipeline();
+  const { activeTruies } = useTroupeauPipeline();
   const today = useMemo(() => new Date(), []);
 
   const [filter, setFilter] = useState<FilterKey>('tout');
@@ -236,14 +235,7 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
 
   return (
     <div className="flex flex-col gap-4">
-      {/* ── Pipeline reproduction (Specific to Truies) ────────────── */}
-      <TruieStatutPipeline
-        basePath="/troupeau/truies"
-        etapes={pipelineEtapes}
-        total={totalTruiesCount}
-      />
-
-      {/* ── Toolbar : toggle viewMode + bouton "Nouvelle truie" ─────── */}
+      {/* ── CTA primaire : ajouter une truie + toggle viewMode ─────── */}
       <div className="flex items-center justify-between gap-2">
         <ViewModeToggle
           mode={viewMode}
@@ -252,11 +244,11 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
         <button
           type="button"
           onClick={() => setAddOpen(true)}
-          aria-label="Ajouter une nouvelle truie"
-          className="pressable inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-accent/40 text-accent font-mono text-[11px] uppercase tracking-wide hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-colors"
+          aria-label="Ajouter une truie"
+          className="pressable inline-flex items-center gap-2 h-10 px-4 rounded-full bg-accent text-bg-0 font-mono text-[12px] font-medium uppercase tracking-wide shadow-sm hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-opacity"
         >
-          <Plus size={14} aria-hidden="true" />
-          Nouvelle truie
+          <Plus size={15} aria-hidden="true" />
+          Ajouter une truie
         </button>
       </div>
 
@@ -340,7 +332,7 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
               <span
                 className={`text-[10px] tabular-nums ${active ? 'text-teal/70' : 'text-text-2'}`}
               >
-                {String(count).padStart(2, '0')}
+                {count}
               </span>
             </button>
           );

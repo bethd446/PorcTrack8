@@ -9,8 +9,8 @@
  *   4. Click Porcelets tab → sections "Sous mère" / "Post-sevrage"
  *   5. Click Loges tab → IsoBarn SVG (role=img)
  *   6. Query `?view=porcelets` → ouvre directement la sous-vue Porcelets
- *   7. Summary strip : "17 truies" et "7 pleines" visibles
- *   8. Filtre CHALEUR : chip "Chaleur 01" visible si 1 truie statut=Chaleur
+ *   7. Header subtitle : "17 truies" et "7 pleines" visibles
+ *   8. Filtre CHALEUR : chip "Chaleur 1" visible si 1 truie statut=Chaleur
  *
  * Mocks :
  *   - `useFarm` → 17 truies (dont 7 pleines, 1 chaleur) + 2 verrats + 14 bandes
@@ -22,7 +22,7 @@
 
 import React from 'react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, cleanup, within } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import type { Truie, Verrat, BandePorcelets } from '../../types/farm';
@@ -404,21 +404,16 @@ describe('TroupeauHub — intégration multi-vues', () => {
     ).toBeNull();
   });
 
-  it('7. summary strip : "17 truies" et "7 pleines" visibles', () => {
+  it('7. header subtitle : "17 truies" et "7 pleines" visibles', () => {
     renderHub();
 
-    const strip = screen.getByRole('group', {
-      name: /synthèse troupeau/i,
-    });
-
-    // "17 truies" (total)
-    expect(within(strip).getByText(/17 truies/i)).toBeDefined();
-
-    // "7 pleines"
-    expect(within(strip).getByText(/7 pleines/i)).toBeDefined();
+    // Le subtitle du header expose "17 truies · 2 verrats … — 7 pleines · 4 maternité · …"
+    expect(screen.getAllByText(/17 truies/i).length).toBeGreaterThan(0);
+    // "7 pleines" dans le header subtitle (peut aussi apparaître dans un filter chip)
+    expect(screen.getAllByText(/7 pleines/i).length).toBeGreaterThan(0);
   });
 
-  it('8. filtre CHALEUR : chip "Chaleur 01" visible (1 truie statut=Chaleur)', () => {
+  it('8. filtre CHALEUR : chip "Chaleur 1" visible (1 truie statut=Chaleur)', () => {
     renderHub();
 
     // Le panneau Truies contient un tablist "Filtrer par statut". Le filtre
@@ -428,8 +423,9 @@ describe('TroupeauHub — intégration multi-vues', () => {
       .find((t) => /chaleur/i.test(t.textContent ?? ''));
 
     expect(chaleurTab).toBeDefined();
-    // Le compteur est formaté "01" (padStart 2)
     expect(chaleurTab?.textContent).toMatch(/chaleur/i);
-    expect(chaleurTab?.textContent).toMatch(/01/);
+    // Compteur sans padStart : "1" et non "01"
+    expect(chaleurTab?.textContent).toMatch(/1$/);
+    expect(chaleurTab?.textContent).not.toMatch(/01/);
   });
 });

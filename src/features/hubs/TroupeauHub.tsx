@@ -178,85 +178,23 @@ const TroupeauHub: React.FC = () => {
               </div>
             </header>
 
-            {/* ── Synth strip + mini KPIs loges ────────────────────── */}
+            {/* ── Mini KPIs loges (occupation Mat/P-sev/Eng) ──────────── */}
             <section
-              aria-label="Synthèse troupeau et occupation des loges"
+              aria-label="Occupation des loges"
               role="group"
               style={{
                 background: 'var(--bg-surface)',
                 borderRadius: 12,
                 padding: '14px 16px',
                 boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 12,
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: 14,
               }}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  alignItems: 'baseline',
-                  gap: '6px 14px',
-                  fontFamily: 'DMMono, ui-monospace, monospace',
-                  fontSize: 12,
-                  letterSpacing: '0.04em',
-                  color: 'var(--ink-soft)',
-                }}
-              >
-                <span
-                  style={{
-                    fontWeight: 600,
-                    color: 'var(--ink)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                  }}
-                >
-                  {summary.total} truie{summary.total > 1 ? 's' : ''}
-                </span>
-                <span style={{ color: 'var(--muted)', opacity: 0.4 }}>|</span>
-                <span>{summary.pleines} pleines</span>
-                <span style={{ color: 'var(--muted)', opacity: 0.4 }}>|</span>
-                <span>{summary.maternite} maternité</span>
-                <span style={{ color: 'var(--muted)', opacity: 0.4 }}>|</span>
-                <span>{summary.vides} vides</span>
-                {summary.chaleur > 0 && (
-                  <>
-                    <span style={{ color: 'var(--muted)', opacity: 0.4 }}>|</span>
-                    <span>{summary.chaleur} chaleur</span>
-                  </>
-                )}
-                {summary.flushing > 0 && (
-                  <>
-                    <span style={{ color: 'var(--muted)', opacity: 0.4 }}>|</span>
-                    <span>{summary.flushing} flushing</span>
-                  </>
-                )}
-                {summary.surveillance > 0 && (
-                  <>
-                    <span style={{ color: 'var(--muted)', opacity: 0.4 }}>|</span>
-                    <span>{summary.surveillance} à surveiller</span>
-                  </>
-                )}
-                {summary.reforme > 0 && (
-                  <>
-                    <span style={{ color: 'var(--muted)', opacity: 0.4 }}>|</span>
-                    <span>{summary.reforme} réforme</span>
-                  </>
-                )}
-              </div>
-
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: 14,
-                }}
-              >
-                <LogesMiniBar label="Mat." occ={summary.mat} />
-                <LogesMiniBar label="P-sev" occ={summary.post} />
-                <LogesMiniBar label="Eng." occ={summary.eng} />
-              </div>
+              <LogesMiniBar label="Mat." occ={summary.mat} />
+              <LogesMiniBar label="P-sev" occ={summary.post} />
+              <LogesMiniBar label="Eng." occ={summary.eng} />
             </section>
 
             {/* ── Sub-tabs (Radix) ─────────────────────────────────── */}
@@ -271,7 +209,7 @@ const TroupeauHub: React.FC = () => {
                   const count = tabCounts[t.id];
                   const countLabel = t.id === 'loges'
                     ? `${count}/${totalLogesCapacity}`
-                    : String(count).padStart(2, '0');
+                    : String(count);
                   return (
                     <TabsTrigger key={t.id} value={t.id} id={`troupeau-tab-${t.id}`} style={{ minHeight: 36, gap: 8 }}>
                       <span>{t.label}</span>

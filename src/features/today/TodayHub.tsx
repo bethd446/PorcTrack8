@@ -283,13 +283,15 @@ const TodayHub: React.FC = () => {
     confirmation?: PendingConfirmation;
     /** Identifiant FarmAlert dismissable (uniquement pour les alertes locales). */
     dismissableAlertId?: string;
+    /** Compte d'items du même type fusionnés en ce groupe (≥2 si groupé, sinon undefined). */
+    groupCount?: number;
   }
 
   const aussiATraiter = useMemo<AussiItem[]>(() => {
     // Keyspace distinct : 'confirm:<alertId>' vs 'alert:<alertId>' vs 'srv:<idx>:<sujet>'
     // Évite que la confirmation actionable soit avalée par une alerte locale partageant le même alertId.
     const seen = new Set<string>();
-    const out: AussiItem[] = [];
+    const flat: AussiItem[] = [];
 
     // 1. Confirmations en attente d'abord — elles sont actionables (form direct).
     for (const c of pendingConfirmations) {
@@ -298,7 +300,7 @@ const TodayHub: React.FC = () => {
       seen.add(key);
       const isSevrage = c.action.type === 'CONFIRM_SEVRAGE';
       const isReforme = c.action.type === 'CONFIRM_REFORME';
-      out.push({
+      flat.push({
         id: c.id,
         priority: 'HAUTE',
         label: resolveAlertSubject(c.alertTitle, lookup),
@@ -314,7 +316,7 @@ const TodayHub: React.FC = () => {
       const key = `alert:${a.id}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      out.push({
+      flat.push({
         id: a.id,
         priority: a.priority,
         label: resolveAlertSubject(a.title, lookup),
@@ -331,7 +333,7 @@ const TodayHub: React.FC = () => {
         const key = `srv:${i}:${a.sujet}`;
         if (seen.has(key)) return;
         seen.add(key);
-        out.push({
+        flat.push({
           id: key,
           priority: a.priorite as AlertPriority,
           label: a.sujet,
@@ -340,6 +342,64 @@ const TodayHub: React.FC = () => {
         });
       });
 
+    // 4. Groupement post-dédup. Bucket key :
+    //    - 'confirm-sevrage' / 'confirm-reforme' pour les confirmations actionables
+    //    - 'reforme-alert' pour les alertes "Réforme Suggérée — XXX"
+    //    - 'sevrage-alert' pour les alertes "Sevrage à Confirmer — XXX"
+    //    - sinon item individuel (pas de groupement)
+    const groupKeyOf = (it: AussiItem): string | null => {
+      if (it.kind === 'confirm-sevrage') return 'confirm-sevrage';
+      if (it.kind === 'confirm-reforme') return 'confirm-reforme';
+      const label = it.label || '';
+      if (/^Réforme Suggérée/i.test(label)) return 'reforme-alert';
+      if (/^Sevrage à Confirmer/i.test(label)) return 'sevrage-alert';
+      return null;
+    };
+
+    const buckets = new Map<string, AussiItem[]>();
+    const ungrouped: AussiItem[] = [];
+    for (const it of flat) {
+      const k = groupKeyOf(it);
+      if (k === null) {
+        ungrouped.push(it);
+        continue;
+      }
+      const arr = buckets.get(k);
+      if (arr) arr.push(it);
+      else buckets.set(k, [it]);
+    }
+
+    const grouped: AussiItem[] = [];
+    for (const [k, arr] of buckets) {
+      if (arr.length === 1) {
+        grouped.push(arr[0]);
+        continue;
+      }
+      // Priorité du groupe = la plus haute des items.
+      const topPriority = arr.reduce<AlertPriority>(
+        (p, it) => (PRIORITY_ORDER[it.priority] < PRIORITY_ORDER[p] ? it.priority : p),
+        arr[0].priority,
+      );
+      let label = '';
+      let to = '/alerts';
+      if (k === 'confirm-sevrage' || k === 'sevrage-alert') {
+        label = `${arr.length} sevrages à confirmer`;
+        to = '/cycles/maternite';
+      } else if (k === 'confirm-reforme' || k === 'reforme-alert') {
+        label = `${arr.length} truies à réformer`;
+        to = '/troupeau?view=truies&statut=reforme';
+      }
+      grouped.push({
+        id: `group:${k}`,
+        priority: topPriority,
+        label,
+        kind: 'navigate',
+        to,
+        groupCount: arr.length,
+      });
+    }
+
+    const out = [...ungrouped, ...grouped];
     out.sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]);
     return out.slice(0, 5);
   }, [alerts, alertesServeur, pendingConfirmations, lookup]);
@@ -572,10 +632,12 @@ const TodayHub: React.FC = () => {
                   }}
                 >
                   {aussiATraiter.map((item) => {
-                    const dotColor =
-                      item.priority === 'CRITIQUE'
-                        ? 'var(--color-pig-deep)'
-                        : 'var(--color-amber-pork-deep)';
+                    const isCritical = item.priority === 'CRITIQUE';
+                    const dotColor = isCritical
+                      ? 'var(--color-pig-deep)'
+                      : 'var(--color-amber-pork-deep)';
+                    const dotSize = isCritical ? 8 : 6;
+                    const labelWeight = isCritical ? 600 : 400;
                     const canDismiss = !!item.dismissableAlertId && !!user;
                     return (
                       <li
@@ -606,8 +668,8 @@ const TodayHub: React.FC = () => {
                           <span
                             aria-hidden="true"
                             style={{
-                              width: 6,
-                              height: 6,
+                              width: dotSize,
+                              height: dotSize,
                               borderRadius: '50%',
                               background: dotColor,
                               flexShrink: 0,
@@ -618,6 +680,7 @@ const TodayHub: React.FC = () => {
                               flex: 1,
                               fontFamily: 'InstrumentSans, system-ui, sans-serif',
                               fontSize: 14,
+                              fontWeight: labelWeight,
                               color: 'var(--ink)',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
