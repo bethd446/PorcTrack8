@@ -37,9 +37,6 @@ import type { BandePorcelets } from '../../types/farm';
  * - Monitoring nutritionnel (Aliment Croissance)
  * - Visualisation GMQ estimé
  */
-const spark = (base: number): number[] =>
-  Array.from({ length: 7 }, (_, i) => Math.max(1, Math.round(Math.abs(base) * (0.85 + 0.05 * i))));
-
 const CroissanceView: React.FC = () => {
   const navigate = useNavigate();
   const { bandes } = useFarm();
@@ -129,24 +126,20 @@ const CroissanceView: React.FC = () => {
                 label="Portées"
                 value={summary.nbPortees}
                 accentColor="var(--amber-pork)"
-                spark={spark(summary.nbPortees || 1)}
               />
               <KpiCardV6
                 label="Effectif"
                 value={summary.totalVivants}
-                spark={spark(summary.totalVivants || 1)}
               />
               <KpiCardV6
                 label="Âge Moyen"
                 value={summary.avgAge}
                 unit="j"
-                spark={spark(summary.avgAge || 1)}
               />
               <KpiCardV6
                 label="Loges Occ."
                 value={`${occupation.occupees}/${occupation.capacite}`}
                 accentColor={occupation.alerte === 'FULL' ? 'var(--color-danger, #EF4444)' : 'var(--amber-pork)'}
-                spark={spark(occupation.occupees || 1)}
               />
             </div>
 
@@ -204,8 +197,8 @@ const CroissanceCard: React.FC<{ data: CroissanceRowData; onOpen: () => void }> 
   return (
     <div
       onClick={onOpen}
-      className={`card-dense flex flex-col gap-4 p-4 border-l-4 transition-all active:scale-[0.98] cursor-pointer ${
-        isTransitionRequired ? 'border-l-amber animate-pulse-slow' : 'border-l-amber/50'
+      className={`card-dense flex flex-col gap-4 p-4 transition-all active:scale-[0.98] cursor-pointer ${
+        isTransitionRequired ? 'animate-pulse-slow' : ''
       }`}
     >
       <div className="flex justify-between items-start">
@@ -219,7 +212,7 @@ const CroissanceCard: React.FC<{ data: CroissanceRowData; onOpen: () => void }> 
           </p>
         </div>
         {isTransitionRequired ? (
-          <Chip tone="amber" label={`➜ ${PHASE_LABEL[data.terrainPhase!]}`} size="sm" icon={<ArrowUpRight size={10} />} />
+          <Chip tone="amber" label={`➜ ${PHASE_LABEL[data.terrainPhase!]}`} size="sm" icon={<ArrowUpRight size={10} />} className="!normal-case" />
         ) : (
           <Chip tone="default" label={`${Math.round(weight)} kg`} size="sm" icon={<Scale size={10} />} />
         )}

@@ -207,8 +207,7 @@ const ForecastView: React.FC = () => {
                     if (!ev || ev.type === 'SATURATION') return;
                     navigate(navByType(ev.type, ev.sujetId, ev.sujetNav));
                   }}
-                  className="card-dense pressable w-full text-left flex items-start gap-3 border-l-2 border-red/80"
-                  style={{ borderLeftColor: 'var(--color-danger, #EF4444)' }}
+                  className="card-dense pressable w-full text-left flex items-start gap-3"
                 >
                   <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red/10 text-red">
                     {eventIcon(report.topCritical.type)}

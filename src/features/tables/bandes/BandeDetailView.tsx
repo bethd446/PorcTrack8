@@ -253,7 +253,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
               ) : (
                 <div className="space-y-2">
                   {filteredHealth.map((row, i) => (
-                    <div key={i} className="card-dense border-l-2 border-l-red">
+                    <div key={i} className="card-dense">
                       <div className="flex justify-between items-start mb-2">
                         <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
                           {String(row[healthHeader.findIndex(h => h.toUpperCase().includes('DATE')) || 0])}
@@ -297,7 +297,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
               ) : (
                 <div className="space-y-2">
                   {filteredNotes.map((row, i) => (
-                    <div key={i} className="card-dense border-l-2 border-l-accent">
+                    <div key={i} className="card-dense">
                       <div className="flex justify-between items-start mb-2">
                         <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
                           {String(row[notesHeader.indexOf('DATE') || 0])}

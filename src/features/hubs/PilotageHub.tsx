@@ -10,7 +10,7 @@
  *   5. Audit / export PDF
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -27,6 +27,14 @@ import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import { genererRapportGlobal } from '../../services/financialAnalyzer';
 import { prepareAuditSnapshot } from '../../services/exportService';
 import AuditPrintTemplate from '../pilotage/AuditPrintTemplate';
+import {
+  captureCurrentSnapshot,
+  computeDelta,
+  deltaSinceLabel,
+  formatDeltaPct,
+  loadPreviousSnapshot,
+  semanticTrendDir,
+} from '../../utils/pilotageDelta';
 
 const PilotageHub: React.FC = () => {
   const navigate = useNavigate();
@@ -43,6 +51,23 @@ const PilotageHub: React.FC = () => {
     if (loading || bandes.length === 0) return null;
     return genererRapportGlobal(bandes, transitions);
   }, [bandes, transitions, loading]);
+
+  // Snapshot précédent — chargé une fois au mount, pas re-fetché ensuite.
+  const prevSnapshotRef = useRef(loadPreviousSnapshot());
+  const prevSnapshot = prevSnapshotRef.current;
+  const snapshotCapturedRef = useRef(false);
+
+  useEffect(() => {
+    if (!globalReport || snapshotCapturedRef.current) return;
+    snapshotCapturedRef.current = true;
+    captureCurrentSnapshot({
+      margeGlobaleEstimee: globalReport.margeGlobaleEstimee,
+      totalRevenuProjete: globalReport.totalRevenuProjete,
+      totalCoutAlimentaire: globalReport.totalCoutAlimentaire,
+      totalCoutFixe: globalReport.totalCoutFixe,
+      tauxMortaliteMoyen: globalReport.tauxMortaliteMoyen,
+    });
+  }, [globalReport]);
 
   const auditData = useMemo(() => {
     if (loading || bandes.length === 0 || !alerts) return null;
@@ -61,9 +86,8 @@ const PilotageHub: React.FC = () => {
     return alerts.filter(a => a.priority === 'CRITIQUE' || a.priority === 'HAUTE').length;
   }, [alerts]);
 
-  // Spark dérivée déterministe
   const spark = (base: number) =>
-    Array.from({ length: 7 }, (_, i) => Math.max(1, Math.round(Math.abs(base) * (0.85 + 0.05 * i))));
+    Array.from({ length: 12 }, (_, i) => Math.max(1, Math.round(Math.abs(base) * (0.85 + 0.025 * i))));
 
   if (loading || !globalReport) {
     return (
@@ -126,6 +150,33 @@ const PilotageHub: React.FC = () => {
   } = globalReport;
 
   const margeNegative = margeGlobaleEstimee < 0;
+
+  // ── Deltas vs snapshot précédent ────────────────────────────────────────
+  const margeDelta = computeDelta(margeGlobaleEstimee, prevSnapshot?.margeGlobaleEstimee);
+  const revenuDelta = computeDelta(totalRevenuProjete, prevSnapshot?.totalRevenuProjete);
+  const coutAlimDelta = computeDelta(totalCoutAlimentaire, prevSnapshot?.totalCoutAlimentaire);
+  const coutFixeDelta = computeDelta(totalCoutFixe, prevSnapshot?.totalCoutFixe);
+  const mortaliteDelta = computeDelta(tauxMortaliteMoyen, prevSnapshot?.tauxMortaliteMoyen);
+
+  const sinceLabel = deltaSinceLabel(prevSnapshot);
+  const firstRunLabel = 'première mesure';
+
+  const buildTrend = (
+    d: ReturnType<typeof computeDelta>,
+    fallback: string,
+  ): string => {
+    const pct = formatDeltaPct(d);
+    if (!pct) return fallback;
+    return sinceLabel ? `${pct} · ${sinceLabel}` : pct;
+  };
+
+  const margeDeltaColor = !margeDelta
+    ? 'var(--muted)'
+    : margeDelta.direction === 'flat'
+      ? 'var(--muted)'
+      : margeDelta.direction === 'up'
+        ? 'var(--color-accent-500)'
+        : 'var(--color-pig)';
 
   return (
     <IonPage>
@@ -245,6 +296,19 @@ const PilotageHub: React.FC = () => {
               </div>
               <div
                 style={{
+                  fontFamily: 'DMMono, ui-monospace, monospace',
+                  fontSize: 13,
+                  letterSpacing: '0.04em',
+                  color: margeDeltaColor,
+                  fontWeight: 500,
+                }}
+              >
+                {margeDelta
+                  ? `${formatDeltaPct(margeDelta)} (${formatDeltaPct(margeDelta, 'currency')}) · ${sinceLabel}`
+                  : firstRunLabel}
+              </div>
+              <div
+                style={{
                   fontFamily: 'InstrumentSans, system-ui, sans-serif',
                   fontSize: 12,
                   color: 'var(--muted)',
@@ -267,30 +331,40 @@ const PilotageHub: React.FC = () => {
                 label="Valeur cheptel"
                 value={formatFCFA(totalRevenuProjete)}
                 unit=" F"
-                trend="Revenus projetés"
+                trend={buildTrend(revenuDelta, 'Revenus projetés')}
+                trendDir={semanticTrendDir(revenuDelta, 'higher-better')}
                 spark={spark(totalRevenuProjete || 1)}
               />
               <KpiCardV6
                 label="Coût aliment"
                 value={formatFCFA(totalCoutAlimentaire)}
                 unit=" F"
-                trend="Engagé"
+                trend={buildTrend(coutAlimDelta, 'Engagé')}
+                trendDir={semanticTrendDir(coutAlimDelta, 'lower-better')}
                 spark={spark(totalCoutAlimentaire || 1)}
-                trendDir="down"
               />
               <KpiCardV6
                 label="Frais fixes"
                 value={formatFCFA(totalCoutFixe)}
                 unit=" F"
-                trend="Cumul cycle"
+                trend={buildTrend(coutFixeDelta, 'Cumul cycle')}
+                trendDir={semanticTrendDir(coutFixeDelta, 'neutral')}
                 spark={spark(totalCoutFixe || 1)}
               />
               <KpiCardV6
                 label="Mortalité"
                 value={tauxMortaliteMoyen.toFixed(1)}
                 unit=" %"
-                trend={tauxMortaliteMoyen > 2 ? 'Au-dessus seuil' : 'Sous seuil'}
-                trendDir={tauxMortaliteMoyen > 2 ? 'down' : 'up'}
+                trend={
+                  mortaliteDelta
+                    ? buildTrend(mortaliteDelta, '')
+                    : tauxMortaliteMoyen > 2 ? 'Au-dessus seuil' : 'Sous seuil'
+                }
+                trendDir={
+                  mortaliteDelta
+                    ? semanticTrendDir(mortaliteDelta, 'lower-better')
+                    : tauxMortaliteMoyen > 2 ? 'down' : 'up'
+                }
                 spark={spark(tauxMortaliteMoyen || 1)}
               />
             </section>

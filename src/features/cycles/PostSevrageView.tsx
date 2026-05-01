@@ -40,9 +40,6 @@ import QuickPeseeForm from '../../components/forms/QuickPeseeForm';
  * - Visualisation des pesées terrain
  * - Analyse GMQ et recommandations
  */
-const spark = (base: number): number[] =>
-  Array.from({ length: 7 }, (_, i) => Math.max(1, Math.round(Math.abs(base) * (0.85 + 0.05 * i))));
-
 const PostSevrageView: React.FC = () => {
   const navigate = useNavigate();
   const { bandes } = useFarm();
@@ -142,18 +139,15 @@ const PostSevrageView: React.FC = () => {
               <KpiCardV6
                 label="Portées"
                 value={summary.nbPortees}
-                spark={spark(summary.nbPortees || 1)}
               />
               <KpiCardV6
                 label="Porcelets"
                 value={summary.totalVivants}
-                spark={spark(summary.totalVivants || 1)}
               />
               <KpiCardV6
                 label="Âge Moyen"
                 value={summary.avgAge}
                 unit="j"
-                spark={spark(summary.avgAge || 1)}
               />
               <KpiCardV6
                 label="Saturation"
@@ -165,7 +159,6 @@ const PostSevrageView: React.FC = () => {
                       ? 'var(--amber-pork)'
                       : undefined
                 }
-                spark={spark(occupation.tauxPct || 1)}
               />
             </div>
 
@@ -252,9 +245,9 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
   return (
     <div
       onClick={onOpen}
-      className={`card-dense flex flex-col gap-4 p-4 border-l-4 transition-all active:scale-[0.98] cursor-pointer ${
-        isBloquant ? 'border-l-red-500 bg-red-500/5 ring-1 ring-red-500/20' :
-        isTransitionRequired ? 'border-l-amber animate-pulse-slow' : 'border-l-teal'
+      className={`card-dense flex flex-col gap-4 p-4 transition-all active:scale-[0.98] cursor-pointer ${
+        isBloquant ? 'bg-red-500/5 ring-1 ring-red-500/20' :
+        isTransitionRequired ? 'animate-pulse-slow' : ''
       }`}
     >
       {/* Header Card */}
@@ -275,9 +268,9 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
           )}
         </div>
         {isTransitionRequired ? (
-          <Chip tone="amber" label={`➜ ${PHASE_LABEL[data.terrainPhase!]}`} size="sm" icon={<ArrowUpRight size={10} />} />
+          <Chip tone="amber" label={`➜ ${PHASE_LABEL[data.terrainPhase!]}`} size="sm" icon={<ArrowUpRight size={10} />} className="!normal-case" />
         ) : (
-          <Chip tone="teal" label="Post-sevrage" size="sm" />
+          <Chip tone="teal" label="Post-sevrage" size="sm" className="!normal-case" />
         )}
       </div>
 

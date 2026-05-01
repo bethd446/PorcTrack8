@@ -5,7 +5,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { IonToast } from '@ionic/react';
+import { IonAlert, IonToast } from '@ionic/react';
 import {
   Inbox,
   PawPrint,
@@ -54,12 +54,17 @@ export const QuickActionsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [kind, setKind] = useState<QuickActionKind | null>(null);
+  const [showMortalityConfirm, setShowMortalityConfirm] = useState(false);
   const [toast, setToast] = useState<{ open: boolean; message: string }>({
     open: false,
     message: '',
   });
 
   const openAction = useCallback((k: QuickActionKind) => {
+    if (k === 'mortalite') {
+      setShowMortalityConfirm(true);
+      return;
+    }
     setKind(k);
   }, []);
 
@@ -115,6 +120,27 @@ export const QuickActionsProvider: React.FC<{ children: React.ReactNode }> = ({
           }}
         />
       </BottomSheet>
+
+      <IonAlert
+        isOpen={showMortalityConfirm}
+        onDidDismiss={() => setShowMortalityConfirm(false)}
+        header="Déclarer une mortalité"
+        message="Cette action enregistre une perte d'animal dans le journal sanitaire et le bilan financier. Elle est irréversible. Continuer ?"
+        buttons={[
+          {
+            text: 'Annuler',
+            role: 'cancel',
+            cssClass: 'alert-button-cancel',
+          },
+          {
+            text: 'Continuer',
+            cssClass: 'alert-button-confirm',
+            handler: () => {
+              setKind('mortalite');
+            },
+          },
+        ]}
+      />
 
       <IonToast
         isOpen={toast.open}

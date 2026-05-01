@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertCircle, ChevronRight, CheckCheck } from 'lucide-react';
 import { Chip } from '../../../components/agritech';
-import { statusTone, statusBorderClass, type AggregatedBande } from './types';
+import { statusTone, type AggregatedBande } from './types';
 
 interface BandeRowProps {
   bande: AggregatedBande;
@@ -16,7 +16,7 @@ const BandeRow: React.FC<BandeRowProps> = ({ bande, isSelected, selectionMode, o
     <button
       type="button"
       onClick={onClick}
-      className={`card-dense pressable w-full text-left border-l-2 ${statusBorderClass(bande.status as string | null | undefined, bande.hasAlert)} transition-colors ${
+      className={`card-dense pressable w-full text-left transition-colors ${
         isSelected ? 'bg-bg-2 outline outline-2 outline-accent outline-offset-[-2px]' : ''
       }`}
     >

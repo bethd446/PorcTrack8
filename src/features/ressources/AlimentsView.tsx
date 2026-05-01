@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage, IonToast } from '@ionic/react';
 import {
   Package,
@@ -8,6 +9,8 @@ import {
   Box,
   Scale,
   Plus,
+  ExternalLink,
+  Settings,
 } from 'lucide-react';
 import AgritechLayout from '../../components/AgritechLayout';
 import EditableNumber from '../../components/EditableNumber';
@@ -19,8 +22,31 @@ import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { useFarm } from '../../context/FarmContext';
 import { updateProduitAliment } from '../../services/supabaseWrites';
-import type { StockAliment, StockStatut } from '../../types/farm';
+import type { StockAliment, StockStatut, Truie, Verrat, BandePorcelets } from '../../types/farm';
 import QuickAddAlimentForm from '../../components/forms/QuickAddAlimentForm';
+import { projectStockDuration, formatJoursRestants } from '../../utils/stockProjection';
+import {
+  buildSingleItemOrderURL,
+  buildWhatsAppOrderURL,
+  hasWhatsAppSupport,
+  type OrderItem,
+} from '../../utils/whatsappOrder';
+
+const FARM_NAME = 'K13';
+
+function manqueKgOf(item: StockAliment): number {
+  const stock = item.stockActuel ?? 0;
+  const seuil = item.seuilAlerte ?? 0;
+  const manque = 2 * seuil - stock;
+  return manque > 0 ? manque : 0;
+}
+
+function needsOrder(item: StockAliment): boolean {
+  if (item.statutStock === 'RUPTURE') return true;
+  const stock = item.stockActuel ?? 0;
+  const seuil = item.seuilAlerte ?? 0;
+  return seuil > 0 && stock < seuil;
+}
 
 /**
  * AlimentsView — stock aliments structuré par catégorie métier.
@@ -49,6 +75,43 @@ import QuickAddAlimentForm from '../../components/forms/QuickAddAlimentForm';
 // ─────────────────────────────────────────────────────────────────────────────
 
 type AlimentCategorie = 'MATIERE_PREMIERE' | 'CONCENTRE' | 'AUTRE';
+type ResourceTreatment = 'urgent' | 'normal' | 'resolu';
+
+function classifyTreatment(item: StockAliment): ResourceTreatment {
+  const stock = item.stockActuel ?? 0;
+  const seuil = item.seuilAlerte ?? 0;
+  if (stock === 0 || /rupt/i.test(item.statutStock ?? '')) return 'urgent';
+  if (stock < seuil) return 'normal';
+  return 'resolu';
+}
+
+interface TreatmentVisual {
+  borderLeft: string;
+  dot: string;
+  label: string;
+}
+
+function getTreatmentVisual(t: ResourceTreatment): TreatmentVisual {
+  if (t === 'urgent') {
+    return {
+      borderLeft: '3px solid var(--color-pig)',
+      dot: 'var(--color-pig)',
+      label: 'Rupture',
+    };
+  }
+  if (t === 'normal') {
+    return {
+      borderLeft: '3px solid var(--color-amber-pork)',
+      dot: 'var(--color-amber-pork)',
+      label: 'Stock bas',
+    };
+  }
+  return {
+    borderLeft: '3px solid transparent',
+    dot: 'var(--color-accent-500)',
+    label: 'OK',
+  };
+}
 
 /**
  * Classifie un aliment via regex sur son libellé (et fallback sur son ID).
@@ -144,6 +207,7 @@ interface AlimentSectionProps {
   items: StockAliment[];
   onSelect: (item: StockAliment) => void;
   onRefresh: () => Promise<void>;
+  cheptel: { truies: Truie[]; verrats: Verrat[]; bandes: BandePorcelets[] };
 }
 
 const AlimentSection: React.FC<AlimentSectionProps> = ({
@@ -156,6 +220,7 @@ const AlimentSection: React.FC<AlimentSectionProps> = ({
   items,
   onSelect,
   onRefresh,
+  cheptel,
 }) => {
   const isEmpty = items.length === 0;
   return (
@@ -201,6 +266,7 @@ const AlimentSection: React.FC<AlimentSectionProps> = ({
                 tone={tone}
                 onRefresh={onRefresh}
                 onSelect={onSelect}
+                cheptel={cheptel}
               />
             );
           })}
@@ -219,20 +285,76 @@ interface AlimentEditableRowProps {
   tone: ChipTone;
   onRefresh: () => Promise<void>;
   onSelect: (item: StockAliment) => void;
+  cheptel: { truies: Truie[]; verrats: Verrat[]; bandes: BandePorcelets[] };
 }
 
 const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
   item,
   tone,
   onRefresh,
+  cheptel,
 }) => {
+  const projection = projectStockDuration(item, cheptel);
+  const treatment = classifyTreatment(item);
+  const visual = getTreatmentVisual(treatment);
+  const isUrgent = treatment === 'urgent';
   return (
-    <div className="flex flex-col gap-1.5 px-3 py-3 border-b border-border last:border-b-0">
+    <div
+      className="flex flex-col gap-1.5 px-3 py-3 border-b border-border last:border-b-0"
+      style={{ borderLeft: visual.borderLeft }}
+    >
       <div className="flex items-center gap-3">
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[14px] font-medium text-text-0">
+          <div
+            className="flex items-center gap-1.5 mb-0.5"
+            style={{
+              fontFamily: 'DMMono, ui-monospace, monospace',
+              fontSize: 9.5,
+              letterSpacing: '0.10em',
+              textTransform: 'uppercase',
+              color: isUrgent ? 'var(--color-pig-deep)' : 'var(--muted)',
+            }}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                width: 5,
+                height: 5,
+                borderRadius: 999,
+                background: visual.dot,
+                display: 'inline-block',
+              }}
+            />
+            <span>{visual.label}</span>
+          </div>
+          <div
+            className="truncate text-text-0"
+            style={{
+              fontSize: isUrgent ? 15 : 14,
+              fontWeight: isUrgent ? 700 : 500,
+            }}
+          >
             {item.libelle || item.id}
           </div>
+          {projection.joursRestants != null && (
+            <div
+              style={{
+                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontSize: 11,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                marginTop: 2,
+                color:
+                  projection.joursRestants < 7
+                    ? 'var(--color-pig)'
+                    : projection.joursRestants < 14
+                      ? 'var(--amber-pork-deep)'
+                      : 'var(--muted)',
+              }}
+            >
+              {formatJoursRestants(projection.joursRestants)}
+            </div>
+          )}
         </div>
         <div className="shrink-0 flex items-center gap-1 font-mono text-[12px] tabular-nums text-text-1">
           <EditableNumber
@@ -277,6 +399,44 @@ const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
           }}
         />
       </div>
+      {needsOrder(item) && (() => {
+        const url = buildSingleItemOrderURL(
+          item.libelle || item.id,
+          manqueKgOf(item),
+          item.unite,
+          FARM_NAME,
+        );
+        if (!url) return null;
+        return (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Commander ${item.libelle || item.id} via WhatsApp`}
+            className="pressable"
+            style={{
+              alignSelf: 'flex-start',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 12px',
+              borderRadius: 9999,
+              background: isUrgent ? 'var(--color-pig)' : 'var(--color-accent-500)',
+              color: 'white',
+              fontSize: 11,
+              fontFamily: 'DMMono, ui-monospace, monospace',
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              textDecoration: 'none',
+              fontWeight: 600,
+              marginTop: 4,
+            }}
+          >
+            Commander
+            <ExternalLink size={12} aria-hidden="true" />
+          </a>
+        );
+      })()}
     </div>
   );
 };
@@ -286,9 +446,32 @@ const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
 // ─────────────────────────────────────────────────────────────────────────────
 
 const AlimentsView: React.FC = () => {
-  const { stockAliment, refreshData } = useFarm();
+  const navigate = useNavigate();
+  const { stockAliment, refreshData, truies, verrats, bandes } = useFarm();
+  const cheptel = useMemo(() => ({ truies, verrats, bandes }), [truies, verrats, bandes]);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const whatsappReady = hasWhatsAppSupport();
+
+  const stocksAOrdonner = useMemo<OrderItem[]>(
+    () =>
+      stockAliment
+        .filter(needsOrder)
+        .map((it) => ({
+          libelle: it.libelle || it.id,
+          manqueKg: manqueKgOf(it),
+          unite: it.unite,
+        })),
+    [stockAliment],
+  );
+
+  const groupedOrderUrl = useMemo(
+    () =>
+      stocksAOrdonner.length >= 2
+        ? buildWhatsAppOrderURL(stocksAOrdonner, FARM_NAME)
+        : null,
+    [stocksAOrdonner],
+  );
 
   const grouped = useMemo(() => {
     const matieres: StockAliment[] = [];
@@ -326,6 +509,28 @@ const AlimentsView: React.FC = () => {
     }
     return { mp, conc };
   }, [stockAliment]);
+
+  const treatmentCounts = useMemo(() => {
+    const out = { urgent: 0, normal: 0, resolu: 0 };
+    for (const item of stockAliment) {
+      out[classifyTreatment(item)] += 1;
+    }
+    return out;
+  }, [stockAliment]);
+
+  const treatmentSummaryLine = useMemo(() => {
+    const parts: string[] = [];
+    if (treatmentCounts.urgent > 0) {
+      parts.push(`${treatmentCounts.urgent} rupture${treatmentCounts.urgent > 1 ? 's' : ''}`);
+    }
+    if (treatmentCounts.normal > 0) {
+      parts.push(`${treatmentCounts.normal} stock${treatmentCounts.normal > 1 ? 's' : ''} bas`);
+    }
+    if (treatmentCounts.resolu > 0) {
+      parts.push(`${treatmentCounts.resolu} OK`);
+    }
+    return parts.join(' · ');
+  }, [treatmentCounts]);
 
   const handleSelect = (_item: StockAliment) => {
     // Placeholder — édition stock arrivera dans un prochain sprint.
@@ -370,6 +575,21 @@ const AlimentsView: React.FC = () => {
                 >
                   {counts.mp} matière{counts.mp > 1 ? 's' : ''} première{counts.mp > 1 ? 's' : ''} · {counts.conc} concentré{counts.conc > 1 ? 's' : ''}
                 </div>
+                {treatmentSummaryLine && (
+                  <div
+                    style={{
+                      fontFamily: 'DMMono, ui-monospace, monospace',
+                      fontSize: 10.5,
+                      letterSpacing: '0.10em',
+                      textTransform: 'uppercase',
+                      color: 'var(--muted)',
+                      marginTop: 4,
+                    }}
+                    aria-live="polite"
+                  >
+                    {summary.total} produit{summary.total > 1 ? 's' : ''} — {treatmentSummaryLine}
+                  </div>
+                )}
               </div>
               <button
                 type="button"
@@ -402,10 +622,73 @@ const AlimentsView: React.FC = () => {
               />
             </div>
 
+            {/* ── Action groupée Commander ──────────────────────── */}
+            {whatsappReady && groupedOrderUrl ? (
+              <a
+                href={groupedOrderUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Commander ${stocksAOrdonner.length} produits via WhatsApp`}
+                className="pressable"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 10,
+                  padding: '12px 16px',
+                  borderRadius: 12,
+                  background: 'var(--color-accent-500)',
+                  color: 'var(--bg-surface)',
+                  textDecoration: 'none',
+                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                  boxShadow: '0 2px 6px rgba(6,78,59,0.18)',
+                }}
+              >
+                <span>
+                  Commander {stocksAOrdonner.length} produits via WhatsApp
+                </span>
+                <ExternalLink size={14} aria-hidden="true" />
+              </a>
+            ) : null}
+
+            {!whatsappReady && stocksAOrdonner.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => navigate('/more')}
+                aria-label="Configurer le numéro WhatsApp dans les Réglages"
+                className="pressable"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '10px 14px',
+                  borderRadius: 12,
+                  background: 'var(--bg-surface-2)',
+                  color: 'var(--muted)',
+                  border: '1px dashed var(--line)',
+                  fontFamily: 'DMMono, ui-monospace, monospace',
+                  fontSize: 11,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <Settings size={13} aria-hidden="true" />
+                <span>
+                  Numéro WhatsApp non configuré · Régler dans Réglages
+                </span>
+              </button>
+            ) : null}
+
             {/* ── Bannière alerte rupture ─────────────────────────── */}
             {summary.rupture > 0 ? (
               <div
-                className="card-dense flex items-start gap-3 border-l-2 border-l-red"
+                className="card-dense flex items-start gap-3"
                 role="alert"
                 aria-label="Alerte rupture stock"
               >
@@ -453,6 +736,7 @@ const AlimentsView: React.FC = () => {
                   items={grouped.matieres}
                   onSelect={handleSelect}
                   onRefresh={refreshData}
+                  cheptel={cheptel}
                 />
 
                 <AlimentSection
@@ -468,6 +752,7 @@ const AlimentsView: React.FC = () => {
                   items={grouped.concentres}
                   onSelect={handleSelect}
                   onRefresh={refreshData}
+                  cheptel={cheptel}
                 />
 
                 {grouped.autres.length > 0 ? (
@@ -480,6 +765,7 @@ const AlimentsView: React.FC = () => {
                     items={grouped.autres}
                     onSelect={handleSelect}
                     onRefresh={refreshData}
+                    cheptel={cheptel}
                   />
                 ) : null}
               </>

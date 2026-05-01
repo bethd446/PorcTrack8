@@ -36,9 +36,6 @@ import type { BandePorcelets } from '../../types/farm';
  * - Monitoring nutritionnel (Aliment Finition)
  * - Visualisation de l'avancement poids
  */
-const spark = (base: number): number[] =>
-  Array.from({ length: 7 }, (_, i) => Math.max(1, Math.round(Math.abs(base) * (0.85 + 0.05 * i))));
-
 const EngraissementView: React.FC = () => {
   const navigate = useNavigate();
   const { bandes } = useFarm();
@@ -126,24 +123,20 @@ const EngraissementView: React.FC = () => {
               <KpiCardV6
                 label="Bandes"
                 value={summary.nbPortees}
-                spark={spark(summary.nbPortees || 1)}
               />
               <KpiCardV6
                 label="Effectif"
                 value={summary.totalVivants}
-                spark={spark(summary.totalVivants || 1)}
               />
               <KpiCardV6
                 label="Poids Moyen"
                 value={summary.avgWeight}
                 unit="kg"
-                spark={spark(summary.avgWeight || 1)}
               />
               <KpiCardV6
                 label="Loges Occ."
                 value={`${occupation.occupees}/${occupation.capacite}`}
                 accentColor={occupation.alerte === 'FULL' ? 'var(--color-danger, #EF4444)' : undefined}
-                spark={spark(occupation.occupees || 1)}
               />
             </div>
 
@@ -198,8 +191,8 @@ const EngraissementCard: React.FC<{ data: EngraissementRowData; onOpen: () => vo
   return (
     <div
       onClick={onOpen}
-      className={`card-dense flex flex-col gap-4 p-4 border-l-4 transition-all active:scale-[0.98] cursor-pointer ${
-        isTransitionRequired ? 'border-l-accent animate-pulse-slow' : 'border-l-bg-2'
+      className={`card-dense flex flex-col gap-4 p-4 transition-all active:scale-[0.98] cursor-pointer ${
+        isTransitionRequired ? 'animate-pulse-slow' : ''
       }`}
     >
       <div className="flex justify-between items-start">
@@ -213,9 +206,9 @@ const EngraissementCard: React.FC<{ data: EngraissementRowData; onOpen: () => vo
           </p>
         </div>
         {isTransitionRequired ? (
-          <Chip tone="accent" label={`➜ ${PHASE_LABEL.FINITION}`} size="sm" icon={<ArrowUpRight size={10} />} />
+          <Chip tone="accent" label={`➜ ${PHASE_LABEL.FINITION}`} size="sm" icon={<ArrowUpRight size={10} />} className="!normal-case" />
         ) : (
-          <Chip tone="default" label="Engraissement" size="sm" />
+          <Chip tone="default" label="Engraissement" size="sm" className="!normal-case" />
         )}
       </div>
 

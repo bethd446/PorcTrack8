@@ -232,7 +232,7 @@ const TruieDetailView: React.FC = () => {
   // ── Chips hero ─────────────────────────────────────────────────────────────
 
   const heroChips: SowHeroChip[] = [statutToChip(truie.statut)];
-  if (lastBande?.id) heroChips.push({ label: `Bande ${lastBande.id}`, tone: 'terre' });
+  if (lastBande?.idPortee) heroChips.push({ label: `Bande ${lastBande.idPortee}`, tone: 'terre' });
 
   // ── Lignée (kit v2.1) ─────────────────────────────────────────────────────
   const pariteCount = truie.nbPortees ?? historique.length;
@@ -599,8 +599,8 @@ const TruieDetailView: React.FC = () => {
                   >
                     <DataRow label="Code · Boucle" value={`${truie.displayId} · ${truie.boucle}`} />
                     {truie.race && <DataRow label="Race" value={truie.race} />}
-                    {lastBande && (
-                      <DataRow label="Dernière portée" value={lastBande.idPortee || lastBande.id} />
+                    {lastBande?.idPortee && (
+                      <DataRow label="Dernière portée" value={lastBande.idPortee} />
                     )}
                     {truie.nbPortees !== undefined && (
                       <DataRow label="Portées" value={String(truie.nbPortees)} />

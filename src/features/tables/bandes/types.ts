@@ -33,10 +33,3 @@ export function statusTone(status: string | null | undefined): StatusTone {
   return 'default';
 }
 
-export function statusBorderClass(status: string | null | undefined, hasAlert: boolean): string {
-  if (hasAlert) return 'border-l-red';
-  const tone = statusTone(status);
-  if (tone === 'gold') return 'border-l-[var(--amber-pork-deep)]';
-  if (tone === 'accent') return 'border-l-accent';
-  return 'border-l-border';
-}

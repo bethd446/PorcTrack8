@@ -203,7 +203,7 @@ const ControleQuotidien: React.FC = () => {
 
             {/* CTA / question card */}
             <section
-              className="card-dense mt-5 border-l-2 border-l-accent"
+              className="card-dense mt-5"
               aria-label="Question en cours"
             >
               <div className="flex items-start gap-3 mb-4">

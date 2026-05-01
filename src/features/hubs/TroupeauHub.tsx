@@ -89,6 +89,10 @@ const TroupeauHub: React.FC = () => {
       pleines: activeTruies.filter(t => isCanon(t.statut, 'PLEINE')).length,
       maternite: activeTruies.filter(t => isCanon(t.statut, 'MATERNITE')).length,
       vides: activeTruies.filter(t => isCanon(t.statut, 'VIDE')).length,
+      chaleur: activeTruies.filter(t => isCanon(t.statut, 'CHALEUR')).length,
+      flushing: activeTruies.filter(t => isCanon(t.statut, 'FLUSHING')).length,
+      surveillance: activeTruies.filter(t => isCanon(t.statut, 'SURVEILLANCE')).length,
+      reforme: activeTruies.filter(t => isCanon(t.statut, 'REFORME')).length,
       mat: Bandes.logesMaternite(activeTruies),
       post: Bandes.logesPostSevrage(realBandes, today),
       eng: Bandes.logesEngraissement(realBandes, today),
@@ -116,6 +120,19 @@ const TroupeauHub: React.FC = () => {
   };
 
   const totalAnimals = activeTruies.length + verrats.length;
+
+  const truieBreakdown = useMemo(() => {
+    const segments: string[] = [
+      `${summary.pleines} pleines`,
+      `${summary.maternite} maternité`,
+      `${summary.vides} vides`,
+    ];
+    if (summary.chaleur > 0) segments.push(`${summary.chaleur} chaleur`);
+    if (summary.flushing > 0) segments.push(`${summary.flushing} flushing`);
+    if (summary.surveillance > 0) segments.push(`${summary.surveillance} à surveiller`);
+    if (summary.reforme > 0) segments.push(`${summary.reforme} réforme`);
+    return segments.join(' · ');
+  }, [summary]);
 
   return (
     <IonPage>
@@ -157,7 +174,7 @@ const TroupeauHub: React.FC = () => {
                   color: 'var(--muted)',
                 }}
               >
-                {totalAnimals} animaux suivis · {summary.pleines} pleines · {summary.maternite} maternité · {summary.vides} vides
+                {summary.total} truie{summary.total > 1 ? 's' : ''} · {verrats.length} verrat{verrats.length > 1 ? 's' : ''} ({totalAnimals} animaux) — {truieBreakdown}
               </div>
             </header>
 
@@ -203,6 +220,30 @@ const TroupeauHub: React.FC = () => {
                 <span>{summary.maternite} maternité</span>
                 <span style={{ color: 'var(--muted)', opacity: 0.4 }}>|</span>
                 <span>{summary.vides} vides</span>
+                {summary.chaleur > 0 && (
+                  <>
+                    <span style={{ color: 'var(--muted)', opacity: 0.4 }}>|</span>
+                    <span>{summary.chaleur} chaleur</span>
+                  </>
+                )}
+                {summary.flushing > 0 && (
+                  <>
+                    <span style={{ color: 'var(--muted)', opacity: 0.4 }}>|</span>
+                    <span>{summary.flushing} flushing</span>
+                  </>
+                )}
+                {summary.surveillance > 0 && (
+                  <>
+                    <span style={{ color: 'var(--muted)', opacity: 0.4 }}>|</span>
+                    <span>{summary.surveillance} à surveiller</span>
+                  </>
+                )}
+                {summary.reforme > 0 && (
+                  <>
+                    <span style={{ color: 'var(--muted)', opacity: 0.4 }}>|</span>
+                    <span>{summary.reforme} réforme</span>
+                  </>
+                )}
               </div>
 
               <div
@@ -224,6 +265,8 @@ const TroupeauHub: React.FC = () => {
               pleines={summary.pleines}
               maternite={summary.maternite}
               vides={summary.vides}
+              surveillance={summary.surveillance}
+              reforme={summary.reforme}
               onStageClick={(stageId) => navigate(`/cycles/repro?stage=${stageId}`)}
             />
 
@@ -356,16 +399,18 @@ interface ReproFunnelProps {
   pleines: number;
   maternite: number;
   vides: number;
+  surveillance: number;
+  reforme: number;
   onStageClick?: (stageId: string) => void;
 }
 
-const ReproFunnel: React.FC<ReproFunnelProps> = ({ total, pleines, maternite, vides, onStageClick }) => {
+const ReproFunnel: React.FC<ReproFunnelProps> = ({ pleines, maternite, vides, surveillance, reforme, onStageClick }) => {
   const stages = [
     { id: 'attente', label: 'Attente saillie', value: vides, color: 'var(--muted)' },
     { id: 'pleines', label: 'Pleines', value: pleines, color: 'var(--color-accent-500)' },
     { id: 'maternite', label: 'Maternité', value: maternite, color: 'var(--color-amber-pork-deep)' },
-    { id: 'surveiller', label: 'Surveiller', value: 0, color: 'var(--color-amber-pork)' },
-    { id: 'reforme', label: 'Réforme', value: Math.max(0, total - pleines - maternite - vides), color: 'var(--color-pig)' },
+    { id: 'surveiller', label: 'Surveiller', value: surveillance, color: 'var(--color-amber-pork)' },
+    { id: 'reforme', label: 'Réforme', value: reforme, color: 'var(--color-pig)' },
   ];
   const max = Math.max(1, ...stages.map(s => s.value));
 
@@ -449,8 +494,7 @@ const ReproFunnel: React.FC<ReproFunnelProps> = ({ total, pleines, maternite, vi
                 style={{
                   fontFamily: 'DMMono, ui-monospace, monospace',
                   fontSize: 9.5,
-                  letterSpacing: '0.10em',
-                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
                   color: 'var(--muted)',
                   lineHeight: 1.3,
                 }}
@@ -542,7 +586,7 @@ const BandesInline: React.FC<BandesInlineProps> = ({ bandes, onOpen, onSeeAll })
                     fontVariantNumeric: 'tabular-nums',
                   }}
                 >
-                  {(b.statut ?? '—').toUpperCase()}
+                  {b.statut ?? '—'}
                   {typeof b.vivants === 'number' ? ` · ${b.vivants} viv.` : ''}
                 </div>
               </div>
@@ -612,8 +656,7 @@ const BatimentsSummary: React.FC<BatimentsSummaryProps> = ({ onSeeAll }) => {
               style={{
                 fontFamily: 'DMMono, ui-monospace, monospace',
                 fontSize: 9.5,
-                letterSpacing: '0.18em',
-                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
                 color: 'var(--muted)',
                 fontWeight: 600,
               }}

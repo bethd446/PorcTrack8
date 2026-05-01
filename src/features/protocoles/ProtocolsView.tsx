@@ -443,7 +443,7 @@ const ProtocolsView: React.FC = () => {
                 <ul className="space-y-3" aria-label="Protocoles terrain essentiels">
                   {protocols.terrain.map(p => (
                     <li key={p.id}>
-                      <div className="card-dense border-l-2 border-l-accent flex items-start gap-3">
+                      <div className="card-dense flex items-start gap-3">
                         <span
                           className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-bg-2 text-accent"
                           aria-hidden="true"
@@ -486,7 +486,7 @@ const ProtocolsView: React.FC = () => {
                 <ul className="space-y-3" aria-label="Protocoles de biosécurité">
                   {protocols.biosecurite.map(p => (
                     <li key={p.id}>
-                      <div className="card-dense border-l-2 border-l-accent flex items-start gap-3">
+                      <div className="card-dense flex items-start gap-3">
                         <span
                           className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-bg-2 text-accent"
                           aria-hidden="true"
@@ -521,7 +521,7 @@ const ProtocolsView: React.FC = () => {
                 <ul className="space-y-3" aria-label="Protocoles de rationnement">
                   {protocols.rations.map(r => (
                     <li key={r.id}>
-                      <div className="card-dense border-l-2 border-l-amber flex items-start gap-3">
+                      <div className="card-dense flex items-start gap-3">
                         <span
                           className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-bg-2 text-amber"
                           aria-hidden="true"

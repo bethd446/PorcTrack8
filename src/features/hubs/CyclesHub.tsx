@@ -12,7 +12,7 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, AlertTriangle } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
 import Eyebrow from '../../components/design/Eyebrow';
@@ -152,7 +152,26 @@ interface BandePosition {
   phase: PhaseDef;
   dayInPhase: number;
   detail: string;
+  /** Statut métier d'origine (bande ou truie) — sert à détecter les états résolus. */
+  statut?: string;
 }
+
+type BandeTreatment = 'urgent' | 'normal' | 'resolu';
+
+const URGENT_THRESHOLD_DAYS = 14;
+
+function classifyBandeTreatment(pos: BandePosition): BandeTreatment {
+  if (pos.statut && /sortie|vendu|reform|recap/i.test(pos.statut)) return 'resolu';
+  const remaining = Math.max(0, pos.phase.days - pos.dayInPhase);
+  if (remaining < URGENT_THRESHOLD_DAYS) return 'urgent';
+  return 'normal';
+}
+
+const TREATMENT_RANK: Record<BandeTreatment, number> = {
+  urgent: 0,
+  normal: 1,
+  resolu: 2,
+};
 
 function bandePosition(b: BandePorcelets, today: Date): BandePosition | null {
   const phase = computeBandePhase(b, today);
@@ -206,6 +225,7 @@ function bandePosition(b: BandePorcelets, today: Date): BandePosition | null {
     phase: def,
     dayInPhase,
     detail,
+    statut: b.statut,
   };
 }
 
@@ -230,6 +250,7 @@ function truieToPosition(t: Truie, today: Date): BandePosition | null {
     phase: def,
     dayInPhase,
     detail: t.dateMBPrevue ? `MB prévue ${t.dateMBPrevue}` : 'Gestation',
+    statut: t.statut,
   };
 }
 
@@ -333,8 +354,7 @@ const CyclesHub: React.FC = () => {
                       border: `1px solid ${count > 0 ? p.tone : 'var(--line)'}`,
                       fontFamily: 'DMMono, ui-monospace, monospace',
                       fontSize: 11,
-                      letterSpacing: '0.10em',
-                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
                       fontWeight: 500,
                       cursor: p.route ? 'pointer' : 'default',
                       transition: 'transform 160ms var(--ease-emil), background 200ms var(--ease-emil)',
@@ -383,31 +403,12 @@ const CyclesHub: React.FC = () => {
 
             {/* ── Liste bandes actives ─────────────────────────────── */}
             {positions.length > 0 ? (
-              <section aria-label={`Bandes actives · ${positions.length}`}>
-                <Eyebrow dotColor="accent">
-                  Bandes actives · {positions.length}
-                </Eyebrow>
-                <ul
-                  style={{
-                    listStyle: 'none',
-                    padding: 0,
-                    margin: '12px 0 0',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 8,
-                  }}
-                >
-                  {positions.map((pos) => (
-                    <BandeRow
-                      key={pos.id}
-                      pos={pos}
-                      onOpen={() =>
-                        navigate(`/troupeau/bandes/${encodeURIComponent(pos.id.replace(/^T-/, ''))}`)
-                      }
-                    />
-                  ))}
-                </ul>
-              </section>
+              <BandesList
+                positions={positions}
+                onOpen={(id) =>
+                  navigate(`/troupeau/bandes/${encodeURIComponent(id.replace(/^T-/, ''))}`)
+                }
+              />
             ) : (
               <div
                 style={{
@@ -470,8 +471,7 @@ const PhaseLabels: React.FC = () => (
           style={{
             fontFamily: 'DMMono, ui-monospace, monospace',
             fontSize: 9,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
             color: p.tone,
             fontWeight: 600,
             lineHeight: 1.2,
@@ -574,51 +574,181 @@ const BandesMarkers: React.FC<BandesMarkersProps> = ({ positions, onOpen }) => (
   </div>
 );
 
+// ─── BandesList ────────────────────────────────────────────────────────────
+
+interface BandesListProps {
+  positions: BandePosition[];
+  onOpen: (id: string) => void;
+}
+
+const BandesList: React.FC<BandesListProps> = ({ positions, onOpen }) => {
+  const enriched = useMemo(() => {
+    return positions
+      .map((pos) => ({ pos, treatment: classifyBandeTreatment(pos) }))
+      .sort((a, b) => {
+        const r = TREATMENT_RANK[a.treatment] - TREATMENT_RANK[b.treatment];
+        if (r !== 0) return r;
+        // Au sein d'un treatment : urgence croissante (jours restants), puis alpha.
+        const remA = Math.max(0, a.pos.phase.days - a.pos.dayInPhase);
+        const remB = Math.max(0, b.pos.phase.days - b.pos.dayInPhase);
+        if (remA !== remB) return remA - remB;
+        return a.pos.label.localeCompare(b.pos.label);
+      });
+  }, [positions]);
+
+  const urgentCount = enriched.filter((e) => e.treatment === 'urgent').length;
+
+  return (
+    <section aria-label={`Bandes actives · ${positions.length}`}>
+      <Eyebrow dotColor="accent">
+        Bandes actives · {positions.length}
+        {urgentCount > 0 && (
+          <span
+            style={{
+              marginLeft: 8,
+              color: 'var(--color-pig-deep, var(--color-pig))',
+              fontWeight: 600,
+            }}
+          >
+            · {urgentCount} urgent{urgentCount > 1 ? 's' : ''}
+          </span>
+        )}
+      </Eyebrow>
+      <ul
+        style={{
+          listStyle: 'none',
+          padding: 0,
+          margin: '12px 0 0',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+        }}
+      >
+        {enriched.map(({ pos, treatment }) => (
+          <BandeRow
+            key={pos.id}
+            pos={pos}
+            treatment={treatment}
+            onOpen={() => onOpen(pos.id)}
+          />
+        ))}
+      </ul>
+    </section>
+  );
+};
+
 // ─── BandeRow ──────────────────────────────────────────────────────────────
 
 interface BandeRowProps {
   pos: BandePosition;
+  treatment: BandeTreatment;
   onOpen: () => void;
 }
 
-const BandeRow: React.FC<BandeRowProps> = ({ pos, onOpen }) => {
+const BandeRow: React.FC<BandeRowProps> = ({ pos, treatment, onOpen }) => {
   const pct = pos.phase.days > 0
     ? Math.min(100, Math.round((pos.dayInPhase / pos.phase.days) * 100))
     : 0;
+
+  const isUrgent = treatment === 'urgent';
+  const isResolu = treatment === 'resolu';
+
+  const remaining = Math.max(0, pos.phase.days - pos.dayInPhase);
+
+  const containerStyle: React.CSSProperties = {
+    width: '100%',
+    textAlign: 'left',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 14,
+    padding: '14px 16px',
+    borderRadius: 12,
+    cursor: 'pointer',
+    transition: 'transform 160ms var(--ease-emil)',
+    background: isResolu ? 'var(--bg-surface-2, var(--bg-surface))' : 'var(--bg-surface)',
+    border: isUrgent
+      ? '1px solid var(--color-pig-soft)'
+      : isResolu
+        ? '1px solid var(--line-2, var(--line))'
+        : '1px solid var(--line)',
+    boxShadow: isUrgent
+      ? '0 1px 2px rgba(17,24,39,0.04), 0 2px 6px rgba(193,90,40,0.08)'
+      : isResolu
+        ? 'none'
+        : '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
+    opacity: isResolu ? 0.65 : 1,
+  };
+
+  const titleStyle: React.CSSProperties = {
+    fontFamily: 'BigShoulders, system-ui, sans-serif',
+    fontSize: isUrgent ? 18 : 16,
+    fontWeight: isUrgent ? 700 : 600,
+    color: 'var(--ink)',
+    letterSpacing: '-0.01em',
+    lineHeight: 1.1,
+  };
+
+  const eyebrowDotColor = isUrgent
+    ? 'var(--color-pig-deep, var(--color-pig))'
+    : pos.phase.tone;
+
+  const eyebrowText = isUrgent
+    ? `Imminent · J+${pos.dayInPhase}/${pos.phase.days} · ${remaining}j restant${remaining > 1 ? 's' : ''}`
+    : `${pos.phase.label} · J+${pos.dayInPhase}/${pos.phase.days}`;
+
   return (
     <li>
       <button
         type="button"
         onClick={onOpen}
         className="pressable"
-        style={{
-          width: '100%',
-          textAlign: 'left',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 14,
-          padding: '14px 16px',
-          background: 'var(--bg-surface)',
-          borderRadius: 12,
-          boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-          border: 'none',
-          cursor: 'pointer',
-          transition: 'transform 160ms var(--ease-emil)',
-        }}
+        style={containerStyle}
       >
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+          {/* Eyebrow priorité / phase */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              marginBottom: 4,
+            }}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: eyebrowDotColor,
+                flexShrink: 0,
+              }}
+            />
             <span
               style={{
-                fontFamily: 'BricolageGrotesque, system-ui, sans-serif',
-                fontSize: 16,
-                fontWeight: 600,
-                color: 'var(--ink)',
-                letterSpacing: '-0.01em',
+                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontSize: 10,
+                letterSpacing: '0.06em',
+                color: isUrgent ? 'var(--color-pig-deep, var(--color-pig))' : 'var(--muted)',
+                fontWeight: isUrgent ? 600 : 500,
+                textTransform: 'uppercase',
+                fontVariantNumeric: 'tabular-nums',
               }}
             >
-              {pos.label}
+              {eyebrowText}
             </span>
+            {isUrgent && (
+              <AlertTriangle
+                size={14}
+                color="var(--color-pig-deep, var(--color-pig))"
+                aria-hidden="true"
+                style={{ marginLeft: 'auto' }}
+              />
+            )}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+            <span style={titleStyle}>{pos.label}</span>
             <span
               style={{
                 fontFamily: 'DMMono, ui-monospace, monospace',
@@ -637,6 +767,7 @@ const BandeRow: React.FC<BandeRowProps> = ({ pos, onOpen }) => {
               />
             </span>
           </div>
+
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
             <div
               style={{
@@ -651,7 +782,9 @@ const BandeRow: React.FC<BandeRowProps> = ({ pos, onOpen }) => {
                 style={{
                   height: '100%',
                   width: `${pct}%`,
-                  background: pos.phase.tone,
+                  background: isUrgent
+                    ? 'var(--color-pig-deep, var(--color-pig))'
+                    : pos.phase.tone,
                   borderRadius: 999,
                   transition: 'width 240ms var(--ease-emil)',
                 }}
@@ -670,6 +803,7 @@ const BandeRow: React.FC<BandeRowProps> = ({ pos, onOpen }) => {
               {pos.dayInPhase}/{pos.phase.days}j
             </span>
           </div>
+
           <div
             style={{
               fontFamily: 'InstrumentSans, system-ui, sans-serif',
@@ -682,6 +816,17 @@ const BandeRow: React.FC<BandeRowProps> = ({ pos, onOpen }) => {
             }}
           >
             {pos.detail}
+            {isUrgent && (
+              <span
+                style={{
+                  marginLeft: 8,
+                  color: 'var(--color-pig-deep, var(--color-pig))',
+                  fontWeight: 600,
+                }}
+              >
+                · Confirmer transition
+              </span>
+            )}
           </div>
         </div>
         <ChevronRight size={18} color="var(--muted)" aria-hidden="true" />

@@ -200,7 +200,7 @@ const BandesView: React.FC = () => {
                   ))}
                 </div>
               ) : error ? (
-                <div className="mx-4 card-dense border-l-2 border-l-red text-center py-10">
+                <div className="mx-4 card-dense text-center py-10">
                   <span
                     aria-hidden="true"
                     className="inline-flex items-center justify-center mb-4"
@@ -220,7 +220,7 @@ const BandesView: React.FC = () => {
                   </Button>
                 </div>
               ) : header.length > 0 && bandeIdIndex === -1 ? (
-                <div className="mx-4 card-dense border-l-2 border-l-[var(--amber-pork)]">
+                <div className="mx-4 card-dense">
                   <div className="flex items-center gap-3 mb-4 text-[var(--amber-pork)]">
                     <AlertCircle size={18} />
                     <h3 className="agritech-heading text-[13px] uppercase">Configuration requise</h3>

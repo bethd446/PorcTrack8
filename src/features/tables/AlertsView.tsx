@@ -22,6 +22,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
+import { useNavigate } from 'react-router-dom';
 import { useMeta } from '../../context/FarmContext';
 import { usePilotage } from '../../context/PilotageContext';
 import { useTroupeau } from '../../context/TroupeauContext';
@@ -32,10 +33,105 @@ import Eyebrow from '../../components/design/Eyebrow';
 import EmptyState from '../../components/design/EmptyState';
 import TopBarSync from '../../components/design/TopBarSync';
 import { type FarmAlert, type AlertPriority, type AlertCategory } from '../../services/alertEngine';
-import { ALERT_PRIORITY_COLOR as PRIORITY_COLOR, ALERT_PRIORITY_BG as PRIORITY_BG } from '../../utils/alertColors';
 import { getPendingConfirmations, type PendingConfirmation } from '../../services/confirmationQueue';
 import { ConfirmationModal } from '../../components/ConfirmationModal';
 import type { AlerteServeur } from '../../types/farm';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Treatment hierarchy — urgent / normal / resolu
+// ─────────────────────────────────────────────────────────────────────────────
+
+type AlertTreatment = 'urgent' | 'normal' | 'resolu';
+
+interface ClassifiableAlert {
+  priority: AlertPriority;
+  acknowledged?: boolean;
+}
+
+function classifyAlertTreatment(alert: ClassifiableAlert): AlertTreatment {
+  if (alert.priority === 'CRITIQUE' || alert.priority === 'HAUTE') return 'urgent';
+  if (alert.priority === 'INFO' || alert.acknowledged) return 'resolu';
+  return 'normal';
+}
+
+const TREATMENT_ORDER: Record<AlertTreatment, number> = {
+  urgent: 0,
+  normal: 1,
+  resolu: 2,
+};
+
+interface DisplayAlert {
+  id: string;
+  priority: AlertPriority;
+  category: AlertCategory;
+  title: string;
+  message: string;
+  subjectLabel?: string;
+  createdAt?: Date;
+  requiresAction?: boolean;
+  acknowledged?: boolean;
+  groupedIds?: string[];
+}
+
+function groupStockAlerts(alerts: FarmAlert[]): DisplayAlert[] {
+  const stockAlerts = alerts.filter(a => a.category === 'STOCK');
+  const others: DisplayAlert[] = alerts
+    .filter(a => a.category !== 'STOCK')
+    .map(a => ({
+      id: a.id,
+      priority: a.priority,
+      category: a.category,
+      title: a.title,
+      message: a.message,
+      subjectLabel: a.subjectLabel,
+      createdAt: a.createdAt,
+      requiresAction: a.requiresAction,
+      acknowledged: false,
+    }));
+
+  if (stockAlerts.length < 3) {
+    return [
+      ...others,
+      ...stockAlerts.map(a => ({
+        id: a.id,
+        priority: a.priority,
+        category: a.category,
+        title: a.title,
+        message: a.message,
+        subjectLabel: a.subjectLabel,
+        createdAt: a.createdAt,
+        requiresAction: a.requiresAction,
+        acknowledged: false,
+      })),
+    ];
+  }
+
+  const highestPriority: AlertPriority = stockAlerts.some(a => a.priority === 'CRITIQUE')
+    ? 'CRITIQUE'
+    : stockAlerts.some(a => a.priority === 'HAUTE')
+      ? 'HAUTE'
+      : stockAlerts.some(a => a.priority === 'NORMALE')
+        ? 'NORMALE'
+        : 'INFO';
+
+  const samples = stockAlerts
+    .slice(0, 3)
+    .map(a => a.title.replace(/^Stock Bas\s*[—-]\s*/i, '').replace(/^Stock\s+/i, ''))
+    .join(', ');
+
+  const grouped: DisplayAlert = {
+    id: 'group-stock',
+    priority: highestPriority,
+    category: 'STOCK',
+    title: `${stockAlerts.length} stocks à surveiller`,
+    message: samples + (stockAlerts.length > 3 ? '…' : ''),
+    groupedIds: stockAlerts.map(a => a.id),
+    requiresAction: false,
+    acknowledged: false,
+  };
+
+  return [...others, grouped];
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Filter chips
@@ -174,10 +270,11 @@ const formatAlertServeurMessage = (a: AlerteServeur): FormattedAlerte => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AlertRow — vignette v6 (marker coloré + titre + description + meta)
+// AlertRow — 3 treatments visuels (urgent / normal / resolu)
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface AlertRowProps {
+  treatment: AlertTreatment;
   priority: AlertPriority;
   title: string;
   description: string;
@@ -190,7 +287,14 @@ interface AlertRowProps {
   ariaRole?: 'alert' | 'listitem';
 }
 
+const TREATMENT_DOT: Record<AlertTreatment, string> = {
+  urgent: 'var(--color-pig-deep)',
+  normal: 'var(--color-amber-pork-deep)',
+  resolu: 'var(--muted)',
+};
+
 const AlertRow: React.FC<AlertRowProps> = ({
+  treatment,
   priority,
   title,
   description,
@@ -204,24 +308,39 @@ const AlertRow: React.FC<AlertRowProps> = ({
 }) => {
   const interactive = typeof onClick === 'function';
   const Wrapper = interactive ? 'button' : 'div';
+
+  const isUrgent = treatment === 'urgent';
+  const isResolu = treatment === 'resolu';
+
+  const background = isResolu ? 'var(--bg-surface-2)' : 'var(--bg-surface)';
+  const border = isUrgent
+    ? '1px solid var(--color-pig-soft)'
+    : isResolu
+      ? '1px solid var(--line-2)'
+      : '1px solid var(--line)';
+  const titleSize = isUrgent ? 16 : 14;
+  const titleWeight = 600;
+  const dotColor = TREATMENT_DOT[treatment];
+
   return (
     <Wrapper
       {...(interactive ? { type: 'button', onClick } : {})}
       role={ariaRole}
       className="pressable"
       style={{
-        background: 'var(--bg-surface)',
+        background,
         borderRadius: 12,
-        boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
+        border,
+        boxShadow: isResolu ? 'none' : '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
         padding: '14px 16px',
         display: 'flex',
         flexDirection: 'column',
-        gap: 8,
+        gap: 6,
         width: '100%',
         textAlign: 'left',
-        border: 'none',
         cursor: interactive ? 'pointer' : 'default',
         transition: 'transform 160ms var(--ease-emil)',
+        opacity: isResolu ? 0.65 : 1,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -230,10 +349,7 @@ const AlertRow: React.FC<AlertRowProps> = ({
             display: 'inline-flex',
             alignItems: 'center',
             gap: 6,
-            background: PRIORITY_BG[priority],
-            color: PRIORITY_COLOR[priority],
-            padding: '3px 9px',
-            borderRadius: 'var(--radius-pill)',
+            color: dotColor,
             fontFamily: 'DMMono, ui-monospace, monospace',
             fontSize: 10,
             letterSpacing: '0.10em',
@@ -247,34 +363,16 @@ const AlertRow: React.FC<AlertRowProps> = ({
               width: 6,
               height: 6,
               borderRadius: '50%',
-              background: PRIORITY_COLOR[priority],
+              background: dotColor,
               flexShrink: 0,
             }}
           />
-          {priority}
-        </span>
-        <span
-          style={{
-            background: 'var(--bg-surface-2)',
-            color: 'var(--ink-soft)',
-            padding: '3px 9px',
-            borderRadius: 'var(--radius-pill)',
-            fontFamily: 'DMMono, ui-monospace, monospace',
-            fontSize: 10,
-            letterSpacing: '0.10em',
-            textTransform: 'uppercase',
-            border: '0.5px solid var(--line)',
-          }}
-        >
-          {categoryLabel}
+          {priority} · {categoryLabel}
         </span>
         {serverTag && (
           <span
             style={{
-              background: 'var(--color-secondary-soft)',
               color: 'var(--color-secondary-deep)',
-              padding: '3px 9px',
-              borderRadius: 'var(--radius-pill)',
               fontFamily: 'DMMono, ui-monospace, monospace',
               fontSize: 10,
               letterSpacing: '0.10em',
@@ -307,8 +405,8 @@ const AlertRow: React.FC<AlertRowProps> = ({
       <h3
         style={{
           fontFamily: 'BigShoulders, system-ui, sans-serif',
-          fontSize: 17,
-          fontWeight: 600,
+          fontSize: titleSize,
+          fontWeight: titleWeight,
           color: 'var(--ink)',
           letterSpacing: '-0.005em',
           lineHeight: 1.3,
@@ -330,7 +428,7 @@ const AlertRow: React.FC<AlertRowProps> = ({
         {description}
       </p>
 
-      {(timeAgo || actionLabel) && (
+      {(timeAgo || (actionLabel && !isResolu)) && (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
           {timeAgo ? (
             <span
@@ -348,12 +446,12 @@ const AlertRow: React.FC<AlertRowProps> = ({
               {timeAgo}
             </span>
           ) : <span />}
-          {actionLabel && (
+          {actionLabel && !isResolu && (
             <span
               style={{
                 fontFamily: 'DMMono, ui-monospace, monospace',
                 fontSize: 10,
-                color: 'var(--color-accent-500)',
+                color: isUrgent ? 'var(--color-accent-500)' : 'var(--muted)',
                 fontWeight: 600,
                 letterSpacing: '0.10em',
                 textTransform: 'uppercase',
@@ -374,6 +472,7 @@ const AlertRow: React.FC<AlertRowProps> = ({
 // ─────────────────────────────────────────────────────────────────────────────
 
 const AlertsView: React.FC = () => {
+  const navigate = useNavigate();
   const { alerts, alertesServeur } = usePilotage();
   const { refreshData } = useMeta();
   const { bandes, truies, verrats } = useTroupeau();
@@ -413,9 +512,27 @@ const AlertsView: React.FC = () => {
     return counts;
   }, [alerts]);
 
-  const filteredAlerts = useMemo(() => {
-    if (activeFilter === 'ALL') return alerts;
-    return alerts.filter(a => a.category === activeFilter);
+  const filteredAlerts = useMemo<DisplayAlert[]>(() => {
+    const base = activeFilter === 'ALL' ? alerts : alerts.filter(a => a.category === activeFilter);
+    const grouped = activeFilter === 'STOCK' ? base.map<DisplayAlert>(a => ({
+      id: a.id,
+      priority: a.priority,
+      category: a.category,
+      title: a.title,
+      message: a.message,
+      subjectLabel: a.subjectLabel,
+      createdAt: a.createdAt,
+      requiresAction: a.requiresAction,
+      acknowledged: false,
+    })) : groupStockAlerts(base);
+    return [...grouped].sort((a, b) => {
+      const ta = TREATMENT_ORDER[classifyAlertTreatment(a)];
+      const tb = TREATMENT_ORDER[classifyAlertTreatment(b)];
+      if (ta !== tb) return ta - tb;
+      const da = a.createdAt ? a.createdAt.getTime() : 0;
+      const db = b.createdAt ? b.createdAt.getTime() : 0;
+      return db - da;
+    });
   }, [alerts, activeFilter]);
 
   const handleAction = useCallback((alert: FarmAlert) => {
@@ -432,10 +549,6 @@ const AlertsView: React.FC = () => {
   );
 
   const showEmpty = alerts.length === 0 && alertesServeur.length === 0;
-
-  // Spark dérivée déterministe (placeholder visuel — pas de vraie série tracée)
-  const spark = (base: number) =>
-    Array.from({ length: 7 }, (_, i) => Math.max(0, Math.round(base * (0.8 + 0.06 * i))));
 
   return (
     <IonPage>
@@ -502,7 +615,6 @@ const AlertsView: React.FC = () => {
                 value={summary.critique}
                 trend={summary.critique > 0 ? 'À traiter' : 'Aucune'}
                 trendDir={summary.critique > 0 ? 'down' : 'up'}
-                spark={spark(summary.critique || 1)}
                 accentColor="var(--color-danger)"
               />
               <KpiCardV6
@@ -510,21 +622,18 @@ const AlertsView: React.FC = () => {
                 value={summary.haute}
                 trend={summary.haute > 0 ? 'Surveiller' : 'Aucune'}
                 trendDir={summary.haute > 0 ? 'down' : 'up'}
-                spark={spark(summary.haute || 1)}
                 accentColor="var(--color-pig)"
               />
               <KpiCardV6
                 label="Normale"
                 value={summary.normale}
                 trend="Sous contrôle"
-                spark={spark(summary.normale || 1)}
                 accentColor="var(--amber-pork)"
               />
               <KpiCardV6
                 label="Info"
                 value={summary.info}
                 trend="Pour mémoire"
-                spark={spark(summary.info || 1)}
                 accentColor="var(--color-info)"
               />
             </section>
@@ -614,9 +723,11 @@ const AlertsView: React.FC = () => {
                       !actionIsJson && actionTrimmed.length > 0
                         ? `${formatted.description} — ${actionTrimmed}`
                         : formatted.description;
+                    const treatment = classifyAlertTreatment({ priority: a.priorite });
                     return (
                       <li key={`srv-${i}-${a.sujet}-${a.date}`}>
                         <AlertRow
+                          treatment={treatment}
                           priority={a.priorite}
                           title={formatted.title}
                           description={description}
@@ -697,31 +808,40 @@ const AlertsView: React.FC = () => {
                     aria-label="Liste alertes locales"
                   >
                     {filteredAlerts.map(alert => {
-                      const hasConfirm = hasPendingForAlert(alert.id);
+                      const isGrouped = !!alert.groupedIds;
+                      const hasConfirm = !isGrouped && hasPendingForAlert(alert.id);
+                      const treatment = classifyAlertTreatment(alert);
+                      const originalAlert = isGrouped ? null : alerts.find(a => a.id === alert.id) ?? null;
+
+                      const onClick = isGrouped
+                        ? () => navigate('/ressources?filter=stock-bas')
+                        : originalAlert && originalAlert.requiresAction && hasConfirm
+                          ? () => handleAction(originalAlert)
+                          : undefined;
+
+                      const actionLabel = isGrouped
+                        ? 'Voir détails'
+                        : originalAlert && originalAlert.requiresAction && hasConfirm
+                          ? 'Action requise'
+                          : originalAlert && originalAlert.requiresAction
+                            ? 'Détails'
+                            : undefined;
+
                       return (
                         <li key={alert.id}>
                           <AlertRow
+                            treatment={treatment}
                             priority={alert.priority}
-                            title={resolveAlertSubject(alert.title, lookup)}
-                            description={resolveAlertSubject(alert.message, lookup)}
+                            title={isGrouped ? alert.title : resolveAlertSubject(alert.title, lookup)}
+                            description={isGrouped ? alert.message : resolveAlertSubject(alert.message, lookup)}
                             categoryLabel={alert.category}
-                            metaLabel={resolveAlertSubject(alert.subjectLabel, lookup)}
-                            timeAgo={formatDistanceToNow(alert.createdAt, {
+                            metaLabel={isGrouped ? `${alert.groupedIds?.length ?? 0} entrées` : resolveAlertSubject(alert.subjectLabel, lookup)}
+                            timeAgo={!isGrouped && alert.createdAt ? formatDistanceToNow(alert.createdAt, {
                               addSuffix: true,
                               locale: fr,
-                            })}
-                            actionLabel={
-                              alert.requiresAction && hasConfirm
-                                ? 'Action requise'
-                                : alert.requiresAction
-                                  ? 'Détails'
-                                  : undefined
-                            }
-                            onClick={
-                              alert.requiresAction && hasConfirm
-                                ? () => handleAction(alert)
-                                : undefined
-                            }
+                            }) : undefined}
+                            actionLabel={actionLabel}
+                            onClick={onClick}
                             ariaRole={alert.priority === 'CRITIQUE' ? 'alert' : 'listitem'}
                           />
                         </li>

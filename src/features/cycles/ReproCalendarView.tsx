@@ -274,7 +274,7 @@ const ReproCalendarView: React.FC = () => {
             {saillesEmpty ? (
               <div
                 role="status"
-                className="card-dense border-l-2 border-l-blue flex items-start gap-3"
+                className="card-dense flex items-start gap-3"
               >
                 <Info
                   size={16}
@@ -367,7 +367,7 @@ const ReproCalendarView: React.FC = () => {
                         className={`animate-fade-in-up ${staggerClass}`}
                       >
                         <div
-                          className="flex items-stretch border-b border-border last:border-b-0 border-l-2 border-l-accent"
+                          className="flex items-stretch border-b border-border last:border-b-0"
                         >
                           <button
                             type="button"

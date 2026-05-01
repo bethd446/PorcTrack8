@@ -357,10 +357,7 @@ const AuditView: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleAlertClick(alert)}
-                          className={
-                            'card-dense pressable w-full text-left flex items-start gap-3 relative border-l-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 ' +
-                            (isHigh ? 'border-l-red' : 'border-l-amber')
-                          }
+                          className="card-dense pressable w-full text-left flex items-start gap-3 relative focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
                         >
                           <span
                             className={

@@ -42,9 +42,6 @@ const SEVRAGE_PROCHE_JOURS = 25;
 const MORTALITE_SEUIL_PCT = 15;
 const PESEE_MILESTONES = [3, 7, 14, 21, 28];
 
-const spark = (base: number): number[] =>
-  Array.from({ length: 7 }, (_, i) => Math.max(1, Math.round(Math.abs(base) * (0.85 + 0.05 * i))));
-
 const MaterniteView: React.FC = () => {
   const navigate = useNavigate();
   const { truies, bandes, refreshData } = useFarm();
@@ -169,7 +166,6 @@ const MaterniteView: React.FC = () => {
               <KpiCardV6
                 label="Truies"
                 value={summary.nbTruies}
-                spark={spark(summary.nbTruies || 1)}
               />
               <KpiCardV6
                 label="Saturation"
@@ -181,19 +177,16 @@ const MaterniteView: React.FC = () => {
                       ? 'var(--amber-pork)'
                       : undefined
                 }
-                spark={spark(summary.occupation.tauxPct || 1)}
               />
               <KpiCardV6
                 label="Porcelets s/m"
                 value={summary.totalVivants}
-                spark={spark(summary.totalVivants || 1)}
               />
               <KpiCardV6
                 label="Mortalité"
                 value={`${summary.mortsGlobalPct.toFixed(1)}%`}
                 accentColor={summary.mortsGlobalPct > MORTALITE_SEUIL_PCT ? 'var(--color-danger, #EF4444)' : undefined}
                 trendDir={summary.mortsGlobalPct > MORTALITE_SEUIL_PCT ? 'down' : 'neutral'}
-                spark={spark(summary.mortsGlobalPct || 1)}
               />
             </div>
 
@@ -254,10 +247,9 @@ const MaterniteCard: React.FC<{
   return (
     <div
       onClick={onDetail}
-      className={`card-dense flex flex-col gap-4 p-4 border-l-4 transition-all active:scale-[0.98] cursor-pointer ${
-        isBloquant ? 'border-l-red-500 bg-red-500/5 ring-1 ring-red-500/20' :
-        mortsPct > MORTALITE_SEUIL_PCT ? 'border-l-red' :
-        isTransitionRequired ? 'border-l-gold animate-pulse-slow' : 'border-l-accent'
+      className={`card-dense flex flex-col gap-4 p-4 transition-all active:scale-[0.98] cursor-pointer ${
+        isBloquant ? 'bg-red-500/5 ring-1 ring-red-500/20' :
+        isTransitionRequired ? 'animate-pulse-slow' : ''
       }`}
     >
       <div className="flex justify-between items-start">

@@ -15,7 +15,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { IonContent, IonPage } from '@ionic/react';
+import { IonAlert, IonContent, IonPage } from '@ionic/react';
 import { AlertCircle, Edit3, Skull } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
@@ -296,6 +296,7 @@ const BandeDetailView: React.FC = () => {
   const { bandes, transitions, truies, verrats, saillies, refreshData } = useFarm();
   const { isOwner } = useAuth();
   const [mortalityOpen, setMortalityOpen] = useState(false);
+  const [showMortalityConfirm, setShowMortalityConfirm] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [peseeOpen, setPeseeOpen] = useState(false);
 
@@ -472,7 +473,7 @@ const BandeDetailView: React.FC = () => {
                     {bande.boucleMere ? ` · ${bande.boucleMere}` : ''}
                   </div>
                 </div>
-                <Chip label={meta.label} tone={meta.tone} size="xs" />
+                <Chip label={meta.label} tone={meta.tone} size="xs" className="!normal-case" />
                 <button
                   type="button"
                   onClick={() => setEditOpen(true)}
@@ -619,8 +620,13 @@ const BandeDetailView: React.FC = () => {
             <button
               type="button"
               aria-label="Déclarer une mortalité porcelet sur cette bande"
-              className="pressable card-dense flex items-center justify-center gap-2 !py-3.5 text-coral hover:brightness-110"
-              onClick={() => setMortalityOpen(true)}
+              className="pressable card-dense flex items-center justify-center gap-2 !py-3.5 hover:brightness-110"
+              style={{
+                background: 'transparent',
+                border: '1px solid var(--color-pig, var(--coral))',
+                color: 'var(--color-pig, var(--coral))',
+              }}
+              onClick={() => setShowMortalityConfirm(true)}
             >
               <Skull size={18} aria-hidden="true" />
               <span className="ft-heading text-[13px] uppercase tracking-wide">
@@ -628,6 +634,27 @@ const BandeDetailView: React.FC = () => {
               </span>
             </button>
           </div>
+
+          <IonAlert
+            isOpen={showMortalityConfirm}
+            onDidDismiss={() => setShowMortalityConfirm(false)}
+            header="Déclarer une mortalité"
+            message="Cette action enregistre une perte d'animal dans le journal sanitaire et le bilan financier. Elle est irréversible. Continuer ?"
+            buttons={[
+              {
+                text: 'Annuler',
+                role: 'cancel',
+                cssClass: 'alert-button-cancel',
+              },
+              {
+                text: 'Continuer',
+                cssClass: 'alert-button-confirm',
+                handler: () => {
+                  setMortalityOpen(true);
+                },
+              },
+            ]}
+          />
 
           <QuickMortalityForm
             isOpen={mortalityOpen}
@@ -648,7 +675,7 @@ const BandeDetailView: React.FC = () => {
 
           <BandeActionToolbar
             onPesee={() => setPeseeOpen(true)}
-            onMortalite={() => setMortalityOpen(true)}
+            onMortalite={() => setShowMortalityConfirm(true)}
             onSoin={() => navigate(`/sante?bande=${bande.id}`)}
           />
         </AgritechLayout>

@@ -357,9 +357,9 @@ const TroupeauLogesView: React.FC = () => {
               <div
                 key={rep.id}
                 onClick={() => setExpandedLoge(isExpanded ? null : key)}
-                className={`card-dense p-3 flex flex-col gap-2 transition-all cursor-pointer border-l-4 ${
+                className={`card-dense p-3 flex flex-col gap-2 transition-all cursor-pointer ${
                   isExpanded ? 'col-span-2' : ''
-                } ${releve?.moyenne > 15 ? 'border-l-accent' : 'border-l-teal'}`}
+                }`}
                 data-testid={`ps-loge-${i + 1}`}
               >
                 <div className="flex items-center justify-between">

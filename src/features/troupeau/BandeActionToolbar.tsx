@@ -23,11 +23,12 @@ const BandeActionToolbar: React.FC<BandeActionToolbarProps> = ({
     <div className="fixed bottom-0 left-0 right-0 bg-bg-1/80 backdrop-blur-xl border-t border-border px-4 py-3 flex gap-3 z-50 animate-fade-in-up">
       <button
         onClick={onMortalite}
+        aria-label="Déclarer mortalité (confirmation requise)"
         className="flex-1 h-14 rounded-2xl border flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
-        style={{ background: 'color-mix(in srgb, var(--color-danger, #EF4444) 10%, transparent)', borderColor: 'color-mix(in srgb, var(--color-danger, #EF4444) 20%, transparent)' }}
+        style={{ background: 'transparent', borderColor: 'var(--color-pig, var(--color-danger, #EF4444))' }}
       >
-        <Skull size={18} style={{ color: 'var(--color-danger, #EF4444)' }} />
-        <span className="text-[9px] font-bold uppercase font-mono" style={{ color: 'var(--color-danger, #EF4444)' }}>Mortalité</span>
+        <Skull size={18} style={{ color: 'var(--color-pig, var(--color-danger, #EF4444))' }} />
+        <span className="text-[9px] font-bold uppercase font-mono" style={{ color: 'var(--color-pig, var(--color-danger, #EF4444))' }}>Mortalité</span>
       </button>
 
       <button

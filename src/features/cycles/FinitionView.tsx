@@ -37,9 +37,6 @@ import QuickVenteForm from '../../components/forms/QuickVenteForm';
 const PRIX_KG_VIF_FCFA = 2100;
 const FINITION_SEUIL_KG = 100;
 
-const spark = (base: number): number[] =>
-  Array.from({ length: 7 }, (_, i) => Math.max(1, Math.round(Math.abs(base) * (0.85 + 0.05 * i))));
-
 const FinitionView: React.FC = () => {
   const navigate = useNavigate();
   const { bandes } = useFarm();
@@ -143,24 +140,20 @@ const FinitionView: React.FC = () => {
                 label="Bandes"
                 value={summary.nbBandes}
                 accentColor={summary.nbBandes > 0 ? 'var(--amber-pork)' : undefined}
-                spark={spark(summary.nbBandes || 1)}
               />
               <KpiCardV6
                 label="Effectif"
                 value={summary.totalVivants}
-                spark={spark(summary.totalVivants || 1)}
               />
               <KpiCardV6
                 label="Poids Moyen"
                 value={summary.avgWeight}
                 unit="kg"
-                spark={spark(summary.avgWeight || 1)}
               />
               <KpiCardV6
                 label="Valeur Est."
                 value={formatFCFA(projection.revenuEstime)}
                 unit="FCFA"
-                spark={spark(projection.revenuEstime || 1)}
               />
             </div>
 
@@ -238,8 +231,8 @@ const FinitionCard: React.FC<{ data: FinitionRowData; onOpen: () => void; onSell
   return (
     <div
       onClick={onOpen}
-      className={`card-dense flex flex-col gap-4 p-4 border-l-4 transition-all active:scale-[0.98] cursor-pointer ${
-        data.isReadyForExit ? 'border-l-success animate-pulse-slow' : 'border-l-gold'
+      className={`card-dense flex flex-col gap-4 p-4 transition-all active:scale-[0.98] cursor-pointer ${
+        data.isReadyForExit ? 'animate-pulse-slow' : ''
       }`}
     >
       {/* Header Card */}
@@ -256,7 +249,7 @@ const FinitionCard: React.FC<{ data: FinitionRowData; onOpen: () => void; onSell
         {data.isReadyForExit ? (
           <Chip tone="success" label="PRÊT SORTIE" size="sm" icon={<ShoppingCart size={10} />} />
         ) : (
-          <Chip tone="gold" label="Finition" size="sm" />
+          <Chip tone="gold" label="Finition" size="sm" className="!normal-case" />
         )}
       </div>
 

@@ -125,7 +125,7 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({ searchTex
                     <BandeRow
                       key={b.id}
                       bande={b}
-                      phase="MATERNITÉ"
+                      phase="Maternité"
                       tone="gold"
                       onClick={() => navigate(`/troupeau/bandes/${b.id}`)}
                       pendingTransition={pending.find(p => p.bandeId === b.id)}
@@ -149,7 +149,7 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({ searchTex
                     <BandeRow
                       key={b.id}
                       bande={b}
-                      phase="POST-SEVR."
+                      phase="Post-sevrage"
                       tone="teal"
                       onClick={() => navigate(`/troupeau/bandes/${b.id}`)}
                       pendingTransition={pending.find(p => p.bandeId === b.id)}
@@ -170,7 +170,7 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({ searchTex
                   <BandeRow
                     key={b.id}
                     bande={b}
-                    phase="CROISS."
+                    phase="Croissance"
                     tone="amber"
                     onClick={() => navigate(`/troupeau/bandes/${b.id}`)}
                     pendingTransition={pending.find(p => p.bandeId === b.id)}
@@ -190,7 +190,7 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({ searchTex
                   <BandeRow
                     key={b.id}
                     bande={b}
-                    phase="ENGRAISS."
+                    phase="Engraissement"
                     tone="accent"
                     onClick={() => navigate(`/troupeau/bandes/${b.id}`)}
                     pendingTransition={pending.find(p => p.bandeId === b.id)}
@@ -210,7 +210,7 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({ searchTex
                   <BandeRow
                     key={b.id}
                     bande={b}
-                    phase="FINITION"
+                    phase="Finition"
                     tone="blue"
                     onClick={() => navigate(`/troupeau/bandes/${b.id}`)}
                     pendingTransition={pending.find(p => p.bandeId === b.id)}
@@ -290,13 +290,13 @@ const BandeRow: React.FC<BandeRowProps> = ({
               <span className="font-mono text-[14px] font-semibold text-text-0 tabular-nums">{primary}</span>
               <span className="text-[11px] text-text-2 font-mono truncate">{bande.vivants ?? 0} vivants</span>
             </div>
-            <div className="font-mono text-[10px] text-text-2 mt-0.5 truncate uppercase">
+            <div className="font-mono text-[10px] text-text-2 mt-0.5 truncate">
               {bande.boucleMere ? `Mère ${bande.boucleMere} · ` : ''}
               {bande.statut}
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Chip label={phase} tone={tone} size="xs" />
+            <Chip label={phase} tone={tone} size="xs" className="!normal-case" />
             <ChevronRight size={14} className="text-text-2" />
           </div>
         </button>

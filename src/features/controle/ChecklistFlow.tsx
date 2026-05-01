@@ -467,7 +467,7 @@ const ChecklistFlow: React.FC = () => {
 
             {/* Question card */}
             <section
-              className="card-dense mt-5 border-l-2 border-l-accent"
+              className="card-dense mt-5"
               aria-label="Question"
             >
               <div className="kpi-label">Question</div>

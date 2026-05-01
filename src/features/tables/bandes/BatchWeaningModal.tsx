@@ -116,7 +116,7 @@ const BatchWeaningModal: React.FC<BatchWeaningModalProps> = ({
           <p className="font-mono text-[12px] text-accent tabular-nums">{progress.current} / {progress.total}</p>
         </div>
         {errors.length > 0 && (
-          <div className="w-full max-w-sm card-dense border-l-2 border-l-red max-h-40 overflow-y-auto">
+          <div className="w-full max-w-sm card-dense max-h-40 overflow-y-auto">
             {errors.map((err, i) => (
               <p key={i} className="font-mono text-[11px] text-red mb-1">{err}</p>
             ))}
@@ -160,7 +160,7 @@ const BatchWeaningModal: React.FC<BatchWeaningModalProps> = ({
       <IonContent className="ion-no-padding">
         <div className="agritech-root px-4 py-5 space-y-4">
           {errors.length > 0 && (
-            <div className="card-dense border-l-2 border-l-red">
+            <div className="card-dense">
               <h4 className="font-mono text-[11px] font-semibold uppercase tracking-wide text-red mb-2">
                 Erreurs lors de la dernière tentative
               </h4>

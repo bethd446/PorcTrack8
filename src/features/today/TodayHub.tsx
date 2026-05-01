@@ -1,13 +1,15 @@
 /**
  * TodayHub — /today
  * ══════════════════════════════════════════════════════════════════════════
- * Inbox du matin (Option Bravo). Point d'entrée par défaut de l'app.
+ * Copilote de décision matinal. Point d'entrée par défaut de l'app.
  *
  *   1. Header BigShoulders : "Bonjour, {firstName}" + date
- *   2. Section "Alertes critiques" — CRITIQUE + HAUTE, max 10
- *   3. Section "Confirmations en attente" — file confirmationQueue
- *   4. Section "Audit du jour" — CTA + dernier audit fait
- *   5. Section "Tâches" — placeholder v1
+ *   2. Alertes critiques (CRITIQUE + HAUTE, top 10)
+ *   3. Retours chaleur cette semaine (truies J18-J24 post-saillie)
+ *   4. Sevrages à confirmer / en retard (bandes SOUS_MERE J28+)
+ *   5. Cycles en cours (tile lien)
+ *   6. Confirmations en attente (top 5)
+ *   7. Audit du jour
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -16,7 +18,7 @@ import {
   IonContent, IonPage, IonRefresher, IonRefresherContent,
 } from '@ionic/react';
 import {
-  AlertTriangle, CheckCircle2, ChevronRight, ClipboardCheck, RotateCcw, ShieldCheck,
+  AlertTriangle, ChevronRight, ClipboardCheck, Layers, PawPrint, RotateCcw, ShieldCheck,
 } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
@@ -32,6 +34,86 @@ import {
   getPendingConfirmations,
   type PendingConfirmation,
 } from '../../services/confirmationQueue';
+import { safeDate } from '../../lib/truieHelpers';
+import { normaliseStatut } from '../../lib/truieStatut';
+import { computeBandePhase } from '../../services/bandesAggregator';
+import type { Saillie, Truie, BandePorcelets } from '../../types/farm';
+
+const MS_DAY = 86_400_000;
+const SEVRAGE_JOURS = 28;
+const RETOUR_CHALEUR_MIN = 18;
+const RETOUR_CHALEUR_MAX = 24;
+const ANTICIPATION_MIN = 11;
+const ANTICIPATION_MAX = 17;
+const SEVRAGE_AVENIR_FENETRE = 3;
+
+function daysSince(date: Date, today: Date): number {
+  const a = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const b = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  return Math.floor((b - a) / MS_DAY);
+}
+
+interface TruieRetourChaleur {
+  truie: Truie;
+  daysSinceSaillie: number;
+}
+
+function computeRetoursChaleur(
+  truies: Truie[],
+  saillies: Saillie[],
+  today: Date,
+): { aVerifier: TruieRetourChaleur[]; aAnticiper: TruieRetourChaleur[] } {
+  const aVerifier: TruieRetourChaleur[] = [];
+  const aAnticiper: TruieRetourChaleur[] = [];
+  for (const truie of truies) {
+    if (normaliseStatut(truie.statut) !== 'PLEINE') continue;
+    const active = saillies.find(
+      s =>
+        (s.truieId === truie.id || s.truieId === truie.displayId) &&
+        (!s.statut || /active|confirm|en[\s_]?cours/i.test(s.statut)),
+    );
+    if (!active) continue;
+    const dSaillie = safeDate(active.dateSaillie);
+    if (!dSaillie) continue;
+    const days = daysSince(dSaillie, today);
+    if (days >= RETOUR_CHALEUR_MIN && days <= RETOUR_CHALEUR_MAX) {
+      aVerifier.push({ truie, daysSinceSaillie: days });
+    } else if (days >= ANTICIPATION_MIN && days <= ANTICIPATION_MAX) {
+      aAnticiper.push({ truie, daysSinceSaillie: days });
+    }
+  }
+  aVerifier.sort((a, b) => b.daysSinceSaillie - a.daysSinceSaillie);
+  aAnticiper.sort((a, b) => b.daysSinceSaillie - a.daysSinceSaillie);
+  return { aVerifier, aAnticiper };
+}
+
+interface BandeSevrage {
+  bande: BandePorcelets;
+  daysOver: number;
+}
+
+function computeSevrages(
+  bandes: BandePorcelets[],
+  today: Date,
+): { enRetard: BandeSevrage[]; aVenir: BandeSevrage[] } {
+  const enRetard: BandeSevrage[] = [];
+  const aVenir: BandeSevrage[] = [];
+  for (const bande of bandes) {
+    if (computeBandePhase(bande, today) !== 'SOUS_MERE') continue;
+    const dMB = safeDate(bande.dateMB);
+    if (!dMB) continue;
+    const dPrevue = safeDate(bande.dateSevragePrevue) ?? new Date(dMB.getTime() + SEVRAGE_JOURS * MS_DAY);
+    const diff = daysSince(dPrevue, today);
+    if (diff > 0) {
+      enRetard.push({ bande, daysOver: diff });
+    } else if (diff >= -SEVRAGE_AVENIR_FENETRE && diff <= 0) {
+      aVenir.push({ bande, daysOver: diff });
+    }
+  }
+  enRetard.sort((a, b) => b.daysOver - a.daysOver);
+  aVenir.sort((a, b) => b.daysOver - a.daysOver);
+  return { enRetard, aVenir };
+}
 
 const PRIORITY_ORDER: Record<AlertPriority, number> = {
   CRITIQUE: 0,
@@ -43,7 +125,7 @@ const PRIORITY_ORDER: Record<AlertPriority, number> = {
 const TodayHub: React.FC = () => {
   const navigate = useNavigate();
   const { userName } = useAuth();
-  const { alerts, alertesServeur } = usePilotage();
+  const { alerts, alertesServeur, saillies } = usePilotage();
   const { notes } = useRessources();
   const { recomputeAlerts } = useMeta();
   const { bandes, truies, verrats } = useTroupeau();
@@ -84,7 +166,8 @@ const TodayHub: React.FC = () => {
     event.detail.complete();
   };
 
-  // ── Top 10 alertes CRITIQUE + HAUTE ────────────────────────────────────
+  // ── Top 5 alertes URGENT (CRITIQUE + HAUTE) ─────────────────────────────
+  // Pas de remplissage avec NORMAL : si <5 urgent, on laisse le padding visuel.
   const criticalAlerts = useMemo(() => {
     const local: FarmAlert[] = alerts.filter(
       a => a.priority === 'CRITIQUE' || a.priority === 'HAUTE',
@@ -109,8 +192,21 @@ const TodayHub: React.FC = () => {
       ...server,
     ];
     merged.sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]);
-    return merged.slice(0, 10);
+    return merged.slice(0, 5);
   }, [alerts, alertesServeur, lookup]);
+
+  // ── Retours chaleur cette semaine ────────────────────────────────────
+  const today = useMemo(() => new Date(), []);
+  const retoursChaleur = useMemo(
+    () => computeRetoursChaleur(truies, saillies, today),
+    [truies, saillies, today],
+  );
+
+  // ── Sevrages à confirmer / en retard ─────────────────────────────────
+  const sevrages = useMemo(
+    () => computeSevrages(bandes, today),
+    [bandes, today],
+  );
 
   // ── Dernier audit (note de catégorie AUDIT_QUOTIDIEN ou CONTROLE) ─────
   const lastAudit = useMemo(() => {
@@ -326,6 +422,227 @@ const TodayHub: React.FC = () => {
               )}
             </section>
 
+            {/* ── Retours chaleur cette semaine ─────────────────────── */}
+            {(retoursChaleur.aVerifier.length > 0 || retoursChaleur.aAnticiper.length > 0) && (
+              <section aria-label="Retours chaleur à surveiller">
+                <Eyebrow dotColor="pig">
+                  Retours chaleur · {retoursChaleur.aVerifier.length} truie{retoursChaleur.aVerifier.length > 1 ? 's' : ''}
+                  {retoursChaleur.aAnticiper.length > 0 ? ` · +${retoursChaleur.aAnticiper.length} à anticiper` : ''}
+                </Eyebrow>
+                <ul
+                  style={{
+                    listStyle: 'none',
+                    padding: 0,
+                    margin: '12px 0 0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 8,
+                  }}
+                >
+                  {retoursChaleur.aVerifier.map(({ truie, daysSinceSaillie }) => (
+                    <li key={`rc-v-${truie.id}`}>
+                      <Link
+                        to={`/troupeau/truies/${truie.id}`}
+                        className="pressable"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          background: 'var(--bg-surface)',
+                          borderRadius: 12,
+                          boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
+                          padding: '14px 16px',
+                          textDecoration: 'none',
+                          border: '1px solid var(--line)',
+                        }}
+                      >
+                        <PawPrint size={20} color="var(--color-pig)" aria-hidden="true" />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontFamily: 'var(--font-display, BigShoulders), system-ui, sans-serif',
+                              fontSize: 15,
+                              fontWeight: 600,
+                              color: 'var(--ink)',
+                              letterSpacing: '-0.005em',
+                            }}
+                          >
+                            {truie.displayId}{truie.nom ? ` · ${truie.nom}` : ''}
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                              fontSize: 12,
+                              color: 'var(--ink-soft)',
+                              marginTop: 2,
+                            }}
+                          >
+                            Saillie il y a {daysSinceSaillie}j · vérifier J18-J24
+                          </div>
+                        </div>
+                        <ChevronRight size={16} color="var(--muted)" aria-hidden="true" />
+                      </Link>
+                    </li>
+                  ))}
+                  {retoursChaleur.aAnticiper.map(({ truie, daysSinceSaillie }) => (
+                    <li key={`rc-a-${truie.id}`}>
+                      <Link
+                        to={`/troupeau/truies/${truie.id}`}
+                        className="pressable"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          background: 'var(--bg-surface)',
+                          borderRadius: 12,
+                          boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
+                          padding: '14px 16px',
+                          textDecoration: 'none',
+                          border: '1px solid var(--line)',
+                        }}
+                      >
+                        <PawPrint size={20} color="var(--color-amber-pork-deep)" aria-hidden="true" />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontFamily: 'var(--font-display, BigShoulders), system-ui, sans-serif',
+                              fontSize: 15,
+                              fontWeight: 600,
+                              color: 'var(--ink)',
+                              letterSpacing: '-0.005em',
+                            }}
+                          >
+                            {truie.displayId}{truie.nom ? ` · ${truie.nom}` : ''}
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                              fontSize: 12,
+                              color: 'var(--ink-soft)',
+                              marginTop: 2,
+                            }}
+                          >
+                            À anticiper · saillie il y a {daysSinceSaillie}j
+                          </div>
+                        </div>
+                        <ChevronRight size={16} color="var(--muted)" aria-hidden="true" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {/* ── Sevrages à confirmer / en retard ──────────────────── */}
+            {(sevrages.enRetard.length > 0 || sevrages.aVenir.length > 0) && (
+              <section aria-label="Sevrages à confirmer">
+                <Eyebrow dotColor={sevrages.enRetard.length > 0 ? 'pig' : 'amber'}>
+                  Sevrages · {sevrages.enRetard.length} en retard, {sevrages.aVenir.length} cette semaine
+                </Eyebrow>
+                <ul
+                  style={{
+                    listStyle: 'none',
+                    padding: 0,
+                    margin: '12px 0 0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 8,
+                  }}
+                >
+                  {sevrages.enRetard.map(({ bande, daysOver }) => (
+                    <li key={`sv-r-${bande.id}`}>
+                      <Link
+                        to={`/troupeau/bandes/${bande.id}`}
+                        className="pressable"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          background: 'var(--bg-surface)',
+                          borderRadius: 12,
+                          boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
+                          padding: '14px 16px',
+                          textDecoration: 'none',
+                          border: '1px solid var(--line)',
+                        }}
+                      >
+                        <Layers size={20} color="var(--color-pig)" aria-hidden="true" />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontFamily: 'var(--font-display, BigShoulders), system-ui, sans-serif',
+                              fontSize: 15,
+                              fontWeight: 600,
+                              color: 'var(--ink)',
+                              letterSpacing: '-0.005em',
+                            }}
+                          >
+                            Bande {bande.idPortee || bande.id}
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                              fontSize: 12,
+                              color: 'var(--ink-soft)',
+                              marginTop: 2,
+                            }}
+                          >
+                            Sevrage J+{daysOver} retard{typeof bande.vivants === 'number' ? ` · ${bande.vivants} porcelets` : ''}
+                          </div>
+                        </div>
+                        <ChevronRight size={16} color="var(--color-pig)" aria-hidden="true" />
+                      </Link>
+                    </li>
+                  ))}
+                  {sevrages.aVenir.map(({ bande, daysOver }) => (
+                    <li key={`sv-v-${bande.id}`}>
+                      <Link
+                        to={`/troupeau/bandes/${bande.id}`}
+                        className="pressable"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          background: 'var(--bg-surface)',
+                          borderRadius: 12,
+                          boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
+                          padding: '14px 16px',
+                          textDecoration: 'none',
+                          border: '1px solid var(--line)',
+                        }}
+                      >
+                        <Layers size={20} color="var(--color-amber-pork-deep)" aria-hidden="true" />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontFamily: 'var(--font-display, BigShoulders), system-ui, sans-serif',
+                              fontSize: 15,
+                              fontWeight: 600,
+                              color: 'var(--ink)',
+                              letterSpacing: '-0.005em',
+                            }}
+                          >
+                            Bande {bande.idPortee || bande.id}
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                              fontSize: 12,
+                              color: 'var(--ink-soft)',
+                              marginTop: 2,
+                            }}
+                          >
+                            Sevrage {daysOver === 0 ? "aujourd'hui" : `dans ${-daysOver}j`}{typeof bande.vivants === 'number' ? ` · ${bande.vivants} porcelets` : ''}
+                          </div>
+                        </div>
+                        <ChevronRight size={16} color="var(--muted)" aria-hidden="true" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
             {/* ── Cycles en cours ──────────────────────────────────── */}
             <section aria-label="Cycles en cours">
               <Eyebrow dotColor="accent">Cycles en cours</Eyebrow>
@@ -364,33 +681,9 @@ const TodayHub: React.FC = () => {
             </section>
 
             {/* ── Confirmations en attente ──────────────────────────── */}
-            <section aria-label="Confirmations en attente">
-              <Eyebrow dotColor="amber">Confirmations en attente</Eyebrow>
-              {pendingConfirmations.length === 0 ? (
-                <div
-                  style={{
-                    marginTop: 12,
-                    background: 'var(--bg-surface)',
-                    borderRadius: 12,
-                    padding: '16px 18px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    border: '1px solid var(--color-accent-100)',
-                  }}
-                >
-                  <CheckCircle2 size={20} color="var(--color-accent-500)" aria-hidden="true" />
-                  <span
-                    style={{
-                      fontFamily: 'InstrumentSans, system-ui, sans-serif',
-                      fontSize: 13,
-                      color: 'var(--muted)',
-                    }}
-                  >
-                    Aucune action à confirmer
-                  </span>
-                </div>
-              ) : (
+            {pendingConfirmations.length > 0 && (
+              <section aria-label="Confirmations en attente">
+                <Eyebrow dotColor="amber">Confirmations en attente · {Math.min(pendingConfirmations.length, 5)}</Eyebrow>
                 <ul
                   style={{
                     listStyle: 'none',
@@ -473,8 +766,8 @@ const TodayHub: React.FC = () => {
                     </li>
                   ))}
                 </ul>
-              )}
-            </section>
+              </section>
+            )}
 
             {/* ── Audit du jour ─────────────────────────────────────── */}
             <section aria-label="Audit du jour">
@@ -559,30 +852,6 @@ const TodayHub: React.FC = () => {
               </div>
             </section>
 
-            {/* ── Tâches ────────────────────────────────────────────── */}
-            <section aria-label="Tâches">
-              <Eyebrow dotColor="muted">Tâches</Eyebrow>
-              <div
-                style={{
-                  marginTop: 12,
-                  background: 'var(--bg-surface)',
-                  borderRadius: 12,
-                  padding: '20px 22px',
-                  textAlign: 'center',
-                }}
-              >
-                <p
-                  style={{
-                    fontFamily: 'InstrumentSans, system-ui, sans-serif',
-                    fontSize: 13,
-                    color: 'var(--muted)',
-                    margin: 0,
-                  }}
-                >
-                  Aucune tâche en attente
-                </p>
-              </div>
-            </section>
           </div>
         </AgritechLayout>
       </IonContent>
