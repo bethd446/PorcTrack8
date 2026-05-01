@@ -110,6 +110,12 @@ vi.mock('../../components/forms/QuickSaillieForm', () => ({
     isOpen ? <div data-testid="quick-saillie-form-open" /> : null,
 }));
 
+// Stub QuickAddVerratForm (idem — évite IonToast non mocké)
+vi.mock('../../components/forms/QuickAddVerratForm', () => ({
+  default: ({ isOpen }: { isOpen: boolean }) =>
+    isOpen ? <div data-testid="quick-add-verrat-form-open" /> : null,
+}));
+
 import TroupeauVerratsView from './TroupeauVerratsView';
 
 function renderView() {

@@ -8,6 +8,9 @@ import {
   insertBatch,
   updateSowByCode,
   resolveSowIdByCode,
+  resolveBoarIdByCode,
+  findLastSaillieForTruie,
+  type LastSaillieResolved,
 } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import { normaliseStatut } from '../../lib/truieStatut';
@@ -54,7 +57,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
   defaultTruieId,
   onSuccess,
 }) => {
-  const { truies, bandes, refreshData } = useFarm();
+  const { truies, verrats, bandes, refreshData } = useFarm();
 
   const truiesEligibles = useMemo<Truie[]>(() => {
     return truies.filter(t => {
@@ -79,6 +82,11 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
     show: false,
     message: '',
   });
+  const [lastSaillie, setLastSaillie] = useState<LastSaillieResolved | null>(
+    null,
+  );
+  const [saillieLoading, setSaillieLoading] = useState(false);
+  const [saillieResolved, setSaillieResolved] = useState(false);
 
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -104,6 +112,26 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
     if (!truieId) return '';
     return suggestIdPortee(truieId, bandes);
   }, [truieId, bandes]);
+
+  const detectedBoarLabel = useMemo<string | null>(() => {
+    if (!lastSaillie) return null;
+    const code = lastSaillie.boar_code_id;
+    if (!code) return null;
+    const v = verrats.find(
+      x => x.displayId === code || x.id === lastSaillie.boar_id,
+    );
+    return v?.nom ? `${code} (${v.nom})` : code;
+  }, [lastSaillie, verrats]);
+
+  const saillieEcartJours = useMemo<number | null>(() => {
+    if (!lastSaillie?.date_saillie || !dateIso) return null;
+    const ds = new Date(lastSaillie.date_saillie);
+    const dm = new Date(dateIso);
+    if (!Number.isFinite(ds.getTime()) || !Number.isFinite(dm.getTime())) {
+      return null;
+    }
+    return Math.round((dm.getTime() - ds.getTime()) / 86400000);
+  }, [lastSaillie, dateIso]);
 
   const [idPortee, setIdPortee] = useState<string>(suggestedIdPortee);
   const [idPorteeEditedManually, setIdPorteeEditedManually] = useState(false);
@@ -134,6 +162,9 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
       setErrors({});
       setSuccess(false);
       setSaving(false);
+      setLastSaillie(null);
+      setSaillieResolved(false);
+      setSaillieLoading(false);
     }
   }
 
@@ -145,6 +176,36 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
       }
     };
   }, []);
+
+  // Résolution auto de la saillie source dès que truie + date sont posées.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!truieId || !dateIso) {
+      setLastSaillie(null);
+      setSaillieResolved(false);
+      return;
+    }
+    let cancelled = false;
+    setSaillieLoading(true);
+    setSaillieResolved(false);
+    findLastSaillieForTruie(truieId, new Date(dateIso))
+      .then(res => {
+        if (cancelled) return;
+        setLastSaillie(res);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setLastSaillie(null);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setSaillieLoading(false);
+        setSaillieResolved(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, truieId, dateIso]);
 
   const handleClose = useCallback(() => {
     if (saving) return;
@@ -187,9 +248,17 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
         0,
         result.normalized.nesTotaux - result.normalized.mortsNes,
       );
+      // Résolution finale du verrat : préférer la saillie auto-détectée,
+      // sinon retomber sur une résolution synchrone (au cas où le useEffect
+      // n'aurait pas eu le temps de finir).
+      let boarUuid: string | null = lastSaillie?.boar_id ?? null;
+      if (!boarUuid && lastSaillie?.boar_code_id) {
+        boarUuid = await resolveBoarIdByCode(lastSaillie.boar_code_id);
+      }
       await insertBatch({
         code_id: idPortee,
         sow_id: sowId,
+        boar_id: boarUuid,
         date_mise_bas: result.normalized.dateMbSheets
           .split('/')
           .reverse()
@@ -216,8 +285,8 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
       setToast({
         show: true,
         message: online
-          ? `Mise-bas enregistrée · ${idPortee}`
-          : `Mise-bas en file · sync auto`,
+          ? `Mise-bas enregistrée. Portée ${idPortee} créée automatiquement.`
+          : `Mise-bas en file · sync auto · ${idPortee}`,
       });
 
       try {
@@ -311,6 +380,46 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
               selectRef={firstFieldRef}
               displayTruie={displayTruie}
             />
+
+            {truieId ? (
+              <div
+                role="status"
+                aria-live="polite"
+                data-testid="saillie-detected"
+                className={[
+                  'rounded-md border px-3 py-2',
+                  'font-mono text-[11px] uppercase tracking-wide',
+                  saillieLoading
+                    ? 'border-border bg-bg-1 text-text-2'
+                    : lastSaillie
+                      ? 'border-accent/40 bg-accent/5 text-text-1'
+                      : saillieResolved
+                        ? 'border-amber/60 bg-amber/5 text-text-1'
+                        : 'border-border bg-bg-1 text-text-2',
+                ].join(' ')}
+              >
+                {saillieLoading ? (
+                  <span>Recherche de la saillie source…</span>
+                ) : lastSaillie ? (
+                  <span>
+                    Saillie détectée : {truieId} ×{' '}
+                    {detectedBoarLabel ?? '—'} le{' '}
+                    {lastSaillie.date_saillie
+                      .split('-')
+                      .reverse()
+                      .join('/')}
+                    {saillieEcartJours !== null
+                      ? ` (J+${saillieEcartJours})`
+                      : ''}
+                  </span>
+                ) : saillieResolved ? (
+                  <span>
+                    Aucune saillie historique trouvée. Le verrat père sera
+                    vide — vous pourrez le compléter plus tard.
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
 
             <MiseBasIdAndDateBlock
               idPortee={idPortee}

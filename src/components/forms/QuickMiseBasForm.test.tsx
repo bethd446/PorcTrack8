@@ -311,6 +311,7 @@ describe('[5] submitMiseBas — insertBatch + updateSowByCode (helpers Supabase)
       code_id: '26-T9-01',
       sow_code: 'T09',
       boucle_mere: 'B.31',
+      boar_code: null,
       date_mise_bas: '2026-04-19',
       porcelets_nes_total: 10,
       nb_mort_nes: 0,
@@ -320,6 +321,68 @@ describe('[5] submitMiseBas — insertBatch + updateSowByCode (helpers Supabase)
       phase: 'maternite',
       notes: 'sans note poids',
     });
+  });
+
+  it('buildMiseBasRow propage boarCode (auto-résolu depuis la dernière saillie)', () => {
+    const row = buildMiseBasRow({
+      idPortee: '26-T13-01',
+      truieId: 'T13',
+      boucleMere: 'B.42',
+      boarCode: 'V01',
+      dateMbSheets: '19/04/2026',
+      nv: 12,
+      mortsNes: 1,
+      vivants: 11,
+      dateSevragePrevue: '17/05/2026',
+      notes: '',
+    });
+    expect(row.boar_code).toBe('V01');
+    expect(row.sow_code).toBe('T13');
+    expect(row.code_id).toBe('26-T13-01');
+  });
+
+  it('submitMiseBas propage boarCode (auto-résolu via findLastSaillieForTruie)', async () => {
+    const insertBatch = vi.fn().mockResolvedValue({});
+    const updateSowByCode = vi.fn().mockResolvedValue({});
+
+    const v = validateMiseBas(makeDraft({ truieId: 'T13', idPortee: '26-T13-01' }));
+    const result = await submitMiseBas(
+      v.normalized!,
+      {
+        idPortee: '26-T13-01',
+        truieId: 'T13',
+        boucleMere: 'B.42',
+        boarCode: 'V01',
+        notes: '',
+      },
+      { insertBatch, updateSowByCode, isOnline: () => true },
+    );
+
+    expect(result.boarCode).toBe('V01');
+    const row = insertBatch.mock.calls[0][0] as MiseBasBatchValues;
+    expect(row.boar_code).toBe('V01');
+  });
+
+  it('submitMiseBas fallback boar_code=null si aucune saillie trouvée', async () => {
+    const insertBatch = vi.fn().mockResolvedValue({});
+    const updateSowByCode = vi.fn().mockResolvedValue({});
+
+    const v = validateMiseBas(makeDraft({ truieId: 'T13', idPortee: '26-T13-01' }));
+    const result = await submitMiseBas(
+      v.normalized!,
+      {
+        idPortee: '26-T13-01',
+        truieId: 'T13',
+        boucleMere: 'B.42',
+        boarCode: null,
+        notes: '',
+      },
+      { insertBatch, updateSowByCode, isOnline: () => true },
+    );
+
+    expect(result.boarCode).toBeNull();
+    const row = insertBatch.mock.calls[0][0] as MiseBasBatchValues;
+    expect(row.boar_code).toBeNull();
   });
 
   it('propage une erreur si insertBatch échoue (updateSowByCode non tenté)', async () => {

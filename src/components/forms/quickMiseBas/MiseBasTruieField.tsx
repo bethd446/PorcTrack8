@@ -66,7 +66,7 @@ const MiseBasTruieField: React.FC<MiseBasTruieFieldProps> = ({
             }}
           >
             {truies.map(t => (
-              <IonSelectOption key={t.id} value={t.id}>
+              <IonSelectOption key={t.id} value={t.displayId}>
                 {displayTruie(t)}
               </IonSelectOption>
             ))}

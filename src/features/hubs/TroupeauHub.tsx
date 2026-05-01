@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Plus } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
 import { useTroupeau } from '../../context/TroupeauContext';
@@ -19,6 +19,7 @@ import TroupeauTruiesView from '../troupeau/TroupeauTruiesView';
 import TroupeauVerratsView from '../troupeau/TroupeauVerratsView';
 import TroupeauPorceletsView from '../troupeau/TroupeauPorceletsView';
 import TroupeauLogesView from '../troupeau/TroupeauLogesView';
+import QuickAddBandeForm from '../../components/forms/QuickAddBandeForm';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs';
 
 // ─── Sub-tabs ────────────────────────────────────────────────────────────────
@@ -76,6 +77,9 @@ const TroupeauHub: React.FC = () => {
   const [searchTruies, setSearchTruies] = useState('');
   const [searchVerrats, setSearchVerrats] = useState('');
   const [searchPorcelets, setSearchPorcelets] = useState('');
+
+  // CTA "Bande historique" — ouverture du form
+  const [addBandeOpen, setAddBandeOpen] = useState(false);
 
   const today = useMemo(() => new Date(), []);
   const realBandes = useMemo(() => Bandes.filterReal(bandes), [bandes]);
@@ -240,17 +244,35 @@ const TroupeauHub: React.FC = () => {
                 <TroupeauLogesView />
               </TabsContent>
               <TabsContent value="bandes" className="animate-fade-in">
-                <BandesInline
-                  bandes={realBandes}
-                  onOpen={(id) => navigate(`/troupeau/bandes/${id}`)}
-                  onSeeAll={() => navigate('/troupeau/bandes')}
-                />
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setAddBandeOpen(true)}
+                      aria-label="Ajouter une bande historique"
+                      className="pressable inline-flex items-center gap-2 h-10 px-4 rounded-full bg-accent text-bg-0 font-mono text-[12px] font-medium uppercase tracking-wide shadow-sm hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-opacity"
+                    >
+                      <Plus size={15} aria-hidden="true" />
+                      Ajouter une bande historique
+                    </button>
+                  </div>
+                  <BandesInline
+                    bandes={realBandes}
+                    onOpen={(id) => navigate(`/troupeau/bandes/${id}`)}
+                    onSeeAll={() => navigate('/troupeau/bandes')}
+                  />
+                </div>
               </TabsContent>
               <TabsContent value="batiments" className="animate-fade-in">
                 <BatimentsSummary onSeeAll={() => navigate('/troupeau/batiments')} />
               </TabsContent>
             </Tabs>
           </div>
+
+          <QuickAddBandeForm
+            isOpen={addBandeOpen}
+            onClose={() => setAddBandeOpen(false)}
+          />
         </AgritechLayout>
       </IonContent>
     </IonPage>

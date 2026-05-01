@@ -372,3 +372,69 @@ export function resolveProduitVetoByCode(
 ): Promise<string | null> {
   return resolveIdByCode('produits_veto', code_id);
 }
+
+// ── Saillie resolver (workflow Saillie → Mise-bas) ───────────────────────────
+
+export interface LastSaillieResolved {
+  /** UUID du verrat (FK boars.id), ou null si la saillie n'a pas de verrat lié. */
+  boar_id: string | null;
+  /** Code du verrat (ex: V01) pour affichage UI, si disponible. */
+  boar_code_id: string | null;
+  /** Date de saillie au format ISO yyyy-MM-dd. */
+  date_saillie: string;
+}
+
+/**
+ * Cherche la saillie la plus récente AVANT `dateMB` pour la truie donnée.
+ *
+ * Utilisé par QuickMiseBasForm pour auto-résoudre le verrat père au moment
+ * d'enregistrer une mise-bas. Fenêtre par défaut : 130 jours (115 ± 15).
+ *
+ * Le paramètre `truie` accepte SOIT un UUID (sows.id) SOIT un code_id
+ * (sows.code_id, ex: T07) — résolution interne.
+ *
+ * @returns la saillie résolue, ou `null` si aucune saillie dans la fenêtre.
+ */
+export async function findLastSaillieForTruie(
+  truie: string,
+  dateMB: Date | string,
+  windowDays = 130,
+): Promise<LastSaillieResolved | null> {
+  if (!truie) return null;
+
+  // Accepte UUID ou code_id (T07) — résolution si nécessaire.
+  const looksLikeUuid =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(truie);
+  const sowId = looksLikeUuid ? truie : await resolveIdByCode('sows', truie);
+  if (!sowId) return null;
+
+  const dateRef = typeof dateMB === 'string' ? new Date(dateMB) : dateMB;
+  if (!Number.isFinite(dateRef.getTime())) return null;
+  const upperIso = dateRef.toISOString().slice(0, 10);
+  const lowerIso = new Date(dateRef.getTime() - windowDays * 86400000)
+    .toISOString()
+    .slice(0, 10);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from('saillies') as any)
+    .select('boar_id, boar_code_id, date_saillie, boars(code_id)')
+    .eq('sow_id', sowId)
+    .lte('date_saillie', upperIso)
+    .gte('date_saillie', lowerIso)
+    .order('date_saillie', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  const row = data as {
+    boar_id: string | null;
+    boar_code_id: string | null;
+    date_saillie: string | null;
+    boars?: { code_id?: string | null } | null;
+  };
+  return {
+    boar_id: row.boar_id ?? null,
+    boar_code_id: row.boars?.code_id ?? row.boar_code_id ?? null,
+    date_saillie: row.date_saillie ?? '',
+  };
+}

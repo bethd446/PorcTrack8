@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, Search } from 'lucide-react';
+import { Heart, Plus, Search } from 'lucide-react';
 
 import { VerratIcon } from '../../components/icons';
 import { Chip, SectionDivider, type ChipTone } from '../../components/agritech';
 import EmptyState from '../../components/design/EmptyState';
+import QuickAddVerratForm from '../../components/forms/QuickAddVerratForm';
 import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
 import { useFarm } from '../../context/FarmContext';
 import type { Verrat, Saillie } from '../../types/farm';
@@ -65,6 +66,7 @@ const TroupeauVerratsView: React.FC<TroupeauVerratsViewProps> = ({ searchText, s
   const navigate = useNavigate();
   const { verrats, saillies } = useFarm();
   const [sheetVerratId, setSheetVerratId] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
 
   const now = useMemo(() => new Date(), []);
 
@@ -115,6 +117,19 @@ const TroupeauVerratsView: React.FC<TroupeauVerratsViewProps> = ({ searchText, s
 
   return (
     <div className="flex flex-col gap-5">
+      {/* ── CTA primaire : ajouter un verrat ──────────────────── */}
+      <div className="flex items-center justify-end">
+        <button
+          type="button"
+          onClick={() => setAddOpen(true)}
+          aria-label="Ajouter un verrat"
+          className="pressable inline-flex items-center gap-2 h-10 px-4 rounded-full bg-accent text-bg-0 font-mono text-[12px] font-medium uppercase tracking-wide shadow-sm hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-opacity"
+        >
+          <Plus size={15} aria-hidden="true" />
+          Ajouter un verrat
+        </button>
+      </div>
+
       {/* ── Summary strip ──────────────────────────────────────── */}
       <section
         role="region"
@@ -226,6 +241,11 @@ const TroupeauVerratsView: React.FC<TroupeauVerratsViewProps> = ({ searchText, s
       <QuickSaillieForm
         isOpen={sheetVerratId !== null}
         onClose={() => setSheetVerratId(null)}
+      />
+
+      <QuickAddVerratForm
+        isOpen={addOpen}
+        onClose={() => setAddOpen(false)}
       />
     </div>
   );

@@ -198,6 +198,8 @@ export interface MiseBasBatchValues {
   code_id: string;
   sow_code: string;
   boucle_mere: string;
+  /** Code verrat (ex: V01) — null si saillie source introuvable. */
+  boar_code: string | null;
   date_mise_bas: string;
   porcelets_nes_total: number;
   nb_mort_nes: number;
@@ -212,6 +214,7 @@ export function buildMiseBasRow(params: {
   idPortee: string;
   truieId: string;
   boucleMere: string;
+  boarCode?: string | null;
   dateMbSheets: string;
   nv: number;
   mortsNes: number;
@@ -231,6 +234,7 @@ export function buildMiseBasRow(params: {
     code_id: params.idPortee,
     sow_code: params.truieId,
     boucle_mere: params.boucleMere,
+    boar_code: params.boarCode ?? null,
     date_mise_bas: sheetsDateToIso(params.dateMbSheets),
     porcelets_nes_total: params.nv,
     nb_mort_nes: params.mortsNes,
@@ -248,6 +252,8 @@ export async function submitMiseBas(
     idPortee: string;
     truieId: string;
     boucleMere: string;
+    /** Verrat père pré-résolu (depuis findLastSaillieForTruie). */
+    boarCode?: string | null;
     notes: string;
   },
   deps: {
@@ -258,13 +264,19 @@ export async function submitMiseBas(
     ) => Promise<unknown>;
     isOnline: () => boolean;
   },
-): Promise<{ online: boolean; idPortee: string }> {
+): Promise<{
+  online: boolean;
+  idPortee: string;
+  boarCode: string | null;
+}> {
   const vivants = Math.max(0, validated.nesTotaux - validated.mortsNes);
+  const boarCode = params.boarCode ?? null;
 
   const row = buildMiseBasRow({
     idPortee: params.idPortee,
     truieId: params.truieId,
     boucleMere: params.boucleMere,
+    boarCode,
     dateMbSheets: validated.dateMbSheets,
     nv: validated.nesTotaux,
     mortsNes: validated.mortsNes,
@@ -277,7 +289,7 @@ export async function submitMiseBas(
   await deps.insertBatch(row);
   await deps.updateSowByCode(params.truieId, { statut: 'Maternité' });
 
-  return { online: deps.isOnline(), idPortee: params.idPortee };
+  return { online: deps.isOnline(), idPortee: params.idPortee, boarCode };
 }
 
 export function todayIsoLocal(d: Date = new Date()): string {

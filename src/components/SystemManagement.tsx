@@ -1,71 +1,551 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  IonContent, IonPage, IonAlert, IonToggle,
+  IonContent, IonPage, IonAlert, IonModal, IonHeader, IonToolbar, IonTitle, IonButtons,
 } from '@ionic/react';
-import { Trash2, Bug, Phone, LogOut } from 'lucide-react';
+import {
+  User, Tractor, Users, RefreshCw, Bell, HelpCircle, ShieldAlert,
+  ChevronRight, LogOut, Trash2, Mail, Lock,
+} from 'lucide-react';
 import AgritechLayout from './AgritechLayout';
-import Eyebrow from './design/Eyebrow';
-import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import type { ThemeMode } from '../services/themeAuto';
-import { isDebugEnabled, setDebugEnabled, APP_VERSION } from '../config';
+import { useMeta } from '../context/FarmContext';
+import { APP_VERSION } from '../config';
 import { kvGet, kvSet, kvClear } from '../services/kvStore';
 import { supabase } from '../services/supabaseClient';
-import { getSupportWhatsapp, setSupportWhatsapp } from '../services/supportContact';
+import {
+  fetchFarm, updateProfile, updateFarm, updatePassword,
+  type FarmInfo,
+} from '../services/settingsService';
 
-const cardStyle: React.CSSProperties = {
-  background: 'var(--bg-surface)',
-  borderRadius: 'var(--radius-card, 12px)',
+const SUPPORT_EMAIL = 'support@porctrack.tech';
+const NOTIF_SIGNUPS_KEY = 'notif_email_signups';
+const NOTIF_ALERTS_KEY = 'notif_email_alerts';
+
+// ─── helpers ──────────────────────────────────────────────────────────────
+
+function formatRelativeTime(ts: number | null | undefined): string {
+  if (!ts) return 'jamais';
+  const diffMs = Date.now() - ts;
+  if (diffMs < 0) return 'à l’instant';
+  const sec = Math.floor(diffMs / 1000);
+  if (sec < 60) return 'il y a quelques secondes';
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `il y a ${min} minute${min > 1 ? 's' : ''}`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `il y a ${h} heure${h > 1 ? 's' : ''}`;
+  const d = Math.floor(h / 24);
+  return `il y a ${d} jour${d > 1 ? 's' : ''}`;
+}
+
+// ─── primitives ────────────────────────────────────────────────────────────
+
+const SettingsSection: React.FC<{
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}> = ({ title, icon, children }) => (
+  <section className="mb-7" aria-label={title}>
+    <div className="flex items-center gap-2 mb-3 px-1">
+      <span className="text-text-2" aria-hidden="true">{icon}</span>
+      <h2
+        className="font-mono uppercase tracking-[0.18em] text-[10.5px] text-text-2"
+        style={{ fontFamily: 'DMMono, ui-monospace, monospace' }}
+      >
+        {title}
+      </h2>
+      <span className="flex-1 h-px bg-border" aria-hidden="true" />
+    </div>
+    <div
+      className="rounded-[var(--radius-card,12px)] overflow-hidden"
+      style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--line)',
+      }}
+    >
+      {children}
+    </div>
+  </section>
+);
+
+const InfoRow: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
+  <div className="px-5 py-3.5 flex items-baseline justify-between gap-3 border-b border-border last:border-b-0">
+    <span
+      className="font-mono uppercase tracking-wide text-[10.5px] text-text-2 shrink-0"
+      style={{ fontFamily: 'DMMono, ui-monospace, monospace' }}
+    >
+      {label}
+    </span>
+    <span className="text-[13px] text-text-0 text-right truncate">{value}</span>
+  </div>
+);
+
+const ActionRow: React.FC<{
+  label: string;
+  description?: string;
+  onClick: () => void;
+  destructive?: boolean;
+  trailing?: React.ReactNode;
+}> = ({ label, description, onClick, destructive = false, trailing }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="w-full px-5 py-4 flex items-center justify-between gap-3 text-left pressable hover:bg-bg-2 transition-colors border-b border-border last:border-b-0"
+  >
+    <div className="min-w-0">
+      <p
+        className={
+          'text-[13.5px] font-semibold truncate ' +
+          (destructive ? 'text-red' : 'text-text-0')
+        }
+      >
+        {label}
+      </p>
+      {description ? (
+        <p className="mt-0.5 font-mono text-[11px] text-text-2 truncate">{description}</p>
+      ) : null}
+    </div>
+    {trailing ?? (
+      <ChevronRight
+        size={16}
+        className={destructive ? 'text-red' : 'text-text-2'}
+        aria-hidden="true"
+      />
+    )}
+  </button>
+);
+
+const ToggleRow: React.FC<{
+  label: string;
+  description?: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}> = ({ label, description, checked, onChange }) => (
+  <div className="px-5 py-4 flex items-center justify-between gap-3 border-b border-border last:border-b-0">
+    <div className="min-w-0">
+      <p className="text-[13.5px] font-semibold text-text-0 truncate">{label}</p>
+      {description ? (
+        <p className="mt-0.5 font-mono text-[11px] text-text-2 truncate">{description}</p>
+      ) : null}
+    </div>
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="relative h-6 w-10 rounded-full transition-colors duration-150 shrink-0"
+      style={{
+        background: checked ? 'var(--color-accent-500)' : 'var(--color-bg-2)',
+        border: '1px solid var(--line)',
+      }}
+    >
+      <span
+        aria-hidden="true"
+        className="absolute top-1/2 -translate-y-1/2 h-4 w-4 rounded-full transition-transform duration-150"
+        style={{
+          background: 'var(--bg-surface)',
+          left: checked ? 'calc(100% - 19px)' : '3px',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
+        }}
+      />
+    </button>
+  </div>
+);
+
+// ─── modals ────────────────────────────────────────────────────────────────
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 12px',
   border: '1px solid var(--line)',
-  padding: 22,
+  borderRadius: 'var(--radius-input, 8px)',
+  background: 'var(--bg-surface)',
+  color: 'var(--ink)',
+  fontSize: 14,
+  fontFamily: 'inherit',
 };
 
-const inputBaseClass =
-  'w-full h-11 px-3 rounded-md bg-bg-1 border border-border text-text-0 placeholder-text-2 text-[14px] outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors';
+const labelStyle: React.CSSProperties = {
+  fontFamily: 'DMMono, ui-monospace, monospace',
+  fontSize: 11,
+  letterSpacing: '0.18em',
+  textTransform: 'uppercase',
+  color: 'var(--ink-soft)',
+  fontWeight: 500,
+  display: 'block',
+  marginBottom: 6,
+};
 
-const primaryBtnClass =
-  'pressable mt-3 h-10 px-4 rounded-md bg-accent text-bg-0 text-[12px] font-semibold uppercase tracking-wide active:scale-[0.97] transition-transform duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2';
+const ProfileEditForm: React.FC<{
+  onClose: () => void;
+  initialName: string;
+  userId: string | null;
+  onSaved: () => void;
+}> = ({ onClose, initialName, userId, onSaved }) => {
+  const [name, setName] = useState(initialName);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-const ghostBtnClass =
-  'pressable h-10 px-4 rounded-md border border-border bg-transparent text-text-1 text-[12px] font-semibold uppercase tracking-wide hover:bg-bg-2 active:scale-[0.97] transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 inline-flex items-center gap-2';
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userId) {
+      setError('Session invalide.');
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      await updateProfile(userId, { full_name: name.trim() });
+      await kvSet('user_name', name.trim());
+      onSaved();
+      onClose();
+    } catch (err) {
+      console.error('[Settings] updateProfile failed', err);
+      setError('Impossible d’enregistrer. Réessaye.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-const labelClass = 'kpi-label block mb-2';
+  return (
+    <IonContent>
+      <form
+        onSubmit={handleSubmit}
+        style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 520, margin: '0 auto' }}
+      >
+        <div>
+          <label style={labelStyle} htmlFor="profile-name">Nom complet</label>
+          <input
+            id="profile-name"
+            type="text"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Christophe Liégeois"
+            style={inputStyle}
+            disabled={submitting}
+          />
+        </div>
+        {error ? (
+          <p role="alert" style={{ padding: '10px 14px', borderRadius: 8, background: 'var(--color-pig-soft, #fdecea)', color: 'var(--color-pig-deep, #c0392b)', fontSize: 13, margin: 0 }}>
+            {error}
+          </p>
+        ) : null}
+        <button
+          type="submit"
+          disabled={submitting || !name.trim()}
+          className="pressable mt-2 h-11 px-4 rounded-md bg-accent text-bg-0 text-[12px] font-semibold uppercase tracking-wide disabled:opacity-50"
+        >
+          {submitting ? 'Enregistrement…' : 'Enregistrer'}
+        </button>
+      </form>
+    </IonContent>
+  );
+};
+
+const ProfileEditModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  initialName: string;
+  userId: string | null;
+  onSaved: () => void;
+}> = ({ isOpen, onClose, initialName, userId, onSaved }) => (
+  <IonModal isOpen={isOpen} onDidDismiss={onClose}>
+    <IonHeader>
+      <IonToolbar>
+        <IonTitle>Modifier mon profil</IonTitle>
+        <IonButtons slot="end">
+          <button
+            onClick={onClose}
+            style={{ background: 'transparent', border: 'none', color: 'var(--ink-soft)', fontSize: 14, padding: '8px 16px' }}
+          >
+            Annuler
+          </button>
+        </IonButtons>
+      </IonToolbar>
+    </IonHeader>
+    {isOpen ? (
+      <ProfileEditForm
+        onClose={onClose}
+        initialName={initialName}
+        userId={userId}
+        onSaved={onSaved}
+      />
+    ) : null}
+  </IonModal>
+);
+
+const PasswordForm: React.FC<{
+  onClose: () => void;
+  onSaved: () => void;
+}> = ({ onClose, onSaved }) => {
+  const [pwd, setPwd] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pwd.length < 8) {
+      setError('Le mot de passe doit faire au moins 8 caractères.');
+      return;
+    }
+    if (pwd !== confirm) {
+      setError('Les mots de passe ne correspondent pas.');
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      await updatePassword(pwd);
+      onSaved();
+      onClose();
+    } catch (err) {
+      console.error('[Settings] updatePassword failed', err);
+      setError('Impossible de changer le mot de passe.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <IonContent>
+      <form
+        onSubmit={handleSubmit}
+        style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 520, margin: '0 auto' }}
+      >
+        <div>
+          <label style={labelStyle} htmlFor="pwd-new">Nouveau mot de passe</label>
+          <input
+            id="pwd-new"
+            type="password"
+            required
+            minLength={8}
+            autoComplete="new-password"
+            value={pwd}
+            onChange={(e) => setPwd(e.target.value)}
+            style={inputStyle}
+            disabled={submitting}
+          />
+        </div>
+        <div>
+          <label style={labelStyle} htmlFor="pwd-confirm">Confirme le mot de passe</label>
+          <input
+            id="pwd-confirm"
+            type="password"
+            required
+            minLength={8}
+            autoComplete="new-password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            style={inputStyle}
+            disabled={submitting}
+          />
+        </div>
+        {error ? (
+          <p role="alert" style={{ padding: '10px 14px', borderRadius: 8, background: 'var(--color-pig-soft, #fdecea)', color: 'var(--color-pig-deep, #c0392b)', fontSize: 13, margin: 0 }}>
+            {error}
+          </p>
+        ) : null}
+        <button
+          type="submit"
+          disabled={submitting}
+          className="pressable mt-2 h-11 px-4 rounded-md bg-accent text-bg-0 text-[12px] font-semibold uppercase tracking-wide disabled:opacity-50"
+        >
+          {submitting ? 'Mise à jour…' : 'Mettre à jour'}
+        </button>
+      </form>
+    </IonContent>
+  );
+};
+
+const PasswordModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onSaved: () => void;
+}> = ({ isOpen, onClose, onSaved }) => (
+  <IonModal isOpen={isOpen} onDidDismiss={onClose}>
+    <IonHeader>
+      <IonToolbar>
+        <IonTitle>Changer mot de passe</IonTitle>
+        <IonButtons slot="end">
+          <button
+            onClick={onClose}
+            style={{ background: 'transparent', border: 'none', color: 'var(--ink-soft)', fontSize: 14, padding: '8px 16px' }}
+          >
+            Annuler
+          </button>
+        </IonButtons>
+      </IonToolbar>
+    </IonHeader>
+    {isOpen ? <PasswordForm onClose={onClose} onSaved={onSaved} /> : null}
+  </IonModal>
+);
+
+const FarmEditForm: React.FC<{
+  onClose: () => void;
+  farm: FarmInfo;
+  onSaved: () => void;
+}> = ({ onClose, farm, onSaved }) => {
+  const [nom, setNom] = useState(farm.nom);
+  const [secteur, setSecteur] = useState(farm.secteur ?? '');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    try {
+      await updateFarm(farm.id, {
+        nom: nom.trim(),
+        secteur: secteur.trim() || null,
+      });
+      onSaved();
+      onClose();
+    } catch (err) {
+      console.error('[Settings] updateFarm failed', err);
+      setError('Impossible d’enregistrer la ferme.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <IonContent>
+      <form
+        onSubmit={handleSubmit}
+        style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 520, margin: '0 auto' }}
+      >
+        <div>
+          <label style={labelStyle} htmlFor="farm-nom">Nom de la ferme</label>
+          <input
+            id="farm-nom"
+            type="text"
+            required
+            value={nom}
+            onChange={(e) => setNom(e.target.value)}
+            style={inputStyle}
+            disabled={submitting}
+          />
+        </div>
+        <div>
+          <label style={labelStyle} htmlFor="farm-secteur">Secteur</label>
+          <input
+            id="farm-secteur"
+            type="text"
+            value={secteur}
+            onChange={(e) => setSecteur(e.target.value)}
+            placeholder="Ex: Nord — Côte d'Ivoire"
+            style={inputStyle}
+            disabled={submitting}
+          />
+        </div>
+        {error ? (
+          <p role="alert" style={{ padding: '10px 14px', borderRadius: 8, background: 'var(--color-pig-soft, #fdecea)', color: 'var(--color-pig-deep, #c0392b)', fontSize: 13, margin: 0 }}>
+            {error}
+          </p>
+        ) : null}
+        <button
+          type="submit"
+          disabled={submitting || !nom.trim()}
+          className="pressable mt-2 h-11 px-4 rounded-md bg-accent text-bg-0 text-[12px] font-semibold uppercase tracking-wide disabled:opacity-50"
+        >
+          {submitting ? 'Enregistrement…' : 'Enregistrer'}
+        </button>
+      </form>
+    </IonContent>
+  );
+};
+
+const FarmEditModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  farm: FarmInfo | null;
+  onSaved: () => void;
+}> = ({ isOpen, onClose, farm, onSaved }) => (
+  <IonModal isOpen={isOpen} onDidDismiss={onClose}>
+    <IonHeader>
+      <IonToolbar>
+        <IonTitle>Modifier la ferme</IonTitle>
+        <IonButtons slot="end">
+          <button
+            onClick={onClose}
+            style={{ background: 'transparent', border: 'none', color: 'var(--ink-soft)', fontSize: 14, padding: '8px 16px' }}
+          >
+            Annuler
+          </button>
+        </IonButtons>
+      </IonToolbar>
+    </IonHeader>
+    {isOpen && farm ? <FarmEditForm onClose={onClose} farm={farm} onSaved={onSaved} /> : null}
+  </IonModal>
+);
+
+// ─── page ──────────────────────────────────────────────────────────────────
 
 export const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { role: userRole, setRole, signOut, userName: authUserName } = useAuth();
+  const { user, profile, role, userName, signOut, refreshProfile } = useAuth();
+  const { lastUpdate, refreshData, recomputeAlerts } = useMeta();
 
-  const [userName, setUserName] = useState(kvGet('user_name') || authUserName || '');
-  const [showAlert, setShowAlert] = useState(false);
-  const [debug, setDebug] = useState(isDebugEnabled());
-  const [whatsapp, setWhatsapp] = useState<string>(getSupportWhatsapp());
-  const [whatsappSaved, setWhatsappSaved] = useState(false);
-  const [profileSaved, setProfileSaved] = useState(false);
-  const [profileDirty, setProfileDirty] = useState(false);
-  const {
-    mode: themeMode,
-    resolved: themeResolved,
-    setMode: setThemeMode,
-  } = useTheme();
+  const [farm, setFarm] = useState<FarmInfo | null>(null);
+  const [showProfileEdit, setShowProfileEdit] = useState(false);
+  const [showPwd, setShowPwd] = useState(false);
+  const [showFarmEdit, setShowFarmEdit] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
-  const handleSaveProfile = async (): Promise<void> => {
-    await kvSet('user_name', userName);
-    setProfileSaved(true);
-    setProfileDirty(false);
+  const [notifSignups, setNotifSignups] = useState(() => kvGet(NOTIF_SIGNUPS_KEY) !== '0');
+  const [notifAlerts, setNotifAlerts] = useState(() => kvGet(NOTIF_ALERTS_KEY) !== '0');
+
+  const userId = user?.id ?? null;
+  const userEmail = profile?.email ?? user?.email ?? '—';
+  const isOwner = role === 'OWNER';
+
+  useEffect(() => {
+    let mounted = true;
+    if (userId) {
+      void fetchFarm(userId).then((f) => {
+        if (mounted) setFarm(f);
+      });
+    }
+    return () => { mounted = false; };
+  }, [userId]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = window.setTimeout(() => setToast(null), 2500);
+    return () => window.clearTimeout(t);
+  }, [toast]);
+
+  const handleSyncNow = async () => {
+    setSyncing(true);
+    try {
+      await refreshData(true);
+      await recomputeAlerts();
+      setToast('Synchronisé');
+    } catch (err) {
+      console.error('[Settings] sync failed', err);
+      setToast('Échec de la synchronisation');
+    } finally {
+      setSyncing(false);
+    }
   };
 
-  const handleReset = async (): Promise<void> => {
+  const handleResetCache = async () => {
     try {
       await supabase.auth.signOut();
     } catch {
-      // ignore — on doit tout de même purger le store local
+      // continue : on doit purger même si signOut échoue
     }
     await kvClear();
     window.location.href = '/';
   };
 
-  const handleSignOut = async (): Promise<void> => {
+  const handleSignOut = async () => {
     try {
       await signOut();
     } finally {
@@ -73,25 +553,25 @@ export const SettingsPage: React.FC = () => {
     }
   };
 
-  const toggleDebug = (val: boolean): void => {
-    setDebug(val);
-    setDebugEnabled(val);
+  const toggleNotifSignups = (v: boolean) => {
+    setNotifSignups(v);
+    void kvSet(NOTIF_SIGNUPS_KEY, v ? '1' : '0');
+  };
+  const toggleNotifAlerts = (v: boolean) => {
+    setNotifAlerts(v);
+    void kvSet(NOTIF_ALERTS_KEY, v ? '1' : '0');
   };
 
-  const needsName = userRole === 'WORKER' && !userName;
-  const displayName = (userName || '').trim() || 'Opérateur';
-  const roleLabel = userRole === 'OWNER' ? 'Propriétaire' : 'Ouvrier';
+  const farmDisplayName = farm?.nom ?? 'Ferme non renseignée';
+  const farmSector = farm?.secteur ?? null;
+  const farmShortId = farm ? `K13-${farm.id.substring(0, 6).toUpperCase()}` : '—';
 
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout withNav={true}>
-          <div
-            className="px-4 pt-5 pb-32 flex flex-col gap-5"
-            style={{ maxWidth: 1100, margin: '0 auto' }}
-          >
-            <header>
-              <Eyebrow dotColor="accent">Plus · Paramètres</Eyebrow>
+          <div className="px-4 pt-5 pb-32 max-w-md mx-auto">
+            <header className="mb-6">
               <h1
                 style={{
                   fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
@@ -100,395 +580,209 @@ export const SettingsPage: React.FC = () => {
                   lineHeight: 1,
                   letterSpacing: '-0.02em',
                   color: 'var(--ink)',
-                  margin: '8px 0 4px',
+                  margin: '0 0 4px',
                 }}
               >
-                Réglages
+                Plus
               </h1>
-              <div
+              <p
                 style={{
                   fontFamily: 'InstrumentSans, system-ui, sans-serif',
                   fontSize: 13,
                   color: 'var(--muted)',
+                  margin: 0,
                 }}
               >
-                Profil, préférences et compte
-              </div>
+                Ton profil, ta ferme et les réglages
+              </p>
             </header>
 
-            {/* ── Profil ───────────────────────────────────────────────── */}
-            <section aria-label="Profil" role="region">
-              <Eyebrow dotColor="accent">Profil</Eyebrow>
-              <div style={{ ...cardStyle, marginTop: 12 }}>
-                <h2
-                  style={{
-                    fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
-                    fontSize: 26,
-                    fontWeight: 700,
-                    lineHeight: 1.05,
-                    letterSpacing: '-0.015em',
-                    color: 'var(--ink)',
-                    margin: 0,
-                  }}
-                >
-                  {displayName}
-                </h2>
-                <div
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    marginTop: 8,
-                    padding: '4px 10px',
-                    borderRadius: 999,
-                    background: 'var(--bg-surface-2, var(--color-bg-2))',
-                    border: '1px solid var(--line)',
-                    fontFamily: 'DMMono, ui-monospace, monospace',
-                    fontSize: 10,
-                    letterSpacing: '0.18em',
-                    textTransform: 'uppercase',
-                    color: 'var(--ink-soft, var(--muted))',
-                  }}
-                >
-                  {roleLabel}
-                </div>
+            {/* Profil */}
+            <SettingsSection title="Profil" icon={<User size={13} />}>
+              <InfoRow label="Nom" value={userName} />
+              <InfoRow label="Email" value={<span className="font-mono text-[12px]">{userEmail}</span>} />
+              <ActionRow
+                label="Modifier mon profil"
+                onClick={() => setShowProfileEdit(true)}
+              />
+              <ActionRow
+                label="Changer mot de passe"
+                onClick={() => setShowPwd(true)}
+                trailing={<Lock size={14} className="text-text-2" aria-hidden="true" />}
+              />
+            </SettingsSection>
 
-                <div className="mt-5">
-                  <label htmlFor="settings-operator" className={labelClass}>
-                    Nom de l&rsquo;opérateur
-                  </label>
-                  <input
-                    id="settings-operator"
-                    type="text"
-                    value={userName}
-                    onChange={(e) => {
-                      setUserName(e.target.value);
-                      setProfileSaved(false);
-                      setProfileDirty(true);
-                    }}
-                    placeholder="Ex: Jean Martin"
-                    className={inputBaseClass}
-                  />
-                  {needsName ? (
-                    <p className="mt-2 font-mono text-[11px] text-red">
-                      Nom requis pour traçabilité
-                    </p>
-                  ) : null}
-                </div>
+            {/* Ferme */}
+            <SettingsSection title="Ferme" icon={<Tractor size={13} />}>
+              <InfoRow label="Code" value={<span className="font-mono text-[12px]">{farmShortId}</span>} />
+              <InfoRow label="Nom" value={farmDisplayName} />
+              {farmSector ? <InfoRow label="Secteur" value={farmSector} /> : null}
+              <ActionRow
+                label="Modifier la ferme"
+                onClick={() => setShowFarmEdit(true)}
+                description={farm ? undefined : 'Aucune ferme liée à ce compte'}
+              />
+            </SettingsSection>
 
-                <div className="mt-4 flex items-center gap-3 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={handleSignOut}
-                    className={ghostBtnClass}
-                  >
-                    <LogOut size={13} aria-hidden="true" />
-                    Se déconnecter
-                  </button>
-                  {profileDirty ? (
-                    <button
-                      type="button"
-                      onClick={handleSaveProfile}
-                      className={primaryBtnClass + ' !mt-0'}
-                    >
-                      Enregistrer
-                    </button>
-                  ) : null}
-                  {profileSaved ? (
-                    <span
-                      role="status"
-                      aria-live="polite"
-                      className="font-mono text-[11px] text-accent uppercase tracking-wide"
-                    >
-                      Enregistré
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-            </section>
-
-            {/* ── Apparence ────────────────────────────────────────────── */}
-            <section aria-label="Apparence" role="region">
-              <Eyebrow dotColor="amber">Apparence</Eyebrow>
-              <div style={{ ...cardStyle, marginTop: 12 }}>
-                <p className="kpi-label mb-3">
-                  Thème · actif : {themeResolved === 'day' ? 'Jour' : 'Nuit'}
-                </p>
-                <div
-                  role="radiogroup"
-                  aria-label="Choix du thème"
-                  className="grid grid-cols-3 gap-2"
-                >
-                  {(['auto', 'day', 'night'] as ThemeMode[]).map((m) => {
-                    const active = themeMode === m;
-                    const label = m === 'auto' ? 'Auto' : m === 'day' ? 'Jour' : 'Nuit';
-                    return (
-                      <button
-                        key={m}
-                        type="button"
-                        role="radio"
-                        aria-checked={active}
-                        onClick={() => setThemeMode(m)}
-                        className={
-                          'pressable h-11 rounded-md font-mono text-[12px] uppercase tracking-wide transition-colors ' +
-                          (active
-                            ? 'bg-accent text-bg-0'
-                            : 'bg-bg-1 border border-border text-text-1 hover:bg-bg-2')
-                        }
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="text-[11px] text-text-2 mt-3">
-                  Auto : jour 6h-19h, nuit sinon.
-                </p>
-              </div>
-            </section>
-
-            {/* ── Support & contact ────────────────────────────────────── */}
-            <section aria-label="Support & contact" role="region">
-              <Eyebrow dotColor="accent">Support & contact</Eyebrow>
-              <div style={{ ...cardStyle, marginTop: 12 }}>
-                <label htmlFor="settings-support-wa" className={labelClass}>
-                  Numéro WhatsApp
-                </label>
-                <div className="flex items-center gap-2">
-                  <span
-                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-bg-2 text-accent"
-                    aria-hidden="true"
-                  >
-                    <Phone size={16} />
-                  </span>
-                  <input
-                    id="settings-support-wa"
-                    type="tel"
-                    inputMode="tel"
-                    value={whatsapp}
-                    onChange={(e) => {
-                      setWhatsapp(e.target.value);
-                      setWhatsappSaved(false);
-                    }}
-                    placeholder="+225 07 XX XX XX XX"
-                    className="flex-1 h-11 px-3 rounded-md bg-bg-1 border border-border text-text-0 placeholder-text-2 font-mono text-[13px] outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
-                  />
-                </div>
-                <p className="text-[11px] text-text-2 mt-2">
-                  Utilisé dans l&rsquo;écran <span className="font-semibold text-text-1">Aide</span>. Format E.164 international.
-                </p>
-                <div className="mt-3 flex items-center gap-3 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSupportWhatsapp(whatsapp);
-                      setWhatsappSaved(true);
-                    }}
-                    className={primaryBtnClass + ' !mt-0'}
-                  >
-                    Enregistrer
-                  </button>
-                  {whatsappSaved ? (
-                    <span
-                      role="status"
-                      aria-live="polite"
-                      className="font-mono text-[11px] text-accent uppercase tracking-wide"
-                    >
-                      Enregistré
-                    </span>
-                  ) : null}
-                  <button
-                    type="button"
-                    onClick={() => navigate('/aide')}
-                    className="ml-auto pressable h-10 px-3 rounded-md text-accent text-[12px] font-semibold uppercase tracking-wide hover:bg-bg-2 transition-colors"
-                  >
-                    Aide & FAQ →
-                  </button>
-                </div>
-              </div>
-            </section>
-
-            {/* ── Administration (OWNER/ADMIN) ─────────────────────────── */}
-            {userRole === 'OWNER' ? (
-              <section aria-label="Administration" role="region">
-                <Eyebrow dotColor="accent">Administration</Eyebrow>
-                <div style={{ ...cardStyle, marginTop: 12, padding: 0 }}>
-                  <button
-                    type="button"
-                    onClick={() => navigate('/admin')}
-                    className="w-full px-5 py-4 flex items-center justify-between gap-3 text-left pressable hover:bg-bg-2 transition-colors rounded-[var(--radius-card,12px)]"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-[13px] font-semibold text-text-0 truncate">
-                        Utilisateurs &amp; admin
-                      </p>
-                      <p className="mt-0.5 font-mono text-[11px] text-text-2 truncate">
-                        Gérer comptes, rôles et invitations
-                      </p>
-                    </div>
-                    <span className="text-accent text-[14px] font-bold" aria-hidden="true">→</span>
-                  </button>
-                </div>
-              </section>
+            {/* Utilisateurs (OWNER only) */}
+            {isOwner ? (
+              <SettingsSection title="Utilisateurs" icon={<Users size={13} />}>
+                <InfoRow label="Membres" value={`${userName} (toi)`} />
+                <ActionRow
+                  label="Ajouter un porcher"
+                  description="Inviter un opérateur sur ta ferme"
+                  onClick={() => navigate('/admin')}
+                />
+                <ActionRow
+                  label="Console admin"
+                  description="Gérer comptes, rôles et invitations"
+                  onClick={() => navigate('/admin')}
+                />
+              </SettingsSection>
             ) : null}
 
-            {/* ── Avancé ───────────────────────────────────────────────── */}
-            <section aria-label="Avancé" role="region">
-              <Eyebrow dotColor="pig">Avancé</Eyebrow>
-              <div style={{ ...cardStyle, marginTop: 12, padding: 0 }}>
-                <div className="px-5 py-4 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span
-                      className={
-                        'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-bg-2 ' +
-                        (debug ? 'text-amber' : 'text-text-2')
-                      }
-                      aria-hidden="true"
-                    >
-                      <Bug size={15} />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-[13px] font-semibold text-text-0 truncate">
-                        Mode développeur
-                      </p>
-                      <p className="mt-0.5 font-mono text-[11px] text-text-2 truncate">
-                        Traces & logs détaillés
-                      </p>
-                    </div>
-                  </div>
-                  <IonToggle
-                    checked={debug}
-                    onIonChange={(e) => toggleDebug(e.detail.checked)}
-                    aria-label="Mode développeur"
-                    style={
-                      {
-                        '--track-background': 'var(--color-bg-2)',
-                        '--track-background-checked': 'var(--color-accent)',
-                        '--handle-background': 'var(--color-text-0)',
-                        '--handle-background-checked': 'var(--color-bg-0)',
-                      } as React.CSSProperties
-                    }
-                  />
-                </div>
+            {/* Synchronisation */}
+            <SettingsSection title="Synchronisation" icon={<RefreshCw size={13} />}>
+              <InfoRow
+                label="Dernière sync"
+                value={
+                  <span className="font-mono text-[12px]">{formatRelativeTime(lastUpdate)}</span>
+                }
+              />
+              <ActionRow
+                label={syncing ? 'Synchronisation…' : 'Synchroniser maintenant'}
+                onClick={() => { void handleSyncNow(); }}
+                description="Recharge les données et recalcule les alertes"
+              />
+              <ActionRow
+                label="Vider le cache local"
+                description="Déconnecte et supprime toutes les données locales"
+                onClick={() => setConfirmReset(true)}
+                destructive
+                trailing={<Trash2 size={14} className="text-red" aria-hidden="true" />}
+              />
+            </SettingsSection>
 
-                {debug ? (
-                  <div className="px-5 py-4 border-t border-border flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-[13px] font-semibold text-text-0 truncate">
-                        Switch rôle
-                      </p>
-                      <p className="mt-0.5 font-mono text-[11px] text-text-2 truncate">
-                        Debug · profil actif : {roleLabel}
-                      </p>
-                    </div>
-                    <div
-                      className="flex rounded-md border border-border bg-bg-1 p-0.5"
-                      role="tablist"
-                      aria-label="Profil"
-                    >
-                      <button
-                        type="button"
-                        role="tab"
-                        aria-selected={userRole === 'WORKER'}
-                        onClick={() => {
-                          setRole('WORKER');
-                          setTimeout(() => window.location.reload(), 100);
-                        }}
-                        className={
-                          'pressable px-3 py-1.5 rounded text-[11px] font-semibold uppercase tracking-wide transition-colors duration-150 ' +
-                          (userRole === 'WORKER'
-                            ? 'bg-accent text-bg-0'
-                            : 'text-text-2 hover:text-text-1')
-                        }
-                      >
-                        Ouvrier
-                      </button>
-                      <button
-                        type="button"
-                        role="tab"
-                        aria-selected={userRole === 'OWNER'}
-                        onClick={() => {
-                          setRole('OWNER');
-                          setTimeout(() => window.location.reload(), 100);
-                        }}
-                        className={
-                          'pressable px-3 py-1.5 rounded text-[11px] font-semibold uppercase tracking-wide transition-colors duration-150 ' +
-                          (userRole === 'OWNER'
-                            ? 'bg-accent text-bg-0'
-                            : 'text-text-2 hover:text-text-1')
-                        }
-                      >
-                        Propriétaire
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
+            {/* Notifications (V21 candidate) */}
+            <SettingsSection title="Notifications" icon={<Bell size={13} />}>
+              <ToggleRow
+                label="Confirmation des saisies"
+                description="Email après chaque saisie validée"
+                checked={notifSignups}
+                onChange={toggleNotifSignups}
+              />
+              <ToggleRow
+                label="Alertes critiques"
+                description="Email pour les alertes urgentes"
+                checked={notifAlerts}
+                onChange={toggleNotifAlerts}
+              />
+            </SettingsSection>
+
+            {/* Aide & support */}
+            <SettingsSection title="Aide & support" icon={<HelpCircle size={13} />}>
+              <ActionRow
+                label="FAQ"
+                description="Réponses aux questions fréquentes"
+                onClick={() => navigate('/aide')}
+              />
+              <ActionRow
+                label="Contacter le support"
+                description={SUPPORT_EMAIL}
+                onClick={() => {
+                  window.location.href = `mailto:${SUPPORT_EMAIL}?subject=Support%20PorcTrack`;
+                }}
+                trailing={<Mail size={14} className="text-text-2" aria-hidden="true" />}
+              />
+              <div className="px-5 py-3.5 border-b border-border last:border-b-0">
+                <span
+                  className="font-mono text-[11px] text-text-2 uppercase tracking-wide"
+                  style={{ fontFamily: 'DMMono, ui-monospace, monospace' }}
+                >
+                  PorcTrack v20 · build {APP_VERSION}
+                </span>
               </div>
+            </SettingsSection>
 
-              <button
-                type="button"
-                onClick={() => setShowAlert(true)}
-                className="pressable mt-3 w-full h-11 rounded-md text-[12px] font-semibold flex items-center justify-center gap-2 active:opacity-70 transition-opacity duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            {/* Sécurité */}
+            <SettingsSection title="Sécurité" icon={<ShieldAlert size={13} />}>
+              <ActionRow
+                label="Se déconnecter"
+                onClick={() => setConfirmSignOut(true)}
+                destructive
+                trailing={<LogOut size={14} className="text-red" aria-hidden="true" />}
+              />
+            </SettingsSection>
+
+            {toast ? (
+              <div
+                role="status"
+                aria-live="polite"
+                className="fixed bottom-24 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-full text-[12px] font-mono uppercase tracking-wide z-50"
                 style={{
-                  background: 'var(--color-pig-soft, color-mix(in srgb, var(--red) 12%, var(--bg-surface)))',
-                  color: 'var(--color-pig-deep, #c0392b)',
-                  border: '1px dashed var(--color-pig, #f5c6c0)',
+                  background: 'var(--ink)',
+                  color: 'var(--bg-surface)',
+                  fontFamily: 'DMMono, ui-monospace, monospace',
                 }}
               >
-                <Trash2 size={13} aria-hidden="true" />
-                Réinitialiser la session
-              </button>
-            </section>
-
-            {/* ── À propos ─────────────────────────────────────────────── */}
-            <section aria-label="À propos" role="region">
-              <Eyebrow dotColor="muted">À propos</Eyebrow>
-              <div style={{ ...cardStyle, marginTop: 12 }}>
-                <p
-                  style={{
-                    fontFamily: 'DMMono, ui-monospace, monospace',
-                    fontSize: 12,
-                    letterSpacing: '0.04em',
-                    color: 'var(--ink-soft, var(--muted))',
-                    margin: 0,
-                  }}
-                >
-                  PorcTrack v9 · build {APP_VERSION}
-                </p>
-                <div className="mt-4 flex flex-col gap-2">
-                  <button
-                    type="button"
-                    onClick={() => navigate('/cgu')}
-                    className="pressable h-10 px-3 rounded-md text-left text-[13px] text-text-1 hover:bg-bg-2 transition-colors flex items-center justify-between"
-                  >
-                    <span>Conditions d&rsquo;utilisation</span>
-                    <span className="text-text-2">→</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => navigate('/privacy')}
-                    className="pressable h-10 px-3 rounded-md text-left text-[13px] text-text-1 hover:bg-bg-2 transition-colors flex items-center justify-between"
-                  >
-                    <span>Confidentialité</span>
-                    <span className="text-text-2">→</span>
-                  </button>
-                </div>
+                {toast}
               </div>
-            </section>
+            ) : null}
           </div>
         </AgritechLayout>
 
+        <ProfileEditModal
+          isOpen={showProfileEdit}
+          onClose={() => setShowProfileEdit(false)}
+          initialName={userName}
+          userId={userId}
+          onSaved={() => {
+            setToast('Profil mis à jour');
+            void refreshProfile();
+          }}
+        />
+        <PasswordModal
+          isOpen={showPwd}
+          onClose={() => setShowPwd(false)}
+          onSaved={() => setToast('Mot de passe mis à jour')}
+        />
+        <FarmEditModal
+          isOpen={showFarmEdit}
+          onClose={() => setShowFarmEdit(false)}
+          farm={farm}
+          onSaved={() => {
+            setToast('Ferme mise à jour');
+            if (userId) {
+              void fetchFarm(userId).then(setFarm);
+            }
+          }}
+        />
+
         <IonAlert
-          isOpen={showAlert}
-          onDidDismiss={() => setShowAlert(false)}
-          header="Réinitialisation"
+          isOpen={confirmReset}
+          onDidDismiss={() => setConfirmReset(false)}
+          header="Vider le cache"
           message="Effacer toutes les données locales et se déconnecter ?"
           buttons={[
             { text: 'Annuler', role: 'cancel' },
             {
-              text: 'Réinitialiser',
+              text: 'Vider',
               cssClass: 'text-[var(--color-danger,#EF4444)]',
-              handler: handleReset,
+              handler: handleResetCache,
+            },
+          ]}
+        />
+        <IonAlert
+          isOpen={confirmSignOut}
+          onDidDismiss={() => setConfirmSignOut(false)}
+          header="Déconnexion"
+          message="Te déconnecter de ton compte ?"
+          buttons={[
+            { text: 'Annuler', role: 'cancel' },
+            {
+              text: 'Se déconnecter',
+              cssClass: 'text-[var(--color-danger,#EF4444)]',
+              handler: handleSignOut,
             },
           ]}
         />
