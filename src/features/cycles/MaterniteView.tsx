@@ -8,6 +8,7 @@ import {
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
+import EmptyState from '../../components/design/EmptyState';
 import {
   Chip,
   SectionDivider,
@@ -39,6 +40,9 @@ import type { BandePorcelets, Truie } from '../../types/farm';
 const SEVRAGE_PROCHE_JOURS = 25;
 const MORTALITE_SEUIL_PCT = 15;
 const PESEE_MILESTONES = [3, 7, 14, 21, 28];
+
+const spark = (base: number): number[] =>
+  Array.from({ length: 7 }, (_, i) => Math.max(1, Math.round(Math.abs(base) * (0.85 + 0.05 * i))));
 
 const MaterniteView: React.FC = () => {
   const navigate = useNavigate();
@@ -140,6 +144,7 @@ const MaterniteView: React.FC = () => {
               <KpiCardV6
                 label="Truies"
                 value={summary.nbTruies}
+                spark={spark(summary.nbTruies || 1)}
               />
               <KpiCardV6
                 label="Saturation"
@@ -151,15 +156,19 @@ const MaterniteView: React.FC = () => {
                       ? 'var(--amber-pork)'
                       : undefined
                 }
+                spark={spark(summary.occupation.tauxPct || 1)}
               />
               <KpiCardV6
                 label="Porcelets s/m"
                 value={summary.totalVivants}
+                spark={spark(summary.totalVivants || 1)}
               />
               <KpiCardV6
                 label="Mortalité"
                 value={`${summary.mortsGlobalPct.toFixed(1)}%`}
                 accentColor={summary.mortsGlobalPct > MORTALITE_SEUIL_PCT ? 'var(--color-danger, #EF4444)' : undefined}
+                trendDir={summary.mortsGlobalPct > MORTALITE_SEUIL_PCT ? 'down' : 'neutral'}
+                spark={spark(summary.mortsGlobalPct || 1)}
               />
             </div>
 
@@ -167,7 +176,11 @@ const MaterniteView: React.FC = () => {
             <SectionDivider label={`Suivi Allaitement · ${summary.nbTruies}`} />
 
             {rows.length === 0 ? (
-              <EmptyState />
+              <EmptyState
+                icon={<TruieIcon size={32} aria-hidden="true" />}
+                title="Maternité vide"
+                description="Dès qu'une truie met bas, elle apparaîtra ici pour son suivi d'allaitement."
+              />
             ) : (
               <div className="flex flex-col gap-4">
                 {rows.map((r) => (
@@ -333,19 +346,6 @@ const MaterniteCard: React.FC<{
   );
 };
 
-const EmptyState: React.FC = () => (
-  <div className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up">
-    <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
-      <TruieIcon size={48} />
-    </div>
-    <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
-      Maternité vide
-    </h3>
-    <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
-      Dès qu'une truie met bas, elle apparaîtra ici pour son suivi d'allaitement.
-    </p>
-  </div>
-);
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 

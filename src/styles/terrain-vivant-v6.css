@@ -69,6 +69,22 @@
   --amber-pork: var(--color-amber-pork);
   --amber-pork-soft: var(--color-amber-pork-soft);
   --amber-pork-deep: var(--color-amber-pork-deep);
+
+  /* ── Aliases phases biologiques GTTT (kit v2.1) ────────────────────────── */
+  --phase-repro:       var(--color-pig);
+  --phase-repro-soft:  var(--color-pig-soft);
+  --phase-mater:       var(--color-info, #3B82F6);
+  --phase-mater-soft:  rgba(59, 130, 246, 0.10);
+  --phase-sevr:        var(--amber-pork);
+  --phase-sevr-soft:   var(--amber-pork-soft);
+  --phase-crois:       var(--color-accent-400);
+  --phase-crois-soft:  var(--color-accent-100);
+  --phase-engr:        var(--color-amber-pork-deep);
+  --phase-engr-soft:   rgba(176, 112, 61, 0.15);
+  --phase-finit:       var(--color-secondary);
+  --phase-finit-soft:  var(--color-secondary-soft);
+  --phase-sortie:      var(--color-accent-500);
+  --phase-sortie-soft: var(--color-accent-100);
 }
 
 /* ── @keyframes pulse — utilisés par repro tracker, sync indicator ──────── */

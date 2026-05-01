@@ -1,5 +1,4 @@
 import React from 'react';
-import Sparkline from './Sparkline';
 
 type Variant = 'default' | 'accent';
 type TrendDir = 'up' | 'down' | 'neutral';
@@ -10,7 +9,10 @@ export interface KpiCardProps {
   unit?: string;
   trend?: string;
   trendDir?: TrendDir;
+  /** 8-12 points pour un sparkline SVG inline */
   spark?: number[];
+  /** Couleur du sparkline (sinon hérite de accentColor / trend) */
+  sparkColor?: string;
   variant?: Variant;
   onClick?: () => void;
   className?: string;
@@ -20,6 +22,21 @@ export interface KpiCardProps {
    * Pass any CSS color (var or hex). Ignored when variant='accent'.
    */
   accentColor?: string;
+}
+
+function buildSparkPath(points: number[], w = 56, h = 22): string {
+  if (!points.length) return '';
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  const range = max - min || 1;
+  const stepX = points.length > 1 ? w / (points.length - 1) : 0;
+  return points
+    .map((p, i) => {
+      const x = i * stepX;
+      const y = h - ((p - min) / range) * h;
+      return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(' ');
 }
 
 /**
@@ -34,6 +51,7 @@ export default function KpiCard({
   trend,
   trendDir = 'neutral',
   spark,
+  sparkColor,
   variant = 'default',
   onClick,
   className = '',
@@ -49,11 +67,15 @@ export default function KpiCard({
       ? 'var(--color-amber-pork-deep)'
       : 'var(--color-accent-500)';
 
-  const sparkColor = isAccent
-    ? 'rgba(252, 228, 201, 0.8)'
-    : trendDir === 'down'
-      ? 'var(--color-amber-pork-deep)'
-      : 'var(--color-accent-500)';
+  const resolvedSparkColor =
+    sparkColor ??
+    (isAccent
+      ? 'rgba(252, 228, 201, 0.8)'
+      : hasTone
+        ? accentColor
+        : trendDir === 'down'
+          ? 'var(--color-amber-pork-deep)'
+          : 'var(--color-accent-500)');
 
   const containerStyle: React.CSSProperties = {
     background: isAccent ? 'var(--color-accent-500)' : 'var(--bg-surface)',
@@ -112,15 +134,6 @@ export default function KpiCard({
     letterSpacing: '0.04em',
   };
 
-  const sparkStyle: React.CSSProperties = {
-    position: 'absolute',
-    bottom: 8,
-    right: 10,
-    width: 56,
-    height: 22,
-    pointerEvents: 'none',
-  };
-
   const Tag = onClick ? 'button' : 'div';
 
   return (
@@ -153,15 +166,28 @@ export default function KpiCard({
       </div>
       {trend ? <div style={trendStyle}>{trend}</div> : null}
       {spark && spark.length >= 2 ? (
-        <div style={sparkStyle}>
-          <Sparkline
-            points={spark}
-            width={56}
-            height={22}
-            stroke={sparkColor}
+        <svg
+          viewBox="0 0 56 22"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            right: 12,
+            bottom: 10,
+            width: 56,
+            height: 22,
+            opacity: 0.6,
+            pointerEvents: 'none',
+          }}
+        >
+          <path
+            d={buildSparkPath(spark)}
+            fill="none"
+            stroke={resolvedSparkColor}
             strokeWidth={1.5}
+            strokeLinecap="round"
           />
-        </div>
+        </svg>
       ) : null}
     </Tag>
   );

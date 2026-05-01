@@ -23,6 +23,7 @@ import TroupeauTruiesView from '../troupeau/TroupeauTruiesView';
 import TroupeauVerratsView from '../troupeau/TroupeauVerratsView';
 import TroupeauPorceletsView from '../troupeau/TroupeauPorceletsView';
 import TroupeauLogesView from '../troupeau/TroupeauLogesView';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs';
 
 // ─── Sub-tabs ────────────────────────────────────────────────────────────────
 
@@ -261,86 +262,49 @@ const TroupeauHub: React.FC = () => {
               vides={summary.vides}
             />
 
-            {/* ── Sub-tabs (pills) ─────────────────────────────────── */}
-            <div
-              role="tablist"
-              aria-label="Sélectionner une vue du troupeau"
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 8,
-                paddingBottom: 4,
+            {/* ── Sub-tabs (Radix) ─────────────────────────────────── */}
+            <Tabs
+              value={activeSubTab}
+              onValueChange={(v) => {
+                if (isSubTab(v)) handleSubTabChange(v);
               }}
             >
-              {SUB_TABS.map((t) => {
-                const active = activeSubTab === t.id;
-                const count = tabCounts[t.id];
-                const countLabel = t.id === 'loges'
-                  ? `${count}/${totalLogesCapacity}`
-                  : String(count).padStart(2, '0');
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={active}
-                    aria-controls={`troupeau-panel-${t.id}`}
-                    id={`troupeau-tab-${t.id}`}
-                    onClick={() => handleSubTabChange(t.id)}
-                    className="pressable"
-                    style={{
-                      minHeight: 44,
-                      padding: '8px 16px',
-                      borderRadius: 'var(--radius-pill)',
-                      background: active ? 'var(--color-accent-500)' : 'var(--bg-surface)',
-                      color: active ? 'var(--bg-surface)' : 'var(--ink-soft)',
-                      border: `1px solid ${active ? 'var(--color-accent-500)' : 'var(--line)'}`,
-                      fontFamily: 'DMMono, ui-monospace, monospace',
-                      fontSize: 11,
-                      letterSpacing: '0.10em',
-                      textTransform: 'uppercase',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      transition: 'transform 160ms var(--ease-emil), background 200ms var(--ease-emil)',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 8,
-                    }}
-                  >
-                    <span>{t.label}</span>
-                    <span
-                      style={{
-                        fontSize: 10,
-                        opacity: 0.75,
-                        fontWeight: 500,
-                        letterSpacing: '0.04em',
-                      }}
-                    >
-                      {countLabel}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* ── Panels ───────────────────────────────────────────── */}
-            <div
-              role="tabpanel"
-              id={`troupeau-panel-${activeSubTab}`}
-              aria-labelledby={`troupeau-tab-${activeSubTab}`}
-              className="animate-fade-in"
-            >
-              {activeSubTab === 'truies' && (
+              <TabsList aria-label="Sélectionner une vue du troupeau">
+                {SUB_TABS.map((t) => {
+                  const count = tabCounts[t.id];
+                  const countLabel = t.id === 'loges'
+                    ? `${count}/${totalLogesCapacity}`
+                    : String(count).padStart(2, '0');
+                  return (
+                    <TabsTrigger key={t.id} value={t.id} id={`troupeau-tab-${t.id}`} style={{ minHeight: 36, gap: 8 }}>
+                      <span>{t.label}</span>
+                      <span
+                        style={{
+                          fontSize: 10,
+                          opacity: 0.75,
+                          fontWeight: 500,
+                          letterSpacing: '0.04em',
+                        }}
+                      >
+                        {countLabel}
+                      </span>
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+              <TabsContent value="truies" className="animate-fade-in">
                 <TroupeauTruiesView searchText={searchTruies} setSearchText={setSearchTruies} />
-              )}
-              {activeSubTab === 'verrats' && (
+              </TabsContent>
+              <TabsContent value="verrats" className="animate-fade-in">
                 <TroupeauVerratsView searchText={searchVerrats} setSearchText={setSearchVerrats} />
-              )}
-              {activeSubTab === 'porcelets' && (
+              </TabsContent>
+              <TabsContent value="porcelets" className="animate-fade-in">
                 <TroupeauPorceletsView searchText={searchPorcelets} setSearchText={setSearchPorcelets} />
-              )}
-              {activeSubTab === 'loges' && <TroupeauLogesView />}
-            </div>
+              </TabsContent>
+              <TabsContent value="loges" className="animate-fade-in">
+                <TroupeauLogesView />
+              </TabsContent>
+            </Tabs>
 
             {/* ── Cycles biologiques ───────────────────────────────── */}
             <section aria-label="Cycles biologiques">

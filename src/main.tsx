@@ -6,6 +6,7 @@ import { Capacitor } from '@capacitor/core';
 import App from './App.tsx';
 import './index.css';
 import { ThemeProvider } from './context/ThemeContext';
+import { Toaster } from './components/ui/sonner';
 
 if (Capacitor.isNativePlatform()) {
   StatusBar.setStyle({ style: Style.Light }).catch(() => {});
@@ -90,6 +91,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
       <App />
+      <Toaster richColors position="top-right" />
     </ThemeProvider>
   </StrictMode>,
 );

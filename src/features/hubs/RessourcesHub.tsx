@@ -31,6 +31,7 @@ import QuickEditStockForm from '../../components/forms/QuickEditStockForm';
 import type { StockKind } from '../../components/forms/quickEditStockLogic';
 import { useFarm } from '../../context/FarmContext';
 import type { StockAliment, StockVeto } from '../../types/farm';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -169,52 +170,23 @@ const RessourcesHub: React.FC = () => {
               />
             </section>
 
-            {/* ── Sub-tabs (pills) ──────────────────────────────────── */}
-            <div
-              role="tablist"
-              aria-label="Type de ressource"
-              style={{
-                display: 'flex',
-                gap: 8,
-                flexWrap: 'wrap',
+            {/* ── Sub-tabs (Radix) ──────────────────────────────────── */}
+            <Tabs
+              value={activeTab}
+              onValueChange={(v) => {
+                if (v === 'aliments' || v === 'pharmacie') setActiveTab(v);
               }}
             >
-              {TABS.map(t => {
-                const active = activeTab === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={active}
-                    onClick={() => setActiveTab(t.id)}
-                    className="pressable"
-                    style={{
-                      minHeight: 44,
-                      padding: '8px 16px',
-                      borderRadius: 'var(--radius-pill)',
-                      background: active ? 'var(--color-accent-500)' : 'var(--bg-surface)',
-                      color: active ? 'var(--bg-surface)' : 'var(--ink-soft)',
-                      border: `1px solid ${active ? 'var(--color-accent-500)' : 'var(--line)'}`,
-                      fontFamily: 'DMMono, ui-monospace, monospace',
-                      fontSize: 11,
-                      letterSpacing: '0.10em',
-                      textTransform: 'uppercase',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      transition: 'transform 160ms var(--ease-emil), background 200ms var(--ease-emil)',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 8,
-                    }}
-                  >
+              <TabsList aria-label="Type de ressource">
+                {TABS.map((t) => (
+                  <TabsTrigger key={t.id} value={t.id} style={{ minHeight: 36, gap: 8 }}>
                     {t.icon}
                     <span>{t.label}</span>
                     <span style={{ opacity: 0.75, fontSize: 10 }}>{t.count}</span>
-                  </button>
-                );
-              })}
-            </div>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
 
             {/* ── Search bar ────────────────────────────────────────── */}
             <div style={{ position: 'relative' }}>

@@ -1,5 +1,7 @@
 import React from 'react';
 import { Sparkles } from 'lucide-react';
+import SyncIndicator from './SyncIndicator';
+import { useSyncState } from '../../hooks/useSyncState';
 
 export interface TopBarSyncProps {
   crumbs: string[];
@@ -19,6 +21,7 @@ export default function TopBarSync({
   onMariusClick,
   className = '',
 }: TopBarSyncProps) {
+  const syncState = useSyncState();
   return (
     <div
       role="navigation"
@@ -76,8 +79,9 @@ export default function TopBarSync({
         })}
       </ol>
 
-      {onMariusClick ? (
-        <div style={{ marginLeft: 'auto' }}>
+      <div style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 14 }}>
+        <SyncIndicator state={syncState} />
+        {onMariusClick ? (
           <button
             type="button"
             onClick={onMariusClick}
@@ -103,8 +107,8 @@ export default function TopBarSync({
             <Sparkles size={13} aria-hidden="true" />
             Marius
           </button>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -13,6 +13,7 @@ import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { SectionDivider } from '../../components/agritech';
 import Button from '../../components/design/Button';
+import EmptyState from '../../components/design/EmptyState';
 import { BandeIcon } from '../../components/icons';
 import QuickSexSeparationForm from '../../components/forms/QuickSexSeparationForm';
 import BandesErrorBoundary from './bandes/BandesErrorBoundary';
@@ -241,22 +242,15 @@ const BandesView: React.FC = () => {
                   </IonSelect>
                 </div>
               ) : aggregatedBandes.length === 0 ? (
-                <div
-                  className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up"
-                  role="status"
-                >
-                  <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
-                    <BandeIcon size={48} />
-                  </div>
-                  <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
-                    {searchText || statusFilter !== 'ALL' ? 'Aucune portée ne correspond' : 'Aucune portée détectée'}
-                  </h3>
-                  <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
-                    {searchText || statusFilter !== 'ALL'
+                <EmptyState
+                  icon={<BandeIcon size={32} />}
+                  title={searchText || statusFilter !== 'ALL' ? 'Aucune portée ne correspond' : 'Aucune portée détectée'}
+                  description={
+                    searchText || statusFilter !== 'ALL'
                       ? "Essayez un autre terme ou changez le filtre de statut."
-                      : 'Les portées apparaîtront après la première mise-bas.'}
-                  </p>
-                </div>
+                      : 'Les portées apparaîtront après la première mise-bas.'
+                  }
+                />
               ) : (
                 <div className="px-4">
                   <SectionDivider label={`${aggregatedBandes.length} portée${aggregatedBandes.length > 1 ? 's' : ''}`} />

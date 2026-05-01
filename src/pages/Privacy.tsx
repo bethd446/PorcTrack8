@@ -272,6 +272,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
           display: 'flex',
           flexDirection: 'column',
           gap: 12,
+          maxWidth: '70ch',
         }}
       >
         {children}

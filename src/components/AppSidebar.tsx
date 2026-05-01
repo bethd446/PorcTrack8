@@ -256,21 +256,24 @@ const AppSidebar: React.FC = () => {
           />
           <div
             style={{
-              maxHeight: cyclesExpanded ? cyclesItems.length * 32 + 8 : 0,
+              display: 'grid',
+              gridTemplateRows: cyclesExpanded ? '1fr' : '0fr',
+              transition: 'grid-template-rows 240ms var(--ease-emil)',
               overflow: 'hidden',
-              transition: 'max-height 240ms var(--ease-emil)',
             }}
           >
-            {cyclesItems.map((c) => (
-              <SidebarRow
-                key={c.href}
-                icon={c.icon}
-                label={c.label}
-                indent
-                active={isActive(c.href)}
-                onClick={() => navigate(c.href)}
-              />
-            ))}
+            <div style={{ minHeight: 0 }}>
+              {cyclesItems.map((c) => (
+                <SidebarRow
+                  key={c.href}
+                  icon={c.icon}
+                  label={c.label}
+                  indent
+                  active={isActive(c.href)}
+                  onClick={() => navigate(c.href)}
+                />
+              ))}
+            </div>
           </div>
         </Section>
 
@@ -355,7 +358,7 @@ const AppSidebar: React.FC = () => {
 
       </aside>
 
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
     </>
   );
 };

@@ -35,8 +35,10 @@ export default function ReproTracker({ stages, progressPct, className = '' }: Re
             height: '100%',
             background: 'var(--ink)',
             borderRadius: 2,
-            width: `${clamped}%`,
-            transition: 'width 240ms var(--ease-emil)',
+            width: '100%',
+            transform: `scaleX(${clamped / 100})`,
+            transformOrigin: 'left',
+            transition: 'transform 240ms var(--ease-emil)',
           }}
         />
       </div>

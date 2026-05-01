@@ -29,6 +29,7 @@ import { useFarm } from '../../context/FarmContext';
 import AgritechLayout from '../../components/AgritechLayout';
 import AgritechHeader from '../../components/AgritechHeader';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
+import EmptyState from '../../components/design/EmptyState';
 import { Chip, SectionDivider } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
 import type { Truie, BandePorcelets, Saillie } from '../../types/farm';
@@ -371,27 +372,20 @@ const ReproCalendarView: React.FC = () => {
 
             {/* ── Empty state global ───────────────────────────────────── */}
             {nothingAtAll ? (
-              <div
-                className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up stagger-4"
-                role="status"
-              >
-                <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
-                  <Heart size={40} aria-hidden="true" />
-                </div>
-                <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
-                  Aucune échéance dans les 14 prochains jours
-                </h3>
-                <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
-                  Profitez du calme — rien à faire cette quinzaine côté repro.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => navigate('/cycles/repro')}
-                  className="pressable mt-5 h-11 px-5 rounded-md bg-accent text-bg-0 text-[13px] font-medium transition-colors"
-                >
-                  Voir historique
-                </button>
-              </div>
+              <EmptyState
+                icon={<Heart size={32} aria-hidden="true" />}
+                title="Aucune échéance dans les 14 prochains jours"
+                description="Profitez du calme — rien à faire cette quinzaine côté repro."
+                action={
+                  <button
+                    type="button"
+                    onClick={() => navigate('/cycles/repro')}
+                    className="pressable h-11 px-5 rounded-md bg-accent text-bg-0 text-[13px] font-medium transition-colors"
+                  >
+                    Voir historique
+                  </button>
+                }
+              />
             ) : null}
 
             {/* ── Section À venir (30 jours) ───────────────────────────── */}

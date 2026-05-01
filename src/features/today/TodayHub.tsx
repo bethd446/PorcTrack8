@@ -204,7 +204,12 @@ const TodayHub: React.FC = () => {
                     gap: 8,
                   }}
                 >
-                  {criticalAlerts.map(alert => (
+                  {criticalAlerts.map(alert => {
+                    const dotColor =
+                      alert.priority === 'CRITIQUE'
+                        ? 'var(--color-pig-deep)'
+                        : 'var(--color-amber-pork-deep)';
+                    return (
                     <li key={alert.id}>
                       <button
                         type="button"
@@ -216,7 +221,6 @@ const TodayHub: React.FC = () => {
                           background: 'var(--bg-surface)',
                           borderRadius: 12,
                           boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-                          borderLeft: `3px solid ${alert.priority === 'CRITIQUE' ? 'var(--color-pig-deep)' : 'var(--color-amber-pork-deep)'}`,
                           padding: '14px 16px',
                           display: 'flex',
                           alignItems: 'center',
@@ -236,20 +240,30 @@ const TodayHub: React.FC = () => {
                             }}
                           >
                             <span
+                              aria-hidden="true"
+                              style={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: '50%',
+                                background: dotColor,
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
                               style={{
                                 fontFamily: 'DMMono, ui-monospace, monospace',
                                 fontSize: 10,
                                 letterSpacing: '0.10em',
                                 textTransform: 'uppercase',
                                 fontWeight: 600,
-                                color: alert.priority === 'CRITIQUE' ? 'var(--color-pig-deep)' : 'var(--color-amber-pork-deep)',
+                                color: dotColor,
                               }}
                             >
                               {alert.priority} · {alert.category}
                             </span>
                             <AlertTriangle
                               size={13}
-                              color={alert.priority === 'CRITIQUE' ? 'var(--color-pig-deep)' : 'var(--color-amber-pork-deep)'}
+                              color={dotColor}
                               aria-hidden="true"
                             />
                           </div>
@@ -288,7 +302,8 @@ const TodayHub: React.FC = () => {
                         <ChevronRight size={16} color="var(--muted)" aria-hidden="true" />
                       </button>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               )}
             </section>

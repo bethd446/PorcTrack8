@@ -4,6 +4,7 @@ import { Heart, Search } from 'lucide-react';
 
 import { VerratIcon } from '../../components/icons';
 import { Chip, SectionDivider, type ChipTone } from '../../components/agritech';
+import EmptyState from '../../components/design/EmptyState';
 import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
 import { useFarm } from '../../context/FarmContext';
 import type { Verrat, Saillie } from '../../types/farm';
@@ -164,21 +165,11 @@ const TroupeauVerratsView: React.FC<TroupeauVerratsViewProps> = ({ searchText, s
 
       {/* ── Liste verrats ──────────────────────────────────────── */}
       {verrats.length === 0 ? (
-        <div
-          className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up"
-          role="status"
-        >
-          <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
-            <VerratIcon size={48} />
-          </div>
-          <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
-            Aucun verrat enregistré
-          </h3>
-          <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
-            Les verrats de la ferme apparaîtront ici dès qu'ils seront
-            saisis dans la feuille VERRATS.
-          </p>
-        </div>
+        <EmptyState
+          icon={<VerratIcon size={32} />}
+          title="Aucun verrat enregistré"
+          description="Les verrats de la ferme apparaîtront ici dès qu'ils seront saisis dans la feuille VERRATS."
+        />
       ) : (
         <section
           role="region"

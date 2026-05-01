@@ -15,6 +15,7 @@ import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
 import { Chip, SectionDivider, KpiCard } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
+import EmptyState from '../../components/design/EmptyState';
 import { useFarm } from '../../context/FarmContext';
 import { updateProduitAliment } from '../../services/supabaseWrites';
 import type { StockAliment, StockStatut } from '../../types/farm';
@@ -389,28 +390,21 @@ const AlimentsView: React.FC = () => {
 
             {/* ── Empty state global ──────────────────────────────── */}
             {isEmpty ? (
-              <div
-                className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up"
-                role="status"
-              >
-                <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
-                  <Package size={40} />
-                </div>
-                <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
-                  Stock aliments vide
-                </h3>
-                <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
-                  Aucun aliment enregistré. Ajoutez votre 1er aliment via le bouton +
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setAddOpen(true)}
-                  className="pressable mt-5 h-11 px-5 rounded-md bg-accent text-bg-0 text-[13px] font-medium transition-colors inline-flex items-center gap-2"
-                >
-                  <Plus size={16} aria-hidden="true" />
-                  Ajouter un aliment
-                </button>
-              </div>
+              <EmptyState
+                icon={<Package size={32} aria-hidden="true" />}
+                title="Stock aliments vide"
+                description="Aucun aliment enregistré. Ajoutez votre 1er aliment via le bouton +."
+                action={
+                  <button
+                    type="button"
+                    onClick={() => setAddOpen(true)}
+                    className="pressable h-11 px-5 rounded-md bg-accent text-bg-0 text-[13px] font-medium transition-colors inline-flex items-center gap-2"
+                  >
+                    <Plus size={16} aria-hidden="true" />
+                    Ajouter un aliment
+                  </button>
+                }
+              />
             ) : (
               <>
                 <AlimentSection

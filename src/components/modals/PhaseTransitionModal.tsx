@@ -7,6 +7,7 @@
 import React, { useState } from 'react';
 import { IonModal } from '@ionic/react';
 import { ArrowRight, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import PhaseBadge, { type Phase } from '../design/PhaseBadge';
 import type { PendingTransition, PhaseAvecSortie } from '../../services/phaseEngine';
 
 // ─── Labels FR pour chaque phase ─────────────────────────────────────────────
@@ -20,13 +21,13 @@ const PHASE_LABEL: Record<string, string> = {
   SORTIE:        '🚚 Sortie abattoir',
 };
 
-const PHASE_COLOR: Record<string, string> = {
-  SOUS_MERE:     'var(--gold)',
-  POST_SEVRAGE:  'var(--teal)',
-  CROISSANCE:    'var(--amber)',
-  ENGRAISSEMENT: 'var(--accent)',
-  FINITION:      'var(--coral)',
-  SORTIE:        'var(--red)',
+const PHASE_TO_DESIGN: Record<string, Phase> = {
+  SOUS_MERE:     'mater',
+  POST_SEVRAGE:  'sevr',
+  CROISSANCE:    'crois',
+  ENGRAISSEMENT: 'engr',
+  FINITION:      'finit',
+  SORTIE:        'sortie',
 };
 
 function isCritical(toPhase: PhaseAvecSortie): boolean {
@@ -88,19 +89,15 @@ const PhaseTransitionModal: React.FC<PhaseTransitionModalProps> = ({
 
         {/* Flèche phases */}
         <div className="flex items-center justify-center gap-4 py-4 card-dense">
-          <span
-            className="font-mono font-bold text-[13px] px-3 py-1.5 rounded-lg"
-            style={{ background: `color-mix(in srgb, ${PHASE_COLOR[transition.fromPhase]} 15%, transparent)`, color: PHASE_COLOR[transition.fromPhase] }}
-          >
-            {PHASE_LABEL[transition.fromPhase] ?? transition.fromPhase}
-          </span>
+          <PhaseBadge
+            phase={PHASE_TO_DESIGN[transition.fromPhase] ?? 'crois'}
+            label={PHASE_LABEL[transition.fromPhase] ?? transition.fromPhase}
+          />
           <ArrowRight size={16} className="text-text-2" />
-          <span
-            className="font-mono font-bold text-[13px] px-3 py-1.5 rounded-lg"
-            style={{ background: `color-mix(in srgb, ${PHASE_COLOR[transition.toPhase]} 15%, transparent)`, color: PHASE_COLOR[transition.toPhase] }}
-          >
-            {PHASE_LABEL[transition.toPhase] ?? transition.toPhase}
-          </span>
+          <PhaseBadge
+            phase={PHASE_TO_DESIGN[transition.toPhase] ?? 'crois'}
+            label={PHASE_LABEL[transition.toPhase] ?? transition.toPhase}
+          />
         </div>
 
         {/* Champ poids (SORTIE uniquement) */}

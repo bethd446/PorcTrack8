@@ -29,6 +29,7 @@ import { resolveAlertSubject } from '../../utils/alertSubject';
 import AgritechLayout from '../../components/AgritechLayout';
 import KpiCardV6 from '../../components/design/KpiCard';
 import Eyebrow from '../../components/design/Eyebrow';
+import EmptyState from '../../components/design/EmptyState';
 import TopBarSync from '../../components/design/TopBarSync';
 import { type FarmAlert, type AlertPriority, type AlertCategory } from '../../services/alertEngine';
 import { ALERT_PRIORITY_COLOR as PRIORITY_COLOR, ALERT_PRIORITY_BG as PRIORITY_BG } from '../../utils/alertColors';
@@ -212,7 +213,6 @@ const AlertRow: React.FC<AlertRowProps> = ({
         background: 'var(--bg-surface)',
         borderRadius: 12,
         boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-        borderLeft: `3px solid ${PRIORITY_COLOR[priority]}`,
         padding: '14px 16px',
         display: 'flex',
         flexDirection: 'column',
@@ -220,9 +220,6 @@ const AlertRow: React.FC<AlertRowProps> = ({
         width: '100%',
         textAlign: 'left',
         border: 'none',
-        borderLeftWidth: 3,
-        borderLeftStyle: 'solid',
-        borderLeftColor: PRIORITY_COLOR[priority],
         cursor: interactive ? 'pointer' : 'default',
         transition: 'transform 160ms var(--ease-emil)',
       }}
@@ -244,6 +241,16 @@ const AlertRow: React.FC<AlertRowProps> = ({
             fontWeight: 600,
           }}
         >
+          <span
+            aria-hidden="true"
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: PRIORITY_COLOR[priority],
+              flexShrink: 0,
+            }}
+          />
           {priority}
         </span>
         <span
@@ -574,59 +581,12 @@ const AlertsView: React.FC = () => {
 
             {/* ── Empty state ───────────────────────────────────────── */}
             {showEmpty && (
-              <div
-                role="status"
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 12,
-                  padding: '56px 32px',
-                  background: 'var(--bg-surface)',
-                  borderRadius: 12,
-                  textAlign: 'center',
-                }}
-              >
-                <div
-                  style={{
-                    width: 64,
-                    height: 64,
-                    borderRadius: '50%',
-                    background: 'var(--color-accent-100)',
-                    color: 'var(--color-accent-600)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <CheckCircle2 size={32} aria-hidden="true" strokeWidth={2} />
-                </div>
-                <h3
-                  style={{
-                    fontFamily: 'BigShoulders, system-ui, sans-serif',
-                    fontSize: 22,
-                    fontWeight: 700,
-                    color: 'var(--ink)',
-                    margin: 0,
-                    letterSpacing: '-0.01em',
-                  }}
-                >
-                  Aucune alerte active
-                </h3>
-                <p
-                  style={{
-                    fontFamily: 'InstrumentSans, system-ui, sans-serif',
-                    fontSize: 13,
-                    color: 'var(--muted)',
-                    maxWidth: 320,
-                    margin: 0,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  Votre élevage tourne bien.
-                </p>
-              </div>
+              <EmptyState
+                size="lg"
+                icon={<CheckCircle2 size={32} aria-hidden="true" strokeWidth={2} />}
+                title="Aucune alerte active"
+                description="Votre élevage tourne bien."
+              />
             )}
 
             {/* ── Section Serveur ───────────────────────────────────── */}
@@ -796,7 +756,6 @@ const AlertsView: React.FC = () => {
                           background: 'var(--bg-surface)',
                           borderRadius: 12,
                           boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-                          borderLeft: '3px solid var(--color-amber-pork)',
                           padding: '14px 16px',
                           display: 'flex',
                           flexDirection: 'column',
@@ -815,8 +774,21 @@ const AlertsView: React.FC = () => {
                               letterSpacing: '0.10em',
                               textTransform: 'uppercase',
                               fontWeight: 600,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 6,
                             }}
                           >
+                            <span
+                              aria-hidden="true"
+                              style={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: '50%',
+                                background: 'var(--color-amber-pork-deep)',
+                                flexShrink: 0,
+                              }}
+                            />
                             À confirmer
                           </span>
                           <span

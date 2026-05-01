@@ -9,6 +9,7 @@ import { PorceletIcon } from '../../components/icons';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
+import EmptyState from '../../components/design/EmptyState';
 import {
   Chip,
   SectionDivider,
@@ -35,6 +36,9 @@ import type { BandePorcelets } from '../../types/farm';
  * - Monitoring nutritionnel (Aliment Croissance)
  * - Visualisation GMQ estimé
  */
+const spark = (base: number): number[] =>
+  Array.from({ length: 7 }, (_, i) => Math.max(1, Math.round(Math.abs(base) * (0.85 + 0.05 * i))));
+
 const CroissanceView: React.FC = () => {
   const navigate = useNavigate();
   const { bandes } = useFarm();
@@ -100,20 +104,24 @@ const CroissanceView: React.FC = () => {
                 label="Portées"
                 value={summary.nbPortees}
                 accentColor="var(--amber-pork)"
+                spark={spark(summary.nbPortees || 1)}
               />
               <KpiCardV6
                 label="Effectif"
                 value={summary.totalVivants}
+                spark={spark(summary.totalVivants || 1)}
               />
               <KpiCardV6
                 label="Âge Moyen"
                 value={summary.avgAge}
                 unit="j"
+                spark={spark(summary.avgAge || 1)}
               />
               <KpiCardV6
                 label="Loges Occ."
                 value={`${occupation.occupees}/${occupation.capacite}`}
                 accentColor={occupation.alerte === 'FULL' ? 'var(--color-danger, #EF4444)' : 'var(--amber-pork)'}
+                spark={spark(occupation.occupees || 1)}
               />
             </div>
 
@@ -121,7 +129,11 @@ const CroissanceView: React.FC = () => {
             <SectionDivider label={`Suivi Croissance · ${summary.nbPortees}`} />
 
             {portees.length === 0 ? (
-              <EmptyState />
+              <EmptyState
+                icon={<PorceletIcon size={32} aria-hidden="true" />}
+                title="Croissance vide"
+                description="Les porcelets entrent en croissance vers J63 (2 mois)."
+              />
             ) : (
               <div className="flex flex-col gap-4">
                 {portees.map((p) => (
@@ -235,19 +247,6 @@ const CroissanceCard: React.FC<{ data: CroissanceRowData; onOpen: () => void }> 
   );
 };
 
-const EmptyState: React.FC = () => (
-  <div className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up">
-    <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-amber">
-      <PorceletIcon size={48} aria-hidden="true" />
-    </div>
-    <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
-      Croissance vide
-    </h3>
-    <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
-      Les porcelets entrent en croissance vers J63 (2 mois).
-    </p>
-  </div>
-);
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 

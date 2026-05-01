@@ -9,6 +9,7 @@ import { BalanceIcon } from '../../components/icons';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
+import EmptyState from '../../components/design/EmptyState';
 import {
   Chip,
   SectionDivider,
@@ -34,6 +35,9 @@ import QuickVenteForm from '../../components/forms/QuickVenteForm';
 // ─── Constantes métier ──────────────────────────────────────────────────────
 const PRIX_KG_VIF_FCFA = 2100;
 const FINITION_SEUIL_KG = 100;
+
+const spark = (base: number): number[] =>
+  Array.from({ length: 7 }, (_, i) => Math.max(1, Math.round(Math.abs(base) * (0.85 + 0.05 * i))));
 
 const FinitionView: React.FC = () => {
   const navigate = useNavigate();
@@ -114,20 +118,24 @@ const FinitionView: React.FC = () => {
                 label="Bandes"
                 value={summary.nbBandes}
                 accentColor={summary.nbBandes > 0 ? 'var(--amber-pork)' : undefined}
+                spark={spark(summary.nbBandes || 1)}
               />
               <KpiCardV6
                 label="Effectif"
                 value={summary.totalVivants}
+                spark={spark(summary.totalVivants || 1)}
               />
               <KpiCardV6
                 label="Poids Moyen"
                 value={summary.avgWeight}
                 unit="kg"
+                spark={spark(summary.avgWeight || 1)}
               />
               <KpiCardV6
                 label="Valeur Est."
                 value={formatFCFA(projection.revenuEstime)}
                 unit="FCFA"
+                spark={spark(projection.revenuEstime || 1)}
               />
             </div>
 
@@ -135,7 +143,11 @@ const FinitionView: React.FC = () => {
             <SectionDivider label={`Suivi Finition · ${summary.nbBandes}`} />
 
             {portees.length === 0 ? (
-              <EmptyState />
+              <EmptyState
+                icon={<BalanceIcon size={32} />}
+                title="Finition vide"
+                description="Les porcs entrent en finition lorsqu'ils dépassent les 100 kg."
+              />
             ) : (
               <div className="flex flex-col gap-4">
                 {portees.map((p) => (
@@ -270,19 +282,6 @@ const FinitionCard: React.FC<{ data: FinitionRowData; onOpen: () => void; onSell
   );
 };
 
-const EmptyState: React.FC = () => (
-  <div className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up">
-    <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-gold">
-      <BalanceIcon size={48} />
-    </div>
-    <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
-      Finition vide
-    </h3>
-    <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
-      Les porcs entrent en finition lorsqu'ils dépassent les 100 kg.
-    </p>
-  </div>
-);
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 

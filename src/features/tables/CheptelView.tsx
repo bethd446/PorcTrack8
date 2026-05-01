@@ -10,6 +10,7 @@ import AgritechLayout from '../../components/AgritechLayout';
 import AgritechHeader from '../../components/AgritechHeader';
 import { Chip, SectionDivider } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
+import EmptyState from '../../components/design/EmptyState';
 import { TruieIcon, VerratIcon } from '../../components/icons';
 import { getStatusConfig } from '../../utils/statusConfig';
 import { FARM_CONFIG } from '../../config/farm';
@@ -66,29 +67,6 @@ const SkeletonRow: React.FC = () => (
   </div>
 );
 
-/** Empty state enrichi — icône custom + copy chaleureuse. */
-const EmptyStateV2: React.FC<{
-  icon: React.ReactNode;
-  title: string;
-  description?: string;
-}> = ({ icon, title, description }) => (
-  <div
-    className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up"
-    role="status"
-  >
-    <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
-      {icon}
-    </div>
-    <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
-      {title}
-    </h3>
-    {description ? (
-      <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
-        {description}
-      </p>
-    ) : null}
-  </div>
-);
 
 const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
   const navigate = useNavigate();
@@ -267,8 +245,8 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
               </div>
             ) : filteredItems.length === 0 ? (
               tab === 'TRUIE' ? (
-                <EmptyStateV2
-                  icon={<EmptyIcon size={48} />}
+                <EmptyState
+                  icon={<EmptyIcon size={32} aria-hidden="true" />}
                   title="Aucune truie trouvée"
                   description={
                     searchText
@@ -277,8 +255,8 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                   }
                 />
               ) : (
-                <EmptyStateV2
-                  icon={<EmptyIcon size={48} />}
+                <EmptyState
+                  icon={<EmptyIcon size={32} aria-hidden="true" />}
                   title="Aucun verrat"
                   description={
                     searchText

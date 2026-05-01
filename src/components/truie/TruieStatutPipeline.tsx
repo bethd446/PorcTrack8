@@ -128,8 +128,8 @@ const TruieStatutPipeline: React.FC<TruieStatutPipelineProps> = ({
                 aria-label={`${etape.label} ${etape.count} sur ${total}`}
               >
                 <div
-                  className={cn('h-full rounded-full transition-[width]', styles.bar)}
-                  style={{ width: `${barWidth}%` }}
+                  className={cn('h-full w-full rounded-full transition-transform', styles.bar)}
+                  style={{ transform: `scaleX(${barWidth / 100})`, transformOrigin: 'left' }}
                 />
               </div>
             </button>

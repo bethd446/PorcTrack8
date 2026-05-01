@@ -1,6 +1,9 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { useIonAlert, IonSegment, IonSegmentButton, IonLabel } from '@ionic/react';
 import { Search, CheckCircle2, ChevronRight, ArrowLeft } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useFarm } from '../../context/FarmContext';
 import {
   insertNote,
@@ -14,6 +17,14 @@ import type { BandePorcelets, Truie, Verrat } from '../../types/farm';
 type PeseeSubject = BandePorcelets | Truie | Verrat;
 import { biologyValidators } from '../../utils/biologyValidators';
 import { kvGet } from '../../services/kvStore';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '../ui/form';
 
 /* ═════════════════════════════════════════════════════════════════════════
    QuickPeseeForm · Pesée rapide (Bande, Truie ou Verrat)
@@ -23,6 +34,7 @@ import { kvGet } from '../../services/kvStore';
      2. Saisie poids (+ nb/écart pour les bandes)
      3. Confirmation
    Persist : NOTES_TERRAIN (5-col) + Update poids (si animal individuel)
+   Validation : RHF + Zod (peseeSchema)
    ═════════════════════════════════════════════════════════════════════════ */
 
 interface QuickPeseeFormProps {
@@ -33,18 +45,70 @@ interface QuickPeseeFormProps {
 type Step = 1 | 2 | 3;
 type SubjectType = 'BANDE' | 'TRUIE' | 'VERRAT';
 
-interface PeseeFormState {
-  nbPeses: string;
-  poidsMoyen: string;
-  ecartType: string;
-  observation: string;
-}
+const peseeSchema = z.object({
+  subjectType: z.enum(['BANDE', 'TRUIE', 'VERRAT']),
+  nbPeses: z.string().min(1, 'Nombre > 0 requis'),
+  poidsMoyen: z.string().min(1, 'Poids > 0 requis'),
+  ecartType: z.string(),
+  observation: z.string(),
+  maxVivants: z.number().optional(),
+}).superRefine((data, ctx) => {
+  const nb = Number(data.nbPeses);
+  if (!Number.isFinite(nb) || nb <= 0) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['nbPeses'],
+      message: 'Nombre > 0 requis',
+    });
+  } else if (
+    data.subjectType === 'BANDE' &&
+    data.maxVivants !== undefined &&
+    nb > data.maxVivants
+  ) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['nbPeses'],
+      message: `Max ${data.maxVivants} vivants`,
+    });
+  }
 
-const INITIAL_STATE: PeseeFormState = {
+  const poids = Number((data.poidsMoyen || '').replace(',', '.'));
+  if (!Number.isFinite(poids) || poids <= 0) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['poidsMoyen'],
+      message: 'Poids > 0 requis',
+    });
+  } else if (poids >= 500) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['poidsMoyen'],
+      message: 'Poids trop élevé (> 500kg)',
+    });
+  }
+
+  const ecartRaw = (data.ecartType || '').trim();
+  if (ecartRaw) {
+    const ecart = Number(ecartRaw.replace(',', '.'));
+    if (!Number.isFinite(ecart) || ecart < 0) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['ecartType'],
+        message: 'Écart-type ≥ 0',
+      });
+    }
+  }
+});
+
+type PeseeFormValues = z.infer<typeof peseeSchema>;
+
+const INITIAL_VALUES: PeseeFormValues = {
+  subjectType: 'BANDE',
   nbPeses: '',
   poidsMoyen: '',
   ecartType: '',
   observation: '',
+  maxVivants: undefined,
 };
 
 function parseFrDate(value: string | undefined): Date | null {
@@ -69,13 +133,18 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
   const [presentAlert] = useIonAlert();
 
   const [step, setStep] = useState<Step>(1);
-  const [subjectType, setSubjectType] = useState<SubjectType>('BANDE');
   const [query, setQuery] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState<BandePorcelets | Truie | Verrat | null>(null);
-  const [form, setForm] = useState<PeseeFormState>(INITIAL_STATE);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedSubject, setSelectedSubject] = useState<PeseeSubject | null>(null);
   const [saving, setSaving] = useState(false);
   const [, setSubmitError] = useState<string>('');
+
+  const form = useForm<PeseeFormValues>({
+    resolver: zodResolver(peseeSchema),
+    defaultValues: INITIAL_VALUES,
+    mode: 'onSubmit',
+  });
+
+  const subjectType = form.watch('subjectType');
 
   // ── Filtrage des sujets ──────────────────────────────────────────────
   const filteredSubjects = useMemo(() => {
@@ -105,11 +174,10 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
     setStep(1);
     setQuery('');
     setSelectedSubject(null);
-    setForm(INITIAL_STATE);
-    setErrors({});
     setSubmitError('');
     setSaving(false);
-  }, []);
+    form.reset(INITIAL_VALUES);
+  }, [form]);
 
   const handleClose = useCallback((): void => {
     resetAll();
@@ -120,85 +188,34 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
     setSelectedSubject(s);
     if (subjectType === 'BANDE') {
       const sb = s as BandePorcelets;
-      setForm(prev => ({
-        ...prev,
-        nbPeses: sb.vivants !== undefined ? String(sb.vivants) : '',
-      }));
+      form.setValue('nbPeses', sb.vivants !== undefined ? String(sb.vivants) : '');
+      form.setValue('maxVivants', sb.vivants);
     } else {
-      setForm(prev => ({ ...prev, nbPeses: '1' }));
+      form.setValue('nbPeses', '1');
+      form.setValue('maxVivants', undefined);
     }
-    setErrors({});
+    form.clearErrors();
     setStep(2);
   };
 
-  const validate = (): boolean => {
-    const next: Record<string, string> = {};
-    const nb = Number(form.nbPeses);
-    const poids = Number(form.poidsMoyen.replace(',', '.'));
-    const ecart = form.ecartType.trim() ? Number(form.ecartType.replace(',', '.')) : null;
-
-    if (!selectedSubject) next.subject = 'Sujet requis';
-    if (!Number.isFinite(nb) || nb <= 0) {
-      next.nbPeses = 'Nombre > 0 requis';
-    } else if (subjectType === 'BANDE' && (selectedSubject as BandePorcelets).vivants !== undefined && nb > ((selectedSubject as BandePorcelets).vivants ?? 0)) {
-      next.nbPeses = `Max ${(selectedSubject as BandePorcelets).vivants} vivants`;
+  // Reset maxVivants si subjectType change pendant l'edit
+  useEffect(() => {
+    if (subjectType !== 'BANDE') {
+      form.setValue('maxVivants', undefined);
     }
+  }, [subjectType, form]);
 
-    if (!Number.isFinite(poids) || poids <= 0) {
-      next.poidsMoyen = 'Poids > 0 requis';
-    } else if (poids >= 500) {
-      next.poidsMoyen = 'Poids trop élevé (> 500kg)';
-    }
-
-    if (ecart !== null && (!Number.isFinite(ecart) || ecart < 0)) {
-      next.ecartType = 'Écart-type ≥ 0';
-    }
-
-    setErrors(next);
-    return Object.keys(next).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
-    e.preventDefault();
-    if (!selectedSubject) return;
-    if (!validate()) return;
-
-    const poids = Number(form.poidsMoyen.replace(',', '.'));
-
-    // Validation biologique uniquement pour les bandes (porcelets)
-    if (subjectType === 'BANDE') {
-      const b = selectedSubject as BandePorcelets;
-      const jMB = jFrom(b.dateMB) ?? 0;
-      const validation = biologyValidators.validatePoidsPlausible(poids, jMB);
-
-      if (!validation.isValid) {
-        presentAlert({
-          header: 'Alerte Plausibilité',
-          subHeader: 'Anomalie de poids détectée',
-          message: validation.message,
-          cssClass: 'agritech-alert',
-          buttons: [
-            { text: 'Annuler', role: 'cancel' },
-            { text: 'Forcer la saisie', role: 'confirm', handler: () => executeSubmit() },
-          ],
-        });
-        return;
-      }
-    }
-
-    await executeSubmit();
-  };
-
-  const executeSubmit = async (): Promise<void> => {
+  const executeSubmit = async (values: PeseeFormValues): Promise<void> => {
     if (!selectedSubject) return;
     setSaving(true);
     setSubmitError('');
 
     try {
-      const nb = Number(form.nbPeses);
-      const poids = Number(form.poidsMoyen.replace(',', '.'));
-      const ecart = form.ecartType.trim() ? Number(form.ecartType.replace(',', '.')) : null;
-      const obs = form.observation.trim();
+      const nb = Number(values.nbPeses);
+      const poids = Number(values.poidsMoyen.replace(',', '.'));
+      const ecartRaw = (values.ecartType || '').trim();
+      const ecart = ecartRaw ? Number(ecartRaw.replace(',', '.')) : null;
+      const obs = (values.observation || '').trim();
 
       let note = '';
       if (subjectType === 'BANDE') {
@@ -241,6 +258,34 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  const onSubmit = form.handleSubmit(async (values) => {
+    if (!selectedSubject) return;
+    const poids = Number(values.poidsMoyen.replace(',', '.'));
+
+    // Validation biologique uniquement pour les bandes (porcelets)
+    if (subjectType === 'BANDE') {
+      const b = selectedSubject as BandePorcelets;
+      const jMB = jFrom(b.dateMB) ?? 0;
+      const validation = biologyValidators.validatePoidsPlausible(poids, jMB);
+
+      if (!validation.isValid) {
+        presentAlert({
+          header: 'Alerte Plausibilité',
+          subHeader: 'Anomalie de poids détectée',
+          message: validation.message,
+          cssClass: 'agritech-alert',
+          buttons: [
+            { text: 'Annuler', role: 'cancel' },
+            { text: 'Forcer la saisie', role: 'confirm', handler: () => executeSubmit(values) },
+          ],
+        });
+        return;
+      }
+    }
+
+    await executeSubmit(values);
+  });
+
   // ── UI Helpers ───────────────────────────────────────────────────────
   const subjectDisplay = (s: PeseeSubject) => {
     const sb = s as BandePorcelets;
@@ -249,15 +294,18 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
     return (sr.displayId || sr.id) + (sr.nom ? ` · ${sr.nom}` : '');
   };
 
+  const watchedNb = form.watch('nbPeses');
+  const watchedPoids = form.watch('poidsMoyen');
+
   const successSummary = useMemo(() => {
     if (step !== 3 || !selectedSubject) return null;
-    const poids = form.poidsMoyen.replace(',', '.');
+    const poids = (watchedPoids || '').replace(',', '.');
     if (subjectType === 'BANDE') {
-      const nb = Number(form.nbPeses) || 0;
+      const nb = Number(watchedNb) || 0;
       return `${nb} porcelets · ${poids} kg moyen`;
     }
     return `${subjectDisplay(selectedSubject)} · ${poids} kg`;
-  }, [step, selectedSubject, form.nbPeses, form.poidsMoyen, subjectType]);
+  }, [step, selectedSubject, watchedNb, watchedPoids, subjectType]);
 
   return (
     <BottomSheet isOpen={isOpen} onClose={handleClose} title="Pesée rapide" height="full">
@@ -272,7 +320,14 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
         {/* ÉTAPE 1 : Sélection */}
         {step === 1 && (
           <div className="space-y-4">
-            <IonSegment value={subjectType} onIonChange={e => { setSubjectType(e.detail.value as SubjectType); setQuery(''); }} className="premium-segment bg-bg-1 border border-border rounded-md">
+            <IonSegment
+              value={subjectType}
+              onIonChange={e => {
+                form.setValue('subjectType', e.detail.value as SubjectType);
+                setQuery('');
+              }}
+              className="premium-segment bg-bg-1 border border-border rounded-md"
+            >
               <IonSegmentButton value="BANDE"><IonLabel className="text-[11px] font-mono">Bandes</IonLabel></IonSegmentButton>
               <IonSegmentButton value="TRUIE"><IonLabel className="text-[11px] font-mono">Truies</IonLabel></IonSegmentButton>
               <IonSegmentButton value="VERRAT"><IonLabel className="text-[11px] font-mono">Verrats</IonLabel></IonSegmentButton>
@@ -304,45 +359,126 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
 
         {/* ÉTAPE 2 : Saisie */}
         {step === 2 && selectedSubject && (
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="card-dense !p-3 flex items-center gap-3">
-              <button type="button" onClick={() => setStep(1)} className="pressable h-9 w-9 flex items-center justify-center rounded-md bg-bg-2 text-text-1"><ArrowLeft size={14} /></button>
-              <div className="min-w-0 flex-1">
-                <div className="font-mono text-[10px] uppercase text-text-2">{subjectType}</div>
-                <div className="truncate font-mono text-[13px] text-text-0">{subjectDisplay(selectedSubject)}</div>
+          <Form {...form}>
+            <form onSubmit={onSubmit} className="space-y-5">
+              <div className="card-dense !p-3 flex items-center gap-3">
+                <button type="button" onClick={() => setStep(1)} className="pressable h-9 w-9 flex items-center justify-center rounded-md bg-bg-2 text-text-1"><ArrowLeft size={14} /></button>
+                <div className="min-w-0 flex-1">
+                  <div className="font-mono text-[10px] uppercase text-text-2">{subjectType}</div>
+                  <div className="truncate font-mono text-[13px] text-text-0">{subjectDisplay(selectedSubject)}</div>
+                </div>
               </div>
-            </div>
 
-            {subjectType === 'BANDE' && (
-              <div className="space-y-1.5">
-                <label className="block font-mono text-[11px] uppercase text-text-2">Nombre pesés</label>
-                <input type="text" inputMode="numeric" className="w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 font-mono text-[20px] outline-none focus:border-accent" value={form.nbPeses} onChange={e => setForm(f => ({ ...f, nbPeses: e.target.value.replace(/[^\d]/g, '') }))} />
+              {subjectType === 'BANDE' && (
+                <FormField
+                  control={form.control}
+                  name="nbPeses"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className="block font-mono text-[11px] uppercase text-text-2">Nombre pesés</FormLabel>
+                      <FormControl>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          className="w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 font-mono text-[20px] outline-none focus:border-accent"
+                          value={field.value}
+                          onChange={e => field.onChange(e.target.value.replace(/[^\d]/g, ''))}
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          ref={field.ref}
+                        />
+                      </FormControl>
+                      <FormMessage className="text-red font-mono text-[11px]" />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              <FormField
+                control={form.control}
+                name="poidsMoyen"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="block font-mono text-[11px] uppercase text-text-2">
+                      Poids {subjectType === 'BANDE' ? 'moyen' : ''} (kg)
+                    </FormLabel>
+                    <FormControl>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        className="w-full h-16 rounded-md px-4 bg-bg-0 border text-text-0 font-mono text-[28px] text-center outline-none focus:border-accent"
+                        placeholder="0.0"
+                        value={field.value}
+                        onChange={e => field.onChange(e.target.value.replace(/[^\d.,]/g, ''))}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                        autoFocus
+                      />
+                    </FormControl>
+                    <FormMessage className="text-red font-mono text-[11px]" />
+                  </FormItem>
+                )}
+              />
+
+              {subjectType === 'BANDE' && (
+                <FormField
+                  control={form.control}
+                  name="ecartType"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className="block font-mono text-[11px] uppercase text-text-2">
+                        Écart-type (kg) · <span className="text-text-2 normal-case">opt</span>
+                      </FormLabel>
+                      <FormControl>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          className="w-full h-11 rounded-md px-3 bg-bg-0 border text-text-0 font-mono text-[14px] outline-none focus:border-accent"
+                          placeholder="0.0"
+                          value={field.value ?? ''}
+                          onChange={e => field.onChange(e.target.value.replace(/[^\d.,]/g, ''))}
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          ref={field.ref}
+                        />
+                      </FormControl>
+                      <FormMessage className="text-red font-mono text-[11px]" />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              <FormField
+                control={form.control}
+                name="observation"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="block font-mono text-[11px] uppercase text-text-2">
+                      Observation · <span className="text-text-2 normal-case">opt</span>
+                    </FormLabel>
+                    <FormControl>
+                      <textarea
+                        className="w-full rounded-md px-3 py-3 bg-bg-0 border text-text-0 font-mono text-[13px] outline-none focus:border-accent min-h-[80px]"
+                        placeholder="Note terrain…"
+                        value={field.value ?? ''}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
+                    </FormControl>
+                    <FormMessage className="text-red font-mono text-[11px]" />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex gap-2 pt-2">
+                <button type="button" onClick={handleClose} className="pressable flex-1 h-14 rounded-md bg-bg-1 border text-text-1 font-mono text-[12px] uppercase font-bold">Annuler</button>
+                <button type="submit" disabled={saving} className="pressable flex-[2] h-14 rounded-md bg-accent text-bg-0 font-mono text-[13px] uppercase font-bold">{saving ? 'Enregistrement…' : 'Enregistrer'}</button>
               </div>
-            )}
-
-            <div className="space-y-1.5">
-              <label className="block font-mono text-[11px] uppercase text-text-2">Poids {subjectType === 'BANDE' ? 'moyen' : ''} (kg)</label>
-              <input type="text" inputMode="decimal" className="w-full h-16 rounded-md px-4 bg-bg-0 border text-text-0 font-mono text-[28px] text-center outline-none focus:border-accent" placeholder="0.0" value={form.poidsMoyen} onChange={e => setForm(f => ({ ...f, poidsMoyen: e.target.value.replace(/[^\d.,]/g, '') }))} autoFocus />
-              {errors.poidsMoyen && <p className="text-red font-mono text-[11px]">{errors.poidsMoyen}</p>}
-            </div>
-
-            {subjectType === 'BANDE' && (
-              <div className="space-y-1.5">
-                <label className="block font-mono text-[11px] uppercase text-text-2">Écart-type (kg) · <span className="text-text-2 normal-case">opt</span></label>
-                <input type="text" inputMode="decimal" className="w-full h-11 rounded-md px-3 bg-bg-0 border text-text-0 font-mono text-[14px] outline-none focus:border-accent" placeholder="0.0" value={form.ecartType} onChange={e => setForm(f => ({ ...f, ecartType: e.target.value.replace(/[^\d.,]/g, '') }))} />
-              </div>
-            )}
-
-            <div className="space-y-1.5">
-              <label className="block font-mono text-[11px] uppercase text-text-2">Observation · <span className="text-text-2 normal-case">opt</span></label>
-              <textarea className="w-full rounded-md px-3 py-3 bg-bg-0 border text-text-0 font-mono text-[13px] outline-none focus:border-accent min-h-[80px]" placeholder="Note terrain…" value={form.observation} onChange={e => setForm(f => ({ ...f, observation: e.target.value }))} />
-            </div>
-
-            <div className="flex gap-2 pt-2">
-              <button type="button" onClick={handleClose} className="pressable flex-1 h-14 rounded-md bg-bg-1 border text-text-1 font-mono text-[12px] uppercase font-bold">Annuler</button>
-              <button type="submit" disabled={saving} className="pressable flex-[2] h-14 rounded-md bg-accent text-bg-0 font-mono text-[13px] uppercase font-bold">{saving ? 'Enregistrement…' : 'Enregistrer'}</button>
-            </div>
-          </form>
+            </form>
+          </Form>
         )}
 
         {/* ÉTAPE 3 : Succès */}

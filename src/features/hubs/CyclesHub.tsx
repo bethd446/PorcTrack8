@@ -16,6 +16,7 @@ import { ChevronRight } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
 import Eyebrow from '../../components/design/Eyebrow';
+import PhaseBadge, { type Phase as DesignPhase } from '../../components/design/PhaseBadge';
 import TopBarSync from '../../components/design/TopBarSync';
 import { useFarm } from '../../context/FarmContext';
 import { useAutoRefresh } from '../../hooks/useAutoRefresh';
@@ -96,6 +97,15 @@ const PHASES: readonly PhaseDef[] = [
     route: '/cycles/finition',
   },
 ];
+
+const PHASE_TO_DESIGN: Record<PhaseId, DesignPhase> = {
+  gestation: 'repro',
+  maternite: 'mater',
+  postsevr:  'sevr',
+  croiss:    'crois',
+  engrais:   'engr',
+  finition:  'finit',
+};
 
 const TOTAL_DAYS = PHASES.reduce((s, p) => s + p.days, 0);
 const PHASE_OFFSETS: Record<PhaseId, number> = (() => {
@@ -609,21 +619,12 @@ const BandeRow: React.FC<BandeRowProps> = ({ pos, onOpen }) => {
             >
               · {pos.truie}
             </span>
-            <span
-              style={{
-                marginLeft: 'auto',
-                background: pos.phase.toneSoft,
-                color: pos.phase.tone,
-                padding: '3px 9px',
-                borderRadius: 'var(--radius-pill)',
-                fontFamily: 'DMMono, ui-monospace, monospace',
-                fontSize: 10,
-                letterSpacing: '0.10em',
-                textTransform: 'uppercase',
-                fontWeight: 600,
-              }}
-            >
-              {pos.phase.label}
+            <span style={{ marginLeft: 'auto' }}>
+              <PhaseBadge
+                phase={PHASE_TO_DESIGN[pos.phase.id]}
+                label={pos.phase.label}
+                size="sm"
+              />
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>

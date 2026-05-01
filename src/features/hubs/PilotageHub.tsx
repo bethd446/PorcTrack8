@@ -386,14 +386,18 @@ const PilotageHub: React.FC = () => {
                     gap: 8,
                   }}
                 >
-                  {urgences.map(alert => (
+                  {urgences.map(alert => {
+                    const dotColor =
+                      alert.priority === 'CRITIQUE'
+                        ? 'var(--color-pig-deep)'
+                        : 'var(--color-amber-pork-deep)';
+                    return (
                     <li key={alert.id}>
                       <div
                         style={{
                           background: 'var(--bg-surface)',
                           borderRadius: 12,
                           boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-                          borderLeft: `3px solid ${alert.priority === 'CRITIQUE' ? 'var(--color-pig-deep)' : 'var(--color-amber-pork-deep)'}`,
                           padding: '14px 16px',
                           display: 'flex',
                           flexDirection: 'column',
@@ -402,20 +406,30 @@ const PilotageHub: React.FC = () => {
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <span
+                            aria-hidden="true"
+                            style={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: '50%',
+                              background: dotColor,
+                              flexShrink: 0,
+                            }}
+                          />
+                          <span
                             style={{
                               fontFamily: 'DMMono, ui-monospace, monospace',
                               fontSize: 10,
                               letterSpacing: '0.10em',
                               textTransform: 'uppercase',
                               fontWeight: 600,
-                              color: alert.priority === 'CRITIQUE' ? 'var(--color-pig-deep)' : 'var(--color-amber-pork-deep)',
+                              color: dotColor,
                             }}
                           >
                             {alert.priority} · {alert.category}
                           </span>
                           <AlertTriangle
                             size={14}
-                            color={alert.priority === 'CRITIQUE' ? 'var(--color-pig-deep)' : 'var(--color-amber-pork-deep)'}
+                            color={dotColor}
                             style={{ marginLeft: 'auto' }}
                             aria-hidden="true"
                           />
@@ -445,7 +459,8 @@ const PilotageHub: React.FC = () => {
                         </p>
                       </div>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               )}
             </section>

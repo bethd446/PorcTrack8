@@ -17,6 +17,7 @@ import {
 
 import { TruieIcon } from '../../components/icons';
 import { Chip, SectionDivider, type ChipTone } from '../../components/agritech';
+import EmptyStateShared from '../../components/design/EmptyState';
 import QuickAddTruieForm from '../../components/forms/QuickAddTruieForm';
 import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
 import type { Truie } from '../../types/farm';
@@ -353,7 +354,16 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
 
       {/* ── Liste ou Grille ─────────────────────────────────────── */}
       {filtered.length === 0 ? (
-        <EmptyState hasSearch={searchText.trim().length > 0} />
+        <EmptyStateShared
+          size="sm"
+          icon={<Users size={20} aria-hidden="true" />}
+          title={searchText.trim().length > 0 ? 'Aucun résultat' : 'Aucune truie'}
+          description={
+            searchText.trim().length > 0
+              ? 'Aucune truie ne correspond à ta recherche.'
+              : 'Ta feuille TRUIES est vide ou non accessible.'
+          }
+        />
       ) : viewMode === 'grid' ? (
         <ul
           role="list"
@@ -515,24 +525,6 @@ const ViewModeToggle: React.FC<{ mode: ViewMode; onChange: (m: ViewMode) => void
     >
       <LayoutGrid size={18} aria-hidden="true" />
     </button>
-  </div>
-);
-
-// ─── Empty state ─────────────────────────────────────────────────────────────
-
-const EmptyState: React.FC<{ hasSearch: boolean }> = ({ hasSearch }) => (
-  <div className="card-dense text-center py-12 animate-fade-in-up" role="status">
-    <div className="inline-flex w-12 h-12 rounded-xl bg-bg-1 border border-border items-center justify-center text-text-2 mb-3">
-      <Users size={22} aria-hidden="true" />
-    </div>
-    <h3 className="ft-heading text-[14px] uppercase text-text-0">
-      {hasSearch ? 'Aucun résultat' : 'Aucune truie'}
-    </h3>
-    <p className="font-mono text-[11px] text-text-2 mt-2">
-      {hasSearch
-        ? 'Aucune truie ne correspond à ta recherche.'
-        : 'Ta feuille TRUIES est vide ou non accessible.'}
-    </p>
   </div>
 );
 

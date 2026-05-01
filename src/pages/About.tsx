@@ -76,6 +76,7 @@ export default function About() {
             lineHeight: 1.65,
             color: 'var(--ink-soft)',
             margin: '0 0 14px',
+            maxWidth: '70ch',
           }}
         >
           Nous aidons les éleveurs porcins à passer d'une gestion sur cahier à une conduite en
@@ -89,6 +90,7 @@ export default function About() {
             lineHeight: 1.65,
             color: 'var(--ink-soft)',
             margin: 0,
+            maxWidth: '70ch',
           }}
         >
           L'objectif n'est pas la digitalisation pour la digitalisation. L'objectif est de gagner
@@ -127,6 +129,7 @@ export default function About() {
               lineHeight: 1.65,
               color: 'var(--ink-soft)',
               margin: '0 0 14px',
+              maxWidth: '70ch',
             }}
           >
             En 2024, en Côte d'Ivoire, un naisseur-engraisseur cherche un outil simple pour suivre
@@ -141,6 +144,7 @@ export default function About() {
               lineHeight: 1.65,
               color: 'var(--ink-soft)',
               margin: 0,
+              maxWidth: '70ch',
             }}
           >
             PorcTrack est né de cette observation. Une équipe distribuée Paris ↔ Abidjan, des
@@ -258,6 +262,7 @@ export default function About() {
             lineHeight: 1.65,
             color: 'var(--ink-soft)',
             margin: '0 0 18px',
+            maxWidth: '70ch',
           }}
         >
           Équipe distribuée Paris ↔ Abidjan, ouverte aux contributions d'éleveurs, de vétérinaires

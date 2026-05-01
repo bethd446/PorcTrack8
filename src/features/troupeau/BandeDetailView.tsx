@@ -27,9 +27,12 @@ import QuickEditBandeForm from '../../components/forms/QuickEditBandeForm';
 import QuickPeseeForm from '../../components/forms/QuickPeseeForm';
 import BandeFinanceCard from './BandeFinanceCard';
 import BandeActionToolbar from './BandeActionToolbar';
+import { CohortTimeline } from '../../components/design/CohortTimeline';
+import type { Phase } from '../../components/design/PhaseBadge';
+import LineageBreadcrumb, { type LineageNode } from '../../components/design/LineageBreadcrumb';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
-import { computeBandePhase } from '../../services/bandesAggregator';
+import { computeBandePhase, type BandePhase } from '../../services/bandesAggregator';
 import { FARM_CONFIG } from '../../config/farm';
 import { updateBatch } from '../../services/supabaseWrites';
 import EditableNumber from '../../components/EditableNumber';
@@ -195,12 +198,101 @@ function buildEvents(bande: BandePorcelets, today: Date): TimelineEvent[] {
   return events;
 }
 
+// ─── CohortTimeline mapping ─────────────────────────────────────────────────
+
+function mapBandePhaseToCohortPhase(p: BandePhase): Phase {
+  switch (p) {
+    case 'SOUS_MERE':     return 'sevr';
+    case 'POST_SEVRAGE':  return 'crois';
+    case 'CROISSANCE':    return 'engr';
+    case 'ENGRAISSEMENT': return 'finit';
+    case 'FINITION':      return 'sortie';
+    default:              return 'repro';
+  }
+}
+
+function computeCohortContext(bande: BandePorcelets, today: Date): {
+  phase: Phase;
+  currentDay: number;
+  phaseProgress: number;
+} {
+  const bp = computeBandePhase(bande, today);
+  const phase = mapBandePhaseToCohortPhase(bp);
+  const mb = parseDate(bande.dateMB);
+  const sev = parseDate(bande.dateSevrageReelle || bande.dateSevragePrevue);
+
+  // Origine du cycle : MB - 115j (gestation) si dispo, sinon MB, sinon today
+  const cycleStart = mb
+    ? new Date(mb.getTime() - 115 * 86400000)
+    : sev
+      ? new Date(sev.getTime() - (115 + 28) * 86400000)
+      : today;
+  const currentDay = Math.max(0, daysBetween(cycleStart, today));
+
+  let phaseStart: Date | null;
+  let phaseDuration: number;
+  switch (bp) {
+    case 'SOUS_MERE':
+      phaseStart = mb;
+      phaseDuration = FARM_CONFIG.SEVRAGE_AGE_JOURS ?? 28;
+      break;
+    case 'POST_SEVRAGE':
+      phaseStart = sev;
+      phaseDuration = FARM_CONFIG.POST_SEVRAGE_DUREE_JOURS ?? 35;
+      break;
+    case 'CROISSANCE': {
+      const base = sev;
+      phaseStart = base
+        ? new Date(base.getTime() + (FARM_CONFIG.POST_SEVRAGE_DUREE_JOURS ?? 35) * 86400000)
+        : null;
+      phaseDuration = FARM_CONFIG.CROISSANCE_DUREE_JOURS ?? 37;
+      break;
+    }
+    case 'ENGRAISSEMENT': {
+      const base = sev;
+      const offset = (FARM_CONFIG.POST_SEVRAGE_DUREE_JOURS ?? 35) + (FARM_CONFIG.CROISSANCE_DUREE_JOURS ?? 37);
+      phaseStart = base ? new Date(base.getTime() + offset * 86400000) : null;
+      phaseDuration = FARM_CONFIG.ENGRAISSEMENT_DUREE_JOURS ?? 80;
+      break;
+    }
+    case 'FINITION': {
+      const base = sev;
+      const offset = (FARM_CONFIG.POST_SEVRAGE_DUREE_JOURS ?? 35)
+        + (FARM_CONFIG.CROISSANCE_DUREE_JOURS ?? 37)
+        + (FARM_CONFIG.ENGRAISSEMENT_DUREE_JOURS ?? 80);
+      phaseStart = base ? new Date(base.getTime() + offset * 86400000) : null;
+      phaseDuration = 28;
+      break;
+    }
+    default:
+      // INCONNU → on suppose gestation, MB est dans phaseDuration jours
+      phaseStart = mb ? new Date(mb.getTime() - 115 * 86400000) : null;
+      phaseDuration = 115;
+  }
+
+  let phaseProgress = 0;
+  if (phaseStart) {
+    const elapsed = daysBetween(phaseStart, today);
+    phaseProgress = Math.max(0, Math.min(1, elapsed / Math.max(1, phaseDuration)));
+  }
+
+  return { phase, currentDay, phaseProgress };
+}
+
+function estimateBandeWeight(bande: BandePorcelets, today: Date): number {
+  const sevDate = parseDate(bande.dateSevrageReelle || bande.dateSevragePrevue);
+  if (!sevDate) return 5;
+  const days = daysBetween(sevDate, today);
+  if (days < 0) return 5;
+  return Math.round(Math.min(25 + days * 0.65, 110));
+}
+
 // ─── Composant ──────────────────────────────────────────────────────────────
 
 const BandeDetailView: React.FC = () => {
   const { bandeId } = useParams<{ bandeId: string }>();
   const navigate = useNavigate();
-  const { bandes, transitions, refreshData } = useFarm();
+  const { bandes, transitions, truies, verrats, saillies, refreshData } = useFarm();
   const { isOwner } = useAuth();
   const [mortalityOpen, setMortalityOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -224,7 +316,12 @@ const BandeDetailView: React.FC = () => {
     return Math.min(25 + days * 0.65, 120);
   }, [bande, today]);
 
-  if (!bande) {
+  const cohortCtx = useMemo(
+    () => (bande ? computeCohortContext(bande, today) : null),
+    [bande, today],
+  );
+
+  if (!bande || !cohortCtx) {
     return (
       <IonPage>
         <IonContent fullscreen className="ion-no-padding">
@@ -258,6 +355,45 @@ const BandeDetailView: React.FC = () => {
 
   const idDisplay = bande.idPortee || bande.id;
 
+  // ── Lignée (kit v2.1) ─────────────────────────────────────────────────────
+  const lineageNodes: LineageNode[] = (() => {
+    const nodes: LineageNode[] = [];
+    const truieRef = bande.truie
+      ? truies.find((t) => t.id === bande.truie || t.displayId === bande.truie)
+      : undefined;
+
+    // Verrat via dernière saillie liée à cette truie (matchée sur ID truie)
+    if (truieRef) {
+      const truieSaillies = saillies
+        .filter((s) => s.truieId === truieRef.id || s.truieId === truieRef.displayId)
+        .sort((a, b) => (parseDate(b.dateSaillie)?.getTime() ?? 0) - (parseDate(a.dateSaillie)?.getTime() ?? 0));
+      const lastSaillie = truieSaillies[0];
+      if (lastSaillie?.verratId) {
+        const verratRef = verrats.find(
+          (v) => v.id === lastSaillie.verratId || v.displayId === lastSaillie.verratId,
+        );
+        nodes.push({
+          id: lastSaillie.verratId,
+          label: 'Verrat père',
+          href: verratRef ? `/troupeau/verrats/${verratRef.id}` : undefined,
+        });
+      }
+    }
+
+    if (truieRef) {
+      nodes.push({
+        id: truieRef.displayId,
+        label: 'Truie mère',
+        href: `/troupeau/truies/${truieRef.id}`,
+      });
+    } else if (bande.truie) {
+      nodes.push({ id: bande.truie, label: 'Truie mère' });
+    }
+
+    nodes.push({ id: idDisplay, label: 'Bande', current: true });
+    return nodes;
+  })();
+
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
@@ -269,6 +405,9 @@ const BandeDetailView: React.FC = () => {
           />
 
           <div className="px-4 pt-4 pb-32 flex flex-col gap-5">
+            {/* ── Lignée (kit v2.1) ───────────────────────────────────── */}
+            <LineageBreadcrumb nodes={lineageNodes} />
+
             {/* ── Hero ───────────────────────────────────────────────── */}
             <div className="card-dense flex flex-col gap-3.5">
               <div className="flex items-center gap-3.5">
@@ -321,6 +460,27 @@ const BandeDetailView: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* ── CohortTimeline (kit v2.1, killer feature) ───────────── */}
+            {/* INSERT-COHORT-TIMELINE — zone réservée, ne pas insérer d'autres composants ici */}
+            <CohortTimeline
+              bandId={idDisplay}
+              bandName={`Bande ${idDisplay} · ${nv} né${nv > 1 ? 's' : ''}`}
+              bandSub={
+                bande.truie
+                  ? `Mère ${bande.truie}${bande.boucleMere ? ` · ${bande.boucleMere}` : ''}`
+                  : undefined
+              }
+              stats={{
+                heads: vivants,
+                weight: estimateBandeWeight(bande, today),
+                ic: 2.4,
+              }}
+              currentPhase={cohortCtx.phase}
+              currentDay={cohortCtx.currentDay}
+              phaseProgress={cohortCtx.phaseProgress}
+            />
+            {/* END-INSERT-COHORT-TIMELINE */}
 
             {/* ── KPI portée ─────────────────────────────────────────── */}
             <section aria-label="Indicateurs portée">

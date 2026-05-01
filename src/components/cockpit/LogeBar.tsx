@@ -21,8 +21,8 @@ const LogeBar: React.FC<LogeBarProps> = ({ label, occupees, capacite, alerte }) 
       </div>
       <div className="h-1.5 w-full bg-bg-2 rounded-full overflow-hidden">
         <div
-          className={`h-full ${fillClass} rounded-full transition-[width]`}
-          style={{ width: `${pct}%` }}
+          className={`h-full w-full ${fillClass} rounded-full transition-transform`}
+          style={{ transform: `scaleX(${pct / 100})`, transformOrigin: 'left' }}
         />
       </div>
     </div>

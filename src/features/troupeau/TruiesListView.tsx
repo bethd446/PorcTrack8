@@ -1,28 +1,20 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   IonContent,
   IonPage,
   IonRefresher,
   IonRefresherContent,
 } from '@ionic/react';
-import {
-  Search,
-  MoreVertical,
-  Baby,
-  PackageCheck,
-  AlertTriangle,
-  Eye,
-} from 'lucide-react';
+import type { ColumnDef } from '@tanstack/react-table';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useFarm } from '../../context/FarmContext';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import { DataRow, Chip, SectionDivider } from '../../components/agritech';
+import { Chip, SectionDivider } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
-import { TruieIcon } from '../../components/icons';
+import { DataTable } from '../../components/ui/data-table';
 import type { Truie } from '../../types/farm';
 import { FARM_CONFIG } from '../../config/farm';
-import { enqueueUpdateRow } from '../../services/offlineQueue';
 import { normaliseStatut } from '../../lib/truieStatut';
 
 /** Filter bucket keys. `all` shows every truie. */
@@ -138,62 +130,6 @@ function echeanceFor(t: Truie): EcheanceBadge | null {
   return null;
 }
 
-/** Skeleton placeholder row. Declared at module scope so React 19 does not
- *  treat it as a component-created-during-render (react-hooks/static-components). */
-const SkeletonRow: React.FC = () => (
-  <div
-    className="flex items-center gap-3 px-3 py-3 border-b border-border last:border-b-0"
-    aria-hidden="true"
-  >
-    <div className="flex-1 min-w-0 space-y-2">
-      <div className="h-[14px] w-2/3 rounded bg-bg-2" />
-      <div className="h-[11px] w-1/2 rounded bg-bg-2" />
-    </div>
-    <div className="h-[18px] w-14 rounded bg-bg-2 shrink-0" />
-  </div>
-);
-
-/** Quick action target statuts (value written back to Sheets). */
-const STATUT_PLEINE = 'Pleine';
-const STATUT_SEVREE = 'En attente saillie'; // Post-sevrage → cycle redémarre
-const STATUT_SURVEILLER = 'À surveiller';
-
-type ActionKey = 'pleine' | 'sevree' | 'surveiller' | 'detail';
-
-interface ActionDef {
-  key: ActionKey;
-  label: string;
-  Icon: React.ComponentType<{ size?: number }>;
-  available: (t: Truie) => boolean;
-}
-
-const ACTIONS: ActionDef[] = [
-  {
-    key: 'pleine',
-    label: 'Marquer pleine',
-    Icon: Baby,
-    available: (t) => normaliseStatut(t.statut) === 'VIDE',
-  },
-  {
-    key: 'sevree',
-    label: 'Marquer sevrée',
-    Icon: PackageCheck,
-    available: (t) => normaliseStatut(t.statut) === 'MATERNITE',
-  },
-  {
-    key: 'surveiller',
-    label: 'À surveiller',
-    Icon: AlertTriangle,
-    available: () => true,
-  },
-  {
-    key: 'detail',
-    label: 'Voir détail',
-    Icon: Eye,
-    available: () => true,
-  },
-];
-
 /**
  * TruiesListView — liste dense des truies (Agritech cockpit).
  *
@@ -216,10 +152,6 @@ const TruiesListView: React.FC = () => {
 
   const [filter, setFilter]       = useState<FilterKey>(initialFilter);
   const [lastInitialFilter, setLastInitialFilter] = useState<FilterKey>(initialFilter);
-  const [searchText, setSearchText] = useState('');
-  const [menuFor, setMenuFor]     = useState<string | null>(null);
-  const [pendingAction, setPendingAction] = useState<string | null>(null);
-  const menuRef = useRef<HTMLDivElement | null>(null);
 
   // Keep local filter in sync if the URL changes (e.g. second tap on pipeline)
   // Render-time sync — avoids cascading renders from setState-in-effect.
@@ -244,48 +176,19 @@ const TruiesListView: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
-  // Close dropdown on outside-click / Escape
-  useEffect(() => {
-    if (!menuFor) return;
-    const onDown = (e: MouseEvent): void => {
-      if (!menuRef.current) return;
-      if (!menuRef.current.contains(e.target as Node)) setMenuFor(null);
-    };
-    const onKey = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') setMenuFor(null);
-    };
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [menuFor]);
-
   const activeFilter = useMemo(
     () => FILTERS.find(f => f.key === filter) ?? FILTERS[0],
     [filter]
   );
 
-  // Filtrage + recherche + tri
+  // Filtrage par statut (search + tri gérés par DataTable / TanStack)
   const filteredTruies = useMemo(() => {
-    const q = searchText.trim().toLowerCase();
     return truies
       .filter(activeFilter.match)
-      .filter(t => {
-        if (!q) return true;
-        const hay = [
-          t.id,
-          t.displayId,
-          t.nom ?? '',
-          t.boucle ?? '',
-        ].join(' ').toLowerCase();
-        return hay.includes(q);
-      })
       .sort((a, b) =>
         a.displayId.localeCompare(b.displayId, undefined, { numeric: true, sensitivity: 'base' })
       );
-  }, [truies, activeFilter, searchText]);
+  }, [truies, activeFilter]);
 
   // Compteurs live par bucket (basés sur la liste COMPLÈTE, pas la recherche)
   const counts = useMemo(() => {
@@ -317,36 +220,60 @@ const TruiesListView: React.FC = () => {
     e.detail.complete();
   };
 
-  const runAction = async (t: Truie, action: ActionKey): Promise<void> => {
-    setMenuFor(null);
-    if (action === 'detail') {
-      navigate(`/troupeau/truies/${t.id}`);
-      return;
-    }
-
-    const nextStatut =
-      action === 'pleine'     ? STATUT_PLEINE    :
-      action === 'sevree'     ? STATUT_SEVREE    :
-      action === 'surveiller' ? STATUT_SURVEILLER : null;
-    if (!nextStatut) return;
-
-    setPendingAction(t.id);
-    try {
-      await enqueueUpdateRow(
-        'TRUIES_REPRODUCTION',
-        'ID',
-        t.id,
-        { Statut: nextStatut },
-      );
-      // Refresh pour refléter le changement dès le retour worker.
-      await refreshData();
-    } catch (err) {
-       
-      console.error('[TruiesListView] action error', err);
-    } finally {
-      setPendingAction(null);
-    }
-  };
+  const columns = useMemo<ColumnDef<Truie>[]>(() => [
+    {
+      accessorKey: 'displayId',
+      header: 'Code',
+      cell: ({ row }) => (
+        <span style={{ fontFamily: 'DMMono, ui-monospace, monospace', fontSize: 12 }}>
+          {row.original.displayId}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'nom',
+      header: 'Nom',
+      cell: ({ row }) => row.original.nom ?? '—',
+    },
+    {
+      accessorKey: 'boucle',
+      header: 'Boucle',
+      cell: ({ row }) => (
+        <span style={{ fontFamily: 'DMMono, ui-monospace, monospace', fontSize: 12 }}>
+          {row.original.boucle ? `B.${row.original.boucle}` : '—'}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'race',
+      header: 'Race',
+      cell: ({ row }) => row.original.race ?? '—',
+    },
+    {
+      accessorKey: 'statut',
+      header: 'Statut',
+      cell: ({ row }) => (
+        <Chip label={row.original.statut} tone={toneForStatut(row.original.statut)} size="xs" />
+      ),
+    },
+    {
+      accessorKey: 'nbPortees',
+      header: 'Parité',
+      cell: ({ row }) => (
+        <span style={{ fontFamily: 'DMMono, ui-monospace, monospace', fontSize: 12 }}>
+          {row.original.nbPortees ?? 0}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'dateMBPrevue',
+      header: 'MB prévue',
+      cell: ({ row }) => {
+        const e = echeanceFor(row.original);
+        return e ? <Chip label={e.label} tone={e.tone} size="xs" /> : '—';
+      },
+    },
+  ], []);
 
   return (
     <IonPage>
@@ -401,21 +328,6 @@ const TruiesListView: React.FC = () => {
               })}
             </div>
 
-            {/* Search (font-mono) */}
-            <label
-              className="flex items-center gap-2 rounded-md border border-border bg-bg-1 px-3 py-2 focus-within:border-accent transition-colors"
-            >
-              <Search size={14} className="text-text-2 shrink-0" aria-hidden="true" />
-              <input
-                type="text"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                placeholder="Boucle · nom · ID"
-                aria-label="Rechercher une truie par boucle, nom ou ID"
-                className="w-full bg-transparent border-none outline-none font-mono text-[13px] text-text-0 placeholder:text-text-2"
-              />
-            </label>
-
             {/* Stats strip */}
             <div className="flex items-center justify-between gap-3 card-dense py-3">
               <div className="flex flex-col gap-0.5 min-w-0">
@@ -443,167 +355,20 @@ const TruiesListView: React.FC = () => {
               }
             />
 
-            {/* Liste */}
-            {loading && filteredTruies.length === 0 ? (
-              <div
-                className="rounded-md border border-border bg-bg-1 overflow-hidden"
-                role="status"
-                aria-busy="true"
-                aria-label="Chargement des truies"
-              >
-                <SkeletonRow />
-                <SkeletonRow />
-                <SkeletonRow />
-                <SkeletonRow />
-              </div>
-            ) : filteredTruies.length === 0 ? (
-              <div
-                className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up"
-                role="status"
-              >
-                <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
-                  <TruieIcon size={48} />
-                </div>
-                <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
-                  {filter !== 'all'
+            <DataTable<Truie, unknown>
+              columns={columns}
+              data={filteredTruies}
+              searchColumn="displayId"
+              searchPlaceholder="Rechercher par code..."
+              emptyMessage={
+                loading
+                  ? 'Chargement...'
+                  : filter !== 'all'
                     ? `Aucune truie · filtre ${activeFilter.label}`
-                    : searchText
-                      ? 'Aucune truie trouvée'
-                      : 'Aucune truie'}
-                </h3>
-                <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
-                  {filter !== 'all'
-                    ? 'Essayez un autre filtre ou réinitialisez.'
-                    : searchText
-                      ? "Modifiez la recherche ou vérifiez les filtres."
-                      : "Votre cheptel est vide pour l'instant."}
-                </p>
-                {filter !== 'all' ? (
-                  <button
-                    type="button"
-                    onClick={() => setFilter('all')}
-                    className="pressable mt-5 h-11 px-5 rounded-md bg-accent text-bg-0 text-[13px] font-medium transition-colors"
-                  >
-                    Réinitialiser le filtre
-                  </button>
-                ) : null}
-              </div>
-            ) : (
-              <div
-                id="truies-liste"
-                role="list"
-                aria-label="Liste des truies"
-                className="rounded-md border border-border bg-bg-1 overflow-hidden relative"
-              >
-                {filteredTruies.map(t => {
-                  const boucle = t.boucle ? `B.${t.boucle}` : '—';
-                  const namePart = t.nom ? ` ${t.nom}` : '';
-                  const primary = `${boucle} · ${t.displayId}${namePart}`;
-
-                  const secondaryParts: string[] = [t.statut];
-                  if (t.ration) {
-                    secondaryParts.push(`${t.ration}kg`);
-                  }
-                  const secondary = secondaryParts.join(' · ');
-
-                  const echeance = echeanceFor(t);
-                  const isMenuOpen = menuFor === t.id;
-                  const isPending = pendingAction === t.id;
-                  const availableActions = ACTIONS.filter(a => a.available(t));
-
-                  return (
-                    <div role="listitem" key={t.id} className="relative">
-                      <DataRow
-                        primary={primary}
-                        secondary={secondary}
-                        accessory={
-                          <div className="flex items-center gap-1.5">
-                            {echeance ? (
-                              <Chip
-                                label={echeance.label}
-                                tone={echeance.tone}
-                                size="xs"
-                              />
-                            ) : null}
-                            <Chip
-                              label={t.statut}
-                              tone={toneForStatut(t.statut)}
-                              size="xs"
-                            />
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setMenuFor(isMenuOpen ? null : t.id);
-                              }}
-                              aria-label={`Actions pour ${t.displayId}`}
-                              aria-haspopup="menu"
-                              aria-expanded={isMenuOpen}
-                              disabled={isPending}
-                              className={[
-                                'pressable inline-flex h-8 w-8 items-center justify-center rounded-md',
-                                'text-text-2 hover:bg-bg-2 hover:text-text-0',
-                                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                                isPending ? 'opacity-40 cursor-not-allowed' : '',
-                              ].join(' ')}
-                            >
-                              {isPending ? (
-                                <span className="animate-pulse font-mono text-[10px]">
-                                  …
-                                </span>
-                              ) : (
-                                <MoreVertical size={14} aria-hidden="true" />
-                              )}
-                            </button>
-                          </div>
-                        }
-                        onClick={() => navigate(`/troupeau/truies/${t.id}`)}
-                      />
-
-                      {isMenuOpen ? (
-                        <div
-                          ref={menuRef}
-                          role="menu"
-                          aria-label={`Actions ${t.displayId}`}
-                          className={[
-                            'absolute right-2 top-[calc(100%-6px)] z-20',
-                            'min-w-[200px] rounded-md border border-border bg-bg-1',
-                            'shadow-lg overflow-hidden',
-                            'animate-scale-in origin-top-right',
-                          ].join(' ')}
-                        >
-                          {availableActions.map((a, idx) => {
-                            const Icon = a.Icon;
-                            return (
-                              <button
-                                key={a.key}
-                                type="button"
-                                role="menuitem"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  void runAction(t, a.key);
-                                }}
-                                style={{ transitionDelay: `${idx * 30}ms` }}
-                                className={[
-                                  'pressable w-full flex items-center gap-2.5 px-3 py-2.5 text-left',
-                                  'text-text-0 hover:bg-bg-2',
-                                  'font-mono text-[12px] uppercase tracking-wide',
-                                  'border-b border-border last:border-b-0',
-                                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-2px]',
-                                ].join(' ')}
-                              >
-                                <Icon size={14} aria-hidden="true" />
-                                <span>{a.label}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    : 'Aucune truie'
+              }
+              onRowClick={(t) => navigate(`/troupeau/truies/${t.id}`)}
+            />
           </div>
         </AgritechLayout>
       </IonContent>

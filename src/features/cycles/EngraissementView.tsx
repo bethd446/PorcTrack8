@@ -8,6 +8,7 @@ import {
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
+import EmptyState from '../../components/design/EmptyState';
 import {
   Chip,
   SectionDivider,
@@ -34,6 +35,9 @@ import type { BandePorcelets } from '../../types/farm';
  * - Monitoring nutritionnel (Aliment Finition)
  * - Visualisation de l'avancement poids
  */
+const spark = (base: number): number[] =>
+  Array.from({ length: 7 }, (_, i) => Math.max(1, Math.round(Math.abs(base) * (0.85 + 0.05 * i))));
+
 const EngraissementView: React.FC = () => {
   const navigate = useNavigate();
   const { bandes } = useFarm();
@@ -97,20 +101,24 @@ const EngraissementView: React.FC = () => {
               <KpiCardV6
                 label="Bandes"
                 value={summary.nbPortees}
+                spark={spark(summary.nbPortees || 1)}
               />
               <KpiCardV6
                 label="Effectif"
                 value={summary.totalVivants}
+                spark={spark(summary.totalVivants || 1)}
               />
               <KpiCardV6
                 label="Poids Moyen"
                 value={summary.avgWeight}
                 unit="kg"
+                spark={spark(summary.avgWeight || 1)}
               />
               <KpiCardV6
                 label="Loges Occ."
                 value={`${occupation.occupees}/${occupation.capacite}`}
                 accentColor={occupation.alerte === 'FULL' ? 'var(--color-danger, #EF4444)' : undefined}
+                spark={spark(occupation.occupees || 1)}
               />
             </div>
 
@@ -118,7 +126,11 @@ const EngraissementView: React.FC = () => {
             <SectionDivider label={`Suivi Engraissement · ${summary.nbPortees}`} />
 
             {portees.length === 0 ? (
-              <EmptyState />
+              <EmptyState
+                icon={<TrendingUp size={32} aria-hidden="true" />}
+                title="Engraissement vide"
+                description="Les porcs entrent en engraissement vers J100."
+              />
             ) : (
               <div className="flex flex-col gap-4">
                 {portees.map((p) => (
@@ -229,19 +241,6 @@ const EngraissementCard: React.FC<{ data: EngraissementRowData; onOpen: () => vo
   );
 };
 
-const EmptyState: React.FC = () => (
-  <div className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up">
-    <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
-      <TrendingUp size={48} />
-    </div>
-    <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
-      Engraissement vide
-    </h3>
-    <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
-      Les porcs entrent en engraissement vers J100.
-    </p>
-  </div>
-);
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 

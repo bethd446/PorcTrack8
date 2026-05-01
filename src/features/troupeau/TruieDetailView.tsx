@@ -35,6 +35,7 @@ import DecisionBinaire from '../../components/design/DecisionBinaire';
 import MariusPanel from '../../components/design/MariusPanel';
 import MariusFAB from '../../components/design/MariusFAB';
 import TimelineVerticale, { type TimelineItem } from '../../components/design/TimelineVerticale';
+import LineageBreadcrumb, { type LineageNode } from '../../components/design/LineageBreadcrumb';
 
 import type { Truie, BandePorcelets, Saillie, TraitementSante } from '../../types/farm';
 
@@ -232,6 +233,16 @@ const TruieDetailView: React.FC = () => {
 
   const heroChips: SowHeroChip[] = [statutToChip(truie.statut)];
   if (lastBande?.id) heroChips.push({ label: `Bande ${lastBande.id}`, tone: 'terre' });
+
+  // ── Lignée (kit v2.1) ─────────────────────────────────────────────────────
+  const pariteCount = truie.nbPortees ?? historique.length;
+  const lineageNodes: LineageNode[] = [
+    {
+      id: truie.displayId,
+      label: pariteCount ? `Truie · ${pariteCount}e portée` : 'Truie',
+      current: true,
+    },
+  ];
 
   // ── Tagline contextuelle ───────────────────────────────────────────────────
 
@@ -458,6 +469,9 @@ const TruieDetailView: React.FC = () => {
               primaryLabel="Nouvel évènement"
               secondaryLabel="Imprimer"
             />
+
+            {/* Lignée (kit v2.1) */}
+            <LineageBreadcrumb nodes={lineageNodes} />
 
             {/* Reproduction en cours */}
             {cycleData && (

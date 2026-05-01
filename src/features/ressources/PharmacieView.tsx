@@ -7,6 +7,7 @@ import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
 import { Chip, DataRow, SectionDivider, KpiCard } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
+import EmptyState from '../../components/design/EmptyState';
 import { SeringueIcon } from '../../components/icons';
 import { useFarm } from '../../context/FarmContext';
 import { updateProduitVeto } from '../../services/supabaseWrites';
@@ -177,20 +178,11 @@ const PharmacieView: React.FC = () => {
 
             {/* ── Empty state ─────────────────────────────────────── */}
             {isEmpty ? (
-              <div
-                className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up"
-                role="status"
-              >
-                <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
-                  <SeringueIcon size={48} />
-                </div>
-                <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
-                  Pharmacie vide
-                </h3>
-                <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
-                  Aucun produit vétérinaire enregistré. Renseignez votre 1er produit véto via le bouton +
-                </p>
-              </div>
+              <EmptyState
+                icon={<SeringueIcon size={32} />}
+                title="Pharmacie vide"
+                description="Aucun produit vétérinaire enregistré. Renseignez votre 1er produit véto via le bouton +."
+              />
             ) : (
               <>
                 {/* ── Produits actifs (triés par urgence) ────────── */}

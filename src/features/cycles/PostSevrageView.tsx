@@ -9,6 +9,7 @@ import { PorceletIcon } from '../../components/icons';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
+import EmptyState from '../../components/design/EmptyState';
 import {
   Chip,
   SectionDivider,
@@ -38,6 +39,9 @@ import QuickPeseeForm from '../../components/forms/QuickPeseeForm';
  * - Visualisation des pesées terrain
  * - Analyse GMQ et recommandations
  */
+const spark = (base: number): number[] =>
+  Array.from({ length: 7 }, (_, i) => Math.max(1, Math.round(Math.abs(base) * (0.85 + 0.05 * i))));
+
 const PostSevrageView: React.FC = () => {
   const navigate = useNavigate();
   const { bandes } = useFarm();
@@ -113,15 +117,18 @@ const PostSevrageView: React.FC = () => {
               <KpiCardV6
                 label="Portées"
                 value={summary.nbPortees}
+                spark={spark(summary.nbPortees || 1)}
               />
               <KpiCardV6
                 label="Porcelets"
                 value={summary.totalVivants}
+                spark={spark(summary.totalVivants || 1)}
               />
               <KpiCardV6
                 label="Âge Moyen"
                 value={summary.avgAge}
                 unit="j"
+                spark={spark(summary.avgAge || 1)}
               />
               <KpiCardV6
                 label="Saturation"
@@ -133,6 +140,7 @@ const PostSevrageView: React.FC = () => {
                       ? 'var(--amber-pork)'
                       : undefined
                 }
+                spark={spark(occupation.tauxPct || 1)}
               />
             </div>
 
@@ -160,7 +168,11 @@ const PostSevrageView: React.FC = () => {
             <section className="space-y-4">
               <SectionDivider label="Suivi des Portées" />
               {portees.length === 0 ? (
-                <EmptyState />
+                <EmptyState
+                  icon={<PorceletIcon size={32} aria-hidden="true" />}
+                  title="Aucune portée post-sevrage"
+                  description="Les portées arriveront après sevrage (J+28). Elles resteront ici jusqu'à J+63."
+                />
               ) : (
                 <div className="flex flex-col gap-4">
                   {portees.map((p) => (
@@ -334,19 +346,6 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
   );
 };
 
-const EmptyState: React.FC = () => (
-  <div className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up">
-    <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
-      <PorceletIcon size={48} aria-hidden="true" />
-    </div>
-    <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
-      Aucune portée post-sevrage
-    </h3>
-    <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
-      Les portées arriveront après sevrage (J+28). Elles resteront ici jusqu'à J+63.
-    </p>
-  </div>
-);
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 

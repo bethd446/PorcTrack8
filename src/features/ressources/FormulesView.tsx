@@ -4,6 +4,7 @@ import { ClipboardList, Calculator, AlertTriangle } from 'lucide-react';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { Chip, SectionDivider } from '../../components/agritech';
+import EmptyState from '../../components/design/EmptyState';
 import {
   PHASE_LABELS,
   PHASE_TONES,
@@ -257,22 +258,11 @@ const FormulesView: React.FC = () => {
             <SectionDivider label={`${alimentFormules.length} formules`} />
 
             {alimentFormules.length === 0 ? (
-              <section
-                className="flex flex-col items-center justify-center py-16 px-8 text-center animate-fade-in-up"
-                role="status"
-              >
-                <div className="w-20 h-20 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-4 text-text-2">
-                  <ClipboardList size={40} aria-hidden="true" />
-                </div>
-                <h3 className="ft-heading text-text-0 text-[18px] mb-2 uppercase tracking-wide">
-                  Aucune formule
-                </h3>
-                <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
-                  Ajoutez l'onglet{' '}
-                  <span className="font-mono text-text-1">ALIMENT_FORMULES</span>{' '}
-                  dans Sheets, ou utilisez les formules de démo.
-                </p>
-              </section>
+              <EmptyState
+                icon={<ClipboardList size={32} aria-hidden="true" />}
+                title="Aucune formule"
+                description="Ajoutez l'onglet ALIMENT_FORMULES dans Sheets, ou utilisez les formules de démo."
+              />
             ) : (
               <div
                 className="flex flex-col gap-3"

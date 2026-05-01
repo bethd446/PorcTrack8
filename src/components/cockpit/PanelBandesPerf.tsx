@@ -77,8 +77,10 @@ const PanelBandesPerf: React.FC<PanelBandesPerfProps> = ({ bandes, target }) => 
                         bottom: 0,
                         background: 'var(--color-accent-500)',
                         borderRadius: 4,
-                        width: `${pct}%`,
-                        transition: 'width 240ms var(--ease-emil)',
+                        width: '100%',
+                        transform: `scaleX(${pct / 100})`,
+                        transformOrigin: 'left',
+                        transition: 'transform 240ms var(--ease-emil)',
                       }}
                     />
                   </div>
