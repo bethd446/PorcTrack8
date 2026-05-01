@@ -1,31 +1,17 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   PorcTrack 8 — Typography & motion
+   PorcTrack 8 — Type scale & motion
    ═══════════════════════════════════════════════════════════════════════════
-   Ce fichier conserve :
-     - les bindings typo --font-display / --font-body / --font-mono
+   Typography → tokens uniques dans src/index.css (commit 2/3).
+   Ce fichier conserve UNIQUEMENT :
      - les easings V2 (spring/gentle/snappy/out-expo)
      - les durées (fast/base/slow)
      - les radii étendus (lg/xl/2xl)
+     - le type scale
 
-   Les surfaces / text / accent sont entièrement pilotés par theme-tokens.css.
+   Les surfaces / text / accent sont pilotés par theme-tokens.css.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── Font stacks ─────────────────────────────────────────────────── */
-  /* v6 (2026-04-30) : --font-display est aligné sur --font-heading
-     (BigShoulders sentence-case). */
-  --font-sans:  'InstrumentSans', -apple-system, 'SF Pro Text', system-ui, sans-serif;
-  --font-mono:  'DMMono', 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
-
-  --font-display: 'BigShoulders', 'InstrumentSans', sans-serif;
-  --font-body:    var(--font-sans);
-  --font-data:    var(--font-mono);
-
-  /* Compat legacy (.ft-heading, .ft-values, .ft-code) */
-  --font-heading: 'BigShoulders', Impact, sans-serif;
-  --font-values:  var(--font-heading);
-  --font-mono-jb: var(--font-mono);
-
   /* ── Type scale ──────────────────────────────────────────────────── */
   --text-4xl: 44px;
   --text-3xl: 36px;

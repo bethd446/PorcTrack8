@@ -6,9 +6,7 @@
 
 /* ── @theme : extension Tailwind v4 (utilitaires bg-pig-* etc.) ────────── */
 @theme {
-  /* Typography v6 — Big Shoulders pour les titres internes (sentence case) */
-  --font-display: "BigShoulders", "InstrumentSans", sans-serif;
-  --font-heading: "BigShoulders", "InstrumentSans", sans-serif;
+  /* Typography → tokens uniques dans src/index.css (commit 2/3) */
 
   /* Amber-pork v6 — orange chaud (était un mustard plus saturé en legacy) */
   --color-amber-pork:      #F4A261;
@@ -31,9 +29,7 @@
 
 /* ── :root variables non-Tailwind (animations, layout) ─────────────────── */
 :root {
-  /* Override final : tokens typo restent BigShoulders sentence case. */
-  --font-display: "BigShoulders", "InstrumentSans", sans-serif !important;
-  --font-heading: "BigShoulders", "InstrumentSans", sans-serif !important;
+  /* Typography → tokens uniques dans src/index.css (commit 2/3) */
 
   /* Fond global v6 — ivoire vert (override du legacy beige chaud). */
   --bg-app: #f0f4f3;

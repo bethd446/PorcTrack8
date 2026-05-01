@@ -42,16 +42,7 @@
   --color-danger: var(--danger);
   --color-info: var(--info);
 
-  /* ── Typography stacks ───────────────────────────────────────────────────
-     display → screen titles (BigShoulders 800)
-     body    → UI text (InstrumentSans 400–600)
-     mono    → IDs, KPI labels, axes (DMMono 500)
-     values  → aliased to --font-heading (BigShoulders) — see index.css
-     ───────────────────────────────────────────────────────────────────── */
-  --font-display: "BigShoulders", "Impact", sans-serif;
-  --font-body:    "InstrumentSans", -apple-system, system-ui, sans-serif;
-  --font-mono-jb: "DMMono", ui-monospace, monospace;
-  /* --font-values is already defined in index.css — not overridden here */
+  /* Typography → tokens uniques dans src/index.css (commit 2/3) */
 
   /* ── Easings ─────────────────────────────────────────────────────────── */
   --ease-out-expo: cubic-bezier(0.23, 1, 0.32, 1);   /* UI state changes */

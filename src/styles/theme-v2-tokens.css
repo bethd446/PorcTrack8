@@ -68,7 +68,7 @@
 
 /* KPI v2 — chiffres plus grands */
 .kpi-v2-value {
-  font-family: var(--font-mono-jb), 'DM Mono', monospace;
+  font-family: var(--font-mono), 'DM Mono', monospace;
   font-feature-settings: "tnum" 1;
   font-weight: 700;
   font-size: var(--text-display-lg);
@@ -78,7 +78,7 @@
 }
 
 .kpi-v2-label {
-  font-family: var(--font-mono-jb), monospace;
+  font-family: var(--font-mono), monospace;
   font-size: var(--text-label-xs);
   text-transform: uppercase;
   letter-spacing: 0.06em;

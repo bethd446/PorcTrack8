@@ -129,7 +129,7 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
                     '--padding-end': '12px',
                     '--padding-top': '8px',
                     '--padding-bottom': '8px',
-                    fontFamily: 'var(--font-mono-jb)',
+                    fontFamily: 'var(--font-mono)',
                     fontSize: '12px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.04em',

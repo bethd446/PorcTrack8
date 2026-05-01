@@ -28,10 +28,15 @@
 @font-face { font-family: 'InstrumentSans'; src: url('/fonts/InstrumentSans-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
 
 @theme {
-  --font-sans:    "InstrumentSans", -apple-system, system-ui, sans-serif;
-  --font-heading: "BigShoulders", "InstrumentSans", sans-serif;
+  /* === Polices PorcTrack 8 — SOURCE UNIQUE (commit 2/3) === */
+  --font-heading: "BigShoulders", Impact, sans-serif;
+  --font-body:    "InstrumentSans", -apple-system, system-ui, sans-serif;
+  --font-mono:    "DMMono", ui-monospace, Menlo, monospace;
+
+  /* === Aliases backward-compat (deprecated, supprimés au commit 3) === */
+  --font-sans:    var(--font-body);
+  --font-display: var(--font-heading);
   --font-values:  var(--font-heading);
-  --font-mono:    "DMMono", ui-monospace, monospace;
 
   /* ── Palette Tailwind v4 — accent vert v6 + neutres ──────────────────── */
   --color-accent-700: #1a3d10;
