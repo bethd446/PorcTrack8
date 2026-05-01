@@ -23,8 +23,8 @@ const SaisirFAB: React.FC<SaisirFABProps> = ({ className = '', hidden = false })
         aria-expanded={open}
         className={`pressable fixed z-[55] flex items-center justify-center rounded-full transition-transform shadow-lg hover:scale-105 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${className}`}
         style={{
-          // Positionné AU-DESSUS de MariusFAB (bottom: 18, hauteur 52). 18 + 52 + 6 = 76.
-          bottom: 'calc(env(safe-area-inset-bottom, 0px) + 76px)',
+          // V19 : FAB unique. Positionné au-dessus de la nav mobile (~68px).
+          bottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)',
           right: 18,
           width: 56,
           height: 56,

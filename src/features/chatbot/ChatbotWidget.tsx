@@ -1,6 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { X, Send, Loader2 } from 'lucide-react';
-import MariusFAB from '../../components/design/MariusFAB';
 
 type Role = 'user' | 'assistant' | 'system';
 
@@ -200,8 +199,11 @@ export const ChatbotWidget: React.FC = () => {
     return null;
   }
 
+  // FAB séparé retiré (V19 Sprint 1) — ouverture via SaisirSheet "Demander à
+  // Marius" qui dispatch l'event 'open-chatbot' (handler dans le useEffect
+  // ci-dessus). Le widget rend uniquement le panel quand open === true.
   if (!open) {
-    return <MariusFAB online onClick={() => setOpen(true)} />;
+    return null;
   }
 
   return (

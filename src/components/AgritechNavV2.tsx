@@ -12,13 +12,6 @@ import {
   Package,
   BarChart3,
   MoreHorizontal,
-  Heart,
-  Syringe,
-  FileText,
-  Scale,
-  AlertOctagon,
-  Sparkles,
-  Plus,
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -293,96 +286,13 @@ function resolveActiveTab(pathname: string): TabId {
   return 'today';
 }
 
-/* ── FAB Menu (action métier) ────────────────────────────────────────────── */
-
-type FABMenuAction = {
-  id: string;
-  label: string;
-  icon: React.ReactNode;
-  onClick: () => void;
-  tone?: 'default' | 'accent' | 'amber' | 'red';
-};
-
-const TONE_BG: Record<NonNullable<FABMenuAction['tone']>, string> = {
-  default: 'var(--bg-2, #f3f4f6)',
-  accent: 'color-mix(in srgb, var(--color-accent-500) 14%, transparent)',
-  amber: 'color-mix(in srgb, var(--amber-pork, #F4A261) 18%, transparent)',
-  red: 'color-mix(in srgb, var(--red, #dc2626) 14%, transparent)',
-};
-
-const TONE_FG: Record<NonNullable<FABMenuAction['tone']>, string> = {
-  default: 'var(--ink, #111827)',
-  accent: 'var(--color-accent-500)',
-  amber: 'var(--amber-pork, #F4A261)',
-  red: 'var(--red, #dc2626)',
-};
-
-const FABMenu: React.FC<{ actions: FABMenuAction[]; isOpen: boolean; onClose: () => void }> = ({
-  actions,
-  isOpen,
-  onClose,
-}) => {
-  return (
-    <BottomSheet isOpen={isOpen} onClose={onClose} title="Actions rapides">
-      <div className="px-4 py-4">
-        <div className="grid grid-cols-2 gap-3">
-          {actions.map((a) => {
-            const tone = a.tone ?? 'default';
-            return (
-              <button
-                key={a.id}
-                type="button"
-                onClick={() => {
-                  a.onClick();
-                  onClose();
-                }}
-                className={cn(
-                  'flex flex-col items-center justify-center gap-2 rounded-2xl py-5 px-3',
-                  'transition-transform active:scale-[0.96]',
-                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                )}
-                style={{
-                  background: 'var(--bg-surface, #fff)',
-                  border: '1px solid var(--line, rgba(0,0,0,0.08))',
-                  transitionTimingFunction: 'var(--ease-emil)',
-                  transitionDuration: '160ms',
-                }}
-              >
-                <span
-                  className="inline-flex h-12 w-12 items-center justify-center rounded-full"
-                  style={{ background: TONE_BG[tone], color: TONE_FG[tone] }}
-                  aria-hidden="true"
-                >
-                  {a.icon}
-                </span>
-                <span
-                  className="text-[13px] font-semibold leading-tight text-center"
-                  style={{
-                    fontFamily: 'InstrumentSans, sans-serif',
-                    color: 'var(--ink, #111827)',
-                  }}
-                >
-                  {a.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </BottomSheet>
-  );
-};
-
 /* ── AgritechNavV2 ───────────────────────────────────────────────────────── */
 
 const AgritechNavV2: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { openAction } = useQuickActions();
   const { isOwner } = useAuth();
   const { alerts, alertesServeur } = usePilotage();
-
-  const [fabOpen, setFabOpen] = useState(false);
 
   const activeTabId = resolveActiveTab(location.pathname);
 
@@ -400,54 +310,6 @@ const AgritechNavV2: React.FC = () => {
     ).length;
     return local + server;
   }, [alerts, alertesServeur]);
-
-  const fabActions: FABMenuAction[] = useMemo(
-    () => [
-      {
-        id: 'saillie',
-        label: 'Saillie',
-        icon: <Heart size={20} />,
-        onClick: () => openAction('saillie'),
-        tone: 'accent',
-      },
-      {
-        id: 'soin',
-        label: 'Soin',
-        icon: <Syringe size={20} />,
-        onClick: () => openAction('soin'),
-        tone: 'accent',
-      },
-      {
-        id: 'note',
-        label: 'Note',
-        icon: <FileText size={20} />,
-        onClick: () => openAction('note'),
-        tone: 'default',
-      },
-      {
-        id: 'pesee',
-        label: 'Pesée',
-        icon: <Scale size={20} />,
-        onClick: () => openAction('pesee'),
-        tone: 'accent',
-      },
-      {
-        id: 'mortalite',
-        label: 'Mortalité',
-        icon: <AlertOctagon size={20} />,
-        onClick: () => openAction('mortalite'),
-        tone: 'red',
-      },
-      {
-        id: 'marius',
-        label: 'Marius IA',
-        icon: <Sparkles size={20} />,
-        onClick: () => window.dispatchEvent(new Event('open-chatbot')),
-        tone: 'amber',
-      },
-    ],
-    [openAction]
-  );
 
   const isMobile = useMediaQuery('(max-width: 1023px)');
 
@@ -491,33 +353,8 @@ const AgritechNavV2: React.FC = () => {
         </ul>
       </nav>
 
-      <button
-        type="button"
-        onClick={() => setFabOpen(true)}
-        aria-label="Actions rapides"
-        aria-expanded={fabOpen}
-        aria-haspopup="menu"
-        className={cn(
-          'fixed left-1/2 -translate-x-1/2 z-40',
-          'h-14 w-14 rounded-full',
-          'flex items-center justify-center',
-          'shadow-lg transition-transform active:scale-[0.94]',
-          'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
-        )}
-        style={{
-          bottom: `calc(env(safe-area-inset-bottom, 0px) + 80px)`,
-          background: 'var(--amber-pork, #F4A261)',
-          color: '#fff',
-          boxShadow: '0 8px 22px -6px color-mix(in srgb, var(--amber-pork, #F4A261) 55%, transparent)',
-          transitionDuration: '180ms',
-          transitionTimingFunction: 'var(--ease-emil)',
-          outlineColor: 'var(--amber-pork, #F4A261)',
-        }}
-      >
-        <Plus size={24} strokeWidth={2.5} aria-hidden="true" />
-      </button>
-
-      <FABMenu actions={fabActions} isOpen={fabOpen} onClose={() => setFabOpen(false)} />
+      {/* FAB amber retiré (V19 Sprint 1) — fusionné dans SaisirFAB.
+          QuickActionsProvider + useQuickActions restent utilisés ailleurs. */}
     </>
   );
 };

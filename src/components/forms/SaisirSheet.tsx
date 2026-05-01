@@ -1,5 +1,15 @@
 import React, { useEffect, useRef } from 'react';
-import { Heart, Baby, Milk, AlertOctagon, Scale, X } from 'lucide-react';
+import {
+  Heart,
+  Baby,
+  Milk,
+  AlertOctagon,
+  Scale,
+  Syringe,
+  FileText,
+  Sparkles,
+  X,
+} from 'lucide-react';
 
 import { useQuickActions, type QuickActionKind } from '../AgritechNavV2';
 
@@ -8,12 +18,15 @@ export interface SaisirSheetProps {
   onClose: () => void;
 }
 
+type ActionKind = QuickActionKind | 'marius';
+
 interface ActionDef {
-  kind: QuickActionKind;
+  kind: ActionKind;
   title: string;
   description: string;
   Icon: React.ComponentType<{ size?: number; strokeWidth?: number; 'aria-hidden'?: boolean }>;
   tone: 'accent' | 'amber' | 'red' | 'default';
+  separator?: boolean;
 }
 
 const ACTIONS: ActionDef[] = [
@@ -51,6 +64,28 @@ const ACTIONS: ActionDef[] = [
     description: 'Bande + poids moyen + date',
     Icon: Scale,
     tone: 'amber',
+  },
+  {
+    kind: 'soin',
+    title: 'Soin',
+    description: 'Traitement véto + animal',
+    Icon: Syringe,
+    tone: 'accent',
+  },
+  {
+    kind: 'note',
+    title: 'Note',
+    description: 'Observation libre',
+    Icon: FileText,
+    tone: 'default',
+  },
+  {
+    kind: 'marius',
+    title: 'Demander à Marius',
+    description: 'Assistant IA terrain',
+    Icon: Sparkles,
+    tone: 'amber',
+    separator: true,
   },
 ];
 
@@ -114,13 +149,17 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  const handlePick = (kind: QuickActionKind): void => {
+  const handlePick = (kind: ActionKind): void => {
     // Ouvre le form cible AVANT de fermer le sheet : ainsi le state du
     // QuickActionsProvider est posé en synchrone, et la fermeture du sheet
     // (qui re-focus l'élément précédent) n'interfère pas avec le mount du
     // form. L'ancien setTimeout perdait l'ouverture si le sheet était
     // déjà unmount au moment du flush.
-    openAction(kind);
+    if (kind === 'marius') {
+      window.dispatchEvent(new Event('open-chatbot'));
+    } else {
+      openAction(kind);
+    }
     onClose();
   };
 
@@ -177,47 +216,55 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
         </div>
 
         <div className="px-4 pt-2 pb-2 space-y-2">
-          {ACTIONS.map(({ kind, title, description, Icon, tone }) => (
-            <button
-              key={kind}
-              type="button"
-              onClick={() => handlePick(kind)}
-              className="flex w-full items-center gap-3 rounded-2xl px-4 py-4 text-left active:scale-[0.985] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-              style={{
-                background: 'var(--bg-surface, #fff)',
-                border: '1px solid var(--line, rgba(0,0,0,0.08))',
-                outlineColor: 'var(--color-accent-500)',
-                transition: 'transform var(--duration-press) var(--ease-emil)',
-              }}
-            >
-              <span
-                aria-hidden="true"
-                className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
-                style={{ background: TONE_BG[tone], color: TONE_FG[tone] }}
+          {ACTIONS.map(({ kind, title, description, Icon, tone, separator }) => (
+            <React.Fragment key={kind}>
+              {separator ? (
+                <div
+                  aria-hidden="true"
+                  className="my-2 h-px"
+                  style={{ background: 'var(--line, rgba(0,0,0,0.08))' }}
+                />
+              ) : null}
+              <button
+                type="button"
+                onClick={() => handlePick(kind)}
+                className="flex w-full items-center gap-3 rounded-2xl px-4 py-4 text-left active:scale-[0.985] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                style={{
+                  background: 'var(--bg-surface, #fff)',
+                  border: '1px solid var(--line, rgba(0,0,0,0.08))',
+                  outlineColor: 'var(--color-accent-500)',
+                  transition: 'transform var(--duration-press) var(--ease-emil)',
+                }}
               >
-                <Icon size={22} strokeWidth={2} aria-hidden />
-              </span>
-              <span className="min-w-0 flex-1">
                 <span
-                  className="block text-[15px] font-semibold leading-tight"
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    color: 'var(--ink, #111827)',
-                  }}
+                  aria-hidden="true"
+                  className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
+                  style={{ background: TONE_BG[tone], color: TONE_FG[tone] }}
                 >
-                  {title}
+                  <Icon size={22} strokeWidth={2} aria-hidden />
                 </span>
-                <span
-                  className="mt-0.5 block text-[12px] leading-snug"
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    color: 'var(--ink-soft, var(--muted, #6b7280))',
-                  }}
-                >
-                  {description}
+                <span className="min-w-0 flex-1">
+                  <span
+                    className="block text-[15px] font-semibold leading-tight"
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      color: 'var(--ink, #111827)',
+                    }}
+                  >
+                    {title}
+                  </span>
+                  <span
+                    className="mt-0.5 block text-[12px] leading-snug"
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      color: 'var(--ink-soft, var(--muted, #6b7280))',
+                    }}
+                  >
+                    {description}
+                  </span>
                 </span>
-              </span>
-            </button>
+              </button>
+            </React.Fragment>
           ))}
         </div>
       </div>

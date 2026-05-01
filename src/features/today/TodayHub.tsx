@@ -132,13 +132,15 @@ const TodayHub: React.FC = () => {
   }, [alerts]);
 
   const firstName = (() => {
+    const capitalize = (s: string): string =>
+      s.length === 0 ? s : s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
     const parts = (userName || 'Utilisateur').split(/\s+/).filter(Boolean);
     if (parts.length === 0) return 'Utilisateur';
     const skipPrefixes = new Set(['Ferme', 'ferme', 'M.', 'Mme', 'Mr', 'Dr', 'Pr']);
-    if (parts.length > 1 && skipPrefixes.has(parts[0])) {
-      return parts[parts.length - 1];
-    }
-    return parts[0];
+    const raw = parts.length > 1 && skipPrefixes.has(parts[0])
+      ? parts[parts.length - 1]
+      : parts[0];
+    return capitalize(raw);
   })();
   const now = new Date();
   const headerDate = now.toLocaleDateString('fr-FR', {

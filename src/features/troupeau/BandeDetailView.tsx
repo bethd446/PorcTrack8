@@ -13,8 +13,8 @@
  *   7. CTA "Enregistrer un événement" (placeholder — pas encore de sheet EVENTS)
  */
 
-import React, { useMemo, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { IonContent, IonModal, IonPage } from '@ionic/react';
 import { AlertCircle, Edit3 } from 'lucide-react';
 
@@ -26,6 +26,7 @@ import { Chip, SectionDivider, type ChipTone } from '../../components/agritech';
 import QuickMortalityForm from '../../components/forms/QuickMortalityForm';
 import QuickEditBandeForm from '../../components/forms/QuickEditBandeForm';
 import QuickPeseeForm from '../../components/forms/QuickPeseeForm';
+import QuickSevrageForm from '../../components/forms/QuickSevrageForm';
 import BandeFinanceCard from './BandeFinanceCard';
 import BandeActionToolbar from './BandeActionToolbar';
 import { CohortTimeline } from '../../components/design/CohortTimeline';
@@ -294,14 +295,26 @@ function estimateBandeWeight(bande: BandePorcelets, today: Date): number {
 const BandeDetailView: React.FC = () => {
   const { bandeId } = useParams<{ bandeId: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { bandes, transitions, truies, verrats, saillies, refreshData } = useFarm();
   const { isOwner } = useAuth();
   const [mortalityOpen, setMortalityOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [peseeOpen, setPeseeOpen] = useState(false);
+  const [sevrageOpen, setSevrageOpen] = useState(
+    () => searchParams.get('action') === 'sevrage',
+  );
   const [treeOpen, setTreeOpen] = useState(false);
 
   const decodedId = bandeId ? decodeURIComponent(bandeId) : '';
+
+  useEffect(() => {
+    if (searchParams.get('action') === 'sevrage') {
+      const next = new URLSearchParams(searchParams);
+      next.delete('action');
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const bande = useMemo(
     () => bandes.find((b) => b.id === decodedId || b.idPortee === decodedId),
@@ -648,6 +661,16 @@ const BandeDetailView: React.FC = () => {
           <QuickPeseeForm
             isOpen={peseeOpen}
             onClose={() => setPeseeOpen(false)}
+          />
+
+          <QuickSevrageForm
+            isOpen={sevrageOpen}
+            onClose={() => setSevrageOpen(false)}
+            defaultBandeId={bande.id}
+            onSuccess={() => {
+              setSevrageOpen(false);
+              void refreshData();
+            }}
           />
 
           <IonModal isOpen={treeOpen} onDidDismiss={() => setTreeOpen(false)}>

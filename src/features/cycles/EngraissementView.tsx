@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import {
   TrendingUp, Droplets, ArrowUpRight,
-  Scale, PackageCheck, AlertTriangle
+  Scale, AlertTriangle
 } from 'lucide-react';
 import AgritechLayout from '../../components/AgritechLayout';
 import Eyebrow from '../../components/design/Eyebrow';
@@ -352,15 +352,6 @@ const EngraissementCard: React.FC<{ data: EngraissementRowData; onOpen: () => vo
         </div>
       </div>
 
-      {isTransitionRequired && (
-        <button
-          className="w-full bg-accent text-bg-0 py-2.5 rounded-xl font-bold text-[12px] uppercase tracking-wider flex items-center justify-center gap-2"
-          onClick={(e) => { e.stopPropagation(); /* TODO: Transition to Finition */ }}
-        >
-          <PackageCheck size={16} />
-          Passer en Finition
-        </button>
-      )}
     </div>
   );
 };

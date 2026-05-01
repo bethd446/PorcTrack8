@@ -308,6 +308,30 @@ export const SettingsPage: React.FC = () => {
               </div>
             </section>
 
+            {/* ── Administration (OWNER/ADMIN) ─────────────────────────── */}
+            {userRole === 'OWNER' ? (
+              <section aria-label="Administration" role="region">
+                <Eyebrow dotColor="accent">Administration</Eyebrow>
+                <div style={{ ...cardStyle, marginTop: 12, padding: 0 }}>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/admin')}
+                    className="w-full px-5 py-4 flex items-center justify-between gap-3 text-left pressable hover:bg-bg-2 transition-colors rounded-[var(--radius-card,12px)]"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-semibold text-text-0 truncate">
+                        Utilisateurs &amp; admin
+                      </p>
+                      <p className="mt-0.5 font-mono text-[11px] text-text-2 truncate">
+                        Gérer comptes, rôles et invitations
+                      </p>
+                    </div>
+                    <span className="text-accent text-[14px] font-bold" aria-hidden="true">→</span>
+                  </button>
+                </div>
+              </section>
+            ) : null}
+
             {/* ── Avancé ───────────────────────────────────────────────── */}
             <section aria-label="Avancé" role="region">
               <Eyebrow dotColor="pig">Avancé</Eyebrow>
