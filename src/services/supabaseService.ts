@@ -107,6 +107,8 @@ export async function getVerrats(
       photoUrl:      r.photo_url ?? undefined,
       dateNaissance: r.date_naissance ?? undefined,
       loge:          r.localisation ?? undefined,
+      race:          r.breed ?? undefined,
+      lignee:        r.lignee_parentale ?? undefined,
       synced:        true,
     }));
 
@@ -129,7 +131,7 @@ export async function getBandes(
   try {
     const { data, error } = await supabase
       .from('batches')
-      .select('*, sows(code_id, boucle)')
+      .select('*, sows(code_id, boucle), boars(code_id)')
       .order('date_mise_bas', { ascending: false });
 
     if (error) return fail<BandePorcelets>(error.message);
@@ -151,6 +153,8 @@ export async function getBandes(
       notes:               r.notes ?? undefined,
       photoUrl:            r.photo_url ?? undefined,
       loge:                r.loge ?? undefined,
+      poidsMoyenKg:        r.poids_moyen_kg ?? undefined,
+      verratPere:          (r.boars as { code_id: string } | null)?.code_id ?? undefined,
       synced:              true,
     }));
 
@@ -378,38 +382,9 @@ export async function getFinances(
   }
 }
 
-// ── ÉCRITURES (insert / update / delete) ─────────────────────────────────────
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const db = supabase as any;
-
-/** Insère une ligne dans n'importe quelle table métier. */
-export async function insertRow(
-  table: string,
-  values: Record<string, unknown>
-): Promise<{ success: boolean; message?: string }> {
-  const { error } = await db.from(table).insert(values);
-  if (error) return { success: false, message: error.message };
-  return { success: true };
-}
-
-/** Met à jour une ligne par son UUID. */
-export async function updateRowById(
-  table: string,
-  id: string,
-  fields: Record<string, unknown>
-): Promise<{ success: boolean; message?: string }> {
-  const { error } = await db.from(table).update(fields).eq('id', id);
-  if (error) return { success: false, message: error.message };
-  return { success: true };
-}
-
-/** Supprime une ligne par son UUID. */
-export async function deleteRowById(
-  table: string,
-  id: string
-): Promise<{ success: boolean; message?: string }> {
-  const { error } = await db.from(table).delete().eq('id', id);
-  if (error) return { success: false, message: error.message };
-  return { success: true };
-}
+// ── ÉCRITURES ────────────────────────────────────────────────────────────────
+// Les fonctions génériques d'insert/update/delete sont retirées d'ici : elles
+// n'auto-injectaient pas `farm_id` et ouvraient un risque multi-tenant. Tous
+// les écrivains métier passent désormais par `services/supabaseWrites.ts`
+// (`insertSow`, `updateBatch`, `deleteNote`, etc.) qui résout `farm_id` via
+// `auth.getSession()` et le scelle au payload.

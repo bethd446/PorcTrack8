@@ -108,7 +108,22 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
     key: K,
     value: BandeEditRawInput[K],
   ): void => {
-    setForm(f => ({ ...f, [key]: value }));
+    setForm(f => {
+      const next = { ...f, [key]: value };
+      // Auto-calc date sevrage prévue = dateMB + 28j si vide
+      if (key === 'dateMB' && typeof value === 'string' && value && !f.dateSevragePrevue) {
+        const m = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (m) {
+          const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+          d.setUTCDate(d.getUTCDate() + 28);
+          const yyyy = d.getUTCFullYear();
+          const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+          const dd = String(d.getUTCDate()).padStart(2, '0');
+          next.dateSevragePrevue = `${yyyy}-${mm}-${dd}`;
+        }
+      }
+      return next;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
@@ -147,6 +162,18 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
       if ('NV' in p) supabasePatch.porcelets_nes_total = p.NV;
       if ('MORTS' in p) supabasePatch.nb_mort_nes = p.MORTS;
       if ('VIVANTS' in p) supabasePatch.porcelets_nes_vivants = p.VIVANTS;
+      if ('POIDS_MOYEN_KG' in p) {
+        supabasePatch.poids_moyen_kg = p.POIDS_MOYEN_KG === '' ? null : p.POIDS_MOYEN_KG;
+      }
+      if ('VERRAT_PERE' in p) {
+        const code = String(p.VERRAT_PERE ?? '').trim();
+        if (!code) {
+          supabasePatch.boar_id = null;
+        } else {
+          const verrat = verrats.find(v => v.id === code || v.displayId === code);
+          supabasePatch.boar_id = verrat?.id ?? null;
+        }
+      }
       if (photoDirty) supabasePatch.photo_url = photoUrl ?? null;
       if (logeDirty) supabasePatch.loge = loge.trim() || null;
       // Champs sans équivalent Supabase : TRUIE (snapshot), BOUCLE_MERE,
@@ -292,6 +319,46 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                   'cursor-not-allowed',
                 ].join(' ')}
               />
+            </div>
+
+            {/* Verrat père (combobox) */}
+            <div className="space-y-1.5">
+              <label htmlFor="edit-bande-verrat" className={labelCls}>
+                Verrat père{' '}
+                <span className="text-text-2 normal-case">· optionnel</span>
+              </label>
+              <select
+                id="edit-bande-verrat"
+                aria-invalid={!!errors.verratPere}
+                className={[
+                  'w-full h-12 rounded-md px-3',
+                  'bg-bg-0 border text-text-0',
+                  'font-mono text-[14px]',
+                  'outline-none transition-colors duration-[160ms]',
+                  'focus:border-accent focus:ring-1 focus:ring-accent',
+                  errors.verratPere
+                    ? 'border-red'
+                    : 'border-border hover:border-text-2',
+                ].join(' ')}
+                value={form.verratPere}
+                onChange={e => update('verratPere', e.target.value)}
+              >
+                <option value="">— Aucun —</option>
+                {verrats.map(v => (
+                  <option key={v.id} value={v.displayId}>
+                    {v.displayId}{v.nom ? ` · ${v.nom}` : ''}
+                  </option>
+                ))}
+              </select>
+              {errors.verratPere ? (
+                <p
+                  id="edit-bande-verrat-error"
+                  role="alert"
+                  className="font-mono text-[11px] text-red"
+                >
+                  {errors.verratPere}
+                </p>
+              ) : null}
             </div>
 
             {/* Loge (emplacement) */}
@@ -494,6 +561,39 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                   </p>
                 ) : null}
               </div>
+            </div>
+
+            {/* Poids moyen courant (kg) */}
+            <div className="space-y-1.5">
+              <label htmlFor="edit-bande-pmoy" className={labelCls}>
+                Poids moyen (kg){' '}
+                <span className="text-text-2 normal-case">· optionnel</span>
+              </label>
+              <input
+                id="edit-bande-pmoy"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={400}
+                step={0.1}
+                aria-invalid={!!errors.poidsMoyenKg}
+                aria-describedby={
+                  errors.poidsMoyenKg ? 'edit-bande-pmoy-error' : undefined
+                }
+                className={inputBase(!!errors.poidsMoyenKg)}
+                placeholder="0.0"
+                value={form.poidsMoyenKg}
+                onChange={e => update('poidsMoyenKg', e.target.value)}
+              />
+              {errors.poidsMoyenKg ? (
+                <p
+                  id="edit-bande-pmoy-error"
+                  role="alert"
+                  className="font-mono text-[11px] text-red"
+                >
+                  {errors.poidsMoyenKg}
+                </p>
+              ) : null}
             </div>
           </fieldset>
 

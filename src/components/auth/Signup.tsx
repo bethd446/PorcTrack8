@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { IonPage, IonContent } from '@ionic/react';
 import { ArrowRight, Mail, CheckCircle2 } from 'lucide-react';
@@ -12,6 +12,47 @@ const FONT_MONO = 'DMMono, ui-monospace, monospace';
 
 type Mode = 'magic' | 'password';
 
+type AuthError = { message?: string; status?: number; code?: string };
+
+const RESEND_COOLDOWN_S = 60;
+
+function validateEmailShape(raw: string): string | null {
+  const value = raw.trim();
+  const invalid = 'Format email invalide.';
+  if (!value) return invalid;
+  const atIdx = value.indexOf('@');
+  if (atIdx <= 0 || atIdx !== value.lastIndexOf('@')) return invalid;
+  const domain = value.slice(atIdx + 1).toLowerCase();
+  if (!domain || !domain.includes('.')) return invalid;
+  if (domain === 'localhost' || domain.endsWith('.local')) return invalid;
+  if (domain.startsWith('.') || domain.endsWith('.')) return invalid;
+  return null;
+}
+
+function extractDomain(raw: string): string {
+  const at = raw.lastIndexOf('@');
+  return at >= 0 ? raw.slice(at + 1) : raw;
+}
+
+function mapSupabaseAuthError(err: AuthError, email: string): string {
+  const msg = err.message ?? '';
+  if (/Email address .* is invalid/i.test(msg) || /email.*invalid/i.test(msg)) {
+    const domain = extractDomain(email) || 'inconnu';
+    return [
+      'Domaine email non reconnu.',
+      `Le service email n'a pas pu valider ton domaine (${domain}).`,
+      'Utilise plutôt un email standard (gmail.com, outlook.com, ton-domaine.fr, etc.) ou contacte-nous si tu as une adresse pro non standard.',
+    ].join('\n');
+  }
+  if (/User already registered/i.test(msg) || err.code === 'user_already_exists') {
+    return 'Un compte existe déjà avec cet email. Connecte-toi ou réinitialise ton mot de passe.';
+  }
+  if (/rate limit/i.test(msg) || err.status === 429) {
+    return 'Trop de tentatives. Patiente une minute avant de réessayer.';
+  }
+  return msg || 'Une erreur est survenue. Réessaie dans un instant.';
+}
+
 export default function Signup() {
   const [mode, setMode] = useState<Mode>('magic');
   const [email, setEmail] = useState('');
@@ -19,34 +60,76 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendNotice, setResendNotice] = useState<string | null>(null);
 
   // theme-day est désormais forcé globalement dans main.tsx (refonte v6 light).
 
-  const handleMagicLink = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const id = window.setInterval(() => {
+      setResendCooldown((s) => (s > 0 ? s - 1 : 0));
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [resendCooldown]);
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
-    const { error: err } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-    });
+
+    const shapeError = validateEmailShape(email);
+    if (shapeError) {
+      setError(shapeError);
+      return;
+    }
+
+    setLoading(true);
+    const redirectTo = `${window.location.origin}/auth/callback`;
+    const { error: err } =
+      mode === 'magic'
+        ? await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } })
+        : await supabase.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo } });
     setLoading(false);
-    if (err) setError(err.message);
-    else setSent(true);
+
+    if (err) {
+      const e2 = err as AuthError;
+      console.error('[Signup] Supabase auth error', {
+        mode,
+        message: e2.message,
+        status: e2.status,
+        code: e2.code,
+      });
+      setError(mapSupabaseAuthError(e2, email));
+      return;
+    }
+
+    setSent(true);
+    setResendCooldown(RESEND_COOLDOWN_S);
   };
 
-  const handlePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    const { error: err } = await supabase.auth.signUp({
+  const handleResend = async () => {
+    if (resendCooldown > 0 || resendLoading) return;
+    setResendLoading(true);
+    setResendNotice(null);
+    const redirectTo = `${window.location.origin}/auth/callback`;
+    const { error: err } = await supabase.auth.signInWithOtp({
       email,
-      password,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      options: { emailRedirectTo: redirectTo },
     });
-    setLoading(false);
-    if (err) setError(err.message);
-    else setSent(true);
+    setResendLoading(false);
+    if (err) {
+      const e2 = err as AuthError;
+      console.error('[Signup] Supabase resend error', {
+        message: e2.message,
+        status: e2.status,
+        code: e2.code,
+      });
+      setResendNotice(mapSupabaseAuthError(e2, email));
+      return;
+    }
+    setResendNotice('Lien renvoyé.');
+    setResendCooldown(RESEND_COOLDOWN_S);
   };
 
   return (
@@ -176,7 +259,7 @@ export default function Signup() {
                 }}
               >
                 <CheckCircle2 size={20} strokeWidth={2} style={{ color: 'var(--color-accent-600)', flexShrink: 0, marginTop: 2 }} />
-                <div>
+                <div style={{ flex: 1 }}>
                   <div
                     style={{
                       fontFamily: FONT_DISPLAY,
@@ -200,12 +283,51 @@ export default function Signup() {
                   >
                     Vérifiez votre boîte mail à <strong style={{ color: 'var(--ink)' }}>{email}</strong> (et le dossier spam si besoin).
                   </p>
+                  <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={handleResend}
+                      disabled={resendCooldown > 0 || resendLoading}
+                      style={{
+                        background: 'transparent',
+                        border: '1px solid var(--color-accent-500)',
+                        cursor: resendCooldown > 0 || resendLoading ? 'not-allowed' : 'pointer',
+                        opacity: resendCooldown > 0 || resendLoading ? 0.6 : 1,
+                        fontFamily: FONT_MONO,
+                        fontSize: 11,
+                        letterSpacing: '0.10em',
+                        textTransform: 'uppercase',
+                        color: 'var(--color-accent-600)',
+                        minHeight: 36,
+                        padding: '6px 12px',
+                        borderRadius: 'var(--radius-card)',
+                        fontWeight: 500,
+                      }}
+                    >
+                      {resendLoading
+                        ? 'Envoi…'
+                        : resendCooldown > 0
+                          ? `Renvoyer le lien (${resendCooldown}s)`
+                          : 'Renvoyer le lien'}
+                    </button>
+                    {resendNotice && (
+                      <span
+                        style={{
+                          fontFamily: FONT_BODY,
+                          fontSize: 12,
+                          color: 'var(--ink-soft)',
+                        }}
+                      >
+                        {resendNotice}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             ) : (
               <>
                 <form
-                  onSubmit={mode === 'magic' ? handleMagicLink : handlePassword}
+                  onSubmit={submit}
                   className="space-y-4"
                 >
                   <Field
@@ -243,6 +365,7 @@ export default function Signup() {
                         fontFamily: FONT_BODY,
                         fontSize: 13,
                         lineHeight: 1.45,
+                        whiteSpace: 'pre-line',
                       }}
                     >
                       {error}

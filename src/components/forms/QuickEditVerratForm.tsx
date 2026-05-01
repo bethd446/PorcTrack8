@@ -11,10 +11,12 @@ import {
   validateVerratEdit,
   ORIGINE_SUGGESTIONS,
   ALIMENTATION_SUGGESTIONS,
+  RACE_SUGGESTIONS,
   STATUT_OPTIONS,
   type VerratEditInitial,
   type VerratEditValidation,
 } from './quickEditVerratValidation';
+import { computeVerratPerformance } from '../../services/performanceAnalyzer';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import PhotoUploader from './PhotoUploader';
 
@@ -45,7 +47,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
   verrat,
   onSuccess,
 }) => {
-  const { refreshData } = useFarm();
+  const { refreshData, bandes, saillies, truies } = useFarm();
   const { user } = useAuth();
   const farmId = user?.id ?? '';
 
@@ -60,8 +62,15 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
       notes: verrat.notes ?? '',
       dateNaissance: (verrat.dateNaissance ?? '').slice(0, 10),
       loge: verrat.loge ?? '',
+      race: verrat.race ?? '',
+      lignee: verrat.lignee ?? '',
     }),
     [verrat],
+  );
+
+  const performance = useMemo(
+    () => computeVerratPerformance(verrat, bandes, saillies, truies),
+    [verrat, bandes, saillies, truies],
   );
 
   const [nom, setNom] = useState<string>(initial.nom);
@@ -75,6 +84,8 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
   const [notes, setNotes] = useState<string>(initial.notes);
   const [dateNaissance, setDateNaissance] = useState<string>(initial.dateNaissance);
   const [loge, setLoge] = useState<string>(initial.loge);
+  const [race, setRace] = useState<string>(initial.race);
+  const [lignee, setLignee] = useState<string>(initial.lignee);
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(verrat.photoUrl);
   const [photoDirty, setPhotoDirty] = useState(false);
   const [errors, setErrors] = useState<VerratEditValidation['errors']>({});
@@ -98,6 +109,8 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
       setNotes(initial.notes);
       setDateNaissance(initial.dateNaissance);
       setLoge(initial.loge);
+      setRace(initial.race);
+      setLignee(initial.lignee);
       setPhotoUrl(verrat.photoUrl);
       setPhotoDirty(false);
       setErrors({});
@@ -117,7 +130,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     const result = validateVerratEdit(
-      { nom, boucle, origine, alimentation, ration, statut, notes, dateNaissance, loge },
+      { nom, boucle, origine, alimentation, ration, statut, notes, dateNaissance, loge, race, lignee },
       initial,
     );
     if (!result.ok || !result.patch) {
@@ -146,6 +159,8 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
         supabasePatch.date_naissance = (p.DATE_NAISSANCE as string) || null;
       }
       if ('LOGE' in p) supabasePatch.localisation = p.LOGE;
+      if ('RACE' in p) supabasePatch.breed = p.RACE;
+      if ('LIGNEE' in p) supabasePatch.lignee_parentale = p.LIGNEE;
       if (photoDirty) supabasePatch.photo_url = photoUrl ?? null;
       await updateBoarByCode(verrat.id, supabasePatch);
       const online = typeof navigator !== 'undefined' && navigator.onLine;
@@ -409,6 +424,96 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
               ) : null}
             </div>
 
+            {/* Race */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="edit-verrat-race"
+                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              >
+                Race{' '}
+                <span className="text-text-2 normal-case">· optionnel</span>
+              </label>
+              <input
+                id="edit-verrat-race"
+                type="text"
+                list="edit-verrat-race-list"
+                maxLength={40}
+                aria-invalid={!!errors.race}
+                aria-describedby={
+                  errors.race ? 'edit-verrat-race-error' : 'edit-verrat-race-hint'
+                }
+                className={inputBaseClass(!!errors.race)}
+                placeholder="Ex: Large White"
+                value={race}
+                onChange={e => setRace(e.target.value)}
+                disabled={saving}
+                autoComplete="off"
+              />
+              <datalist id="edit-verrat-race-list">
+                {RACE_SUGGESTIONS.map(r => (
+                  <option key={r} value={r} />
+                ))}
+              </datalist>
+              <p
+                id="edit-verrat-race-hint"
+                className="font-mono text-[10px] text-text-2 tabular-nums"
+              >
+                {race.trim().length}/40
+              </p>
+              {errors.race ? (
+                <p
+                  id="edit-verrat-race-error"
+                  role="alert"
+                  className="font-mono text-[11px] text-red"
+                >
+                  {errors.race}
+                </p>
+              ) : null}
+            </div>
+
+            {/* Lignée parentale */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="edit-verrat-lignee"
+                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              >
+                Lignée parentale{' '}
+                <span className="text-text-2 normal-case">· optionnel</span>
+              </label>
+              <input
+                id="edit-verrat-lignee"
+                type="text"
+                maxLength={80}
+                aria-invalid={!!errors.lignee}
+                aria-describedby={
+                  errors.lignee
+                    ? 'edit-verrat-lignee-error'
+                    : 'edit-verrat-lignee-hint'
+                }
+                className={inputBaseClass(!!errors.lignee)}
+                placeholder="Ex: Père Titan / Mère Rose"
+                value={lignee}
+                onChange={e => setLignee(e.target.value)}
+                disabled={saving}
+                autoComplete="off"
+              />
+              <p
+                id="edit-verrat-lignee-hint"
+                className="font-mono text-[10px] text-text-2 tabular-nums"
+              >
+                {lignee.trim().length}/80
+              </p>
+              {errors.lignee ? (
+                <p
+                  id="edit-verrat-lignee-error"
+                  role="alert"
+                  className="font-mono text-[11px] text-red"
+                >
+                  {errors.lignee}
+                </p>
+              ) : null}
+            </div>
+
             {/* Loge */}
             <div className="space-y-1.5">
               <label
@@ -611,6 +716,34 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                 </p>
               ) : null}
             </div>
+          </section>
+
+          {/* ═══ Section Performances (readonly) ══════════════════════ */}
+          <section aria-label="Performances" className="space-y-4">
+            <h3 className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+              Performances · calculé
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-md border border-border bg-bg-2 px-3 py-2">
+                <p className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+                  Saillies cumulées
+                </p>
+                <p className="font-mono text-[18px] tabular-nums text-text-0 mt-1">
+                  {performance.nbSaillies}
+                </p>
+              </div>
+              <div className="rounded-md border border-border bg-bg-2 px-3 py-2">
+                <p className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+                  Taux fertilité
+                </p>
+                <p className="font-mono text-[18px] tabular-nums text-text-0 mt-1">
+                  {performance.tauxSuccesSaillie}%
+                </p>
+              </div>
+            </div>
+            <p className="font-mono text-[10px] text-text-2">
+              {performance.nbPorteesEngendrees} portées engendrées · {performance.tier}
+            </p>
           </section>
 
           {/* ═══ Section Notes ══════════════════════════════════════ */}

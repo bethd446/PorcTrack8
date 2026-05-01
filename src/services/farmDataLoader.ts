@@ -52,6 +52,8 @@ import {
 } from '../config/aliments';
 import { getQueueStatus, processQueue } from './offlineQueue';
 import { runAlertEngine, type FarmAlert } from './alertEngine';
+import { fetchDismissedAlertIds } from './alertDismissals';
+import { supabase } from './supabaseClient';
 import { enqueueAlert } from './confirmationQueue';
 import { logger } from './logger';
 import { scheduleFromAlerts } from './notifications';
@@ -291,7 +293,7 @@ export async function refreshAll(): Promise<void> {
     patch('ressources', { alimentFormules: formulesFinal });
 
     // Moteur d'alertes GTTT — s'exécute après chaque refresh complet
-    const newAlerts = runAlertEngine({
+    const rawAlerts = runAlertEngine({
       truies: truieRes.data,
       bandes: bandeRes.data,
       sante: santeRes.data,
@@ -299,6 +301,7 @@ export async function refreshAll(): Promise<void> {
       saillies: sailliesFinal,
       notes: notesRes.data,
     });
+    const newAlerts = await applyDismissals(rawAlerts);
 
     patch('pilotage', {
       alerts: newAlerts,
@@ -341,8 +344,8 @@ export async function processQueueAndRefresh(): Promise<void> {
  * et notifie les abonnés 'pilotage'. Utile pour rafraîchir les compteurs
  * (ex: sevrage en retard qui change à minuit) sans fetch réseau.
  */
-export function recomputeAlerts(): void {
-  const newAlerts = runAlertEngine({
+export async function recomputeAlerts(): Promise<void> {
+  const rawAlerts = runAlertEngine({
     truies: state.troupeau.truies,
     bandes: state.troupeau.bandes,
     sante: state.ressources.sante,
@@ -350,8 +353,26 @@ export function recomputeAlerts(): void {
     saillies: state.pilotage.saillies,
     notes: state.ressources.notes,
   });
+  const newAlerts = await applyDismissals(rawAlerts);
 
   patch('pilotage', { alerts: newAlerts });
+}
+
+/**
+ * Filtre les alertes ignorées (table `alert_dismissals`). Si l'utilisateur
+ * n'est pas connecté ou que le fetch échoue, retourne la liste brute.
+ */
+async function applyDismissals(alerts: FarmAlert[]): Promise<FarmAlert[]> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return alerts;
+    const dismissed = await fetchDismissedAlertIds(user.id);
+    if (dismissed.size === 0) return alerts;
+    return alerts.filter(a => !dismissed.has(a.id));
+  } catch (e) {
+    logger.error('farmDataLoader', 'applyDismissals failed', e);
+    return alerts;
+  }
 }
 
 // ── Helpers testables ───────────────────────────────────────────────────────

@@ -14,15 +14,17 @@ import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import {
   IonPage, IonContent,
   IonRefresher, IonRefresherContent,
+  IonToast,
 } from '@ionic/react';
 import {
   Bell, Heart, Package, Layers, Box,
-  CheckCircle2, Clock, Server, AlertOctagon,
+  CheckCircle2, Clock, Server, AlertOctagon, X,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { useMeta } from '../../context/FarmContext';
 import { usePilotage } from '../../context/PilotageContext';
 import { useTroupeau } from '../../context/TroupeauContext';
@@ -33,6 +35,7 @@ import Eyebrow from '../../components/design/Eyebrow';
 import EmptyState from '../../components/design/EmptyState';
 import TopBarSync from '../../components/design/TopBarSync';
 import { type FarmAlert, type AlertPriority, type AlertCategory } from '../../services/alertEngine';
+import { dismissAlert } from '../../services/alertDismissals';
 import { getPendingConfirmations, type PendingConfirmation } from '../../services/confirmationQueue';
 import { ConfirmationModal } from '../../components/ConfirmationModal';
 import type { AlerteServeur } from '../../types/farm';
@@ -284,6 +287,7 @@ interface AlertRowProps {
   serverTag?: boolean;
   actionLabel?: string;
   onClick?: () => void;
+  onDismiss?: () => void;
   ariaRole?: 'alert' | 'listitem';
 }
 
@@ -304,10 +308,14 @@ const AlertRow: React.FC<AlertRowProps> = ({
   serverTag,
   actionLabel,
   onClick,
+  onDismiss,
   ariaRole = 'listitem',
 }) => {
   const interactive = typeof onClick === 'function';
-  const Wrapper = interactive ? 'button' : 'div';
+  const hasDismiss = typeof onDismiss === 'function';
+  // Si on a un dismiss button, on ne peut pas wrapper en <button> (boutons
+  // imbriqués invalides). On utilise un <div> avec onClick à la place.
+  const Wrapper: 'button' | 'div' = hasDismiss ? 'div' : (interactive ? 'button' : 'div');
 
   const isUrgent = treatment === 'urgent';
   const isResolu = treatment === 'resolu';
@@ -322,12 +330,17 @@ const AlertRow: React.FC<AlertRowProps> = ({
   const titleWeight = 600;
   const dotColor = TREATMENT_DOT[treatment];
 
+  const wrapperProps: React.HTMLAttributes<HTMLElement> & { type?: 'button' } = hasDismiss
+    ? { onClick: interactive ? onClick : undefined }
+    : (interactive ? { type: 'button', onClick } : {});
+
   return (
     <Wrapper
-      {...(interactive ? { type: 'button', onClick } : {})}
+      {...wrapperProps}
       role={ariaRole}
       className="pressable"
       style={{
+        position: 'relative',
         background,
         borderRadius: 12,
         border,
@@ -343,6 +356,35 @@ const AlertRow: React.FC<AlertRowProps> = ({
         opacity: isResolu ? 0.65 : 1,
       }}
     >
+      {hasDismiss && !isResolu && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDismiss?.();
+          }}
+          aria-label="Ignorer cette alerte pour 30 jours"
+          className="pressable"
+          style={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            width: 28,
+            height: 28,
+            borderRadius: '50%',
+            border: 'none',
+            background: 'transparent',
+            color: 'var(--muted)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            padding: 0,
+          }}
+        >
+          <X size={14} aria-hidden="true" />
+        </button>
+      )}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <span
           style={{
@@ -473,13 +515,29 @@ const AlertRow: React.FC<AlertRowProps> = ({
 
 const AlertsView: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { alerts, alertesServeur } = usePilotage();
-  const { refreshData } = useMeta();
+  const { refreshData, recomputeAlerts } = useMeta();
   const { bandes, truies, verrats } = useTroupeau();
   const lookup = useMemo(() => ({ bandes, truies, verrats }), [bandes, truies, verrats]);
   const [pendingConfirmations, setPendingConfirmations] = useState<PendingConfirmation[]>([]);
   const [selectedAlert, setSelectedAlert] = useState<{ alert: FarmAlert; confirmId: string } | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterId>('ALL');
+  const [dismissToast, setDismissToast] = useState<{ show: boolean; message: string }>({
+    show: false, message: '',
+  });
+
+  const handleDismiss = useCallback(async (alertId: string) => {
+    if (!user) return;
+    try {
+      await dismissAlert(user.id, user.id, alertId, 'manual');
+      setDismissToast({ show: true, message: 'Alerte ignorée pour 30 jours' });
+      await recomputeAlerts();
+    } catch (e) {
+      console.warn('[AlertsView] dismiss failed', e);
+      setDismissToast({ show: true, message: 'Erreur lors de l\'ignorance' });
+    }
+  }, [user, recomputeAlerts]);
 
   const loadConfirmations = useCallback(async () => {
     const pc = await getPendingConfirmations();
@@ -867,6 +925,7 @@ const AlertsView: React.FC = () => {
                             }) : undefined}
                             actionLabel={actionLabel}
                             onClick={onClick}
+                            onDismiss={!isGrouped && user ? () => void handleDismiss(alert.id) : undefined}
                             ariaRole={alert.priority === 'CRITIQUE' ? 'alert' : 'listitem'}
                           />
                         </li>
@@ -991,6 +1050,14 @@ const AlertsView: React.FC = () => {
             void refreshData();
             void loadConfirmations();
           }}
+        />
+
+        <IonToast
+          isOpen={dismissToast.show}
+          message={dismissToast.message}
+          duration={2200}
+          position="bottom"
+          onDidDismiss={() => setDismissToast({ show: false, message: '' })}
         />
       </IonContent>
     </IonPage>

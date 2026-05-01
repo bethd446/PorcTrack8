@@ -41,6 +41,36 @@ export type Database = {
         }
         Relationships: []
       }
+      alert_dismissals: {
+        Row: {
+          alert_id: string
+          dismissed_at: string
+          dismissed_by: string
+          expires_at: string
+          farm_id: string
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          alert_id: string
+          dismissed_at?: string
+          dismissed_by: string
+          expires_at?: string
+          farm_id: string
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          alert_id?: string
+          dismissed_at?: string
+          dismissed_by?: string
+          expires_at?: string
+          farm_id?: string
+          id?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
       bandes: {
         Row: {
           date_entree: string | null
@@ -90,6 +120,7 @@ export type Database = {
           notes: string | null
           phase: string | null
           photo_url: string | null
+          poids_moyen_kg: number | null
           poids_moyen_sevrage_kg: number | null
           poids_portee_naissance_kg: number | null
           porcelets_nes_total: number
@@ -115,6 +146,7 @@ export type Database = {
           notes?: string | null
           phase?: string | null
           photo_url?: string | null
+          poids_moyen_kg?: number | null
           poids_moyen_sevrage_kg?: number | null
           poids_portee_naissance_kg?: number | null
           porcelets_nes_total?: number
@@ -140,6 +172,7 @@ export type Database = {
           notes?: string | null
           phase?: string | null
           photo_url?: string | null
+          poids_moyen_kg?: number | null
           poids_moyen_sevrage_kg?: number | null
           poids_portee_naissance_kg?: number | null
           porcelets_nes_total?: number
@@ -183,6 +216,7 @@ export type Database = {
           date_naissance: string | null
           farm_id: string
           id: string
+          lignee_parentale: string | null
           localisation: string | null
           name: string | null
           notes: string | null
@@ -200,6 +234,7 @@ export type Database = {
           date_naissance?: string | null
           farm_id: string
           id?: string
+          lignee_parentale?: string | null
           localisation?: string | null
           name?: string | null
           notes?: string | null
@@ -217,6 +252,7 @@ export type Database = {
           date_naissance?: string | null
           farm_id?: string
           id?: string
+          lignee_parentale?: string | null
           localisation?: string | null
           name?: string | null
           notes?: string | null

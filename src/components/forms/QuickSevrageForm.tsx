@@ -4,7 +4,10 @@ import { Baby, Check, CheckCircle2 } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
 import { useFarm } from '../../context/FarmContext';
-import { updateBatchByCode } from '../../services/supabaseWrites';
+import {
+  updateBatchByCode,
+  updateSowByCode,
+} from '../../services/supabaseWrites';
 import { useEscapeKey } from './useFormA11y';
 import type { BandePorcelets } from '../../types/farm';
 
@@ -90,14 +93,22 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
 
     setSaving(true);
     try {
-      // TODO: backend — flow sevrage complet (libération de la truie côté sows,
-      // alerte retour chaleur J+5, transition de phase post-sevrage).
       await updateBatchByCode(bandeId, {
         date_sevrage: dateIso,
         statut: 'Sevré',
         phase: 'post-sevrage',
         porcelets_sevrene_total: nb,
       });
+      // Libère la truie associée : statut "En attente saillie" pour déclencher
+      // l'alerte retour chaleur J+5 (R3).
+      const truieCode = selected?.truie?.trim();
+      if (truieCode) {
+        try {
+          await updateSowByCode(truieCode, { statut: 'En attente saillie' });
+        } catch (e) {
+          console.warn('[sevrage] libération truie échouée', e);
+        }
+      }
       setSuccess(true);
       setToast({ open: true, message: `Sevrage enregistré · ${nb} porcelets` });
       try { await refreshData(true); } catch { /* noop */ }
@@ -107,15 +118,8 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
         onClose();
       }, 1500);
     } catch (err) {
-      console.warn('TODO: backend sevrage — fallback note', err);
-      // Fallback : on confirme côté UI même si la colonne n'existe pas.
-      setSuccess(true);
-      setToast({ open: true, message: `Sevrage enregistré · ${nb} porcelets` });
-      if (onSuccess) onSuccess();
-      setTimeout(() => {
-        setSuccess(false);
-        onClose();
-      }, 1500);
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(`Erreur enregistrement : ${msg}`);
     } finally {
       setSaving(false);
     }

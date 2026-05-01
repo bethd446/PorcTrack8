@@ -14,13 +14,14 @@
  *   5. TOURNÉE DU JOUR — checklist terrain
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   IonContent, IonPage, IonRefresher, IonRefresherContent,
+  IonToast,
 } from '@ionic/react';
 import {
-  ArrowRight, ChevronRight, ClipboardCheck, ShieldCheck,
+  ArrowRight, ChevronRight, ClipboardCheck, ShieldCheck, X,
 } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
@@ -32,6 +33,7 @@ import { useMeta } from '../../context/FarmContext';
 import { useTroupeau } from '../../context/TroupeauContext';
 import { resolveAlertSubject } from '../../utils/alertSubject';
 import type { AlertPriority, FarmAlert } from '../../services/alertEngine';
+import { dismissAlert } from '../../services/alertDismissals';
 import {
   getPendingConfirmations,
   type PendingConfirmation,
@@ -95,12 +97,27 @@ const formatBandeLabel = (raw: string): string => {
 
 const TodayHub: React.FC = () => {
   const navigate = useNavigate();
-  const { userName } = useAuth();
+  const { userName, user } = useAuth();
   const { alerts, alertesServeur } = usePilotage();
   const { notes, stockAliment } = useRessources();
   const { recomputeAlerts } = useMeta();
   const { bandes, truies, verrats } = useTroupeau();
   const lookup = useMemo(() => ({ bandes, truies, verrats }), [bandes, truies, verrats]);
+  const [dismissToast, setDismissToast] = useState<{ show: boolean; message: string }>({
+    show: false, message: '',
+  });
+
+  const handleDismissAussi = useCallback(async (alertId: string) => {
+    if (!user) return;
+    try {
+      await dismissAlert(user.id, user.id, alertId, 'manual');
+      setDismissToast({ show: true, message: 'Alerte ignorée pour 30 jours' });
+      await recomputeAlerts();
+    } catch (e) {
+      console.warn('[TodayHub] dismiss failed', e);
+      setDismissToast({ show: true, message: 'Erreur lors de l\'ignorance' });
+    }
+  }, [user, recomputeAlerts]);
 
   // ── Confirmations en attente (file persistante) ───────────────────────
   const [pendingConfirmations, setPendingConfirmations] = useState<PendingConfirmation[]>([]);
@@ -262,6 +279,8 @@ const TodayHub: React.FC = () => {
     kind: AussiKind;
     to?: string;
     confirmation?: PendingConfirmation;
+    /** Identifiant FarmAlert dismissable (uniquement pour les alertes locales). */
+    dismissableAlertId?: string;
   }
 
   const aussiATraiter = useMemo<AussiItem[]>(() => {
@@ -278,6 +297,7 @@ const TodayHub: React.FC = () => {
         label: resolveAlertSubject(a.title, lookup),
         kind: 'navigate',
         to: alertHref(a),
+        dismissableAlertId: a.id,
       });
     }
 
@@ -547,18 +567,25 @@ const TodayHub: React.FC = () => {
                       item.priority === 'CRITIQUE'
                         ? 'var(--color-pig-deep)'
                         : 'var(--color-amber-pork-deep)';
+                    const canDismiss = !!item.dismissableAlertId && !!user;
                     return (
-                      <li key={item.id}>
+                      <li
+                        key={item.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          borderBottom: '1px solid var(--line)',
+                        }}
+                      >
                         <button
                           type="button"
                           onClick={() => handleAussiClick(item)}
                           className="pressable"
                           style={{
-                            width: '100%',
+                            flex: 1,
                             textAlign: 'left',
                             background: 'transparent',
                             border: 'none',
-                            borderBottom: '1px solid var(--line)',
                             padding: '12px 4px',
                             display: 'flex',
                             alignItems: 'center',
@@ -592,6 +619,30 @@ const TodayHub: React.FC = () => {
                           </span>
                           <ChevronRight size={16} color="var(--muted)" aria-hidden="true" />
                         </button>
+                        {canDismiss && (
+                          <button
+                            type="button"
+                            onClick={() => void handleDismissAussi(item.dismissableAlertId!)}
+                            aria-label="Ignorer cette alerte pour 30 jours"
+                            className="pressable"
+                            style={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: '50%',
+                              border: 'none',
+                              background: 'transparent',
+                              color: 'var(--muted)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              padding: 0,
+                              marginLeft: 4,
+                            }}
+                          >
+                            <X size={14} aria-hidden="true" />
+                          </button>
+                        )}
                       </li>
                     );
                   })}
@@ -751,6 +802,14 @@ const TodayHub: React.FC = () => {
             onSuccess={() => recomputeAlerts()}
           />
         </AgritechLayout>
+
+        <IonToast
+          isOpen={dismissToast.show}
+          message={dismissToast.message}
+          duration={2200}
+          position="bottom"
+          onDidDismiss={() => setDismissToast({ show: false, message: '' })}
+        />
       </IonContent>
     </IonPage>
   );

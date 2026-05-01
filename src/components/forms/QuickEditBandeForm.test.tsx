@@ -76,6 +76,8 @@ function makeInput(overrides: Partial<BandeEditRawInput> = {}): BandeEditRawInpu
     logeEngraissement: '',
     statut: 'Sous mère',
     notes: '',
+    poidsMoyenKg: '',
+    verratPere: '',
     ...overrides,
   };
 }
@@ -163,6 +165,8 @@ describe('[1] bandeToRawInput — tous les champs du formulaire', () => {
       logeEngraissement: 'M',
       statut: 'Sous mère',
       notes: 'test',
+      poidsMoyenKg: '',
+      verratPere: '',
     });
   });
 

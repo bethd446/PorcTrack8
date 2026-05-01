@@ -70,6 +70,10 @@ export interface Verrat {
   dateNaissance?: string;
   /** Emplacement loge / bâtiment. */
   loge?: string;
+  /** Race / lignée génétique (colonne `breed`). */
+  race?: string;
+  /** Lignée parentale libre (ex: "Père Titan / Mère Rose"). */
+  lignee?: string;
   synced: boolean;
   raw?: (string | number | boolean)[];
 }
@@ -98,6 +102,10 @@ export interface BandePorcelets {
   photoUrl?: string;
   /** Emplacement loge — alias `loge` côté DB (déjà présent). */
   loge?: string;
+  /** Poids moyen courant (kg) — colonne `poids_moyen_kg`. */
+  poidsMoyenKg?: number;
+  /** ID/code du verrat père (résolu via saillie ou saisi directement). */
+  verratPere?: string;
   notes?: string;
   synced: boolean;
   raw?: (string | number | boolean)[];

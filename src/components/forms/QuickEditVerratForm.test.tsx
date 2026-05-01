@@ -91,6 +91,8 @@ function makeInitial(over: Partial<VerratEditInitial> = {}): VerratEditInitial {
     notes: '',
     dateNaissance: '',
     loge: '',
+    race: '',
+    lignee: '',
     ...over,
   };
 }
@@ -106,6 +108,8 @@ function makeForm(over: Partial<VerratEditForm> = {}): VerratEditForm {
     notes: '',
     dateNaissance: '',
     loge: '',
+    race: '',
+    lignee: '',
     ...over,
   };
 }
@@ -148,6 +152,8 @@ describe('[1] QuickEditVerratForm · render structure', () => {
   it('expose les suggestions Alimentation', () => {
     expect(ALIMENTATION_SUGGESTIONS).toEqual([
       'Mâle reproducteur',
+      'Verrat standard',
+      'Verrat premium',
       'Entretien',
       'Flushing',
     ]);

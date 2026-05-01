@@ -44,6 +44,8 @@ export type BandeEditPatch = Partial<{
   LOGE_ENGRAISSEMENT: 'M' | 'F' | '';
   STATUT: string;
   NOTES: string;
+  POIDS_MOYEN_KG: number | '';
+  VERRAT_PERE: string;
 }> &
   Record<string, string | number | boolean | null>;
 
@@ -62,6 +64,8 @@ export interface BandeEditErrors {
   logeEngraissement?: string;
   statut?: string;
   notes?: string;
+  poidsMoyenKg?: string;
+  verratPere?: string;
 }
 
 export interface BandeEditValidation {
@@ -97,6 +101,10 @@ export interface BandeEditRawInput {
   logeEngraissement: '' | 'M' | 'F';
   statut: string;
   notes: string;
+  /** Poids moyen courant en kg (string input, vide autorisé). */
+  poidsMoyenKg: string;
+  /** ID/code du verrat père sélectionné (combobox). */
+  verratPere: string;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -159,6 +167,8 @@ export function bandeToRawInput(bande: BandePorcelets): BandeEditRawInput {
     logeEngraissement: bande.logeEngraissement ?? '',
     statut: bande.statut ?? '',
     notes: bande.notes ?? '',
+    poidsMoyenKg: bande.poidsMoyenKg !== undefined ? String(bande.poidsMoyenKg) : '',
+    verratPere: bande.verratPere ?? '',
   };
 }
 
@@ -272,6 +282,23 @@ export function validateBandeEdit(
     errors.logeEngraissement = 'Valeur invalide';
   }
 
+  // ── Poids moyen (kg) ─ optionnel, 0..400 ─────────────────────────────
+  let poidsMoyenN: number | null = null;
+  if (input.poidsMoyenKg.trim() !== '') {
+    const norm = input.poidsMoyenKg.replace(',', '.').trim();
+    const n = Number(norm);
+    if (!Number.isFinite(n)) errors.poidsMoyenKg = 'Poids numérique invalide';
+    else if (n < 0) errors.poidsMoyenKg = 'Poids ≥ 0';
+    else if (n > 400) errors.poidsMoyenKg = 'Poids ≤ 400 kg';
+    else poidsMoyenN = Math.round(n * 10) / 10;
+  }
+
+  // ── Verrat père : texte court (code ID résolu côté composant) ────────
+  const verratPere = input.verratPere.trim();
+  if (verratPere.length > MAX_TEXT) {
+    errors.verratPere = `Max ${MAX_TEXT} caractères`;
+  }
+
   if (Object.keys(errors).length > 0) return { ok: false, errors };
 
   // ── Construction du patch partiel ────────────────────────────────────
@@ -311,6 +338,13 @@ export function validateBandeEdit(
       const n = nums[raw];
       patch[key as string] = typeof n === 'number' ? n : '';
     }
+  }
+
+  if (input.poidsMoyenKg !== initial.poidsMoyenKg) {
+    patch.POIDS_MOYEN_KG = typeof poidsMoyenN === 'number' ? poidsMoyenN : '';
+  }
+  if (verratPere !== initial.verratPere.trim()) {
+    patch.VERRAT_PERE = verratPere;
   }
 
   return { ok: true, errors: {}, patch };

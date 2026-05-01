@@ -32,6 +32,8 @@ export type VerratEditPatch = Partial<{
   NOTES: string;
   DATE_NAISSANCE: string;
   LOGE: string;
+  RACE: string;
+  LIGNEE: string;
 }> &
   Record<string, string | number | boolean | null>;
 
@@ -48,6 +50,8 @@ export interface VerratEditValidation {
     notes?: string;
     dateNaissance?: string;
     loge?: string;
+    race?: string;
+    lignee?: string;
   };
 }
 
@@ -61,6 +65,8 @@ export interface VerratEditInitial {
   notes: string;
   dateNaissance: string;
   loge: string;
+  race: string;
+  lignee: string;
 }
 
 export interface VerratEditForm {
@@ -73,6 +79,8 @@ export interface VerratEditForm {
   notes: string;
   dateNaissance: string;
   loge: string;
+  race: string;
+  lignee: string;
 }
 
 /** Arrondi au 0.1 près (évite les flottants parasites). */
@@ -137,6 +145,14 @@ export function validateVerratEdit(
   const loge = (form.loge ?? '').trim();
   if (loge.length > 30) errors.loge = 'Loge trop longue (max 30)';
 
+  // ── Race ─────────────────────────────────────────────────────────────
+  const race = (form.race ?? '').trim();
+  if (race.length > 40) errors.race = 'Race trop longue (max 40)';
+
+  // ── Lignée parentale ─────────────────────────────────────────────────
+  const lignee = (form.lignee ?? '').trim();
+  if (lignee.length > 80) errors.lignee = 'Lignée trop longue (max 80)';
+
   if (Object.keys(errors).length > 0) return { ok: false, errors };
 
   // ── Diff (patch partiel : uniquement les champs modifiés) ────────────
@@ -162,6 +178,8 @@ export function validateVerratEdit(
     patch.DATE_NAISSANCE = dateNaissance;
   }
   if (loge !== (initial.loge ?? '').trim()) patch.LOGE = loge;
+  if (race !== (initial.race ?? '').trim()) patch.RACE = race;
+  if (lignee !== (initial.lignee ?? '').trim()) patch.LIGNEE = lignee;
 
   return { ok: true, errors: {}, patch };
 }
@@ -176,8 +194,19 @@ export const ORIGINE_SUGGESTIONS = [
 
 export const ALIMENTATION_SUGGESTIONS = [
   'Mâle reproducteur',
+  'Verrat standard',
+  'Verrat premium',
   'Entretien',
   'Flushing',
+] as const;
+
+export const RACE_SUGGESTIONS = [
+  'Large White',
+  'Landrace',
+  'Duroc',
+  'Pietrain',
+  'Large White × Landrace',
+  'Autre',
 ] as const;
 
 export const STATUT_OPTIONS = [

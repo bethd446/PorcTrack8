@@ -71,7 +71,7 @@ interface FarmContextType extends FarmState {
   getNotesForSubject: (id: string, type: string) => TraitementSante[];
   pullData: () => Promise<void>;
   processQueue: () => Promise<void>;
-  recomputeAlerts: () => void;
+  recomputeAlerts: () => Promise<void>;
 }
 
 // ── Meta context (loading / dataSource / refreshData) ──────────────────────
@@ -83,7 +83,7 @@ interface MetaContextType {
   refreshData: (force?: boolean) => Promise<void>;
   pullData: () => Promise<void>;
   processQueue: () => Promise<void>;
-  recomputeAlerts: () => void;
+  recomputeAlerts: () => Promise<void>;
 }
 
 const MetaContext = createContext<MetaContextType | undefined>(undefined);

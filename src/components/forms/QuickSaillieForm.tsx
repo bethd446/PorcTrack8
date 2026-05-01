@@ -24,7 +24,7 @@ interface QuickSaillieFormProps {
 }
 
 const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, defaultTruieDisplayId }) => {
-  const { truies, verrats } = useFarm();
+  const { truies, verrats, refreshData } = useFarm();
   const [selectedTruie, setSelectedTruie] = useState(defaultTruieDisplayId ?? '');
   const [selectedVerrat, setSelectedVerrat] = useState('');
 
@@ -66,6 +66,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
         statut: 'SAILLIE',
         notes: 'Saillie enregistrée depuis PorcTrack',
       });
+      try { await refreshData(true); } catch { /* noop */ }
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);
