@@ -39,9 +39,13 @@ import NotFound from './pages/NotFound';
 
 const AdminDashboard = React.lazy(() => import('./features/admin/AdminDashboard'));
 import AgritechNavV2, { QuickActionsProvider } from './components/AgritechNavV2';
-import SaisirFAB from './components/SaisirFAB';
 import { loadChecklistDefinitions } from './services/checklistService';
-import { ChatbotWidget } from './features/chatbot';
+
+// Lazy : FAB et widgets non critiques au LCP, montés au shell mais ouverts uniquement sur interaction
+const SaisirFAB = React.lazy(() => import(/* webpackChunkName: "saisir-fab" */ './components/SaisirFAB'));
+const ChatbotWidget = React.lazy(() =>
+  import(/* webpackChunkName: "chatbot-widget" */ './features/chatbot').then(m => ({ default: m.ChatbotWidget })),
+);
 
 // Lazy loading — chaque écran dans son propre chunk pour réduire le bundle initial
 const TableView = React.lazy(() => import(/* webpackChunkName: "table-view" */ './features/tables/TableView'));
@@ -123,7 +127,11 @@ const SaisirFABMount: React.FC = () => {
   ) {
     return null;
   }
-  return <SaisirFAB />;
+  return (
+    <React.Suspense fallback={null}>
+      <SaisirFAB />
+    </React.Suspense>
+  );
 };
 
 const AppShell: React.FC = () => (
@@ -227,7 +235,9 @@ const AppShell: React.FC = () => (
       <Route path="*" element={<NotFound />} />
     </Routes>
     <AgritechNavV2 />
-    <ChatbotWidget />
+    <React.Suspense fallback={null}>
+      <ChatbotWidget />
+    </React.Suspense>
     <SaisirFABMount />
   </>
 );

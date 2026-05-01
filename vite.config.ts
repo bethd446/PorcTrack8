@@ -117,10 +117,9 @@ export default defineConfig(() => {
 
             // Small utility libs grouped together
             if (
-              id.includes('/node_modules/date-fns') ||
-              id.includes('/node_modules/date-fns-tz') ||
               id.includes('/node_modules/clsx') ||
-              id.includes('/node_modules/tailwind-merge')
+              id.includes('/node_modules/tailwind-merge') ||
+              id.includes('/node_modules/class-variance-authority')
             ) {
               return 'vendor-util';
             }
@@ -129,9 +128,61 @@ export default defineConfig(() => {
               return 'vendor-supabase';
             }
 
+            // Radix UI primitives (used by shadcn-style components)
+            if (id.includes('/node_modules/@radix-ui/')) {
+              return 'vendor-radix';
+            }
+
+            // Form stack (react-hook-form + resolvers + zod validators)
+            if (
+              id.includes('/node_modules/react-hook-form') ||
+              id.includes('/node_modules/@hookform/') ||
+              id.includes('/node_modules/zod/')
+            ) {
+              return 'vendor-forms';
+            }
+
+            // Date pickers + date utilities (heavy locales)
+            if (
+              id.includes('/node_modules/react-day-picker') ||
+              id.includes('/node_modules/date-fns/') ||
+              id.includes('/node_modules/date-fns-tz/')
+            ) {
+              return 'vendor-dates';
+            }
+
+            // Command palette
+            if (id.includes('/node_modules/cmdk')) {
+              return 'vendor-cmdk';
+            }
+
+            // Toast notifications
+            if (id.includes('/node_modules/sonner')) {
+              return 'vendor-toast';
+            }
+
+            // TanStack (react-table etc.)
+            if (id.includes('/node_modules/@tanstack/')) {
+              return 'vendor-tanstack';
+            }
+
             // Everything else in node_modules -> generic vendor chunk
             return 'vendor-misc';
           },
+        },
+      },
+      modulePreload: {
+        polyfill: false,
+        // Only preload the critical-path chunks the entry HTML actually needs
+        // synchronously. Lazy-loaded route chunks (table-view, bandes,
+        // feature-controle, cheptel, alertes…) and feature-only vendor
+        // chunks (vendor-radix, vendor-forms, vendor-dates, vendor-cmdk,
+        // vendor-toast, vendor-tanstack, vendor-misc) are filtered out so
+        // they’re only fetched when the corresponding route is visited.
+        resolveDependencies: (_filename, deps) => {
+          const criticalPattern =
+            /(^|\/)(index|vendor-react|vendor-ionic-(core|react|components-[an])|vendor-supabase|vendor-capacitor|vendor-icons|vendor-util)(-[^/]+)?\.(js|css)$/;
+          return deps.filter((dep) => criticalPattern.test(dep));
         },
       },
       // With the chunking above the largest chunk is ~450 kB (vendor-ionic-core).

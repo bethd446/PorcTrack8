@@ -22,7 +22,8 @@
     "test:perf": "playwright test --config=tests/playwright.config.ts tests/e2e/performance.spec.ts",
     "test:ui": "playwright test --config=tests/playwright.config.ts --ui",
     "test:report": "playwright show-report tests/playwright-report",
-    "test:all": "playwright test --config=tests/playwright.config.ts --reporter=html"
+    "test:all": "playwright test --config=tests/playwright.config.ts --reporter=html",
+    "fonts:convert": "node scripts/convert-fonts-to-woff2.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^6.2.1",
@@ -94,6 +95,7 @@
     "typescript": "~5.8.2",
     "typescript-eslint": "^8.58.2",
     "vite": "^6.2.0",
-    "vitest": "^4.1.4"
+    "vitest": "^4.1.4",
+    "wawoff2": "^2.0.1"
   }
 }
