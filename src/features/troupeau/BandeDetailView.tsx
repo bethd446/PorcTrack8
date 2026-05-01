@@ -32,6 +32,8 @@ import QuickVenteForm from '../../components/forms/QuickVenteForm';
 import BandeFinanceCard from './BandeFinanceCard';
 import BandeICRealCard from './BandeICRealCard';
 import BandeActionToolbar from './BandeActionToolbar';
+import { NutritionAdvicePanel } from '../../components/cards/NutritionAdvicePanel';
+import { buildNutritionSnapshot } from '../../services/buildNutritionSnapshot';
 import { useQuickActions } from '../../components/AgritechNavV2';
 import PoidsTriView from './PoidsTriView';
 import { CohortTimeline } from '../../components/design/CohortTimeline';
@@ -301,7 +303,7 @@ const BandeDetailView: React.FC = () => {
   const { bandeId } = useParams<{ bandeId: string }>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { bandes, transitions, truies, verrats, saillies, refreshData } = useFarm();
+  const { bandes, transitions, truies, verrats, saillies, notes, refreshData } = useFarm();
   const { isOwner } = useAuth();
   const { openAction } = useQuickActions();
   const [mortalityOpen, setMortalityOpen] = useState(false);
@@ -344,6 +346,18 @@ const BandeDetailView: React.FC = () => {
   const cohortCtx = useMemo(
     () => (bande ? computeCohortContext(bande, today) : null),
     [bande, today],
+  );
+
+  const nutritionSnapshot = useMemo(
+    () =>
+      bande
+        ? buildNutritionSnapshot({
+            bande,
+            today,
+            weightLogs: notes,
+          })
+        : null,
+    [bande, today, notes],
   );
 
   if (!bande || !cohortCtx) {
@@ -662,6 +676,19 @@ const BandeDetailView: React.FC = () => {
                 />
               </div>
             </section>
+
+            {/* ── Conseils nutritionnels (Sprint V23-S1.5) ───────────── */}
+            {nutritionSnapshot ? (
+              <section aria-label="Conseils nutritionnels">
+                <SectionDivider label="Conseils nutritionnels" />
+                <div className="mt-3">
+                  <NutritionAdvicePanel
+                    snapshot={nutritionSnapshot}
+                    phaseBiologique={bande.statut}
+                  />
+                </div>
+              </section>
+            ) : null}
 
             {/* ── Timeline événements ─────────────────────────────────── */}
             {events.length > 0 ? (
