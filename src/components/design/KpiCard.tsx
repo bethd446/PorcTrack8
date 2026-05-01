@@ -174,7 +174,7 @@ export default function KpiCard({
   };
 
   const unitStyle: React.CSSProperties = {
-    fontFamily: 'BricolageGrotesque, system-ui, sans-serif',
+    fontFamily: 'var(--font-heading)',
     fontSize: 16,
     fontWeight: 500,
     color: isAccent ? 'rgba(255,255,255,0.75)' : 'var(--muted)',

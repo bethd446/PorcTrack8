@@ -539,7 +539,7 @@ const BatimentsSummary: React.FC<BatimentsSummaryProps> = ({ onSeeAll }) => {
             </span>
             <span
               style={{
-                fontFamily: 'BricolageGrotesque, system-ui, sans-serif',
+                fontFamily: 'var(--font-heading)',
                 fontSize: 22,
                 fontWeight: 600,
                 color: 'var(--ink)',

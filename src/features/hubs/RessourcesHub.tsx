@@ -813,7 +813,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
         <span
           style={{
-            fontFamily: 'BricolageGrotesque, system-ui, sans-serif',
+            fontFamily: 'var(--font-heading)',
             fontSize: isUrgent ? 28 : 24,
             fontWeight: 600,
             letterSpacing: '-0.02em',

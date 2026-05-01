@@ -197,7 +197,7 @@ const TruieDetailView: React.FC = () => {
         <IonContent className="ion-padding">
           <h1
             style={{
-              fontFamily: 'BigShoulders, "Big Shoulders Display", sans-serif',
+              fontFamily: 'var(--font-heading)',
               fontSize: 28,
               fontWeight: 700,
               color: 'var(--ink)',
@@ -490,7 +490,7 @@ const TruieDetailView: React.FC = () => {
                     Saillie · jour{' '}
                     <strong
                       style={{
-                        fontFamily: 'BricolageGrotesque, ui-sans-serif, system-ui',
+                        fontFamily: 'var(--font-heading)',
                         fontWeight: 600,
                         color: 'var(--amber-pork-deep)',
                         fontSize: 16,
@@ -568,7 +568,7 @@ const TruieDetailView: React.FC = () => {
                       title={isEmpty ? 'Donnée non disponible — saisir une saillie pour activer.' : undefined}
                       aria-label={isEmpty ? `${v.label} non disponible` : undefined}
                       style={{
-                        fontFamily: 'BricolageGrotesque, ui-sans-serif, system-ui',
+                        fontFamily: 'var(--font-heading)',
                         fontSize: 22,
                         lineHeight: 1,
                         color: v.valColor,
@@ -984,7 +984,7 @@ const SaillieRow: React.FC<{ saillie: Saillie; num: number; last: boolean }> = (
       </div>
       <div
         style={{
-          fontFamily: 'BigShoulders, "Big Shoulders Display", sans-serif',
+          fontFamily: 'var(--font-heading)',
           fontSize: 14,
           lineHeight: 1.2,
           color: 'var(--ink)',

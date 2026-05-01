@@ -420,7 +420,7 @@ function MonitoringPanel({ logs }: { logs: AdminLog[] }) {
               </span>
               <span
                 style={{
-                  fontFamily: 'BricolageGrotesque, system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: 12,
                   color: 'var(--muted)',
                 }}

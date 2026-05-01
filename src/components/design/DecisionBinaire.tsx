@@ -39,7 +39,7 @@ export default function DecisionBinaire({
       <div style={{ fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.5 }}>
         <strong
           style={{
-            fontFamily: 'BigShoulders, "Big Shoulders Display", sans-serif',
+            fontFamily: 'var(--font-heading)',
             fontWeight: 600,
             color: 'var(--amber-pork-deep)',
             fontSize: 15,

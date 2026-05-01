@@ -43,14 +43,14 @@
   --color-info: var(--info);
 
   /* ── Typography stacks ───────────────────────────────────────────────────
-     display → screen titles (Big Shoulders Display 800)
-     body    → UI text (Inter 400–600)
-     mono    → IDs, KPI labels, axes (JetBrains Mono 500)
-     values  → (reused) BricolageGrotesque for big numbers on light surfaces
+     display → screen titles (BigShoulders 800)
+     body    → UI text (InstrumentSans 400–600)
+     mono    → IDs, KPI labels, axes (DMMono 500)
+     values  → aliased to --font-heading (BigShoulders) — see index.css
      ───────────────────────────────────────────────────────────────────── */
-  --font-display: "Big Shoulders Display", "BigShoulders", "Impact", sans-serif;
-  --font-body:    "Inter", "InstrumentSans", -apple-system, system-ui, sans-serif;
-  --font-mono-jb: "JetBrains Mono", "DMMono", ui-monospace, monospace;
+  --font-display: "BigShoulders", "Impact", sans-serif;
+  --font-body:    "InstrumentSans", -apple-system, system-ui, sans-serif;
+  --font-mono-jb: "DMMono", ui-monospace, monospace;
   /* --font-values is already defined in index.css — not overridden here */
 
   /* ── Easings ─────────────────────────────────────────────────────────── */

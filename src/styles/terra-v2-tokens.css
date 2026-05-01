@@ -22,8 +22,8 @@
   --font-data:    var(--font-mono);
 
   /* Compat legacy (.ft-heading, .ft-values, .ft-code) */
-  --font-heading: 'BigShoulders', 'Big Shoulders Display', Impact, sans-serif;
-  --font-values:  'BricolageGrotesque', var(--font-sans);
+  --font-heading: 'BigShoulders', Impact, sans-serif;
+  --font-values:  var(--font-heading);
   --font-mono-jb: var(--font-mono);
 
   /* ── Type scale ──────────────────────────────────────────────────── */

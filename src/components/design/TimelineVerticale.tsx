@@ -125,7 +125,7 @@ export default function TimelineVerticale({ items, className = '' }: TimelineVer
 
             <h4
               style={{
-                fontFamily: 'BigShoulders, "Big Shoulders Display", sans-serif',
+                fontFamily: 'var(--font-heading)',
                 fontSize: 16,
                 color: 'var(--ink)',
                 margin: '4px 0 4px',

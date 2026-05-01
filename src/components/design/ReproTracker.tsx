@@ -83,7 +83,7 @@ export default function ReproTracker({ stages, progressPct, className = '' }: Re
             </div>
             <div
               style={{
-                fontFamily: 'BricolageGrotesque, ui-sans-serif, system-ui',
+                fontFamily: 'var(--font-heading)',
                 fontSize: 12,
                 color: 'var(--ink)',
                 marginTop: 2,

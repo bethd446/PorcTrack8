@@ -264,7 +264,7 @@ const NavTab: React.FC<NavTabProps> = ({ tab, isActive, onSelect, badgeCount }) 
               style={{
                 background: 'var(--red, #dc2626)',
                 color: 'var(--bg-surface, #fff)',
-                fontFamily: 'BricolageGrotesque, sans-serif',
+                fontFamily: 'var(--font-heading)',
               }}
             >
               {badgeCount > 9 ? '9+' : badgeCount}

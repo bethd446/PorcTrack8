@@ -23,8 +23,6 @@
 /* ── Polices ──────────────────────────────────────────────────────────────── */
 @font-face { font-family: 'BigShoulders'; src: url('/fonts/BigShoulders-Bold.ttf') format('truetype'); font-weight: 700; font-display: swap; }
 @font-face { font-family: 'BigShoulders'; src: url('/fonts/BigShoulders-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
-@font-face { font-family: 'BricolageGrotesque'; src: url('/fonts/BricolageGrotesque-Bold.ttf') format('truetype'); font-weight: 700; font-display: swap; }
-@font-face { font-family: 'BricolageGrotesque'; src: url('/fonts/BricolageGrotesque-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
 @font-face { font-family: 'DMMono'; src: url('/fonts/DMMono-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
 @font-face { font-family: 'InstrumentSans'; src: url('/fonts/InstrumentSans-Bold.ttf') format('truetype'); font-weight: 700; font-display: swap; }
 @font-face { font-family: 'InstrumentSans'; src: url('/fonts/InstrumentSans-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
@@ -32,7 +30,7 @@
 @theme {
   --font-sans:    "InstrumentSans", -apple-system, system-ui, sans-serif;
   --font-heading: "BigShoulders", "InstrumentSans", sans-serif;
-  --font-values:  "BricolageGrotesque", "InstrumentSans", sans-serif;
+  --font-values:  var(--font-heading);
   --font-mono:    "DMMono", ui-monospace, monospace;
 
   /* ── Palette Tailwind v4 — accent vert v6 + neutres ──────────────────── */

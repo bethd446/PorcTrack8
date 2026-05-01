@@ -275,7 +275,7 @@ const PilotageHub: React.FC = () => {
               </Eyebrow>
               <div
                 style={{
-                  fontFamily: 'BricolageGrotesque, system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: 44,
                   fontWeight: 700,
                   letterSpacing: '-0.03em',

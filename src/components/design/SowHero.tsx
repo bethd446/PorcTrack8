@@ -116,7 +116,7 @@ export default function SowHero({
 
           <h1
             style={{
-              fontFamily: 'BigShoulders, "Big Shoulders Display", sans-serif',
+              fontFamily: 'var(--font-heading)',
               fontSize: 44,
               lineHeight: 1,
               fontWeight: 700,

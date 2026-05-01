@@ -9,7 +9,7 @@ import PublicShell from '../components/design/PublicShell';
 const FONT_DISPLAY = 'BigShoulders, "InstrumentSans", sans-serif';
 const FONT_BODY = 'InstrumentSans, -apple-system, system-ui, sans-serif';
 const FONT_MONO = 'DMMono, ui-monospace, monospace';
-const FONT_NUM = 'BricolageGrotesque, "InstrumentSans", sans-serif';
+const FONT_NUM = 'BigShoulders, "InstrumentSans", sans-serif';
 
 export default function About() {
   return (

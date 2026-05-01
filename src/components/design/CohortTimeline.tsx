@@ -293,7 +293,7 @@ const Stat: React.FC<{ value: string; label: string; unit?: string }> = ({
   <div style={{ textAlign: 'right' }}>
     <div
       style={{
-        fontFamily: 'BricolageGrotesque, "Bricolage Grotesque", system-ui, sans-serif',
+        fontFamily: 'var(--font-heading)',
         fontSize: 22,
         fontWeight: 700,
         lineHeight: 1,
