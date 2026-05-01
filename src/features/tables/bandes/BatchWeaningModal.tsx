@@ -42,7 +42,7 @@ const BatchWeaningModal: React.FC<BatchWeaningModalProps> = ({
     try {
       for (const bande of selectedBandes) {
         currentStep++;
-        setProgress({ current: currentStep, total: totalSteps, phase: `Sevrage lot ${bande.id}...` });
+        setProgress({ current: currentStep, total: totalSteps, phase: `Sevrage bande ${bande.id}...` });
 
         try {
           const batchId = await resolveBatchIdByCode(bande.id);
@@ -80,7 +80,7 @@ const BatchWeaningModal: React.FC<BatchWeaningModalProps> = ({
         currentStep++;
         setProgress({ current: currentStep, total: totalSteps, phase: 'Génération du Point Hebdo...' });
 
-        const summary = `Sevrage groupé de ${selectedBandes.length} lots. Poids moy: ${poidsMoyen || '?'}kg. Notes: ${note || 'N/A'} — par ${kvGet('user_name') || 'Système'}`;
+        const summary = `Sevrage groupé de ${selectedBandes.length} bandes. Poids moy: ${poidsMoyen || '?'}kg. Notes: ${note || 'N/A'} — par ${kvGet('user_name') || 'Système'}`;
 
         await insertNote({
           content: summary,
@@ -190,7 +190,7 @@ const BatchWeaningModal: React.FC<BatchWeaningModalProps> = ({
 
             <div>
               <label className="block font-mono text-[11px] uppercase tracking-wide text-text-2 mb-2">
-                Poids moyen du lot (kg)
+                Poids moyen de la bande (kg)
               </label>
               <input
                 type="number"

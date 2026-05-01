@@ -811,12 +811,11 @@ const TruieDetailView: React.FC = () => {
                   fontFamily: 'DMMono, ui-monospace, monospace',
                   fontSize: 11,
                   letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
                   color: 'var(--ink)',
                   cursor: 'pointer',
                 }}
               >
-                Fermer
+                Fermer l'arbre
               </button>
             </div>
           </IonContent>

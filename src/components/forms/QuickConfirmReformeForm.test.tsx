@@ -110,8 +110,8 @@ describe('QuickConfirmReformeForm', () => {
     );
     const select = screen.getByLabelText(/Motif retenu/i) as HTMLSelectElement;
     const labels = Array.from(select.options).map(o => o.textContent);
-    expect(labels).toContain('Inactivité prolongée');
-    expect(labels).toContain('Mauvaise productivité');
+    expect(labels).toContain('Truie inactive longue durée');
+    expect(labels).toContain('Productivité faible');
     expect(labels).toContain('Boiterie');
     expect(labels).toContain('Maladie');
     expect(labels).toContain('Âge');

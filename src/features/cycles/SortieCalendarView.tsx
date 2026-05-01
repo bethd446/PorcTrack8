@@ -143,13 +143,13 @@ const SortieCalendarView: React.FC = () => {
                 <div className="card-dense !p-0 overflow-hidden mt-3">
                   {calendar.map(({ bande, dateSortiePrevue, daysAhead, poidsActuel }) => {
                     const tone: ChipTone = daysAhead <= 0 ? 'red' : daysAhead <= 7 ? 'amber' : 'default';
-                    const label = daysAhead <= 0 ? 'À SORTIR' : daysAhead === 1 ? 'DEMAIN' : `J-${daysAhead}`;
+                    const label = daysAhead <= 0 ? 'À sortir' : daysAhead === 1 ? 'Demain' : `J-${daysAhead}`;
 
                     return (
                       <div key={bande.id} className="border-b border-border last:border-b-0">
                         <DataRow
                           primary={bande.idPortee || bande.id}
-                          secondary={`~${Math.round(poidsActuel)} kg · ${bande.vivants} têtes · MB ${bande.dateMB || '?'}`}
+                          secondary={`~${Math.round(poidsActuel)} kg · ${bande.vivants} porc${bande.vivants > 1 ? 's' : ''} · MB ${bande.dateMB || '?'}`}
                           meta={formatDate(dateSortiePrevue)}
                           accessory={<Chip label={label} tone={tone} size="xs" />}
                           onClick={() => navigate(`/troupeau/bandes/${encodeURIComponent(bande.id)}`)}

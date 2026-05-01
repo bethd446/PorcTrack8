@@ -386,7 +386,7 @@ const PilotageHub: React.FC = () => {
                 {topBande && (
                   <PerfBandeCard
                     tone="accent"
-                    label="Top performer"
+                    label="Bande la mieux notée"
                     bandeId={topBande.bande.idPortee}
                     metric={`ROI : +${topBande.report.roiPct}%`}
                   />
@@ -479,8 +479,8 @@ const PilotageHub: React.FC = () => {
                 />
                 <ModuleTile
                   icon={<TrendingUp size={18} aria-hidden="true" />}
-                  title="Performance GTTT"
-                  subtitle="Benchmarks"
+                  title="Performance technique"
+                  subtitle="Benchmarks GTTT"
                   onClick={() => navigate('/pilotage/perf')}
                 />
                 <ModuleTile

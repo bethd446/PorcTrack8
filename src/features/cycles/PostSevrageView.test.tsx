@@ -185,7 +185,7 @@ describe('PostSevrageView — smoke', () => {
 });
 
 describe('PostSevrageView — métier', () => {
-  it('une bande avec dateMB ancienne (terrainPhase=CROISSANCE) affiche le CTA "Préparer loge croissance"', () => {
+  it('une bande avec dateMB ancienne (terrainPhase=CROISSANCE) affiche le CTA "Préparer la loge croissance"', () => {
     // dateMB 70 jours avant aujourd'hui (15/05) → 06/03/2026
     // age=70j > CR=63 ⇒ terrainPhase=CROISSANCE
     // statut "Sevrés" + sevrage récent (5j) ⇒ phase déclarée=POST_SEVRAGE
@@ -209,7 +209,7 @@ describe('PostSevrageView — métier', () => {
     expect(screen.getByText('P-LATE')).toBeTruthy();
     expect(
       screen.getByRole('button', {
-        name: /Préparer loge croissance|Transférer maintenant/i,
+        name: /Préparer la loge croissance|Transférer maintenant/i,
       }),
     ).toBeTruthy();
   });

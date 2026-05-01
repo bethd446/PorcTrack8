@@ -184,10 +184,10 @@ const MaterniteView: React.FC = () => {
             <button
               type="button"
               onClick={() => openMiseBas()}
-              className="pressable w-full h-[58px] rounded-xl bg-accent text-bg-0 font-mono text-[13px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-accent/20"
+              className="pressable w-full h-[58px] rounded-xl bg-accent text-bg-0 font-mono text-[13px] font-bold tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-accent/20"
             >
               <Plus size={20} />
-              <span>Saisir mise-bas</span>
+              <span>Saisir une mise-bas</span>
             </button>
 
             {/* ── Summary KPI ─────────────────────────────────────────── */}
@@ -360,7 +360,7 @@ const MaterniteCard: React.FC<{
               {truie.displayId}
             </h3>
             {truie.nom && <span className="text-[12px] text-text-2 truncate max-w-[80px]">{truie.nom}</span>}
-            <Chip tone={isBloquant ? 'red' : 'default'} label={isBloquant ? 'BLOCAGE' : boucleLabel} size="xs" />
+            <Chip tone={isBloquant ? 'red' : 'default'} label={isBloquant ? 'Blocage' : boucleLabel} size="xs" />
           </div>
           <p className="text-[11px] text-text-2 mt-0.5">
             {portee ? `Portée: ${portee.idPortee}` : 'Aucune portée liée'}
@@ -368,12 +368,12 @@ const MaterniteCard: React.FC<{
           {isBloquant && (
             <div className="flex items-center gap-1.5 mt-1 animate-pulse" style={{ color: 'var(--color-danger, #EF4444)' }}>
               <AlertCircle size={14} />
-              <span className="text-[10px] font-bold uppercase">Urgence Critique</span>
+              <span className="text-[10px] font-bold">Action urgente</span>
             </div>
           )}
         </div>
         {isTransitionRequired ? (
-          <Chip tone={isBloquant ? 'red' : 'gold'} label={isBloquant ? 'RETARD' : `➜ SEVRAGE J${jSinceMB}`} size="sm" icon={<ArrowUpRight size={10} />} />
+          <Chip tone={isBloquant ? 'red' : 'gold'} label={isBloquant ? 'En retard' : `➜ Sevrage J${jSinceMB}`} size="sm" icon={<ArrowUpRight size={10} />} />
         ) : (
           <Chip tone="accent" label={`J+${jSinceMB || 0} Lactation`} size="sm" />
         )}
@@ -453,13 +453,13 @@ const MaterniteCard: React.FC<{
 
       {isTransitionRequired && (
         <button
-          className={`w-full py-2.5 rounded-xl font-bold text-[12px] uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg ${
+          className={`w-full py-2.5 rounded-xl font-bold text-[12px] tracking-wider flex items-center justify-center gap-2 shadow-lg ${
             isBloquant ? 'bg-red-500 text-white shadow-red-500/20' : 'bg-gold text-bg-0 shadow-gold/20'
           }`}
           onClick={(e) => { e.stopPropagation(); navigate(`/troupeau/bandes/${portee?.id}?action=sevrage`); }}
         >
           <ArrowUpRight size={16} />
-          {isBloquant ? 'Sevrage Immédiat' : 'Confirmer Sevrage'}
+          {isBloquant ? 'Sevrer maintenant' : 'Confirmer le sevrage'}
         </button>
       )}
     </div>

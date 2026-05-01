@@ -535,7 +535,7 @@ const ChecklistFlow: React.FC = () => {
                     </label>
                     <textarea
                       id="ck-text"
-                      placeholder="Saisir votre observation…"
+                      placeholder="Saisir ton observation…"
                       value={answer}
                       onChange={e => setAnswer(e.target.value)}
                       rows={5}

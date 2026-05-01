@@ -135,7 +135,7 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
               'min-h-[120px] resize-y',
               errors.note ? 'border-red' : 'border-border hover:border-text-2',
             ].join(' ')}
-            placeholder="Écrivez votre observation ici…"
+            placeholder="Écris ton observation ici…"
             value={note}
             onChange={e => setNote(e.target.value)}
             disabled={loading}

@@ -78,7 +78,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
     e.preventDefault();
     setError('');
     if (!bandeId) {
-      setError('Sélectionnez une bande');
+      setError('Sélectionne une bande');
       return;
     }
     const nb = parseInt(nbSevres, 10);

@@ -294,7 +294,7 @@ export const ChatbotWidget: React.FC = () => {
           value={input}
           onChange={e => setInput(e.target.value)}
           placeholder="Question pour Marius…"
-          aria-label="Votre question pour Marius"
+          aria-label="Ta question pour Marius"
           disabled={loading}
           className="flex-1 text-sm rounded-full px-3 py-2 border outline-none
                      focus:border-[var(--color-accent-500)]"

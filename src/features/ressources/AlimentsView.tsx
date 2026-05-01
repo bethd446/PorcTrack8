@@ -713,7 +713,7 @@ const AlimentsView: React.FC = () => {
               <EmptyState
                 icon={<Package size={32} aria-hidden="true" />}
                 title="Stock aliments vide"
-                description="Aucun aliment enregistré. Ajoutez votre 1er aliment via le bouton +."
+                description="Aucun aliment enregistré. Ajoute ton 1er aliment via le bouton +."
                 action={
                   <button
                     type="button"
@@ -732,7 +732,7 @@ const AlimentsView: React.FC = () => {
                   icon={<Wheat size={14} />}
                   emptyIcon={<Wheat size={40} />}
                   emptyTitle="Aucune matière première"
-                  emptyDescription="Ajoutez maïs, tourteau de soja ou son de blé"
+                  emptyDescription="Ajoute maïs, tourteau de soja ou son de blé"
                   items={grouped.matieres}
                   onSelect={handleSelect}
                   onRefresh={refreshData}
@@ -744,7 +744,7 @@ const AlimentsView: React.FC = () => {
                   icon={<FlaskConical size={14} />}
                   emptyIcon={<FlaskConical size={40} />}
                   emptyTitle="Aucun concentré"
-                  emptyDescription="Ajoutez KPC, Mycofix, Lysine…"
+                  emptyDescription="Ajoute KPC, Mycofix, Lysine…"
                   emptyAction={{
                     label: 'Ajouter un aliment',
                     onClick: () => setAddOpen(true),

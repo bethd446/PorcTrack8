@@ -240,7 +240,7 @@ const formatAlertServeurMessage = (a: AlerteServeur): FormattedAlerte => {
     return { title: 'Mise-bas prévue', description: `Mise-bas prévue pour ${who}${when}.` };
   }
   if (sujetUpper.includes('MORTALIT')) {
-    const lot = bandeId ? `lot ${bandeId}` : 'lot inconnu';
+    const lot = bandeId ? `bande ${bandeId}` : 'bande inconnue';
     const tauxStr = taux !== undefined ? ` (${taux}%)` : '';
     return { title: 'Mortalité élevée', description: `Taux de mortalité élevé — ${lot}${tauxStr}.` };
   }
@@ -752,7 +752,7 @@ const AlertsView: React.FC = () => {
                 size="lg"
                 icon={<CheckCircle2 size={32} aria-hidden="true" strokeWidth={2} />}
                 title="Aucune alerte active"
-                description="Votre élevage tourne bien."
+                description="Ton élevage tourne bien."
               />
             )}
 
@@ -901,13 +901,13 @@ const AlertsView: React.FC = () => {
                             : undefined;
 
                       const actionLabel = isGrouped
-                        ? 'Voir détails'
+                        ? 'Voir le détail des stocks'
                         : originalAlert && originalAlert.requiresAction && hasConfirm
                           ? 'Action requise'
                           : originalAlert && originalAlert.requiresAction
-                            ? 'Détails'
+                            ? "Voir l'alerte"
                             : fallbackRoute
-                              ? 'Voir'
+                              ? 'Ouvrir'
                               : undefined;
 
                       return (

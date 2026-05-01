@@ -20,8 +20,8 @@ export interface QuickConfirmReformeFormProps {
 }
 
 const REFORME_MOTIFS = [
-  { value: 'INACTIVE_LONG', label: 'Inactivité prolongée' },
-  { value: 'PERF_INSUFFISANTE', label: 'Mauvaise productivité' },
+  { value: 'INACTIVE_LONG', label: 'Truie inactive longue durée' },
+  { value: 'PERF_INSUFFISANTE', label: 'Productivité faible' },
   { value: 'BOITERIE', label: 'Boiterie' },
   { value: 'MALADIE', label: 'Maladie' },
   { value: 'AGE', label: 'Âge' },

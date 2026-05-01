@@ -358,11 +358,11 @@ const CroissanceCard: React.FC<{ data: CroissanceRowData; onOpen: () => void }> 
 
       {isTransitionRequired && (
         <button
-          className="w-full bg-amber text-bg-0 py-2.5 rounded-xl font-bold text-[12px] uppercase tracking-wider flex items-center justify-center gap-2"
+          className="w-full bg-amber text-bg-0 py-2.5 rounded-xl font-bold text-[12px] tracking-wider flex items-center justify-center gap-2"
           onClick={(e) => { e.stopPropagation(); navigate('/troupeau/batiments'); }}
         >
           <ArrowUpRight size={16} />
-          Confirmer Engraissement
+          Passer en engraissement
         </button>
       )}
     </div>

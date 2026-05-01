@@ -398,7 +398,7 @@ const PharmacieView: React.FC = () => {
               <EmptyState
                 icon={<SeringueIcon size={32} />}
                 title="Pharmacie vide"
-                description="Aucun produit vétérinaire enregistré. Renseignez votre 1er produit véto via le bouton +."
+                description="Aucun produit vétérinaire enregistré. Renseigne ton 1er produit véto via le bouton +."
               />
             ) : (
               <>

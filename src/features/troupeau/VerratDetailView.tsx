@@ -425,12 +425,12 @@ const VerratDetailView: React.FC = () => {
                 />
                 <ActionButton
                   icon={<FileText size={16} aria-hidden="true" />}
-                  label="Note"
+                  label="Ajouter une note"
                   onClick={() => setSheet('note')}
                 />
                 <ActionButton
                   icon={<Scale size={16} aria-hidden="true" />}
-                  label="Pesée"
+                  label="Peser ce verrat"
                   onClick={() => setSheet('pesee')}
                 />
               </div>

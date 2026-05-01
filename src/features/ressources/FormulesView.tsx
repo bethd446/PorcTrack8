@@ -287,7 +287,7 @@ const FormulesView: React.FC = () => {
               <EmptyState
                 icon={<ClipboardList size={32} aria-hidden="true" />}
                 title="Aucune formule"
-                description="Ajoutez l'onglet ALIMENT_FORMULES dans Sheets, ou utilisez les formules de démo."
+                description="Ajoute l'onglet ALIMENT_FORMULES dans Sheets, ou utilise les formules de démo."
               />
             ) : (
               <div

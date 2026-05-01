@@ -361,7 +361,7 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
             >
               {data.idPortee}
             </h3>
-            <Chip tone={isBloquant ? 'red' : 'default'} label={isBloquant ? 'BLOCAGE' : `${data.vivants} têtes`} size="xs" />
+            <Chip tone={isBloquant ? 'red' : 'default'} label={isBloquant ? 'Blocage' : `${data.vivants} porcelet${data.vivants > 1 ? 's' : ''}`} size="xs" />
           </div>
           <p className="text-[11px] text-text-2 mt-0.5">
             Mère: {data.truie || '—'} · Âge: <span className="text-text-1 font-mono">{data.ageJours}j</span>
@@ -455,13 +455,13 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
       {/* Footer / CTA */}
       {isTransitionRequired && (
         <button
-          className={`w-full py-2.5 rounded-xl font-bold text-[12px] uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg ${
+          className={`w-full py-2.5 rounded-xl font-bold text-[12px] tracking-wider flex items-center justify-center gap-2 shadow-lg ${
             isBloquant ? 'bg-red-500 text-white shadow-red-500/20' : 'bg-amber text-bg-0 shadow-amber/20'
           }`}
           onClick={(e) => { e.stopPropagation(); navigate('/troupeau/batiments'); }}
         >
           <ArrowUpRight size={16} />
-          {isBloquant ? 'Transférer maintenant' : 'Préparer loge croissance'}
+          {isBloquant ? 'Transférer maintenant' : 'Préparer la loge croissance'}
         </button>
       )}
 

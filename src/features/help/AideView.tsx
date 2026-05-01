@@ -21,27 +21,27 @@ const FAQ: ReadonlyArray<FaqEntry> = [
   {
     question: 'Comment enregistrer une saillie ?',
     answer:
-      "Depuis l'Accueil, touchez « Saillie ». Sélectionnez la truie puis le verrat. Validez.",
+      "Depuis l'Accueil, touche « Saillie ». Sélectionne la truie puis le verrat. Valide.",
   },
   {
     question: "Pourquoi « Hors ligne » s'affiche ?",
     answer:
-      "L'app tourne sans réseau. Vos saisies sont stockées et envoyées dès que le 4G/Wi-Fi revient.",
+      "L'app tourne sans réseau. Tes saisies sont stockées et envoyées dès que le 4G/Wi-Fi revient.",
   },
   {
     question: 'Comment ajouter une truie ?',
     answer:
-      "Ouvrez Cheptel → onglet Truies → bouton +. Renseignez la boucle, le numéro et le statut, puis validez.",
+      "Ouvre Cheptel → onglet Truies → bouton +. Renseigne la boucle, le numéro et le statut, puis valide.",
   },
   {
     question: 'Comment fonctionnent les alertes ?',
     answer:
-      "Les alertes sont calculées automatiquement à partir de vos données (mises-bas, sevrages, stocks). Touchez une alerte pour voir le détail et la traiter.",
+      "Les alertes sont calculées automatiquement à partir de tes données (mises-bas, sevrages, stocks). Touche une alerte pour voir le détail et la traiter.",
   },
   {
     question: 'Batterie faible pendant le tour ?',
     answer:
-      "Activez le mode économie d'énergie d'Android. L'app fonctionne sans notifications, vous pouvez saisir normalement.",
+      "Active le mode économie d'énergie d'Android. L'app fonctionne sans notifications, tu peux saisir normalement.",
   },
 ];
 

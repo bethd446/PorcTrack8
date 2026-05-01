@@ -394,11 +394,11 @@ const FinitionCard: React.FC<{ data: FinitionRowData; onOpen: () => void; onSell
 
       {data.isReadyForExit && (
         <button
-          className="w-full bg-success text-bg-0 py-2.5 rounded-xl font-bold text-[12px] uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-success/20"
+          className="w-full bg-success text-bg-0 py-2.5 rounded-xl font-bold text-[12px] tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-success/20"
           onClick={(e) => { e.stopPropagation(); onSell(); }}
         >
           <ShoppingCart size={16} />
-          Déclarer Vente
+          Déclarer la vente
         </button>
       )}
     </div>

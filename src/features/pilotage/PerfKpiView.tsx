@@ -62,16 +62,25 @@ function motifToChipTone(motif: MotifReforme): ChipTone {
 function motifLabel(motif: MotifReforme): string {
   switch (motif) {
     case 'PERF_INSUFFISANTE':
-      return 'Perf';
+      return 'Productivité faible';
     case 'INACTIVE_LONG':
-      return 'Truie inactive depuis longtemps';
+      return 'Truie inactive longue durée';
     case 'ISSE_ELEVE':
-      return 'ISSE';
+      return 'Sevrage-saillie trop long';
     case 'MULTIPLE':
     default:
-      return 'Multi';
+      return 'Plusieurs motifs';
   }
 }
+
+/** Mapping des tiers de performance vers un libellé sentence case. */
+const TIER_LABEL: Record<PerformanceTier, string> = {
+  ELITE: 'Élite',
+  BON: 'Bon',
+  MOYEN: 'Moyen',
+  FAIBLE: 'Faible',
+  INSUFFISANT: 'Insuffisant',
+};
 
 // ─── Tones KPI repro avancés ────────────────────────────────────────────────
 type KpiTone = 'default' | 'warning' | 'critical' | 'success';
@@ -129,7 +138,7 @@ function formatNum(n: number): string {
 
 /** Hint affiché sous un KPI vide pour expliquer la donnée manquante. */
 function emptyHint(nbBandes: number): string {
-  return `Données insuffisantes (requiert portées sevrées). Vous avez ${nbBandes} bande${nbBandes > 1 ? 's' : ''}.`;
+  return `Données insuffisantes (requiert portées sevrées). Tu as ${nbBandes} bande${nbBandes > 1 ? 's' : ''}.`;
 }
 
 /** Nom affichable d'une truie : nom prioritaire, puis displayId, puis boucle. */
@@ -176,7 +185,7 @@ const PerfKpiView: React.FC = () => {
       primary={truieLabel(r.truie)}
       secondary={`${r.performance.nbPortees} portées · moyNV ${formatNum(r.performance.moyNV)}`}
       meta={<span>{r.performance.scoreCompetence}</span>}
-      accessory={<Chip tone={tierToChipTone(r.performance.tier)} label={r.performance.tier} />}
+      accessory={<Chip tone={tierToChipTone(r.performance.tier)} label={TIER_LABEL[r.performance.tier] ?? r.performance.tier} />}
       onClick={() => goToTruie(r.truie.id)}
     />
   );
@@ -272,7 +281,7 @@ const PerfKpiView: React.FC = () => {
                   </div>
                   <div className="flex flex-col gap-1">
                     <KpiCardV6
-                      label="Mort. N→Sev"
+                      label="Mortalité naissance → sevrage"
                       value={formatNum(kpis.tauxMortaliteNaissanceSevrage)}
                       unit="%"
                       accentColor={kpis.tauxMortaliteNaissanceSevrage > 15 ? 'var(--color-danger, #EF4444)' : undefined}
@@ -308,7 +317,7 @@ const PerfKpiView: React.FC = () => {
                   <div className="grid grid-cols-2 gap-2">
                     <div className="flex flex-col gap-1">
                       <KpiCardV6
-                        label="ISSE"
+                        label="Sevrage → saillie"
                         value={kpis.isseMoyJours !== null ? formatNum(kpis.isseMoyJours) : '—'}
                         unit={kpis.isseMoyJours !== null ? 'j' : undefined}
                         accentColor={toneToAccent(isseToTone(kpis.isseMoyJours))}
@@ -319,7 +328,7 @@ const PerfKpiView: React.FC = () => {
                     </div>
                     <div className="flex flex-col gap-1">
                       <KpiCardV6
-                        label="IEM"
+                        label="Entre mises-bas"
                         value={kpis.iemMoyJours !== null ? formatNum(kpis.iemMoyJours) : '—'}
                         unit={kpis.iemMoyJours !== null ? 'j' : undefined}
                         accentColor={toneToAccent(iemToTone(kpis.iemMoyJours))}
@@ -330,7 +339,7 @@ const PerfKpiView: React.FC = () => {
                     </div>
                     <div className="flex flex-col gap-1">
                       <KpiCardV6
-                        label="Taux MB"
+                        label="% saillies réussies"
                         value={kpis.tauxMBPct !== null ? formatNum(kpis.tauxMBPct) : '—'}
                         unit={kpis.tauxMBPct !== null ? '%' : undefined}
                         accentColor={toneToAccent(tauxMBToTone(kpis.tauxMBPct))}
@@ -341,7 +350,7 @@ const PerfKpiView: React.FC = () => {
                     </div>
                     <div className="flex flex-col gap-1">
                       <KpiCardV6
-                        label="Renouv."
+                        label="Renouvellement annuel"
                         value={
                           kpis.tauxRenouvellementPct !== null
                             ? formatNum(kpis.tauxRenouvellementPct)

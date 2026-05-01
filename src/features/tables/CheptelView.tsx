@@ -250,8 +250,8 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                   title="Aucune truie trouvée"
                   description={
                     searchText
-                      ? "Modifiez la recherche ou vérifiez les filtres."
-                      : "Votre cheptel n'a pas encore de truies enregistrées."
+                      ? "Modifie la recherche ou vérifie les filtres."
+                      : "Ton cheptel n'a pas encore de truies enregistrées."
                   }
                 />
               ) : (
@@ -260,8 +260,8 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                   title="Aucun verrat"
                   description={
                     searchText
-                      ? "Modifiez la recherche ou vérifiez les filtres."
-                      : "Votre cheptel n'a pas encore de verrats enregistrés."
+                      ? "Modifie la recherche ou vérifie les filtres."
+                      : "Ton cheptel n'a pas encore de verrats enregistrés."
                   }
                 />
               )

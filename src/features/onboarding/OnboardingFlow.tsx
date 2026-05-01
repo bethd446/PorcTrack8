@@ -172,7 +172,7 @@ const StepName: React.FC<StepNameProps> = ({ value, onChange, onSkip, onContinue
   <div className="flex-1 flex flex-col">
     <StepHeader
       icon={<User size={20} aria-hidden="true" />}
-      title="Votre nom"
+      title="Ton nom"
       subtitle="Pour tracer qui fait quoi. Laisse vide si tu préfères rester anonyme."
     />
     <input
@@ -180,7 +180,7 @@ const StepName: React.FC<StepNameProps> = ({ value, onChange, onSkip, onContinue
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder="Ex: Jean Martin"
-      aria-label="Votre nom"
+      aria-label="Ton nom"
       className="w-full h-12 px-4 rounded-md bg-bg-1 border border-border text-text-0 placeholder-text-2 text-[15px] outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
     />
     <div className="flex-1" />
@@ -199,8 +199,8 @@ const StepRole: React.FC<StepRoleProps> = ({ value, onChange, onSkip, onContinue
   <div className="flex-1 flex flex-col">
     <StepHeader
       icon={<Briefcase size={20} aria-hidden="true" />}
-      title="Votre rôle"
-      subtitle="Aide l'app à vous montrer les bonnes actions."
+      title="Ton rôle"
+      subtitle="Aide l'app à te montrer les bonnes actions."
     />
     <div
       role="radiogroup"
@@ -244,7 +244,7 @@ const StepPhone: React.FC<StepPhoneProps> = ({ value, onChange, onSkip, onContin
   <div className="flex-1 flex flex-col">
     <StepHeader
       icon={<Phone size={20} aria-hidden="true" />}
-      title="Votre numéro WhatsApp (optionnel)"
+      title="Ton numéro WhatsApp (optionnel)"
       subtitle="Pour être joint en cas d'urgence. Format international."
     />
     <input
@@ -253,7 +253,7 @@ const StepPhone: React.FC<StepPhoneProps> = ({ value, onChange, onSkip, onContin
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder="+225 07 XX XX XX XX"
-      aria-label="Votre numéro WhatsApp"
+      aria-label="Ton numéro WhatsApp"
       className="w-full h-12 px-4 rounded-md bg-bg-1 border border-border text-text-0 placeholder-text-2 font-mono text-[14px] outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
     />
     <div className="flex-1" />

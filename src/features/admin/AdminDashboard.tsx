@@ -278,7 +278,7 @@ function UsersPanel({ users, loading, error, onUsersChange, onError, onInvite }:
           <span style={COUNT_PILL_STYLE}>{users.length}</span>
           <Button variant="primary" size="sm" onClick={onInvite}>
             <UserPlus size={14} strokeWidth={1.75} />
-            Inviter un opérateur
+            Ajouter un porcher
           </Button>
         </div>
       </div>
@@ -491,7 +491,7 @@ function InviteOperatorModal({ isOpen, onClose, currentUserId, onInvited }: Invi
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUserId) {
-      setFormError('Session invalide. Reconnectez-vous.');
+      setFormError('Session invalide. Reconnecte-toi.');
       return;
     }
     setSubmitting(true);
@@ -581,7 +581,7 @@ function InviteOperatorModal({ isOpen, onClose, currentUserId, onInvited }: Invi
           }}
         >
           <p style={{ fontSize: 13, color: 'var(--ink-soft)', margin: 0 }}>
-            L'opérateur recevra une invitation pour rejoindre votre élevage K13 avec le rôle choisi.
+            Le porcher recevra une invitation pour rejoindre ton élevage K13 avec le rôle choisi.
           </p>
 
           <div>
@@ -716,8 +716,8 @@ function OnboardingHero({ onInvite }: OnboardingHeroProps) {
           lineHeight: 1.5,
         }}
       >
-        Vous êtes seul sur la ferme K13. Invitez un porcher, assistant ou
-        gérant à rejoindre votre élevage pour partager le suivi quotidien.
+        Tu es seul sur la ferme K13. Invite un porcher, un assistant ou un
+        gérant à rejoindre ton élevage pour partager le suivi quotidien.
       </p>
 
       <ul
