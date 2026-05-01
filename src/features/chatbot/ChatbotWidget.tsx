@@ -1,27 +1,36 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { X, Send, Image, Loader2 } from 'lucide-react';
+import { X, Send, Loader2 } from 'lucide-react';
 import MariusFAB from '../../components/design/MariusFAB';
 
+type Role = 'user' | 'assistant' | 'system';
+
 interface Message {
-  role: 'user' | 'assistant';
+  role: Role;
   content: string;
-  imageUrl?: string;
 }
 
-const SYSTEM_PROMPT = `Tu es l'assistant IA de PorcTrack, expert en élevage porcin GTTT.
-Tu aides les éleveurs avec : suivi des bandes, règles biologiques (gestation 115j, lactation 28j),
-alertes, traitements vétérinaires, nutrition et gestion d'élevage.
-Réponds en français, de façon concise et pratique pour le terrain.`;
+const DEFAULT_API_BASE = 'http://187.127.225.24:8081';
+const DEFAULT_API_KEY = 'marius-secret-key-2026';
 
-async function sendToGemini(
-  _messages: Message[],
-  _imageBase64?: string
-): Promise<string> {
-  // SYSTEM_PROMPT conservé pour ré-activation future via proxy backend.
-  void SYSTEM_PROMPT;
-  throw new Error(
-    'Marius est en cours de configuration. La connexion à l\'IA sera bientôt disponible.',
-  );
+const API_BASE: string =
+  (import.meta.env.VITE_MARIUS_API_BASE as string | undefined) ?? DEFAULT_API_BASE;
+
+// SECURITY: VITE_* env vars are inlined into the client bundle at build time
+// and visible to anyone inspecting the JS. Acceptable for MVP, but for prod
+// route requests through a backend proxy that holds the real secret.
+const API_KEY: string =
+  (import.meta.env.VITE_MARIUS_API_KEY as string | undefined) ?? DEFAULT_API_KEY;
+
+const ENV_CONFIGURED = Boolean(API_BASE);
+
+function warnMixedContent(): void {
+  if (typeof window === 'undefined') return;
+  if (window.location.protocol === 'https:' && API_BASE.startsWith('http://')) {
+    console.warn(
+      '[Marius] Mixed Content: la page est servie en HTTPS mais API_BASE est en HTTP. ' +
+        'Configure HTTPS sur ton VPS (Cloudflare Tunnel ou Caddy + Let\'s Encrypt).',
+    );
+  }
 }
 
 export const ChatbotWidget: React.FC = () => {
@@ -29,56 +38,148 @@ export const ChatbotWidget: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [pendingImage, setPendingImage] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [streaming, setStreaming] = useState(false);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const handler = () => setOpen(true);
     window.addEventListener('open-chatbot', handler);
     return () => window.removeEventListener('open-chatbot', handler);
   }, []);
-  const bottomRef = useRef<HTMLDivElement>(null);
 
-  const scrollBottom = () =>
-    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+  useEffect(() => {
+    if (open) {
+      warnMixedContent();
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  useEffect(() => {
+    return () => abortRef.current?.abort();
+  }, []);
+
+  const appendToLastAssistant = useCallback((delta: string) => {
+    setMessages(prev => {
+      const next = [...prev];
+      const last = next[next.length - 1];
+      if (last && last.role === 'assistant') {
+        next[next.length - 1] = { ...last, content: last.content + delta };
+      }
+      return next;
+    });
+  }, []);
 
   const handleSend = useCallback(async () => {
     const text = input.trim();
-    if (!text && !pendingImage) return;
+    if (!text || loading) return;
 
-    const userMsg: Message = {
-      role: 'user',
-      content: text || '(analyse cette image)',
-      imageUrl: pendingImage ?? undefined,
-    };
-    const next = [...messages, userMsg];
-    setMessages(next);
-    setInput('');
-    setPendingImage(null);
-    setLoading(true);
-    scrollBottom();
-
-    try {
-      const imageData = pendingImage ? pendingImage.split(',')[1] : undefined;
-      const reply = await sendToGemini(next, imageData);
-      setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
-    } catch (e) {
+    if (!ENV_CONFIGURED) {
       setMessages(prev => [
         ...prev,
-        { role: 'assistant', content: `Erreur : ${String(e)}` },
+        { role: 'system', content: 'Configurez l\'URL Marius dans .env (VITE_MARIUS_API_BASE).' },
       ]);
+      return;
+    }
+
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setMessages(prev => [
+      ...prev,
+      { role: 'user', content: text },
+      { role: 'assistant', content: '' },
+    ]);
+    setInput('');
+    setLoading(true);
+    setStreaming(false);
+
+    try {
+      const response = await fetch(`${API_BASE}/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': API_KEY,
+        },
+        body: JSON.stringify({ message: text }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok || !response.body) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let firstChunk = true;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split('\n\n');
+        buffer = events.pop() ?? '';
+
+        for (const event of events) {
+          for (const line of event.split('\n')) {
+            if (!line.startsWith('data: ')) continue;
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              setLoading(false);
+              setStreaming(false);
+              return;
+            }
+            let chunk = data;
+            try {
+              const parsed = JSON.parse(data) as { content?: string };
+              if (typeof parsed.content === 'string') chunk = parsed.content;
+            } catch {
+              // texte brut, on l'utilise tel quel
+            }
+            if (firstChunk) {
+              setStreaming(true);
+              firstChunk = false;
+            }
+            appendToLastAssistant(chunk);
+          }
+        }
+      }
+    } catch (err) {
+      if ((err as { name?: string }).name === 'AbortError') return;
+      setMessages(prev => {
+        const next = [...prev];
+        // remplace la bulle assistant vide par un message d'erreur
+        if (next.length > 0 && next[next.length - 1].role === 'assistant' && !next[next.length - 1].content) {
+          next.pop();
+        }
+        next.push({
+          role: 'system',
+          content: 'Marius est indisponible (vérifiez la connexion).',
+        });
+        return next;
+      });
     } finally {
       setLoading(false);
-      scrollBottom();
+      setStreaming(false);
     }
-  }, [input, messages, pendingImage]);
+  }, [input, loading, appendToLastAssistant]);
 
-  const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => setPendingImage(ev.target?.result as string);
-    reader.readAsDataURL(file);
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    void handleSend();
+  };
+
+  const handleClose = () => {
+    abortRef.current?.abort();
+    setOpen(false);
   };
 
   if (!open) {
@@ -86,92 +187,102 @@ export const ChatbotWidget: React.FC = () => {
   }
 
   return (
-    <div className="fixed bottom-20 right-4 z-50 w-[340px] max-h-[520px]
-                    rounded-3xl shadow-2xl flex flex-col overflow-hidden
-                    border border-[var(--color-accent-100)]"
-         style={{ background: 'var(--bg-surface)' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3
-                      bg-[var(--color-accent-500)] text-white">
+    <div
+      role="dialog"
+      aria-label="Conversation avec Marius"
+      className="fixed bottom-20 right-4 z-50 w-[340px] max-h-[520px]
+                 rounded-3xl shadow-2xl flex flex-col overflow-hidden
+                 border border-[var(--color-accent-100)]"
+      style={{ background: 'var(--bg-surface)' }}
+    >
+      <div
+        className="flex items-center justify-between px-4 py-3
+                   bg-[var(--color-accent-500)] text-white"
+      >
         <div className="flex items-center gap-2">
           <img src="/images/porc-mark.svg" alt="" className="w-6 h-6" />
-          <span className="font-semibold text-sm">Assistant PorcTrack</span>
+          <span className="ft-heading text-sm uppercase tracking-wide">Marius</span>
         </div>
-        <button onClick={() => setOpen(false)} aria-label="Fermer">
+        <button onClick={handleClose} aria-label="Fermer la conversation">
           <X size={18} />
         </button>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 min-h-[200px]">
+      <div
+        aria-live="polite"
+        className="flex-1 overflow-y-auto px-3 py-3 space-y-3 min-h-[200px]"
+      >
         {messages.length === 0 && (
           <p className="text-xs text-center mt-8" style={{ color: 'var(--muted)' }}>
-            Bonjour ! Je suis votre assistant élevage.<br />
-            Posez une question ou envoyez une photo.
+            Bonjour, je suis Marius.<br />
+            Posez une question sur votre élevage.
           </p>
         )}
-        {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm leading-relaxed
-              ${m.role === 'user'
-                ? 'bg-[var(--color-accent-500)] text-white rounded-br-sm'
-                : 'rounded-bl-sm'}`}
-              style={m.role === 'user' ? undefined : { background: 'var(--bg-surface-2)', color: 'var(--ink)' }}>
-              {m.imageUrl && (
-                <img src={m.imageUrl} alt="photo" className="rounded-lg mb-1 max-h-32 object-cover" />
-              )}
-              {m.content}
+        {messages.map((m, i) => {
+          if (m.role === 'system') {
+            return (
+              <div
+                key={i}
+                className="text-xs text-center px-3 py-2 rounded-lg mx-auto max-w-[90%]"
+                style={{ background: 'var(--bg-surface-2)', color: 'var(--muted)' }}
+              >
+                {m.content}
+              </div>
+            );
+          }
+          return (
+            <div
+              key={i}
+              className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              <div
+                className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm leading-relaxed
+                  ${
+                    m.role === 'user'
+                      ? 'bg-[var(--color-accent-500)] text-white rounded-br-sm'
+                      : 'rounded-bl-sm'
+                  }`}
+                style={
+                  m.role === 'user'
+                    ? undefined
+                    : { background: 'var(--bg-surface-2)', color: 'var(--ink)' }
+                }
+              >
+                {m.content || (loading && !streaming ? 'Marius reflechit…' : '')}
+              </div>
             </div>
-          </div>
-        ))}
-        {loading && (
-          <div className="flex justify-start">
-            <div className="rounded-2xl px-3 py-2" style={{ background: 'var(--bg-surface-2)' }}>
-              <Loader2 size={16} className="animate-spin" style={{ color: 'var(--muted)' }} />
-            </div>
+          );
+        })}
+        {loading && !streaming && (
+          <div className="flex justify-start items-center gap-2 px-2">
+            <Loader2 size={14} className="animate-spin" style={{ color: 'var(--muted)' }} />
+            <span className="text-xs" style={{ color: 'var(--muted)' }}>
+              Marius reflechit…
+            </span>
           </div>
         )}
         <div ref={bottomRef} />
       </div>
 
-      {/* Image preview */}
-      {pendingImage && (
-        <div className="px-3 pb-1 flex items-center gap-2">
-          <img src={pendingImage} alt="preview" className="h-12 w-12 rounded-lg object-cover border" />
-          <button onClick={() => setPendingImage(null)} className="text-xs" style={{ color: 'var(--muted)' }}>✕</button>
-        </div>
-      )}
-
-      {/* Input */}
-      <div className="flex items-center gap-2 px-3 py-2 border-t" style={{ borderColor: 'var(--line)' }}>
+      <form
+        onSubmit={handleSubmit}
+        className="flex items-center gap-2 px-3 py-2 border-t"
+        style={{ borderColor: 'var(--line)' }}
+      >
         <input
-          type="file"
-          accept="image/*"
-          ref={fileRef}
-          onChange={handleImage}
-          className="hidden"
-        />
-        <button
-          onClick={() => fileRef.current?.click()}
-          aria-label="Ajouter une photo"
-          className="hover:text-[var(--color-accent-500)] transition-colors"
-          style={{ color: 'var(--muted)' }}
-        >
-          <Image size={20} />
-        </button>
-        <input
+          ref={inputRef}
           value={input}
           onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
-          placeholder="Question ou commande…"
-          className="flex-1 text-sm rounded-full px-3 py-2
-                     border outline-none
+          placeholder="Question pour Marius…"
+          aria-label="Votre question pour Marius"
+          disabled={loading}
+          className="flex-1 text-sm rounded-full px-3 py-2 border outline-none
                      focus:border-[var(--color-accent-500)]"
           style={{ background: 'var(--bg-surface-2)', borderColor: 'var(--line)' }}
         />
         <button
-          onClick={handleSend}
-          disabled={loading || (!input.trim() && !pendingImage)}
+          type="submit"
+          disabled={loading || !input.trim()}
           aria-label="Envoyer"
           className="w-9 h-9 rounded-full bg-[var(--color-accent-500)] text-white
                      flex items-center justify-center
@@ -180,7 +291,7 @@ export const ChatbotWidget: React.FC = () => {
         >
           <Send size={15} />
         </button>
-      </div>
+      </form>
     </div>
   );
 };
