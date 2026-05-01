@@ -1,10 +1,14 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
 import { useNavigate } from 'react-router-dom';
 import {
   TrendingUp,
   Trophy,
   AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  Printer,
+  Download,
 } from 'lucide-react';
 import AgritechLayout from '../../components/AgritechLayout';
 import Eyebrow from '../../components/design/Eyebrow';
@@ -21,6 +25,7 @@ import {
   type TruiesAReformer,
   type MotifReforme,
 } from '../../services/perfKpiAnalyzer';
+import { genererRapportGlobal } from '../../services/financialAnalyzer';
 import type { PerformanceTier } from '../../types/farm';
 
 /**
@@ -146,14 +151,25 @@ function truieLabel(truie: { displayId: string; boucle: string; nom?: string }):
   return truie.nom || truie.displayId || truie.boucle;
 }
 
+/** Échappe une cellule CSV (RFC 4180). */
+function csvCell(v: string | number | null | undefined): string {
+  const s = v === null || v === undefined ? '' : String(v);
+  if (/[",\n;]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+/** Seuil minimal de bandes pour considérer les indicateurs techniques fiables. */
+const SEUIL_INDICATEURS_FIABLES = 10;
+
 /**
  * PerfKpiView — /pilotage/perf
  *
- * KPI globaux du troupeau + top/flop truies par score composite +
- * liste des candidates à réforme. Lecture seule, calculs en useMemo.
+ * Page d'aide à la décision : hero troupeau, top truies, candidates à réforme,
+ * indicateurs techniques repliables (vides tant que les portées sevrées sont
+ * insuffisantes), export PDF/CSV.
  */
 const PerfKpiView: React.FC = () => {
-  const { truies, bandes, saillies } = useFarm();
+  const { truies, bandes, saillies, transitions } = useFarm();
   const navigate = useNavigate();
 
   const kpis = useMemo(
@@ -171,12 +187,93 @@ const PerfKpiView: React.FC = () => {
     [truies, bandes, saillies],
   );
 
-  // Empty state : pas une seule portée → aucune data pour statuer.
-  const hasData = kpis.nbPortees12m > 0 || kpis.nbTruiesProductives > 0;
+  const finance = useMemo(
+    () => genererRapportGlobal(bandes, transitions ?? []),
+    [bandes, transitions],
+  );
+
   const nbBandes = bandes.length;
+  const hasData = kpis.nbPortees12m > 0 || kpis.nbTruiesProductives > 0;
+  const indicateursFiables = nbBandes >= SEUIL_INDICATEURS_FIABLES;
+  const [indicateursOuverts, setIndicateursOuverts] = useState<boolean>(indicateursFiables);
+
+  // ── Hero : statut global + ROI moyen ─────────────────────────────────────
+  const truiesProductivesPct =
+    kpis.nbTruiesTotal > 0
+      ? Math.round((kpis.nbTruiesProductives / kpis.nbTruiesTotal) * 100)
+      : 0;
+
+  const roiMoyen = useMemo<number | null>(() => {
+    if (finance.totalCout <= 0) return null;
+    return Math.round((finance.margeGlobaleEstimee / finance.totalCout) * 100);
+  }, [finance.totalCout, finance.margeGlobaleEstimee]);
+
+  type StatutGlobal = 'OK' | 'SURVEILLER' | 'CRITIQUE' | 'INDISPONIBLE';
+  const statutGlobal = useMemo<StatutGlobal>(() => {
+    if (!hasData) return 'INDISPONIBLE';
+    const critiques: number[] = [];
+    if (roiMoyen !== null) critiques.push(roiMoyen < 0 ? 1 : 0);
+    if (kpis.tauxMortaliteNaissanceSevrage > 15) critiques.push(1);
+    if (kpis.tauxMBPct !== null && kpis.tauxMBPct < 82) critiques.push(1);
+    if (kpis.isseMoyJours !== null && kpis.isseMoyJours > 10) critiques.push(1);
+    const sumCrit = critiques.reduce((a, b) => a + b, 0);
+    if (sumCrit >= 2) return 'CRITIQUE';
+    if (sumCrit === 1) return 'SURVEILLER';
+    return 'OK';
+  }, [hasData, roiMoyen, kpis.tauxMortaliteNaissanceSevrage, kpis.tauxMBPct, kpis.isseMoyJours]);
+
+  const statutDisplay = useMemo(() => {
+    switch (statutGlobal) {
+      case 'OK':
+        return { label: 'Bon', tone: 'accent' as ChipTone, dot: 'var(--color-accent-500)' };
+      case 'SURVEILLER':
+        return { label: 'À surveiller', tone: 'amber' as ChipTone, dot: 'var(--amber-pork)' };
+      case 'CRITIQUE':
+        return { label: 'Critique', tone: 'red' as ChipTone, dot: 'var(--color-danger, #EF4444)' };
+      case 'INDISPONIBLE':
+      default:
+        return { label: 'Données partielles', tone: 'default' as ChipTone, dot: 'var(--muted)' };
+    }
+  }, [statutGlobal]);
 
   const goToTruie = (id: string): void => {
     navigate(`/troupeau/truies/${id}`);
+  };
+
+  const goToReforme = (): void => {
+    navigate('/troupeau?view=truies&statut=REFORME');
+  };
+
+  // ── Export ────────────────────────────────────────────────────────────────
+  const handlePrint = (): void => {
+    if (typeof window !== 'undefined') window.print();
+  };
+
+  const handleExportCsv = (): void => {
+    if (typeof document === 'undefined') return;
+    const header = ['Bande', 'Truie', 'NV', 'Morts', 'Vivants', 'DateMB', 'DateSevrage', 'Statut'];
+    const lines = bandes.map(b =>
+      [
+        b.id ?? '',
+        b.truie ?? b.boucleMere ?? '',
+        b.nv ?? '',
+        b.morts ?? '',
+        b.vivants ?? '',
+        b.dateMB ?? '',
+        b.dateSevrageReelle ?? b.dateSevragePrevue ?? '',
+        b.statut ?? '',
+      ].map(csvCell).join(','),
+    );
+    const csv = [header.join(','), ...lines].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `porctrack-performance-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const renderRanking = (r: TruieRanking): React.ReactNode => (
@@ -199,6 +296,8 @@ const PerfKpiView: React.FC = () => {
       onClick={() => goToTruie(r.truie.id)}
     />
   );
+
+  const topLimited = top.slice(0, 5);
 
   return (
     <IonPage>
@@ -239,177 +338,332 @@ const PerfKpiView: React.FC = () => {
               </div>
             </header>
 
-            {!hasData ? (
-              <section className="card-dense flex flex-col items-center justify-center py-10 text-center">
-                <TrendingUp size={48} className="text-text-2 mb-3" aria-hidden="true" />
-                <div className="text-[14px] font-medium text-text-0">Données insuffisantes</div>
-                <div className="mt-1 font-mono text-[12px] text-text-2">
-                  Aucune portée enregistrée sur les 12 derniers mois.
+            {/* ── Hero : ton troupeau en un coup d'œil ────────────────── */}
+            <section
+              className="card-dense flex flex-col gap-3 p-5"
+              style={{
+                background: 'var(--bg-surface, #fff)',
+                borderLeft: `4px solid ${statutDisplay.dot}`,
+              }}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span
+                  className="font-mono uppercase tracking-widest text-text-2"
+                  style={{ fontSize: 10 }}
+                >
+                  Ton troupeau en un coup d'œil
+                </span>
+                <Chip tone={statutDisplay.tone} label={statutDisplay.label} size="sm" />
+              </div>
+
+              {hasData ? (
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="flex flex-col">
+                    <span
+                      className="font-heading text-text-0"
+                      style={{ fontSize: 28, fontWeight: 700, lineHeight: 1 }}
+                    >
+                      {kpis.nbTruiesProductives}
+                      <span className="text-text-2" style={{ fontSize: 16, fontWeight: 500 }}>
+                        /{kpis.nbTruiesTotal}
+                      </span>
+                    </span>
+                    <span className="font-mono text-text-2 mt-1" style={{ fontSize: 11 }}>
+                      Truies productives ({truiesProductivesPct} %)
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span
+                      className="font-heading text-text-0"
+                      style={{ fontSize: 28, fontWeight: 700, lineHeight: 1 }}
+                    >
+                      {roiMoyen !== null ? `${roiMoyen}` : '—'}
+                      {roiMoyen !== null && (
+                        <span className="text-text-2" style={{ fontSize: 16, fontWeight: 500 }}>
+                          {' '}%
+                        </span>
+                      )}
+                    </span>
+                    <span className="font-mono text-text-2 mt-1" style={{ fontSize: 11 }}>
+                      ROI moyen estimé
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span
+                      className="font-heading text-text-0"
+                      style={{ fontSize: 28, fontWeight: 700, lineHeight: 1 }}
+                    >
+                      {kpis.nbMbAVenir30j}
+                    </span>
+                    <span className="font-mono text-text-2 mt-1" style={{ fontSize: 11 }}>
+                      Mises-bas à venir 30 j
+                    </span>
+                  </div>
                 </div>
-              </section>
-            ) : (
-              <>
-                {/* ── Summary strip : 4 KPI globaux ─────────────────── */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex flex-col gap-1">
-                    <KpiCardV6
-                      label="Sevrés/truie/an"
-                      value={formatNum(kpis.sevresParTruieAn)}
-                      accentColor={toneToAccent(kpis.sevresParTruieAn > 0 && kpis.sevresParTruieAn < 18 ? 'warning' : 'default')}
-                    />
-                    {kpis.sevresParTruieAn === 0 && (
-                      <span className="px-1 font-mono text-[10px] text-text-2">{emptyHint(nbBandes)}</span>
-                    )}
+              ) : (
+                <div className="flex flex-col items-center text-center py-4">
+                  <TrendingUp size={32} className="text-text-2 mb-2" aria-hidden="true" />
+                  <div className="text-[14px] text-text-0 font-medium">
+                    Saisie en cours.
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <KpiCardV6
-                      label="Portées/truie/an"
-                      value={formatNum(kpis.porteesParTruieAn)}
-                    />
-                    {kpis.porteesParTruieAn === 0 && (
-                      <span className="px-1 font-mono text-[10px] text-text-2">{emptyHint(nbBandes)}</span>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <KpiCardV6
-                      label="NV moyen"
-                      value={formatNum(kpis.moyNV)}
-                    />
-                    {kpis.moyNV === 0 && (
-                      <span className="px-1 font-mono text-[10px] text-text-2">{emptyHint(nbBandes)}</span>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <KpiCardV6
-                      label="Mortalité naissance → sevrage"
-                      value={formatNum(kpis.tauxMortaliteNaissanceSevrage)}
-                      unit="%"
-                      accentColor={kpis.tauxMortaliteNaissanceSevrage > 15 ? 'var(--color-danger, #EF4444)' : undefined}
-                    />
-                    {kpis.tauxMortaliteNaissanceSevrage === 0 && (
-                      <span className="px-1 font-mono text-[10px] text-text-2">{emptyHint(nbBandes)}</span>
-                    )}
+                  <div className="font-mono text-[12px] text-text-2 mt-1">
+                    Reviens dans 2-3 mois pour voir tes premières moyennes.
                   </div>
                 </div>
+              )}
+            </section>
 
-                {/* ── Secondary strip : 2 KPI auxiliaires ───────────── */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex flex-col gap-1">
-                    <KpiCardV6
-                      label="Interv. sev-sail."
-                      value={
-                        kpis.intervalSevrageSaillieMoyJours !== null
-                          ? formatNum(kpis.intervalSevrageSaillieMoyJours)
-                          : '—'
-                      }
-                      unit="j"
-                    />
-                    {kpis.intervalSevrageSaillieMoyJours === null && (
-                      <span className="px-1 font-mono text-[10px] text-text-2">{emptyHint(nbBandes)}</span>
-                    )}
-                  </div>
-                  <KpiCardV6 label="MB à venir 30j" value={kpis.nbMbAVenir30j} />
+            {/* ── Tes meilleures truies ──────────────────────────────── */}
+            <section>
+              <SectionDivider label="Tes meilleures truies" />
+              {topLimited.length === 0 ? (
+                <div className="card-dense text-[13px] text-text-2 text-center py-4 flex items-center justify-center gap-2">
+                  <Trophy size={14} className="text-text-2" />
+                  <span>Aucune truie élite ou bonne pour l'instant.</span>
                 </div>
+              ) : (
+                <div className="card-dense !p-0 overflow-hidden">
+                  {topLimited.map(renderRanking)}
+                </div>
+              )}
+            </section>
 
-                {/* ── Reproduction avancée : ISSE, IEM, Taux MB, Renouv. ── */}
-                <section>
-                  <SectionDivider label="Reproduction avancée" />
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="flex flex-col gap-1">
-                      <KpiCardV6
-                        label="Sevrage → saillie"
-                        value={kpis.isseMoyJours !== null ? formatNum(kpis.isseMoyJours) : '—'}
-                        unit={kpis.isseMoyJours !== null ? 'j' : undefined}
-                        accentColor={toneToAccent(isseToTone(kpis.isseMoyJours))}
-                      />
-                      <span className="px-1 font-mono text-[10px] text-text-2">
-                        {kpis.isseMoyJours === null ? emptyHint(nbBandes) : 'cible 3-7 j'}
-                      </span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <KpiCardV6
-                        label="Entre mises-bas"
-                        value={kpis.iemMoyJours !== null ? formatNum(kpis.iemMoyJours) : '—'}
-                        unit={kpis.iemMoyJours !== null ? 'j' : undefined}
-                        accentColor={toneToAccent(iemToTone(kpis.iemMoyJours))}
-                      />
-                      <span className="px-1 font-mono text-[10px] text-text-2">
-                        {kpis.iemMoyJours === null ? emptyHint(nbBandes) : 'cible 140-150 j'}
-                      </span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <KpiCardV6
-                        label="% saillies réussies"
-                        value={kpis.tauxMBPct !== null ? formatNum(kpis.tauxMBPct) : '—'}
-                        unit={kpis.tauxMBPct !== null ? '%' : undefined}
-                        accentColor={toneToAccent(tauxMBToTone(kpis.tauxMBPct))}
-                      />
-                      <span className="px-1 font-mono text-[10px] text-text-2">
-                        {kpis.tauxMBPct === null ? emptyHint(nbBandes) : 'cible ≥ 88 %'}
-                      </span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <KpiCardV6
-                        label="Renouvellement annuel"
-                        value={
-                          kpis.tauxRenouvellementPct !== null
-                            ? formatNum(kpis.tauxRenouvellementPct)
-                            : '—'
-                        }
-                        unit={kpis.tauxRenouvellementPct !== null ? '%' : undefined}
-                        accentColor={toneToAccent(renouvToTone(kpis.tauxRenouvellementPct))}
-                      />
-                      <span className="px-1 font-mono text-[10px] text-text-2">
-                        {kpis.tauxRenouvellementPct === null ? emptyHint(nbBandes) : 'cible 30-40 %/an'}
-                      </span>
-                    </div>
+            {/* ── Truies à réformer (candidates) ─────────────────────── */}
+            <section>
+              <SectionDivider label="Truies à réformer (candidates)" />
+              {aReformer.length === 0 ? (
+                <div className="card-dense text-[13px] text-text-2 text-center py-4">
+                  Aucune candidate à réforme pour l'instant. Bon signe.
+                </div>
+              ) : (
+                <>
+                  <div className="card-dense !p-0 overflow-hidden">
+                    {aReformer.map(renderReforme)}
                   </div>
-                </section>
-
-                {/* ── Top truies (ELITE / BON) ──────────────────────── */}
-                <section>
-                  <SectionDivider label="Top truies" />
-                  {top.length === 0 ? (
-                    <div className="card-dense text-[13px] text-text-2 text-center py-4 flex items-center justify-center gap-2">
-                      <Trophy size={14} className="text-text-2" />
-                      <span>Aucune truie ELITE ou BON pour l'instant.</span>
-                    </div>
-                  ) : (
-                    <div className="card-dense !p-0 overflow-hidden">
-                      {top.map(renderRanking)}
-                    </div>
-                  )}
-                </section>
-
-                {/* ── Flop truies (FAIBLE / INSUFFISANT, ≥3 portées) ─ */}
-                <section>
-                  <SectionDivider label="Flop truies" />
-                  {flop.length === 0 ? (
-                    <div className="card-dense text-[13px] text-text-2 text-center py-4">
-                      Aucune truie en sous-performance avec données suffisantes.
-                    </div>
-                  ) : (
-                    <div className="card-dense !p-0 overflow-hidden">
-                      {flop.map(renderRanking)}
-                    </div>
-                  )}
-                </section>
-
-                {/* ── À réformer ───────────────────────────────────── */}
-                {aReformer.length > 0 && (
-                  <section>
-                    <SectionDivider label="À réformer" />
-                    <div className="card-dense !p-0 overflow-hidden">
-                      {aReformer.map(renderReforme)}
-                    </div>
-                    <div className="mt-2 flex items-center gap-2 px-1 font-mono text-[11px] text-text-2">
+                  <div className="mt-2 flex items-center justify-between gap-2 px-1">
+                    <div className="flex items-center gap-2 font-mono text-[11px] text-text-2">
                       <AlertTriangle size={12} className="text-amber" />
-                      <span>Candidates — validation porcher requise avant décision.</span>
+                      <span>
+                        {aReformer.length} truie{aReformer.length > 1 ? 's' : ''} suggérée
+                        {aReformer.length > 1 ? 's' : ''} · validation porcher requise.
+                      </span>
                     </div>
-                  </section>
+                    <button
+                      type="button"
+                      onClick={goToReforme}
+                      className="font-mono text-[11px] underline text-text-0 hover:text-[var(--color-accent-500)]"
+                    >
+                      Voir la liste détaillée →
+                    </button>
+                  </div>
+                </>
+              )}
+            </section>
+
+            {/* ── Indicateurs techniques (repliable) ─────────────────── */}
+            <section className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => setIndicateursOuverts(v => !v)}
+                className="card-dense w-full flex items-center justify-between p-4 text-left"
+                aria-expanded={indicateursOuverts}
+              >
+                <div className="flex flex-col">
+                  <span className="font-heading uppercase text-text-0" style={{ fontSize: 12, letterSpacing: '0.05em' }}>
+                    Indicateurs techniques
+                  </span>
+                  <span className="font-mono text-text-2 mt-1" style={{ fontSize: 11 }}>
+                    Sevrage→saillie · Entre mises-bas · % saillies réussies · Renouvellement…
+                  </span>
+                  {!indicateursFiables && (
+                    <span className="font-mono text-text-2 mt-1" style={{ fontSize: 11 }}>
+                      Données insuffisantes (requiert {SEUIL_INDICATEURS_FIABLES} portées sevrées sur 12 mois).
+                    </span>
+                  )}
+                </div>
+                {indicateursOuverts ? (
+                  <ChevronUp size={18} className="text-text-2 shrink-0" aria-hidden="true" />
+                ) : (
+                  <ChevronDown size={18} className="text-text-2 shrink-0" aria-hidden="true" />
                 )}
-              </>
-            )}
+              </button>
+
+              {indicateursOuverts && (
+                <div className="flex flex-col gap-5">
+                  {!hasData ? (
+                    <div className="card-dense flex flex-col items-center justify-center py-8 text-center">
+                      <TrendingUp size={36} className="text-text-2 mb-2" aria-hidden="true" />
+                      <div className="text-[13px] text-text-0 font-medium">
+                        Aucune portée enregistrée sur les 12 derniers mois.
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Summary strip : 4 KPI globaux */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex flex-col gap-1">
+                          <KpiCardV6
+                            label="Sevrés/truie/an"
+                            value={formatNum(kpis.sevresParTruieAn)}
+                            accentColor={toneToAccent(kpis.sevresParTruieAn > 0 && kpis.sevresParTruieAn < 18 ? 'warning' : 'default')}
+                          />
+                          {kpis.sevresParTruieAn === 0 && (
+                            <span className="px-1 font-mono text-[10px] text-text-2">{emptyHint(nbBandes)}</span>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <KpiCardV6
+                            label="Portées/truie/an"
+                            value={formatNum(kpis.porteesParTruieAn)}
+                          />
+                          {kpis.porteesParTruieAn === 0 && (
+                            <span className="px-1 font-mono text-[10px] text-text-2">{emptyHint(nbBandes)}</span>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <KpiCardV6
+                            label="NV moyen"
+                            value={formatNum(kpis.moyNV)}
+                          />
+                          {kpis.moyNV === 0 && (
+                            <span className="px-1 font-mono text-[10px] text-text-2">{emptyHint(nbBandes)}</span>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <KpiCardV6
+                            label="Mortalité naissance → sevrage"
+                            value={formatNum(kpis.tauxMortaliteNaissanceSevrage)}
+                            unit="%"
+                            accentColor={kpis.tauxMortaliteNaissanceSevrage > 15 ? 'var(--color-danger, #EF4444)' : undefined}
+                          />
+                          {kpis.tauxMortaliteNaissanceSevrage === 0 && (
+                            <span className="px-1 font-mono text-[10px] text-text-2">{emptyHint(nbBandes)}</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Secondary strip : 2 KPI auxiliaires */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex flex-col gap-1">
+                          <KpiCardV6
+                            label="Interv. sev-sail."
+                            value={
+                              kpis.intervalSevrageSaillieMoyJours !== null
+                                ? formatNum(kpis.intervalSevrageSaillieMoyJours)
+                                : '—'
+                            }
+                            unit="j"
+                          />
+                          {kpis.intervalSevrageSaillieMoyJours === null && (
+                            <span className="px-1 font-mono text-[10px] text-text-2">{emptyHint(nbBandes)}</span>
+                          )}
+                        </div>
+                        <KpiCardV6 label="MB à venir 30j" value={kpis.nbMbAVenir30j} />
+                      </div>
+
+                      {/* Reproduction avancée : ISSE, IEM, Taux MB, Renouv. */}
+                      <section>
+                        <SectionDivider label="Reproduction avancée" />
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="flex flex-col gap-1">
+                            <KpiCardV6
+                              label="Sevrage → saillie"
+                              value={kpis.isseMoyJours !== null ? formatNum(kpis.isseMoyJours) : '—'}
+                              unit={kpis.isseMoyJours !== null ? 'j' : undefined}
+                              accentColor={toneToAccent(isseToTone(kpis.isseMoyJours))}
+                            />
+                            <span className="px-1 font-mono text-[10px] text-text-2">
+                              {kpis.isseMoyJours === null ? emptyHint(nbBandes) : 'cible 3-7 j'}
+                            </span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <KpiCardV6
+                              label="Entre mises-bas"
+                              value={kpis.iemMoyJours !== null ? formatNum(kpis.iemMoyJours) : '—'}
+                              unit={kpis.iemMoyJours !== null ? 'j' : undefined}
+                              accentColor={toneToAccent(iemToTone(kpis.iemMoyJours))}
+                            />
+                            <span className="px-1 font-mono text-[10px] text-text-2">
+                              {kpis.iemMoyJours === null ? emptyHint(nbBandes) : 'cible 140-150 j'}
+                            </span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <KpiCardV6
+                              label="% saillies réussies"
+                              value={kpis.tauxMBPct !== null ? formatNum(kpis.tauxMBPct) : '—'}
+                              unit={kpis.tauxMBPct !== null ? '%' : undefined}
+                              accentColor={toneToAccent(tauxMBToTone(kpis.tauxMBPct))}
+                            />
+                            <span className="px-1 font-mono text-[10px] text-text-2">
+                              {kpis.tauxMBPct === null ? emptyHint(nbBandes) : 'cible ≥ 88 %'}
+                            </span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <KpiCardV6
+                              label="Renouvellement annuel"
+                              value={
+                                kpis.tauxRenouvellementPct !== null
+                                  ? formatNum(kpis.tauxRenouvellementPct)
+                                  : '—'
+                              }
+                              unit={kpis.tauxRenouvellementPct !== null ? '%' : undefined}
+                              accentColor={toneToAccent(renouvToTone(kpis.tauxRenouvellementPct))}
+                            />
+                            <span className="px-1 font-mono text-[10px] text-text-2">
+                              {kpis.tauxRenouvellementPct === null ? emptyHint(nbBandes) : 'cible 30-40 %/an'}
+                            </span>
+                          </div>
+                        </div>
+                      </section>
+
+                      {/* Flop truies (gardé pour l'analyse fine, sous indicateurs) */}
+                      <section>
+                        <SectionDivider label="Truies en sous-performance" />
+                        {flop.length === 0 ? (
+                          <div className="card-dense text-[13px] text-text-2 text-center py-4">
+                            Aucune truie en sous-performance avec données suffisantes.
+                          </div>
+                        ) : (
+                          <div className="card-dense !p-0 overflow-hidden">
+                            {flop.map(renderRanking)}
+                          </div>
+                        )}
+                      </section>
+                    </>
+                  )}
+                </div>
+              )}
+            </section>
+
+            {/* ── Export ─────────────────────────────────────────────── */}
+            <section className="flex flex-col gap-2 print:hidden">
+              <SectionDivider label="Export" />
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  className="card-dense flex items-center gap-2 px-4 py-3 text-left hover:bg-bg-2 transition"
+                >
+                  <Printer size={16} className="text-text-2" aria-hidden="true" />
+                  <span className="font-heading uppercase text-text-0" style={{ fontSize: 12, letterSpacing: '0.05em' }}>
+                    Imprimer en PDF
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportCsv}
+                  className="card-dense flex items-center gap-2 px-4 py-3 text-left hover:bg-bg-2 transition"
+                >
+                  <Download size={16} className="text-text-2" aria-hidden="true" />
+                  <span className="font-heading uppercase text-text-0" style={{ fontSize: 12, letterSpacing: '0.05em' }}>
+                    Export CSV
+                  </span>
+                </button>
+              </div>
+              <span className="font-mono text-text-2 px-1" style={{ fontSize: 11 }}>
+                Pour réunions banquier ou véto.
+              </span>
+            </section>
           </div>
         </AgritechLayout>
       </IonContent>
