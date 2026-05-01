@@ -248,12 +248,6 @@ const AppSidebar: React.FC = () => {
             active={isActive('/audit')}
             onClick={() => navigate('/audit')}
           />
-          <SidebarRow
-            icon={CheckSquare}
-            label="Tâches"
-            active={isActive('/today/tasks')}
-            onClick={() => navigate('/audit')}
-          />
         </Section>
 
         {/* Cheptel */}

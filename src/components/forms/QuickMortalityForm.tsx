@@ -19,11 +19,20 @@ import { FARM_CONFIG } from '../../config/farm';
 import { kvGet } from '../../services/kvStore';
 
 const CAUSE_OPTIONS = [
-  { value: 'ECRASEMENT', label: 'Écrasement' },
+  { value: 'INCONNUE', label: 'Inconnue' },
+  { value: 'DIARRHEE', label: 'Diarrhée' },
+  { value: 'HYPOTHERMIE', label: 'Hypothermie' },
+  { value: 'ECRASEMENT', label: 'Écrasement par la mère' },
+  { value: 'SEPTICEMIE', label: 'Septicémie' },
+  { value: 'RESPIRATOIRE', label: 'Maladie respiratoire' },
+  { value: 'MALNUTRITION', label: 'Malnutrition' },
   { value: 'MALADIE', label: 'Maladie / Sanitaire' },
-  { value: 'INCONNUE', label: 'Cause Inconnue' },
   { value: 'AUTRE', label: 'Autre' },
 ];
+
+const CAUSE_LABEL: Record<string, string> = Object.fromEntries(
+  CAUSE_OPTIONS.map(o => [o.value, o.label]),
+);
 
 /**
  * QuickMortalityForm — Déclaration rapide d'une mortalité (Porcelet, Truie ou Verrat).
@@ -235,11 +244,23 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
       return;
     }
 
+    const causeLabel = CAUSE_LABEL[cause] ?? cause;
+    const target =
+      subjectType === 'BANDE'
+        ? `dans la bande ${(selectedSubject as BandePorcelets).idPortee || selectedSubject.id}`
+        : `pour ${subjectDisplay(selectedSubject)}`;
+    const subject =
+      subjectType === 'BANDE'
+        ? `${nb} mort${nb > 1 ? 's' : ''}`
+        : subjectType === 'TRUIE'
+        ? '1 truie morte'
+        : '1 verrat mort';
+
     presentAlert({
-      header: 'Confirmer la mortalité',
-      message: `Voulez-vous enregistrer la mortalité de ${subjectType === 'BANDE' ? nb + ' porcelet(s)' : subjectDisplay(selectedSubject)} ?`,
+      header: 'Confirmer la saisie',
+      message: `Tu vas enregistrer ${subject} ${target}, cause : ${causeLabel}. Cette action sera tracée dans le journal sanitaire et le bilan financier.`,
       buttons: [
-        { text: 'Annuler', role: 'cancel' },
+        { text: 'Modifier', role: 'cancel' },
         { text: 'Confirmer', handler: () => executeSave(nb) }
       ]
     });
@@ -374,17 +395,34 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
                 </div>
               </div>
 
-              {subjectType === 'BANDE' && (
-                <div className="space-y-2">
-                  <label htmlFor="mortality-count" className="block font-mono text-[11px] uppercase text-text-2">Nombre de morts</label>
-                  <div className="flex items-center gap-2">
-                    <button type="button" aria-label="Diminuer le nombre de morts" onClick={() => setNbMorts(n => Math.max(1, n-1))} className="pressable h-12 w-12 rounded-md border bg-bg-0 text-text-1">−</button>
-                    <input id="mortality-count" aria-label="Nombre de porcelets morts" aria-describedby="mortality-count-hint" type="number" className="flex-1 h-12 rounded-md px-3 text-center bg-bg-0 border text-text-0 font-mono text-xl font-bold" value={nbMorts} onChange={e => setNbMorts(clampDeaths(Number(e.target.value)))} />
-                    <button type="button" aria-label="Augmenter le nombre de morts" onClick={() => setNbMorts(n => n+1)} className="pressable h-12 w-12 rounded-md border bg-bg-0 text-text-1">+</button>
+              {subjectType === 'BANDE' && (() => {
+                const bande = selectedSubject as BandePorcelets;
+                const vivants = bande.vivants ?? 0;
+                const maxMorts = Math.max(MIN_DEATHS, Math.min(MAX_DEATHS, vivants > 0 ? vivants : MAX_DEATHS));
+                return (
+                  <div className="space-y-2">
+                    <label htmlFor="mortality-count" className="block font-mono text-[11px] uppercase text-text-2">Nombre de morts</label>
+                    <div className="flex items-center gap-2">
+                      <button type="button" aria-label="Diminuer le nombre de morts" onClick={() => setNbMorts(n => Math.max(1, n-1))} className="pressable h-12 w-12 rounded-md border bg-bg-0 text-text-1">−</button>
+                      <input
+                        id="mortality-count"
+                        aria-label="Nombre de porcelets morts"
+                        aria-describedby="mortality-count-hint"
+                        type="number"
+                        min={MIN_DEATHS}
+                        max={maxMorts}
+                        className="flex-1 h-12 rounded-md px-3 text-center bg-bg-0 border text-text-0 font-mono text-xl font-bold"
+                        value={nbMorts}
+                        onChange={e => setNbMorts(Math.min(maxMorts, clampDeaths(Number(e.target.value))))}
+                      />
+                      <button type="button" aria-label="Augmenter le nombre de morts" onClick={() => setNbMorts(n => Math.min(maxMorts, n+1))} className="pressable h-12 w-12 rounded-md border bg-bg-0 text-text-1">+</button>
+                    </div>
+                    <span id="mortality-count-hint" className="block font-mono text-[11px] text-text-2">
+                      Maximum : {vivants} porcelet{vivants > 1 ? 's' : ''} vivant{vivants > 1 ? 's' : ''} actuellement.
+                    </span>
                   </div>
-                  <span id="mortality-count-hint" className="sr-only">Nombre de décès à enregistrer</span>
-                </div>
-              )}
+                );
+              })()}
 
               <div className="space-y-2">
                 <label htmlFor="mortality-obs" className="block font-mono text-[11px] uppercase text-text-2">Observation (optionnel)</label>

@@ -1,0 +1,222 @@
+import React, { useEffect, useRef } from 'react';
+import { Heart, Baby, Milk, AlertOctagon, Scale, X } from 'lucide-react';
+
+import { useQuickActions, type QuickActionKind } from '../AgritechNavV2';
+
+export interface SaisirSheetProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+interface ActionDef {
+  kind: QuickActionKind;
+  title: string;
+  description: string;
+  Icon: React.ComponentType<{ size?: number; strokeWidth?: number; 'aria-hidden'?: boolean }>;
+  tone: 'accent' | 'amber' | 'red' | 'default';
+}
+
+const ACTIONS: ActionDef[] = [
+  {
+    kind: 'saillie',
+    title: 'Saillie',
+    description: 'Truie × verrat à la date du jour',
+    Icon: Heart,
+    tone: 'accent',
+  },
+  {
+    kind: 'misebas',
+    title: 'Mise-bas',
+    description: 'Truie + nés vivants + morts-nés',
+    Icon: Baby,
+    tone: 'accent',
+  },
+  {
+    kind: 'sevrage',
+    title: 'Sevrage',
+    description: 'Bande + date + nb porcelets',
+    Icon: Milk,
+    tone: 'default',
+  },
+  {
+    kind: 'mortalite',
+    title: 'Mortalité',
+    description: 'Animal/bande + cause + date',
+    Icon: AlertOctagon,
+    tone: 'red',
+  },
+  {
+    kind: 'pesee',
+    title: 'Pesée',
+    description: 'Bande + poids moyen + date',
+    Icon: Scale,
+    tone: 'amber',
+  },
+];
+
+const TONE_BG: Record<ActionDef['tone'], string> = {
+  default: 'var(--bg-2, #f3f4f6)',
+  accent: 'color-mix(in srgb, var(--color-accent-500) 14%, transparent)',
+  amber: 'color-mix(in srgb, var(--amber-pork, #F4A261) 18%, transparent)',
+  red: 'color-mix(in srgb, var(--red, #dc2626) 14%, transparent)',
+};
+
+const TONE_FG: Record<ActionDef['tone'], string> = {
+  default: 'var(--ink, #111827)',
+  accent: 'var(--color-accent-500)',
+  amber: 'var(--amber-pork, #F4A261)',
+  red: 'var(--red, #dc2626)',
+};
+
+const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
+  const { openAction } = useQuickActions();
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const previousActiveRef = useRef<Element | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    previousActiveRef.current = document.activeElement;
+    const t = setTimeout(() => closeBtnRef.current?.focus(), 30);
+
+    const onKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+        return;
+      }
+      if (e.key === 'Tab' && sheetRef.current) {
+        const focusables = sheetRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        );
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener('keydown', onKeyDown);
+      if (previousActiveRef.current instanceof HTMLElement) {
+        previousActiveRef.current.focus();
+      }
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const handlePick = (kind: QuickActionKind): void => {
+    onClose();
+    // Petit délai pour laisser le sheet se fermer avant d'ouvrir le form cible.
+    setTimeout(() => openAction(kind), 80);
+  };
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="saisir-sheet-title"
+      className="fixed inset-0 z-[1100] flex items-end justify-center"
+    >
+      <button
+        type="button"
+        aria-label="Fermer le panneau de saisie"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+      />
+
+      <div
+        ref={sheetRef}
+        className="relative w-full max-w-[520px] rounded-t-3xl shadow-2xl animate-fade-in-up"
+        style={{
+          background: 'var(--bg-app, #f0f4f3)',
+          borderTop: '1px solid var(--line, rgba(0,0,0,0.08))',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)',
+        }}
+      >
+        <div className="flex items-center justify-between px-5 pt-4 pb-2">
+          <h2
+            id="saisir-sheet-title"
+            className="text-[22px] uppercase tracking-wide"
+            style={{
+              fontFamily: 'var(--font-heading)',
+              color: 'var(--ink, #111827)',
+              fontWeight: 700,
+            }}
+          >
+            Que veux-tu saisir ?
+          </h2>
+          <button
+            ref={closeBtnRef}
+            type="button"
+            onClick={onClose}
+            aria-label="Fermer"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full transition-transform active:scale-[0.94] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            style={{
+              background: 'var(--bg-2, #f3f4f6)',
+              color: 'var(--ink, #111827)',
+              outlineColor: 'var(--color-accent-500)',
+            }}
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="px-4 pt-2 pb-2 space-y-2">
+          {ACTIONS.map(({ kind, title, description, Icon, tone }) => (
+            <button
+              key={kind}
+              type="button"
+              onClick={() => handlePick(kind)}
+              className="flex w-full items-center gap-3 rounded-2xl px-4 py-4 text-left transition-transform active:scale-[0.985] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+              style={{
+                background: 'var(--bg-surface, #fff)',
+                border: '1px solid var(--line, rgba(0,0,0,0.08))',
+                outlineColor: 'var(--color-accent-500)',
+              }}
+            >
+              <span
+                aria-hidden="true"
+                className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
+                style={{ background: TONE_BG[tone], color: TONE_FG[tone] }}
+              >
+                <Icon size={22} strokeWidth={2} aria-hidden />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span
+                  className="block text-[15px] font-semibold leading-tight"
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    color: 'var(--ink, #111827)',
+                  }}
+                >
+                  {title}
+                </span>
+                <span
+                  className="mt-0.5 block text-[12px] leading-snug"
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    color: 'var(--ink-soft, var(--muted, #6b7280))',
+                  }}
+                >
+                  {description}
+                </span>
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SaisirSheet;

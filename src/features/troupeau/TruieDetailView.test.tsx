@@ -151,6 +151,9 @@ vi.mock('@ionic/react', () => ({
   IonSelectOption: ({ children, value }: { children: React.ReactNode; value: string }) => (
     <option value={value}>{children}</option>
   ),
+  IonSegment: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  IonSegmentButton: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  IonLabel: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
   // BottomSheet utilise IonModal : en fermé (isOpen=false) on ne rend rien.
   IonModal: ({
     isOpen,

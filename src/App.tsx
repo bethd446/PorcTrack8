@@ -5,6 +5,7 @@ import {
   Route,
   Navigate,
   useNavigate,
+  useLocation,
 } from 'react-router-dom';
 import { IonApp } from '@ionic/react';
 import OnboardingFlow from './features/onboarding/OnboardingFlow';
@@ -38,6 +39,7 @@ import NotFound from './pages/NotFound';
 
 const AdminDashboard = React.lazy(() => import('./features/admin/AdminDashboard'));
 import AgritechNavV2, { QuickActionsProvider } from './components/AgritechNavV2';
+import SaisirFAB from './components/SaisirFAB';
 import { loadChecklistDefinitions } from './services/checklistService';
 import { ChatbotWidget } from './features/chatbot';
 
@@ -106,6 +108,22 @@ const OnboardingRoute: React.FC = () => {
       <OnboardingFlow onComplete={() => navigate('/today', { replace: true })} />
     </AgritechLayout>
   );
+};
+
+const SaisirFABMount: React.FC = () => {
+  const { pathname } = useLocation();
+  // SaisirFAB visible partout dans l'app protégée SAUF :
+  // - /admin (réservé admin)
+  // - /onboarding (UX guidée, pas pertinent)
+  // - /checklist/* (parcours guidé plein écran)
+  if (
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/onboarding') ||
+    pathname.startsWith('/checklist/')
+  ) {
+    return null;
+  }
+  return <SaisirFAB />;
 };
 
 const AppShell: React.FC = () => (
@@ -210,6 +228,7 @@ const AppShell: React.FC = () => (
     </Routes>
     <AgritechNavV2 />
     <ChatbotWidget />
+    <SaisirFABMount />
   </>
 );
 

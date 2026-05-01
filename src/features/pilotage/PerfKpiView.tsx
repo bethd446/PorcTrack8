@@ -64,7 +64,7 @@ function motifLabel(motif: MotifReforme): string {
     case 'PERF_INSUFFISANTE':
       return 'Perf';
     case 'INACTIVE_LONG':
-      return 'Inactif';
+      return 'Truie inactive depuis longtemps';
     case 'ISSE_ELEVE':
       return 'ISSE';
     case 'MULTIPLE':

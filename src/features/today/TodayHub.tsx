@@ -3,13 +3,15 @@
  * ══════════════════════════════════════════════════════════════════════════
  * Copilote de décision matinal. Point d'entrée par défaut de l'app.
  *
+ * Hiérarchie (refonte V13) :
  *   1. Header BigShoulders : "Bonjour, {firstName}" + date
- *   2. Alertes critiques (CRITIQUE + HAUTE, top 10)
- *   3. Retours chaleur cette semaine (truies J18-J24 post-saillie)
- *   4. Sevrages à confirmer / en retard (bandes SOUS_MERE J28+)
- *   5. Cycles en cours (tile lien)
- *   6. Confirmations en attente (top 5)
- *   7. Audit du jour
+ *   2. TÂCHE PRIORITAIRE — single hero card (algorithme : sevrage retard ≥5j
+ *      > mise-bas imminente J-1/J0 > stock rupture > stock bas + sevrages
+ *      proches > "tout sous contrôle")
+ *   3. AUSSI À TRAITER — top 5 alertes urgentes dédupliquées (CRITIQUE+HAUTE
+ *      fusionne alertes locales/serveur + confirmations en attente)
+ *   4. TON ÉLEVAGE — résumé fermier (bandes, truies/verrats, repro)
+ *   5. TOURNÉE DU JOUR — checklist terrain
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -18,7 +20,7 @@ import {
   IonContent, IonPage, IonRefresher, IonRefresherContent,
 } from '@ionic/react';
 import {
-  AlertTriangle, ChevronRight, ClipboardCheck, Layers, PawPrint, RotateCcw, ShieldCheck,
+  ArrowRight, ChevronRight, ClipboardCheck, ShieldCheck,
 } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
@@ -29,13 +31,34 @@ import { useRessources } from '../../context/RessourcesContext';
 import { useMeta } from '../../context/FarmContext';
 import { useTroupeau } from '../../context/TroupeauContext';
 import { resolveAlertSubject } from '../../utils/alertSubject';
-import type { FarmAlert, AlertPriority } from '../../services/alertEngine';
+import type { AlertPriority, FarmAlert } from '../../services/alertEngine';
 import {
   getPendingConfirmations,
   type PendingConfirmation,
 } from '../../services/confirmationQueue';
-import { getRetoursChaleur, getSevrages } from '../../services/proactiveCues';
+import { getSevrages } from '../../services/proactiveCues';
 import { filterRealPortees } from '../../services/bandesAggregator';
+import { normaliseStatut } from '../../lib/truieStatut';
+import { safeDate } from '../../lib/truieHelpers';
+import type { Truie } from '../../types/farm';
+import QuickConfirmSevrageForm from '../../components/forms/QuickConfirmSevrageForm';
+import QuickConfirmReformeForm from '../../components/forms/QuickConfirmReformeForm';
+
+/** Routing par catégorie pour les alertes (B2 sprint, ressoudé V14). */
+function alertHref(a: FarmAlert): string {
+  switch (a.category) {
+    case 'STOCK':
+      return '/ressources/aliments?filter=stock-bas';
+    case 'BANDES':
+      return a.subjectId ? `/troupeau/bandes/${a.subjectId}` : '/troupeau?view=bandes';
+    case 'REPRO':
+      return a.subjectId ? `/troupeau/truies/${a.subjectId}` : '/troupeau';
+    case 'SANTE':
+      return '/ressources/pharmacie';
+    default:
+      return '/alerts';
+  }
+}
 
 const PRIORITY_ORDER: Record<AlertPriority, number> = {
   CRITIQUE: 0,
@@ -43,6 +66,25 @@ const PRIORITY_ORDER: Record<AlertPriority, number> = {
   NORMALE: 2,
   INFO: 3,
 };
+
+const SEVRAGE_RETARD_SEUIL_J = 5;
+const MB_IMMINENTE_FENETRE_J = 1;
+const SEVRAGE_PROCHE_FENETRE_J = 7;
+
+type PrimaryTaskKind =
+  | 'SEVRAGE_RETARD'
+  | 'MB_IMMINENTE'
+  | 'STOCK_RUPTURE'
+  | 'STOCK_BAS_SEVRAGE'
+  | 'IDLE';
+
+interface PrimaryTask {
+  kind: PrimaryTaskKind;
+  title: string;
+  detail?: string;
+  cta: string;
+  to: string;
+}
 
 /** Affiche "Bande {code}" en évitant le doublon "Bande Bande X" si idPortee contient déjà le mot. */
 const formatBandeLabel = (raw: string): string => {
@@ -54,8 +96,8 @@ const formatBandeLabel = (raw: string): string => {
 const TodayHub: React.FC = () => {
   const navigate = useNavigate();
   const { userName } = useAuth();
-  const { alerts, alertesServeur, saillies } = usePilotage();
-  const { notes } = useRessources();
+  const { alerts, alertesServeur } = usePilotage();
+  const { notes, stockAliment } = useRessources();
   const { recomputeAlerts } = useMeta();
   const { bandes, truies, verrats } = useTroupeau();
   const lookup = useMemo(() => ({ bandes, truies, verrats }), [bandes, truies, verrats]);
@@ -95,41 +137,7 @@ const TodayHub: React.FC = () => {
     event.detail.complete();
   };
 
-  // ── Top 5 alertes URGENT (CRITIQUE + HAUTE) ─────────────────────────────
-  // Pas de remplissage avec NORMAL : si <5 urgent, on laisse le padding visuel.
-  const criticalAlerts = useMemo(() => {
-    const local: FarmAlert[] = alerts.filter(
-      a => a.priority === 'CRITIQUE' || a.priority === 'HAUTE',
-    );
-    const server = alertesServeur
-      .filter(a => a.priorite === 'CRITIQUE' || a.priorite === 'HAUTE')
-      .map((a, i) => ({
-        id: `srv-${i}`,
-        priority: a.priorite as AlertPriority,
-        category: a.categorie,
-        title: a.sujet,
-        message: a.description,
-      }));
-    const merged = [
-      ...local.map(a => ({
-        id: a.id,
-        priority: a.priority,
-        category: a.category as string,
-        title: resolveAlertSubject(a.title, lookup),
-        message: resolveAlertSubject(a.message, lookup),
-      })),
-      ...server,
-    ];
-    merged.sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]);
-    return merged.slice(0, 5);
-  }, [alerts, alertesServeur, lookup]);
-
-  // ── Retours chaleur cette semaine ────────────────────────────────────
   const today = useMemo(() => new Date(), []);
-  const retoursChaleur = useMemo(
-    () => getRetoursChaleur(truies, saillies, today),
-    [truies, saillies, today],
-  );
 
   // Bandes filtrées (exclut RECAP) — source de vérité partagée avec /cycles.
   const realBandes = useMemo(() => filterRealPortees(bandes), [bandes]);
@@ -140,11 +148,223 @@ const TodayHub: React.FC = () => {
     [realBandes, today],
   );
 
-  // ── Dernier audit (note de catégorie AUDIT_QUOTIDIEN ou CONTROLE) ─────
+  // ── Mise-bas imminentes (truies dont la dateMBPrevue est dans 0-1j) ───
+  const mbImminentes = useMemo(() => {
+    const out: { truie: Truie; daysAway: number }[] = [];
+    for (const t of truies) {
+      if (t.statut === 'Morte' || t.statut === 'Réforme') continue;
+      const d = safeDate(t.dateMBPrevue);
+      if (!d) continue;
+      const a = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+      const b = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+      const diffJ = Math.round((a - b) / 86_400_000);
+      if (diffJ >= -MB_IMMINENTE_FENETRE_J && diffJ <= MB_IMMINENTE_FENETRE_J) {
+        out.push({ truie: t, daysAway: diffJ });
+      }
+    }
+    out.sort((x, y) => x.daysAway - y.daysAway);
+    return out;
+  }, [truies, today]);
+
+  // ── Stocks aliment en rupture ou bas ──────────────────────────────────
+  const stocksRupture = useMemo(
+    () => stockAliment.filter(s => s.statutStock === 'RUPTURE' || s.stockActuel <= 0),
+    [stockAliment],
+  );
+  const stocksBas = useMemo(
+    () => stockAliment.filter(s => s.statutStock === 'BAS'),
+    [stockAliment],
+  );
+
+  // ── Sevrages dans les 7 prochains jours (pour priorité 4) ─────────────
+  const sevragesProches = useMemo(() => {
+    const cutoff = today.getTime() + SEVRAGE_PROCHE_FENETRE_J * 86_400_000;
+    return realBandes.filter(b => {
+      const d = safeDate(b.dateSevragePrevue);
+      if (!d) return false;
+      return d.getTime() >= today.getTime() && d.getTime() <= cutoff;
+    });
+  }, [realBandes, today]);
+
+  // ── Algorithme de calcul de LA tâche prioritaire ──────────────────────
+  const primaryTask: PrimaryTask = useMemo(() => {
+    // 1. Sevrage en retard ≥ 5 jours
+    const retardCritiques = sevrages.enRetard.filter(s => s.daysOver >= SEVRAGE_RETARD_SEUIL_J);
+    if (retardCritiques.length > 0) {
+      const plural = retardCritiques.length > 1;
+      const plusAncien = retardCritiques[0];
+      return {
+        kind: 'SEVRAGE_RETARD',
+        title: `${retardCritiques.length} sevrage${plural ? 's' : ''} en retard à confirmer`,
+        detail: `Le plus ancien : ${formatBandeLabel(plusAncien.bande.idPortee || plusAncien.bande.id)} (J+${plusAncien.daysOver})`,
+        cta: 'Confirmer maintenant',
+        to: '/alerts',
+      };
+    }
+
+    // 2. Mise-bas imminente J-1/J0/J+1
+    if (mbImminentes.length > 0) {
+      const m = mbImminentes[0];
+      const labelDelai =
+        m.daysAway === 0 ? "aujourd'hui"
+        : m.daysAway > 0 ? `J-${m.daysAway}`
+        : `J+${Math.abs(m.daysAway)}`;
+      return {
+        kind: 'MB_IMMINENTE',
+        title: `Mise-bas imminente : ${m.truie.displayId}`,
+        detail: `À surveiller ${labelDelai}`,
+        cta: 'Voir la truie',
+        to: `/troupeau/truies/${m.truie.id}`,
+      };
+    }
+
+    // 3. Stock rupture
+    if (stocksRupture.length > 0) {
+      const plural = stocksRupture.length > 1;
+      return {
+        kind: 'STOCK_RUPTURE',
+        title: `${stocksRupture.length} stock${plural ? 's' : ''} en rupture, à commander`,
+        detail: stocksRupture.slice(0, 2).map(s => s.libelle).join(' · '),
+        cta: 'Commander maintenant',
+        to: '/ressources',
+      };
+    }
+
+    // 4. Stock bas + sevrage proche → risque alimentaire
+    if (stocksBas.length > 0 && sevragesProches.length > 0) {
+      const lib = stocksBas[0].libelle;
+      const plural = sevragesProches.length > 1;
+      return {
+        kind: 'STOCK_BAS_SEVRAGE',
+        title: `Risque alimentaire : ${lib} bas, ${sevragesProches.length} sevrage${plural ? 's' : ''} dans 7 jours`,
+        detail: 'Anticiper la commande pour éviter la rupture en lactation',
+        cta: 'Voir les ressources',
+        to: '/ressources',
+      };
+    }
+
+    // 5. Aucune action
+    return {
+      kind: 'IDLE',
+      title: 'Tout est sous contrôle',
+      detail: 'Aucune action urgente ce matin. Bonne journée.',
+      cta: 'Voir le troupeau',
+      to: '/troupeau',
+    };
+  }, [sevrages, mbImminentes, stocksRupture, stocksBas, sevragesProches]);
+
+  // ── "Aussi à traiter" — fusion + déduplication par alertId ────────────
+  type AussiKind = 'navigate' | 'confirm-sevrage' | 'confirm-reforme';
+  interface AussiItem {
+    id: string;
+    priority: AlertPriority;
+    label: string;
+    kind: AussiKind;
+    to?: string;
+    confirmation?: PendingConfirmation;
+  }
+
+  const aussiATraiter = useMemo<AussiItem[]>(() => {
+    const seen = new Set<string>();
+    const out: AussiItem[] = [];
+
+    for (const a of alerts) {
+      if (a.priority !== 'CRITIQUE' && a.priority !== 'HAUTE') continue;
+      if (seen.has(a.id)) continue;
+      seen.add(a.id);
+      out.push({
+        id: a.id,
+        priority: a.priority,
+        label: resolveAlertSubject(a.title, lookup),
+        kind: 'navigate',
+        to: alertHref(a),
+      });
+    }
+
+    alertesServeur
+      .filter(a => a.priorite === 'CRITIQUE' || a.priorite === 'HAUTE')
+      .forEach((a, i) => {
+        const id = `srv-${i}-${a.sujet}`;
+        if (seen.has(id)) return;
+        seen.add(id);
+        out.push({
+          id,
+          priority: a.priorite as AlertPriority,
+          label: a.sujet,
+          kind: 'navigate',
+          to: '/alerts',
+        });
+      });
+
+    for (const c of pendingConfirmations) {
+      if (seen.has(c.alertId)) continue;
+      seen.add(c.alertId);
+      const isSevrage = c.action.type === 'CONFIRM_SEVRAGE';
+      const isReforme = c.action.type === 'CONFIRM_REFORME';
+      out.push({
+        id: c.id,
+        priority: 'HAUTE',
+        label: resolveAlertSubject(c.alertTitle, lookup),
+        kind: isSevrage ? 'confirm-sevrage' : isReforme ? 'confirm-reforme' : 'navigate',
+        to: !isSevrage && !isReforme ? '/alerts' : undefined,
+        confirmation: c,
+      });
+    }
+
+    out.sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]);
+    return out.slice(0, 5);
+  }, [alerts, alertesServeur, pendingConfirmations, lookup]);
+
+  // ── State pour les forms confirmation (ressoudé V14, ex-Agent C) ─────
+  const [sevrageConfirmation, setSevrageConfirmation] =
+    useState<PendingConfirmation | null>(null);
+  const [reformeConfirmation, setReformeConfirmation] =
+    useState<PendingConfirmation | null>(null);
+
+  function handleAussiClick(item: AussiItem): void {
+    if (item.kind === 'confirm-sevrage' && item.confirmation) {
+      setSevrageConfirmation(item.confirmation);
+      return;
+    }
+    if (item.kind === 'confirm-reforme' && item.confirmation) {
+      setReformeConfirmation(item.confirmation);
+      return;
+    }
+    if (item.to) navigate(item.to);
+  }
+
+  // ── "Ton élevage" — composition fermière ─────────────────────────────
+  const cheptelStats = useMemo(() => {
+    const truiesActives = truies.filter(t => {
+      const s = (t.statut || '').toLowerCase();
+      return !/morte|r[ée]forme/.test(s);
+    });
+    const verratsActifs = verrats.filter(v => {
+      const s = (v.statut || '').toLowerCase();
+      return !/mort|r[ée]forme/.test(s);
+    });
+    let pleines = 0, maternite = 0, vides = 0;
+    for (const t of truiesActives) {
+      const c = normaliseStatut(t.statut);
+      if (c === 'PLEINE') pleines += 1;
+      else if (c === 'MATERNITE') maternite += 1;
+      else if (c === 'VIDE') vides += 1;
+    }
+    return {
+      bandesCount: realBandes.length,
+      truiesCount: truiesActives.length,
+      verratsCount: verratsActifs.length,
+      pleines,
+      maternite,
+      vides,
+    };
+  }, [truies, verrats, realBandes]);
+
+  // ── Dernière tournée (note de catégorie AUDIT_QUOTIDIEN ou CONTROLE) ──
   const lastAudit = useMemo(() => {
     const audits = notes.filter(n => {
       const cat = String(n.animalType ?? '');
-      return cat === 'CONTROLE' || cat === 'AUDIT_QUOTIDIEN' || /audit/i.test(n.texte);
+      return cat === 'CONTROLE' || cat === 'AUDIT_QUOTIDIEN' || /audit|tourn[ée]e/i.test(n.texte);
     });
     if (audits.length === 0) return null;
     const sorted = [...audits].sort((a, b) => {
@@ -168,6 +388,17 @@ const TodayHub: React.FC = () => {
     return dt.toLocaleDateString('fr-FR');
   }, [lastAudit]);
 
+  const tourneeAujourdHui = useMemo(() => {
+    if (!lastAudit) return false;
+    const dt = new Date(lastAudit.date);
+    if (Number.isNaN(dt.getTime())) return false;
+    return (
+      dt.getFullYear() === today.getFullYear() &&
+      dt.getMonth() === today.getMonth() &&
+      dt.getDate() === today.getDate()
+    );
+  }, [lastAudit, today]);
+
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
@@ -177,7 +408,7 @@ const TodayHub: React.FC = () => {
           </IonRefresher>
 
           <div
-            className="px-4 pt-5 pb-32 flex flex-col gap-6"
+            className="px-4 pt-5 pb-32 flex flex-col gap-7"
             style={{ maxWidth: 1100, margin: '0 auto' }}
           >
             {/* ── En-tête ───────────────────────────────────────────── */}
@@ -208,26 +439,187 @@ const TodayHub: React.FC = () => {
               </div>
             </header>
 
-            {/* ── Alertes critiques ────────────────────────────────── */}
-            <section aria-label={`Alertes critiques · ${criticalAlerts.length}`}>
-              <Eyebrow dotColor={criticalAlerts.length > 0 ? 'pig' : 'accent'}>
-                Alertes critiques · {criticalAlerts.length}
+            {/* ── Tâche prioritaire (single hero) ────────────────────── */}
+            <section aria-label="Tâche prioritaire">
+              <Eyebrow dotColor={primaryTask.kind === 'IDLE' ? 'accent' : 'pig'}>
+                Tâche prioritaire
               </Eyebrow>
-              {criticalAlerts.length === 0 ? (
+              <button
+                type="button"
+                onClick={() => navigate(primaryTask.to)}
+                aria-label={primaryTask.title}
+                className="pressable"
+                style={{
+                  width: '100%',
+                  textAlign: 'left',
+                  marginTop: 12,
+                  background: primaryTask.kind === 'IDLE'
+                    ? 'var(--bg-surface)'
+                    : 'var(--color-accent-50, var(--bg-surface))',
+                  border: primaryTask.kind === 'IDLE'
+                    ? '1px solid var(--color-accent-100)'
+                    : '2px solid var(--color-accent-500)',
+                  borderRadius: 16,
+                  padding: '20px 22px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 14,
+                  cursor: 'pointer',
+                  boxShadow: primaryTask.kind === 'IDLE'
+                    ? '0 1px 2px rgba(17,24,39,0.04)'
+                    : '0 4px 12px rgba(17,24,39,0.08)',
+                  transition: 'transform 160ms var(--ease-emil)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+                  {primaryTask.kind === 'IDLE' ? (
+                    <ShieldCheck size={26} color="var(--color-accent-500)" aria-hidden="true" />
+                  ) : null}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h2
+                      style={{
+                        fontFamily: 'var(--font-display, BigShoulders), system-ui, sans-serif',
+                        fontSize: 22,
+                        fontWeight: 700,
+                        color: 'var(--ink)',
+                        margin: 0,
+                        lineHeight: 1.15,
+                        letterSpacing: '-0.01em',
+                      }}
+                    >
+                      {primaryTask.title}
+                    </h2>
+                    {primaryTask.detail ? (
+                      <p
+                        style={{
+                          fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                          fontSize: 14,
+                          color: 'var(--ink-soft)',
+                          lineHeight: 1.45,
+                          margin: '6px 0 0',
+                        }}
+                      >
+                        {primaryTask.detail}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
                 <div
                   style={{
-                    marginTop: 12,
-                    background: 'var(--bg-surface)',
-                    borderRadius: 12,
-                    padding: '20px 22px',
-                    display: 'flex',
+                    display: 'inline-flex',
                     alignItems: 'center',
-                    gap: 12,
-                    border: '1px solid var(--color-accent-100)',
+                    gap: 8,
+                    padding: '10px 16px',
+                    borderRadius: 'var(--radius-pill)',
+                    background: 'var(--color-accent-500)',
+                    color: 'var(--bg-surface)',
+                    fontFamily: 'DMMono, ui-monospace, monospace',
+                    fontSize: 12,
+                    letterSpacing: '0.10em',
+                    textTransform: 'uppercase',
+                    fontWeight: 600,
+                    alignSelf: 'flex-start',
+                    minHeight: 44,
+                    boxSizing: 'border-box',
                   }}
                 >
-                  <ShieldCheck size={22} color="var(--color-accent-500)" aria-hidden="true" />
-                  <span
+                  {primaryTask.cta}
+                  <ArrowRight size={14} aria-hidden="true" />
+                </div>
+              </button>
+            </section>
+
+            {/* ── Aussi à traiter ────────────────────────────────────── */}
+            {aussiATraiter.length > 0 && (
+              <section aria-label="Aussi à traiter">
+                <Eyebrow dotColor="amber">Aussi à traiter</Eyebrow>
+                <ul
+                  style={{
+                    listStyle: 'none',
+                    padding: 0,
+                    margin: '12px 0 0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
+                >
+                  {aussiATraiter.map((item) => {
+                    const dotColor =
+                      item.priority === 'CRITIQUE'
+                        ? 'var(--color-pig-deep)'
+                        : 'var(--color-amber-pork-deep)';
+                    return (
+                      <li key={item.id}>
+                        <button
+                          type="button"
+                          onClick={() => handleAussiClick(item)}
+                          className="pressable"
+                          style={{
+                            width: '100%',
+                            textAlign: 'left',
+                            background: 'transparent',
+                            border: 'none',
+                            borderBottom: '1px solid var(--line)',
+                            padding: '12px 4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 12,
+                            cursor: 'pointer',
+                            minHeight: 44,
+                          }}
+                        >
+                          <span
+                            aria-hidden="true"
+                            style={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: '50%',
+                              background: dotColor,
+                              flexShrink: 0,
+                            }}
+                          />
+                          <span
+                            style={{
+                              flex: 1,
+                              fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                              fontSize: 14,
+                              color: 'var(--ink)',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {item.label}
+                          </span>
+                          <ChevronRight size={16} color="var(--muted)" aria-hidden="true" />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            )}
+
+            {/* ── Ton élevage ────────────────────────────────────────── */}
+            <section aria-label="Ton élevage">
+              <Eyebrow dotColor="accent">Ton élevage</Eyebrow>
+              <Link
+                to="/troupeau"
+                className="pressable"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 14,
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--line)',
+                  borderRadius: 12,
+                  padding: '16px 18px',
+                  textDecoration: 'none',
+                  marginTop: 12,
+                  boxShadow: '0 1px 2px rgba(17,24,39,0.04)',
+                }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
                     style={{
                       fontFamily: 'var(--font-display, BigShoulders), system-ui, sans-serif',
                       fontSize: 16,
@@ -236,474 +628,30 @@ const TodayHub: React.FC = () => {
                       letterSpacing: '-0.005em',
                     }}
                   >
-                    Aucune alerte prioritaire ce matin
-                  </span>
-                </div>
-              ) : (
-                <ul
-                  style={{
-                    listStyle: 'none',
-                    padding: 0,
-                    margin: '12px 0 0',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 8,
-                  }}
-                >
-                  {criticalAlerts.map(alert => {
-                    const dotColor =
-                      alert.priority === 'CRITIQUE'
-                        ? 'var(--color-pig-deep)'
-                        : 'var(--color-amber-pork-deep)';
-                    return (
-                    <li key={alert.id}>
-                      <button
-                        type="button"
-                        onClick={() => navigate('/alerts')}
-                        className="pressable"
-                        style={{
-                          width: '100%',
-                          textAlign: 'left',
-                          background: 'var(--bg-surface)',
-                          borderRadius: 12,
-                          boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-                          padding: '14px 16px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 12,
-                          border: 'none',
-                          cursor: 'pointer',
-                          transition: 'transform 160ms var(--ease-emil)',
-                        }}
-                      >
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 8,
-                              marginBottom: 4,
-                            }}
-                          >
-                            <span
-                              aria-hidden="true"
-                              style={{
-                                width: 6,
-                                height: 6,
-                                borderRadius: '50%',
-                                background: dotColor,
-                                flexShrink: 0,
-                              }}
-                            />
-                            <span
-                              style={{
-                                fontFamily: 'DMMono, ui-monospace, monospace',
-                                fontSize: 10,
-                                letterSpacing: '0.10em',
-                                textTransform: 'uppercase',
-                                fontWeight: 600,
-                                color: dotColor,
-                              }}
-                            >
-                              {alert.priority} · {alert.category}
-                            </span>
-                            <AlertTriangle
-                              size={13}
-                              color={dotColor}
-                              aria-hidden="true"
-                            />
-                          </div>
-                          <h4
-                            style={{
-                              fontFamily: 'var(--font-display, BigShoulders), system-ui, sans-serif',
-                              fontSize: 15,
-                              fontWeight: 600,
-                              color: 'var(--ink)',
-                              margin: 0,
-                              letterSpacing: '-0.005em',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {alert.title}
-                          </h4>
-                          {alert.message ? (
-                            <p
-                              style={{
-                                fontFamily: 'InstrumentSans, system-ui, sans-serif',
-                                fontSize: 12,
-                                color: 'var(--ink-soft)',
-                                lineHeight: 1.4,
-                                margin: '2px 0 0',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              {alert.message}
-                            </p>
-                          ) : null}
-                        </div>
-                        <ChevronRight size={16} color="var(--muted)" aria-hidden="true" />
-                      </button>
-                    </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </section>
-
-            {/* ── Retours chaleur cette semaine ─────────────────────── */}
-            {(retoursChaleur.aVerifier.length > 0 || retoursChaleur.aAnticiper.length > 0) && (
-              <section aria-label="Retours chaleur à surveiller">
-                <Eyebrow dotColor="pig">
-                  Retours chaleur · {retoursChaleur.aVerifier.length} truie{retoursChaleur.aVerifier.length > 1 ? 's' : ''}
-                  {retoursChaleur.aAnticiper.length > 0 ? ` · +${retoursChaleur.aAnticiper.length} à anticiper` : ''}
-                </Eyebrow>
-                <ul
-                  style={{
-                    listStyle: 'none',
-                    padding: 0,
-                    margin: '12px 0 0',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 8,
-                  }}
-                >
-                  {retoursChaleur.aVerifier.map(({ truie, daysSinceSaillie }) => (
-                    <li key={`rc-v-${truie.id}`}>
-                      <Link
-                        to={`/troupeau/truies/${truie.id}`}
-                        className="pressable"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 12,
-                          background: 'var(--bg-surface)',
-                          borderRadius: 12,
-                          boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-                          padding: '14px 16px',
-                          textDecoration: 'none',
-                          border: '1px solid var(--line)',
-                        }}
-                      >
-                        <PawPrint size={20} color="var(--color-pig)" aria-hidden="true" />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div
-                            style={{
-                              fontFamily: 'var(--font-display, BigShoulders), system-ui, sans-serif',
-                              fontSize: 15,
-                              fontWeight: 600,
-                              color: 'var(--ink)',
-                              letterSpacing: '-0.005em',
-                            }}
-                          >
-                            {truie.displayId}{truie.nom ? ` · ${truie.nom}` : ''}
-                          </div>
-                          <div
-                            style={{
-                              fontFamily: 'InstrumentSans, system-ui, sans-serif',
-                              fontSize: 12,
-                              color: 'var(--ink-soft)',
-                              marginTop: 2,
-                            }}
-                          >
-                            Saillie il y a {daysSinceSaillie}j · vérifier J18-J24
-                          </div>
-                        </div>
-                        <ChevronRight size={16} color="var(--muted)" aria-hidden="true" />
-                      </Link>
-                    </li>
-                  ))}
-                  {retoursChaleur.aAnticiper.map(({ truie, daysSinceSaillie }) => (
-                    <li key={`rc-a-${truie.id}`}>
-                      <Link
-                        to={`/troupeau/truies/${truie.id}`}
-                        className="pressable"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 12,
-                          background: 'var(--bg-surface)',
-                          borderRadius: 12,
-                          boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-                          padding: '14px 16px',
-                          textDecoration: 'none',
-                          border: '1px solid var(--line)',
-                        }}
-                      >
-                        <PawPrint size={20} color="var(--color-amber-pork-deep)" aria-hidden="true" />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div
-                            style={{
-                              fontFamily: 'var(--font-display, BigShoulders), system-ui, sans-serif',
-                              fontSize: 15,
-                              fontWeight: 600,
-                              color: 'var(--ink)',
-                              letterSpacing: '-0.005em',
-                            }}
-                          >
-                            {truie.displayId}{truie.nom ? ` · ${truie.nom}` : ''}
-                          </div>
-                          <div
-                            style={{
-                              fontFamily: 'InstrumentSans, system-ui, sans-serif',
-                              fontSize: 12,
-                              color: 'var(--ink-soft)',
-                              marginTop: 2,
-                            }}
-                          >
-                            À anticiper · saillie il y a {daysSinceSaillie}j
-                          </div>
-                        </div>
-                        <ChevronRight size={16} color="var(--muted)" aria-hidden="true" />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            {/* ── Sevrages à confirmer / en retard ──────────────────── */}
-            {(sevrages.enRetard.length > 0 || sevrages.aVenir.length > 0) && (
-              <section aria-label="Sevrages à confirmer">
-                <Eyebrow dotColor={sevrages.enRetard.length > 0 ? 'pig' : 'amber'}>
-                  Sevrages · {sevrages.enRetard.length} en retard, {sevrages.aVenir.length} cette semaine
-                </Eyebrow>
-                <ul
-                  style={{
-                    listStyle: 'none',
-                    padding: 0,
-                    margin: '12px 0 0',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 8,
-                  }}
-                >
-                  {sevrages.enRetard.map(({ bande, daysOver }) => (
-                    <li key={`sv-r-${bande.id}`}>
-                      <Link
-                        to={`/troupeau/bandes/${bande.id}`}
-                        className="pressable"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 12,
-                          background: 'var(--bg-surface)',
-                          borderRadius: 12,
-                          boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-                          padding: '14px 16px',
-                          textDecoration: 'none',
-                          border: '1px solid var(--line)',
-                        }}
-                      >
-                        <Layers size={20} color="var(--color-pig)" aria-hidden="true" />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div
-                            style={{
-                              fontFamily: 'var(--font-display, BigShoulders), system-ui, sans-serif',
-                              fontSize: 15,
-                              fontWeight: 600,
-                              color: 'var(--ink)',
-                              letterSpacing: '-0.005em',
-                            }}
-                          >
-                            {formatBandeLabel(bande.idPortee || bande.id)}
-                          </div>
-                          <div
-                            style={{
-                              fontFamily: 'InstrumentSans, system-ui, sans-serif',
-                              fontSize: 12,
-                              color: 'var(--ink-soft)',
-                              marginTop: 2,
-                            }}
-                          >
-                            Sevrage J+{daysOver} retard{typeof bande.vivants === 'number' ? ` · ${bande.vivants} porcelets` : ''}
-                          </div>
-                        </div>
-                        <ChevronRight size={16} color="var(--color-pig)" aria-hidden="true" />
-                      </Link>
-                    </li>
-                  ))}
-                  {sevrages.aVenir.map(({ bande, daysOver }) => (
-                    <li key={`sv-v-${bande.id}`}>
-                      <Link
-                        to={`/troupeau/bandes/${bande.id}`}
-                        className="pressable"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 12,
-                          background: 'var(--bg-surface)',
-                          borderRadius: 12,
-                          boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-                          padding: '14px 16px',
-                          textDecoration: 'none',
-                          border: '1px solid var(--line)',
-                        }}
-                      >
-                        <Layers size={20} color="var(--color-amber-pork-deep)" aria-hidden="true" />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div
-                            style={{
-                              fontFamily: 'var(--font-display, BigShoulders), system-ui, sans-serif',
-                              fontSize: 15,
-                              fontWeight: 600,
-                              color: 'var(--ink)',
-                              letterSpacing: '-0.005em',
-                            }}
-                          >
-                            {formatBandeLabel(bande.idPortee || bande.id)}
-                          </div>
-                          <div
-                            style={{
-                              fontFamily: 'InstrumentSans, system-ui, sans-serif',
-                              fontSize: 12,
-                              color: 'var(--ink-soft)',
-                              marginTop: 2,
-                            }}
-                          >
-                            Sevrage {daysOver === 0 ? "aujourd'hui" : `dans ${-daysOver}j`}{typeof bande.vivants === 'number' ? ` · ${bande.vivants} porcelets` : ''}
-                          </div>
-                        </div>
-                        <ChevronRight size={16} color="var(--muted)" aria-hidden="true" />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            {/* ── Cycles en cours ──────────────────────────────────── */}
-            <section aria-label="Cycles en cours">
-              <Eyebrow dotColor="accent">Cycles en cours</Eyebrow>
-              <Link
-                to="/cycles"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  background: 'var(--bg-surface)',
-                  border: '1px solid var(--line)',
-                  borderRadius: 'var(--radius-card, 12px)',
-                  padding: '16px 20px',
-                  textDecoration: 'none',
-                  marginTop: 12,
-                }}
-              >
-                <RotateCcw size={20} color="var(--color-accent-500)" aria-hidden="true" />
-                <div style={{ flex: 1 }}>
+                    {cheptelStats.bandesCount} bande{cheptelStats.bandesCount > 1 ? 's' : ''} active{cheptelStats.bandesCount > 1 ? 's' : ''}
+                    {' · '}
+                    {cheptelStats.truiesCount} truie{cheptelStats.truiesCount > 1 ? 's' : ''}
+                    {' · '}
+                    {cheptelStats.verratsCount} verrat{cheptelStats.verratsCount > 1 ? 's' : ''}
+                  </div>
                   <div
                     style={{
-                      fontFamily: 'BigShoulders, sans-serif',
-                      fontSize: 18,
-                      fontWeight: 700,
-                      color: 'var(--ink)',
+                      fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                      fontSize: 13,
+                      color: 'var(--ink-soft)',
+                      marginTop: 4,
                     }}
                   >
-                    Voir les cycles biologiques
-                  </div>
-                  <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-                    {realBandes.length} bande{realBandes.length > 1 ? 's' : ''} active{realBandes.length > 1 ? 's' : ''} · 7 phases
+                    Reproduction&nbsp;: {cheptelStats.pleines} pleine{cheptelStats.pleines > 1 ? 's' : ''}, {cheptelStats.maternite} maternité, {cheptelStats.vides} vide{cheptelStats.vides > 1 ? 's' : ''}
                   </div>
                 </div>
                 <ChevronRight size={18} color="var(--muted)" aria-hidden="true" />
               </Link>
             </section>
 
-            {/* ── Confirmations en attente ──────────────────────────── */}
-            {pendingConfirmations.length > 0 && (
-              <section aria-label="Confirmations en attente">
-                <Eyebrow dotColor="amber">Confirmations en attente · {Math.min(pendingConfirmations.length, 5)}</Eyebrow>
-                <ul
-                  style={{
-                    listStyle: 'none',
-                    padding: 0,
-                    margin: '12px 0 0',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 8,
-                  }}
-                >
-                  {pendingConfirmations.slice(0, 5).map((c) => (
-                    <li key={c.id}>
-                      <button
-                        type="button"
-                        onClick={() => navigate('/alerts')}
-                        className="pressable"
-                        style={{
-                          width: '100%',
-                          textAlign: 'left',
-                          background: 'var(--bg-surface)',
-                          borderRadius: 12,
-                          boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-                          padding: '14px 16px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 12,
-                          border: 'none',
-                          cursor: 'pointer',
-                          transition: 'transform 160ms var(--ease-emil)',
-                        }}
-                      >
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div
-                            style={{
-                              fontFamily: 'DMMono, ui-monospace, monospace',
-                              fontSize: 10,
-                              letterSpacing: '0.10em',
-                              textTransform: 'uppercase',
-                              fontWeight: 600,
-                              color: 'var(--color-amber-pork-deep)',
-                              marginBottom: 4,
-                            }}
-                          >
-                            {c.action.type.replace(/_/g, ' ')}
-                          </div>
-                          <h4
-                            style={{
-                              fontFamily: 'var(--font-display, BigShoulders), system-ui, sans-serif',
-                              fontSize: 15,
-                              fontWeight: 600,
-                              color: 'var(--ink)',
-                              margin: 0,
-                              letterSpacing: '-0.005em',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {resolveAlertSubject(c.alertTitle, lookup)}
-                          </h4>
-                          {c.alertMessage ? (
-                            <p
-                              style={{
-                                fontFamily: 'InstrumentSans, system-ui, sans-serif',
-                                fontSize: 12,
-                                color: 'var(--ink-soft)',
-                                lineHeight: 1.4,
-                                margin: '2px 0 0',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              {resolveAlertSubject(c.alertMessage, lookup)}
-                            </p>
-                          ) : null}
-                        </div>
-                        <ChevronRight size={16} color="var(--muted)" aria-hidden="true" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            {/* ── Audit du jour ─────────────────────────────────────── */}
-            <section aria-label="Audit du jour">
-              <Eyebrow dotColor="amber">Audit du jour</Eyebrow>
+            {/* ── Tournée du jour ────────────────────────────────────── */}
+            <section aria-label="Tournée du jour">
+              <Eyebrow dotColor="amber">Tournée du jour</Eyebrow>
               <div
                 style={{
                   marginTop: 12,
@@ -742,7 +690,7 @@ const TodayHub: React.FC = () => {
                         letterSpacing: '-0.005em',
                       }}
                     >
-                      Audit terrain
+                      Tournée terrain
                     </div>
                     <div
                       style={{
@@ -753,14 +701,18 @@ const TodayHub: React.FC = () => {
                         marginTop: 2,
                       }}
                     >
-                      {lastAuditAgo ? `Dernier · ${lastAuditAgo}` : 'Aucun audit enregistré'}
+                      {tourneeAujourdHui
+                        ? `Tournée ${lastAuditAgo}`
+                        : lastAuditAgo
+                          ? `Aucune tournée enregistrée aujourd'hui · dernière ${lastAuditAgo}`
+                          : "Aucune tournée enregistrée aujourd'hui"}
                     </div>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => navigate('/audit')}
-                  aria-label="Lancer un audit"
+                  aria-label="Démarrer la tournée"
                   className="pressable"
                   style={{
                     width: '100%',
@@ -779,12 +731,25 @@ const TodayHub: React.FC = () => {
                     transition: 'transform 160ms var(--ease-emil)',
                   }}
                 >
-                  Lancer un audit
+                  Démarrer la tournée
                 </button>
               </div>
             </section>
 
           </div>
+
+          <QuickConfirmSevrageForm
+            isOpen={!!sevrageConfirmation}
+            onClose={() => setSevrageConfirmation(null)}
+            pending={sevrageConfirmation}
+            onSuccess={() => recomputeAlerts()}
+          />
+          <QuickConfirmReformeForm
+            isOpen={!!reformeConfirmation}
+            onClose={() => setReformeConfirmation(null)}
+            pending={reformeConfirmation}
+            onSuccess={() => recomputeAlerts()}
+          />
         </AgritechLayout>
       </IonContent>
     </IonPage>

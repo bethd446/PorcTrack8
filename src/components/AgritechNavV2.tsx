@@ -5,7 +5,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { IonAlert, IonToast } from '@ionic/react';
+import { IonToast } from '@ionic/react';
 import {
   Inbox,
   PawPrint,
@@ -31,10 +31,19 @@ import QuickPeseeForm from './forms/QuickPeseeForm';
 import QuickHealthForm from './forms/QuickHealthForm';
 import QuickNoteForm from './forms/QuickNoteForm';
 import QuickMortalityForm from './forms/QuickMortalityForm';
+import QuickMiseBasForm from './forms/QuickMiseBasForm';
+import QuickSevrageForm from './forms/QuickSevrageForm';
 
 /* ── QuickActions Context ────────────────────────────────────────────────── */
 
-export type QuickActionKind = 'saillie' | 'soin' | 'note' | 'pesee' | 'mortalite';
+export type QuickActionKind =
+  | 'saillie'
+  | 'soin'
+  | 'note'
+  | 'pesee'
+  | 'mortalite'
+  | 'misebas'
+  | 'sevrage';
 
 interface QuickActionsContextValue {
   openAction: (kind: QuickActionKind) => void;
@@ -42,7 +51,7 @@ interface QuickActionsContextValue {
 
 const QuickActionsCtx = createContext<QuickActionsContextValue | null>(null);
 
-const useQuickActions = (): QuickActionsContextValue => {
+export const useQuickActions = (): QuickActionsContextValue => {
   const ctx = useContext(QuickActionsCtx);
   if (!ctx) {
     throw new Error('useQuickActions must be used within QuickActionsProvider');
@@ -54,17 +63,12 @@ export const QuickActionsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [kind, setKind] = useState<QuickActionKind | null>(null);
-  const [showMortalityConfirm, setShowMortalityConfirm] = useState(false);
   const [toast, setToast] = useState<{ open: boolean; message: string }>({
     open: false,
     message: '',
   });
 
   const openAction = useCallback((k: QuickActionKind) => {
-    if (k === 'mortalite') {
-      setShowMortalityConfirm(true);
-      return;
-    }
     setKind(k);
   }, []);
 
@@ -87,6 +91,20 @@ export const QuickActionsProvider: React.FC<{ children: React.ReactNode }> = ({
         onSuccess={() => {
           setToast({ open: true, message: 'Mortalité enregistrée' });
           closeSheet();
+        }}
+      />
+      <QuickMiseBasForm
+        isOpen={kind === 'misebas'}
+        onClose={closeSheet}
+        onSuccess={() => {
+          setToast({ open: true, message: 'Mise-bas enregistrée' });
+        }}
+      />
+      <QuickSevrageForm
+        isOpen={kind === 'sevrage'}
+        onClose={closeSheet}
+        onSuccess={() => {
+          setToast({ open: true, message: 'Sevrage enregistré' });
         }}
       />
 
@@ -120,27 +138,6 @@ export const QuickActionsProvider: React.FC<{ children: React.ReactNode }> = ({
           }}
         />
       </BottomSheet>
-
-      <IonAlert
-        isOpen={showMortalityConfirm}
-        onDidDismiss={() => setShowMortalityConfirm(false)}
-        header="Déclarer une mortalité"
-        message="Cette action enregistre une perte d'animal dans le journal sanitaire et le bilan financier. Elle est irréversible. Continuer ?"
-        buttons={[
-          {
-            text: 'Annuler',
-            role: 'cancel',
-            cssClass: 'alert-button-cancel',
-          },
-          {
-            text: 'Continuer',
-            cssClass: 'alert-button-confirm',
-            handler: () => {
-              setKind('mortalite');
-            },
-          },
-        ]}
-      />
 
       <IonToast
         isOpen={toast.open}

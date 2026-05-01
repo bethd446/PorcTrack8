@@ -26,6 +26,10 @@ import { updateSow, updateBatch } from '../../services/supabaseWrites';
 import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
 import QuickEditTruieForm from '../../components/forms/QuickEditTruieForm';
+import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
+import QuickMiseBasForm from '../../components/forms/QuickMiseBasForm';
+import QuickMortalityForm from '../../components/forms/QuickMortalityForm';
+import TruieEventActionSheet, { type TruieEventAction } from '../../components/forms/TruieEventActionSheet';
 
 import Eyebrow from '../../components/design/Eyebrow';
 import Chip from '../../components/design/Chip';
@@ -91,6 +95,22 @@ const TruieDetailView: React.FC = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [toast, setToast] = useState('');
   const [treeOpen, setTreeOpen] = useState(false);
+  const [eventSheetOpen, setEventSheetOpen] = useState(false);
+  const [saillieOpen, setSaillieOpen] = useState(false);
+  const [miseBasOpen, setMiseBasOpen] = useState(false);
+  const [mortalityOpen, setMortalityOpen] = useState(false);
+
+  const handleEventAction = useCallback((action: TruieEventAction): void => {
+    setEventSheetOpen(false);
+    if (action === 'SAILLIE') setSaillieOpen(true);
+    else if (action === 'MISE_BAS') setMiseBasOpen(true);
+    else if (action === 'MORTALITE') setMortalityOpen(true);
+    else if (action === 'ECHOGRAPHIE') {
+      // TODO: formulaire échographie dédié — pour l'instant on bascule le statut
+      // côté action existante (DecisionBinaire J18-J24) et on informe l'utilisateur.
+      setToast('Échographie : utiliser la décision binaire J18-J24 ou « Modifier toutes les infos » pour passer à PLEINE.');
+    }
+  }, []);
 
   // ── Données métier ─────────────────────────────────────────────────────────
 
@@ -466,9 +486,9 @@ const TruieDetailView: React.FC = () => {
               tagline={tagline}
               photoUrl={truie.photoUrl}
               photoStamp={`${truie.displayId} · ${formatDateShort(new Date().toISOString())}`}
-              onPrimaryAction={() => setEditOpen(true)}
+              onPrimaryAction={() => setEventSheetOpen(true)}
               onSecondaryAction={() => window.print()}
-              primaryLabel="Nouvel évènement"
+              primaryLabel="+ Saisir évènement"
               secondaryLabel="Imprimer"
             />
 
@@ -799,6 +819,31 @@ const TruieDetailView: React.FC = () => {
           isOpen={editOpen}
           onClose={() => setEditOpen(false)}
           truie={truie}
+        />
+
+        {/* Sheet sélection évènement */}
+        <TruieEventActionSheet
+          isOpen={eventSheetOpen}
+          onClose={() => setEventSheetOpen(false)}
+          truieDisplayId={truie.displayId}
+          truieStatut={truie.statut}
+          onSelect={handleEventAction}
+        />
+
+        {/* Formulaires métier */}
+        <QuickSaillieForm
+          isOpen={saillieOpen}
+          onClose={() => setSaillieOpen(false)}
+          defaultTruieDisplayId={truie.displayId}
+        />
+        <QuickMiseBasForm
+          isOpen={miseBasOpen}
+          onClose={() => setMiseBasOpen(false)}
+          defaultTruieId={truie.displayId}
+        />
+        <QuickMortalityForm
+          isOpen={mortalityOpen}
+          onClose={() => setMortalityOpen(false)}
         />
 
         {/* Modal arbre généalogique */}

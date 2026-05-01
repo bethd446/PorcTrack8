@@ -19,12 +19,25 @@ import { normaliseStatut } from '../../lib/truieStatut';
 interface QuickSaillieFormProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Pré-sélectionne une truie (displayId) à l'ouverture (depuis la fiche truie). */
+  defaultTruieDisplayId?: string;
 }
 
-const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose }) => {
+const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, defaultTruieDisplayId }) => {
   const { truies, verrats } = useFarm();
-  const [selectedTruie, setSelectedTruie] = useState('');
+  const [selectedTruie, setSelectedTruie] = useState(defaultTruieDisplayId ?? '');
   const [selectedVerrat, setSelectedVerrat] = useState('');
+
+  const [lastOpenKey, setLastOpenKey] = useState<{ isOpen: boolean; defaultTruieDisplayId: string | undefined }>({
+    isOpen,
+    defaultTruieDisplayId,
+  });
+  if (lastOpenKey.isOpen !== isOpen || lastOpenKey.defaultTruieDisplayId !== defaultTruieDisplayId) {
+    setLastOpenKey({ isOpen, defaultTruieDisplayId });
+    if (isOpen && defaultTruieDisplayId) {
+      setSelectedTruie(defaultTruieDisplayId);
+    }
+  }
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
 
