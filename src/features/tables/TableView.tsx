@@ -27,7 +27,7 @@ import {
   AlertCircle, Search, ChevronRight,
   Box, Package, Stethoscope, NotebookPen, Heart, Zap, Layers,
 } from 'lucide-react';
-import { readTableByKey } from '../../services/googleSheets';
+import { getTableByKey } from '../../services/tableLoader';
 import TableRowEdit from './TableRowEdit';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
@@ -261,11 +261,11 @@ const TableView: React.FC<TableViewProps> = ({ tableKey }) => {
     setLoading(true);
     setError(null);
     try {
-      const result = await readTableByKey(tableKey);
+      const result = await getTableByKey(tableKey);
       if (result.success) {
         setHeader(result.header);
         setRows(result.rows);
-        setMeta(result.meta);
+        setMeta(result.meta ? { sheetName: result.meta.sheetName, idHeader: result.meta.idHeader } : null);
       } else {
         setError(result.message || 'Impossible de charger les données');
       }

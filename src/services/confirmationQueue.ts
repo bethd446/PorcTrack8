@@ -1,67 +1,84 @@
 /**
  * PorcTrack — File d'Actions en Attente de Confirmation
  * ══════════════════════════════════════════════════════
- * Toute action critique (sevrage, mise-bas, saillie, réforme…) passe
- * par ce service avant d'être envoyée à Google Sheets.
+ * Toute action critique (sevrage, mise-bas, saillie, réforme, regroupement)
+ * passe par ce service avant d'être écrite dans Supabase.
  *
  * Flux :
  *   1. Le moteur d'alertes détecte un événement
  *   2. L'alerte propose des actions
  *   3. Le porcher confirme dans l'UI (ConfirmationModal)
- *   4. Ce service exécute l'action et l'écrit dans Sheets
+ *   4. Ce service exécute l'action via les helpers typés `supabaseWrites.ts`
  *   5. Le cache est invalidé → l'UI se met à jour
  */
 
 import { Preferences } from '@capacitor/preferences';
-import { updateRowById, appendRow } from './googleSheets';
+import {
+  insertBatch,
+  insertNote,
+  updateSowByCode,
+  updateBatchByCode,
+} from './supabaseWrites';
 import type { FarmAlert, AlertAction } from './alertEngine';
-import type { SheetCell } from './offlineQueue';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TYPE GUARDS — narrow les payloads dynamiques des actions d'alerte.
-// Les payloads sont Record<string, unknown> côté alertEngine pour éviter
-// d'exploser un discriminated union complexe. On narrow ici à l'usage.
+// MAPPING patches Sheets (UPPERCASE) → colonnes Supabase (snake_case)
+// Le payload des actions vient de alertEngine.ts qui produit encore des noms
+// de colonnes Sheets ; on les traduit ici pour rester compatible tant que
+// alertEngine n'est pas migré (vague suivante).
 // ─────────────────────────────────────────────────────────────────────────────
 
-function isStringField(obj: Record<string, unknown>, key: string): obj is Record<string, unknown> & Record<typeof key, string> {
-  return typeof obj[key] === 'string';
-}
+const SOW_COL_MAP: Record<string, string> = {
+  STATUT: 'statut',
+  STATUT_REPRO: 'statut_repro',
+  DATE_DERNIERE_MB: 'date_mb_prevue',
+  DATE_MB_PREVUE: 'date_mb_prevue',
+  DATE_SAILLIE: 'date_mb_prevue',
+  NOTES: 'notes',
+};
 
-function asSheetCellArray(v: unknown): SheetCell[] | null {
-  if (!Array.isArray(v)) return null;
-  // Autorise les cellules primitives Sheets ; rejette les sous-objets.
-  for (const cell of v) {
-    if (cell === null) continue;
-    const t = typeof cell;
-    if (t !== 'string' && t !== 'number' && t !== 'boolean') return null;
+const BATCH_COL_MAP: Record<string, string> = {
+  STATUT: 'statut',
+  DATE_SEVRAGE_REELLE: 'date_sevrage',
+  DATE_SEVRAGE: 'date_sevrage',
+  SEVRES: 'porcelets_sevrene_total',
+  DATE_MB: 'date_mise_bas',
+  NOTES: 'notes',
+  LOGE: 'loge',
+  ALIMENT: 'aliment_actuel',
+};
+
+function mapPatch(
+  raw: Record<string, unknown>,
+  colMap: Record<string, string>,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(raw)) {
+    const target = colMap[k] ?? k.toLowerCase();
+    out[target] = v;
   }
-  return v as SheetCell[];
+  return out;
 }
 
-function asPatchRecord(v: unknown): Record<string, SheetCell> | null {
+function asStringRecord(v: unknown): Record<string, unknown> | null {
   if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
-  const entries = Object.entries(v as Record<string, unknown>);
-  for (const [, val] of entries) {
-    if (val === null) continue;
-    const t = typeof val;
-    if (t !== 'string' && t !== 'number' && t !== 'boolean') return null;
-  }
-  return v as Record<string, SheetCell>;
+  return v as Record<string, unknown>;
 }
 
-interface TruieUpdate {
+interface SecondaryUpdate {
   sheet: string;
-  idHeader: string;
   idValue: string;
-  patch: Record<string, SheetCell>;
+  patch: Record<string, unknown>;
 }
 
-function asTruieUpdate(v: unknown): TruieUpdate | null {
+function asSecondaryUpdate(v: unknown): SecondaryUpdate | null {
   if (!v || typeof v !== 'object') return null;
   const o = v as Record<string, unknown>;
-  const patch = asPatchRecord(o.patch);
-  if (typeof o.sheet !== 'string' || typeof o.idHeader !== 'string' || typeof o.idValue !== 'string' || !patch) return null;
-  return { sheet: o.sheet, idHeader: o.idHeader, idValue: o.idValue, patch };
+  const patch = asStringRecord(o.patch);
+  if (typeof o.sheet !== 'string' || typeof o.idValue !== 'string' || !patch) {
+    return null;
+  }
+  return { sheet: o.sheet, idValue: o.idValue, patch };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -77,17 +94,16 @@ export interface PendingConfirmation {
   alertMessage: string;
   action: AlertAction;
   status: ConfirmationStatus;
-  createdAt: string;      // ISO string
+  createdAt: string;
   resolvedAt?: string;
   error?: string;
-  /** Note optionnelle laissée par le porcher */
   note?: string;
 }
 
 const QUEUE_KEY = 'porctrack_confirmation_queue_v1';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STOCKAGE (Capacitor Preferences — survit aux rechargements)
+// STOCKAGE
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function loadQueue(): Promise<PendingConfirmation[]> {
@@ -107,13 +123,9 @@ async function saveQueue(queue: PendingConfirmation[]): Promise<void> {
 // API PUBLIQUE
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Ajoute une alerte à la file si elle n'y est pas déjà.
- * Appelé automatiquement par le FarmContext quand une alerte requiresAction=true apparaît.
- */
 export async function enqueueAlert(alert: FarmAlert, action: AlertAction): Promise<void> {
   const queue = await loadQueue();
-  const exists = queue.some(q => q.id === `${alert.id}-${action.type}`);
+  const exists = queue.some((q) => q.id === `${alert.id}-${action.type}`);
   if (exists) return;
 
   const item: PendingConfirmation = {
@@ -130,142 +142,171 @@ export async function enqueueAlert(alert: FarmAlert, action: AlertAction): Promi
   await saveQueue(queue);
 }
 
-/**
- * Retourne toutes les confirmations en attente.
- */
 export async function getPendingConfirmations(): Promise<PendingConfirmation[]> {
   const queue = await loadQueue();
-  return queue.filter(q => q.status === 'PENDING');
+  return queue.filter((q) => q.status === 'PENDING');
 }
 
-/**
- * Retourne l'historique des actions (confirmées + rejetées).
- */
 export async function getConfirmationHistory(limit = 50): Promise<PendingConfirmation[]> {
   const queue = await loadQueue();
   return queue
-    .filter(q => q.status !== 'PENDING')
-    .sort((a, b) => new Date(b.resolvedAt ?? b.createdAt).getTime() - new Date(a.resolvedAt ?? a.createdAt).getTime())
+    .filter((q) => q.status !== 'PENDING')
+    .sort(
+      (a, b) =>
+        new Date(b.resolvedAt ?? b.createdAt).getTime() -
+        new Date(a.resolvedAt ?? a.createdAt).getTime(),
+    )
     .slice(0, limit);
 }
 
-/**
- * Exécute l'action confirmée par le porcher, écrit dans Sheets.
- * @param itemId  ID de la PendingConfirmation
- * @param note    Note optionnelle du porcher
- */
-export async function confirmAction(itemId: string, note?: string): Promise<{ success: boolean; error?: string }> {
+// ─────────────────────────────────────────────────────────────────────────────
+// EXÉCUTION DES ACTIONS — dispatch via le `type` de l'AlertAction.
+// La sémantique métier (sevrage J+28, retour chaleur, regroupement) est
+// préservée à l'identique ; seul le backend change (Sheets → Supabase).
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function runConfirmedAction(
+  action: AlertAction,
+  note: string | undefined,
+): Promise<void> {
+  const payload = action.payload ?? {};
+  const noteSuffix = note ? { notes: note } : {};
+
+  switch (action.type) {
+    case 'CONFIRM_MISE_BAS': {
+      const idValue = String(payload.idValue ?? '');
+      const rawPatch = asStringRecord(payload.patch) ?? {};
+      const patch = { ...mapPatch(rawPatch, SOW_COL_MAP), ...noteSuffix };
+      await updateSowByCode(idValue, patch);
+      return;
+    }
+
+    case 'CONFIRM_SEVRAGE': {
+      const idValue = String(payload.idValue ?? '');
+      const rawPatch = asStringRecord(payload.patch) ?? {};
+      const patch = { ...mapPatch(rawPatch, BATCH_COL_MAP), ...noteSuffix };
+      if (idValue) {
+        await updateBatchByCode(idValue, patch);
+      }
+      const truieUpdate = asSecondaryUpdate(payload.truieUpdate);
+      if (truieUpdate) {
+        await updateSowByCode(
+          truieUpdate.idValue,
+          mapPatch(truieUpdate.patch, SOW_COL_MAP),
+        );
+      }
+      return;
+    }
+
+    case 'CONFIRM_SAILLIE': {
+      const idValue = String(payload.idValue ?? payload.truieId ?? '');
+      const rawPatch = asStringRecord(payload.patch) ?? {};
+      const patch = { ...mapPatch(rawPatch, SOW_COL_MAP), ...noteSuffix };
+      if (!idValue) throw new Error('CONFIRM_SAILLIE : code truie manquant');
+      await updateSowByCode(idValue, patch);
+      return;
+    }
+
+    case 'CONFIRM_REFORME': {
+      const idValue = String(payload.idValue ?? '');
+      const rawPatch = asStringRecord(payload.patch) ?? { STATUT: 'Réforme' };
+      const patch = { ...mapPatch(rawPatch, SOW_COL_MAP), ...noteSuffix };
+      await updateSowByCode(idValue, patch);
+      return;
+    }
+
+    case 'CONFIRM_REGROUPEMENT_BANDE': {
+      const bandeIds = Array.isArray(payload.bandeIds)
+        ? (payload.bandeIds as unknown[]).filter((x): x is string => typeof x === 'string')
+        : [];
+      const totalVivants =
+        typeof payload.totalVivants === 'number' ? payload.totalVivants : 0;
+      const codeId = `BANDE-${new Date().toISOString().slice(0, 10)}-SEV`;
+      await insertBatch({
+        code_id: codeId,
+        date_sevrage: new Date().toISOString().slice(0, 10),
+        porcelets_sevrene_total: totalVivants,
+        porcelets_nes_vivants: totalVivants,
+        statut: 'En cours',
+        notes: note ?? `Regroupement automatique : ${bandeIds.join(', ')}`,
+      });
+      return;
+    }
+
+    case 'CONFIRM_SOIN': {
+      const content = String(payload.note ?? note ?? 'Soin confirmé');
+      await insertNote({
+        content,
+        category: 'SANTE',
+      });
+      return;
+    }
+
+    case 'DISMISS':
+      return;
+  }
+}
+
+export async function confirmAction(
+  itemId: string,
+  note?: string,
+): Promise<{ success: boolean; error?: string }> {
   const queue = await loadQueue();
-  const idx = queue.findIndex(q => q.id === itemId);
+  const idx = queue.findIndex((q) => q.id === itemId);
   if (idx === -1) return { success: false, error: 'Action introuvable' };
 
   const item = queue[idx];
   if (item.status !== 'PENDING') return { success: false, error: 'Action déjà traitée' };
 
   try {
-    const payload = item.action.payload;
-    if (!payload) {
-      // Action DISMISS ou sans payload
-      queue[idx] = { ...item, status: 'CONFIRMED', resolvedAt: new Date().toISOString(), note };
-      await saveQueue(queue);
-      return { success: true };
-    }
-
-    // Exécuter l'action principale
-    let result: { success: boolean; message?: string };
-
-    const values = asSheetCellArray(payload.values);
-    if (payload.action === 'append_row' || values !== null) {
-      if (!isStringField(payload, 'sheet') || !values) {
-        throw new Error('Payload append_row invalide (sheet ou values manquants/mal typés)');
-      }
-      result = await appendRow(payload.sheet, values);
-    } else {
-      const patch = asPatchRecord(payload.patch);
-      if (
-        !isStringField(payload, 'sheet') ||
-        !isStringField(payload, 'idHeader') ||
-        !isStringField(payload, 'idValue') ||
-        !patch
-      ) {
-        throw new Error('Payload update_row_by_id invalide (champs sheet/idHeader/idValue/patch)');
-      }
-      result = await updateRowById(payload.sheet, payload.idHeader, payload.idValue, {
-        ...patch,
-        ...(note ? { NOTES: note } : {}),
-      });
-    }
-
-    if (!result.success) throw new Error(result.message ?? 'Erreur Sheets');
-
-    // Action secondaire (ex: mise à jour de la truie mère lors du sevrage)
-    const truieUpdate = asTruieUpdate(payload.truieUpdate);
-    if (truieUpdate) {
-      await updateRowById(truieUpdate.sheet, truieUpdate.idHeader, truieUpdate.idValue, truieUpdate.patch);
-    }
-
-    // Si regroupement → créer une nouvelle bande
-    if (item.action.type === 'CONFIRM_REGROUPEMENT_BANDE' && Array.isArray(payload.bandeIds)) {
-      const bandeIds = (payload.bandeIds as unknown[]).filter((x): x is string => typeof x === 'string');
-      const totalVivants = typeof payload.totalVivants === 'number' ? payload.totalVivants : 0;
-      const nomBande = `BANDE-${new Date().toISOString().slice(0, 10)}-SEV`;
-      await appendRow('PORCELETS_BANDES_DETAIL', [
-        nomBande,
-        '',
-        '',
-        new Date().toLocaleDateString('fr-FR'),
-        totalVivants,
-        0,
-        totalVivants,
-        'En cours',
-        '',
-        '',
-        '',
-        note ?? `Regroupement automatique : ${bandeIds.join(', ')}`,
-      ]);
-    }
-
-    queue[idx] = { ...item, status: 'CONFIRMED', resolvedAt: new Date().toISOString(), note };
+    await runConfirmedAction(item.action, note);
+    queue[idx] = {
+      ...item,
+      status: 'CONFIRMED',
+      resolvedAt: new Date().toISOString(),
+      note,
+    };
     await saveQueue(queue);
     return { success: true };
-
   } catch (err) {
-    const error = String(err);
-    queue[idx] = { ...item, status: 'FAILED', resolvedAt: new Date().toISOString(), error };
+    const error = err instanceof Error ? err.message : String(err);
+    queue[idx] = {
+      ...item,
+      status: 'FAILED',
+      resolvedAt: new Date().toISOString(),
+      error,
+    };
     await saveQueue(queue);
     return { success: false, error };
   }
 }
 
-/**
- * Rejette une action (le porcher dit "Plus tard" ou "Non").
- */
 export async function dismissAction(itemId: string, note?: string): Promise<void> {
   const queue = await loadQueue();
-  const idx = queue.findIndex(q => q.id === itemId);
+  const idx = queue.findIndex((q) => q.id === itemId);
   if (idx === -1) return;
-  queue[idx] = { ...queue[idx], status: 'DISMISSED', resolvedAt: new Date().toISOString(), note };
+  queue[idx] = {
+    ...queue[idx],
+    status: 'DISMISSED',
+    resolvedAt: new Date().toISOString(),
+    note,
+  };
   await saveQueue(queue);
 }
 
-/**
- * Nombre d'actions en attente (badge dans le header).
- */
 export async function getPendingCount(): Promise<number> {
   const pending = await getPendingConfirmations();
   return pending.length;
 }
 
-/**
- * Vide l'historique résolu (nettoyage mensuel).
- */
 export async function cleanHistory(keepDays = 30): Promise<void> {
   const queue = await loadQueue();
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - keepDays);
-  const cleaned = queue.filter(q =>
-    q.status === 'PENDING' ||
-    new Date(q.resolvedAt ?? q.createdAt) > cutoff
+  const cleaned = queue.filter(
+    (q) =>
+      q.status === 'PENDING' ||
+      new Date(q.resolvedAt ?? q.createdAt) > cutoff,
   );
   await saveQueue(cleaned);
 }

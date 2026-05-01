@@ -28,14 +28,14 @@ const FAQ: ReadonlyArray<FaqEntry> = [
       "L'app tourne sans réseau. Vos saisies sont stockées et envoyées dès que le 4G/Wi-Fi revient.",
   },
   {
-    question: 'Comment forcer la synchronisation ?',
+    question: 'Comment ajouter une truie ?',
     answer:
-      'Plus → Forcer Pull. Cela rapatrie les dernières données de Google Sheets.',
+      "Ouvrez Cheptel → onglet Truies → bouton +. Renseignez la boucle, le numéro et le statut, puis validez.",
   },
   {
-    question: 'Mes données sont-elles sauvegardées ?',
+    question: 'Comment fonctionnent les alertes ?',
     answer:
-      'Oui : dans Google Sheets dès qu\'il y a réseau. En local, les saisies en attente sont conservées.',
+      "Les alertes sont calculées automatiquement à partir de vos données (mises-bas, sevrages, stocks). Touchez une alerte pour voir le détail et la traiter.",
   },
   {
     question: 'Batterie faible pendant le tour ?',

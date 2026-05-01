@@ -3,7 +3,7 @@
  * ═══════════════════════════════════════════════════════════════════
  * Affiché quand le moteur d'alertes détecte une action requise.
  * Le porcher peut :
- *   - Confirmer l'action (écrit dans Google Sheets)
+ *   - Confirmer l'action (persistée via supabaseWrites)
  *   - Ajouter une note optionnelle
  *   - Rejeter / reporter
  *
@@ -102,7 +102,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     try {
       const result = await confirmAction(confirmationId, note || undefined);
       if (result.success) {
-        setToast({ show: true, message: 'Action confirmée et enregistrée dans Sheets', success: true });
+        setToast({ show: true, message: 'Action confirmée', success: true });
         setTimeout(() => {
           onResolved();
           onClose();
@@ -209,7 +209,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                 <div className="flex items-center gap-2 mb-2">
                   <FileText size={12} className="text-text-2" aria-hidden="true" />
                   <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
-                    Action dans Google Sheets
+                    Action enregistrée
                   </span>
                 </div>
                 {primaryAction.payload.sheet && (

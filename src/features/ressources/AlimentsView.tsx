@@ -400,7 +400,7 @@ const AlimentsView: React.FC = () => {
                   Stock aliments vide
                 </h3>
                 <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
-                  Aucun aliment n'est enregistré dans la feuille STOCK_ALIMENTS. Ajoutez matières premières et concentrés depuis Google Sheets.
+                  Aucun aliment enregistré. Ajoutez votre 1er aliment via le bouton +
                 </p>
                 <button
                   type="button"
@@ -418,7 +418,7 @@ const AlimentsView: React.FC = () => {
                   icon={<Wheat size={14} />}
                   emptyIcon={<Wheat size={40} />}
                   emptyTitle="Aucune matière première"
-                  emptyDescription="Ajoutez maïs, tourteau de soja ou son de blé dans Google Sheets."
+                  emptyDescription="Ajoutez maïs, tourteau de soja ou son de blé"
                   items={grouped.matieres}
                   onSelect={handleSelect}
                   onRefresh={refreshData}
@@ -429,11 +429,10 @@ const AlimentsView: React.FC = () => {
                   icon={<FlaskConical size={14} />}
                   emptyIcon={<FlaskConical size={40} />}
                   emptyTitle="Aucun concentré"
-                  emptyDescription="Ajoutez KPC, Mycofix, Lysine… dans Google Sheets."
+                  emptyDescription="Ajoutez KPC, Mycofix, Lysine…"
                   emptyAction={{
-                    label: 'Voir Sheets',
-                    onClick: () =>
-                      setToastMsg('Édite STOCK_ALIMENTS dans Google Sheets'),
+                    label: 'Ajouter un aliment',
+                    onClick: () => setAddOpen(true),
                   }}
                   items={grouped.concentres}
                   onSelect={handleSelect}

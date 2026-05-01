@@ -9,7 +9,7 @@
  *   - Expose le bouton « Retour » (backTo=/troupeau)
  *
  * React Testing Library + jsdom (override via pragma `@vitest-environment jsdom`).
- * On mocke `useFarm` pour ne pas déclencher d'appels Google Sheets au montage.
+ * On mocke `useFarm` pour ne pas déclencher d'appels Supabase au montage.
  */
 
 import React from 'react';

@@ -3,9 +3,12 @@ import { IonToast } from '@ionic/react';
 import { Package, Send, CheckCircle2 } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
 import {
-  enqueueUpdateRow,
-  enqueueAppendRow,
-} from '../../services/offlineQueue';
+  insertFinance,
+  updateProduitAliment,
+  updateProduitVeto,
+  resolveProduitAlimentByCode,
+  resolveProduitVetoByCode,
+} from '../../services/supabaseWrites';
 import { BottomSheet } from '../agritech';
 import type { StockStatut } from '../../types/farm';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
@@ -147,17 +150,32 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
         dateIso,
       });
 
-      // 1. Update ligne STOCK_*
-      await enqueueUpdateRow(
-        payloads.stockSheet,
-        payloads.stockIdHeader,
-        payloads.stockIdValue,
-        payloads.stockPatch,
-      );
+      // 1. Update ligne stock (aliment ou véto)
+      const stockUpdate = {
+        stock_actuel: payloads.stockPatch.STOCK_ACTUEL as number,
+        en_alerte: payloads.stockPatch.STATUT_STOCK !== 'OK',
+      };
+      if (stockItem.kind === 'ALIMENT') {
+        const id = await resolveProduitAlimentByCode(stockItem.id);
+        if (id) await updateProduitAliment(id, stockUpdate);
+      } else {
+        const id = await resolveProduitVetoByCode(stockItem.id);
+        if (id) {
+          await updateProduitVeto(id, {
+            stock_actuel: stockUpdate.stock_actuel,
+            alerte_stock_bas: stockUpdate.en_alerte,
+          });
+        }
+      }
 
-      // 2. Append FINANCES si prix fourni
+      // 2. Append finance si prix fourni
       if (payloads.financeValues) {
-        await enqueueAppendRow('FINANCES', payloads.financeValues);
+        await insertFinance({
+          poste: payloads.financeValues[2] as string,
+          type: 'DEPENSE',
+          mensuel_fcfa: payloads.financeValues[3] as number,
+          notes: payloads.financeValues[5] as string,
+        });
       }
 
       const online = typeof navigator !== 'undefined' && navigator.onLine;

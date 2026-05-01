@@ -8,9 +8,8 @@
  *   • `toRefillItem`         — discriminant kind aliment/véto
  *   • `buildRefillPayloads`  — prépare UPDATE STOCK + APPEND FINANCES
  *
- * Les tests d'intégration offline (`enqueueUpdateRow` vs `enqueueAppendRow`)
- * vérifient que la queue garde des entrées distinctes pour STOCK_* et
- * FINANCES — c'est le comportement réel observé sur le module `offlineQueue`.
+ * Les tests d'intégration offline vérifient que la queue Supabase garde des
+ * entrées distinctes pour les tables produits_* et finances.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -50,10 +49,33 @@ vi.mock('@capacitor/preferences', () => ({
   },
 }));
 
-// googleSheets est importé par offlineQueue — on stub pour éviter fetch/node
-vi.mock('../../services/googleSheets', () => ({
-  updateRowById: vi.fn(async () => ({ success: true })),
-  appendRow: vi.fn(async () => ({ success: true })),
+// supabaseWrites est importé par offlineQueue — on stub pour éviter le client
+vi.mock('../../services/supabaseWrites', () => ({
+  insertSow: vi.fn(async () => ({})),
+  insertBoar: vi.fn(async () => ({})),
+  insertBatch: vi.fn(async () => ({})),
+  insertNote: vi.fn(async () => ({})),
+  insertHealthLog: vi.fn(async () => ({})),
+  insertSaillie: vi.fn(async () => ({})),
+  insertFinance: vi.fn(async () => ({})),
+  insertProduitAliment: vi.fn(async () => ({})),
+  insertProduitVeto: vi.fn(async () => ({})),
+  updateSow: vi.fn(async () => ({ success: true })),
+  updateBoar: vi.fn(async () => ({ success: true })),
+  updateBatch: vi.fn(async () => ({ success: true })),
+  updateNote: vi.fn(async () => ({ success: true })),
+  updateProduitAliment: vi.fn(async () => ({ success: true })),
+  updateProduitVeto: vi.fn(async () => ({ success: true })),
+  updateSowByCode: vi.fn(async () => ({})),
+  updateBoarByCode: vi.fn(async () => ({})),
+  updateBatchByCode: vi.fn(async () => ({})),
+  deleteSow: vi.fn(async () => undefined),
+  deleteBoar: vi.fn(async () => undefined),
+  deleteBatch: vi.fn(async () => undefined),
+  deleteNote: vi.fn(async () => undefined),
+  deleteHealthLog: vi.fn(async () => undefined),
+  deleteProduitAliment: vi.fn(async () => undefined),
+  deleteProduitVeto: vi.fn(async () => undefined),
 }));
 
 // ── Helpers fixtures ───────────────────────────────────────────────────────
@@ -240,12 +262,11 @@ describe('buildRefillPayloads', () => {
   });
 });
 
-// ─── Intégration offlineQueue : STOCK_* et FINANCES distincts ──────────────
+// ─── Intégration offlineQueue Supabase : produits_* et finances distincts ──
 
 describe('Offline queue — réappro produit deux entrées distinctes', () => {
   beforeEach(async () => {
     prefsStore.clear();
-    // Force reload du cache mémoire de la queue
     const mod = await import('../../services/offlineQueue');
     await mod.clearQueue();
   });
@@ -254,8 +275,8 @@ describe('Offline queue — réappro produit deux entrées distinctes', () => {
     prefsStore.clear();
   });
 
-  it('enqueue STOCK_ALIMENTS puis FINANCES → 2 items distincts dans la queue', async () => {
-    const { enqueueUpdateRow, enqueueAppendRow, getQueueStatus } = await import(
+  it('enqueue produits_aliments (update) puis finances (insert) → 2 items distincts', async () => {
+    const { enqueueUpdate, enqueueInsert, getQueueStatus } = await import(
       '../../services/offlineQueue'
     );
 
@@ -270,42 +291,44 @@ describe('Offline queue — réappro produit deux entrées distinctes', () => {
       dateIso: '2026-04-19',
     });
 
-    await enqueueUpdateRow(
-      payloads.stockSheet,
-      payloads.stockIdHeader,
-      payloads.stockIdValue,
-      payloads.stockPatch,
-    );
+    await enqueueUpdate('produits_aliments', payloads.stockIdValue, {
+      stock_actuel: payloads.stockPatch.STOCK_ACTUEL,
+      statut_stock: payloads.stockPatch.STATUT_STOCK,
+    });
     expect(payloads.financeValues).not.toBeNull();
-    await enqueueAppendRow('FINANCES', payloads.financeValues!);
+    await enqueueInsert('finances', {
+      operation_date: payloads.financeValues![0],
+      category: payloads.financeValues![1],
+      label: payloads.financeValues![2],
+      amount: payloads.financeValues![3],
+      type: payloads.financeValues![4],
+      notes: payloads.financeValues![5],
+    });
 
     const { pending, items } = getQueueStatus();
     expect(pending).toBe(2);
 
-    // Item 1 — update STOCK_ALIMENTS
-    const upd = items.find((i) => i.action === 'update_row_by_id');
+    const upd = items.find((i) => i.mutation.kind === 'update');
     expect(upd).toBeDefined();
-    if (upd && upd.action === 'update_row_by_id') {
-      expect(upd.payload.sheet).toBe('STOCK_ALIMENTS');
-      expect(upd.payload.idHeader).toBe('ID');
-      expect(upd.payload.idValue).toBe('ALIM-01');
-      expect(upd.payload.patch.STOCK_ACTUEL).toBe(500);
-      expect(upd.payload.patch.STATUT_STOCK).toBe('OK');
+    if (upd && upd.mutation.kind === 'update') {
+      expect(upd.mutation.table).toBe('produits_aliments');
+      expect(upd.mutation.id).toBe('ALIM-01');
+      expect(upd.mutation.fields.stock_actuel).toBe(500);
+      expect(upd.mutation.fields.statut_stock).toBe('OK');
     }
 
-    // Item 2 — append FINANCES
-    const app = items.find((i) => i.action === 'append_row');
-    expect(app).toBeDefined();
-    if (app && app.action === 'append_row') {
-      expect(app.payload.sheet).toBe('FINANCES');
-      expect(app.payload.values[1]).toBe('ALIMENT');
-      expect(app.payload.values[3]).toBe(175_000);
-      expect(app.payload.values[4]).toBe('DEPENSE');
+    const ins = items.find((i) => i.mutation.kind === 'insert');
+    expect(ins).toBeDefined();
+    if (ins && ins.mutation.kind === 'insert') {
+      expect(ins.mutation.table).toBe('finances');
+      expect(ins.mutation.values.category).toBe('ALIMENT');
+      expect(ins.mutation.values.amount).toBe(175_000);
+      expect(ins.mutation.values.type).toBe('DEPENSE');
     }
   });
 
-  it('pas de prix → queue ne contient que l\'update STOCK_*', async () => {
-    const { enqueueUpdateRow, getQueueStatus } = await import(
+  it('pas de prix → queue ne contient que l\'update produits_veto', async () => {
+    const { enqueueUpdate, getQueueStatus } = await import(
       '../../services/offlineQueue'
     );
 
@@ -316,18 +339,16 @@ describe('Offline queue — réappro produit deux entrées distinctes', () => {
       dateIso: '2026-04-19',
     });
 
-    await enqueueUpdateRow(
-      payloads.stockSheet,
-      payloads.stockIdHeader,
-      payloads.stockIdValue,
-      payloads.stockPatch,
-    );
+    await enqueueUpdate('produits_veto', payloads.stockIdValue, {
+      stock_actuel: payloads.stockPatch.STOCK_ACTUEL,
+      statut_stock: payloads.stockPatch.STATUT_STOCK,
+    });
 
     expect(payloads.financeValues).toBeNull();
     const { pending, items } = getQueueStatus();
     expect(pending).toBe(1);
-    if (items[0].action === 'update_row_by_id') {
-      expect(items[0].payload.sheet).toBe('STOCK_VETO');
+    if (items[0].mutation.kind === 'update') {
+      expect(items[0].mutation.table).toBe('produits_veto');
     }
   });
 });

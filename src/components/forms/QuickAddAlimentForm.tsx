@@ -35,7 +35,7 @@ import { IonToast } from '@ionic/react';
 import { Plus, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { enqueueAppendRow } from '../../services/offlineQueue';
+import { insertProduitAliment } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import type { StockStatut } from '../../types/farm';
 import { recomputeStatut } from './quickRefillLogic';
@@ -131,7 +131,16 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
     setErrors({});
     setSaving(true);
     try {
-      await enqueueAppendRow('STOCK_ALIMENTS', result.row);
+      const row = result.row;
+      await insertProduitAliment({
+        code_id: row[0] as string,
+        libelle: row[1] as string,
+        stock_actuel: row[2] as number,
+        unite: (row[3] as string) || null,
+        seuil_alerte: row[4] as number,
+        en_alerte: (row[5] as string) !== 'OK',
+        notes: (row[6] as string) || null,
+      });
       const online = typeof navigator !== 'undefined' && navigator.onLine;
       setToast(
         online ? 'Aliment ajouté' : 'Aliment en file · sync auto',

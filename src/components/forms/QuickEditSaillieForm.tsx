@@ -3,7 +3,8 @@ import { IonToast } from '@ionic/react';
 import { Edit3, Save, Calendar, Heart } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { enqueueUpdateRow } from '../../services/offlineQueue';
+import { supabase } from '../../services/supabaseClient';
+import { resolveSowIdByCode } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import type { Saillie } from '../../types/farm';
 import {
@@ -173,12 +174,32 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
     }
     setSaving(true);
     try {
-      await enqueueUpdateRow(
-        'SUIVI_REPRODUCTION_ACTUEL',
-        'ID TRUIE',
-        saillie.truieId,
-        result.patch,
-      );
+      const supabasePatch: Record<string, unknown> = {};
+      const p = result.patch as Record<string, unknown>;
+      const frToIso = (fr: unknown): string | null => {
+        if (typeof fr !== 'string' || !fr) return null;
+        const m = fr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (!m) return null;
+        return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+      };
+      if ('VERRAT' in p) supabasePatch.boar_code_id = p.VERRAT;
+      if ('DATE SAILLIE' in p)
+        supabasePatch.date_saillie = frToIso(p['DATE SAILLIE']);
+      if ('DATE MB PREVUE' in p)
+        supabasePatch.date_mb_prevue = frToIso(p['DATE MB PREVUE']);
+      if ('STATUT' in p) supabasePatch.statut = p.STATUT;
+      if ('NOTES' in p) supabasePatch.notes = p.NOTES;
+
+      const sowId = await resolveSowIdByCode(saillie.truieId);
+      if (sowId) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase.from('saillies') as any)
+          .update(supabasePatch)
+          .eq('sow_id', sowId)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        if (error) throw new Error(error.message);
+      }
       const online = typeof navigator !== 'undefined' && navigator.onLine;
       setToast(
         online

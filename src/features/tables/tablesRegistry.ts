@@ -1,12 +1,14 @@
 /**
- * PorcTrack — Registre des Tables Google Sheets
+ * PorcTrack — Registre des Tables (Supabase)
  * ════════════════════════════════════════════════
- * MIGRATION : localStorage → Capacitor Preferences
- * getMeta() devient async pour être cohérent avec le stockage Preferences.
+ * Mapping statique des KEYs legacy (héritées de TABLES_INDEX Sheets) vers
+ * les métadonnées de table Supabase. Le schéma est connu à la compilation,
+ * donc plus aucun chargement asynchrone n'est nécessaire.
+ *
+ * `idHeader` reste le nom de la colonne identifiante côté UI (ex. 'ID Portée'),
+ * conservé pour la compat des composants legacy. La résolution réelle vers
+ * un UUID Supabase passe par les helpers `resolveXByCode` de supabaseWrites.
  */
-
-import { Preferences } from '@capacitor/preferences';
-import { getTablesIndex } from '../../services/googleSheets';
 
 export interface TableMeta {
   key: string;
@@ -16,80 +18,84 @@ export interface TableMeta {
   module: string;
 }
 
-const CACHE_KEY = 'porctrack_tables_index_v2';
+export const TABLE_REGISTRY: Record<string, TableMeta> = {
+  SUIVI_TRUIES_REPRODUCTION: {
+    key: 'SUIVI_TRUIES_REPRODUCTION',
+    sheetName: 'sows',
+    headerRow: 1,
+    idHeader: 'ID',
+    module: 'TROUPEAU',
+  },
+  VERRATS: {
+    key: 'VERRATS',
+    sheetName: 'boars',
+    headerRow: 1,
+    idHeader: 'ID',
+    module: 'TROUPEAU',
+  },
+  PORCELETS_BANDES_DETAIL: {
+    key: 'PORCELETS_BANDES_DETAIL',
+    sheetName: 'batches',
+    headerRow: 1,
+    idHeader: 'ID Portée',
+    module: 'BANDES',
+  },
+  JOURNAL_SANTE: {
+    key: 'JOURNAL_SANTE',
+    sheetName: 'health_logs',
+    headerRow: 1,
+    idHeader: 'ID',
+    module: 'SANTE',
+  },
+  STOCK_ALIMENTS: {
+    key: 'STOCK_ALIMENTS',
+    sheetName: 'produits_aliments',
+    headerRow: 1,
+    idHeader: 'ID',
+    module: 'STOCK',
+  },
+  STOCK_VETO: {
+    key: 'STOCK_VETO',
+    sheetName: 'produits_veto',
+    headerRow: 1,
+    idHeader: 'ID',
+    module: 'STOCK',
+  },
+  NOTES_TERRAIN: {
+    key: 'NOTES_TERRAIN',
+    sheetName: 'notes',
+    headerRow: 1,
+    idHeader: 'ID',
+    module: 'NOTES',
+  },
+  FINANCES: {
+    key: 'FINANCES',
+    sheetName: 'finances',
+    headerRow: 1,
+    idHeader: 'ID',
+    module: 'FINANCES',
+  },
+  SUIVI_REPRODUCTION_ACTUEL: {
+    key: 'SUIVI_REPRODUCTION_ACTUEL',
+    sheetName: 'saillies',
+    headerRow: 1,
+    idHeader: 'ID',
+    module: 'REPRO',
+  },
+};
 
-// ── Persistance ───────────────────────────────────────────────────────────────
-
-async function readCache(): Promise<Record<string, TableMeta>> {
-  try {
-    const { value } = await Preferences.get({ key: CACHE_KEY });
-    return value ? JSON.parse(value) : {};
-  } catch {
-    return {};
-  }
+export function getMeta(key: string): TableMeta | null {
+  return TABLE_REGISTRY[key] ?? null;
 }
-
-async function writeCache(mapping: Record<string, TableMeta>): Promise<void> {
-  await Preferences.set({ key: CACHE_KEY, value: JSON.stringify(mapping) });
-}
-
-// ── API publique ──────────────────────────────────────────────────────────────
-
-/**
- * Charge TABLES_INDEX depuis Sheets, met à jour le cache, retourne le mapping.
- * En cas d'échec réseau, retourne le cache existant.
- */
-export async function loadTablesIndex(): Promise<Record<string, TableMeta>> {
-  try {
-    const result = await getTablesIndex();
-    if (result.success && result.values.length > 1) {
-      // Ligne 0 = headers : KEY | SHEET_NAME | HEADER_ROW | ID_HEADER | MODULE
-      const [, ...rows] = result.values;
-      const mapping: Record<string, TableMeta> = {};
-
-      rows.forEach((row: unknown[]) => {
-        const key = String(row[0] || '').trim();
-        if (key) {
-          mapping[key] = {
-            key,
-            sheetName: String(row[1] || key),
-            headerRow: parseInt(String(row[2])) || 1,
-            idHeader: String(row[3] || 'ID'),
-            module: String(row[4] || ''),
-          };
-        }
-      });
-
-      await writeCache(mapping);
-      return mapping;
-    }
-  } catch (e) {
-    console.error('[TablesRegistry] loadTablesIndex error:', e);
-  }
-
-  // Fallback → cache Preferences
-  return readCache();
-}
-
-/**
- * Retourne les métadonnées d'une table par sa KEY.
- * Async car Capacitor Preferences est asynchrone.
- */
-export async function getMeta(key: string): Promise<TableMeta | null> {
-  const mapping = await readCache();
-  return mapping[key] ?? null;
-}
-
-/**
- * Version synchrone pour les cas où le cache est déjà en mémoire.
- * À utiliser uniquement si loadTablesIndex() a déjà été appelé.
- */
-let _memoryMapping: Record<string, TableMeta> = {};
 
 export function getMetaSync(key: string): TableMeta | null {
-  return _memoryMapping[key] ?? null;
+  return TABLE_REGISTRY[key] ?? null;
+}
+
+export async function loadTablesIndex(): Promise<Record<string, TableMeta>> {
+  return TABLE_REGISTRY;
 }
 
 export async function initRegistry(): Promise<void> {
-  _memoryMapping = await loadTablesIndex();
+  // No-op : registre statique chargé à l'import.
 }

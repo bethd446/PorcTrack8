@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
+import { Baby, Heart, Sprout, TrendingUp, Award, Home, Truck } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
 import { useTroupeau } from '../../context/TroupeauContext';
-import { useMeta } from '../../context/FarmContext';
 import { normaliseStatut } from '../../lib/truieStatut';
 import { Bandes } from '../../services/bandAnalysisEngine';
 import type { LogeOccupationAlerte } from '../../services/bandesAggregator';
@@ -14,6 +14,10 @@ import { FARM_CONFIG } from '../../config/farm';
 
 import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
+import {
+  computeBandePhase,
+  filterRealPortees,
+} from '../../services/bandesAggregator';
 
 import TroupeauTruiesView from '../troupeau/TroupeauTruiesView';
 import TroupeauVerratsView from '../troupeau/TroupeauVerratsView';
@@ -36,8 +40,8 @@ function isSubTab(v: string | null): v is SubTab {
 }
 
 const TroupeauHub: React.FC = () => {
+  const navigate = useNavigate();
   const { verrats, bandes } = useTroupeau();
-  const { lastUpdate } = useMeta();
   const [searchParams, setSearchParams] = useSearchParams();
   const { activeTruies } = useTroupeauPipeline();
   const { handleRefresh } = useAutoRefresh();
@@ -103,11 +107,50 @@ const TroupeauHub: React.FC = () => {
     loges: summary.mat.occupees + summary.post.occupees + summary.eng.occupees,
   };
 
-  const lastSyncMinutes = lastUpdate
-    ? Math.max(0, Math.round((Date.now() - lastUpdate) / 60_000))
-    : undefined;
-
   const totalAnimals = activeTruies.length + verrats.length;
+
+  // ── Comptes par phase de cycle (pour tiles "Cycles biologiques") ────────
+  const cycleCounts = useMemo(() => {
+    const counts = {
+      maternite: 0,
+      postSevrage: 0,
+      croissance: 0,
+      engraissement: 0,
+      finition: 0,
+      reproduction: activeTruies.filter(t => normaliseStatut(t.statut) === 'PLEINE').length,
+      sortie: 0,
+    };
+    const real = filterRealPortees(bandes);
+    for (const b of real) {
+      const phase = computeBandePhase(b, today);
+      if (phase === 'SOUS_MERE') counts.maternite += 1;
+      else if (phase === 'POST_SEVRAGE') counts.postSevrage += 1;
+      else if (phase === 'CROISSANCE') counts.croissance += 1;
+      else if (phase === 'ENGRAISSEMENT') counts.engraissement += 1;
+      else if (phase === 'FINITION') counts.finition += 1;
+    }
+    counts.sortie = bandes.filter(b => {
+      const s = (b.statut ?? '').toLowerCase();
+      return /vendu|archiv|sortie/.test(s);
+    }).length;
+    return counts;
+  }, [bandes, activeTruies, today]);
+
+  const CYCLE_TILES: ReadonlyArray<{
+    id: string;
+    label: string;
+    icon: React.ReactNode;
+    count: number;
+    route: string;
+  }> = [
+    { id: 'maternite', label: 'Maternité', icon: <Baby size={18} aria-hidden="true" />, count: cycleCounts.maternite, route: '/cycles/maternite' },
+    { id: 'postsevr', label: 'Post-sevrage', icon: <Sprout size={18} aria-hidden="true" />, count: cycleCounts.postSevrage, route: '/cycles/post-sevrage' },
+    { id: 'croiss', label: 'Croissance', icon: <TrendingUp size={18} aria-hidden="true" />, count: cycleCounts.croissance, route: '/cycles/croissance' },
+    { id: 'engrais', label: 'Engraissement', icon: <Home size={18} aria-hidden="true" />, count: cycleCounts.engraissement, route: '/cycles/engraissement' },
+    { id: 'finition', label: 'Finition', icon: <Award size={18} aria-hidden="true" />, count: cycleCounts.finition, route: '/cycles/finition' },
+    { id: 'repro', label: 'Reproduction', icon: <Heart size={18} aria-hidden="true" />, count: cycleCounts.reproduction, route: '/cycles/repro' },
+    { id: 'sortie', label: 'Sortie', icon: <Truck size={18} aria-hidden="true" />, count: cycleCounts.sortie, route: '/cycles/sortie' },
+  ];
 
   return (
     <IonPage>
@@ -119,7 +162,6 @@ const TroupeauHub: React.FC = () => {
 
           <TopBarSync
             crumbs={['Pilotage', 'Cheptel']}
-            lastSyncMinutes={lastSyncMinutes}
             onMariusClick={() => {
               const evt = new CustomEvent('open-chatbot');
               window.dispatchEvent(evt);
@@ -299,6 +341,84 @@ const TroupeauHub: React.FC = () => {
               )}
               {activeSubTab === 'loges' && <TroupeauLogesView />}
             </div>
+
+            {/* ── Cycles biologiques ───────────────────────────────── */}
+            <section aria-label="Cycles biologiques">
+              <Eyebrow dotColor="accent">Cycles biologiques</Eyebrow>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                  gap: 10,
+                  marginTop: 12,
+                }}
+              >
+                {CYCLE_TILES.map(t => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => navigate(t.route)}
+                    aria-label={`${t.label} · ${t.count}`}
+                    className="pressable"
+                    style={{
+                      background: 'var(--bg-surface)',
+                      borderRadius: 12,
+                      padding: '14px 14px',
+                      boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 10,
+                      minHeight: 96,
+                      transition: 'transform 160ms var(--ease-emil)',
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 10,
+                        background: 'var(--color-accent-100)',
+                        color: 'var(--color-accent-600)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {t.icon}
+                    </span>
+                    <div style={{ minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontFamily: 'BigShoulders, system-ui, sans-serif',
+                          fontSize: 14,
+                          fontWeight: 600,
+                          color: 'var(--ink)',
+                          letterSpacing: '-0.005em',
+                        }}
+                      >
+                        {t.label}
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: 'DMMono, ui-monospace, monospace',
+                          fontSize: 11,
+                          letterSpacing: '0.06em',
+                          color: 'var(--muted)',
+                          marginTop: 2,
+                          fontVariantNumeric: 'tabular-nums',
+                        }}
+                      >
+                        {String(t.count).padStart(2, '0')} {t.id === 'repro' ? 'truie(s)' : 'bande(s)'}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </section>
           </div>
         </AgritechLayout>
       </IonContent>

@@ -19,7 +19,7 @@ export default function SmartRoot() {
   }
 
   if (session) {
-    return <Navigate to="/cockpit" replace />;
+    return <Navigate to="/today" replace />;
   }
 
   return <Landing />;

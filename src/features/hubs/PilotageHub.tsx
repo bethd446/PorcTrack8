@@ -22,7 +22,7 @@ import AgritechLayout from '../../components/AgritechLayout';
 import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import KpiCardV6 from '../../components/design/KpiCard';
-import { useFarm, useMeta } from '../../context/FarmContext';
+import { useFarm } from '../../context/FarmContext';
 import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import { genererRapportGlobal } from '../../services/financialAnalyzer';
 import { prepareAuditSnapshot } from '../../services/exportService';
@@ -36,7 +36,6 @@ const PilotageHub: React.FC = () => {
     bandes,
     transitions,
   } = useFarm();
-  const { lastUpdate } = useMeta();
   const { handleRefresh } = useAutoRefresh();
   const [, setIsPrinting] = useState(false);
 
@@ -62,10 +61,6 @@ const PilotageHub: React.FC = () => {
     return alerts.filter(a => a.priority === 'CRITIQUE' || a.priority === 'HAUTE').slice(0, 5);
   }, [alerts]);
 
-  const lastSyncMinutes = lastUpdate
-    ? Math.max(0, Math.round((Date.now() - lastUpdate) / 60_000))
-    : undefined;
-
   // Spark dérivée déterministe
   const spark = (base: number) =>
     Array.from({ length: 7 }, (_, i) => Math.max(1, Math.round(Math.abs(base) * (0.85 + 0.05 * i))));
@@ -78,7 +73,7 @@ const PilotageHub: React.FC = () => {
             <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
               <IonRefresherContent />
             </IonRefresher>
-            <TopBarSync crumbs={['Pilotage', 'Vue globale']} lastSyncMinutes={lastSyncMinutes} />
+            <TopBarSync crumbs={['Pilotage', 'Vue globale']} />
             <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
               <Eyebrow dotColor="accent">Pilotage · Vue globale</Eyebrow>
               <h1
@@ -142,7 +137,6 @@ const PilotageHub: React.FC = () => {
 
           <TopBarSync
             crumbs={['Pilotage', 'Vue globale']}
-            lastSyncMinutes={lastSyncMinutes}
             onMariusClick={() => {
               const evt = new CustomEvent('open-chatbot');
               window.dispatchEvent(evt);
@@ -479,7 +473,7 @@ const PilotageHub: React.FC = () => {
                   icon={<Wind size={18} aria-hidden="true" />}
                   title="Prévisions"
                   subtitle="Projections"
-                  onClick={() => navigate('/pilotage/forecast')}
+                  onClick={() => navigate('/pilotage/previsions')}
                 />
               </div>
             </section>

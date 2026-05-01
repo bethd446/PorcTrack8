@@ -188,7 +188,7 @@ const PharmacieView: React.FC = () => {
                   Pharmacie vide
                 </h3>
                 <p className="text-text-2 text-[13px] max-w-xs leading-relaxed">
-                  Aucun produit vétérinaire enregistré. Renseignez vos antibiotiques, antiparasitaires et compléments dans Google Sheets.
+                  Aucun produit vétérinaire enregistré. Renseignez votre 1er produit véto via le bouton +
                 </p>
               </div>
             ) : (

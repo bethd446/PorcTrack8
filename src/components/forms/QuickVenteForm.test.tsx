@@ -55,10 +55,33 @@ vi.mock('@capacitor/preferences', () => ({
   },
 }));
 
-// googleSheets stubé (évite fetch)
-vi.mock('../../services/googleSheets', () => ({
-  updateRowById: vi.fn(async () => ({ success: true })),
-  appendRow: vi.fn(async () => ({ success: true })),
+// supabaseWrites stubé (importé par offlineQueue)
+vi.mock('../../services/supabaseWrites', () => ({
+  insertSow: vi.fn(async () => ({})),
+  insertBoar: vi.fn(async () => ({})),
+  insertBatch: vi.fn(async () => ({})),
+  insertNote: vi.fn(async () => ({})),
+  insertHealthLog: vi.fn(async () => ({})),
+  insertSaillie: vi.fn(async () => ({})),
+  insertFinance: vi.fn(async () => ({})),
+  insertProduitAliment: vi.fn(async () => ({})),
+  insertProduitVeto: vi.fn(async () => ({})),
+  updateSow: vi.fn(async () => ({ success: true })),
+  updateBoar: vi.fn(async () => ({ success: true })),
+  updateBatch: vi.fn(async () => ({ success: true })),
+  updateNote: vi.fn(async () => ({ success: true })),
+  updateProduitAliment: vi.fn(async () => ({ success: true })),
+  updateProduitVeto: vi.fn(async () => ({ success: true })),
+  updateSowByCode: vi.fn(async () => ({})),
+  updateBoarByCode: vi.fn(async () => ({})),
+  updateBatchByCode: vi.fn(async () => ({})),
+  deleteSow: vi.fn(async () => undefined),
+  deleteBoar: vi.fn(async () => undefined),
+  deleteBatch: vi.fn(async () => undefined),
+  deleteNote: vi.fn(async () => undefined),
+  deleteHealthLog: vi.fn(async () => undefined),
+  deleteProduitAliment: vi.fn(async () => undefined),
+  deleteProduitVeto: vi.fn(async () => undefined),
 }));
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
@@ -234,9 +257,8 @@ describe('QuickVenteForm · submit = 2 enqueues (ordre bande → finance)', () =
     vi.restoreAllMocks();
   });
 
-  it('test 4 : enqueue bande update PUIS finance append (ordre préservé pour idempotence)', async () => {
-    // Charge la queue offline avec le storage mocké (prefsStore vide au départ).
-    const { enqueueAppendRow, enqueueUpdateRow, getQueueStatus } = await import(
+  it('test 4 : enqueue bande update (batches) PUIS finance insert (ordre préservé)', async () => {
+    const { enqueueInsert, enqueueUpdateByCode, getQueueStatus } = await import(
       '../../services/offlineQueue'
     );
 
@@ -250,43 +272,46 @@ describe('QuickVenteForm · submit = 2 enqueues (ordre bande → finance)', () =
       dateIso: '2026-04-19',
     });
 
-    // 1. bande update
-    await enqueueUpdateRow(
-      payloads.bandeSheet,
-      payloads.bandeIdHeader,
-      payloads.bandeIdValue,
-      payloads.bandePatch,
-    );
-    // 2. finance append
-    await enqueueAppendRow('FINANCES', payloads.financeValues);
+    // 1. update batches by code (bande)
+    await enqueueUpdateByCode('batches', payloads.bandeIdValue, {
+      porcelets_nes_vivants: payloads.bandePatch.VIVANTS,
+      notes: payloads.bandePatch.NOTES,
+    });
+    // 2. insert finances (revenu vente)
+    await enqueueInsert('finances', {
+      operation_date: payloads.financeValues[0],
+      category: payloads.financeValues[1],
+      label: payloads.financeValues[2],
+      amount: payloads.financeValues[3],
+      type: payloads.financeValues[4],
+      notes: payloads.financeValues[5],
+    });
 
     const { items } = getQueueStatus();
     expect(items.length).toBeGreaterThanOrEqual(2);
     const last2 = items.slice(-2);
 
-    // Ordre : update bande AVANT append finance
-    expect(last2[0].action).toBe('update_row_by_id');
-    expect(last2[1].action).toBe('append_row');
+    // Ordre : update batches AVANT insert finances
+    expect(last2[0].mutation.kind).toBe('updateByCode');
+    expect(last2[1].mutation.kind).toBe('insert');
 
     const [first, second] = last2;
-    if (first.action === 'update_row_by_id') {
-      expect(first.payload.sheet).toBe('PORCELETS_BANDES_DETAIL');
-      expect(first.payload.idHeader).toBe('ID');
-      expect(first.payload.idValue).toBe('B-042');
-      expect(first.payload.patch.VIVANTS).toBe(9);
-      // Notes horodatées (audit trail)
-      expect(String(first.payload.patch.NOTES)).toContain('Vente 3 porcs');
+    if (first.mutation.kind === 'updateByCode') {
+      expect(first.mutation.table).toBe('batches');
+      expect(first.mutation.codeId).toBe('B-042');
+      expect(first.mutation.fields.porcelets_nes_vivants).toBe(9);
+      expect(String(first.mutation.fields.notes)).toContain('Vente 3 porcs');
     } else {
-      throw new Error('First queue entry should be update_row_by_id');
+      throw new Error('First queue entry should be updateByCode');
     }
-    if (second.action === 'append_row') {
-      expect(second.payload.sheet).toBe('FINANCES');
-      expect(second.payload.values[1]).toBe('VENTE_PORCS');
-      expect(second.payload.values[4]).toBe('REVENU');
+    if (second.mutation.kind === 'insert') {
+      expect(second.mutation.table).toBe('finances');
+      expect(second.mutation.values.category).toBe('VENTE_PORCS');
+      expect(second.mutation.values.type).toBe('REVENU');
       // Montant = 3 × 85 × 2100 = 535 500
-      expect(second.payload.values[3]).toBe(3 * 85 * 2100);
+      expect(second.mutation.values.amount).toBe(3 * 85 * 2100);
     } else {
-      throw new Error('Second queue entry should be append_row');
+      throw new Error('Second queue entry should be insert');
     }
   });
 });

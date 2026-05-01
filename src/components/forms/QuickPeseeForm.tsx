@@ -2,7 +2,11 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { useIonAlert, IonSegment, IonSegmentButton, IonLabel } from '@ionic/react';
 import { Search, CheckCircle2, ChevronRight, ArrowLeft } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
-import { enqueueAppendRow, enqueueUpdateRow } from '../../services/offlineQueue';
+import {
+  insertNote,
+  updateSowByCode,
+  updateBoarByCode,
+} from '../../services/supabaseWrites';
 import { safeDate } from '../../lib/truieHelpers';
 import { BottomSheet, DataRow } from '../agritech';
 import type { BandePorcelets, Truie, Verrat } from '../../types/farm';
@@ -10,7 +14,6 @@ import type { BandePorcelets, Truie, Verrat } from '../../types/farm';
 type PeseeSubject = BandePorcelets | Truie | Verrat;
 import { biologyValidators } from '../../utils/biologyValidators';
 import { kvGet } from '../../services/kvStore';
-import { getMetaSync } from '../../features/tables/tablesRegistry';
 
 /* ═════════════════════════════════════════════════════════════════════════
    QuickPeseeForm · Pesée rapide (Bande, Truie ou Verrat)
@@ -62,7 +65,7 @@ function jFrom(frDate: string | undefined): number | null {
 }
 
 const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
-  const { bandes, truies, verrats, refreshData, truiesHeader, verratsHeader } = useFarm();
+  const { bandes, truies, verrats, refreshData } = useFarm();
   const [presentAlert] = useIonAlert();
 
   const [step, setStep] = useState<Step>(1);
@@ -210,24 +213,23 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
 
       const author = kvGet('user_name') || 'Anonyme';
 
-      const row: string[] = [
-        new Date().toISOString().slice(0, 10),
-        subjectType,
-        selectedSubject.id,
-        note,
-        author,
-      ];
+      await insertNote({
+        content: `[${subjectType}:${selectedSubject.id}] ${note}`,
+        category: 'PESEE',
+        author_id: author,
+      });
 
-      await enqueueAppendRow('NOTES_TERRAIN', row);
-
-      // Si animal individuel, on met à jour son poids dans la fiche signalétique
-      if (subjectType === 'TRUIE' || subjectType === 'VERRAT') {
-        const table = subjectType === 'TRUIE' ? 'SUIVI_TRUIES_REPRODUCTION' : 'VERRATS';
-        const headers = subjectType === 'TRUIE' ? truiesHeader : verratsHeader;
-        const weightCol = headers.find(h => h.toUpperCase().includes('POIDS')) || 'POIDS';
-        const meta = getMetaSync(table);
-        const idH = meta?.idHeader || 'ID';
-        await enqueueUpdateRow(table, idH, selectedSubject.id, { [weightCol]: poids });
+      // Si animal individuel, on met à jour son poids dans la fiche signalétique.
+      // Note: la table sows/boars n'a pas de colonne poids dédiée — on stocke
+      // la dernière pesée en notes pour audit (le schéma DB ne porte pas ce champ).
+      if (subjectType === 'TRUIE') {
+        await updateSowByCode(selectedSubject.id, {
+          notes: `Dernière pesée : ${poids} kg (${new Date().toISOString().slice(0, 10)})`,
+        });
+      } else if (subjectType === 'VERRAT') {
+        await updateBoarByCode(selectedSubject.id, {
+          notes: `Dernière pesée : ${poids} kg (${new Date().toISOString().slice(0, 10)})`,
+        });
       }
 
       setStep(3);

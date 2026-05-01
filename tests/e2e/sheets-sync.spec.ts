@@ -30,11 +30,12 @@ test.describe('Synchronisation Sheets', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1500);
 
-    // Le badge de source (LIVE, CACHE, ou OFFLINE) doit être visible
-    const statusBadge = page.locator('.premium-header .ft-code').filter({ hasText: /LIVE|CACHE|OFFLINE|SYNC/i });
+    const statusBadge = page
+      .locator('[data-testid="agritech-header"]')
+      .locator('text=/LIVE|CACHE|OFFLINE|SYNC/i');
     // Peut ne pas être visible si aucune donnée ne vient encore
-    const visible = await statusBadge.isVisible();
-    console.log(`Source badge visible: ${visible}`);
+    const visible = await statusBadge.first().isVisible().catch(() => false);
+    void visible;
   });
 
   test('État du Troupeau affiche des chiffres (pas de NaN)', async ({ page }) => {
@@ -42,7 +43,7 @@ test.describe('Synchronisation Sheets', () => {
     await page.waitForTimeout(4000);
 
     // Chercher les KPIs du troupeau
-    const kpiNumbers = page.locator('.ft-heading').filter({ hasText: /^\d+$/ });
+    const kpiNumbers = page.locator('[data-testid="kpi-card-v6"], [data-testid="kpi-card"]').filter({ hasText: /^\d+$/ });
     const count = await kpiNumbers.count();
     if (count > 0) {
       for (let i = 0; i < count; i++) {
@@ -55,7 +56,7 @@ test.describe('Synchronisation Sheets', () => {
   });
 
   test('Cheptel : pas de truie sans statut', async ({ page }) => {
-    await page.goto('/cheptel');
+    await page.goto('/troupeau/truies');
     await page.waitForTimeout(4000);
 
     // Vérifier que les badges de statut ne sont pas vides
@@ -77,7 +78,7 @@ test.describe('Synchronisation Sheets', () => {
       }
     });
 
-    await page.goto('/bandes');
+    await page.goto('/troupeau/bandes');
     await page.waitForTimeout(4000);
 
     if (errors.length > 0) {
@@ -97,20 +98,19 @@ test.describe('Synchronisation Sheets', () => {
     //    On bloque les requêtes réseau externes mais l'app SPA reste chargée en mémoire
     await context.route('**/script.google.com/**', route => route.abort());
 
-    // 3. Naviguer entre les onglets de l'app (navigation SPA, pas de reload HTML)
-    await page.locator('ion-tab-button').filter({ hasText: /CHEPTEL/i }).tap({ force: true });
+    // 3. Naviguer entre les onglets agritech (navigation SPA)
+    const nav = page.getByRole('navigation', { name: /navigation principale/i }).last();
+    await nav.getByRole('button', { name: /Cheptel/i }).click();
     await page.waitForTimeout(1000);
 
-    // L'app doit toujours fonctionner (navigation SPA locale)
     const err = page.locator('text=ERREUR DE CHARGEMENT');
     expect(await err.isVisible()).toBe(false);
 
-    // 4. Revenir au Dashboard
-    await page.locator('ion-tab-button').filter({ hasText: /HOME/i }).tap({ force: true });
+    // 4. Revenir au Today
+    await nav.getByRole('button', { name: /Aujourd/i }).click();
     await page.waitForTimeout(500);
 
-    // Le header doit toujours être visible (contenu en mémoire)
-    const header = page.locator('.premium-header');
+    const header = page.locator('[data-testid="agritech-header"]').first();
     await expect(header).toBeVisible();
     console.log('✅ Navigation SPA offline fonctionnelle (données GAS bloquées)');
 

@@ -7,16 +7,17 @@
  *   1. Porcher swipe-left ou appuie longuement sur une ligne → modal apparaît
  *   2. Il voit ce qui va être supprimé (nom + ID)
  *   3. Il entre une RAISON obligatoire (ex: "Mort", "Vendu", "Erreur saisie")
- *   4. Il confirme → `deleteRowById` → cache invalidé → Sheets mis à jour
+ *   4. Il confirme → delete Supabase + log dans deletion_log
  *   5. UI rafraîchie automatiquement
- *
- * Rendu en overlay dark centré.
  */
 
 import React, { useEffect, useId, useState } from 'react';
 import { IonSpinner, IonToast } from '@ionic/react';
 import { Trash2, X, AlertOctagon } from 'lucide-react';
-import { deleteRowById } from '../services/googleSheets';
+import {
+  deleteSow, deleteBoar, deleteBatch,
+  resolveSowIdByCode, resolveBoarIdByCode, resolveBatchIdByCode,
+} from '../services/supabaseWrites';
 
 export interface DeleteTarget {
   sheet: string; // ex: 'SUIVI_TRUIES_REPRODUCTION'
@@ -76,17 +77,28 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ target, isOpen, onClose, onDe
     if (!reason.trim()) return;
     setLoading(true);
     try {
-      const result = await deleteRowById(target.sheet, target.idHeader, target.idValue, reason.trim());
-      if (result.success) {
-        setToast({ show: true, message: `${target.label} supprimé(e)`, success: true });
-        setTimeout(() => {
-          onDeleted();
-          setReason('');
-          onClose();
-        }, 1000);
-      } else {
-        setToast({ show: true, message: `${result.message}`, success: false });
+      let resolved: string | null = null;
+      if (target.type === 'TRUIE') resolved = await resolveSowIdByCode(target.idValue);
+      else if (target.type === 'VERRAT') resolved = await resolveBoarIdByCode(target.idValue);
+      else if (target.type === 'BANDE') resolved = await resolveBatchIdByCode(target.idValue);
+
+      if (!resolved) {
+        setToast({ show: true, message: `Introuvable: ${target.idValue}`, success: false });
+        return;
       }
+
+      if (target.type === 'TRUIE') await deleteSow(resolved, reason.trim());
+      else if (target.type === 'VERRAT') await deleteBoar(resolved, reason.trim());
+      else if (target.type === 'BANDE') await deleteBatch(resolved, reason.trim());
+
+      setToast({ show: true, message: `${target.label} supprimé(e)`, success: true });
+      setTimeout(() => {
+        onDeleted();
+        setReason('');
+        onClose();
+      }, 1000);
+    } catch (e) {
+      setToast({ show: true, message: String(e), success: false });
     } finally {
       setLoading(false);
     }
@@ -162,7 +174,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ target, isOpen, onClose, onDe
                   Action irréversible
                 </p>
                 <p className="mt-1 font-mono text-[11px] text-text-1 leading-relaxed">
-                  La ligne sera supprimée de Google Sheets. La raison sera tracée dans ZZ_LOGS.
+                  La ligne sera supprimée définitivement. La raison sera tracée dans le journal d'audit.
                 </p>
               </div>
             </div>

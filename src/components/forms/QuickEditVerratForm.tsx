@@ -3,7 +3,7 @@ import { IonToast } from '@ionic/react';
 import { Edit3, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { enqueueUpdateRow } from '../../services/offlineQueue';
+import { updateBoarByCode } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import type { Verrat } from '../../types/farm';
 import {
@@ -119,7 +119,16 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
     }
     setSaving(true);
     try {
-      await enqueueUpdateRow('VERRATS', 'ID', verrat.id, result.patch);
+      const supabasePatch: Record<string, unknown> = {};
+      const p = result.patch as Record<string, unknown>;
+      if ('NOM' in p) supabasePatch.name = p.NOM;
+      if ('BOUCLE' in p) supabasePatch.boucle = p.BOUCLE;
+      if ('ORIGINE' in p) supabasePatch.origine = p.ORIGINE;
+      if ('ALIMENTATION' in p) supabasePatch.alimentation = p.ALIMENTATION;
+      if ('RATION KG/J' in p) supabasePatch.ration_kg_j = p['RATION KG/J'];
+      if ('STATUT' in p) supabasePatch.statut = p.STATUT;
+      if ('NOTES' in p) supabasePatch.notes = p.NOTES;
+      await updateBoarByCode(verrat.id, supabasePatch);
       const online = typeof navigator !== 'undefined' && navigator.onLine;
       setToast(
         online

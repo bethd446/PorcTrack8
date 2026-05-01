@@ -1,74 +1,39 @@
 import React, { useState } from 'react';
 import {
-  IonContent, IonPage, IonSpinner, IonToast, IonAlert, IonToggle
+  IonContent, IonPage, IonAlert, IonToggle
 } from '@ionic/react';
 import {
-  RefreshCw, Cloud, Shield, BookOpen, AlertTriangle,
-  Save, Trash2, Bug, Phone
+  Shield, BookOpen, AlertTriangle,
+  Trash2, Bug, Phone
 } from 'lucide-react';
-import { useFarm } from '../context/FarmContext';
-import { getTablesIndex } from '../services/googleSheets';
 import AgritechLayout from './AgritechLayout';
 import AgritechHeader from './AgritechHeader';
 import { HubTile, SectionDivider, Chip } from './agritech';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import type { ThemeMode } from '../services/themeAuto';
-import { useNavigate } from 'react-router-dom';
 import { isDebugEnabled, setDebugEnabled, APP_VERSION } from '../config';
-import { getQueueStatus } from '../services/offlineQueue';
 import { kvGet, kvSet, kvClear } from '../services/kvStore';
 import { getSupportWhatsapp, setSupportWhatsapp } from '../services/supportContact';
 
 export const SettingsPage: React.FC = () => {
-  const { syncStatus, pullData, processQueue } = useFarm();
   const { role: userRole, setRole } = useAuth();
-  const navigate = useNavigate();
 
-  const defaultUrl = (import.meta.env.VITE_GAS_URL as string | undefined) || '';
-  const defaultToken = (import.meta.env.VITE_GAS_TOKEN as string | undefined) || '';
-
-  const [url, setUrl] = useState(kvGet('gas_url') || defaultUrl);
-  const [token, setToken] = useState(kvGet('gas_token') || defaultToken);
   const [userName, setUserName] = useState(kvGet('user_name') || '');
-  const [showToast, setShowToast] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
-  const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
-  const [testMessage, setTestMessage] = useState('');
   const [debug, setDebug] = useState(isDebugEnabled());
   const [whatsapp, setWhatsapp] = useState<string>(getSupportWhatsapp());
   const [whatsappSaved, setWhatsappSaved] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
   const {
     mode: themeMode,
     resolved: themeResolved,
     setMode: setThemeMode,
   } = useTheme();
 
-  const pendingCount = getQueueStatus().pending;
-
-  const handleSaveAndTest = async (): Promise<void> => {
-    await Promise.all([
-      kvSet('gas_url', url),
-      kvSet('gas_token', token),
-      kvSet('user_name', userName),
-    ]);
-
-    setTestStatus('testing');
-    try {
-      const res = await getTablesIndex();
-      if (res.success) {
-        setTestStatus('success');
-        setTestMessage(`Connecté : ${res.values.length} tables actives`);
-        setShowToast(true);
-        pullData();
-      } else {
-        setTestStatus('error');
-        setTestMessage(res.message || 'Erreur de connexion');
-      }
-    } catch (e) {
-      setTestStatus('error');
-      setTestMessage(String(e));
-    }
+  const handleSaveProfile = async (): Promise<void> => {
+    await kvSet('user_name', userName);
+    setProfileSaved(true);
   };
 
   const handleReset = async (): Promise<void> => {
@@ -81,7 +46,6 @@ export const SettingsPage: React.FC = () => {
     setDebugEnabled(val);
   };
 
-  const isSynced = syncStatus === 'synced';
   const needsName = userRole === 'WORKER' && !userName;
 
   return (
@@ -97,65 +61,6 @@ export const SettingsPage: React.FC = () => {
           />
 
           <div className="px-4 pt-4 pb-8 space-y-5">
-            {/* ── Flux & Synchronisation ─────────────────────────────── */}
-            <section aria-label="Flux & synchronisation" role="region">
-              <SectionDivider label="Flux & synchronisation" />
-              <div className="card-dense">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span
-                      className={
-                        'inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-bg-2 ' +
-                        (isSynced ? 'text-accent' : 'text-amber')
-                      }
-                      aria-hidden="true"
-                    >
-                      {isSynced ? (
-                        <Cloud size={18} />
-                      ) : (
-                        <RefreshCw size={18} className="animate-spin" />
-                      )}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-[14px] font-semibold text-text-0 truncate">
-                        {isSynced ? 'Système à jour' : 'Synchronisation...'}
-                      </p>
-                      <p className="mt-0.5 font-mono text-[11px] text-text-2 truncate">
-                        {pendingCount} action(s) en attente
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => processQueue()}
-                    aria-label="Traiter la file"
-                    className="pressable inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-bg-2 text-text-1 active:scale-[0.96] transition-transform duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-                  >
-                    <RefreshCw size={15} />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => navigate('/sync')}
-                    className="pressable inline-flex items-center justify-center h-10 rounded-md border border-border bg-bg-1 text-text-0 text-[12px] font-semibold active:scale-[0.97] transition-transform duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-                  >
-                    Détails file
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => pullData()}
-                    aria-label="Rafraîchir les données"
-                    className="pressable inline-flex items-center justify-center gap-2 h-10 rounded-md bg-accent text-bg-0 text-[12px] font-semibold active:scale-[0.97] transition-transform duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 hover:bg-[color:var(--color-accent-dim)]"
-                  >
-                    <RefreshCw size={13} aria-hidden="true" />
-                    Forcer pull
-                  </button>
-                </div>
-              </div>
-            </section>
-
             {/* ── Audit & Protocoles (Hub tiles) ──────────────────────── */}
             <section aria-label="Audit & protocoles" role="region">
               <SectionDivider label="Audit & performance" />
@@ -275,9 +180,9 @@ export const SettingsPage: React.FC = () => {
               </div>
             </section>
 
-            {/* ── Paramètres système ──────────────────────────────────── */}
-            <section aria-label="Paramètres système" role="region">
-              <SectionDivider label="Paramètres" />
+            {/* ── Profil utilisateur ──────────────────────────────────── */}
+            <section aria-label="Profil utilisateur" role="region">
+              <SectionDivider label="Profil" />
 
               <div className="card-dense !p-0 overflow-hidden">
                 {/* Nom opérateur */}
@@ -292,7 +197,10 @@ export const SettingsPage: React.FC = () => {
                     id="settings-operator"
                     type="text"
                     value={userName}
-                    onChange={e => setUserName(e.target.value)}
+                    onChange={e => {
+                      setUserName(e.target.value);
+                      setProfileSaved(false);
+                    }}
                     placeholder="Ex: Jean Martin"
                     className="w-full h-11 px-3 rounded-md bg-bg-1 border border-border text-text-0 placeholder-text-2 text-[14px] outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
                   />
@@ -301,42 +209,22 @@ export const SettingsPage: React.FC = () => {
                       Nom requis pour traçabilité
                     </p>
                   ) : null}
-                </div>
-
-                {/* GAS URL */}
-                <div className="px-4 py-4 border-b border-border">
-                  <label
-                    htmlFor="settings-gas-url"
-                    className="kpi-label block mb-2"
+                  <button
+                    type="button"
+                    onClick={handleSaveProfile}
+                    className="pressable mt-3 h-10 px-4 rounded-md bg-accent text-bg-0 text-[12px] font-semibold uppercase tracking-wide active:scale-[0.97] transition-transform duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
                   >
-                    GAS API URL
-                  </label>
-                  <input
-                    id="settings-gas-url"
-                    type="text"
-                    value={url}
-                    onChange={e => setUrl(e.target.value)}
-                    placeholder="https://script.google.com/..."
-                    className="w-full h-11 px-3 rounded-md bg-bg-1 border border-border text-text-0 placeholder-text-2 font-mono text-[12px] outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
-                  />
-                </div>
-
-                {/* Token */}
-                <div className="px-4 py-4 border-b border-border">
-                  <label
-                    htmlFor="settings-token"
-                    className="kpi-label block mb-2"
-                  >
-                    Token d'accès
-                  </label>
-                  <input
-                    id="settings-token"
-                    type="text"
-                    value={token}
-                    onChange={e => setToken(e.target.value)}
-                    placeholder="Bearer…"
-                    className="w-full h-11 px-3 rounded-md bg-bg-1 border border-border text-text-0 placeholder-text-2 font-mono text-[12px] outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
-                  />
+                    Enregistrer
+                  </button>
+                  {profileSaved ? (
+                    <span
+                      role="status"
+                      aria-live="polite"
+                      className="ml-3 font-mono text-[11px] text-accent uppercase tracking-wide"
+                    >
+                      Enregistré
+                    </span>
+                  ) : null}
                 </div>
 
                 {/* Debug toggle */}
@@ -436,28 +324,11 @@ export const SettingsPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Save button */}
-              <button
-                type="button"
-                onClick={handleSaveAndTest}
-                disabled={testStatus === 'testing'}
-                className="pressable mt-4 w-full h-12 rounded-md bg-accent text-bg-0 text-[13px] font-semibold flex items-center justify-center gap-2 active:scale-[0.97] disabled:opacity-40 transition-[transform,opacity] duration-150 hover:bg-[color:var(--color-accent-dim)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-              >
-                {testStatus === 'testing' ? (
-                  <IonSpinner name="bubbles" className="w-5 h-5" />
-                ) : (
-                  <>
-                    <Save size={15} aria-hidden="true" />
-                    Enregistrer & vérifier
-                  </>
-                )}
-              </button>
-
               {/* Reset */}
               <button
                 type="button"
                 onClick={() => setShowAlert(true)}
-                className="pressable mt-3 w-full h-11 rounded-md border border-dashed border-red/40 bg-transparent text-red text-[12px] font-semibold flex items-center justify-center gap-2 active:opacity-70 transition-opacity duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red focus-visible:outline-offset-2"
+                className="pressable mt-4 w-full h-11 rounded-md border border-dashed border-red/40 bg-transparent text-red text-[12px] font-semibold flex items-center justify-center gap-2 active:opacity-70 transition-opacity duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red focus-visible:outline-offset-2"
               >
                 <Trash2 size={13} aria-hidden="true" />
                 Réinitialiser la session
@@ -473,13 +344,6 @@ export const SettingsPage: React.FC = () => {
           </div>
         </AgritechLayout>
 
-        <IonToast
-          isOpen={showToast}
-          onDidDismiss={() => setShowToast(false)}
-          message={testMessage}
-          duration={3000}
-          position="top"
-        />
         <IonAlert
           isOpen={showAlert}
           onDidDismiss={() => setShowAlert(false)}

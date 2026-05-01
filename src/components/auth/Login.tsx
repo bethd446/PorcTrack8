@@ -33,7 +33,7 @@ export default function Login() {
       setError(authError.message);
       setLoading(false);
     } else {
-      navigate('/cockpit');
+      navigate('/today', { replace: true });
     }
   };
 

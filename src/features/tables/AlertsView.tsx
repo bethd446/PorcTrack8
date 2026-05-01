@@ -366,7 +366,7 @@ const AlertRow: React.FC<AlertRowProps> = ({
 
 const AlertsView: React.FC = () => {
   const { alerts, alertesServeur } = usePilotage();
-  const { refreshData, lastUpdate } = useMeta();
+  const { refreshData } = useMeta();
   const [pendingConfirmations, setPendingConfirmations] = useState<PendingConfirmation[]>([]);
   const [selectedAlert, setSelectedAlert] = useState<{ alert: FarmAlert; confirmId: string } | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterId>('ALL');
@@ -421,9 +421,6 @@ const AlertsView: React.FC = () => {
   );
 
   const showEmpty = alerts.length === 0 && alertesServeur.length === 0;
-  const lastSyncMinutes = lastUpdate
-    ? Math.max(0, Math.round((Date.now() - lastUpdate) / 60_000))
-    : undefined;
 
   // Spark dérivée déterministe (placeholder visuel — pas de vraie série tracée)
   const spark = (base: number) =>
@@ -445,7 +442,6 @@ const AlertsView: React.FC = () => {
 
           <TopBarSync
             crumbs={['Pilotage', 'Alertes']}
-            lastSyncMinutes={lastSyncMinutes}
             onMariusClick={() => {
               const evt = new CustomEvent('open-chatbot');
               window.dispatchEvent(evt);

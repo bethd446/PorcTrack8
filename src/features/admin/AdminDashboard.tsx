@@ -82,6 +82,7 @@ function SectionHeader({ title, badge }: { title: string; badge?: number }) {
 function LogsPanel() {
   const [logs, setLogs] = useState<AdminLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -91,8 +92,19 @@ function LogsPanel() {
       .select('*')
       .order('created_at', { ascending: false })
       .limit(30)
-      .then(({ data }) => {
-        setLogs(data ?? []);
+      .then(({ data, error: fetchErr }) => {
+        if (fetchErr) {
+          console.error('[AdminDashboard] LogsPanel fetch failed', fetchErr);
+          setError('Impossible de charger les journaux.');
+          setLogs([]);
+        } else {
+          setLogs(data ?? []);
+        }
+        setLoading(false);
+      }, (err) => {
+        console.error('[AdminDashboard] LogsPanel fetch failed', err);
+        setError('Impossible de charger les journaux.');
+        setLogs([]);
         setLoading(false);
       });
 
@@ -120,7 +132,12 @@ function LogsPanel() {
             Chargement…
           </p>
         )}
-        {!loading && logs.length === 0 && (
+        {!loading && error && (
+          <p role="alert" style={{ padding: '16px 24px', fontSize: 13, color: 'var(--color-pig-deep, #c0392b)', background: 'var(--color-pig-soft, #fdecea)', borderBottom: '1px solid var(--line-2)' }}>
+            {error}
+          </p>
+        )}
+        {!loading && !error && logs.length === 0 && (
           <p style={{ padding: '32px 24px', textAlign: 'center', fontSize: 13, color: 'var(--muted)' }}>
             Aucun log enregistré.
           </p>
@@ -213,6 +230,7 @@ const ROLE_STYLES: Record<string, RoleStyle> = {
 function UsersPanel() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
 
   useEffect(() => {
@@ -220,20 +238,38 @@ function UsersPanel() {
       .from('profiles')
       .select('id, role, last_sign_in_at, email')
       .order('role', { ascending: true })
-      .then(({ data }) => {
-        setUsers(data ?? []);
+      .then(({ data, error: fetchErr }) => {
+        if (fetchErr) {
+          console.error('[AdminDashboard] UsersPanel fetch failed', fetchErr);
+          setError('Impossible de charger les utilisateurs.');
+          setUsers([]);
+        } else {
+          setUsers(data ?? []);
+        }
+        setLoading(false);
+      }, (err) => {
+        console.error('[AdminDashboard] UsersPanel fetch failed', err);
+        setError('Impossible de charger les utilisateurs.');
+        setUsers([]);
         setLoading(false);
       });
   }, []);
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     setUpdating(userId);
-    await supabase
-      .from('profiles')
-      .update({ role: newRole })
-      .eq('id', userId);
-    setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
-    setUpdating(null);
+    try {
+      const { error: updErr } = await supabase
+        .from('profiles')
+        .update({ role: newRole })
+        .eq('id', userId);
+      if (updErr) throw updErr;
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+    } catch (err) {
+      console.error('[AdminDashboard] role update failed', err);
+      setError('Mise à jour du rôle impossible.');
+    } finally {
+      setUpdating(null);
+    }
   };
 
   const thStyle: React.CSSProperties = {
@@ -256,7 +292,12 @@ function UsersPanel() {
             Chargement…
           </p>
         )}
-        {!loading && users.length === 0 && (
+        {!loading && error && (
+          <p role="alert" style={{ padding: '16px 24px', fontSize: 13, color: 'var(--color-pig-deep, #c0392b)', background: 'var(--color-pig-soft, #fdecea)', borderBottom: '1px solid var(--line-2)' }}>
+            {error}
+          </p>
+        )}
+        {!loading && !error && users.length === 0 && (
           <p style={{ padding: '32px 24px', textAlign: 'center', fontSize: 13, color: 'var(--muted)' }}>
             Aucun profil trouvé.
           </p>
@@ -421,6 +462,7 @@ export default function AdminDashboard() {
   const [logs, setLogs] = useState<AdminLog[]>([]);
   const [userCount, setUserCount] = useState<number>(0);
   const [todayCount, setTodayCount] = useState<number>(0);
+  const [globalError, setGlobalError] = useState<string | null>(null);
 
   useEffect(() => {
     supabase
@@ -428,17 +470,41 @@ export default function AdminDashboard() {
       .select('*')
       .order('created_at', { ascending: false })
       .limit(100)
-      .then(({ data }) => {
+      .then(({ data, error: fetchErr }) => {
+        if (fetchErr) {
+          console.error('[AdminDashboard] logs aggregate fetch failed', fetchErr);
+          setGlobalError('Erreur de chargement du journal.');
+          setLogs([]);
+          setTodayCount(0);
+          return;
+        }
         const allLogs = data ?? [];
         setLogs(allLogs);
         const today = new Date().toISOString().slice(0, 10);
         setTodayCount(allLogs.filter(l => l.created_at.startsWith(today)).length);
+      }, (err) => {
+        console.error('[AdminDashboard] logs aggregate fetch failed', err);
+        setGlobalError('Erreur de chargement du journal.');
+        setLogs([]);
+        setTodayCount(0);
       });
 
     supabase
       .from('profiles')
       .select('id', { count: 'exact', head: true })
-      .then(({ count }) => setUserCount(count ?? 0));
+      .then(({ count, error: fetchErr }) => {
+        if (fetchErr) {
+          console.error('[AdminDashboard] user count fetch failed', fetchErr);
+          setGlobalError('Erreur de chargement des utilisateurs.');
+          setUserCount(0);
+          return;
+        }
+        setUserCount(count ?? 0);
+      }, (err) => {
+        console.error('[AdminDashboard] user count fetch failed', err);
+        setGlobalError('Erreur de chargement des utilisateurs.');
+        setUserCount(0);
+      });
   }, []);
 
   const handleLogout = async () => {
@@ -491,6 +557,22 @@ export default function AdminDashboard() {
             Déconnexion
           </Button>
         </header>
+
+        {globalError && (
+          <div
+            role="alert"
+            style={{
+              padding: '12px 16px',
+              borderRadius: 'var(--radius-card)',
+              background: 'var(--color-pig-soft, #fdecea)',
+              color: 'var(--color-pig-deep, #c0392b)',
+              border: '1px solid var(--color-pig, #f5c6c0)',
+              fontSize: 13,
+            }}
+          >
+            {globalError}
+          </div>
+        )}
 
         <div
           style={{

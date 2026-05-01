@@ -21,7 +21,6 @@ import { IonContent, IonPage, IonToast, useIonAlert } from '@ionic/react';
 import { Sparkles } from 'lucide-react';
 
 import { useFarm } from '../../context/FarmContext';
-import { useAuth } from '../../context/AuthContext';
 import { enqueueUpdateRow } from '../../services/offlineQueue';
 import { updateSow, updateBatch } from '../../services/supabaseWrites';
 import EditableNumber from '../../components/EditableNumber';
@@ -87,7 +86,6 @@ const TruieDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { truies, bandes, saillies, sante, refreshData } = useFarm();
-  const { isOwner: _isOwner } = useAuth();
   const [presentAlert] = useIonAlert();
   const [editOpen, setEditOpen] = useState(false);
   const [toast, setToast] = useState('');

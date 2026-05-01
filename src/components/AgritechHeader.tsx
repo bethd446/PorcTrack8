@@ -59,6 +59,7 @@ const AgritechHeader: React.FC<AgritechHeaderProps> = ({
   return (
     <header
       role="banner"
+      data-testid="agritech-header"
       className={cn(
         'bg-bg-0 border-b border-border px-4 pt-4 pb-3',
         className

@@ -29,7 +29,7 @@ import { IonToast } from '@ionic/react';
 import { Plus, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { enqueueAppendRow } from '../../services/offlineQueue';
+import { insertSow } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import {
@@ -103,7 +103,15 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
     setErrors({});
     setSaving(true);
     try {
-      await enqueueAppendRow('SUIVI_TRUIES_REPRODUCTION', result.row);
+      const row = result.row;
+      await insertSow({
+        code_id: row[0] as string,
+        name: (row[1] as string) || null,
+        boucle: (row[2] as string) || null,
+        statut: row[3] as string,
+        nb_portees: row[5] as number,
+        ration_kg_j: row[8] as number,
+      });
       const online =
         typeof navigator !== 'undefined' && navigator.onLine;
       setToast(

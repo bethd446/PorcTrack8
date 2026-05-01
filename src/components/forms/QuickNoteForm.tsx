@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { IonSpinner, IonToast } from '@ionic/react';
 import { Send, ClipboardList } from 'lucide-react';
-import { enqueueAppendRow } from '../../services/offlineQueue';
+import { insertNote } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import { kvGet } from '../../services/kvStore';
 
@@ -39,17 +39,11 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
 
     setLoading(true);
     try {
-      // Schéma canonique NOTES_TERRAIN (5 colonnes) :
-      //   DATE | TYPE_ANIMAL | ID_ANIMAL | NOTE | AUTEUR
-      const values = [
-        new Date().toISOString().slice(0, 10),
-        subjectType,
-        subjectId,
-        note.trim(),
-        author,
-      ];
-
-      await enqueueAppendRow('NOTES_TERRAIN', values);
+      await insertNote({
+        content: `[${subjectType}:${subjectId}] ${note.trim()}`,
+        category: subjectType,
+        author_id: author,
+      });
       setNote('');
       const online = typeof navigator !== 'undefined' && navigator.onLine;
       setToast({

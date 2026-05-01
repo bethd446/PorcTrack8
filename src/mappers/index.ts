@@ -24,7 +24,7 @@ const findIdx = (header: string[], ...variants: string[]) => {
 type RawCell = string | number | boolean | Date | null | undefined;
 
 /**
- * Parses a date from Google Sheets (can be a serial number, a string or an ISO date).
+ * Parses a date string from legacy data (can be a serial number, a string or an ISO date).
  */
 export const parseSheetDate = (val: unknown): string => {
   if (!val || val === '—' || val === '') return '';

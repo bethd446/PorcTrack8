@@ -3,29 +3,22 @@ import { Sparkles } from 'lucide-react';
 
 export interface TopBarSyncProps {
   crumbs: string[];
-  lastSyncMinutes?: number;
   onMariusClick?: () => void;
   className?: string;
 }
 
 /**
- * Barre supérieure desktop : breadcrumb (gauche, DMMono 11px) ·
- * statut sync au centre (dot pulse-green) · pilule Marius à droite
- * (Instrument Sans 12px, fond amber-pork).
+ * Barre supérieure desktop : breadcrumb (gauche, DMMono 11px) +
+ * pilule Marius à droite (Instrument Sans 12px, fond amber-pork).
+ * Le statut sync historique a été retiré (Vague 3) — plus aucune notion
+ * de synchronisation visible côté UI, toutes les écritures passent par
+ * supabaseWrites.ts.
  */
 export default function TopBarSync({
   crumbs,
-  lastSyncMinutes,
   onMariusClick,
   className = '',
 }: TopBarSyncProps) {
-  const syncLabel =
-    typeof lastSyncMinutes === 'number'
-      ? lastSyncMinutes <= 0
-        ? 'Synchronisé · à l’instant'
-        : `Synchronisé · il y a ${lastSyncMinutes} min`
-      : 'Synchronisé';
-
   return (
     <div
       role="navigation"
@@ -83,38 +76,8 @@ export default function TopBarSync({
         })}
       </ol>
 
-      <div
-        style={{
-          marginLeft: 'auto',
-          display: 'flex',
-          gap: 14,
-          alignItems: 'center',
-        }}
-      >
-        <span
-          aria-live="polite"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 7,
-            color: 'var(--color-accent-500)',
-          }}
-        >
-          <span
-            aria-hidden
-            className="pulse-green"
-            style={{
-              width: 7,
-              height: 7,
-              background: 'var(--color-accent-500)',
-              borderRadius: '50%',
-              display: 'inline-block',
-            }}
-          />
-          {syncLabel}
-        </span>
-
-        {onMariusClick ? (
+      {onMariusClick ? (
+        <div style={{ marginLeft: 'auto' }}>
           <button
             type="button"
             onClick={onMariusClick}
@@ -140,8 +103,8 @@ export default function TopBarSync({
             <Sparkles size={13} aria-hidden="true" />
             Marius
           </button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </div>
   );
 }

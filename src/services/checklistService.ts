@@ -1,5 +1,4 @@
-import { fetchData } from './googleSheets';
-import { kvGet, kvSet } from './kvStore';
+import { kvGet } from './kvStore';
 import { logger } from './logger';
 
 export interface ChecklistQuestion {
@@ -25,35 +24,17 @@ export interface ChecklistItem {
   champ: string;
 }
 
-const CACHE_KEY_QUESTIONS = 'porctrack_questions_cache';
 const CACHE_KEY_CHECKLISTS = 'porctrack_checklists_cache';
 
-export async function loadChecklistDefinitions() {
-  try {
-    const [questionsRes, checklistsRes] = await Promise.all([
-      fetchData('QUESTIONS_CONTROLE'),
-      fetchData('CHECKLISTS')
-    ]);
-
-    if (questionsRes.success) {
-      await kvSet(CACHE_KEY_QUESTIONS, JSON.stringify({
-        data: questionsRes.data,
-        timestamp: Date.now()
-      }));
-    }
-
-    if (checklistsRes.success) {
-      await kvSet(CACHE_KEY_CHECKLISTS, JSON.stringify({
-        data: checklistsRes.data,
-        timestamp: Date.now()
-      }));
-    }
-
-    return { success: true };
-  } catch (e) {
-    console.warn('[checklistService] Failed to load checklists (non-fatal):', e);
-    return { success: false };
-  }
+// TODO Supabase: table checklist_definitions à créer (vague suivante).
+// En attendant, le composant ChecklistFlow.tsx retombe sur CONTROLE_QUESTIONS
+// (fallback local) si aucun item n'est trouvé.
+export async function loadChecklistDefinitions(): Promise<{
+  questions: ChecklistQuestion[];
+  checklists: ChecklistItem[];
+  success: boolean;
+}> {
+  return { questions: [], checklists: [], success: true };
 }
 
 export function getChecklistItems(name: string): ChecklistItem[] {

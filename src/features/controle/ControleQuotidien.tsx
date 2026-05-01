@@ -5,8 +5,7 @@ import {
 } from '@ionic/react';
 import { ChevronRight, Box, CheckCircle2, Shield } from 'lucide-react';
 import { CONTROLE_QUESTIONS } from './questions';
-import { appendRow } from '../../services/googleSheets';
-import { enqueueAppendRow } from '../../services/offlineQueue';
+import { insertNote } from '../../services/supabaseWrites';
 import AgritechLayout from '../../components/AgritechLayout';
 import AgritechHeader from '../../components/AgritechHeader';
 import { Chip } from '../../components/agritech';
@@ -27,39 +26,22 @@ const ControleQuotidien: React.FC = () => {
   const handleAnswer = async (answer: string): Promise<void> => {
     setLoading(true);
     setLastAnswer(answer);
-    const now = new Date();
     const porcher = kvGet('user_name') || 'Porcher K13';
     const deviceId = kvGet('device_id') || 'DEV-UNKNOWN';
 
-    // Schéma canonique NOTES_TERRAIN (5 colonnes) :
-    //   DATE | TYPE_ANIMAL | ID_ANIMAL | NOTE | AUTEUR
-    // TYPE_ANIMAL = 'CONTROLE' pour les audits quotidiens.
-    // ID_ANIMAL   = clef de la question (Q1, Q2, …).
-    // NOTE        = texte structuré Question / Réponse / Détails.
     const noteText =
-      `Question: ${question.text}\n` +
+      `[${question.id || 'Q'}] Question: ${question.text}\n` +
       `Réponse: ${answer}` +
       (details ? `\nDétails: ${details}` : '') +
-      `\n[device: ${deviceId}]`;
-
-    const values = [
-      now.toISOString().slice(0, 10), // DATE YYYY-MM-DD
-      'CONTROLE',                     // TYPE_ANIMAL
-      question.id || 'Q',             // ID_ANIMAL = clef question
-      noteText,                       // NOTE
-      porcher,                        // AUTEUR
-    ];
+      `\n[device: ${deviceId}] [auteur: ${porcher}]`;
 
     try {
-      const res = await appendRow('NOTES_TERRAIN', values);
-      if (!res.success) {
-        enqueueAppendRow('NOTES_TERRAIN', values);
-        setToastMsg("Enregistré (file d'attente)");
-        setShowToast(true);
-      }
-    } catch {
-      enqueueAppendRow('NOTES_TERRAIN', values);
-      setToastMsg('Enregistré (hors ligne)');
+      await insertNote({
+        content: noteText,
+        category: 'AUDIT_QUOTIDIEN',
+      });
+    } catch (e) {
+      setToastMsg(`Erreur d'enregistrement: ${String(e)}`);
       setShowToast(true);
     }
 
@@ -81,7 +63,7 @@ const ControleQuotidien: React.FC = () => {
           <AgritechLayout withNav={false}>
             <AgritechHeader
               title="Contrôle terminé"
-              subtitle="Données synchronisées"
+              subtitle="Audit terrain"
             />
             <div className="px-4 pt-8 pb-8 flex flex-col items-center text-center">
               <div
@@ -94,14 +76,14 @@ const ControleQuotidien: React.FC = () => {
                 Tour validé
               </h2>
               <p className="font-mono text-[12px] text-text-2 mb-10">
-                Toutes les réponses ont été transmises au registre.
+                Toutes les réponses ont été enregistrées.
               </p>
 
               <div className="w-full space-y-3">
                 {lastAnswer === 'Oui' && (
                   <button
                     type="button"
-                    onClick={() => navigate('/stock')}
+                    onClick={() => navigate('/ressources/aliments')}
                     className="pressable w-full h-12 rounded-md bg-accent text-bg-0 text-[13px] font-semibold flex items-center justify-center gap-2 active:scale-[0.97] transition-transform duration-150 hover:bg-[color:var(--color-accent-dim)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
                   >
                     <Box size={16} aria-hidden="true" />

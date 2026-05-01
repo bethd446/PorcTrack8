@@ -3,7 +3,12 @@ import { IonToast } from '@ionic/react';
 import { Edit3, Save, RefreshCw } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { enqueueUpdateRow } from '../../services/offlineQueue';
+import {
+  updateProduitAliment,
+  updateProduitVeto,
+  resolveProduitAlimentByCode,
+  resolveProduitVetoByCode,
+} from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import type { StockAliment, StockVeto } from '../../types/farm';
 import {
@@ -133,12 +138,34 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
     setErrors({});
     setSaving(true);
     try {
-      await enqueueUpdateRow(
-        result.sheetName,
-        'ID',
-        stockItem.id,
-        result.patch,
-      );
+      const p = result.patch as Record<string, unknown>;
+      if (kind === 'ALIMENT') {
+        const id = await resolveProduitAlimentByCode(stockItem.id);
+        if (id) {
+          await updateProduitAliment(id, {
+            libelle: p.LIBELLE as string,
+            stock_actuel: p.STOCK_ACTUEL as number,
+            unite: p.UNITE as string,
+            seuil_alerte: p.SEUIL_ALERTE as number,
+            en_alerte: p.STATUT_STOCK !== 'OK',
+            notes: (p.NOTES as string) || null,
+          });
+        }
+      } else {
+        const id = await resolveProduitVetoByCode(stockItem.id);
+        if (id) {
+          await updateProduitVeto(id, {
+            libelle: p.PRODUIT as string,
+            type: (p.TYPE as string) || null,
+            usage: (p.USAGE as string) || null,
+            stock_actuel: p.STOCK_ACTUEL as number,
+            unite: p.UNITE as string,
+            stock_min: p.SEUIL_ALERTE as number,
+            alerte_stock_bas: p.STATUT_STOCK !== 'OK',
+            notes: (p.NOTES as string) || null,
+          });
+        }
+      }
       const online = typeof navigator !== 'undefined' && navigator.onLine;
       setToast(
         online

@@ -17,7 +17,7 @@ import { ChevronRight } from 'lucide-react';
 import AgritechLayout from '../../components/AgritechLayout';
 import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
-import { useFarm, useMeta } from '../../context/FarmContext';
+import { useFarm } from '../../context/FarmContext';
 import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import {
   computeBandePhase,
@@ -218,7 +218,6 @@ function truieToPosition(t: Truie, today: Date): BandePosition | null {
 const CyclesHub: React.FC = () => {
   const navigate = useNavigate();
   const { truies, bandes } = useFarm();
-  const { lastUpdate } = useMeta();
   const { handleRefresh } = useAutoRefresh();
   const today = useMemo(() => new Date(), []);
 
@@ -241,10 +240,6 @@ const CyclesHub: React.FC = () => {
     return c;
   }, [positions]);
 
-  const lastSyncMinutes = lastUpdate
-    ? Math.max(0, Math.round((Date.now() - lastUpdate) / 60_000))
-    : undefined;
-
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
@@ -255,7 +250,6 @@ const CyclesHub: React.FC = () => {
 
           <TopBarSync
             crumbs={['Pilotage', 'Cycles']}
-            lastSyncMinutes={lastSyncMinutes}
             onMariusClick={() => {
               const evt = new CustomEvent('open-chatbot');
               window.dispatchEvent(evt);

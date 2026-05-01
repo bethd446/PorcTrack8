@@ -10,7 +10,7 @@
  *   • `detectTruiesAReformer`      — truies candidates à réforme (perf ou inactivité)
  *
  * Toutes les dates en entrée respectent le format dd/MM/yyyy — identique au reste
- * de l'app (mapping Google Sheets).
+ * de l'app (mapping Supabase).
  */
 
 import type {

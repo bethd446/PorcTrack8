@@ -5,14 +5,18 @@ import { CheckCircle2, Search, ChevronRight, ArrowLeft } from 'lucide-react';
 import { BottomSheet, DataRow } from '../agritech';
 import { useFarm } from '../../context/FarmContext';
 import { filterRealPortees } from '../../services/bandesAggregator';
-import { enqueueAppendRow, enqueueUpdateRow } from '../../services/offlineQueue';
+import {
+  insertHealthLog,
+  updateBatchByCode,
+  updateSowByCode,
+  updateBoarByCode,
+} from '../../services/supabaseWrites';
 import type { BandePorcelets, Truie, Verrat } from '../../types/farm';
 
 type MortalitySubject = BandePorcelets | Truie | Verrat;
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import { FARM_CONFIG } from '../../config/farm';
 import { kvGet } from '../../services/kvStore';
-import { getMetaSync } from '../../features/tables/tablesRegistry';
 
 const CAUSE_OPTIONS = [
   { value: 'ECRASEMENT', label: 'Écrasement' },
@@ -56,8 +60,19 @@ export function clampDeaths(raw: number): number {
   return Math.max(MIN_DEATHS, Math.min(MAX_DEATHS, Math.floor(raw)));
 }
 
-/** Construit la ligne JOURNAL_SANTE pour une mortalité. */
-export function buildMortalityJournalRow(params: {
+/** Payload typé Supabase pour insertHealthLog (mortalité bande). */
+export interface MortalityHealthLogValues {
+  log_date: string;
+  log_type: 'MORTALITE';
+  animal_type: SubjectType;
+  animal_code: string;
+  affected_animals: number;
+  notes: string;
+  operator: string;
+}
+
+/** Construit le payload health_logs pour une mortalité. */
+export function buildMortalityHealthLog(params: {
   bandeId?: string;
   subjectType?: SubjectType;
   subjectId?: string;
@@ -65,37 +80,34 @@ export function buildMortalityJournalRow(params: {
   observation: string;
   auteur: string;
   now?: Date;
-}): (string | number | boolean | null)[] {
+}): MortalityHealthLogValues {
   const { bandeId, subjectType = 'BANDE', subjectId, nbMorts, observation, auteur, now = new Date() } = params;
   const id = subjectId || bandeId || 'UNKNOWN';
-  const type = subjectType || 'BANDE';
-  const quantite = type === 'BANDE' ? `${nbMorts} mort${nbMorts > 1 ? 's' : ''}` : 'Mortalité individuelle';
-  return [
-    now.toISOString(),
-    type,
-    id,
-    'MORTALITE',
-    quantite,
-    observation.trim(),
-    auteur,
-  ];
+  return {
+    log_date: now.toISOString().slice(0, 10),
+    log_type: 'MORTALITE',
+    animal_type: subjectType,
+    animal_code: id,
+    affected_animals: nbMorts,
+    notes: observation.trim(),
+    operator: auteur,
+  };
 }
 
 /**
- * Orchestration du submit : append JOURNAL_SANTE + update PORCELETS_BANDES_DETAIL.
+ * Orchestration submit : insert health_logs + updateByCode batches.
+ * Les deps sont typées Supabase pour faciliter les tests unitaires.
  */
 export async function submitMortality(
   bande: Pick<BandePorcelets, 'id' | 'vivants' | 'morts' | 'nv'>,
   nbMortsRaw: number,
   observation: string,
   deps: {
-    appendRow: (sheet: string, values: (string | number | boolean | null)[]) => Promise<void>;
-    updateRow: (
-      sheet: string,
-      idHeader: string,
-      idValue: string,
-      patch: Record<string, string | number | boolean | null>,
-    ) => Promise<void>;
+    insertHealthLog: (values: MortalityHealthLogValues) => Promise<unknown>;
+    updateBatchByCode: (
+      codeId: string,
+      fields: { porcelets_nes_vivants: number; nb_mort_nes: number },
+    ) => Promise<unknown>;
     getAuteur: () => string;
     isOnline: () => boolean;
     now?: () => Date;
@@ -104,9 +116,8 @@ export async function submitMortality(
   const nbMorts = clampDeaths(nbMortsRaw);
   const now = deps.now ? deps.now() : new Date();
 
-  await deps.appendRow(
-    'JOURNAL_SANTE',
-    buildMortalityJournalRow({
+  await deps.insertHealthLog(
+    buildMortalityHealthLog({
       bandeId: bande.id,
       nbMorts,
       observation,
@@ -116,7 +127,10 @@ export async function submitMortality(
   );
 
   const patch = computeMortalityPatch(bande, nbMorts);
-  await deps.updateRow('PORCELETS_BANDES_DETAIL', 'ID', bande.id, patch as Record<string, string | number | boolean | null>);
+  await deps.updateBatchByCode(bande.id, {
+    porcelets_nes_vivants: patch.VIVANTS,
+    nb_mort_nes: patch.MORTS,
+  });
 
   return { online: deps.isOnline(), nbMorts, patch };
 }
@@ -127,7 +141,7 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
   defaultBandeId,
   onSuccess,
 }) => {
-  const { bandes, truies, verrats, refreshData, bandesHeader, truiesHeader, verratsHeader } = useFarm();
+  const { bandes, truies, verrats, refreshData } = useFarm();
   const [presentAlert] = useIonAlert();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -244,41 +258,40 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
       const now = new Date();
 
       if (subjectType === 'BANDE') {
-        const meta = getMetaSync('PORCELETS_BANDES_DETAIL');
-        const idHeader = meta?.idHeader || 'ID Portée';
-        const vivantsCol = bandesHeader.find(h => h.toUpperCase() === 'VIVANTS') || 'Vivants';
-        const mortsCol = bandesHeader.find(h => h.toUpperCase() === 'MORTS') || 'Morts';
-
-        await submitMortality(selectedSubject as BandePorcelets, nb, `[CAUSE: ${cause}] ${observation}`, {
-          appendRow: (s, v) => enqueueAppendRow(s, v),
-          updateRow: (s, _idH, idV, p) => {
-             // Adapt patch keys to real headers
-             const realPatch: Record<string, string | number | boolean | null> = {};
-             if (p.VIVANTS !== undefined) realPatch[vivantsCol] = p.VIVANTS as number;
-             if (p.MORTS !== undefined) realPatch[mortsCol] = p.MORTS as number;
-             return enqueueUpdateRow(s, idHeader, idV, realPatch);
-          },
-          getAuteur: () => author,
-          isOnline: () => typeof navigator !== 'undefined' && navigator.onLine,
-          now: () => now
+        const bande = selectedSubject as BandePorcelets;
+        const patch = computeMortalityPatch(bande, nb);
+        await insertHealthLog({
+          code_id: `MORT-${Date.now()}`,
+          animal_type: 'BANDE',
+          animal_code: bande.id,
+          animal_reference: bande.id,
+          log_type: 'MORTALITE',
+          affected_animals: nb,
+          notes: `[CAUSE: ${cause}] ${observation}`.trim(),
+          operator: author,
+          log_date: now.toISOString().slice(0, 10),
+        });
+        await updateBatchByCode(bande.id, {
+          porcelets_nes_vivants: patch.VIVANTS,
+          nb_mort_nes: patch.MORTS,
         });
       } else {
-        // Reproducer mortality
-        await enqueueAppendRow('JOURNAL_SANTE', buildMortalityJournalRow({
-          subjectType,
-          subjectId: selectedSubject.id,
-          nbMorts: 1,
-          observation: `[CAUSE: ${cause}] ${observation}`,
-          auteur: author,
-          now
-        }));
-
-        const table = subjectType === 'TRUIE' ? 'SUIVI_TRUIES_REPRODUCTION' : 'VERRATS';
-        const headers = subjectType === 'TRUIE' ? truiesHeader : verratsHeader;
-        const statusCol = headers.find(h => h.toUpperCase().includes('STATUT')) || 'STATUT';
-        const meta = getMetaSync(table);
-        const idH = meta?.idHeader || 'ID';
-        await enqueueUpdateRow(table, idH, selectedSubject.id, { [statusCol]: subjectType === 'TRUIE' ? 'Morte' : 'Mort' });
+        await insertHealthLog({
+          code_id: `MORT-${Date.now()}`,
+          animal_type: subjectType,
+          animal_code: selectedSubject.id,
+          animal_reference: selectedSubject.id,
+          log_type: 'MORTALITE',
+          affected_animals: 1,
+          notes: `[CAUSE: ${cause}] ${observation}`.trim(),
+          operator: author,
+          log_date: now.toISOString().slice(0, 10),
+        });
+        if (subjectType === 'TRUIE') {
+          await updateSowByCode(selectedSubject.id, { statut: 'Morte' });
+        } else {
+          await updateBoarByCode(selectedSubject.id, { statut: 'Mort' });
+        }
       }
 
       setSuccess(true);

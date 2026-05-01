@@ -1,5 +1,5 @@
 /**
- * Formules aliment — typage + valeurs par défaut + agrégation depuis Sheets.
+ * Formules aliment — typage + valeurs par défaut + agrégation runtime.
  * ═════════════════════════════════════════════════════════════════════════
  *
  * 5 phases couvrant tous les stades du cycle :
@@ -11,12 +11,11 @@
  * (`src/services/rationCalculator.ts`) et l'écran
  * `src/features/ressources/FormulesView.tsx`.
  *
- * Source de vérité **runtime** : feuille Google Sheets `ALIMENT_FORMULES`
- * (long format — cf. `FormuleRowSheets` dans `src/types/farm.ts`).
- * Les valeurs par défaut ci-dessous sont utilisées si la feuille est
- * indisponible ou vide — l'app reste fonctionnelle hors-ligne.
+ * Source de vérité : table Supabase `produits_aliments` + config locale.
+ * Les valeurs par défaut ci-dessous sont utilisées si la donnée distante
+ * est indisponible ou vide — l'app reste fonctionnelle hors-ligne.
  *
- * Pipeline : Sheets (long rows) → `mapFormuleRow` → `aggregateFormulesFromRows`
+ * Pipeline : rows distantes → `mapFormuleRow` → `aggregateFormulesFromRows`
  *         → `FormuleAliment[]` → `FormulesView` + `calculerRation`.
  */
 import type { FormuleRowSheets } from '../types/farm';

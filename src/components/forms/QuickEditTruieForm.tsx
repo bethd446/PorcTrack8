@@ -3,7 +3,7 @@ import { IonToast } from '@ionic/react';
 import { Edit3, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { enqueueUpdateRow } from '../../services/offlineQueue';
+import { updateSowByCode } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import type { Truie } from '../../types/farm';
 import {
@@ -162,12 +162,23 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
 
     setSaving(true);
     try {
-      await enqueueUpdateRow(
-        'SUIVI_TRUIES_REPRODUCTION',
-        'ID',
-        truie.id,
-        result.patch,
-      );
+      const supabasePatch: Record<string, unknown> = {};
+      const p = result.patch as Record<string, unknown>;
+      if ('NOM' in p) supabasePatch.name = p.NOM;
+      if ('BOUCLE' in p) supabasePatch.boucle = p.BOUCLE;
+      if ('RACE' in p) supabasePatch.breed = p.RACE;
+      if ('STADE' in p) supabasePatch.statut_repro = p.STADE;
+      if ('STATUT' in p) supabasePatch.statut = p.STATUT;
+      if ('RATION KG/J' in p) supabasePatch.ration_kg_j = p['RATION KG/J'];
+      if ('NB_PORTEES' in p) supabasePatch.nb_portees = p.NB_PORTEES;
+      if ('DATE_MB_PREVUE' in p) {
+        const fr = p.DATE_MB_PREVUE as string;
+        supabasePatch.date_mb_prevue = fr
+          ? fr.split('/').reverse().join('-')
+          : null;
+      }
+      if ('NOTES' in p) supabasePatch.notes = p.NOTES;
+      await updateSowByCode(truie.id, supabasePatch);
       const online = typeof navigator !== 'undefined' && navigator.onLine;
       setToast(
         online

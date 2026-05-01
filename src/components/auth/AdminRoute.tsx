@@ -1,60 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { supabase } from '../../services/supabaseClient';
+import { useAuth } from '../../context/AuthContext';
 
 interface Props {
   children: React.ReactNode;
 }
 
-type Status = 'loading' | 'admin' | 'not-admin' | 'unauth';
-
-/**
- * AdminRoute — vérifie session Supabase + rôle ADMIN dans la table `profiles`.
- * - Pas de session        → /login
- * - Session mais pas ADMIN → / (dashboard)
- * - Session + ADMIN        → contenu rendu
- */
 export default function AdminRoute({ children }: Props) {
-  const [status, setStatus] = useState<Status>('loading');
+  const { session, profile, loading } = useAuth();
 
-  useEffect(() => {
-    const check = async () => {
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const session = sessionData.session;
-
-        if (!session) {
-          setStatus('unauth');
-          return;
-        }
-
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
-
-        if (error || !profile || profile.role !== 'ADMIN') {
-          setStatus('not-admin');
-        } else {
-          setStatus('admin');
-        }
-      } catch (err) {
-        console.error('[AdminRoute] check failed', err);
-        setStatus('not-admin');
-      }
-    };
-
-    check();
-
-    const { data: listener } = supabase.auth.onAuthStateChange(() => {
-      check();
-    });
-
-    return () => listener.subscription.unsubscribe();
-  }, []);
-
-  if (status === 'loading') {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-screen" style={{ background: 'var(--bg-app)' }}>
         <div className="flex flex-col items-center gap-4">
@@ -65,8 +20,8 @@ export default function AdminRoute({ children }: Props) {
     );
   }
 
-  if (status === 'unauth') return <Navigate to="/login" replace />;
-  if (status === 'not-admin') return <Navigate to="/" replace />;
+  if (!session) return <Navigate to="/login" replace />;
+  if (profile?.role !== 'ADMIN') return <Navigate to="/" replace />;
 
   return <>{children}</>;
 }

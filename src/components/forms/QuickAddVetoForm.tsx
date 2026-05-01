@@ -35,7 +35,7 @@ import { IonToast } from '@ionic/react';
 import { Plus, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { enqueueAppendRow } from '../../services/offlineQueue';
+import { insertProduitVeto } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import {
@@ -123,7 +123,18 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
     setErrors({});
     setSaving(true);
     try {
-      await enqueueAppendRow('STOCK_VETO', result.row);
+      const row = result.row;
+      await insertProduitVeto({
+        code_id: row[0] as string,
+        libelle: row[1] as string,
+        type: (row[2] as string) || null,
+        usage: (row[3] as string) || null,
+        stock_actuel: row[4] as number,
+        unite: (row[5] as string) || null,
+        stock_min: row[6] as number,
+        alerte_stock_bas: (row[7] as string) !== 'OK',
+        notes: (row[8] as string) || null,
+      });
       const online = typeof navigator !== 'undefined' && navigator.onLine;
       setToast(online ? 'Produit ajouté' : 'Produit en file · sync auto');
       try {

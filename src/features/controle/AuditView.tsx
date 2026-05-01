@@ -7,7 +7,13 @@ import {
   AlertTriangle, ShieldAlert
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { readTableByKey } from '../../services/googleSheets';
+import {
+  getBandes,
+  getTruies,
+  getStockAliments,
+  getJournalSante,
+  getStockVeto,
+} from '../../services/supabaseService';
 import AgritechLayout from '../../components/AgritechLayout';
 import AgritechHeader from '../../components/AgritechHeader';
 import { Chip, SectionDivider } from '../../components/agritech';
@@ -34,30 +40,24 @@ const AuditView: React.FC = () => {
     const newAlerts: AuditAlert[] = [];
 
     try {
-      const [bandeRes, truieRes, stockRes] = await Promise.all([
-        readTableByKey('PORCELETS_BANDES_DETAIL'),
-        readTableByKey('SUIVI_TRUIES_REPRODUCTION'),
-        readTableByKey('STOCK_ALIMENTS'),
+      const [bandeRes, truieRes, stockRes, healthRes, vetoRes] = await Promise.all([
+        getBandes(),
+        getTruies(),
+        getStockAliments(),
+        getJournalSante(),
+        getStockVeto(),
       ]);
 
       // 1. Audit Bandes
       if (bandeRes.success) {
-        const h = bandeRes.header;
-        const mortsIdx = h.findIndex(x => x.toLowerCase().includes('morts'));
-        const nvIdx = h.findIndex(x => x.toLowerCase().includes('nv'));
-        const vivantsIdx = h.findIndex(x => x.toLowerCase().includes('vivants'));
-        const mbIdx = h.findIndex(x => x.toLowerCase().includes('date mb'));
-        const dateSevragePrevueIdx = h.findIndex(x => x.toLowerCase().includes('sevrage prévue'));
-        const dateSevrageReelleIdx = h.findIndex(x => x.toLowerCase().includes('sevrage réelle'));
-
-        bandeRes.rows.forEach(row => {
-          const id = row[0];
-          const morts = parseInt(row[mortsIdx]) || 0;
-          const nv = parseInt(row[nvIdx]) || 0;
-          const vivants = parseInt(row[vivantsIdx]) || 0;
-          const sp = row[dateSevragePrevueIdx];
-          const sr = row[dateSevrageReelleIdx];
-          const mb = row[mbIdx];
+        bandeRes.data.forEach(b => {
+          const id = b.idPortee;
+          const morts = b.morts ?? 0;
+          const nv = b.nv ?? 0;
+          const vivants = b.vivants ?? 0;
+          const sp = b.dateSevragePrevue;
+          const sr = b.dateSevrageReelle;
+          const mb = b.dateMB;
 
           if (morts > 0) {
             newAlerts.push({
@@ -118,18 +118,12 @@ const AuditView: React.FC = () => {
 
       // 2. Audit Truies
       if (truieRes.success) {
-        const h = truieRes.header;
-        const mbPrevueIdx = h.findIndex(
-          x => x.toLowerCase().includes('mb_prevue') || x.toLowerCase().includes('mise bas')
-        );
-        const statutIdx = h.findIndex(x => x.toLowerCase().includes('statut'));
+        truieRes.data.forEach(t => {
+          const id = t.displayId;
+          const mb = t.dateMBPrevue;
+          const statut = String(t.statut ?? '').toUpperCase();
 
-        truieRes.rows.forEach(row => {
-          const id = row[0];
-          const mb = row[mbPrevueIdx];
-          const statut = String(row[statutIdx]).toUpperCase();
-
-          if (mb && (statut.includes('GESTANTE') || statut.includes('ATTENTE'))) {
+          if (mb && (statut.includes('GESTANTE') || statut.includes('ATTENTE') || statut.includes('PLEINE'))) {
             const mbDate = new Date(mb);
             if (!isNaN(mbDate.getTime())) {
               const diffDays = Math.floor(
@@ -149,66 +143,44 @@ const AuditView: React.FC = () => {
 
       // 3. Audit Stocks
       if (stockRes.success) {
-        const qteIdx = stockRes.header.findIndex(x => x.toLowerCase().includes('quantite'));
-        stockRes.rows.forEach(row => {
-          const id = row[0];
-          const nom = row[1];
-          const qte = parseFloat(row[qteIdx]) || 0;
-          if (qte < 100) {
+        stockRes.data.forEach(s => {
+          if (s.stockActuel < 100) {
             newAlerts.push({
-              id: `CHK_S1_${id}`, source: 'STOCK', targetId: id,
+              id: `CHK_S1_${s.id}`, source: 'STOCK', targetId: s.id,
               title: 'Stock critique', severity: 'HIGH',
-              description: `Il ne reste que ${qte}kg de ${nom}.`,
+              description: `Il ne reste que ${s.stockActuel}${s.unite || 'kg'} de ${s.libelle}.`,
             });
           }
         });
       }
 
-      // 4. Audit Santé & DLC (Fictif si table existe)
-      const healthRes = await readTableByKey('JOURNAL_SANTE');
+      // 4. Audit Santé — cibles manquantes
       if (healthRes.success) {
-        const h = healthRes.header;
-        const typeIdx = h.findIndex(x => x.toUpperCase().includes('TYPE'));
-        const targetIdx = h.findIndex(
-          x => x.toUpperCase().includes('ID') || x.toUpperCase().includes('SUJET')
-        );
-
-        healthRes.rows.forEach((row, i) => {
-          const type = row[typeIdx];
-          const target = row[targetIdx];
-          if (type && type !== 'GENERAL' && (!target || target === 'N/A' || target === '')) {
+        healthRes.data.forEach((row, i) => {
+          if (row.cibleType && row.cibleType !== 'GENERAL' && (!row.cibleId || row.cibleId === 'N/A')) {
             newAlerts.push({
               id: `CHK_H1_${i}`, source: 'SANTE', targetId: 'N/A',
               title: 'Cible manquante', severity: 'MEDIUM',
-              description: `Intervention type "${type}" sans animal/bande rattaché.`,
+              description: `Intervention type "${row.typeSoin}" sans animal/bande rattaché.`,
             });
           }
         });
       }
 
-      const vetoRes = await readTableByKey('STOCK_VETO');
+      // 5. Audit Stock Véto — pas de DLC dans le schéma Supabase actuel.
+      // Sémantique perdue : la péremption DLC n'est plus auditée (champ absent
+      // de produits_veto). Ruptures stocks véto auditées à la place.
       if (vetoRes.success) {
-        const h = vetoRes.header;
-        const dlcIdx = h.findIndex(
-          x => x.toUpperCase().includes('DLC') || x.toUpperCase().includes('PEREMPTION')
-        );
-        if (dlcIdx !== -1) {
-          vetoRes.rows.forEach(row => {
-            const id = row[0];
-            const nom = row[1];
-            const dlc = row[dlcIdx];
-            if (dlc) {
-              const dlcDate = new Date(dlc);
-              if (!isNaN(dlcDate.getTime()) && dlcDate < new Date()) {
-                newAlerts.push({
-                  id: `CHK_V1_${id}`, source: 'STOCK', targetId: id,
-                  title: 'Produit périmé', severity: 'HIGH',
-                  description: `Le médicament ${nom} a dépassé sa DLC (${dlc}).`,
-                });
-              }
-            }
-          });
-        }
+        vetoRes.data.forEach(v => {
+          if (v.statutStock === 'RUPTURE' || v.statutStock === 'BAS') {
+            newAlerts.push({
+              id: `CHK_V1_${v.id}`, source: 'STOCK', targetId: v.id,
+              title: v.statutStock === 'RUPTURE' ? 'Rupture véto' : 'Stock véto bas',
+              severity: v.statutStock === 'RUPTURE' ? 'HIGH' : 'MEDIUM',
+              description: `${v.produit} : ${v.stockActuel}${v.unite || 'doses'} restant.`,
+            });
+          }
+        });
       }
 
       setAlerts(newAlerts.sort((a, _b) => (a.severity === 'HIGH' ? -1 : 1)));

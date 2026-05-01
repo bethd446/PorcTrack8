@@ -28,10 +28,7 @@ export default defineConfig(() => {
           manualChunks(id) {
             // ---- Application feature chunks ----
             if (id.includes('/src/features/tables/BandesView')) return 'bandes';
-            if (
-              id.includes('/src/features/tables/CheptelView') ||
-              id.includes('/src/features/tables/AnimalDetailView')
-            ) {
+            if (id.includes('/src/features/tables/CheptelView')) {
               return 'cheptel';
             }
             if (id.includes('/src/features/tables/AlertsView')) return 'alertes';
@@ -101,17 +98,6 @@ export default defineConfig(() => {
               return 'vendor-capacitor';
             }
 
-            // Charts — recharts pulls in many d3-* submodules + victory-vendor.
-            // Keep them together in a dedicated chunk so chart-less routes
-            // don't pay for them.
-            if (
-              id.includes('/node_modules/recharts') ||
-              id.includes('/node_modules/victory-vendor') ||
-              /\/node_modules\/d3-[^/]+\//.test(id)
-            ) {
-              return 'vendor-recharts';
-            }
-
             // Icons
             if (
               id.includes('/node_modules/lucide-react') ||
@@ -137,6 +123,10 @@ export default defineConfig(() => {
               id.includes('/node_modules/tailwind-merge')
             ) {
               return 'vendor-util';
+            }
+
+            if (id.includes('/node_modules/@supabase/')) {
+              return 'vendor-supabase';
             }
 
             // Everything else in node_modules -> generic vendor chunk

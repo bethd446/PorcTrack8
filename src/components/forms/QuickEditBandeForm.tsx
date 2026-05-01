@@ -3,7 +3,7 @@ import { IonToast } from '@ionic/react';
 import { Edit3, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { enqueueUpdateRow } from '../../services/offlineQueue';
+import { updateBatchByCode } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import type { BandePorcelets } from '../../types/farm';
 import {
@@ -103,12 +103,28 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
 
     setSaving(true);
     try {
-      await enqueueUpdateRow(
-        'PORCELETS_BANDES_DETAIL',
-        'ID',
-        bande.id,
-        result.patch,
-      );
+      const supabasePatch: Record<string, unknown> = {};
+      const p = result.patch as Record<string, unknown>;
+      const frToIso = (fr: unknown): string | null => {
+        if (typeof fr !== 'string' || !fr) return null;
+        const m = fr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (!m) return null;
+        return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+      };
+      if ('STATUT' in p) supabasePatch.statut = p.STATUT;
+      if ('NOTES' in p) supabasePatch.notes = p.NOTES;
+      if ('LOGE_ENGRAISSEMENT' in p) supabasePatch.loge = p.LOGE_ENGRAISSEMENT;
+      if ('DATE_MB' in p) supabasePatch.date_mise_bas = frToIso(p.DATE_MB);
+      if ('DATE_SEVRAGE_PREVUE' in p)
+        supabasePatch.date_sevrage_prevue = frToIso(p.DATE_SEVRAGE_PREVUE);
+      if ('DATE_SEVRAGE_REELLE' in p)
+        supabasePatch.date_sevrage = frToIso(p.DATE_SEVRAGE_REELLE);
+      if ('NV' in p) supabasePatch.porcelets_nes_total = p.NV;
+      if ('MORTS' in p) supabasePatch.nb_mort_nes = p.MORTS;
+      if ('VIVANTS' in p) supabasePatch.porcelets_nes_vivants = p.VIVANTS;
+      // Champs sans équivalent Supabase : TRUIE (snapshot), BOUCLE_MERE,
+      // NB_MALES, NB_FEMELLES, DATE_SEPARATION → ignorés silencieusement.
+      await updateBatchByCode(bande.id, supabasePatch);
       const online = typeof navigator !== 'undefined' && navigator.onLine;
       setToast(
         online

@@ -1,39 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { supabase } from '../../services/supabaseClient';
+import { useAuth } from '../../context/AuthContext';
 
 interface Props {
   children: React.ReactNode;
 }
 
-/**
- * SupabaseProtectedRoute — vérifie la session Supabase Auth.
- * Si l'utilisateur n'est pas connecté → redirige vers /login.
- * Pendant la vérification → spinner sobre (évite flash de contenu).
- */
 export default function SupabaseProtectedRoute({ children }: Props) {
-  const [status, setStatus] = useState<'loading' | 'auth' | 'unauth'>('loading');
+  const { session, loading } = useAuth();
 
-  useEffect(() => {
-    // Vérification initiale de session
-    supabase.auth.getSession()
-      .then(({ data }) => {
-        setStatus(data.session ? 'auth' : 'unauth');
-      })
-      .catch((err) => {
-        console.error('[ProtectedRoute] getSession failed', err);
-        setStatus('unauth');
-      });
-
-    // Écoute les changements de session (logout, expiry, refresh)
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setStatus(session ? 'auth' : 'unauth');
-    });
-
-    return () => listener.subscription.unsubscribe();
-  }, []);
-
-  if (status === 'loading') {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-screen" style={{ background: 'var(--bg-app)' }}>
         <div className="flex flex-col items-center gap-4">
@@ -44,7 +20,7 @@ export default function SupabaseProtectedRoute({ children }: Props) {
     );
   }
 
-  if (status === 'unauth') {
+  if (!session) {
     return <Navigate to="/login" replace />;
   }
 

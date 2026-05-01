@@ -24,7 +24,8 @@ import { IonToast } from '@ionic/react';
 import { Edit3, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { enqueueUpdateRow, type SheetCell } from '../../services/offlineQueue';
+import { type SheetCell } from '../../services/offlineQueue';
+import { supabase } from '../../services/supabaseClient';
 import { useFarm } from '../../context/FarmContext';
 import type { FinanceEntry, FinanceType } from '../../types/farm';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
@@ -261,7 +262,17 @@ const QuickEditTransactionForm: React.FC<QuickEditTransactionFormProps> = ({
 
     setSaving(true);
     try {
-      await enqueueUpdateRow('FINANCES', 'ID', transaction.id, result.patch);
+      const supabasePatch: Record<string, unknown> = {};
+      const p = result.patch as Record<string, unknown>;
+      if ('LIBELLE' in p) supabasePatch.poste = p.LIBELLE;
+      if ('TYPE' in p) supabasePatch.type = p.TYPE;
+      if ('MONTANT' in p) supabasePatch.mensuel_fcfa = p.MONTANT;
+      if ('NOTES' in p) supabasePatch.notes = p.NOTES;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('finances') as any)
+        .update(supabasePatch)
+        .eq('id', transaction.id);
+      if (error) throw new Error(error.message);
       const online = typeof navigator !== 'undefined' && navigator.onLine;
       setToast(
         online

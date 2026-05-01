@@ -475,7 +475,7 @@ const TruiesListView: React.FC = () => {
                   {filter !== 'all'
                     ? 'Essayez un autre filtre ou réinitialisez.'
                     : searchText
-                      ? "Modifiez la recherche ou vérifiez que Google Sheets est à jour."
+                      ? "Modifiez la recherche ou vérifiez les filtres."
                       : "Votre cheptel est vide pour l'instant."}
                 </p>
                 {filter !== 'all' ? (

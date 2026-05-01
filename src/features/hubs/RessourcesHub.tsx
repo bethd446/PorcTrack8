@@ -29,7 +29,7 @@ import {
 } from '../../components/forms/quickRefillLogic';
 import QuickEditStockForm from '../../components/forms/QuickEditStockForm';
 import type { StockKind } from '../../components/forms/quickEditStockLogic';
-import { useFarm, useMeta } from '../../context/FarmContext';
+import { useFarm } from '../../context/FarmContext';
 import type { StockAliment, StockVeto } from '../../types/farm';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -42,7 +42,6 @@ type StockItem = StockAliment | StockVeto;
 const RessourcesHub: React.FC = () => {
   const navigate = useNavigate();
   const { stockAliment, stockVeto, refreshData } = useFarm();
-  const { lastUpdate } = useMeta();
   const { handleRefresh } = useAutoRefresh();
 
   const [activeTab, setActiveTab] = useState<ResourceTab>('aliments');
@@ -72,10 +71,6 @@ const RessourcesHub: React.FC = () => {
     return { total, rupture, bas, ok };
   }, [stockAliment, stockVeto]);
 
-  const lastSyncMinutes = lastUpdate
-    ? Math.max(0, Math.round((Date.now() - lastUpdate) / 60_000))
-    : undefined;
-
   const [refillTarget, setRefillTarget] = useState<RefillStockItem | null>(null);
   const [editTarget, setEditTarget] = useState<{ item: StockItem; kind: StockKind } | null>(null);
 
@@ -102,7 +97,6 @@ const RessourcesHub: React.FC = () => {
 
           <TopBarSync
             crumbs={['Pilotage', 'Ressources']}
-            lastSyncMinutes={lastSyncMinutes}
             onMariusClick={() => {
               const evt = new CustomEvent('open-chatbot');
               window.dispatchEvent(evt);

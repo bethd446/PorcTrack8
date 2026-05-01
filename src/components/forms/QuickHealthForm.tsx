@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { IonSpinner, IonToast, IonSelect, IonSelectOption } from '@ionic/react';
 import { Stethoscope, Send } from 'lucide-react';
-import { enqueueAppendRow } from '../../services/offlineQueue';
+import { insertHealthLog } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import { kvGet } from '../../services/kvStore';
 
@@ -51,18 +51,16 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
 
     setLoading(true);
     try {
-      // Structure JOURNAL_SANTE: DATE, SUJET_TYPE, SUJET_ID, TYPE, SOIN, OBSERVATION, AUTEUR
-      const values = [
-        new Date().toISOString(),
-        subjectType,
-        subjectId,
-        formData.type,
-        formData.soin.trim(),
-        formData.obs.trim(),
-        kvGet('user_name') || 'Anonyme',
-      ];
-
-      await enqueueAppendRow('JOURNAL_SANTE', values);
+      await insertHealthLog({
+        code_id: `HL-${Date.now()}`,
+        animal_type: subjectType,
+        animal_code: subjectId,
+        animal_reference: subjectId,
+        log_type: formData.type,
+        treatment_name: formData.soin.trim(),
+        notes: formData.obs.trim() || null,
+        operator: kvGet('user_name') || 'Anonyme',
+      });
       setFormData({ type: 'Traitement', soin: '', obs: '' });
       const online = typeof navigator !== 'undefined' && navigator.onLine;
       setToast({

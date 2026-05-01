@@ -32,12 +32,6 @@
   --accent-ressources: var(--amber);
   --accent-pilotage:   var(--coral);
 
-  /* Shadows agritech (dark theme — discrets + glow accent) */
-  --shadow-sm:         0 1px 2px rgba(0, 0, 0, 0.35);
-  --shadow-md:         0 4px 12px rgba(0, 0, 0, 0.40);
-  --shadow-lg:         0 12px 24px rgba(0, 0, 0, 0.50);
-  --shadow-glow-accent: 0 0 0 1px rgba(16, 185, 129, 0.25), 0 8px 24px rgba(16, 185, 129, 0.15);
-
   /* Typographie étendue (v2 plus hiérarchique) */
   --text-display-xl: 44px;
   --text-display-lg: 36px;

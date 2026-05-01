@@ -5,7 +5,6 @@ import {
   Route,
   Navigate,
   useNavigate,
-  useParams,
 } from 'react-router-dom';
 import { IonApp } from '@ionic/react';
 import OnboardingFlow from './features/onboarding/OnboardingFlow';
@@ -51,11 +50,11 @@ const CheptelView = React.lazy(() => import(/* webpackChunkName: "cheptel" */ '.
 const ControleQuotidien = React.lazy(() => import(/* webpackChunkName: "controle" */ './features/controle/ControleQuotidien'));
 const ChecklistFlow = React.lazy(() => import(/* webpackChunkName: "checklist" */ './features/controle/ChecklistFlow'));
 const AuditView = React.lazy(() => import(/* webpackChunkName: "audit" */ './features/controle/AuditView'));
-const SyncView = React.lazy(() => import(/* webpackChunkName: "sync" */ './features/controle/SyncView'));
 const ProtocolsView = React.lazy(() => import(/* webpackChunkName: "protocoles" */ './features/protocoles/ProtocolsView'));
 const AlertsView = React.lazy(() => import(/* webpackChunkName: "alertes" */ './features/tables/AlertsView'));
 const SettingsPage = React.lazy(() => import(/* webpackChunkName: "settings" */ './components/SystemManagement').then(m => ({ default: m.SettingsPage })));
 
+const TodayHub = React.lazy(() => import(/* webpackChunkName: "today-hub" */ './features/today/TodayHub'));
 const TroupeauHub = React.lazy(() => import(/* webpackChunkName: "troupeau-hub" */ './features/hubs/TroupeauHub'));
 const CyclesHub = React.lazy(() => import(/* webpackChunkName: "cycles-hub" */ './features/hubs/CyclesHub'));
 const RessourcesHub = React.lazy(() => import(/* webpackChunkName: "ressources-hub" */ './features/hubs/RessourcesHub'));
@@ -106,7 +105,7 @@ const OnboardingRoute: React.FC = () => {
   const navigate = useNavigate();
   return (
     <AgritechLayout withNav={false} withSidebar={false}>
-      <OnboardingFlow onComplete={() => navigate('/cockpit', { replace: true })} />
+      <OnboardingFlow onComplete={() => navigate('/today', { replace: true })} />
     </AgritechLayout>
   );
 };
@@ -114,31 +113,17 @@ const OnboardingRoute: React.FC = () => {
 const AppShell: React.FC = () => (
   <>
     <Routes>
-      <Route path="/" element={<Navigate to="/cockpit" replace />} />
+      <Route path="/" element={<Navigate to="/today" replace />} />
+      <Route path="/today" element={<TodayHub />} />
       <Route path="/cockpit" element={<Cockpit />} />
       <Route path="/controle" element={<ControleQuotidien />} />
 
-      {/* Legacy Cheptel → Troupeau */}
-      <Route path="/cheptel" element={<Navigate to="/troupeau/truies" replace />} />
-      <Route path="/cheptel/truie/:id" element={<RedirectTruie />} />
-      <Route path="/cheptel/verrat/:id" element={<RedirectVerrat />} />
-
-      {/* Legacy Bandes → Troupeau/Bandes */}
-      <Route path="/bandes" element={<Navigate to="/troupeau/bandes" replace />} />
-      <Route path="/bandes/:bandeId" element={<RedirectBande />} />
-
       <Route path="/sante" element={<TableView tableKey="JOURNAL_SANTE" />} />
-
-      {/* Legacy Stock → Ressources */}
-      <Route path="/stock" element={<Navigate to="/ressources/aliments" replace />} />
-      <Route path="/stock/aliments" element={<Navigate to="/ressources/aliments" replace />} />
-      <Route path="/stock/veto" element={<Navigate to="/ressources/pharmacie" replace />} />
 
       <Route path="/protocoles" element={<ProtocolsView />} />
       <Route path="/checklist/:name" element={<ChecklistFlow />} />
       <Route path="/audit" element={<AuditView />} />
       <Route path="/alerts" element={<AlertsView />} />
-      <Route path="/sync" element={<SyncView />} />
       <Route path="/more" element={<SettingsPage />} />
       <Route path="/aide" element={<AideView />} />
 
@@ -174,9 +159,6 @@ const AppShell: React.FC = () => (
       <Route path="/cycles/sortie" element={<SortieCalendarView />} />
 
       {/* Pilotage sub-routes */}
-      <Route path="/pilotage/alertes" element={<Navigate to="/alerts" replace />} />
-      <Route path="/pilotage/reglages" element={<Navigate to="/more" replace />} />
-      <Route path="/pilotage/audit" element={<Navigate to="/audit" replace />} />
       <Route
         path="/pilotage/perf"
         element={
@@ -202,14 +184,6 @@ const AppShell: React.FC = () => (
         }
       />
       <Route
-        path="/pilotage/rapports"
-        element={
-          <ProtectedRoute allowedRoles={['OWNER']}>
-            <RapportFinancierView />
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/pilotage/previsions"
         element={
           <ProtectedRoute allowedRoles={['OWNER']}>
@@ -222,7 +196,6 @@ const AppShell: React.FC = () => (
       <Route path="/ressources/aliments" element={<AlimentsView />} />
       <Route path="/ressources/aliments/plan" element={<PlanAlimentationView />} />
       <Route path="/ressources/aliments/formules" element={<FormulesView />} />
-      <Route path="/ressources/veto" element={<TableView tableKey="STOCK_VETO" />} />
       <Route path="/ressources/pharmacie" element={<PharmacieView />} />
 
       {/* Admin (rôle ADMIN requis) */}
@@ -303,18 +276,3 @@ export default function App() {
   );
 }
 
-/* ── Helpers de redirection param-preserving pour routes legacy ────────── */
-const RedirectTruie: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  return <Navigate to={`/troupeau/truies/${id ?? ''}`} replace />;
-};
-
-const RedirectVerrat: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  return <Navigate to={`/troupeau/verrats/${id ?? ''}`} replace />;
-};
-
-const RedirectBande: React.FC = () => {
-  const { bandeId } = useParams<{ bandeId: string }>();
-  return <Navigate to={`/troupeau/bandes/${bandeId ?? ''}`} replace />;
-};

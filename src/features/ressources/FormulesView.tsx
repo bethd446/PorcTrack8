@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
-import { ClipboardList, Calculator, AlertTriangle, Database, HardDrive } from 'lucide-react';
+import { ClipboardList, Calculator, AlertTriangle } from 'lucide-react';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { Chip, SectionDivider } from '../../components/agritech';
@@ -162,7 +162,7 @@ const FormuleCard: React.FC<{
  */
 const FormulesView: React.FC = () => {
   const [masseKg, setMasseKg] = useState<number>(1000);
-  const { alimentFormules, dataSource } = useFarm();
+  const { alimentFormules } = useFarm();
 
   // Calcul réactif des formules — recalcul si masse OU formules changent.
   const calculs = useMemo(
@@ -173,13 +173,6 @@ const FormulesView: React.FC = () => {
       })),
     [masseKg, alimentFormules],
   );
-
-  // Indicateur discret de la source des formules (Sheets vs cache local).
-  const sourceLabel =
-    dataSource === 'NETWORK' ? 'Google Sheets'
-    : dataSource === 'CACHE' ? 'Cache local'
-    : 'Valeurs par défaut';
-  const SourceIcon = dataSource === 'NETWORK' ? Database : HardDrive;
 
   const handleMasseChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const v = Number(e.target.value);
@@ -260,18 +253,8 @@ const FormulesView: React.FC = () => {
               </div>
             </section>
 
-            {/* ── Formules + indicateur source ─────────────────────── */}
+            {/* ── Formules ─────────────────────────────────────────── */}
             <SectionDivider label={`${alimentFormules.length} formules`} />
-
-            {/* Chip source — discret, mono, text-text-2 */}
-            <div
-              className="flex items-center gap-1.5 -mt-1 font-mono text-[11px] text-text-2"
-              role="status"
-              aria-label={`Source des formules : ${sourceLabel}`}
-            >
-              <SourceIcon size={11} aria-hidden="true" />
-              <span>Source : {sourceLabel}</span>
-            </div>
 
             {alimentFormules.length === 0 ? (
               <section

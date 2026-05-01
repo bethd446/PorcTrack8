@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { Heart, Check, CheckCircle2 } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
-import { enqueueAppendRow } from '../../services/offlineQueue';
+import {
+  insertSaillie,
+  resolveSowIdByCode,
+  resolveBoarIdByCode,
+} from '../../services/supabaseWrites';
 import { BottomSheet } from '../agritech';
 import { normaliseStatut } from '../../lib/truieStatut';
 
@@ -36,14 +40,19 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose }) 
     if (!selectedTruie || !selectedVerrat) return;
     setSaving(true);
     try {
-      await enqueueAppendRow('SUIVI_TRUIES_REPRODUCTION', [
-        new Date().toISOString(),
-        selectedTruie,
-        selectedVerrat,
-        'SAILLIE',
-        new Date().toLocaleDateString('fr-FR'),
-        `Saillie enregistrée depuis PorcTrack`,
+      const [sowId, boarId] = await Promise.all([
+        resolveSowIdByCode(selectedTruie),
+        resolveBoarIdByCode(selectedVerrat),
       ]);
+      await insertSaillie({
+        sow_id: sowId,
+        boar_id: boarId,
+        sow_code_id: selectedTruie,
+        boar_code_id: selectedVerrat,
+        date_saillie: new Date().toISOString().slice(0, 10),
+        statut: 'SAILLIE',
+        notes: 'Saillie enregistrée depuis PorcTrack',
+      });
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);

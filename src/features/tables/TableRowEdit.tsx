@@ -1,21 +1,29 @@
 /**
  * TableRowEdit — Agritech Dark
  * ══════════════════════════════════════════════════════════════════
- * Édition inline d'une ligne de table Sheets. Rendu à l'intérieur
+ * Édition inline d'une ligne de table Supabase. Rendu à l'intérieur
  * d'un `<BottomSheet>` (agritech) : pas de wrapper IonModal propre.
  *
  * Conservations strictes :
  *   · Dynamic headers (placeholder "Chargement du schéma…")
  *   · Coercion numérique (poids/montant/quantité/ration/nb)
- *   · Offline queue fallback (enqueueUpdateRow)
+ *   · Helpers typés Supabase (updateSowByCode, updateBatchByCode, …)
  *   · PhotoStrip (subjectType déduit du sheetName)
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { IonLoading, IonToast } from '@ionic/react';
 import { ShieldCheck, AlertCircle, X, Save } from 'lucide-react';
-import { updateRowById } from '../../services/googleSheets';
-import { enqueueUpdateRow } from '../../services/offlineQueue';
+import {
+  updateSowByCode,
+  updateBoarByCode,
+  updateBatchByCode,
+  updateProduitAliment,
+  updateProduitVeto,
+  updateNote,
+  resolveProduitAlimentByCode,
+  resolveProduitVetoByCode,
+} from '../../services/supabaseWrites';
 import PhotoStrip from '../../components/PhotoStrip';
 import { PhotoEntry } from '../../services/photos';
 
@@ -105,6 +113,65 @@ const TableRowEdit: React.FC<TableRowEditProps> = ({ meta, header, rowData, onCl
     return 'NOTE';
   }, [meta.sheetName]);
 
+  const mapPatchKey = (sheetName: string, col: string): string | null => {
+    const c = col.trim().toUpperCase();
+    const s = sheetName.toLowerCase();
+    if (s === 'sows' || s === 'boars') {
+      if (c === 'NOM' || c === 'NAME') return 'name';
+      if (c === 'STATUT') return 'statut';
+      if (c === 'STADE' || c === 'STATUT_REPRO') return 'statut_repro';
+      if (c === 'RATION' || c === 'RATION_KG_J') return 'ration_kg_j';
+      if (c === 'NB_PORTEES') return 'nb_portees';
+      if (c === 'DATE_MB_PREVUE') return 'date_mb_prevue';
+      if (c === 'BOUCLE') return 'boucle';
+      if (c === 'RACE' || c === 'BREED') return 'breed';
+      if (c === 'NOTES') return 'notes';
+      if (c === 'ORIGINE') return 'origine';
+      if (c === 'ALIMENTATION') return 'alimentation';
+      return col.toLowerCase();
+    }
+    if (s === 'batches') {
+      if (c === 'STATUT') return 'statut';
+      if (c === 'DATE MB' || c === 'DATE_MB') return 'date_mise_bas';
+      if (c === 'DATE SEVRAGE PRÉVUE' || c === 'DATE_SEVRAGE_PREVUE') return 'date_sevrage_prevue';
+      if (c === 'DATE SEVRAGE RÉELLE' || c === 'DATE_SEVRAGE_REELLE') return 'date_sevrage';
+      if (c === 'NV') return 'porcelets_nes_vivants';
+      if (c === 'MORTS') return 'nb_mort_nes';
+      if (c === 'POIDS_SEVRAGE_MOYEN') return 'poids_moyen_sevrage_kg';
+      if (c === 'NOTES' || c === 'NOTES_SEVRAGE') return 'notes';
+      if (c === 'PHASE') return 'phase';
+      if (c === 'LOGE') return 'loge';
+      return col.toLowerCase();
+    }
+    if (s === 'produits_aliments' || s === 'produits_veto') {
+      if (c === 'LIBELLE') return 'libelle';
+      if (c === 'STOCK_ACTUEL') return 'stock_actuel';
+      if (c === 'SEUIL_ALERTE') return 'seuil_alerte';
+      if (c === 'STOCK_MIN') return 'stock_min';
+      if (c === 'UNITE') return 'unite';
+      if (c === 'TYPE') return 'type';
+      if (c === 'USAGE') return 'usage';
+      if (c === 'NOTES') return 'notes';
+      return col.toLowerCase();
+    }
+    if (s === 'notes') {
+      if (c === 'NOTE' || c === 'TEXTE' || c === 'CONTENT') return 'content';
+      if (c === 'CATEGORIE' || c === 'CATEGORY') return 'category';
+      return null;
+    }
+    if (s === 'health_logs') {
+      if (c === 'DATE') return 'log_date';
+      if (c === 'TYPE_SOIN' || c === 'LOG_TYPE') return 'log_type';
+      if (c === 'TRAITEMENT' || c === 'TREATMENT') return 'treatment';
+      if (c === 'OBSERVATION' || c === 'NOTES') return 'notes';
+      if (c === 'AUTEUR' || c === 'OPERATOR') return 'operator';
+      if (c === 'CIBLE_ID' || c === 'ANIMAL_CODE') return 'animal_code';
+      if (c === 'TYPE_ANIMAL' || c === 'ANIMAL_TYPE') return 'animal_type';
+      return col.toLowerCase();
+    }
+    return col.toLowerCase();
+  };
+
   const handleSave = async (): Promise<void> => {
     if (!headerReady) return;
     setLoading(true);
@@ -123,7 +190,8 @@ const TableRowEdit: React.FC<TableRowEditProps> = ({ meta, header, rowData, onCl
       const currentStr = typeof currentVal === 'number' ? String(currentVal) : currentVal;
 
       if (col !== meta.idHeader && currentStr !== initialStr) {
-        patch[col] = currentVal;
+        const dbKey = mapPatchKey(meta.sheetName, col);
+        if (dbKey) patch[dbKey] = currentVal;
       }
     });
 
@@ -134,28 +202,59 @@ const TableRowEdit: React.FC<TableRowEditProps> = ({ meta, header, rowData, onCl
     }
 
     try {
-      const result = await updateRowById(meta.sheetName, meta.idHeader, idValue, patch);
-      if (result.success) {
+      const sheet = meta.sheetName.toLowerCase();
+      let success = false;
+      let message = '';
+
+      if (sheet === 'sows') {
+        const r = await updateSowByCode(idValue, patch);
+        success = !!r;
+      } else if (sheet === 'boars') {
+        const r = await updateBoarByCode(idValue, patch);
+        success = !!r;
+      } else if (sheet === 'batches') {
+        const r = await updateBatchByCode(idValue, patch);
+        success = !!r;
+      } else if (sheet === 'produits_aliments') {
+        const id = await resolveProduitAlimentByCode(idValue);
+        if (id) {
+          const r = await updateProduitAliment(id, patch);
+          success = r.success;
+          message = r.error ?? '';
+        }
+      } else if (sheet === 'produits_veto') {
+        const id = await resolveProduitVetoByCode(idValue);
+        if (id) {
+          const r = await updateProduitVeto(id, patch);
+          success = r.success;
+          message = r.error ?? '';
+        }
+      } else if (sheet === 'notes') {
+        const r = await updateNote(idValue, patch);
+        success = r.success;
+        message = r.error ?? '';
+      } else {
+        success = false;
+        message = `Édition non supportée pour la table '${sheet}'`;
+      }
+
+      if (success) {
         setToast({ show: true, message: 'Mis à jour avec succès' });
         setTimeout(() => {
           onSaved();
           onClose();
         }, 800);
       } else {
-        enqueueUpdateRow(meta.sheetName, meta.idHeader, idValue, patch);
-        setToast({ show: true, message: 'En attente de synchronisation (hors ligne)' });
+        setToast({ show: true, message: message || 'Échec de la mise à jour' });
         setTimeout(() => {
-          onSaved();
           onClose();
-        }, 1200);
+        }, 1500);
       }
-    } catch {
-      enqueueUpdateRow(meta.sheetName, meta.idHeader, idValue, patch);
-      setToast({ show: true, message: 'En attente de synchronisation' });
+    } catch (e) {
+      setToast({ show: true, message: `Erreur: ${String(e)}` });
       setTimeout(() => {
-        onSaved();
         onClose();
-      }, 1200);
+      }, 1500);
     } finally {
       setLoading(false);
     }

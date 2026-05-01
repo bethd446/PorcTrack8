@@ -14,8 +14,15 @@ import {
   type ChecklistItem as BaseChecklistItem,
 } from '../../services/checklistService';
 import { CONTROLE_QUESTIONS } from './questions';
-import { appendRow, updateRowById, readTableByKey } from '../../services/googleSheets';
-import { enqueueAppendRow, enqueueUpdateRow } from '../../services/offlineQueue';
+import { getBandes, getStockAliments, getTruies } from '../../services/supabaseService';
+import {
+  insertNote,
+  insertHealthLog,
+  updateSowByCode,
+  updateBatchByCode,
+  updateProduitAliment,
+  resolveProduitAlimentByCode,
+} from '../../services/supabaseWrites';
 import AgritechLayout from '../../components/AgritechLayout';
 import AgritechHeader from '../../components/AgritechHeader';
 import { Chip } from '../../components/agritech';
@@ -95,17 +102,22 @@ const ChecklistFlow: React.FC = () => {
 
       setQuestions(items);
 
-      // Pre-fetch contexts if needed
       const [bandeRes, stockRes, truieRes] = await Promise.all([
-        readTableByKey('PORCELETS_BANDES_DETAIL'),
-        readTableByKey('STOCK_ALIMENTS'),
-        readTableByKey('SUIVI_TRUIES_REPRODUCTION'),
+        getBandes(),
+        getStockAliments(),
+        getTruies(),
       ]);
 
       setContextData({
-        bandes: bandeRes.success ? bandeRes.rows.map(r => ({ id: r[0], label: r[0] })) : [],
-        stocks: stockRes.success ? stockRes.rows.map(r => ({ id: r[0], label: r[1] })) : [],
-        truies: truieRes.success ? truieRes.rows.map(r => ({ id: r[0], label: r[0] })) : [],
+        bandes: bandeRes.success
+          ? bandeRes.data.map(b => ({ id: b.idPortee, label: b.idPortee }))
+          : [],
+        stocks: stockRes.success
+          ? stockRes.data.map(s => ({ id: s.id, label: s.libelle }))
+          : [],
+        truies: truieRes.success
+          ? truieRes.data.map(t => ({ id: t.displayId, label: t.displayId }))
+          : [],
       });
     } finally {
       setInitialLoading(false);
@@ -158,72 +170,83 @@ const ChecklistFlow: React.FC = () => {
     setLoading(true);
     try {
       const table = String(currentQuestion.CIBLE_TABLE).toUpperCase();
-      const now = new Date();
-      const timestamp = now.toISOString();
       const porcher = kvGet('user_name') || 'Porcher K13';
+      const checklistName = (name || 'DAILY').toUpperCase();
+      const champ = String(currentQuestion.CHAMP || '');
 
-      // Memory for session
       if (table === 'PORCELETS_BANDES' || table === 'PORCELETS_BANDES_DETAIL') {
         setSessionBandeId(contextId);
       }
 
       if (table === 'NOTES_TERRAIN' || !table || table === 'UNDEFINED') {
-        // Schéma canonique NOTES_TERRAIN (5 colonnes) :
-        //   DATE | TYPE_ANIMAL | ID_ANIMAL | NOTE | AUTEUR
-        // ID_ANIMAL = nom checklist (ex: 'DAILY', 'VENDREDI') pour pouvoir
-        //             retrouver la réponse par checklist.
-        // NOTE      = texte structuré Question / Réponse / Détails + contextId éventuel.
         const noteText =
-          `Question: ${currentQuestion.TEXTE_AFFICHE}\n` +
+          `[${checklistName}] Question: ${currentQuestion.TEXTE_AFFICHE}\n` +
           `Réponse: ${answer}` +
           (details ? `\nDétails: ${details}` : '') +
-          (contextId ? `\n[sujet: ${contextId}]` : '');
-        const values = [
-          now.toISOString().slice(0, 10),       // DATE YYYY-MM-DD
-          'CHECKLIST',                           // TYPE_ANIMAL
-          (name || 'DAILY').toUpperCase(),       // ID_ANIMAL = nom checklist
-          noteText,                              // NOTE
-          porcher,                               // AUTEUR
-        ];
-        const res = await appendRow('NOTES_TERRAIN', values);
-        if (!res.success) enqueueAppendRow('NOTES_TERRAIN', values);
-      } else if (table === 'SANTE') {
-        const values = [
-          timestamp,
-          needsContext ? 'CIBLE' : 'GENERAL',
-          contextId || 'GLOBAL',
-          'CONTROLE',
-          currentQuestion.TEXTE_AFFICHE ?? '',
-          `Réponse: ${answer}. Obs: ${details}`,
-          porcher,
-        ];
-        const res = await appendRow('JOURNAL_SANTE', values);
-        if (!res.success) enqueueAppendRow('JOURNAL_SANTE', values);
+          (contextId ? `\n[sujet: ${contextId}]` : '') +
+          `\n[auteur: ${porcher}]`;
+        await insertNote({
+          content: noteText,
+          category: 'CHECKLIST',
+        });
+      } else if (table === 'SANTE' || table === 'JOURNAL_SANTE') {
+        const animalType = needsContext
+          ? (table.includes('TRUIE') || currentTable.includes('TRUIE') ? 'TRUIE' :
+             (currentTable === 'PORCELETS_BANDES' || currentTable === 'PORCELETS_BANDES_DETAIL') ? 'BANDE' :
+             'GENERAL')
+          : 'GENERAL';
+        await insertHealthLog({
+          code_id: `CK-${Date.now()}`,
+          log_type: 'CONTROLE',
+          animal_type: animalType,
+          animal_code: contextId || null,
+          treatment: currentQuestion.TEXTE_AFFICHE ?? '',
+          notes: `Réponse: ${answer}. Obs: ${details}`,
+          operator: porcher,
+        });
+      } else if (table === 'SUIVI_TRUIES_REPRODUCTION') {
+        const patch: Record<string, unknown> = {};
+        if (champ.toUpperCase().includes('STATUT')) patch.statut = answer;
+        else if (champ.toUpperCase().includes('RATION')) patch.ration_kg_j = parseFloat(answer) || 0;
+        else if (champ.toUpperCase().includes('NOTE')) patch.notes = answer;
+        else patch.notes = `[${champ}] ${answer}`;
+        await updateSowByCode(contextId, patch);
+      } else if (table === 'PORCELETS_BANDES' || table === 'PORCELETS_BANDES_DETAIL') {
+        const patch: Record<string, unknown> = {};
+        if (champ.toUpperCase().includes('STATUT')) patch.statut = answer;
+        else if (champ.toUpperCase().includes('PHASE')) patch.phase = answer;
+        else if (champ.toUpperCase().includes('NOTE')) patch.notes = answer;
+        else patch.notes = `[${champ}] ${answer}`;
+        await updateBatchByCode(contextId, patch);
+      } else if (table === 'STOCK_ALIMENTS') {
+        const id = await resolveProduitAlimentByCode(contextId);
+        if (id) {
+          const patch: Record<string, unknown> = {};
+          if (champ.toUpperCase().includes('STOCK')) patch.stock_actuel = parseFloat(answer) || 0;
+          else if (champ.toUpperCase().includes('SEUIL')) patch.seuil_alerte = parseFloat(answer) || 0;
+          else patch.notes = `[${champ}] ${answer}`;
+          await updateProduitAliment(id, patch);
+        }
       } else {
-        const patch = { [String(currentQuestion.CHAMP)]: answer };
-        const res = await updateRowById(table, 'ID', contextId, patch);
-        if (!res.success) enqueueUpdateRow(table, 'ID', contextId, patch);
+        await insertNote({
+          content: `[${table}/${champ}/${contextId}] ${answer}` +
+            (details ? ` — ${details}` : ''),
+          category: 'CHECKLIST',
+        });
       }
 
       if (currentStep < questions.length - 1) {
         setCurrentStep(currentStep + 1);
         setAnswer('');
         setDetails('');
-        // Reset context if NOT a context we want to remember
         if (!['PORCELETS_BANDES', 'PORCELETS_BANDES_DETAIL'].includes(table)) {
           setSelectedContextId('');
         }
       } else {
-        // Log completion — schéma canonique 5 cols avec marker 'CHECKLIST_DONE'
-        // détectable dans la NOTE (col 4) pour isChecklistDoneToday().
-        const checklistName = name?.toUpperCase() || 'DAILY';
-        await appendRow('NOTES_TERRAIN', [
-          now.toISOString().slice(0, 10),
-          'CHECKLIST',
-          checklistName,
-          `CHECKLIST_DONE: Checklist ${checklistName} terminée`,
-          porcher,
-        ]);
+        await insertNote({
+          content: `CHECKLIST_DONE: Checklist ${checklistName} terminée par ${porcher}`,
+          category: 'CHECKLIST',
+        });
         setIsFinished(true);
       }
     } catch {

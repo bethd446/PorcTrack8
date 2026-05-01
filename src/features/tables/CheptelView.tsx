@@ -272,7 +272,7 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                   title="Aucune truie trouvée"
                   description={
                     searchText
-                      ? "Modifiez la recherche ou vérifiez que Google Sheets est à jour."
+                      ? "Modifiez la recherche ou vérifiez les filtres."
                       : "Votre cheptel n'a pas encore de truies enregistrées."
                   }
                 />
@@ -282,7 +282,7 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                   title="Aucun verrat"
                   description={
                     searchText
-                      ? "Modifiez la recherche ou vérifiez que Google Sheets est à jour."
+                      ? "Modifiez la recherche ou vérifiez les filtres."
                       : "Votre cheptel n'a pas encore de verrats enregistrés."
                   }
                 />
@@ -339,6 +339,7 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                     <div
                       role="listitem"
                       key={item.id}
+                      data-testid="cheptel-row"
                       className="relative border-b border-border last:border-b-0"
                     >
                       <button

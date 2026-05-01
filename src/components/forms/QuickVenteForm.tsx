@@ -5,9 +5,9 @@ import { TrendingUp, Check, CheckCircle2 } from 'lucide-react';
 import { BottomSheet } from '../agritech';
 import { useFarm } from '../../context/FarmContext';
 import {
-  enqueueAppendRow,
-  enqueueUpdateRow,
-} from '../../services/offlineQueue';
+  insertFinance,
+  updateBatchByCode,
+} from '../../services/supabaseWrites';
 import type { BandePorcelets } from '../../types/farm';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import {
@@ -173,16 +173,19 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
         notes,
       });
 
-      // 1. Update bande (VIVANTS + NOTES + [STATUT si vendue])
-      await enqueueUpdateRow(
-        payloads.bandeSheet,
-        payloads.bandeIdHeader,
-        payloads.bandeIdValue,
-        payloads.bandePatch,
-      );
+      const batchPatch: Record<string, unknown> = {
+        porcelets_nes_vivants: payloads.vivantsRestants,
+        notes: payloads.bandePatch.NOTES as string,
+      };
+      if (payloads.bandeVendue) batchPatch.statut = 'Vendue';
+      await updateBatchByCode(bande.id, batchPatch);
 
-      // 2. Append FINANCES (REVENU)
-      await enqueueAppendRow('FINANCES', payloads.financeValues);
+      await insertFinance({
+        poste: `Vente ${nbNum} porc${nbNum > 1 ? 's' : ''} ${acheteur.trim()}`,
+        type: 'REVENU',
+        mensuel_fcfa: payloads.montant,
+        notes: (payloads.financeValues[5] as string) ?? null,
+      });
 
       const online = typeof navigator !== 'undefined' && navigator.onLine;
       const formatted = montantTotal.toLocaleString('fr-FR');

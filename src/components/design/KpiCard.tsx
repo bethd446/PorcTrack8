@@ -128,6 +128,7 @@ export default function KpiCard({
       type={onClick ? 'button' : undefined}
       onClick={onClick}
       aria-label={ariaLabel ?? `${label} ${value}${unit ?? ''}`}
+      data-testid="kpi-card-v6"
       className={`pressable ${className}`}
       style={containerStyle}
     >

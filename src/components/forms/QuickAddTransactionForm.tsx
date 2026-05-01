@@ -28,7 +28,7 @@ import { IonToast } from '@ionic/react';
 import { Plus, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { enqueueAppendRow } from '../../services/offlineQueue';
+import { insertFinance } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import type { FinanceType } from '../../types/farm';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
@@ -113,7 +113,20 @@ const QuickAddTransactionForm: React.FC<QuickAddTransactionFormProps> = ({
     setErrors({});
     setSaving(true);
     try {
-      await enqueueAppendRow('FINANCES', result.row);
+      const row = result.row;
+      const noteParts: string[] = [];
+      const bandeRef = row[5] as string;
+      if (bandeRef) noteParts.push(`bande:${bandeRef}`);
+      noteParts.push(`categorie:${row[1] as string}`);
+      noteParts.push(`date:${row[0] as string}`);
+      const userNote = (row[6] as string) ?? '';
+      if (userNote) noteParts.push(userNote);
+      await insertFinance({
+        poste: row[2] as string,
+        type: row[4] as string,
+        mensuel_fcfa: row[3] as number,
+        notes: noteParts.join(' · '),
+      });
       const online = typeof navigator !== 'undefined' && navigator.onLine;
       setToast(online ? 'Transaction ajoutée' : 'Transaction en file · sync auto');
       try {

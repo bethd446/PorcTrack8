@@ -1,7 +1,10 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { SplitSquareHorizontal, Search, CheckCircle2, ChevronRight, ArrowLeft } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
-import { enqueueAppendRow, enqueueUpdateRow } from '../../services/offlineQueue';
+import {
+  insertNote,
+  updateBatchByCode,
+} from '../../services/supabaseWrites';
 import { safeDate } from '../../lib/truieHelpers';
 import { BottomSheet, DataRow } from '../agritech';
 import { bandesAEligibleSeparation } from '../../services/bandesAggregator';
@@ -180,22 +183,17 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
 
       const author = kvGet('user_name') || 'Anonyme';
 
-      const row: string[] = [
-        form.dateSeparation,     // DATE (ISO YYYY-MM-DD)
-        'BANDE',                 // TYPE_ANIMAL
-        selectedBande.id,        // ID_ANIMAL
-        note,                    // NOTE
-        author,                  // AUTEUR
-      ];
+      await insertNote({
+        content: `[BANDE:${selectedBande.id}] ${note}`,
+        category: 'SEPARATION',
+        author_id: author,
+      });
 
-      await enqueueAppendRow('NOTES_TERRAIN', row);
-
-      // Patch best-effort sur PORCELETS_BANDES — le worker ignore silencieusement
-      // les clés du patch dont la colonne n'existe pas côté Sheets.
-      await enqueueUpdateRow('PORCELETS_BANDES', 'ID Portée', selectedBande.id, {
-        nbMales: males,
-        nbFemelles: femelles,
-        dateSeparation: form.dateSeparation,
+      // Le schéma batches Supabase n'a pas nb_males / nb_femelles /
+      // date_separation : on log la séparation dans notes (champ existant)
+      // pour ne pas perdre l'info.
+      await updateBatchByCode(selectedBande.id, {
+        notes: `Séparation ${form.dateSeparation} · ${males}M · ${femelles}F`,
       });
 
       setStep(3);

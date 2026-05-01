@@ -12,7 +12,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   clampDeaths,
   computeMortalityPatch,
-  buildMortalityJournalRow,
+  buildMortalityHealthLog,
   submitMortality,
   MORTALITY_BOUNDS,
 } from './QuickMortalityForm';
@@ -100,72 +100,73 @@ describe('computeMortalityPatch', () => {
   });
 });
 
-// ─── buildMortalityJournalRow ────────────────────────────────────────────────
+// ─── buildMortalityHealthLog ─────────────────────────────────────────────────
 
-describe('buildMortalityJournalRow', () => {
-  it('produit une ligne JOURNAL_SANTE conforme au schéma', () => {
+describe('buildMortalityHealthLog', () => {
+  it('produit un payload health_logs Supabase conforme', () => {
     const now = new Date('2026-04-19T10:00:00.000Z');
-    const row = buildMortalityJournalRow({
+    const values = buildMortalityHealthLog({
       bandeId: 'B-001',
       nbMorts: 2,
       observation: '  écrasement loge 3  ',
       auteur: 'Pierre',
       now,
     });
-    expect(row).toEqual([
-      '2026-04-19T10:00:00.000Z',
-      'BANDE',
-      'B-001',
-      'MORTALITE',
-      '2 morts',
-      'écrasement loge 3',
-      'Pierre',
-    ]);
+    expect(values).toEqual({
+      log_date: '2026-04-19',
+      log_type: 'MORTALITE',
+      animal_type: 'BANDE',
+      animal_code: 'B-001',
+      affected_animals: 2,
+      notes: 'écrasement loge 3',
+      operator: 'Pierre',
+    });
   });
 
-  it('gère le singulier correctement', () => {
-    const row = buildMortalityJournalRow({
+  it('preserve le compte d\'animaux affectés (1 mort)', () => {
+    const values = buildMortalityHealthLog({
       bandeId: 'B-001',
       nbMorts: 1,
       observation: '',
       auteur: 'A',
     });
-    expect(row[4]).toBe('1 mort');
+    expect(values.affected_animals).toBe(1);
+    expect(values.notes).toBe('');
   });
 });
 
 // ─── submitMortality ─────────────────────────────────────────────────────────
 
 describe('submitMortality', () => {
-  it('valid submit : append JOURNAL_SANTE + update PORCELETS_BANDES_DETAIL', async () => {
-    const appendRow = vi.fn().mockResolvedValue(undefined);
-    const updateRow = vi.fn().mockResolvedValue(undefined);
+  it('valid submit : insertHealthLog + updateBatchByCode (helpers Supabase)', async () => {
+    const insertHealthLog = vi.fn().mockResolvedValue({});
+    const updateBatchByCode = vi.fn().mockResolvedValue({});
     const bande = makeBande({ id: 'B-042', vivants: 12, morts: 2, nv: 14 });
     const fixedNow = new Date('2026-04-19T10:00:00.000Z');
 
     const result = await submitMortality(bande, 3, 'écrasement loge 3', {
-      appendRow,
-      updateRow,
+      insertHealthLog,
+      updateBatchByCode,
       getAuteur: () => 'Tester',
       isOnline: () => true,
       now: () => fixedNow,
     });
 
-    expect(appendRow).toHaveBeenCalledTimes(1);
-    expect(appendRow).toHaveBeenCalledWith('JOURNAL_SANTE', [
-      '2026-04-19T10:00:00.000Z',
-      'BANDE',
-      'B-042',
-      'MORTALITE',
-      '3 morts',
-      'écrasement loge 3',
-      'Tester',
-    ]);
+    expect(insertHealthLog).toHaveBeenCalledTimes(1);
+    expect(insertHealthLog).toHaveBeenCalledWith({
+      log_date: '2026-04-19',
+      log_type: 'MORTALITE',
+      animal_type: 'BANDE',
+      animal_code: 'B-042',
+      affected_animals: 3,
+      notes: 'écrasement loge 3',
+      operator: 'Tester',
+    });
 
-    expect(updateRow).toHaveBeenCalledTimes(1);
-    expect(updateRow).toHaveBeenCalledWith('PORCELETS_BANDES_DETAIL', 'ID', 'B-042', {
-      VIVANTS: 9,
-      MORTS: 5,
+    expect(updateBatchByCode).toHaveBeenCalledTimes(1);
+    expect(updateBatchByCode).toHaveBeenCalledWith('B-042', {
+      porcelets_nes_vivants: 9,
+      nb_mort_nes: 5,
     });
 
     expect(result).toEqual({
@@ -176,55 +177,50 @@ describe('submitMortality', () => {
   });
 
   it('borne max : 25 est réduit à 20 avant enregistrement', async () => {
-    const appendRow = vi.fn().mockResolvedValue(undefined);
-    const updateRow = vi.fn().mockResolvedValue(undefined);
+    const insertHealthLog = vi.fn().mockResolvedValue({});
+    const updateBatchByCode = vi.fn().mockResolvedValue({});
     const bande = makeBande({ id: 'B-001', vivants: 30, morts: 0, nv: 30 });
 
     const result = await submitMortality(bande, 25, '', {
-      appendRow,
-      updateRow,
+      insertHealthLog,
+      updateBatchByCode,
       getAuteur: () => 'A',
       isOnline: () => true,
     });
 
     expect(result.nbMorts).toBe(20);
-    expect(updateRow).toHaveBeenCalledWith(
-      'PORCELETS_BANDES_DETAIL',
-      'ID',
-      'B-001',
-      { VIVANTS: 10, MORTS: 20 },
-    );
-    const appendArgs = appendRow.mock.calls[0][1] as unknown[];
-    expect(appendArgs[4]).toBe('20 morts');
+    expect(updateBatchByCode).toHaveBeenCalledWith('B-001', {
+      porcelets_nes_vivants: 10,
+      nb_mort_nes: 20,
+    });
+    const insertArgs = insertHealthLog.mock.calls[0][0] as { affected_animals: number };
+    expect(insertArgs.affected_animals).toBe(20);
   });
 
   it('offline mode : online=false est propagé pour toast contextualisé', async () => {
-    const appendRow = vi.fn().mockResolvedValue(undefined);
-    const updateRow = vi.fn().mockResolvedValue(undefined);
+    const insertHealthLog = vi.fn().mockResolvedValue({});
+    const updateBatchByCode = vi.fn().mockResolvedValue({});
     const bande = makeBande();
 
     const result = await submitMortality(bande, 1, '', {
-      appendRow,
-      updateRow,
+      insertHealthLog,
+      updateBatchByCode,
       getAuteur: () => 'A',
       isOnline: () => false,
     });
 
-    // Malgré l'offline, les deux enqueues ont été appelés (pattern offline-first)
-    expect(appendRow).toHaveBeenCalledTimes(1);
-    expect(updateRow).toHaveBeenCalledTimes(1);
+    expect(insertHealthLog).toHaveBeenCalledTimes(1);
+    expect(updateBatchByCode).toHaveBeenCalledTimes(1);
     expect(result.online).toBe(false);
     expect(result.nbMorts).toBe(1);
   });
 
-  it('append précède update (ordre des 2 enqueues préservé pour audit trail)', async () => {
-    // Le journal (audit trail) doit être écrit avant la patch idempotente :
-    // si la patch échoue, on garde au moins une trace de l'intention.
+  it('insertHealthLog précède updateBatchByCode (ordre audit trail)', async () => {
     const calls: string[] = [];
-    const appendRow = vi.fn().mockImplementation(async () => {
-      calls.push('append');
+    const insertHealthLog = vi.fn().mockImplementation(async () => {
+      calls.push('insert');
     });
-    const updateRow = vi.fn().mockImplementation(async () => {
+    const updateBatchByCode = vi.fn().mockImplementation(async () => {
       calls.push('update');
     });
 
@@ -233,40 +229,32 @@ describe('submitMortality', () => {
       2,
       'loge 2',
       {
-        appendRow,
-        updateRow,
+        insertHealthLog,
+        updateBatchByCode,
         getAuteur: () => 'A',
         isOnline: () => true,
       },
     );
 
-    expect(calls).toEqual(['append', 'update']);
-    // Vérifie aussi que les deux ont bien été invoqués une seule fois
-    expect(appendRow).toHaveBeenCalledTimes(1);
-    expect(updateRow).toHaveBeenCalledTimes(1);
-    // Le sheet cible de chaque enqueue reste correct
-    expect(appendRow.mock.calls[0][0]).toBe('JOURNAL_SANTE');
-    expect(updateRow.mock.calls[0][0]).toBe('PORCELETS_BANDES_DETAIL');
+    expect(calls).toEqual(['insert', 'update']);
+    expect(insertHealthLog).toHaveBeenCalledTimes(1);
+    expect(updateBatchByCode).toHaveBeenCalledTimes(1);
   });
 
-  it('propage une erreur d\'enqueue (pas de faux succès silencieux)', async () => {
-    // Si le premier enqueue échoue (ex: Preferences.set KO sur Android),
-    // submitMortality doit rejeter pour que l'UI affiche une erreur plutôt
-    // qu'un toast "enregistré" mensonger.
-    const appendRow = vi.fn().mockRejectedValue(new Error('Preferences KO'));
-    const updateRow = vi.fn().mockResolvedValue(undefined);
+  it('propage une erreur insertHealthLog (pas de faux succès silencieux)', async () => {
+    const insertHealthLog = vi.fn().mockRejectedValue(new Error('Supabase KO'));
+    const updateBatchByCode = vi.fn().mockResolvedValue({});
 
     await expect(
       submitMortality(makeBande(), 1, '', {
-        appendRow,
-        updateRow,
+        insertHealthLog,
+        updateBatchByCode,
         getAuteur: () => 'A',
         isOnline: () => true,
       }),
-    ).rejects.toThrow('Preferences KO');
+    ).rejects.toThrow('Supabase KO');
 
-    // L'update ne doit PAS avoir été tenté si l'append a échoué
-    expect(updateRow).not.toHaveBeenCalled();
+    expect(updateBatchByCode).not.toHaveBeenCalled();
   });
 });
 

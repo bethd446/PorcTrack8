@@ -100,6 +100,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
         type="button"
         onClick={onClick}
         aria-label={typeof value === 'string' || typeof value === 'number' ? `${label} ${value}` : label}
+        data-testid="kpi-card"
         className={cn(
           'card-dense pressable text-left flex flex-col w-full',
           toneAccent[tone],
@@ -113,7 +114,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
   }
 
   return (
-    <div className={cn('card-dense flex flex-col', toneAccent[tone], className)}>{content}</div>
+    <div data-testid="kpi-card" className={cn('card-dense flex flex-col', toneAccent[tone], className)}>{content}</div>
   );
 };
 
