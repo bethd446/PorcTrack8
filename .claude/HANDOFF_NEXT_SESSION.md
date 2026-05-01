@@ -1,95 +1,154 @@
-# PorcTrack 8 — Handoff post-Vagues 1+2+3+4 + Hotfix Sécu (2026-05-01 04:50)
+# PorcTrack 8 — Handoff post-Sheets-Out (2026-05-01 12:54)
 
 ## TL;DR
-- **v6 LIVE** sur https://porctrack.tech (bundle `index-DoatRbXy.js`)
-- Scroll Landing **corrigé** (Ionic IonPage/IonContent)
-- Design v6 « Terrain Vivant » **uniformisé partout**
-- **4 BLOCKING sécu/runtime corrigés** post code-reviewer (commit `33bf5ca`)
-- 12/12 routes prod HTTP 200, **0 leak GEMINI_API_KEY** vérifié dans bundle
-- 2 commits poussés sur main : `3500f2b` (refonte massive) + `33bf5ca` (hotfix)
-- Backups remote :
-  - `~/backups/porctrack-tech-20260501-041222-prevague234.tar.gz` (avant Vagues)
-  - `~/backups/porctrack-tech-20260501-075032-prehotfix.tar.gz` (avant hotfix)
+- **v8 LIVE** sur https://porctrack.tech (bundle `index-Bfh2a0Jw.js`)
+- **Google Sheets dégage 100%** du code source (services + UI + vars env)
+- **Nav Bravo** déployée : 5 tabs mobile + sidebar nested desktop + Cmd+K + FAB menu actions
+- **Nouveau hub `/today`** = Inbox alertes biologiques (route racine `/` y redirige)
+- Cockpit/BandesView/QuickMiseBasForm **découpés** en sous-composants modulaires
+- 17/17 routes HTTP 200, **0 leak** vérifié dans bundle prod
+- Commits : `d2c8eac` (consolidé Vagues 1+2+3+4) sur `main`
+- Backups remote : `~/backups/porctrack-tech-20260501-125421-prevague1234.tar.gz`
 
-## Vagues exécutées (10 agents Opus + 8 hotfix self)
+## Métriques
 
-### Vague 1 — Hotfix scroll + ménage (2 agents parallèle)
-- **1A** (debugger Opus) : root cause scroll = Ionic `body{position:fixed;overflow:hidden}` global. Fix : wrap IonPage+IonContent (Landing/Login/Signup + PublicShell pour About/CGU/Privacy/NotFound).
-- **1B** (general Opus) : suppression PremiumUI.tsx, PremiumHeader.tsx, SkeletonCard.tsx, _archive/theme-terracotta.css. Migration getStatusConfig → src/utils/statusConfig.ts. Purge index.css 46-118 (135 lignes).
+| | Valeur |
+|---|---|
+| tsc --noEmit | 0 erreur |
+| vitest | 787 passed / 5 skipped (52 fichiers) |
+| eslint | 0 erreur (24 warnings cosmétiques `Date.now()` purity) |
+| bun run build | 2.25s |
+| Bundle JS | `index-Bfh2a0Jw.js` (120 kB / 30 kB gzip) |
+| Bundle CSS | `index-DXXLTTSk.css` |
+| 16 agents Opus orchestrés | 4 vagues + 3 QA en background |
+| 223 fichiers changés | +12841 / -7353 |
 
-### Vague 2 — Refonte massive (4 agents parallèle)
-- **2C** : AdminDashboard 374→484L (AgritechLayout + KpiCardV6 + Eyebrow + Button)
-- **2D** : AuthCallback + AideView (WhatsApp Phone+#25D366 brand) + AuditPrintTemplate (font-display + print-safe)
-- **2E** : 12 vues KpiCard agritech → KpiCardV6 (52 cards + 8 hex + 6 text-red-* tokenisés)
-- **2F** : 18 fichiers purgés ~50 substitutions (SystemManagement: MessageCircle→Phone)
+## Vagues exécutées (16 agents Opus)
 
-### Vague 3 — Validation + review (2 agents)
-- **3G** : tsc 0, vitest 781/786, eslint 0 errors / 23 warnings
-- **3H** code-reviewer Opus : 4 BLOCKING détectés (corrigés en hotfix immédiat)
+### Vague 1 — Quick wins + API extension (2 agents //)
+- **1a** : StatusBar Capacitor init runtime, code mort supprimé (SyncStatusBadge, DataAgeIndicator, AgritechNav v1, AnimalDetailView 973L, SparklineCard), recharts dep désinstallée, vendor-supabase chunk splitté, theme-tokens dark legacy purgé, 11 routes deprecated supprimées
+- **1b** : `supabaseWrites.ts` étendu 90→333L (9 insertX + 7 deleteX + 3 updateXByCode + 5 resolveXByCode + logDeletion best-effort)
 
-### Vague 4 — Deploy (commit 3500f2b)
-- Build 2.78s, 12 routes HTTP 200 vérifiées
-- Backup remote, rsync --delete
+### Vague 2 — Migration writes Sheets→Supabase (3 agents //)
+- **2a** : `offlineQueue.ts` refactoré (QueuedMutation typé Postgres), `confirmationQueue.ts` 6 actions GTTT migrées, `checklistService.ts` neutralisé
+- **2b** : 19 formulaires Quick* migrés (24 appels Sheets → Supabase typé)
+- **2c** : 8 composants migrés (ChecklistFlow, ControleQuotidien, AuditView, TableView, BandesView clôture, TableRowEdit, DeleteModal, tablesRegistry static)
 
-### Hotfix sécu/runtime post-review (commit 33bf5ca)
-1. **🔴→✅ GEMINI_API_KEY leak** : vite.config `define` retiré, ChatbotWidget.sendToGemini neutralisé (lance erreur "Marius en cours de configuration"). SYSTEM_PROMPT préservé pour réactivation future via proxy backend. Vérifié zéro leak dans bundle prod.
-2. **🔴→✅ Couleurs alertes divergentes** : créé `src/utils/alertColors.ts` (single source of truth). Cockpit + AlertsView importent `ALERT_PRIORITY_COLOR/BG`. Mapping unifié : CRITIQUE=danger, HAUTE=amber-pork, NORMALE=accent-500, INFO=info. Le token `--color-pig` reste réservé "retour chaleur" uniquement.
-3. **🔴→✅ AuthContext loading infini** : `getSession().then(...).catch(...).finally(setLoading(false))`.
-4. **🔴→✅ ProtectedRoute + AdminRoute loading infini** : `.catch` + try/catch fail-safe (default 'unauth' / 'not-admin' si réseau KO).
-5. Build hotfix 2.54s, bundle `index-DoatRbXy.js`, redeploy.
+### Vague 3 — Refonte nav Bravo + UI Sheets cleanup (3 agents //)
+- **3a** : AppSidebar refondue 240px (Épinglé / Aujourd'hui / Cheptel nested Cycles / Pilotage / Ressources / Admin), CommandPalette Cmd+K (fuzzy search), useRecentNavigation hook
+- **3b** : AgritechNavV2 5 tabs Bravo + FAB menu actions métier (Marius IA inclus), Mortalité câblée, resolveActiveTab fixé
+- **3c** : TodayHub `/today` créé, fusion Cycles dans Cheptel hub, /sync supprimé, SystemManagement section Flux+GAS supprimée, Cockpit OfflineChip+bannière supprimés, TopBarSync redesigné, 9 fichiers UI nettoyés (vocabulaire neutre), **`googleSheets.ts` SUPPRIMÉ**, VITE_GAS_* retirés, doublons routes supprimés
 
-## Risques / TODO résiduels (NON BLOCKING)
+### Vague 4 — Découpage + 8 issues + tests (3 agents //)
+- **4a** : Cockpit 1435→494L (14 sous-composants extraits dans `src/components/cockpit/`), BandesView 1300→355L (9 sous-composants `src/features/tables/bandes/`), QuickMiseBasForm 1139→409L (4 sous-composants UI + helpers purs)
+- **4b** : 8 issues 🟡 résolues (ProtectedRoute/AdminRoute useAuth, AdminDashboard try/catch, Cockpit useMediaQuery+kvStore, useMediaQuery useSyncExternalStore, _isOwner unused, Login `/today`+replace, Date.now purity), 5 commentaires cosmétiques Sheets→Supabase
+- **4c** : E2E Playwright selectors v6 (22 occurrences, data-testid agritech-header/kpi-card-v6/cheptel-row), 3 tests vitest cycles créés (Maternite, PostSevrage, ReproCalendar)
 
-### Important (corriger demain)
-- **🟡 ProtectedRoute + AdminRoute dupliquent useAuth()** : pourraient utiliser `useAuth()` au lieu de leur propre `getSession()` (plus DRY)
-- **🟡 SyncStatusBadge non réactif** : `getQueueLength()`/`hasFailedSync()` lus en render sans subscription. Fix : hook `useSyncStatus()` avec event listener queue.
-- **🟡 SyncStatusBadge a11y** : `<div onClick>` → remplacer par `<button>` (clavier + role)
-- **🟡 AgritechNavV2 path resolver bug** : tab Cockpit `path: '/'` match faux-positif tous les paths via `startsWith`. Fix : changer `path: '/cockpit'`.
-- **🟡 QuickMortalityForm + QuickPeseeForm** : useState orphelins `success`/`submitError` (setter sans getter, state mort). Supprimer.
-- **🟡 Cockpit duplique useMediaQuery** : remplacer le useEffect inline (l.103-113) par le hook partagé.
-- **🟡 Cockpit utilise localStorage** : `localStorage.getItem('user_name')` (l.393-400) → `kvGet('user_name')` selon doctrine.
-- **🟡 AdminDashboard fetches sans .catch** : 3 spots (l.88-97, 218-227, 229-237) peuvent geler la page sur erreur réseau.
+### Vague 5 — Build + commit + push + deploy
+- `bun run build` 2.25s
+- Commit `d2c8eac` consolidé (223 fichiers, +12841/-7353)
+- Push `f0ee22c..d2c8eac main -> main`
+- Backup remote pré-deploy
+- Rsync `--delete` vers porctrack.tech
+- 17/17 routes HTTP 200 vérifiées
+- 0 leak GEMINI_API_KEY / VITE_GAS / appendRow / googleSheets dans bundle prod
+
+## Architecture nav finale (Option Bravo)
+
+**Mobile (≤1023px)** — 5 tabs :
+1. **Aujourd'hui** (`/today`) — Inbox alertes biologiques + Audit + Tâches (Inbox icon, badge count CRITIQUE+HAUTE)
+2. **Cheptel** (`/troupeau`) — Hub fusionné Truies+Verrats+Bandes+Cycles (sub-tabs)
+3. **Pilotage** (`/pilotage`, OWNER only) — KPIs + Finances + Rapports + Prévisions
+4. **Ressources** (`/ressources`) — Aliments + Pharmacie
+5. **Plus** (`/more`) — Profil + Aide + Marius + Réglages + Admin (gated)
+
+**FAB central** (mobile) — bottom sheet 2×3 grille : Saillie / Soin / Note / Pesée / Mortalité / Marius IA
+
+**Desktop (≥1024px)** — sidebar 240px nested + Cmd+K command palette + sections Épinglé/Aujourd'hui/Cheptel(>Cycles expandable)/Pilotage/Ressources/Admin
+
+## TODO restants (non bloquants)
+
+### Important
+- 24 warnings eslint `Date.now()` purity dans `ChecklistFlow:199`, `TodayHub:104`, `QuickMortalityForm:280` etc. — wrapper dans `useMemo` ou helper utilitaire
+- Issue Date.now() dans `Cockpit:1335` et `PanelCalendrier:73` réglée — autres restent
+- Table `deletion_log` côté Supabase à créer (helpers logDeletion fallback console.warn)
+- KpiCardV6 sans prop `icon` — 52 cards sans icône en haut-gauche
+- `getNotesForAnimal` / `pullData` / `processQueue` / `syncStatus` exposés dans FarmContext mais plus utilisés UI — à nettoyer
+- Tests E2E Playwright non exécutés (serveur dev non lancé) — vérifier en CI
+- Quelques sub-vues du sidebar pointent vers routes futures (`/today/tasks`) — placeholder OK
 
 ### Mineur
-- KpiCardV6 sans prop `icon` : 52 KPI cards ont perdu leur icône. Évolution future.
-- 23 warnings eslint : Date.now() purity x2, useMediaQuery setState-in-effect, _isOwner unused
-- Login navigate sans `{ replace: true }`
-- Landing duplique header au lieu de PublicShell
-- ThemeContext timer dépendances superflues (deps `[mode, resolved]`)
-- CLAUDE.md projet (racine) doit être mis à jour pour refléter v6 (PremiumHeader/UI/SkeletonCard supprimés, AgritechLayout/KpiCardV6 à documenter)
+- `src/components/cockpit/panelStyles.ts` à vérifier (probablement importé par tous les sous-composants)
+- bun.lock vs package-lock.json coexistent
+- `theme-night` bloc dormant (light forcé) — peut être supprimé un jour si plus de retour dark prévu
 
-## Tokens v6 vérifiés présents
-`--bg-app`, `--bg-surface`, `--bg-surface-2`, `--color-accent-500/100`, `--amber-pork`/-soft/-deep, `--color-pig`/-soft/-deep (réservé retour chaleur), `--color-secondary`/-soft/-deep, `--ink`/-soft, `--muted`, `--line`, `--line-2`, `--radius-card/pill/premium`, `--ease-emil`, `--duration-press/transition`, `--font-display/heading`, `--color-danger`, `--color-info`, `--shadow-card/-hover`.
+## Schémas Supabase à créer (TODO migration SQL)
 
-## Rollback procedure (si bug majeur en prod)
+```sql
+-- Trace de suppression (utilisé par logDeletion)
+create table public.deletion_log (
+  id uuid primary key default gen_random_uuid(),
+  farm_id uuid not null references public.profiles(id),
+  table_name text not null,
+  row_id text not null,
+  reason text,
+  deleted_at timestamptz not null default now(),
+  deleted_by uuid not null
+);
+alter table public.deletion_log enable row level security;
+create policy "deletion_log_owner" on public.deletion_log
+  for all using (farm_id = auth.uid()) with check (farm_id = auth.uid());
+
+-- Définitions checklists (si on rebranche checklistService)
+create table public.checklist_definitions (
+  id uuid primary key default gen_random_uuid(),
+  farm_id uuid not null references public.profiles(id),
+  category text not null,
+  question text not null,
+  required boolean default false,
+  ordering int default 0
+);
+alter table public.checklist_definitions enable row level security;
+create policy "checklist_def_owner" on public.checklist_definitions
+  for all using (farm_id = auth.uid()) with check (farm_id = auth.uid());
+```
+
+## Champs perdus à modéliser éventuellement
+
+Champs Sheets sans équivalent Supabase actuel (signalés par Vague 2b) :
+- `sows.poids`, `sows.derniere_nv` (utiles GTTT)
+- `batches.boucle_mere`, `batches.nb_males`, `batches.nb_femelles`, `batches.date_separation`
+- `notes.animal_type`, `notes.animal_id`, `notes.author` (encodés actuellement dans `content`)
+- `finances` : modèle "poste budgétaire" (poste/mensuel_fcfa/annuel_fcfa) — pas adapté aux transactions. Recommandation : table `transactions` séparée OU ajouter `transaction_date`/`bande_id`/`categorie` dans `finances`
+
+## Bundle live actuel
+- JS : `index-Bfh2a0Jw.js` (120 kB / 30 kB gzip)
+- CSS : `index-DXXLTTSk.css`
+- Commits : `f0ee22c..d2c8eac main -> main`
+- Bundles vendor : ionic-core 446kB, react 232kB, supabase 200kB (split réussi), recharts retiré
+
+## Rollback procedure
 ```bash
 ssh porctrack
 cd ~/domains/porctrack.tech/public_html
 rm -rf ./*
-# Choisir le backup approprié :
-tar -xzf ~/backups/porctrack-tech-20260501-075032-prehotfix.tar.gz   # avant hotfix sécu
-# OU
-tar -xzf ~/backups/porctrack-tech-20260501-041222-prevague234.tar.gz # avant Vagues
+tar -xzf ~/backups/porctrack-tech-20260501-125421-prevague1234.tar.gz
 exit
 ```
 
 ## Action utilisateur next session
-1. **Test mobile** porctrack.tech : scroll Landing/Login/Signup (le hotfix #1)
-2. **Test Marius** : ouvrir le chat (FAB orange Sparkles), envoyer un message → doit afficher "Marius est en cours de configuration. La connexion à l'IA sera bientôt disponible." (comportement attendu post-hotfix sécu)
-3. **Test alertes** : comparer la palette dans Cockpit (panneau "Alertes du jour") vs vue `/alertes` complète → doit être identique (HAUTE = orange amber, pas pig)
-4. **Test connecté** : Cockpit → Cycles → Troupeau → Pilotage → Ressources, cohérence v6
-5. **Sprint suivant proposé** : 8 issues 🟡 du code-reviewer (~2-3h, en 1 ou 2 sub-agents)
-6. **Sprint Marius backend** : monter un proxy Cloudflare Worker ou Supabase Edge Function pour réactiver Gemini sans exposer la clé
-7. **Sprint UX KpiCard** : ajouter prop `icon` à KpiCardV6, ré-injecter sur les 52 cards
+1. **Test mobile** porctrack.tech : route `/` doit rediriger vers `/today` (Inbox alertes), navigation 5 tabs, FAB menu actions, Marius dans le FAB
+2. **Test desktop** : sidebar 240px avec sections Épinglé/Aujourd'hui/Cheptel(Cycles expandable)/Pilotage/Ressources/Admin, **Cmd+K** ouvre command palette
+3. **Test Sheets out** : essayer toutes les actions terrain (saillie, mise-bas, pesée, mortalité, note, soin, vente, refill stock) → doit s'écrire dans Supabase, plus aucune mention Google Sheets
+4. **Vérifier rôles** : Pilotage tab visible OWNER, masqué WORKER ; Admin section visible ADMIN, masquée autres
+5. **Sprint suivant proposé** :
+   - Créer table `deletion_log` côté Supabase + regen types
+   - Ajouter prop `icon` à KpiCardV6 (~30min)
+   - Ajouter colonnes manquantes (poids/derniere_nv/transactions) si métier le demande
+   - Fix 24 warnings `Date.now()` purity (~30min)
 
-## Bundle live actuel
-- JS : `index-DoatRbXy.js`
-- CSS : `index-DbLRj0Ep.css`
-- Commits : `3500f2b` (refonte) + `33bf5ca` (hotfix sécu/runtime)
-- Push : `bc70044..33bf5ca main -> main`
-
-## Servers locaux (preview_start, encore actifs)
-- vite-dev :5173 (id `af774cc8-3995-4cc7-bd66-a96602547c5e`)
-- vite-preview :4173 (id `cd967f52-ce0e-4c37-aefd-0f187059c9bd`)
-- vitest-ui :51204 (id `19fbdde1-0090-451c-b035-70c271a82a99`)
-- launch.json : `/Users/13mac/Desktop/.claude/launch.json` (avec --cwd vers projet)
+## Servers locaux (preview_start)
+- vite-dev :5173 (encore actif)
+- vite-preview :4173
+- vitest-ui :51204
+- launch.json : `/Users/13mac/Desktop/.claude/launch.json` (avec bash -c cd + bun run)
