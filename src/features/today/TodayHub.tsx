@@ -43,6 +43,13 @@ const PRIORITY_ORDER: Record<AlertPriority, number> = {
   INFO: 3,
 };
 
+/** Affiche "Bande {code}" en évitant le doublon "Bande Bande X" si idPortee contient déjà le mot. */
+const formatBandeLabel = (raw: string): string => {
+  const trimmed = (raw ?? '').trim();
+  if (!trimmed) return 'Bande';
+  return /^bande\b/i.test(trimmed) ? trimmed : `Bande ${trimmed}`;
+};
+
 const TodayHub: React.FC = () => {
   const navigate = useNavigate();
   const { userName } = useAuth();
@@ -498,7 +505,7 @@ const TodayHub: React.FC = () => {
                               letterSpacing: '-0.005em',
                             }}
                           >
-                            Bande {bande.idPortee || bande.id}
+                            {formatBandeLabel(bande.idPortee || bande.id)}
                           </div>
                           <div
                             style={{
@@ -543,7 +550,7 @@ const TodayHub: React.FC = () => {
                               letterSpacing: '-0.005em',
                             }}
                           >
-                            Bande {bande.idPortee || bande.id}
+                            {formatBandeLabel(bande.idPortee || bande.id)}
                           </div>
                           <div
                             style={{

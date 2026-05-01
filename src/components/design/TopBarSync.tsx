@@ -1,13 +1,20 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import SyncIndicator from './SyncIndicator';
 import { useSyncState } from '../../hooks/useSyncState';
 
+export type Crumb = string | { label: string; href?: string };
+
 export interface TopBarSyncProps {
-  crumbs: string[];
+  crumbs: Crumb[];
   onMariusClick?: () => void;
   className?: string;
 }
+
+const crumbLabel = (c: Crumb): string => (typeof c === 'string' ? c : c.label);
+const crumbHref = (c: Crumb): string | undefined =>
+  typeof c === 'string' ? undefined : c.href;
 
 /**
  * Barre supérieure desktop : breadcrumb (gauche, DMMono 11px) +
@@ -53,18 +60,38 @@ export default function TopBarSync({
       >
         {crumbs.map((crumb, i) => {
           const isLast = i === crumbs.length - 1;
+          const label = crumbLabel(crumb);
+          const href = crumbHref(crumb);
+          const itemStyle: React.CSSProperties = {
+            color: isLast ? 'var(--ink)' : 'var(--muted)',
+            fontWeight: isLast ? 500 : 400,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          };
           return (
-            <React.Fragment key={`${i}-${crumb}`}>
-              <li
-                style={{
-                  color: isLast ? 'var(--ink)' : 'var(--muted)',
-                  fontWeight: isLast ? 500 : 400,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {crumb}
+            <React.Fragment key={`${i}-${label}`}>
+              <li style={itemStyle}>
+                {!isLast && href ? (
+                  <Link
+                    to={href}
+                    style={{
+                      color: 'inherit',
+                      textDecoration: 'none',
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.textDecoration = 'underline')
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.textDecoration = 'none')
+                    }
+                  >
+                    {label}
+                  </Link>
+                ) : (
+                  label
+                )}
               </li>
               {!isLast ? (
                 <li

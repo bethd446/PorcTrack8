@@ -489,17 +489,26 @@ interface DetailRowProps {
   accent?: string;
 }
 
-const DetailRow: React.FC<DetailRowProps> = ({ label, value, mono, accent }) => (
-  <div className="flex items-center justify-between px-3.5 py-3 border-b border-border last:border-b-0">
-    <span className="text-[13px] text-text-1">{label}</span>
-    <span
-      className={`${mono ? 'font-mono tabular-nums' : ''} text-[13px] font-medium`}
-      style={{ color: accent || 'var(--text-0)' }}
-    >
-      {value}
-    </span>
-  </div>
-);
+const DetailRow: React.FC<DetailRowProps> = ({ label, value, mono, accent }) => {
+  const isEmpty = value === '—' || value == null || value === '';
+  return (
+    <div className="flex items-center justify-between px-3.5 py-3 border-b border-border last:border-b-0">
+      <span className="text-[13px] text-text-1">{label}</span>
+      <span
+        className={`${mono ? 'font-mono tabular-nums' : ''} text-[13px] font-medium`}
+        style={{
+          color: accent || 'var(--text-0)',
+          opacity: isEmpty ? 0.4 : 1,
+          cursor: isEmpty ? 'help' : 'default',
+        }}
+        title={isEmpty ? 'Donnée non disponible — saisir une information pour activer.' : undefined}
+        aria-label={isEmpty ? `${label} non disponible` : undefined}
+      >
+        {value}
+      </span>
+    </div>
+  );
+};
 
 interface EditableDetailRowProps {
   label: string;

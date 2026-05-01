@@ -33,7 +33,6 @@ import SowHero, { type SowHeroChip } from '../../components/design/SowHero';
 import ReproTracker, { type ReproStage } from '../../components/design/ReproTracker';
 import DecisionBinaire from '../../components/design/DecisionBinaire';
 import MariusPanel from '../../components/design/MariusPanel';
-import MariusFAB from '../../components/design/MariusFAB';
 import TimelineVerticale, { type TimelineItem } from '../../components/design/TimelineVerticale';
 import LineageBreadcrumb, { type LineageNode } from '../../components/design/LineageBreadcrumb';
 import LineageTree from '../../components/design/LineageTree';
@@ -536,7 +535,9 @@ const TruieDetailView: React.FC = () => {
                 }}
                 className="sow-vitals"
               >
-                {vitales.map((v, i) => (
+                {vitales.map((v, i) => {
+                  const isEmpty = v.value === '—' || v.value == null || v.value === '';
+                  return (
                   <div
                     key={v.label}
                     style={{
@@ -563,6 +564,8 @@ const TruieDetailView: React.FC = () => {
                       )}
                     </div>
                     <div
+                      title={isEmpty ? 'Donnée non disponible — saisir une saillie pour activer.' : undefined}
+                      aria-label={isEmpty ? `${v.label} non disponible` : undefined}
                       style={{
                         fontFamily: 'BricolageGrotesque, ui-sans-serif, system-ui',
                         fontSize: 22,
@@ -570,6 +573,8 @@ const TruieDetailView: React.FC = () => {
                         color: v.valColor,
                         fontWeight: 600,
                         letterSpacing: '-0.02em',
+                        opacity: isEmpty ? 0.4 : 1,
+                        cursor: isEmpty ? 'help' : 'default',
                       }}
                     >
                       {v.value}
@@ -580,7 +585,8 @@ const TruieDetailView: React.FC = () => {
                       )}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
 
@@ -779,8 +785,7 @@ const TruieDetailView: React.FC = () => {
             </div>
           </div>
 
-          {/* FAB Marius */}
-          <MariusFAB online onClick={() => { /* TODO: ouvrir panel Marius */ }} />
+          {/* FAB Marius : rendu globalement dans App.tsx via ChatbotWidget — pas de double instance ici. */}
         </div>
 
         {/* Sheet édition */}

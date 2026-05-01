@@ -62,9 +62,21 @@ const AppSidebar: React.FC = () => {
   const { items: recentItems } = useRecentNavigation();
 
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [cyclesExpanded, setCyclesExpanded] = useState<boolean>(() => {
-    return kvGet(CYCLES_EXPANDED_KEY) !== '0';
+  const isOnCyclesRoute = location.pathname.startsWith('/cycles');
+  const [cyclesUserOverride, setCyclesUserOverride] = useState<boolean | null>(() => {
+    const v = kvGet(CYCLES_EXPANDED_KEY);
+    if (v === '1') return true;
+    if (v === '0') return false;
+    return null;
   });
+  const cyclesExpanded = cyclesUserOverride ?? isOnCyclesRoute;
+
+  // Auto-reset override quand on entre/sort de /cycles : on aligne sur la route et on
+  // efface l'override pour repartir d'un état dérivé propre.
+  useEffect(() => {
+    setCyclesUserOverride(null);
+    void kvSet(CYCLES_EXPANDED_KEY, '');
+  }, [isOnCyclesRoute]);
 
   // Cmd+K / Ctrl+K
   useEffect(() => {
@@ -80,11 +92,9 @@ const AppSidebar: React.FC = () => {
   }, []);
 
   const toggleCycles = (): void => {
-    setCyclesExpanded((prev) => {
-      const next = !prev;
-      void kvSet(CYCLES_EXPANDED_KEY, next ? '1' : '0');
-      return next;
-    });
+    const next = !cyclesExpanded;
+    setCyclesUserOverride(next);
+    void kvSet(CYCLES_EXPANDED_KEY, next ? '1' : '0');
   };
 
   const isActive = (href: string, prefixes?: string[]): boolean => {
