@@ -82,7 +82,7 @@
   body {
     background-color: var(--bg-app);
     color: var(--ink);
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
     font-size: 15px;
@@ -91,6 +91,23 @@
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
   }
+
+  /* Force la cascade Ionic — sinon ion-content/ion-button rendent en Roboto.
+     Préserve les classes custom font-heading/font-mono via :not(). */
+  body *:not(svg):not(svg *) {
+    font-family: inherit;
+  }
+  ion-app, ion-page, ion-content, ion-header, ion-footer,
+  ion-toolbar, ion-title, ion-button, ion-item, ion-label,
+  ion-input, ion-textarea, ion-select, ion-list, ion-modal,
+  ion-tabs, ion-tab-button, ion-segment, ion-segment-button,
+  ion-card, ion-card-content, ion-card-header, ion-card-subtitle,
+  ion-card-title, ion-refresher, ion-refresher-content,
+  ion-alert, ion-toast, ion-popover {
+    --ion-font-family: var(--font-body);
+    font-family: var(--font-body);
+  }
+
   :root {
     --ion-font-family: var(--font-body);
     --ion-color-primary: var(--color-accent-500);
@@ -128,6 +145,18 @@
   font-feature-settings: "tnum" 1;
   font-variant-numeric: tabular-nums;
 }
+
+/* ── Boutons design system : --font-body explicite (Bug audit /login) ──── */
+.pt-btn,
+.pt-btn--primary,
+.pt-btn--secondary,
+.pt-btn--lg,
+.pt-btn--md,
+.pt-btn--sm {
+  font-family: var(--font-body);
+  font-weight: 600;
+}
+
 .text-xxs    { font-size: 0.7rem; line-height: 1rem; }
 .tracking-ultra   { letter-spacing: 0.12em; }
 .tracking-premium { letter-spacing: 0.04em; }
