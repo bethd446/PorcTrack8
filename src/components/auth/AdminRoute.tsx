@@ -7,9 +7,9 @@ interface Props {
 }
 
 export default function AdminRoute({ children }: Props) {
-  const { session, profile, loading } = useAuth();
+  const { session, profile, loading, profileLoaded } = useAuth();
 
-  if (loading) {
+  if (loading || (session && !profileLoaded)) {
     return (
       <div className="flex items-center justify-center h-screen" style={{ background: 'var(--bg-app)' }}>
         <div className="flex flex-col items-center gap-4">

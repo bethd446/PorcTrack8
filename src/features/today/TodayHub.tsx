@@ -40,7 +40,15 @@ const TodayHub: React.FC = () => {
   const { notes } = useRessources();
   const { recomputeAlerts } = useMeta();
 
-  const firstName = (userName || 'Utilisateur').split(' ')[0];
+  const firstName = (() => {
+    const parts = (userName || 'Utilisateur').split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return 'Utilisateur';
+    const skipPrefixes = new Set(['Ferme', 'ferme', 'M.', 'Mme', 'Mr', 'Dr', 'Pr']);
+    if (parts.length > 1 && skipPrefixes.has(parts[0])) {
+      return parts[parts.length - 1];
+    }
+    return parts[0];
+  })();
   const now = new Date();
   const headerDate = now.toLocaleDateString('fr-FR', {
     weekday: 'long',

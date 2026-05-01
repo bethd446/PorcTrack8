@@ -16,6 +16,7 @@ interface AuthContextType {
   user: User | null;
   profile: SupabaseProfile | null;
   loading: boolean;
+  profileLoaded: boolean;
 
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -37,22 +38,27 @@ function mapToLegacyRole(supabaseRole: string | null | undefined, fallback: User
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<SupabaseProfile | null>(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [legacyRole, setLegacyRoleState] = useState<UserRole>(
     () => (kvGet('user_role') as UserRole | null) ?? 'OWNER',
   );
 
   const fetchProfile = useCallback(async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, email, full_name, role')
-      .eq('id', userId)
-      .single();
-    if (error || !data) {
-      setProfile(null);
-      return;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, email, full_name, role')
+        .eq('id', userId)
+        .single();
+      if (error || !data) {
+        setProfile(null);
+        return;
+      }
+      setProfile(data as SupabaseProfile);
+    } finally {
+      setProfileLoaded(true);
     }
-    setProfile(data as SupabaseProfile);
   }, []);
 
   const refreshProfile = useCallback(async () => {
@@ -77,6 +83,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
+    // Safety: force loading=false après 6s même si tout hang. Évite splash bloquant définitif.
+    const safetyTimeout = window.setTimeout(() => {
+      if (mounted) {
+        console.warn('[AuthContext] safety timeout — forcing loading=false');
+        setLoading(false);
+      }
+    }, 6000);
+
+    const finishLoading = () => {
+      if (mounted) {
+        window.clearTimeout(safetyTimeout);
+        setLoading(false);
+      }
+    };
+
     supabase.auth.getSession()
       .then(async ({ data }) => {
         if (!mounted) return;
@@ -84,28 +105,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           await tryDevAutologin();
           const { data: refreshed } = await supabase.auth.getSession();
           setSession(refreshed.session);
+          finishLoading();
           if (refreshed.session?.user.id) {
-            await fetchProfile(refreshed.session.user.id);
+            void fetchProfile(refreshed.session.user.id);
           }
         } else {
           setSession(data.session);
+          finishLoading();
           if (data.session.user.id) {
-            await fetchProfile(data.session.user.id);
+            void fetchProfile(data.session.user.id);
           }
         }
       })
       .catch((err) => {
         console.error('[AuthContext] getSession failed', err);
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
+        finishLoading();
       });
 
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       if (!mounted) return;
       setSession(newSession);
       if (newSession?.user.id) {
-        await fetchProfile(newSession.user.id);
+        void fetchProfile(newSession.user.id);
       } else {
         setProfile(null);
       }
@@ -113,6 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       mounted = false;
+      window.clearTimeout(safetyTimeout);
       listener.subscription.unsubscribe();
     };
   }, [fetchProfile]);
@@ -138,6 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         profile,
         loading,
+        profileLoaded,
         signOut,
         refreshProfile,
         role,

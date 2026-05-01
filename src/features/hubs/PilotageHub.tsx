@@ -639,7 +639,8 @@ const ModuleTile: React.FC<ModuleTileProps> = ({ icon, title, subtitle, onClick 
   </button>
 );
 
-function formatFCFA(n: number): string {
+function formatFCFA(n: number | null | undefined): string {
+  if (n == null || !Number.isFinite(n)) return '0';
   return Math.round(n).toLocaleString('fr-FR').replace(/\s/g, '.');
 }
 
