@@ -813,11 +813,34 @@ const AlertsView: React.FC = () => {
                       const treatment = classifyAlertTreatment(alert);
                       const originalAlert = isGrouped ? null : alerts.find(a => a.id === alert.id) ?? null;
 
+                      // Route fallback par catégorie (BUG #1 utilisateur — cards non cliquables).
+                      const fallbackRoute = ((): string | null => {
+                        if (alert.category === 'STOCK') return '/ressources?filter=stock-bas';
+                        const subj = originalAlert?.subjectId;
+                        if (alert.category === 'BANDES') {
+                          if (subj && bandes.some(b => b.id === subj || b.idPortee === subj)) {
+                            const bande = bandes.find(b => b.id === subj || b.idPortee === subj);
+                            return `/troupeau/bandes/${bande?.id ?? subj}`;
+                          }
+                          return '/troupeau?view=bandes';
+                        }
+                        if (alert.category === 'REPRO') {
+                          if (subj && truies.some(t => t.id === subj || t.displayId === subj)) {
+                            const truie = truies.find(t => t.id === subj || t.displayId === subj);
+                            return `/troupeau/truies/${truie?.id ?? subj}`;
+                          }
+                          return '/troupeau';
+                        }
+                        return null;
+                      })();
+
                       const onClick = isGrouped
                         ? () => navigate('/ressources?filter=stock-bas')
                         : originalAlert && originalAlert.requiresAction && hasConfirm
                           ? () => handleAction(originalAlert)
-                          : undefined;
+                          : fallbackRoute
+                            ? () => navigate(fallbackRoute)
+                            : undefined;
 
                       const actionLabel = isGrouped
                         ? 'Voir détails'
@@ -825,7 +848,9 @@ const AlertsView: React.FC = () => {
                           ? 'Action requise'
                           : originalAlert && originalAlert.requiresAction
                             ? 'Détails'
-                            : undefined;
+                            : fallbackRoute
+                              ? 'Voir'
+                              : undefined;
 
                       return (
                         <li key={alert.id}>

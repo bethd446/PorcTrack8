@@ -5,6 +5,7 @@ import { Edit3, Save } from 'lucide-react';
 import { BottomSheet } from '../agritech';
 import { updateBoarByCode } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
+import { useAuth } from '../../context/AuthContext';
 import type { Verrat } from '../../types/farm';
 import {
   validateVerratEdit,
@@ -15,6 +16,7 @@ import {
   type VerratEditValidation,
 } from './quickEditVerratValidation';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
+import PhotoUploader from './PhotoUploader';
 
 /* ═════════════════════════════════════════════════════════════════════════
    QuickEditVerratForm · Édition rapide d'un verrat
@@ -44,6 +46,8 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
   onSuccess,
 }) => {
   const { refreshData } = useFarm();
+  const { user } = useAuth();
+  const farmId = user?.id ?? '';
 
   const initial: VerratEditInitial = useMemo(
     () => ({
@@ -54,6 +58,8 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
       ration: verrat.ration ?? 0,
       statut: verrat.statut || 'Actif',
       notes: verrat.notes ?? '',
+      dateNaissance: (verrat.dateNaissance ?? '').slice(0, 10),
+      loge: verrat.loge ?? '',
     }),
     [verrat],
   );
@@ -67,6 +73,10 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
   );
   const [statut, setStatut] = useState<string>(initial.statut);
   const [notes, setNotes] = useState<string>(initial.notes);
+  const [dateNaissance, setDateNaissance] = useState<string>(initial.dateNaissance);
+  const [loge, setLoge] = useState<string>(initial.loge);
+  const [photoUrl, setPhotoUrl] = useState<string | undefined>(verrat.photoUrl);
+  const [photoDirty, setPhotoDirty] = useState(false);
   const [errors, setErrors] = useState<VerratEditValidation['errors']>({});
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string>('');
@@ -86,6 +96,10 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
       setRation(initial.ration > 0 ? String(initial.ration) : '');
       setStatut(initial.statut);
       setNotes(initial.notes);
+      setDateNaissance(initial.dateNaissance);
+      setLoge(initial.loge);
+      setPhotoUrl(verrat.photoUrl);
+      setPhotoDirty(false);
       setErrors({});
       setSaving(false);
     }
@@ -103,7 +117,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     const result = validateVerratEdit(
-      { nom, boucle, origine, alimentation, ration, statut, notes },
+      { nom, boucle, origine, alimentation, ration, statut, notes, dateNaissance, loge },
       initial,
     );
     if (!result.ok || !result.patch) {
@@ -111,8 +125,8 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
       return;
     }
     setErrors({});
-    // Patch vide (aucune modification) : on ferme sans réseau
-    if (Object.keys(result.patch).length === 0) {
+    // Patch vide et pas de photo modifiée : on ferme sans réseau
+    if (Object.keys(result.patch).length === 0 && !photoDirty) {
       setToast('Aucune modification');
       onClose();
       return;
@@ -128,6 +142,11 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
       if ('RATION KG/J' in p) supabasePatch.ration_kg_j = p['RATION KG/J'];
       if ('STATUT' in p) supabasePatch.statut = p.STATUT;
       if ('NOTES' in p) supabasePatch.notes = p.NOTES;
+      if ('DATE_NAISSANCE' in p) {
+        supabasePatch.date_naissance = (p.DATE_NAISSANCE as string) || null;
+      }
+      if ('LOGE' in p) supabasePatch.localisation = p.LOGE;
+      if (photoDirty) supabasePatch.photo_url = photoUrl ?? null;
       await updateBoarByCode(verrat.id, supabasePatch);
       const online = typeof navigator !== 'undefined' && navigator.onLine;
       setToast(
@@ -195,6 +214,27 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
               </p>
             </div>
           </div>
+
+          {/* ═══ Section Photo ══════════════════════════════════════ */}
+          <section aria-label="Photo" className="space-y-4">
+            <h3 className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+              Photo
+            </h3>
+            <PhotoUploader
+              photoUrl={photoUrl}
+              farmId={farmId}
+              animalId={verrat.id}
+              onUploaded={url => {
+                setPhotoUrl(url);
+                setPhotoDirty(true);
+              }}
+              onDeleted={() => {
+                setPhotoUrl(undefined);
+                setPhotoDirty(true);
+              }}
+              disabled={saving}
+            />
+          </section>
 
           {/* ═══ Section Identité ════════════════════════════════════ */}
           <section aria-label="Identité" className="space-y-4">
@@ -333,6 +373,79 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                   className="font-mono text-[11px] text-red"
                 >
                   {errors.origine}
+                </p>
+              ) : null}
+            </div>
+
+            {/* Date naissance */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="edit-verrat-naissance"
+                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              >
+                Date de naissance{' '}
+                <span className="text-text-2 normal-case">· optionnel</span>
+              </label>
+              <input
+                id="edit-verrat-naissance"
+                type="date"
+                aria-invalid={!!errors.dateNaissance}
+                aria-describedby={
+                  errors.dateNaissance ? 'edit-verrat-naissance-error' : undefined
+                }
+                className={inputBaseClass(!!errors.dateNaissance)}
+                value={dateNaissance}
+                onChange={e => setDateNaissance(e.target.value)}
+                disabled={saving}
+              />
+              {errors.dateNaissance ? (
+                <p
+                  id="edit-verrat-naissance-error"
+                  role="alert"
+                  className="font-mono text-[11px] text-red"
+                >
+                  {errors.dateNaissance}
+                </p>
+              ) : null}
+            </div>
+
+            {/* Loge */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="edit-verrat-loge"
+                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              >
+                Emplacement loge{' '}
+                <span className="text-text-2 normal-case">· optionnel</span>
+              </label>
+              <input
+                id="edit-verrat-loge"
+                type="text"
+                maxLength={30}
+                aria-invalid={!!errors.loge}
+                aria-describedby={
+                  errors.loge ? 'edit-verrat-loge-error' : 'edit-verrat-loge-hint'
+                }
+                className={inputBaseClass(!!errors.loge)}
+                placeholder="Ex: Bât. Verrats L1"
+                value={loge}
+                onChange={e => setLoge(e.target.value)}
+                disabled={saving}
+                autoComplete="off"
+              />
+              <p
+                id="edit-verrat-loge-hint"
+                className="font-mono text-[10px] text-text-2 tabular-nums"
+              >
+                {loge.trim().length}/30
+              </p>
+              {errors.loge ? (
+                <p
+                  id="edit-verrat-loge-error"
+                  role="alert"
+                  className="font-mono text-[11px] text-red"
+                >
+                  {errors.loge}
                 </p>
               ) : null}
             </div>

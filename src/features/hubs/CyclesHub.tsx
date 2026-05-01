@@ -290,7 +290,7 @@ const CyclesHub: React.FC = () => {
           </IonRefresher>
 
           <TopBarSync
-            crumbs={['Pilotage', 'Cycles']}
+            crumbs={['Cycles', 'Vue globale']}
             onMariusClick={() => {
               const evt = new CustomEvent('open-chatbot');
               window.dispatchEvent(evt);

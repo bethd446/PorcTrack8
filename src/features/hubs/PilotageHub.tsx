@@ -35,6 +35,7 @@ import {
   loadPreviousSnapshot,
   semanticTrendDir,
 } from '../../utils/pilotageDelta';
+import { filterRealPortees } from '../../services/bandesAggregator';
 
 const PilotageHub: React.FC = () => {
   const navigate = useNavigate();
@@ -47,10 +48,12 @@ const PilotageHub: React.FC = () => {
   const { handleRefresh } = useAutoRefresh();
   const [, setIsPrinting] = useState(false);
 
+  const realBandes = useMemo(() => filterRealPortees(bandes), [bandes]);
+
   const globalReport = useMemo(() => {
-    if (loading || bandes.length === 0) return null;
-    return genererRapportGlobal(bandes, transitions);
-  }, [bandes, transitions, loading]);
+    if (loading || realBandes.length === 0) return null;
+    return genererRapportGlobal(realBandes, transitions);
+  }, [realBandes, transitions, loading]);
 
   // Snapshot précédent — chargé une fois au mount, pas re-fetché ensuite.
   const prevSnapshotRef = useRef(loadPreviousSnapshot());
@@ -70,9 +73,9 @@ const PilotageHub: React.FC = () => {
   }, [globalReport]);
 
   const auditData = useMemo(() => {
-    if (loading || bandes.length === 0 || !alerts) return null;
-    return prepareAuditSnapshot(bandes, transitions, alerts);
-  }, [bandes, transitions, alerts, loading]);
+    if (loading || realBandes.length === 0 || !alerts) return null;
+    return prepareAuditSnapshot(realBandes, transitions, alerts);
+  }, [realBandes, transitions, alerts, loading]);
 
   const handlePrint = () => {
     setIsPrinting(true);
@@ -219,7 +222,7 @@ const PilotageHub: React.FC = () => {
                     color: 'var(--muted)',
                   }}
                 >
-                  Cockpit financier · {bandes.length} bandes · marge théorique K13
+                  Cockpit financier · {realBandes.length} bande{realBandes.length > 1 ? 's' : ''} · marge théorique K13
                 </div>
               </div>
               {auditData && (

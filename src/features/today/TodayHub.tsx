@@ -35,6 +35,7 @@ import {
   type PendingConfirmation,
 } from '../../services/confirmationQueue';
 import { getRetoursChaleur, getSevrages } from '../../services/proactiveCues';
+import { filterRealPortees } from '../../services/bandesAggregator';
 
 const PRIORITY_ORDER: Record<AlertPriority, number> = {
   CRITIQUE: 0,
@@ -123,10 +124,13 @@ const TodayHub: React.FC = () => {
     [truies, saillies, today],
   );
 
+  // Bandes filtrées (exclut RECAP) — source de vérité partagée avec /cycles.
+  const realBandes = useMemo(() => filterRealPortees(bandes), [bandes]);
+
   // ── Sevrages à confirmer / en retard ─────────────────────────────────
   const sevrages = useMemo(
-    () => getSevrages(bandes, today),
-    [bandes, today],
+    () => getSevrages(realBandes, today),
+    [realBandes, today],
   );
 
   // ── Dernier audit (note de catégorie AUDIT_QUOTIDIEN ou CONTROLE) ─────
@@ -594,7 +598,7 @@ const TodayHub: React.FC = () => {
                     Voir les cycles biologiques
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-                    {bandes.length} bandes actives · 7 phases
+                    {realBandes.length} bande{realBandes.length > 1 ? 's' : ''} active{realBandes.length > 1 ? 's' : ''} · 7 phases
                   </div>
                 </div>
                 <ChevronRight size={18} color="var(--muted)" aria-hidden="true" />
@@ -663,7 +667,7 @@ const TodayHub: React.FC = () => {
                               whiteSpace: 'nowrap',
                             }}
                           >
-                            {c.alertTitle}
+                            {resolveAlertSubject(c.alertTitle, lookup)}
                           </h4>
                           {c.alertMessage ? (
                             <p
@@ -678,7 +682,7 @@ const TodayHub: React.FC = () => {
                                 whiteSpace: 'nowrap',
                               }}
                             >
-                              {c.alertMessage}
+                              {resolveAlertSubject(c.alertMessage, lookup)}
                             </p>
                           ) : null}
                         </div>

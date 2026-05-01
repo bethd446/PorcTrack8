@@ -143,7 +143,7 @@ const TroupeauHub: React.FC = () => {
           </IonRefresher>
 
           <TopBarSync
-            crumbs={['Pilotage', 'Cheptel']}
+            crumbs={['Cheptel', 'Troupeau']}
             onMariusClick={() => {
               const evt = new CustomEvent('open-chatbot');
               window.dispatchEvent(evt);
@@ -258,17 +258,6 @@ const TroupeauHub: React.FC = () => {
                 <LogesMiniBar label="Eng." occ={summary.eng} />
               </div>
             </section>
-
-            {/* ── Pipeline reproduction (funnel statuts) ───────────── */}
-            <ReproFunnel
-              total={summary.total}
-              pleines={summary.pleines}
-              maternite={summary.maternite}
-              vides={summary.vides}
-              surveillance={summary.surveillance}
-              reforme={summary.reforme}
-              onStageClick={(stageId) => navigate(`/cycles/repro?stage=${stageId}`)}
-            />
 
             {/* ── Sub-tabs (Radix) ─────────────────────────────────── */}
             <Tabs
@@ -391,121 +380,6 @@ const LogesMiniBar: React.FC<LogesMiniBarProps> = ({ label, occ }) => {
         />
       </div>
     </div>
-  );
-};
-
-interface ReproFunnelProps {
-  total: number;
-  pleines: number;
-  maternite: number;
-  vides: number;
-  surveillance: number;
-  reforme: number;
-  onStageClick?: (stageId: string) => void;
-}
-
-const ReproFunnel: React.FC<ReproFunnelProps> = ({ pleines, maternite, vides, surveillance, reforme, onStageClick }) => {
-  const stages = [
-    { id: 'attente', label: 'Attente saillie', value: vides, color: 'var(--muted)' },
-    { id: 'pleines', label: 'Pleines', value: pleines, color: 'var(--color-accent-500)' },
-    { id: 'maternite', label: 'Maternité', value: maternite, color: 'var(--color-amber-pork-deep)' },
-    { id: 'surveiller', label: 'Surveiller', value: surveillance, color: 'var(--color-amber-pork)' },
-    { id: 'reforme', label: 'Réforme', value: reforme, color: 'var(--color-pig)' },
-  ];
-  const max = Math.max(1, ...stages.map(s => s.value));
-
-  return (
-    <section
-      aria-label="Pipeline reproduction"
-      style={{
-        background: 'var(--bg-surface)',
-        borderRadius: 12,
-        padding: '16px 18px',
-        boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 12,
-      }}
-    >
-      <Eyebrow dotColor="accent" withRule={false}>
-        Pipeline reproduction
-      </Eyebrow>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${stages.length}, 1fr)`,
-          gap: 8,
-        }}
-      >
-        {stages.map((s) => {
-          const pct = (s.value / max) * 100;
-          return (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => onStageClick?.(s.id)}
-              aria-label={`${s.label} · ${s.value}`}
-              className="pressable"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 6,
-                minWidth: 0,
-                background: 'transparent',
-                border: 'none',
-                padding: '4px 2px',
-                textAlign: 'left',
-                cursor: onStageClick ? 'pointer' : 'default',
-                borderRadius: 8,
-                transition: 'background 160ms var(--ease-emil)',
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: 'BricolageGrotesque, system-ui, sans-serif',
-                  fontSize: 22,
-                  fontWeight: 600,
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1,
-                  color: s.value > 0 ? s.color : 'var(--muted)',
-                }}
-              >
-                {s.value}
-              </div>
-              <div
-                style={{
-                  height: 4,
-                  background: 'var(--bg-app)',
-                  borderRadius: 999,
-                  overflow: 'hidden',
-                }}
-              >
-                <div
-                  style={{
-                    height: '100%',
-                    width: `${pct}%`,
-                    background: s.color,
-                    borderRadius: 999,
-                    transition: 'width 240ms var(--ease-emil)',
-                  }}
-                />
-              </div>
-              <div
-                style={{
-                  fontFamily: 'DMMono, ui-monospace, monospace',
-                  fontSize: 9.5,
-                  letterSpacing: '0.04em',
-                  color: 'var(--muted)',
-                  lineHeight: 1.3,
-                }}
-              >
-                {s.label}
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    </section>
   );
 };
 

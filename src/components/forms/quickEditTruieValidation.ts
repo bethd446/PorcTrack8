@@ -35,6 +35,9 @@ export interface TruieEditValidation {
     nbPortees?: string;
     derniereNV?: string;
     dateMBPrevue?: string;
+    dateNaissance?: string;
+    origine?: string;
+    loge?: string;
     notes?: string;
   };
 }
@@ -52,6 +55,10 @@ export interface TruieEditDraft {
   derniereNV: string;
   /** Date MB prévue au format yyyy-MM-dd (input date HTML5). */
   dateMBPrevue: string;
+  /** Date de naissance au format yyyy-MM-dd (input date HTML5). */
+  dateNaissance: string;
+  origine: string;
+  loge: string;
   notes: string;
 }
 
@@ -71,6 +78,10 @@ export interface TruieEditInitial {
   derniereNV: string;
   /** dateMBPrevue initiale au format yyyy-MM-dd (normalisée depuis Sheets). */
   dateMBPrevue: string;
+  /** dateNaissance initiale au format yyyy-MM-dd. */
+  dateNaissance: string;
+  origine: string;
+  loge: string;
   notes: string;
 }
 
@@ -176,6 +187,9 @@ export function validateTruieEditFull(
   const statut = (draft.statut ?? '').trim();
   const notes = (draft.notes ?? '').trim();
   const dateIso = (draft.dateMBPrevue ?? '').trim();
+  const dateNaissanceIso = (draft.dateNaissance ?? '').trim();
+  const origine = (draft.origine ?? '').trim();
+  const loge = (draft.loge ?? '').trim();
 
   // ── Validation ─────────────────────────────────────────────────────────
   if (boucle.length === 0) {
@@ -238,6 +252,13 @@ export function validateTruieEditFull(
     errors.dateMBPrevue = 'Date invalide (format yyyy-MM-dd)';
   }
 
+  // Date de naissance — format yyyy-MM-dd ou vide
+  if (dateNaissanceIso !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(dateNaissanceIso)) {
+    errors.dateNaissance = 'Date invalide (format yyyy-MM-dd)';
+  }
+  if (origine.length > 50) errors.origine = 'Origine trop longue (max 50)';
+  if (loge.length > 30) errors.loge = 'Loge trop longue (max 30)';
+
   if (Object.keys(errors).length > 0) return { ok: false, errors };
 
   // ── Construction du patch (diff vs initial) ────────────────────────────
@@ -276,6 +297,11 @@ export function validateTruieEditFull(
     if (dateIso !== initial.dateMBPrevue) {
       patch['DATE_MB_PREVUE'] = isoDateToFr(dateIso);
     }
+    if (dateNaissanceIso !== initial.dateNaissance) {
+      patch['DATE_NAISSANCE'] = dateNaissanceIso;
+    }
+    setIfChanged('ORIGINE', origine, initial.origine);
+    setIfChanged('LOGE', loge, initial.loge);
     setIfChanged('NOTES', notes, initial.notes);
   } else {
     // Pas de snapshot → on inclut tous les champs
@@ -289,6 +315,9 @@ export function validateTruieEditFull(
     patch['NB_PORTEES'] = nbPorteesN === null ? '' : nbPorteesN;
     patch['DERNIERE_NV'] = derniereNVN === null ? '' : derniereNVN;
     patch['DATE_MB_PREVUE'] = isoDateToFr(dateIso);
+    patch['DATE_NAISSANCE'] = dateNaissanceIso;
+    patch['ORIGINE'] = origine;
+    patch['LOGE'] = loge;
     patch['NOTES'] = notes;
   }
 

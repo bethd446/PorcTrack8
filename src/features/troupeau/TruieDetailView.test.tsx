@@ -20,7 +20,18 @@ import type { Truie } from '../../types/farm';
 
 // Mock AuthContext (requis depuis l'ajout du rôle utilisateur).
 vi.mock('../../context/AuthContext', () => ({
-  useAuth: () => ({ role: 'PORCHER', userName: 'Test', setRole: vi.fn(), isOwner: false }),
+  useAuth: () => ({
+    user: { id: 'farm-test' },
+    role: 'PORCHER',
+    userName: 'Test',
+    setRole: vi.fn(),
+    isOwner: false,
+    profile: null,
+    loading: false,
+    profileLoaded: true,
+    signOut: vi.fn(),
+    refreshProfile: vi.fn(),
+  }),
 }));
 
 // Mock offlineQueue pour observer les updates de statut.

@@ -36,6 +36,22 @@ const verratBobi: Verrat = {
 };
 
 // ── Mocks ───────────────────────────────────────────────────────────────────
+vi.mock('../../context/AuthContext', () => ({
+  useAuth: () => ({
+    user: { id: 'farm-test' },
+    profile: null,
+    loading: false,
+    profileLoaded: true,
+    role: 'PORCHER',
+    userName: 'Test',
+    isOwner: true,
+    signOut: vi.fn(),
+    refreshProfile: vi.fn(),
+    setRole: vi.fn(),
+  }),
+  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
 vi.mock('../../context/FarmContext', () => ({
   useFarm: () => ({
     truies: [],

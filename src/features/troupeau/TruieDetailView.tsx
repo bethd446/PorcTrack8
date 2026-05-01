@@ -465,6 +465,7 @@ const TruieDetailView: React.FC = () => {
               name={truie.nom || truie.displayId}
               subtitle={truie.race ? `— ${truie.race}` : undefined}
               tagline={tagline}
+              photoUrl={truie.photoUrl}
               photoStamp={`${truie.displayId} · ${formatDateShort(new Date().toISOString())}`}
               onPrimaryAction={() => setEditOpen(true)}
               onSecondaryAction={() => window.print()}
@@ -601,6 +602,11 @@ const TruieDetailView: React.FC = () => {
                   >
                     <DataRow label="Code · Boucle" value={`${truie.displayId} · ${truie.boucle}`} />
                     {truie.race && <DataRow label="Race" value={truie.race} />}
+                    {truie.dateNaissance && (
+                      <DataRow label="Naissance" value={formatDate(truie.dateNaissance)} />
+                    )}
+                    {truie.origine && <DataRow label="Origine" value={truie.origine} />}
+                    {truie.loge && <DataRow label="Loge" value={truie.loge} />}
                     {lastBande?.idPortee && (
                       <DataRow label="Dernière portée" value={lastBande.idPortee} />
                     )}

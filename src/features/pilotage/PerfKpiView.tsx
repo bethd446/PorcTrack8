@@ -127,6 +127,11 @@ function formatNum(n: number): string {
   return Number.isInteger(n) ? `${n}` : n.toFixed(1);
 }
 
+/** Hint affiché sous un KPI vide pour expliquer la donnée manquante. */
+function emptyHint(nbBandes: number): string {
+  return `Données insuffisantes (requiert portées sevrées). Vous avez ${nbBandes} bande${nbBandes > 1 ? 's' : ''}.`;
+}
+
 /** Nom affichable d'une truie : nom prioritaire, puis displayId, puis boucle. */
 function truieLabel(truie: { displayId: string; boucle: string; nom?: string }): string {
   return truie.nom || truie.displayId || truie.boucle;
@@ -237,38 +242,63 @@ const PerfKpiView: React.FC = () => {
               <>
                 {/* ── Summary strip : 4 KPI globaux ─────────────────── */}
                 <div className="grid grid-cols-2 gap-2">
-                  <KpiCardV6
-                    label="Sevrés/truie/an"
-                    value={formatNum(kpis.sevresParTruieAn)}
-                    accentColor={toneToAccent(kpis.sevresParTruieAn > 0 && kpis.sevresParTruieAn < 18 ? 'warning' : 'default')}
-                  />
-                  <KpiCardV6
-                    label="Portées/truie/an"
-                    value={formatNum(kpis.porteesParTruieAn)}
-                  />
-                  <KpiCardV6
-                    label="NV moyen"
-                    value={formatNum(kpis.moyNV)}
-                  />
-                  <KpiCardV6
-                    label="Mort. N→Sev"
-                    value={formatNum(kpis.tauxMortaliteNaissanceSevrage)}
-                    unit="%"
-                    accentColor={kpis.tauxMortaliteNaissanceSevrage > 15 ? 'var(--color-danger, #EF4444)' : undefined}
-                  />
+                  <div className="flex flex-col gap-1">
+                    <KpiCardV6
+                      label="Sevrés/truie/an"
+                      value={formatNum(kpis.sevresParTruieAn)}
+                      accentColor={toneToAccent(kpis.sevresParTruieAn > 0 && kpis.sevresParTruieAn < 18 ? 'warning' : 'default')}
+                    />
+                    {kpis.sevresParTruieAn === 0 && (
+                      <span className="px-1 font-mono text-[10px] text-text-2">{emptyHint(nbBandes)}</span>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <KpiCardV6
+                      label="Portées/truie/an"
+                      value={formatNum(kpis.porteesParTruieAn)}
+                    />
+                    {kpis.porteesParTruieAn === 0 && (
+                      <span className="px-1 font-mono text-[10px] text-text-2">{emptyHint(nbBandes)}</span>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <KpiCardV6
+                      label="NV moyen"
+                      value={formatNum(kpis.moyNV)}
+                    />
+                    {kpis.moyNV === 0 && (
+                      <span className="px-1 font-mono text-[10px] text-text-2">{emptyHint(nbBandes)}</span>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <KpiCardV6
+                      label="Mort. N→Sev"
+                      value={formatNum(kpis.tauxMortaliteNaissanceSevrage)}
+                      unit="%"
+                      accentColor={kpis.tauxMortaliteNaissanceSevrage > 15 ? 'var(--color-danger, #EF4444)' : undefined}
+                    />
+                    {kpis.tauxMortaliteNaissanceSevrage === 0 && (
+                      <span className="px-1 font-mono text-[10px] text-text-2">{emptyHint(nbBandes)}</span>
+                    )}
+                  </div>
                 </div>
 
                 {/* ── Secondary strip : 2 KPI auxiliaires ───────────── */}
                 <div className="grid grid-cols-2 gap-2">
-                  <KpiCardV6
-                    label="Interv. sev-sail."
-                    value={
-                      kpis.intervalSevrageSaillieMoyJours !== null
-                        ? formatNum(kpis.intervalSevrageSaillieMoyJours)
-                        : '—'
-                    }
-                    unit="j"
-                  />
+                  <div className="flex flex-col gap-1">
+                    <KpiCardV6
+                      label="Interv. sev-sail."
+                      value={
+                        kpis.intervalSevrageSaillieMoyJours !== null
+                          ? formatNum(kpis.intervalSevrageSaillieMoyJours)
+                          : '—'
+                      }
+                      unit="j"
+                    />
+                    {kpis.intervalSevrageSaillieMoyJours === null && (
+                      <span className="px-1 font-mono text-[10px] text-text-2">{emptyHint(nbBandes)}</span>
+                    )}
+                  </div>
                   <KpiCardV6 label="MB à venir 30j" value={kpis.nbMbAVenir30j} />
                 </div>
 
@@ -283,7 +313,9 @@ const PerfKpiView: React.FC = () => {
                         unit={kpis.isseMoyJours !== null ? 'j' : undefined}
                         accentColor={toneToAccent(isseToTone(kpis.isseMoyJours))}
                       />
-                      <span className="px-1 font-mono text-[10px] text-text-2">cible 3-7 j</span>
+                      <span className="px-1 font-mono text-[10px] text-text-2">
+                        {kpis.isseMoyJours === null ? emptyHint(nbBandes) : 'cible 3-7 j'}
+                      </span>
                     </div>
                     <div className="flex flex-col gap-1">
                       <KpiCardV6
@@ -293,7 +325,7 @@ const PerfKpiView: React.FC = () => {
                         accentColor={toneToAccent(iemToTone(kpis.iemMoyJours))}
                       />
                       <span className="px-1 font-mono text-[10px] text-text-2">
-                        cible 140-150 j
+                        {kpis.iemMoyJours === null ? emptyHint(nbBandes) : 'cible 140-150 j'}
                       </span>
                     </div>
                     <div className="flex flex-col gap-1">
@@ -303,7 +335,9 @@ const PerfKpiView: React.FC = () => {
                         unit={kpis.tauxMBPct !== null ? '%' : undefined}
                         accentColor={toneToAccent(tauxMBToTone(kpis.tauxMBPct))}
                       />
-                      <span className="px-1 font-mono text-[10px] text-text-2">cible ≥ 88 %</span>
+                      <span className="px-1 font-mono text-[10px] text-text-2">
+                        {kpis.tauxMBPct === null ? emptyHint(nbBandes) : 'cible ≥ 88 %'}
+                      </span>
                     </div>
                     <div className="flex flex-col gap-1">
                       <KpiCardV6
@@ -317,7 +351,7 @@ const PerfKpiView: React.FC = () => {
                         accentColor={toneToAccent(renouvToTone(kpis.tauxRenouvellementPct))}
                       />
                       <span className="px-1 font-mono text-[10px] text-text-2">
-                        cible 30-40 %/an
+                        {kpis.tauxRenouvellementPct === null ? emptyHint(nbBandes) : 'cible 30-40 %/an'}
                       </span>
                     </div>
                   </div>

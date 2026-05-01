@@ -89,6 +89,8 @@ function makeInitial(over: Partial<VerratEditInitial> = {}): VerratEditInitial {
     ration: 3.5,
     statut: 'Actif',
     notes: '',
+    dateNaissance: '',
+    loge: '',
     ...over,
   };
 }
@@ -102,6 +104,8 @@ function makeForm(over: Partial<VerratEditForm> = {}): VerratEditForm {
     ration: '3.5',
     statut: 'Actif',
     notes: '',
+    dateNaissance: '',
+    loge: '',
     ...over,
   };
 }

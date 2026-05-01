@@ -466,14 +466,28 @@ const BandeDetailView: React.FC = () => {
             {/* ── Hero ───────────────────────────────────────────────── */}
             <div className="card-dense flex flex-col gap-3.5">
               <div className="flex items-center gap-3.5">
-                <div className="w-[52px] h-[52px] rounded-2xl-v2 bg-bg-1 border border-border flex items-center justify-center shrink-0 text-gold">
-                  <BandeIcon size={30} aria-hidden="true" />
-                </div>
+                {bande.photoUrl ? (
+                  <img
+                    src={bande.photoUrl}
+                    alt={`Photo de la bande ${idDisplay}`}
+                    className="w-[88px] h-[88px] rounded-2xl object-cover shrink-0 border border-border"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-[52px] h-[52px] rounded-2xl-v2 bg-bg-1 border border-border flex items-center justify-center shrink-0 text-gold">
+                    <BandeIcon size={30} aria-hidden="true" />
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="font-mono text-[11px] text-text-2 uppercase tracking-wide">
                     Truie {bande.truie || '—'}
                     {bande.boucleMere ? ` · ${bande.boucleMere}` : ''}
                   </div>
+                  {bande.loge ? (
+                    <div className="font-mono text-[11px] text-text-2 mt-0.5">
+                      Loge {bande.loge}
+                    </div>
+                  ) : null}
                 </div>
                 <Chip label={meta.label} tone={meta.tone} size="xs" className="!normal-case" />
                 <button

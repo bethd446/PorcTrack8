@@ -113,7 +113,7 @@ export default function KpiCard({
     typeof process !== 'undefined' &&
     process.env?.NODE_ENV !== 'production'
   ) {
-    // eslint-disable-next-line no-console
+     
     console.debug(
       `[KpiCard] sparkline ignoré (${spark.length} points < 8) — label="${label}"`,
     );

@@ -89,6 +89,7 @@ export type Database = {
           nb_mort_nes: number | null
           notes: string | null
           phase: string | null
+          photo_url: string | null
           poids_moyen_sevrage_kg: number | null
           poids_portee_naissance_kg: number | null
           porcelets_nes_total: number
@@ -113,6 +114,7 @@ export type Database = {
           nb_mort_nes?: number | null
           notes?: string | null
           phase?: string | null
+          photo_url?: string | null
           poids_moyen_sevrage_kg?: number | null
           poids_portee_naissance_kg?: number | null
           porcelets_nes_total?: number
@@ -137,6 +139,7 @@ export type Database = {
           nb_mort_nes?: number | null
           notes?: string | null
           phase?: string | null
+          photo_url?: string | null
           poids_moyen_sevrage_kg?: number | null
           poids_portee_naissance_kg?: number | null
           porcelets_nes_total?: number
@@ -177,11 +180,14 @@ export type Database = {
           breed: string | null
           code_id: string
           created_on: string
+          date_naissance: string | null
           farm_id: string
           id: string
+          localisation: string | null
           name: string | null
           notes: string | null
           origine: string | null
+          photo_url: string | null
           ration_kg_j: number | null
           statut: string | null
         }
@@ -191,11 +197,14 @@ export type Database = {
           breed?: string | null
           code_id: string
           created_on?: string
+          date_naissance?: string | null
           farm_id: string
           id?: string
+          localisation?: string | null
           name?: string | null
           notes?: string | null
           origine?: string | null
+          photo_url?: string | null
           ration_kg_j?: number | null
           statut?: string | null
         }
@@ -205,11 +214,14 @@ export type Database = {
           breed?: string | null
           code_id?: string
           created_on?: string
+          date_naissance?: string | null
           farm_id?: string
           id?: string
+          localisation?: string | null
           name?: string | null
           notes?: string | null
           origine?: string | null
+          photo_url?: string | null
           ration_kg_j?: number | null
           statut?: string | null
         }
@@ -702,6 +714,7 @@ export type Database = {
           code_id: string
           created_on: string
           date_mb_prevue: string | null
+          date_naissance: string | null
           farm_id: string
           id: string
           localisation: string | null
@@ -709,6 +722,7 @@ export type Database = {
           nb_portees: number | null
           notes: string | null
           origine: string | null
+          photo_url: string | null
           ration_kg_j: number | null
           statut: string | null
           statut_repro: string | null
@@ -720,6 +734,7 @@ export type Database = {
           code_id: string
           created_on?: string
           date_mb_prevue?: string | null
+          date_naissance?: string | null
           farm_id: string
           id?: string
           localisation?: string | null
@@ -727,6 +742,7 @@ export type Database = {
           nb_portees?: number | null
           notes?: string | null
           origine?: string | null
+          photo_url?: string | null
           ration_kg_j?: number | null
           statut?: string | null
           statut_repro?: string | null
@@ -738,6 +754,7 @@ export type Database = {
           code_id?: string
           created_on?: string
           date_mb_prevue?: string | null
+          date_naissance?: string | null
           farm_id?: string
           id?: string
           localisation?: string | null
@@ -745,6 +762,7 @@ export type Database = {
           nb_portees?: number | null
           notes?: string | null
           origine?: string | null
+          photo_url?: string | null
           ration_kg_j?: number | null
           statut?: string | null
           statut_repro?: string | null

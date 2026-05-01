@@ -182,11 +182,12 @@ const PharmacieView: React.FC = () => {
   const summary = useMemo(() => {
     const total = stockVeto.length;
     const rupture = stockVeto.filter(s => s.statutStock === 'RUPTURE').length;
+    const produitsAvecPrix = stockVeto.filter(item => priceOf(item) > 0).length;
     const valeurStock = stockVeto.reduce(
-      (sum, item) => sum + item.stockActuel * priceOf(item),
+      (sum, item) => sum + (item.stockActuel ?? 0) * priceOf(item),
       0
     );
-    return { total, rupture, valeurStock };
+    return { total, rupture, valeurStock, produitsAvecPrix };
   }, [stockVeto]);
 
   const treatmentCounts = useMemo(() => {
@@ -316,9 +317,16 @@ const PharmacieView: React.FC = () => {
               />
               <KpiCard
                 label="Valeur stock"
-                value={formatCurrency(summary.valeurStock)}
+                value={
+                  summary.valeurStock > 0
+                    ? formatCurrency(summary.valeurStock)
+                    : summary.total === 0
+                      ? '—'
+                      : 'Définir prix'
+                }
                 unit={summary.valeurStock > 0 ? 'XOF' : undefined}
                 icon={<Box size={14} />}
+                tone={summary.valeurStock === 0 && summary.total > 0 ? 'default' : 'default'}
               />
             </div>
 

@@ -30,6 +30,8 @@ export type VerratEditPatch = Partial<{
   'RATION KG/J': number;
   STATUT: string;
   NOTES: string;
+  DATE_NAISSANCE: string;
+  LOGE: string;
 }> &
   Record<string, string | number | boolean | null>;
 
@@ -44,6 +46,8 @@ export interface VerratEditValidation {
     ration?: string;
     statut?: string;
     notes?: string;
+    dateNaissance?: string;
+    loge?: string;
   };
 }
 
@@ -55,6 +59,8 @@ export interface VerratEditInitial {
   ration: number;
   statut: string;
   notes: string;
+  dateNaissance: string;
+  loge: string;
 }
 
 export interface VerratEditForm {
@@ -65,6 +71,8 @@ export interface VerratEditForm {
   ration: string;
   statut: string;
   notes: string;
+  dateNaissance: string;
+  loge: string;
 }
 
 /** Arrondi au 0.1 près (évite les flottants parasites). */
@@ -119,6 +127,16 @@ export function validateVerratEdit(
   const notes = (form.notes ?? '').trim();
   if (notes.length > 200) errors.notes = 'Notes trop longues (max 200)';
 
+  // ── Date de naissance ────────────────────────────────────────────────
+  const dateNaissance = (form.dateNaissance ?? '').trim();
+  if (dateNaissance !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(dateNaissance)) {
+    errors.dateNaissance = 'Date invalide (format yyyy-MM-dd)';
+  }
+
+  // ── Loge ─────────────────────────────────────────────────────────────
+  const loge = (form.loge ?? '').trim();
+  if (loge.length > 30) errors.loge = 'Loge trop longue (max 30)';
+
   if (Object.keys(errors).length > 0) return { ok: false, errors };
 
   // ── Diff (patch partiel : uniquement les champs modifiés) ────────────
@@ -140,6 +158,10 @@ export function validateVerratEdit(
   if (rationNormalized !== initialRation) patch['RATION KG/J'] = rationNormalized;
   if (statut !== initialStatut) patch.STATUT = statut;
   if (notes !== initialNotes) patch.NOTES = notes;
+  if (dateNaissance !== (initial.dateNaissance ?? '').trim()) {
+    patch.DATE_NAISSANCE = dateNaissance;
+  }
+  if (loge !== (initial.loge ?? '').trim()) patch.LOGE = loge;
 
   return { ok: true, errors: {}, patch };
 }

@@ -218,9 +218,18 @@ const VerratDetailView: React.FC = () => {
 
             {/* ── Hero ───────────────────────────────────────────────── */}
             <div className="card-dense flex items-center gap-3.5 !p-4">
-              <div className="w-14 h-14 rounded-2xl-v2 bg-bg-1 border border-border flex items-center justify-center shrink-0 text-accent">
-                <VerratIcon size={32} aria-hidden="true" />
-              </div>
+              {verrat.photoUrl ? (
+                <img
+                  src={verrat.photoUrl}
+                  alt={`Photo du verrat ${displayId}`}
+                  className="w-[88px] h-[88px] rounded-2xl object-cover shrink-0 border border-border"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="w-14 h-14 rounded-2xl-v2 bg-bg-1 border border-border flex items-center justify-center shrink-0 text-accent">
+                  <VerratIcon size={32} aria-hidden="true" />
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <div className="flex gap-1.5 flex-wrap items-center">
                   <Chip label={verrat.statut || '—'} tone={tone} size="xs" />
@@ -255,6 +264,10 @@ const VerratDetailView: React.FC = () => {
                   />
                 </EditableDetailRow>
                 <DetailRow label="Origine" value={verrat.origine || '—'} />
+                {verrat.dateNaissance ? (
+                  <DetailRow label="Naissance" value={formatDate(verrat.dateNaissance)} />
+                ) : null}
+                {verrat.loge ? <DetailRow label="Loge" value={verrat.loge} /> : null}
                 <DetailRow label="Alimentation" value={verrat.alimentation || '—'} />
                 <EditableDetailRow label="Ration/j">
                   <EditableNumber

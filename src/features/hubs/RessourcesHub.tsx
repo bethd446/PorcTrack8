@@ -228,7 +228,7 @@ const RessourcesHub: React.FC = () => {
           </IonRefresher>
 
           <TopBarSync
-            crumbs={['Pilotage', 'Ressources']}
+            crumbs={['Ressources', 'Vue globale']}
             onMariusClick={() => {
               const evt = new CustomEvent('open-chatbot');
               window.dispatchEvent(evt);

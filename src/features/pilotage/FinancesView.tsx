@@ -158,6 +158,32 @@ const FinancesView: React.FC = () => {
     return all.totalRevenus - all.totalDepenses;
   }, [entries]);
 
+  // Compteur de mois consécutifs en solde négatif (depuis le mois courant en
+  // remontant) — utilisé pour expliciter pourquoi la trésorerie cumul est < 0.
+  const moisNegatifs = useMemo(() => {
+    if (tresorerieCumul >= 0) return 0;
+    const now = new Date();
+    let cumul = 0;
+    // On reconstruit la trésorerie en partant du début de l'historique pour
+    // identifier le 1er mois où le cumul passe en négatif.
+    const sorted = [...entries].sort(
+      (a, b) => parseDateFr(a.date) - parseDateFr(b.date),
+    );
+    let firstNegativeKey: string | null = null;
+    for (const e of sorted) {
+      cumul += e.type === 'REVENU' ? e.montant : -e.montant;
+      if (cumul < 0 && !firstNegativeKey) {
+        firstNegativeKey = dateToPeriode(e.date);
+      }
+    }
+    if (!firstNegativeKey) return 0;
+    const [fy, fm] = firstNegativeKey.split('-').map(Number);
+    if (!Number.isFinite(fy) || !Number.isFinite(fm)) return 0;
+    const count =
+      (now.getFullYear() - fy) * 12 + (now.getMonth() + 1 - fm) + 1;
+    return Math.max(1, count);
+  }, [entries, tresorerieCumul]);
+
   // Sparkline : CA par mois (6 derniers)
   const sparkData = useMemo(() => {
     const keys = last6MonthsKeys();
@@ -318,9 +344,59 @@ const FinancesView: React.FC = () => {
                   <KpiCardV6
                     label="Trésorerie cumul"
                     value={formatMontant(tresorerieCumul, currency)}
-                    accentColor={tresorerieCumul >= 0 ? undefined : 'var(--color-danger, #EF4444)'}
+                    accentColor={tresorerieCumul >= 0 ? undefined : 'pig'}
+                    tone={tresorerieCumul < 0 ? 'critical' : undefined}
+                    trend={
+                      tresorerieCumul < 0
+                        ? `⚠ ATTENTION · solde négatif${moisNegatifs > 0 ? ` depuis ${moisNegatifs} mois` : ''}`
+                        : undefined
+                    }
+                    polarity="higher-better"
+                    trendDir={tresorerieCumul < 0 ? 'down' : 'neutral'}
+                    ariaLabel={
+                      tresorerieCumul < 0
+                        ? `Trésorerie cumul ${formatMontant(tresorerieCumul, currency)} — ATTENTION : solde négatif${moisNegatifs > 0 ? ` depuis ${moisNegatifs} mois` : ''}`
+                        : undefined
+                    }
                   />
                 </div>
+
+                {/* ── Banner : mois courant vide mais historique présent ── */}
+                {periode === 'mois' && filteredEntries.length === 0 && entries.length > 0 ? (
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    className="card-dense"
+                    style={{
+                      padding: '12px 14px',
+                      background: 'color-mix(in srgb, var(--amber) 8%, var(--bg-2))',
+                      borderColor: 'color-mix(in srgb, var(--amber) 30%, var(--border))',
+                    }}
+                  >
+                    <div className="ft-heading text-[12px] uppercase tracking-wide text-text-0">
+                      Aucune transaction ce mois
+                    </div>
+                    <div className="font-mono text-[11px] text-text-2 mt-1">
+                      {entries.length} transaction{entries.length > 1 ? 's' : ''} dans l'historique. Voir
+                      <button
+                        type="button"
+                        onClick={() => setPeriode('prec')}
+                        className="font-semibold text-accent ml-1 underline-offset-2 hover:underline"
+                      >
+                        Mois préc.
+                      </button>
+                      <span className="text-text-2 mx-1">ou</span>
+                      <button
+                        type="button"
+                        onClick={() => setPeriode('annee')}
+                        className="font-semibold text-accent underline-offset-2 hover:underline"
+                      >
+                        Année
+                      </button>
+                      .
+                    </div>
+                  </div>
+                ) : null}
 
                 {/* ── Bloc A : CA 6 mois + 3 ventes (variante SYNTHÈSE) ── */}
                 <section aria-label="Chiffre d'affaires 6 mois">
@@ -469,6 +545,8 @@ const SparkCa: React.FC<SparkCaProps> = ({ data, currency, deltaPct, recentVente
   const max = Math.max(...vals, 1);
   const lastCa = vals[vals.length - 1] ?? 0;
   const lastLabel = data[data.length - 1]?.label ?? '—';
+  const totalCa = vals.reduce((s, v) => s + v, 0);
+  const allEmpty = totalCa === 0;
 
   const pts = data.map((d, i) => {
     const x = (i / Math.max(1, data.length - 1)) * W;
@@ -481,13 +559,31 @@ const SparkCa: React.FC<SparkCaProps> = ({ data, currency, deltaPct, recentVente
     : '';
   const last = pts[pts.length - 1] ?? [0, H];
 
+  if (allEmpty) {
+    return (
+      <div className="card-dense mt-3 text-center py-6" role="status" aria-live="polite">
+        <div className="kpi-label text-[10px] mb-1">Aucune transaction sur 6 mois</div>
+        <div className="font-mono text-[11px] text-text-2">
+          Aucune donnée à afficher pour la période.
+        </div>
+        <div className="flex justify-between mt-4">
+          {data.map((d) => (
+            <span key={d.periode} className="font-mono text-[9px] tracking-wide text-text-2">
+              {d.label}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="card-dense mt-3">
       <div className="flex items-baseline justify-between gap-4">
         <div className="min-w-0">
           <div className="kpi-label text-[10px]">{lastLabel}</div>
           <div className="font-mono tabular-nums text-[26px] font-bold text-accent mt-1 leading-none tracking-tight">
-            {formatMontant(lastCa, currency)}
+            {lastCa === 0 ? 'Aucune transaction' : formatMontant(lastCa, currency)}
           </div>
           {deltaPct !== null ? (
             <div className="font-mono text-[10px] text-text-2 mt-1.5">

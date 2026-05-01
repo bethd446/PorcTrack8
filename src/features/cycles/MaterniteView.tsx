@@ -275,6 +275,11 @@ const MaterniteCard: React.FC<{
   const mortsPct = mortsPercent(portee);
   const feedConfig = FARM_CONFIG.FEED_CONFIG.TRUIE_LACTATION;
 
+  // Boucle peut déjà contenir "B." en préfixe selon source de données — on
+  // strip pour éviter "B.B.24", puis on re-préfixe une seule fois.
+  const boucleClean = (truie.boucle ?? '').toString().replace(/^B\.\s*/i, '').trim();
+  const boucleLabel = boucleClean ? `B.${boucleClean}` : 'B.—';
+
   const treatmentStyle = getCycleTreatmentStyle(treatment, MATERNITE_PHASE_TONE);
   const isUrgent = treatment === 'urgent';
   const isResolu = treatment === 'resolu';
@@ -355,7 +360,7 @@ const MaterniteCard: React.FC<{
               {truie.displayId}
             </h3>
             {truie.nom && <span className="text-[12px] text-text-2 truncate max-w-[80px]">{truie.nom}</span>}
-            <Chip tone={isBloquant ? 'red' : 'default'} label={isBloquant ? 'BLOCAGE' : `B.${truie.boucle}`} size="xs" />
+            <Chip tone={isBloquant ? 'red' : 'default'} label={isBloquant ? 'BLOCAGE' : boucleLabel} size="xs" />
           </div>
           <p className="text-[11px] text-text-2 mt-0.5">
             {portee ? `Portée: ${portee.idPortee}` : 'Aucune portée liée'}

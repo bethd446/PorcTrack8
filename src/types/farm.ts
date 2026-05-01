@@ -42,6 +42,14 @@ export interface Truie {
   poids?: number;
   /** Race / lignée génétique (ex. Large White, Landrace, Duroc). Optionnel. */
   race?: string;
+  /** URL publique de la photo (Supabase Storage bucket `farm-photos`). */
+  photoUrl?: string;
+  /** Date de naissance ISO yyyy-MM-dd (colonne `date_naissance`). */
+  dateNaissance?: string;
+  /** Origine / élevage de provenance (colonne `origine`). */
+  origine?: string;
+  /** Emplacement loge / bâtiment (colonne `localisation`). */
+  loge?: string;
   synced: boolean;
   raw?: (string | number | boolean)[];
 }
@@ -56,6 +64,12 @@ export interface Verrat {
   alimentation?: string;
   ration: number;
   notes?: string;
+  /** URL publique de la photo (Supabase Storage bucket `farm-photos`). */
+  photoUrl?: string;
+  /** Date de naissance ISO yyyy-MM-dd. */
+  dateNaissance?: string;
+  /** Emplacement loge / bâtiment. */
+  loge?: string;
   synced: boolean;
   raw?: (string | number | boolean)[];
 }
@@ -80,6 +94,10 @@ export interface BandePorcelets {
   logeEngraissement?: 'M' | 'F';
   /** Date de séparation par sexe (dd/MM/yyyy ou ISO). */
   dateSeparation?: string;
+  /** URL publique de la photo de groupe (Supabase Storage). */
+  photoUrl?: string;
+  /** Emplacement loge — alias `loge` côté DB (déjà présent). */
+  loge?: string;
   notes?: string;
   synced: boolean;
   raw?: (string | number | boolean)[];

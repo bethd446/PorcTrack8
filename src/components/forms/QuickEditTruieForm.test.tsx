@@ -99,6 +99,9 @@ const baseInitial: TruieEditInitial = {
   nbPortees: '4',
   derniereNV: '12',
   dateMBPrevue: '2026-05-10',
+  dateNaissance: '',
+  origine: '',
+  loge: '',
   notes: 'RAS',
 };
 

@@ -90,7 +90,7 @@ const TruieStatutPipeline: React.FC<TruieStatutPipelineProps> = ({
               key={etape.key}
               type="button"
               onClick={() => navigate(`${basePath}?statut=${etape.key}`)}
-              aria-label={`${etape.label} · ${etape.count} truies — ouvrir la liste filtrée`}
+              aria-label={`${etape.label} · ${etape.count} ${etape.count === 1 ? 'truie' : 'truies'} — ouvrir la liste filtrée`}
               style={{ transitionDelay: `${idx * 50}ms` }}
               className={cn(
                 'pressable card-dense text-left flex flex-col gap-2',

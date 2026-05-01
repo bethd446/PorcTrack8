@@ -826,16 +826,29 @@ export default function AdminDashboard() {
       .order('role', { ascending: true })
       .then(({ data, error: fetchErr }) => {
         if (fetchErr) {
-          console.error('[AdminDashboard] profiles fetch failed', fetchErr);
-          setProfilesError('Impossible de charger les utilisateurs.');
-          setProfiles([]);
+          console.error(
+            '[AdminDashboard] profiles fetch failed',
+            fetchErr.message,
+            fetchErr.code,
+            fetchErr,
+          );
+          // Table inexistante → fallback gracieux : 0 profils, onboarding solo-owner pris.
+          if (fetchErr.code === '42P01' || /relation .* does not exist/i.test(fetchErr.message)) {
+            setProfiles([]);
+            setProfilesError(null);
+          } else {
+            const detail = fetchErr.code ? `${fetchErr.code} — ${fetchErr.message}` : fetchErr.message;
+            setProfilesError(`Erreur chargement utilisateurs : ${detail}`);
+            setProfiles([]);
+          }
         } else {
           setProfiles(data ?? []);
         }
         setProfilesLoading(false);
-      }, (err) => {
+      }, (err: unknown) => {
         console.error('[AdminDashboard] profiles fetch failed', err);
-        setProfilesError('Impossible de charger les utilisateurs.');
+        const msg = err instanceof Error ? err.message : String(err);
+        setProfilesError(`Erreur chargement utilisateurs : ${msg}`);
         setProfiles([]);
         setProfilesLoading(false);
       });
@@ -844,9 +857,9 @@ export default function AdminDashboard() {
   const isSoloOwner =
     !profilesLoading &&
     !profilesError &&
-    profiles.length === 1 &&
     currentUserId !== null &&
-    profiles[0].id === currentUserId;
+    (profiles.length === 0 ||
+      (profiles.length === 1 && profiles[0].id === currentUserId));
 
   const handleLogout = async () => {
     await supabase.auth.signOut();

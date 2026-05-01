@@ -140,17 +140,17 @@ const TroupeauLogesView: React.FC = () => {
         />
         <Chip
           tone="gold"
-          label={`${truiesMat.length} truies en mat`}
+          label={`${truiesMat.length} ${truiesMat.length === 1 ? 'truie' : 'truies'} en mat`}
           size="sm"
         />
         <Chip
           tone="teal"
-          label={`${bandesPostSev.length} bandes post-sev`}
+          label={`${bandesPostSev.length} ${bandesPostSev.length === 1 ? 'bande' : 'bandes'} post-sev`}
           size="sm"
         />
         <Chip
           tone="amber"
-          label={`${bandesEngr.length} bandes engr`}
+          label={`${bandesEngr.length} ${bandesEngr.length === 1 ? 'bande' : 'bandes'} engr`}
           size="sm"
         />
       </div>

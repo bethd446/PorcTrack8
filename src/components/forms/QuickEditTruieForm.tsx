@@ -5,6 +5,7 @@ import { Edit3, Save } from 'lucide-react';
 import { BottomSheet } from '../agritech';
 import { updateSowByCode } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
+import { useAuth } from '../../context/AuthContext';
 import type { Truie } from '../../types/farm';
 import {
   validateTruieEditFull,
@@ -14,6 +15,7 @@ import {
   type TruieEditValidation,
 } from './quickEditTruieValidation';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
+import PhotoUploader from './PhotoUploader';
 
 /* ═════════════════════════════════════════════════════════════════════════
    QuickEditTruieForm · Édition complète d'une truie
@@ -84,6 +86,9 @@ function buildInitial(truie: Truie): TruieEditInitial {
         ? String(truie.derniereNV)
         : '',
     dateMBPrevue: frDateToIso(truie.dateMBPrevue ?? ''),
+    dateNaissance: (truie.dateNaissance ?? '').slice(0, 10),
+    origine: truie.origine ?? '',
+    loge: truie.loge ?? '',
     notes: truie.notes ?? '',
   };
 }
@@ -106,10 +111,14 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
   onSuccess,
 }) => {
   const { refreshData } = useFarm();
+  const { user } = useAuth();
+  const farmId = user?.id ?? '';
 
   const initial = useMemo(() => buildInitial(truie), [truie]);
 
   const [draft, setDraft] = useState<TruieEditDraft>(initial);
+  const [photoUrl, setPhotoUrl] = useState<string | undefined>(truie.photoUrl);
+  const [photoDirty, setPhotoDirty] = useState(false);
   const [errors, setErrors] = useState<TruieEditValidation['errors']>({});
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string>('');
@@ -123,6 +132,8 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
     setLastKey({ isOpen, truieId: truie.id });
     if (isOpen) {
       setDraft(initial);
+      setPhotoUrl(truie.photoUrl);
+      setPhotoDirty(false);
       setErrors({});
       setSaving(false);
     }
@@ -153,8 +164,8 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
     }
     setErrors({});
 
-    // Si aucun champ modifié → rien à envoyer, on ferme juste avec toast
-    if (Object.keys(result.patch).length === 0) {
+    // Si aucun champ modifié et pas de photo → rien à envoyer
+    if (Object.keys(result.patch).length === 0 && !photoDirty) {
       setToast('Aucune modification');
       onClose();
       return;
@@ -177,7 +188,13 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
           ? fr.split('/').reverse().join('-')
           : null;
       }
+      if ('DATE_NAISSANCE' in p) {
+        supabasePatch.date_naissance = (p.DATE_NAISSANCE as string) || null;
+      }
+      if ('ORIGINE' in p) supabasePatch.origine = p.ORIGINE;
+      if ('LOGE' in p) supabasePatch.localisation = p.LOGE;
       if ('NOTES' in p) supabasePatch.notes = p.NOTES;
+      if (photoDirty) supabasePatch.photo_url = photoUrl ?? null;
       await updateSowByCode(truie.id, supabasePatch);
       const online = typeof navigator !== 'undefined' && navigator.onLine;
       setToast(
@@ -246,6 +263,27 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
               </p>
             </div>
           </div>
+
+          {/* ── Section 0 : Photo ────────────────────────────────────── */}
+          <section className="space-y-4" aria-labelledby="sect-photo">
+            <h3 id="sect-photo" className={sectionTitleCls}>
+              Photo
+            </h3>
+            <PhotoUploader
+              photoUrl={photoUrl}
+              farmId={farmId}
+              animalId={truie.id}
+              onUploaded={url => {
+                setPhotoUrl(url);
+                setPhotoDirty(true);
+              }}
+              onDeleted={() => {
+                setPhotoUrl(undefined);
+                setPhotoDirty(true);
+              }}
+              disabled={saving}
+            />
+          </section>
 
           {/* ── Section 1 : Identité ─────────────────────────────────── */}
           <section className="space-y-4" aria-labelledby="sect-identite">
@@ -391,6 +429,102 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
               {errors.poids ? (
                 <p id="edit-truie-poids-error" role="alert" className={errCls}>
                   {errors.poids}
+                </p>
+              ) : null}
+            </div>
+
+            {/* Date de naissance */}
+            <div className="space-y-1.5">
+              <label htmlFor="edit-truie-naissance" className={labelCls}>
+                Date de naissance{' '}
+                <span className="text-text-2 normal-case">· optionnel</span>
+              </label>
+              <input
+                id="edit-truie-naissance"
+                type="date"
+                aria-invalid={!!errors.dateNaissance}
+                aria-describedby={
+                  errors.dateNaissance
+                    ? 'edit-truie-naissance-error'
+                    : undefined
+                }
+                className={[
+                  inputBase,
+                  errors.dateNaissance ? inputErr : inputOk,
+                ].join(' ')}
+                value={draft.dateNaissance}
+                onChange={e => update('dateNaissance', e.target.value)}
+                disabled={saving}
+              />
+              {errors.dateNaissance ? (
+                <p
+                  id="edit-truie-naissance-error"
+                  role="alert"
+                  className={errCls}
+                >
+                  {errors.dateNaissance}
+                </p>
+              ) : null}
+            </div>
+
+            {/* Origine */}
+            <div className="space-y-1.5">
+              <label htmlFor="edit-truie-origine" className={labelCls}>
+                Origine{' '}
+                <span className="text-text-2 normal-case">· optionnel</span>
+              </label>
+              <input
+                id="edit-truie-origine"
+                type="text"
+                maxLength={50}
+                aria-invalid={!!errors.origine}
+                aria-describedby={
+                  errors.origine ? 'edit-truie-origine-error' : 'edit-truie-origine-hint'
+                }
+                className={[inputBase, errors.origine ? inputErr : inputOk].join(' ')}
+                placeholder="Ex: Élevage Thomasset"
+                value={draft.origine}
+                onChange={e => update('origine', e.target.value)}
+                disabled={saving}
+                autoComplete="off"
+              />
+              <p id="edit-truie-origine-hint" className={hintCls}>
+                {draft.origine.trim().length}/50
+              </p>
+              {errors.origine ? (
+                <p id="edit-truie-origine-error" role="alert" className={errCls}>
+                  {errors.origine}
+                </p>
+              ) : null}
+            </div>
+
+            {/* Emplacement loge */}
+            <div className="space-y-1.5">
+              <label htmlFor="edit-truie-loge" className={labelCls}>
+                Emplacement loge{' '}
+                <span className="text-text-2 normal-case">· optionnel</span>
+              </label>
+              <input
+                id="edit-truie-loge"
+                type="text"
+                maxLength={30}
+                aria-invalid={!!errors.loge}
+                aria-describedby={
+                  errors.loge ? 'edit-truie-loge-error' : 'edit-truie-loge-hint'
+                }
+                className={[inputBase, errors.loge ? inputErr : inputOk].join(' ')}
+                placeholder="Ex: Maternité L3"
+                value={draft.loge}
+                onChange={e => update('loge', e.target.value)}
+                disabled={saving}
+                autoComplete="off"
+              />
+              <p id="edit-truie-loge-hint" className={hintCls}>
+                {draft.loge.trim().length}/30
+              </p>
+              {errors.loge ? (
+                <p id="edit-truie-loge-error" role="alert" className={errCls}>
+                  {errors.loge}
                 </p>
               ) : null}
             </div>

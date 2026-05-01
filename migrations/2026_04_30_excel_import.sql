@@ -346,25 +346,25 @@ COMMIT;
 -- ============================================================
 BEGIN;
 INSERT INTO public.produits_veto (farm_id, code_id, libelle, type, usage, unite, stock_actuel, stock_min, dlc, notes)
-SELECT 'bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid, 'SANTE-20260414-0001', 'Fer injectable', 'Complement', 'Porcelets J3', 'doses', 0.0, 20.0, NULL, 'Fer injectable — stock 0 doses — CRITIQUE'
+SELECT 'bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid, 'SANTE-20260414-0001', 'Fer injectable', 'Complément', 'Porcelets J3', 'doses', 0.0, 20.0, NULL, 'Fer injectable — stock 0 doses — CRITIQUE'
 WHERE NOT EXISTS (SELECT 1 FROM public.produits_veto WHERE farm_id='bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid AND code_id='SANTE-20260414-0001');
 INSERT INTO public.produits_veto (farm_id, code_id, libelle, type, usage, unite, stock_actuel, stock_min, dlc, notes)
-SELECT 'bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid, 'SANTE-20260414-0002', 'Oxytetracycline', 'Antibiotique', 'Diarrhee', 'ml', 3.0, 5.0, NULL, 'Oxytetracycline OXYTETRA 20% — 3 flacons restants'
+SELECT 'bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid, 'SANTE-20260414-0002', 'Oxytetracycline', 'Antibiotique', 'Diarrhée', 'ml', 3.0, 5.0, NULL, 'Oxytetracycline OXYTETRA 20% — 3 flacons restants'
 WHERE NOT EXISTS (SELECT 1 FROM public.produits_veto WHERE farm_id='bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid AND code_id='SANTE-20260414-0002');
 INSERT INTO public.produits_veto (farm_id, code_id, libelle, type, usage, unite, stock_actuel, stock_min, dlc, notes)
-SELECT 'bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid, 'SANTE-20260414-0003', 'Ivermectine', 'Antiparasitaire', 'Deparasitage', 'ml', 0.0, 50.0, NULL, 'Ivermectine — stock 0 — deparasitage trimestriel compromis'
+SELECT 'bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid, 'SANTE-20260414-0003', 'Ivermectine', 'Antiparasitaire', 'Déparasitage', 'ml', 0.0, 50.0, NULL, 'Ivermectine — stock 0 — déparasitage trimestriel compromis'
 WHERE NOT EXISTS (SELECT 1 FROM public.produits_veto WHERE farm_id='bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid AND code_id='SANTE-20260414-0003');
 INSERT INTO public.produits_veto (farm_id, code_id, libelle, type, usage, unite, stock_actuel, stock_min, dlc, notes)
-SELECT 'bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid, 'SANTE-20260414-0004', 'Vitamines AD3E', 'Complement', 'Truies gestantes', 'ml', 5.0, 3.0, NULL, 'VETOVIT PLUS + CERTIVIT AD3E — 5 unites dispo'
+SELECT 'bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid, 'SANTE-20260414-0004', 'Vitamines AD3E', 'Complément', 'Truies gestantes', 'ml', 5.0, 3.0, NULL, 'VETOVIT PLUS + CERTIVIT AD3E — 5 unités dispo'
 WHERE NOT EXISTS (SELECT 1 FROM public.produits_veto WHERE farm_id='bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid AND code_id='SANTE-20260414-0004');
 INSERT INTO public.produits_veto (farm_id, code_id, libelle, type, usage, unite, stock_actuel, stock_min, dlc, notes)
-SELECT 'bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid, 'SANTE-20260414-0005', 'Desinfectant', 'Biosecurite', 'Pediluves quotidiens', 'L', 1.0, 3.0, NULL, 'VULKAN R 5L — 1 bidon restant — pediluves quotidiens'
+SELECT 'bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid, 'SANTE-20260414-0005', 'Désinfectant', 'Biosécurité', 'Pédiluves quotidiens', 'L', 1.0, 3.0, NULL, 'VULKAN R 5L — 1 bidon restant — pédiluves quotidiens'
 WHERE NOT EXISTS (SELECT 1 FROM public.produits_veto WHERE farm_id='bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid AND code_id='SANTE-20260414-0005');
 INSERT INTO public.produits_veto (farm_id, code_id, libelle, type, usage, unite, stock_actuel, stock_min, dlc, notes)
-SELECT 'bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid, 'SANTE-20260414-0006', 'Calcium injectable', 'Complement', 'Truies allaitantes', 'ml', 1.0, 3.0, NULL, 'UCAPHOSCAL 5L — 1 bidon — truies allaitantes'
+SELECT 'bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid, 'SANTE-20260414-0006', 'Calcium injectable', 'Complément', 'Truies allaitantes', 'ml', 1.0, 3.0, NULL, 'UCAPHOSCAL 5L — 1 bidon — truies allaitantes'
 WHERE NOT EXISTS (SELECT 1 FROM public.produits_veto WHERE farm_id='bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid AND code_id='SANTE-20260414-0006');
 INSERT INTO public.produits_veto (farm_id, code_id, libelle, type, usage, unite, stock_actuel, stock_min, dlc, notes)
-SELECT 'bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid, 'SANTE-20260414-0007', 'Anti-diarrheique', 'Traitement', 'Porcelets', 'ml', 0.0, 50.0, NULL, 'Anti-diarrheique — stock 0 — porcelets a risque'
+SELECT 'bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid, 'SANTE-20260414-0007', 'Anti-diarrhéique', 'Traitement', 'Porcelets', 'ml', 0.0, 50.0, NULL, 'Anti-diarrhéique — stock 0 — porcelets à risque'
 WHERE NOT EXISTS (SELECT 1 FROM public.produits_veto WHERE farm_id='bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid AND code_id='SANTE-20260414-0007');
 COMMIT;
 
@@ -427,8 +427,8 @@ INSERT INTO public.finances (farm_id, poste, mensuel_fcfa, pct_total, type, note
 SELECT 'bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid, 'Veterinaire', 50000.0, 0.034, 'Variable', 'Prophylaxie + urgences'
 WHERE NOT EXISTS (SELECT 1 FROM public.finances WHERE farm_id='bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid AND poste='Veterinaire');
 INSERT INTO public.finances (farm_id, poste, mensuel_fcfa, pct_total, type, notes)
-SELECT 'bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid, 'Biosecurite', 35000.0, 0.024, 'Fixe', 'MIRAH/PPA compliance'
-WHERE NOT EXISTS (SELECT 1 FROM public.finances WHERE farm_id='bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid AND poste='Biosecurite');
+SELECT 'bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid, 'Biosécurité', 35000.0, 0.024, 'Fixe', 'MIRAH/PPA compliance'
+WHERE NOT EXISTS (SELECT 1 FROM public.finances WHERE farm_id='bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid AND poste='Biosécurité');
 INSERT INTO public.finances (farm_id, poste, mensuel_fcfa, pct_total, type, notes)
 SELECT 'bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid, 'Transport + Divers', 30000.0, 0.02, 'Variable', 'Livraisons MP'
 WHERE NOT EXISTS (SELECT 1 FROM public.finances WHERE farm_id='bc96ddbd-c34d-46b1-b624-4a3dca181a2c'::uuid AND poste='Transport + Divers');

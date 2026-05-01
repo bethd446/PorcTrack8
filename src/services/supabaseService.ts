@@ -64,6 +64,10 @@ export async function getTruies(
       dateMBPrevue:  r.date_mb_prevue ?? undefined,
       notes:         r.notes ?? undefined,
       race:          r.breed ?? undefined,
+      photoUrl:      r.photo_url ?? undefined,
+      dateNaissance: r.date_naissance ?? undefined,
+      origine:       r.origine ?? undefined,
+      loge:          r.localisation ?? undefined,
       synced:        true,
     }));
 
@@ -91,16 +95,19 @@ export async function getVerrats(
     if (error) return fail<Verrat>(error.message);
 
     const mapped: Verrat[] = (data ?? []).map(r => ({
-      id:           r.id,
-      displayId:    r.code_id,
-      boucle:       r.boucle ?? '',
-      nom:          r.name ?? undefined,
-      statut:       r.statut ?? 'Actif',
-      origine:      r.origine ?? undefined,
-      alimentation: r.alimentation ?? undefined,
-      ration:       r.ration_kg_j ?? 0,
-      notes:        r.notes ?? undefined,
-      synced:       true,
+      id:            r.id,
+      displayId:     r.code_id,
+      boucle:        r.boucle ?? '',
+      nom:           r.name ?? undefined,
+      statut:        r.statut ?? 'Actif',
+      origine:       r.origine ?? undefined,
+      alimentation:  r.alimentation ?? undefined,
+      ration:        r.ration_kg_j ?? 0,
+      notes:         r.notes ?? undefined,
+      photoUrl:      r.photo_url ?? undefined,
+      dateNaissance: r.date_naissance ?? undefined,
+      loge:          r.localisation ?? undefined,
+      synced:        true,
     }));
 
     cb?.(mapped, VERRATS_HEADER);
@@ -142,6 +149,8 @@ export async function getBandes(
       dateSevragePrevue:   r.date_sevrage_prevue ?? undefined,
       dateSevrageReelle:   r.date_sevrage ?? undefined,
       notes:               r.notes ?? undefined,
+      photoUrl:            r.photo_url ?? undefined,
+      loge:                r.loge ?? undefined,
       synced:              true,
     }));
 

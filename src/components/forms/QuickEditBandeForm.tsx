@@ -5,6 +5,7 @@ import { Edit3, Save } from 'lucide-react';
 import { BottomSheet } from '../agritech';
 import { updateBatchByCode } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
+import { useAuth } from '../../context/AuthContext';
 import type { BandePorcelets } from '../../types/farm';
 import {
   validateBandeEdit,
@@ -14,6 +15,7 @@ import {
   type BandeEditRawInput,
 } from './quickEditBandeValidation';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
+import PhotoUploader from './PhotoUploader';
 
 /* ═════════════════════════════════════════════════════════════════════════
    QuickEditBandeForm · Édition rapide d'une bande/portée
@@ -48,14 +50,33 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
   bande,
   onSuccess,
 }) => {
-  const { refreshData } = useFarm();
+  const { refreshData, saillies, verrats } = useFarm();
+  const { user } = useAuth();
+  const farmId = user?.id ?? '';
 
   const initial = useMemo<BandeEditRawInput>(() => bandeToRawInput(bande), [bande]);
 
   const [form, setForm] = useState<BandeEditRawInput>(initial);
+  const [photoUrl, setPhotoUrl] = useState<string | undefined>(bande.photoUrl);
+  const [photoDirty, setPhotoDirty] = useState(false);
+  const [loge, setLoge] = useState<string>(bande.loge ?? '');
+  const [logeDirty, setLogeDirty] = useState(false);
   const [errors, setErrors] = useState<BandeEditErrors>({});
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string>('');
+
+  // Origine = parents truie + verrat (readonly, déduit via dernière saillie liée)
+  const origineDeduite = useMemo(() => {
+    const truie = bande.truie ?? '';
+    const lastSaillie = [...saillies]
+      .filter(s => truie && (s.truieId === truie || s.truieNom === truie))
+      .sort((a, b) => (b.dateSaillie ?? '').localeCompare(a.dateSaillie ?? ''))[0];
+    const verratId = lastSaillie?.verratId ?? '';
+    const verrat = verrats.find(v => v.id === verratId || v.displayId === verratId);
+    const verratLabel = verrat ? (verrat.nom || verrat.displayId) : verratId;
+    if (!truie && !verratLabel) return '';
+    return [truie, verratLabel].filter(Boolean).join(' × ');
+  }, [bande.truie, saillies, verrats]);
 
   // Render-time sync: reset on (re)open or bande change (avoids setState-in-effect).
   const [lastKey, setLastKey] = useState<{ isOpen: boolean; bandeId: string }>({
@@ -66,6 +87,10 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
     setLastKey({ isOpen, bandeId: bande.id });
     if (isOpen) {
       setForm(bandeToRawInput(bande));
+      setPhotoUrl(bande.photoUrl);
+      setPhotoDirty(false);
+      setLoge(bande.loge ?? '');
+      setLogeDirty(false);
       setErrors({});
       setSaving(false);
     }
@@ -95,8 +120,8 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
     }
     setErrors({});
 
-    // Patch vide → pas d'appel réseau, on ferme simplement.
-    if (Object.keys(result.patch).length === 0) {
+    // Patch vide et pas de modif photo/loge → pas d'appel réseau, on ferme.
+    if (Object.keys(result.patch).length === 0 && !photoDirty && !logeDirty) {
       onClose();
       return;
     }
@@ -122,6 +147,8 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
       if ('NV' in p) supabasePatch.porcelets_nes_total = p.NV;
       if ('MORTS' in p) supabasePatch.nb_mort_nes = p.MORTS;
       if ('VIVANTS' in p) supabasePatch.porcelets_nes_vivants = p.VIVANTS;
+      if (photoDirty) supabasePatch.photo_url = photoUrl ?? null;
+      if (logeDirty) supabasePatch.loge = loge.trim() || null;
       // Champs sans équivalent Supabase : TRUIE (snapshot), BOUCLE_MERE,
       // NB_MALES, NB_FEMELLES, DATE_SEPARATION → ignorés silencieusement.
       await updateBatchByCode(bande.id, supabasePatch);
@@ -204,6 +231,25 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
             </div>
           </div>
 
+          {/* ── Photo ───────────────────────────────────────────────── */}
+          <fieldset className="space-y-3" disabled={saving}>
+            <legend className={labelCls + ' mb-1'}>Photo</legend>
+            <PhotoUploader
+              photoUrl={photoUrl}
+              farmId={farmId}
+              animalId={bande.id}
+              onUploaded={url => {
+                setPhotoUrl(url);
+                setPhotoDirty(true);
+              }}
+              onDeleted={() => {
+                setPhotoUrl(undefined);
+                setPhotoDirty(true);
+              }}
+              disabled={saving}
+            />
+          </fieldset>
+
           {/* ── Identité ────────────────────────────────────────────── */}
           <fieldset className="space-y-3" disabled={saving}>
             <legend className={labelCls + ' mb-1'}>Identité</legend>
@@ -225,6 +271,47 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                   'font-mono text-[14px] tabular-nums',
                   'cursor-not-allowed',
                 ].join(' ')}
+              />
+            </div>
+
+            {/* Origine (parents truie × verrat) — readonly */}
+            <div className="space-y-1.5">
+              <label htmlFor="edit-bande-origine" className={labelCls}>
+                Origine (parents)
+              </label>
+              <input
+                id="edit-bande-origine"
+                type="text"
+                readOnly
+                aria-readonly="true"
+                value={origineDeduite || '—'}
+                className={[
+                  'w-full h-12 rounded-md px-3',
+                  'bg-bg-2 border border-border text-text-1',
+                  'font-mono text-[13px]',
+                  'cursor-not-allowed',
+                ].join(' ')}
+              />
+            </div>
+
+            {/* Loge (emplacement) */}
+            <div className="space-y-1.5">
+              <label htmlFor="edit-bande-loge-emplacement" className={labelCls}>
+                Emplacement loge{' '}
+                <span className="text-text-2 normal-case">· optionnel</span>
+              </label>
+              <input
+                id="edit-bande-loge-emplacement"
+                type="text"
+                maxLength={30}
+                className={inputBase(false)}
+                placeholder="Ex: Engraissement L7"
+                value={loge}
+                onChange={e => {
+                  setLoge(e.target.value);
+                  setLogeDirty(true);
+                }}
+                autoComplete="off"
               />
             </div>
 

@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePilotage } from '../context/PilotageContext';
+import { useTroupeau } from '../context/TroupeauContext';
 import { useRecentNavigation, type RecentItem } from '../hooks/useRecentNavigation';
 import { kvGet, kvSet } from '../services/kvStore';
 import CommandPalette from './design/CommandPalette';
@@ -59,7 +60,24 @@ const AppSidebar: React.FC = () => {
   const navigate = useNavigate();
   const { isOwner, profile } = useAuth();
   const { criticalAlertCount } = usePilotage();
+  const { bandes } = useTroupeau();
   const { items: recentItems } = useRecentNavigation();
+
+  // Resolve bande UUID → idPortee for the "Épinglé" pills.
+  // If a bande recent item has no resolvable idPortee, we hide it.
+  const resolvedRecentItems = useMemo(() => {
+    return recentItems
+      .map((it) => {
+        if (it.kind !== 'bande') return it;
+        const m = it.path.match(/^\/troupeau\/bandes\/([^/]+)$/);
+        const id = m ? decodeURIComponent(m[1]) : '';
+        const bande = bandes.find((b) => b.id === id || b.idPortee === id);
+        const display = bande?.idPortee?.trim();
+        if (!display) return null;
+        return { ...it, label: `Bande ${display}` };
+      })
+      .filter((it): it is RecentItem => it !== null);
+  }, [recentItems, bandes]);
 
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [cyclesExpanded, setCyclesExpanded] = useState<boolean>(() => {
@@ -188,9 +206,9 @@ const AppSidebar: React.FC = () => {
         </div>
 
         {/* Section Épinglé */}
-        {recentItems.length > 0 ? (
+        {resolvedRecentItems.length > 0 ? (
           <Section title="Épinglé">
-            {recentItems.map((it) => {
+            {resolvedRecentItems.map((it) => {
               const Icon = RECENT_ICON[it.kind] ?? LayoutGrid;
               return (
                 <SidebarRow
@@ -231,19 +249,9 @@ const AppSidebar: React.FC = () => {
         {/* Cheptel */}
         <Section title="Cheptel">
           <SidebarRow
-            icon={Layers}
-            label="Bandes"
-            active={isActive('/troupeau/bandes')}
-            onClick={() => navigate('/troupeau/bandes')}
-          />
-          <SidebarRow
             icon={PawPrint}
-            label="Truies & Verrats"
-            active={
-              location.pathname === '/troupeau' ||
-              isActive('/troupeau/truies') ||
-              isActive('/troupeau/verrats')
-            }
+            label="Troupeau"
+            active={isActive('/troupeau')}
             onClick={() => navigate('/troupeau')}
           />
         </Section>
@@ -293,7 +301,7 @@ const AppSidebar: React.FC = () => {
           <Section title="Pilotage">
             <SidebarRow
               icon={BarChart3}
-              label="KPIs"
+              label="Performance"
               active={isActive('/pilotage/perf')}
               onClick={() => navigate('/pilotage/perf')}
             />
