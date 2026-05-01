@@ -64,8 +64,6 @@ const CyclesHub = React.lazy(() => import(/* webpackChunkName: "cycles-hub" */ '
 const RessourcesHub = React.lazy(() => import(/* webpackChunkName: "ressources-hub" */ './features/hubs/RessourcesHub'));
 const PilotageHub = React.lazy(() => import(/* webpackChunkName: "pilotage-hub" */ './features/hubs/PilotageHub'));
 
-const TruiesListView = React.lazy(() => import(/* webpackChunkName: "truies-list" */ './features/troupeau/TruiesListView'));
-
 const PlanAlimentationView = React.lazy(() => import(/* webpackChunkName: "plan-alim" */ './features/ressources/PlanAlimentationView'));
 const FormulesView = React.lazy(() => import(/* webpackChunkName: "formules" */ './features/ressources/FormulesView'));
 const PharmacieView = React.lazy(() => import(/* webpackChunkName: "pharmacie" */ './features/ressources/PharmacieView'));
@@ -112,6 +110,17 @@ const OnboardingRoute: React.FC = () => {
       <OnboardingFlow onComplete={() => navigate('/today', { replace: true })} />
     </AgritechLayout>
   );
+};
+
+/**
+ * Redirige `/troupeau/truies?statut=...` vers `/troupeau?view=truies&statut=...`.
+ * On consolide la liste des truies dans TroupeauHub (onglet TRUIES) avec CTA + nouvelle truie.
+ */
+const TroupeauTruiesRedirect: React.FC = () => {
+  const { search } = useLocation();
+  const params = new URLSearchParams(search);
+  params.set('view', 'truies');
+  return <Navigate to={`/troupeau?${params.toString()}`} replace />;
 };
 
 const SaisirFABMount: React.FC = () => {
@@ -164,7 +173,7 @@ const AppShell: React.FC = () => (
       />
 
       {/* Troupeau sub-routes */}
-      <Route path="/troupeau/truies" element={<TruiesListView />} />
+      <Route path="/troupeau/truies" element={<TroupeauTruiesRedirect />} />
       <Route path="/troupeau/verrats" element={<CheptelView initialTab="VERRAT" />} />
       <Route path="/troupeau/truies/:id" element={<TruieDetailView />} />
       <Route path="/troupeau/verrats/:id" element={<VerratDetailView />} />

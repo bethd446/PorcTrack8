@@ -18,7 +18,7 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { IonContent, IonModal, IonPage, IonToast, useIonAlert } from '@ionic/react';
-import { Sparkles } from 'lucide-react';
+import { Printer } from 'lucide-react';
 
 import { useFarm } from '../../context/FarmContext';
 import { enqueueUpdateRow } from '../../services/offlineQueue';
@@ -40,6 +40,7 @@ import MariusPanel from '../../components/design/MariusPanel';
 import TimelineVerticale, { type TimelineItem } from '../../components/design/TimelineVerticale';
 import LineageBreadcrumb, { type LineageNode } from '../../components/design/LineageBreadcrumb';
 import LineageTree from '../../components/design/LineageTree';
+import TopBarSync from '../../components/design/TopBarSync';
 
 import type { Truie, BandePorcelets, Saillie, TraitementSante } from '../../types/farm';
 
@@ -108,7 +109,7 @@ const TruieDetailView: React.FC = () => {
     else if (action === 'ECHOGRAPHIE') {
       // TODO: formulaire échographie dédié — pour l'instant on bascule le statut
       // côté action existante (DecisionBinaire J18-J24) et on informe l'utilisateur.
-      setToast('Échographie : utiliser la décision binaire J18-J24 ou « Modifier toutes les infos » pour passer à PLEINE.');
+      setToast('Échographie : utiliser la décision binaire J18-J24 ou « Éditer la fiche » pour passer à PLEINE.');
     }
   }, []);
 
@@ -383,98 +384,15 @@ const TruieDetailView: React.FC = () => {
             paddingBottom: 80,
           }}
         >
-          {/* TopBar synchro */}
-          <div
-            style={{
-              background: 'var(--bg-surface)',
-              borderBottom: '1px solid var(--line)',
-              padding: '12px 22px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 14,
-              fontFamily: 'DMMono, ui-monospace, monospace',
-              fontSize: 11,
-              letterSpacing: '0.04em',
-            }}
-          >
-            <button
-              onClick={() => navigate('/troupeau')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--muted)',
-                cursor: 'pointer',
-                padding: 0,
-                fontFamily: 'inherit',
-                fontSize: 'inherit',
-              }}
-            >
-              Troupeau
-            </button>
-            <span style={{ color: 'var(--muted)', opacity: 0.4 }}>/</span>
-            <button
-              onClick={() => navigate('/troupeau/truies')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--muted)',
-                cursor: 'pointer',
-                padding: 0,
-                fontFamily: 'inherit',
-                fontSize: 'inherit',
-              }}
-            >
-              Truies
-            </button>
-            <span style={{ color: 'var(--muted)', opacity: 0.4 }}>/</span>
-            <span style={{ color: 'var(--ink)', fontWeight: 500 }}>
-              {truie.displayId}
-              {truie.nom ? ` · ${truie.nom}` : ''}
-            </span>
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: 14, alignItems: 'center' }}>
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 7,
-                  color: 'var(--color-accent-500)',
-                }}
-              >
-                <span
-                  className="pulse-green"
-                  aria-hidden
-                  style={{
-                    width: 7,
-                    height: 7,
-                    background: 'var(--color-accent-500)',
-                    borderRadius: '50%',
-                  }}
-                />
-                Synchronisé
-              </span>
-              <button
-                type="button"
-                aria-label="Ouvrir Marius"
-                style={{
-                  background: 'var(--amber-pork)',
-                  color: 'var(--ink)',
-                  padding: '6px 12px',
-                  borderRadius: 9999,
-                  fontFamily: 'InstrumentSans, ui-sans-serif, system-ui',
-                  fontSize: 12,
-                  fontWeight: 500,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                <Sparkles size={13} strokeWidth={2} aria-hidden />
-                Marius
-              </button>
-            </div>
-          </div>
+          {/* TopBar synchro (composant partagé) */}
+          <TopBarSync
+            crumbs={[
+              { label: 'Troupeau', href: '/troupeau' },
+              { label: 'Truies', href: '/troupeau?view=truies' },
+              `${truie.displayId}${truie.nom ? ` · ${truie.nom}` : ''}`,
+            ]}
+            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
+          />
 
           <div style={{ padding: '16px 22px 24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
             {/* Hero */}
@@ -487,9 +405,7 @@ const TruieDetailView: React.FC = () => {
               photoUrl={truie.photoUrl}
               photoStamp={`${truie.displayId} · ${formatDateShort(new Date().toISOString())}`}
               onPrimaryAction={() => setEventSheetOpen(true)}
-              onSecondaryAction={() => window.print()}
               primaryLabel="+ Saisir évènement"
-              secondaryLabel="Imprimer"
             />
 
             {/* Lignée (kit v2.1) */}
@@ -787,7 +703,7 @@ const TruieDetailView: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setEditOpen(true)}
-                      aria-label={`Modifier toutes les infos de la truie ${truie.displayId}`}
+                      aria-label={`Éditer la fiche de la truie ${truie.displayId}`}
                       style={{
                         padding: '12px 16px',
                         borderRadius: 9999,
@@ -803,7 +719,33 @@ const TruieDetailView: React.FC = () => {
                         minHeight: 44,
                       }}
                     >
-                      Modifier toutes les infos
+                      Éditer la fiche
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => window.print()}
+                      aria-label={`Imprimer la fiche de la truie ${truie.displayId}`}
+                      style={{
+                        padding: '12px 16px',
+                        borderRadius: 9999,
+                        background: 'transparent',
+                        color: 'var(--muted)',
+                        border: '1px dashed var(--line)',
+                        fontFamily: 'DMMono, ui-monospace, monospace',
+                        fontSize: 11,
+                        letterSpacing: '0.10em',
+                        textTransform: 'uppercase',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        minHeight: 44,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                      }}
+                    >
+                      <Printer size={13} strokeWidth={2} aria-hidden />
+                      Imprimer la fiche
                     </button>
                   </div>
                 </section>

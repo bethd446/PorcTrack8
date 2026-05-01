@@ -34,7 +34,7 @@ export default function SowHero({
   onPrimaryAction,
   onSecondaryAction,
   primaryLabel = 'Saisir événement',
-  secondaryLabel = 'Imprimer',
+  secondaryLabel,
 }: SowHeroProps) {
   return (
     <div
@@ -162,10 +162,12 @@ export default function SowHero({
             <Plus size={13} strokeWidth={2} aria-hidden />
             {primaryLabel}
           </Button>
-          <Button variant="secondary" size="md" onClick={onSecondaryAction}>
-            <Printer size={13} strokeWidth={2} aria-hidden />
-            {secondaryLabel}
-          </Button>
+          {onSecondaryAction && secondaryLabel ? (
+            <Button variant="secondary" size="md" onClick={onSecondaryAction}>
+              <Printer size={13} strokeWidth={2} aria-hidden />
+              {secondaryLabel}
+            </Button>
+          ) : null}
         </div>
       </div>
     </div>

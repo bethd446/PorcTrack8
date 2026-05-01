@@ -10,7 +10,6 @@ import {
   PawPrint,
   Search,
   ChevronDown,
-  CheckSquare,
   Inbox,
   Pill,
   Wheat,
@@ -27,7 +26,7 @@ import CommandPalette from './design/CommandPalette';
 /**
  * AppSidebar — sidebar desktop ≥1024px (Option Bravo).
  *
- * Sections : Épinglé · Aujourd'hui · Cheptel · Pilotage · Ressources · Admin.
+ * Sections : Épinglé · Aujourd'hui · Cheptel · Pilotage · Stocks · Admin.
  * Cycles biologiques expandable, état persisté kvStore.
  * Trigger Cmd+K en haut, palette globale (CommandPalette).
  */
@@ -237,16 +236,10 @@ const AppSidebar: React.FC = () => {
         <Section title="Aujourd'hui">
           <SidebarRow
             icon={Inbox}
-            label="Inbox alertes"
+            label="Toutes les alertes"
             count={criticalAlertCount > 0 ? criticalAlertCount : undefined}
             active={isActive('/alerts', ['/alerts', '/pilotage/alertes'])}
             onClick={() => navigate('/alerts')}
-          />
-          <SidebarRow
-            icon={CheckSquare}
-            label="Audit du jour"
-            active={isActive('/audit')}
-            onClick={() => navigate('/audit')}
           />
         </Section>
 
@@ -264,7 +257,7 @@ const AppSidebar: React.FC = () => {
         <Section title="Cycles">
           <SidebarRow
             icon={RotateCcw}
-            label="Cycles · Vue globale"
+            label="Cycles"
             expandable
             expanded={cyclesExpanded}
             active={location.pathname === '/cycles'}
@@ -312,17 +305,8 @@ const AppSidebar: React.FC = () => {
             <SidebarRow
               icon={BarChart3}
               label="Finances"
-              active={
-                isActive('/pilotage/finances') &&
-                !location.pathname.startsWith('/pilotage/finances/rapport')
-              }
+              active={isActive('/pilotage/finances')}
               onClick={() => navigate('/pilotage/finances')}
-            />
-            <SidebarRow
-              icon={BarChart3}
-              label="Rapports"
-              active={isActive('/pilotage/finances/rapport')}
-              onClick={() => navigate('/pilotage/finances/rapport')}
             />
             <SidebarRow
               icon={BarChart3}
@@ -334,7 +318,7 @@ const AppSidebar: React.FC = () => {
         ) : null}
 
         {/* Ressources */}
-        <Section title="Ressources">
+        <Section title="Stocks">
           <SidebarRow
             icon={Wheat}
             label="Aliments"

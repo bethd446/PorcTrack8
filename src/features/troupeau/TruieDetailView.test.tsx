@@ -246,11 +246,10 @@ describe('TruieDetailView', () => {
     );
   });
 
-  it('expose un bouton « Modifier toutes les infos de la truie T14 »', () => {
+  it('expose un bouton « Éditer la fiche de la truie T14 »', () => {
     renderAt('/troupeau/truies/T14');
-    // En v6, le bouton edit pastille a été remplacé par le CTA texte
-    // "Modifier toutes les infos" (aria-label inchangé en concept).
-    const editBtn = screen.getByLabelText(/modifier toutes les infos de la truie t14/i);
+    // Sprint 2B V19 : label unifié "Éditer la fiche" (sentence case, concision).
+    const editBtn = screen.getByLabelText(/éditer la fiche de la truie t14/i);
     expect(editBtn.tagName).toBe('BUTTON');
   });
 
@@ -328,27 +327,26 @@ describe('TruieDetailView', () => {
     () => {},
   );
 
-  // ── CTA « Modifier toutes les infos » + highlight ────────────────────────
+  // ── CTA « Éditer la fiche » + highlight ────────────────────────
 
-  it('CTA « Modifier toutes les infos » présent et cliquable', () => {
+  it('CTA « Éditer la fiche » présent et cliquable', () => {
     renderAt('/troupeau/truies/T14');
     const btn = screen.getByRole('button', {
-      name: /modifier toutes les infos de la truie t14/i,
+      name: /éditer la fiche de la truie t14/i,
     });
     expect(btn).toBeDefined();
     expect(btn.tagName).toBe('BUTTON');
-    // En v6, le label texte est uniquement "Modifier toutes les infos"
-    // (le sous-titre listant les champs a été retiré).
-    expect(btn.textContent).toMatch(/modifier toutes les infos/i);
+    // Sprint 2B V19 : label texte court "Éditer la fiche".
+    expect(btn.textContent).toMatch(/éditer la fiche/i);
   });
 
-  it('CTA « Modifier toutes les infos » : click ouvre le sheet edit (dialog)', () => {
+  it('CTA « Éditer la fiche » : click ouvre le sheet edit (dialog)', () => {
     renderAt('/troupeau/truies/T14');
     // Avant click : pas de dialog visible (IonModal mocké rend rien si !isOpen).
     expect(screen.queryByRole('dialog')).toBeNull();
 
     const btn = screen.getByRole('button', {
-      name: /modifier toutes les infos de la truie t14/i,
+      name: /éditer la fiche de la truie t14/i,
     });
     fireEvent.click(btn);
 
