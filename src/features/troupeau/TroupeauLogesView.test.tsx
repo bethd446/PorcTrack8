@@ -49,6 +49,7 @@ const bandeB01: BandePorcelets = {
   morts: 0,
   vivants: 12,
   statut: 'Sous mère',
+  poidsInitialKg: 0,
   synced: true,
 };
 

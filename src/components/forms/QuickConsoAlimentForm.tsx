@@ -24,7 +24,7 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
-import { Wheat, Send } from 'lucide-react';
+import { Wheat, Send, AlertTriangle } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
 import { useFarm } from '../../context/FarmContext';
@@ -486,9 +486,12 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
           {ruptureImminente && selectedAliment ? (
             <div
               role="alert"
-              className="rounded-md border border-amber-pork bg-amber-pork/10 px-3 py-2 font-mono text-[12px] text-amber-pork"
+              className="flex items-start gap-2 rounded-md border border-amber-pork bg-amber-pork/10 px-3 py-2 font-mono text-[12px] text-amber-pork"
             >
-              ⚠ Stock bas après cette saisie ({selectedAliment.libelle}).
+              <AlertTriangle size={14} className="shrink-0 mt-px" aria-hidden="true" />
+              <span className="min-w-0 break-words">
+                Stock bas après cette saisie ({selectedAliment.libelle}).
+              </span>
             </div>
           ) : null}
 

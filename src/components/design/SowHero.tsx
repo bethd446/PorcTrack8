@@ -92,9 +92,12 @@ export default function SowHero({
                 {fallbackIcon}
               </span>
             ) : (
-              <span style={{ fontSize: 84, lineHeight: 1, opacity: 0.3 }} aria-hidden="true">
-                🐷
-              </span>
+              <img
+                src="/images/porc-mark.svg"
+                alt=""
+                aria-hidden="true"
+                style={{ width: 84, height: 84, opacity: 0.3 }}
+              />
             )}
             {onUploadClick && (
               <button

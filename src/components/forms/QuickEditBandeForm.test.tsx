@@ -55,6 +55,7 @@ function makeBande(overrides: Partial<BandePorcelets> = {}): BandePorcelets {
     vivants: 12,
     statut: 'Sous mère',
     dateSevragePrevue: '12/04/2026',
+    poidsInitialKg: 0,
     synced: true,
     ...overrides,
   };
@@ -175,6 +176,7 @@ describe('[1] bandeToRawInput — tous les champs du formulaire', () => {
       id: 'P-1',
       idPortee: 'P-1',
       statut: 'Sevrés',
+      poidsInitialKg: 0,
       synced: true,
     };
     const raw = bandeToRawInput(bande);

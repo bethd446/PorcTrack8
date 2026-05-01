@@ -316,7 +316,7 @@ const CroissanceCard: React.FC<{ data: CroissanceRowData; onOpen: () => void }> 
           </p>
         </div>
         {isTransitionRequired ? (
-          <Chip tone="amber" label={`➜ ${PHASE_LABEL[data.terrainPhase!]}`} size="sm" icon={<ArrowUpRight size={10} />} className="!normal-case" />
+          <Chip tone="amber" label={PHASE_LABEL[data.terrainPhase!]} size="sm" icon={<ArrowUpRight size={10} />} className="!normal-case" />
         ) : (
           <Chip tone="default" label={`${Math.round(weight)} kg`} size="sm" icon={<Scale size={10} />} />
         )}
@@ -350,7 +350,7 @@ const CroissanceCard: React.FC<{ data: CroissanceRowData; onOpen: () => void }> 
           <div className="text-[12px] font-bold text-amber truncate">
             {feedConfig.label}
           </div>
-          <div className="mt-1 text-[9px] text-text-2 font-mono leading-tight">
+          <div className="mt-1 text-[10px] text-text-2 font-mono leading-tight truncate">
             Maïs: {feedConfig.formule.mais}% | Soja: {feedConfig.formule.tourteau_soja}%
           </div>
         </div>

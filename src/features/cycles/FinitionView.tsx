@@ -386,7 +386,7 @@ const FinitionCard: React.FC<{ data: FinitionRowData; onOpen: () => void; onSell
           <div className="text-[12px] font-bold text-accent truncate">
             {feedConfig?.label || currentAliment}
           </div>
-          <div className="mt-1 text-[9px] text-text-2 font-mono leading-tight">
+          <div className="mt-1 text-[10px] text-text-2 font-mono leading-tight truncate">
             Maïs: {feedConfig?.formule.mais}% | KPC: {feedConfig?.formule.kpc_5}%
           </div>
         </div>

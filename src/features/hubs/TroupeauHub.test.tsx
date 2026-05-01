@@ -124,22 +124,22 @@ const mockVerrats: Verrat[] = [
 /** 14 bandes : mix de Sous mère / Sevrés / RECAP pour nourrir toutes les vues. */
 const mockBandes: BandePorcelets[] = [
   // 4 sous mère
-  { id: 'B01', idPortee: 'P01', statut: 'Sous mère', vivants: 12, truie: 'T09', boucleMere: 'FR-9-02', dateMB: '10/04/2026', synced: true },
-  { id: 'B02', idPortee: 'P02', statut: 'Sous mère', vivants: 11, truie: 'T10', boucleMere: 'FR-10-02', dateMB: '12/04/2026', synced: true },
-  { id: 'B03', idPortee: 'P03', statut: 'Sous mère', vivants: 13, truie: 'T11', boucleMere: 'FR-11-02', dateMB: '14/04/2026', synced: true },
-  { id: 'B04', idPortee: 'P04', statut: 'Sous mère', vivants: 10, truie: 'T12', boucleMere: 'FR-12-02', dateMB: '15/04/2026', synced: true },
+  { id: 'B01', idPortee: 'P01', statut: 'Sous mère', vivants: 12, truie: 'T09', boucleMere: 'FR-9-02', dateMB: '10/04/2026', poidsInitialKg: 0, synced: true },
+  { id: 'B02', idPortee: 'P02', statut: 'Sous mère', vivants: 11, truie: 'T10', boucleMere: 'FR-10-02', dateMB: '12/04/2026', poidsInitialKg: 0, synced: true },
+  { id: 'B03', idPortee: 'P03', statut: 'Sous mère', vivants: 13, truie: 'T11', boucleMere: 'FR-11-02', dateMB: '14/04/2026', poidsInitialKg: 0, synced: true },
+  { id: 'B04', idPortee: 'P04', statut: 'Sous mère', vivants: 10, truie: 'T12', boucleMere: 'FR-12-02', dateMB: '15/04/2026', poidsInitialKg: 0, synced: true },
   // 8 sevrés (dont 4 en engraissement théorique)
-  { id: 'B05', idPortee: 'P05', statut: 'Sevrés', vivants: 22, dateSevrageReelle: '01/01/2026', synced: true },
-  { id: 'B06', idPortee: 'P06', statut: 'Sevrés', vivants: 21, dateSevrageReelle: '05/01/2026', synced: true },
-  { id: 'B07', idPortee: 'P07', statut: 'Sevrés', vivants: 20, dateSevrageReelle: '10/01/2026', synced: true },
-  { id: 'B08', idPortee: 'P08', statut: 'Sevrés', vivants: 19, dateSevrageReelle: '15/01/2026', synced: true },
-  { id: 'B09', idPortee: 'P09', statut: 'Sevrés', vivants: 18, dateSevrageReelle: '20/03/2026', synced: true },
-  { id: 'B10', idPortee: 'P10', statut: 'Sevrés', vivants: 17, dateSevrageReelle: '25/03/2026', synced: true },
-  { id: 'B11', idPortee: 'P11', statut: 'Sevrés', vivants: 16, dateSevrageReelle: '01/04/2026', synced: true },
-  { id: 'B12', idPortee: 'P12', statut: 'Sevrés', vivants: 15, dateSevrageReelle: '05/04/2026', synced: true },
+  { id: 'B05', idPortee: 'P05', statut: 'Sevrés', vivants: 22, dateSevrageReelle: '01/01/2026', poidsInitialKg: 0, synced: true },
+  { id: 'B06', idPortee: 'P06', statut: 'Sevrés', vivants: 21, dateSevrageReelle: '05/01/2026', poidsInitialKg: 0, synced: true },
+  { id: 'B07', idPortee: 'P07', statut: 'Sevrés', vivants: 20, dateSevrageReelle: '10/01/2026', poidsInitialKg: 0, synced: true },
+  { id: 'B08', idPortee: 'P08', statut: 'Sevrés', vivants: 19, dateSevrageReelle: '15/01/2026', poidsInitialKg: 0, synced: true },
+  { id: 'B09', idPortee: 'P09', statut: 'Sevrés', vivants: 18, dateSevrageReelle: '20/03/2026', poidsInitialKg: 0, synced: true },
+  { id: 'B10', idPortee: 'P10', statut: 'Sevrés', vivants: 17, dateSevrageReelle: '25/03/2026', poidsInitialKg: 0, synced: true },
+  { id: 'B11', idPortee: 'P11', statut: 'Sevrés', vivants: 16, dateSevrageReelle: '01/04/2026', poidsInitialKg: 0, synced: true },
+  { id: 'B12', idPortee: 'P12', statut: 'Sevrés', vivants: 15, dateSevrageReelle: '05/04/2026', poidsInitialKg: 0, synced: true },
   // 2 RECAP (exclues par Bandes.filterReal)
-  { id: 'B13', idPortee: 'RECAP-2026', statut: 'RECAP', vivants: 0, synced: true },
-  { id: 'B14', idPortee: 'RECAP-2025', statut: 'RECAP', vivants: 0, synced: true },
+  { id: 'B13', idPortee: 'RECAP-2026', statut: 'RECAP', vivants: 0, poidsInitialKg: 0, synced: true },
+  { id: 'B14', idPortee: 'RECAP-2025', statut: 'RECAP', vivants: 0, poidsInitialKg: 0, synced: true },
 ];
 
 // ─── Mocks ──────────────────────────────────────────────────────────────────

@@ -43,6 +43,7 @@ function makeBande(
     idPortee: overrides.idPortee ?? `P${String(bandeCount).padStart(2, '0')}`,
     statut,
     vivants: 10,
+    poidsInitialKg: 0,
     synced: true,
     ...overrides,
   };

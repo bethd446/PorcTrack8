@@ -41,6 +41,7 @@ function makeBande(overrides: Partial<BandePorcelets> = {}): BandePorcelets {
     morts: 1,
     vivants: 11,
     dateMB: '10/04/2026',
+    poidsInitialKg: 0,
     synced: true,
     ...overrides,
   };

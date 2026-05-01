@@ -10,6 +10,7 @@ import { IonToast } from '@ionic/react';
 
 import { BottomSheet } from '../agritech';
 import type { PendingConfirmation } from '../../services/confirmationQueue';
+import { setBandePoidsInitial } from '../../services/supabaseWrites';
 import { useConfirmFlow } from './useConfirmFlow';
 
 export interface QuickConfirmSevrageFormProps {
@@ -40,6 +41,8 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
 
   const [dateSevrage, setDateSevrage] = useState<string>(todayIso());
   const [nbSevres, setNbSevres] = useState<number>(sevresDefault);
+  const [poidsKg, setPoidsKg] = useState<string>('');
+  const [poidsError, setPoidsError] = useState<string>('');
   const { saving, error, toast, submit, dismissToast, resetError } = useConfirmFlow({
     pending,
     onClose,
@@ -50,6 +53,8 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
     if (isOpen) {
       setDateSevrage(todayIso());
       setNbSevres(sevresDefault);
+      setPoidsKg('');
+      setPoidsError('');
       resetError();
     }
     // sevresDefault est dérivé de [pending?.id, isOpen] donc retiré des deps.
@@ -57,8 +62,21 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
   }, [isOpen, pending?.id]);
 
   const handleConfirm = async (): Promise<void> => {
-    const note = `Sevrage confirmé le ${dateSevrage} · ${nbSevres} porcelet(s) sevré(s)`;
+    const poids = parseFloat(poidsKg.replace(',', '.'));
+    if (!Number.isFinite(poids) || poids < 0.5 || poids > 50) {
+      setPoidsError('Poids invalide');
+      return;
+    }
+    setPoidsError('');
+    const note = `Sevrage confirmé le ${dateSevrage} · ${nbSevres} porcelet(s) sevré(s) · poids moyen ${poids} kg`;
     await submit(note, `Sevrage confirmé pour ${bandeId}`);
+    if (bandeId) {
+      try {
+        await setBandePoidsInitial(bandeId, poids);
+      } catch (e) {
+        console.warn('[sevrage] poids initial échoué', e);
+      }
+    }
   };
 
   if (!pending) return null;
@@ -111,6 +129,48 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
             </span>
           </div>
 
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <label htmlFor="sevrage-poids" className="block font-mono text-[11px] uppercase text-text-2">
+                Poids moyen sevrage (kg) <span className="text-red normal-case">· obligatoire</span>
+              </label>
+              <span className="inline-flex items-center px-2 h-6 rounded-full bg-bg-2 border border-border font-mono text-[10px] uppercase tracking-wide text-text-1">
+                5-7 kg cible
+              </span>
+            </div>
+            <input
+              id="sevrage-poids"
+              type="number"
+              inputMode="decimal"
+              step={0.1}
+              min={0.5}
+              max={50}
+              aria-required="true"
+              className="w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 font-mono text-[13px] tabular-nums"
+              value={poidsKg}
+              onChange={e => setPoidsKg(e.target.value)}
+              placeholder="6.0"
+            />
+            {(() => {
+              const p = parseFloat(poidsKg.replace(',', '.'));
+              if (!Number.isFinite(p) || poidsKg.trim() === '') return null;
+              if (p < 4 || p > 10) {
+                return (
+                  <span
+                    role="status"
+                    className="inline-flex items-center px-2 h-6 rounded-full bg-amber-100 border border-amber-300 font-mono text-[10px] uppercase tracking-wide text-amber-900"
+                  >
+                    Hors plage cible 5-7 kg
+                  </span>
+                );
+              }
+              return null;
+            })()}
+            {poidsError && (
+              <p role="alert" className="font-mono text-[11px] text-red">{poidsError}</p>
+            )}
+          </div>
+
           {error && (
             <p role="alert" className="font-mono text-[11px] text-red">
               {error}
@@ -120,10 +180,10 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
           <button
             type="button"
             onClick={handleConfirm}
-            disabled={saving}
+            disabled={saving || !poidsKg}
             aria-busy={saving}
             aria-label="Confirmer le sevrage"
-            className="pressable w-full h-14 rounded-md bg-accent text-bg-0 font-mono text-[12px] font-bold uppercase tracking-wide"
+            className="pressable w-full h-14 rounded-md bg-accent text-bg-0 font-mono text-[12px] font-bold uppercase tracking-wide disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? 'Enregistrement…' : 'Confirmer le sevrage'}
           </button>

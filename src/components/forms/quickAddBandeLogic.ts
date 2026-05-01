@@ -30,6 +30,7 @@ export interface AddBandeDraft {
   mortsNesMales: string;
   mortsNesFemelles: string;
   statut: BandeStatutInitial;
+  poidsKg: string;
   loge: string;
   notes: string;
 }
@@ -45,6 +46,7 @@ export interface AddBandeValidation {
     mortsNes?: string;
     mortsNesMales?: string;
     mortsNesFemelles?: string;
+    poidsKg?: string;
     loge?: string;
     notes?: string;
     coherence?: string;
@@ -58,6 +60,7 @@ export interface AddBandeValidation {
     porcelets_nes_total: number;
     nb_mort_nes: number;
     statut: BandeStatutInitial;
+    poids_initial_kg: number;
     loge: string | null;
     notes: string | null;
   };
@@ -69,6 +72,10 @@ const BOUNDS = {
   maxNesTotaux: 50,
   maxNotes: 300,
   maxLoge: 30,
+  minPoids: 0.5,
+  maxPoids: 50,
+  /** Poids naissance par défaut quand bande Sous mère sans pesée (kg). */
+  defaultPoidsNaissance: 1.4,
 } as const;
 
 function parseInteger(raw: string): number | null {
@@ -143,6 +150,25 @@ export function validateAddBande(draft: AddBandeDraft): AddBandeValidation {
   const loge = String(draft.loge ?? '').trim();
   if (loge.length > BOUNDS.maxLoge) errors.loge = `Loge trop longue (max ${BOUNDS.maxLoge})`;
 
+  // Poids initial : obligatoire si bande Sevrés (porcelets sevrés à l'import).
+  // Si Sous mère, défaut naissance 1.4 kg quand vide.
+  const poidsRaw = String(draft.poidsKg ?? '').trim().replace(',', '.');
+  let poids: number | null = null;
+  if (poidsRaw !== '') {
+    const n = parseFloat(poidsRaw);
+    if (!Number.isFinite(n)) {
+      errors.poidsKg = 'Poids invalide';
+    } else if (n < BOUNDS.minPoids || n > BOUNDS.maxPoids) {
+      errors.poidsKg = `Entre ${BOUNDS.minPoids} et ${BOUNDS.maxPoids} kg`;
+    } else {
+      poids = n;
+    }
+  } else if (draft.statut === 'Sevrés') {
+    errors.poidsKg = 'Poids moyen requis pour bande sevrée';
+  } else {
+    poids = BOUNDS.defaultPoidsNaissance;
+  }
+
   const notes = String(draft.notes ?? '').trim();
   if (notes.length > BOUNDS.maxNotes) errors.notes = `Notes trop longues (max ${BOUNDS.maxNotes})`;
 
@@ -174,6 +200,7 @@ export function validateAddBande(draft: AddBandeDraft): AddBandeValidation {
       porcelets_nes_total: nesTotaux,
       nb_mort_nes: mortsNes as number,
       statut: draft.statut ?? 'Sous mère',
+      poids_initial_kg: poids as number,
       loge: loge || null,
       notes: notes || null,
     },

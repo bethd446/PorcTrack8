@@ -409,7 +409,7 @@ const MaterniteCard: React.FC<{
           <div className="text-[14px] font-bold text-accent">
             {truie.ration} kg/j
           </div>
-          <div className="mt-1 text-[9px] text-text-2 font-mono leading-tight">
+          <div className="mt-1 text-[10px] text-text-2 font-mono leading-tight truncate">
             Plan: {feedConfig.label}
           </div>
         </div>
@@ -424,7 +424,7 @@ const MaterniteCard: React.FC<{
             return (
               <div
                 key={m}
-                className={`w-6 h-6 rounded-lg flex items-center justify-center text-[9px] font-bold border transition-all ${
+                className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold border transition-all ${
                   isCurrent ? 'bg-amber border-amber text-bg-0 shadow-md scale-110' :
                   isPast ? 'bg-bg-2 border-border text-text-2 opacity-50' :
                   'bg-bg-1 border-dashed border-border text-text-2'

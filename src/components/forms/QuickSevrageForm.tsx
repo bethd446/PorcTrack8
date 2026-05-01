@@ -42,6 +42,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
   const [bandeId, setBandeId] = useState<string>(defaultBandeId ?? '');
   const [dateIso, setDateIso] = useState<string>(todayIsoLocal());
   const [nbSevres, setNbSevres] = useState<string>('');
+  const [poidsKg, setPoidsKg] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string>('');
@@ -61,6 +62,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
       setBandeId(defaultBandeId ?? '');
       setDateIso(todayIsoLocal());
       setNbSevres('');
+      setPoidsKg('');
       setError('');
       setSuccess(false);
       setSaving(false);
@@ -90,6 +92,11 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
       setError('Date de sevrage requise');
       return;
     }
+    const poids = parseFloat(poidsKg.replace(',', '.'));
+    if (!Number.isFinite(poids) || poids < 0.5 || poids > 50) {
+      setError('Poids invalide');
+      return;
+    }
 
     setSaving(true);
     try {
@@ -98,6 +105,8 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
         statut: 'Sevré',
         phase: 'post-sevrage',
         porcelets_sevrene_total: nb,
+        poids_initial_kg: poids,
+        poids_moyen_kg: poids,
       });
       // Libère la truie associée : statut "En attente saillie" pour déclencher
       // l'alerte retour chaleur J+5 (R3).
@@ -241,6 +250,49 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
               )}
             </div>
 
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <label
+                  htmlFor="sevrage-poids"
+                  className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                >
+                  Poids moyen sevrage (kg) <span className="text-red normal-case">· obligatoire</span>
+                </label>
+                <span className="inline-flex items-center px-2 h-6 rounded-full bg-bg-2 border border-border font-mono text-[10px] uppercase tracking-wide text-text-1">
+                  5-7 kg cible
+                </span>
+              </div>
+              <input
+                id="sevrage-poids"
+                type="number"
+                inputMode="decimal"
+                step={0.1}
+                min={0.5}
+                max={50}
+                aria-required="true"
+                value={poidsKg}
+                onChange={e => setPoidsKg(e.target.value)}
+                disabled={saving}
+                placeholder="6.0"
+                className="w-full h-14 rounded-md px-4 bg-bg-0 border border-border text-text-0 font-mono text-[24px] text-center outline-none focus:border-accent tabular-nums"
+              />
+              {(() => {
+                const p = parseFloat(poidsKg.replace(',', '.'));
+                if (!Number.isFinite(p) || poidsKg.trim() === '') return null;
+                if (p < 4 || p > 10) {
+                  return (
+                    <span
+                      role="status"
+                      className="inline-flex items-center px-2 h-6 rounded-full bg-amber-100 border border-amber-300 font-mono text-[10px] uppercase tracking-wide text-amber-900"
+                    >
+                      Hors plage cible 5-7 kg
+                    </span>
+                  );
+                }
+                return null;
+              })()}
+            </div>
+
             {error && (
               <p
                 role="alert"
@@ -261,7 +313,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
               </button>
               <button
                 type="submit"
-                disabled={saving || !bandeId || !nbSevres}
+                disabled={saving || !bandeId || !nbSevres || !poidsKg}
                 aria-busy={saving}
                 className="pressable flex-[2] h-14 rounded-md bg-accent text-bg-0 font-mono text-[13px] font-bold uppercase tracking-wide inline-flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
               >

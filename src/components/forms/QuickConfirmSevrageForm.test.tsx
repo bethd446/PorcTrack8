@@ -31,6 +31,10 @@ vi.mock('../../services/confirmationQueue', async () => {
   };
 });
 
+vi.mock('../../services/supabaseWrites', () => ({
+  setBandePoidsInitial: vi.fn().mockResolvedValue({ success: true }),
+}));
+
 vi.mock('@ionic/react', () => ({
   IonToast: ({ isOpen, message }: { isOpen: boolean; message: string }) =>
     isOpen ? <div role="status">{message}</div> : null,
@@ -168,7 +172,7 @@ describe('QuickConfirmSevrageForm', () => {
     expect(nbInputAfter.value).toBe('5');
   });
 
-  it('[6] submit : confirmAction appelée avec (pending.id, note formatée)', async () => {
+  it('[6] submit : confirmAction appelée avec (pending.id, note formatée + poids)', async () => {
     render(
       <QuickConfirmSevrageForm
         isOpen
@@ -177,6 +181,10 @@ describe('QuickConfirmSevrageForm', () => {
       />,
     );
 
+    fireEvent.change(
+      screen.getByLabelText(/Poids moyen sevrage/i),
+      { target: { value: '6.0' } },
+    );
     fireEvent.click(screen.getByRole('button', { name: /Confirmer le sevrage/i }));
 
     // confirmAction est appelée synchronement dans handleConfirm avant l'await.
@@ -185,6 +193,7 @@ describe('QuickConfirmSevrageForm', () => {
     expect(id).toBe('alert-42-CONFIRM_SEVRAGE');
     expect(note).toMatch(/Sevrage confirmé le 2026-04-19/);
     expect(note).toMatch(/11 porcelet/);
+    expect(note).toMatch(/poids moyen 6/);
   });
 
   it('[7] onSuccess + onClose appelés après save (timeout 800)', async () => {
@@ -200,6 +209,10 @@ describe('QuickConfirmSevrageForm', () => {
       />,
     );
 
+    fireEvent.change(
+      screen.getByLabelText(/Poids moyen sevrage/i),
+      { target: { value: '6.0' } },
+    );
     fireEvent.click(screen.getByRole('button', { name: /Confirmer le sevrage/i }));
 
     // Laisser les promesses se résoudre (microtasks) puis avancer le timer.
@@ -228,6 +241,10 @@ describe('QuickConfirmSevrageForm', () => {
       />,
     );
 
+    fireEvent.change(
+      screen.getByLabelText(/Poids moyen sevrage/i),
+      { target: { value: '6.0' } },
+    );
     fireEvent.click(screen.getByRole('button', { name: /Confirmer le sevrage/i }));
 
     await act(async () => {
@@ -236,5 +253,21 @@ describe('QuickConfirmSevrageForm', () => {
 
     const alert = screen.getByRole('alert');
     expect(alert.textContent).toMatch(/PostgresError 23502/);
+  });
+
+  it('[9] poids vide → bouton submit disabled, confirmAction pas appelée', () => {
+    render(
+      <QuickConfirmSevrageForm
+        isOpen
+        onClose={() => undefined}
+        pending={makePending()}
+      />,
+    );
+
+    const submit = screen.getByRole('button', { name: /Confirmer le sevrage/i }) as HTMLButtonElement;
+    expect(submit.disabled).toBe(true);
+
+    fireEvent.click(submit);
+    expect(confirmAction).not.toHaveBeenCalled();
   });
 });

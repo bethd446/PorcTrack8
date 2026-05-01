@@ -30,6 +30,7 @@ function makeBande(
     idPortee: `P${counter}`,
     statut,
     vivants,
+    poidsInitialKg: 0,
     synced: true,
     ...opts,
   };

@@ -19,6 +19,8 @@ export type PhaseAvecSortie = BandePhase | 'SORTIE';
 // Type pour les phases alimentaires définies dans FARM_CONFIG
 export type FeedPhase = keyof typeof FARM_CONFIG.FEED_CONFIG;
 
+export type TransitionReason = 'AGE_ATTEINT' | 'POIDS_ATTEINT' | 'POIDS_ET_AGE';
+
 export interface PendingTransition {
   bandeId: string;
   label: string;
@@ -32,7 +34,23 @@ export interface PendingTransition {
   joursEnRetard: number;
   isBloquant: boolean;
   urgence: 'NORMALE' | 'HAUTE' | 'CRITIQUE';
+  /** Cause du déclenchement : âge biologique, poids franchi, ou les deux. */
+  reason: TransitionReason;
+  /** Seuil de poids effectivement franchi (kg) si reason inclut POIDS. */
+  poidsSeuilKg?: number;
+  /** Poids réel mesuré (kg) — non null si la bande a `poidsMoyenKg`. */
+  poidsReelKg?: number;
 }
+
+// ─── Seuils de poids déclenchant une suggestion de transition (kg) ──────────
+// Le poids prime sur l'âge : si poidsMoyenKg ≥ seuil, la transition est suggérée
+// même si l'âge biologique ne l'a pas encore atteint.
+export const POIDS_SEUILS = {
+  CROISSANCE: 25,
+  ENGRAISSEMENT: 50,
+  FINITION: 80,
+  SORTIE: 110,
+} as const;
 
 // ─── Labels FR pour chaque phase ─────────────────────────────────────────────
 
@@ -159,6 +177,22 @@ function estimerPoids(bande: BandePorcelets, today: Date): number | null {
   return Math.min(POIDS_SEVRAGE + jours * GMQ_AVG, 120);
 }
 
+// ─── Logique poids ───────────────────────────────────────────────────────────
+
+/**
+ * Retourne le seuil de poids associé à la phase suivante (kg), ou null si pas
+ * de seuil défini pour cette transition.
+ */
+function getPoidsSeuilPourTransition(toPhase: PhaseAvecSortie): number | null {
+  switch (toPhase) {
+    case 'CROISSANCE':    return POIDS_SEUILS.CROISSANCE;
+    case 'ENGRAISSEMENT': return POIDS_SEUILS.ENGRAISSEMENT;
+    case 'FINITION':      return POIDS_SEUILS.FINITION;
+    case 'SORTIE':        return POIDS_SEUILS.SORTIE;
+    default:              return null;
+  }
+}
+
 // ─── detectPendingTransitions ────────────────────────────────────────────────
 
 export function detectPendingTransitions(
@@ -176,52 +210,64 @@ export function detectPendingTransitions(
     const declaree = computeBandePhase(b, today);
     if (declaree === 'INCONNU') continue;
 
-    const poids = estimerPoids(b, today);
+    const poidsReel = typeof b.poidsMoyenKg === 'number' ? b.poidsMoyenKg : null;
+    const poidsEstime = estimerPoids(b, today);
+    const poidsPourAliment = poidsReel ?? poidsEstime;
     const mbDate = parseDateFr(b.dateMB);
     const ageJours = mbDate ? floorDays(mbDate, today) : null;
 
-    // Cas FINITION → SORTIE
-    if (declaree === 'FINITION') {
-      if (poids !== null && poids >= FARM_CONFIG.FINITION_POIDS_MAX_KG) {
-        result.push({
-          bandeId: b.id,
-          label: b.idPortee ?? b.id,
-          fromPhase: 'FINITION',
-          toPhase: 'SORTIE',
-          ageJours,
-          poidsEstimeKg: poids,
-          bande: b,
-          joursEnRetard: 0,
-          isBloquant: false,
-          urgence: 'NORMALE'
-        });
+    const next = nextPhase(declaree);
+    if (!next) continue;
+
+    // ─── Évaluation des deux critères : âge biologique et poids réel ──────
+    const triggerByAge = phaseOrder(terrain) > phaseOrder(declaree)
+      || (declaree === 'FINITION'
+          && poidsPourAliment !== null
+          && poidsPourAliment >= FARM_CONFIG.FINITION_POIDS_MAX_KG);
+
+    const seuilPoids = getPoidsSeuilPourTransition(next);
+    const triggerByPoids = poidsReel !== null
+      && seuilPoids !== null
+      && poidsReel >= seuilPoids;
+
+    if (!triggerByAge && !triggerByPoids) continue;
+
+    // Cas FINITION → SORTIE : conserver le comportement original (poids requis).
+    if (declaree === 'FINITION' && next === 'SORTIE') {
+      if (poidsPourAliment === null || poidsPourAliment < FARM_CONFIG.FINITION_POIDS_MAX_KG) {
+        // Pas de poids ou poids insuffisant — on ignore (même si l'âge dit FINITION).
+        if (!triggerByPoids) continue;
       }
-      continue;
     }
 
-    // Cas standard : terrain > déclarée
-    if (phaseOrder(terrain) > phaseOrder(declaree)) {
-      const next = nextPhase(declaree);
-      if (!next) continue;
+    const reason: TransitionReason = triggerByAge && triggerByPoids
+      ? 'POIDS_ET_AGE'
+      : triggerByPoids
+        ? 'POIDS_ATTEINT'
+        : 'AGE_ATTEINT';
 
-      const threshold = getSeuilFinPhase(declaree);
-      const retard = (threshold && ageJours !== null) ? Math.max(0, ageJours - threshold) : 0;
-      const isCritique = retard > 5;
+    const threshold = getSeuilFinPhase(declaree);
+    const retard = (threshold && ageJours !== null) ? Math.max(0, ageJours - threshold) : 0;
+    const isCritique = retard > 5;
 
-      result.push({
-        bandeId: b.id,
-        label: b.idPortee ?? b.id,
-        fromPhase: declaree,
-        toPhase: next,
-        ageJours,
-        poidsEstimeKg: poids,
-        bande: b,
-        alimentRecommande: poids ? determinerAliment(poids) : undefined,
-        joursEnRetard: retard,
-        isBloquant: isCritique,
-        urgence: isCritique ? 'CRITIQUE' : (retard > 2 ? 'HAUTE' : 'NORMALE')
-      });
-    }
+    result.push({
+      bandeId: b.id,
+      label: b.idPortee ?? b.id,
+      fromPhase: declaree,
+      toPhase: next,
+      ageJours,
+      poidsEstimeKg: poidsPourAliment,
+      bande: b,
+      alimentRecommande: poidsPourAliment !== null ? determinerAliment(poidsPourAliment) : undefined,
+      joursEnRetard: retard,
+      isBloquant: isCritique,
+      urgence: next === 'SORTIE'
+        ? 'NORMALE'
+        : isCritique ? 'CRITIQUE' : (retard > 2 ? 'HAUTE' : 'NORMALE'),
+      reason,
+      poidsSeuilKg: triggerByPoids && seuilPoids !== null ? seuilPoids : undefined,
+      poidsReelKg: poidsReel ?? undefined,
+    });
   }
 
   return result;

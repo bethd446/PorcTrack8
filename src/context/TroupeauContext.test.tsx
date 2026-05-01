@@ -61,7 +61,7 @@ describe('TroupeauProvider', () => {
       ration: 3, synced: true,
     };
     const bande: BandePorcelets = {
-      id: 'B01', idPortee: 'B01', statut: 'Sous mère', synced: true,
+      id: 'B01', idPortee: 'B01', statut: 'Sous mère', poidsInitialKg: 0, synced: true,
     };
 
     // Mute le snapshot directement (le singleton est déjà reset)

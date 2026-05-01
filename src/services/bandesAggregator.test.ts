@@ -31,6 +31,7 @@ function makeBande(statut: BandeStatut, vivants = 10): BandePorcelets {
     idPortee: `P${counter}`,
     statut,
     vivants,
+    poidsInitialKg: 0,
     synced: true,
   };
 }
@@ -79,7 +80,7 @@ describe('countSousMere', () => {
 
   it('gère vivants undefined proprement', () => {
     const bandes: BandePorcelets[] = [
-      { id: 'B', idPortee: 'P', statut: 'Sous mère', synced: true },
+      { id: 'B', idPortee: 'P', statut: 'Sous mère', poidsInitialKg: 0, synced: true },
     ];
     const result = countSousMere(bandes);
     expect(result.portees).toBe(1);

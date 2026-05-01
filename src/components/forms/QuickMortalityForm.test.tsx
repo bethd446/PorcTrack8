@@ -29,6 +29,7 @@ function makeBande(overrides: Partial<BandePorcelets> = {}): BandePorcelets {
     nv: 14,
     vivants: 12,
     morts: 2,
+    poidsInitialKg: 0,
     synced: true,
     ...overrides,
   };

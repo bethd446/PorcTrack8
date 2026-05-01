@@ -18,7 +18,7 @@ const PHASE_LABEL: Record<string, string> = {
   CROISSANCE:    'Croissance',
   ENGRAISSEMENT: 'Engraissement',
   FINITION:      'Finition',
-  SORTIE:        '🚚 Sortie abattoir',
+  SORTIE:        'Sortie abattoir',
 };
 
 const PHASE_TO_DESIGN: Record<string, Phase> = {
@@ -99,6 +99,16 @@ const PhaseTransitionModal: React.FC<PhaseTransitionModalProps> = ({
             label={PHASE_LABEL[transition.toPhase] ?? transition.toPhase}
           />
         </div>
+
+        {/* Justification de la transition (poids franchi vs âge biologique) */}
+        {(transition.reason === 'POIDS_ATTEINT' || transition.reason === 'POIDS_ET_AGE')
+          && transition.poidsReelKg !== undefined
+          && transition.poidsSeuilKg !== undefined && (
+          <p className="font-mono text-[12px] text-text-1 leading-snug">
+            Poids {transition.poidsReelKg} kg ≥ seuil {transition.poidsSeuilKg} kg pour{' '}
+            {PHASE_LABEL[transition.toPhase] ?? transition.toPhase}.
+          </p>
+        )}
 
         {/* Champ poids (SORTIE uniquement) */}
         {needsPoids && (

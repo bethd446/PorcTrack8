@@ -154,7 +154,7 @@ const SortieCalendarView: React.FC = () => {
                           accessory={<Chip label={label} tone={tone} size="xs" />}
                           onClick={() => navigate(`/troupeau/bandes/${encodeURIComponent(bande.id)}`)}
                         />
-                        <div className="px-4 pb-3 -mt-1 flex gap-2">
+                        <div className="px-4 pb-3 flex flex-wrap gap-2">
                           <button
                             type="button"
                             onClick={(e) => {

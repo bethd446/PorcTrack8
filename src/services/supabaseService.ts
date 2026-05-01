@@ -154,6 +154,7 @@ export async function getBandes(
       photoUrl:            r.photo_url ?? undefined,
       loge:                r.loge ?? undefined,
       poidsMoyenKg:        r.poids_moyen_kg ?? undefined,
+      poidsInitialKg:      (r as { poids_initial_kg?: number | null }).poids_initial_kg ?? 0,
       verratPere:          (r.boars as { code_id: string } | null)?.code_id ?? undefined,
       synced:              true,
     }));

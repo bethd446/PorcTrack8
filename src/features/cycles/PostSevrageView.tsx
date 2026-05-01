@@ -374,7 +374,7 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
           )}
         </div>
         {isTransitionRequired ? (
-          <Chip tone="amber" label={`➜ ${PHASE_LABEL[data.terrainPhase!]}`} size="sm" icon={<ArrowUpRight size={10} />} className="!normal-case" />
+          <Chip tone="amber" label={PHASE_LABEL[data.terrainPhase!]} size="sm" icon={<ArrowUpRight size={10} />} className="!normal-case" />
         ) : (
           <Chip tone="teal" label="Post-sevrage" size="sm" className="!normal-case" />
         )}
@@ -419,7 +419,7 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
           <div className="text-[12px] font-bold text-accent truncate">
             {feedConfig?.label || currentAliment}
           </div>
-          <div className="mt-1 text-[9px] text-text-2 font-mono leading-tight">
+          <div className="mt-1 text-[10px] text-text-2 font-mono leading-tight truncate">
             Maïs: {feedConfig?.formule.mais}% | Soja: {feedConfig?.formule.tourteau_soja}%
           </div>
         </div>
@@ -435,9 +435,9 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
             </p>
             <div className="mt-1.5 flex flex-wrap gap-1">
               {data.releve.weights.slice(0, 8).map((w: number, i: number) => (
-                <span key={i} className="text-[9px] font-mono bg-bg-1 px-1 rounded text-text-2">{w}kg</span>
+                <span key={i} className="text-[10px] font-mono bg-bg-1 px-1.5 py-0.5 rounded text-text-2 whitespace-nowrap">{w}kg</span>
               ))}
-              {data.releve.weights.length > 8 && <span className="text-[9px] text-text-2">...</span>}
+              {data.releve.weights.length > 8 && <span className="text-[10px] text-text-2">…</span>}
             </div>
           </div>
         </div>

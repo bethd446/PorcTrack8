@@ -97,6 +97,7 @@ function makeBande(over: Partial<BandePorcelets> = {}): BandePorcelets {
     nv: 12,
     vivants: 12,
     morts: 0,
+    poidsInitialKg: 0,
     synced: true,
     ...over,
   };

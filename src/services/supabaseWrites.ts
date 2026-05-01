@@ -248,7 +248,7 @@ export function deleteBatch(id: string, reason?: string): Promise<void> {
 
 export async function updateBatchByCode(
   code_id: string,
-  patch: Partial<BatchRow>,
+  patch: Partial<BatchRow> & { poids_initial_kg?: number | null },
 ): Promise<BatchRow | null> {
   const id = await resolveIdByCode('batches', code_id);
   if (!id) return null;
@@ -260,6 +260,28 @@ export async function updateBatchByCode(
     .single();
   if (error) throw new Error(`[batches] updateByCode failed: ${error.message}`);
   return data as BatchRow;
+}
+
+/**
+ * Met à jour le poids initial (au sevrage) d'une bande identifiée par son code.
+ * Source de vérité pour les calculs IC et GMQ. Validation côté DB :
+ * `poids_initial_kg > 0 AND <= 200` (CHECK constraint).
+ */
+export async function setBandePoidsInitial(
+  code_id: string,
+  poidsKg: number,
+): Promise<WriteResult> {
+  if (!Number.isFinite(poidsKg) || poidsKg <= 0 || poidsKg > 200) {
+    return { success: false, error: 'Poids invalide' };
+  }
+  const id = await resolveIdByCode('batches', code_id);
+  if (!id) return { success: false, error: `Bande ${code_id} introuvable` };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase.from('batches') as any)
+    .update({ poids_initial_kg: poidsKg, poids_moyen_kg: poidsKg })
+    .eq('id', id);
+  if (error) return { success: false, error: error.message };
+  return { success: true };
 }
 
 // ── Notes ────────────────────────────────────────────────────────────────────

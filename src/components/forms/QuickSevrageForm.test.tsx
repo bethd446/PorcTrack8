@@ -71,6 +71,7 @@ function makeBande(overrides: Partial<BandePorcelets> = {}): BandePorcelets {
     truie: 'T07',
     statut: 'Sous mère',
     vivants: 11,
+    poidsInitialKg: 0,
     synced: true,
     ...overrides,
   };
@@ -121,7 +122,7 @@ describe('QuickSevrageForm', () => {
     ).toBeTruthy();
   });
 
-  it('[3] submit happy path : updateBatchByCode + updateSowByCode appelés', async () => {
+  it('[3] submit happy path : updateBatchByCode + updateSowByCode appelés (avec poids)', async () => {
     mockFarm.bandes = [makeBande()];
 
     render(
@@ -135,6 +136,10 @@ describe('QuickSevrageForm', () => {
     fireEvent.change(
       screen.getByLabelText(/Nombre de porcelets sevrés/i),
       { target: { value: '11' } },
+    );
+    fireEvent.change(
+      screen.getByLabelText(/Poids moyen sevrage/i),
+      { target: { value: '6.0' } },
     );
 
     fireEvent.click(screen.getByRole('button', { name: /Enregistrer/i }));
@@ -151,6 +156,8 @@ describe('QuickSevrageForm', () => {
       statut: 'Sevré',
       phase: 'post-sevrage',
       porcelets_sevrene_total: 11,
+      poids_initial_kg: 6,
+      poids_moyen_kg: 6,
     });
     expect(batchPatch.date_sevrage).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -183,6 +190,10 @@ describe('QuickSevrageForm', () => {
     fireEvent.change(
       screen.getByLabelText(/Nombre de porcelets sevrés/i),
       { target: { value: '11' } },
+    );
+    fireEvent.change(
+      screen.getByLabelText(/Poids moyen sevrage/i),
+      { target: { value: '6.0' } },
     );
     fireEvent.click(screen.getByRole('button', { name: /Enregistrer/i }));
 
@@ -221,10 +232,68 @@ describe('QuickSevrageForm', () => {
       screen.getByLabelText(/Nombre de porcelets sevrés/i),
       { target: { value: '11' } },
     );
+    fireEvent.change(
+      screen.getByLabelText(/Poids moyen sevrage/i),
+      { target: { value: '6.0' } },
+    );
     fireEvent.click(screen.getByRole('button', { name: /Enregistrer/i }));
 
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toMatch(/Supabase 503/);
     expect(screen.queryByTestId('toast')).toBeNull();
+  });
+
+  it('[6] poids vide → bouton submit disabled, updateBatchByCode pas appelée', () => {
+    mockFarm.bandes = [makeBande()];
+    render(
+      <QuickSevrageForm
+        isOpen
+        onClose={() => undefined}
+        defaultBandeId="26-T7-01"
+      />,
+    );
+
+    fireEvent.change(
+      screen.getByLabelText(/Nombre de porcelets sevrés/i),
+      { target: { value: '11' } },
+    );
+    // Pas de poids saisi → submit doit rester désactivé
+    const submit = screen.getByRole('button', { name: /Enregistrer/i }) as HTMLButtonElement;
+    expect(submit.disabled).toBe(true);
+
+    fireEvent.click(submit);
+    expect(updateBatchByCode).not.toHaveBeenCalled();
+  });
+
+  it('[7] poids hors plage 4-10 → warning visible mais submit possible', async () => {
+    mockFarm.bandes = [makeBande()];
+    render(
+      <QuickSevrageForm
+        isOpen
+        onClose={() => undefined}
+        defaultBandeId="26-T7-01"
+      />,
+    );
+
+    fireEvent.change(
+      screen.getByLabelText(/Nombre de porcelets sevrés/i),
+      { target: { value: '11' } },
+    );
+    fireEvent.change(
+      screen.getByLabelText(/Poids moyen sevrage/i),
+      { target: { value: '3.0' } }, // < 4 → warning
+    );
+
+    expect(screen.getByText(/Hors plage cible 5-7 kg/i)).toBeTruthy();
+
+    const submit = screen.getByRole('button', { name: /Enregistrer/i }) as HTMLButtonElement;
+    expect(submit.disabled).toBe(false);
+
+    fireEvent.click(submit);
+    await waitFor(() => {
+      expect(updateBatchByCode).toHaveBeenCalledTimes(1);
+    });
+    const [, batchPatch] = (updateBatchByCode as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(batchPatch.poids_initial_kg).toBe(3);
   });
 });

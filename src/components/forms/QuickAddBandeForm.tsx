@@ -54,6 +54,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
   const [mortsNesMales, setMortsNesMales] = useState<string>('');
   const [mortsNesFemelles, setMortsNesFemelles] = useState<string>('');
   const [statut, setStatut] = useState<BandeStatutInitial>('Sous mère');
+  const [poidsKg, setPoidsKg] = useState<string>('');
   const [loge, setLoge] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [errors, setErrors] = useState<AddBandeValidation['errors']>({});
@@ -80,6 +81,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
       setMortsNesMales('');
       setMortsNesFemelles('');
       setStatut('Sous mère');
+      setPoidsKg('');
       setLoge('');
       setNotes('');
       setErrors({});
@@ -116,6 +118,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
       mortsNesMales,
       mortsNesFemelles,
       statut,
+      poidsKg,
       loge,
       notes,
     });
@@ -145,7 +148,9 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
         statut: result.values.statut,
         loge: result.values.loge,
         notes: result.values.notes,
-      });
+        // Colonne V23 (NOT NULL) — type Database pas encore régénéré.
+        poids_initial_kg: result.values.poids_initial_kg,
+      } as Parameters<typeof insertBatch>[0]);
       const online =
         typeof navigator !== 'undefined' && navigator.onLine;
       setToast(online ? 'Bande ajoutée' : 'Bande en file · sync auto');
@@ -505,6 +510,66 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
                 );
               })}
             </div>
+          </div>
+
+          {/* Poids moyen au sevrage / naissance */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <label
+                htmlFor="add-bande-poids"
+                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              >
+                Poids moyen sevrage (kg){' '}
+                {statut === 'Sevrés' ? (
+                  <span className="text-red normal-case">· obligatoire</span>
+                ) : (
+                  <span className="text-text-2 normal-case">· défaut naissance 1.4 kg</span>
+                )}
+              </label>
+              <span className="inline-flex items-center px-2 h-6 rounded-full bg-bg-2 border border-border font-mono text-[10px] uppercase tracking-wide text-text-1">
+                5-7 kg cible
+              </span>
+            </div>
+            <input
+              id="add-bande-poids"
+              type="number"
+              inputMode="decimal"
+              step={0.1}
+              min={0.5}
+              max={50}
+              aria-required={statut === 'Sevrés'}
+              aria-invalid={!!errors.poidsKg}
+              aria-describedby={errors.poidsKg ? 'add-bande-poids-error' : undefined}
+              className={[
+                'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2',
+                'font-mono text-[16px] tabular-nums text-center outline-none transition-colors duration-[160ms]',
+                'focus:border-accent focus:ring-1 focus:ring-accent',
+                errors.poidsKg ? 'border-red' : 'border-border hover:border-text-2',
+              ].join(' ')}
+              placeholder={statut === 'Sevrés' ? '6.0' : '1.4'}
+              value={poidsKg}
+              onChange={e => setPoidsKg(e.target.value)}
+              disabled={saving}
+            />
+            {errors.poidsKg ? (
+              <p id="add-bande-poids-error" role="alert" className="font-mono text-[11px] text-red">
+                {errors.poidsKg}
+              </p>
+            ) : (() => {
+              const p = parseFloat(poidsKg.replace(',', '.'));
+              if (!Number.isFinite(p) || poidsKg.trim() === '') return null;
+              if (statut === 'Sevrés' && (p < 4 || p > 10)) {
+                return (
+                  <span
+                    role="status"
+                    className="inline-flex items-center px-2 h-6 rounded-full bg-amber-100 border border-amber-300 font-mono text-[10px] uppercase tracking-wide text-amber-900"
+                  >
+                    Hors plage cible 5-7 kg
+                  </span>
+                );
+              }
+              return null;
+            })()}
           </div>
 
           {/* Loge actuelle */}

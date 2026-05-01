@@ -19,7 +19,8 @@ const mockTransition: PendingTransition = {
   joursEnRetard: 0,
   isBloquant: false,
   urgence: 'NORMALE',
-  bande: { id: 'B07', idPortee: 'P07', statut: 'Sevrés', vivants: 20, synced: true },
+  reason: 'AGE_ATTEINT',
+  bande: { id: 'B07', idPortee: 'P07', statut: 'Sevrés', vivants: 20, synced: true, poidsInitialKg: 7 },
 };
 
 vi.mock('@ionic/react', () => ({
@@ -71,5 +72,16 @@ describe('PhaseTransitionModal', () => {
     };
     renderModal({ transition: finTransition });
     expect(screen.getByLabelText(/poids.*kg/i)).toBeDefined();
+  });
+
+  it("affiche le seuil franchi quand la transition est déclenchée par poids", () => {
+    const poidsTransition: PendingTransition = {
+      ...mockTransition,
+      reason: 'POIDS_ATTEINT',
+      poidsSeuilKg: 25,
+      poidsReelKg: 26,
+    };
+    renderModal({ transition: poidsTransition });
+    expect(screen.getByText(/Poids 26 kg.*seuil 25 kg/i)).toBeDefined();
   });
 });

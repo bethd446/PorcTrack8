@@ -104,6 +104,8 @@ export interface BandePorcelets {
   loge?: string;
   /** Poids moyen courant (kg) — colonne `poids_moyen_kg`. */
   poidsMoyenKg?: number;
+  /** Poids moyen kg au sevrage (démarrage bande). Obligatoire — saisi via QuickSevrageForm/wizard. */
+  poidsInitialKg: number;
   /** ID/code du verrat père (résolu via saillie ou saisi directement). */
   verratPere?: string;
   notes?: string;

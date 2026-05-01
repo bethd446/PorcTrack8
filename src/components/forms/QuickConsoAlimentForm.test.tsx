@@ -56,6 +56,7 @@ function makeBande(over: Partial<BandePorcelets> = {}): BandePorcelets {
     idPortee: 'P-2026-01',
     truie: 'T01',
     statut: 'Sous mère',
+    poidsInitialKg: 0,
     synced: true,
     ...over,
   };

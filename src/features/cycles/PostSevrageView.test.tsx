@@ -93,6 +93,7 @@ function makeBande(overrides: Partial<BandePorcelets> = {}): BandePorcelets {
     id: 'B-001',
     idPortee: 'P-001',
     statut: 'Sevrés',
+    poidsInitialKg: 0,
     synced: true,
     ...overrides,
   };

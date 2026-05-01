@@ -312,7 +312,7 @@ const EngraissementCard: React.FC<{ data: EngraissementRowData; onOpen: () => vo
           </p>
         </div>
         {isTransitionRequired ? (
-          <Chip tone="accent" label={`➜ ${PHASE_LABEL.FINITION}`} size="sm" icon={<ArrowUpRight size={10} />} className="!normal-case" />
+          <Chip tone="accent" label={PHASE_LABEL.FINITION} size="sm" icon={<ArrowUpRight size={10} />} className="!normal-case" />
         ) : (
           <Chip tone="default" label="Engraissement" size="sm" className="!normal-case" />
         )}
@@ -346,7 +346,7 @@ const EngraissementCard: React.FC<{ data: EngraissementRowData; onOpen: () => vo
           <div className="text-[12px] font-bold text-accent truncate">
             {feedConfig?.label || currentAliment}
           </div>
-          <div className="mt-1 text-[9px] text-text-2 font-mono leading-tight">
+          <div className="mt-1 text-[10px] text-text-2 font-mono leading-tight truncate">
             Maïs: {feedConfig?.formule.mais}% | KPC: {feedConfig?.formule.kpc_5}%
           </div>
         </div>

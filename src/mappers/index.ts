@@ -243,6 +243,7 @@ export const mapBande = (header: string[], row: RawRow): BandePorcelets | null =
     logeEngraissement,
     dateSeparation: dsepIdx !== -1 ? parseSheetDate(row[dsepIdx]) : undefined,
     notes: readOptStr(row, noIdx),
+    poidsInitialKg: 0,
     synced: true,
     raw: toRaw(row),
   };
