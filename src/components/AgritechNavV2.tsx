@@ -7,9 +7,9 @@ import React, {
 } from 'react';
 import { IonToast } from '@ionic/react';
 import {
-  Inbox,
-  PawPrint,
-  Package,
+  Home,
+  PiggyBank,
+  Heart,
   BarChart3,
   MoreHorizontal,
 } from 'lucide-react';
@@ -181,7 +181,7 @@ export const QuickActionsProvider: React.FC<{ children: React.ReactNode }> = ({
 
 /* ── Tabs definition ─────────────────────────────────────────────────────── */
 
-type TabId = 'today' | 'cheptel' | 'pilotage' | 'ressources' | 'more';
+type TabId = 'today' | 'elevage' | 'repro' | 'perf' | 'more';
 
 interface NavTabDef {
   id: TabId;
@@ -192,42 +192,47 @@ interface NavTabDef {
   ownerOnly?: boolean;
 }
 
+// Path Repro : page hub /reproduction livrée Agent B3 V22 (fil conducteur
+// saillie → écho → MB → sevrage avec KPIs ISSE/IEM/Taux MB/Renouv).
+// L'active state matche aussi /cycles/repro et /cycles/maternite.
+const REPRO_PATH = '/reproduction';
+
 const TABS: NavTabDef[] = [
   {
     id: 'today',
     path: '/today',
     label: 'Aujourd’hui',
-    Icon: Inbox,
-    match: ['/today', '/audit', '/alerts'],
+    Icon: Home,
+    match: ['/today'],
   },
   {
-    id: 'cheptel',
+    id: 'elevage',
     path: '/troupeau',
-    label: 'Cheptel',
-    Icon: PawPrint,
+    label: 'Élevage',
+    Icon: PiggyBank,
     match: ['/troupeau', '/cycles', '/cheptel', '/bandes'],
   },
   {
-    id: 'pilotage',
-    path: '/pilotage',
-    label: 'Pilotage',
+    id: 'repro',
+    path: REPRO_PATH,
+    label: 'Repro',
+    Icon: Heart,
+    match: ['/reproduction', '/cycles/repro', '/cycles/maternite'],
+  },
+  {
+    id: 'perf',
+    path: '/pilotage/perf',
+    label: 'Perf',
     Icon: BarChart3,
     match: ['/pilotage'],
     ownerOnly: true,
-  },
-  {
-    id: 'ressources',
-    path: '/ressources',
-    label: 'Ressources',
-    Icon: Package,
-    match: ['/ressources', '/stock'],
   },
   {
     id: 'more',
     path: '/more',
     label: 'Plus',
     Icon: MoreHorizontal,
-    match: ['/more', '/aide', '/admin'],
+    match: ['/more', '/admin', '/aide', '/fournisseurs', '/ressources'],
   },
 ];
 
@@ -314,12 +319,22 @@ const NavTab: React.FC<NavTabProps> = ({ tab, isActive, onSelect, badgeCount }) 
 /* ── Active tab resolver ─────────────────────────────────────────────────── */
 
 function resolveActiveTab(pathname: string): TabId {
+  // Priorité aux matches les plus longs (préfixe le plus spécifique gagne).
+  // Évite que /cycles/repro soit attribué à "Élevage" (match /cycles) alors
+  // qu'il appartient à "Repro" (match /cycles/repro).
+  let bestId: TabId = 'today';
+  let bestLen = -1;
   for (const tab of TABS) {
     for (const m of tab.match) {
-      if (pathname === m || pathname.startsWith(m + '/')) return tab.id;
+      if (pathname === m || pathname.startsWith(m + '/')) {
+        if (m.length > bestLen) {
+          bestLen = m.length;
+          bestId = tab.id;
+        }
+      }
     }
   }
-  return 'today';
+  return bestId;
 }
 
 /* ── AgritechNavV2 ───────────────────────────────────────────────────────── */

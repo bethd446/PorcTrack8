@@ -14,6 +14,12 @@ import {
   Pill,
   Wheat,
   Users as UsersIcon,
+  Home,
+  HeartPulse,
+  Calendar,
+  Baby,
+  Truck,
+  HelpCircle,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -24,15 +30,19 @@ import { kvGet, kvSet } from '../services/kvStore';
 import CommandPalette from './design/CommandPalette';
 
 /**
- * AppSidebar — sidebar desktop ≥1024px (Option Bravo).
+ * AppSidebar — sidebar desktop ≥1024px (V22-B1).
  *
- * Sections : Épinglé · Aujourd'hui · Cheptel · Pilotage · Stocks · Admin.
- * Cycles biologiques expandable, état persisté kvStore.
+ * Sections : Épinglé · Aujourd'hui · Mon élevage · Reproduction · Performance · Stocks · Plus.
+ * Cycles biologiques expandable sous "Mon élevage", état persisté kvStore.
  * Trigger Cmd+K en haut, palette globale (CommandPalette).
  */
 
 const SIDEBAR_WIDTH = 240;
 const CYCLES_EXPANDED_KEY = 'sidebar_cycles_expanded';
+
+// Page hub Reproduction (Agent B3 V22) — page dédiée fil conducteur
+// saillie → écho → MB → sevrage avec KPIs repro.
+const REPRODUCTION_HUB_HREF = '/reproduction';
 
 interface NavItem {
   label: string;
@@ -121,8 +131,8 @@ const AppSidebar: React.FC = () => {
     );
   };
 
-  const showAdminSection = profile?.role === 'ADMIN';
-  const showPilotageSection = isOwner;
+  const showAdminItem = profile?.role === 'ADMIN';
+  const showPerformanceSection = isOwner;
 
   const cyclesItems: NavItem[] = useMemo(
     () => [
@@ -214,7 +224,7 @@ const AppSidebar: React.FC = () => {
           </button>
         </div>
 
-        {/* Section Épinglé */}
+        {/* Section Épinglé (dynamique) */}
         {resolvedRecentItems.length > 0 ? (
           <Section title="Épinglé">
             {resolvedRecentItems.map((it) => {
@@ -232,8 +242,14 @@ const AppSidebar: React.FC = () => {
           </Section>
         ) : null}
 
-        {/* Aujourd'hui */}
+        {/* 1. Aujourd'hui */}
         <Section title="Aujourd'hui">
+          <SidebarRow
+            icon={Home}
+            label="Aperçu du jour"
+            active={isActive('/today')}
+            onClick={() => navigate('/today')}
+          />
           <SidebarRow
             icon={Inbox}
             label="Toutes les alertes"
@@ -243,21 +259,17 @@ const AppSidebar: React.FC = () => {
           />
         </Section>
 
-        {/* Cheptel */}
-        <Section title="Cheptel">
+        {/* 2. Mon élevage */}
+        <Section title="Mon élevage">
           <SidebarRow
             icon={PawPrint}
-            label="Troupeau"
+            label="Tout le troupeau"
             active={isActive('/troupeau')}
             onClick={() => navigate('/troupeau')}
           />
-        </Section>
-
-        {/* Cycles */}
-        <Section title="Cycles">
           <SidebarRow
             icon={RotateCcw}
-            label="Cycles"
+            label="Cycles biologiques"
             expandable
             expanded={cyclesExpanded}
             active={location.pathname === '/cycles'}
@@ -293,12 +305,34 @@ const AppSidebar: React.FC = () => {
           </div>
         </Section>
 
-        {/* Pilotage */}
-        {showPilotageSection ? (
-          <Section title="Pilotage">
+        {/* 3. Reproduction */}
+        <Section title="Reproduction">
+          <SidebarRow
+            icon={HeartPulse}
+            label="Vue reproduction"
+            active={location.pathname === '/reproduction'}
+            onClick={() => navigate(REPRODUCTION_HUB_HREF)}
+          />
+          <SidebarRow
+            icon={Calendar}
+            label="Calendrier saillies"
+            active={isActive('/cycles/repro')}
+            onClick={() => navigate('/cycles/repro')}
+          />
+          <SidebarRow
+            icon={Baby}
+            label="Maternité"
+            active={isActive('/cycles/maternite')}
+            onClick={() => navigate('/cycles/maternite')}
+          />
+        </Section>
+
+        {/* 4. Performance (ex-Pilotage, OWNER only) */}
+        {showPerformanceSection ? (
+          <Section title="Performance">
             <SidebarRow
               icon={BarChart3}
-              label="Performance"
+              label="KPIs techniques"
               active={isActive('/pilotage/perf')}
               onClick={() => navigate('/pilotage/perf')}
             />
@@ -317,7 +351,7 @@ const AppSidebar: React.FC = () => {
           </Section>
         ) : null}
 
-        {/* Ressources */}
+        {/* 5. Stocks */}
         <Section title="Stocks">
           <SidebarRow
             icon={Wheat}
@@ -331,37 +365,37 @@ const AppSidebar: React.FC = () => {
             active={isActive('/ressources/pharmacie')}
             onClick={() => navigate('/ressources/pharmacie')}
           />
+          <SidebarRow
+            icon={Truck}
+            label="Fournisseurs"
+            active={isActive('/fournisseurs')}
+            onClick={() => navigate('/fournisseurs')}
+          />
         </Section>
 
-        {/* Admin */}
-        {showAdminSection ? (
-          <Section title="Admin">
+        {/* 6. Plus */}
+        <Section title="Plus">
+          {showAdminItem ? (
             <SidebarRow
               icon={UsersIcon}
-              label="Utilisateurs"
+              label="Admin"
               active={isActive('/admin')}
               onClick={() => navigate('/admin')}
             />
-            <SidebarRow
-              icon={Settings}
-              label="Ferme & Système"
-              active={isActive('/more')}
-              onClick={() => navigate('/more')}
-            />
-          </Section>
-        ) : null}
-
-        {/* fallback non-owner : accès aux paramètres ferme limité, mais on garde Réglages */}
-        {!showAdminSection ? (
-          <Section title="Système">
-            <SidebarRow
-              icon={Settings}
-              label="Réglages"
-              active={isActive('/more')}
-              onClick={() => navigate('/more')}
-            />
-          </Section>
-        ) : null}
+          ) : null}
+          <SidebarRow
+            icon={Settings}
+            label="Réglages"
+            active={isActive('/more')}
+            onClick={() => navigate('/more')}
+          />
+          <SidebarRow
+            icon={HelpCircle}
+            label="Aide"
+            active={isActive('/aide')}
+            onClick={() => navigate('/aide')}
+          />
+        </Section>
 
       </aside>
 
