@@ -47,10 +47,10 @@ function navByType(type: ForecastEventType, id: string, nav?: 'truie' | 'verrat'
 /** Couleur de la barre gauche selon priorité. */
 function priorityColor(p: ForecastPriority): string {
   switch (p) {
-    case 'CRITIQUE': return '#EF4444';
-    case 'HAUTE': return '#F59E0B';
-    case 'NORMALE': return '#60A5FA';
-    case 'INFO': return '#6B7880';
+    case 'CRITIQUE': return 'var(--color-danger, #EF4444)';
+    case 'HAUTE': return 'var(--amber-pork)';
+    case 'NORMALE': return 'var(--color-info, #3B82F6)';
+    case 'INFO': return 'var(--muted)';
   }
 }
 

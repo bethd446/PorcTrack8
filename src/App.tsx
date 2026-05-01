@@ -88,7 +88,10 @@ const SortieCalendarView = React.lazy(() => import(/* webpackChunkName: "cycle-s
 const AideView = React.lazy(() => import(/* webpackChunkName: "aide" */ './features/help/AideView'));
 
 const SuspenseFallback = () => (
-  <div className="flex flex-col items-center justify-center h-screen bg-white">
+  <div
+    className="flex flex-col items-center justify-center h-screen"
+    style={{ background: 'var(--bg-app, #f0f4f3)' }}
+  >
     <div className="animate-pulse-soft flex flex-col items-center gap-5">
       <img src="/images/icon.svg" alt="PorcTrack" className="w-16 h-16 rounded-xl" />
       <div className="space-y-1 text-center">
@@ -102,7 +105,7 @@ const SuspenseFallback = () => (
 const OnboardingRoute: React.FC = () => {
   const navigate = useNavigate();
   return (
-    <AgritechLayout withNav={false}>
+    <AgritechLayout withNav={false} withSidebar={false}>
       <OnboardingFlow onComplete={() => navigate('/cockpit', { replace: true })} />
     </AgritechLayout>
   );
@@ -242,7 +245,10 @@ const AppShell: React.FC = () => (
 
 const AppContent = () => {
   useEffect(() => {
-    loadChecklistDefinitions();
+    // Non-bloquant : si GAS échoue, on n'empêche pas le rendu de l'app.
+    loadChecklistDefinitions().catch((err) => {
+      console.warn('[App] loadChecklistDefinitions failed (non-fatal):', err);
+    });
   }, []);
 
   return (

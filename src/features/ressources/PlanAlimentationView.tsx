@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
-import { Wheat, Calculator, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import { Chip, DataRow, SectionDivider, KpiCard } from '../../components/agritech';
+import { default as KpiCardV6 } from '../../components/design/KpiCard';
+import { Chip, DataRow, SectionDivider } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
 import {
   buildAlimentationPlan,
@@ -88,30 +89,28 @@ const PlanAlimentationView: React.FC = () => {
           <div className="px-4 pt-4 pb-8 flex flex-col gap-4">
             {/* ── Summary strip : 3 KPI ───────────────────────────── */}
             <div className="grid grid-cols-3 gap-2">
-              <KpiCard
+              <KpiCardV6
                 label="Conso/j"
                 value={formatKg(plan.consommationJournaliereTotale)}
                 unit="kg"
-                icon={<Calculator size={14} />}
               />
-              <KpiCard
+              <KpiCardV6
                 label="Stock"
                 value={formatKg(plan.stockTotal)}
                 unit="kg"
-                icon={<Wheat size={14} />}
               />
-              <KpiCard
+              <KpiCardV6
                 label="Couv. moy."
                 value={formatJours(plan.joursCouvertureMoyenne)}
                 unit="j"
-                tone={
+                accentColor={
                   !isFinite(plan.joursCouvertureMoyenne)
-                    ? 'default'
+                    ? undefined
                     : plan.joursCouvertureMoyenne < 7
-                    ? 'critical'
+                    ? 'var(--color-danger, #EF4444)'
                     : plan.joursCouvertureMoyenne < 14
-                    ? 'warning'
-                    : 'success'
+                    ? 'var(--amber-pork)'
+                    : undefined
                 }
               />
             </div>

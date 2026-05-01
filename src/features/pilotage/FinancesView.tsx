@@ -20,14 +20,15 @@ import {
   IonContent, IonPage, IonRefresher, IonRefresherContent,
 } from '@ionic/react';
 import {
-  Wallet, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownLeft,
-  ArrowDownRight, ChevronRight, BarChart3, Coins, Plus, MoreVertical,
+  ArrowUpRight, ArrowDownLeft,
+  ChevronRight, BarChart3, Coins, Plus, MoreVertical,
   Pencil, Trash2,
 } from 'lucide-react';
 
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import { KpiCard, Chip, SectionDivider } from '../../components/agritech';
+import { default as KpiCardV6 } from '../../components/design/KpiCard';
+import { Chip, SectionDivider } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
 import {
   summarizeByPeriode,
@@ -265,33 +266,30 @@ const FinancesView: React.FC = () => {
                   aria-label="Résumé finances"
                   className="grid grid-cols-2 gap-2.5"
                 >
-                  <KpiCard
+                  <KpiCardV6
                     label="Chiffre d'affaires"
                     value={formatMontant(summary.totalRevenus, currency)}
-                    icon={<TrendingUp size={14} aria-hidden="true" />}
-                    tone="success"
                   />
-                  <KpiCard
+                  <KpiCardV6
                     label="Dépenses"
                     value={formatMontant(summary.totalDepenses, currency)}
-                    icon={<TrendingDown size={14} aria-hidden="true" />}
-                    tone="warning"
+                    accentColor="var(--amber-pork)"
                   />
-                  <KpiCard
+                  <KpiCardV6
                     label="Marge nette"
                     value={formatMontant(summary.margeNette, currency)}
-                    icon={
-                      summary.margeNette >= 0
-                        ? <ArrowUpRight size={14} aria-hidden="true" />
-                        : <ArrowDownRight size={14} aria-hidden="true" />
+                    accentColor={
+                      margeTone === 'critical'
+                        ? 'var(--color-danger, #EF4444)'
+                        : margeTone === 'success'
+                          ? undefined
+                          : undefined
                     }
-                    tone={margeTone}
                   />
-                  <KpiCard
+                  <KpiCardV6
                     label="Trésorerie cumul"
                     value={formatMontant(tresorerieCumul, currency)}
-                    icon={<Wallet size={14} aria-hidden="true" />}
-                    tone={tresorerieCumul >= 0 ? 'default' : 'critical'}
+                    accentColor={tresorerieCumul >= 0 ? undefined : 'var(--color-danger, #EF4444)'}
                   />
                 </div>
 

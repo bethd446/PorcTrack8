@@ -7,8 +7,13 @@ export default function SmartRoot() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#0A0D0C]">
-        <p className="text-xs uppercase tracking-widest text-[#A8B3B8]">Chargement…</p>
+      <div
+        className="flex items-center justify-center min-h-screen"
+        style={{ background: 'var(--bg-app, #f0f4f3)' }}
+      >
+        <p className="text-xs uppercase tracking-widest" style={{ color: 'var(--muted, #6B7280)' }}>
+          Chargement…
+        </p>
       </div>
     );
   }

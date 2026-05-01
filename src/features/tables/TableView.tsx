@@ -33,6 +33,7 @@ import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { BottomSheet, Chip } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
+import Button from '../../components/design/Button';
 
 interface TableViewProps {
   tableKey: string;
@@ -51,7 +52,7 @@ interface TableDescriptor {
 
 const TABLE_DESCRIPTORS: Record<string, TableDescriptor> = {
   JOURNAL_SANTE: {
-    title: 'Journal Santé',
+    title: 'Journal santé',
     subtitle: 'Suivi sanitaire · soins',
     icon: Stethoscope,
     emptyLabel: 'Aucun soin enregistré',
@@ -295,7 +296,7 @@ const TableView: React.FC<TableViewProps> = ({ tableKey }) => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout withNav={false}>
-          <AgritechHeader title={descriptor.title.toUpperCase()} subtitle={descriptor.subtitle}>
+          <AgritechHeader title={descriptor.title} subtitle={descriptor.subtitle}>
             {/* Dark search bar inside header slot */}
             <div
               className={[
@@ -333,7 +334,18 @@ const TableView: React.FC<TableViewProps> = ({ tableKey }) => {
                 className="card-dense flex flex-col items-center justify-center gap-3 py-12 text-center"
                 role="alert"
               >
-                <AlertCircle size={36} className="text-red-400" aria-hidden="true" />
+                <span
+                  aria-hidden="true"
+                  className="inline-flex items-center justify-center"
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: '50%',
+                    background: 'var(--color-pig-soft, color-mix(in srgb, var(--red) 12%, var(--bg-surface)))',
+                  }}
+                >
+                  <AlertCircle size={28} className="text-red" aria-hidden="true" />
+                </span>
                 <p
                   className="text-[14px] font-bold uppercase tracking-wide text-text-0"
                   style={{ fontFamily: 'var(--font-display)' }}
@@ -343,18 +355,9 @@ const TableView: React.FC<TableViewProps> = ({ tableKey }) => {
                 <p className="font-mono text-[11px] uppercase tracking-wide text-text-2 max-w-xs">
                   {error}
                 </p>
-                <button
-                  type="button"
-                  onClick={loadData}
-                  className={[
-                    'pressable mt-2 inline-flex items-center justify-center',
-                    'px-4 py-2 rounded-md',
-                    'bg-accent text-bg-0 font-mono text-[12px] font-semibold uppercase tracking-wide',
-                    'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                  ].join(' ')}
-                >
+                <Button variant="primary" size="md" onClick={loadData} className="mt-2">
                   Réessayer
-                </button>
+                </Button>
               </div>
             ) : filteredRows.length === 0 ? (
               <div

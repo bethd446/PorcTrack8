@@ -1,12 +1,12 @@
 /**
- * CyclesHub — /cycles (tab 03)
+ * CyclesHub — /cycles
  * ══════════════════════════════════════════════════════════════════════════
- * Refonte Claude Design v2 (2026-04-20) — mockup _tabs/03-cycles.
+ * Refonte v6 « Terrain Vivant » (2026-04-30)
  *
- * Structure :
- *   1. Summary chips 5 phases (count par phase avec tone)
- *   2. Pipeline horizontal 295 jours (bande 5 phases + labels + markers bandes)
- *   3. Liste bandes actives (DataRow avec progress J+x/durée + chip phase)
+ *   1. TopBarSync + Eyebrow + H1 Big Shoulders
+ *   2. Sub-tabs en pills (par phase) — pointe vers les vues détaillées
+ *   3. Pipeline horizontal (band 6 phases proportionnelles + labels + bandes)
+ *   4. Liste bandes actives en cards v6 (radius 12, shadow-card)
  */
 
 import React, { useMemo } from 'react';
@@ -14,11 +14,10 @@ import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
 import { ChevronRight } from 'lucide-react';
 
-import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import DataAgeIndicator from '../../components/DataAgeIndicator';
-import { SectionDivider, Chip } from '../../components/agritech';
-import { useFarm } from '../../context/FarmContext';
+import Eyebrow from '../../components/design/Eyebrow';
+import TopBarSync from '../../components/design/TopBarSync';
+import { useFarm, useMeta } from '../../context/FarmContext';
 import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import {
   computeBandePhase,
@@ -37,22 +36,63 @@ interface PhaseDef {
   label: string;
   short: string;
   days: number;
-  varTone: string;
+  tone: string;
+  toneSoft: string;
   route?: string;
 }
 
 const PHASES: readonly PhaseDef[] = [
-  { id: 'gestation', label: 'Gestation', short: 'GEST.', days: 115, varTone: 'var(--cyan)' },
-  { id: 'maternite', label: 'Maternité', short: 'MAT.', days: FARM_CONFIG.SEVRAGE_AGE_JOURS ?? 28, varTone: 'var(--gold)', route: '/cycles/maternite' },
-  { id: 'postsevr',  label: 'Post-sevrage', short: 'P-SEV.', days: FARM_CONFIG.POST_SEVRAGE_DUREE_JOURS ?? 35, varTone: 'var(--teal)', route: '/cycles/post-sevrage' },
-  { id: 'croiss',    label: 'Croissance', short: 'CROIS.', days: FARM_CONFIG.CROISSANCE_DUREE_JOURS ?? 37, varTone: 'var(--amber)', route: '/cycles/croissance' },
-  { id: 'engrais',   label: 'Engrais.', short: 'ENGR.', days: FARM_CONFIG.ENGRAISSEMENT_DUREE_JOURS ?? 80, varTone: 'var(--accent)', route: '/cycles/engraissement' },
+  {
+    id: 'gestation',
+    label: 'Gestation',
+    short: 'Gest.',
+    days: 115,
+    tone: 'var(--color-pig)',
+    toneSoft: 'var(--color-pig-soft)',
+  },
+  {
+    id: 'maternite',
+    label: 'Maternité',
+    short: 'Mat.',
+    days: FARM_CONFIG.SEVRAGE_AGE_JOURS ?? 28,
+    tone: 'var(--color-info)',
+    toneSoft: 'var(--color-blue-100)',
+    route: '/cycles/maternite',
+  },
+  {
+    id: 'postsevr',
+    label: 'Post-sevrage',
+    short: 'P-sev.',
+    days: FARM_CONFIG.POST_SEVRAGE_DUREE_JOURS ?? 35,
+    tone: 'var(--color-accent-400)',
+    toneSoft: 'var(--color-accent-100)',
+    route: '/cycles/post-sevrage',
+  },
+  {
+    id: 'croiss',
+    label: 'Croissance',
+    short: 'Crois.',
+    days: FARM_CONFIG.CROISSANCE_DUREE_JOURS ?? 37,
+    tone: 'var(--color-accent-500)',
+    toneSoft: 'var(--color-accent-100)',
+    route: '/cycles/croissance',
+  },
+  {
+    id: 'engrais',
+    label: 'Engrais.',
+    short: 'Engr.',
+    days: FARM_CONFIG.ENGRAISSEMENT_DUREE_JOURS ?? 80,
+    tone: 'var(--color-secondary)',
+    toneSoft: 'var(--color-secondary-soft)',
+    route: '/cycles/engraissement',
+  },
   {
     id: 'finition',
     label: 'Finition',
-    short: 'FINIT.',
+    short: 'Finit.',
     days: Math.round((FARM_CONFIG.FINITION_POIDS_MAX_KG - FARM_CONFIG.FINITION_POIDS_MIN_KG) / 0.90),
-    varTone: 'var(--coral)',
+    tone: 'var(--color-secondary-deep)',
+    toneSoft: 'var(--color-secondary-soft)',
     route: '/cycles/finition',
   },
 ];
@@ -94,7 +134,6 @@ interface BandePosition {
   detail: string;
 }
 
-/** Détermine la position d'une bande dans le pipeline. */
 function bandePosition(b: BandePorcelets, today: Date): BandePosition | null {
   const phase = computeBandePhase(b, today);
   const vivants = b.vivants ?? 0;
@@ -150,12 +189,10 @@ function bandePosition(b: BandePorcelets, today: Date): BandePosition | null {
   };
 }
 
-/** Position globale (j sur pipeline 295j). */
 function globalDay(b: BandePosition): number {
   return PHASE_OFFSETS[b.phase.id] + b.dayInPhase;
 }
 
-/** Truies en gestation → pseudo-bandes pour le pipeline. */
 function truieToPosition(t: Truie, today: Date): BandePosition | null {
   if (normaliseStatut(t.statut) !== 'PLEINE') return null;
   const def = PHASES.find((p) => p.id === 'gestation');
@@ -181,6 +218,7 @@ function truieToPosition(t: Truie, today: Date): BandePosition | null {
 const CyclesHub: React.FC = () => {
   const navigate = useNavigate();
   const { truies, bandes } = useFarm();
+  const { lastUpdate } = useMeta();
   const { handleRefresh } = useAutoRefresh();
   const today = useMemo(() => new Date(), []);
 
@@ -203,7 +241,9 @@ const CyclesHub: React.FC = () => {
     return c;
   }, [positions]);
 
-  const gridCols = PHASES.length === 6 ? 'grid-cols-6' : 'grid-cols-5';
+  const lastSyncMinutes = lastUpdate
+    ? Math.max(0, Math.round((Date.now() - lastUpdate) / 60_000))
+    : undefined;
 
   return (
     <IonPage>
@@ -213,72 +253,111 @@ const CyclesHub: React.FC = () => {
             <IonRefresherContent />
           </IonRefresher>
 
-          <AgritechHeader
-            title="CYCLES"
-            subtitle={`Pipeline · ${TOTAL_DAYS} jours`}
-            action={<DataAgeIndicator />}
+          <TopBarSync
+            crumbs={['Pilotage', 'Cycles']}
+            lastSyncMinutes={lastSyncMinutes}
+            onMariusClick={() => {
+              const evt = new CustomEvent('open-chatbot');
+              window.dispatchEvent(evt);
+            }}
           />
 
-          <div className="px-4 pt-4 pb-32 flex flex-col gap-5">
-            {/* ── Summary chips phases ────────────────────────────────── */}
-            <div className={`grid ${gridCols} gap-1`}>
+          <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
+            {/* ── En-tête ───────────────────────────────────────────── */}
+            <header>
+              <Eyebrow dotColor="accent">Pipeline · {TOTAL_DAYS} jours</Eyebrow>
+              <h1
+                style={{
+                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontSize: 34,
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  letterSpacing: '-0.02em',
+                  color: 'var(--ink)',
+                  margin: '8px 0 4px',
+                }}
+              >
+                Cycles
+              </h1>
+              <div
+                style={{
+                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontSize: 13,
+                  color: 'var(--muted)',
+                }}
+              >
+                {positions.length} bande{positions.length > 1 ? 's' : ''} active{positions.length > 1 ? 's' : ''} · 6 phases
+              </div>
+            </header>
+
+            {/* ── Sub-tabs phases (pills) ───────────────────────────── */}
+            <div
+              role="tablist"
+              aria-label="Phases du cycle"
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 8,
+              }}
+            >
               {PHASES.map((p) => {
                 const count = countByPhase[p.id];
-                const content = (
-                  <>
-                    <div
-                      className="font-mono text-[9px] uppercase tracking-wide font-semibold"
-                      style={{ color: p.varTone }}
-                    >
-                      {p.short}
-                    </div>
-                    <div
-                      className="font-mono tabular-nums text-[20px] font-bold mt-1 leading-none"
-                      style={{ color: count > 0 ? p.varTone : 'var(--text-2)' }}
+                const Tag: 'button' | 'div' = p.route ? 'button' : 'div';
+                return (
+                  <Tag
+                    key={p.id}
+                    role="tab"
+                    aria-selected={false}
+                    {...(p.route ? { type: 'button' as const, onClick: () => navigate(p.route!) } : {})}
+                    className="pressable"
+                    style={{
+                      minHeight: 44,
+                      padding: '8px 14px',
+                      borderRadius: 'var(--radius-pill)',
+                      background: count > 0 ? p.toneSoft : 'var(--bg-surface)',
+                      color: count > 0 ? p.tone : 'var(--ink-soft)',
+                      border: `1px solid ${count > 0 ? p.tone : 'var(--line)'}`,
+                      fontFamily: 'DMMono, ui-monospace, monospace',
+                      fontSize: 11,
+                      letterSpacing: '0.10em',
+                      textTransform: 'uppercase',
+                      fontWeight: 500,
+                      cursor: p.route ? 'pointer' : 'default',
+                      transition: 'transform 160ms var(--ease-emil), background 200ms var(--ease-emil)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                  >
+                    <span>{p.label}</span>
+                    <span
+                      style={{
+                        fontSize: 10,
+                        opacity: 0.75,
+                        fontVariantNumeric: 'tabular-nums',
+                      }}
                     >
                       {String(count).padStart(2, '0')}
-                    </div>
-                  </>
-                );
-
-                const baseClasses = "card-dense !p-2.5 text-center transition-transform duration-[160ms] active:scale-[0.97]";
-                const borderStyle = {
-                  borderColor: count > 0
-                    ? `color-mix(in srgb, ${p.varTone} 40%, var(--border))`
-                    : undefined,
-                };
-
-                if (p.route) {
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => navigate(p.route!)}
-                      className={`${baseClasses} pressable`}
-                      style={borderStyle}
-                      aria-label={`Voir le détail ${p.label} (${count} bandes)`}
-                    >
-                      {content}
-                    </button>
-                  );
-                }
-
-                return (
-                  <div
-                    key={p.id}
-                    className={baseClasses}
-                    style={borderStyle}
-                  >
-                    {content}
-                  </div>
+                    </span>
+                  </Tag>
                 );
               })}
             </div>
 
-            {/* ── Pipeline horizontal ─────────────────────────────────── */}
-            <section aria-label={`Pipeline ${TOTAL_DAYS} jours`}>
-              <SectionDivider label={`Pipeline · ${TOTAL_DAYS} jours`} />
-              <div className="card-dense !px-3.5 !pt-4 !pb-3.5 mt-3 overflow-hidden">
+            {/* ── Pipeline horizontal ──────────────────────────────── */}
+            <section
+              aria-label={`Pipeline ${TOTAL_DAYS} jours`}
+              style={{
+                background: 'var(--bg-surface)',
+                borderRadius: 12,
+                padding: '18px 20px 16px',
+                boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
+              }}
+            >
+              <Eyebrow dotColor="accent" withRule={false}>
+                Pipeline · {TOTAL_DAYS} jours
+              </Eyebrow>
+              <div style={{ marginTop: 14 }}>
                 <PhaseBand />
                 <PhaseLabels />
                 <BandesMarkers
@@ -288,11 +367,22 @@ const CyclesHub: React.FC = () => {
               </div>
             </section>
 
-            {/* ── Liste bandes actives ────────────────────────────────── */}
+            {/* ── Liste bandes actives ─────────────────────────────── */}
             {positions.length > 0 ? (
               <section aria-label={`Bandes actives · ${positions.length}`}>
-                <SectionDivider label={`Bandes actives · ${positions.length}`} />
-                <ul className="card-dense !p-0 overflow-hidden">
+                <Eyebrow dotColor="accent">
+                  Bandes actives · {positions.length}
+                </Eyebrow>
+                <ul
+                  style={{
+                    listStyle: 'none',
+                    padding: 0,
+                    margin: '12px 0 0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 8,
+                  }}
+                >
                   {positions.map((pos) => (
                     <BandeRow
                       key={pos.id}
@@ -305,8 +395,22 @@ const CyclesHub: React.FC = () => {
                 </ul>
               </section>
             ) : (
-              <div className="card-dense text-center py-8">
-                <p className="font-mono text-[12px] text-text-2">
+              <div
+                style={{
+                  background: 'var(--bg-surface)',
+                  borderRadius: 12,
+                  padding: '32px',
+                  textAlign: 'center',
+                }}
+              >
+                <p
+                  style={{
+                    fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                    fontSize: 13,
+                    color: 'var(--muted)',
+                    margin: 0,
+                  }}
+                >
                   Aucune bande active dans le pipeline.
                 </p>
               </div>
@@ -318,11 +422,17 @@ const CyclesHub: React.FC = () => {
   );
 };
 
-// ─── Pipeline band (5 phases proportionnelles) ─────────────────────────────
+// ─── Pipeline band ─────────────────────────────────────────────────────────
 
 const PhaseBand: React.FC = () => (
   <div
-    className="flex h-[10px] rounded-full overflow-hidden gap-[2px]"
+    style={{
+      display: 'flex',
+      height: 10,
+      borderRadius: 999,
+      overflow: 'hidden',
+      gap: 2,
+    }}
     aria-hidden="true"
   >
     {PHASES.map((p) => (
@@ -330,35 +440,49 @@ const PhaseBand: React.FC = () => (
         key={p.id}
         style={{
           flex: p.days,
-          background: `color-mix(in srgb, ${p.varTone} 30%, var(--bg-1))`,
-          borderTop: `2px solid ${p.varTone}`,
+          background: p.toneSoft,
+          borderTop: `2px solid ${p.tone}`,
         }}
       />
     ))}
   </div>
 );
 
-// ─── Phase labels sous la band ─────────────────────────────────────────────
-
 const PhaseLabels: React.FC = () => (
-  <div className="flex gap-[2px] mt-2">
+  <div style={{ display: 'flex', gap: 2, marginTop: 8 }}>
     {PHASES.map((p) => (
-      <div key={p.id} className="flex-1 text-center" style={{ flex: p.days }}>
+      <div key={p.id} style={{ flex: p.days, textAlign: 'center', minWidth: 0 }}>
         <div
-          className="font-mono text-[9px] uppercase tracking-tight font-semibold leading-none"
-          style={{ color: p.varTone }}
+          style={{
+            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontSize: 9,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: p.tone,
+            fontWeight: 600,
+            lineHeight: 1.2,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
         >
           {p.short}
         </div>
-        <div className="font-mono text-[9px] text-text-2 tabular-nums mt-1 leading-none">
+        <div
+          style={{
+            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontSize: 9,
+            color: 'var(--muted)',
+            fontVariantNumeric: 'tabular-nums',
+            marginTop: 2,
+          }}
+        >
           {p.days}j
         </div>
       </div>
     ))}
   </div>
 );
-
-// ─── Bandes markers (positions absolues) ──────────────────────────────────
 
 interface BandesMarkersProps {
   positions: BandePosition[];
@@ -367,8 +491,13 @@ interface BandesMarkersProps {
 
 const BandesMarkers: React.FC<BandesMarkersProps> = ({ positions, onOpen }) => (
   <div
-    className="relative mt-4 pt-3 border-t border-dashed border-border"
-    style={{ height: 110 }}
+    style={{
+      position: 'relative',
+      marginTop: 18,
+      paddingTop: 14,
+      borderTop: '1px dashed var(--line)',
+      height: 110,
+    }}
     aria-label="Positions des bandes"
   >
     {positions.slice(0, 9).map((pos, i) => {
@@ -379,32 +508,51 @@ const BandesMarkers: React.FC<BandesMarkersProps> = ({ positions, onOpen }) => (
           key={pos.id}
           type="button"
           onClick={() => onOpen(pos.id)}
-          className="pressable absolute flex flex-col items-center -translate-x-1/2 z-[2]"
-          style={{ left: `${leftPct}%`, top: row * 30 }}
+          className="pressable"
+          style={{
+            position: 'absolute',
+            left: `${leftPct}%`,
+            top: row * 30,
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0,
+          }}
           aria-label={`Bande ${pos.label}`}
         >
           <span
-            className="font-mono text-[10px] font-semibold px-1.5 py-[3px] rounded-md whitespace-nowrap"
             style={{
-              background: 'var(--bg-2)',
-              border: `1px solid ${pos.phase.varTone}`,
-              color: pos.phase.varTone,
+              fontFamily: 'DMMono, ui-monospace, monospace',
+              fontSize: 10,
+              fontWeight: 600,
+              padding: '3px 7px',
+              borderRadius: 6,
+              whiteSpace: 'nowrap',
+              background: 'var(--bg-surface)',
+              border: `1px solid ${pos.phase.tone}`,
+              color: pos.phase.tone,
+              letterSpacing: '0.04em',
             }}
           >
             {pos.label}
           </span>
           <span
-            className="w-px h-1.5"
-            style={{ background: pos.phase.varTone }}
             aria-hidden="true"
+            style={{ width: 1, height: 6, background: pos.phase.tone }}
           />
           <span
-            className="w-2 h-2 rounded-full"
-            style={{
-              background: pos.phase.varTone,
-              boxShadow: '0 0 0 2px var(--bg-2)',
-            }}
             aria-hidden="true"
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: pos.phase.tone,
+              boxShadow: '0 0 0 2px var(--bg-surface)',
+            }}
           />
         </button>
       );
@@ -412,7 +560,7 @@ const BandesMarkers: React.FC<BandesMarkersProps> = ({ positions, onOpen }) => (
   </div>
 );
 
-// ─── BandeRow ───────────────────────────────────────────────────────────────
+// ─── BandeRow ──────────────────────────────────────────────────────────────
 
 interface BandeRowProps {
   pos: BandePosition;
@@ -428,38 +576,110 @@ const BandeRow: React.FC<BandeRowProps> = ({ pos, onOpen }) => {
       <button
         type="button"
         onClick={onOpen}
-        className="pressable w-full text-left flex items-center gap-3 px-3 py-3 border-b border-border last:border-b-0"
+        className="pressable"
+        style={{
+          width: '100%',
+          textAlign: 'left',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 14,
+          padding: '14px 16px',
+          background: 'var(--bg-surface)',
+          borderRadius: 12,
+          boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
+          border: 'none',
+          cursor: 'pointer',
+          transition: 'transform 160ms var(--ease-emil)',
+        }}
       >
-        <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="font-mono text-[14px] font-semibold text-text-0">
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+            <span
+              style={{
+                fontFamily: 'BricolageGrotesque, system-ui, sans-serif',
+                fontSize: 16,
+                fontWeight: 600,
+                color: 'var(--ink)',
+                letterSpacing: '-0.01em',
+              }}
+            >
               {pos.label}
             </span>
-            <span className="font-mono text-[11px] text-text-2">· {pos.truie}</span>
-            <Chip
-              label={pos.phase.label}
-              tone="default"
-              size="xs"
-              className="border"
-            />
+            <span
+              style={{
+                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontSize: 11,
+                color: 'var(--muted)',
+                letterSpacing: '0.04em',
+              }}
+            >
+              · {pos.truie}
+            </span>
+            <span
+              style={{
+                marginLeft: 'auto',
+                background: pos.phase.toneSoft,
+                color: pos.phase.tone,
+                padding: '3px 9px',
+                borderRadius: 'var(--radius-pill)',
+                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontSize: 10,
+                letterSpacing: '0.10em',
+                textTransform: 'uppercase',
+                fontWeight: 600,
+              }}
+            >
+              {pos.phase.label}
+            </span>
           </div>
-          <div className="flex items-center gap-2 mt-2">
-            <div className="h-1.5 flex-1 bg-bg-2 rounded-full overflow-hidden">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
+            <div
+              style={{
+                flex: 1,
+                height: 4,
+                background: 'var(--bg-app)',
+                borderRadius: 999,
+                overflow: 'hidden',
+              }}
+            >
               <div
-                className="h-full rounded-full transition-[width]"
                 style={{
+                  height: '100%',
                   width: `${pct}%`,
-                  background: pos.phase.varTone,
+                  background: pos.phase.tone,
+                  borderRadius: 999,
+                  transition: 'width 240ms var(--ease-emil)',
                 }}
               />
             </div>
-            <span className="font-mono text-[10px] text-text-2 tabular-nums min-w-[56px] text-right">
+            <span
+              style={{
+                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontSize: 10,
+                color: 'var(--muted)',
+                fontVariantNumeric: 'tabular-nums',
+                minWidth: 56,
+                textAlign: 'right',
+              }}
+            >
               {pos.dayInPhase}/{pos.phase.days}j
             </span>
           </div>
-          <div className="text-[11px] text-text-2 mt-1 truncate">{pos.detail}</div>
+          <div
+            style={{
+              fontFamily: 'InstrumentSans, system-ui, sans-serif',
+              fontSize: 12,
+              color: 'var(--muted)',
+              marginTop: 4,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {pos.detail}
+          </div>
         </div>
-        <ChevronRight size={16} className="shrink-0 text-text-2" aria-hidden="true" />
+        <ChevronRight size={18} color="var(--muted)" aria-hidden="true" />
       </button>
     </li>
   );

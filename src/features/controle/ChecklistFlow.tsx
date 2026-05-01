@@ -398,8 +398,8 @@ const ChecklistFlow: React.FC = () => {
               aria-label="Progression de la checklist"
             >
               <div
-                className="absolute inset-y-0 left-0 bg-accent rounded-full transition-all duration-300 ease-out"
-                style={{ width: `${progressPct}%` }}
+                className="absolute inset-y-0 left-0 bg-accent rounded-full"
+                style={{ width: `${progressPct}%`, transition: 'all var(--duration-transition) var(--ease-emil)' }}
               />
             </div>
 

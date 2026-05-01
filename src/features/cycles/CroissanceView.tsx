@@ -2,14 +2,14 @@ import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import {
-  Activity, Droplets, ArrowUpRight,
+  Droplets, ArrowUpRight,
   TrendingUp, Scale
 } from 'lucide-react';
 import { PorceletIcon } from '../../components/icons';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
+import { default as KpiCardV6 } from '../../components/design/KpiCard';
 import {
-  KpiCard,
   Chip,
   SectionDivider,
 } from '../../components/agritech';
@@ -96,26 +96,24 @@ const CroissanceView: React.FC = () => {
           <div className="px-4 pt-4 pb-32 flex flex-col gap-5">
             {/* ── Summary Stats ────────────────────────────────────────── */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <KpiCard
+              <KpiCardV6
                 label="Portées"
                 value={summary.nbPortees}
-                icon={<Activity size={14} className="text-amber" />}
-                tone="warning"
+                accentColor="var(--amber-pork)"
               />
-              <KpiCard
+              <KpiCardV6
                 label="Effectif"
                 value={summary.totalVivants}
-                tone="success"
               />
-              <KpiCard
+              <KpiCardV6
                 label="Âge Moyen"
                 value={summary.avgAge}
                 unit="j"
               />
-              <KpiCard
+              <KpiCardV6
                 label="Loges Occ."
                 value={`${occupation.occupees}/${occupation.capacite}`}
-                tone={occupation.alerte === 'FULL' ? 'critical' : 'warning'}
+                accentColor={occupation.alerte === 'FULL' ? 'var(--color-danger, #EF4444)' : 'var(--amber-pork)'}
               />
             </div>
 

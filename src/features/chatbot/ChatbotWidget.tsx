@@ -1,5 +1,6 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { MessageCircle, X, Send, Image, Loader2 } from 'lucide-react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { X, Send, Image, Loader2 } from 'lucide-react';
+import MariusFAB from '../../components/design/MariusFAB';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -58,6 +59,12 @@ export const ChatbotWidget: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener('open-chatbot', handler);
+    return () => window.removeEventListener('open-chatbot', handler);
+  }, []);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const scrollBottom = () =>
@@ -103,24 +110,14 @@ export const ChatbotWidget: React.FC = () => {
   };
 
   if (!open) {
-    return (
-      <button
-        onClick={() => setOpen(true)}
-        aria-label="Ouvrir l'assistant IA"
-        className="fixed bottom-24 right-4 z-50 w-14 h-14 rounded-full
-                   bg-[var(--color-amber-500)] text-white shadow-lg
-                   flex items-center justify-center
-                   hover:scale-105 active:scale-95 transition-transform"
-      >
-        <MessageCircle size={24} />
-      </button>
-    );
+    return <MariusFAB online onClick={() => setOpen(true)} />;
   }
 
   return (
     <div className="fixed bottom-20 right-4 z-50 w-[340px] max-h-[520px]
-                    bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden
-                    border border-[var(--color-accent-100)]">
+                    rounded-3xl shadow-2xl flex flex-col overflow-hidden
+                    border border-[var(--color-accent-100)]"
+         style={{ background: 'var(--bg-surface)' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3
                       bg-[var(--color-accent-500)] text-white">
@@ -136,7 +133,7 @@ export const ChatbotWidget: React.FC = () => {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 min-h-[200px]">
         {messages.length === 0 && (
-          <p className="text-xs text-gray-400 text-center mt-8">
+          <p className="text-xs text-center mt-8" style={{ color: 'var(--muted)' }}>
             Bonjour ! Je suis votre assistant élevage.<br />
             Posez une question ou envoyez une photo.
           </p>
@@ -146,7 +143,8 @@ export const ChatbotWidget: React.FC = () => {
             <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm leading-relaxed
               ${m.role === 'user'
                 ? 'bg-[var(--color-accent-500)] text-white rounded-br-sm'
-                : 'bg-gray-100 text-gray-800 rounded-bl-sm'}`}>
+                : 'rounded-bl-sm'}`}
+              style={m.role === 'user' ? undefined : { background: 'var(--bg-surface-2)', color: 'var(--ink)' }}>
               {m.imageUrl && (
                 <img src={m.imageUrl} alt="photo" className="rounded-lg mb-1 max-h-32 object-cover" />
               )}
@@ -156,8 +154,8 @@ export const ChatbotWidget: React.FC = () => {
         ))}
         {loading && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-2xl px-3 py-2">
-              <Loader2 size={16} className="animate-spin text-gray-400" />
+            <div className="rounded-2xl px-3 py-2" style={{ background: 'var(--bg-surface-2)' }}>
+              <Loader2 size={16} className="animate-spin" style={{ color: 'var(--muted)' }} />
             </div>
           </div>
         )}
@@ -168,12 +166,12 @@ export const ChatbotWidget: React.FC = () => {
       {pendingImage && (
         <div className="px-3 pb-1 flex items-center gap-2">
           <img src={pendingImage} alt="preview" className="h-12 w-12 rounded-lg object-cover border" />
-          <button onClick={() => setPendingImage(null)} className="text-xs text-gray-400">✕</button>
+          <button onClick={() => setPendingImage(null)} className="text-xs" style={{ color: 'var(--muted)' }}>✕</button>
         </div>
       )}
 
       {/* Input */}
-      <div className="flex items-center gap-2 px-3 py-2 border-t border-gray-100">
+      <div className="flex items-center gap-2 px-3 py-2 border-t" style={{ borderColor: 'var(--line)' }}>
         <input
           type="file"
           accept="image/*"
@@ -184,7 +182,8 @@ export const ChatbotWidget: React.FC = () => {
         <button
           onClick={() => fileRef.current?.click()}
           aria-label="Ajouter une photo"
-          className="text-gray-400 hover:text-[var(--color-accent-500)] transition-colors"
+          className="hover:text-[var(--color-accent-500)] transition-colors"
+          style={{ color: 'var(--muted)' }}
         >
           <Image size={20} />
         </button>
@@ -193,9 +192,10 @@ export const ChatbotWidget: React.FC = () => {
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
           placeholder="Question ou commande…"
-          className="flex-1 text-sm bg-gray-50 rounded-full px-3 py-2
-                     border border-gray-200 outline-none
+          className="flex-1 text-sm rounded-full px-3 py-2
+                     border outline-none
                      focus:border-[var(--color-accent-500)]"
+          style={{ background: 'var(--bg-surface-2)', borderColor: 'var(--line)' }}
         />
         <button
           onClick={handleSend}

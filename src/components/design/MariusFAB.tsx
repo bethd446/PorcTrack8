@@ -12,10 +12,10 @@ export default function MariusFAB({ online = true, onClick, className = '' }: Ma
     <button
       type="button"
       onClick={onClick}
-      aria-label="Ouvrir Marius"
-      className={className}
+      aria-label="Ouvrir Marius, l'assistant de l'élevage"
+      className={`pressable ${className}`}
       style={{
-        position: 'absolute',
+        position: 'fixed',
         bottom: 18,
         right: 18,
         background: 'var(--amber-pork)',
@@ -23,20 +23,20 @@ export default function MariusFAB({ online = true, onClick, className = '' }: Ma
         borderRadius: '50%',
         width: 52,
         height: 52,
-        display: 'flex',
+        display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
         boxShadow: '0 4px 12px rgba(244, 162, 97, 0.4)',
-        zIndex: 5,
-        border: 'none',
+        zIndex: 50,
+        border: 0,
         cursor: 'pointer',
-        transition: 'transform 160ms var(--ease-emil)',
+        transition: 'transform var(--duration-press, 160ms) var(--ease-emil, cubic-bezier(0.23,1,0.32,1))',
       }}
     >
-      <Sparkles size={24} strokeWidth={2} aria-hidden />
+      <Sparkles size={24} strokeWidth={2} aria-hidden="true" />
       {online && (
         <span
-          aria-hidden
+          aria-hidden="true"
           style={{
             position: 'absolute',
             top: 4,

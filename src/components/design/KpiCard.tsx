@@ -15,6 +15,11 @@ export interface KpiCardProps {
   onClick?: () => void;
   className?: string;
   ariaLabel?: string;
+  /**
+   * Optional semantic accent — colors value, dot and border-left (3px).
+   * Pass any CSS color (var or hex). Ignored when variant='accent'.
+   */
+  accentColor?: string;
 }
 
 /**
@@ -33,8 +38,10 @@ export default function KpiCard({
   onClick,
   className = '',
   ariaLabel,
+  accentColor,
 }: KpiCardProps) {
   const isAccent = variant === 'accent';
+  const hasTone = !isAccent && Boolean(accentColor);
 
   const trendColor = isAccent
     ? 'var(--color-amber-pork-soft)'
@@ -61,6 +68,7 @@ export default function KpiCard({
     width: '100%',
     textAlign: 'left',
     border: 'none',
+    borderLeft: hasTone ? `3px solid ${accentColor}` : 'none',
     cursor: onClick ? 'pointer' : 'default',
     transition:
       'transform 160ms var(--ease-emil), box-shadow 200ms var(--ease-emil)',
@@ -81,7 +89,11 @@ export default function KpiCard({
     lineHeight: 1,
     fontWeight: 600,
     marginTop: 8,
-    color: isAccent ? 'var(--bg-surface)' : 'var(--ink)',
+    color: isAccent
+      ? 'var(--bg-surface)'
+      : hasTone
+        ? accentColor
+        : 'var(--ink)',
     letterSpacing: '-0.02em',
   };
 
@@ -119,7 +131,21 @@ export default function KpiCard({
       className={`pressable ${className}`}
       style={containerStyle}
     >
-      <div style={labelStyle}>{label}</div>
+      <div style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: 6 }}>
+        {hasTone ? (
+          <span
+            aria-hidden="true"
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: accentColor,
+              flexShrink: 0,
+            }}
+          />
+        ) : null}
+        {label}
+      </div>
       <div style={valueStyle}>
         {value}
         {unit ? <small style={unitStyle}>{unit}</small> : null}

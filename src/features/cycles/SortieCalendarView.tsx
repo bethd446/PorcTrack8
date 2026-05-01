@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
-import { Calendar, Truck, Scale, TrendingUp } from 'lucide-react';
+import { Calendar, TrendingUp } from 'lucide-react';
 
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import { KpiCard, DataRow, Chip, SectionDivider, type ChipTone } from '../../components/agritech';
+import { default as KpiCardV6 } from '../../components/design/KpiCard';
+import { DataRow, Chip, SectionDivider, type ChipTone } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
 import { filterRealPortees } from '../../services/bandesAggregator';
 import type { BandePorcelets } from '../../types/farm';
@@ -95,16 +96,14 @@ const SortieCalendarView: React.FC = () => {
 
           <div className="px-4 pt-4 pb-32 space-y-6">
             <div className="grid grid-cols-2 gap-3">
-              <KpiCard
+              <KpiCardV6
                 label="Prochaines 14j"
                 value={sortiesProches.length}
-                icon={<Truck size={14} />}
-                tone={sortiesProches.length > 0 ? 'warning' : 'default'}
+                accentColor={sortiesProches.length > 0 ? 'var(--amber-pork)' : undefined}
               />
-              <KpiCard
+              <KpiCardV6
                 label="Total en cours"
                 value={calendar.length}
-                icon={<Scale size={14} />}
               />
             </div>
 

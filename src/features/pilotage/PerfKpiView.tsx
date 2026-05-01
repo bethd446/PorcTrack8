@@ -3,19 +3,13 @@ import { IonContent, IonPage } from '@ionic/react';
 import { useNavigate } from 'react-router-dom';
 import {
   TrendingUp,
-  Activity,
-  Baby,
-  Skull,
   Trophy,
   AlertTriangle,
-  Repeat,
-  CalendarClock,
-  CheckCircle2,
-  RefreshCw,
 } from 'lucide-react';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import { Chip, DataRow, SectionDivider, KpiCard } from '../../components/agritech';
+import { default as KpiCardV6 } from '../../components/design/KpiCard';
+import { Chip, DataRow, SectionDivider } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
 import {
@@ -80,6 +74,19 @@ function motifLabel(motif: MotifReforme): string {
 
 // ─── Tones KPI repro avancés ────────────────────────────────────────────────
 type KpiTone = 'default' | 'warning' | 'critical' | 'success';
+
+function toneToAccent(tone: KpiTone): string | undefined {
+  switch (tone) {
+    case 'critical':
+      return 'var(--color-danger, #EF4444)';
+    case 'warning':
+      return 'var(--amber-pork)';
+    case 'success':
+    case 'default':
+    default:
+      return undefined;
+  }
+}
 
 /** ISSE (j) : cible 3-7, amber 8-10, red >10. Null → default. */
 function isseToTone(isse: number | null): KpiTone {
@@ -200,34 +207,30 @@ const PerfKpiView: React.FC = () => {
               <>
                 {/* ── Summary strip : 4 KPI globaux ─────────────────── */}
                 <div className="grid grid-cols-2 gap-2">
-                  <KpiCard
+                  <KpiCardV6
                     label="Sevrés/truie/an"
                     value={formatNum(kpis.sevresParTruieAn)}
-                    icon={<Baby size={14} />}
-                    tone={kpis.sevresParTruieAn > 0 && kpis.sevresParTruieAn < 18 ? 'warning' : 'default'}
+                    accentColor={toneToAccent(kpis.sevresParTruieAn > 0 && kpis.sevresParTruieAn < 18 ? 'warning' : 'default')}
                   />
-                  <KpiCard
+                  <KpiCardV6
                     label="Portées/truie/an"
                     value={formatNum(kpis.porteesParTruieAn)}
-                    icon={<Activity size={14} />}
                   />
-                  <KpiCard
+                  <KpiCardV6
                     label="NV moyen"
                     value={formatNum(kpis.moyNV)}
-                    icon={<TrendingUp size={14} />}
                   />
-                  <KpiCard
+                  <KpiCardV6
                     label="Mort. N→Sev"
                     value={formatNum(kpis.tauxMortaliteNaissanceSevrage)}
                     unit="%"
-                    icon={<Skull size={14} />}
-                    tone={kpis.tauxMortaliteNaissanceSevrage > 15 ? 'critical' : 'default'}
+                    accentColor={kpis.tauxMortaliteNaissanceSevrage > 15 ? 'var(--color-danger, #EF4444)' : undefined}
                   />
                 </div>
 
                 {/* ── Secondary strip : 2 KPI auxiliaires ───────────── */}
                 <div className="grid grid-cols-2 gap-2">
-                  <KpiCard
+                  <KpiCardV6
                     label="Interv. sev-sail."
                     value={
                       kpis.intervalSevrageSaillieMoyJours !== null
@@ -236,7 +239,7 @@ const PerfKpiView: React.FC = () => {
                     }
                     unit="j"
                   />
-                  <KpiCard label="MB à venir 30j" value={kpis.nbMbAVenir30j} />
+                  <KpiCardV6 label="MB à venir 30j" value={kpis.nbMbAVenir30j} />
                 </div>
 
                 {/* ── Reproduction avancée : ISSE, IEM, Taux MB, Renouv. ── */}
@@ -244,39 +247,36 @@ const PerfKpiView: React.FC = () => {
                   <SectionDivider label="Reproduction avancée" />
                   <div className="grid grid-cols-2 gap-2">
                     <div className="flex flex-col gap-1">
-                      <KpiCard
+                      <KpiCardV6
                         label="ISSE"
                         value={kpis.isseMoyJours !== null ? formatNum(kpis.isseMoyJours) : '—'}
                         unit={kpis.isseMoyJours !== null ? 'j' : undefined}
-                        icon={<Repeat size={14} />}
-                        tone={isseToTone(kpis.isseMoyJours)}
+                        accentColor={toneToAccent(isseToTone(kpis.isseMoyJours))}
                       />
                       <span className="px-1 font-mono text-[10px] text-text-2">cible 3-7 j</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <KpiCard
+                      <KpiCardV6
                         label="IEM"
                         value={kpis.iemMoyJours !== null ? formatNum(kpis.iemMoyJours) : '—'}
                         unit={kpis.iemMoyJours !== null ? 'j' : undefined}
-                        icon={<CalendarClock size={14} />}
-                        tone={iemToTone(kpis.iemMoyJours)}
+                        accentColor={toneToAccent(iemToTone(kpis.iemMoyJours))}
                       />
                       <span className="px-1 font-mono text-[10px] text-text-2">
                         cible 140-150 j
                       </span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <KpiCard
+                      <KpiCardV6
                         label="Taux MB"
                         value={kpis.tauxMBPct !== null ? formatNum(kpis.tauxMBPct) : '—'}
                         unit={kpis.tauxMBPct !== null ? '%' : undefined}
-                        icon={<CheckCircle2 size={14} />}
-                        tone={tauxMBToTone(kpis.tauxMBPct)}
+                        accentColor={toneToAccent(tauxMBToTone(kpis.tauxMBPct))}
                       />
                       <span className="px-1 font-mono text-[10px] text-text-2">cible ≥ 88 %</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <KpiCard
+                      <KpiCardV6
                         label="Renouv."
                         value={
                           kpis.tauxRenouvellementPct !== null
@@ -284,8 +284,7 @@ const PerfKpiView: React.FC = () => {
                             : '—'
                         }
                         unit={kpis.tauxRenouvellementPct !== null ? '%' : undefined}
-                        icon={<RefreshCw size={14} />}
-                        tone={renouvToTone(kpis.tauxRenouvellementPct)}
+                        accentColor={toneToAccent(renouvToTone(kpis.tauxRenouvellementPct))}
                       />
                       <span className="px-1 font-mono text-[10px] text-text-2">
                         cible 30-40 %/an

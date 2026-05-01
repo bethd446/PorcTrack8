@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { IonPage, IonContent } from '@ionic/react';
 import { ArrowRight } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
 import Eyebrow from '../design/Eyebrow';
@@ -37,10 +38,12 @@ export default function Login() {
   };
 
   return (
+    <IonPage>
+      <IonContent fullscreen scrollY={true}>
     <div
       data-public-page
       style={{
-        minHeight: '100vh',
+        minHeight: '100%',
         width: '100%',
         background: 'var(--bg-app)',
         color: 'var(--ink)',
@@ -313,6 +316,8 @@ export default function Login() {
         </div>
       </footer>
     </div>
+      </IonContent>
+    </IonPage>
   );
 }
 

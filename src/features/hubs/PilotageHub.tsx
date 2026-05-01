@@ -1,39 +1,50 @@
-import React, { useState, useMemo } from 'react';
+/**
+ * PilotageHub — /pilotage
+ * ══════════════════════════════════════════════════════════════════════════
+ * Refonte v6 « Terrain Vivant » (2026-04-30)
+ *
+ *   1. TopBarSync + Eyebrow + H1 Big Shoulders
+ *   2. KPI cards principaux (4) — Marge globale / Valeur cheptel / Mortalité / Frais
+ *   3. Section "Performance bandes" : top / flop par marge
+ *   4. Section "Alertes critiques" : urgences à traiter
+ *   5. Audit / export PDF
+ */
+
+import React, { useMemo, useState } from 'react';
 import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
+import { useNavigate } from 'react-router-dom';
 import {
   Wallet, FileText, TrendingUp, AlertTriangle,
-  Coins, Skull, ShieldCheck, ArrowRight, Zap, Target
+  ArrowRight, Wind, ShieldCheck,
 } from 'lucide-react';
 
-import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import DataAgeIndicator from '../../components/DataAgeIndicator';
-import {
-  HubTile, SectionDivider, KpiCard, Chip
-} from '../../components/agritech';
-import { useFarm } from '../../context/FarmContext';
+import Eyebrow from '../../components/design/Eyebrow';
+import TopBarSync from '../../components/design/TopBarSync';
+import KpiCardV6 from '../../components/design/KpiCard';
+import { useFarm, useMeta } from '../../context/FarmContext';
 import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import { genererRapportGlobal } from '../../services/financialAnalyzer';
 import { prepareAuditSnapshot } from '../../services/exportService';
 import AuditPrintTemplate from '../pilotage/AuditPrintTemplate';
 
 const PilotageHub: React.FC = () => {
+  const navigate = useNavigate();
   const {
     loading,
     alerts,
     bandes,
     transitions,
   } = useFarm();
+  const { lastUpdate } = useMeta();
   const { handleRefresh } = useAutoRefresh();
   const [, setIsPrinting] = useState(false);
 
-  // 1. Moteur de Consolidation Financière
   const globalReport = useMemo(() => {
     if (loading || bandes.length === 0) return null;
     return genererRapportGlobal(bandes, transitions);
   }, [bandes, transitions, loading]);
 
-  // Snapshot pour l'export
   const auditData = useMemo(() => {
     if (loading || bandes.length === 0 || !alerts) return null;
     return prepareAuditSnapshot(bandes, transitions, alerts);
@@ -47,40 +58,79 @@ const PilotageHub: React.FC = () => {
     }, 500);
   };
 
-  // 2. Alertes filtrées pour le Cockpit
   const urgences = useMemo(() => {
     return alerts.filter(a => a.priority === 'CRITIQUE' || a.priority === 'HAUTE').slice(0, 5);
   }, [alerts]);
+
+  const lastSyncMinutes = lastUpdate
+    ? Math.max(0, Math.round((Date.now() - lastUpdate) / 60_000))
+    : undefined;
+
+  // Spark dérivée déterministe
+  const spark = (base: number) =>
+    Array.from({ length: 7 }, (_, i) => Math.max(1, Math.round(Math.abs(base) * (0.85 + 0.05 * i))));
 
   if (loading || !globalReport) {
     return (
       <IonPage>
         <IonContent fullscreen className="ion-no-padding">
-           <AgritechLayout>
-             <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
-               <IonRefresherContent />
-             </IonRefresher>
-             <AgritechHeader
-               title="PILOTAGE"
-               subtitle="Consolidation des données..."
-               action={<DataAgeIndicator />}
-             />
-             <div className="p-4 space-y-6">
-                <div className="h-32 bg-bg-1 rounded-2xl animate-pulse" />
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="h-24 bg-bg-1 rounded-2xl animate-pulse" />
-                  <div className="h-24 bg-bg-1 rounded-2xl animate-pulse" />
-                </div>
-             </div>
-           </AgritechLayout>
+          <AgritechLayout>
+            <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
+              <IonRefresherContent />
+            </IonRefresher>
+            <TopBarSync crumbs={['Pilotage', 'Vue globale']} lastSyncMinutes={lastSyncMinutes} />
+            <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
+              <Eyebrow dotColor="accent">Pilotage · Vue globale</Eyebrow>
+              <h1
+                style={{
+                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontSize: 34,
+                  fontWeight: 700,
+                  letterSpacing: '-0.02em',
+                  color: 'var(--ink)',
+                  margin: '4px 0 12px',
+                }}
+              >
+                Pilotage
+              </h1>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(4, 1fr)',
+                  gap: 10,
+                }}
+              >
+                {[0, 1, 2, 3].map(i => (
+                  <div
+                    key={i}
+                    style={{
+                      height: 96,
+                      borderRadius: 12,
+                      background: 'var(--bg-surface)',
+                      opacity: 0.6,
+                    }}
+                    className="animate-pulse"
+                  />
+                ))}
+              </div>
+            </div>
+          </AgritechLayout>
         </IonContent>
       </IonPage>
     );
   }
 
-  const { margeGlobaleEstimee, totalRevenuProjete, totalCoutAlimentaire, totalCoutFixe, tauxMortaliteMoyen, topBande, flopBande } = globalReport;
+  const {
+    margeGlobaleEstimee,
+    totalRevenuProjete,
+    totalCoutAlimentaire,
+    totalCoutFixe,
+    tauxMortaliteMoyen,
+    topBande,
+    flopBande,
+  } = globalReport;
 
-  const margeColor = margeGlobaleEstimee > 500000 ? 'text-emerald-500' : margeGlobaleEstimee > 0 ? 'text-amber-500' : 'text-red-500';
+  const margeNegative = margeGlobaleEstimee < 0;
 
   return (
     <IonPage>
@@ -90,157 +140,510 @@ const PilotageHub: React.FC = () => {
             <IonRefresherContent />
           </IonRefresher>
 
-          <AgritechHeader
-            title="COCKPIT PILOTAGE"
-            subtitle="Vue globale de l'exploitation"
-            action={
-              <div className="flex items-center gap-3">
-                <DataAgeIndicator />
-                {auditData && (
-                  <button
-                    onClick={handlePrint}
-                    aria-label="Exporter le rapport PDF"
-                    className="pressable h-10 px-4 rounded-full bg-accent text-bg-0 font-mono text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-accent/20"
-                  >
-                    <FileText size={14} />
-                    Export PDF
-                  </button>
-                )}
-              </div>
-            }
+          <TopBarSync
+            crumbs={['Pilotage', 'Vue globale']}
+            lastSyncMinutes={lastSyncMinutes}
+            onMariusClick={() => {
+              const evt = new CustomEvent('open-chatbot');
+              window.dispatchEvent(evt);
+            }}
           />
 
-          <div className="px-4 pt-4 pb-32 flex flex-col gap-6">
-
-            {/* ── HEADER : COCKPIT FINANCIER ── */}
-            <div className="card-dense !p-6 flex flex-col items-center text-center gap-2 border-b-4 border-b-emerald-500/20">
-              <span className="text-[10px] uppercase font-mono text-text-2 tracking-widest">Marge Globale Estimée (Cheptel Actif)</span>
-              <div className={`text-4xl font-black font-mono tracking-tighter ${margeColor}`}>
-                {formatFCFA(margeGlobaleEstimee)} <span className="text-sm font-bold opacity-70">FCFA</span>
+          <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
+            {/* ── En-tête + export ──────────────────────────────────── */}
+            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+              <div>
+                <Eyebrow dotColor="accent">Pilotage · Vue globale</Eyebrow>
+                <h1
+                  style={{
+                    fontFamily: 'BigShoulders, system-ui, sans-serif',
+                    fontSize: 34,
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    letterSpacing: '-0.02em',
+                    color: 'var(--ink)',
+                    margin: '8px 0 4px',
+                  }}
+                >
+                  Pilotage
+                </h1>
+                <div
+                  style={{
+                    fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                    fontSize: 13,
+                    color: 'var(--muted)',
+                  }}
+                >
+                  Cockpit financier · {bandes.length} bandes · marge théorique K13
+                </div>
               </div>
-              <div className="flex items-center gap-2 mt-2">
-                 <Chip tone="success" label="Calcul Théorique K13" size="xs" />
-                 <span className="text-[9px] text-text-2 italic">Basé sur J+X et Pesées</span>
-              </div>
-            </div>
+              {auditData && (
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  aria-label="Exporter le rapport PDF"
+                  className="pressable"
+                  style={{
+                    minHeight: 44,
+                    padding: '8px 16px',
+                    borderRadius: 'var(--radius-pill)',
+                    background: 'var(--color-accent-500)',
+                    color: 'var(--bg-surface)',
+                    border: '1.5px solid var(--color-accent-500)',
+                    fontFamily: 'DMMono, ui-monospace, monospace',
+                    fontSize: 11,
+                    letterSpacing: '0.10em',
+                    textTransform: 'uppercase',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    transition: 'transform 160ms var(--ease-emil)',
+                  }}
+                >
+                  <FileText size={13} aria-hidden="true" />
+                  Export PDF
+                </button>
+              )}
+            </header>
 
-            {/* ── GRILLE MACRO-KPIs ── */}
-            <div className="grid grid-cols-2 gap-3">
-              <KpiCard
-                label="Valeur Cheptel"
+            {/* ── Marge globale (hero) ─────────────────────────────── */}
+            <section
+              aria-label="Marge globale estimée"
+              style={{
+                background: 'var(--bg-surface)',
+                borderRadius: 12,
+                padding: '20px 22px',
+                boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+                alignItems: 'flex-start',
+              }}
+            >
+              <Eyebrow dotColor={margeNegative ? 'pig' : 'accent'} withRule={false}>
+                Marge globale estimée · cheptel actif
+              </Eyebrow>
+              <div
+                style={{
+                  fontFamily: 'BricolageGrotesque, system-ui, sans-serif',
+                  fontSize: 44,
+                  fontWeight: 700,
+                  letterSpacing: '-0.03em',
+                  color: margeNegative ? 'var(--color-pig-deep)' : 'var(--color-accent-500)',
+                  lineHeight: 1,
+                }}
+              >
+                {formatFCFA(margeGlobaleEstimee)}
+                <span
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 500,
+                    color: 'var(--muted)',
+                    marginLeft: 8,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  FCFA
+                </span>
+              </div>
+              <div
+                style={{
+                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontSize: 12,
+                  color: 'var(--muted)',
+                }}
+              >
+                Calcul théorique basé sur J+X et les pesées en stock.
+              </div>
+            </section>
+
+            {/* ── 4 KPI cards ──────────────────────────────────────── */}
+            <section
+              aria-label="KPIs financiers"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                gap: 10,
+              }}
+            >
+              <KpiCardV6
+                label="Valeur cheptel"
                 value={formatFCFA(totalRevenuProjete)}
-                unit="FCFA"
-                icon={<Coins size={14} className="text-emerald-500" />}
+                unit=" F"
+                trend="Revenus projetés"
+                spark={spark(totalRevenuProjete || 1)}
               />
-              <KpiCard
-                label="Dette Aliment"
+              <KpiCardV6
+                label="Coût aliment"
                 value={formatFCFA(totalCoutAlimentaire)}
-                unit="FCFA"
-                icon={<Zap size={14} className="text-amber-500" />}
+                unit=" F"
+                trend="Engagé"
+                spark={spark(totalCoutAlimentaire || 1)}
+                trendDir="down"
               />
-              <KpiCard
-                label="Frais Engagés"
+              <KpiCardV6
+                label="Frais fixes"
                 value={formatFCFA(totalCoutFixe)}
-                unit="FCFA"
-                icon={<Target size={14} className="text-text-2" />}
+                unit=" F"
+                trend="Cumul cycle"
+                spark={spark(totalCoutFixe || 1)}
               />
-              <KpiCard
-                label="Mortalité Global"
+              <KpiCardV6
+                label="Mortalité"
                 value={tauxMortaliteMoyen.toFixed(1)}
-                unit="%"
-                tone={tauxMortaliteMoyen > 2 ? 'critical' : 'success'}
-                icon={<Skull size={14} />}
+                unit=" %"
+                trend={tauxMortaliteMoyen > 2 ? 'Au-dessus seuil' : 'Sous seuil'}
+                trendDir={tauxMortaliteMoyen > 2 ? 'down' : 'up'}
+                spark={spark(tauxMortaliteMoyen || 1)}
               />
-            </div>
+            </section>
 
-            {/* ── SECTION : URGENCES & VIGIE ── */}
-            <section className="space-y-3">
-              <SectionDivider label="Urgences & Vigie" />
+            {/* ── Performance bandes (top / flop) ──────────────────── */}
+            <section aria-label="Performance bandes">
+              <Eyebrow dotColor="accent">Performance bandes</Eyebrow>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                  gap: 10,
+                  marginTop: 12,
+                }}
+              >
+                {topBande && (
+                  <PerfBandeCard
+                    tone="accent"
+                    label="Top performer"
+                    bandeId={topBande.bande.idPortee}
+                    metric={`ROI : +${topBande.report.roiPct}%`}
+                  />
+                )}
+                {flopBande && (
+                  <PerfBandeCard
+                    tone="pig"
+                    label="Attention requise"
+                    bandeId={flopBande.bande.idPortee}
+                    metric={`Marge : ${formatFCFA(flopBande.report.margeNetteProjetee)} FCFA`}
+                  />
+                )}
+                {!topBande && !flopBande && (
+                  <div
+                    style={{
+                      background: 'var(--bg-surface)',
+                      borderRadius: 12,
+                      padding: '20px',
+                      textAlign: 'center',
+                      fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                      fontSize: 13,
+                      color: 'var(--muted)',
+                    }}
+                  >
+                    Données insuffisantes pour classer les bandes.
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* ── Alertes critiques ────────────────────────────────── */}
+            <section aria-label="Alertes critiques">
+              <Eyebrow dotColor={urgences.length > 0 ? 'pig' : 'accent'}>
+                Alertes critiques · {urgences.length}
+              </Eyebrow>
               {urgences.length === 0 ? (
-                <div className="card-dense !p-5 flex items-center justify-center gap-3 bg-emerald-500/5 border-emerald-500/20">
-                   <ShieldCheck className="text-emerald-500" size={24} />
-                   <span className="text-[13px] font-bold text-emerald-700 uppercase font-mono">Exploitation sous contrôle</span>
+                <div
+                  style={{
+                    marginTop: 12,
+                    background: 'var(--bg-surface)',
+                    borderRadius: 12,
+                    padding: '20px 22px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    border: '1px solid var(--color-accent-100)',
+                  }}
+                >
+                  <ShieldCheck size={22} color="var(--color-accent-500)" aria-hidden="true" />
+                  <span
+                    style={{
+                      fontFamily: 'BigShoulders, system-ui, sans-serif',
+                      fontSize: 16,
+                      fontWeight: 600,
+                      color: 'var(--ink)',
+                      letterSpacing: '-0.005em',
+                    }}
+                  >
+                    Exploitation sous contrôle
+                  </span>
                 </div>
               ) : (
-                <div className="flex overflow-x-auto gap-3 pb-2 -mx-1 px-1 snap-x scrollbar-hide">
+                <ul
+                  style={{
+                    listStyle: 'none',
+                    padding: 0,
+                    margin: '12px 0 0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 8,
+                  }}
+                >
                   {urgences.map(alert => (
-                    <div key={alert.id} className="min-w-[280px] snap-center card-dense !p-4 border-l-4 border-red-500 flex flex-col gap-2">
-                       <div className="flex justify-between items-start">
-                          <span className="text-[10px] font-bold font-mono text-red-600 uppercase">{alert.category}</span>
-                          <AlertTriangle size={14} className="text-red-500 animate-pulse" />
-                       </div>
-                       <h4 className="text-[13px] font-bold text-text-0">{alert.title}</h4>
-                       <p className="text-[11px] text-text-2 leading-tight">{alert.message}</p>
-                    </div>
+                    <li key={alert.id}>
+                      <div
+                        style={{
+                          background: 'var(--bg-surface)',
+                          borderRadius: 12,
+                          boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
+                          borderLeft: `3px solid ${alert.priority === 'CRITIQUE' ? 'var(--color-pig-deep)' : 'var(--color-amber-pork-deep)'}`,
+                          padding: '14px 16px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 6,
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span
+                            style={{
+                              fontFamily: 'DMMono, ui-monospace, monospace',
+                              fontSize: 10,
+                              letterSpacing: '0.10em',
+                              textTransform: 'uppercase',
+                              fontWeight: 600,
+                              color: alert.priority === 'CRITIQUE' ? 'var(--color-pig-deep)' : 'var(--color-amber-pork-deep)',
+                            }}
+                          >
+                            {alert.priority} · {alert.category}
+                          </span>
+                          <AlertTriangle
+                            size={14}
+                            color={alert.priority === 'CRITIQUE' ? 'var(--color-pig-deep)' : 'var(--color-amber-pork-deep)'}
+                            style={{ marginLeft: 'auto' }}
+                            aria-hidden="true"
+                          />
+                        </div>
+                        <h4
+                          style={{
+                            fontFamily: 'BigShoulders, system-ui, sans-serif',
+                            fontSize: 16,
+                            fontWeight: 600,
+                            color: 'var(--ink)',
+                            margin: 0,
+                            letterSpacing: '-0.005em',
+                          }}
+                        >
+                          {alert.title}
+                        </h4>
+                        <p
+                          style={{
+                            fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                            fontSize: 12,
+                            color: 'var(--ink-soft)',
+                            lineHeight: 1.5,
+                            margin: 0,
+                          }}
+                        >
+                          {alert.message}
+                        </p>
+                      </div>
+                    </li>
                   ))}
-                </div>
+                </ul>
               )}
             </section>
 
-            {/* ── SECTION : PALMARÈS DES BANDES ── */}
-            <section className="space-y-3">
-              <SectionDivider label="Palmarès des Bandes" />
-              <div className="grid grid-cols-1 gap-3">
-                {topBande && (
-                  <div className="card-dense !p-4 flex items-center gap-4 border-r-4 border-emerald-500/30">
-                    <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0">
-                      <TrendingUp size={20} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                       <div className="text-[10px] uppercase font-mono text-emerald-600 font-bold">Top Performer</div>
-                       <h4 className="text-[14px] font-bold text-text-0 truncate">{topBande.bande.idPortee}</h4>
-                       <p className="text-[11px] text-text-2">ROI : +{topBande.report.roiPct}%</p>
-                    </div>
-                    <ArrowRight size={16} className="text-text-2" />
-                  </div>
-                )}
-                {flopBande && (
-                  <div className="card-dense !p-4 flex items-center gap-4 border-r-4 border-red-500/30">
-                    <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center text-red-600 shrink-0">
-                      <TrendingUp size={20} className="rotate-180" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                       <div className="text-[10px] uppercase font-mono text-red-600 font-bold">Attention Requise</div>
-                       <h4 className="text-[14px] font-bold text-text-0 truncate">{flopBande.bande.idPortee}</h4>
-                       <p className="text-[11px] text-text-2">Marge : {formatFCFA(flopBande.report.margeNetteProjetee)} FCFA</p>
-                    </div>
-                    <ArrowRight size={16} className="text-text-2" />
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* ── MODULES CLASSIQUES ── */}
-            <section className="mt-2">
-              <SectionDivider label="Modules de Gestion" />
-              <div className="grid grid-cols-2 gap-2.5 mt-3">
-                <HubTile
-                  icon={<Wallet size={20} />}
+            {/* ── Modules de gestion ───────────────────────────────── */}
+            <section aria-label="Modules de gestion">
+              <Eyebrow dotColor="muted">Modules de gestion</Eyebrow>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                  gap: 10,
+                  marginTop: 12,
+                }}
+              >
+                <ModuleTile
+                  icon={<Wallet size={18} aria-hidden="true" />}
                   title="Trésorerie"
                   subtitle="Flux réels"
-                  to="/pilotage/finances"
-                  tone="gold"
-                  variant="compact"
+                  onClick={() => navigate('/pilotage/finances')}
                 />
-                <HubTile
-                  icon={<TrendingUp size={20} />}
-                  title="Perf GTTT"
+                <ModuleTile
+                  icon={<TrendingUp size={18} aria-hidden="true" />}
+                  title="Performance GTTT"
                   subtitle="Benchmarks"
-                  to="/pilotage/perf"
-                  tone="accent"
-                  variant="compact"
+                  onClick={() => navigate('/pilotage/perf')}
+                />
+                <ModuleTile
+                  icon={<Wind size={18} aria-hidden="true" />}
+                  title="Prévisions"
+                  subtitle="Projections"
+                  onClick={() => navigate('/pilotage/forecast')}
                 />
               </div>
             </section>
           </div>
         </AgritechLayout>
 
-        {/* Template d'impression masqué (print-only via Tailwind) */}
         {auditData && <AuditPrintTemplate data={auditData} />}
       </IonContent>
     </IonPage>
   );
 };
+
+// ─── Sous-composants ───────────────────────────────────────────────────────
+
+interface PerfBandeCardProps {
+  tone: 'accent' | 'pig';
+  label: string;
+  bandeId: string;
+  metric: string;
+}
+
+const PerfBandeCard: React.FC<PerfBandeCardProps> = ({ tone, label, bandeId, metric }) => {
+  const color = tone === 'accent' ? 'var(--color-accent-500)' : 'var(--color-pig-deep)';
+  const bg = tone === 'accent' ? 'var(--color-accent-100)' : 'var(--color-pig-soft)';
+  return (
+    <div
+      style={{
+        background: 'var(--bg-surface)',
+        borderRadius: 12,
+        boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
+        padding: '14px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 14,
+      }}
+    >
+      <div
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: '50%',
+          background: bg,
+          color,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <TrendingUp size={20} aria-hidden="true" style={{ transform: tone === 'pig' ? 'rotate(180deg)' : 'none' }} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontSize: 9.5,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color,
+            fontWeight: 600,
+          }}
+        >
+          {label}
+        </div>
+        <h4
+          style={{
+            fontFamily: 'BigShoulders, system-ui, sans-serif',
+            fontSize: 16,
+            fontWeight: 600,
+            color: 'var(--ink)',
+            margin: '4px 0 2px',
+            letterSpacing: '-0.005em',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {bandeId}
+        </h4>
+        <div
+          style={{
+            fontFamily: 'InstrumentSans, system-ui, sans-serif',
+            fontSize: 12,
+            color: 'var(--muted)',
+          }}
+        >
+          {metric}
+        </div>
+      </div>
+      <ArrowRight size={16} color="var(--muted)" aria-hidden="true" />
+    </div>
+  );
+};
+
+interface ModuleTileProps {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  onClick: () => void;
+}
+
+const ModuleTile: React.FC<ModuleTileProps> = ({ icon, title, subtitle, onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    aria-label={title}
+    className="pressable"
+    style={{
+      background: 'var(--bg-surface)',
+      borderRadius: 12,
+      padding: '14px 16px',
+      boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
+      border: 'none',
+      cursor: 'pointer',
+      textAlign: 'left',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+      minHeight: 44,
+      transition: 'transform 160ms var(--ease-emil)',
+    }}
+  >
+    <span
+      style={{
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        background: 'var(--color-accent-100)',
+        color: 'var(--color-accent-600)',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      }}
+    >
+      {icon}
+    </span>
+    <div style={{ minWidth: 0, flex: 1 }}>
+      <div
+        style={{
+          fontFamily: 'BigShoulders, system-ui, sans-serif',
+          fontSize: 14,
+          fontWeight: 600,
+          color: 'var(--ink)',
+          letterSpacing: '-0.005em',
+        }}
+      >
+        {title}
+      </div>
+      <div
+        style={{
+          fontFamily: 'DMMono, ui-monospace, monospace',
+          fontSize: 10,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: 'var(--muted)',
+          marginTop: 2,
+        }}
+      >
+        {subtitle}
+      </div>
+    </div>
+  </button>
+);
 
 function formatFCFA(n: number): string {
   return Math.round(n).toLocaleString('fr-FR').replace(/\s/g, '.');

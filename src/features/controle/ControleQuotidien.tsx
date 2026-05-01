@@ -153,9 +153,10 @@ const ControleQuotidien: React.FC = () => {
               aria-label="Progression de l'audit"
             >
               <div
-                className="absolute inset-y-0 left-0 bg-accent rounded-full transition-all duration-300 ease-out"
+                className="absolute inset-y-0 left-0 bg-accent rounded-full"
                 style={{
                   width: `${((currentStep + 1) / CONTROLE_QUESTIONS.length) * 100}%`,
+                  transition: 'all var(--duration-transition) var(--ease-emil)',
                 }}
               />
             </div>

@@ -7,8 +7,8 @@ import {
 } from 'lucide-react';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
+import { default as KpiCardV6 } from '../../components/design/KpiCard';
 import {
-  KpiCard,
   Chip,
   SectionDivider,
 } from '../../components/agritech';
@@ -94,25 +94,23 @@ const EngraissementView: React.FC = () => {
           <div className="px-4 pt-4 pb-32 flex flex-col gap-5">
             {/* ── Summary Stats ────────────────────────────────────────── */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <KpiCard
+              <KpiCardV6
                 label="Bandes"
                 value={summary.nbPortees}
-                icon={<TrendingUp size={14} className="text-accent" />}
               />
-              <KpiCard
+              <KpiCardV6
                 label="Effectif"
                 value={summary.totalVivants}
-                tone="success"
               />
-              <KpiCard
+              <KpiCardV6
                 label="Poids Moyen"
                 value={summary.avgWeight}
                 unit="kg"
               />
-              <KpiCard
+              <KpiCardV6
                 label="Loges Occ."
                 value={`${occupation.occupees}/${occupation.capacite}`}
-                tone={occupation.alerte === 'FULL' ? 'critical' : 'success'}
+                accentColor={occupation.alerte === 'FULL' ? 'var(--color-danger, #EF4444)' : undefined}
               />
             </div>
 

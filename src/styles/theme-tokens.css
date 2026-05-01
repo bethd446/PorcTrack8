@@ -44,7 +44,7 @@
 }
 
 :root.theme-day {
-  /* DAY — Blanc pur · accent émeraude profond */
+  /* DAY — Blanc pur · accent vert forêt v6 (#2d5a1b) */
   --bg-0: #FFFFFF;
   --bg-1: #FAFAFA;
   --bg-2: #F4F4F4;
@@ -53,13 +53,13 @@
   --text-2: #8A8A8A;
   --border: #E5E5E5;
   --border-strong: #D4D4D4;
-  --accent: #059669;
-  --accent-dim: #047857;
+  --accent: #2d5a1b;
+  --accent-dim: #235016;
   --accent-fg: #FFFFFF;
   --amber: #D97706;
   --red: #DC2626;
   --blue: #2563EB;
-  --gold: #B45309;
+  --gold: #F4A261;
   --coral: #E11D48;
   --teal: #0D9488;
   --cyan: #0891B2;

@@ -51,7 +51,7 @@ export async function loadChecklistDefinitions() {
 
     return { success: true };
   } catch (e) {
-    console.error('Failed to load checklists', e);
+    console.warn('[checklistService] Failed to load checklists (non-fatal):', e);
     return { success: false };
   }
 }

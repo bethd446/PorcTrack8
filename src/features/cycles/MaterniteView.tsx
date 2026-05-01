@@ -7,8 +7,8 @@ import {
 } from 'lucide-react';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
+import { default as KpiCardV6 } from '../../components/design/KpiCard';
 import {
-  KpiCard,
   Chip,
   SectionDivider,
 } from '../../components/agritech';
@@ -137,25 +137,29 @@ const MaterniteView: React.FC = () => {
 
             {/* ── Summary KPI ─────────────────────────────────────────── */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <KpiCard
+              <KpiCardV6
                 label="Truies"
                 value={summary.nbTruies}
-                icon={<TruieIcon size={14} className="text-accent" />}
               />
-              <KpiCard
+              <KpiCardV6
                 label="Saturation"
                 value={`${summary.occupation.tauxPct}%`}
-                tone={summary.occupation.alerte === 'FULL' ? 'critical' : summary.occupation.alerte === 'HIGH' ? 'warning' : 'success'}
+                accentColor={
+                  summary.occupation.alerte === 'FULL'
+                    ? 'var(--color-danger, #EF4444)'
+                    : summary.occupation.alerte === 'HIGH'
+                      ? 'var(--amber-pork)'
+                      : undefined
+                }
               />
-              <KpiCard
+              <KpiCardV6
                 label="Porcelets s/m"
                 value={summary.totalVivants}
-                tone="success"
               />
-              <KpiCard
+              <KpiCardV6
                 label="Mortalité"
                 value={`${summary.mortsGlobalPct.toFixed(1)}%`}
-                tone={summary.mortsGlobalPct > MORTALITE_SEUIL_PCT ? 'critical' : 'default'}
+                accentColor={summary.mortsGlobalPct > MORTALITE_SEUIL_PCT ? 'var(--color-danger, #EF4444)' : undefined}
               />
             </div>
 
@@ -221,7 +225,7 @@ const MaterniteCard: React.FC<{
       <div className="flex justify-between items-start">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className={`text-[15px] font-bold text-text-0 font-mono ${isBloquant ? 'text-red-600' : ''}`}>{truie.displayId}</h3>
+            <h3 className="text-[15px] font-bold text-text-0 font-mono" style={isBloquant ? { color: 'var(--color-danger, #EF4444)' } : undefined}>{truie.displayId}</h3>
             {truie.nom && <span className="text-[12px] text-text-2 truncate max-w-[80px]">{truie.nom}</span>}
             <Chip tone={isBloquant ? 'red' : 'default'} label={isBloquant ? 'BLOCAGE' : `B.${truie.boucle}`} size="xs" />
           </div>
@@ -229,7 +233,7 @@ const MaterniteCard: React.FC<{
             {portee ? `Portée: ${portee.idPortee}` : 'Aucune portée liée'}
           </p>
           {isBloquant && (
-            <div className="flex items-center gap-1.5 mt-1 text-red-600 animate-pulse">
+            <div className="flex items-center gap-1.5 mt-1 animate-pulse" style={{ color: 'var(--color-danger, #EF4444)' }}>
               <AlertCircle size={14} />
               <span className="text-[10px] font-bold uppercase">Urgence Critique</span>
             </div>
@@ -245,7 +249,7 @@ const MaterniteCard: React.FC<{
       {/* Message de blocage */}
       {isBloquant && (
         <div className="bg-red-500/10 rounded-lg p-3 border border-red-500/20">
-          <p className="text-[11px] text-red-700 leading-tight">
+          <p className="text-[11px] leading-tight" style={{ color: 'var(--color-danger, #EF4444)' }}>
             <strong>Action bloquée :</strong> Retard critique de sevrage (+{joursEnRetard}j).
             Veuillez déclarer le sevrage de cette portée pour débloquer les saisies.
           </p>

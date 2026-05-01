@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { Scale, HelpCircle, TrendingUp, Target, Weight } from 'lucide-react';
-import { KpiCard, Chip, SectionDivider, DataRow } from '../agritech';
+import { Scale, HelpCircle } from 'lucide-react';
+import { default as KpiCardV6 } from '../design/KpiCard';
+import { Chip, SectionDivider, DataRow } from '../agritech';
 import type { ChipTone } from '../agritech';
 import {
   computeBandeGrowthStats,
@@ -164,12 +165,11 @@ const BandeCroissanceCard: React.FC<BandeCroissanceCardProps> = ({ bande, notes 
         <>
           {/* ── Grid KPIs ─────────────────────────────────────────────── */}
           <div className="grid grid-cols-3 gap-2">
-            <KpiCard
-              icon={<Weight size={12} aria-hidden="true" />}
+            <KpiCardV6
               label="Dernier poids"
               value={dernierPoids !== undefined ? dernierPoids.toFixed(1) : '—'}
               unit="kg"
-              deltaLabel={
+              trend={
                 joursDepuisDerniere !== undefined && joursDepuisDerniere >= 0
                   ? joursDepuisDerniere === 0
                     ? 'aujourd\'hui'
@@ -177,15 +177,13 @@ const BandeCroissanceCard: React.FC<BandeCroissanceCardProps> = ({ bande, notes 
                   : undefined
               }
             />
-            <KpiCard
-              icon={<TrendingUp size={12} aria-hidden="true" />}
+            <KpiCardV6
               label="GMQ moyen"
               value={gmqMoyenGlobal > 0 ? gmqMoyenGlobal : '—'}
               unit={gmqMoyenGlobal > 0 ? 'g/j' : undefined}
-              tone={alerte === 'SOUS_CIBLE' ? 'warning' : 'default'}
+              accentColor={alerte === 'SOUS_CIBLE' ? 'var(--amber-pork)' : undefined}
             />
-            <KpiCard
-              icon={<Target size={12} aria-hidden="true" />}
+            <KpiCardV6
               label="Cible phase"
               value={
                 gmqCibleActuel.max > 0

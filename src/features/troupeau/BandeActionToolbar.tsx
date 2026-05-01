@@ -23,10 +23,11 @@ const BandeActionToolbar: React.FC<BandeActionToolbarProps> = ({
     <div className="fixed bottom-0 left-0 right-0 bg-bg-1/80 backdrop-blur-xl border-t border-border px-4 py-3 flex gap-3 z-50 animate-fade-in-up">
       <button
         onClick={onMortalite}
-        className="flex-1 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
+        className="flex-1 h-14 rounded-2xl border flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
+        style={{ background: 'color-mix(in srgb, var(--color-danger, #EF4444) 10%, transparent)', borderColor: 'color-mix(in srgb, var(--color-danger, #EF4444) 20%, transparent)' }}
       >
-        <Skull size={18} className="text-red-500" />
-        <span className="text-[9px] font-bold uppercase font-mono text-red-600">Mortalité</span>
+        <Skull size={18} style={{ color: 'var(--color-danger, #EF4444)' }} />
+        <span className="text-[9px] font-bold uppercase font-mono" style={{ color: 'var(--color-danger, #EF4444)' }}>Mortalité</span>
       </button>
 
       <button
@@ -40,10 +41,11 @@ const BandeActionToolbar: React.FC<BandeActionToolbarProps> = ({
       {onTransfert && (
         <button
           onClick={onTransfert}
-          className="flex-1 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
+          className="flex-1 h-14 rounded-2xl border flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
+          style={{ background: 'color-mix(in srgb, var(--amber-pork) 10%, transparent)', borderColor: 'color-mix(in srgb, var(--amber-pork) 20%, transparent)' }}
         >
-          <ArrowRightLeft size={18} className="text-amber-600" />
-          <span className="text-[9px] font-bold uppercase font-mono text-amber-600">Transfert</span>
+          <ArrowRightLeft size={18} style={{ color: 'var(--amber-pork-deep)' }} />
+          <span className="text-[9px] font-bold uppercase font-mono" style={{ color: 'var(--amber-pork-deep)' }}>Transfert</span>
         </button>
       )}
 

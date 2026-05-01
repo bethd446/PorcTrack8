@@ -6,7 +6,11 @@
 
 /* ── @theme : extension Tailwind v4 (utilitaires bg-pig-* etc.) ────────── */
 @theme {
-  /* Override alignement v6 (était #d4920f en legacy) */
+  /* Typography v6 — Big Shoulders pour les titres internes (sentence case) */
+  --font-display: "BigShoulders", "InstrumentSans", sans-serif;
+  --font-heading: "BigShoulders", "InstrumentSans", sans-serif;
+
+  /* Amber-pork v6 — orange chaud (était un mustard plus saturé en legacy) */
   --color-amber-pork:      #F4A261;
   --color-amber-pork-soft: #FCE4C9;
   --color-amber-pork-deep: #B0703D;
@@ -21,12 +25,19 @@
   --color-secondary-soft: #d9c9a8;
   --color-secondary-deep: #5d3a1f;
 
-  /* Accent re-aligné sur shades v6 (notre #d9ebbf → #e3edd9 plus pastel) */
+  /* Accent v6 — pastel vert clair */
   --color-accent-100: #e3edd9;
 }
 
 /* ── :root variables non-Tailwind (animations, layout) ─────────────────── */
 :root {
+  /* Override final : tokens typo restent BigShoulders sentence case. */
+  --font-display: "BigShoulders", "InstrumentSans", sans-serif !important;
+  --font-heading: "BigShoulders", "InstrumentSans", sans-serif !important;
+
+  /* Fond global v6 — ivoire vert (override du legacy beige chaud). */
+  --bg-app: #f0f4f3;
+
   /* Animations — Emil Kowalski standard */
   --ease-emil:           cubic-bezier(0.23, 1, 0.32, 1);
   --duration-press:      160ms;

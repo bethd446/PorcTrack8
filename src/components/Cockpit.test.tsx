@@ -98,6 +98,21 @@ vi.mock('../context/RessourcesContext', () => ({
   useRessources: () => mockFarmValue,
 }));
 
+vi.mock('../context/AuthContext', () => ({
+  useAuth: () => ({
+    session: null,
+    user: null,
+    profile: null,
+    loading: false,
+    signOut: async () => {},
+    refreshProfile: async () => {},
+    role: 'OWNER' as const,
+    userName: 'Utilisateur',
+    setRole: () => {},
+    isOwner: true,
+  }),
+}));
+
 // ForecastWidget fait des calculs lourds hors sujet pour ces tests ; on le
 // remplace par un placeholder minimal qui n'affecte pas les autres sections.
 vi.mock('./cockpit/ForecastWidget', () => ({
@@ -252,7 +267,7 @@ afterEach(() => {
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe('Cockpit — rendu baseline', () => {
-  it('affiche l\'en-tête "COCKPIT · K13" avec 17 truies / 2 verrats / 14 bandes', () => {
+  it('affiche le H1 "Bonjour, …" avec 17 truies / 2 verrats / 14 bandes', () => {
     mockFarmValue.truies = Array.from({ length: 17 }, (_, i) =>
       makeTruie({ id: `T${String(i + 1).padStart(2, '0')}`, displayId: `T${i + 1}` }),
     );
@@ -265,10 +280,9 @@ describe('Cockpit — rendu baseline', () => {
 
     renderCockpit();
 
-    // L'en-tête contient "Cockpit" + " · K13" (séparés par un <span>)
+    // H1 unifié mobile/desktop : "Bonjour, {prénom}" en BigShoulders.
     const heading = screen.getByRole('heading', { level: 1 });
-    expect(heading.textContent).toMatch(/Cockpit/i);
-    expect(heading.textContent).toMatch(/K13/);
+    expect(heading.textContent).toMatch(/Bonjour/i);
   });
 });
 

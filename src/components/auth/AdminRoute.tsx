@@ -52,10 +52,10 @@ export default function AdminRoute({ children }: Props) {
 
   if (status === 'loading') {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#f0f4f3]">
+      <div className="flex items-center justify-center h-screen" style={{ background: 'var(--bg-app)' }}>
         <div className="flex flex-col items-center gap-4">
           <img src="/images/icon.svg" alt="PorcTrack" className="w-12 h-12 rounded-xl animate-pulse" />
-          <p className="text-xs text-[#064e3b] opacity-50 uppercase tracking-widest">Vérification accès…</p>
+          <p className="text-xs opacity-50 uppercase tracking-widest" style={{ color: 'var(--color-accent-500)' }}>Vérification accès…</p>
         </div>
       </div>
     );

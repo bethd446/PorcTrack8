@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { IonPage, IonContent } from '@ionic/react';
 import Button from './Button';
 
 const FONT_DISPLAY = 'BigShoulders, "InstrumentSans", sans-serif';
@@ -137,23 +138,27 @@ interface PublicShellProps {
 export default function PublicShell({ children }: PublicShellProps) {
   useForceDayTheme();
   return (
-    <div
-      data-public-page
-      style={{
-        position: 'relative',
-        zIndex: 1,
-        minHeight: '100vh',
-        width: '100%',
-        background: 'var(--bg-app)',
-        color: 'var(--ink)',
-        fontFamily: FONT_BODY,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      <PublicHeader />
-      <main style={{ flex: 1 }}>{children}</main>
-      <PublicFooter />
-    </div>
+    <IonPage>
+      <IonContent fullscreen scrollY={true}>
+        <div
+          data-public-page
+          style={{
+            position: 'relative',
+            zIndex: 1,
+            minHeight: '100%',
+            width: '100%',
+            background: 'var(--bg-app)',
+            color: 'var(--ink)',
+            fontFamily: FONT_BODY,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <PublicHeader />
+          <main style={{ flex: 1 }}>{children}</main>
+          <PublicFooter />
+        </div>
+      </IonContent>
+    </IonPage>
   );
 }

@@ -391,9 +391,9 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
               <CheckCircle2 size={64} className="text-coral mb-4" strokeWidth={1.5} />
               <p className="agritech-heading text-[18px] uppercase">Mortalité enregistrée</p>
               <p className="mt-2 font-mono text-[12px] text-text-2">{subjectDisplay(selectedSubject)}</p>
-              <div className="mt-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
-                 <div className="text-[10px] uppercase font-mono text-red-600 mb-1">Impact financier estimé</div>
-                 <div className="text-xl font-bold text-red-700">-{impactFCFA.toLocaleString('fr-FR')} FCFA</div>
+              <div className="mt-6 p-4 rounded-xl border" style={{ background: 'color-mix(in srgb, var(--color-danger, #EF4444) 10%, transparent)', borderColor: 'color-mix(in srgb, var(--color-danger, #EF4444) 20%, transparent)' }}>
+                 <div className="text-[10px] uppercase font-mono mb-1" style={{ color: 'var(--color-danger, #EF4444)' }}>Impact financier estimé</div>
+                 <div className="text-xl font-bold" style={{ color: 'var(--color-danger, #EF4444)' }}>-{impactFCFA.toLocaleString('fr-FR')} FCFA</div>
               </div>
             </div>
           )}

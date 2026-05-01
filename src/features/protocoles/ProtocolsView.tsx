@@ -319,8 +319,8 @@ const ProtocolsView: React.FC = () => {
                   {protocols.cycle.map((s, _idx) => (
                     <div key={s.id} className="relative">
                       {/* Dot connector */}
-                      <div className={`absolute -left-[25px] top-4 h-4 w-4 rounded-full border-2 border-bg-app bg-white ring-2 ring-offset-2 ring-transparent flex items-center justify-center`}
-                           style={{ color: `var(--color-${s.tone})`, borderColor: `var(--color-${s.tone})` }}>
+                      <div className={`absolute -left-[25px] top-4 h-4 w-4 rounded-full border-2 border-bg-app ring-2 ring-offset-2 ring-transparent flex items-center justify-center`}
+                           style={{ background: 'var(--bg-surface)', color: `var(--color-${s.tone})`, borderColor: `var(--color-${s.tone})` }}>
                         <div className="h-1.5 w-1.5 rounded-full bg-current" />
                       </div>
 
@@ -396,7 +396,7 @@ const ProtocolsView: React.FC = () => {
                 </div>
 
                 <div className="card-dense bg-accent border-none p-5 text-white flex flex-col items-center text-center gap-3">
-                  <div className="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                  <div className="h-14 w-14 rounded-full flex items-center justify-center backdrop-blur-sm" style={{ background: 'rgba(255,255,255,0.2)' }}>
                     <Target size={30} className="text-white" />
                   </div>
                   <div>

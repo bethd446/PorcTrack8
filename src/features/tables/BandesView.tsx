@@ -16,6 +16,7 @@ import PhotoStrip from '../../components/PhotoStrip';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { Chip, SectionDivider } from '../../components/agritech';
+import Button from '../../components/design/Button';
 import { BandeIcon } from '../../components/icons';
 import QuickNoteForm from '../../components/forms/QuickNoteForm';
 import QuickHealthForm from '../../components/forms/QuickHealthForm';
@@ -128,7 +129,7 @@ function statusTone(status: string | null | undefined): StatusTone {
 function statusBorderClass(status: string | null | undefined, hasAlert: boolean): string {
   if (hasAlert) return 'border-l-red';
   const tone = statusTone(status);
-  if (tone === 'gold') return 'border-l-[#D4A056]';
+  if (tone === 'gold') return 'border-l-[var(--amber-pork-deep)]';
   if (tone === 'accent') return 'border-l-accent';
   return 'border-l-border';
 }
@@ -414,19 +415,27 @@ const BandesView: React.FC = () => {
                     </div>
                 ) : error ? (
                     <div className="mx-4 card-dense border-l-2 border-l-red text-center py-10">
-                        <AlertTriangle size={36} className="text-red mb-4 mx-auto" />
+                        <span
+                          aria-hidden="true"
+                          className="inline-flex items-center justify-center mb-4"
+                          style={{
+                            width: 56,
+                            height: 56,
+                            borderRadius: '50%',
+                            background: 'var(--color-pig-soft, color-mix(in srgb, var(--red) 12%, var(--bg-surface)))',
+                          }}
+                        >
+                          <AlertTriangle size={28} className="text-red" aria-hidden="true" />
+                        </span>
                         <h3 className="agritech-heading text-[14px] uppercase mb-2">Erreur flux</h3>
                         <p className="font-mono text-[11px] text-text-2 uppercase mb-6">{error}</p>
-                        <button
-                          onClick={loadData}
-                          className="pressable h-11 px-6 rounded-md bg-accent text-bg-0 font-mono text-[12px] uppercase tracking-wide transition-colors"
-                        >
+                        <Button variant="primary" size="md" onClick={loadData}>
                           Réessayer
-                        </button>
+                        </Button>
                     </div>
                 ) : header.length > 0 && bandeIdIndex === -1 ? (
-                    <div className="mx-4 card-dense border-l-2 border-l-[#F4A261]">
-                         <div className="flex items-center gap-3 mb-4 text-[#F4A261]">
+                    <div className="mx-4 card-dense border-l-2 border-l-[var(--amber-pork)]">
+                         <div className="flex items-center gap-3 mb-4 text-[var(--amber-pork)]">
                              <AlertCircle size={18} />
                              <h3 className="agritech-heading text-[13px] uppercase">Configuration requise</h3>
                          </div>

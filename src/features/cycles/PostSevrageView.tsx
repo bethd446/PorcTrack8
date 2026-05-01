@@ -8,8 +8,8 @@ import {
 import { PorceletIcon } from '../../components/icons';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
+import { default as KpiCardV6 } from '../../components/design/KpiCard';
 import {
-  KpiCard,
   Chip,
   SectionDivider,
 } from '../../components/agritech';
@@ -110,25 +110,29 @@ const PostSevrageView: React.FC = () => {
           <div className="px-4 pt-4 pb-32 flex flex-col gap-5">
             {/* ── Summary Stats ────────────────────────────────────────── */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <KpiCard
+              <KpiCardV6
                 label="Portées"
                 value={summary.nbPortees}
-                icon={<PackageCheck size={14} className="text-accent" />}
               />
-              <KpiCard
+              <KpiCardV6
                 label="Porcelets"
                 value={summary.totalVivants}
-                tone="success"
               />
-              <KpiCard
+              <KpiCardV6
                 label="Âge Moyen"
                 value={summary.avgAge}
                 unit="j"
               />
-              <KpiCard
+              <KpiCardV6
                 label="Saturation"
                 value={`${occupation.tauxPct}%`}
-                tone={occupation.alerte === 'FULL' ? 'critical' : occupation.alerte === 'HIGH' ? 'warning' : 'success'}
+                accentColor={
+                  occupation.alerte === 'FULL'
+                    ? 'var(--color-danger, #EF4444)'
+                    : occupation.alerte === 'HIGH'
+                      ? 'var(--amber-pork)'
+                      : undefined
+                }
               />
             </div>
 
@@ -220,14 +224,14 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
       <div className="flex justify-between items-start">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className={`text-[15px] font-bold font-mono ${isBloquant ? 'text-red-600' : 'text-text-0'}`}>{data.idPortee}</h3>
+            <h3 className="text-[15px] font-bold font-mono text-text-0" style={isBloquant ? { color: 'var(--color-danger, #EF4444)' } : undefined}>{data.idPortee}</h3>
             <Chip tone={isBloquant ? 'red' : 'default'} label={isBloquant ? 'BLOCAGE' : `${data.vivants} têtes`} size="xs" />
           </div>
           <p className="text-[11px] text-text-2 mt-0.5">
             Mère: {data.truie || '—'} · Âge: <span className="text-text-1 font-mono">{data.ageJours}j</span>
           </p>
           {isBloquant && (
-            <div className="flex items-center gap-1.5 mt-1 text-red-600 animate-pulse">
+            <div className="flex items-center gap-1.5 mt-1 animate-pulse" style={{ color: 'var(--color-danger, #EF4444)' }}>
               <AlertCircle size={14} />
               <span className="text-[10px] font-bold uppercase">Urgence Critique</span>
             </div>
@@ -243,7 +247,7 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
       {/* Message de blocage */}
       {isBloquant && (
         <div className="bg-red-500/10 rounded-lg p-3 border border-red-500/20">
-          <p className="text-[11px] text-red-700 leading-tight">
+          <p className="text-[11px] leading-tight" style={{ color: 'var(--color-danger, #EF4444)' }}>
             <strong>Action bloquée :</strong> Retard critique de transition (+{joursEnRetard}j).
             Veuillez transférer cette loge vers l'Engraissement pour débloquer les saisies.
           </p>

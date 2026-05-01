@@ -23,12 +23,13 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonPage, IonContent, IonRefresher, IonRefresherContent } from '@ionic/react';
-import { Heart, Baby, CalendarClock, Info, Edit3 } from 'lucide-react';
+import { Heart, Baby, Info, Edit3 } from 'lucide-react';
 
 import { useFarm } from '../../context/FarmContext';
 import AgritechLayout from '../../components/AgritechLayout';
 import AgritechHeader from '../../components/AgritechHeader';
-import { KpiCard, Chip, SectionDivider } from '../../components/agritech';
+import { default as KpiCardV6 } from '../../components/design/KpiCard';
+import { Chip, SectionDivider } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
 import type { Truie, BandePorcelets, Saillie } from '../../types/farm';
 import QuickEditSaillieForm from '../../components/forms/QuickEditSaillieForm';
@@ -319,35 +320,28 @@ const ReproCalendarView: React.FC = () => {
               className="grid grid-cols-2 gap-3"
             >
               <div className="animate-fade-in-up">
-                <KpiCard
+                <KpiCardV6
                   label="Saillies 7j"
                   value={saillies7j.length}
-                  icon={<Heart size={14} aria-hidden="true" />}
-                  tone={saillies7j.length > 0 ? 'success' : 'default'}
                 />
               </div>
               <div className="animate-fade-in-up stagger-1">
-                <KpiCard
+                <KpiCardV6
                   label="MB prévues 30j"
                   value={mbPrevues30j.length}
-                  icon={<Baby size={14} aria-hidden="true" />}
-                  tone={mbPrevues30j.length > 0 ? 'success' : 'default'}
                 />
               </div>
               <div className="animate-fade-in-up stagger-2">
-                <KpiCard
+                <KpiCardV6
                   label="Retours chaleur"
                   value={retoursChaleur.length}
-                  icon={<Heart size={14} aria-hidden="true" />}
-                  tone={retoursChaleur.length > 0 ? 'warning' : 'default'}
+                  accentColor={retoursChaleur.length > 0 ? 'var(--color-pig-deep)' : undefined}
                 />
               </div>
               <div className="animate-fade-in-up stagger-3">
-                <KpiCard
+                <KpiCardV6
                   label="Gestations"
                   value={nbGestations}
-                  icon={<CalendarClock size={14} aria-hidden="true" />}
-                  tone="default"
                 />
               </div>
             </section>

@@ -11,7 +11,7 @@ import AgritechHeader from '../../components/AgritechHeader';
 import { Chip, SectionDivider } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
 import { TruieIcon, VerratIcon } from '../../components/icons';
-import { getStatusConfig } from '../../components/PremiumUI';
+import { getStatusConfig } from '../../utils/statusConfig';
 import { FARM_CONFIG } from '../../config/farm';
 import { normaliseStatut } from '../../lib/truieStatut';
 import QuickEditTruieForm from '../../components/forms/QuickEditTruieForm';

@@ -17,20 +17,14 @@ import {
   Users,
   Baby,
   Home,
-  LayoutDashboard,
-  Activity,
-  Layers,
-  PackageSearch,
-  TrendingUp,
   CalendarDays,
-  Settings2,
-  BellRing,
 } from 'lucide-react';
 import { FARM_CONFIG } from '../config/farm';
 import { useMeta } from '../context/FarmContext';
 import { useTroupeau } from '../context/TroupeauContext';
 import { usePilotage } from '../context/PilotageContext';
 import { useRessources } from '../context/RessourcesContext';
+import { useAuth } from '../context/AuthContext';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import {
   KpiCard as AgritechKpi,
@@ -46,8 +40,6 @@ import QuickHealthForm from './forms/QuickHealthForm';
 import QuickNoteForm from './forms/QuickNoteForm';
 import QuickPeseeForm from './forms/QuickPeseeForm';
 import ForecastWidget from './cockpit/ForecastWidget';
-import Sidebar from './design/Sidebar';
-import type { SidebarSection } from './design/Sidebar';
 import KpiCardV6 from './design/KpiCard';
 import TopBarSync from './design/TopBarSync';
 import Eyebrow from './design/Eyebrow';
@@ -106,13 +98,14 @@ const Cockpit: React.FC = () => {
   const [toast, setToast] = useState<{ open: boolean; message: string }>({ open: false, message: '' });
   const [pulse, setPulse] = useState(false);
 
-  // ── Breakpoint desktop (≥768px) — défaut mobile pour SSR / tests jsdom ──
+  // ── Breakpoint desktop (≥1024px) — défaut mobile pour SSR / tests jsdom ──
+  // Aligné sur AgritechLayout (sidebar) + AgritechNavV2 (auto-hide).
   const [isDesktop, setIsDesktop] = useState<boolean>(false);
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
       return;
     }
-    const mq = window.matchMedia('(min-width: 768px)');
+    const mq = window.matchMedia('(min-width: 1024px)');
     const update = (): void => setIsDesktop(mq.matches);
     update();
     mq.addEventListener('change', update);
@@ -394,6 +387,9 @@ const Cockpit: React.FC = () => {
     ? Math.max(0, Math.round((Date.now() - lastUpdate) / 60_000))
     : undefined;
 
+  // Source de vérité : profil Supabase (full_name) via useAuth ; fallback
+  // localStorage pour les anciennes sessions, puis "Utilisateur".
+  const { userName: authUserName } = useAuth();
   let storedUserName: string | null = null;
   try {
     if (typeof window !== 'undefined' && typeof window.localStorage?.getItem === 'function') {
@@ -402,51 +398,11 @@ const Cockpit: React.FC = () => {
   } catch {
     storedUserName = null;
   }
-  const userFirstName = (storedUserName || 'Utilisateur').split(' ')[0];
-
-  // ── Sidebar config (desktop) ────────────────────────────────────────────
-  const sidebarSections: SidebarSection[] = useMemo(
-    () => [
-      {
-        title: 'Pilotage',
-        items: [
-          {
-            label: 'Cockpit',
-            icon: LayoutDashboard,
-            href: '/cockpit',
-            active: true,
-          },
-          {
-            label: 'Alertes',
-            icon: BellRing,
-            href: '/alerts',
-            count: kpiAlertesTotal > 0 ? kpiAlertesTotal : undefined,
-          },
-        ],
-      },
-      {
-        title: 'Cheptel',
-        items: [
-          { label: 'Truies', icon: Users, href: '/troupeau/truies', count: truies.length },
-          { label: 'Verrats', icon: Heart, href: '/troupeau/verrats', count: verrats.length },
-          { label: 'Bandes', icon: Layers, href: '/troupeau/bandes', count: porteesReelles.length },
-        ],
-      },
-      {
-        title: 'Gestion',
-        items: [
-          { label: 'Cycles', icon: Activity, href: '/cycles' },
-          { label: 'Ressources', icon: PackageSearch, href: '/ressources' },
-          { label: 'Pilotage', icon: TrendingUp, href: '/pilotage' },
-        ],
-      },
-      {
-        title: 'Système',
-        items: [{ label: 'Réglages', icon: Settings2, href: '/more' }],
-      },
-    ],
-    [kpiAlertesTotal, truies.length, verrats.length, porteesReelles.length]
-  );
+  const resolvedUserName =
+    (authUserName && authUserName !== 'Utilisateur' ? authUserName : null) ||
+    storedUserName ||
+    'Utilisateur';
+  const userFirstName = resolvedUserName.split(' ')[0];
 
   // ── Render ──────────────────────────────────────────────────────────────
   return (
@@ -457,11 +413,10 @@ const Cockpit: React.FC = () => {
             <IonRefresherContent />
           </IonRefresher>
 
-          {/* ═══════════════════ DESKTOP (≥768px) ═══════════════════ */}
+          {/* ═══════════════════ DESKTOP (≥1024px) ═══════════════════ */}
+          {/* La sidebar est rendue par AgritechLayout (shell unifié). */}
           {isDesktop ? (
-          <div className="md:flex" style={{ display: 'flex', minHeight: '100vh' }}>
-            <Sidebar sections={sidebarSections} />
-
+          <div style={{ display: 'flex', minHeight: '100vh' }}>
             <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
               <TopBarSync
                 crumbs={['Pilotage', 'Cockpit']}
@@ -602,13 +557,30 @@ const Cockpit: React.FC = () => {
               <div className="flex items-baseline justify-between gap-3">
                 <div className="min-w-0">
                   <h1
-                    className="agritech-heading leading-none uppercase truncate"
-                    style={{ fontSize: 'var(--text-display-lg)' }}
+                    className="ft-heading truncate"
+                    style={{
+                      fontFamily: 'BigShoulders, system-ui, sans-serif',
+                      fontSize: 32,
+                      fontWeight: 700,
+                      lineHeight: 1,
+                      color: 'var(--ink)',
+                      letterSpacing: '-0.02em',
+                      margin: 0,
+                    }}
                   >
-                    Cockpit <span className="text-text-2"> · {FARM_CONFIG.FARM_ID}</span>
+                    Bonjour, {userFirstName}
                   </h1>
-                  <p className="mt-1 font-mono text-[12px] text-text-2 leading-none">
-                    {headerDate} · {headerTime}
+                  <p
+                    className="mt-1 leading-none"
+                    style={{
+                      fontFamily: 'DMMono, ui-monospace, monospace',
+                      fontSize: 11,
+                      letterSpacing: '0.06em',
+                      color: 'var(--muted)',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {headerDate} · {headerTime} · {FARM_CONFIG.FARM_NAME}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
@@ -1296,10 +1268,10 @@ interface PanelAlertesProps {
 }
 
 const ALERT_DOT_COLOR: Record<AlertPriority, string> = {
-  CRITIQUE: 'var(--red, #EF4444)',
-  HAUTE: 'var(--color-amber-pork)',
+  CRITIQUE: 'var(--color-danger, #EF4444)',
+  HAUTE: 'var(--amber-pork)',
   NORMALE: 'var(--color-accent-500)',
-  INFO: 'var(--info, #3B82F6)',
+  INFO: 'var(--color-info, #3B82F6)',
 };
 
 const PanelAlertes: React.FC<PanelAlertesProps> = ({ alerts, onSeeAll }) => {
@@ -1389,13 +1361,13 @@ const TAG_STYLE: Record<AgendaItem['kind'], React.CSSProperties> = {
     color: 'var(--color-accent-600)',
   },
   SEV: {
-    background: 'var(--info, #3B82F6)',
+    background: 'var(--color-info, #3B82F6)',
     color: 'var(--bg-surface)',
     opacity: 0.9,
   },
   RETOUR: {
-    background: 'var(--color-amber-pork-soft)',
-    color: 'var(--color-amber-pork-deep)',
+    background: 'var(--amber-pork-soft)',
+    color: 'var(--amber-pork-deep)',
   },
   ALERTE: {
     background: 'var(--bg-app, var(--bg-surface-2))',

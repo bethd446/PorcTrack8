@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
 
 export interface AgritechHeaderProps {
-  /** Titre principal (affiché UPPERCASE, Big Shoulders Display). */
+  /** Titre principal (Big Shoulders, sentence case — v6 2026-04-30). */
   title: string;
   /** Sous-titre (mono, text-text-2). */
   subtitle?: string;
@@ -25,7 +25,7 @@ export interface AgritechHeaderProps {
 }
 
 /**
- * AgritechHeader — équivalent dark cockpit de `PremiumHeader`.
+ * AgritechHeader — header agritech (fond bg-bg-0).
  *
  * Dédié aux écrans agritech (fond `bg-bg-0`). Fondu sans couture avec
  * `AgritechLayout` (même fond). Safe-area-top respectée.
@@ -80,8 +80,8 @@ const AgritechHeader: React.FC<AgritechHeaderProps> = ({
 
           <div className="min-w-0">
             <h1
-              className="agritech-heading uppercase leading-none truncate"
-              style={{ fontSize: 'clamp(22px, 6vw, 28px)', letterSpacing: '0.02em' }}
+              className="agritech-heading leading-none truncate"
+              style={{ fontSize: 'clamp(22px, 6vw, 28px)', letterSpacing: '-0.01em' }}
             >
               {title}
             </h1>

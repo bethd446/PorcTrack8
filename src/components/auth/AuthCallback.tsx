@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { IonPage, IonContent } from '@ionic/react';
 import { supabase } from '../../services/supabaseClient';
+import Eyebrow from '../design/Eyebrow';
+import Button from '../design/Button';
+
+const FONT_DISPLAY = 'BigShoulders, "InstrumentSans", sans-serif';
+const FONT_BODY = 'InstrumentSans, -apple-system, system-ui, sans-serif';
+const FONT_MONO = 'DMMono, ui-monospace, monospace';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -18,8 +25,6 @@ export default function AuthCallback() {
         if (data.session) {
           navigate('/cockpit', { replace: true });
         } else {
-          // Attend une frame pour laisser onAuthStateChange prendre le relais
-          // (Supabase parse l'URL au chargement et déclenche un event SIGNED_IN)
           setTimeout(() => {
             supabase.auth.getSession().then(({ data: retryData }) => {
               if (cancelled) return;
@@ -44,23 +49,104 @@ export default function AuthCallback() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-[#0A0D0C] text-[#F4F7F6] flex items-center justify-center p-6">
-      <div className="text-center">
-        {error ? (
-          <>
-            <p className="text-red-400 mb-2 font-semibold">Erreur d'authentification</p>
-            <p className="text-xs text-[#A8B3B8] max-w-sm mb-6">{error}</p>
-            <button
-              onClick={() => (window.location.href = '/login')}
-              className="px-4 py-2 rounded-md bg-[#10B981] text-[#0A0D0C] font-semibold text-sm hover:bg-[#0EA371] transition-colors"
-            >
-              Retour à la connexion
-            </button>
-          </>
-        ) : (
-          <p className="text-sm text-[#A8B3B8] uppercase tracking-widest">Connexion en cours…</p>
-        )}
-      </div>
-    </div>
+    <IonPage>
+      <IonContent fullscreen scrollY={true}>
+        <div
+          data-public-page
+          style={{
+            minHeight: '100%',
+            width: '100%',
+            background: 'var(--bg-app)',
+            color: 'var(--ink)',
+            fontFamily: FONT_BODY,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px',
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: 420,
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--line)',
+              borderRadius: 'var(--radius-card)',
+              boxShadow: 'var(--shadow-card)',
+              padding: '28px 24px',
+              textAlign: 'center',
+            }}
+          >
+            {error ? (
+              <>
+                <Eyebrow dotColor="pig">Erreur d'authentification</Eyebrow>
+                <h1
+                  style={{
+                    fontFamily: FONT_DISPLAY,
+                    fontWeight: 700,
+                    fontSize: 'clamp(24px, 4vw, 30px)',
+                    lineHeight: 1.05,
+                    letterSpacing: '-0.02em',
+                    color: 'var(--ink)',
+                    margin: '14px 0 10px',
+                  }}
+                >
+                  Connexion impossible.
+                </h1>
+                <p
+                  style={{
+                    fontFamily: FONT_BODY,
+                    fontSize: 14,
+                    lineHeight: 1.5,
+                    color: 'var(--ink-soft)',
+                    margin: '0 0 22px',
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  {error}
+                </p>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onClick={() => (window.location.href = '/login')}
+                  style={{ width: '100%' }}
+                >
+                  Retour à la connexion
+                </Button>
+              </>
+            ) : (
+              <>
+                <Eyebrow dotColor="accent">Authentification</Eyebrow>
+                <h1
+                  style={{
+                    fontFamily: FONT_DISPLAY,
+                    fontWeight: 700,
+                    fontSize: 'clamp(24px, 4vw, 30px)',
+                    lineHeight: 1.05,
+                    letterSpacing: '-0.02em',
+                    color: 'var(--ink)',
+                    margin: '14px 0 10px',
+                  }}
+                >
+                  Connexion en cours.
+                </h1>
+                <p
+                  style={{
+                    fontFamily: FONT_MONO,
+                    fontSize: 11,
+                    letterSpacing: '0.16em',
+                    textTransform: 'uppercase',
+                    color: 'var(--muted)',
+                    margin: 0,
+                  }}
+                >
+                  Patientez un instant…
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      </IonContent>
+    </IonPage>
   );
 }

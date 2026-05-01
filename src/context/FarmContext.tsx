@@ -46,6 +46,7 @@ import {
 import { TroupeauProvider, useTroupeau } from './TroupeauContext';
 import { RessourcesProvider, useRessources } from './RessourcesContext';
 import { PilotageProvider, usePilotage } from './PilotageContext';
+import { useAuth } from './AuthContext';
 
 // ── Shape publique (inchangée par rapport à l'existant) ────────────────────
 interface FarmContextType extends FarmState {
@@ -89,16 +90,26 @@ const MetaContext = createContext<MetaContextType | undefined>(undefined);
 
 const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [meta, setMeta] = useState(() => getSnapshot('meta'));
+  // Dépend de la session auth : RLS Supabase filtre par auth.uid() = farm_id.
+  // Sans session, toutes les requêtes reviennent vides — il faut donc attendre
+  // que la session soit attachée avant le premier refreshAll().
+  const { session, loading: authLoading } = useAuth();
+  const userId = session?.user.id ?? null;
 
   useEffect(() => {
     return subscribe('meta', setMeta);
   }, []);
 
-  // Fetch initial + auto-flush queue au retour en ligne
+  // Fetch initial : on attend que l'auth ait fini son boot ET qu'une session
+  // soit présente. Re-déclenché si l'utilisateur change (logout/login).
   useEffect(() => {
-    // Legitimate I/O: initial data fetch (Google Sheets + alert engine)
-    refreshAll();
+    if (authLoading) return;
+    if (!userId) return;
+    // Legitimate I/O: initial data fetch (Supabase + alert engine)
+    void refreshAll();
+  }, [authLoading, userId]);
 
+  useEffect(() => {
     const onOnline = (): void => {
       void processQueueAndRefresh().catch(() => {
         /* silent : retry possible via /sync */

@@ -36,12 +36,12 @@ const BandeFinanceCard: React.FC<BandeFinanceCardProps> = ({
   const config = useMemo(() => {
     switch (statutRentabilite) {
       case 'EXCELLENT':
-        return { color: 'bg-emerald-500', text: 'text-emerald-500', label: 'Rentabilité Élevée', tone: 'success' as const };
+        return { color: 'bg-[var(--color-accent-500)]', text: 'text-[var(--color-accent-500)]', label: 'Rentabilité Élevée', tone: 'success' as const };
       case 'CORRECT':
-        return { color: 'bg-amber-500', text: 'text-amber-500', label: 'Rentabilité Correcte', tone: 'amber' as const };
+        return { color: 'bg-[var(--amber-pork)]', text: 'text-[var(--amber-pork)]', label: 'Rentabilité Correcte', tone: 'amber' as const };
       case 'DEFICITAIRE':
       default:
-        return { color: 'bg-red-500', text: 'text-red-500', label: 'Déficitaire', tone: 'red' as const };
+        return { color: 'bg-[var(--color-danger,#EF4444)]', text: 'text-[var(--color-danger,#EF4444)]', label: 'Déficitaire', tone: 'red' as const };
     }
   }, [statutRentabilite]);
 
@@ -96,7 +96,7 @@ const BandeFinanceCard: React.FC<BandeFinanceCardProps> = ({
         </div>
         <div className="flex flex-col gap-1 items-end text-right">
           <span className="text-[8px] uppercase font-mono text-text-2">Marge Nette</span>
-          <span className={`text-[13px] font-bold font-mono ${margeNetteProjetee < 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+          <span className={`text-[13px] font-bold font-mono ${margeNetteProjetee < 0 ? 'text-[var(--color-danger,#EF4444)]' : 'text-[var(--color-accent-500)]'}`}>
             {margeNetteProjetee > 0 ? '+' : ''}{formatFCFA(margeNetteProjetee)}
           </span>
         </div>

@@ -4,7 +4,7 @@ import {
 } from '@ionic/react';
 import {
   RefreshCw, Cloud, Shield, BookOpen, AlertTriangle,
-  Save, Trash2, Bug, MessageCircle
+  Save, Trash2, Bug, Phone
 } from 'lucide-react';
 import { useFarm } from '../context/FarmContext';
 import { getTablesIndex } from '../services/googleSheets';
@@ -13,7 +13,7 @@ import AgritechHeader from './AgritechHeader';
 import { HubTile, SectionDivider, Chip } from './agritech';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import type { ThemeMode, ThemeVariant } from '../services/themeAuto';
+import type { ThemeMode } from '../services/themeAuto';
 import { useNavigate } from 'react-router-dom';
 import { isDebugEnabled, setDebugEnabled, APP_VERSION } from '../config';
 import { getQueueStatus } from '../services/offlineQueue';
@@ -42,8 +42,6 @@ export const SettingsPage: React.FC = () => {
     mode: themeMode,
     resolved: themeResolved,
     setMode: setThemeMode,
-    variant: themeVariant,
-    setVariant: setThemeVariant,
   } = useTheme();
 
   const pendingCount = getQueueStatus().pending;
@@ -217,42 +215,6 @@ export const SettingsPage: React.FC = () => {
                   </p>
                 </div>
 
-                {/* ── Variante de palette (dev / exploration) ──────────── */}
-                <div className="border-t border-border px-4 py-4">
-                  <p className="kpi-label mb-3">
-                    Thème · {themeVariant === 'terracotta' ? 'Terracotta' : 'Émeraude'}
-                  </p>
-                  <div
-                    role="radiogroup"
-                    aria-label="Variante de palette"
-                    className="grid grid-cols-2 gap-2"
-                  >
-                    {(['emerald', 'terracotta'] as ThemeVariant[]).map((v) => {
-                      const active = themeVariant === v;
-                      const label = v === 'emerald' ? 'Émeraude' : 'Terracotta';
-                      return (
-                        <button
-                          key={v}
-                          type="button"
-                          role="radio"
-                          aria-checked={active}
-                          onClick={() => setThemeVariant(v)}
-                          className={
-                            'pressable h-11 rounded-md font-mono text-[12px] uppercase tracking-wide transition-colors ' +
-                            (active
-                              ? 'bg-accent text-bg-0'
-                              : 'bg-bg-1 border border-border text-text-1 hover:bg-bg-2')
-                          }
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <p className="text-[11px] text-text-2 mt-2">
-                    Variante expérimentale — change uniquement les couleurs d'accent.
-                  </p>
-                </div>
               </div>
             </section>
 
@@ -272,7 +234,7 @@ export const SettingsPage: React.FC = () => {
                       className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-bg-2 text-accent"
                       aria-hidden="true"
                     >
-                      <MessageCircle size={16} />
+                      <Phone size={16} />
                     </span>
                     <input
                       id="settings-support-wa"
@@ -527,7 +489,7 @@ export const SettingsPage: React.FC = () => {
             { text: 'Annuler', role: 'cancel' },
             {
               text: 'Réinitialiser',
-              cssClass: 'text-red-500',
+              cssClass: 'text-[var(--color-danger,#EF4444)]',
               handler: handleReset,
             },
           ]}

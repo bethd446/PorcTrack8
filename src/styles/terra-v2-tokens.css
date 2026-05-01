@@ -1,24 +1,23 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   PorcTrack 8 — Typography & motion (v2)
+   PorcTrack 8 — Typography & motion
    ═══════════════════════════════════════════════════════════════════════════
-   2026-04-20 — Après abandon du thème Terracotta, ce fichier ne conserve QUE :
-     - le chargement des polices Geist + Instrument Serif (Google Fonts)
+   Ce fichier conserve :
      - les bindings typo --font-display / --font-body / --font-mono
      - les easings V2 (spring/gentle/snappy/out-expo)
      - les durées (fast/base/slow)
      - les radii étendus (lg/xl/2xl)
 
-   Les surfaces / text / accent sont entièrement pilotés par theme-tokens.css
-   (noir pur en nuit, blanc pur en jour, accent émeraude dans les deux).
+   Les surfaces / text / accent sont entièrement pilotés par theme-tokens.css.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
   /* ── Font stacks ─────────────────────────────────────────────────── */
-  --font-serif: 'Instrument Serif', 'Iowan Old Style', 'Palatino', serif;
-  --font-sans:  'Geist', -apple-system, 'SF Pro Text', system-ui, sans-serif;
-  --font-mono:  'Geist Mono', 'DMMono', ui-monospace, 'SF Mono', Menlo, monospace;
+  /* v6 (2026-04-30) : --font-display est aligné sur --font-heading
+     (BigShoulders sentence-case). */
+  --font-sans:  'InstrumentSans', -apple-system, 'SF Pro Text', system-ui, sans-serif;
+  --font-mono:  'DMMono', 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
-  --font-display: var(--font-serif);
+  --font-display: 'BigShoulders', 'InstrumentSans', sans-serif;
   --font-body:    var(--font-sans);
   --font-data:    var(--font-mono);
 

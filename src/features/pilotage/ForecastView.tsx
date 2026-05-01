@@ -30,7 +30,8 @@ import {
 
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
-import { KpiCard, Chip, SectionDivider } from '../../components/agritech';
+import { default as KpiCardV6 } from '../../components/design/KpiCard';
+import { Chip, SectionDivider } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
 import {
@@ -141,32 +142,28 @@ const ForecastView: React.FC = () => {
               className="grid grid-cols-4 gap-2"
             >
               <div className="animate-fade-in-up">
-                <KpiCard
+                <KpiCardV6
                   label="MB"
                   value={report.countByType.MB}
-                  icon={<Baby size={14} aria-hidden="true" />}
-                  tone={report.countByType.MB > 0 ? 'warning' : 'default'}
+                  accentColor={report.countByType.MB > 0 ? 'var(--amber-pork)' : undefined}
                 />
               </div>
               <div className="animate-fade-in-up stagger-1">
-                <KpiCard
+                <KpiCardV6
                   label="Sevrages"
                   value={report.countByType.SEVRAGE}
-                  icon={<PackageCheck size={14} aria-hidden="true" />}
                 />
               </div>
               <div className="animate-fade-in-up stagger-2">
-                <KpiCard
+                <KpiCardV6
                   label="Chaleurs"
                   value={report.countByType.RETOUR_CHALEUR}
-                  icon={<Heart size={14} aria-hidden="true" />}
                 />
               </div>
               <div className="animate-fade-in-up stagger-3">
-                <KpiCard
+                <KpiCardV6
                   label="Finitions"
                   value={report.countByType.FINITION}
-                  icon={<Scale size={14} aria-hidden="true" />}
                 />
               </div>
             </section>
@@ -182,7 +179,7 @@ const ForecastView: React.FC = () => {
                     navigate(navByType(ev.type, ev.sujetId, ev.sujetNav));
                   }}
                   className="card-dense pressable w-full text-left flex items-start gap-3 border-l-2 border-red/80"
-                  style={{ borderLeftColor: '#EF4444' }}
+                  style={{ borderLeftColor: 'var(--color-danger, #EF4444)' }}
                 >
                   <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red/10 text-red">
                     {eventIcon(report.topCritical.type)}
@@ -222,10 +219,10 @@ const ForecastView: React.FC = () => {
                   const staggerClass = staggerIdx === 0 ? '' : `stagger-${staggerIdx}`;
                   const pct = Math.min(100, Math.round((w.nbMBPrevues / w.capaciteMaternite) * 100));
                   const fillColor = w.saturation === 'FULL'
-                    ? '#EF4444'
+                    ? 'var(--color-danger, #EF4444)'
                     : w.saturation === 'HIGH'
-                      ? '#F59E0B'
-                      : '#60A5FA';
+                      ? 'var(--amber-pork)'
+                      : 'var(--color-info, #3B82F6)';
                   return (
                     <div
                       key={w.semaineIso}

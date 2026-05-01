@@ -1,9 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, LogOut } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-
-// ── Types ────────────────────────────────────────────────────────────────────
+import AgritechLayout from '../../components/AgritechLayout';
+import KpiCardV6 from '../../components/design/KpiCard';
+import Button from '../../components/design/Button';
+import Eyebrow from '../../components/design/Eyebrow';
 
 interface AdminLog {
   id: string;
@@ -19,8 +22,6 @@ interface UserProfile {
   last_sign_in_at?: string;
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
 function fmtDate(iso?: string | null): string {
   if (!iso) return '—';
   return new Date(iso).toLocaleString('fr-FR', {
@@ -33,36 +34,50 @@ function shortId(id: string): string {
   return id.substring(0, 8) + '…';
 }
 
-// ── Sous-composants ──────────────────────────────────────────────────────────
+const CARD_STYLE: React.CSSProperties = {
+  background: 'var(--bg-surface)',
+  border: '1px solid var(--line)',
+  borderRadius: 'var(--radius-card)',
+  boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04), 0 1px 3px rgba(17, 24, 39, 0.06)',
+  overflow: 'hidden',
+};
 
-function KpiCard({ value, label, icon }: { value: string | number; label: string; icon: string }) {
-  return (
-    <div className="premium-card flex items-center justify-between px-6 py-5">
-      <div>
-        <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">{label}</p>
-        <p className="ft-values text-3xl font-bold text-[#064e3b]">{value}</p>
-      </div>
-      <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-2xl">
-        {icon}
-      </div>
-    </div>
-  );
-}
+const SECTION_HEADER_STYLE: React.CSSProperties = {
+  padding: '14px 20px',
+  borderBottom: '1px solid var(--line-2)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 12,
+};
+
+const SECTION_TITLE_STYLE: React.CSSProperties = {
+  fontFamily: 'DMMono, ui-monospace, monospace',
+  fontSize: 11,
+  letterSpacing: '0.18em',
+  textTransform: 'uppercase',
+  color: 'var(--ink-soft)',
+  fontWeight: 500,
+};
+
+const COUNT_PILL_STYLE: React.CSSProperties = {
+  fontFamily: 'DMMono, ui-monospace, monospace',
+  fontSize: 11,
+  padding: '3px 10px',
+  borderRadius: 'var(--radius-pill)',
+  background: 'var(--color-accent-100)',
+  color: 'var(--color-accent-500)',
+  fontWeight: 500,
+};
 
 function SectionHeader({ title, badge }: { title: string; badge?: number }) {
   return (
-    <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-      <h2 className="ft-heading text-sm text-[#064e3b] uppercase tracking-wide">{title}</h2>
-      {badge !== undefined && (
-        <span className="premium-badge bg-emerald-50 text-[#064e3b] text-xs px-3 py-1">
-          {badge}
-        </span>
-      )}
+    <div style={SECTION_HEADER_STYLE}>
+      <span style={SECTION_TITLE_STYLE}>{title}</span>
+      {badge !== undefined && <span style={COUNT_PILL_STYLE}>{badge}</span>}
     </div>
   );
 }
-
-// ── Panel 1 : Logs temps réel ────────────────────────────────────────────────
 
 function LogsPanel() {
   const [logs, setLogs] = useState<AdminLog[]>([]);
@@ -71,7 +86,6 @@ function LogsPanel() {
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Chargement initial
     supabase
       .from('admin_logs')
       .select('*')
@@ -82,13 +96,11 @@ function LogsPanel() {
         setLoading(false);
       });
 
-    // Souscription temps réel
     channelRef.current = supabase
       .channel('admin_logs_rt')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'admin_logs' },
         (payload) => {
           setLogs(prev => [payload.new as AdminLog, ...prev].slice(0, 50));
-          // Scroll to top pour voir le nouveau log
           listRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
         }
       )
@@ -100,42 +112,75 @@ function LogsPanel() {
   }, []);
 
   return (
-    <div className="premium-card overflow-hidden">
+    <div style={CARD_STYLE}>
       <SectionHeader title="Journal temps réel" badge={logs.length} />
-      <div ref={listRef} className="overflow-y-auto" style={{ maxHeight: 380 }}>
+      <div ref={listRef} style={{ overflowY: 'auto', maxHeight: 380 }}>
         {loading && (
-          <p className="px-6 py-8 text-center text-sm text-gray-400">Chargement…</p>
+          <p style={{ padding: '32px 24px', textAlign: 'center', fontSize: 13, color: 'var(--muted)' }}>
+            Chargement…
+          </p>
         )}
         {!loading && logs.length === 0 && (
-          <p className="px-6 py-8 text-center text-sm text-gray-400">Aucun log enregistré.</p>
+          <p style={{ padding: '32px 24px', textAlign: 'center', fontSize: 13, color: 'var(--muted)' }}>
+            Aucun log enregistré.
+          </p>
         )}
         {logs.map((log, i) => (
           <div
             key={log.id}
-            className={`px-6 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors ${
-              i === 0 ? 'bg-emerald-50/50' : ''
-            } ${i < logs.length - 1 ? 'border-b border-gray-50' : ''}`}
+            style={{
+              padding: '12px 20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              background: i === 0 ? 'var(--color-accent-100)' : 'transparent',
+              borderBottom: i < logs.length - 1 ? '1px solid var(--line-2)' : 'none',
+              transition: 'background 200ms var(--ease-emil)',
+            }}
           >
-            {/* Indicateur live */}
-            {i === 0 && (
-              <span className="flex-shrink-0 w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            )}
-            {i > 0 && <span className="flex-shrink-0 w-2 h-2 rounded-full bg-gray-200" />}
-
-            {/* Action badge */}
             <span
-              className="ft-code text-xs bg-emerald-50 text-[#064e3b] px-2 py-0.5 rounded-full whitespace-nowrap"
+              style={{
+                flexShrink: 0,
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: i === 0 ? 'var(--color-accent-500)' : 'var(--line)',
+                animation: i === 0 ? 'pulse 2s ease-in-out infinite' : undefined,
+              }}
+            />
+            <span
+              style={{
+                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontSize: 11,
+                background: 'var(--color-accent-100)',
+                color: 'var(--color-accent-500)',
+                padding: '2px 10px',
+                borderRadius: 'var(--radius-pill)',
+                whiteSpace: 'nowrap',
+                fontWeight: 500,
+              }}
             >
               {log.action}
             </span>
-
-            {/* ID tronqué */}
-            <span className="ft-code text-xs text-gray-300 hidden sm:inline">
+            <span
+              className="hidden sm:inline"
+              style={{
+                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontSize: 11,
+                color: 'var(--muted)',
+              }}
+            >
               {shortId(log.id)}
             </span>
-
-            {/* Date */}
-            <span className="ft-code text-xs text-gray-400 ml-auto whitespace-nowrap">
+            <span
+              style={{
+                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontSize: 11,
+                color: 'var(--muted)',
+                marginLeft: 'auto',
+                whiteSpace: 'nowrap',
+              }}
+            >
               {fmtDate(log.created_at)}
             </span>
           </div>
@@ -145,12 +190,24 @@ function LogsPanel() {
   );
 }
 
-// ── Panel 2 : User Management ────────────────────────────────────────────────
+interface RoleStyle {
+  background: string;
+  color: string;
+}
 
-const ROLE_COLORS: Record<string, string> = {
-  ADMIN: 'bg-amber-50 text-amber-700',
-  OWNER: 'bg-emerald-50 text-emerald-700',
-  PORCHER: 'bg-blue-50 text-blue-700',
+const ROLE_STYLES: Record<string, RoleStyle> = {
+  ADMIN: {
+    background: 'var(--amber-pork-soft, #fde7d3)',
+    color: 'var(--amber-pork-deep, #c2662b)',
+  },
+  OWNER: {
+    background: 'var(--color-accent-100)',
+    color: 'var(--color-accent-500)',
+  },
+  PORCHER: {
+    background: 'var(--bg-surface-2)',
+    color: 'var(--ink-soft)',
+  },
 };
 
 function UsersPanel() {
@@ -179,57 +236,110 @@ function UsersPanel() {
     setUpdating(null);
   };
 
+  const thStyle: React.CSSProperties = {
+    fontFamily: 'DMMono, ui-monospace, monospace',
+    fontSize: 10,
+    letterSpacing: '0.18em',
+    textTransform: 'uppercase',
+    color: 'var(--muted)',
+    fontWeight: 500,
+    textAlign: 'left',
+    padding: '12px 20px',
+  };
+
   return (
-    <div className="premium-card overflow-hidden">
+    <div style={CARD_STYLE}>
       <SectionHeader title="Gestion des utilisateurs" badge={users.length} />
-      <div className="overflow-x-auto">
+      <div style={{ overflowX: 'auto' }}>
         {loading && (
-          <p className="px-6 py-8 text-center text-sm text-gray-400">Chargement…</p>
+          <p style={{ padding: '32px 24px', textAlign: 'center', fontSize: 13, color: 'var(--muted)' }}>
+            Chargement…
+          </p>
         )}
         {!loading && users.length === 0 && (
-          <p className="px-6 py-8 text-center text-sm text-gray-400">Aucun profil trouvé.</p>
+          <p style={{ padding: '32px 24px', textAlign: 'center', fontSize: 13, color: 'var(--muted)' }}>
+            Aucun profil trouvé.
+          </p>
         )}
         {!loading && users.length > 0 && (
-          <table className="w-full text-sm">
+          <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
             <thead>
-              <tr className="border-b border-gray-100">
-                <th className="ft-heading text-left px-6 py-3 text-xs text-gray-400 font-normal uppercase tracking-wide">ID</th>
-                <th className="ft-heading text-left px-6 py-3 text-xs text-gray-400 font-normal uppercase tracking-wide">Email</th>
-                <th className="ft-heading text-left px-6 py-3 text-xs text-gray-400 font-normal uppercase tracking-wide">Rôle</th>
-                <th className="ft-heading text-left px-6 py-3 text-xs text-gray-400 font-normal uppercase tracking-wide">Dernière connexion</th>
+              <tr style={{ borderBottom: '1px solid var(--line-2)' }}>
+                <th style={thStyle}>ID</th>
+                <th style={thStyle}>Email</th>
+                <th style={thStyle}>Rôle</th>
+                <th style={thStyle}>Dernière connexion</th>
               </tr>
             </thead>
             <tbody>
-              {users.map((user, i) => (
-                <tr
-                  key={user.id}
-                  className={`hover:bg-gray-50 transition-colors ${i < users.length - 1 ? 'border-b border-gray-50' : ''}`}
-                >
-                  <td className="ft-code px-6 py-3 text-xs text-gray-300">
-                    {shortId(user.id)}
-                  </td>
-                  <td className="px-6 py-3 text-sm text-gray-600 max-w-[180px] truncate">
-                    {user.email ?? '—'}
-                  </td>
-                  <td className="px-6 py-3">
-                    <select
-                      value={user.role}
-                      disabled={updating === user.id}
-                      onChange={e => handleRoleChange(user.id, e.target.value)}
-                      className={`ft-code text-xs px-2 py-1 rounded-full border-0 font-medium cursor-pointer ${
-                        ROLE_COLORS[user.role] ?? 'bg-gray-50 text-gray-600'
-                      } disabled:opacity-50`}
+              {users.map((user, i) => {
+                const roleStyle = ROLE_STYLES[user.role] ?? ROLE_STYLES.PORCHER;
+                return (
+                  <tr
+                    key={user.id}
+                    style={{
+                      borderBottom: i < users.length - 1 ? '1px solid var(--line-2)' : 'none',
+                      transition: 'background 200ms var(--ease-emil)',
+                    }}
+                  >
+                    <td
+                      style={{
+                        padding: '12px 20px',
+                        fontFamily: 'DMMono, ui-monospace, monospace',
+                        fontSize: 11,
+                        color: 'var(--muted)',
+                      }}
                     >
-                      <option value="ADMIN">ADMIN</option>
-                      <option value="OWNER">OWNER</option>
-                      <option value="PORCHER">PORCHER</option>
-                    </select>
-                  </td>
-                  <td className="ft-code px-6 py-3 text-xs text-gray-400">
-                    {fmtDate(user.last_sign_in_at)}
-                  </td>
-                </tr>
-              ))}
+                      {shortId(user.id)}
+                    </td>
+                    <td
+                      style={{
+                        padding: '12px 20px',
+                        color: 'var(--ink-soft)',
+                        maxWidth: 180,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {user.email ?? '—'}
+                    </td>
+                    <td style={{ padding: '12px 20px' }}>
+                      <select
+                        value={user.role}
+                        disabled={updating === user.id}
+                        onChange={e => handleRoleChange(user.id, e.target.value)}
+                        style={{
+                          fontFamily: 'DMMono, ui-monospace, monospace',
+                          fontSize: 11,
+                          padding: '4px 10px',
+                          borderRadius: 'var(--radius-pill)',
+                          border: 'none',
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                          background: roleStyle.background,
+                          color: roleStyle.color,
+                          opacity: updating === user.id ? 0.5 : 1,
+                        }}
+                      >
+                        <option value="ADMIN">ADMIN</option>
+                        <option value="OWNER">OWNER</option>
+                        <option value="PORCHER">PORCHER</option>
+                      </select>
+                    </td>
+                    <td
+                      style={{
+                        padding: '12px 20px',
+                        fontFamily: 'DMMono, ui-monospace, monospace',
+                        fontSize: 11,
+                        color: 'var(--muted)',
+                      }}
+                    >
+                      {fmtDate(user.last_sign_in_at)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
@@ -238,10 +348,7 @@ function UsersPanel() {
   );
 }
 
-// ── Panel 3 : Monitoring ─────────────────────────────────────────────────────
-
 function MonitoringPanel({ logs }: { logs: AdminLog[] }) {
-  // Comptage des actions par type
   const actionCounts = logs.reduce<Record<string, number>>((acc, log) => {
     acc[log.action] = (acc[log.action] ?? 0) + 1;
     return acc;
@@ -254,22 +361,52 @@ function MonitoringPanel({ logs }: { logs: AdminLog[] }) {
   const maxCount = sorted[0]?.[1] ?? 1;
 
   return (
-    <div className="premium-card overflow-hidden">
+    <div style={CARD_STYLE}>
       <SectionHeader title="Monitoring — Requêtes récentes" />
-      <div className="px-6 py-4 space-y-3">
+      <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         {sorted.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-4">Aucune donnée.</p>
+          <p style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'center', padding: '16px 0' }}>
+            Aucune donnée.
+          </p>
         )}
         {sorted.map(([action, count]) => (
           <div key={action}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="ft-code text-xs text-[#064e3b]">{action}</span>
-              <span className="ft-values text-xs text-gray-400">{count}</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span
+                style={{
+                  fontFamily: 'DMMono, ui-monospace, monospace',
+                  fontSize: 11,
+                  color: 'var(--ink)',
+                }}
+              >
+                {action}
+              </span>
+              <span
+                style={{
+                  fontFamily: 'BricolageGrotesque, system-ui, sans-serif',
+                  fontSize: 12,
+                  color: 'var(--muted)',
+                }}
+              >
+                {count}
+              </span>
             </div>
-            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              style={{
+                height: 6,
+                background: 'var(--bg-surface-2)',
+                borderRadius: 'var(--radius-pill)',
+                overflow: 'hidden',
+              }}
+            >
               <div
-                className="h-full bg-[#064e3b] rounded-full transition-all duration-500"
-                style={{ width: `${(count / maxCount) * 100}%` }}
+                style={{
+                  height: '100%',
+                  background: 'var(--color-accent-500)',
+                  borderRadius: 'var(--radius-pill)',
+                  width: `${(count / maxCount) * 100}%`,
+                  transition: 'width 500ms var(--ease-emil)',
+                }}
               />
             </div>
           </div>
@@ -279,8 +416,6 @@ function MonitoringPanel({ logs }: { logs: AdminLog[] }) {
   );
 }
 
-// ── AdminDashboard principal ──────────────────────────────────────────────────
-
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [logs, setLogs] = useState<AdminLog[]>([]);
@@ -288,7 +423,6 @@ export default function AdminDashboard() {
   const [todayCount, setTodayCount] = useState<number>(0);
 
   useEffect(() => {
-    // Logs pour monitoring panel
     supabase
       .from('admin_logs')
       .select('*')
@@ -297,12 +431,10 @@ export default function AdminDashboard() {
       .then(({ data }) => {
         const allLogs = data ?? [];
         setLogs(allLogs);
-        // Logs du jour
         const today = new Date().toISOString().slice(0, 10);
         setTodayCount(allLogs.filter(l => l.created_at.startsWith(today)).length);
       });
 
-    // Comptage users
     supabase
       .from('profiles')
       .select('id', { count: 'exact', head: true })
@@ -315,60 +447,95 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f0f4f3]">
-
-      {/* ── Header ──────────────────────────────────────────────── */}
-      <header className="premium-header rounded-b-[36px] px-6 pt-12 pb-8">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-xs text-emerald-300 uppercase tracking-widest mb-1 font-medium">
-              Console d'administration
-            </p>
-            <h1 className="ft-heading text-4xl text-white uppercase tracking-tight">
-              Admin Dashboard
+    <AgritechLayout>
+      <main
+        style={{
+          maxWidth: 1100,
+          margin: '0 auto',
+          padding: '32px 20px 96px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 24,
+        }}
+      >
+        <header
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 16,
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <Eyebrow>Console d'administration</Eyebrow>
+            <h1
+              style={{
+                fontFamily: 'var(--font-display, BigShoulders), system-ui, sans-serif',
+                fontSize: 'clamp(32px, 5vw, 44px)',
+                lineHeight: 1.05,
+                letterSpacing: '-0.01em',
+                color: 'var(--ink)',
+                fontWeight: 700,
+                margin: 0,
+              }}
+            >
+              Administration
             </h1>
-            <p className="text-emerald-200 text-sm mt-1 opacity-80">
-              Supervision · Utilisateurs · Logs
+            <p style={{ fontSize: 14, color: 'var(--ink-soft)', margin: 0 }}>
+              Supervision, utilisateurs et journal d'événements.
             </p>
           </div>
-          <button
-            onClick={handleLogout}
-            className="mt-1 text-xs text-emerald-300 hover:text-white transition-colors uppercase tracking-wide ft-code"
-          >
+          <Button variant="ghost" size="sm" onClick={handleLogout}>
+            <LogOut size={14} strokeWidth={1.75} />
             Déconnexion
-          </button>
+          </Button>
+        </header>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: 16,
+          }}
+        >
+          <KpiCardV6
+            label="Logs totaux"
+            value={logs.length}
+            accentColor="var(--color-accent-500)"
+          />
+          <KpiCardV6
+            label="Logs aujourd'hui"
+            value={todayCount}
+            accentColor="var(--amber-pork, #F4A261)"
+          />
+          <KpiCardV6
+            label="Utilisateurs"
+            value={userCount}
+            accentColor="var(--color-accent-500)"
+          />
         </div>
-      </header>
 
-      {/* ── Contenu ─────────────────────────────────────────────── */}
-      <main className="px-4 pt-6 pb-24 space-y-6 max-w-4xl mx-auto">
-
-        {/* KPIs */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <KpiCard value={logs.length} label="Logs totaux" icon="📋" />
-          <KpiCard value={todayCount} label="Logs aujourd'hui" icon="📡" />
-          <KpiCard value={userCount} label="Utilisateurs" icon="👥" />
-        </div>
-
-        {/* Logs temps réel */}
         <LogsPanel />
 
-        {/* Users + Monitoring côte à côte sur large écran */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: 24,
+          }}
+        >
           <UsersPanel />
           <MonitoringPanel logs={logs} />
         </div>
 
-        {/* Lien retour app */}
-        <div className="text-center pt-2">
-          <button
-            onClick={() => navigate('/')}
-            className="text-xs text-gray-400 hover:text-[#064e3b] transition-colors ft-code uppercase tracking-wide"
-          >
-            ← Retour au dashboard élevage
-          </button>
+        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 8 }}>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
+            <ChevronLeft size={14} strokeWidth={1.75} />
+            Retour au dashboard élevage
+          </Button>
         </div>
       </main>
-    </div>
+    </AgritechLayout>
   );
 }

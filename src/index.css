@@ -12,10 +12,6 @@
      4. theme-v2-tokens.css      — radii/easings/accents par onglet (--accent-cockpit…)
      5. terra-v2-tokens.css      — typographie + radii étendus
      6. terrain-vivant-v6.css    — palette client v6 (FINAL)
-
-   Note : tous les composants consomment encore les tokens dynamiques
-   (--bg-0, --text-0). Comme `theme-day` est forcé au boot dans main.tsx,
-   ces tokens valent toujours leur version claire. Aucune surface dark.
    ──────────────────────────────────────────────────────────────────── */
 @import "./styles/theme-tokens.css";
 @import "./styles/agritech-tokens.css";
@@ -39,15 +35,12 @@
   --font-values:  "BricolageGrotesque", "InstrumentSans", sans-serif;
   --font-mono:    "DMMono", ui-monospace, monospace;
 
-  /* ── Palette Ultra Clean ──────────────────────────────────────────────
-     Une seule couleur d'accent : vert émeraude
-     Tout le reste : niveaux de gris
-     ──────────────────────────────────────────────────────────────────── */
+  /* ── Palette Tailwind v4 — accent vert v6 + neutres ──────────────────── */
   --color-accent-700: #1a3d10;
   --color-accent-600: #235016;
   --color-accent-500: #2d5a1b;
   --color-accent-400: #4b8529;
-  --color-accent-100: #d9ebbf;
+  --color-accent-100: #e3edd9;
   --color-accent-50:  #eef5e0;
 
   --color-gray-900: #111827;
@@ -64,7 +57,7 @@
   --color-red-500:    #EF4444;
   --color-red-100:    #FEE2E2;
   --color-red-50:     #FEF2F2;
-  --color-amber-500:  #d4920f;
+  --color-amber-500:  #F4A261;
   --color-amber-100:  #fef6c2;
   --color-amber-50:   #fff8e1;
   --color-blue-500:   #3B82F6;
@@ -73,62 +66,48 @@
   --color-purple-500: #8B5CF6;
   --color-purple-50:  #F5F3FF;
 
-  /* Legacy aliases */
-  --color-emerald-premium: #2d5a1b;
-  --color-forest-mid: #3a6e22;
-  --color-forest-light: #d9ebbf;
-  --color-amber-pork: #d4920f;
-  --color-amber-deep: #a87a0c;
-
-  /* Nouveau — Terre / Boue */
-  --color-terre:       #7a4a28;
-  --color-terre-light: rgba(122,74,40,0.12);
-  /* Fond ivoire chaud */
-  --bg-app: #f5f0e6;
-
   /* Ombres — quasi invisibles */
-  --shadow-card:     0 1px 2px rgba(0,0,0,0.04);
-  --shadow-card-hover: 0 2px 8px rgba(0,0,0,0.08);
-  --shadow-premium:  0 1px 3px rgba(0,0,0,0.06);
-  --shadow-header:   0 1px 0 rgba(0,0,0,0.04);
-  --shadow-nav:      0 -1px 0 rgba(0,0,0,0.04);
+  --shadow-card:        0 1px 2px rgba(0,0,0,0.04);
+  --shadow-card-hover:  0 2px 8px rgba(0,0,0,0.08);
+  --shadow-premium:     0 1px 3px rgba(0,0,0,0.06);
+  --shadow-header:      0 1px 0 rgba(0,0,0,0.04);
+  --shadow-nav:         0 -1px 0 rgba(0,0,0,0.04);
 }
 
 /* ── Base ─────────────────────────────────────────────────────────────── */
 @layer base {
   body {
-    background-color: #FFFFFF;
-    color: #111827;
+    background-color: var(--bg-app);
+    color: var(--ink);
     font-family: var(--font-sans);
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
     font-size: 15px;
     line-height: 1.5;
-    /* UI/UX Pro Max — Touch & Performance */
-    touch-action: manipulation;          /* Zéro délai 300ms sur tout le body */
-    overscroll-behavior: contain;        /* Pas de pull-to-refresh accidentel */
-    -webkit-overflow-scrolling: touch;   /* Scroll fluide iOS */
+    touch-action: manipulation;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
   :root {
     --ion-font-family: var(--font-body);
-    --ion-color-primary: #2d5a1b;
+    --ion-color-primary: var(--color-accent-500);
     --ion-color-primary-rgb: 45, 90, 27;
     --ion-color-primary-contrast: #ffffff;
-    --ion-color-primary-shade: #235016;
-    --ion-color-primary-tint: #4b8529;
+    --ion-color-primary-shade: var(--color-accent-600);
+    --ion-color-primary-tint: var(--color-accent-400);
     --ion-safe-area-top: env(safe-area-inset-top);
     --ion-safe-area-bottom: env(safe-area-inset-bottom);
   }
 }
 
-/* ── Hiérarchie typographique — V2 Terra (2026-04-20) ──────────────────
-   Stack Editorial Terra :
-   1. Instrument Serif (--font-display) → Titres, labels uppercase, chiffres clés
-   2. Geist (--font-body)               → Body, labels, boutons, UI courante
-   3. Geist Mono (--font-mono)          → IDs, dates, codes, données tabulaires
+/* ── Hiérarchie typographique — Terrain Vivant v6 (2026-04-30) ──────────
+   Stack v6 :
+   1. BigShoulders (--font-display / --font-heading) → Titres sentence case
+   2. InstrumentSans (--font-body)                   → Body, labels, boutons
+   3. DMMono (--font-mono)                           → IDs, dates, codes
    ──────────────────────────────────────────────────────────────────── */
 .ft-heading {
-  font-family: var(--font-heading) !important; /* BigShoulders Bold — titres condensed impact */
+  font-family: var(--font-heading) !important;
   font-weight: 700;
   letter-spacing: 0.02em;
   text-rendering: optimizeLegibility;
@@ -151,22 +130,11 @@
 .tracking-premium { letter-spacing: 0.04em; }
 .tracking-wide    { letter-spacing: 0.05em; }
 
-/* ── Emil Kowalski Easing Curves ───────────────────────────────────────
-   Strong ease-out: starts fast, gives instant feedback
-   Strong ease-in-out: natural acceleration for on-screen movement
-   Never use ease-in for UI — it feels sluggish
-   ──────────────────────────────────────────────────────────────────── */
-:root {
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
-  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
 /* ── Cards ─────────────────────────────────────────────────────────────── */
 .premium-card {
-  background: #FFFFFF;
+  background: var(--bg-surface);
   border-radius: 16px;
-  border: 1px solid #F3F4F6;
+  border: 1px solid var(--color-gray-100);
   box-shadow: var(--shadow-card);
   transition: transform 160ms var(--ease-out), box-shadow 200ms var(--ease-out);
 }
@@ -176,34 +144,17 @@
   background: rgba(255,255,255,0.90);
   backdrop-filter: blur(20px);
   border-radius: 16px;
-  border: 1px solid #F3F4F6;
+  border: 1px solid var(--color-gray-100);
 }
-
-/* ── Buttons — 160ms ease-out, scale(0.97) active ─────────────────────── */
-.premium-btn {
-  font-family: "InstrumentSans", sans-serif;
-  font-weight: 600;
-  border-radius: 12px;
-  height: 48px;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  transition: transform 160ms var(--ease-out), background 200ms var(--ease-out);
-  font-size: 14px;
-}
-.premium-btn:active { transform: scale(0.97); }
-.premium-btn:disabled { opacity: 0.4; }
-.premium-btn-primary { background: var(--color-accent-500); color: #fff; }
-.premium-btn-primary:active { background: var(--color-accent-600); }
-.premium-btn-outline { border: 1px solid #E5E7EB; color: #374151; background: #fff; }
-.premium-btn-amber { background: #F59E0B; color: #fff; }
 
 /* ── Header ────────────────────────────────────────────────────────────── */
 .premium-header {
-  background: #FFFFFF;
+  background: var(--bg-surface);
   padding-bottom: 16px;
   padding-left: 20px;
   padding-right: 20px;
   position: relative;
-  border-bottom: 1px solid #F3F4F6;
+  border-bottom: 1px solid var(--color-gray-100);
 }
 .premium-header::before, .premium-header::after { display: none; }
 
@@ -237,13 +188,13 @@
 /* ── Navigation bar ────────────────────────────────────────────────────── */
 ion-tab-bar {
   --border: 0;
-  --background: #FFFFFF;
-  border-top: 1px solid #F3F4F6;
+  --background: var(--bg-surface);
+  border-top: 1px solid var(--color-gray-100);
   height: 68px;
   padding-bottom: env(safe-area-inset-bottom);
   z-index: 1000;
 }
-ion-tab-button { --color: #9CA3AF; --color-selected: var(--color-accent-500); }
+ion-tab-button { --color: var(--color-gray-400); --color-selected: var(--color-accent-500); }
 ion-tab-button ion-label {
   font-family: "InstrumentSans", sans-serif !important;
   font-size: 11px !important; font-weight: 600 !important;
@@ -257,7 +208,7 @@ ion-tab-button.tab-selected::after {
 }
 
 ion-toolbar { --background: transparent; --border-width: 0; }
-ion-content { --background: #FFFFFF; }
+ion-content { --background: var(--bg-surface); }
 ion-refresher { z-index: 10; }
 ion-modal { --border-radius: 20px; --backdrop-opacity: 0.4; }
 
@@ -268,7 +219,6 @@ ion-modal { --border-radius: 20px; --backdrop-opacity: 0.4; }
    - UI animations under 300ms
    ──────────────────────────────────────────────────────────────────── */
 
-/* Fade in + slight upward movement — standard list entry */
 @keyframes fade-in-up {
   0%   { opacity: 0; transform: translateY(8px) scale(0.98); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
@@ -277,14 +227,12 @@ ion-modal { --border-radius: 20px; --backdrop-opacity: 0.4; }
   animation: fade-in-up 250ms var(--ease-out) both;
 }
 
-/* Stagger delays — 50ms increments (Emil: 30-80ms) */
 .stagger-1 { animation-delay: 50ms; }
 .stagger-2 { animation-delay: 100ms; }
 .stagger-3 { animation-delay: 150ms; }
 .stagger-4 { animation-delay: 200ms; }
 .stagger-5 { animation-delay: 250ms; }
 
-/* Fade in from scale(0.95) — for modals, cards appearing */
 @keyframes scale-in {
   0%   { opacity: 0; transform: scale(0.95); }
   100% { opacity: 1; transform: scale(1); }
@@ -293,33 +241,27 @@ ion-modal { --border-radius: 20px; --backdrop-opacity: 0.4; }
   animation: scale-in 200ms var(--ease-out) both;
 }
 
-/* Soft pulse — status indicators */
 @keyframes pulse-soft {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.4; }
 }
 .animate-pulse-soft { animation: pulse-soft 2s var(--ease-in-out) infinite; }
 
-/* Skeleton shimmer — loading states */
 @keyframes shimmer {
   0%   { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
 .animate-shimmer {
-  background: linear-gradient(90deg, #F3F4F6 25%, #E5E7EB 50%, #F3F4F6 75%);
+  background: linear-gradient(90deg, var(--color-gray-100) 25%, var(--color-gray-200) 50%, var(--color-gray-100) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s linear infinite;
 }
 
-/* ── Pressable — any interactive element ───────────────────────────────
-   Emil: "Add transform: scale(0.97) on :active. This gives instant
-   feedback, making the UI feel like it is truly listening."
-   ──────────────────────────────────────────────────────────────────── */
+/* ── Pressable — any interactive element ─────────────────────────────── */
 .pressable {
   transition: transform 160ms var(--ease-out);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  /* UI/UX Pro Max — Touch targets terrain (48×48px min pour usage gants) */
   min-height: 44px;
   min-width: 44px;
 }
@@ -338,7 +280,7 @@ ion-modal { --border-radius: 20px; --backdrop-opacity: 0.4; }
 
 /* ── Focus visible — accessibilité clavier ──────────────────────────── */
 :focus-visible {
-  outline: 2px solid var(--color-accent-600, #059669);
+  outline: 2px solid var(--color-accent-600);
   outline-offset: 2px;
   border-radius: 8px;
 }
@@ -363,13 +305,4 @@ ion-modal { --border-radius: 20px; --backdrop-opacity: 0.4; }
   .premium-card:hover {
     box-shadow: var(--shadow-card-hover);
   }
-  .premium-btn:hover {
-    filter: brightness(1.05);
-  }
 }
-
-/* ── Utility ───────────────────────────────────────────────────────────── */
-.gradient-text { -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; background-image: linear-gradient(135deg, var(--color-accent-500), var(--color-accent-400)); }
-.accent-pork { color: #F59E0B; }
-.bg-accent-pork { background-color: #F59E0B; }
-.border-accent-pork { border-color: #F59E0B; }

@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { IonPage, IonContent } from '@ionic/react';
 import {
   ArrowRight,
   RotateCcw,
@@ -21,12 +22,14 @@ const FONT_MONO = 'DMMono, ui-monospace, monospace';
 export default function Landing() {
   // theme-day est désormais forcé globalement dans main.tsx (refonte v6 light).
   return (
+    <IonPage>
+      <IonContent fullscreen scrollY={true}>
     <div
       data-public-page
       style={{
         position: 'relative',
         zIndex: 1,
-        minHeight: '100vh',
+        minHeight: '100%',
         width: '100%',
         background: 'var(--bg-app, #f0f4f3)',
         color: 'var(--ink, #111827)',
@@ -471,6 +474,8 @@ export default function Landing() {
         </div>
       </footer>
     </div>
+      </IonContent>
+    </IonPage>
   );
 }
 

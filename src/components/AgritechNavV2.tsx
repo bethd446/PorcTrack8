@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { cn } from '../lib/utils';
 import { FAB, BottomSheet } from './agritech';
 import type { FABAction } from './agritech';
@@ -323,9 +324,13 @@ const AgritechNavV2: React.FC = () => {
 
   /* ── Render ─────────────────────────────────────────────────────────── */
 
+  // Auto-hide ≥1024px : la sidebar prend le relais (cf. AgritechLayout).
+  const isMobile = useMediaQuery('(max-width: 1023px)');
+
   // Hide on immersive flows (identique à l'ancienne nav).
   // Placé APRÈS les hooks pour respecter react-hooks/rules-of-hooks.
   const hideOn = ['/checklist/', '/controle/checklist'];
+  if (!isMobile) return null;
   if (hideOn.some((p) => location.pathname.startsWith(p))) return null;
 
   return (
