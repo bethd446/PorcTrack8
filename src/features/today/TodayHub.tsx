@@ -24,6 +24,8 @@ import { useAuth } from '../../context/AuthContext';
 import { usePilotage } from '../../context/PilotageContext';
 import { useRessources } from '../../context/RessourcesContext';
 import { useMeta } from '../../context/FarmContext';
+import { useTroupeau } from '../../context/TroupeauContext';
+import { resolveAlertSubject } from '../../utils/alertSubject';
 import type { FarmAlert, AlertPriority } from '../../services/alertEngine';
 
 const PRIORITY_ORDER: Record<AlertPriority, number> = {
@@ -39,6 +41,8 @@ const TodayHub: React.FC = () => {
   const { alerts, alertesServeur } = usePilotage();
   const { notes } = useRessources();
   const { recomputeAlerts } = useMeta();
+  const { bandes, truies, verrats } = useTroupeau();
+  const lookup = useMemo(() => ({ bandes, truies, verrats }), [bandes, truies, verrats]);
 
   const firstName = (() => {
     const parts = (userName || 'Utilisateur').split(/\s+/).filter(Boolean);
@@ -81,14 +85,14 @@ const TodayHub: React.FC = () => {
         id: a.id,
         priority: a.priority,
         category: a.category as string,
-        title: a.title,
-        message: a.message,
+        title: resolveAlertSubject(a.title, lookup),
+        message: resolveAlertSubject(a.message, lookup),
       })),
       ...server,
     ];
     merged.sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]);
     return merged.slice(0, 10);
-  }, [alerts, alertesServeur]);
+  }, [alerts, alertesServeur, lookup]);
 
   // ── Dernier audit (note de catégorie AUDIT_QUOTIDIEN ou CONTROLE) ─────
   const lastAudit = useMemo(() => {

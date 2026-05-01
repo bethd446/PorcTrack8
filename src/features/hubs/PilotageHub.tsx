@@ -23,9 +23,11 @@ import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import KpiCardV6 from '../../components/design/KpiCard';
 import { useFarm } from '../../context/FarmContext';
+import { useTroupeau } from '../../context/TroupeauContext';
 import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import { genererRapportGlobal } from '../../services/financialAnalyzer';
 import { prepareAuditSnapshot } from '../../services/exportService';
+import { resolveAlertSubject } from '../../utils/alertSubject';
 import AuditPrintTemplate from '../pilotage/AuditPrintTemplate';
 
 const PilotageHub: React.FC = () => {
@@ -36,6 +38,8 @@ const PilotageHub: React.FC = () => {
     bandes,
     transitions,
   } = useFarm();
+  const { truies, verrats } = useTroupeau();
+  const alertLookup = useMemo(() => ({ bandes, truies, verrats }), [bandes, truies, verrats]);
   const { handleRefresh } = useAutoRefresh();
   const [, setIsPrinting] = useState(false);
 
@@ -426,7 +430,7 @@ const PilotageHub: React.FC = () => {
                             letterSpacing: '-0.005em',
                           }}
                         >
-                          {alert.title}
+                          {resolveAlertSubject(alert.title, alertLookup)}
                         </h4>
                         <p
                           style={{
@@ -437,7 +441,7 @@ const PilotageHub: React.FC = () => {
                             margin: 0,
                           }}
                         >
-                          {alert.message}
+                          {resolveAlertSubject(alert.message, alertLookup)}
                         </p>
                       </div>
                     </li>

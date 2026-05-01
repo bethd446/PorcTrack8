@@ -10,8 +10,12 @@ import type { BandeROIEstimate, ConsoPhase } from '../types/finance.types';
 
 function parseFrDate(s: string | undefined): Date | null {
   if (!s) return null;
-  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+  // Format FR: DD/MM/YYYY
+  const fr = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (fr) return new Date(+fr[3], +fr[2] - 1, +fr[1]);
+  // Format ISO: YYYY-MM-DD (avec ou sans heure)
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return new Date(+iso[1], +iso[2] - 1, +iso[3]);
   return null;
 }
 
@@ -132,8 +136,8 @@ export function genererRapportGlobal(
   const estimateWeight = (b: BandePorcelets) => {
     const sevDate = b.dateSevrageReelle || b.dateSevragePrevue;
     if (!sevDate) return 5;
-    const parts = sevDate.split('/');
-    const d = new Date(+parts[2], +parts[1] - 1, +parts[0]);
+    const d = parseFrDate(sevDate);
+    if (!d) return 5;
     const days = Math.floor((today.getTime() - d.getTime()) / 86400000);
     return Math.min(25 + days * 0.65, 110);
   };

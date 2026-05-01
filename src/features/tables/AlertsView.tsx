@@ -24,6 +24,8 @@ import { fr } from 'date-fns/locale';
 
 import { useMeta } from '../../context/FarmContext';
 import { usePilotage } from '../../context/PilotageContext';
+import { useTroupeau } from '../../context/TroupeauContext';
+import { resolveAlertSubject } from '../../utils/alertSubject';
 import AgritechLayout from '../../components/AgritechLayout';
 import KpiCardV6 from '../../components/design/KpiCard';
 import Eyebrow from '../../components/design/Eyebrow';
@@ -367,6 +369,8 @@ const AlertRow: React.FC<AlertRowProps> = ({
 const AlertsView: React.FC = () => {
   const { alerts, alertesServeur } = usePilotage();
   const { refreshData } = useMeta();
+  const { bandes, truies, verrats } = useTroupeau();
+  const lookup = useMemo(() => ({ bandes, truies, verrats }), [bandes, truies, verrats]);
   const [pendingConfirmations, setPendingConfirmations] = useState<PendingConfirmation[]>([]);
   const [selectedAlert, setSelectedAlert] = useState<{ alert: FarmAlert; confirmId: string } | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterId>('ALL');
@@ -738,10 +742,10 @@ const AlertsView: React.FC = () => {
                         <li key={alert.id}>
                           <AlertRow
                             priority={alert.priority}
-                            title={alert.title}
-                            description={alert.message}
+                            title={resolveAlertSubject(alert.title, lookup)}
+                            description={resolveAlertSubject(alert.message, lookup)}
                             categoryLabel={alert.category}
-                            metaLabel={alert.subjectLabel}
+                            metaLabel={resolveAlertSubject(alert.subjectLabel, lookup)}
                             timeAgo={formatDistanceToNow(alert.createdAt, {
                               addSuffix: true,
                               locale: fr,
@@ -839,7 +843,7 @@ const AlertsView: React.FC = () => {
                             letterSpacing: '-0.005em',
                           }}
                         >
-                          {pc.alertTitle}
+                          {resolveAlertSubject(pc.alertTitle, lookup)}
                         </h3>
                         <p
                           style={{
@@ -850,7 +854,7 @@ const AlertsView: React.FC = () => {
                             margin: 0,
                           }}
                         >
-                          {pc.alertMessage}
+                          {resolveAlertSubject(pc.alertMessage, lookup)}
                         </p>
                       </div>
                     </li>

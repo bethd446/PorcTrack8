@@ -57,7 +57,7 @@ const RECENT_ICON: Record<RecentItem['kind'], LucideIcon> = {
 const AppSidebar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isOwner } = useAuth();
+  const { isOwner, profile } = useAuth();
   const { criticalAlertCount } = usePilotage();
   const { items: recentItems } = useRecentNavigation();
 
@@ -69,8 +69,9 @@ const AppSidebar: React.FC = () => {
   // Cmd+K / Ctrl+K
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
+        e.stopPropagation();
         setPaletteOpen((v) => !v);
       }
     };
@@ -93,10 +94,7 @@ const AppSidebar: React.FC = () => {
     );
   };
 
-  // ADMIN strict : la spec demande visible si OWNER ou ADMIN.
-  // Le système n'a que OWNER/WORKER → on aligne sur isOwner.
-  // (Mapping : OWNER inclut les ADMIN supabase via mapToLegacyRole.)
-  const showAdminSection = isOwner;
+  const showAdminSection = profile?.role === 'ADMIN';
   const showPilotageSection = isOwner;
 
   const cyclesItems: NavItem[] = useMemo(

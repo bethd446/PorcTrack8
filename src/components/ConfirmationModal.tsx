@@ -28,6 +28,8 @@ import { Chip } from './agritech';
 import type { ChipTone } from './agritech';
 import { confirmAction, dismissAction } from '../services/confirmationQueue';
 import type { FarmAlert, AlertPriority } from '../services/alertEngine';
+import { useTroupeau } from '../context/TroupeauContext';
+import { resolveAlertSubject } from '../utils/alertSubject';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Icône par catégorie
@@ -76,6 +78,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
   const titleId = useId();
   const descId = useId();
+  const { bandes, truies, verrats } = useTroupeau();
 
   // Escape key closes modal
   useEffect(() => {
@@ -89,6 +92,10 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
   if (!isOpen || !alert || !confirmationId) return null;
 
+  const lookup = { bandes, truies, verrats };
+  const displayTitle = resolveAlertSubject(alert.title, lookup);
+  const displayMessage = resolveAlertSubject(alert.message, lookup);
+  const displaySubjectLabel = resolveAlertSubject(alert.subjectLabel, lookup);
   const priorityTone = PRIORITY_TONE[alert.priority];
   const categoryIcon = CATEGORY_ICONS[alert.category] ?? AlertCircle;
   const primaryAction = alert.actions.find(a => a.variant === 'primary' || a.type !== 'DISMISS');
@@ -157,10 +164,10 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                   id={titleId}
                   className="agritech-heading text-[16px] uppercase tracking-wide leading-tight"
                 >
-                  {alert.title}
+                  {displayTitle}
                 </h2>
                 <p className="mt-1 font-mono text-[11px] uppercase tracking-wide text-text-2 tabular-nums truncate">
-                  {alert.subjectLabel}
+                  {displaySubjectLabel}
                 </p>
               </div>
             </div>
@@ -187,7 +194,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
               className="rounded-md border border-border bg-bg-0 p-4"
             >
               <p className="font-mono text-[12px] text-text-1 leading-relaxed">
-                {alert.message}
+                {displayMessage}
               </p>
               {alert.dueDate && alert.daysOffset !== undefined && (
                 <div className="flex items-center gap-1.5 mt-3">
