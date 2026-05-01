@@ -16,9 +16,14 @@ export default function SupabaseProtectedRoute({ children }: Props) {
 
   useEffect(() => {
     // Vérification initiale de session
-    supabase.auth.getSession().then(({ data }) => {
-      setStatus(data.session ? 'auth' : 'unauth');
-    });
+    supabase.auth.getSession()
+      .then(({ data }) => {
+        setStatus(data.session ? 'auth' : 'unauth');
+      })
+      .catch((err) => {
+        console.error('[ProtectedRoute] getSession failed', err);
+        setStatus('unauth');
+      });
 
     // Écoute les changements de session (logout, expiry, refresh)
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {

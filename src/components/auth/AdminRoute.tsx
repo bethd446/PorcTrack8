@@ -19,25 +19,29 @@ export default function AdminRoute({ children }: Props) {
 
   useEffect(() => {
     const check = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const session = sessionData.session;
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const session = sessionData.session;
 
-      if (!session) {
-        setStatus('unauth');
-        return;
-      }
+        if (!session) {
+          setStatus('unauth');
+          return;
+        }
 
-      // Vérifier le rôle dans la table profiles
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
 
-      if (error || !profile || profile.role !== 'ADMIN') {
+        if (error || !profile || profile.role !== 'ADMIN') {
+          setStatus('not-admin');
+        } else {
+          setStatus('admin');
+        }
+      } catch (err) {
+        console.error('[AdminRoute] check failed', err);
         setStatus('not-admin');
-      } else {
-        setStatus('admin');
       }
     };
 

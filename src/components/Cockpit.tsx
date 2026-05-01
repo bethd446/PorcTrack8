@@ -44,6 +44,7 @@ import KpiCardV6 from './design/KpiCard';
 import TopBarSync from './design/TopBarSync';
 import Eyebrow from './design/Eyebrow';
 import type { FarmAlert, AlertPriority } from '../services/alertEngine';
+import { ALERT_PRIORITY_COLOR as ALERT_DOT_COLOR } from '../utils/alertColors';
 import type { AlerteServeur, DataSource } from '../types/farm';
 import { Bandes } from '../services/bandAnalysisEngine';
 import { normaliseStatut } from '../lib/truieStatut';
@@ -1266,13 +1267,6 @@ interface PanelAlertesProps {
   alerts: PanelAlerteRow[];
   onSeeAll: () => void;
 }
-
-const ALERT_DOT_COLOR: Record<AlertPriority, string> = {
-  CRITIQUE: 'var(--color-danger, #EF4444)',
-  HAUTE: 'var(--amber-pork)',
-  NORMALE: 'var(--color-accent-500)',
-  INFO: 'var(--color-info, #3B82F6)',
-};
 
 const PanelAlertes: React.FC<PanelAlertesProps> = ({ alerts, onSeeAll }) => {
   return (

@@ -77,23 +77,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!mounted) return;
-      if (!data.session) {
-        await tryDevAutologin();
-        const { data: refreshed } = await supabase.auth.getSession();
-        setSession(refreshed.session);
-        if (refreshed.session?.user.id) {
-          await fetchProfile(refreshed.session.user.id);
+    supabase.auth.getSession()
+      .then(async ({ data }) => {
+        if (!mounted) return;
+        if (!data.session) {
+          await tryDevAutologin();
+          const { data: refreshed } = await supabase.auth.getSession();
+          setSession(refreshed.session);
+          if (refreshed.session?.user.id) {
+            await fetchProfile(refreshed.session.user.id);
+          }
+        } else {
+          setSession(data.session);
+          if (data.session.user.id) {
+            await fetchProfile(data.session.user.id);
+          }
         }
-      } else {
-        setSession(data.session);
-        if (data.session.user.id) {
-          await fetchProfile(data.session.user.id);
-        }
-      }
-      setLoading(false);
-    });
+      })
+      .catch((err) => {
+        console.error('[AuthContext] getSession failed', err);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
 
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       if (!mounted) return;

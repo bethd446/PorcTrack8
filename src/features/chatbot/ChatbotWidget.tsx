@@ -14,42 +14,14 @@ alertes, traitements vétérinaires, nutrition et gestion d'élevage.
 Réponds en français, de façon concise et pratique pour le terrain.`;
 
 async function sendToGemini(
-  messages: Message[],
-  imageBase64?: string
+  _messages: Message[],
+  _imageBase64?: string
 ): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('GEMINI_API_KEY non configurée');
-
-  const lastMsg = messages[messages.length - 1];
-
-  const parts: unknown[] = [{ text: lastMsg.content }];
-  if (imageBase64) {
-    parts.push({
-      inline_data: { mime_type: 'image/jpeg', data: imageBase64 },
-    });
-  }
-
-  const history = messages.slice(0, -1).map(m => ({
-    role: m.role === 'user' ? 'user' : 'model',
-    parts: [{ text: m.content }],
-  }));
-
-  const body = {
-    system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-    contents: [
-      ...history,
-      { role: 'user', parts },
-    ],
-    generationConfig: { temperature: 0.7, maxOutputTokens: 512 },
-  };
-
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+  // SYSTEM_PROMPT conservé pour ré-activation future via proxy backend.
+  void SYSTEM_PROMPT;
+  throw new Error(
+    'Marius est en cours de configuration. La connexion à l\'IA sera bientôt disponible.',
   );
-  if (!res.ok) throw new Error(`Gemini API error ${res.status}`);
-  const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? '(pas de réponse)';
 }
 
 export const ChatbotWidget: React.FC = () => {

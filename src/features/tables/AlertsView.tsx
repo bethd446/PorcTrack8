@@ -29,27 +29,10 @@ import KpiCardV6 from '../../components/design/KpiCard';
 import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { type FarmAlert, type AlertPriority, type AlertCategory } from '../../services/alertEngine';
+import { ALERT_PRIORITY_COLOR as PRIORITY_COLOR, ALERT_PRIORITY_BG as PRIORITY_BG } from '../../utils/alertColors';
 import { getPendingConfirmations, type PendingConfirmation } from '../../services/confirmationQueue';
 import { ConfirmationModal } from '../../components/ConfirmationModal';
 import type { AlerteServeur } from '../../types/farm';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Priority → tokens v6
-// ─────────────────────────────────────────────────────────────────────────────
-
-const PRIORITY_COLOR: Record<AlertPriority, string> = {
-  CRITIQUE: 'var(--color-danger)',
-  HAUTE:    'var(--color-pig)',
-  NORMALE:  'var(--amber-pork)',
-  INFO:     'var(--color-info)',
-};
-
-const PRIORITY_BG: Record<AlertPriority, string> = {
-  CRITIQUE: 'var(--color-red-100)',
-  HAUTE:    'var(--color-pig-soft)',
-  NORMALE:  'var(--color-amber-pork-soft)',
-  INFO:     'var(--color-blue-100)',
-};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Filter chips
