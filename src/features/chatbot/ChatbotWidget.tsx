@@ -133,10 +133,30 @@ export const ChatbotWidget: React.FC = () => {
             }
             let chunk = data;
             try {
-              const parsed = JSON.parse(data) as { content?: string };
-              if (typeof parsed.content === 'string') chunk = parsed.content;
+              const parsed = JSON.parse(data) as {
+                content?: string;
+                choices?: Array<{
+                  delta?: { content?: string };
+                  message?: { content?: string };
+                  finish_reason?: string | null;
+                }>;
+              };
+              // 1. Format OpenAI/llama-server : choices[0].delta.content (streaming)
+              const openaiDelta = parsed.choices?.[0]?.delta?.content;
+              if (typeof openaiDelta === 'string') {
+                chunk = openaiDelta;
+              } else if (typeof parsed.content === 'string') {
+                // 2. Format simple : { content: "..." }
+                chunk = parsed.content;
+              } else if (parsed.choices?.[0]?.finish_reason) {
+                // Pas de delta sur les events de fin (finish_reason set sans content) → skip
+                continue;
+              } else {
+                // Autre payload non reconnu — skip pour éviter d'afficher du JSON brut
+                continue;
+              }
             } catch {
-              // texte brut, on l'utilise tel quel
+              // Texte brut hors JSON, on l'utilise tel quel
             }
             if (firstChunk) {
               setStreaming(true);
