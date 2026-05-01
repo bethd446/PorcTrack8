@@ -23,13 +23,13 @@ export default function AuthCallback() {
         if (cancelled) return;
 
         if (data.session) {
-          navigate('/cockpit', { replace: true });
+          navigate('/today', { replace: true });
         } else {
           setTimeout(() => {
             supabase.auth.getSession().then(({ data: retryData }) => {
               if (cancelled) return;
               if (retryData.session) {
-                navigate('/cockpit', { replace: true });
+                navigate('/today', { replace: true });
               } else {
                 navigate('/login', { replace: true });
               }

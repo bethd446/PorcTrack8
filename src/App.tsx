@@ -42,8 +42,6 @@ import { loadChecklistDefinitions } from './services/checklistService';
 import { ChatbotWidget } from './features/chatbot';
 
 // Lazy loading — chaque écran dans son propre chunk pour réduire le bundle initial
-// Cockpit agritech remplace Dashboard (Dashboard legacy supprimé — Cockpit = route `/cockpit`).
-const Cockpit = React.lazy(() => import(/* webpackChunkName: "cockpit" */ './components/Cockpit'));
 const TableView = React.lazy(() => import(/* webpackChunkName: "table-view" */ './features/tables/TableView'));
 const BandesView = React.lazy(() => import(/* webpackChunkName: "bandes" */ './features/tables/BandesView'));
 const CheptelView = React.lazy(() => import(/* webpackChunkName: "cheptel" */ './features/tables/CheptelView'));
@@ -115,7 +113,6 @@ const AppShell: React.FC = () => (
     <Routes>
       <Route path="/" element={<Navigate to="/today" replace />} />
       <Route path="/today" element={<TodayHub />} />
-      <Route path="/cockpit" element={<Cockpit />} />
       <Route path="/controle" element={<ControleQuotidien />} />
 
       <Route path="/sante" element={<TableView tableKey="JOURNAL_SANTE" />} />

@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
 import { Calendar, TrendingUp } from 'lucide-react';
 
-import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
+import Eyebrow from '../../components/design/Eyebrow';
+import TopBarSync from '../../components/design/TopBarSync';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
 import { DataRow, Chip, SectionDivider, type ChipTone } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
@@ -88,13 +89,37 @@ const SortieCalendarView: React.FC = () => {
         </IonRefresher>
 
         <AgritechLayout>
-          <AgritechHeader
-            title="Sorties Abattoir"
-            subtitle="Prévisions basées sur le poids (90kg)"
-            backTo="/cycles/finition"
+          <TopBarSync
+            crumbs={['Cycles', 'Sortie']}
+            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
           />
 
-          <div className="px-4 pt-4 pb-32 space-y-6">
+          <div className="px-4 pt-5 pb-32 space-y-6" style={{ maxWidth: 1100, margin: '0 auto' }}>
+            <header>
+              <Eyebrow dotColor="accent">Cycle · Sortie</Eyebrow>
+              <h1
+                style={{
+                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontSize: 34,
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  letterSpacing: '-0.02em',
+                  color: 'var(--ink)',
+                  margin: '8px 0 4px',
+                }}
+              >
+                Sortie
+              </h1>
+              <div
+                style={{
+                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontSize: 13,
+                  color: 'var(--muted)',
+                }}
+              >
+                Calendrier abattoir
+              </div>
+            </header>
             <div className="grid grid-cols-2 gap-3">
               <KpiCardV6
                 label="Prochaines 14j"

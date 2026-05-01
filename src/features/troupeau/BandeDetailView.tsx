@@ -18,8 +18,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import { AlertCircle, Edit3, Skull } from 'lucide-react';
 
-import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
+import Eyebrow from '../../components/design/Eyebrow';
+import TopBarSync from '../../components/design/TopBarSync';
 import { BandeIcon } from '../../components/icons';
 import { Chip, SectionDivider, type ChipTone } from '../../components/agritech';
 import QuickMortalityForm from '../../components/forms/QuickMortalityForm';
@@ -326,17 +327,43 @@ const BandeDetailView: React.FC = () => {
       <IonPage>
         <IonContent fullscreen className="ion-no-padding">
           <AgritechLayout>
-            <AgritechHeader
-              title="PORTÉE INTROUVABLE"
-              subtitle={`ID "${decodedId}"`}
-              backTo="/troupeau"
+            <TopBarSync
+              crumbs={['Cheptel', 'Bandes', decodedId]}
+              onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
             />
-            <div className="px-4 pt-6 flex flex-col items-center gap-3">
-              <AlertCircle size={40} className="text-coral" aria-hidden="true" />
-              <p className="font-mono text-[12px] text-text-2 text-center max-w-xs">
-                Cette portée n'existe pas (ou plus) dans ta feuille PORTEES.
-                Retourne au troupeau et vérifie l'ID.
-              </p>
+            <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
+              <header>
+                <Eyebrow dotColor="accent">Cheptel · Bande {decodedId}</Eyebrow>
+                <h1
+                  style={{
+                    fontFamily: 'BigShoulders, system-ui, sans-serif',
+                    fontSize: 34,
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    letterSpacing: '-0.02em',
+                    color: 'var(--ink)',
+                    margin: '8px 0 4px',
+                  }}
+                >
+                  Portée introuvable
+                </h1>
+                <div
+                  style={{
+                    fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                    fontSize: 13,
+                    color: 'var(--muted)',
+                  }}
+                >
+                  ID "{decodedId}"
+                </div>
+              </header>
+              <div className="flex flex-col items-center gap-3">
+                <AlertCircle size={40} className="text-coral" aria-hidden="true" />
+                <p className="font-mono text-[12px] text-text-2 text-center max-w-xs">
+                  Cette portée n'existe pas (ou plus) dans ta feuille PORTEES.
+                  Retourne au troupeau et vérifie l'ID.
+                </p>
+              </div>
             </div>
           </AgritechLayout>
         </IonContent>
@@ -398,13 +425,38 @@ const BandeDetailView: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
-          <AgritechHeader
-            title="PORTÉE"
-            subtitle={idDisplay}
-            backTo="/troupeau"
+          <TopBarSync
+            crumbs={['Cheptel', 'Bandes', idDisplay]}
+            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
           />
 
-          <div className="px-4 pt-4 pb-32 flex flex-col gap-5">
+          <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
+            <header>
+              <Eyebrow dotColor="accent">Cheptel · Bande {idDisplay}</Eyebrow>
+              <h1
+                style={{
+                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontSize: 34,
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  letterSpacing: '-0.02em',
+                  color: 'var(--ink)',
+                  margin: '8px 0 4px',
+                }}
+              >
+                Bande {idDisplay}
+              </h1>
+              <div
+                style={{
+                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontSize: 13,
+                  color: 'var(--muted)',
+                }}
+              >
+                {vivants} porcelet{vivants > 1 ? 's' : ''} · phase {meta.label}
+              </div>
+            </header>
+
             {/* ── Lignée (kit v2.1) ───────────────────────────────────── */}
             <LineageBreadcrumb nodes={lineageNodes} />
 
@@ -415,10 +467,7 @@ const BandeDetailView: React.FC = () => {
                   <BandeIcon size={30} aria-hidden="true" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="ft-heading text-[22px] text-text-0 leading-none">
-                    {idDisplay}
-                  </div>
-                  <div className="font-mono text-[11px] text-text-2 mt-1.5 uppercase tracking-wide">
+                  <div className="font-mono text-[11px] text-text-2 uppercase tracking-wide">
                     Truie {bande.truie || '—'}
                     {bande.boucleMere ? ` · ${bande.boucleMere}` : ''}
                   </div>
@@ -600,7 +649,7 @@ const BandeDetailView: React.FC = () => {
           <BandeActionToolbar
             onPesee={() => setPeseeOpen(true)}
             onMortalite={() => setMortalityOpen(true)}
-            onSoin={() => navigate(`/sante/nouveau?bande=${bande.id}`)}
+            onSoin={() => navigate(`/sante?bande=${bande.id}`)}
           />
         </AgritechLayout>
       </IonContent>

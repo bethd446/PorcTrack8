@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
-import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
+import Eyebrow from '../../components/design/Eyebrow';
+import TopBarSync from '../../components/design/TopBarSync';
 import { IsoBarn, SectionDivider } from '../../components/agritech';
 import type { Building, Arrow } from '../../components/agritech';
 import { FARM_CONFIG } from '../../config/farm';
@@ -129,13 +130,38 @@ const BatimentsView: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
-          <AgritechHeader
-            title="Bâtiments"
-            subtitle={`${FARM_CONFIG.FARM_NAME} · Vue isométrique`}
-            backTo="/troupeau"
+          <TopBarSync
+            crumbs={['Cheptel', 'Bâtiments']}
+            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
           />
 
-          <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
+          <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
+            <header>
+              <Eyebrow dotColor="accent">Cheptel · Bâtiments</Eyebrow>
+              <h1
+                style={{
+                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontSize: 34,
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  letterSpacing: '-0.02em',
+                  color: 'var(--ink)',
+                  margin: '8px 0 4px',
+                }}
+              >
+                Bâtiments
+              </h1>
+              <div
+                style={{
+                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontSize: 13,
+                  color: 'var(--muted)',
+                }}
+              >
+                Plan isométrique 3 phases
+              </div>
+            </header>
+
             <SectionDivider label="Plan · 3 phases" />
 
             <div className="card-dense p-3">

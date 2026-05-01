@@ -6,8 +6,9 @@ import {
   Trophy,
   AlertTriangle,
 } from 'lucide-react';
-import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
+import Eyebrow from '../../components/design/Eyebrow';
+import TopBarSync from '../../components/design/TopBarSync';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
 import { Chip, DataRow, SectionDivider } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
@@ -158,6 +159,7 @@ const PerfKpiView: React.FC = () => {
 
   // Empty state : pas une seule portée → aucune data pour statuer.
   const hasData = kpis.nbPortees12m > 0 || kpis.nbTruiesProductives > 0;
+  const nbBandes = bandes.length;
 
   const goToTruie = (id: string): void => {
     navigate(`/troupeau/truies/${id}`);
@@ -188,13 +190,41 @@ const PerfKpiView: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
-          <AgritechHeader
-            title="PERFORMANCE"
-            subtitle="Productivité élevage · benchmarks"
-            backTo="/pilotage"
+          <TopBarSync
+            crumbs={['Pilotage', 'Performance']}
+            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
           />
 
-          <div className="px-4 pt-4 pb-8 flex flex-col gap-4">
+          <div
+            className="px-4 pt-5 pb-32 flex flex-col gap-5"
+            style={{ maxWidth: 1100, margin: '0 auto' }}
+          >
+            <header>
+              <Eyebrow dotColor="accent">Pilotage · GTTT</Eyebrow>
+              <h1
+                style={{
+                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontSize: 34,
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  letterSpacing: '-0.02em',
+                  color: 'var(--ink)',
+                  margin: '8px 0 4px',
+                }}
+              >
+                Performance
+              </h1>
+              <div
+                style={{
+                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontSize: 13,
+                  color: 'var(--muted)',
+                }}
+              >
+                Indicateurs techniques · {nbBandes} bande{nbBandes > 1 ? 's' : ''}
+              </div>
+            </header>
+
             {!hasData ? (
               <section className="card-dense flex flex-col items-center justify-center py-10 text-center">
                 <TrendingUp size={48} className="text-text-2 mb-3" aria-hidden="true" />

@@ -3,35 +3,35 @@
  * ══════════════════════════════════════════════════════════════════════════
  * Route : /cycles/repro
  *
- * Vue "Calendrier Repro" — agrège trois flux temporels autour du cycle
- * reproductif :
+ * Vue "Calendrier Repro" — agrège les saillies récentes et expose des
+ * KPIs de synthèse repro. Le forecast détaillé (MB, sevrages, retours
+ * chaleur, saturation) est centralisé dans /pilotage/previsions afin
+ * d'éviter la duplication.
  *
- *   1. Saillies effectuées (7 derniers jours) — depuis `saillies`
- *   2. Mises-Bas prévues (30 prochains jours) — depuis
- *      `truies.dateMBPrevue` ∪ `saillies.dateMBPrevue` (dédupliqué)
- *   3. Retours en chaleur attendus (J+3 à J+10 post-sevrage) — depuis
- *      `bandes.dateSevrageReelle` (statut contenant "sevr")
+ *   1. KPIs synthétiques : Saillies 7j, MB prévues 30j (count),
+ *      Retours chaleur (count), Gestations
+ *   2. Saillies effectuées (7 derniers jours) — depuis `saillies`
+ *   3. Lien vers /pilotage/previsions pour le forecast complet 14j
  *
- * Les flux (1) et (2) coexistent. Si `saillies` est vide (feuille
- * SUIVI_REPRODUCTION_ACTUEL non encore câblée), on continue d'afficher
- * les MB prévues depuis `truies.dateMBPrevue` + un message informatif.
+ * Si `saillies` est vide (feuille SUIVI_REPRODUCTION_ACTUEL non câblée),
+ * un message informatif est affiché.
  *
  * Design : AgritechLayout + AgritechHeader, DataRow + Chip, border-left
  * rouge/ambre/accent-dim selon urgence, stagger 50ms. Zéro `any`.
  */
 
 import React, { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { IonPage, IonContent, IonRefresher, IonRefresherContent } from '@ionic/react';
-import { Heart, Baby, Info, Edit3 } from 'lucide-react';
+import { Heart, Info, Edit3, ChevronRight } from 'lucide-react';
 
 import { useFarm } from '../../context/FarmContext';
 import AgritechLayout from '../../components/AgritechLayout';
-import AgritechHeader from '../../components/AgritechHeader';
+import Eyebrow from '../../components/design/Eyebrow';
+import TopBarSync from '../../components/design/TopBarSync';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
 import EmptyState from '../../components/design/EmptyState';
 import { Chip, SectionDivider } from '../../components/agritech';
-import type { ChipTone } from '../../components/agritech';
 import type { Truie, BandePorcelets, Saillie } from '../../types/farm';
 import QuickEditSaillieForm from '../../components/forms/QuickEditSaillieForm';
 
@@ -81,20 +81,6 @@ function diffDays(a: Date, b: Date): number {
 // Types internes
 // ─────────────────────────────────────────────────────────────────────────────
 
-type AVenirKind = 'MB_PREVUE' | 'RETOUR_CHALEUR';
-
-interface AVenirItem {
-  key: string;
-  kind: AVenirKind;
-  /** Date cible parsée, normalisée 0h. */
-  date: Date;
-  /** Jours restants (≥ 0 pour MB futures, peut être 0 si aujourd'hui). */
-  daysAhead: number;
-  primary: string;
-  /** ID de la truie associée pour navigation (si connue). */
-  truieId?: string;
-}
-
 interface SaillieItem {
   key: string;
   date: Date;
@@ -104,31 +90,6 @@ interface SaillieItem {
   truieId: string;
   /** Référence à la saillie brute pour édition rapide. */
   source: Saillie;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Urgency → border-left + chip tone
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Classes border-left selon l'urgence en jours restants. */
-function urgencyBorder(daysAhead: number): string {
-  if (daysAhead < 2) return 'border-l-red';
-  if (daysAhead < 7) return 'border-l-amber';
-  return 'border-l-accent-dim';
-}
-
-/** ChipTone pour la priorité / jours restants. */
-function urgencyTone(daysAhead: number): ChipTone {
-  if (daysAhead < 2) return 'red';
-  if (daysAhead < 7) return 'amber';
-  return 'default';
-}
-
-/** Label court pour le chip de délai. */
-function daysAheadLabel(daysAhead: number): string {
-  if (daysAhead <= 0) return "Aujourd'hui";
-  if (daysAhead === 1) return 'Demain';
-  return `J-${daysAhead}`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -176,108 +137,46 @@ const ReproCalendarView: React.FC = () => {
     return items;
   }, [saillies, today]);
 
-  // ── 2. MB prévues 30 prochains jours — dédup truies ∪ saillies ────────────
-  const mbPrevues30j = useMemo<AVenirItem[]>(() => {
-    /**
-     * Dédup key : truieId + date ISO. Une truie peut apparaître dans `truies`
-     * (champ `dateMBPrevue`) ET dans `saillies` (champ `dateMBPrevue`). On
-     * considère que c'est le même événement si truieId + date coïncident.
-     * Priorité : l'entrée `truies` (plus canonique — reflète l'état actuel).
-     */
-    const seen = new Map<string, AVenirItem>();
-
+  // ── 2. Comptage MB prévues 30 prochains jours — dédup truies ∪ saillies ──
+  const mbPrevues30jCount = useMemo<number>(() => {
+    const seen = new Set<string>();
     const truiesTyped = truies as Truie[];
 
-    // 2a. Depuis truies
     for (const t of truiesTyped) {
       const d = parseDate(t.dateMBPrevue);
       if (!d) continue;
       const daysAhead = diffDays(today, d);
       if (daysAhead < 0 || daysAhead > 30) continue;
-
       const iso = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-      const key = `truie|${t.id}|${iso}`;
-      const nom = t.nom ? ` ${t.nom}` : '';
-      seen.set(key, {
-        key: `mb-truie-${t.id}-${iso}`,
-        kind: 'MB_PREVUE',
-        date: d,
-        daysAhead,
-        primary: `MB prévue ${t.displayId}${nom}`,
-        truieId: t.id,
-      });
+      seen.add(`truie|${t.id}|${iso}`);
     }
 
-    // 2b. Depuis saillies (si pas déjà présent via truies)
     for (const s of saillies as Saillie[]) {
       const d = parseDate(s.dateMBPrevue);
       if (!d) continue;
       const daysAhead = diffDays(today, d);
       if (daysAhead < 0 || daysAhead > 30) continue;
       if (!s.truieId) continue;
-
       const iso = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-      const dedupKey = `truie|${s.truieId}|${iso}`;
-      if (seen.has(dedupKey)) continue;
-
-      // Résolution label truie via truies si possible
-      const truie = truiesTyped.find((t) => t.id === s.truieId);
-      const label = truie
-        ? `${truie.displayId}${truie.nom ? ' ' + truie.nom : ''}`
-        : s.truieNom
-          ? `${s.truieId} ${s.truieNom}`
-          : s.truieId;
-
-      seen.set(dedupKey, {
-        key: `mb-saillie-${s.truieId}-${iso}`,
-        kind: 'MB_PREVUE',
-        date: d,
-        daysAhead,
-        primary: `MB prévue ${label}`,
-        truieId: s.truieId,
-      });
+      seen.add(`truie|${s.truieId}|${iso}`);
     }
 
-    return Array.from(seen.values());
+    return seen.size;
   }, [truies, saillies, today]);
 
-  // ── 3. Retours chaleur attendus (J+3 à J+10 post-sevrage) ─────────────────
-  const retoursChaleur = useMemo<AVenirItem[]>(() => {
-    const items: AVenirItem[] = [];
+  // ── 3. Retours chaleur attendus (J+3 à J+10 post-sevrage) — comptage ─────
+  const retoursChaleurCount = useMemo<number>(() => {
+    let n = 0;
     for (const b of bandes as BandePorcelets[]) {
       if (!/sevr/i.test(b.statut || '')) continue;
       const dSevrage = parseDate(b.dateSevrageReelle);
       if (!dSevrage) continue;
-
       const daysSinceSevrage = diffDays(dSevrage, today);
-      // Fenêtre active : sevrage entre J-3 et J-10 en arrière → retour
-      // attendu à sevrage + 5j. `daysAhead` est le délai restant jusqu'à J+5.
       if (daysSinceSevrage < 3 || daysSinceSevrage > 10) continue;
-
-      const dRetour = new Date(dSevrage.getTime() + 5 * 86_400_000);
-      const daysAhead = diffDays(today, dRetour);
-      // Clamp : si déjà dépassé (daysAhead < 0), conserve mais affiche 0.
-      const displayDays = Math.max(0, daysAhead);
-
-      const truieLabel = b.truie || b.boucleMere || b.idPortee;
-      items.push({
-        key: `chaleur-${b.id}`,
-        kind: 'RETOUR_CHALEUR',
-        date: dRetour,
-        daysAhead: displayDays,
-        primary: `Retour chaleur ${truieLabel}`,
-        truieId: b.truie,
-      });
+      n++;
     }
-    return items;
+    return n;
   }, [bandes, today]);
-
-  // ── À venir (merge + sort ASC par date) ───────────────────────────────────
-  const aVenir = useMemo<AVenirItem[]>(() => {
-    return [...mbPrevues30j, ...retoursChaleur].sort(
-      (a, b) => a.date.getTime() - b.date.getTime()
-    );
-  }, [mbPrevues30j, retoursChaleur]);
 
   // ── Gestations en cours (KPI) ─────────────────────────────────────────────
   const nbGestations = useMemo(() => {
@@ -286,7 +185,7 @@ const ReproCalendarView: React.FC = () => {
 
   const saillesEmpty = saillies.length === 0;
   const nothingAtAll =
-    aVenir.length === 0 && saillies7j.length === 0;
+    saillies7j.length === 0 && mbPrevues30jCount === 0 && retoursChaleurCount === 0;
 
   // ── Navigation helpers ────────────────────────────────────────────────────
   const goTruie = (truieId?: string): void => {
@@ -308,13 +207,37 @@ const ReproCalendarView: React.FC = () => {
         </IonRefresher>
 
         <AgritechLayout>
-          <AgritechHeader
-            title="Calendrier Repro"
-            subtitle="Saillies · MB prévues · Retours chaleur"
-            backTo="/cycles"
+          <TopBarSync
+            crumbs={['Cycles', 'Reproduction']}
+            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
           />
 
-          <div className="px-4 pt-4 pb-32 space-y-5">
+          <div className="px-4 pt-5 pb-32 space-y-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
+            <header>
+              <Eyebrow dotColor="pig">Cycle · Reproduction</Eyebrow>
+              <h1
+                style={{
+                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontSize: 34,
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  letterSpacing: '-0.02em',
+                  color: 'var(--ink)',
+                  margin: '8px 0 4px',
+                }}
+              >
+                Reproduction
+              </h1>
+              <div
+                style={{
+                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontSize: 13,
+                  color: 'var(--muted)',
+                }}
+              >
+                Calendrier saillies & retours chaleur
+              </div>
+            </header>
             {/* ── Summary strip (4 KPI) ─────────────────────────────────── */}
             <section
               aria-label="Synthèse repro"
@@ -329,14 +252,14 @@ const ReproCalendarView: React.FC = () => {
               <div className="animate-fade-in-up stagger-1">
                 <KpiCardV6
                   label="MB prévues 30j"
-                  value={mbPrevues30j.length}
+                  value={mbPrevues30jCount}
                 />
               </div>
               <div className="animate-fade-in-up stagger-2">
                 <KpiCardV6
                   label="Retours chaleur"
-                  value={retoursChaleur.length}
-                  accentColor={retoursChaleur.length > 0 ? 'var(--color-pig-deep)' : undefined}
+                  value={retoursChaleurCount}
+                  accentColor={retoursChaleurCount > 0 ? 'var(--color-pig-deep)' : undefined}
                 />
               </div>
               <div className="animate-fade-in-up stagger-3">
@@ -388,77 +311,22 @@ const ReproCalendarView: React.FC = () => {
               />
             ) : null}
 
-            {/* ── Section À venir (30 jours) ───────────────────────────── */}
-            {aVenir.length > 0 ? (
-              <section aria-label="Évènements à venir">
-                <SectionDivider
-                  label="À venir (30 jours)"
-                  action={
-                    <Chip
-                      label={String(aVenir.length)}
-                      tone="accent"
-                      size="xs"
-                    />
-                  }
-                />
-                <ul
-                  role="list"
-                  aria-label="Liste des évènements repro à venir"
-                  className="card-dense !p-0 overflow-hidden"
-                >
-                  {aVenir.map((item, idx) => {
-                    const isChaleur = item.kind === 'RETOUR_CHALEUR';
-                    const Icon = isChaleur ? Heart : Baby;
-                    const iconColor = isChaleur ? 'text-accent' : 'text-gold';
-                    const border = urgencyBorder(item.daysAhead);
-                    const staggerIdx = Math.min(idx, 5);
-                    const staggerClass =
-                      staggerIdx === 0 ? '' : `stagger-${staggerIdx}`;
-
-                    return (
-                      <li
-                        key={item.key}
-                        role="listitem"
-                        className={`animate-fade-in-up ${staggerClass}`}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => goTruie(item.truieId)}
-                          disabled={!item.truieId}
-                          className={`pressable w-full flex items-center gap-3 px-3 py-3 text-left border-b border-border last:border-b-0 border-l-2 ${border} focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-2px] disabled:cursor-default disabled:opacity-70`}
-                        >
-                          <div className="h-9 w-9 rounded-md bg-bg-2 border border-border flex items-center justify-center shrink-0">
-                            <Icon
-                              size={16}
-                              className={iconColor}
-                              aria-hidden="true"
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate text-[14px] font-medium text-text-0">
-                              {item.primary}
-                            </div>
-                            <div className="mt-0.5 truncate font-mono text-[11px] text-text-2">
-                              {item.daysAhead === 0
-                                ? "Aujourd'hui"
-                                : `Dans ${item.daysAhead} jour${item.daysAhead > 1 ? 's' : ''}`}{' '}
-                              · {formatDateFr(item.date)}
-                            </div>
-                          </div>
-                          <div className="shrink-0">
-                            <Chip
-                              label={daysAheadLabel(item.daysAhead)}
-                              tone={urgencyTone(item.daysAhead)}
-                              size="xs"
-                            />
-                          </div>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
-            ) : null}
+            {/* ── Lien vers le forecast pilotage (canonique) ───────────── */}
+            <Link
+              to="/pilotage/previsions"
+              className="pressable flex items-center gap-3 px-4 py-3 rounded-md bg-bg-1 border border-border hover:bg-bg-2 transition-colors no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+              style={{ textDecoration: 'none' }}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="text-[14px] font-medium text-text-0">
+                  Voir le forecast complet 14 jours
+                </div>
+                <div className="mt-0.5 font-mono text-[11px] text-text-2">
+                  MB · Sevrages · Retours chaleur · Saturation
+                </div>
+              </div>
+              <ChevronRight size={18} className="text-text-2 shrink-0" aria-hidden="true" />
+            </Link>
 
             {/* ── Section Saillies récentes ────────────────────────────── */}
             {saillies7j.length > 0 ? (

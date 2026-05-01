@@ -6,8 +6,9 @@ import {
   Droplets, ShoppingCart
 } from 'lucide-react';
 import { BalanceIcon } from '../../components/icons';
-import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
+import Eyebrow from '../../components/design/Eyebrow';
+import TopBarSync from '../../components/design/TopBarSync';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
 import EmptyState from '../../components/design/EmptyState';
 import {
@@ -96,22 +97,46 @@ const FinitionView: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
-          <AgritechHeader
-            title="FINITION"
-            subtitle="Prêt pour abattage · 110 kg"
-            backTo="/cycles"
-            action={
+          <TopBarSync
+            crumbs={['Cycles', 'Finition']}
+            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
+          />
+
+          <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
+            <header className="flex items-start justify-between gap-3">
+              <div>
+                <Eyebrow dotColor="accent">Cycle · Finition</Eyebrow>
+                <h1
+                  style={{
+                    fontFamily: 'BigShoulders, system-ui, sans-serif',
+                    fontSize: 34,
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    letterSpacing: '-0.02em',
+                    color: 'var(--ink)',
+                    margin: '8px 0 4px',
+                  }}
+                >
+                  Finition
+                </h1>
+                <div
+                  style={{
+                    fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                    fontSize: 13,
+                    color: 'var(--muted)',
+                  }}
+                >
+                  J137 → J165 · {summary.nbBandes} bandes
+                </div>
+              </div>
               <button
                 onClick={() => navigate('/cycles/sortie')}
-                className="pressable inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-accent/40 text-accent font-mono text-[11px] uppercase tracking-wide transition-colors"
+                className="pressable inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-accent/40 text-accent font-mono text-[11px] uppercase tracking-wide transition-colors shrink-0"
               >
                 <Calendar size={14} />
                 Calendrier
               </button>
-            }
-          />
-
-          <div className="px-4 pt-4 pb-32 flex flex-col gap-5">
+            </header>
             {/* ── Summary Stats ────────────────────────────────────────── */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <KpiCardV6

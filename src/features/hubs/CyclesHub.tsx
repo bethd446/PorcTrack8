@@ -30,7 +30,7 @@ import { normaliseStatut } from '../../lib/truieStatut';
 
 // ─── Phases ─────────────────────────────────────────────────────────────────
 
-type PhaseId = 'gestation' | 'maternite' | 'postsevr' | 'croiss' | 'engrais' | 'finition';
+type PhaseId = 'gestation' | 'maternite' | 'postsevr' | 'croiss' | 'engrais' | 'finition' | 'sortie';
 
 interface PhaseDef {
   id: PhaseId;
@@ -96,6 +96,15 @@ const PHASES: readonly PhaseDef[] = [
     toneSoft: 'var(--color-secondary-soft)',
     route: '/cycles/finition',
   },
+  {
+    id: 'sortie',
+    label: 'Sortie',
+    short: 'Sort.',
+    days: 7,
+    tone: 'var(--color-ink-soft, #4b5563)',
+    toneSoft: 'var(--bg-surface-2, #f3f4f6)',
+    route: '/cycles/sortie',
+  },
 ];
 
 const PHASE_TO_DESIGN: Record<PhaseId, DesignPhase> = {
@@ -105,12 +114,13 @@ const PHASE_TO_DESIGN: Record<PhaseId, DesignPhase> = {
   croiss:    'crois',
   engrais:   'engr',
   finition:  'finit',
+  sortie:    'sortie',
 };
 
 const TOTAL_DAYS = PHASES.reduce((s, p) => s + p.days, 0);
 const PHASE_OFFSETS: Record<PhaseId, number> = (() => {
   const o: Record<PhaseId, number> = {
-    gestation: 0, maternite: 0, postsevr: 0, croiss: 0, engrais: 0, finition: 0,
+    gestation: 0, maternite: 0, postsevr: 0, croiss: 0, engrais: 0, finition: 0, sortie: 0,
   };
   let acc = 0;
   for (const p of PHASES) {
@@ -244,7 +254,7 @@ const CyclesHub: React.FC = () => {
 
   const countByPhase = useMemo(() => {
     const c: Record<PhaseId, number> = {
-      gestation: 0, maternite: 0, postsevr: 0, croiss: 0, engrais: 0, finition: 0,
+      gestation: 0, maternite: 0, postsevr: 0, croiss: 0, engrais: 0, finition: 0, sortie: 0,
     };
     for (const p of positions) c[p.phase.id] += 1;
     return c;
@@ -290,7 +300,7 @@ const CyclesHub: React.FC = () => {
                   color: 'var(--muted)',
                 }}
               >
-                {positions.length} bande{positions.length > 1 ? 's' : ''} active{positions.length > 1 ? 's' : ''} · 6 phases
+                {positions.length} bande{positions.length > 1 ? 's' : ''} active{positions.length > 1 ? 's' : ''} · 7 phases
               </div>
             </header>
 

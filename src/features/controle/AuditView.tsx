@@ -15,7 +15,8 @@ import {
   getStockVeto,
 } from '../../services/supabaseService';
 import AgritechLayout from '../../components/AgritechLayout';
-import AgritechHeader from '../../components/AgritechHeader';
+import Eyebrow from '../../components/design/Eyebrow';
+import TopBarSync from '../../components/design/TopBarSync';
 import { Chip, SectionDivider } from '../../components/agritech';
 
 interface AuditAlert {
@@ -213,9 +214,9 @@ const AuditView: React.FC = () => {
   };
 
   const handleAlertClick = (alert: AuditAlert): void => {
-    if (alert.source === 'BANDE') navigate(`/bandes/${alert.targetId}`);
-    if (alert.source === 'TRUIE') navigate(`/cheptel/truie/${alert.targetId}`);
-    if (alert.source === 'STOCK') navigate(`/stock`);
+    if (alert.source === 'BANDE') navigate(`/troupeau/bandes/${alert.targetId}`);
+    if (alert.source === 'TRUIE') navigate(`/troupeau/truies/${alert.targetId}`);
+    if (alert.source === 'STOCK') navigate(`/ressources/aliments`);
   };
 
   const filtered = useMemo<AuditAlert[]>(() => {
@@ -245,11 +246,45 @@ const AuditView: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout withNav={true}>
-          <AgritechHeader
-            title="Audit cohérence"
-            subtitle={`${alerts.length} incohérence${alerts.length > 1 ? 's' : ''} détectée${alerts.length > 1 ? 's' : ''}`}
-            backTo="/"
+          <TopBarSync
+            crumbs={['Outils', 'Audit']}
+            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
+          />
+
+          <IonRefresher
+            slot="fixed"
+            onIonRefresh={e => runAudit().then(() => e.detail.complete())}
           >
+            <IonRefresherContent />
+          </IonRefresher>
+
+          <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
+            <header>
+              <Eyebrow dotColor="accent">Outils · Audit</Eyebrow>
+              <h1
+                style={{
+                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontSize: 34,
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  letterSpacing: '-0.02em',
+                  color: 'var(--ink)',
+                  margin: '8px 0 4px',
+                }}
+              >
+                Audit cohérence
+              </h1>
+              <div
+                style={{
+                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontSize: 13,
+                  color: 'var(--muted)',
+                }}
+              >
+                {alerts.length} incohérence{alerts.length > 1 ? 's' : ''} détectée{alerts.length > 1 ? 's' : ''}
+              </div>
+            </header>
+
             <div
               className="flex gap-2 overflow-x-auto -mx-1 px-1"
               role="tablist"
@@ -284,16 +319,7 @@ const AuditView: React.FC = () => {
                 );
               })}
             </div>
-          </AgritechHeader>
 
-          <IonRefresher
-            slot="fixed"
-            onIonRefresh={e => runAudit().then(() => e.detail.complete())}
-          >
-            <IonRefresherContent />
-          </IonRefresher>
-
-          <div className="px-4 pt-4 pb-8">
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <IonSpinner

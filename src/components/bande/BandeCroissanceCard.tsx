@@ -158,7 +158,7 @@ const BandeCroissanceCard: React.FC<BandeCroissanceCardProps> = ({ bande, notes 
             Aucune pesée enregistrée
           </p>
           <p className="mt-1.5 font-mono text-[11px] text-text-2">
-            Utilisez le bouton Pesée du Cockpit pour commencer.
+            Utilisez le bouton Pesée pour commencer.
           </p>
         </div>
       ) : (

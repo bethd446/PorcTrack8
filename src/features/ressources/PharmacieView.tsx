@@ -1,13 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
 import { Package, Box, AlertOctagon, Plus } from 'lucide-react';
-import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
 import { Chip, DataRow, SectionDivider, KpiCard } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
 import EmptyState from '../../components/design/EmptyState';
+import Eyebrow from '../../components/design/Eyebrow';
+import TopBarSync from '../../components/design/TopBarSync';
 import { SeringueIcon } from '../../components/icons';
 import { useFarm } from '../../context/FarmContext';
 import { updateProduitVeto } from '../../services/supabaseWrites';
@@ -137,24 +138,49 @@ const PharmacieView: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
-          <AgritechHeader
-            title="PHARMACIE"
-            subtitle="Inventaire produits vétérinaires"
-            backTo="/ressources"
-            action={
+          <TopBarSync
+            crumbs={['Ressources', 'Pharmacie']}
+            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
+          />
+
+          <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
+            <header className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <Eyebrow dotColor="accent">Ressources · Pharmacie</Eyebrow>
+                <h1
+                  style={{
+                    fontFamily: 'BigShoulders, system-ui, sans-serif',
+                    fontSize: 34,
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    letterSpacing: '-0.02em',
+                    color: 'var(--ink)',
+                    margin: '8px 0 4px',
+                  }}
+                >
+                  Pharmacie
+                </h1>
+                <div
+                  style={{
+                    fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                    fontSize: 13,
+                    color: 'var(--muted)',
+                  }}
+                >
+                  {summary.total} produit{summary.total > 1 ? 's' : ''} vétérinaire{summary.total > 1 ? 's' : ''}
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={() => setAddOpen(true)}
                 aria-label="Ajouter un nouveau produit vétérinaire"
-                className="pressable inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-accent/40 text-accent font-mono text-[11px] uppercase tracking-wide hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-colors"
+                className="pressable shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-accent/40 text-accent font-mono text-[11px] uppercase tracking-wide hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-colors"
               >
                 <Plus size={14} aria-hidden="true" />
                 Nouveau produit
               </button>
-            }
-          />
+            </header>
 
-          <div className="px-4 pt-4 pb-8 flex flex-col gap-4">
             {/* ── Summary strip : 3 KpiCards ──────────────────────── */}
             <div className="grid grid-cols-3 gap-2">
               <KpiCard

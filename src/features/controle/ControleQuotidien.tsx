@@ -7,7 +7,8 @@ import { ChevronRight, Box, CheckCircle2, Shield } from 'lucide-react';
 import { CONTROLE_QUESTIONS } from './questions';
 import { insertNote } from '../../services/supabaseWrites';
 import AgritechLayout from '../../components/AgritechLayout';
-import AgritechHeader from '../../components/AgritechHeader';
+import Eyebrow from '../../components/design/Eyebrow';
+import TopBarSync from '../../components/design/TopBarSync';
 import { Chip } from '../../components/agritech';
 import { kvGet } from '../../services/kvStore';
 
@@ -61,11 +62,38 @@ const ControleQuotidien: React.FC = () => {
       <IonPage>
         <IonContent fullscreen className="ion-no-padding">
           <AgritechLayout withNav={false}>
-            <AgritechHeader
-              title="Contrôle terminé"
-              subtitle="Audit terrain"
+            <TopBarSync
+              crumbs={['Outils', 'Audit terrain']}
+              onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
             />
-            <div className="px-4 pt-8 pb-8 flex flex-col items-center text-center">
+            <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
+              <header>
+                <Eyebrow dotColor="accent">Outils · Audit terrain</Eyebrow>
+                <h1
+                  style={{
+                    fontFamily: 'BigShoulders, system-ui, sans-serif',
+                    fontSize: 34,
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    letterSpacing: '-0.02em',
+                    color: 'var(--ink)',
+                    margin: '8px 0 4px',
+                  }}
+                >
+                  Contrôle terminé
+                </h1>
+                <div
+                  style={{
+                    fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                    fontSize: 13,
+                    color: 'var(--muted)',
+                  }}
+                >
+                  Questionnaire quotidien
+                </div>
+              </header>
+
+              <div className="flex flex-col items-center text-center">
               <div
                 className="inline-flex h-20 w-20 items-center justify-center rounded-md bg-bg-1 border border-accent/40 text-accent mb-6"
                 aria-hidden="true"
@@ -99,6 +127,7 @@ const ControleQuotidien: React.FC = () => {
                   Retour au cockpit
                 </button>
               </div>
+              </div>
             </div>
           </AgritechLayout>
         </IonContent>
@@ -111,20 +140,46 @@ const ControleQuotidien: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout withNav={false}>
-          <AgritechHeader
-            title="Audit terrain"
-            subtitle={`Contrôle quotidien · ${currentStep + 1}/${CONTROLE_QUESTIONS.length}`}
-            backTo="/"
-            action={
-              <Chip
-                label={`Q${currentStep + 1}/${CONTROLE_QUESTIONS.length}`}
-                size="xs"
-                tone="accent"
-              />
-            }
+          <TopBarSync
+            crumbs={['Outils', 'Audit terrain']}
+            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
           />
 
-          <div className="px-4 pt-5 pb-10">
+          <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
+            <header>
+              <Eyebrow dotColor="accent">Outils · Audit terrain</Eyebrow>
+              <h1
+                style={{
+                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontSize: 34,
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  letterSpacing: '-0.02em',
+                  color: 'var(--ink)',
+                  margin: '8px 0 4px',
+                }}
+              >
+                Audit terrain
+              </h1>
+              <div
+                style={{
+                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontSize: 13,
+                  color: 'var(--muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <span>Questionnaire quotidien</span>
+                <Chip
+                  label={`Q${currentStep + 1}/${CONTROLE_QUESTIONS.length}`}
+                  size="xs"
+                  tone="accent"
+                />
+              </div>
+            </header>
+
             {/* Progress bar */}
             <div
               className="relative h-1.5 w-full rounded-full bg-bg-2 overflow-hidden"

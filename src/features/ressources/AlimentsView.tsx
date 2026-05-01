@@ -9,13 +9,14 @@ import {
   Scale,
   Plus,
 } from 'lucide-react';
-import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
 import { Chip, SectionDivider, KpiCard } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
 import EmptyState from '../../components/design/EmptyState';
+import Eyebrow from '../../components/design/Eyebrow';
+import TopBarSync from '../../components/design/TopBarSync';
 import { useFarm } from '../../context/FarmContext';
 import { updateProduitAliment } from '../../services/supabaseWrites';
 import type { StockAliment, StockStatut } from '../../types/farm';
@@ -315,6 +316,17 @@ const AlimentsView: React.FC = () => {
     return { total, rupture, poidsKg };
   }, [stockAliment]);
 
+  const counts = useMemo(() => {
+    let mp = 0;
+    let conc = 0;
+    for (const item of stockAliment) {
+      const cat = categoriserAliment(item.libelle, item.id);
+      if (cat === 'MATIERE_PREMIERE') mp += 1;
+      else if (cat === 'CONCENTRE') conc += 1;
+    }
+    return { mp, conc };
+  }, [stockAliment]);
+
   const handleSelect = (_item: StockAliment) => {
     // Placeholder — édition stock arrivera dans un prochain sprint.
     // Pour l'instant, on évite de rediriger vers TableView legacy pour ne
@@ -327,24 +339,49 @@ const AlimentsView: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
-          <AgritechHeader
-            title="STOCK ALIMENTS"
-            subtitle="Matières premières & concentrés"
-            backTo="/ressources"
-            action={
+          <TopBarSync
+            crumbs={['Ressources', 'Aliments']}
+            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
+          />
+
+          <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
+            <header className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <Eyebrow dotColor="accent">Ressources · Aliments</Eyebrow>
+                <h1
+                  style={{
+                    fontFamily: 'BigShoulders, system-ui, sans-serif',
+                    fontSize: 34,
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    letterSpacing: '-0.02em',
+                    color: 'var(--ink)',
+                    margin: '8px 0 4px',
+                  }}
+                >
+                  Aliments
+                </h1>
+                <div
+                  style={{
+                    fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                    fontSize: 13,
+                    color: 'var(--muted)',
+                  }}
+                >
+                  {counts.mp} matière{counts.mp > 1 ? 's' : ''} première{counts.mp > 1 ? 's' : ''} · {counts.conc} concentré{counts.conc > 1 ? 's' : ''}
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={() => setAddOpen(true)}
                 aria-label="Ajouter un nouvel aliment"
-                className="inline-flex h-9 items-center gap-1.5 px-3 rounded-md bg-accent text-bg-0 font-mono text-[11px] font-bold uppercase tracking-wide transition-colors duration-150 hover:brightness-110 active:scale-[0.96] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                className="shrink-0 inline-flex h-9 items-center gap-1.5 px-3 rounded-md bg-accent text-bg-0 font-mono text-[11px] font-bold uppercase tracking-wide transition-colors duration-150 hover:brightness-110 active:scale-[0.96] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
               >
                 <Plus size={14} aria-hidden="true" />
                 <span>Nouvel aliment</span>
               </button>
-            }
-          />
+            </header>
 
-          <div className="px-4 pt-4 pb-8 flex flex-col gap-4">
             {/* ── Summary strip : 3 KpiCards ──────────────────────── */}
             <div className="grid grid-cols-3 gap-2">
               <KpiCard

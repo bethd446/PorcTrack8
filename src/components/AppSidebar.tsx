@@ -99,12 +99,12 @@ const AppSidebar: React.FC = () => {
 
   const cyclesItems: NavItem[] = useMemo(
     () => [
+      { label: 'Reproduction', icon: RotateCcw, href: '/cycles/repro' },
       { label: 'Maternité', icon: RotateCcw, href: '/cycles/maternite' },
       { label: 'Post-sevrage', icon: RotateCcw, href: '/cycles/post-sevrage' },
       { label: 'Croissance', icon: RotateCcw, href: '/cycles/croissance' },
       { label: 'Engraissement', icon: RotateCcw, href: '/cycles/engraissement' },
       { label: 'Finition', icon: RotateCcw, href: '/cycles/finition' },
-      { label: 'Reproduction', icon: RotateCcw, href: '/cycles/repro' },
       { label: 'Sortie', icon: RotateCcw, href: '/cycles/sortie' },
     ],
     [],
@@ -246,12 +246,16 @@ const AppSidebar: React.FC = () => {
             }
             onClick={() => navigate('/troupeau')}
           />
+        </Section>
+
+        {/* Cycles */}
+        <Section title="Cycles">
           <SidebarRow
             icon={RotateCcw}
-            label="Cycles biologiques"
+            label="Cycles · Vue globale"
             expandable
             expanded={cyclesExpanded}
-            active={isActive('/cycles')}
+            active={location.pathname === '/cycles'}
             onClick={toggleCycles}
           />
           <div
@@ -263,6 +267,13 @@ const AppSidebar: React.FC = () => {
             }}
           >
             <div style={{ minHeight: 0 }}>
+              <SidebarRow
+                icon={RotateCcw}
+                label="Vue globale"
+                indent
+                active={location.pathname === '/cycles'}
+                onClick={() => navigate('/cycles')}
+              />
               {cyclesItems.map((c) => (
                 <SidebarRow
                   key={c.href}

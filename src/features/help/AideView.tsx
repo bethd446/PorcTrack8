@@ -2,7 +2,8 @@ import React from 'react';
 import { IonContent, IonPage } from '@ionic/react';
 import { HelpCircle, Phone } from 'lucide-react';
 import AgritechLayout from '../../components/AgritechLayout';
-import AgritechHeader from '../../components/AgritechHeader';
+import Eyebrow from '../../components/design/Eyebrow';
+import TopBarSync from '../../components/design/TopBarSync';
 import { buildWhatsappUrl, getSupportWhatsapp } from '../../services/supportContact';
 
 const FONT_DISPLAY = 'BigShoulders, "InstrumentSans", sans-serif';
@@ -85,18 +86,49 @@ const AideView: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout withNav={true}>
-          <AgritechHeader title="Aide" subtitle="Support · FAQ" />
+          <TopBarSync
+            crumbs={['Plus', 'Aide']}
+            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
+          />
 
           <div
-            className="px-4 pt-4 pb-8"
+            className="px-4 pt-5 pb-32"
             style={{
               fontFamily: FONT_BODY,
               color: 'var(--ink)',
               display: 'flex',
               flexDirection: 'column',
               gap: 24,
+              maxWidth: 1100,
+              margin: '0 auto',
             }}
           >
+            <header>
+              <Eyebrow dotColor="accent">Plus · Aide</Eyebrow>
+              <h1
+                style={{
+                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontSize: 34,
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  letterSpacing: '-0.02em',
+                  color: 'var(--ink)',
+                  margin: '8px 0 4px',
+                }}
+              >
+                Aide
+              </h1>
+              <div
+                style={{
+                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontSize: 13,
+                  color: 'var(--muted)',
+                }}
+              >
+                FAQ et support
+              </div>
+            </header>
+
             <section aria-label="Introduction">
               <div
                 style={{

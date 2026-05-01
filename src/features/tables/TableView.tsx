@@ -427,9 +427,9 @@ const TableView: React.FC<TableViewProps> = ({ tableKey }) => {
                           ariaLabel={`Ouvrir ${idValue || 'ligne'}`}
                           onClick={() => {
                             if (tableKey === 'SUIVI_TRUIES_REPRODUCTION') {
-                              navigate(`/cheptel/truie/${row[idIndex]}`);
+                              navigate(`/troupeau/truies/${row[idIndex]}`);
                             } else if (tableKey === 'VERRATS') {
-                              navigate(`/cheptel/verrat/${row[idIndex]}`);
+                              navigate(`/troupeau/verrats/${row[idIndex]}`);
                             } else {
                               setSelectedRow(row);
                             }

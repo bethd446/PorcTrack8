@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
 import { AlertTriangle } from 'lucide-react';
-import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
 import { Chip, DataRow, SectionDivider } from '../../components/agritech';
+import Eyebrow from '../../components/design/Eyebrow';
+import TopBarSync from '../../components/design/TopBarSync';
 import { useFarm } from '../../context/FarmContext';
 import {
   buildAlimentationPlan,
@@ -81,12 +82,38 @@ const PlanAlimentationView: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
-          <AgritechHeader
-            title="PLAN ALIMENTATION"
-            subtitle="Couverture stocks & rations"
+          <TopBarSync
+            crumbs={['Ressources', 'Plan']}
+            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
           />
 
-          <div className="px-4 pt-4 pb-8 flex flex-col gap-4">
+          <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
+            <header>
+              <Eyebrow dotColor="accent">Ressources · Plan</Eyebrow>
+              <h1
+                style={{
+                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontSize: 34,
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  letterSpacing: '-0.02em',
+                  color: 'var(--ink)',
+                  margin: '8px 0 4px',
+                }}
+              >
+                Plan d'alimentation
+              </h1>
+              <div
+                style={{
+                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontSize: 13,
+                  color: 'var(--muted)',
+                }}
+              >
+                Rations par phase
+              </div>
+            </header>
+
             {/* ── Summary strip : 3 KPI ───────────────────────────── */}
             <div className="grid grid-cols-3 gap-2">
               <KpiCardV6

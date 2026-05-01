@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
-import { Baby, Heart, Sprout, TrendingUp, Award, Home, Truck } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
 import { useTroupeau } from '../../context/TroupeauContext';
@@ -14,10 +14,6 @@ import { FARM_CONFIG } from '../../config/farm';
 
 import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
-import {
-  computeBandePhase,
-  filterRealPortees,
-} from '../../services/bandesAggregator';
 
 import TroupeauTruiesView from '../troupeau/TroupeauTruiesView';
 import TroupeauVerratsView from '../troupeau/TroupeauVerratsView';
@@ -27,17 +23,26 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/ta
 
 // ─── Sub-tabs ────────────────────────────────────────────────────────────────
 
-type SubTab = 'truies' | 'verrats' | 'porcelets' | 'loges';
+type SubTab = 'truies' | 'verrats' | 'porcelets' | 'loges' | 'bandes' | 'batiments';
 
 const SUB_TABS: ReadonlyArray<{ id: SubTab; label: string }> = [
   { id: 'truies', label: 'Truies' },
   { id: 'verrats', label: 'Verrats' },
   { id: 'porcelets', label: 'Porcelets' },
   { id: 'loges', label: 'Loges' },
+  { id: 'bandes', label: 'Bandes' },
+  { id: 'batiments', label: 'Bâtiments' },
 ];
 
 function isSubTab(v: string | null): v is SubTab {
-  return v === 'truies' || v === 'verrats' || v === 'porcelets' || v === 'loges';
+  return (
+    v === 'truies' ||
+    v === 'verrats' ||
+    v === 'porcelets' ||
+    v === 'loges' ||
+    v === 'bandes' ||
+    v === 'batiments'
+  );
 }
 
 const TroupeauHub: React.FC = () => {
@@ -106,52 +111,11 @@ const TroupeauHub: React.FC = () => {
     verrats: verrats.length,
     porcelets: porceletCount,
     loges: summary.mat.occupees + summary.post.occupees + summary.eng.occupees,
+    bandes: realBandes.length,
+    batiments: 3,
   };
 
   const totalAnimals = activeTruies.length + verrats.length;
-
-  // ── Comptes par phase de cycle (pour tiles "Cycles biologiques") ────────
-  const cycleCounts = useMemo(() => {
-    const counts = {
-      maternite: 0,
-      postSevrage: 0,
-      croissance: 0,
-      engraissement: 0,
-      finition: 0,
-      reproduction: activeTruies.filter(t => normaliseStatut(t.statut) === 'PLEINE').length,
-      sortie: 0,
-    };
-    const real = filterRealPortees(bandes);
-    for (const b of real) {
-      const phase = computeBandePhase(b, today);
-      if (phase === 'SOUS_MERE') counts.maternite += 1;
-      else if (phase === 'POST_SEVRAGE') counts.postSevrage += 1;
-      else if (phase === 'CROISSANCE') counts.croissance += 1;
-      else if (phase === 'ENGRAISSEMENT') counts.engraissement += 1;
-      else if (phase === 'FINITION') counts.finition += 1;
-    }
-    counts.sortie = bandes.filter(b => {
-      const s = (b.statut ?? '').toLowerCase();
-      return /vendu|archiv|sortie/.test(s);
-    }).length;
-    return counts;
-  }, [bandes, activeTruies, today]);
-
-  const CYCLE_TILES: ReadonlyArray<{
-    id: string;
-    label: string;
-    icon: React.ReactNode;
-    count: number;
-    route: string;
-  }> = [
-    { id: 'maternite', label: 'Maternité', icon: <Baby size={18} aria-hidden="true" />, count: cycleCounts.maternite, route: '/cycles/maternite' },
-    { id: 'postsevr', label: 'Post-sevrage', icon: <Sprout size={18} aria-hidden="true" />, count: cycleCounts.postSevrage, route: '/cycles/post-sevrage' },
-    { id: 'croiss', label: 'Croissance', icon: <TrendingUp size={18} aria-hidden="true" />, count: cycleCounts.croissance, route: '/cycles/croissance' },
-    { id: 'engrais', label: 'Engraissement', icon: <Home size={18} aria-hidden="true" />, count: cycleCounts.engraissement, route: '/cycles/engraissement' },
-    { id: 'finition', label: 'Finition', icon: <Award size={18} aria-hidden="true" />, count: cycleCounts.finition, route: '/cycles/finition' },
-    { id: 'repro', label: 'Reproduction', icon: <Heart size={18} aria-hidden="true" />, count: cycleCounts.reproduction, route: '/cycles/repro' },
-    { id: 'sortie', label: 'Sortie', icon: <Truck size={18} aria-hidden="true" />, count: cycleCounts.sortie, route: '/cycles/sortie' },
-  ];
 
   return (
     <IonPage>
@@ -260,6 +224,7 @@ const TroupeauHub: React.FC = () => {
               pleines={summary.pleines}
               maternite={summary.maternite}
               vides={summary.vides}
+              onStageClick={(stageId) => navigate(`/cycles/repro?stage=${stageId}`)}
             />
 
             {/* ── Sub-tabs (Radix) ─────────────────────────────────── */}
@@ -304,85 +269,17 @@ const TroupeauHub: React.FC = () => {
               <TabsContent value="loges" className="animate-fade-in">
                 <TroupeauLogesView />
               </TabsContent>
+              <TabsContent value="bandes" className="animate-fade-in">
+                <BandesInline
+                  bandes={realBandes}
+                  onOpen={(id) => navigate(`/troupeau/bandes/${id}`)}
+                  onSeeAll={() => navigate('/troupeau/bandes')}
+                />
+              </TabsContent>
+              <TabsContent value="batiments" className="animate-fade-in">
+                <BatimentsSummary onSeeAll={() => navigate('/troupeau/batiments')} />
+              </TabsContent>
             </Tabs>
-
-            {/* ── Cycles biologiques ───────────────────────────────── */}
-            <section aria-label="Cycles biologiques">
-              <Eyebrow dotColor="accent">Cycles biologiques</Eyebrow>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-                  gap: 10,
-                  marginTop: 12,
-                }}
-              >
-                {CYCLE_TILES.map(t => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => navigate(t.route)}
-                    aria-label={`${t.label} · ${t.count}`}
-                    className="pressable"
-                    style={{
-                      background: 'var(--bg-surface)',
-                      borderRadius: 12,
-                      padding: '14px 14px',
-                      boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-                      border: 'none',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 10,
-                      minHeight: 96,
-                      transition: 'transform 160ms var(--ease-emil)',
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 10,
-                        background: 'var(--color-accent-100)',
-                        color: 'var(--color-accent-600)',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {t.icon}
-                    </span>
-                    <div style={{ minWidth: 0 }}>
-                      <div
-                        style={{
-                          fontFamily: 'BigShoulders, system-ui, sans-serif',
-                          fontSize: 14,
-                          fontWeight: 600,
-                          color: 'var(--ink)',
-                          letterSpacing: '-0.005em',
-                        }}
-                      >
-                        {t.label}
-                      </div>
-                      <div
-                        style={{
-                          fontFamily: 'DMMono, ui-monospace, monospace',
-                          fontSize: 11,
-                          letterSpacing: '0.06em',
-                          color: 'var(--muted)',
-                          marginTop: 2,
-                          fontVariantNumeric: 'tabular-nums',
-                        }}
-                      >
-                        {String(t.count).padStart(2, '0')} {t.id === 'repro' ? 'truie(s)' : 'bande(s)'}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </section>
           </div>
         </AgritechLayout>
       </IonContent>
@@ -459,9 +356,10 @@ interface ReproFunnelProps {
   pleines: number;
   maternite: number;
   vides: number;
+  onStageClick?: (stageId: string) => void;
 }
 
-const ReproFunnel: React.FC<ReproFunnelProps> = ({ total, pleines, maternite, vides }) => {
+const ReproFunnel: React.FC<ReproFunnelProps> = ({ total, pleines, maternite, vides, onStageClick }) => {
   const stages = [
     { id: 'attente', label: 'Attente saillie', value: vides, color: 'var(--muted)' },
     { id: 'pleines', label: 'Pleines', value: pleines, color: 'var(--color-accent-500)' },
@@ -497,9 +395,25 @@ const ReproFunnel: React.FC<ReproFunnelProps> = ({ total, pleines, maternite, vi
         {stages.map((s) => {
           const pct = (s.value / max) * 100;
           return (
-            <div
+            <button
               key={s.id}
-              style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}
+              type="button"
+              onClick={() => onStageClick?.(s.id)}
+              aria-label={`${s.label} · ${s.value}`}
+              className="pressable"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+                minWidth: 0,
+                background: 'transparent',
+                border: 'none',
+                padding: '4px 2px',
+                textAlign: 'left',
+                cursor: onStageClick ? 'pointer' : 'default',
+                borderRadius: 8,
+                transition: 'background 160ms var(--ease-emil)',
+              }}
             >
               <div
                 style={{
@@ -543,11 +457,217 @@ const ReproFunnel: React.FC<ReproFunnelProps> = ({ total, pleines, maternite, vi
               >
                 {s.label}
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
     </section>
+  );
+};
+
+// ─── BandesInline ──────────────────────────────────────────────────────────
+
+interface BandesInlineProps {
+  bandes: ReadonlyArray<{ id: string; idPortee?: string; truie?: string; statut?: string; vivants?: number; dateMB?: string }>;
+  onOpen: (id: string) => void;
+  onSeeAll: () => void;
+}
+
+const BandesInline: React.FC<BandesInlineProps> = ({ bandes, onOpen, onSeeAll }) => {
+  if (bandes.length === 0) {
+    return (
+      <div
+        style={{
+          background: 'var(--bg-surface)',
+          borderRadius: 12,
+          padding: '20px 16px',
+          textAlign: 'center',
+          color: 'var(--muted)',
+          fontSize: 13,
+        }}
+      >
+        Aucune bande active.
+      </div>
+    );
+  }
+  return (
+    <div
+      style={{
+        background: 'var(--bg-surface)',
+        borderRadius: 12,
+        boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
+        overflow: 'hidden',
+      }}
+    >
+      <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+        {bandes.map((b, idx) => (
+          <li key={b.id}>
+            <button
+              type="button"
+              onClick={() => onOpen(b.id)}
+              className="pressable"
+              style={{
+                width: '100%',
+                background: 'transparent',
+                border: 'none',
+                borderTop: idx === 0 ? 'none' : '1px solid var(--bg-app)',
+                padding: '12px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{
+                    fontFamily: 'BigShoulders, system-ui, sans-serif',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: 'var(--ink)',
+                    letterSpacing: '-0.005em',
+                  }}
+                >
+                  {b.idPortee ?? b.id}
+                  {b.truie ? ` · ${b.truie}` : ''}
+                </div>
+                <div
+                  style={{
+                    fontFamily: 'DMMono, ui-monospace, monospace',
+                    fontSize: 10.5,
+                    letterSpacing: '0.06em',
+                    color: 'var(--muted)',
+                    marginTop: 2,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  {(b.statut ?? '—').toUpperCase()}
+                  {typeof b.vivants === 'number' ? ` · ${b.vivants} viv.` : ''}
+                </div>
+              </div>
+              <ChevronRight size={16} aria-hidden="true" style={{ color: 'var(--muted)', flexShrink: 0 }} />
+            </button>
+          </li>
+        ))}
+      </ul>
+      <button
+        type="button"
+        onClick={onSeeAll}
+        className="pressable"
+        style={{
+          width: '100%',
+          background: 'transparent',
+          border: 'none',
+          borderTop: '1px solid var(--bg-app)',
+          padding: '12px 16px',
+          fontFamily: 'DMMono, ui-monospace, monospace',
+          fontSize: 11,
+          letterSpacing: '0.10em',
+          textTransform: 'uppercase',
+          color: 'var(--color-accent-600)',
+          cursor: 'pointer',
+        }}
+      >
+        Voir toutes les bandes
+      </button>
+    </div>
+  );
+};
+
+// ─── BatimentsSummary ──────────────────────────────────────────────────────
+
+interface BatimentsSummaryProps {
+  onSeeAll: () => void;
+}
+
+const BatimentsSummary: React.FC<BatimentsSummaryProps> = ({ onSeeAll }) => {
+  const stats = [
+    { label: 'Maternité', cap: FARM_CONFIG.MATERNITE_LOGES_CAPACITY },
+    { label: 'Post-sevrage', cap: FARM_CONFIG.POST_SEVRAGE_LOGES_CAPACITY },
+    { label: 'Engraissement', cap: FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY },
+  ];
+  return (
+    <div
+      style={{
+        background: 'var(--bg-surface)',
+        borderRadius: 12,
+        boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
+        padding: '16px 18px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 14,
+      }}
+    >
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: 12,
+        }}
+      >
+        {stats.map((s) => (
+          <div key={s.label} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span
+              style={{
+                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontSize: 9.5,
+                letterSpacing: '0.18em',
+                textTransform: 'uppercase',
+                color: 'var(--muted)',
+                fontWeight: 600,
+              }}
+            >
+              {s.label}
+            </span>
+            <span
+              style={{
+                fontFamily: 'BricolageGrotesque, system-ui, sans-serif',
+                fontSize: 22,
+                fontWeight: 600,
+                color: 'var(--ink)',
+                letterSpacing: '-0.02em',
+                lineHeight: 1,
+              }}
+            >
+              {s.cap}
+            </span>
+            <span
+              style={{
+                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontSize: 10,
+                letterSpacing: '0.06em',
+                color: 'var(--muted)',
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              loges
+            </span>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={onSeeAll}
+        className="pressable"
+        style={{
+          alignSelf: 'flex-start',
+          background: 'var(--color-accent-100)',
+          color: 'var(--color-accent-600)',
+          border: 'none',
+          borderRadius: 8,
+          padding: '8px 14px',
+          fontFamily: 'DMMono, ui-monospace, monospace',
+          fontSize: 11,
+          letterSpacing: '0.10em',
+          textTransform: 'uppercase',
+          fontWeight: 600,
+          cursor: 'pointer',
+        }}
+      >
+        Voir le plan complet
+      </button>
+    </div>
   );
 };
 

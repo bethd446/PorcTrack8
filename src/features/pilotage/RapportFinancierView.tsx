@@ -16,8 +16,9 @@ import React, { useMemo } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
 import { Download, TrendingUp, Trophy, BarChart3 } from 'lucide-react';
 
-import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
+import Eyebrow from '../../components/design/Eyebrow';
+import TopBarSync from '../../components/design/TopBarSync';
 import { KpiCard, SectionDivider, Chip } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
 import {
@@ -138,13 +139,41 @@ const RapportFinancierView: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
-          <AgritechHeader
-            title="RAPPORT FINANCIER"
-            subtitle="Détail CA par bande · 6 mois"
-            backTo="/pilotage/finances"
+          <TopBarSync
+            crumbs={['Pilotage', 'Rapports']}
+            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
           />
 
-          <div className="px-4 pt-4 pb-32 flex flex-col gap-5">
+          <div
+            className="px-4 pt-5 pb-32 flex flex-col gap-5"
+            style={{ maxWidth: 1100, margin: '0 auto' }}
+          >
+            <header>
+              <Eyebrow dotColor="accent">Pilotage · Rapport</Eyebrow>
+              <h1
+                style={{
+                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontSize: 34,
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  letterSpacing: '-0.02em',
+                  color: 'var(--ink)',
+                  margin: '8px 0 4px',
+                }}
+              >
+                Rapport financier
+              </h1>
+              <div
+                style={{
+                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontSize: 13,
+                  color: 'var(--muted)',
+                }}
+              >
+                Synthèse 6 mois · top {topBandes.length} bande{topBandes.length > 1 ? 's' : ''}
+              </div>
+            </header>
+
             {/* ── KPI synthèse ────────────────────────────────────────── */}
             <div className="grid grid-cols-3 gap-2.5">
               <KpiCard

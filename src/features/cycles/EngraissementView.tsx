@@ -5,8 +5,9 @@ import {
   TrendingUp, Droplets, ArrowUpRight,
   Scale, PackageCheck
 } from 'lucide-react';
-import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
+import Eyebrow from '../../components/design/Eyebrow';
+import TopBarSync from '../../components/design/TopBarSync';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
 import EmptyState from '../../components/design/EmptyState';
 import {
@@ -89,13 +90,37 @@ const EngraissementView: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
-          <AgritechHeader
-            title="ENGRAISSEMENT"
-            subtitle="Phase de finition · J100 → J180"
-            backTo="/cycles"
+          <TopBarSync
+            crumbs={['Cycles', 'Engraissement']}
+            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
           />
 
-          <div className="px-4 pt-4 pb-32 flex flex-col gap-5">
+          <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
+            <header>
+              <Eyebrow dotColor="amber">Cycle · Engraissement</Eyebrow>
+              <h1
+                style={{
+                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontSize: 34,
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  letterSpacing: '-0.02em',
+                  color: 'var(--ink)',
+                  margin: '8px 0 4px',
+                }}
+              >
+                Engraissement
+              </h1>
+              <div
+                style={{
+                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontSize: 13,
+                  color: 'var(--muted)',
+                }}
+              >
+                J95 → J137 · {summary.nbPortees} bandes
+              </div>
+            </header>
             {/* ── Summary Stats ────────────────────────────────────────── */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <KpiCardV6

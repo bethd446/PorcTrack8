@@ -6,16 +6,16 @@
  *   1. TopBarSync + Eyebrow + H1 Big Shoulders
  *   2. KPI cards principaux (4) — Marge globale / Valeur cheptel / Mortalité / Frais
  *   3. Section "Performance bandes" : top / flop par marge
- *   4. Section "Alertes critiques" : urgences à traiter
+ *   4. Carte synthétique "Alertes" → /alerts (canonique)
  *   5. Audit / export PDF
  */
 
 import React, { useMemo, useState } from 'react';
 import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
-  Wallet, FileText, TrendingUp, AlertTriangle,
-  ArrowRight, Wind, ShieldCheck,
+  Wallet, FileText, TrendingUp,
+  ArrowRight, Wind, BellRing, ChevronRight,
 } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
@@ -23,11 +23,9 @@ import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import KpiCardV6 from '../../components/design/KpiCard';
 import { useFarm } from '../../context/FarmContext';
-import { useTroupeau } from '../../context/TroupeauContext';
 import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import { genererRapportGlobal } from '../../services/financialAnalyzer';
 import { prepareAuditSnapshot } from '../../services/exportService';
-import { resolveAlertSubject } from '../../utils/alertSubject';
 import AuditPrintTemplate from '../pilotage/AuditPrintTemplate';
 
 const PilotageHub: React.FC = () => {
@@ -38,8 +36,6 @@ const PilotageHub: React.FC = () => {
     bandes,
     transitions,
   } = useFarm();
-  const { truies, verrats } = useTroupeau();
-  const alertLookup = useMemo(() => ({ bandes, truies, verrats }), [bandes, truies, verrats]);
   const { handleRefresh } = useAutoRefresh();
   const [, setIsPrinting] = useState(false);
 
@@ -61,8 +57,8 @@ const PilotageHub: React.FC = () => {
     }, 500);
   };
 
-  const urgences = useMemo(() => {
-    return alerts.filter(a => a.priority === 'CRITIQUE' || a.priority === 'HAUTE').slice(0, 5);
+  const alertsCount = useMemo(() => {
+    return alerts.filter(a => a.priority === 'CRITIQUE' || a.priority === 'HAUTE').length;
   }, [alerts]);
 
   // Spark dérivée déterministe
@@ -344,125 +340,47 @@ const PilotageHub: React.FC = () => {
               </div>
             </section>
 
-            {/* ── Alertes critiques ────────────────────────────────── */}
-            <section aria-label="Alertes critiques">
-              <Eyebrow dotColor={urgences.length > 0 ? 'pig' : 'accent'}>
-                Alertes critiques · {urgences.length}
-              </Eyebrow>
-              {urgences.length === 0 ? (
-                <div
-                  style={{
-                    marginTop: 12,
-                    background: 'var(--bg-surface)',
-                    borderRadius: 12,
-                    padding: '20px 22px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    border: '1px solid var(--color-accent-100)',
-                  }}
-                >
-                  <ShieldCheck size={22} color="var(--color-accent-500)" aria-hidden="true" />
-                  <span
+            {/* ── Alertes (carte sommaire) ─────────────────────────── */}
+            <section aria-label="Alertes en cours">
+              <Eyebrow dotColor="pig">Alertes</Eyebrow>
+              <Link
+                to="/alerts"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--line)',
+                  borderRadius: 'var(--radius-card, 12px)',
+                  padding: '14px 18px',
+                  textDecoration: 'none',
+                  marginTop: 12,
+                }}
+              >
+                <BellRing
+                  size={20}
+                  color={alertsCount > 0 ? 'var(--color-pig)' : 'var(--muted)'}
+                  aria-hidden="true"
+                />
+                <div style={{ flex: 1 }}>
+                  <div
                     style={{
                       fontFamily: 'BigShoulders, system-ui, sans-serif',
                       fontSize: 16,
-                      fontWeight: 600,
+                      fontWeight: 700,
                       color: 'var(--ink)',
-                      letterSpacing: '-0.005em',
                     }}
                   >
-                    Exploitation sous contrôle
-                  </span>
+                    {alertsCount > 0
+                      ? `${alertsCount} alerte${alertsCount > 1 ? 's' : ''} active${alertsCount > 1 ? 's' : ''}`
+                      : 'Aucune alerte'}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--muted)' }}>
+                    Voir toutes les alertes →
+                  </div>
                 </div>
-              ) : (
-                <ul
-                  style={{
-                    listStyle: 'none',
-                    padding: 0,
-                    margin: '12px 0 0',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 8,
-                  }}
-                >
-                  {urgences.map(alert => {
-                    const dotColor =
-                      alert.priority === 'CRITIQUE'
-                        ? 'var(--color-pig-deep)'
-                        : 'var(--color-amber-pork-deep)';
-                    return (
-                    <li key={alert.id}>
-                      <div
-                        style={{
-                          background: 'var(--bg-surface)',
-                          borderRadius: 12,
-                          boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-                          padding: '14px 16px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 6,
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span
-                            aria-hidden="true"
-                            style={{
-                              width: 6,
-                              height: 6,
-                              borderRadius: '50%',
-                              background: dotColor,
-                              flexShrink: 0,
-                            }}
-                          />
-                          <span
-                            style={{
-                              fontFamily: 'DMMono, ui-monospace, monospace',
-                              fontSize: 10,
-                              letterSpacing: '0.10em',
-                              textTransform: 'uppercase',
-                              fontWeight: 600,
-                              color: dotColor,
-                            }}
-                          >
-                            {alert.priority} · {alert.category}
-                          </span>
-                          <AlertTriangle
-                            size={14}
-                            color={dotColor}
-                            style={{ marginLeft: 'auto' }}
-                            aria-hidden="true"
-                          />
-                        </div>
-                        <h4
-                          style={{
-                            fontFamily: 'BigShoulders, system-ui, sans-serif',
-                            fontSize: 16,
-                            fontWeight: 600,
-                            color: 'var(--ink)',
-                            margin: 0,
-                            letterSpacing: '-0.005em',
-                          }}
-                        >
-                          {resolveAlertSubject(alert.title, alertLookup)}
-                        </h4>
-                        <p
-                          style={{
-                            fontFamily: 'InstrumentSans, system-ui, sans-serif',
-                            fontSize: 12,
-                            color: 'var(--ink-soft)',
-                            lineHeight: 1.5,
-                            margin: 0,
-                          }}
-                        >
-                          {resolveAlertSubject(alert.message, alertLookup)}
-                        </p>
-                      </div>
-                    </li>
-                    );
-                  })}
-                </ul>
-              )}
+                <ChevronRight size={18} color="var(--muted)" aria-hidden="true" />
+              </Link>
             </section>
 
             {/* ── Modules de gestion ───────────────────────────────── */}

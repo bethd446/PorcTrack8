@@ -50,9 +50,9 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onOpenChange }) =
         <CommandEmpty>Aucun résultat</CommandEmpty>
 
         <CommandGroup heading="Pages">
-          <CommandItem onSelect={() => go('/cockpit')}>
+          <CommandItem onSelect={() => go('/today')}>
             <LayoutGrid size={14} />
-            Cockpit
+            Aujourd'hui
           </CommandItem>
           <CommandItem onSelect={() => go('/alerts')}>
             <BellRing size={14} />

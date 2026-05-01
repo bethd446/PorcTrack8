@@ -5,17 +5,18 @@
  *
  *   1. Header BigShoulders : "Bonjour, {firstName}" + date
  *   2. Section "Alertes critiques" — CRITIQUE + HAUTE, max 10
- *   3. Section "Audit du jour" — CTA + dernier audit fait
- *   4. Section "Tâches" — placeholder v1
+ *   3. Section "Confirmations en attente" — file confirmationQueue
+ *   4. Section "Audit du jour" — CTA + dernier audit fait
+ *   5. Section "Tâches" — placeholder v1
  */
 
-import React, { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   IonContent, IonPage, IonRefresher, IonRefresherContent,
 } from '@ionic/react';
 import {
-  AlertTriangle, ChevronRight, ClipboardCheck, ShieldCheck,
+  AlertTriangle, CheckCircle2, ChevronRight, ClipboardCheck, RotateCcw, ShieldCheck,
 } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
@@ -27,6 +28,10 @@ import { useMeta } from '../../context/FarmContext';
 import { useTroupeau } from '../../context/TroupeauContext';
 import { resolveAlertSubject } from '../../utils/alertSubject';
 import type { FarmAlert, AlertPriority } from '../../services/alertEngine';
+import {
+  getPendingConfirmations,
+  type PendingConfirmation,
+} from '../../services/confirmationQueue';
 
 const PRIORITY_ORDER: Record<AlertPriority, number> = {
   CRITIQUE: 0,
@@ -43,6 +48,18 @@ const TodayHub: React.FC = () => {
   const { recomputeAlerts } = useMeta();
   const { bandes, truies, verrats } = useTroupeau();
   const lookup = useMemo(() => ({ bandes, truies, verrats }), [bandes, truies, verrats]);
+
+  // ── Confirmations en attente (file persistante) ───────────────────────
+  const [pendingConfirmations, setPendingConfirmations] = useState<PendingConfirmation[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    void getPendingConfirmations().then((items) => {
+      if (!cancelled) setPendingConfirmations(items);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [alerts]);
 
   const firstName = (() => {
     const parts = (userName || 'Utilisateur').split(/\s+/).filter(Boolean);
@@ -63,6 +80,7 @@ const TodayHub: React.FC = () => {
 
   const handleRefresh = (event: CustomEvent<{ complete: () => void }>): void => {
     recomputeAlerts();
+    void getPendingConfirmations().then(setPendingConfirmations);
     event.detail.complete();
   };
 
@@ -304,6 +322,156 @@ const TodayHub: React.FC = () => {
                     </li>
                     );
                   })}
+                </ul>
+              )}
+            </section>
+
+            {/* ── Cycles en cours ──────────────────────────────────── */}
+            <section aria-label="Cycles en cours">
+              <Eyebrow dotColor="accent">Cycles en cours</Eyebrow>
+              <Link
+                to="/cycles"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--line)',
+                  borderRadius: 'var(--radius-card, 12px)',
+                  padding: '16px 20px',
+                  textDecoration: 'none',
+                  marginTop: 12,
+                }}
+              >
+                <RotateCcw size={20} color="var(--color-accent-500)" aria-hidden="true" />
+                <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      fontFamily: 'BigShoulders, sans-serif',
+                      fontSize: 18,
+                      fontWeight: 700,
+                      color: 'var(--ink)',
+                    }}
+                  >
+                    Voir les cycles biologiques
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--muted)' }}>
+                    {bandes.length} bandes actives · 7 phases
+                  </div>
+                </div>
+                <ChevronRight size={18} color="var(--muted)" aria-hidden="true" />
+              </Link>
+            </section>
+
+            {/* ── Confirmations en attente ──────────────────────────── */}
+            <section aria-label="Confirmations en attente">
+              <Eyebrow dotColor="amber">Confirmations en attente</Eyebrow>
+              {pendingConfirmations.length === 0 ? (
+                <div
+                  style={{
+                    marginTop: 12,
+                    background: 'var(--bg-surface)',
+                    borderRadius: 12,
+                    padding: '16px 18px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    border: '1px solid var(--color-accent-100)',
+                  }}
+                >
+                  <CheckCircle2 size={20} color="var(--color-accent-500)" aria-hidden="true" />
+                  <span
+                    style={{
+                      fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                      fontSize: 13,
+                      color: 'var(--muted)',
+                    }}
+                  >
+                    Aucune action à confirmer
+                  </span>
+                </div>
+              ) : (
+                <ul
+                  style={{
+                    listStyle: 'none',
+                    padding: 0,
+                    margin: '12px 0 0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 8,
+                  }}
+                >
+                  {pendingConfirmations.slice(0, 5).map((c) => (
+                    <li key={c.id}>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/alerts')}
+                        className="pressable"
+                        style={{
+                          width: '100%',
+                          textAlign: 'left',
+                          background: 'var(--bg-surface)',
+                          borderRadius: 12,
+                          boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
+                          padding: '14px 16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          border: 'none',
+                          cursor: 'pointer',
+                          transition: 'transform 160ms var(--ease-emil)',
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontFamily: 'DMMono, ui-monospace, monospace',
+                              fontSize: 10,
+                              letterSpacing: '0.10em',
+                              textTransform: 'uppercase',
+                              fontWeight: 600,
+                              color: 'var(--color-amber-pork-deep)',
+                              marginBottom: 4,
+                            }}
+                          >
+                            {c.action.type.replace(/_/g, ' ')}
+                          </div>
+                          <h4
+                            style={{
+                              fontFamily: 'var(--font-display, BigShoulders), system-ui, sans-serif',
+                              fontSize: 15,
+                              fontWeight: 600,
+                              color: 'var(--ink)',
+                              margin: 0,
+                              letterSpacing: '-0.005em',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {c.alertTitle}
+                          </h4>
+                          {c.alertMessage ? (
+                            <p
+                              style={{
+                                fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                                fontSize: 12,
+                                color: 'var(--ink-soft)',
+                                lineHeight: 1.4,
+                                margin: '2px 0 0',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {c.alertMessage}
+                            </p>
+                          ) : null}
+                        </div>
+                        <ChevronRight size={16} color="var(--muted)" aria-hidden="true" />
+                      </button>
+                    </li>
+                  ))}
                 </ul>
               )}
             </section>

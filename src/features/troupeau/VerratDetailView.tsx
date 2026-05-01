@@ -18,8 +18,9 @@ import {
   Syringe, Scale, Heart, FileText, AlertCircle, Edit3,
 } from 'lucide-react';
 
-import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
+import Eyebrow from '../../components/design/Eyebrow';
+import TopBarSync from '../../components/design/TopBarSync';
 import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
 import { VerratIcon } from '../../components/icons';
@@ -108,20 +109,47 @@ const VerratDetailView: React.FC = () => {
       <IonPage>
         <IonContent fullscreen className="ion-no-padding">
           <AgritechLayout>
-            <AgritechHeader
-              title="VERRAT INTROUVABLE"
-              subtitle={`ID "${decodedId}"`}
-              backTo="/troupeau/verrats"
+            <TopBarSync
+              crumbs={['Cheptel', 'Verrats', decodedId]}
+              onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
             />
             <div
               role="main"
               aria-label="Verrat introuvable"
-              className="px-4 pt-6 flex flex-col items-center gap-3"
+              className="px-4 pt-5 pb-32 flex flex-col gap-5"
+              style={{ maxWidth: 1100, margin: '0 auto' }}
             >
-              <AlertCircle size={40} className="text-coral" aria-hidden="true" />
-              <p className="font-mono text-[12px] text-text-2 text-center max-w-xs">
-                Ce verrat n'existe pas (ou plus) dans ta feuille VERRATS.
-              </p>
+              <header>
+                <Eyebrow dotColor="accent">Cheptel · Verrat {decodedId}</Eyebrow>
+                <h1
+                  style={{
+                    fontFamily: 'BigShoulders, system-ui, sans-serif',
+                    fontSize: 34,
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    letterSpacing: '-0.02em',
+                    color: 'var(--ink)',
+                    margin: '8px 0 4px',
+                  }}
+                >
+                  Verrat introuvable
+                </h1>
+                <div
+                  style={{
+                    fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                    fontSize: 13,
+                    color: 'var(--muted)',
+                  }}
+                >
+                  ID "{decodedId}"
+                </div>
+              </header>
+              <div className="flex flex-col items-center gap-3">
+                <AlertCircle size={40} className="text-coral" aria-hidden="true" />
+                <p className="font-mono text-[12px] text-text-2 text-center max-w-xs">
+                  Ce verrat n'existe pas (ou plus) dans ta feuille VERRATS.
+                </p>
+              </div>
             </div>
           </AgritechLayout>
         </IonContent>
@@ -151,27 +179,50 @@ const VerratDetailView: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
-          <AgritechHeader
-            title="VERRAT"
-            subtitle={displayId}
-            backTo="/troupeau/verrats"
+          <TopBarSync
+            crumbs={['Cheptel', 'Verrats', displayId]}
+            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
           />
 
           <div
             role="main"
             aria-label={`Détail verrat ${displayId}`}
-            className="px-4 pt-4 pb-32 flex flex-col gap-5"
+            className="px-4 pt-5 pb-32 flex flex-col gap-5"
+            style={{ maxWidth: 1100, margin: '0 auto' }}
           >
+            <header>
+              <Eyebrow dotColor="accent">Cheptel · Verrat {displayId}</Eyebrow>
+              <h1
+                style={{
+                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontSize: 34,
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  letterSpacing: '-0.02em',
+                  color: 'var(--ink)',
+                  margin: '8px 0 4px',
+                }}
+              >
+                {title}
+              </h1>
+              <div
+                style={{
+                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontSize: 13,
+                  color: 'var(--muted)',
+                }}
+              >
+                Origine {verrat.origine || '—'} · statut {verrat.statut || '—'}
+              </div>
+            </header>
+
             {/* ── Hero ───────────────────────────────────────────────── */}
             <div className="card-dense flex items-center gap-3.5 !p-4">
               <div className="w-14 h-14 rounded-2xl-v2 bg-bg-1 border border-border flex items-center justify-center shrink-0 text-accent">
                 <VerratIcon size={32} aria-hidden="true" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="ft-heading text-[22px] text-text-0 leading-none truncate">
-                  {title}
-                </div>
-                <div className="flex gap-1.5 mt-2 flex-wrap items-center">
+                <div className="flex gap-1.5 flex-wrap items-center">
                   <Chip label={verrat.statut || '—'} tone={tone} size="xs" />
                   <button
                     type="button"
