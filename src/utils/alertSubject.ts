@@ -1,6 +1,10 @@
 import type { Truie, Verrat, BandePorcelets } from '../types/farm';
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+// Capture un préfixe de classification précédant directement un UUID, ex : "Bande <uuid>".
+// On l'utilise pour éviter "Bande Bande XX" lorsque le label remonté contient déjà le mot.
+const PREFIXED_UUID_RE =
+  /\b(bande|truie|verrat)s?\s+([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/gi;
 
 export interface TroupeauLookup {
   bandes: BandePorcelets[];
@@ -8,29 +12,46 @@ export interface TroupeauLookup {
   verrats: Verrat[];
 }
 
-const labelForUuid = (uuid: string, t: TroupeauLookup): string | null => {
+interface FriendlyLabel {
+  kind: 'bande' | 'truie' | 'verrat';
+  code: string;
+}
+
+const friendlyForUuid = (uuid: string, t: TroupeauLookup): FriendlyLabel | null => {
   const bande = t.bandes.find(b => b.id === uuid);
   if (bande) {
-    const code = bande.idPortee?.trim();
-    return code ? `Bande ${code}` : `Bande ${uuid.slice(0, 8)}`;
+    return { kind: 'bande', code: bande.idPortee?.trim() || uuid.slice(0, 8) };
   }
   const truie = t.truies.find(s => s.id === uuid);
   if (truie) {
-    const code = truie.displayId?.trim();
-    return code ? `Truie ${code}` : `Truie ${uuid.slice(0, 8)}`;
+    return { kind: 'truie', code: truie.displayId?.trim() || uuid.slice(0, 8) };
   }
   const verrat = t.verrats.find(v => v.id === uuid);
   if (verrat) {
-    const code = verrat.displayId?.trim();
-    return code ? `Verrat ${code}` : `Verrat ${uuid.slice(0, 8)}`;
+    return { kind: 'verrat', code: verrat.displayId?.trim() || uuid.slice(0, 8) };
   }
   return null;
 };
 
+const KIND_LABEL: Record<FriendlyLabel['kind'], string> = {
+  bande: 'Bande',
+  truie: 'Truie',
+  verrat: 'Verrat',
+};
+
 export const resolveAlertSubject = (raw: string, t: TroupeauLookup): string => {
   if (!raw) return raw;
-  return raw.replace(UUID_RE, (uuid) => {
-    const friendly = labelForUuid(uuid.toLowerCase(), t);
-    return friendly ?? `${uuid.slice(0, 8)}…`;
+  // 1) Pass prioritaire : si "Bande <uuid>" / "Truie <uuid>" / "Verrat <uuid>" apparaît,
+  //    on garde le préfixe existant (avec sa casse) et on remplace l'UUID par le code seul.
+  const withoutDoublons = raw.replace(PREFIXED_UUID_RE, (_match, prefix: string, uuid: string) => {
+    const friendly = friendlyForUuid(uuid.toLowerCase(), t);
+    if (!friendly) return `${prefix} ${uuid.slice(0, 8)}…`;
+    return `${prefix} ${friendly.code}`;
+  });
+  // 2) Pass standard : UUID isolés non préfixés → on prefixe avec le kind.
+  return withoutDoublons.replace(UUID_RE, (uuid) => {
+    const friendly = friendlyForUuid(uuid.toLowerCase(), t);
+    if (!friendly) return `${uuid.slice(0, 8)}…`;
+    return `${KIND_LABEL[friendly.kind]} ${friendly.code}`;
   });
 };

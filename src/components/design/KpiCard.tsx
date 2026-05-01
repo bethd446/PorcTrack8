@@ -205,7 +205,15 @@ export default function KpiCard({
         {label}
       </div>
       <div style={valueRowStyle}>
-        <span style={valueStyle}>{value}</span>
+        <span
+          style={{
+            ...valueStyle,
+            opacity: value === '—' ? 0.4 : 1,
+          }}
+          title={value === '—' ? 'Donnée non disponible — saisir des évènements pour activer.' : undefined}
+        >
+          {value}
+        </span>
         {unit ? <span style={unitStyle}>{unit}</span> : null}
       </div>
       {trend ? <div style={trendStyle}>{trend}</div> : null}
