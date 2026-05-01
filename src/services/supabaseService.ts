@@ -253,6 +253,9 @@ export async function getStockAliments(
     const mapped: StockAliment[] = (data ?? []).map(r => {
       const stockActuel = r.stock_actuel ?? 0;
       const seuil       = r.seuil_alerte ?? 0;
+      // V21-D1 : fournisseur_id (colonne ajoutée par migration, pas encore dans
+      // le type Database généré). Cast ciblé pour conserver le typage du reste.
+      const fournisseurId = (r as { fournisseur_id?: string | null }).fournisseur_id ?? undefined;
       return {
         id:           r.id,
         libelle:      r.libelle,
@@ -263,6 +266,7 @@ export async function getStockAliments(
                     : stockActuel <= seuil ? 'BAS'
                     : 'OK',
         notes:        r.notes ?? undefined,
+        fournisseurId,
       };
     });
 
@@ -292,6 +296,7 @@ export async function getStockVeto(
     const mapped: StockVeto[] = (data ?? []).map(r => {
       const stockActuel = r.stock_actuel ?? 0;
       const stockMin    = r.stock_min ?? 0;
+      const fournisseurId = (r as { fournisseur_id?: string | null }).fournisseur_id ?? undefined;
       return {
         id:           r.id,
         produit:      r.libelle,
@@ -305,6 +310,7 @@ export async function getStockVeto(
                     : stockActuel <= stockMin ? 'BAS'
                     : 'OK',
         notes:        r.notes ?? undefined,
+        fournisseurId,
       };
     });
 
@@ -336,7 +342,10 @@ export async function getNotesTerrain(
       animalType: (r.category as Note['animalType']) ?? 'GENERAL',
       animalId:   '',
       texte:      r.content ?? '',
-      auteur:     undefined,
+      auteur:     r.author_id ?? undefined,
+      photoUrl:   r.photo_url ?? undefined,
+      audioUrl:   r.audio_url ?? undefined,
+      tags:       r.tags ?? undefined,
       synced:     true,
     }));
 

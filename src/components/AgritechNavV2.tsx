@@ -26,17 +26,25 @@ import QuickNoteForm from './forms/QuickNoteForm';
 import QuickMortalityForm from './forms/QuickMortalityForm';
 import QuickMiseBasForm from './forms/QuickMiseBasForm';
 import QuickSevrageForm from './forms/QuickSevrageForm';
+import QuickEchographieForm from './forms/QuickEchographieForm';
+import QuickWeightDistForm from './forms/QuickWeightDistForm';
+import QuickConsoAlimentForm from './forms/QuickConsoAlimentForm';
+import QuickAdoptionForm from './forms/QuickAdoptionForm';
 
 /* ── QuickActions Context ────────────────────────────────────────────────── */
 
 export type QuickActionKind =
   | 'saillie'
+  | 'echographie'
   | 'soin'
   | 'note'
   | 'pesee'
+  | 'conso'
   | 'mortalite'
   | 'misebas'
-  | 'sevrage';
+  | 'sevrage'
+  | 'tripoids'
+  | 'adoption';
 
 interface QuickActionsContextValue {
   openAction: (kind: QuickActionKind) => void;
@@ -77,7 +85,21 @@ export const QuickActionsProvider: React.FC<{ children: React.ReactNode }> = ({
       {children}
 
       <QuickSaillieForm isOpen={kind === 'saillie'} onClose={closeSheet} />
+      <QuickEchographieForm
+        isOpen={kind === 'echographie'}
+        onClose={closeSheet}
+        onSuccess={() => {
+          setToast({ open: true, message: 'Échographie enregistrée' });
+        }}
+      />
       <QuickPeseeForm isOpen={kind === 'pesee'} onClose={closeSheet} />
+      <QuickConsoAlimentForm
+        isOpen={kind === 'conso'}
+        onClose={closeSheet}
+        onSuccess={() => {
+          setToast({ open: true, message: 'Conso aliment enregistrée' });
+        }}
+      />
       <QuickMortalityForm
         isOpen={kind === 'mortalite'}
         onClose={closeSheet}
@@ -93,11 +115,25 @@ export const QuickActionsProvider: React.FC<{ children: React.ReactNode }> = ({
           setToast({ open: true, message: 'Mise-bas enregistrée' });
         }}
       />
+      <QuickWeightDistForm
+        isOpen={kind === 'tripoids'}
+        onClose={closeSheet}
+        onSuccess={() => {
+          setToast({ open: true, message: 'Tri par poids enregistré' });
+        }}
+      />
       <QuickSevrageForm
         isOpen={kind === 'sevrage'}
         onClose={closeSheet}
         onSuccess={() => {
           setToast({ open: true, message: 'Sevrage enregistré' });
+        }}
+      />
+      <QuickAdoptionForm
+        isOpen={kind === 'adoption'}
+        onClose={closeSheet}
+        onSuccess={() => {
+          setToast({ open: true, message: 'Adoption enregistrée' });
         }}
       />
 

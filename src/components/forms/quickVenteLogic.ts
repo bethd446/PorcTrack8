@@ -21,7 +21,17 @@ import type { BandePorcelets } from '../../types/farm';
 export const VENTE_MAX_POIDS_KG = 200;
 export const VENTE_NOTES_MAX = 200;
 export const VENTE_ACHETEUR_MAX = 60;
+export const VENTE_ABATTOIR_NOM_MAX = 60;
 export const VENTE_STATUT_VENDUE = 'Vendue';
+
+/** Canaux de vente possibles. */
+export const VENTE_CANAUX = ['ABATTOIR', 'DIRECT', 'DEMI_GROS', 'AUTRE'] as const;
+export type VenteCanal = (typeof VENTE_CANAUX)[number];
+
+/** Seuil de rendement carcasse considéré "bon" (badge vert ≥, amber sinon). */
+export const VENTE_RENDEMENT_SEUIL_BON = 75;
+/** Borne haute pour valider un rendement carcasse plausible (~85% max physiologique). */
+export const VENTE_RENDEMENT_MAX_PCT = 85;
 
 // ─── Helpers date ───────────────────────────────────────────────────────────
 
@@ -59,6 +69,19 @@ export function computeVenteMontant(
   return Math.round(nbVendus * poidsMoyenKg * prixUnitaireFCFA);
 }
 
+/**
+ * Rendement carcasse (%) = poids_carcasse / poids_vif × 100.
+ * Retourne NaN si inputs invalides.
+ */
+export function computeRendementCarcasse(
+  poidsCarcasseKg: number,
+  poidsVifKg: number,
+): number {
+  if (!Number.isFinite(poidsCarcasseKg) || poidsCarcasseKg <= 0) return Number.NaN;
+  if (!Number.isFinite(poidsVifKg) || poidsVifKg <= 0) return Number.NaN;
+  return Math.round((poidsCarcasseKg / poidsVifKg) * 1000) / 10;
+}
+
 // ─── Validation ─────────────────────────────────────────────────────────────
 
 export interface VenteValidationInput {
@@ -68,6 +91,12 @@ export interface VenteValidationInput {
   prixUnitaireFCFA: number;
   acheteur: string;
   dateIso: string;
+  /** Canal de vente (optionnel, par défaut DIRECT côté composant). */
+  canal?: VenteCanal;
+  /** Si canal = ABATTOIR, ces 3 champs sont validés ensemble. */
+  abattoirNom?: string;
+  poidsCarcasseKg?: number;
+  prixCarcasseFCFAKg?: number;
 }
 
 export interface VenteValidationResult {
@@ -116,6 +145,47 @@ export function validateVente(input: VenteValidationInput): VenteValidationResul
     errors.date = 'Date requise';
   }
 
+  // ── Canal de vente (optionnel mais validé si présent) ────────────────────
+  if (input.canal !== undefined && !VENTE_CANAUX.includes(input.canal)) {
+    errors.canal = 'Canal de vente invalide';
+  }
+
+  // ── Si ABATTOIR : nom + poids carcasse + prix carcasse requis ─────────────
+  if (input.canal === 'ABATTOIR') {
+    const nomTrim = (input.abattoirNom ?? '').trim();
+    if (!nomTrim) {
+      errors.abattoirNom = 'Nom abattoir requis';
+    } else if (nomTrim.length > VENTE_ABATTOIR_NOM_MAX) {
+      errors.abattoirNom = `Max ${VENTE_ABATTOIR_NOM_MAX} caractères`;
+    }
+
+    if (
+      !Number.isFinite(input.poidsCarcasseKg) ||
+      (input.poidsCarcasseKg ?? 0) <= 0
+    ) {
+      errors.poidsCarcasse = 'Poids carcasse > 0 requis';
+    } else {
+      const totalVif =
+        Number.isFinite(input.poidsMoyenKg) && Number.isFinite(input.nbVendus)
+          ? input.poidsMoyenKg * input.nbVendus
+          : Number.NaN;
+      // Rendement = carcasse / vif × 100. Doit rester ≤ VENTE_RENDEMENT_MAX_PCT.
+      if (Number.isFinite(totalVif) && totalVif > 0) {
+        const pct = ((input.poidsCarcasseKg as number) / totalVif) * 100;
+        if (pct > VENTE_RENDEMENT_MAX_PCT) {
+          errors.poidsCarcasse = `Rendement > ${VENTE_RENDEMENT_MAX_PCT}% impossible`;
+        }
+      }
+    }
+
+    if (
+      !Number.isFinite(input.prixCarcasseFCFAKg) ||
+      (input.prixCarcasseFCFAKg ?? 0) <= 0
+    ) {
+      errors.prixCarcasse = 'Prix carcasse > 0 requis';
+    }
+  }
+
   return { ok: Object.keys(errors).length === 0, errors };
 }
 
@@ -135,6 +205,12 @@ export interface VentePayloads {
   vivantsRestants: number;
   /** True si la bande est totalement vendue (vivants=0). */
   bandeVendue: boolean;
+  /** Patch carcasse (camelCase métier) à appliquer en plus du patch legacy. */
+  carcassePatch: Record<string, SheetCell>;
+  /** Patch carcasse (snake_case Postgres) prêt pour `updateBatchByCode`. */
+  carcasseDbPatch: Record<string, SheetCell>;
+  /** Rendement carcasse (%) si calculable, sinon null. */
+  rendementPct: number | null;
 }
 
 export interface BuildVentePayloadsArgs {
@@ -145,6 +221,12 @@ export interface BuildVentePayloadsArgs {
   acheteur: string;
   dateIso: string; // YYYY-MM-DD
   notes?: string;
+  /** Canal de vente. Par défaut indéfini (legacy = DIRECT). */
+  canal?: VenteCanal;
+  /** Champs carcasse (ABATTOIR uniquement). */
+  abattoirNom?: string;
+  poidsCarcasseKg?: number;
+  prixCarcasseFCFAKg?: number;
 }
 
 /**
@@ -172,6 +254,7 @@ export function buildVentePayloads(args: BuildVentePayloadsArgs): VentePayloads 
   const {
     bande, nbVendus, poidsMoyenKg, prixUnitaireFCFA,
     acheteur, dateIso, notes,
+    canal, abattoirNom, poidsCarcasseKg, prixCarcasseFCFAKg,
   } = args;
 
   const currentVivants = Number(bande.vivants) || 0;
@@ -188,6 +271,51 @@ export function buildVentePayloads(args: BuildVentePayloadsArgs): VentePayloads 
     bandePatch.STATUT = VENTE_STATUT_VENDUE;
   }
 
+  // ── Patch carcasse (camelCase métier + snake_case DB) ──────────────────
+  const carcassePatch: Record<string, SheetCell> = {};
+  const carcasseDbPatch: Record<string, SheetCell> = {};
+  let rendementPct: number | null = null;
+
+  if (canal) {
+    carcassePatch.canalVente = canal;
+    carcasseDbPatch.canal_vente = canal;
+  }
+
+  const totalVif =
+    Number.isFinite(poidsMoyenKg) && Number.isFinite(nbVendus) && nbVendus > 0
+      ? Math.round(poidsMoyenKg * nbVendus * 100) / 100
+      : null;
+
+  if (canal === 'ABATTOIR') {
+    if (totalVif !== null) {
+      carcassePatch.poidsVifKg = totalVif;
+      carcasseDbPatch.poids_vif_kg = totalVif;
+    }
+    const nomTrim = (abattoirNom ?? '').trim();
+    if (nomTrim) {
+      carcassePatch.abattoirNom = nomTrim;
+      carcasseDbPatch.abattoir_nom = nomTrim;
+    }
+    if (Number.isFinite(poidsCarcasseKg) && (poidsCarcasseKg ?? 0) > 0) {
+      const c = poidsCarcasseKg as number;
+      carcassePatch.poidsCarcasseKg = c;
+      carcasseDbPatch.poids_carcasse_kg = c;
+      if (totalVif !== null) {
+        const pct = computeRendementCarcasse(c, totalVif);
+        if (Number.isFinite(pct)) {
+          rendementPct = pct;
+          carcassePatch.rendementCarcassePct = pct;
+          carcasseDbPatch.rendement_carcasse_pct = pct;
+        }
+      }
+    }
+    if (Number.isFinite(prixCarcasseFCFAKg) && (prixCarcasseFCFAKg ?? 0) > 0) {
+      const p = prixCarcasseFCFAKg as number;
+      carcassePatch.prixCarcasseFCFAKg = p;
+      carcasseDbPatch.prix_carcasse_fcfa_kg = p;
+    }
+  }
+
   const acheteurTrim = acheteur.trim();
   const libelle = `Vente ${nbVendus} porc${nbVendus > 1 ? 's' : ''} ${acheteurTrim}`;
   const notesTrim = (notes ?? '').trim();
@@ -200,6 +328,17 @@ export function buildVentePayloads(args: BuildVentePayloadsArgs): VentePayloads 
     `prix:${prixUnitaireFCFA}FCFA/kg`,
     `acheteur:${acheteurTrim}`,
   ];
+  if (canal) notesParts.push(`canal:${canal}`);
+  if (canal === 'ABATTOIR') {
+    if ((abattoirNom ?? '').trim()) notesParts.push(`abattoir:${(abattoirNom as string).trim()}`);
+    if (Number.isFinite(poidsCarcasseKg) && (poidsCarcasseKg ?? 0) > 0) {
+      notesParts.push(`carcasse:${poidsCarcasseKg}kg`);
+    }
+    if (rendementPct !== null) notesParts.push(`rendement:${rendementPct}%`);
+    if (Number.isFinite(prixCarcasseFCFAKg) && (prixCarcasseFCFAKg ?? 0) > 0) {
+      notesParts.push(`prix_carcasse:${prixCarcasseFCFAKg}FCFA/kg`);
+    }
+  }
   if (notesTrim) notesParts.push(notesTrim);
 
   // FINANCES schema : DATE · CATEGORIE · LIBELLE · MONTANT · TYPE · NOTES
@@ -221,5 +360,8 @@ export function buildVentePayloads(args: BuildVentePayloadsArgs): VentePayloads 
     montant,
     vivantsRestants,
     bandeVendue,
+    carcassePatch,
+    carcasseDbPatch,
+    rendementPct,
   };
 }

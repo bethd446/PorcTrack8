@@ -10,6 +10,7 @@ import AgritechLayout from '../../components/AgritechLayout';
 import KpiCardV6 from '../../components/design/KpiCard';
 import Button from '../../components/design/Button';
 import Eyebrow from '../../components/design/Eyebrow';
+import PendingValidationsView from './PendingValidationsView';
 
 interface AdminLog {
   id: string;
@@ -976,6 +977,8 @@ export default function AdminDashboard() {
                 accentColor="var(--color-accent-500)"
               />
             </div>
+
+            <PendingValidationsView />
 
             <LogsPanel />
 

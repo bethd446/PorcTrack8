@@ -131,6 +131,8 @@ export interface StockAliment {
   seuilAlerte: number;
   statutStock: StockStatut;
   notes?: string;
+  /** UUID du fournisseur préféré (V21-D1). */
+  fournisseurId?: string;
 }
 
 export interface StockVeto {
@@ -144,6 +146,8 @@ export interface StockVeto {
   seuilAlerte: number;
   statutStock?: StockStatut;
   notes?: string;
+  /** UUID du fournisseur préféré (V21-D1). */
+  fournisseurId?: string;
 }
 
 /**

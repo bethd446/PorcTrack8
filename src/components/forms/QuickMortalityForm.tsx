@@ -17,6 +17,8 @@ type MortalitySubject = BandePorcelets | Truie | Verrat;
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import { FARM_CONFIG } from '../../config/farm';
 import { kvGet } from '../../services/kvStore';
+import { useAuth } from '../../context/AuthContext';
+import { getDefaultValidationStatus } from '../../services/validationWorkflow';
 
 const CAUSE_OPTIONS = [
   { value: 'INCONNUE', label: 'Inconnue' },
@@ -151,6 +153,7 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
   onSuccess,
 }) => {
   const { bandes, truies, verrats, refreshData } = useFarm();
+  const { role } = useAuth();
   const [presentAlert] = useIonAlert();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -277,6 +280,7 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
 
       const author = kvGet('user_name') || 'Anonyme';
       const now = new Date();
+      const validationStatus = getDefaultValidationStatus(role);
 
       if (subjectType === 'BANDE') {
         const bande = selectedSubject as BandePorcelets;
@@ -291,7 +295,8 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
           notes: `[CAUSE: ${cause}] ${observation}`.trim(),
           operator: author,
           log_date: now.toISOString().slice(0, 10),
-        });
+          validation_status: validationStatus,
+        } as Parameters<typeof insertHealthLog>[0]);
         await updateBatchByCode(bande.id, {
           porcelets_nes_vivants: patch.VIVANTS,
           nb_mort_nes: patch.MORTS,
@@ -307,7 +312,8 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
           notes: `[CAUSE: ${cause}] ${observation}`.trim(),
           operator: author,
           log_date: now.toISOString().slice(0, 10),
-        });
+          validation_status: validationStatus,
+        } as Parameters<typeof insertHealthLog>[0]);
         if (subjectType === 'TRUIE') {
           await updateSowByCode(selectedSubject.id, { statut: 'Morte' });
         } else {

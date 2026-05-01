@@ -27,10 +27,12 @@ import QuickAddAlimentForm from '../../components/forms/QuickAddAlimentForm';
 import { projectStockDuration, formatJoursRestants } from '../../utils/stockProjection';
 import {
   buildSingleItemOrderURL,
+  buildSupplierOrderURL,
   buildWhatsAppOrderURL,
   hasWhatsAppSupport,
   type OrderItem,
 } from '../../utils/whatsappOrder';
+import { listFournisseurs, type FournisseurRow } from '../../services/supabaseWrites';
 
 const FARM_NAME = 'K13';
 
@@ -208,6 +210,7 @@ interface AlimentSectionProps {
   onSelect: (item: StockAliment) => void;
   onRefresh: () => Promise<void>;
   cheptel: { truies: Truie[]; verrats: Verrat[]; bandes: BandePorcelets[] };
+  fournisseurs?: FournisseurRow[];
 }
 
 const AlimentSection: React.FC<AlimentSectionProps> = ({
@@ -221,6 +224,7 @@ const AlimentSection: React.FC<AlimentSectionProps> = ({
   onSelect,
   onRefresh,
   cheptel,
+  fournisseurs,
 }) => {
   const isEmpty = items.length === 0;
   return (
@@ -267,6 +271,7 @@ const AlimentSection: React.FC<AlimentSectionProps> = ({
                 onRefresh={onRefresh}
                 onSelect={onSelect}
                 cheptel={cheptel}
+                fournisseurs={fournisseurs}
               />
             );
           })}
@@ -286,6 +291,7 @@ interface AlimentEditableRowProps {
   onRefresh: () => Promise<void>;
   onSelect: (item: StockAliment) => void;
   cheptel: { truies: Truie[]; verrats: Verrat[]; bandes: BandePorcelets[] };
+  fournisseurs?: FournisseurRow[];
 }
 
 const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
@@ -293,6 +299,7 @@ const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
   tone,
   onRefresh,
   cheptel,
+  fournisseurs,
 }) => {
   const projection = projectStockDuration(item, cheptel);
   const treatment = classifyTreatment(item);
@@ -400,12 +407,26 @@ const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
         />
       </div>
       {needsOrder(item) && (() => {
-        const url = buildSingleItemOrderURL(
-          item.libelle || item.id,
-          manqueKgOf(item),
-          item.unite,
-          FARM_NAME,
-        );
+        // V21-D1 : si fournisseur préféré configuré, on cible son WhatsApp.
+        const f = item.fournisseurId
+          ? fournisseurs?.find(x => x.id === item.fournisseurId)
+          : undefined;
+        const supplierUrl = f
+          ? buildSupplierOrderURL({
+              fournisseur: { nom: f.nom, whatsapp_number: f.whatsapp_number },
+              produit: item.libelle || item.id,
+              qteKg: manqueKgOf(item),
+              farmName: FARM_NAME,
+            })
+          : null;
+        const url =
+          supplierUrl ??
+          buildSingleItemOrderURL(
+            item.libelle || item.id,
+            manqueKgOf(item),
+            item.unite,
+            FARM_NAME,
+          );
         if (!url) return null;
         return (
           <a
@@ -451,7 +472,18 @@ const AlimentsView: React.FC = () => {
   const cheptel = useMemo(() => ({ truies, verrats, bandes }), [truies, verrats, bandes]);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [fournisseurs, setFournisseurs] = useState<FournisseurRow[]>([]);
   const whatsappReady = hasWhatsAppSupport();
+
+  React.useEffect(() => {
+    let active = true;
+    void listFournisseurs().then(list => {
+      if (active) setFournisseurs(list);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const stocksAOrdonner = useMemo<OrderItem[]>(
     () =>
@@ -737,6 +769,7 @@ const AlimentsView: React.FC = () => {
                   onSelect={handleSelect}
                   onRefresh={refreshData}
                   cheptel={cheptel}
+                  fournisseurs={fournisseurs}
                 />
 
                 <AlimentSection
@@ -753,6 +786,7 @@ const AlimentsView: React.FC = () => {
                   onSelect={handleSelect}
                   onRefresh={refreshData}
                   cheptel={cheptel}
+                  fournisseurs={fournisseurs}
                 />
 
                 {grouped.autres.length > 0 ? (

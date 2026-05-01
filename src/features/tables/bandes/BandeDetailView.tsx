@@ -4,15 +4,21 @@ import {
 } from '@ionic/react';
 import {
   AlertCircle, Activity, ClipboardList, ChevronLeft, ChevronRight,
-  Stethoscope, TrendingUp,
+  Stethoscope, TrendingUp, CalendarClock, CheckCircle2,
 } from 'lucide-react';
 import PhotoStrip from '../../../components/PhotoStrip';
 import { Chip } from '../../../components/agritech';
 import QuickNoteForm from '../../../components/forms/QuickNoteForm';
 import QuickHealthForm from '../../../components/forms/QuickHealthForm';
+import NotesTimeline from '../../../components/design/NotesTimeline';
 import BandeCroissanceCard from '../../../components/bande/BandeCroissanceCard';
 import { useFarm } from '../../../context/FarmContext';
 import { getJournalSante, getNotesTerrain } from '../../../services/supabaseService';
+import {
+  getRecommendedHealthLogs,
+  HEALTH_LOG_TEMPLATES,
+  type HealthLogType,
+} from '../../../services/healthProtocolPlanner';
 import TableRowEdit from '../TableRowEdit';
 import CycleTimeline from './CycleTimeline';
 import type { AggregatedBande, DebugMeta, SheetRawRow } from './types';
@@ -81,6 +87,27 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
       return rowId === targetId && (rowType === 'BANDE' || typeIdx === -1);
     });
   }, [healthData, healthHeader, bande.id]);
+
+  // ── Protocole sanitaire recommandé selon phase de la bande ────────────
+  const recommendedHealth = useMemo(() => {
+    if (!bandeTyped) return [];
+    const recos = getRecommendedHealthLogs(bandeTyped, new Date());
+    if (recos.length === 0) return recos;
+    // Croise avec l'historique health_logs pour marquer "déjà fait".
+    const typeIdx = healthHeader.findIndex(h => h.toUpperCase().includes('TYPE'));
+    const idIdx = healthHeader.findIndex(h => ['CIBLE_ID', 'SUJET_ID', 'ID', 'BOUCLE'].includes(h.toUpperCase()));
+    const doneTypes = new Set<string>();
+    if (typeIdx !== -1 && idIdx !== -1) {
+      for (const r of healthData) {
+        if (String(r[idIdx]).trim().toUpperCase() === String(bande.id).trim().toUpperCase()) {
+          doneTypes.add(String(r[typeIdx]).trim().toUpperCase());
+        }
+      }
+    }
+    return recos.map(r => ({ ...r, done: doneTypes.has(r.type) }));
+  }, [bandeTyped, bande.id, healthHeader, healthData]);
+
+  const [presetType, setPresetType] = useState<HealthLogType | undefined>(undefined);
 
   const filteredNotes = useMemo(() => {
     if (!bande.id || notesData.length === 0) return [];
@@ -235,7 +262,66 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
 
           {tab === 'sante' && (
             <div className="space-y-4 pb-32">
-              <QuickHealthForm subjectType="BANDE" subjectId={bande.id} onSuccess={() => { onRefresh(); loadRelatedData(); }} />
+              {/* ── Protocole sanitaire recommandé (selon phase) ─────────── */}
+              {recommendedHealth.length > 0 && (
+                <div className="card-dense space-y-3">
+                  <div className="flex items-center gap-2">
+                    <CalendarClock size={14} className="text-accent" />
+                    <h4 className="kpi-label">Protocole recommandé</h4>
+                  </div>
+                  <div className="space-y-2">
+                    {recommendedHealth.map(reco => {
+                      const tpl = HEALTH_LOG_TEMPLATES[reco.type];
+                      const dateStr = reco.recommendedDate.toLocaleDateString('fr-FR');
+                      return (
+                        <div
+                          key={reco.type}
+                          className={[
+                            'flex items-center justify-between gap-3',
+                            'rounded-md border px-3 py-2',
+                            reco.done
+                              ? 'border-border bg-bg-1 opacity-60'
+                              : 'border-accent/30 bg-bg-0',
+                          ].join(' ')}
+                        >
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              {reco.done ? (
+                                <CheckCircle2 size={12} className="text-accent shrink-0" />
+                              ) : (
+                                <CalendarClock size={12} className="text-accent shrink-0" />
+                              )}
+                              <span className="font-mono text-[11px] uppercase tracking-wide text-text-1 truncate">
+                                {tpl.label}
+                              </span>
+                            </div>
+                            <span className="font-mono text-[10px] text-text-2 ml-[18px]">
+                              {reco.done ? 'Fait' : `Prévu ${dateStr}`}
+                              {tpl.defaultDose ? ` · ${tpl.defaultDose}` : ''}
+                            </span>
+                          </div>
+                          {!reco.done && (
+                            <button
+                              type="button"
+                              onClick={() => setPresetType(reco.type)}
+                              className="pressable shrink-0 inline-flex items-center justify-center h-7 px-2.5 rounded-md bg-accent text-bg-0 font-mono text-[10px] uppercase tracking-wide hover:brightness-110"
+                            >
+                              Saisir
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <QuickHealthForm
+                subjectType="BANDE"
+                subjectId={bande.id}
+                defaultLogType={presetType}
+                onSuccess={() => { setPresetType(undefined); onRefresh(); loadRelatedData(); }}
+              />
 
               <div className="flex items-center justify-between mb-1">
                 <h3 className="kpi-label">Journal santé portée</h3>
@@ -280,6 +366,9 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
           {tab === 'notes' && (
             <div className="space-y-4 pb-32">
               <QuickNoteForm subjectType="BANDE" subjectId={bande.id} onSuccess={() => { onRefresh(); loadRelatedData(); }} />
+
+              {/* Historique notes V21-6 C2 */}
+              <NotesTimeline subjectType="BANDE" subjectId={bande.id} />
 
               <div className="flex items-center justify-between mb-1">
                 <h3 className="kpi-label">Journal de bord</h3>

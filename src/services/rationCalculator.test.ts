@@ -17,12 +17,16 @@ import {
   totalPourcentBase,
   consoJournaliereKg,
   consoTotaleKg,
+  getCurrentReproPhase,
+  getRecommendedRation,
+  isRationEcartSignificatif,
 } from './rationCalculator';
 import {
   FORMULES_ALIMENT,
   findFormuleByPhase,
   type FormuleAliment,
 } from '../config/aliments';
+import type { Truie } from '../types/farm';
 
 /** Retrouve une formule en TS-safe (throw si absente : protège des typos). */
 function getFormule(code: Parameters<typeof findFormuleByPhase>[0]): FormuleAliment {
@@ -137,5 +141,125 @@ describe('rationCalculator · conso journalière/totale', () => {
   it('conso totale avec jours <= 0 → 0', () => {
     expect(consoTotaleKg(10, 2, 0)).toBe(0);
     expect(consoTotaleKg(10, 2, -5)).toBe(0);
+  });
+});
+
+// ─── Plan ration repro truie ─────────────────────────────────────────────────
+
+function mkTruie(overrides: Partial<Truie> = {}): Truie {
+  return {
+    id: 'T01',
+    displayId: 'T01',
+    boucle: 'B-001',
+    statut: 'En attente saillie',
+    ration: 2.5,
+    synced: true,
+    ...overrides,
+  };
+}
+
+/** Calcule une dateMBPrevue pour une saillie il y a `dayPostSaillie` jours. */
+function mbPrevueForDayPost(today: Date, dayPostSaillie: number): string {
+  const d = new Date(today);
+  d.setDate(d.getDate() + (115 - dayPostSaillie));
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
+describe('rationCalculator · getCurrentReproPhase', () => {
+  const TODAY = new Date(2026, 4, 1); // 2026-05-01
+
+  it('lactation : statut "En maternité" → TRUIE_LACTATION', () => {
+    const t = mkTruie({ statut: 'En maternité' });
+    expect(getCurrentReproPhase(t, TODAY)).toBe('TRUIE_LACTATION');
+  });
+
+  it('gestation J45 (saillie il y a 45j) → TRUIE_GESTATION', () => {
+    const t = mkTruie({
+      statut: 'Pleine',
+      dateMBPrevue: mbPrevueForDayPost(TODAY, 45),
+    });
+    expect(getCurrentReproPhase(t, TODAY)).toBe('TRUIE_GESTATION');
+  });
+
+  it('gestation tardive J110 → TRUIE_GESTATION_TARD', () => {
+    const t = mkTruie({
+      statut: 'Pleine',
+      dateMBPrevue: mbPrevueForDayPost(TODAY, 110),
+    });
+    expect(getCurrentReproPhase(t, TODAY)).toBe('TRUIE_GESTATION_TARD');
+  });
+
+  it('fenêtre incertaine J10 (avant écho) → null', () => {
+    const t = mkTruie({
+      statut: 'Pleine',
+      dateMBPrevue: mbPrevueForDayPost(TODAY, 10),
+    });
+    expect(getCurrentReproPhase(t, TODAY)).toBe(null);
+  });
+
+  it('"En attente saillie" sans dateMBPrevue → TRUIE_FLUSHING', () => {
+    const t = mkTruie({ statut: 'En attente saillie' });
+    expect(getCurrentReproPhase(t, TODAY)).toBe('TRUIE_FLUSHING');
+  });
+
+  it('statut inconnu sans dates → null', () => {
+    const t = mkTruie({ statut: 'Réforme', dateMBPrevue: undefined });
+    expect(getCurrentReproPhase(t, TODAY)).toBe(null);
+  });
+});
+
+describe('rationCalculator · getRecommendedRation', () => {
+  const TODAY = new Date(2026, 4, 1);
+
+  it('gestation J45 → 2.5 kg/j (FEED_CONFIG.TRUIE_GESTATION)', () => {
+    const t = mkTruie({
+      statut: 'Pleine',
+      dateMBPrevue: mbPrevueForDayPost(TODAY, 45),
+    });
+    expect(getRecommendedRation(t, TODAY)).toBe(2.5);
+  });
+
+  it('lactation → 6.0 kg/j', () => {
+    const t = mkTruie({ statut: 'En maternité' });
+    expect(getRecommendedRation(t, TODAY)).toBe(6.0);
+  });
+
+  it('flushing → 4.0 kg/j', () => {
+    const t = mkTruie({ statut: 'En attente saillie' });
+    expect(getRecommendedRation(t, TODAY)).toBe(4.0);
+  });
+
+  it('phase null → 0 kg/j', () => {
+    const t = mkTruie({ statut: 'Réforme' });
+    expect(getRecommendedRation(t, TODAY)).toBe(0);
+  });
+});
+
+describe('rationCalculator · isRationEcartSignificatif', () => {
+  const TODAY = new Date(2026, 4, 1);
+
+  it('écart 0.6 kg sur gestation (reco 2.5, réelle 3.1) → true', () => {
+    const t = mkTruie({
+      statut: 'Pleine',
+      dateMBPrevue: mbPrevueForDayPost(TODAY, 45),
+      ration: 3.1,
+    });
+    expect(isRationEcartSignificatif(t, TODAY)).toBe(true);
+  });
+
+  it('écart 0.3 kg sur gestation (sous seuil 0.5) → false', () => {
+    const t = mkTruie({
+      statut: 'Pleine',
+      dateMBPrevue: mbPrevueForDayPost(TODAY, 45),
+      ration: 2.8,
+    });
+    expect(isRationEcartSignificatif(t, TODAY)).toBe(false);
+  });
+
+  it('aucune phase identifiée → false (pas de signal d\'écart)', () => {
+    const t = mkTruie({ statut: 'Réforme', ration: 12 });
+    expect(isRationEcartSignificatif(t, TODAY)).toBe(false);
   });
 });

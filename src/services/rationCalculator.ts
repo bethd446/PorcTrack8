@@ -16,6 +16,12 @@
  */
 
 import type { FormuleAliment, AdditifLigne } from '../config/aliments';
+import {
+  FEED_CONFIG,
+  RATION_ECART_SEUIL_KG,
+  type FeedPhaseCode,
+} from '../config/feed';
+import type { Truie } from '../types/farm';
 
 export interface IngredientCalcule {
   nom: string;
@@ -148,4 +154,121 @@ export function consoTotaleKg(
 ): number {
   if (jours <= 0) return 0;
   return consoJournaliereKg(effectif, rationKgParSujetJour) * jours;
+}
+
+// ─── Plan ration repro truie ────────────────────────────────────────────────
+
+/**
+ * Parse une date ISO (yyyy-MM-dd) ou FR (dd/MM/yyyy) — null si invalide.
+ * Reset à 00:00 local pour éviter les off-by-one liés aux fuseaux.
+ */
+function parseDateLoose(s?: string): Date | null {
+  if (!s) return null;
+  const fr = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (fr) {
+    const d = new Date(Number(fr[3]), Number(fr[2]) - 1, Number(fr[1]));
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) {
+    const d = new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+  return null;
+}
+
+function diffDays(from: Date, to: Date): number {
+  const ms = 1000 * 60 * 60 * 24;
+  const a = new Date(from.getFullYear(), from.getMonth(), from.getDate()).getTime();
+  const b = new Date(to.getFullYear(), to.getMonth(), to.getDate()).getTime();
+  return Math.floor((b - a) / ms);
+}
+
+/**
+ * Détermine la phase repro courante d'une truie selon son état + dates.
+ *
+ * Règles (priorité descendante) :
+ *  1. Si statut = 'En maternité' OU date_mise_bas connue & sevrage non passé :
+ *     → TRUIE_LACTATION pendant 28 j post-MB ; sinon TRUIE_TARIE pendant 5 j ;
+ *     sinon null.
+ *  2. Sinon, si date_saillie présente :
+ *     - 0..20  jours post-saillie : null (fenêtre incertaine, voir échographie)
+ *     - 21..108 jours : TRUIE_GESTATION
+ *     - 109..114 jours : TRUIE_GESTATION_TARD
+ *     - >= 115 jours : null (mise-bas attendue, lactation pas encore enregistrée)
+ *  3. Sinon, si statut = 'En attente saillie' : TRUIE_FLUSHING (5 j avant
+ *     prochaine saillie). On ne connait pas la date — on retourne FLUSHING par
+ *     défaut comme recommandation conservatrice.
+ *  4. Sinon : null.
+ *
+ * @param truie  Truie courante
+ * @param today  Date de référence (default = now)
+ */
+export function getCurrentReproPhase(
+  truie: Truie,
+  today: Date = new Date(),
+): FeedPhaseCode | null {
+  const ref = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  // 1. Lactation / Tarissement post mise-bas
+  // Source dateMB : on regarde si la truie a une portée récente via dateMBPrevue
+  // ou statut. Faute d'info précise dans Truie, on s'appuie sur le statut.
+  const statut = (truie.statut || '').toLowerCase();
+  const isMaternite = /maternit/i.test(statut);
+  if (isMaternite) {
+    return 'TRUIE_LACTATION';
+  }
+
+  // 2. Gestation à partir de la date de mise-bas prévue (saillie + 115)
+  const mbPrevue = parseDateLoose(truie.dateMBPrevue);
+  if (mbPrevue) {
+    // dayPostSaillie ≈ 115 - daysUntilMB (≥ 0 si saillie passée)
+    const daysUntilMB = diffDays(ref, mbPrevue);
+    const dayPostSaillie = 115 - daysUntilMB;
+    if (dayPostSaillie >= 0 && dayPostSaillie <= 20) return null;
+    if (dayPostSaillie >= 21 && dayPostSaillie <= 108) return 'TRUIE_GESTATION';
+    if (dayPostSaillie >= 109 && dayPostSaillie <= 114) return 'TRUIE_GESTATION_TARD';
+    if (dayPostSaillie >= 115) return null;
+  }
+
+  // 3. En attente saillie : flushing recommandé
+  if (statut.includes('attente') && statut.includes('saillie')) {
+    return 'TRUIE_FLUSHING';
+  }
+
+  // 4. Statut "Pleine" sans date_mb_prevue : on fallback gestation principale
+  if (statut === 'pleine' || statut.includes('gestation')) {
+    return 'TRUIE_GESTATION';
+  }
+
+  return null;
+}
+
+/**
+ * Ration recommandée (kg/jour) pour une truie selon sa phase repro courante.
+ * Retourne 0 si aucune phase identifiable.
+ */
+export function getRecommendedRation(
+  truie: Truie,
+  today: Date = new Date(),
+): number {
+  const phase = getCurrentReproPhase(truie, today);
+  if (!phase) return 0;
+  return FEED_CONFIG[phase].ration_kg_j;
+}
+
+/**
+ * Vrai si l'écart absolu entre ration réelle et recommandée dépasse le seuil.
+ * Toujours faux si ration recommandée = 0 (pas de phase identifiée).
+ */
+export function isRationEcartSignificatif(
+  truie: Truie,
+  today: Date = new Date(),
+): boolean {
+  const reco = getRecommendedRation(truie, today);
+  if (reco <= 0) return false;
+  const reelle = Number.isFinite(truie.ration) ? truie.ration : 0;
+  return Math.abs(reelle - reco) > RATION_ECART_SEUIL_KG;
 }

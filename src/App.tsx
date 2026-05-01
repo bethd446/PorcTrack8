@@ -68,6 +68,7 @@ const PlanAlimentationView = React.lazy(() => import(/* webpackChunkName: "plan-
 const FormulesView = React.lazy(() => import(/* webpackChunkName: "formules" */ './features/ressources/FormulesView'));
 const PharmacieView = React.lazy(() => import(/* webpackChunkName: "pharmacie" */ './features/ressources/PharmacieView'));
 const AlimentsView = React.lazy(() => import(/* webpackChunkName: "aliments" */ './features/ressources/AlimentsView'));
+const FournisseursView = React.lazy(() => import(/* webpackChunkName: "fournisseurs" */ './features/ressources/FournisseursView'));
 
 const PerfKpiView = React.lazy(() => import(/* webpackChunkName: "pilotage-perf" */ './features/pilotage/PerfKpiView'));
 const FinancesView = React.lazy(() => import(/* webpackChunkName: "pilotage-finances" */ './features/pilotage/FinancesView'));
@@ -229,6 +230,9 @@ const AppShell: React.FC = () => (
       <Route path="/ressources/aliments/plan" element={<PlanAlimentationView />} />
       <Route path="/ressources/aliments/formules" element={<FormulesView />} />
       <Route path="/ressources/pharmacie" element={<PharmacieView />} />
+
+      {/* Carnet fournisseurs (V21-D1) */}
+      <Route path="/fournisseurs" element={<FournisseursView />} />
 
       {/* Admin (rôle ADMIN requis) */}
       <Route

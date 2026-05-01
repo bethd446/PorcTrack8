@@ -36,6 +36,7 @@ export {
   isoToSheetsDate,
   addDaysToSheetsDate,
   validateMiseBas,
+  validateSexRatio,
   buildMiseBasRow,
   submitMiseBas,
   type MiseBasDraft,
@@ -75,6 +76,9 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
   const [nesTotauxEditedManually, setNesTotauxEditedManually] = useState(false);
   const [poidsMoyen, setPoidsMoyen] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
+  const [nbMales, setNbMales] = useState<string>('');
+  const [nbFemelles, setNbFemelles] = useState<string>('');
+  const [nbFemellesEditedManually, setNbFemellesEditedManually] = useState(false);
   const [errors, setErrors] = useState<MiseBasValidationErrors>({});
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -105,6 +109,26 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
       setNesTotaux(String(v + m));
     } else if (Number.isFinite(v)) {
       setNesTotaux(String(v));
+    }
+  }
+
+  // Auto-suggestion femelles = nv - males si l'utilisateur n'a pas saisi
+  // explicitement le nb de femelles.
+  const [lastAutoSex, setLastAutoSex] = useState<{ nbMales: string; nesVivants: string }>({
+    nbMales,
+    nesVivants,
+  });
+  if (
+    !nbFemellesEditedManually &&
+    (lastAutoSex.nbMales !== nbMales || lastAutoSex.nesVivants !== nesVivants)
+  ) {
+    setLastAutoSex({ nbMales, nesVivants });
+    const m = parseInt(nbMales, 10);
+    const v = parseInt(nesVivants, 10);
+    if (Number.isFinite(m) && Number.isFinite(v) && v - m >= 0) {
+      setNbFemelles(String(v - m));
+    } else if (nbMales === '') {
+      setNbFemelles('');
     }
   }
 
@@ -158,6 +182,9 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
       setNesTotauxEditedManually(false);
       setPoidsMoyen('');
       setNotes('');
+      setNbMales('');
+      setNbFemelles('');
+      setNbFemellesEditedManually(false);
       setIdPorteeEditedManually(false);
       setErrors({});
       setSuccess(false);
@@ -233,6 +260,8 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
       nesTotaux,
       poidsMoyen,
       notes,
+      nbMales,
+      nbFemelles,
     };
     const result = validateMiseBas(draft);
     if (!result.ok || !result.normalized) {
@@ -270,6 +299,12 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
         porcelets_nes_total: result.normalized.nesTotaux,
         porcelets_nes_vivants: vivants,
         nb_mort_nes: result.normalized.mortsNes,
+        ...(result.normalized.nbMales !== undefined
+          ? { nb_males_naissance: result.normalized.nbMales }
+          : {}),
+        ...(result.normalized.nbFemelles !== undefined
+          ? { nb_femelles_naissance: result.normalized.nbFemelles }
+          : {}),
         poids_portee_naissance_kg:
           result.normalized.poidsMoyen !== undefined
             ? result.normalized.poidsMoyen * vivants
@@ -277,7 +312,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
         statut: 'Sous mère',
         phase: 'maternite',
         notes: heure ? `MB ${heure} · ${notes}`.trim() : notes,
-      });
+      } as Parameters<typeof insertBatch>[0]);
       await updateSowByCode(truieId, { statut: 'Maternité' });
       const online = typeof navigator !== 'undefined' && navigator.onLine;
 
@@ -454,6 +489,111 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
               saving={saving}
               errors={errors}
             />
+
+            {/* ── Sex ratio M/F (V21, optionnel) ──────────────────────── */}
+            <div className="space-y-2">
+              <div className="flex items-baseline justify-between">
+                <span
+                  id="mb-sex-label"
+                  className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                >
+                  Répartition M/F (optionnel)
+                </span>
+                <span className="font-mono text-[10px] text-text-2">
+                  Auto : femelles = vivants − mâles
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2" aria-labelledby="mb-sex-label">
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="mb-males"
+                    className="block font-mono text-[10px] uppercase tracking-wide text-text-2"
+                  >
+                    Mâles
+                  </label>
+                  <input
+                    id="mb-males"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={25}
+                    step={1}
+                    aria-label="Nombre de porcelets mâles"
+                    aria-invalid={!!errors.nbMales}
+                    aria-describedby={errors.nbMales ? 'mb-males-error' : undefined}
+                    className={[
+                      'w-full h-12 rounded-md px-3 text-center',
+                      'bg-bg-0 border text-text-0',
+                      'font-mono text-[16px] font-bold tabular-nums',
+                      'outline-none transition-colors duration-[160ms]',
+                      'focus:border-accent focus:ring-1 focus:ring-accent',
+                      errors.nbMales ? 'border-red' : 'border-border',
+                    ].join(' ')}
+                    placeholder="—"
+                    value={nbMales}
+                    onChange={e => setNbMales(e.target.value)}
+                    disabled={saving}
+                  />
+                  {errors.nbMales ? (
+                    <p
+                      id="mb-males-error"
+                      role="alert"
+                      className="font-mono text-[10px] text-red"
+                    >
+                      {errors.nbMales}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="mb-femelles"
+                    className="block font-mono text-[10px] uppercase tracking-wide text-text-2"
+                  >
+                    Femelles
+                  </label>
+                  <input
+                    id="mb-femelles"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={25}
+                    step={1}
+                    aria-label="Nombre de porcelets femelles"
+                    aria-invalid={!!errors.nbFemelles}
+                    aria-describedby={errors.nbFemelles ? 'mb-femelles-error' : undefined}
+                    className={[
+                      'w-full h-12 rounded-md px-3 text-center',
+                      'bg-bg-0 border text-text-0',
+                      'font-mono text-[16px] font-bold tabular-nums',
+                      'outline-none transition-colors duration-[160ms]',
+                      'focus:border-accent focus:ring-1 focus:ring-accent',
+                      errors.nbFemelles ? 'border-red' : 'border-border',
+                    ].join(' ')}
+                    placeholder="—"
+                    value={nbFemelles}
+                    onChange={e => {
+                      setNbFemelles(e.target.value);
+                      setNbFemellesEditedManually(true);
+                    }}
+                    disabled={saving}
+                  />
+                  {errors.nbFemelles ? (
+                    <p
+                      id="mb-femelles-error"
+                      role="alert"
+                      className="font-mono text-[10px] text-red"
+                    >
+                      {errors.nbFemelles}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+              {errors.sexRatio ? (
+                <p role="alert" className="font-mono text-[11px] text-red">
+                  {errors.sexRatio}
+                </p>
+              ) : null}
+            </div>
 
             <div className="flex items-center gap-2 pt-2">
               <button

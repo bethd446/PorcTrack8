@@ -29,6 +29,7 @@ import QuickEditTruieForm from '../../components/forms/QuickEditTruieForm';
 import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
 import QuickMiseBasForm from '../../components/forms/QuickMiseBasForm';
 import QuickMortalityForm from '../../components/forms/QuickMortalityForm';
+import QuickEchographieForm from '../../components/forms/QuickEchographieForm';
 import TruieEventActionSheet, { type TruieEventAction } from '../../components/forms/TruieEventActionSheet';
 
 import Eyebrow from '../../components/design/Eyebrow';
@@ -39,11 +40,18 @@ import ReproTracker, { type ReproStage } from '../../components/design/ReproTrac
 import DecisionBinaire from '../../components/design/DecisionBinaire';
 import MariusPanel from '../../components/design/MariusPanel';
 import TimelineVerticale, { type TimelineItem } from '../../components/design/TimelineVerticale';
+import NotesTimeline from '../../components/design/NotesTimeline';
 import LineageBreadcrumb, { type LineageNode } from '../../components/design/LineageBreadcrumb';
 import LineageTree from '../../components/design/LineageTree';
 import TopBarSync from '../../components/design/TopBarSync';
 
 import type { Truie, BandePorcelets, Saillie, TraitementSante } from '../../types/farm';
+import {
+  getCurrentReproPhase,
+  getRecommendedRation,
+  isRationEcartSignificatif,
+} from '../../services/rationCalculator';
+import { FEED_CONFIG } from '../../config/feed';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -101,17 +109,14 @@ const TruieDetailView: React.FC = () => {
   const [saillieOpen, setSaillieOpen] = useState(false);
   const [miseBasOpen, setMiseBasOpen] = useState(false);
   const [mortalityOpen, setMortalityOpen] = useState(false);
+  const [echoOpen, setEchoOpen] = useState(false);
 
   const handleEventAction = useCallback((action: TruieEventAction): void => {
     setEventSheetOpen(false);
     if (action === 'SAILLIE') setSaillieOpen(true);
     else if (action === 'MISE_BAS') setMiseBasOpen(true);
     else if (action === 'MORTALITE') setMortalityOpen(true);
-    else if (action === 'ECHOGRAPHIE') {
-      // TODO: formulaire échographie dédié — pour l'instant on bascule le statut
-      // côté action existante (DecisionBinaire J18-J24) et on informe l'utilisateur.
-      setToast('Échographie : utiliser la décision binaire J18-J24 ou « Éditer la fiche » pour passer à PLEINE.');
-    }
+    else if (action === 'ECHOGRAPHIE') setEchoOpen(true);
   }, []);
 
   // ── Données métier ─────────────────────────────────────────────────────────
@@ -748,6 +753,9 @@ const TruieDetailView: React.FC = () => {
                   </div>
                 </section>
 
+                {/* Plan ration recommandée (V21-D3) */}
+                <RationRecoBlock truie={truie} />
+
                 {/* Historique saillies */}
                 <section aria-label="Historique saillies" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <Eyebrow>Historique saillies</Eyebrow>
@@ -806,6 +814,9 @@ const TruieDetailView: React.FC = () => {
                     />
                   </div>
                 </section>
+
+                {/* Historique des notes terrain (V21-6 C2) */}
+                <NotesTimeline subjectType="TRUIE" subjectId={truie.id} />
               </div>
 
               {/* Séparateur vertical */}
@@ -937,6 +948,11 @@ const TruieDetailView: React.FC = () => {
         <QuickMortalityForm
           isOpen={mortalityOpen}
           onClose={() => setMortalityOpen(false)}
+        />
+        <QuickEchographieForm
+          isOpen={echoOpen}
+          onClose={() => setEchoOpen(false)}
+          defaultTruieDisplayId={truie.displayId}
         />
 
         {/* Modal arbre généalogique */}
@@ -1150,6 +1166,152 @@ const SaillieRow: React.FC<{ saillie: Saillie; num: number; last: boolean }> = (
         </Chip>
       </div>
     </div>
+  );
+};
+
+/**
+ * RationRecoBlock — recommandation ration / phase repro courante (V21-D3).
+ * Calcule live : phase + ration recommandée + écart vs ration saisie.
+ */
+const RationRecoBlock: React.FC<{ truie: Truie }> = ({ truie }) => {
+  const today = new Date();
+  const phase = getCurrentReproPhase(truie, today);
+  const reco = getRecommendedRation(truie, today);
+  const ecart = isRationEcartSignificatif(truie, today);
+  const phaseCfg = phase ? FEED_CONFIG[phase] : null;
+
+  // Si aucune phase identifiée, on n'affiche rien (évite bruit visuel inutile).
+  if (!phaseCfg) return null;
+
+  return (
+    <section aria-label="Plan ration recommandée" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <Eyebrow dotColor="amber">Plan ration recommandée</Eyebrow>
+      <div
+        style={{
+          background: 'var(--bg-surface)',
+          borderRadius: 12,
+          padding: '14px 16px',
+          boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontSize: 10,
+            letterSpacing: '0.16em',
+            textTransform: 'uppercase',
+            color: 'var(--muted)',
+          }}
+        >
+          Phase courante
+        </div>
+        <div
+          style={{
+            fontFamily: 'var(--font-heading)',
+            fontSize: 18,
+            fontWeight: 600,
+            color: 'var(--ink)',
+            letterSpacing: '-0.01em',
+          }}
+        >
+          {phaseCfg.label}
+        </div>
+        {phaseCfg.description ? (
+          <div style={{ fontSize: 12, color: 'var(--muted)' }}>{phaseCfg.description}</div>
+        ) : null}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 8,
+            marginTop: 4,
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontSize: 9.5,
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                color: 'var(--muted)',
+                marginBottom: 4,
+              }}
+            >
+              Recommandée
+            </div>
+            <div
+              style={{
+                fontFamily: 'var(--font-heading)',
+                fontSize: 22,
+                fontWeight: 600,
+                color: 'var(--ink)',
+                letterSpacing: '-0.02em',
+              }}
+            >
+              {reco.toFixed(1)}{' '}
+              <small style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 400 }}>kg/j</small>
+            </div>
+          </div>
+          <div>
+            <div
+              style={{
+                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontSize: 9.5,
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                color: 'var(--muted)',
+                marginBottom: 4,
+              }}
+            >
+              Saisie
+            </div>
+            <div
+              style={{
+                fontFamily: 'var(--font-heading)',
+                fontSize: 22,
+                fontWeight: 600,
+                color: ecart ? 'var(--amber-pork-deep)' : 'var(--ink)',
+                letterSpacing: '-0.02em',
+              }}
+            >
+              {Number.isFinite(truie.ration) ? truie.ration.toFixed(1) : '—'}{' '}
+              <small style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 400 }}>kg/j</small>
+            </div>
+          </div>
+        </div>
+        {ecart ? (
+          <div
+            role="status"
+            style={{
+              marginTop: 4,
+              padding: '8px 12px',
+              borderRadius: 8,
+              background: 'var(--amber-pork-soft, #fde7d2)',
+              color: 'var(--amber-pork-deep, #c2662b)',
+              fontFamily: 'DMMono, ui-monospace, monospace',
+              fontSize: 11,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Écart &gt; 0,5 kg vs recommandée
+          </div>
+        ) : null}
+        <div
+          style={{
+            fontSize: 11.5,
+            color: 'var(--muted)',
+            fontFamily: 'InstrumentSans, ui-sans-serif, system-ui',
+          }}
+        >
+          Aliment référence : <strong style={{ color: 'var(--ink)' }}>{phaseCfg.aliment_ref}</strong>
+        </div>
+      </div>
+    </section>
   );
 };
 

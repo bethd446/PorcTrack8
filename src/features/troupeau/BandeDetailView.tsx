@@ -27,8 +27,13 @@ import QuickMortalityForm from '../../components/forms/QuickMortalityForm';
 import QuickEditBandeForm from '../../components/forms/QuickEditBandeForm';
 import QuickPeseeForm from '../../components/forms/QuickPeseeForm';
 import QuickSevrageForm from '../../components/forms/QuickSevrageForm';
+import QuickWeightDistForm from '../../components/forms/QuickWeightDistForm';
+import QuickVenteForm from '../../components/forms/QuickVenteForm';
 import BandeFinanceCard from './BandeFinanceCard';
+import BandeICRealCard from './BandeICRealCard';
 import BandeActionToolbar from './BandeActionToolbar';
+import { useQuickActions } from '../../components/AgritechNavV2';
+import PoidsTriView from './PoidsTriView';
 import { CohortTimeline } from '../../components/design/CohortTimeline';
 import type { Phase } from '../../components/design/PhaseBadge';
 import LineageBreadcrumb, { type LineageNode } from '../../components/design/LineageBreadcrumb';
@@ -298,6 +303,7 @@ const BandeDetailView: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { bandes, transitions, truies, verrats, saillies, refreshData } = useFarm();
   const { isOwner } = useAuth();
+  const { openAction } = useQuickActions();
   const [mortalityOpen, setMortalityOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [peseeOpen, setPeseeOpen] = useState(false);
@@ -305,6 +311,9 @@ const BandeDetailView: React.FC = () => {
     () => searchParams.get('action') === 'sevrage',
   );
   const [treeOpen, setTreeOpen] = useState(false);
+  const [tripoidsOpen, setTripoidsOpen] = useState(false);
+  const [venteOpen, setVenteOpen] = useState(false);
+  const [poidsTriRefreshKey, setPoidsTriRefreshKey] = useState(0);
 
   const decodedId = bandeId ? decodeURIComponent(bandeId) : '';
 
@@ -614,6 +623,21 @@ const BandeDetailView: React.FC = () => {
               </div>
             </section>
 
+            {/* ── Tri par poids (engraissement / finition uniquement) ─ */}
+            {(cohortCtx.phase === 'engr' || cohortCtx.phase === 'finit') ? (
+              <section aria-label="Tri par poids">
+                <SectionDivider label="Tri par poids" />
+                <div className="mt-3">
+                  <PoidsTriView
+                    key={`poids-tri-${poidsTriRefreshKey}`}
+                    bande={bande}
+                    onSaisirTri={() => setTripoidsOpen(true)}
+                    onVendrePrets={() => setVenteOpen(true)}
+                  />
+                </div>
+              </section>
+            ) : null}
+
             {/* ── Finance ROI ── */}
             {isOwner && (
               <section aria-label="Rentabilité">
@@ -627,6 +651,17 @@ const BandeDetailView: React.FC = () => {
                 </div>
               </section>
             )}
+
+            {/* ── Indicateur alimentaire (IC réel V21-3) ── */}
+            <section aria-label="Indicateur alimentaire">
+              <SectionDivider label="Indicateur alimentaire" />
+              <div className="mt-3">
+                <BandeICRealCard
+                  bandeId={bande.id}
+                  onSaisirConso={() => openAction('conso')}
+                />
+              </div>
+            </section>
 
             {/* ── Timeline événements ─────────────────────────────────── */}
             {events.length > 0 ? (
@@ -669,6 +704,27 @@ const BandeDetailView: React.FC = () => {
             defaultBandeId={bande.id}
             onSuccess={() => {
               setSevrageOpen(false);
+              void refreshData();
+            }}
+          />
+
+          <QuickWeightDistForm
+            isOpen={tripoidsOpen}
+            onClose={() => setTripoidsOpen(false)}
+            defaultBandeId={bande.id}
+            onSuccess={() => {
+              setTripoidsOpen(false);
+              setPoidsTriRefreshKey((k) => k + 1);
+              void refreshData();
+            }}
+          />
+
+          <QuickVenteForm
+            isOpen={venteOpen}
+            onClose={() => setVenteOpen(false)}
+            bande={bande}
+            onSuccess={() => {
+              setVenteOpen(false);
               void refreshData();
             }}
           />

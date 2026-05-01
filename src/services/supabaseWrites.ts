@@ -301,12 +301,251 @@ export function insertSaillie(
   return runInsert<SaillieRow>('saillies', values);
 }
 
+/**
+ * Patch partiel d'une saillie. Accepte les champs métier `Update` ainsi que
+ * les nouvelles colonnes V21 d'échographie (`statut_echo`, `date_echo`,
+ * `notes_echo`) qui ne sont pas encore régénérées dans Database types.
+ */
+export type SaillieUpdatePatch = Partial<SaillieRow> & {
+  statut_echo?: 'CONFIRMEE' | 'VIDE' | 'DOUTEUSE' | null;
+  date_echo?: string | null;
+  notes_echo?: string | null;
+};
+
+export function updateSaillie(
+  id: string,
+  patch: SaillieUpdatePatch,
+): Promise<WriteResult> {
+  return runUpdate('saillies', id, patch as Record<string, unknown>);
+}
+
 // ── Finances ─────────────────────────────────────────────────────────────────
 
 export function insertFinance(
   values: WithoutFarm<FinanceInsert>,
 ): Promise<FinanceRow> {
   return runInsert<FinanceRow>('finances', values);
+}
+
+// ── Weight distributions (V21-4 — tri par poids engraissement) ──────────────
+
+export interface WeightDistributionInsert {
+  batch_id: string;
+  date_pesee: string; // YYYY-MM-DD
+  nb_under_90kg: number;
+  nb_90_to_100kg: number;
+  nb_100_to_110kg: number;
+  nb_above_110kg: number;
+  notes: string | null;
+  created_by: string;
+}
+
+/**
+ * Insert dans `weight_distributions`. Table créée par la migration V21-4 ;
+ * pas encore présente dans `Database` types, donc cast `any`.
+ */
+export async function insertWeightDistribution(
+  values: WeightDistributionInsert,
+): Promise<{ id: string }> {
+  const farm_id = await getFarmId();
+  const payload = { ...values, farm_id };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from('weight_distributions' as any) as any)
+    .insert(payload)
+    .select()
+    .single();
+  if (error) {
+    throw new Error(`[weight_distributions] insert failed: ${error.message}`);
+  }
+  return data as { id: string };
+}
+
+export interface WeightDistributionRow {
+  id: string;
+  farm_id: string;
+  batch_id: string;
+  date_pesee: string;
+  nb_under_90kg: number;
+  nb_90_to_100kg: number;
+  nb_100_to_110kg: number;
+  nb_above_110kg: number;
+  notes: string | null;
+  created_at: string;
+  created_by: string;
+}
+
+/** Liste les distributions de poids pour une bande, du plus récent au plus ancien. */
+export async function listWeightDistributions(
+  batch_id: string,
+): Promise<WeightDistributionRow[]> {
+  if (!batch_id) return [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from('weight_distributions' as any) as any)
+    .select('*')
+    .eq('batch_id', batch_id)
+    .order('date_pesee', { ascending: false })
+    .limit(50);
+  if (error) {
+    console.warn('[weight_distributions] list failed:', error.message);
+    return [];
+  }
+  return (data ?? []) as WeightDistributionRow[];
+}
+
+// ── Fournisseurs (V21-D1) ───────────────────────────────────────────────────
+
+export type FournisseurType = 'ALIMENT' | 'PHARMACIE' | 'GENETIQUE' | 'AUTRE';
+
+export interface FournisseurRow {
+  id: string;
+  farm_id: string;
+  nom: string;
+  type: FournisseurType | null;
+  whatsapp_number: string | null;
+  email: string | null;
+  notes: string | null;
+  is_default: boolean;
+  created_at: string;
+}
+
+export interface FournisseurInsert {
+  nom: string;
+  type: FournisseurType | null;
+  whatsapp_number: string | null;
+  email: string | null;
+  notes: string | null;
+  is_default: boolean;
+}
+
+export async function insertFournisseur(
+  values: FournisseurInsert,
+): Promise<FournisseurRow> {
+  const farm_id = await getFarmId();
+  const payload = { ...values, farm_id };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from('fournisseurs' as any) as any)
+    .insert(payload)
+    .select()
+    .single();
+  if (error) throw new Error(`[fournisseurs] insert failed: ${error.message}`);
+  return data as FournisseurRow;
+}
+
+export async function listFournisseurs(): Promise<FournisseurRow[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from('fournisseurs' as any) as any)
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.warn('[fournisseurs] list failed:', error.message);
+    return [];
+  }
+  return (data ?? []) as FournisseurRow[];
+}
+
+export async function updateFournisseur(
+  id: string,
+  patch: Partial<FournisseurInsert>,
+): Promise<WriteResult> {
+  if (!id) return { success: false, error: 'ID manquant' };
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.from('fournisseurs' as any) as any)
+      .update(patch)
+      .eq('id', id);
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: String(e) };
+  }
+}
+
+export async function deleteFournisseur(id: string): Promise<void> {
+  if (!id) throw new Error('ID manquant');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase.from('fournisseurs' as any) as any)
+    .delete()
+    .eq('id', id);
+  if (error) throw new Error(`[fournisseurs] delete failed: ${error.message}`);
+}
+
+// ── Adoptions (V21-D2) ──────────────────────────────────────────────────────
+
+export type AdoptionMotif = 'EQUILIBRAGE' | 'TRUIE_INSUFFISANTE_LAIT' | 'AUTRE';
+
+export interface AdoptionInsert {
+  from_batch_id: string;
+  to_batch_id: string;
+  nb_porcelets: number;
+  date_adoption: string; // YYYY-MM-DD
+  motif: AdoptionMotif | null;
+  notes: string | null;
+  created_by: string;
+}
+
+export interface AdoptionRow extends AdoptionInsert {
+  id: string;
+  farm_id: string;
+  created_at: string;
+}
+
+/**
+ * Insert d'une adoption + ajustement des porcelets vivants des deux bandes.
+ *
+ * Workflow :
+ *  1. Insert dans `adoptions` (RLS contrôlée).
+ *  2. Décrémente `from_batch.porcelets_nes_vivants` de `nb_porcelets`.
+ *  3. Incrémente `to_batch.porcelets_nes_vivants` de `nb_porcelets`.
+ *
+ * En cas d'échec d'une étape post-insert, on logue mais on ne rollback pas
+ * automatiquement (à faire manuellement par l'utilisateur).
+ */
+export async function insertAdoption(
+  values: AdoptionInsert,
+): Promise<AdoptionRow> {
+  if (values.from_batch_id === values.to_batch_id) {
+    throw new Error('Bande source et destination identiques (no_self_adoption)');
+  }
+  if (!Number.isFinite(values.nb_porcelets) || values.nb_porcelets <= 0) {
+    throw new Error('nb_porcelets doit être > 0');
+  }
+
+  const farm_id = await getFarmId();
+  const payload = { ...values, farm_id };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from('adoptions' as any) as any)
+    .insert(payload)
+    .select()
+    .single();
+  if (error) throw new Error(`[adoptions] insert failed: ${error.message}`);
+
+  // Adjust batches.porcelets_nes_vivants
+  await adjustBatchVivants(values.from_batch_id, -values.nb_porcelets);
+  await adjustBatchVivants(values.to_batch_id, values.nb_porcelets);
+
+  return data as AdoptionRow;
+}
+
+async function adjustBatchVivants(batchId: string, delta: number): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from('batches') as any)
+    .select('porcelets_nes_vivants')
+    .eq('id', batchId)
+    .single();
+  if (error || !data) {
+    console.warn(`[adoptions] adjust batch ${batchId}: cannot read current vivants`, error);
+    return;
+  }
+  const current = Number(data.porcelets_nes_vivants ?? 0);
+  const next = Math.max(0, current + delta);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: updErr } = await (supabase.from('batches') as any)
+    .update({ porcelets_nes_vivants: next })
+    .eq('id', batchId);
+  if (updErr) {
+    console.warn(`[adoptions] adjust batch ${batchId}: update failed`, updErr);
+  }
 }
 
 // ── Aliments ─────────────────────────────────────────────────────────────────
@@ -382,6 +621,74 @@ export interface LastSaillieResolved {
   boar_code_id: string | null;
   /** Date de saillie au format ISO yyyy-MM-dd. */
   date_saillie: string;
+}
+
+/**
+ * Saillie « en cours » d'une truie (saillie active dont la MB n'a pas encore
+ * eu lieu). Retourne l'UUID de la saillie pour pouvoir patcher (statut_echo,
+ * date_echo, notes_echo) — utilisé par le QuickEchographieForm.
+ */
+export interface PendingSaillie {
+  saillie_id: string;
+  sow_id: string;
+  sow_code_id: string | null;
+  boar_code_id: string | null;
+  date_saillie: string;
+  /** Jours depuis la saillie (calculé côté serveur via dateRef). */
+  days_since: number;
+}
+
+/**
+ * Liste les saillies « en attente d'écho » : saillies d'au moins `minDaysAgo`
+ * jours pour lesquelles le statut écho n'est pas encore renseigné.
+ *
+ * Utilisé pour alimenter le sélecteur du QuickEchographieForm. Ordre :
+ * plus récente d'abord.
+ */
+export async function listPendingEchographies(
+  options: { minDaysAgo?: number; dateRef?: Date } = {},
+): Promise<PendingSaillie[]> {
+  const minDaysAgo = options.minDaysAgo ?? 21;
+  const dateRef = options.dateRef ?? new Date();
+  if (!Number.isFinite(dateRef.getTime())) return [];
+
+  const upperIso = new Date(dateRef.getTime() - minDaysAgo * 86400000)
+    .toISOString()
+    .slice(0, 10);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from('saillies') as any)
+    .select('id, sow_id, sow_code_id, boar_code_id, date_saillie, statut_echo, sows(code_id)')
+    .lte('date_saillie', upperIso)
+    .is('statut_echo', null)
+    .order('date_saillie', { ascending: false });
+
+  if (error || !data) return [];
+
+  const refTs = dateRef.getTime();
+  return (data as Array<{
+    id: string;
+    sow_id: string | null;
+    sow_code_id: string | null;
+    boar_code_id: string | null;
+    date_saillie: string | null;
+    sows?: { code_id?: string | null } | null;
+  }>)
+    .filter(r => !!r.id && !!r.sow_id && !!r.date_saillie)
+    .map(r => {
+      const ds = new Date(r.date_saillie as string);
+      const daysSince = Number.isFinite(ds.getTime())
+        ? Math.max(0, Math.round((refTs - ds.getTime()) / 86400000))
+        : 0;
+      return {
+        saillie_id: r.id,
+        sow_id: r.sow_id as string,
+        sow_code_id: r.sows?.code_id ?? r.sow_code_id ?? null,
+        boar_code_id: r.boar_code_id ?? null,
+        date_saillie: r.date_saillie as string,
+        days_since: daysSince,
+      };
+    });
 }
 
 /**

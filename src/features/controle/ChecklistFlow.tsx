@@ -14,6 +14,13 @@ import {
   type ChecklistItem as BaseChecklistItem,
 } from '../../services/checklistService';
 import { CONTROLE_QUESTIONS } from './questions';
+import {
+  CHECKLIST_TEMPLATES,
+  CHECKLIST_TEMPLATES_META,
+  getCombinedTemplate,
+  type ChecklistTemplateItem,
+  type ChecklistTemplateKey,
+} from '../../data/checklistTemplates';
 import { getBandes, getStockAliments, getTruies } from '../../services/supabaseService';
 import {
   insertNote,
@@ -43,6 +50,34 @@ interface ContextOption {
   label: string;
 }
 
+/**
+ * Convertit un template métier (tableau d'items Q/R simples) en `ChecklistItem`
+ * compatible avec le pipeline d'enregistrement existant. Les questions sont
+ * de type 'bool' (OUI/NON) avec cible NOTES_TERRAIN et tag CHECKLIST.
+ */
+function templateToChecklistItems(
+  templateKey: ChecklistTemplateKey | 'COMBINED',
+  items: ChecklistTemplateItem[],
+): ChecklistItem[] {
+  return items.map((q, i) => ({
+    checklist: templateKey,
+    nr: i + 1,
+    idQuestion: q.id,
+    texteAffiche: q.label,
+    typeRep: 'bool',
+    options: 'OUI,NON',
+    cibleTable: 'NOTES_TERRAIN',
+    champ: q.id,
+    TEXTE_AFFICHE: q.label,
+    TYPE_REP: 'bool',
+    OPTIONS: 'OUI,NON',
+    CIBLE_TABLE: 'NOTES_TERRAIN',
+    CHAMP: q.id,
+  })) as ChecklistItem[];
+}
+
+type TemplateChoice = ChecklistTemplateKey | 'COMBINED' | null;
+
 const ChecklistFlow: React.FC = () => {
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
@@ -54,6 +89,12 @@ const ChecklistFlow: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
   const [isFinished, setIsFinished] = useState(false);
+  /**
+   * V21-6 C4 — sélecteur de template métier au démarrage.
+   * `null` = écran de choix actif. Une fois choisi → on injecte les questions
+   * et le flow standard reprend le contrôle.
+   */
+  const [templateChoice, setTemplateChoice] = useState<TemplateChoice>(null);
 
   // Context Data
   const [contextData, setContextData] = useState<{
@@ -70,37 +111,56 @@ const ChecklistFlow: React.FC = () => {
   const loadData = useCallback(async (): Promise<void> => {
     setInitialLoading(true);
     try {
-      // 1. Essai depuis le cache localStorage
-      let items = getChecklistItems(name || 'DAILY');
+      // V21-6 C4 — auto-select template si le `name` route matche une clé.
+      const upperName = (name || '').toUpperCase();
+      const isTemplateKey = (
+        upperName === 'GENERAL' ||
+        upperName === 'MISE_BAS' ||
+        upperName === 'SEVRAGE' ||
+        upperName === 'SORTIE_VENTE' ||
+        upperName === 'COMBINED'
+      );
 
-      // 2. Cache vide → tenter de charger depuis Sheets
-      if (items.length === 0) {
-        await loadChecklistDefinitions();
-        items = getChecklistItems(name || 'DAILY');
+      if (isTemplateKey) {
+        const key = upperName as TemplateChoice;
+        setTemplateChoice(key);
+        const tplItems = key === 'COMBINED'
+          ? getCombinedTemplate()
+          : CHECKLIST_TEMPLATES[key as ChecklistTemplateKey];
+        setQuestions(templateToChecklistItems(key as ChecklistTemplateKey | 'COMBINED', tplItems));
+      } else {
+        // 1. Essai depuis le cache localStorage
+        let items = getChecklistItems(name || 'DAILY');
+
+        // 2. Cache vide → tenter de charger depuis Sheets
+        if (items.length === 0) {
+          await loadChecklistDefinitions();
+          items = getChecklistItems(name || 'DAILY');
+        }
+
+        // 3. Toujours vide → fallback sur les questions locales codées en dur
+        if (items.length === 0 && (name === 'DAILY' || !name)) {
+          // Convertir CONTROLE_QUESTIONS (format local) → format ChecklistItem
+          const fallback = CONTROLE_QUESTIONS.map((q, i) => ({
+            checklist: 'DAILY',
+            nr: i + 1,
+            idQuestion: q.id,
+            texteAffiche: q.text,
+            typeRep: q.type === 'choice' ? 'enum' : 'text',
+            options: q.options?.join(',') ?? '',
+            cibleTable: 'NOTES_TERRAIN',
+            champ: q.id,
+            TEXTE_AFFICHE: q.text,
+            TYPE_REP: q.type === 'choice' ? 'enum' : 'text',
+            OPTIONS: q.options?.join(',') ?? '',
+            CIBLE_TABLE: 'NOTES_TERRAIN',
+            CHAMP: q.id,
+          }));
+          items = fallback as ChecklistItem[];
+        }
+
+        setQuestions(items);
       }
-
-      // 3. Toujours vide → fallback sur les questions locales codées en dur
-      if (items.length === 0 && (name === 'DAILY' || !name)) {
-        // Convertir CONTROLE_QUESTIONS (format local) → format ChecklistItem
-        const fallback = CONTROLE_QUESTIONS.map((q, i) => ({
-          checklist: 'DAILY',
-          nr: i + 1,
-          idQuestion: q.id,
-          texteAffiche: q.text,
-          typeRep: q.type === 'choice' ? 'enum' : 'text',
-          options: q.options?.join(',') ?? '',
-          cibleTable: 'NOTES_TERRAIN',
-          champ: q.id,
-          TEXTE_AFFICHE: q.text,
-          TYPE_REP: q.type === 'choice' ? 'enum' : 'text',
-          OPTIONS: q.options?.join(',') ?? '',
-          CIBLE_TABLE: 'NOTES_TERRAIN',
-          CHAMP: q.id,
-        }));
-        items = fallback as ChecklistItem[];
-      }
-
-      setQuestions(items);
 
       const [bandeRes, stockRes, truieRes] = await Promise.all([
         getBandes(),
@@ -123,6 +183,22 @@ const ChecklistFlow: React.FC = () => {
       setInitialLoading(false);
     }
   }, [name]);
+
+  /** Sélection d'un template métier depuis l'écran de choix. */
+  const handleSelectTemplate = useCallback(
+    (choice: ChecklistTemplateKey | 'COMBINED'): void => {
+      const tplItems = choice === 'COMBINED'
+        ? getCombinedTemplate()
+        : CHECKLIST_TEMPLATES[choice];
+      setQuestions(templateToChecklistItems(choice, tplItems));
+      setTemplateChoice(choice);
+      setCurrentStep(0);
+      setAnswer('');
+      setDetails('');
+      setSelectedContextId('');
+    },
+    [],
+  );
 
   useEffect(() => {
     // Legitimate I/O: async fetch of checklist questions + context tables
@@ -269,6 +345,69 @@ const ChecklistFlow: React.FC = () => {
               <p className="mt-4 font-mono text-[11px] uppercase tracking-wide text-text-2">
                 Initialisation…
               </p>
+            </div>
+          </AgritechLayout>
+        </IonContent>
+      </IonPage>
+    );
+  }
+
+  // ── Sélecteur de template (V21-6 C4) ─────────────────────────────────
+  // Écran initial uniquement quand la route ne désigne pas une checklist
+  // ciblée (ex: DAILY, VENDREDI). Permet à l'éleveur de choisir quelle
+  // tournée il fait avant de démarrer les questions.
+  const upperName = (name || '').toUpperCase();
+  const isLegacyChecklist = upperName === 'DAILY' || upperName === 'VENDREDI';
+  if (templateChoice === null && !isLegacyChecklist) {
+    return (
+      <IonPage>
+        <IonContent fullscreen className="ion-no-padding">
+          <AgritechLayout withNav={false}>
+            <AgritechHeader
+              title="Tournée du jour"
+              subtitle="Choisis le type d'audit"
+              backTo="/"
+            />
+            <div className="px-4 pt-6 pb-10">
+              <h2 className="agritech-heading text-[18px] uppercase leading-tight mb-4">
+                Quelle tournée fais-tu aujourd'hui ?
+              </h2>
+              <div className="space-y-2.5" role="list">
+                {CHECKLIST_TEMPLATES_META.map(meta => (
+                  <button
+                    key={meta.key}
+                    type="button"
+                    role="listitem"
+                    onClick={() => handleSelectTemplate(meta.key)}
+                    aria-label={`Démarrer la tournée ${meta.label}`}
+                    data-testid={`tpl-${meta.key}`}
+                    className="pressable w-full flex items-center gap-3 px-4 py-4 rounded-md border border-border bg-bg-1 hover:border-accent/60 active:scale-[0.98] transition-colors text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                  >
+                    <span className="text-[24px]" aria-hidden="true">{meta.emoji}</span>
+                    <span className="flex-1 min-w-0">
+                      <span className="block font-mono text-[13px] font-bold uppercase tracking-wide text-text-0">
+                        {meta.label}
+                      </span>
+                      <span className="block font-mono text-[11px] text-text-2 mt-0.5">
+                        {meta.description}
+                      </span>
+                    </span>
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  role="listitem"
+                  onClick={() => handleSelectTemplate('COMBINED')}
+                  aria-label="Démarrer toutes les tournées combinées"
+                  data-testid="tpl-COMBINED"
+                  className="pressable w-full flex items-center justify-center gap-2 px-4 py-3 mt-3 rounded-md border-2 border-dashed border-accent/60 bg-bg-1 hover:bg-bg-2 active:scale-[0.98] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                >
+                  <span className="font-mono text-[12px] font-bold uppercase tracking-wide text-accent">
+                    Tout combiné · les 4 enchaînés
+                  </span>
+                </button>
+              </div>
             </div>
           </AgritechLayout>
         </IonContent>

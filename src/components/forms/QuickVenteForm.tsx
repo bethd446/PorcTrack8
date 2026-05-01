@@ -10,14 +10,28 @@ import {
 } from '../../services/supabaseWrites';
 import type { BandePorcelets } from '../../types/farm';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
+import { useAuth } from '../../context/AuthContext';
+import { getDefaultValidationStatus } from '../../services/validationWorkflow';
 import {
   buildVentePayloads,
+  computeRendementCarcasse,
   computeVenteMontant,
   toIsoDateInput,
   validateVente,
+  VENTE_ABATTOIR_NOM_MAX,
   VENTE_ACHETEUR_MAX,
+  VENTE_CANAUX,
   VENTE_NOTES_MAX,
+  VENTE_RENDEMENT_SEUIL_BON,
+  type VenteCanal,
 } from './quickVenteLogic';
+
+const CANAL_LABELS: Record<VenteCanal, string> = {
+  ABATTOIR: 'Abattoir',
+  DIRECT: 'Vente directe',
+  DEMI_GROS: 'Demi-gros',
+  AUTRE: 'Autre',
+};
 
 /**
  * QuickVenteForm — Enregistrer une vente de porcs depuis une bande en finition.
@@ -50,6 +64,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
   onSuccess,
 }) => {
   const { refreshData } = useFarm();
+  const { role } = useAuth();
   const vivantsActuels = bande.vivants ?? 0;
 
   const [nbVendus, setNbVendus] = useState<string>('');
@@ -58,6 +73,10 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
   const [acheteur, setAcheteur] = useState<string>('');
   const [dateIso, setDateIso] = useState<string>(toIsoDateInput());
   const [notes, setNotes] = useState<string>('');
+  const [canal, setCanal] = useState<VenteCanal>('DIRECT');
+  const [abattoirNom, setAbattoirNom] = useState<string>('');
+  const [poidsCarcasse, setPoidsCarcasse] = useState<string>('');
+  const [prixCarcasse, setPrixCarcasse] = useState<string>('');
 
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -82,6 +101,10 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
       setAcheteur('');
       setDateIso(toIsoDateInput());
       setNotes('');
+      setCanal('DIRECT');
+      setAbattoirNom('');
+      setPoidsCarcasse('');
+      setPrixCarcasse('');
       setErrors({});
       setSaving(false);
       setSuccess(false);
@@ -109,6 +132,10 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
     setAcheteur('');
     setDateIso(toIsoDateInput());
     setNotes('');
+    setCanal('DIRECT');
+    setAbattoirNom('');
+    setPoidsCarcasse('');
+    setPrixCarcasse('');
     setErrors({});
     setSaving(false);
     setSuccess(false);
@@ -137,10 +164,33 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
     return Number.isFinite(n) ? n : NaN;
   }, [prixUnitaire]);
 
+  const poidsCarcasseNum = useMemo(() => {
+    const n = parseFloat(poidsCarcasse.replace(',', '.'));
+    return Number.isFinite(n) ? n : NaN;
+  }, [poidsCarcasse]);
+
+  const prixCarcasseNum = useMemo(() => {
+    const n = parseFloat(prixCarcasse.replace(',', '.'));
+    return Number.isFinite(n) ? n : NaN;
+  }, [prixCarcasse]);
+
   const montantTotal = useMemo(
     () => computeVenteMontant(nbNum, poidsNum, prixNum),
     [nbNum, poidsNum, prixNum],
   );
+
+  const poidsVifTotal = useMemo(() => {
+    if (!Number.isFinite(nbNum) || nbNum <= 0) return NaN;
+    if (!Number.isFinite(poidsNum) || poidsNum <= 0) return NaN;
+    return Math.round(nbNum * poidsNum * 100) / 100;
+  }, [nbNum, poidsNum]);
+
+  const rendementPct = useMemo(
+    () => computeRendementCarcasse(poidsCarcasseNum, poidsVifTotal),
+    [poidsCarcasseNum, poidsVifTotal],
+  );
+
+  const showAbattoirFields = canal === 'ABATTOIR';
 
   const idBandeDisplay = bande.idPortee || bande.id;
 
@@ -154,6 +204,10 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
       prixUnitaireFCFA: prixNum,
       acheteur,
       dateIso,
+      canal,
+      abattoirNom,
+      poidsCarcasseKg: poidsCarcasseNum,
+      prixCarcasseFCFAKg: prixCarcasseNum,
     });
     if (!validation.ok) {
       setErrors(validation.errors);
@@ -171,11 +225,18 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
         acheteur,
         dateIso,
         notes,
+        canal,
+        abattoirNom,
+        poidsCarcasseKg: poidsCarcasseNum,
+        prixCarcasseFCFAKg: prixCarcasseNum,
       });
 
+      const validationStatus = getDefaultValidationStatus(role);
       const batchPatch: Record<string, unknown> = {
         porcelets_nes_vivants: payloads.vivantsRestants,
         notes: payloads.bandePatch.NOTES as string,
+        validation_status: validationStatus,
+        ...payloads.carcasseDbPatch,
       };
       if (payloads.bandeVendue) batchPatch.statut = 'Vendue';
       await updateBatchByCode(bande.id, batchPatch);
@@ -185,7 +246,8 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
         type: 'REVENU',
         mensuel_fcfa: payloads.montant,
         notes: (payloads.financeValues[5] as string) ?? null,
-      });
+        validation_status: validationStatus,
+      } as Parameters<typeof insertFinance>[0]);
 
       const online = typeof navigator !== 'undefined' && navigator.onLine;
       const formatted = montantTotal.toLocaleString('fr-FR');
@@ -223,7 +285,12 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
     Number.isFinite(poidsNum) && poidsNum > 0 &&
     Number.isFinite(prixNum) && prixNum > 0 &&
     acheteur.trim().length > 0 &&
-    !!dateIso;
+    !!dateIso &&
+    (!showAbattoirFields || (
+      abattoirNom.trim().length > 0 &&
+      Number.isFinite(poidsCarcasseNum) && poidsCarcasseNum > 0 &&
+      Number.isFinite(prixCarcasseNum) && prixCarcasseNum > 0
+    ));
 
   return (
     <BottomSheet
@@ -506,6 +573,200 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                 </p>
               ) : null}
             </div>
+
+            {/* ── Canal de vente ──────────────────────────────────────── */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="vente-canal"
+                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              >
+                Canal de vente
+              </label>
+              <select
+                id="vente-canal"
+                aria-label="Canal de vente"
+                aria-invalid={!!errors.canal}
+                aria-describedby={errors.canal ? 'vente-canal-error' : undefined}
+                className={[
+                  'w-full h-11 rounded-md px-3',
+                  'bg-bg-0 border text-text-0',
+                  'font-mono text-[13px]',
+                  'outline-none transition-colors duration-[160ms]',
+                  'focus:border-amber focus:ring-1 focus:ring-amber',
+                  errors.canal ? 'border-red' : 'border-border hover:border-text-2',
+                ].join(' ')}
+                value={canal}
+                onChange={e => setCanal(e.target.value as VenteCanal)}
+                disabled={saving}
+              >
+                {VENTE_CANAUX.map(c => (
+                  <option key={c} value={c}>{CANAL_LABELS[c]}</option>
+                ))}
+              </select>
+              {errors.canal ? (
+                <p
+                  id="vente-canal-error"
+                  role="alert"
+                  className="font-mono text-[11px] text-red"
+                >
+                  {errors.canal}
+                </p>
+              ) : null}
+            </div>
+
+            {/* ── Champs ABATTOIR (conditionnels) ─────────────────────── */}
+            {showAbattoirFields ? (
+              <div
+                className="space-y-3 rounded-md border border-border bg-bg-1 p-3"
+                aria-label="Informations abattoir et carcasse"
+              >
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="vente-abattoir"
+                    className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                  >
+                    Nom abattoir
+                  </label>
+                  <input
+                    id="vente-abattoir"
+                    type="text"
+                    aria-label="Nom de l'abattoir"
+                    aria-required="true"
+                    aria-invalid={!!errors.abattoirNom}
+                    aria-describedby={errors.abattoirNom ? 'vente-abattoir-error' : undefined}
+                    className={[
+                      'w-full h-11 rounded-md px-3',
+                      'bg-bg-0 border text-text-0 placeholder:text-text-2',
+                      'font-mono text-[13px]',
+                      'outline-none transition-colors duration-[160ms]',
+                      'focus:border-amber focus:ring-1 focus:ring-amber',
+                      errors.abattoirNom ? 'border-red' : 'border-border hover:border-text-2',
+                    ].join(' ')}
+                    placeholder="Ex : Abattoir Abidjan"
+                    value={abattoirNom}
+                    onChange={e => setAbattoirNom(e.target.value)}
+                    disabled={saving}
+                    maxLength={VENTE_ABATTOIR_NOM_MAX}
+                  />
+                  {errors.abattoirNom ? (
+                    <p
+                      id="vente-abattoir-error"
+                      role="alert"
+                      className="font-mono text-[11px] text-red"
+                    >
+                      {errors.abattoirNom}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor="vente-carcasse"
+                      className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                    >
+                      Poids carcasse total (kg)
+                    </label>
+                    <input
+                      id="vente-carcasse"
+                      type="text"
+                      inputMode="decimal"
+                      aria-label="Poids carcasse total en kilogrammes"
+                      aria-required="true"
+                      aria-invalid={!!errors.poidsCarcasse}
+                      aria-describedby={errors.poidsCarcasse ? 'vente-carcasse-error' : undefined}
+                      className={[
+                        'w-full h-11 rounded-md px-3',
+                        'bg-bg-0 border text-text-0 placeholder:text-text-2',
+                        'font-mono text-[13px] tabular-nums',
+                        'outline-none transition-colors duration-[160ms]',
+                        'focus:border-amber focus:ring-1 focus:ring-amber',
+                        errors.poidsCarcasse ? 'border-red' : 'border-border hover:border-text-2',
+                      ].join(' ')}
+                      placeholder="0"
+                      value={poidsCarcasse}
+                      onChange={e =>
+                        setPoidsCarcasse(e.target.value.replace(/[^\d.,]/g, ''))
+                      }
+                      disabled={saving}
+                    />
+                    {errors.poidsCarcasse ? (
+                      <p
+                        id="vente-carcasse-error"
+                        role="alert"
+                        className="font-mono text-[11px] text-red"
+                      >
+                        {errors.poidsCarcasse}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor="vente-prix-carcasse"
+                      className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                    >
+                      Prix carcasse (FCFA / kg)
+                    </label>
+                    <input
+                      id="vente-prix-carcasse"
+                      type="text"
+                      inputMode="decimal"
+                      aria-label="Prix par kilogramme de carcasse en FCFA"
+                      aria-required="true"
+                      aria-invalid={!!errors.prixCarcasse}
+                      aria-describedby={errors.prixCarcasse ? 'vente-prix-carcasse-error' : undefined}
+                      className={[
+                        'w-full h-11 rounded-md px-3',
+                        'bg-bg-0 border text-text-0 placeholder:text-text-2',
+                        'font-mono text-[13px] tabular-nums',
+                        'outline-none transition-colors duration-[160ms]',
+                        'focus:border-amber focus:ring-1 focus:ring-amber',
+                        errors.prixCarcasse ? 'border-red' : 'border-border hover:border-text-2',
+                      ].join(' ')}
+                      placeholder="0"
+                      value={prixCarcasse}
+                      onChange={e =>
+                        setPrixCarcasse(e.target.value.replace(/[^\d.,]/g, ''))
+                      }
+                      disabled={saving}
+                    />
+                    {errors.prixCarcasse ? (
+                      <p
+                        id="vente-prix-carcasse-error"
+                        role="alert"
+                        className="font-mono text-[11px] text-red"
+                      >
+                        {errors.prixCarcasse}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Badge rendement carcasse auto-calculé */}
+                {Number.isFinite(rendementPct) ? (
+                  <div
+                    className="card-dense !p-3 flex items-center justify-between"
+                    aria-live="polite"
+                    aria-label={`Rendement carcasse : ${rendementPct} pour cent`}
+                  >
+                    <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+                      Rendement carcasse
+                    </span>
+                    <span
+                      className={[
+                        'font-mono text-[14px] tabular-nums font-bold rounded-full px-3 py-0.5',
+                        rendementPct >= VENTE_RENDEMENT_SEUIL_BON
+                          ? 'bg-green-500/15 text-green-600'
+                          : 'bg-amber/15 text-amber',
+                      ].join(' ')}
+                    >
+                      {rendementPct.toFixed(1)}%
+                    </span>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
 
             {/* ── Notes (optionnel) ────────────────────────────────────── */}
             <div className="space-y-1.5">

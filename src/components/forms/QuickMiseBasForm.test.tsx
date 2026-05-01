@@ -17,6 +17,7 @@ import {
   extractTruieNumber,
   suggestIdPortee,
   validateMiseBas,
+  validateSexRatio,
   buildMiseBasRow,
   addDaysToSheetsDate,
   submitMiseBas,
@@ -316,6 +317,8 @@ describe('[5] submitMiseBas — insertBatch + updateSowByCode (helpers Supabase)
       porcelets_nes_total: 10,
       nb_mort_nes: 0,
       porcelets_nes_vivants: 10,
+      nb_males_naissance: null,
+      nb_femelles_naissance: null,
       date_sevrage_prevue: '2026-05-17',
       statut: 'Sous mère',
       phase: 'maternite',
@@ -472,5 +475,118 @@ describe('QuickMiseBasForm · contrats UI (source-grep)', () => {
     expect(SRC).toMatch(/insertBatch\b/);
     expect(SRC).toMatch(/updateSowByCode\b/);
     expect(SRC).toMatch(/Maternit/);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// [V21 Sex ratio M/F] — validateSexRatio + intégration validateMiseBas
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('[V21] validateSexRatio — répartition mâles/femelles à la naissance', () => {
+  it('null/null + nv quelconque → valide (champ optionnel)', () => {
+    expect(validateSexRatio(null, null, 12)).toBeNull();
+  });
+
+  it('males=0, femelles=0 → valide (saisie déclarative explicite)', () => {
+    expect(validateSexRatio(0, 0, 12)).toBeNull();
+  });
+
+  it('males=6, femelles=6, nv=12 → valide (somme exactement = nv)', () => {
+    expect(validateSexRatio(6, 6, 12)).toBeNull();
+  });
+
+  it('males=5, femelles=4, nv=12 → valide (somme < nv : tolérance)', () => {
+    expect(validateSexRatio(5, 4, 12)).toBeNull();
+  });
+
+  it('males=8, femelles=8, nv=12 → erreur (somme > nv)', () => {
+    const err = validateSexRatio(8, 8, 12);
+    expect(err).toBeTruthy();
+    expect(err).toMatch(/> nés vivants/);
+  });
+
+  it('males=26 → erreur (au-dessus borne maxNes=25)', () => {
+    expect(validateSexRatio(26, 0, 30)).toMatch(/Mâles/);
+  });
+
+  it('femelles=-1 → erreur', () => {
+    expect(validateSexRatio(0, -1, 30)).toMatch(/Femelles/);
+  });
+
+  it('males seul saisi (6/null), nv=12 → valide (6 + 0 ≤ 12)', () => {
+    expect(validateSexRatio(6, null, 12)).toBeNull();
+  });
+
+  it('males seul saisi 14, nv=12 → erreur (14 + 0 > 12)', () => {
+    expect(validateSexRatio(14, null, 12)).toMatch(/> nés vivants/);
+  });
+});
+
+describe('[V21] validateMiseBas — sex ratio intégré', () => {
+  it('submit avec sex ratio rempli → valeurs persistées dans normalized', () => {
+    const r = validateMiseBas(
+      makeDraft({ nbMales: '7', nbFemelles: '5', nesVivants: '12', mortsNes: '0', nesTotaux: '12' }),
+    );
+    expect(r.ok).toBe(true);
+    expect(r.normalized?.nbMales).toBe(7);
+    expect(r.normalized?.nbFemelles).toBe(5);
+  });
+
+  it('submit sans sex ratio → undefined persisté (pas d\'erreur)', () => {
+    const r = validateMiseBas(makeDraft({ nbMales: '', nbFemelles: '' }));
+    expect(r.ok).toBe(true);
+    expect(r.normalized?.nbMales).toBeUndefined();
+    expect(r.normalized?.nbFemelles).toBeUndefined();
+  });
+
+  it('males + femelles > nv → erreur sexRatio bloque le submit', () => {
+    const r = validateMiseBas(
+      makeDraft({
+        nesVivants: '12',
+        mortsNes: '1',
+        nesTotaux: '13',
+        nbMales: '8',
+        nbFemelles: '6',
+      }),
+    );
+    expect(r.ok).toBe(false);
+    expect(r.errors.sexRatio).toBeTruthy();
+    expect(r.errors.sexRatio).toMatch(/> nés vivants/);
+  });
+});
+
+describe('[V21] buildMiseBasRow — propage nb_males/nb_femelles', () => {
+  it('avec nbMales/nbFemelles → colonnes peuplées', () => {
+    const row = buildMiseBasRow({
+      idPortee: '26-T7-02',
+      truieId: 'T07',
+      boucleMere: 'B.21',
+      dateMbSheets: '19/04/2026',
+      nv: 12,
+      mortsNes: 1,
+      vivants: 11,
+      dateSevragePrevue: '17/05/2026',
+      notes: '',
+      nbMales: 6,
+      nbFemelles: 5,
+    });
+    expect(row.nb_males_naissance).toBe(6);
+    expect(row.nb_femelles_naissance).toBe(5);
+  });
+
+  it('sans nbMales/nbFemelles → colonnes null (pas d\'erreur)', () => {
+    const row = buildMiseBasRow({
+      idPortee: '26-T7-02',
+      truieId: 'T07',
+      boucleMere: 'B.21',
+      dateMbSheets: '19/04/2026',
+      nv: 12,
+      mortsNes: 0,
+      vivants: 12,
+      dateSevragePrevue: '17/05/2026',
+      notes: '',
+    });
+    expect(row.nb_males_naissance).toBeNull();
+    expect(row.nb_femelles_naissance).toBeNull();
   });
 });

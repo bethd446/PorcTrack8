@@ -11,6 +11,9 @@ export interface MiseBasDraft {
   nesTotaux: string;
   poidsMoyen: string;
   notes: string;
+  /** Sex ratio à la naissance (optionnel, V21). 0–25 chacun. */
+  nbMales?: string;
+  nbFemelles?: string;
 }
 
 export interface MiseBasValidationErrors {
@@ -22,6 +25,9 @@ export interface MiseBasValidationErrors {
   poidsMoyen?: string;
   notes?: string;
   coherence?: string;
+  nbMales?: string;
+  nbFemelles?: string;
+  sexRatio?: string;
 }
 
 export interface MiseBasValidation {
@@ -34,7 +40,48 @@ export interface MiseBasValidation {
     poidsMoyen?: number;
     dateMbSheets: string;
     dateSevragePrevue: string;
+    nbMales?: number;
+    nbFemelles?: number;
   };
+}
+
+/**
+ * Valide le sex ratio mâles/femelles à la naissance (V21).
+ * Retourne null si valide, sinon un message d'erreur.
+ *
+ * Règles :
+ *  - chaque champ est optionnel (null/undefined → pas de saisie)
+ *  - chaque champ doit être un entier entre 0 et 25 si renseigné
+ *  - males + femelles ≤ nv (tolérance autorisée si la somme < nv : on accepte
+ *    car certains cas réels saisissent partiellement)
+ */
+export function validateSexRatio(
+  males: number | null | undefined,
+  femelles: number | null | undefined,
+  nv: number,
+): string | null {
+  const hasMales = males !== null && males !== undefined;
+  const hasFemelles = femelles !== null && femelles !== undefined;
+
+  if (hasMales) {
+    if (!Number.isFinite(males as number) || (males as number) < 0 || (males as number) > MISE_BAS_BOUNDS.maxNes) {
+      return `Mâles : 0 à ${MISE_BAS_BOUNDS.maxNes}`;
+    }
+  }
+  if (hasFemelles) {
+    if (!Number.isFinite(femelles as number) || (femelles as number) < 0 || (femelles as number) > MISE_BAS_BOUNDS.maxNes) {
+      return `Femelles : 0 à ${MISE_BAS_BOUNDS.maxNes}`;
+    }
+  }
+
+  const m = hasMales ? (males as number) : 0;
+  const f = hasFemelles ? (femelles as number) : 0;
+
+  if ((hasMales || hasFemelles) && m + f > nv) {
+    return `Mâles + femelles (${m + f}) > nés vivants (${nv})`;
+  }
+
+  return null;
 }
 
 export const MISE_BAS_BOUNDS = {
@@ -162,6 +209,30 @@ export function validateMiseBas(draft: MiseBasDraft): MiseBasValidation {
     errors.notes = `Max ${MISE_BAS_BOUNDS.maxNotes} caractères`;
   }
 
+  // Sex ratio (optionnel)
+  const malesRaw = draft.nbMales !== undefined ? String(draft.nbMales).trim() : '';
+  const femellesRaw = draft.nbFemelles !== undefined ? String(draft.nbFemelles).trim() : '';
+  let nbMalesNum: number | undefined;
+  let nbFemellesNum: number | undefined;
+  if (malesRaw !== '') {
+    const v = parseInteger(malesRaw);
+    if (v === null) errors.nbMales = `0 à ${MISE_BAS_BOUNDS.maxNes}`;
+    else nbMalesNum = v;
+  }
+  if (femellesRaw !== '') {
+    const v = parseInteger(femellesRaw);
+    if (v === null) errors.nbFemelles = `0 à ${MISE_BAS_BOUNDS.maxNes}`;
+    else nbFemellesNum = v;
+  }
+  if (!errors.nbMales && !errors.nbFemelles && nv !== null) {
+    const sexErr = validateSexRatio(
+      nbMalesNum ?? null,
+      nbFemellesNum ?? null,
+      nv,
+    );
+    if (sexErr) errors.sexRatio = sexErr;
+  }
+
   const dateMbSheets = isoToSheetsDate(draft.dateIso);
   if (!dateMbSheets) {
     errors.idPortee = errors.idPortee ?? '';
@@ -184,6 +255,8 @@ export function validateMiseBas(draft: MiseBasDraft): MiseBasValidation {
       poidsMoyen: poidsMoyenNum,
       dateMbSheets,
       dateSevragePrevue,
+      nbMales: nbMalesNum,
+      nbFemelles: nbFemellesNum,
     },
   };
 }
@@ -204,6 +277,9 @@ export interface MiseBasBatchValues {
   porcelets_nes_total: number;
   nb_mort_nes: number;
   porcelets_nes_vivants: number;
+  /** Répartition mâles/femelles à la naissance (V21, optionnel). */
+  nb_males_naissance: number | null;
+  nb_femelles_naissance: number | null;
   date_sevrage_prevue: string;
   statut: 'Sous mère';
   phase: 'maternite';
@@ -222,6 +298,8 @@ export function buildMiseBasRow(params: {
   dateSevragePrevue: string;
   notes: string;
   poidsMoyen?: number;
+  nbMales?: number;
+  nbFemelles?: number;
 }): MiseBasBatchValues {
   const noteParts: string[] = [];
   if (params.poidsMoyen !== undefined) {
@@ -239,6 +317,8 @@ export function buildMiseBasRow(params: {
     porcelets_nes_total: params.nv,
     nb_mort_nes: params.mortsNes,
     porcelets_nes_vivants: params.vivants,
+    nb_males_naissance: params.nbMales ?? null,
+    nb_femelles_naissance: params.nbFemelles ?? null,
     date_sevrage_prevue: sheetsDateToIso(params.dateSevragePrevue),
     statut: 'Sous mère',
     phase: 'maternite',
@@ -284,6 +364,8 @@ export async function submitMiseBas(
     dateSevragePrevue: validated.dateSevragePrevue,
     notes: params.notes,
     poidsMoyen: validated.poidsMoyen,
+    nbMales: validated.nbMales,
+    nbFemelles: validated.nbFemelles,
   });
 
   await deps.insertBatch(row);

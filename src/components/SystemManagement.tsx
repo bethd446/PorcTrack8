@@ -5,7 +5,7 @@ import {
 } from '@ionic/react';
 import {
   User, Tractor, Users, RefreshCw, Bell, HelpCircle, ShieldAlert,
-  ChevronRight, LogOut, Trash2, Mail, Lock,
+  ChevronRight, LogOut, Trash2, Mail, Lock, Truck,
 } from 'lucide-react';
 import AgritechLayout from './AgritechLayout';
 import { useAuth } from '../context/AuthContext';
@@ -660,6 +660,15 @@ export const SettingsPage: React.FC = () => {
                 onClick={() => setConfirmReset(true)}
                 destructive
                 trailing={<Trash2 size={14} className="text-red" aria-hidden="true" />}
+              />
+            </SettingsSection>
+
+            {/* Carnet fournisseurs (V21-D1) */}
+            <SettingsSection title="Carnet fournisseurs" icon={<Truck size={13} />}>
+              <ActionRow
+                label="Gérer les fournisseurs"
+                description="Aliment, pharmacie, génétique — WhatsApp pré-rempli"
+                onClick={() => navigate('/fournisseurs')}
               />
             </SettingsSection>
 

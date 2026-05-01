@@ -21,12 +21,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildVentePayloads,
   buildBandeNotes,
+  computeRendementCarcasse,
   computeVenteMontant,
   toFrDate,
   toIsoDateInput,
   validateVente,
   VENTE_ACHETEUR_MAX,
   VENTE_MAX_POIDS_KG,
+  VENTE_RENDEMENT_MAX_PCT,
   VENTE_STATUT_VENDUE,
 } from './quickVenteLogic';
 import type { BandePorcelets } from '../../types/farm';
@@ -417,5 +419,114 @@ describe('QuickVenteForm · helpers', () => {
       .toBe('Vente 1 porc 19/04/2026');
     expect(buildBandeNotes(undefined, '19/04/2026', 3))
       .toBe('Vente 3 porcs 19/04/2026');
+  });
+});
+
+// ── V21-4 · Canal ABATTOIR + carcasse + rendement ──────────────────────────
+
+describe('QuickVenteForm · V21-4 carcasse (ABATTOIR)', () => {
+  it('test carcasse 1 : ABATTOIR avec carcasse → patch DB carcasse + finance enrichies', () => {
+    const bande = makeBande({ id: 'B-ABA', vivants: 10 });
+    const payloads = buildVentePayloads({
+      bande,
+      nbVendus: 5,
+      poidsMoyenKg: 100, // total vif = 500 kg
+      prixUnitaireFCFA: 2100,
+      acheteur: 'Abattoir Abidjan',
+      dateIso: '2026-04-19',
+      canal: 'ABATTOIR',
+      abattoirNom: 'Abidjan SA',
+      poidsCarcasseKg: 380, // rendement = 76%
+      prixCarcasseFCFAKg: 2800,
+    });
+
+    // Patch DB (snake_case) prêt pour updateBatchByCode
+    expect(payloads.carcasseDbPatch.canal_vente).toBe('ABATTOIR');
+    expect(payloads.carcasseDbPatch.abattoir_nom).toBe('Abidjan SA');
+    expect(payloads.carcasseDbPatch.poids_vif_kg).toBe(500);
+    expect(payloads.carcasseDbPatch.poids_carcasse_kg).toBe(380);
+    expect(payloads.carcasseDbPatch.prix_carcasse_fcfa_kg).toBe(2800);
+    expect(payloads.carcasseDbPatch.rendement_carcasse_pct).toBe(76);
+
+    // Patch métier (camelCase)
+    expect(payloads.carcassePatch.canalVente).toBe('ABATTOIR');
+    expect(payloads.carcassePatch.poidsCarcasseKg).toBe(380);
+
+    // Notes finance enrichies
+    const financeNotes = String(payloads.financeValues[5]);
+    expect(financeNotes).toContain('canal:ABATTOIR');
+    expect(financeNotes).toContain('abattoir:Abidjan SA');
+    expect(financeNotes).toContain('carcasse:380kg');
+    expect(financeNotes).toContain('rendement:76%');
+    expect(financeNotes).toContain('prix_carcasse:2800FCFA/kg');
+
+    expect(payloads.rendementPct).toBe(76);
+  });
+
+  it('test carcasse 2 : calcul rendement carcasse / vif × 100', () => {
+    // Cas standard : 380 kg carcasse / 500 kg vif = 76 %
+    expect(computeRendementCarcasse(380, 500)).toBe(76);
+    // 76.5 %
+    expect(computeRendementCarcasse(382.5, 500)).toBe(76.5);
+    // 75 % pile
+    expect(computeRendementCarcasse(75, 100)).toBe(75);
+    // Inputs invalides → NaN
+    expect(Number.isNaN(computeRendementCarcasse(0, 500))).toBe(true);
+    expect(Number.isNaN(computeRendementCarcasse(380, 0))).toBe(true);
+    expect(Number.isNaN(computeRendementCarcasse(-1, 500))).toBe(true);
+    expect(Number.isNaN(computeRendementCarcasse(Number.NaN, 500))).toBe(true);
+
+    // Cohérence avec buildVentePayloads
+    const bande = makeBande({ vivants: 10 });
+    const p = buildVentePayloads({
+      bande, nbVendus: 4, poidsMoyenKg: 110, prixUnitaireFCFA: 2100,
+      acheteur: 'X', dateIso: '2026-04-19',
+      canal: 'ABATTOIR', abattoirNom: 'A', poidsCarcasseKg: 330,
+      prixCarcasseFCFAKg: 2800,
+    });
+    // total vif = 440, carcasse = 330 → 75%
+    expect(p.rendementPct).toBe(75);
+  });
+
+  it('test carcasse 3 : validation rendement physiologique (≤ 85%)', () => {
+    // Rendement plausible : 75% → ok
+    const okRes = validateVente({
+      nbVendus: 5, vivantsActuels: 10, poidsMoyenKg: 100,
+      prixUnitaireFCFA: 2100, acheteur: 'X', dateIso: '2026-04-19',
+      canal: 'ABATTOIR', abattoirNom: 'A', poidsCarcasseKg: 375,
+      prixCarcasseFCFAKg: 2800,
+    });
+    expect(okRes.ok).toBe(true);
+
+    // Rendement > VENTE_RENDEMENT_MAX_PCT → erreur
+    const tooHigh = validateVente({
+      nbVendus: 5, vivantsActuels: 10, poidsMoyenKg: 100,
+      prixUnitaireFCFA: 2100, acheteur: 'X', dateIso: '2026-04-19',
+      canal: 'ABATTOIR', abattoirNom: 'A',
+      poidsCarcasseKg: 500, // 100% rendement (impossible)
+      prixCarcasseFCFAKg: 2800,
+    });
+    expect(tooHigh.ok).toBe(false);
+    expect(tooHigh.errors.poidsCarcasse).toBeDefined();
+    expect(tooHigh.errors.poidsCarcasse).toContain(`${VENTE_RENDEMENT_MAX_PCT}`);
+
+    // Champs ABATTOIR manquants → erreurs requises
+    const missingAll = validateVente({
+      nbVendus: 5, vivantsActuels: 10, poidsMoyenKg: 100,
+      prixUnitaireFCFA: 2100, acheteur: 'X', dateIso: '2026-04-19',
+      canal: 'ABATTOIR',
+    });
+    expect(missingAll.ok).toBe(false);
+    expect(missingAll.errors.abattoirNom).toBeDefined();
+    expect(missingAll.errors.poidsCarcasse).toBeDefined();
+    expect(missingAll.errors.prixCarcasse).toBeDefined();
+
+    // Canal non-ABATTOIR : pas d'exigence carcasse
+    const direct = validateVente({
+      nbVendus: 5, vivantsActuels: 10, poidsMoyenKg: 100,
+      prixUnitaireFCFA: 2100, acheteur: 'X', dateIso: '2026-04-19',
+      canal: 'DIRECT',
+    });
+    expect(direct.ok).toBe(true);
   });
 });

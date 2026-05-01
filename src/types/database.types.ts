@@ -470,28 +470,37 @@ export type Database = {
       }
       notes: {
         Row: {
+          audio_url: string | null
           author_id: string | null
           category: string | null
           content: string
           created_at: string
           farm_id: string
           id: string
+          photo_url: string | null
+          tags: string[] | null
         }
         Insert: {
+          audio_url?: string | null
           author_id?: string | null
           category?: string | null
           content: string
           created_at?: string
           farm_id: string
           id?: string
+          photo_url?: string | null
+          tags?: string[] | null
         }
         Update: {
+          audio_url?: string | null
           author_id?: string | null
           category?: string | null
           content?: string
           created_at?: string
           farm_id?: string
           id?: string
+          photo_url?: string | null
+          tags?: string[] | null
         }
         Relationships: []
       }

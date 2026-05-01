@@ -1,13 +1,17 @@
 import React, { useEffect, useRef } from 'react';
 import {
   Heart,
+  Stethoscope,
   Baby,
   Milk,
   AlertOctagon,
   Scale,
   Syringe,
+  Wheat,
   FileText,
   Sparkles,
+  Layers,
+  Repeat,
   X,
 } from 'lucide-react';
 
@@ -38,6 +42,13 @@ const ACTIONS: ActionDef[] = [
     tone: 'accent',
   },
   {
+    kind: 'echographie',
+    title: 'Échographie',
+    description: 'Confirmer ou infirmer la gestation (J28)',
+    Icon: Stethoscope,
+    tone: 'accent',
+  },
+  {
     kind: 'misebas',
     title: 'Mise-bas',
     description: 'Truie + nés vivants + morts-nés',
@@ -59,10 +70,31 @@ const ACTIONS: ActionDef[] = [
     tone: 'red',
   },
   {
+    kind: 'adoption',
+    title: 'Adoption',
+    description: 'Transfert porcelets entre bandes en maternité',
+    Icon: Repeat,
+    tone: 'default',
+  },
+  {
     kind: 'pesee',
     title: 'Pesée',
     description: 'Bande + poids moyen + date',
     Icon: Scale,
+    tone: 'amber',
+  },
+  {
+    kind: 'conso',
+    title: 'Conso aliment',
+    description: 'Quantité livrée à une bande ou truie',
+    Icon: Wheat,
+    tone: 'amber',
+  },
+  {
+    kind: 'tripoids',
+    title: 'Tri par poids',
+    description: 'Distribution engraissement / finition',
+    Icon: Layers,
     tone: 'amber',
   },
   {

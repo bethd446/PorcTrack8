@@ -62,3 +62,27 @@ export function buildSingleItemOrderURL(
 ): string | null {
   return buildWhatsAppOrderURL([{ libelle, manqueKg, unite }], farmName);
 }
+
+/**
+ * Construit une URL WhatsApp ciblée vers un fournisseur (V21-D1).
+ * Si `fournisseur` est fourni, utilise son numéro WhatsApp ; sinon retourne
+ * `null` (le fallback grouped/support reste à la charge de l'appelant).
+ *
+ * Format message : "Bonjour {nom}, j'ai besoin de {produit} {qte} kg pour ma
+ * ferme {farm}. Possible quand ?"
+ */
+export function buildSupplierOrderURL(opts: {
+  fournisseur: { nom: string; whatsapp_number: string | null } | null | undefined;
+  produit: string;
+  qteKg: number;
+  farmName?: string;
+}): string | null {
+  const f = opts.fournisseur;
+  if (!f || !f.whatsapp_number) return null;
+  const digits = f.whatsapp_number.replace(/\D/g, '');
+  if (digits.length < 8) return null;
+  const qte = Math.max(0, Math.ceil(opts.qteKg));
+  const farmPart = opts.farmName ? ` pour ma ferme ${opts.farmName}` : '';
+  const message = `Bonjour ${f.nom}, j'ai besoin de ${opts.produit} ${qte} kg${farmPart}. Possible quand ?`;
+  return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+}

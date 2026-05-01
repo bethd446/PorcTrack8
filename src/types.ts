@@ -70,6 +70,12 @@ export interface Note {
   date:        string;
   texte:       string;
   auteur?:     string;
+  /** URL publique d'une photo associée (Supabase `notes.photo_url`). */
+  photoUrl?:   string;
+  /** URL publique d'un mémo audio (Supabase `notes.audio_url`). */
+  audioUrl?:   string;
+  /** Tags libres (Supabase `notes.tags`, ex: ['santé','urgent']). */
+  tags?:       string[];
   synced:      boolean;
 }
 
