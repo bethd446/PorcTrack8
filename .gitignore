@@ -7,6 +7,13 @@ coverage/
 graphify-out/
 *.log
 
+# Playwright artifacts (générés à chaque run)
+tests/playwright-artifacts/
+tests/playwright-report/data/
+tests/playwright-report/trace/
+tests/playwright-report/index.html
+test-results/
+
 # Variables d'environnement (NE JAMAIS COMMITTER)
 .env
 .env.local

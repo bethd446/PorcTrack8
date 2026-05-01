@@ -3,7 +3,7 @@ import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/r
 import { useNavigate } from 'react-router-dom';
 import {
   Baby, Plus, Scale, Droplets,
-  ArrowUpRight, AlertCircle, Lock
+  ArrowUpRight, AlertCircle, AlertTriangle, Lock
 } from 'lucide-react';
 import AgritechLayout from '../../components/AgritechLayout';
 import Eyebrow from '../../components/design/Eyebrow';
@@ -27,6 +27,16 @@ import {
   detectPendingTransitions,
 } from '../../services/phaseEngine';
 import type { BandePorcelets, Truie } from '../../types/farm';
+import {
+  classifyCyclePhaseCard,
+  computeRemaining,
+  getCycleTreatmentStyle,
+  TREATMENT_RANK,
+  type CycleTreatment,
+} from '../../utils/cycleTreatments';
+
+const MATERNITE_PHASE_TONE = 'var(--color-info)';
+const MATERNITE_PHASE_DAYS = FARM_CONFIG.SEVRAGE_AGE_JOURS ?? 28;
 
 /**
  * MaterniteView — Hub Cycles / Maternité
@@ -73,7 +83,7 @@ const MaterniteView: React.FC = () => {
   const pendingTransitions = useMemo(() => detectPendingTransitions(porteesReelles, today), [porteesReelles, today]);
 
   const rows = useMemo(() => {
-    return truiesEnMat.map(truie => {
+    const enriched = truiesEnMat.map(truie => {
       const portee = getTruiePortee(truie, porteesReelles);
       const jSinceMB = daysSince(portee?.dateMB, today);
       const terrainPhase = portee ? computePhaseTerrain(portee, today) : null;
@@ -85,7 +95,26 @@ const MaterniteView: React.FC = () => {
         urgence: transition?.urgence ?? 'NORMALE'
       };
 
-      return { truie, portee, jSinceMB, terrainPhase, status };
+      const treatment = classifyCyclePhaseCard(
+        {
+          statut: portee?.statut ?? truie.statut,
+          dayInPhase: jSinceMB,
+          phaseDays: MATERNITE_PHASE_DAYS,
+        },
+        today,
+        'maternite',
+      );
+
+      return { truie, portee, jSinceMB, terrainPhase, status, treatment };
+    });
+
+    return enriched.sort((a, b) => {
+      const r = TREATMENT_RANK[a.treatment] - TREATMENT_RANK[b.treatment];
+      if (r !== 0) return r;
+      const remA = computeRemaining({ dayInPhase: a.jSinceMB, phaseDays: MATERNITE_PHASE_DAYS }) ?? Number.MAX_SAFE_INTEGER;
+      const remB = computeRemaining({ dayInPhase: b.jSinceMB, phaseDays: MATERNITE_PHASE_DAYS }) ?? Number.MAX_SAFE_INTEGER;
+      if (remA !== remB) return remA - remB;
+      return a.truie.displayId.localeCompare(b.truie.displayId, undefined, { numeric: true, sensitivity: 'base' });
     });
   }, [truiesEnMat, porteesReelles, today, pendingTransitions]);
 
@@ -205,6 +234,7 @@ const MaterniteView: React.FC = () => {
                   <MaterniteCard
                     key={r.truie.id}
                     data={r}
+                    treatment={r.treatment}
                     onDetail={() => navigate(`/troupeau/truies/${r.truie.id}`)}
                   />
                 ))}
@@ -234,8 +264,9 @@ interface MaterniteStatus {
 
 const MaterniteCard: React.FC<{
   data: { truie: Truie; portee?: BandePorcelets; jSinceMB: number | null; terrainPhase: string | null; status: MaterniteStatus };
+  treatment: CycleTreatment;
   onDetail: () => void;
-}> = ({ data, onDetail }) => {
+}> = ({ data, treatment, onDetail }) => {
   const navigate = useNavigate();
   const { truie, portee, jSinceMB, terrainPhase, status } = data;
   const { isBloquant, joursEnRetard } = status;
@@ -244,18 +275,85 @@ const MaterniteCard: React.FC<{
   const mortsPct = mortsPercent(portee);
   const feedConfig = FARM_CONFIG.FEED_CONFIG.TRUIE_LACTATION;
 
+  const treatmentStyle = getCycleTreatmentStyle(treatment, MATERNITE_PHASE_TONE);
+  const isUrgent = treatment === 'urgent';
+  const isResolu = treatment === 'resolu';
+  const remainingDays = computeRemaining({ dayInPhase: jSinceMB, phaseDays: MATERNITE_PHASE_DAYS });
+  const eyebrowText = isUrgent && remainingDays !== null
+    ? `Imminent · ${remainingDays}j restant${remainingDays > 1 ? 's' : ''}`
+    : isResolu
+      ? 'Résolu'
+      : 'Maternité';
+
   return (
     <div
       onClick={onDetail}
+      style={{
+        background: treatmentStyle.background,
+        border: treatmentStyle.border,
+        borderRadius: 12,
+        opacity: treatmentStyle.opacity,
+      }}
       className={`card-dense flex flex-col gap-4 p-4 transition-all active:scale-[0.98] cursor-pointer ${
-        isBloquant ? 'bg-red-500/5 ring-1 ring-red-500/20' :
-        isTransitionRequired ? 'animate-pulse-slow' : ''
+        isBloquant ? 'ring-1 ring-red-500/20' : ''
       }`}
     >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          marginBottom: -4,
+        }}
+      >
+        <span
+          aria-hidden="true"
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            background: treatmentStyle.eyebrowDot,
+            flexShrink: 0,
+          }}
+        />
+        <span
+          style={{
+            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontSize: 10,
+            letterSpacing: '0.06em',
+            color: treatmentStyle.eyebrowColor,
+            fontWeight: isUrgent ? 600 : 500,
+            textTransform: 'uppercase',
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
+          {eyebrowText}
+        </span>
+        {treatmentStyle.showAlertIcon && (
+          <AlertTriangle
+            size={14}
+            color="var(--color-pig-deep, var(--color-pig))"
+            aria-hidden="true"
+            style={{ marginLeft: 'auto' }}
+          />
+        )}
+      </div>
       <div className="flex justify-between items-start">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="text-[15px] font-bold text-text-0 font-mono" style={isBloquant ? { color: 'var(--color-danger, #EF4444)' } : undefined}>{truie.displayId}</h3>
+            <h3
+              style={{
+                fontFamily: 'BigShoulders, system-ui, sans-serif',
+                fontSize: treatmentStyle.titleSize,
+                fontWeight: treatmentStyle.titleWeight,
+                color: isBloquant ? 'var(--color-danger, #EF4444)' : 'var(--ink)',
+                letterSpacing: '-0.01em',
+                lineHeight: 1.1,
+                margin: 0,
+              }}
+            >
+              {truie.displayId}
+            </h3>
             {truie.nom && <span className="text-[12px] text-text-2 truncate max-w-[80px]">{truie.nom}</span>}
             <Chip tone={isBloquant ? 'red' : 'default'} label={isBloquant ? 'BLOCAGE' : `B.${truie.boucle}`} size="xs" />
           </div>

@@ -23,6 +23,7 @@
 import React from 'react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import type { Truie, Verrat, BandePorcelets } from '../../types/farm';
 
@@ -291,6 +292,20 @@ function clickSubTab(label: RegExp): void {
   fireEvent.click(tab);
 }
 
+/** Variante async : Radix Tabs réagit à pointerdown → utiliser userEvent. */
+async function clickSubTabUser(label: RegExp): Promise<void> {
+  const user = userEvent.setup();
+  const tab = screen
+    .getAllByRole('tab')
+    .find(
+      (t) =>
+        t.id.startsWith('troupeau-tab-')
+        && label.test(t.textContent ?? ''),
+    );
+  if (!tab) throw new Error(`Sous-onglet introuvable : ${label}`);
+  await user.click(tab);
+}
+
 // ─── Tests ──────────────────────────────────────────────────────────────────
 
 describe('TroupeauHub — intégration multi-vues', () => {
@@ -329,11 +344,10 @@ describe('TroupeauHub — intégration multi-vues', () => {
     expect(truiesTab?.getAttribute('aria-selected')).toBe('true');
   });
 
-  // TODO: Radix Tabs ne réagit pas à fireEvent.click — adapter avec userEvent.
-  it.skip('3. click Verrats → VerratsView affichée (V01 / V02 présents)', async () => {
+  it('3. click Verrats → VerratsView affichée (V01 / V02 présents)', async () => {
     renderHub();
 
-    clickSubTab(/verrats/i);
+    await clickSubTabUser(/verrats/i);
 
     // React.lazy → Suspense → placeholder "Chargement…" puis le module résout
     // findByText attend l'apparition du contenu réel.
@@ -345,11 +359,10 @@ describe('TroupeauHub — intégration multi-vues', () => {
     expect(actifChips.length).toBeGreaterThanOrEqual(2);
   });
 
-  // TODO: Radix Tabs ne réagit pas à fireEvent.click — adapter avec userEvent.
-  it.skip('4. click Porcelets → sections "Sous mère" et "Post-sevrage" visibles', async () => {
+  it('4. click Porcelets → sections "Sous mère" et "Post-sevrage" visibles', async () => {
     renderHub();
 
-    clickSubTab(/porcelets/i);
+    await clickSubTabUser(/porcelets/i);
 
     // Section "Sous mère · 4"
     const sousMereHeader = await screen.findByText(/Sous mère · 4/i);
@@ -360,11 +373,10 @@ describe('TroupeauHub — intégration multi-vues', () => {
     expect(psHeader).toBeDefined();
   });
 
-  // TODO: Radix Tabs ne réagit pas à fireEvent.click — adapter avec userEvent.
-  it.skip('5. click Loges → IsoBarn SVG (role=img) visible', async () => {
+  it('5. click Loges → IsoBarn SVG (role=img) visible', async () => {
     renderHub();
 
-    clickSubTab(/loges/i);
+    await clickSubTabUser(/loges/i);
 
     // On attend l'apparition du SVG stubé (role=img + aria-label isométrique)
     const svg = await screen.findByRole('img', { name: /isométrique/i });

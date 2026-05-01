@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import {
   Droplets, ArrowUpRight,
-  TrendingUp, Scale
+  TrendingUp, Scale, AlertTriangle
 } from 'lucide-react';
 import { PorceletIcon } from '../../components/icons';
 import AgritechLayout from '../../components/AgritechLayout';
@@ -28,6 +28,18 @@ import {
 } from '../../services/phaseEngine';
 import { WEIGHTS_RELEVE, type LogeReleve } from '../../config/weightsReleve';
 import type { BandePorcelets } from '../../types/farm';
+import {
+  classifyCyclePhaseCard,
+  computeRemaining,
+  getCycleTreatmentStyle,
+  TREATMENT_RANK,
+  type CycleTreatment,
+} from '../../utils/cycleTreatments';
+
+const CROISS_PHASE_TONE = 'var(--color-accent-500)';
+const CROISS_PHASE_DAYS = FARM_CONFIG.CROISSANCE_DUREE_JOURS ?? 37;
+const CROISS_PHASE_OFFSET =
+  (FARM_CONFIG.SEVRAGE_AGE_JOURS ?? 28) + (FARM_CONFIG.POST_SEVRAGE_DUREE_JOURS ?? 35);
 
 /**
  * CroissanceView — Hub Cycles / Croissance
@@ -57,16 +69,40 @@ const CroissanceView: React.FC = () => {
       const logeIdx = (realPortees.indexOf(b) % 2) + 1; // Croissance = Loge 1-2 engraissement
       const releve = WEIGHTS_RELEVE[`LOGE_${logeIdx}`];
 
+      const dayInPhase = ageJours !== null
+        ? Math.max(0, ageJours - CROISS_PHASE_OFFSET)
+        : null;
+      const treatment = classifyCyclePhaseCard(
+        {
+          statut: b.statut,
+          dayInPhase,
+          phaseDays: CROISS_PHASE_DAYS,
+        },
+        today,
+        'croiss',
+      );
+
       return {
         id: b.id,
         idPortee: b.idPortee || b.id,
         truie: b.truie,
         vivants: b.vivants ?? 0,
         ageJours,
+        dayInPhase,
         terrainPhase,
         releve,
-        bande: b
+        bande: b,
+        treatment,
       };
+    });
+
+    rows.sort((a, b) => {
+      const r = TREATMENT_RANK[a.treatment] - TREATMENT_RANK[b.treatment];
+      if (r !== 0) return r;
+      const remA = computeRemaining({ dayInPhase: a.dayInPhase, phaseDays: CROISS_PHASE_DAYS }) ?? Number.MAX_SAFE_INTEGER;
+      const remB = computeRemaining({ dayInPhase: b.dayInPhase, phaseDays: CROISS_PHASE_DAYS }) ?? Number.MAX_SAFE_INTEGER;
+      if (remA !== remB) return remA - remB;
+      return a.idPortee.localeCompare(b.idPortee, 'fr');
     });
 
     const totalVivants = rows.reduce((acc, r) => acc + r.vivants, 0);
@@ -178,9 +214,11 @@ interface CroissanceRowData {
   truie?: string;
   vivants: number;
   ageJours: number | null;
+  dayInPhase: number | null;
   terrainPhase: string | null;
   releve?: LogeReleve;
   bande: BandePorcelets;
+  treatment: CycleTreatment;
 }
 
 const CroissanceCard: React.FC<{ data: CroissanceRowData; onOpen: () => void }> = ({ data, onOpen }) => {
@@ -194,17 +232,83 @@ const CroissanceCard: React.FC<{ data: CroissanceRowData; onOpen: () => void }> 
   const gmqTarget = 650;
   const gmqProgress = Math.min(100, (gmq / gmqTarget) * 100);
 
+  const treatmentStyle = getCycleTreatmentStyle(data.treatment, CROISS_PHASE_TONE);
+  const isUrgent = data.treatment === 'urgent';
+  const isResolu = data.treatment === 'resolu';
+  const remainingDays = computeRemaining({ dayInPhase: data.dayInPhase, phaseDays: CROISS_PHASE_DAYS });
+  const eyebrowText = isUrgent && remainingDays !== null
+    ? `Imminent · ${remainingDays}j restant${remainingDays > 1 ? 's' : ''}`
+    : isResolu
+      ? 'Résolu'
+      : 'Croissance';
+
   return (
     <div
       onClick={onOpen}
-      className={`card-dense flex flex-col gap-4 p-4 transition-all active:scale-[0.98] cursor-pointer ${
-        isTransitionRequired ? 'animate-pulse-slow' : ''
-      }`}
+      style={{
+        background: treatmentStyle.background,
+        border: treatmentStyle.border,
+        borderRadius: 12,
+        opacity: treatmentStyle.opacity,
+      }}
+      className="card-dense flex flex-col gap-4 p-4 transition-all active:scale-[0.98] cursor-pointer"
     >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          marginBottom: -4,
+        }}
+      >
+        <span
+          aria-hidden="true"
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            background: treatmentStyle.eyebrowDot,
+            flexShrink: 0,
+          }}
+        />
+        <span
+          style={{
+            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontSize: 10,
+            letterSpacing: '0.06em',
+            color: treatmentStyle.eyebrowColor,
+            fontWeight: isUrgent ? 600 : 500,
+            textTransform: 'uppercase',
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
+          {eyebrowText}
+        </span>
+        {treatmentStyle.showAlertIcon && (
+          <AlertTriangle
+            size={14}
+            color="var(--color-pig-deep, var(--color-pig))"
+            aria-hidden="true"
+            style={{ marginLeft: 'auto' }}
+          />
+        )}
+      </div>
       <div className="flex justify-between items-start">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="text-[15px] font-bold text-text-0 font-mono">{data.idPortee}</h3>
+            <h3
+              style={{
+                fontFamily: 'BigShoulders, system-ui, sans-serif',
+                fontSize: treatmentStyle.titleSize,
+                fontWeight: treatmentStyle.titleWeight,
+                color: 'var(--ink)',
+                letterSpacing: '-0.01em',
+                lineHeight: 1.1,
+                margin: 0,
+              }}
+            >
+              {data.idPortee}
+            </h3>
             <Chip tone="default" label={`${data.vivants} porcs`} size="xs" />
           </div>
           <p className="text-[11px] text-text-2 mt-0.5">

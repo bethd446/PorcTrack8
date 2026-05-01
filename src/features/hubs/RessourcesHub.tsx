@@ -10,11 +10,12 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
 import {
   AlertTriangle, Plus, Edit3, Droplets, FlaskConical, Search,
   Calculator, ClipboardList, ArrowRight, ExternalLink, Settings,
+  X,
 } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
@@ -106,6 +107,10 @@ const FARM_NAME = 'K13';
 
 const RessourcesHub: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filterParam = searchParams.get('filter');
+  const isStockBasFilter = filterParam === 'stock-bas';
+
   const { stockAliment, stockVeto, refreshData, truies, verrats, bandes } = useFarm();
   const cheptel = useMemo(() => ({ truies, verrats, bandes }), [truies, verrats, bandes]);
   const { handleRefresh } = useAutoRefresh();
@@ -114,18 +119,35 @@ const RessourcesHub: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredAliments = useMemo(() => {
-    const filtered = stockAliment.filter(a =>
+    let filtered = stockAliment.filter(a =>
       a.libelle.toLowerCase().includes(searchQuery.toLowerCase()),
     );
+    if (isStockBasFilter) {
+      filtered = filtered.filter(a => classifyResourceTreatment(a) !== 'resolu');
+    }
     return sortByTreatment(filtered);
-  }, [stockAliment, searchQuery]);
+  }, [stockAliment, searchQuery, isStockBasFilter]);
 
   const filteredVetos = useMemo(() => {
-    const filtered = stockVeto.filter(v =>
+    let filtered = stockVeto.filter(v =>
       v.produit.toLowerCase().includes(searchQuery.toLowerCase()),
     );
+    if (isStockBasFilter) {
+      filtered = filtered.filter(v => classifyResourceTreatment(v) !== 'resolu');
+    }
     return sortByTreatment(filtered);
-  }, [stockVeto, searchQuery]);
+  }, [stockVeto, searchQuery, isStockBasFilter]);
+
+  const stockBasCount = useMemo(() => {
+    if (!isStockBasFilter) return 0;
+    return filteredAliments.length + filteredVetos.length;
+  }, [isStockBasFilter, filteredAliments, filteredVetos]);
+
+  const clearStockBasFilter = (): void => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('filter');
+    setSearchParams(next, { replace: true });
+  };
 
   const treatmentCounts = useMemo(() => {
     const source: StockItem[] = activeTab === 'aliments' ? filteredAliments : filteredVetos;
@@ -240,6 +262,65 @@ const RessourcesHub: React.FC = () => {
                 {stats.total} référence{stats.total > 1 ? 's' : ''} suivies · {stockAliment.length} aliments · {stockVeto.length} produits véto
               </div>
             </header>
+
+            {isStockBasFilter && (
+              <div
+                role="status"
+                aria-live="polite"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  flexWrap: 'wrap',
+                  marginTop: -8,
+                }}
+              >
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '6px 12px',
+                    borderRadius: 'var(--radius-pill)',
+                    background: 'var(--color-pig-soft, var(--bg-surface-2))',
+                    color: 'var(--color-pig-deep, var(--color-pig))',
+                    border: '1px solid var(--color-pig)',
+                    fontFamily: 'DMMono, ui-monospace, monospace',
+                    fontSize: 11,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    fontWeight: 600,
+                  }}
+                >
+                  <AlertTriangle size={12} aria-hidden="true" />
+                  Stock bas · {stockBasCount} produit{stockBasCount > 1 ? 's' : ''}
+                </span>
+                <button
+                  type="button"
+                  onClick={clearStockBasFilter}
+                  className="pressable"
+                  aria-label="Réinitialiser le filtre stock bas"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '6px 12px',
+                    borderRadius: 'var(--radius-pill)',
+                    background: 'transparent',
+                    color: 'var(--muted)',
+                    border: '1px solid var(--line)',
+                    fontFamily: 'DMMono, ui-monospace, monospace',
+                    fontSize: 11,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <X size={12} aria-hidden="true" />
+                  Réinitialiser
+                </button>
+              </div>
+            )}
 
             {/* ── 4 KPI cards ──────────────────────────────────────── */}
             <section

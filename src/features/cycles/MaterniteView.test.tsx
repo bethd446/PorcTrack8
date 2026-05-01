@@ -170,7 +170,7 @@ afterEach(() => {
 });
 
 describe('MaterniteView — smoke', () => {
-  it.skip('affiche le KPI "Truies" avec le compte des truies en maternité', () => {
+  it('affiche le KPI "Truies" avec le compte des truies en maternité', () => {
     mockFarmValue.truies = [
       makeTruie({ id: 'T01', displayId: 'T01', statut: 'En maternité' }),
     ];
@@ -180,7 +180,9 @@ describe('MaterniteView — smoke', () => {
 
     renderView();
 
-    expect(screen.getByText(/Maternité/i)).toBeTruthy();
+    // "Maternité" apparaît plusieurs fois (crumbs, eyebrow, h1) → ciblage h1
+    const h1 = screen.getByRole('heading', { level: 1 });
+    expect(h1.textContent).toMatch(/Maternité/i);
     // Le KPI "Truies" doit afficher 1
     const kpiTruies = screen.getByLabelText(/Truies\s+1/i);
     expect(kpiTruies).toBeTruthy();

@@ -15,7 +15,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { IonAlert, IonContent, IonPage } from '@ionic/react';
+import { IonAlert, IonContent, IonModal, IonPage } from '@ionic/react';
 import { AlertCircle, Edit3, Skull } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
@@ -31,6 +31,7 @@ import BandeActionToolbar from './BandeActionToolbar';
 import { CohortTimeline } from '../../components/design/CohortTimeline';
 import type { Phase } from '../../components/design/PhaseBadge';
 import LineageBreadcrumb, { type LineageNode } from '../../components/design/LineageBreadcrumb';
+import LineageTree from '../../components/design/LineageTree';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
 import { computeBandePhase, type BandePhase } from '../../services/bandesAggregator';
@@ -299,6 +300,7 @@ const BandeDetailView: React.FC = () => {
   const [showMortalityConfirm, setShowMortalityConfirm] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [peseeOpen, setPeseeOpen] = useState(false);
+  const [treeOpen, setTreeOpen] = useState(false);
 
   const decodedId = bandeId ? decodeURIComponent(bandeId) : '';
 
@@ -459,7 +461,7 @@ const BandeDetailView: React.FC = () => {
             </header>
 
             {/* ── Lignée (kit v2.1) ───────────────────────────────────── */}
-            <LineageBreadcrumb nodes={lineageNodes} />
+            <LineageBreadcrumb nodes={lineageNodes} onTreeClick={() => setTreeOpen(true)} />
 
             {/* ── Hero ───────────────────────────────────────────────── */}
             <div className="card-dense flex flex-col gap-3.5">
@@ -672,6 +674,39 @@ const BandeDetailView: React.FC = () => {
             isOpen={peseeOpen}
             onClose={() => setPeseeOpen(false)}
           />
+
+          <IonModal isOpen={treeOpen} onDidDismiss={() => setTreeOpen(false)}>
+            <IonContent>
+              <div style={{ padding: 18 }}>
+                <LineageTree
+                  rootBandeId={bande.id}
+                  truies={truies}
+                  verrats={verrats}
+                  bandes={bandes}
+                  saillies={saillies}
+                />
+                <button
+                  type="button"
+                  onClick={() => setTreeOpen(false)}
+                  style={{
+                    marginTop: 16,
+                    padding: '10px 18px',
+                    borderRadius: 'var(--radius-pill, 9999px)',
+                    border: '1px solid var(--line)',
+                    background: 'var(--bg-surface)',
+                    fontFamily: 'DMMono, ui-monospace, monospace',
+                    fontSize: 11,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: 'var(--ink)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Fermer
+                </button>
+              </div>
+            </IonContent>
+          </IonModal>
 
           <BandeActionToolbar
             onPesee={() => setPeseeOpen(true)}

@@ -15,7 +15,7 @@
  * la fiche animal ou la bande correspondante (`navByType`).
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -26,6 +26,9 @@ import {
   AlertOctagon,
   Calendar,
   TrendingUp,
+  Stethoscope,
+  Truck,
+  Repeat,
 } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
@@ -42,6 +45,12 @@ import {
   type ForecastPriority,
   type WeeklyPressure,
 } from '../../services/forecastAnalyzer';
+import {
+  buildForecastEvents,
+  groupEventsByWeek,
+  type ForecastEvent as PrevisionnelEvent,
+  type ForecastEventType as PrevisionnelEventType,
+} from '../../utils/forecastEvents';
 
 // ─── Helpers UI ─────────────────────────────────────────────────────────────
 
@@ -104,18 +113,84 @@ function shortWeek(iso: string): string {
   return i >= 0 ? iso.slice(i + 1) : iso;
 }
 
+// ─── Helpers calendrier prévisionnel (30/60/90 j) ────────────────────────────
+
+type Horizon = 14 | 30 | 60 | 90;
+
+/** Couleur sémantique par type d'événement prévisionnel. */
+function previsionnelColor(type: PrevisionnelEventType): string {
+  switch (type) {
+    case 'MISE_BAS':       return 'var(--color-info, #3B82F6)';
+    case 'SEVRAGE':        return 'var(--amber-pork, #F4A261)';
+    case 'RETOUR_CHALEUR': return 'var(--color-pig, #C2662B)';
+    case 'PESEE':          return 'var(--color-accent-500, #2D5A1B)';
+    case 'ECHO':           return 'var(--color-info, #3B82F6)';
+    case 'SORTIE':         return 'var(--color-secondary, #8B5E3C)';
+    case 'RE_SAILLIE':     return 'var(--color-pig, #C2662B)';
+  }
+}
+
+/** Icône lucide par type prévisionnel. */
+function previsionnelIcon(type: PrevisionnelEventType): React.ReactNode {
+  const size = 16;
+  switch (type) {
+    case 'MISE_BAS':       return <Baby size={size} aria-hidden="true" />;
+    case 'SEVRAGE':        return <PackageCheck size={size} aria-hidden="true" />;
+    case 'RETOUR_CHALEUR': return <Heart size={size} aria-hidden="true" />;
+    case 'PESEE':          return <Scale size={size} aria-hidden="true" />;
+    case 'ECHO':           return <Stethoscope size={size} aria-hidden="true" />;
+    case 'SORTIE':         return <Truck size={size} aria-hidden="true" />;
+    case 'RE_SAILLIE':     return <Repeat size={size} aria-hidden="true" />;
+  }
+}
+
+/** Format Date → "lun. 4 mai" (locale FR). */
+function formatDayShort(d: Date): string {
+  return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+/** Format Date → "3 mai" (sans jour). */
+function formatDateOnly(d: Date): string {
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
+
+/** Route deep par event prévisionnel. */
+function navByPrevisionnel(ev: PrevisionnelEvent): string {
+  const id = encodeURIComponent(ev.targetId);
+  if (ev.targetType === 'truie') return `/troupeau/truies/${id}`;
+  if (ev.targetType === 'verrat') return `/troupeau/verrats/${id}`;
+  return `/troupeau/bandes/${id}`;
+}
+
 // ─── Composant ──────────────────────────────────────────────────────────────
 
 const ForecastView: React.FC = () => {
-  const { truies, bandes, saillies, refreshData } = useFarm();
+  const { truies, verrats, bandes, saillies, notes, refreshData } = useFarm();
   const navigate = useNavigate();
+  const [horizon, setHorizon] = useState<Horizon>(14);
 
   const report = useMemo(
     () => buildForecast({ truies, bandes, saillies }),
     [truies, bandes, saillies],
   );
 
+  // Événements 30/60/90 j (calendrier prévisionnel élargi).
+  const previsionnelEvents = useMemo<PrevisionnelEvent[]>(() => {
+    if (horizon === 14) return [];
+    return buildForecastEvents(
+      { truies, verrats, bandes, saillies, notes },
+      new Date(),
+      horizon,
+    );
+  }, [truies, verrats, bandes, saillies, notes, horizon]);
+
+  const previsionnelGroups = useMemo(
+    () => groupEventsByWeek(previsionnelEvents),
+    [previsionnelEvents],
+  );
+
   const hasEvents = report.horizon14jEvents.length > 0;
+  const hasPrevisionnel = previsionnelEvents.length > 0;
 
   return (
     <IonPage>
@@ -140,7 +215,7 @@ const ForecastView: React.FC = () => {
             style={{ maxWidth: 1100, margin: '0 auto' }}
           >
             <header>
-              <Eyebrow dotColor="accent">Pilotage · Prévisions</Eyebrow>
+              <Eyebrow dotColor="accent">Calendrier prévisionnel</Eyebrow>
               <h1
                 style={{
                   fontFamily: 'BigShoulders, system-ui, sans-serif',
@@ -161,10 +236,47 @@ const ForecastView: React.FC = () => {
                   color: 'var(--muted)',
                 }}
               >
-                Calendrier 14 jours · {report.horizon14jEvents.length} événement{report.horizon14jEvents.length > 1 ? 's' : ''}
+                {horizon === 14
+                  ? `Calendrier 14 jours · ${report.horizon14jEvents.length} événement${report.horizon14jEvents.length > 1 ? 's' : ''}`
+                  : `Horizon ${horizon} jours · ${previsionnelEvents.length} événement${previsionnelEvents.length > 1 ? 's' : ''}`}
               </div>
             </header>
 
+            {/* ── Tabs horizon ─────────────────────────────────────────── */}
+            <div
+              className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1"
+              role="tablist"
+              aria-label="Horizon prévisionnel"
+              style={{ scrollbarWidth: 'none' }}
+            >
+              {([14, 30, 60, 90] as const).map(h => {
+                const isActive = h === horizon;
+                return (
+                  <button
+                    key={h}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    onClick={() => setHorizon(h)}
+                    className={[
+                      'pressable shrink-0 inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5',
+                      'transition-colors duration-150',
+                      'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
+                      isActive
+                        ? 'bg-accent-dim/30 border-accent text-accent'
+                        : 'bg-bg-1 border-border text-text-1 hover:bg-bg-2',
+                    ].join(' ')}
+                  >
+                    <span className="font-mono text-[11px] font-semibold uppercase tracking-wide">
+                      {h} j
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {horizon === 14 ? (
+              <>
             {/* ── Summary strip ─────────────────────────────────────────── */}
             <section
               aria-label="Synthèse prévisions 14 jours"
@@ -347,6 +459,93 @@ const ForecastView: React.FC = () => {
                 </div>
               )}
             </section>
+              </>
+            ) : (
+              <section aria-label={`Calendrier prévisionnel ${horizon} jours`} className="flex flex-col gap-4">
+                {hasPrevisionnel ? (
+                  previsionnelGroups.map((group, gIdx) => (
+                    <div
+                      key={group.isoLabel}
+                      className={`flex flex-col gap-2 animate-fade-in-up ${gIdx === 0 ? '' : `stagger-${Math.min(gIdx, 5)}`}`}
+                    >
+                      <SectionDivider
+                        label={`Semaine du ${formatDateOnly(group.weekStart)} au ${formatDateOnly(group.weekEnd)}`}
+                        action={
+                          <Chip
+                            label={String(group.events.length)}
+                            tone="accent"
+                            size="xs"
+                          />
+                        }
+                      />
+                      <ul
+                        role="list"
+                        className="card-dense !p-0 overflow-hidden"
+                      >
+                        {group.events.map((ev, idx) => (
+                          <li
+                            key={ev.id}
+                            role="listitem"
+                            className={`border-b border-border last:border-b-0 ${idx === 0 ? '' : ''}`}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => navigate(navByPrevisionnel(ev))}
+                              className="pressable flex w-full items-center gap-3 px-3 py-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-2px]"
+                            >
+                              <span
+                                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                                style={{
+                                  background: `${previsionnelColor(ev.type)}1A`,
+                                  color: previsionnelColor(ev.type),
+                                }}
+                              >
+                                {previsionnelIcon(ev.type)}
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <div className="truncate text-[14px] font-medium text-text-0">
+                                  {ev.title}
+                                </div>
+                                {ev.subtitle ? (
+                                  <div className="mt-0.5 truncate font-mono text-[11px] text-text-2">
+                                    {ev.subtitle}
+                                  </div>
+                                ) : null}
+                              </div>
+                              <div className="shrink-0 flex flex-col items-end gap-1">
+                                <span
+                                  className="font-mono text-[10px] uppercase tracking-wide"
+                                  style={{ color: previsionnelColor(ev.type) }}
+                                >
+                                  {ev.type.replace('_', ' ')}
+                                </span>
+                                <span className="font-mono text-[11px] text-text-2 tabular-nums">
+                                  {formatDayShort(ev.date)}
+                                </span>
+                              </div>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))
+                ) : (
+                  <div className="card-dense text-center py-10 animate-fade-in-up" role="status">
+                    <Calendar
+                      size={48}
+                      className="text-text-2 mx-auto mb-3 opacity-60"
+                      aria-hidden="true"
+                    />
+                    <h3 className="agritech-heading text-[14px] uppercase mb-1">
+                      Horizon vide
+                    </h3>
+                    <p className="font-mono text-[11px] text-text-2 tracking-wide">
+                      Aucun événement projeté dans les {horizon} prochains jours
+                    </p>
+                  </div>
+                )}
+              </section>
+            )}
           </div>
         </AgritechLayout>
       </IonContent>

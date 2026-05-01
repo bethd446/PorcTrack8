@@ -120,19 +120,18 @@ describe('VerratDetailView', () => {
     );
   });
 
-  it.skip('rend Bobi (V01) avec sa boucle et son origine', () => {
+  it('rend Bobi (V01) avec sa boucle et son origine', () => {
     renderAt('/troupeau/verrats/V01');
-    // Le titre « VERRAT » + subtitle V01 apparaissent dans le header
+    // h1 = title = "V01 · Bobi" (refonte v6)
     const heading = screen.getByRole('heading', { level: 1 });
-    expect(heading.textContent).toContain('VERRAT');
+    expect(heading.textContent).toContain('V01');
+    expect(heading.textContent).toContain('Bobi');
     // Section Identité contient Boucle + Origine
     const identite = screen.getByRole('region', { name: /identité/i });
     expect(within(identite).getByText('FR-V01-001')).toBeDefined();
     expect(within(identite).getByText('Thomasset')).toBeDefined();
     expect(within(identite).getByText('Boucle')).toBeDefined();
     expect(within(identite).getByText('Origine')).toBeDefined();
-    // Le nom « Bobi » est présent dans le hero (title = "V01 · Bobi")
-    expect(document.body.textContent).toContain('Bobi');
   });
 
   it('chip « Actif » visible avec le ton accent', () => {

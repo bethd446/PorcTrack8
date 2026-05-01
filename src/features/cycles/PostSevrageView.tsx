@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import {
   PackageCheck, Droplets,
-  ArrowUpRight, TrendingUp, Lightbulb, Scale
+  ArrowUpRight, TrendingUp, Lightbulb, Scale, AlertTriangle
 } from 'lucide-react';
 import { PorceletIcon } from '../../components/icons';
 import AgritechLayout from '../../components/AgritechLayout';
@@ -31,6 +31,17 @@ import {
 import { WEIGHTS_RELEVE, ANALYSE_RECOMMANDATIONS } from '../../config/weightsReleve';
 import { AlertCircle, Lock } from 'lucide-react';
 import QuickPeseeForm from '../../components/forms/QuickPeseeForm';
+import {
+  classifyCyclePhaseCard,
+  computeRemaining,
+  getCycleTreatmentStyle,
+  TREATMENT_RANK,
+  type CycleTreatment,
+} from '../../utils/cycleTreatments';
+
+const POSTSEVR_PHASE_TONE = 'var(--color-accent-400)';
+const POSTSEVR_PHASE_DAYS = FARM_CONFIG.POST_SEVRAGE_DUREE_JOURS ?? 35;
+const POSTSEVR_PHASE_OFFSET = FARM_CONFIG.SEVRAGE_AGE_JOURS ?? 28;
 
 /**
  * PostSevrageView — Hub Cycles / Post-sevrage
@@ -70,17 +81,41 @@ const PostSevrageView: React.FC = () => {
       const logeIdx = realPortees.indexOf(b) % 4 + 1;
       const releve = WEIGHTS_RELEVE[`LOGE_${logeIdx}`];
 
+      const dayInPhase = ageJours !== null
+        ? Math.max(0, ageJours - POSTSEVR_PHASE_OFFSET)
+        : null;
+      const treatment = classifyCyclePhaseCard(
+        {
+          statut: b.statut,
+          dayInPhase,
+          phaseDays: POSTSEVR_PHASE_DAYS,
+        },
+        today,
+        'postsevr',
+      );
+
       return {
         id: b.id,
         idPortee: b.idPortee || b.id,
         truie: b.truie,
         vivants: b.vivants ?? 0,
         ageJours,
+        dayInPhase,
         terrainPhase,
         releve,
         bande: b,
-        status
+        status,
+        treatment,
       };
+    });
+
+    rows.sort((a, b) => {
+      const r = TREATMENT_RANK[a.treatment] - TREATMENT_RANK[b.treatment];
+      if (r !== 0) return r;
+      const remA = computeRemaining({ dayInPhase: a.dayInPhase, phaseDays: POSTSEVR_PHASE_DAYS }) ?? Number.MAX_SAFE_INTEGER;
+      const remB = computeRemaining({ dayInPhase: b.dayInPhase, phaseDays: POSTSEVR_PHASE_DAYS }) ?? Number.MAX_SAFE_INTEGER;
+      if (remA !== remB) return remA - remB;
+      return a.idPortee.localeCompare(b.idPortee, 'fr');
     });
 
     const totalVivants = rows.reduce((acc, r) => acc + r.vivants, 0);
@@ -218,6 +253,7 @@ interface PostSevrageRowData {
   truie?: string;
   vivants: number;
   ageJours: number | null;
+  dayInPhase: number | null;
   terrainPhase: string | null;
   releve?: import('../../config/weightsReleve').LogeReleve;
   bande: import('../../types/farm').BandePorcelets;
@@ -226,6 +262,7 @@ interface PostSevrageRowData {
     joursEnRetard: number;
     urgence: string;
   };
+  treatment: CycleTreatment;
 }
 
 const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }> = ({ data, onOpen }) => {
@@ -242,19 +279,88 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
   const gmqTarget = 220;
   const gmqProgress = Math.min(100, (gmq / gmqTarget) * 100);
 
+  const treatmentStyle = getCycleTreatmentStyle(data.treatment, POSTSEVR_PHASE_TONE);
+  const isUrgent = data.treatment === 'urgent';
+  const isResolu = data.treatment === 'resolu';
+  const remainingDays = computeRemaining({ dayInPhase: data.dayInPhase, phaseDays: POSTSEVR_PHASE_DAYS });
+  const eyebrowText = isUrgent && remainingDays !== null
+    ? `Imminent · ${remainingDays}j restant${remainingDays > 1 ? 's' : ''}`
+    : isResolu
+      ? 'Résolu'
+      : 'Post-sevrage';
+
   return (
     <div
       onClick={onOpen}
+      style={{
+        background: treatmentStyle.background,
+        border: treatmentStyle.border,
+        borderRadius: 12,
+        opacity: treatmentStyle.opacity,
+      }}
       className={`card-dense flex flex-col gap-4 p-4 transition-all active:scale-[0.98] cursor-pointer ${
-        isBloquant ? 'bg-red-500/5 ring-1 ring-red-500/20' :
-        isTransitionRequired ? 'animate-pulse-slow' : ''
+        isBloquant ? 'ring-1 ring-red-500/20' : ''
       }`}
     >
+      {/* Treatment eyebrow */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          marginBottom: -4,
+        }}
+      >
+        <span
+          aria-hidden="true"
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            background: treatmentStyle.eyebrowDot,
+            flexShrink: 0,
+          }}
+        />
+        <span
+          style={{
+            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontSize: 10,
+            letterSpacing: '0.06em',
+            color: treatmentStyle.eyebrowColor,
+            fontWeight: isUrgent ? 600 : 500,
+            textTransform: 'uppercase',
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
+          {eyebrowText}
+        </span>
+        {treatmentStyle.showAlertIcon && (
+          <AlertTriangle
+            size={14}
+            color="var(--color-pig-deep, var(--color-pig))"
+            aria-hidden="true"
+            style={{ marginLeft: 'auto' }}
+          />
+        )}
+      </div>
+
       {/* Header Card */}
       <div className="flex justify-between items-start">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="text-[15px] font-bold font-mono text-text-0" style={isBloquant ? { color: 'var(--color-danger, #EF4444)' } : undefined}>{data.idPortee}</h3>
+            <h3
+              style={{
+                fontFamily: 'BigShoulders, system-ui, sans-serif',
+                fontSize: treatmentStyle.titleSize,
+                fontWeight: treatmentStyle.titleWeight,
+                color: isBloquant ? 'var(--color-danger, #EF4444)' : 'var(--ink)',
+                letterSpacing: '-0.01em',
+                lineHeight: 1.1,
+                margin: 0,
+              }}
+            >
+              {data.idPortee}
+            </h3>
             <Chip tone={isBloquant ? 'red' : 'default'} label={isBloquant ? 'BLOCAGE' : `${data.vivants} têtes`} size="xs" />
           </div>
           <p className="text-[11px] text-text-2 mt-0.5">

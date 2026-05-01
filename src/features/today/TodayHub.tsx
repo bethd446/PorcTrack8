@@ -34,86 +34,7 @@ import {
   getPendingConfirmations,
   type PendingConfirmation,
 } from '../../services/confirmationQueue';
-import { safeDate } from '../../lib/truieHelpers';
-import { normaliseStatut } from '../../lib/truieStatut';
-import { computeBandePhase } from '../../services/bandesAggregator';
-import type { Saillie, Truie, BandePorcelets } from '../../types/farm';
-
-const MS_DAY = 86_400_000;
-const SEVRAGE_JOURS = 28;
-const RETOUR_CHALEUR_MIN = 18;
-const RETOUR_CHALEUR_MAX = 24;
-const ANTICIPATION_MIN = 11;
-const ANTICIPATION_MAX = 17;
-const SEVRAGE_AVENIR_FENETRE = 3;
-
-function daysSince(date: Date, today: Date): number {
-  const a = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-  const b = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-  return Math.floor((b - a) / MS_DAY);
-}
-
-interface TruieRetourChaleur {
-  truie: Truie;
-  daysSinceSaillie: number;
-}
-
-function computeRetoursChaleur(
-  truies: Truie[],
-  saillies: Saillie[],
-  today: Date,
-): { aVerifier: TruieRetourChaleur[]; aAnticiper: TruieRetourChaleur[] } {
-  const aVerifier: TruieRetourChaleur[] = [];
-  const aAnticiper: TruieRetourChaleur[] = [];
-  for (const truie of truies) {
-    if (normaliseStatut(truie.statut) !== 'PLEINE') continue;
-    const active = saillies.find(
-      s =>
-        (s.truieId === truie.id || s.truieId === truie.displayId) &&
-        (!s.statut || /active|confirm|en[\s_]?cours/i.test(s.statut)),
-    );
-    if (!active) continue;
-    const dSaillie = safeDate(active.dateSaillie);
-    if (!dSaillie) continue;
-    const days = daysSince(dSaillie, today);
-    if (days >= RETOUR_CHALEUR_MIN && days <= RETOUR_CHALEUR_MAX) {
-      aVerifier.push({ truie, daysSinceSaillie: days });
-    } else if (days >= ANTICIPATION_MIN && days <= ANTICIPATION_MAX) {
-      aAnticiper.push({ truie, daysSinceSaillie: days });
-    }
-  }
-  aVerifier.sort((a, b) => b.daysSinceSaillie - a.daysSinceSaillie);
-  aAnticiper.sort((a, b) => b.daysSinceSaillie - a.daysSinceSaillie);
-  return { aVerifier, aAnticiper };
-}
-
-interface BandeSevrage {
-  bande: BandePorcelets;
-  daysOver: number;
-}
-
-function computeSevrages(
-  bandes: BandePorcelets[],
-  today: Date,
-): { enRetard: BandeSevrage[]; aVenir: BandeSevrage[] } {
-  const enRetard: BandeSevrage[] = [];
-  const aVenir: BandeSevrage[] = [];
-  for (const bande of bandes) {
-    if (computeBandePhase(bande, today) !== 'SOUS_MERE') continue;
-    const dMB = safeDate(bande.dateMB);
-    if (!dMB) continue;
-    const dPrevue = safeDate(bande.dateSevragePrevue) ?? new Date(dMB.getTime() + SEVRAGE_JOURS * MS_DAY);
-    const diff = daysSince(dPrevue, today);
-    if (diff > 0) {
-      enRetard.push({ bande, daysOver: diff });
-    } else if (diff >= -SEVRAGE_AVENIR_FENETRE && diff <= 0) {
-      aVenir.push({ bande, daysOver: diff });
-    }
-  }
-  enRetard.sort((a, b) => b.daysOver - a.daysOver);
-  aVenir.sort((a, b) => b.daysOver - a.daysOver);
-  return { enRetard, aVenir };
-}
+import { getRetoursChaleur, getSevrages } from '../../services/proactiveCues';
 
 const PRIORITY_ORDER: Record<AlertPriority, number> = {
   CRITIQUE: 0,
@@ -198,13 +119,13 @@ const TodayHub: React.FC = () => {
   // ── Retours chaleur cette semaine ────────────────────────────────────
   const today = useMemo(() => new Date(), []);
   const retoursChaleur = useMemo(
-    () => computeRetoursChaleur(truies, saillies, today),
+    () => getRetoursChaleur(truies, saillies, today),
     [truies, saillies, today],
   );
 
   // ── Sevrages à confirmer / en retard ─────────────────────────────────
   const sevrages = useMemo(
-    () => computeSevrages(bandes, today),
+    () => getSevrages(bandes, today),
     [bandes, today],
   );
 

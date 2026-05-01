@@ -17,7 +17,7 @@
 
 import React, { useMemo, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { IonContent, IonPage, IonToast, useIonAlert } from '@ionic/react';
+import { IonContent, IonModal, IonPage, IonToast, useIonAlert } from '@ionic/react';
 import { Sparkles } from 'lucide-react';
 
 import { useFarm } from '../../context/FarmContext';
@@ -36,6 +36,7 @@ import MariusPanel from '../../components/design/MariusPanel';
 import MariusFAB from '../../components/design/MariusFAB';
 import TimelineVerticale, { type TimelineItem } from '../../components/design/TimelineVerticale';
 import LineageBreadcrumb, { type LineageNode } from '../../components/design/LineageBreadcrumb';
+import LineageTree from '../../components/design/LineageTree';
 
 import type { Truie, BandePorcelets, Saillie, TraitementSante } from '../../types/farm';
 
@@ -86,10 +87,11 @@ function statutToChip(statut: string): SowHeroChip {
 const TruieDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { truies, bandes, saillies, sante, refreshData } = useFarm();
+  const { truies, verrats, bandes, saillies, sante, refreshData } = useFarm();
   const [presentAlert] = useIonAlert();
   const [editOpen, setEditOpen] = useState(false);
   const [toast, setToast] = useState('');
+  const [treeOpen, setTreeOpen] = useState(false);
 
   // ── Données métier ─────────────────────────────────────────────────────────
 
@@ -471,7 +473,7 @@ const TruieDetailView: React.FC = () => {
             />
 
             {/* Lignée (kit v2.1) */}
-            <LineageBreadcrumb nodes={lineageNodes} />
+            <LineageBreadcrumb nodes={lineageNodes} onTreeClick={() => setTreeOpen(true)} />
 
             {/* Reproduction en cours */}
             {cycleData && (
@@ -787,6 +789,40 @@ const TruieDetailView: React.FC = () => {
           onClose={() => setEditOpen(false)}
           truie={truie}
         />
+
+        {/* Modal arbre généalogique */}
+        <IonModal isOpen={treeOpen} onDidDismiss={() => setTreeOpen(false)}>
+          <IonContent>
+            <div style={{ padding: 18 }}>
+              <LineageTree
+                rootTruieId={truie.id}
+                truies={truies}
+                verrats={verrats}
+                bandes={bandes}
+                saillies={saillies}
+              />
+              <button
+                type="button"
+                onClick={() => setTreeOpen(false)}
+                style={{
+                  marginTop: 16,
+                  padding: '10px 18px',
+                  borderRadius: 'var(--radius-pill, 9999px)',
+                  border: '1px solid var(--line)',
+                  background: 'var(--bg-surface)',
+                  fontFamily: 'DMMono, ui-monospace, monospace',
+                  fontSize: 11,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: 'var(--ink)',
+                  cursor: 'pointer',
+                }}
+              >
+                Fermer
+              </button>
+            </div>
+          </IonContent>
+        </IonModal>
 
         <IonToast
           isOpen={!!toast}

@@ -87,6 +87,16 @@ vi.mock('../../components/forms/QuickEditSaillieForm', () => ({
   default: () => null,
 }));
 
+vi.mock('@ionic/react', () => ({
+  IonPage: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  IonContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  IonRefresher: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  IonRefresherContent: () => <div />,
+  IonModal: ({ isOpen, children }: { isOpen?: boolean; children: React.ReactNode }) =>
+    isOpen ? <div role="dialog">{children}</div> : null,
+  IonToast: () => null,
+}));
+
 import ReproCalendarView from './ReproCalendarView';
 
 function makeTruie(overrides: Partial<Truie> = {}): Truie {
@@ -185,7 +195,7 @@ afterEach(() => {
 });
 
 describe('ReproCalendarView — smoke', () => {
-  it.skip('affiche le titre Calendrier Repro et le KPI Saillies 7j à 1 quand 1 saillie en cours', () => {
+  it('affiche le titre Reproduction et le KPI Saillies 7j à 1 quand 1 saillie en cours', () => {
     mockFarmValue.truies = [makeTruie()];
     mockFarmValue.saillies = [
       makeSaillie({ dateSaillie: '12/05/2026' }), // 3j avant le 15/05
@@ -193,13 +203,15 @@ describe('ReproCalendarView — smoke', () => {
 
     renderView();
 
-    expect(screen.getByText(/Reproduction/i)).toBeTruthy();
+    // h1 = "Reproduction" (refonte v6 : "Calendrier Repro" → "Reproduction")
+    const h1 = screen.getByRole('heading', { level: 1 });
+    expect(h1.textContent).toMatch(/Reproduction/i);
     expect(screen.getByLabelText(/Saillies 7j\s+1/i)).toBeTruthy();
   });
 });
 
 describe('ReproCalendarView — métier', () => {
-  it.skip('une bande sevrée 5j auparavant déclenche le KPI Retours chaleur à 1', () => {
+  it('une bande sevrée 5j auparavant déclenche le KPI Retours chaleur à 1', () => {
     // Sevrage à J-5 ⇒ daysSinceSevrage=5 (entre 3 et 10) ⇒ retour chaleur
     // attendu à sevrage+5 = aujourd'hui (15/05).
     mockFarmValue.bandes = [
@@ -214,8 +226,8 @@ describe('ReproCalendarView — métier', () => {
 
     renderView();
 
+    // Le KPI "Retours chaleur" passe à 1 (la liste détaillée par truie a
+    // été retirée — seul le compteur global est affiché).
     expect(screen.getByLabelText(/Retours chaleur\s+1/i)).toBeTruthy();
-    // Et la ligne "Retour chaleur T01" est visible
-    expect(screen.getByText(/Retour chaleur T01/i)).toBeTruthy();
   });
 });

@@ -26,11 +26,28 @@ export interface LineageNode {
 
 interface Props {
   nodes: LineageNode[];
-  /** Lien vers l'arbre genealogique complet */
+  /** Lien vers l'arbre genealogique complet (mode navigation) */
   treeHref?: string;
+  /** Callback alternatif (mode modal). Prioritaire sur treeHref si fourni. */
+  onTreeClick?: () => void;
 }
 
-const LineageBreadcrumb: React.FC<Props> = ({ nodes, treeHref }) => {
+const LineageBreadcrumb: React.FC<Props> = ({ nodes, treeHref, onTreeClick }) => {
+  const treeLabel = 'Arbre genetique →';
+  const treeStyle: React.CSSProperties = {
+    marginLeft: 'auto',
+    fontFamily: 'DMMono, ui-monospace, monospace',
+    fontSize: 11,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    color: 'var(--color-accent-500)',
+    textDecoration: 'none',
+    fontWeight: 600,
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    padding: 0,
+  };
   return (
     <section
       aria-label="Lignee"
@@ -128,23 +145,15 @@ const LineageBreadcrumb: React.FC<Props> = ({ nodes, treeHref }) => {
           );
         })}
       </div>
-      {treeHref && (
-        <Link
-          to={treeHref}
-          style={{
-            marginLeft: 'auto',
-            fontFamily: 'DMMono, ui-monospace, monospace',
-            fontSize: 11,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            color: 'var(--color-accent-500)',
-            textDecoration: 'none',
-            fontWeight: 600,
-          }}
-        >
-          {'Arbre genetique →'}
+      {onTreeClick ? (
+        <button type="button" onClick={onTreeClick} style={treeStyle}>
+          {treeLabel}
+        </button>
+      ) : treeHref ? (
+        <Link to={treeHref} style={treeStyle}>
+          {treeLabel}
         </Link>
-      )}
+      ) : null}
     </section>
   );
 };

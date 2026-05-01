@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import {
   Coins, TrendingUp, Calendar,
-  Droplets, ShoppingCart
+  Droplets, ShoppingCart, AlertTriangle
 } from 'lucide-react';
 import { BalanceIcon } from '../../components/icons';
 import AgritechLayout from '../../components/AgritechLayout';
@@ -23,6 +23,18 @@ import {
 import { FARM_CONFIG } from '../../config/farm';
 import type { BandePorcelets } from '../../types/farm';
 import QuickVenteForm from '../../components/forms/QuickVenteForm';
+import {
+  classifyCyclePhaseCard,
+  computeRemaining,
+  getCycleTreatmentStyle,
+  TREATMENT_RANK,
+  type CycleTreatment,
+} from '../../utils/cycleTreatments';
+
+const FINITION_PHASE_TONE = 'var(--color-secondary-deep)';
+const FINITION_PHASE_DAYS = Math.round(
+  (FARM_CONFIG.FINITION_POIDS_MAX_KG - FARM_CONFIG.FINITION_POIDS_MIN_KG) / 0.90,
+);
 
 /**
  * FinitionView — Hub Cycles / Finition
@@ -56,18 +68,37 @@ const FinitionView: React.FC = () => {
       const weight = estimateWeightKg(b, today);
       const isReadyForExit = weight >= FARM_CONFIG.FINITION_POIDS_MAX_KG;
 
+      // Jours estimés avant atteinte du poids cible (sortie) à 0.65 kg/j.
+      const daysToExit = Math.max(0, Math.ceil((FARM_CONFIG.FINITION_POIDS_MAX_KG - weight) / 0.65));
+      const treatment = classifyCyclePhaseCard(
+        {
+          statut: b.statut,
+          dayInPhase: null,
+          phaseDays: FINITION_PHASE_DAYS,
+          daysToTransitionOverride: daysToExit,
+        },
+        today,
+        'finition',
+      );
+
       return {
         id: b.id,
         idPortee: b.idPortee || b.id,
         truie: b.truie,
         vivants: b.vivants ?? 0,
         weight,
+        daysToExit,
         isReadyForExit,
-        bande: b
+        bande: b,
+        treatment,
       };
     });
 
-    rows.sort((a, b) => b.weight - a.weight);
+    rows.sort((a, b) => {
+      const r = TREATMENT_RANK[a.treatment] - TREATMENT_RANK[b.treatment];
+      if (r !== 0) return r;
+      return b.weight - a.weight;
+    });
 
     const nbBandes = rows.length;
     const totalVivants = rows.reduce((acc, r) => acc + r.vivants, 0);
@@ -217,8 +248,10 @@ interface FinitionRowData {
   truie?: string;
   vivants: number;
   weight: number;
+  daysToExit: number;
   isReadyForExit: boolean;
   bande: BandePorcelets;
+  treatment: CycleTreatment;
 }
 
 const FinitionCard: React.FC<{ data: FinitionRowData; onOpen: () => void; onSell: () => void }> = ({ data, onOpen, onSell }) => {
@@ -228,18 +261,90 @@ const FinitionCard: React.FC<{ data: FinitionRowData; onOpen: () => void; onSell
   const targetWeight = FARM_CONFIG.FINITION_POIDS_MAX_KG;
   const progress = Math.min(100, (data.weight / targetWeight) * 100);
 
+  const treatmentStyle = getCycleTreatmentStyle(data.treatment, FINITION_PHASE_TONE);
+  const isUrgent = data.treatment === 'urgent';
+  const isResolu = data.treatment === 'resolu';
+  const remainingDays = computeRemaining({
+    dayInPhase: null,
+    phaseDays: FINITION_PHASE_DAYS,
+    daysToTransitionOverride: data.daysToExit,
+  });
+  const eyebrowText = isUrgent && remainingDays !== null
+    ? `Imminent · ${remainingDays}j restant${remainingDays > 1 ? 's' : ''}`
+    : isResolu
+      ? 'Résolu'
+      : 'Finition';
+
   return (
     <div
       onClick={onOpen}
+      style={{
+        background: treatmentStyle.background,
+        border: treatmentStyle.border,
+        borderRadius: 12,
+        opacity: treatmentStyle.opacity,
+      }}
       className={`card-dense flex flex-col gap-4 p-4 transition-all active:scale-[0.98] cursor-pointer ${
-        data.isReadyForExit ? 'animate-pulse-slow' : ''
+        data.isReadyForExit && !isResolu ? 'animate-pulse-slow' : ''
       }`}
     >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          marginBottom: -4,
+        }}
+      >
+        <span
+          aria-hidden="true"
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            background: treatmentStyle.eyebrowDot,
+            flexShrink: 0,
+          }}
+        />
+        <span
+          style={{
+            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontSize: 10,
+            letterSpacing: '0.06em',
+            color: treatmentStyle.eyebrowColor,
+            fontWeight: isUrgent ? 600 : 500,
+            textTransform: 'uppercase',
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
+          {eyebrowText}
+        </span>
+        {treatmentStyle.showAlertIcon && (
+          <AlertTriangle
+            size={14}
+            color="var(--color-pig-deep, var(--color-pig))"
+            aria-hidden="true"
+            style={{ marginLeft: 'auto' }}
+          />
+        )}
+      </div>
       {/* Header Card */}
       <div className="flex justify-between items-start">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="text-[15px] font-bold text-text-0 font-mono">{data.idPortee}</h3>
+            <h3
+              style={{
+                fontFamily: 'BigShoulders, system-ui, sans-serif',
+                fontSize: treatmentStyle.titleSize,
+                fontWeight: treatmentStyle.titleWeight,
+                color: 'var(--ink)',
+                letterSpacing: '-0.01em',
+                lineHeight: 1.1,
+                margin: 0,
+              }}
+            >
+              {data.idPortee}
+            </h3>
             <Chip tone="default" label={`${data.vivants} porcs`} size="xs" />
           </div>
           <p className="text-[11px] text-text-2 mt-0.5">

@@ -105,10 +105,10 @@ describe('BatimentsView', () => {
     expect(croissance.length).toBeGreaterThanOrEqual(1);
   });
 
+  // TODO: AgritechHeader retiré au profit de TopBarSync (sans bouton Retour).
+  // Réintroduire un test de breadcrumb si la nav back devient critique.
   it.skip('expose un bouton « Retour » (backTo=/troupeau)', () => {
     renderView();
-    // AgritechHeader monte un <button aria-label="Retour"> quand `backTo`
-    // est fourni.
     const back = screen.getByLabelText('Retour');
     expect(back.tagName).toBe('BUTTON');
   });
