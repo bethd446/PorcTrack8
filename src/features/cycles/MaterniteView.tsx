@@ -3,7 +3,7 @@ import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/r
 import { useNavigate } from 'react-router-dom';
 import {
   Baby, Plus, Scale, Droplets,
-  ArrowUpRight, AlertCircle, AlertTriangle, Lock
+  ArrowUpRight, AlertTriangle, Lock
 } from 'lucide-react';
 import AgritechLayout from '../../components/AgritechLayout';
 import Eyebrow from '../../components/design/Eyebrow';
@@ -284,11 +284,15 @@ const MaterniteCard: React.FC<{
   const isUrgent = treatment === 'urgent';
   const isResolu = treatment === 'resolu';
   const remainingDays = computeRemaining({ dayInPhase: jSinceMB, phaseDays: MATERNITE_PHASE_DAYS });
-  const eyebrowText = isUrgent && remainingDays !== null
-    ? `Imminent · ${remainingDays}j restant${remainingDays > 1 ? 's' : ''}`
-    : isResolu
-      ? 'Résolu'
-      : 'Maternité';
+  const eyebrowText = isBloquant
+    ? `En retard de ${joursEnRetard}j`
+    : isUrgent && remainingDays !== null
+      ? remainingDays <= 0
+        ? 'À sevrer maintenant'
+        : `À sevrer dans ${remainingDays}j`
+      : isResolu
+        ? 'Résolu'
+        : 'Maternité';
 
   return (
     <div
@@ -360,33 +364,22 @@ const MaterniteCard: React.FC<{
               {truie.displayId}
             </h3>
             {truie.nom && <span className="text-[12px] text-text-2 truncate max-w-[80px]">{truie.nom}</span>}
-            <Chip tone={isBloquant ? 'red' : 'default'} label={isBloquant ? 'Blocage' : boucleLabel} size="xs" />
+            <Chip tone="default" label={boucleLabel} size="xs" />
           </div>
           <p className="text-[11px] text-text-2 mt-0.5">
             {portee ? `Portée: ${portee.idPortee}` : 'Aucune portée liée'}
           </p>
-          {isBloquant && (
-            <div className="flex items-center gap-1.5 mt-1 animate-pulse" style={{ color: 'var(--color-danger, #EF4444)' }}>
-              <AlertCircle size={14} />
-              <span className="text-[10px] font-bold">Action urgente</span>
-            </div>
-          )}
         </div>
-        {isTransitionRequired ? (
-          <Chip tone={isBloquant ? 'red' : 'gold'} label={isBloquant ? 'En retard' : `➜ Sevrage J${jSinceMB}`} size="sm" icon={<ArrowUpRight size={10} />} />
-        ) : (
+        {!isUrgent && !isBloquant && !isTransitionRequired && (
           <Chip tone="accent" label={`J+${jSinceMB || 0} Lactation`} size="sm" />
         )}
       </div>
 
-      {/* Message de blocage */}
-      {isBloquant && (
-        <div className="bg-red-500/10 rounded-lg p-3 border border-red-500/20">
-          <p className="text-[11px] leading-tight" style={{ color: 'var(--color-danger, #EF4444)' }}>
-            <strong>Action bloquée :</strong> Retard critique de sevrage (+{joursEnRetard}j).
-            Veuillez déclarer le sevrage de cette portée pour débloquer les saisies.
-          </p>
-        </div>
+      {/* Message d'action unique en cas d'urgence */}
+      {(isBloquant || isUrgent) && (
+        <p className="text-[11.5px] leading-snug text-text-1">
+          Sevre la portée pour débloquer.
+        </p>
       )}
 
       <div className="grid grid-cols-2 gap-4">

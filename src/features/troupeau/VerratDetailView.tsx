@@ -310,10 +310,29 @@ const VerratDetailView: React.FC = () => {
             <section aria-label="Saillies">
               <SectionDivider label={`Saillies · ${saillesVerrat.length}`} />
               {saillesVerrat.length === 0 ? (
-                <div className="card-dense text-center py-6 mt-3">
-                  <p className="font-mono text-[11px] text-text-2">
-                    Aucune saillie enregistrée pour ce verrat.
+                <div className="card-dense text-center py-6 mt-3 flex flex-col items-center gap-2.5">
+                  <p
+                    style={{
+                      fontFamily: 'BigShoulders, system-ui, sans-serif',
+                      fontSize: 16,
+                      fontWeight: 600,
+                      color: 'var(--ink)',
+                      letterSpacing: '-0.01em',
+                      margin: 0,
+                    }}
+                  >
+                    Verrat non encore utilisé
                   </p>
+                  <p className="text-[12px] text-text-2 max-w-xs">
+                    Lance la première saillie pour activer le suivi.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setSheet('saillie')}
+                    className="pressable mt-2 px-4 py-2.5 rounded-full bg-accent text-bg-0 font-mono text-[11px] font-bold uppercase tracking-wider"
+                  >
+                    + Saisir une saillie
+                  </button>
                 </div>
               ) : (
                 <>

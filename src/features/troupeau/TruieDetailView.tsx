@@ -34,6 +34,7 @@ import TruieEventActionSheet, { type TruieEventAction } from '../../components/f
 import Eyebrow from '../../components/design/Eyebrow';
 import Chip from '../../components/design/Chip';
 import SowHero, { type SowHeroChip } from '../../components/design/SowHero';
+import { TruieIcon } from '../../components/icons';
 import ReproTracker, { type ReproStage } from '../../components/design/ReproTracker';
 import DecisionBinaire from '../../components/design/DecisionBinaire';
 import MariusPanel from '../../components/design/MariusPanel';
@@ -284,6 +285,28 @@ const TruieDetailView: React.FC = () => {
 
   const showRetourChaleur = cycleData && cycleData.dayPost >= 18 && cycleData.dayPost <= 24;
 
+  // ── Mise-bas imminente (J-3 à J+5 sur dateMBPrevue) ───────────────────────
+  const daysUntilMB = (() => {
+    const d = parseDate(truie.dateMBPrevue);
+    if (!d) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    d.setHours(0, 0, 0, 0);
+    return Math.round((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  })();
+  const isPleine = /pleine|gestation|maternit/i.test(truie.statut);
+  const showMiseBasCTA = isPleine && daysUntilMB !== null && daysUntilMB >= -5 && daysUntilMB <= 3;
+  const miseBasCTALabel = (() => {
+    if (daysUntilMB === null) return '';
+    if (daysUntilMB === 0) return `${truie.displayId} doit mettre bas aujourd'hui`;
+    if (daysUntilMB > 0) return `${truie.displayId} doit mettre bas dans ${daysUntilMB}j`;
+    return `${truie.displayId} a dépassé la date prévue (+${Math.abs(daysUntilMB)}j)`;
+  })();
+
+  // ── Vitales : empty state si jamais saillie ───────────────────────────────
+  const pariteVal = truie.nbPortees ?? historique.length;
+  const showVitalesEmpty = pariteVal === 0 && truie.statut === 'En attente saillie';
+
   // ── Vitales (5 KPI) ────────────────────────────────────────────────────────
 
   const vitales = [
@@ -406,7 +429,51 @@ const TruieDetailView: React.FC = () => {
               photoStamp={`${truie.displayId} · ${formatDateShort(new Date().toISOString())}`}
               onPrimaryAction={() => setEventSheetOpen(true)}
               primaryLabel="+ Saisir évènement"
+              fallbackIcon={<TruieIcon size={128} />}
+              onUploadClick={() => setEditOpen(true)}
             />
+
+            {/* CTA Mise-bas imminente : J-3 → J+5 si truie Pleine */}
+            {showMiseBasCTA && (
+              <section aria-label="Mise-bas imminente" style={sectionStyle()}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <Eyebrow dotColor="amber">Mise-bas imminente</Eyebrow>
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-heading)',
+                      fontSize: 18,
+                      fontWeight: 600,
+                      color: 'var(--ink)',
+                      letterSpacing: '-0.01em',
+                    }}
+                  >
+                    {miseBasCTALabel}
+                  </div>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setMiseBasOpen(true)}
+                      style={{
+                        padding: '12px 18px',
+                        borderRadius: 9999,
+                        background: 'var(--amber-pork-deep)',
+                        color: 'var(--bg-surface)',
+                        border: 'none',
+                        fontFamily: 'DMMono, ui-monospace, monospace',
+                        fontSize: 11,
+                        letterSpacing: '0.10em',
+                        textTransform: 'uppercase',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        minHeight: 44,
+                      }}
+                    >
+                      + Saisir la mise-bas
+                    </button>
+                  </div>
+                </div>
+              </section>
+            )}
 
             {/* Lignée (kit v2.1) */}
             <LineageBreadcrumb nodes={lineageNodes} onTreeClick={() => setTreeOpen(true)} />
@@ -461,6 +528,65 @@ const TruieDetailView: React.FC = () => {
               <div style={{ marginBottom: 12 }}>
                 <Eyebrow>Vitales</Eyebrow>
               </div>
+              {showVitalesEmpty ? (
+                <div
+                  style={{
+                    background: 'var(--bg-surface)',
+                    borderRadius: 12,
+                    border: '1px solid var(--line)',
+                    padding: '28px 24px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 12,
+                    textAlign: 'center',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-heading)',
+                      fontSize: 18,
+                      fontWeight: 600,
+                      color: 'var(--ink)',
+                      letterSpacing: '-0.01em',
+                    }}
+                  >
+                    Aucune saillie historique
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: 'InstrumentSans, ui-sans-serif, system-ui',
+                      fontSize: 13,
+                      color: 'var(--muted)',
+                      maxWidth: 360,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    Lance la repro pour activer le suivi.
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSaillieOpen(true)}
+                    style={{
+                      marginTop: 4,
+                      padding: '12px 18px',
+                      borderRadius: 9999,
+                      background: 'var(--color-accent-600, var(--amber-pork-deep))',
+                      color: 'var(--bg-surface)',
+                      border: 'none',
+                      fontFamily: 'DMMono, ui-monospace, monospace',
+                      fontSize: 11,
+                      letterSpacing: '0.10em',
+                      textTransform: 'uppercase',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      minHeight: 44,
+                    }}
+                  >
+                    + Saisir une saillie
+                  </button>
+                </div>
+              ) : (
               <div
                 style={{
                   display: 'grid',
@@ -525,6 +651,7 @@ const TruieDetailView: React.FC = () => {
                   );
                 })}
               </div>
+              )}
             </section>
 
             {/* Body 2 col */}
@@ -533,7 +660,7 @@ const TruieDetailView: React.FC = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 24, minWidth: 0 }}>
                 {/* Identité */}
                 <section aria-label="Identité" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <Eyebrow>Identité &amp; généalogie</Eyebrow>
+                  <Eyebrow>Identité</Eyebrow>
                   <div
                     style={{
                       background: 'var(--bg-surface)',
@@ -548,16 +675,40 @@ const TruieDetailView: React.FC = () => {
                       <DataRow label="Naissance" value={formatDate(truie.dateNaissance)} />
                     )}
                     {truie.origine && <DataRow label="Origine" value={truie.origine} />}
-                    {truie.loge && <DataRow label="Loge" value={truie.loge} />}
+                    <DataRow label="Loge" value={truie.loge || '—'} last />
+                  </div>
+                </section>
+
+                {/* Repro & rations */}
+                <section aria-label="Repro et rations" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <Eyebrow>Repro &amp; rations</Eyebrow>
+                  <div
+                    style={{
+                      background: 'var(--bg-surface)',
+                      borderRadius: 12,
+                      padding: '6px 16px',
+                      boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04)',
+                    }}
+                  >
+                    <DataRow label="Statut" value={truie.statut || '—'} />
+                    {truie.stade && <DataRow label="Stade" value={truie.stade} />}
+                    <DataRow
+                      label="NB portées"
+                      value={truie.nbPortees !== undefined ? String(truie.nbPortees) : '—'}
+                    />
+                    {truie.derniereNV !== undefined && (
+                      <DataRow label="Dernière NV" value={String(truie.derniereNV)} />
+                    )}
                     {lastBande?.idPortee && (
                       <DataRow label="Dernière portée" value={lastBande.idPortee} />
                     )}
-                    {truie.nbPortees !== undefined && (
-                      <DataRow label="Portées" value={String(truie.nbPortees)} />
+                    {truie.dateMBPrevue && (
+                      <DataRow label="Date MB prévue" value={formatDate(truie.dateMBPrevue)} />
                     )}
                     <DataRowEditable
                       label="Ration"
                       ariaLabel={`Ration journalière de la truie ${truie.displayId}`}
+                      last={!lastBande}
                     >
                       <EditableNumber
                         value={truie.ration ?? null}
