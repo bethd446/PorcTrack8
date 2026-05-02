@@ -11,7 +11,7 @@ import EmptyState from '../../components/design/EmptyState';
 import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { SeringueIcon } from '../../components/icons';
-import { useFarm } from '../../context/FarmContext';
+import { useFarm, useMeta } from '../../context/FarmContext';
 import { updateProduitVeto } from '../../services/supabaseWrites';
 import type { StockVeto, StockStatut } from '../../types/farm';
 import QuickAddVetoForm from '../../components/forms/QuickAddVetoForm';
@@ -24,7 +24,9 @@ import {
   type OrderItem,
 } from '../../utils/whatsappOrder';
 
-const FARM_NAME = 'K13';
+// AUDIT-V1 : FARM_NAME hardcodé conservé pour URL WhatsApp (scope module).
+// HEADER affiché utilise useMeta().nomFerme.
+const FARM_NAME_FALLBACK = 'K13';
 
 function manqueKgVeto(item: StockVeto): number {
   const stock = item.stockActuel ?? 0;
@@ -157,6 +159,7 @@ function formatCurrency(n: number): string {
 const PharmacieView: React.FC = () => {
   const navigate = useNavigate();
   const { stockVeto, refreshData } = useFarm();
+  const { nomFerme: FARM_NAME } = useMeta();
   const [addOpen, setAddOpen] = useState<boolean>(false);
   const [refillItem, setRefillItem] = useState<RefillStockItem | null>(null);
   const whatsappReady = hasWhatsAppSupport();
@@ -593,7 +596,7 @@ const VetoEditableRow: React.FC<VetoEditableRowProps> = ({
           item.produit,
           manqueKgVeto(item),
           item.unite,
-          FARM_NAME,
+          FARM_NAME_FALLBACK,
         );
         if (!url) return null;
         return (

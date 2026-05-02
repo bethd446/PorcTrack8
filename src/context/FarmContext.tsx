@@ -91,6 +91,8 @@ interface MetaContextType {
   pays: string | null;
   /** Devise dérivée du pays (FCFA par défaut). */
   currency: Currency;
+  /** false tant que fetchFarm n'a pas résolu (skeleton UI possible). */
+  identityLoaded: boolean;
   refreshData: (force?: boolean) => Promise<void>;
   pullData: () => Promise<void>;
   processQueue: () => Promise<void>;
@@ -103,12 +105,15 @@ interface FarmIdentity {
   nomFerme: string;
   pays: string | null;
   currency: Currency;
+  /** false tant que fetchFarm n'a pas résolu — utiliser pour skeleton UI. */
+  loaded: boolean;
 }
 
 const DEFAULT_FARM_IDENTITY: FarmIdentity = {
   nomFerme: 'Ma ferme',
   pays: null,
-  currency: 'FCFA',
+  currency: 'EUR',
+  loaded: false,
 };
 
 const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -138,11 +143,17 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     let cancelled = false;
     void fetchFarm(userId)
       .then((f) => {
-        if (cancelled || !f) return;
+        if (cancelled || !f) {
+          // Pas de farm row trouvée mais fetch ok : on marque loaded pour
+          // débloquer l'UI (sinon skeleton infini).
+          if (!cancelled) setIdentity((prev) => ({ ...prev, loaded: true }));
+          return;
+        }
         const next: FarmIdentity = {
           nomFerme: f.nomFerme?.trim() || f.nom?.trim() || 'Ma ferme',
           pays: f.pays,
           currency: inferCurrencyFromCountry(f.pays),
+          loaded: true,
         };
         setIdentity(next);
         if (typeof document !== 'undefined') {
@@ -150,7 +161,8 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         }
       })
       .catch(() => {
-        /* silent : offline / RLS — fallback identity already set. */
+        /* silent : offline / RLS — débloque quand même l'UI. */
+        if (!cancelled) setIdentity((prev) => ({ ...prev, loaded: true }));
       });
     return () => {
       cancelled = true;
@@ -192,6 +204,7 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       nomFerme: identity.nomFerme,
       pays: identity.pays,
       currency: identity.currency,
+      identityLoaded: identity.loaded,
       refreshData,
       pullData,
       processQueue,

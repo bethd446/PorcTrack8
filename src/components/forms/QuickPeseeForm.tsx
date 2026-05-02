@@ -257,12 +257,17 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
       setStep(3);
       try { await refreshData(true); } catch { /* noop */ }
     } catch (err) {
+      // AUDIT-V1 P0-2 : log explicite sinon submit silencieux côté terrain.
+      // eslint-disable-next-line no-console
+      console.error('[QuickPeseeForm] insertNote failed', err);
       setSubmitError(err instanceof Error ? err.message : 'Erreur enregistrement pesée');
     } finally {
       setSaving(false);
     }
   };
 
+  // AUDIT-V1 P0-2 : si validation Zod échoue, RHF appelle juste le 1er param,
+  // pas le 2nd. On logge les erreurs de validation pour debug terrain.
   const onSubmit = form.handleSubmit(async (values) => {
     if (!selectedSubject) return;
     const poids = Number(values.poidsMoyen.replace(',', '.'));
@@ -289,6 +294,13 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
     }
 
     await executeSubmit(values);
+  }, (errors) => {
+    // AUDIT-V1 P0-2 : second callback de RHF.handleSubmit appelé sur
+    // validation FAIL. Sans ça, l'utilisateur voit un submit silencieux.
+    // eslint-disable-next-line no-console
+    console.warn('[QuickPeseeForm] validation failed', errors);
+    const firstError = Object.values(errors)[0]?.message;
+    setSubmitError(firstError ? String(firstError) : 'Champs invalides — vérifie tes saisies');
   });
 
   // ── UI Helpers ───────────────────────────────────────────────────────

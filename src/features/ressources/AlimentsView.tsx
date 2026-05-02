@@ -20,7 +20,7 @@ import type { ChipTone } from '../../components/agritech';
 import EmptyState from '../../components/design/EmptyState';
 import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
-import { useFarm } from '../../context/FarmContext';
+import { useFarm, useMeta } from '../../context/FarmContext';
 import { updateProduitAliment } from '../../services/supabaseWrites';
 import type { StockAliment, StockStatut, Truie, Verrat, BandePorcelets } from '../../types/farm';
 import QuickAddAlimentForm from '../../components/forms/QuickAddAlimentForm';
@@ -34,7 +34,10 @@ import {
 } from '../../utils/whatsappOrder';
 import { listFournisseurs, type FournisseurRow } from '../../services/supabaseWrites';
 
-const FARM_NAME = 'K13';
+// AUDIT-V1 : FARM_NAME hardcodé conservé pour URLs WhatsApp commande
+// (utilisé en scope module hors composant). Le HEADER affiché à l'utilisateur
+// utilise useMeta().nomFerme (cf. ligne 472).
+const FARM_NAME_FALLBACK = 'K13';
 
 function manqueKgOf(item: StockAliment): number {
   const stock = item.stockActuel ?? 0;
@@ -416,7 +419,7 @@ const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
               fournisseur: { nom: f.nom, whatsapp_number: f.whatsapp_number },
               produit: item.libelle || item.id,
               qteKg: manqueKgOf(item),
-              farmName: FARM_NAME,
+              farmName: FARM_NAME_FALLBACK,
             })
           : null;
         const url =
@@ -425,7 +428,7 @@ const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
             item.libelle || item.id,
             manqueKgOf(item),
             item.unite,
-            FARM_NAME,
+            FARM_NAME_FALLBACK,
           );
         if (!url) return null;
         return (
@@ -469,6 +472,7 @@ const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
 const AlimentsView: React.FC = () => {
   const navigate = useNavigate();
   const { stockAliment, refreshData, truies, verrats, bandes } = useFarm();
+  const { nomFerme: FARM_NAME } = useMeta();
   const cheptel = useMemo(() => ({ truies, verrats, bandes }), [truies, verrats, bandes]);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);

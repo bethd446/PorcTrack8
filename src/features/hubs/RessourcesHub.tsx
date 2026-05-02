@@ -30,7 +30,7 @@ import {
 } from '../../components/forms/quickRefillLogic';
 import QuickEditStockForm from '../../components/forms/QuickEditStockForm';
 import type { StockKind } from '../../components/forms/quickEditStockLogic';
-import { useFarm } from '../../context/FarmContext';
+import { useFarm, useMeta } from '../../context/FarmContext';
 import type { StockAliment, StockVeto } from '../../types/farm';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs';
 import { projectStockDuration, formatJoursRestants } from '../../utils/stockProjection';
@@ -101,7 +101,7 @@ function toOrderItem(item: StockItem): OrderItem {
   };
 }
 
-const FARM_NAME = 'K13';
+// AUDIT-V1 : FARM_NAME hardcodé "K13" → utiliser useMeta().nomFerme
 
 // ─── Composant ──────────────────────────────────────────────────────────────
 
@@ -112,6 +112,8 @@ const RessourcesHub: React.FC = () => {
   const isStockBasFilter = filterParam === 'stock-bas';
 
   const { stockAliment, stockVeto, refreshData, truies, verrats, bandes } = useFarm();
+  const { nomFerme } = useMeta();
+  const FARM_NAME = nomFerme;
   const cheptel = useMemo(() => ({ truies, verrats, bandes }), [truies, verrats, bandes]);
   const { handleRefresh } = useAutoRefresh();
 

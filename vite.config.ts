@@ -32,6 +32,12 @@ export default defineConfig(() => {
           ],
         },
         workbox: {
+          // AUDIT-V1 P0-3 : sans ces 2 flags, le nouveau SW reste "waiting"
+          // jusqu'à ce que l'utilisateur ferme TOUS les onglets PorcTrack.
+          // Conséquence terrain : Christophe voit l'ancien JS pendant des
+          // heures après un push (régressions V23 fantômes observées).
+          skipWaiting: true,
+          clientsClaim: true,
           globPatterns: ['**/*.{js,css,html,ico,svg,png,woff2}'],
           runtimeCaching: [
             {
