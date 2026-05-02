@@ -341,3 +341,35 @@ export const flushQueue = processQueue;
 export async function clearQueue(): Promise<void> {
   await saveQueue([]);
 }
+
+// ── Online detection + auto-flush ────────────────────────────────────────────
+
+/**
+ * Renvoie `true` si l'app est considérée connectée. Fallback `true` en SSR
+ * (pas de `navigator`) pour éviter de bloquer le premier rendu.
+ */
+export function isOnline(): boolean {
+  if (typeof navigator === 'undefined') return true;
+  return navigator.onLine !== false;
+}
+
+/**
+ * Installe un listener `window.online` qui invoque `flushFn` à chaque
+ * reconnexion. Idempotent par instance : retourne une fonction
+ * d'unsubscribe à appeler au unmount.
+ *
+ * `flushFn` est appelé sans attente : les erreurs sont logguées sans
+ * être propagées (le listener ne doit jamais throw).
+ */
+export function installOnlineFlushListener(
+  flushFn: () => Promise<void>,
+): () => void {
+  if (typeof window === 'undefined') return () => {};
+  const handler = (): void => {
+    void flushFn().catch((e) => {
+      console.warn('[offlineQueue] auto-flush on online failed:', e);
+    });
+  };
+  window.addEventListener('online', handler);
+  return () => window.removeEventListener('online', handler);
+}

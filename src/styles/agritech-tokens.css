@@ -52,4 +52,18 @@
      ───────────────────────────────────────────────────────────────────── */
   --radius-sm: 6px;                /* Chips, inline pills */
   --radius-md: 10px;                /* Cards, tables, inputs */
+
+  /* ── Module accents (RT4 — différenciation visuelle subtile par module)
+     Additif au DS Terrain Vivant : ces couleurs servent UNIQUEMENT à
+     accentuer la nav (item actif), le sidebar et l'eyebrow des hubs.
+     Ne PAS remplacer les couleurs primaires des cards/CTAs.
+     ───────────────────────────────────────────────────────────────────── */
+  --module-naissage:     #2563eb; /* bleu — Reproduction/Mise-bas/Maternité */
+  --module-naissage-bg:  #eff6ff;
+  --module-engr:         #f97316; /* orange — Croissance/Engraissement/Finition */
+  --module-engr-bg:      #fff7ed;
+  --module-sanitaire:    #dc2626; /* rouge — Santé/Mortalité */
+  --module-sanitaire-bg: #fef2f2;
+  --module-stocks:       #6b7280; /* gris — Aliments/Veto/Stocks */
+  --module-stocks-bg:    #f9fafb;
 }

@@ -11,6 +11,8 @@ interface MiseBasIdAndDateBlockProps {
   setHeure: (v: string) => void;
   saving: boolean;
   errorIdPortee?: string;
+  /** RT4 Volet 2 — erreur date Fail-Fast (ex: date future). */
+  errorDateIso?: string;
 }
 
 const MiseBasIdAndDateBlock: React.FC<MiseBasIdAndDateBlockProps> = ({
@@ -24,6 +26,7 @@ const MiseBasIdAndDateBlock: React.FC<MiseBasIdAndDateBlockProps> = ({
   setHeure,
   saving,
   errorIdPortee,
+  errorDateIso,
 }) => {
   return (
     <>
@@ -92,11 +95,23 @@ const MiseBasIdAndDateBlock: React.FC<MiseBasIdAndDateBlockProps> = ({
             id="mb-date"
             type="date"
             aria-label="Date de mise-bas"
-            className="w-full h-12 rounded-md px-3 bg-bg-0 border border-border text-text-0 font-mono text-[13px] tabular-nums outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+            aria-invalid={!!errorDateIso}
+            aria-describedby={errorDateIso ? 'mb-date-error' : undefined}
+            className={[
+              'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0',
+              'font-mono text-[13px] tabular-nums outline-none',
+              'focus:border-accent focus:ring-1 focus:ring-accent',
+              errorDateIso ? 'border-red' : 'border-border',
+            ].join(' ')}
             value={dateIso}
             onChange={e => setDateIso(e.target.value)}
             disabled={saving}
           />
+          {errorDateIso ? (
+            <p id="mb-date-error" role="alert" className="font-mono text-[11px] text-red">
+              {errorDateIso}
+            </p>
+          ) : null}
         </div>
         <div className="space-y-1.5">
           <label

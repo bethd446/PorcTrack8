@@ -27,6 +27,7 @@ import { usePilotage } from '../context/PilotageContext';
 import { useTroupeau } from '../context/TroupeauContext';
 import { useRecentNavigation, type RecentItem } from '../hooks/useRecentNavigation';
 import { kvGet, kvSet } from '../services/kvStore';
+import { inferModuleFromPath, getModuleTone } from '../lib/moduleColor';
 import CommandPalette from './design/CommandPalette';
 
 /**
@@ -130,6 +131,11 @@ const AppSidebar: React.FC = () => {
       (p) => location.pathname === p || location.pathname.startsWith(p + '/'),
     );
   };
+
+  // RT4 : accent module dérivé du href de chaque row. Permet de colorer la
+  // border-left active d'une teinte cohérente avec la zone fonctionnelle.
+  const accentFor = (href: string): string =>
+    getModuleTone(inferModuleFromPath(href)).fg;
 
   const showAdminItem = profile?.role === 'ADMIN';
   const showPerformanceSection = isOwner;
@@ -299,6 +305,7 @@ const AppSidebar: React.FC = () => {
                   indent
                   active={isActive(c.href)}
                   onClick={() => navigate(c.href)}
+                  moduleAccent={accentFor(c.href)}
                 />
               ))}
             </div>
@@ -312,18 +319,21 @@ const AppSidebar: React.FC = () => {
             label="Vue reproduction"
             active={location.pathname === '/reproduction'}
             onClick={() => navigate(REPRODUCTION_HUB_HREF)}
+            moduleAccent={accentFor('/reproduction')}
           />
           <SidebarRow
             icon={Calendar}
             label="Calendrier saillies"
             active={isActive('/cycles/repro')}
             onClick={() => navigate('/cycles/repro')}
+            moduleAccent={accentFor('/cycles/repro')}
           />
           <SidebarRow
             icon={Baby}
             label="Maternité"
             active={isActive('/cycles/maternite')}
             onClick={() => navigate('/cycles/maternite')}
+            moduleAccent={accentFor('/cycles/maternite')}
           />
         </Section>
 
@@ -358,18 +368,21 @@ const AppSidebar: React.FC = () => {
             label="Aliments"
             active={isActive('/ressources/aliments')}
             onClick={() => navigate('/ressources/aliments')}
+            moduleAccent={accentFor('/ressources/aliments')}
           />
           <SidebarRow
             icon={Pill}
             label="Pharmacie"
             active={isActive('/ressources/pharmacie')}
             onClick={() => navigate('/ressources/pharmacie')}
+            moduleAccent={accentFor('/ressources/pharmacie')}
           />
           <SidebarRow
             icon={Truck}
             label="Fournisseurs"
             active={isActive('/fournisseurs')}
             onClick={() => navigate('/fournisseurs')}
+            moduleAccent={accentFor('/fournisseurs')}
           />
         </Section>
 
@@ -435,6 +448,8 @@ interface SidebarRowProps {
   expanded?: boolean;
   indent?: boolean;
   onClick: () => void;
+  /** Accent module (RT4) : couleur de la border-left active (override). */
+  moduleAccent?: string;
 }
 
 const SidebarRow: React.FC<SidebarRowProps> = ({
@@ -446,6 +461,7 @@ const SidebarRow: React.FC<SidebarRowProps> = ({
   expanded = false,
   indent = false,
   onClick,
+  moduleAccent,
 }) => {
   const [hover, setHover] = useState(false);
   const bg = active
@@ -454,6 +470,12 @@ const SidebarRow: React.FC<SidebarRowProps> = ({
       ? 'var(--bg-surface-2)'
       : 'transparent';
   const fg = active ? 'var(--color-accent-500)' : 'var(--ink-soft)';
+  // RT4 : si un accent module est fourni, il colore la border-left de
+  // l'item actif. Le reste (texte, icône, bg) reste inchangé pour ne pas
+  // casser le DS existant.
+  const borderLeftColor = active
+    ? (moduleAccent ?? 'var(--color-accent-500)')
+    : 'transparent';
 
   return (
     <button
@@ -470,7 +492,7 @@ const SidebarRow: React.FC<SidebarRowProps> = ({
         borderTop: 0,
         borderRight: 0,
         borderBottom: 0,
-        borderLeft: `3px solid ${active ? 'var(--color-accent-500)' : 'transparent'}`,
+        borderLeft: `3px solid ${borderLeftColor}`,
         padding: indent ? '6px 18px 6px 42px' : '8px 14px 8px 18px',
         fontFamily: 'inherit',
         fontSize: 14,

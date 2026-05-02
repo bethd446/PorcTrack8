@@ -825,22 +825,46 @@ export type Database = {
       troupeaux: {
         Row: {
           created_at: string | null
+          effectif_truies_initial: number | null
+          effectif_verrats_initial: number | null
           id: string
           nom: string
+          nom_ferme: string | null
+          notes_demarrage: string | null
+          objectif_porcelets_an: number | null
+          onboarding_completed_at: string | null
+          pays: string | null
+          races: unknown | null
           secteur: string | null
           user_id: string | null
         }
         Insert: {
           created_at?: string | null
+          effectif_truies_initial?: number | null
+          effectif_verrats_initial?: number | null
           id?: string
           nom: string
+          nom_ferme?: string | null
+          notes_demarrage?: string | null
+          objectif_porcelets_an?: number | null
+          onboarding_completed_at?: string | null
+          pays?: string | null
+          races?: unknown | null
           secteur?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string | null
+          effectif_truies_initial?: number | null
+          effectif_verrats_initial?: number | null
           id?: string
           nom?: string
+          nom_ferme?: string | null
+          notes_demarrage?: string | null
+          objectif_porcelets_an?: number | null
+          onboarding_completed_at?: string | null
+          pays?: string | null
+          races?: unknown | null
           secteur?: string | null
           user_id?: string | null
         }

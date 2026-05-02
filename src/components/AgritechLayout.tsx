@@ -2,6 +2,7 @@ import React from 'react';
 import { cn } from '../lib/utils';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import AppSidebar from './AppSidebar';
+import SyncStatusBadge from './SyncStatusBadge';
 
 export interface AgritechLayoutProps {
   children: React.ReactNode;
@@ -48,6 +49,20 @@ const AgritechLayout: React.FC<AgritechLayoutProps> = ({
     >
       {showSidebar ? <AppSidebar /> : null}
       <div style={{ minWidth: 0 }}>{children}</div>
+      {/* Sync badge global — top-right, ne s'affiche que si pending ou offline (RT2). */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 'calc(env(safe-area-inset-top) + 8px)',
+          right: 12,
+          zIndex: 60,
+          pointerEvents: 'none',
+        }}
+      >
+        <div style={{ pointerEvents: 'auto' }}>
+          <SyncStatusBadge />
+        </div>
+      </div>
     </div>
   );
 };

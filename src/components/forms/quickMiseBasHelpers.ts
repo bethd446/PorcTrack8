@@ -19,6 +19,8 @@ export interface MiseBasDraft {
 export interface MiseBasValidationErrors {
   truieId?: string;
   idPortee?: string;
+  /** Date ISO MB (RT4 — Fail-Fast date présent/passée). */
+  dateIso?: string;
   nesVivants?: string;
   mortsNes?: string;
   nesTotaux?: string;

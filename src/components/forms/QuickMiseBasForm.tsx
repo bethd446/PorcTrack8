@@ -24,6 +24,10 @@ import {
   type MiseBasDraft,
   type MiseBasValidationErrors,
 } from './quickMiseBasHelpers';
+import {
+  validateDatePresentOrPast,
+  validateEffectif,
+} from '../../lib/validation/farmValidators';
 import MiseBasTruieField from './quickMiseBas/MiseBasTruieField';
 import MiseBasIdAndDateBlock from './quickMiseBas/MiseBasIdAndDateBlock';
 import MiseBasCountsBlock from './quickMiseBas/MiseBasCountsBlock';
@@ -268,6 +272,20 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
       setErrors(result.errors);
       return;
     }
+    // RT4 Volet 2 : Fail-Fast — date MB ne peut pas être dans le futur,
+    // effectif positif borné. Défense en profondeur sur la couche métier.
+    const failFast: MiseBasValidationErrors = {};
+    const dr = validateDatePresentOrPast(dateIso, 'dateIso');
+    if (!dr.ok) failFast.dateIso = dr.errors[0].message;
+    const ef = validateEffectif(result.normalized.nesTotaux, {
+      max: 50,
+      field: 'nesTotaux',
+    });
+    if (!ef.ok) failFast.nesTotaux = ef.errors[0].message;
+    if (Object.keys(failFast).length > 0) {
+      setErrors(failFast);
+      return;
+    }
     setErrors({});
 
     setSaving(true);
@@ -467,6 +485,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
               setHeure={setHeure}
               saving={saving}
               errorIdPortee={errors.idPortee}
+              errorDateIso={errors.dateIso}
             />
 
             <MiseBasCountsBlock

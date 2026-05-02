@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { IonPage, IonContent } from '@ionic/react';
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, Mail } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
+import { getAuthRedirectURL } from '../../lib/authRedirect';
 import Eyebrow from '../design/Eyebrow';
 import Button from '../design/Button';
 
@@ -10,12 +11,16 @@ const FONT_DISPLAY = 'BigShoulders, "InstrumentSans", sans-serif';
 const FONT_BODY = 'InstrumentSans, -apple-system, system-ui, sans-serif';
 const FONT_MONO = 'DMMono, ui-monospace, monospace';
 
+type Mode = 'login' | 'reset';
+
 export default function Login() {
   const navigate = useNavigate();
+  const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resetSent, setResetSent] = useState(false);
 
   // theme-day est désormais forcé globalement dans main.tsx (refonte v6 light).
 
@@ -35,6 +40,38 @@ export default function Login() {
     } else {
       navigate('/today', { replace: true });
     }
+  };
+
+  const handleResetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const redirectTo = getAuthRedirectURL('/reset-password');
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo,
+    });
+
+    setLoading(false);
+
+    if (resetError) {
+      setError(resetError.message);
+      return;
+    }
+
+    setResetSent(true);
+  };
+
+  const switchToReset = () => {
+    setMode('reset');
+    setError(null);
+    setPassword('');
+  };
+
+  const switchToLogin = () => {
+    setMode('login');
+    setError(null);
+    setResetSent(false);
   };
 
   return (
@@ -115,7 +152,7 @@ export default function Login() {
         style={{ flex: 1, display: 'flex', alignItems: 'center' }}
       >
         <div style={{ width: '100%' }}>
-          <Eyebrow dotColor="accent">Connexion éleveur</Eyebrow>
+          <Eyebrow dotColor="accent">{mode === 'reset' ? 'Récupération' : 'Connexion éleveur'}</Eyebrow>
 
           <h1
             style={{
@@ -128,7 +165,7 @@ export default function Login() {
               margin: '14px 0 10px',
             }}
           >
-            Bienvenue à la ferme.
+            {mode === 'reset' ? 'Mot de passe oublié.' : 'Bienvenue à la ferme.'}
           </h1>
 
           <p
@@ -140,7 +177,9 @@ export default function Login() {
               margin: '0 0 28px',
             }}
           >
-            Reprenez votre cockpit là où vous l'avez laissé.
+            {mode === 'reset'
+              ? 'Renseigne ton email, on t\'envoie un lien pour le redéfinir.'
+              : "Reprenez votre cockpit là où vous l'avez laissé."}
           </p>
 
           <div
@@ -152,9 +191,79 @@ export default function Login() {
               padding: '28px 24px',
             }}
           >
-            <form onSubmit={handleLogin} className="space-y-4">
+            {mode === 'reset' && resetSent ? (
+              <div
+                style={{
+                  background: 'var(--color-accent-100)',
+                  border: '1px solid var(--color-accent-500)',
+                  borderRadius: 'var(--radius-card)',
+                  padding: '18px 18px',
+                  display: 'flex',
+                  gap: 12,
+                  alignItems: 'flex-start',
+                }}
+              >
+                <CheckCircle2
+                  size={20}
+                  strokeWidth={2}
+                  style={{ color: 'var(--color-accent-600)', flexShrink: 0, marginTop: 2 }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      fontFamily: FONT_DISPLAY,
+                      fontWeight: 700,
+                      fontSize: 18,
+                      color: 'var(--ink)',
+                      lineHeight: 1.2,
+                      marginBottom: 6,
+                    }}
+                  >
+                    Email envoyé.
+                  </div>
+                  <p
+                    style={{
+                      fontFamily: FONT_BODY,
+                      fontSize: 14,
+                      lineHeight: 1.5,
+                      color: 'var(--ink-soft)',
+                      margin: 0,
+                    }}
+                  >
+                    Vérifie ta boîte mail à <strong style={{ color: 'var(--ink)' }}>{email}</strong>{' '}
+                    (y compris les spams).
+                  </p>
+                  <div style={{ marginTop: 14 }}>
+                    <button
+                      type="button"
+                      onClick={switchToLogin}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontFamily: FONT_MONO,
+                        fontSize: 11,
+                        letterSpacing: '0.10em',
+                        textTransform: 'uppercase',
+                        color: 'var(--color-accent-600)',
+                        minHeight: 36,
+                        padding: '0 0',
+                        fontWeight: 500,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                      }}
+                    >
+                      <ArrowLeft size={14} strokeWidth={2} />
+                      Retour à la connexion
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+            <form onSubmit={mode === 'reset' ? handleResetSubmit : handleLogin} className="space-y-4">
               <Field
-                label="Email"
+                label={mode === 'reset' ? 'Email du compte' : 'Email'}
                 type="email"
                 value={email}
                 onChange={setEmail}
@@ -163,15 +272,17 @@ export default function Login() {
                 required
               />
 
-              <Field
-                label="Mot de passe"
-                type="password"
-                value={password}
-                onChange={setPassword}
-                autoComplete="current-password"
-                placeholder="••••••••"
-                required
-              />
+              {mode === 'login' && (
+                <Field
+                  label="Mot de passe"
+                  type="password"
+                  value={password}
+                  onChange={setPassword}
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  required
+                />
+              )}
 
               {error && (
                 <div
@@ -203,77 +314,115 @@ export default function Login() {
                 {loading
                   ? <Loader2 size={16} strokeWidth={2} className="animate-spin" aria-hidden="true" />
                   : null}
-                {loading ? 'Connexion en cours…' : 'Se connecter'}
-                {!loading && <ArrowRight size={16} strokeWidth={2} />}
+                {loading
+                  ? mode === 'reset' ? 'Envoi en cours…' : 'Connexion en cours…'
+                  : mode === 'reset' ? 'Recevoir le lien' : 'Se connecter'}
+                {!loading && (mode === 'reset'
+                  ? <Mail size={16} strokeWidth={2} />
+                  : <ArrowRight size={16} strokeWidth={2} />)}
               </Button>
 
               <div style={{ textAlign: 'center', marginTop: 6 }}>
-                <a
-                  href="#"
-                  onClick={(e) => e.preventDefault()}
-                  style={{
-                    fontFamily: FONT_MONO,
-                    fontSize: 11,
-                    letterSpacing: '0.10em',
-                    textTransform: 'uppercase',
-                    color: 'var(--muted)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    minHeight: 44,
-                    padding: '0 8px',
-                    textDecoration: 'none',
-                  }}
-                >
-                  Mot de passe oublié ?
-                </a>
+                {mode === 'login' ? (
+                  <button
+                    type="button"
+                    onClick={switchToReset}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontFamily: FONT_MONO,
+                      fontSize: 11,
+                      letterSpacing: '0.10em',
+                      textTransform: 'uppercase',
+                      color: 'var(--muted)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      minHeight: 44,
+                      padding: '0 8px',
+                      fontWeight: 500,
+                    }}
+                  >
+                    Mot de passe oublié ?
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={switchToLogin}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontFamily: FONT_MONO,
+                      fontSize: 11,
+                      letterSpacing: '0.10em',
+                      textTransform: 'uppercase',
+                      color: 'var(--color-accent-600)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      minHeight: 44,
+                      padding: '0 8px',
+                      fontWeight: 500,
+                    }}
+                  >
+                    <ArrowLeft size={14} strokeWidth={2} />
+                    Retour à la connexion
+                  </button>
+                )}
               </div>
             </form>
+            )}
 
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                margin: '20px 0 18px',
-              }}
-            >
-              <span style={{ flex: 1, height: 1, background: 'var(--line)' }} />
-              <span
-                style={{
-                  fontFamily: FONT_MONO,
-                  fontSize: 10,
-                  letterSpacing: '0.16em',
-                  textTransform: 'uppercase',
-                  color: 'var(--muted)',
-                }}
-              >
-                ou
-              </span>
-              <span style={{ flex: 1, height: 1, background: 'var(--line)' }} />
-            </div>
+            {mode === 'login' && (
+              <>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    margin: '20px 0 18px',
+                  }}
+                >
+                  <span style={{ flex: 1, height: 1, background: 'var(--line)' }} />
+                  <span
+                    style={{
+                      fontFamily: FONT_MONO,
+                      fontSize: 10,
+                      letterSpacing: '0.16em',
+                      textTransform: 'uppercase',
+                      color: 'var(--muted)',
+                    }}
+                  >
+                    ou
+                  </span>
+                  <span style={{ flex: 1, height: 1, background: 'var(--line)' }} />
+                </div>
 
-            <p
-              style={{
-                fontFamily: FONT_BODY,
-                fontSize: 14,
-                lineHeight: 1.5,
-                color: 'var(--ink-soft)',
-                textAlign: 'center',
-                margin: 0,
-              }}
-            >
-              Pas encore de compte ?{' '}
-              <Link
-                to="/signup"
-                style={{
-                  color: 'var(--color-accent-600)',
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                }}
-              >
-                Créer un compte
-              </Link>
-            </p>
+                <p
+                  style={{
+                    fontFamily: FONT_BODY,
+                    fontSize: 14,
+                    lineHeight: 1.5,
+                    color: 'var(--ink-soft)',
+                    textAlign: 'center',
+                    margin: 0,
+                  }}
+                >
+                  Pas encore de compte ?{' '}
+                  <Link
+                    to="/signup"
+                    style={{
+                      color: 'var(--color-accent-600)',
+                      fontWeight: 600,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    Créer un compte
+                  </Link>
+                </p>
+              </>
+            )}
           </div>
         </div>
       </main>

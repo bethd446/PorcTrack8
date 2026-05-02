@@ -95,7 +95,9 @@
     "typescript": "~5.8.2",
     "typescript-eslint": "^8.58.2",
     "vite": "^6.2.0",
+    "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.1.4",
-    "wawoff2": "^2.0.1"
+    "wawoff2": "^2.0.1",
+    "workbox-window": "^7.4.0"
   }
 }

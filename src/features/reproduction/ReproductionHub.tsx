@@ -241,7 +241,9 @@ const ReproductionHub: React.FC = () => {
           >
             {/* ── En-tête ──────────────────────────────────────────── */}
             <header>
-              <Eyebrow dotColor="accent">Reproduction</Eyebrow>
+              {/* RT4 : eyebrow accent module (naissage = bleu) — différenciation
+                  visuelle subtile du hub Reproduction. */}
+              <Eyebrow customDotColor="var(--module-naissage)">Reproduction</Eyebrow>
               <h1
                 style={{
                   fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',

@@ -13,6 +13,11 @@ const DOT_BG: Record<DotColor, string> = {
 interface EyebrowProps {
   children: React.ReactNode;
   dotColor?: DotColor;
+  /**
+   * Couleur dot custom (CSS color/var). Si fourni, override `dotColor`.
+   * Utile pour l'accent module (RT4) : `var(--module-naissage)` etc.
+   */
+  customDotColor?: string;
   className?: string;
   withRule?: boolean;
 }
@@ -20,6 +25,7 @@ interface EyebrowProps {
 export default function Eyebrow({
   children,
   dotColor = 'accent',
+  customDotColor,
   className = '',
   withRule = true,
 }: EyebrowProps) {
@@ -41,7 +47,7 @@ export default function Eyebrow({
           width: 6,
           height: 6,
           borderRadius: '50%',
-          background: DOT_BG[dotColor],
+          background: customDotColor ?? DOT_BG[dotColor],
           flexShrink: 0,
         }}
       />

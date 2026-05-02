@@ -87,6 +87,16 @@ try {
   logger.warn('Init', 'notif permission bootstrap failed', e);
 }
 
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  import('virtual:pwa-register').then(({ registerSW }) => {
+    registerSW({
+      immediate: true,
+      onRegisteredSW: () => logger.info('main', 'SW registered'),
+      onRegisterError: (err) => logger.error('main', 'SW register failed', err),
+    });
+  });
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>

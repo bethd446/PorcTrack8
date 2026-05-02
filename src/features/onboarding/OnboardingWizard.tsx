@@ -1,0 +1,681 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  MapPin,
+  Tag,
+  Users,
+  Target,
+  StickyNote,
+  Home,
+  Factory,
+  Loader2,
+} from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { supabase } from '../../services/supabaseClient';
+import { kvGet, kvSet } from '../../services/kvStore';
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OnboardingWizard — 10 étapes pour configurer une nouvelle ferme
+   ───────────────────────────────────────────────────────────────────────────
+   Étapes :
+     1. Bienvenue
+     2. Nom de la ferme        → nom_ferme
+     3. Localisation           → secteur + pays
+     4. Type de production     → typeProd (radio, 3 choix)
+     5. Races (skip si Engraisseur seul)  → races jsonb[]
+     6. Cheptel truies (skip si Engraisseur seul) → effectif_truies_initial
+     7. Cheptel verrats        → effectif_verrats_initial
+     8. Objectif porcelets/an  → objectif_porcelets_an
+     9. Notes de démarrage     → notes_demarrage
+    10. Récap + persistance Supabase
+
+   Persistance progressive : `kvSet('onboarding_draft', JSON)` à chaque étape.
+   À la fin, UPDATE troupeaux WHERE user_id=auth.uid() + onboarding_completed_at.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const TOTAL_STEPS = 10;
+const DRAFT_KEY = 'onboarding_draft';
+
+type TypeProd = 'NAISSEUR' | 'NAISSEUR_ENGRAISSEUR' | 'ENGRAISSEUR_SEUL';
+
+const RACES_DISPONIBLES = [
+  'Large White',
+  'Landrace',
+  'Duroc',
+  'Piétrain',
+  'Métisse',
+  'Local',
+  'Autre',
+] as const;
+type Race = (typeof RACES_DISPONIBLES)[number];
+
+interface WizardState {
+  step: number;
+  nom_ferme: string;
+  secteur: string;
+  pays: string;
+  typeProd: TypeProd | null;
+  races: Race[];
+  effectif_truies_initial: number;
+  effectif_verrats_initial: number;
+  objectif_porcelets_an: number;
+  notes_demarrage: string;
+}
+
+const INITIAL: WizardState = {
+  step: 1,
+  nom_ferme: '',
+  secteur: '',
+  pays: 'France',
+  typeProd: null,
+  races: [],
+  effectif_truies_initial: 0,
+  effectif_verrats_initial: 0,
+  objectif_porcelets_an: 0,
+  notes_demarrage: '',
+};
+
+function loadDraft(): WizardState {
+  try {
+    const raw = kvGet(DRAFT_KEY);
+    if (!raw) return INITIAL;
+    const parsed = JSON.parse(raw) as Partial<WizardState>;
+    return { ...INITIAL, ...parsed };
+  } catch {
+    return INITIAL;
+  }
+}
+
+/** Étapes que l'on saute si l'utilisateur a sélectionné « Engraisseur seul ». */
+function isStepSkipped(step: number, typeProd: TypeProd | null): boolean {
+  if (typeProd !== 'ENGRAISSEUR_SEUL') return false;
+  return step === 5 || step === 6;
+}
+
+function nextStep(current: number, typeProd: TypeProd | null): number {
+  let n = current + 1;
+  while (n < TOTAL_STEPS && isStepSkipped(n, typeProd)) n++;
+  return Math.min(n, TOTAL_STEPS);
+}
+
+function prevStep(current: number, typeProd: TypeProd | null): number {
+  let n = current - 1;
+  while (n > 1 && isStepSkipped(n, typeProd)) n--;
+  return Math.max(n, 1);
+}
+
+function validateStep(state: WizardState): boolean {
+  switch (state.step) {
+    case 2:
+      return state.nom_ferme.trim().length > 0 && state.nom_ferme.length <= 80;
+    case 3:
+      return state.secteur.trim().length > 0 && state.pays.trim().length > 0;
+    case 4:
+      return state.typeProd !== null;
+    case 5:
+      return state.races.length >= 1 && state.races.length <= 5;
+    case 6:
+      return state.effectif_truies_initial >= 0 && state.effectif_truies_initial <= 500;
+    case 7:
+      return state.effectif_verrats_initial >= 0 && state.effectif_verrats_initial <= 50;
+    case 8:
+      return state.objectif_porcelets_an >= 0 && state.objectif_porcelets_an <= 50000;
+    case 9:
+      return state.notes_demarrage.length <= 500;
+    default:
+      return true;
+  }
+}
+
+const OnboardingWizard: React.FC = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [state, setState] = useState<WizardState>(() => loadDraft());
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void kvSet(DRAFT_KEY, JSON.stringify(state));
+  }, [state]);
+
+  const canContinue = useMemo(() => validateStep(state), [state]);
+
+  const goNext = (): void => {
+    if (!canContinue) return;
+    setState((s) => ({ ...s, step: nextStep(s.step, s.typeProd) }));
+  };
+  const goPrev = (): void =>
+    setState((s) => ({ ...s, step: prevStep(s.step, s.typeProd) }));
+
+  const handleSkipForLater = (): void => {
+    void kvSet(DRAFT_KEY, JSON.stringify(state));
+    navigate('/today', { replace: true });
+  };
+
+  const handleFinish = async (): Promise<void> => {
+    if (!user) {
+      setError('Session introuvable. Reconnectez-vous.');
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      const payload = {
+        nom_ferme: state.nom_ferme.trim() || null,
+        nom: state.nom_ferme.trim() || 'Ma ferme',
+        secteur: state.secteur.trim() || null,
+        pays: state.pays.trim() || null,
+        races: state.races,
+        effectif_truies_initial:
+          state.typeProd === 'ENGRAISSEUR_SEUL' ? 0 : state.effectif_truies_initial,
+        effectif_verrats_initial: state.effectif_verrats_initial,
+        objectif_porcelets_an: state.objectif_porcelets_an,
+        notes_demarrage: state.notes_demarrage.trim() || null,
+        onboarding_completed_at: new Date().toISOString(),
+      };
+      const { error: upErr } = await supabase
+        .from('troupeaux')
+        .update(payload)
+        .eq('user_id', user.id);
+      if (upErr) throw upErr;
+      await kvSet('onboarding_done', '1');
+      await kvSet(DRAFT_KEY, '');
+      navigate('/today', { replace: true });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Erreur inconnue';
+      setError(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const progressFraction = state.step / TOTAL_STEPS;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Configuration initiale de la ferme"
+      className="min-h-[100dvh] w-full flex flex-col bg-bg-0 text-text-0"
+    >
+      {/* Top bar : progress + plus tard */}
+      <div className="px-5 pt-5 pb-3 flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <span className="ft-code text-[11px] uppercase tracking-wide text-text-2">
+            Étape {state.step} / {TOTAL_STEPS}
+          </span>
+          {state.step > 1 && state.step < TOTAL_STEPS && (
+            <button
+              type="button"
+              onClick={handleSkipForLater}
+              className="ft-code text-[11px] uppercase tracking-wide text-text-2 underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
+            >
+              Plus tard
+            </button>
+          )}
+        </div>
+        <div
+          className="bg-bg-2 h-1 rounded-full overflow-hidden"
+          role="progressbar"
+          aria-valuemin={1}
+          aria-valuemax={TOTAL_STEPS}
+          aria-valuenow={state.step}
+        >
+          <div
+            className="h-full bg-accent origin-left transition-transform duration-300"
+            style={{ transform: `scaleX(${progressFraction})` }}
+          />
+        </div>
+      </div>
+
+      {/* Contenu centré */}
+      <div className="flex-1 px-5 pb-6 flex items-center justify-center">
+        <div className="w-full max-w-[560px]">
+          <StepRenderer
+            state={state}
+            setState={setState}
+            onStart={goNext}
+            error={error}
+          />
+        </div>
+      </div>
+
+      {/* Footer actions */}
+      {state.step > 1 && (
+        <div className="px-5 pb-5 max-w-[560px] mx-auto w-full">
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={goPrev}
+              disabled={saving}
+              className="h-12 rounded-md bg-bg-1 border border-border text-text-1 text-[13px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+            >
+              <ChevronLeft size={16} aria-hidden="true" />
+              Précédent
+            </button>
+            {state.step < TOTAL_STEPS ? (
+              <button
+                type="button"
+                onClick={goNext}
+                disabled={!canContinue}
+                className="h-12 rounded-md bg-accent text-bg-0 text-[13px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+              >
+                Suivant
+                <ChevronRight size={16} aria-hidden="true" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void handleFinish()}
+                disabled={saving}
+                className="h-12 rounded-md bg-accent text-bg-0 text-[13px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                    Enregistrement…
+                  </>
+                ) : (
+                  <>
+                    Terminer
+                    <Check size={16} aria-hidden="true" />
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ─── Renderer d'étape ─────────────────────────────────────────────────── */
+
+interface StepRendererProps {
+  state: WizardState;
+  setState: React.Dispatch<React.SetStateAction<WizardState>>;
+  onStart: () => void;
+  error: string | null;
+}
+
+const StepRenderer: React.FC<StepRendererProps> = ({ state, setState, onStart, error }) => {
+  switch (state.step) {
+    case 1:
+      return <StepWelcome onStart={onStart} />;
+    case 2:
+      return (
+        <StepCard
+          icon={<Home size={20} aria-hidden="true" />}
+          title="Nom de la ferme"
+          subtitle="Comment souhaites-tu appeler ta ferme dans l'application ?"
+        >
+          <input
+            type="text"
+            value={state.nom_ferme}
+            maxLength={80}
+            onChange={(e) => setState((s) => ({ ...s, nom_ferme: e.target.value }))}
+            placeholder="Ex : Ferme des Trois Chênes"
+            aria-label="Nom de la ferme"
+            className="w-full h-12 px-4 rounded-md bg-bg-1 border border-border text-text-0 placeholder-text-2 text-[15px] outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+          />
+          <p className="text-[12px] text-text-2 mt-2">{state.nom_ferme.length} / 80</p>
+          {state.nom_ferme.length === 0 && (
+            <p className="text-[12px] text-red-500 mt-2">Le nom de la ferme est obligatoire.</p>
+          )}
+        </StepCard>
+      );
+    case 3:
+      return (
+        <StepCard
+          icon={<MapPin size={20} aria-hidden="true" />}
+          title="Localisation"
+          subtitle="Pour adapter les recommandations climatiques."
+        >
+          <label className="block ft-code text-[11px] uppercase tracking-wide text-text-2 mb-1">
+            Secteur
+          </label>
+          <input
+            type="text"
+            value={state.secteur}
+            onChange={(e) => setState((s) => ({ ...s, secteur: e.target.value }))}
+            placeholder="Ex : Bretagne Nord"
+            aria-label="Secteur"
+            className="w-full h-12 px-4 rounded-md bg-bg-1 border border-border text-text-0 placeholder-text-2 text-[15px] outline-none focus:ring-2 focus:ring-accent focus:border-accent mb-4"
+          />
+          <label className="block ft-code text-[11px] uppercase tracking-wide text-text-2 mb-1">
+            Pays
+          </label>
+          <select
+            value={state.pays}
+            onChange={(e) => setState((s) => ({ ...s, pays: e.target.value }))}
+            aria-label="Pays"
+            className="w-full h-12 px-4 rounded-md bg-bg-1 border border-border text-text-0 text-[15px] outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+          >
+            <option value="France">France</option>
+            <option value="Belgique">Belgique</option>
+            <option value="Suisse">Suisse</option>
+            <option value="Canada">Canada</option>
+            <option value="Côte d'Ivoire">Côte d'Ivoire</option>
+            <option value="Sénégal">Sénégal</option>
+            <option value="Maroc">Maroc</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </StepCard>
+      );
+    case 4:
+      return (
+        <StepCard
+          icon={<Factory size={20} aria-hidden="true" />}
+          title="Type de production"
+          subtitle="Cela conditionne les modules visibles dans l'app."
+        >
+          <div role="radiogroup" aria-label="Type de production" className="flex flex-col gap-2">
+            {(
+              [
+                { key: 'NAISSEUR', label: 'Naisseur' },
+                { key: 'NAISSEUR_ENGRAISSEUR', label: 'Naisseur-Engraisseur' },
+                { key: 'ENGRAISSEUR_SEUL', label: 'Engraisseur seul' },
+              ] as const
+            ).map(({ key, label }) => {
+              const active = state.typeProd === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setState((s) => ({ ...s, typeProd: key }))}
+                  className={
+                    'h-12 px-4 rounded-md text-[13px] font-semibold uppercase tracking-wide text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ' +
+                    (active
+                      ? 'bg-accent text-bg-0'
+                      : 'bg-bg-1 border border-border text-text-1 hover:bg-bg-2')
+                  }
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </StepCard>
+      );
+    case 5:
+      return (
+        <StepCard
+          icon={<Tag size={20} aria-hidden="true" />}
+          title="Races élevées"
+          subtitle="Sélectionne entre 1 et 5 races."
+        >
+          <div className="flex flex-wrap gap-2">
+            {RACES_DISPONIBLES.map((r) => {
+              const active = state.races.includes(r);
+              const disabled = !active && state.races.length >= 5;
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  aria-pressed={active}
+                  disabled={disabled}
+                  onClick={() =>
+                    setState((s) => ({
+                      ...s,
+                      races: active ? s.races.filter((x) => x !== r) : [...s.races, r],
+                    }))
+                  }
+                  className={
+                    'h-10 px-4 rounded-full text-[12px] font-semibold uppercase tracking-wide transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent ' +
+                    (active
+                      ? 'bg-accent text-bg-0'
+                      : 'bg-bg-1 border border-border text-text-1 hover:bg-bg-2 disabled:opacity-40')
+                  }
+                >
+                  {r}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[12px] text-text-2 mt-3">{state.races.length} / 5 sélectionnées</p>
+          {state.races.length === 0 && (
+            <p className="text-[12px] text-red-500 mt-1">Sélectionne au moins une race.</p>
+          )}
+        </StepCard>
+      );
+    case 6:
+      return (
+        <StepCard
+          icon={<Users size={20} aria-hidden="true" />}
+          title="Cheptel initial — Truies"
+          subtitle="Combien de truies ont déjà sur la ferme ?"
+        >
+          <NumberInput
+            value={state.effectif_truies_initial}
+            min={0}
+            max={500}
+            onChange={(v) => setState((s) => ({ ...s, effectif_truies_initial: v }))}
+            ariaLabel="Effectif truies initial"
+          />
+          <p className="text-[12px] text-text-2 mt-2">
+            Tu pourras ajouter chaque truie individuellement ensuite.
+          </p>
+        </StepCard>
+      );
+    case 7:
+      return (
+        <StepCard
+          icon={<Users size={20} aria-hidden="true" />}
+          title="Cheptel initial — Verrats"
+          subtitle="Combien de verrats actifs ?"
+        >
+          <NumberInput
+            value={state.effectif_verrats_initial}
+            min={0}
+            max={50}
+            onChange={(v) => setState((s) => ({ ...s, effectif_verrats_initial: v }))}
+            ariaLabel="Effectif verrats initial"
+          />
+        </StepCard>
+      );
+    case 8:
+      return (
+        <StepCard
+          icon={<Target size={20} aria-hidden="true" />}
+          title="Objectif annuel porcelets"
+          subtitle="Production cible sur 12 mois."
+        >
+          <NumberInput
+            value={state.objectif_porcelets_an}
+            min={0}
+            max={50000}
+            onChange={(v) => setState((s) => ({ ...s, objectif_porcelets_an: v }))}
+            ariaLabel="Objectif annuel porcelets"
+          />
+          <p className="text-[12px] text-text-2 mt-2">
+            Optionnel — sert à calibrer le tableau de bord.
+          </p>
+        </StepCard>
+      );
+    case 9:
+      return (
+        <StepCard
+          icon={<StickyNote size={20} aria-hidden="true" />}
+          title="Notes de démarrage"
+          subtitle="Particularités de ta ferme, contraintes locales, etc."
+        >
+          <textarea
+            value={state.notes_demarrage}
+            maxLength={500}
+            onChange={(e) => setState((s) => ({ ...s, notes_demarrage: e.target.value }))}
+            placeholder="Ex : élevage plein-air, contraintes biosécurité…"
+            aria-label="Notes de démarrage"
+            rows={6}
+            className="w-full px-4 py-3 rounded-md bg-bg-1 border border-border text-text-0 placeholder-text-2 text-[14px] outline-none focus:ring-2 focus:ring-accent focus:border-accent resize-none"
+          />
+          <p className="text-[12px] text-text-2 mt-2">{state.notes_demarrage.length} / 500</p>
+        </StepCard>
+      );
+    case 10:
+      return <StepRecap state={state} error={error} />;
+    default:
+      return null;
+  }
+};
+
+/* ─── Étape 1 : accueil ────────────────────────────────────────────────── */
+
+const StepWelcome: React.FC<{ onStart: () => void }> = ({ onStart }) => (
+  <div className="flex flex-col items-center text-center py-10">
+    <img
+      src="/images/porc-mark.svg"
+      alt=""
+      aria-hidden="true"
+      className="w-24 h-24 mb-6"
+      onError={(e) => {
+        (e.currentTarget as HTMLImageElement).src = '/images/icon.svg';
+      }}
+    />
+    <h1
+      className="ft-heading uppercase tracking-wide text-[28px] mb-3"
+      style={{ letterSpacing: '0.02em' }}
+    >
+      Bienvenue sur PorcTrack
+    </h1>
+    <p className="text-[14px] text-text-1 max-w-sm leading-relaxed mb-8">
+      10 questions rapides pour configurer ton interface. Tu peux interrompre à tout moment et
+      reprendre plus tard.
+    </p>
+    <button
+      type="button"
+      onClick={onStart}
+      className="h-12 px-8 rounded-md bg-accent text-bg-0 text-[13px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+    >
+      Commencer
+      <ChevronRight size={16} aria-hidden="true" />
+    </button>
+  </div>
+);
+
+/* ─── Étape 10 : récap ─────────────────────────────────────────────────── */
+
+const StepRecap: React.FC<{ state: WizardState; error: string | null }> = ({ state, error }) => {
+  const typeLabel: Record<TypeProd, string> = {
+    NAISSEUR: 'Naisseur',
+    NAISSEUR_ENGRAISSEUR: 'Naisseur-Engraisseur',
+    ENGRAISSEUR_SEUL: 'Engraisseur seul',
+  };
+  const items: Array<{ label: string; value: string }> = [
+    { label: 'Nom de la ferme', value: state.nom_ferme || '—' },
+    { label: 'Secteur', value: state.secteur || '—' },
+    { label: 'Pays', value: state.pays || '—' },
+    {
+      label: 'Type de production',
+      value: state.typeProd ? typeLabel[state.typeProd] : '—',
+    },
+  ];
+  if (state.typeProd !== 'ENGRAISSEUR_SEUL') {
+    items.push({ label: 'Races', value: state.races.join(', ') || '—' });
+    items.push({
+      label: 'Truies',
+      value: String(state.effectif_truies_initial),
+    });
+  }
+  items.push({ label: 'Verrats', value: String(state.effectif_verrats_initial) });
+  items.push({
+    label: 'Objectif porcelets / an',
+    value: state.objectif_porcelets_an > 0 ? String(state.objectif_porcelets_an) : '—',
+  });
+  if (state.notes_demarrage) {
+    items.push({ label: 'Notes', value: state.notes_demarrage });
+  }
+
+  return (
+    <div className="bg-bg-1 border border-border rounded-2xl p-6">
+      <h2 className="ft-heading uppercase tracking-wide text-[22px] mb-4">Récapitulatif</h2>
+      <p className="text-[13px] text-text-2 mb-5">
+        Vérifie tes réponses avant d'enregistrer.
+      </p>
+      <dl className="flex flex-col gap-3">
+        {items.map((it) => (
+          <div key={it.label} className="flex flex-col">
+            <dt className="ft-code text-[11px] uppercase tracking-wide text-text-2">
+              {it.label}
+            </dt>
+            <dd className="text-[14px] text-text-0 break-words">{it.value}</dd>
+          </div>
+        ))}
+      </dl>
+      {error && (
+        <p
+          role="alert"
+          className="mt-5 text-[13px] text-red-500 bg-red-500/10 border border-red-500/30 rounded-md px-3 py-2"
+        >
+          {error}
+        </p>
+      )}
+    </div>
+  );
+};
+
+/* ─── Atoms ───────────────────────────────────────────────────────────── */
+
+interface StepCardProps {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  children: React.ReactNode;
+}
+
+const StepCard: React.FC<StepCardProps> = ({ icon, title, subtitle, children }) => (
+  <div className="bg-bg-1 border border-border rounded-2xl p-6">
+    <div className="flex items-start gap-3 mb-5">
+      <span
+        className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent shrink-0"
+        aria-hidden="true"
+      >
+        {icon}
+      </span>
+      <div className="flex-1">
+        <h2
+          className="ft-heading uppercase tracking-wide text-[20px] leading-tight"
+          style={{ letterSpacing: '0.02em' }}
+        >
+          {title}
+        </h2>
+        <p className="text-[13px] text-text-2 mt-1 leading-relaxed">{subtitle}</p>
+      </div>
+    </div>
+    {children}
+  </div>
+);
+
+interface NumberInputProps {
+  value: number;
+  min: number;
+  max: number;
+  onChange: (v: number) => void;
+  ariaLabel: string;
+}
+
+const NumberInput: React.FC<NumberInputProps> = ({ value, min, max, onChange, ariaLabel }) => (
+  <input
+    type="number"
+    value={Number.isFinite(value) ? value : 0}
+    min={min}
+    max={max}
+    onChange={(e) => {
+      const n = parseInt(e.target.value, 10);
+      if (Number.isNaN(n)) {
+        onChange(0);
+        return;
+      }
+      onChange(Math.max(min, Math.min(max, n)));
+    }}
+    aria-label={ariaLabel}
+    className="w-full h-12 px-4 rounded-md bg-bg-1 border border-border text-text-0 text-[18px] ft-values outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+  />
+);
+
+export default OnboardingWizard;

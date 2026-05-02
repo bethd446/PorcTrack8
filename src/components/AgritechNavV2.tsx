@@ -18,6 +18,7 @@ import { useAuth } from '../context/AuthContext';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { usePilotage } from '../context/PilotageContext';
 import { cn } from '../lib/utils';
+import { inferModuleFromPath, getModuleTone } from '../lib/moduleColor';
 import { BottomSheet } from './agritech';
 import QuickSaillieForm from './forms/QuickSaillieForm';
 import QuickPeseeForm from './forms/QuickPeseeForm';
@@ -245,10 +246,15 @@ interface NavTabProps {
   isActive: boolean;
   onSelect: (path: string) => void;
   badgeCount?: number;
+  /** Accent module (RT4) : couleur de l'underline actif en plus de l'accent global. */
+  moduleAccent?: string;
 }
 
-const NavTab: React.FC<NavTabProps> = ({ tab, isActive, onSelect, badgeCount }) => {
+const NavTab: React.FC<NavTabProps> = ({ tab, isActive, onSelect, badgeCount, moduleAccent }) => {
   const { Icon, label, path } = tab;
+  // RT4 : on garde ACCENT comme couleur principale (texte+icône), et on ajoute
+  // l'accent module sur l'underline pour différencier visuellement.
+  const underlineColor = moduleAccent ?? ACCENT;
   return (
     <li className="relative" role="presentation">
       {isActive && (
@@ -258,7 +264,7 @@ const NavTab: React.FC<NavTabProps> = ({ tab, isActive, onSelect, badgeCount }) 
           style={{
             width: 32,
             height: 2,
-            background: ACCENT,
+            background: underlineColor,
             borderRadius: '0 0 2px 2px',
           }}
         />
@@ -346,6 +352,8 @@ const AgritechNavV2: React.FC = () => {
   const { alerts, alertesServeur } = usePilotage();
 
   const activeTabId = resolveActiveTab(location.pathname);
+  // RT4 : déduit le module courant pour colorer l'underline de la tab active.
+  const moduleAccent = getModuleTone(inferModuleFromPath(location.pathname)).fg;
 
   const visibleTabs = useMemo(
     () => TABS.filter((t) => !t.ownerOnly || isOwner),
@@ -399,6 +407,7 @@ const AgritechNavV2: React.FC = () => {
               isActive={activeTabId === tab.id}
               onSelect={navigate}
               badgeCount={tab.id === 'today' ? todayBadgeCount : undefined}
+              moduleAccent={activeTabId === tab.id ? moduleAccent : undefined}
             />
           ))}
         </ul>

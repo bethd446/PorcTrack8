@@ -10,6 +10,8 @@ import {
 import { IonApp } from '@ionic/react';
 import OnboardingFlow from './features/onboarding/OnboardingFlow';
 import AgritechLayout from './components/AgritechLayout';
+import { supabase } from './services/supabaseClient';
+import { useAuth } from './context/AuthContext';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -31,6 +33,7 @@ import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
 import AuthCallback from './components/auth/AuthCallback';
 import AdminRoute from './components/auth/AdminRoute';
+const ResetPassword = React.lazy(() => import(/* webpackChunkName: "reset-password" */ './components/auth/ResetPassword'));
 import SmartRoot from './components/SmartRoot';
 import About from './pages/About';
 import Privacy from './pages/Privacy';
@@ -39,6 +42,7 @@ import NotFound from './pages/NotFound';
 
 const AdminDashboard = React.lazy(() => import('./features/admin/AdminDashboard'));
 import AgritechNavV2, { QuickActionsProvider } from './components/AgritechNavV2';
+import { GlobalSearchProvider } from './context/GlobalSearchContext';
 import { loadChecklistDefinitions } from './services/checklistService';
 
 // Lazy : FAB et widgets non critiques au LCP, montés au shell mais ouverts uniquement sur interaction
@@ -91,6 +95,7 @@ const FinitionView = React.lazy(() => import(/* webpackChunkName: "cycle-finitio
 const SortieCalendarView = React.lazy(() => import(/* webpackChunkName: "cycle-sortie" */ './features/cycles/SortieCalendarView'));
 
 const AideView = React.lazy(() => import(/* webpackChunkName: "aide" */ './features/help/AideView'));
+const OnboardingWizard = React.lazy(() => import(/* webpackChunkName: "onboarding-wizard" */ './features/onboarding/OnboardingWizard'));
 
 const SuspenseFallback = () => (
   <div
@@ -114,6 +119,57 @@ const OnboardingRoute: React.FC = () => {
       <OnboardingFlow onComplete={() => navigate('/today', { replace: true })} />
     </AgritechLayout>
   );
+};
+
+/**
+ * Wizard 10 questions (RT5). Route `/onboarding` lazy : route protégée
+ * distincte rendue sans navigation/sidebar.
+ */
+const OnboardingWizardRoute: React.FC = () => (
+  <AgritechLayout withNav={false} withSidebar={false}>
+    <OnboardingWizard />
+  </AgritechLayout>
+);
+
+/**
+ * Effet : au login, vérifie si l'onboarding a été complété (col
+ * `troupeaux.onboarding_completed_at`). Sinon redirige vers `/onboarding`.
+ * Ne s'exécute que si l'utilisateur n'est pas déjà sur /onboarding ou sur
+ * une route publique.
+ */
+const OnboardingGate: React.FC = () => {
+  const { user, profileLoaded } = useAuth();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  useEffect(() => {
+    if (!user || !profileLoaded) return;
+    const skip =
+      pathname.startsWith('/onboarding') ||
+      pathname.startsWith('/login') ||
+      pathname.startsWith('/signup') ||
+      pathname.startsWith('/auth/');
+    if (skip) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { data } = await supabase
+          .from('troupeaux')
+          .select('onboarding_completed_at')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (cancelled) return;
+        if (!data?.onboarding_completed_at) {
+          navigate('/onboarding', { replace: true });
+        }
+      } catch {
+        // Silencieux : si la requête échoue (offline, RLS), on ne bloque pas.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, profileLoaded, pathname, navigate]);
+  return null;
 };
 
 /**
@@ -148,7 +204,7 @@ const SaisirFABMount: React.FC = () => {
 };
 
 const AppShell: React.FC = () => (
-  <>
+  <GlobalSearchProvider>
     <Routes>
       <Route path="/" element={<Navigate to="/today" replace />} />
       <Route path="/today" element={<TodayHub />} />
@@ -260,7 +316,7 @@ const AppShell: React.FC = () => (
       <ChatbotWidget />
     </React.Suspense>
     <SaisirFABMount />
-  </>
+  </GlobalSearchProvider>
 );
 
 const AppContent = () => {
@@ -275,6 +331,7 @@ const AppContent = () => {
     <IonApp>
       <React.Suspense fallback={<SuspenseFallback />}>
         <QuickActionsProvider>
+          <OnboardingGate />
           <Routes>
             {/* ── Routes publiques ─────────────────────────────────────── */}
             <Route path="/" element={<SmartRoot />} />
@@ -284,10 +341,19 @@ const AppContent = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* ── Onboarding (route protégée distincte) ────────────────── */}
             <Route
               path="/onboarding"
+              element={
+                <SupabaseProtectedRoute>
+                  <OnboardingWizardRoute />
+                </SupabaseProtectedRoute>
+              }
+            />
+            <Route
+              path="/onboarding-legacy"
               element={
                 <SupabaseProtectedRoute>
                   <OnboardingRoute />

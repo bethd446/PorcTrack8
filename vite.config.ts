@@ -2,11 +2,71 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig, loadEnv} from 'vite';
+import {VitePWA} from 'vite-plugin-pwa';
 
 export default defineConfig(() => {
   return {
     base: '/',
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        manifest: {
+          name: 'PorcTrack 8',
+          short_name: 'PorcTrack',
+          description:
+            'Gestion Technique de Troupeau Porcin — alertes biologiques, suivi des bandes, hors-ligne',
+          start_url: '/',
+          display: 'standalone',
+          background_color: '#f0f4f3',
+          theme_color: '#064e3b',
+          orientation: 'portrait',
+          icons: [
+            {
+              src: '/images/porc-mark.svg',
+              sizes: 'any',
+              type: 'image/svg+xml',
+              purpose: 'any maskable',
+            },
+          ],
+        },
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,svg,png,woff2}'],
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/jcritwravdwefwqwyjvk\.supabase\.co\/.*/,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'supabase-api',
+                networkTimeoutSeconds: 10,
+                expiration: {maxEntries: 100, maxAgeSeconds: 86400},
+              },
+            },
+            {
+              urlPattern: /^https:\/\/api\.porctrack\.tech\/.*/,
+              handler: 'NetworkOnly',
+            },
+            {
+              urlPattern: /\.(?:woff2|woff|ttf|eot)$/,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'fonts',
+                expiration: {maxEntries: 30, maxAgeSeconds: 31536000},
+              },
+            },
+            {
+              urlPattern: /\.(?:png|svg|jpg|jpeg|webp)$/,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'images',
+                expiration: {maxEntries: 100, maxAgeSeconds: 2592000},
+              },
+            },
+          ],
+        },
+      }),
+    ],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

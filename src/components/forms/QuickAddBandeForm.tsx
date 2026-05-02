@@ -29,6 +29,11 @@ import {
   type AddBandeValidation,
   type BandeStatutInitial,
 } from './quickAddBandeLogic';
+import {
+  validatePoidsKg,
+  validateDatePresentOrPast,
+  validateEffectif,
+} from '../../lib/validation/farmValidators';
 
 // ─── Composant ───────────────────────────────────────────────────────────────
 
@@ -124,6 +129,29 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
     });
     if (!result.ok || !result.values) {
       setErrors(result.errors);
+      return;
+    }
+    // RT4 Volet 2 : Fail-Fast farm validators en complément (sécurité défense
+    // en profondeur). Bornes plus larges que la logique métier locale, mais
+    // attrapent NaN/dates futures si la regex de validateAddBande passe.
+    const failFast: AddBandeValidation['errors'] = {};
+    if (result.values.date_mise_bas) {
+      const dr = validateDatePresentOrPast(result.values.date_mise_bas, 'dateMb');
+      if (!dr.ok) failFast.dateMb = dr.errors[0].message;
+    }
+    const ef = validateEffectif(result.values.porcelets_nes_vivants, {
+      max: 25,
+      field: 'nesVivants',
+    });
+    if (!ef.ok) failFast.nesVivants = ef.errors[0].message;
+    const pr = validatePoidsKg(result.values.poids_initial_kg, {
+      min: 0.5,
+      max: 50,
+      field: 'poidsKg',
+    });
+    if (!pr.ok) failFast.poidsKg = pr.errors[0].message;
+    if (Object.keys(failFast).length > 0) {
+      setErrors(failFast);
       return;
     }
     setErrors({});

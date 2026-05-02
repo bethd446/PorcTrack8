@@ -10,6 +10,11 @@ import {
 } from '../../services/supabaseWrites';
 import { useEscapeKey } from './useFormA11y';
 import type { BandePorcelets } from '../../types/farm';
+import {
+  validateDatePresentOrPast,
+  validatePoidsKg,
+  validateEffectif,
+} from '../../lib/validation/farmValidators';
 
 export interface QuickSevrageFormProps {
   isOpen: boolean;
@@ -83,18 +88,23 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
       setError('Sélectionne une bande');
       return;
     }
+    // RT4 Volet 2 : Fail-Fast — effectif sevrés, date passée/aujourd'hui,
+    // poids dans plage porcelet sevré (0.5–50 kg).
     const nb = parseInt(nbSevres, 10);
-    if (!Number.isFinite(nb) || nb <= 0) {
-      setError('Nombre de porcelets sevrés requis');
+    const ef = validateEffectif(nb, { min: 1, max: 50, field: 'nbSevres' });
+    if (!ef.ok) {
+      setError(ef.errors[0].message);
       return;
     }
-    if (!dateIso) {
-      setError('Date de sevrage requise');
+    const dr = validateDatePresentOrPast(dateIso, 'dateIso');
+    if (!dr.ok) {
+      setError(dr.errors[0].message);
       return;
     }
     const poids = parseFloat(poidsKg.replace(',', '.'));
-    if (!Number.isFinite(poids) || poids < 0.5 || poids > 50) {
-      setError('Poids invalide');
+    const pr = validatePoidsKg(poids, { min: 0.5, max: 50, field: 'poidsKg' });
+    if (!pr.ok) {
+      setError(pr.errors[0].message);
       return;
     }
 
