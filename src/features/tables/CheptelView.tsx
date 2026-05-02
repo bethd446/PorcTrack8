@@ -1,3 +1,13 @@
+/**
+ * @deprecated AUDIT-3 (2026-05-02) — Composant orphelin retiré des routes.
+ * La route `/troupeau/verrats` redirige désormais vers `/troupeau?view=verrats`
+ * (TroupeauHub onglet VERRATS) pour cohérence visuelle avec les autres tabs
+ * cheptel. Cette vue avait un layout différent (banner h1 simple) qui cassait
+ * l'expérience. Conservée pour archive — plus aucun import vivant.
+ *
+ * À supprimer en V24 si aucun retour utilisateur.
+ */
+
 import React, { useState, useMemo } from 'react';
 import {
   IonPage, IonContent,

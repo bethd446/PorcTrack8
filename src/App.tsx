@@ -53,7 +53,8 @@ const ChatbotWidget = React.lazy(() =>
 
 // Lazy loading — chaque écran dans son propre chunk pour réduire le bundle initial
 const TableView = React.lazy(() => import(/* webpackChunkName: "table-view" */ './features/tables/TableView'));
-const CheptelView = React.lazy(() => import(/* webpackChunkName: "cheptel" */ './features/tables/CheptelView'));
+// CheptelView retirée des routes (AUDIT-3). Conservée @deprecated dans
+// features/tables/CheptelView.tsx pour archive — plus aucun import.
 const ControleQuotidien = React.lazy(() => import(/* webpackChunkName: "controle" */ './features/controle/ControleQuotidien'));
 const ChecklistFlow = React.lazy(() => import(/* webpackChunkName: "checklist" */ './features/controle/ChecklistFlow'));
 const AuditView = React.lazy(() => import(/* webpackChunkName: "audit" */ './features/controle/AuditView'));
@@ -234,7 +235,10 @@ const AppShell: React.FC = () => (
 
       {/* Troupeau sub-routes */}
       <Route path="/troupeau/truies" element={<TroupeauTruiesRedirect />} />
-      <Route path="/troupeau/verrats" element={<CheptelView initialTab="VERRAT" />} />
+      {/* AUDIT-3 : redirige vers le hub unifié TroupeauHub onglet VERRATS
+          pour cohérence visuelle (CheptelView legacy a un layout différent
+          des autres tabs cheptel). CheptelView reste @deprecated. */}
+      <Route path="/troupeau/verrats" element={<Navigate to="/troupeau?view=verrats" replace />} />
       <Route path="/troupeau/truies/:id" element={<TruieDetailView />} />
       <Route path="/troupeau/verrats/:id" element={<VerratDetailView />} />
       {/* Route legacy /troupeau/bandes : la vue Sheets BandesView est cassée
@@ -242,7 +246,8 @@ const AppShell: React.FC = () => (
           BANDES qui consomme bandes Supabase. BandesView reste @deprecated. */}
       <Route path="/troupeau/bandes" element={<Navigate to="/troupeau?view=bandes" replace />} />
       <Route path="/troupeau/bandes/:bandeId" element={<BandeDetailView />} />
-      <Route path="/troupeau/batiments" element={<BatimentsView />} />
+      {/* AUDIT-3 : redirige vers le hub unifié pour cohérence visuelle. */}
+      <Route path="/troupeau/batiments" element={<Navigate to="/troupeau?view=batiments" replace />} />
       <Route path="/troupeau/classement" element={<ClassementView />} />
 
       {/* Reproduction (V22-B3 hub fil conducteur) */}
