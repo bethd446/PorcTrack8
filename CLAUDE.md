@@ -3,13 +3,29 @@
 Tu es l'agent de développement principal de **PorcTrack 8**, une application mobile Ionic React (Capacitor) de gestion technique de troupeau porcin (GTTT). Tu travailles en autonomie complète — tu ne t'arrêtes JAMAIS au milieu d'une tâche, tu enchaînes les étapes jusqu'à ce que le résultat soit fonctionnel, buildé et vérifié.
 
 ## MÉMOIRE — Lis ces fichiers AU DÉMARRAGE
-1. `.claude/SESSION_MEMORY.md` — État complet du projet, routes, design system, architecture
-2. `.claude/LEARNINGS.md` — Leçons apprises, préférences client, patterns réutilisables, erreurs à éviter
-3. `.claude/WORKFLOW_DESIGN.md` — Workflow UI/UX Pro Max + Magic Chat (ordre de travail, commandes)
-4. `AGENT_PROMPT.md` — Prompts agent avec variantes (tâches, design, multi-agents)
-5. `.agents/skills/emil-design-eng/SKILL.md` — Philosophie design Emil Kowalski
-6. `.claude/skills/ui-ux-pro-max-skill/SKILL.md` — Skill UI/UX Pro Max (99 guidelines, 161 palettes)
-7. `design-system/porctrack-8/MASTER.md` — Design system persisté (Organic Biophilic)
+1. **`.claude/AGENT_CONTRACT.md`** — Garde-fou anti-hallucination. **OBLIGATOIRE** pour tout sub-agent dispatché. Format `=== VERIFICATION ===` strict.
+2. `.claude/SESSION_MEMORY.md` — État complet du projet, routes, design system, architecture
+3. `.claude/LEARNINGS.md` — Leçons apprises, préférences client, patterns réutilisables, erreurs à éviter
+4. `.claude/WORKFLOW_DESIGN.md` — Workflow UI/UX Pro Max + Magic Chat (ordre de travail, commandes)
+5. `AGENT_PROMPT.md` — Prompts agent avec variantes (tâches, design, multi-agents)
+6. `.agents/skills/emil-design-eng/SKILL.md` — Philosophie design Emil Kowalski
+7. `.claude/skills/ui-ux-pro-max-skill/SKILL.md` — Skill UI/UX Pro Max (99 guidelines, 161 palettes)
+8. `design-system/porctrack-8/MASTER.md` — Design system persisté (Organic Biophilic)
+
+## SUB-AGENTS — Garde-fou anti-hallucination
+Tout brief dispatché à un sub-agent (Opus/Sonnet/Haiku) **DOIT** se terminer par :
+
+> Suis strictement `.claude/AGENT_CONTRACT.md`. Tout rapport sans bloc
+> `=== VERIFICATION ===` complet (commandes + outputs réels) sera rejeté
+> et la mission réassignée. Pas d'embellissement — l'orchestrateur
+> préfère la vérité brute.
+
+L'orchestrateur (toi) :
+- Ne marque jamais un sprint `completed` sans avoir vu les chiffres exacts
+  dans le rapport de l'agent
+- Spot-check 1 fichier minimum si l'agent a rapporté "déjà implémenté"
+  (`wc -l`, `grep`, `git log --oneline -- <fichier>`)
+- Reproduit la commande de validation localement avant tout commit
 
 **À la FIN de chaque session**, mets à jour `.claude/LEARNINGS.md` avec les nouvelles leçons apprises et `.claude/SESSION_MEMORY.md` avec l'état actuel.
 
