@@ -21,6 +21,10 @@ import {
   Truck,
   HelpCircle,
   Trophy,
+  ClipboardCheck,
+  BookOpen,
+  Stethoscope,
+  Boxes,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -34,7 +38,7 @@ import CommandPalette from './design/CommandPalette';
 /**
  * AppSidebar — sidebar desktop ≥1024px (V22-B1).
  *
- * Sections : Épinglé · Aujourd'hui · Mon élevage · Reproduction · Performance · Stocks · Plus.
+ * Sections : Épinglé · Aujourd’hui · Mon élevage · Reproduction · Performance · Stocks · Plus.
  * Cycles biologiques expandable sous "Mon élevage", état persisté kvStore.
  * Trigger Cmd+K en haut, palette globale (CommandPalette).
  */
@@ -250,8 +254,8 @@ const AppSidebar: React.FC = () => {
           </Section>
         ) : null}
 
-        {/* 1. Aujourd'hui */}
-        <Section title="Aujourd'hui">
+        {/* 1. Aujourd’hui */}
+        <Section title="Aujourd’hui">
           <SidebarRow
             icon={Home}
             label="Aperçu du jour"
@@ -342,6 +346,13 @@ const AppSidebar: React.FC = () => {
         {/* 4. Performance (ex-Pilotage, OWNER only) */}
         {showPerformanceSection ? (
           <Section title="Performance">
+            {/* AUDIT-5 : entrée hub Pilotage parent. */}
+            <SidebarRow
+              icon={LayoutGrid}
+              label="Vue d’ensemble"
+              active={isActive('/pilotage') && !isActive('/pilotage/perf') && !isActive('/pilotage/finances') && !isActive('/pilotage/previsions')}
+              onClick={() => navigate('/pilotage')}
+            />
             <SidebarRow
               icon={BarChart3}
               label="KPIs techniques"
@@ -372,6 +383,14 @@ const AppSidebar: React.FC = () => {
 
         {/* 5. Stocks */}
         <Section title="Stocks">
+          {/* AUDIT-5 : ajout du hub /ressources comme entrée parent. */}
+          <SidebarRow
+            icon={Boxes}
+            label="Vue d’ensemble"
+            active={isActive('/ressources') && !isActive('/ressources/aliments') && !isActive('/ressources/pharmacie')}
+            onClick={() => navigate('/ressources')}
+            moduleAccent={accentFor('/ressources')}
+          />
           <SidebarRow
             icon={Wheat}
             label="Aliments"
@@ -395,7 +414,30 @@ const AppSidebar: React.FC = () => {
           />
         </Section>
 
-        {/* 6. Plus */}
+        {/* 6. Outils terrain (AUDIT-5 : routes auparavant orphelines) */}
+        <Section title="Outils terrain">
+          <SidebarRow
+            icon={ClipboardCheck}
+            label="Contrôle quotidien"
+            active={isActive('/controle')}
+            onClick={() => navigate('/controle')}
+          />
+          <SidebarRow
+            icon={Stethoscope}
+            label="Journal santé"
+            active={isActive('/sante')}
+            onClick={() => navigate('/sante')}
+            moduleAccent={accentFor('/sante')}
+          />
+          <SidebarRow
+            icon={BookOpen}
+            label="Protocoles"
+            active={isActive('/protocoles')}
+            onClick={() => navigate('/protocoles')}
+          />
+        </Section>
+
+        {/* 7. Plus */}
         <Section title="Plus">
           {showAdminItem ? (
             <SidebarRow

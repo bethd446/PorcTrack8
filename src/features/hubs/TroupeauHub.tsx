@@ -149,7 +149,7 @@ const TroupeauHub: React.FC = () => {
           </IonRefresher>
 
           <TopBarSync
-            crumbs={['Cheptel', 'Troupeau']}
+            crumbs={['Élevage']}
             onMariusClick={() => {
               const evt = new CustomEvent('open-chatbot');
               window.dispatchEvent(evt);
@@ -158,8 +158,10 @@ const TroupeauHub: React.FC = () => {
 
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
             {/* ── En-tête ───────────────────────────────────────────── */}
+            {/* AUDIT-5 : vocabulaire canonique "Élevage" partout (vs ancien
+                mélange Cheptel/Troupeau/Élevage). Cohérent avec bottom-tab. */}
             <header>
-              <Eyebrow dotColor="accent">Cheptel · {nomFerme}</Eyebrow>
+              <Eyebrow dotColor="accent">Élevage · {nomFerme}</Eyebrow>
               <h1
                 style={{
                   fontFamily: 'BigShoulders, system-ui, sans-serif',
@@ -171,7 +173,7 @@ const TroupeauHub: React.FC = () => {
                   margin: '8px 0 4px',
                 }}
               >
-                Troupeau
+                Élevage
               </h1>
               <div
                 style={{

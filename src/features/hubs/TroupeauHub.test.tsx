@@ -332,12 +332,12 @@ describe('TroupeauHub — intégration multi-vues', () => {
     cleanup();
   });
 
-  it('1. render baseline avec titre "TROUPEAU" et truies mockées', () => {
+  it('1. render baseline avec titre "Élevage" et truies mockées', () => {
     renderHub();
 
-    // AgritechHeader rend le titre tel quel ; CSS applique l'uppercase
+    // AUDIT-5 : titre canonique "Élevage" (vs ancien "Troupeau")
     const heading = screen.getByRole('heading', { level: 1 });
-    expect(heading.textContent).toMatch(/TROUPEAU/i);
+    expect(heading.textContent).toMatch(/élevage/i);
 
     // Subtitle : "Ferme K13 · 19 animaux" (17 truies actives + 2 verrats)
     expect(document.body.textContent).toMatch(/Ferme K13/);
