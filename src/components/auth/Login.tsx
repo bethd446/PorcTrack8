@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { IonPage, IonContent } from '@ionic/react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
 import Eyebrow from '../design/Eyebrow';
 import Button from '../design/Button';
@@ -198,8 +198,12 @@ export default function Login() {
                 disabled={loading}
                 className="w-full"
                 style={{ width: '100%', marginTop: 4 }}
+                aria-busy={loading}
               >
-                {loading ? 'Connexion…' : 'Se connecter'}
+                {loading
+                  ? <Loader2 size={16} strokeWidth={2} className="animate-spin" aria-hidden="true" />
+                  : null}
+                {loading ? 'Connexion en cours…' : 'Se connecter'}
                 {!loading && <ArrowRight size={16} strokeWidth={2} />}
               </Button>
 

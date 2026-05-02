@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { IonPage, IonContent } from '@ionic/react';
-import { ArrowRight, Mail, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Mail, CheckCircle2, Loader2 } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
 import { getAuthRedirectURL } from '../../lib/authRedirect';
 import Eyebrow from '../design/Eyebrow';
@@ -289,6 +289,7 @@ export default function Signup() {
                       type="button"
                       onClick={handleResend}
                       disabled={resendCooldown > 0 || resendLoading}
+                      aria-busy={resendLoading}
                       style={{
                         background: 'transparent',
                         border: '1px solid var(--color-accent-500)',
@@ -303,10 +304,16 @@ export default function Signup() {
                         padding: '6px 12px',
                         borderRadius: 'var(--radius-card)',
                         fontWeight: 500,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 8,
                       }}
                     >
+                      {resendLoading && (
+                        <Loader2 size={14} strokeWidth={2} className="animate-spin" aria-hidden="true" />
+                      )}
                       {resendLoading
-                        ? 'Envoi…'
+                        ? 'Envoi en cours…'
                         : resendCooldown > 0
                           ? `Renvoyer le lien (${resendCooldown}s)`
                           : 'Renvoyer le lien'}
@@ -379,9 +386,13 @@ export default function Signup() {
                     size="lg"
                     disabled={loading}
                     style={{ width: '100%', marginTop: 4 }}
+                    aria-busy={loading}
                   >
                     {loading
-                      ? 'Envoi…'
+                      ? <Loader2 size={16} strokeWidth={2} className="animate-spin" aria-hidden="true" />
+                      : null}
+                    {loading
+                      ? 'Envoi en cours…'
                       : mode === 'magic'
                         ? 'Recevoir le lien magique'
                         : 'Créer mon compte'}
