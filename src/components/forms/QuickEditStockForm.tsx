@@ -218,10 +218,10 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
               <Edit3 size={18} aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+              <p className="text-mono-label text-text-1">
                 {kind === 'ALIMENT' ? 'Éditer aliment' : 'Éditer produit véto'}
               </p>
-              <p className="font-mono text-[10px] uppercase tracking-wide text-text-2 tabular-nums mt-0.5 truncate">
+              <p className="text-mono-micro text-text-2 tabular-nums mt-0.5 truncate">
                 {stockItem.id}
               </p>
             </div>
@@ -232,7 +232,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-stock-libelle"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Libellé
               </label>
@@ -276,7 +276,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
               <div className="space-y-1.5">
                 <label
                   htmlFor="edit-stock-produit"
-                  className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                  className="block text-mono-label text-text-2"
                 >
                   Produit
                 </label>
@@ -320,7 +320,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                 <div className="space-y-1.5">
                   <label
                     htmlFor="edit-stock-type"
-                    className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                    className="block text-mono-label text-text-2"
                   >
                     Type <span className="text-text-2 normal-case">· opt.</span>
                   </label>
@@ -361,7 +361,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                 <div className="space-y-1.5">
                   <label
                     htmlFor="edit-stock-usage"
-                    className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                    className="block text-mono-label text-text-2"
                   >
                     Usage <span className="text-text-2 normal-case">· opt.</span>
                   </label>
@@ -404,7 +404,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
 
           {/* ── Section Stock ───────────────────────────────────────── */}
           <div className="space-y-3">
-            <p className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+            <p className="text-mono-micro text-text-2">
               Stock
             </p>
 
@@ -412,7 +412,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
               <div className="space-y-1.5">
                 <label
                   htmlFor="edit-stock-actuel"
-                  className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                  className="block text-mono-label text-text-2"
                 >
                   Stock actuel
                 </label>
@@ -458,7 +458,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
               <div className="space-y-1.5">
                 <label
                   htmlFor="edit-stock-unite"
-                  className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                  className="block text-mono-label text-text-2"
                 >
                   Unité
                 </label>
@@ -507,7 +507,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-stock-seuil"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Seuil d'alerte
               </label>
@@ -565,7 +565,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
             <div className="flex items-center justify-between gap-2">
               <label
                 htmlFor="edit-stock-statut"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Statut · <span className={statutTone}>{statut}</span>
               </label>
@@ -577,7 +577,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                 className={[
                   'pressable inline-flex items-center gap-1.5 h-8 px-3 rounded-md',
                   'bg-bg-1 border border-border text-text-1',
-                  'font-mono text-[10px] uppercase tracking-wide',
+                  'text-mono-micro',
                   'transition-colors duration-[160ms] hover:border-text-2 hover:text-accent',
                   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                   saving ? 'opacity-40 cursor-not-allowed' : '',
@@ -618,7 +618,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="edit-stock-notes"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Notes <span className="text-text-2 normal-case">· optionnel</span>
             </label>

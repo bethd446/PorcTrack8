@@ -210,7 +210,7 @@ const QuickWeightDistForm: React.FC<QuickWeightDistFormProps> = ({
               <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-amber">
                 <Scale size={18} aria-hidden="true" />
               </div>
-              <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+              <p className="text-mono-label text-text-1">
                 Distribution des poids (engraissement / finition)
               </p>
             </div>
@@ -218,7 +218,7 @@ const QuickWeightDistForm: React.FC<QuickWeightDistFormProps> = ({
             <div className="space-y-2">
               <label
                 htmlFor="wdist-bande"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Bande à peser
               </label>
@@ -243,7 +243,7 @@ const QuickWeightDistForm: React.FC<QuickWeightDistFormProps> = ({
                 ))}
               </select>
               {bandesEligibles.length === 0 && (
-                <p className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+                <p className="text-mono-label text-text-2">
                   Aucune bande en engraissement / finition
                 </p>
               )}
@@ -252,7 +252,7 @@ const QuickWeightDistForm: React.FC<QuickWeightDistFormProps> = ({
             <div className="space-y-2">
               <label
                 htmlFor="wdist-date"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Date pesée
               </label>
@@ -313,7 +313,7 @@ const QuickWeightDistForm: React.FC<QuickWeightDistFormProps> = ({
               aria-live="polite"
               aria-label={`Total ${total} porcs sur ${vivants} vivants`}
             >
-              <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+              <span className="text-mono-label text-text-2">
                 Total pesé / vivants
               </span>
               <span
@@ -340,7 +340,7 @@ const QuickWeightDistForm: React.FC<QuickWeightDistFormProps> = ({
             <div className="space-y-2">
               <label
                 htmlFor="wdist-notes"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Notes <span className="text-text-2 normal-case">· optionnel</span>
               </label>
@@ -361,7 +361,7 @@ const QuickWeightDistForm: React.FC<QuickWeightDistFormProps> = ({
             {errors.form ? (
               <p
                 role="alert"
-                className="font-mono text-[11px] uppercase tracking-wide text-red"
+                className="text-mono-label text-red"
               >
                 {errors.form}
               </p>
@@ -427,7 +427,7 @@ const DistField: React.FC<DistFieldProps> = ({
   <div className="space-y-1.5">
     <label
       htmlFor={id}
-      className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+      className="block text-mono-label text-text-2"
     >
       {label}
     </label>

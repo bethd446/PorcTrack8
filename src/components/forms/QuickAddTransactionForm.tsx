@@ -151,7 +151,7 @@ const QuickAddTransactionForm: React.FC<QuickAddTransactionFormProps> = ({
   const inputOk = 'border-border hover:border-text-2';
   const inputErr = 'border-red';
   const labelCls =
-    'block font-mono text-[11px] uppercase tracking-wide text-text-2';
+    'block text-mono-label text-text-2';
   const hintCls = 'font-mono text-[10px] text-text-2 tabular-nums';
   const errCls = 'font-mono text-[11px] text-red';
 
@@ -174,7 +174,7 @@ const QuickAddTransactionForm: React.FC<QuickAddTransactionFormProps> = ({
             <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
               <Plus size={18} aria-hidden="true" />
             </div>
-            <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+            <p className="text-mono-label text-text-1">
               Ajouter une transaction
             </p>
           </div>
@@ -208,7 +208,7 @@ const QuickAddTransactionForm: React.FC<QuickAddTransactionFormProps> = ({
           <div className="space-y-1.5">
             <span
               id="add-tx-type-label"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Type
             </span>

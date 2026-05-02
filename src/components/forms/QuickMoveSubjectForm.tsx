@@ -162,7 +162,7 @@ const QuickMoveSubjectForm: React.FC<QuickMoveSubjectFormProps> = ({
   };
 
   const labelCls =
-    'block font-mono text-[11px] uppercase tracking-wide text-text-2';
+    'block text-mono-label text-text-2';
 
   return (
     <>
@@ -183,7 +183,7 @@ const QuickMoveSubjectForm: React.FC<QuickMoveSubjectFormProps> = ({
               <Move size={18} aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <p className="font-mono text-[11px] uppercase tracking-wide text-text-1 truncate">
+              <p className="text-mono-label text-text-1 truncate">
                 {subjectLabel}
               </p>
               {currentLogeNumero ? (
@@ -221,7 +221,7 @@ const QuickMoveSubjectForm: React.FC<QuickMoveSubjectFormProps> = ({
               >
                 {grouped.map(([type, lst]) => (
                   <div key={type} className="space-y-1.5">
-                    <p className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+                    <p className="text-mono-micro text-text-2">
                       {TYPE_LABEL[type]}
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -286,7 +286,7 @@ const QuickMoveSubjectForm: React.FC<QuickMoveSubjectFormProps> = ({
           {error ? (
             <p
               role="alert"
-              className="font-mono text-[11px] uppercase tracking-wide text-red"
+              className="text-mono-label text-red"
             >
               {error}
             </p>

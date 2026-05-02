@@ -183,7 +183,7 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
             <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
               <Plus size={18} aria-hidden="true" />
             </div>
-            <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+            <p className="text-mono-label text-text-1">
               Ajouter un produit à la pharmacie
             </p>
           </div>
@@ -209,7 +209,7 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-veto-id"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               ID <span className="text-text-2 normal-case">· auto-suggéré</span>
             </label>
@@ -252,7 +252,7 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-veto-produit"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Produit <span className="text-red normal-case">· obligatoire</span>
             </label>
@@ -290,7 +290,7 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="add-veto-type"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Type
               </label>
@@ -312,7 +312,7 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="add-veto-usage"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Usage
               </label>
@@ -337,7 +337,7 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="add-veto-stock"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Stock initial
               </label>
@@ -372,7 +372,7 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="add-veto-unite"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Unité
               </label>
@@ -411,7 +411,7 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-veto-seuil"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Seuil alerte <span className="text-text-2 normal-case">· défaut 5</span>
             </label>
@@ -460,7 +460,7 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-veto-notes"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Notes <span className="text-text-2 normal-case">· optionnel</span>
             </label>

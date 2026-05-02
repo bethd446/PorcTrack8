@@ -560,22 +560,14 @@ const TodayHub: React.FC = () => {
             <header>
               <Eyebrow dotColor="accent">Aujourd&rsquo;hui</Eyebrow>
               <h1
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '8px 0 4px',
-                }}
+                className="text-page-title"
+                style={{ margin: '8px 0 4px' }}
               >
                 Bonjour, {firstName}
               </h1>
               <div
+                className="text-body"
                 style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
                   color: 'var(--muted)',
                   textTransform: 'capitalize',
                 }}
@@ -622,25 +614,19 @@ const TodayHub: React.FC = () => {
                   ) : null}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <h2
+                      className="text-section-title"
                       style={{
-                        fontFamily: 'var(--font-heading)',
-                        fontSize: 22,
-                        fontWeight: 700,
                         color: 'var(--ink)',
                         margin: 0,
-                        lineHeight: 1.15,
-                        letterSpacing: '-0.01em',
                       }}
                     >
                       {primaryTask.title}
                     </h2>
                     {primaryTask.detail ? (
                       <p
+                        className="text-body-lg"
                         style={{
-                          fontFamily: 'var(--font-body)',
-                          fontSize: 14,
                           color: 'var(--ink-soft)',
-                          lineHeight: 1.45,
                           margin: '6px 0 0',
                         }}
                       >
@@ -762,10 +748,9 @@ const TodayHub: React.FC = () => {
                             }}
                           />
                           <span
+                            className="text-body-lg"
                             style={{
                               flex: 1,
-                              fontFamily: 'var(--font-body)',
-                              fontSize: 14,
                               fontWeight: labelWeight,
                               color: 'var(--ink)',
                               overflow: 'hidden',
@@ -844,9 +829,8 @@ const TodayHub: React.FC = () => {
                     {cheptelStats.verratsCount} verrat{cheptelStats.verratsCount > 1 ? 's' : ''}
                   </div>
                   <div
+                    className="text-body"
                     style={{
-                      fontFamily: 'var(--font-body)',
-                      fontSize: 13,
                       color: 'var(--ink-soft)',
                       marginTop: 4,
                     }}

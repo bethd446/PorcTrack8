@@ -182,7 +182,7 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
           <h3 className="font-mono text-[11px] font-bold uppercase tracking-wide text-text-1">
             Saisie rapide santé
           </h3>
-          <p className="font-mono text-[10px] uppercase tracking-wide text-text-2 mt-0.5">
+          <p className="text-mono-micro text-text-2 mt-0.5">
             14 types · auto-suggestions
           </p>
         </div>
@@ -194,7 +194,7 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
         <div className="space-y-1.5">
           <label
             htmlFor="health-type"
-            className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+            className="block text-mono-label text-text-2"
           >
             Type d'intervention
           </label>
@@ -255,7 +255,7 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
           </div>
           <div className="flex items-center gap-1.5 mt-1">
             <CatIcon size={11} aria-hidden className={CATEGORY_META[currentCat].tone} />
-            <span className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+            <span className="text-mono-micro text-text-2">
               {CATEGORY_META[currentCat].label}
             </span>
           </div>
@@ -270,7 +270,7 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
         <div className="space-y-1.5">
           <label
             htmlFor="health-treatment"
-            className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+            className="block text-mono-label text-text-2"
           >
             Description / molécule
           </label>
@@ -309,7 +309,7 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="health-dose"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Dose / quantité
             </label>
@@ -334,7 +334,7 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="health-produit"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Produit véto
             </label>
@@ -388,7 +388,7 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
         <div className="space-y-1.5">
           <label
             htmlFor="health-obs"
-            className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+            className="block text-mono-label text-text-2"
           >
             Observation
           </label>

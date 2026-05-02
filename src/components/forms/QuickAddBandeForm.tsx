@@ -218,10 +218,10 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
               <Plus size={18} aria-hidden="true" />
             </div>
             <div>
-              <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+              <p className="text-mono-label text-text-1">
                 Importer une bande historique
               </p>
-              <p className="font-mono text-[10px] uppercase tracking-wide text-text-2 mt-0.5">
+              <p className="text-mono-micro text-text-2 mt-0.5">
                 Pour les portées antérieures à l'application
               </p>
             </div>
@@ -231,7 +231,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-bande-truie"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Truie mère <span className="text-red normal-case">· obligatoire</span>
             </label>
@@ -269,7 +269,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-bande-verrat"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Verrat père <span className="text-text-2 normal-case">· optionnel</span>
             </label>
@@ -299,7 +299,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-bande-id"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               ID portée <span className="text-text-2 normal-case">· auto-suggéré</span>
             </label>
@@ -338,7 +338,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-bande-date-mb"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Date de mise-bas
             </label>
@@ -366,7 +366,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="add-bande-nv"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Nés vivants <span className="text-red normal-case">·</span>
               </label>
@@ -399,7 +399,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="add-bande-mn"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Morts-nés
               </label>
@@ -433,7 +433,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="add-bande-mn-m"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Mort-nés ♂ <span className="text-text-2 normal-case">· opt.</span>
               </label>
@@ -463,7 +463,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="add-bande-mn-f"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Mort-nés ♀ <span className="text-text-2 normal-case">· opt.</span>
               </label>
@@ -502,7 +502,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
           <div className="space-y-1.5">
             <span
               id="add-bande-statut-label"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Statut initial
             </span>
@@ -545,7 +545,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
             <div className="flex items-center justify-between gap-2">
               <label
                 htmlFor="add-bande-poids"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Poids moyen sevrage (kg){' '}
                 {statut === 'Sevrés' ? (
@@ -554,7 +554,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
                   <span className="text-text-2 normal-case">· défaut naissance 1.4 kg</span>
                 )}
               </label>
-              <span className="inline-flex items-center px-2 h-6 rounded-full bg-bg-2 border border-border font-mono text-[10px] uppercase tracking-wide text-text-1">
+              <span className="inline-flex items-center px-2 h-6 rounded-full bg-bg-2 border border-border text-mono-micro text-text-1">
                 5-7 kg cible
               </span>
             </div>
@@ -590,7 +590,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
                 return (
                   <span
                     role="status"
-                    className="inline-flex items-center px-2 h-6 rounded-full bg-amber-100 border border-amber-300 font-mono text-[10px] uppercase tracking-wide text-amber-900"
+                    className="inline-flex items-center px-2 h-6 rounded-full bg-amber-100 border border-amber-300 text-mono-micro text-amber-900"
                   >
                     Hors plage cible 5-7 kg
                   </span>
@@ -604,7 +604,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-bande-loge"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Loge actuelle
             </label>
@@ -634,7 +634,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-bande-notes"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Notes
             </label>

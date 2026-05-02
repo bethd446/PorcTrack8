@@ -273,7 +273,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                 <Package size={18} aria-hidden="true" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+                <div className="text-mono-micro text-text-2">
                   {stockItem.kind === 'ALIMENT' ? 'Aliment' : 'Véto / soin'}
                 </div>
                 <div className="truncate font-mono text-[13px] text-text-0">
@@ -296,7 +296,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="refill-qty"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Quantité reçue ({unite})
               </label>
@@ -368,7 +368,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="refill-supplier"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Fournisseur <span className="text-text-2 normal-case">· optionnel</span>
               </label>
@@ -397,7 +397,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
               <div className="space-y-1.5">
                 <label
                   htmlFor="refill-price"
-                  className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                  className="block text-mono-label text-text-2"
                 >
                   Prix unit. FCFA <span className="text-text-2 normal-case">· opt.</span>
                 </label>
@@ -437,7 +437,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
               <div className="space-y-1.5">
                 <label
                   htmlFor="refill-date"
-                  className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                  className="block text-mono-label text-text-2"
                 >
                   Date
                 </label>
@@ -475,7 +475,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
             {/* Total si prix fourni */}
             {totalMontant > 0 ? (
               <div className="card-dense !p-3 flex items-center justify-between">
-                <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+                <span className="text-mono-label text-text-2">
                   Montant total
                 </span>
                 <span className="font-mono text-[14px] tabular-nums text-text-0">

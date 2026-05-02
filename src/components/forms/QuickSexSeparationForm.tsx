@@ -284,7 +284,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
               <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
                 <SplitSquareHorizontal size={18} aria-hidden="true" />
               </div>
-              <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+              <p className="text-mono-label text-text-1">
                 Choisir la bande à séparer
               </p>
             </div>
@@ -293,7 +293,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
             <div className="space-y-1.5">
               <label
                 htmlFor="sep-search"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Rechercher
               </label>
@@ -382,7 +382,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
                 <ArrowLeft size={14} aria-hidden="true" />
               </button>
               <div className="min-w-0 flex-1">
-                <div className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+                <div className="text-mono-micro text-text-2">
                   Bande
                 </div>
                 <div className="truncate font-mono text-[13px] text-text-0 tabular-nums">
@@ -402,7 +402,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
               <div className="space-y-1.5">
                 <label
                   htmlFor="sep-males"
-                  className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                  className="block text-mono-label text-text-2"
                 >
                   Mâles
                 </label>
@@ -434,7 +434,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
               <div className="space-y-1.5">
                 <label
                   htmlFor="sep-femelles"
-                  className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                  className="block text-mono-label text-text-2"
                 >
                   Femelles
                 </label>
@@ -472,7 +472,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
               ].join(' ')}
               aria-live="polite"
             >
-              <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+              <span className="text-mono-label text-text-2">
                 Total séparé
               </span>
               <span className="font-mono text-[16px] tabular-nums text-text-0">
@@ -495,7 +495,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
             <div className="space-y-1.5">
               <label
                 htmlFor="sep-date"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Date séparation
               </label>
@@ -532,7 +532,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
             <div className="space-y-1.5">
               <label
                 htmlFor="sep-obs"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Observation <span className="text-text-2 normal-case">· optionnel</span>
               </label>

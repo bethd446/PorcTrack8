@@ -240,11 +240,11 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
   const inputOk = 'border-border hover:border-text-2';
   const inputErr = 'border-red';
   const labelCls =
-    'block font-mono text-[11px] uppercase tracking-wide text-text-2';
+    'block text-mono-label text-text-2';
   const hintCls = 'font-mono text-[10px] text-text-2 tabular-nums';
   const errCls = 'font-mono text-[11px] text-red';
   const sectionTitleCls =
-    'font-mono text-[10px] uppercase tracking-wider text-text-2 pb-1 border-b border-border';
+    'text-mono-micror text-text-2 pb-1 border-b border-border';
 
   return (
     <>
@@ -266,10 +266,10 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
               <Edit3 size={18} aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+              <p className="text-mono-label text-text-1">
                 Modifier la truie
               </p>
-              <p className="font-mono text-[10px] uppercase tracking-wide text-text-2 tabular-nums mt-0.5">
+              <p className="text-mono-micro text-text-2 tabular-nums mt-0.5">
                 {displayId}
                 {truie.boucle ? ` · ${truie.boucle}` : ''}
               </p>

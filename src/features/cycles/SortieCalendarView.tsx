@@ -98,24 +98,14 @@ const SortieCalendarView: React.FC = () => {
             <header>
               <Eyebrow dotColor="accent">Cycle · Sortie</Eyebrow>
               <h1
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '8px 0 4px',
-                }}
+                className="text-page-title"
+                style={{ margin: '8px 0 4px' }}
               >
                 Sortie
               </h1>
               <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--muted)',
-                }}
+                className="text-body"
+                style={{ color: 'var(--muted)' }}
               >
                 Calendrier abattoir
               </div>

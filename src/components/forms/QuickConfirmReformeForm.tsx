@@ -86,7 +86,7 @@ const QuickConfirmReformeForm: React.FC<QuickConfirmReformeFormProps> = ({
       >
         <div className="space-y-5">
           <div className="card-dense !p-4 space-y-1">
-            <div className="font-mono text-[10px] uppercase tracking-wide text-text-2">Truie</div>
+            <div className="text-mono-micro text-text-2">Truie</div>
             <div className="font-mono text-[13px] text-text-0">{truieId}</div>
             <p className="mt-2 font-mono text-[12px] text-text-1 leading-relaxed">
               {pending.alertMessage}

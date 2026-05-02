@@ -159,24 +159,14 @@ const MaterniteView: React.FC = () => {
             <header>
               <Eyebrow dotColor="accent">Cycle · Maternité</Eyebrow>
               <h1
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '8px 0 4px',
-                }}
+                className="text-page-title"
+                style={{ margin: '8px 0 4px' }}
               >
                 Maternité
               </h1>
               <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--muted)',
-                }}
+                className="text-body"
+                style={{ color: 'var(--muted)' }}
               >
                 J0 → J28 · {summary.nbTruies} portées en cours
               </div>
@@ -327,13 +317,10 @@ const MaterniteCard: React.FC<{
           }}
         />
         <span
+          className="text-mono-micro"
           style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10,
-            letterSpacing: '0.06em',
             color: treatmentStyle.eyebrowColor,
             fontWeight: isUrgent ? 600 : 500,
-            textTransform: 'uppercase',
             fontVariantNumeric: 'tabular-nums',
           }}
         >

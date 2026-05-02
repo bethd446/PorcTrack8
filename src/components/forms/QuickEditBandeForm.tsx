@@ -378,14 +378,14 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
     [
       'w-full h-12 rounded-md px-3',
       'bg-bg-0 border text-text-0 placeholder:text-text-2',
-      'font-mono text-[18px] tabular-nums text-center',
+      'text-kpi-value text-center',
       'outline-none transition-colors duration-[160ms]',
       'focus:border-accent focus:ring-1 focus:ring-accent',
       hasError ? 'border-red' : 'border-border hover:border-text-2',
     ].join(' ');
 
   const labelCls =
-    'block font-mono text-[11px] uppercase tracking-wide text-text-2';
+    'block text-mono-label text-text-2';
 
   return (
     <>
@@ -407,10 +407,10 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
               <Edit3 size={18} aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+              <p className="text-mono-label text-text-1">
                 Modifier la portée
               </p>
-              <p className="font-mono text-[10px] uppercase tracking-wide text-text-2 tabular-nums mt-0.5">
+              <p className="text-mono-micro text-text-2 tabular-nums mt-0.5">
                 {displayId}
               </p>
             </div>
@@ -1037,7 +1037,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                 className={[
                   'pressable inline-flex items-center gap-2 rounded-md',
                   'border border-dashed border-border px-3 py-2',
-                  'font-mono text-[11px] uppercase tracking-wide text-text-1',
+                  'text-mono-label text-text-1',
                   'hover:border-accent hover:text-accent',
                   truiesDisponibles.length === 0 ? 'opacity-40 cursor-not-allowed' : '',
                 ].join(' ')}
@@ -1048,7 +1048,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
             ) : (
               <div className="space-y-2 rounded-md border border-accent/40 bg-bg-1 p-3">
                 <div className="flex items-center justify-between">
-                  <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+                  <p className="text-mono-label text-text-1">
                     Nouvelle source
                   </p>
                   <button
@@ -1218,7 +1218,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
               className={[
                 'pressable inline-flex items-center gap-2 rounded-md',
                 'border border-dashed border-border px-3 py-2',
-                'font-mono text-[11px] uppercase tracking-wide text-text-1',
+                'text-mono-label text-text-1',
                 'hover:border-accent hover:text-accent',
               ].join(' ')}
             >

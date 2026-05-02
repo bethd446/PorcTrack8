@@ -242,24 +242,14 @@ const RessourcesHub: React.FC = () => {
             <header>
               <Eyebrow dotColor="amber">Inventaire · Approvisionnement</Eyebrow>
               <h1
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '8px 0 4px',
-                }}
+                className="text-page-title"
+                style={{ margin: '8px 0 4px' }}
               >
                 Ressources
               </h1>
               <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--muted)',
-                }}
+                className="text-body"
+                style={{ color: 'var(--muted)' }}
               >
                 {stats.total === 0
                   ? 'Aucune référence suivie'
@@ -828,13 +818,8 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
           {qty}
         </span>
         <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 11,
-            letterSpacing: '0.10em',
-            textTransform: 'uppercase',
-            color: 'var(--muted)',
-          }}
+          className="text-mono-label"
+          style={{ color: 'var(--muted)' }}
         >
           {unit}
         </span>

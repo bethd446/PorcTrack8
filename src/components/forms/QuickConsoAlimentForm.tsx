@@ -207,14 +207,14 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
             <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
               <Wheat size={18} aria-hidden="true" />
             </div>
-            <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+            <p className="text-mono-label text-text-1">
               Saisie conso aliment réelle
             </p>
           </div>
 
           {/* Sujet : Bande / Truie */}
           <fieldset className="space-y-2">
-            <legend className="block font-mono text-[11px] uppercase tracking-wide text-text-2">
+            <legend className="block text-mono-label text-text-2">
               Sujet
             </legend>
             <div className="grid grid-cols-2 gap-2">
@@ -264,7 +264,7 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="conso-bande"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Bande <span className="text-red normal-case">· obligatoire</span>
               </label>
@@ -307,7 +307,7 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="conso-truie"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Truie <span className="text-red normal-case">· obligatoire</span>
               </label>
@@ -351,7 +351,7 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="conso-aliment"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Aliment <span className="text-red normal-case">· obligatoire</span>
             </label>
@@ -404,7 +404,7 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="conso-qty"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Quantité (kg) <span className="text-red normal-case">·</span>
               </label>
@@ -445,7 +445,7 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="conso-date"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Date
               </label>
@@ -499,7 +499,7 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="conso-notes"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Notes <span className="text-text-2 normal-case">· optionnel</span>
             </label>

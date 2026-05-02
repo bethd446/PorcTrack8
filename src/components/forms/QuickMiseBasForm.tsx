@@ -417,10 +417,10 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
                 <Baby size={18} aria-hidden="true" />
               </div>
               <div>
-                <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+                <p className="text-mono-label text-text-1">
                   Nouvelle portée née sous la mère
                 </p>
-                <p className="font-mono text-[10px] uppercase tracking-wide text-text-2 mt-0.5">
+                <p className="text-mono-micro text-text-2 mt-0.5">
                   La truie passera automatiquement en Maternité
                 </p>
               </div>
@@ -443,7 +443,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
                 data-testid="saillie-detected"
                 className={[
                   'rounded-md border px-3 py-2',
-                  'font-mono text-[11px] uppercase tracking-wide',
+                  'text-mono-label',
                   saillieLoading
                     ? 'border-border bg-bg-1 text-text-2'
                     : lastSaillie
@@ -516,7 +516,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
               <div className="flex items-baseline justify-between">
                 <span
                   id="mb-sex-label"
-                  className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                  className="block text-mono-label text-text-2"
                 >
                   Répartition M/F (optionnel)
                 </span>
@@ -528,7 +528,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
                 <div className="space-y-1.5">
                   <label
                     htmlFor="mb-males"
-                    className="block font-mono text-[10px] uppercase tracking-wide text-text-2"
+                    className="block text-mono-micro text-text-2"
                   >
                     Mâles
                   </label>
@@ -568,7 +568,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
                 <div className="space-y-1.5">
                   <label
                     htmlFor="mb-femelles"
-                    className="block font-mono text-[10px] uppercase tracking-wide text-text-2"
+                    className="block text-mono-micro text-text-2"
                   >
                     Femelles
                   </label>

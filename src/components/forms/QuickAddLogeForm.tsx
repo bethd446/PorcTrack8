@@ -124,7 +124,7 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({
     ].join(' ');
 
   const labelCls =
-    'block font-mono text-[11px] uppercase tracking-wide text-text-2';
+    'block text-mono-label text-text-2';
 
   return (
     <>
@@ -145,7 +145,7 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({
               <Plus size={18} aria-hidden="true" />
             </div>
             <div>
-              <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+              <p className="text-mono-label text-text-1">
                 Ajouter une loge
               </p>
               <p className="font-mono text-[10px] text-text-2 mt-0.5">

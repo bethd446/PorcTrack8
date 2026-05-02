@@ -107,14 +107,8 @@ const PilotageHub: React.FC = () => {
             <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
               <Eyebrow dotColor="accent">Pilotage · Vue globale</Eyebrow>
               <h1
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
-                  fontWeight: 700,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '4px 0 12px',
-                }}
+                className="text-page-title"
+                style={{ margin: '4px 0 12px' }}
               >
                 Pilotage
               </h1>
@@ -200,24 +194,14 @@ const PilotageHub: React.FC = () => {
               <div>
                 <Eyebrow dotColor="accent">Pilotage · Vue globale</Eyebrow>
                 <h1
-                  style={{
-                    fontFamily: 'var(--font-heading)',
-                    fontSize: 34,
-                    fontWeight: 700,
-                    lineHeight: 1,
-                    letterSpacing: '-0.02em',
-                    color: 'var(--ink)',
-                    margin: '8px 0 4px',
-                  }}
+                  className="text-page-title"
+                  style={{ margin: '8px 0 4px' }}
                 >
                   Pilotage
                 </h1>
                 <div
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 13,
-                    color: 'var(--muted)',
-                  }}
+                  className="text-body"
+                  style={{ color: 'var(--muted)' }}
                 >
                   Cockpit financier · {realBandes.length} bande{realBandes.length > 1 ? 's' : ''} · marge théorique {nomFerme}
                 </div>
@@ -227,7 +211,7 @@ const PilotageHub: React.FC = () => {
                   type="button"
                   onClick={handlePrint}
                   aria-label="Exporter le rapport PDF"
-                  className="pressable"
+                  className="pressable text-mono-label"
                   style={{
                     minHeight: 44,
                     padding: '8px 16px',
@@ -235,11 +219,6 @@ const PilotageHub: React.FC = () => {
                     background: 'var(--color-accent-500)',
                     color: 'var(--bg-surface)',
                     border: '1.5px solid var(--color-accent-500)',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 11,
-                    letterSpacing: '0.10em',
-                    textTransform: 'uppercase',
-                    fontWeight: 500,
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -271,13 +250,10 @@ const PilotageHub: React.FC = () => {
                 Marge globale estimée · cheptel actif
               </Eyebrow>
               <div
+                className="text-display-lg"
                 style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 44,
-                  fontWeight: 700,
                   letterSpacing: '-0.03em',
                   color: margeNegative ? 'var(--color-pig-deep)' : 'var(--color-accent-500)',
-                  lineHeight: 1,
                 }}
               >
                 {formatNumber(margeGlobaleEstimee)}

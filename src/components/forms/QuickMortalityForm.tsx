@@ -377,7 +377,7 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
                 ))}
               </ul>
               {filteredSubjects.length === 0 && (
-                <p className="font-mono text-[11px] uppercase tracking-wide text-text-2">Aucune bande active</p>
+                <p className="text-mono-label text-text-2">Aucune bande active</p>
               )}
             </div>
           )}

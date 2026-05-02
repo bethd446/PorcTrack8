@@ -255,10 +255,10 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
               <Edit3 size={18} aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+              <p className="text-mono-label text-text-1">
                 Corriger une saillie
               </p>
-              <p className="font-mono text-[10px] uppercase tracking-wide text-text-2 tabular-nums mt-0.5">
+              <p className="text-mono-micro text-text-2 tabular-nums mt-0.5">
                 {truieLabel}
                 {saillie.dateSaillie ? ` · ${saillie.dateSaillie}` : ''}
               </p>
@@ -267,7 +267,7 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
 
           {/* ═══ Section Couple ══════════════════════════════════════ */}
           <section aria-label="Couple" className="space-y-4">
-            <h3 className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+            <h3 className="text-mono-micro text-text-2">
               Couple
             </h3>
 
@@ -275,7 +275,7 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-saillie-truie"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Truie <span className="text-text-2 normal-case">· verrouillée</span>
               </label>
@@ -299,7 +299,7 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-saillie-verrat"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Verrat <span className="text-red normal-case">· requis</span>
               </label>
@@ -344,7 +344,7 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
 
           {/* ═══ Section Planning ════════════════════════════════════ */}
           <section aria-label="Planning" className="space-y-4">
-            <h3 className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+            <h3 className="text-mono-micro text-text-2">
               Planning
             </h3>
 
@@ -352,7 +352,7 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-saillie-date"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Date saillie <span className="text-red normal-case">· requis</span>
               </label>
@@ -403,7 +403,7 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-saillie-mb"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Date MB prévue{' '}
                 <span className="text-text-2 normal-case">
@@ -455,7 +455,7 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
                       setDateMBPrevue(addDaysIso(dateSaillie, GESTATION_DAYS));
                     }}
                     disabled={saving}
-                    className="font-mono text-[10px] uppercase tracking-wide text-accent hover:underline"
+                    className="text-mono-micro text-accent hover:underline"
                     aria-label="Recalculer la date MB prévue automatiquement"
                   >
                     Reset auto
@@ -476,13 +476,13 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
 
           {/* ═══ Section Statut ══════════════════════════════════════ */}
           <section aria-label="Statut" className="space-y-4">
-            <h3 className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+            <h3 className="text-mono-micro text-text-2">
               Statut
             </h3>
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-saillie-statut"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Statut de la saillie
               </label>
@@ -524,13 +524,13 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
 
           {/* ═══ Section Notes ═══════════════════════════════════════ */}
           <section aria-label="Notes" className="space-y-4">
-            <h3 className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+            <h3 className="text-mono-micro text-text-2">
               Notes
             </h3>
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-saillie-notes"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Notes <span className="text-text-2 normal-case">· optionnel</span>
               </label>

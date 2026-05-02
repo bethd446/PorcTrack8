@@ -337,7 +337,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                 <TrendingUp size={18} aria-hidden="true" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+                <div className="text-mono-micro text-text-2">
                   Bande en finition
                 </div>
                 <div className="truncate font-mono text-[13px] text-text-0">
@@ -357,7 +357,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="vente-nb"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Nombre de porcs vendus (max {vivantsActuels})
               </label>
@@ -402,7 +402,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
               <div className="space-y-1.5">
                 <label
                   htmlFor="vente-poids"
-                  className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                  className="block text-mono-label text-text-2"
                 >
                   Poids moyen (kg)
                 </label>
@@ -443,7 +443,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
               <div className="space-y-1.5">
                 <label
                   htmlFor="vente-prix"
-                  className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                  className="block text-mono-label text-text-2"
                 >
                   Prix unit. FCFA / kg
                 </label>
@@ -488,7 +488,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
               aria-live="polite"
               aria-label={`Montant total estimé : ${montantTotal.toLocaleString('fr-FR')} FCFA`}
             >
-              <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+              <span className="text-mono-label text-text-2">
                 Montant total
               </span>
               <span className="font-mono text-[16px] tabular-nums text-amber font-bold">
@@ -500,7 +500,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="vente-acheteur"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Acheteur
               </label>
@@ -540,7 +540,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="vente-date"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Date vente
               </label>
@@ -578,7 +578,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="vente-canal"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Canal de vente
               </label>
@@ -623,7 +623,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                 <div className="space-y-1.5">
                   <label
                     htmlFor="vente-abattoir"
-                    className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                    className="block text-mono-label text-text-2"
                   >
                     Nom abattoir
                   </label>
@@ -663,7 +663,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                   <div className="space-y-1.5">
                     <label
                       htmlFor="vente-carcasse"
-                      className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                      className="block text-mono-label text-text-2"
                     >
                       Poids carcasse total (kg)
                     </label>
@@ -704,7 +704,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                   <div className="space-y-1.5">
                     <label
                       htmlFor="vente-prix-carcasse"
-                      className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                      className="block text-mono-label text-text-2"
                     >
                       Prix carcasse (FCFA / kg)
                     </label>
@@ -750,7 +750,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                     aria-live="polite"
                     aria-label={`Rendement carcasse : ${rendementPct} pour cent`}
                   >
-                    <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+                    <span className="text-mono-label text-text-2">
                       Rendement carcasse
                     </span>
                     <span
@@ -772,7 +772,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="vente-notes"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Notes <span className="text-text-2 normal-case">· optionnel</span>
               </label>

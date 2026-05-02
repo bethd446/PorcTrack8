@@ -272,7 +272,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
                       {t.displayId}
                       {t.nom ? ` · ${t.nom}` : ''}
                     </p>
-                    <p className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+                    <p className="text-mono-label text-text-2">
                       {t.statut}
                     </p>
                   </div>
@@ -350,7 +350,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
       <div className="space-y-1.5">
         <label
           htmlFor="saillie-bande-date"
-          className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+          className="block text-mono-label text-text-2"
         >
           Date de saillie
         </label>
@@ -374,7 +374,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
       <div className="space-y-1.5">
         <label
           htmlFor="saillie-bande-notes"
-          className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+          className="block text-mono-label text-text-2"
         >
           Notes <span className="text-text-2 normal-case">· optionnel</span>
         </label>
@@ -396,7 +396,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
       </div>
 
       <div className="rounded-md border border-border bg-bg-0 p-3">
-        <p className="mb-2 font-mono text-[11px] uppercase tracking-wide text-text-2">
+        <p className="mb-2 text-mono-label text-text-2">
           Récapitulatif
         </p>
         <ul className="space-y-1">
@@ -446,7 +446,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
               <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
                 <Heart size={18} aria-hidden="true" />
               </div>
-              <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+              <p className="text-mono-label text-text-1">
                 N truies × 1 verrat × 1 date
               </p>
             </div>
@@ -458,7 +458,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
             {error && (
               <p
                 role="alert"
-                className="font-mono text-[11px] uppercase tracking-wide text-red"
+                className="text-mono-label text-red"
               >
                 {error}
               </p>

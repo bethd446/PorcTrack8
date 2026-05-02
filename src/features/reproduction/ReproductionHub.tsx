@@ -83,9 +83,8 @@ const StepSection: React.FC<SectionProps> = ({ step, title, count, emptyLabel, c
     </Eyebrow>
     {count === 0 ? (
       <p
+        className="text-body"
         style={{
-          fontFamily: 'var(--font-body)',
-          fontSize: 13,
           color: 'var(--muted)',
           margin: '12px 0 0',
           padding: '12px 14px',
@@ -191,7 +190,7 @@ const StepRow: React.FC<RowProps> = ({ primary, secondary, cta, Icon, onPrimary,
     <button
       type="button"
       onClick={onCta}
-      className="pressable"
+      className="pressable text-mono-label"
       aria-label={cta}
       style={{
         minHeight: 44,
@@ -200,10 +199,6 @@ const StepRow: React.FC<RowProps> = ({ primary, secondary, cta, Icon, onPrimary,
         background: 'var(--color-accent-500)',
         color: 'var(--bg-surface)',
         border: 'none',
-        fontFamily: 'var(--font-mono)',
-        fontSize: 11,
-        letterSpacing: '0.10em',
-        textTransform: 'uppercase',
         fontWeight: 600,
         cursor: 'pointer',
         whiteSpace: 'nowrap',
@@ -268,24 +263,14 @@ const ReproductionHub: React.FC = () => {
                   visuelle subtile du hub Reproduction. */}
               <Eyebrow customDotColor="var(--module-naissage)">Reproduction</Eyebrow>
               <h1
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '8px 0 4px',
-                }}
+                className="text-page-title"
+                style={{ margin: '8px 0 4px' }}
               >
                 Reproduction
               </h1>
               <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--muted)',
-                }}
+                className="text-body"
+                style={{ color: 'var(--muted)' }}
               >
                 Le cycle truie de ta ferme
               </div>
@@ -609,10 +594,9 @@ const ReproductionHub: React.FC = () => {
                     Voir le calendrier complet
                   </span>
                   <span
+                    className="text-body"
                     style={{
                       display: 'block',
-                      fontFamily: 'var(--font-body)',
-                      fontSize: 13,
                       color: 'var(--ink-soft)',
                       marginTop: 2,
                     }}

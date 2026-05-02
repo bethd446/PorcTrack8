@@ -179,7 +179,7 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
             <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
               <Repeat size={18} aria-hidden="true" />
             </div>
-            <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+            <p className="text-mono-label text-text-1">
               Transférer entre bandes en maternité
             </p>
           </div>
@@ -188,7 +188,7 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-adoption-from"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Bande source <span className="text-red normal-case">· obligatoire</span>
             </label>
@@ -228,7 +228,7 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-adoption-to"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Bande destination <span className="text-red normal-case">· obligatoire</span>
             </label>
@@ -270,7 +270,7 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="add-adoption-nb"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Nb porcelets
               </label>
@@ -308,7 +308,7 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="add-adoption-date"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Date
               </label>
@@ -344,7 +344,7 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-adoption-motif"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Motif
             </label>
@@ -373,7 +373,7 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-adoption-notes"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Notes <span className="text-text-2 normal-case">· optionnel</span>
             </label>

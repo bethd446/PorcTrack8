@@ -155,7 +155,7 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
             <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
               <Plus size={18} aria-hidden="true" />
             </div>
-            <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+            <p className="text-mono-label text-text-1">
               Ajouter une truie au troupeau
             </p>
           </div>
@@ -164,7 +164,7 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-truie-id"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               ID <span className="text-text-2 normal-case">· auto-suggéré</span>
             </label>
@@ -216,7 +216,7 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-truie-boucle"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Boucle <span className="text-red normal-case">· obligatoire</span>
             </label>
@@ -257,7 +257,7 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-truie-nom"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Nom <span className="text-text-2 normal-case">· optionnel</span>
             </label>
@@ -279,7 +279,7 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
           <div className="space-y-1.5">
             <span
               id="add-truie-stade-label"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Stade
             </span>
@@ -321,7 +321,7 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-truie-ration"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Ration (kg/j)
             </label>

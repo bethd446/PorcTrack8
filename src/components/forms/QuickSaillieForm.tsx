@@ -123,7 +123,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
             <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
               <Heart size={18} aria-hidden="true" />
             </div>
-            <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+            <p className="text-mono-label text-text-1">
               Sélectionnez la truie et le verrat
             </p>
           </div>
@@ -132,7 +132,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
           <div className="space-y-2">
             <span
               id="saillie-truie-label"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Truie
             </span>
@@ -169,7 +169,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
                 })}
               </div>
             ) : (
-              <p className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+              <p className="text-mono-label text-text-2">
                 Aucune truie disponible
               </p>
             )}
@@ -179,7 +179,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
           <div className="space-y-2">
             <span
               id="saillie-verrat-label"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Verrat
             </span>
@@ -216,7 +216,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
                 })}
               </div>
             ) : (
-              <p className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+              <p className="text-mono-label text-text-2">
                 Aucun verrat actif
               </p>
             )}
@@ -250,7 +250,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
           </button>
 
           {selectedTruie && selectedVerrat && (
-            <p className="text-center font-mono text-[11px] uppercase tracking-wide text-text-2 tabular-nums">
+            <p className="text-center text-mono-label text-text-2 tabular-nums">
               {selectedTruie} × {selectedVerrat} · {new Date().toLocaleDateString('fr-FR')}
             </p>
           )}

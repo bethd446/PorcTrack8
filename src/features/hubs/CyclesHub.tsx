@@ -361,24 +361,14 @@ const CyclesHub: React.FC = () => {
             <header>
               <Eyebrow dotColor="accent">Pipeline · {TOTAL_DAYS} jours</Eyebrow>
               <h1
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '8px 0 4px',
-                }}
+                className="text-page-title"
+                style={{ margin: '8px 0 4px' }}
               >
                 Cycles
               </h1>
               <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--muted)',
-                }}
+                className="text-body"
+                style={{ color: 'var(--muted)' }}
               >
                 {positions.length} bande{positions.length > 1 ? 's' : ''} active{positions.length > 1 ? 's' : ''} · 7 phases
               </div>
@@ -478,9 +468,8 @@ const CyclesHub: React.FC = () => {
                 }}
               >
                 <p
+                  className="text-body"
                   style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 13,
                     color: 'var(--muted)',
                     margin: 0,
                   }}

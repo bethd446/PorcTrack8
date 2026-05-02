@@ -256,10 +256,10 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
                 <Stethoscope size={18} aria-hidden="true" />
               </div>
               <div>
-                <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+                <p className="text-mono-label text-text-1">
                   Confirmer la gestation (J28-J35)
                 </p>
-                <p className="font-mono text-[10px] uppercase tracking-wide text-text-2 mt-0.5">
+                <p className="text-mono-micro text-text-2 mt-0.5">
                   Une saillie « VIDE » libère la truie
                 </p>
               </div>
@@ -269,7 +269,7 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="echo-saillie"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Truie (saillie ≥ 21 j)
               </label>
@@ -322,7 +322,7 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="echo-date"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Date écho
               </label>
@@ -361,7 +361,7 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
             <div className="space-y-2">
               <span
                 id="echo-statut-label"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Résultat
               </span>
@@ -409,7 +409,7 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="echo-notes"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Note ({notes.length}/{ECHO_BOUNDS.maxNotes})
               </label>

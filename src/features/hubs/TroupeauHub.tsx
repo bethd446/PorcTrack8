@@ -163,24 +163,14 @@ const TroupeauHub: React.FC = () => {
             <header>
               <Eyebrow dotColor="accent">Élevage · {nomFerme}</Eyebrow>
               <h1
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '8px 0 4px',
-                }}
+                className="text-page-title"
+                style={{ margin: '8px 0 4px' }}
               >
                 Élevage
               </h1>
               <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--muted)',
-                }}
+                className="text-body"
+                style={{ color: 'var(--muted)' }}
               >
                 {summary.total} truie{summary.total > 1 ? 's' : ''} · {verrats.length} verrat{verrats.length > 1 ? 's' : ''} ({totalAnimals} animaux) — {truieBreakdown}
               </div>
@@ -452,17 +442,13 @@ const BandesInline: React.FC<BandesInlineProps> = ({ bandes, onOpen, onSeeAll })
       <button
         type="button"
         onClick={onSeeAll}
-        className="pressable"
+        className="pressable text-mono-label"
         style={{
           width: '100%',
           background: 'transparent',
           border: 'none',
           borderTop: '1px solid var(--bg-app)',
           padding: '12px 16px',
-          fontFamily: 'var(--font-mono)',
-          fontSize: 11,
-          letterSpacing: '0.10em',
-          textTransform: 'uppercase',
           color: 'var(--color-accent-600)',
           cursor: 'pointer',
         }}
@@ -546,7 +532,7 @@ const BatimentsSummary: React.FC<BatimentsSummaryProps> = ({ onSeeAll }) => {
       <button
         type="button"
         onClick={onSeeAll}
-        className="pressable"
+        className="pressable text-mono-label"
         style={{
           alignSelf: 'flex-start',
           background: 'var(--color-accent-100)',
@@ -554,10 +540,6 @@ const BatimentsSummary: React.FC<BatimentsSummaryProps> = ({ onSeeAll }) => {
           border: 'none',
           borderRadius: 8,
           padding: '8px 14px',
-          fontFamily: 'var(--font-mono)',
-          fontSize: 11,
-          letterSpacing: '0.10em',
-          textTransform: 'uppercase',
           fontWeight: 600,
           cursor: 'pointer',
         }}

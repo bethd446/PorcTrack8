@@ -235,10 +235,10 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
               <Edit3 size={18} aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+              <p className="text-mono-label text-text-1">
                 Modifier identité & ration
               </p>
-              <p className="font-mono text-[10px] uppercase tracking-wide text-text-2 tabular-nums mt-0.5">
+              <p className="text-mono-micro text-text-2 tabular-nums mt-0.5">
                 {displayId}
                 {verrat.boucle ? ` · ${verrat.boucle}` : ''}
               </p>
@@ -247,7 +247,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
 
           {/* ═══ Section Photo ══════════════════════════════════════ */}
           <section aria-label="Photo" className="space-y-4">
-            <h3 className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+            <h3 className="text-mono-micro text-text-2">
               Photo
             </h3>
             <PhotoUploader
@@ -268,7 +268,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
 
           {/* ═══ Section Identité ════════════════════════════════════ */}
           <section aria-label="Identité" className="space-y-4">
-            <h3 className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+            <h3 className="text-mono-micro text-text-2">
               Identité
             </h3>
 
@@ -276,7 +276,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-verrat-codeid"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Code interne <span className="text-red normal-case">· requis</span>
               </label>
@@ -322,7 +322,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-verrat-nom"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Nom <span className="text-text-2 normal-case">· optionnel</span>
               </label>
@@ -364,7 +364,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-verrat-boucle"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Boucle <span className="text-red normal-case">· requis</span>
               </label>
@@ -408,7 +408,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-verrat-origine"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Origine <span className="text-text-2 normal-case">· optionnel</span>
               </label>
@@ -457,7 +457,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-verrat-naissance"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Date de naissance{' '}
                 <span className="text-text-2 normal-case">· optionnel</span>
@@ -489,7 +489,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-verrat-race"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Race{' '}
                 <span className="text-text-2 normal-case">· optionnel</span>
@@ -536,7 +536,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-verrat-lignee"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Lignée parentale{' '}
                 <span className="text-text-2 normal-case">· optionnel</span>
@@ -579,7 +579,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-verrat-loge"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Emplacement loge{' '}
                 <span className="text-text-2 normal-case">· optionnel</span>
@@ -619,7 +619,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
 
           {/* ═══ Section Alimentation ═══════════════════════════════ */}
           <section aria-label="Alimentation" className="space-y-4">
-            <h3 className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+            <h3 className="text-mono-micro text-text-2">
               Alimentation
             </h3>
 
@@ -627,7 +627,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-verrat-alimentation"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Alimentation
               </label>
@@ -676,7 +676,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-verrat-ration"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Ration (kg/j)
               </label>
@@ -730,13 +730,13 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
 
           {/* ═══ Section Statut ═════════════════════════════════════ */}
           <section aria-label="Statut" className="space-y-4">
-            <h3 className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+            <h3 className="text-mono-micro text-text-2">
               Statut
             </h3>
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-verrat-statut"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Statut du verrat
               </label>
@@ -781,23 +781,23 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
 
           {/* ═══ Section Performances (readonly) ══════════════════════ */}
           <section aria-label="Performances" className="space-y-4">
-            <h3 className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+            <h3 className="text-mono-micro text-text-2">
               Performances · calculé
             </h3>
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-md border border-border bg-bg-2 px-3 py-2">
-                <p className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+                <p className="text-mono-micro text-text-2">
                   Saillies cumulées
                 </p>
-                <p className="font-mono text-[18px] tabular-nums text-text-0 mt-1">
+                <p className="text-kpi-value text-text-0 mt-1">
                   {performance.nbSaillies}
                 </p>
               </div>
               <div className="rounded-md border border-border bg-bg-2 px-3 py-2">
-                <p className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+                <p className="text-mono-micro text-text-2">
                   Taux fertilité
                 </p>
-                <p className="font-mono text-[18px] tabular-nums text-text-0 mt-1">
+                <p className="text-kpi-value text-text-0 mt-1">
                   {performance.tauxSuccesSaillie}%
                 </p>
               </div>
@@ -809,13 +809,13 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
 
           {/* ═══ Section Notes ══════════════════════════════════════ */}
           <section aria-label="Notes" className="space-y-4">
-            <h3 className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+            <h3 className="text-mono-micro text-text-2">
               Notes
             </h3>
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-verrat-notes"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Notes <span className="text-text-2 normal-case">· optionnel</span>
               </label>

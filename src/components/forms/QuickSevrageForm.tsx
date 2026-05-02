@@ -180,7 +180,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
               <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
                 <Baby size={18} aria-hidden="true" />
               </div>
-              <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+              <p className="text-mono-label text-text-1">
                 Sélectionnez la bande à sevrer
               </p>
             </div>
@@ -188,7 +188,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
             <div className="space-y-2">
               <label
                 htmlFor="sevrage-bande"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Bande
               </label>
@@ -209,7 +209,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
                 ))}
               </select>
               {bandesEligibles.length === 0 && (
-                <p className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+                <p className="text-mono-label text-text-2">
                   Aucune bande éligible (sous mère)
                 </p>
               )}
@@ -218,7 +218,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
             <div className="space-y-2">
               <label
                 htmlFor="sevrage-date"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Date de sevrage
               </label>
@@ -235,7 +235,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
             <div className="space-y-2">
               <label
                 htmlFor="sevrage-nb"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Nombre de porcelets sevrés
               </label>
@@ -250,7 +250,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
                 className="w-full h-14 rounded-md px-4 bg-bg-0 border border-border text-text-0 font-mono text-[24px] text-center outline-none focus:border-accent tabular-nums"
               />
               {selected?.vivants !== undefined && (
-                <p className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+                <p className="text-mono-label text-text-2">
                   Max disponible : {selected.vivants}
                 </p>
               )}
@@ -260,11 +260,11 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
               <div className="flex items-center justify-between gap-2">
                 <label
                   htmlFor="sevrage-poids"
-                  className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                  className="block text-mono-label text-text-2"
                 >
                   Poids moyen sevrage (kg) <span className="text-red normal-case">· obligatoire</span>
                 </label>
-                <span className="inline-flex items-center px-2 h-6 rounded-full bg-bg-2 border border-border font-mono text-[10px] uppercase tracking-wide text-text-1">
+                <span className="inline-flex items-center px-2 h-6 rounded-full bg-bg-2 border border-border text-mono-micro text-text-1">
                   5-7 kg cible
                 </span>
               </div>
@@ -289,7 +289,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
                   return (
                     <span
                       role="status"
-                      className="inline-flex items-center px-2 h-6 rounded-full bg-amber-100 border border-amber-300 font-mono text-[10px] uppercase tracking-wide text-amber-900"
+                      className="inline-flex items-center px-2 h-6 rounded-full bg-amber-100 border border-amber-300 text-mono-micro text-amber-900"
                     >
                       Hors plage cible 5-7 kg
                     </span>
@@ -302,7 +302,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
             {error && (
               <p
                 role="alert"
-                className="font-mono text-[11px] uppercase tracking-wide text-red"
+                className="text-mono-label text-red"
               >
                 {error}
               </p>

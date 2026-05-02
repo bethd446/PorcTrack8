@@ -190,7 +190,7 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
             <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
               <Plus size={18} aria-hidden="true" />
             </div>
-            <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+            <p className="text-mono-label text-text-1">
               Ajouter un aliment au catalogue
             </p>
           </div>
@@ -199,7 +199,7 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-aliment-id"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               ID <span className="text-text-2 normal-case">· auto-suggéré</span>
             </label>
@@ -251,7 +251,7 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-aliment-libelle"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Libellé <span className="text-red normal-case">· obligatoire</span>
             </label>
@@ -297,7 +297,7 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="add-aliment-stock"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Stock initial
               </label>
@@ -342,7 +342,7 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="add-aliment-unite"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-mono-label text-text-2"
               >
                 Unité
               </label>
@@ -394,7 +394,7 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-aliment-seuil"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Seuil alerte
             </label>
@@ -456,7 +456,7 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-aliment-notes"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Notes <span className="text-text-2 normal-case">· optionnel</span>
             </label>

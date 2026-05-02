@@ -144,7 +144,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
             <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
               <Plus size={18} aria-hidden="true" />
             </div>
-            <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+            <p className="text-mono-label text-text-1">
               Ajouter un verrat au troupeau
             </p>
           </div>
@@ -153,7 +153,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-verrat-id"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               ID <span className="text-text-2 normal-case">· auto-suggéré</span>
             </label>
@@ -195,7 +195,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-verrat-nom"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Nom <span className="text-text-2 normal-case">· optionnel</span>
             </label>
@@ -225,7 +225,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-verrat-boucle"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Boucle <span className="text-red normal-case">· obligatoire</span>
             </label>
@@ -259,7 +259,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-verrat-race"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Race
             </label>
@@ -295,7 +295,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-verrat-date-naissance"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Date de naissance <span className="text-text-2 normal-case">· optionnel</span>
             </label>
@@ -322,7 +322,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-verrat-origine"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Origine
             </label>
@@ -352,7 +352,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-verrat-loge"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Localisation (loge)
             </label>
@@ -382,7 +382,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
           <div className="space-y-1.5">
             <span
               id="add-verrat-statut-label"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Statut
             </span>
@@ -424,7 +424,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-verrat-ration"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Ration (kg/j)
             </label>

@@ -114,7 +114,7 @@ const QuickAddFournisseurForm: React.FC<QuickAddFournisseurFormProps> = ({
             <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
               <Plus size={18} aria-hidden="true" />
             </div>
-            <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+            <p className="text-mono-label text-text-1">
               Carnet fournisseurs
             </p>
           </div>
@@ -123,7 +123,7 @@ const QuickAddFournisseurForm: React.FC<QuickAddFournisseurFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-fourn-nom"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Nom <span className="text-red normal-case">· obligatoire</span>
             </label>
@@ -160,7 +160,7 @@ const QuickAddFournisseurForm: React.FC<QuickAddFournisseurFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-fourn-type"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Type
             </label>
@@ -191,7 +191,7 @@ const QuickAddFournisseurForm: React.FC<QuickAddFournisseurFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-fourn-wa"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               WhatsApp <span className="text-text-2 normal-case">· format international</span>
             </label>
@@ -233,7 +233,7 @@ const QuickAddFournisseurForm: React.FC<QuickAddFournisseurFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-fourn-email"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Email <span className="text-text-2 normal-case">· optionnel</span>
             </label>
@@ -269,7 +269,7 @@ const QuickAddFournisseurForm: React.FC<QuickAddFournisseurFormProps> = ({
           <div className="space-y-1.5">
             <label
               htmlFor="add-fourn-notes"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Notes <span className="text-text-2 normal-case">· optionnel</span>
             </label>
@@ -311,7 +311,7 @@ const QuickAddFournisseurForm: React.FC<QuickAddFournisseurFormProps> = ({
             />
             <label
               htmlFor="add-fourn-default"
-              className="font-mono text-[11px] uppercase tracking-wide text-text-1 cursor-pointer"
+              className="text-mono-label text-text-1 cursor-pointer"
             >
               Fournisseur par défaut pour ce type
             </label>

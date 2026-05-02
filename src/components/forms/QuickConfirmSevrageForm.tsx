@@ -91,7 +91,7 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
       >
         <div className="space-y-5">
           <div className="card-dense !p-4 space-y-1">
-            <div className="font-mono text-[10px] uppercase tracking-wide text-text-2">Bande</div>
+            <div className="text-mono-micro text-text-2">Bande</div>
             <div className="font-mono text-[13px] text-text-0">{bandeId}</div>
             <p className="mt-2 font-mono text-[12px] text-text-1 leading-relaxed">
               {pending.alertMessage}
@@ -134,7 +134,7 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
               <label htmlFor="sevrage-poids" className="block font-mono text-[11px] uppercase text-text-2">
                 Poids moyen sevrage (kg) <span className="text-red normal-case">· obligatoire</span>
               </label>
-              <span className="inline-flex items-center px-2 h-6 rounded-full bg-bg-2 border border-border font-mono text-[10px] uppercase tracking-wide text-text-1">
+              <span className="inline-flex items-center px-2 h-6 rounded-full bg-bg-2 border border-border text-mono-micro text-text-1">
                 5-7 kg cible
               </span>
             </div>
@@ -158,7 +158,7 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
                 return (
                   <span
                     role="status"
-                    className="inline-flex items-center px-2 h-6 rounded-full bg-amber-100 border border-amber-300 font-mono text-[10px] uppercase tracking-wide text-amber-900"
+                    className="inline-flex items-center px-2 h-6 rounded-full bg-amber-100 border border-amber-300 text-mono-micro text-amber-900"
                   >
                     Hors plage cible 5-7 kg
                   </span>

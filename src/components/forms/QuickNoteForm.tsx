@@ -235,7 +235,7 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
         {/* 1 · Sujet */}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <label className="block font-mono text-[11px] uppercase tracking-wide text-text-2">
+            <label className="block text-mono-label text-text-2">
               Sujet
             </label>
             <div
@@ -251,7 +251,7 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
           </div>
 
           <div className="space-y-1.5">
-            <label className="block font-mono text-[11px] uppercase tracking-wide text-text-2">
+            <label className="block text-mono-label text-text-2">
               Auteur
             </label>
             <div
@@ -269,7 +269,7 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
 
         {/* 2 · Photo */}
         <div className="space-y-1.5">
-          <label className="block font-mono text-[11px] uppercase tracking-wide text-text-2">
+          <label className="block text-mono-label text-text-2">
             Photo (optionnelle)
           </label>
           <div className="flex items-start gap-3">
@@ -299,7 +299,7 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
                 className={[
                   'pressable inline-flex items-center gap-2 px-3 h-9 rounded-md',
                   'bg-bg-0 border border-border text-text-1',
-                  'font-mono text-[11px] uppercase tracking-wide',
+                  'text-mono-label',
                   'hover:border-text-2 transition-colors duration-[160ms]',
                   photoBusy !== null ? 'opacity-50 cursor-not-allowed' : '',
                 ].join(' ')}
@@ -332,7 +332,7 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
 
         {/* 3 · Tags */}
         <div className="space-y-1.5">
-          <label className="block font-mono text-[11px] uppercase tracking-wide text-text-2">
+          <label className="block text-mono-label text-text-2">
             Tags (optionnels)
           </label>
           <div className="flex flex-wrap gap-1.5" role="group" aria-label="Tags note">
@@ -347,7 +347,7 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
                   aria-label={`Tag ${tag.label}`}
                   className={[
                     'pressable inline-flex items-center px-2.5 h-7 rounded-full border',
-                    'font-mono text-[10px] uppercase tracking-wide',
+                    'text-mono-micro',
                     'transition-colors duration-[160ms]',
                     active
                       ? tag.activeClass
@@ -366,7 +366,7 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
           <div className="flex items-center justify-between">
             <label
               htmlFor="quick-note-text"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Observation
             </label>
@@ -385,7 +385,7 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
               }
               className={[
                 'pressable inline-flex items-center gap-1.5 px-2 h-7 rounded-md',
-                'font-mono text-[10px] uppercase tracking-wide',
+                'text-mono-micro',
                 'transition-colors duration-[160ms]',
                 dictation.isListening
                   ? 'bg-red text-bg-0 border border-red animate-pulse'

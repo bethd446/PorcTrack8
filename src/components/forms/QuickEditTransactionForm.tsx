@@ -303,7 +303,7 @@ const QuickEditTransactionForm: React.FC<QuickEditTransactionFormProps> = ({
   const inputOk = 'border-border hover:border-text-2';
   const inputErr = 'border-red';
   const labelCls =
-    'block font-mono text-[11px] uppercase tracking-wide text-text-2';
+    'block text-mono-label text-text-2';
   const hintCls = 'font-mono text-[10px] text-text-2 tabular-nums';
   const errCls = 'font-mono text-[11px] text-red';
 
@@ -336,10 +336,10 @@ const QuickEditTransactionForm: React.FC<QuickEditTransactionFormProps> = ({
               <Edit3 size={18} aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+              <p className="text-mono-label text-text-1">
                 Modifier la transaction
               </p>
-              <p className="font-mono text-[10px] uppercase tracking-wide text-text-2 tabular-nums mt-0.5">
+              <p className="text-mono-micro text-text-2 tabular-nums mt-0.5">
                 {transaction.id}
               </p>
             </div>
@@ -374,7 +374,7 @@ const QuickEditTransactionForm: React.FC<QuickEditTransactionFormProps> = ({
           <div className="space-y-1.5">
             <span
               id="edit-tx-type-label"
-              className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              className="block text-mono-label text-text-2"
             >
               Type
             </span>

@@ -351,7 +351,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
             </IonSegment>
 
             <div className="space-y-1.5">
-              <label className="block font-mono text-[11px] uppercase tracking-wide text-text-2">Rechercher</label>
+              <label className="block text-mono-label text-text-2">Rechercher</label>
               <div className="flex items-center gap-2 h-11 px-3 rounded-md bg-bg-0 border border-border focus-within:border-accent">
                 <Search size={14} className="text-text-2" />
                 <input type="search" className="flex-1 bg-transparent outline-none font-mono text-[13px] text-text-0" placeholder="ID, Nom, Boucle…" value={query} onChange={e => setQuery(e.target.value)} />

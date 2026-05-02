@@ -427,7 +427,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
                       {code}
                       {b.truie ? ` · ${b.truie}` : ''}
                     </p>
-                    <p className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+                    <p className="text-mono-label text-text-2">
                       {b.vivants ?? 0} vivants
                       {j !== null ? ` · J+${j}` : ''}
                     </p>
@@ -477,7 +477,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
                 data-testid={`destination-${idx}`}
               >
                 <div className="flex items-center justify-between">
-                  <p className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+                  <p className="text-mono-label text-text-2">
                     Destination {idx + 1}
                   </p>
                   {destinations.length > 1 && (
@@ -539,7 +539,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
                 </div>
 
                 {showWarning && (
-                  <p className="rounded-sm bg-amber-pork/15 px-2 py-1 font-mono text-[11px] uppercase tracking-wide text-amber-pork">
+                  <p className="rounded-sm bg-amber-pork/15 px-2 py-1 text-mono-label text-amber-pork">
                     Hors 4–10 kg
                   </p>
                 )}
@@ -585,7 +585,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
       <div className="space-y-2">
         <label
           htmlFor="multi-sevrage-date"
-          className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+          className="block text-mono-label text-text-2"
         >
           Date de sevrage
         </label>
@@ -600,7 +600,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
       </div>
 
       <div className="rounded-md border border-border bg-bg-0 p-3">
-        <p className="mb-2 font-mono text-[11px] uppercase tracking-wide text-text-2">
+        <p className="mb-2 text-mono-label text-text-2">
           Sources ({totalSource} porcelets)
         </p>
         <ul className="space-y-1">
@@ -616,7 +616,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
       </div>
 
       <div className="rounded-md border border-border bg-bg-0 p-3">
-        <p className="mb-2 font-mono text-[11px] uppercase tracking-wide text-text-2">
+        <p className="mb-2 text-mono-label text-text-2">
           Destinations ({totalDestination} porcelets)
         </p>
         <ul className="space-y-1">
@@ -633,7 +633,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
       </div>
 
       {totalDestination !== totalSource && (
-        <p className="rounded-sm bg-amber-pork/15 px-3 py-2 font-mono text-[11px] uppercase tracking-wide text-amber-pork">
+        <p className="rounded-sm bg-amber-pork/15 px-3 py-2 text-mono-label text-amber-pork">
           Écart {totalSource - totalDestination} porcelets — non bloquant
         </p>
       )}
@@ -670,7 +670,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
               <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
                 <Baby size={18} aria-hidden="true" />
               </div>
-              <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+              <p className="text-mono-label text-text-1">
                 Regrouper plusieurs portées en bandes
               </p>
             </div>
@@ -682,7 +682,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
             {error && (
               <p
                 role="alert"
-                className="font-mono text-[11px] uppercase tracking-wide text-red"
+                className="text-mono-label text-red"
               >
                 {error}
               </p>
