@@ -26,9 +26,37 @@ export interface PendingBandesState {
 }
 
 /**
- * Hook qui interroge Supabase pour récupérer le nombre de bandes
+ * Détecte si une bande est mâle.
+ * Convention christophe : code_id = `B-YYYYMMDD-{loge}{M|F}` (ex L3M, QM, L5RM).
+ * Le dernier caractère encode le sexe : M = mâle, F = femelle.
+ * Exporté pour tests.
+ */
+export function isMaleBatch(code_id: string | null | undefined): boolean {
+  if (!code_id) return false;
+  return code_id.trim().toUpperCase().endsWith('M');
+}
+
+/**
+ * Trie les bandes : MÂLES d'abord, puis FEMELLES, puis ordre alphabétique
+ * sur le code_id. Demande métier christophe — ordre carnet papier.
+ */
+export function sortBandesPendingMaleFirst<T extends { code_id?: string | null }>(
+  rows: T[],
+): T[] {
+  return [...rows].sort((a, b) => {
+    const am = isMaleBatch(a.code_id);
+    const bm = isMaleBatch(b.code_id);
+    if (am && !bm) return -1;
+    if (!am && bm) return 1;
+    return (a.code_id ?? '').localeCompare(b.code_id ?? '');
+  });
+}
+
+/**
+ * Hook qui interroge Supabase pour récupérer la liste des bandes
  * `validation_status='PENDING'` pour la ferme courante (RLS filtre déjà par
- * farm_id côté serveur). Retourne aussi l'ID de la 1ère pour l'ouvrir au tap.
+ * farm_id côté serveur). Tri MÂLES en premier puis FEMELLES (demande métier).
+ * Retourne l'ID de la 1ère pour l'ouvrir au tap.
  */
 export function usePendingBandes(): PendingBandesState {
   const [count, setCount] = useState(0);
@@ -44,18 +72,19 @@ export function usePendingBandes(): PendingBandesState {
     void (async () => {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, count: total, error } = await (supabase.from('batches') as any)
-          .select('id', { count: 'exact' })
-          .eq('validation_status', 'PENDING')
-          .order('created_at', { ascending: true })
-          .limit(1);
+        const { data, error } = await (supabase.from('batches') as any)
+          .select('id, code_id')
+          .eq('validation_status', 'PENDING');
         if (cancelled) return;
-        if (error) {
+        if (error || !Array.isArray(data)) {
           setCount(0);
           setFirstPendingId(null);
         } else {
-          setCount(typeof total === 'number' ? total : Array.isArray(data) ? data.length : 0);
-          setFirstPendingId(Array.isArray(data) && data[0]?.id ? data[0].id : null);
+          const sorted = sortBandesPendingMaleFirst(
+            data as Array<{ id: string; code_id?: string | null }>,
+          );
+          setCount(sorted.length);
+          setFirstPendingId(sorted[0]?.id ?? null);
         }
       } catch {
         if (!cancelled) {

@@ -34,7 +34,11 @@ vi.mock('../../services/supabaseClient', () => ({
   supabase: { from: () => ({}) },
 }));
 
-import PendingBandesBanner, { type PendingBandesState } from './PendingBandesBanner';
+import PendingBandesBanner, {
+  type PendingBandesState,
+  isMaleBatch,
+  sortBandesPendingMaleFirst,
+} from './PendingBandesBanner';
 
 afterEach(() => cleanup());
 
@@ -101,5 +105,58 @@ describe('PendingBandesBanner', () => {
     const form = screen.getByTestId('mock-edit-form');
     expect(form).toBeTruthy();
     expect(form.getAttribute('data-batch-id')).toBe('batch-uuid-42');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// [V26c] Tri MÂLES en premier (demande métier christophe — ordre carnet)
+// ═══════════════════════════════════════════════════════════════════════════
+describe('[V26c] sortBandesPendingMaleFirst', () => {
+  it('détecte mâle via suffixe -M', () => {
+    expect(isMaleBatch('B-2026-05-02-L3M')).toBe(true);
+    expect(isMaleBatch('B-2026-05-02-L4M')).toBe(true);
+    expect(isMaleBatch('B-2026-05-02-QM')).toBe(true);
+  });
+
+  it('détecte femelle via suffixe -F (pas mâle)', () => {
+    expect(isMaleBatch('B-2026-05-02-L3F')).toBe(false);
+    expect(isMaleBatch('B-2026-05-02-QF')).toBe(false);
+    expect(isMaleBatch('B-2026-05-02-L5RF')).toBe(false);
+  });
+
+  it('null/undefined ne sont pas mâles', () => {
+    expect(isMaleBatch(null)).toBe(false);
+    expect(isMaleBatch(undefined)).toBe(false);
+    expect(isMaleBatch('')).toBe(false);
+  });
+
+  it('trie 10 bandes mixtes : tous les M avant tous les F', () => {
+    const input = [
+      { id: '1', code_id: 'B-2026-05-02-L3F' },
+      { id: '2', code_id: 'B-2026-05-02-L3M' },
+      { id: '3', code_id: 'B-2026-05-02-L4F' },
+      { id: '4', code_id: 'B-2026-05-02-L4M' },
+      { id: '5', code_id: 'B-2026-05-02-QF' },
+      { id: '6', code_id: 'B-2026-05-02-QM' },
+    ];
+    const out = sortBandesPendingMaleFirst(input);
+    const codes = out.map(b => b.code_id ?? '');
+    // Tous les M doivent venir avant tous les F
+    let lastMIdx = -1;
+    for (let i = 0; i < codes.length; i++) if (/M$/.test(codes[i])) lastMIdx = i;
+    const firstFIdx = codes.findIndex(c => /F$/.test(c));
+    expect(lastMIdx).toBeLessThan(firstFIdx);
+    // Et l'ordre stable alphabétique au sein de chaque groupe
+    expect(codes[0]).toBe('B-2026-05-02-L3M');
+  });
+
+  it('ne mute pas le tableau d\'entrée', () => {
+    const input = [
+      { id: '1', code_id: 'B-F' },
+      { id: '2', code_id: 'B-M' },
+    ];
+    const inputCopy = JSON.parse(JSON.stringify(input));
+    sortBandesPendingMaleFirst(input);
+    expect(input).toEqual(inputCopy);
   });
 });
