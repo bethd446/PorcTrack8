@@ -36,7 +36,7 @@ const LineageBreadcrumb: React.FC<Props> = ({ nodes, treeHref, onTreeClick }) =>
   const treeLabel = 'Arbre genetique →';
   const treeStyle: React.CSSProperties = {
     marginLeft: 'auto',
-    fontFamily: 'DMMono, ui-monospace, monospace',
+    fontFamily: 'var(--font-mono)',
     fontSize: 11,
     letterSpacing: '0.08em',
     textTransform: 'uppercase',
@@ -64,7 +64,7 @@ const LineageBreadcrumb: React.FC<Props> = ({ nodes, treeHref, onTreeClick }) =>
     >
       <span
         style={{
-          fontFamily: 'DMMono, ui-monospace, monospace',
+          fontFamily: 'var(--font-mono)',
           fontSize: 10,
           letterSpacing: '0.10em',
           textTransform: 'uppercase',
@@ -81,7 +81,7 @@ const LineageBreadcrumb: React.FC<Props> = ({ nodes, treeHref, onTreeClick }) =>
             <>
               <span
                 style={{
-                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: 18,
                   fontWeight: 700,
                   letterSpacing: '-0.01em',
@@ -93,7 +93,7 @@ const LineageBreadcrumb: React.FC<Props> = ({ nodes, treeHref, onTreeClick }) =>
               </span>
               <span
                 style={{
-                  fontFamily: 'DMMono, ui-monospace, monospace',
+                  fontFamily: 'var(--font-mono)',
                   fontSize: 10,
                   letterSpacing: '0.06em',
                   textTransform: 'uppercase',
@@ -132,7 +132,7 @@ const LineageBreadcrumb: React.FC<Props> = ({ nodes, treeHref, onTreeClick }) =>
                 <span
                   aria-hidden="true"
                   style={{
-                    fontFamily: 'BigShoulders, system-ui, sans-serif',
+                    fontFamily: 'var(--font-heading)',
                     fontSize: 18,
                     color: 'var(--muted)',
                     fontWeight: 500,

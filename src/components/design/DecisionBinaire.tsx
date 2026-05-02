@@ -84,7 +84,7 @@ export default function DecisionBinaire({
       <div
         style={{
           gridColumn: '1 / -1',
-          fontFamily: 'DMMono, ui-monospace, monospace',
+          fontFamily: 'var(--font-mono)',
           fontSize: 9.5,
           letterSpacing: '0.04em',
           color: 'var(--ink-soft)',
@@ -102,7 +102,7 @@ export default function DecisionBinaire({
 
 function pillStyle(extra: React.CSSProperties): React.CSSProperties {
   return {
-    fontFamily: 'DMMono, ui-monospace, monospace',
+    fontFamily: 'var(--font-mono)',
     fontSize: 10.5,
     letterSpacing: '0.10em',
     textTransform: 'uppercase',

@@ -27,7 +27,7 @@ const SECTION_HEADER_STYLE: React.CSSProperties = {
 };
 
 const SECTION_TITLE_STYLE: React.CSSProperties = {
-  fontFamily: 'DMMono, ui-monospace, monospace',
+  fontFamily: 'var(--font-mono)',
   fontSize: 11,
   letterSpacing: '0.18em',
   textTransform: 'uppercase',
@@ -36,7 +36,7 @@ const SECTION_TITLE_STYLE: React.CSSProperties = {
 };
 
 const COUNT_PILL_STYLE: React.CSSProperties = {
-  fontFamily: 'DMMono, ui-monospace, monospace',
+  fontFamily: 'var(--font-mono)',
   fontSize: 11,
   padding: '3px 10px',
   borderRadius: 'var(--radius-pill)',
@@ -225,7 +225,7 @@ export default function PendingValidationsView({ embedded, onChange }: PendingVa
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span
                   style={{
-                    fontFamily: 'DMMono, ui-monospace, monospace',
+                    fontFamily: 'var(--font-mono)',
                     fontSize: 10,
                     letterSpacing: '0.18em',
                     textTransform: 'uppercase',
@@ -240,7 +240,7 @@ export default function PendingValidationsView({ embedded, onChange }: PendingVa
                 </span>
                 <span
                   style={{
-                    fontFamily: 'DMMono, ui-monospace, monospace',
+                    fontFamily: 'var(--font-mono)',
                     fontSize: 11,
                     color: 'var(--muted)',
                     marginLeft: 'auto',
@@ -260,7 +260,7 @@ export default function PendingValidationsView({ embedded, onChange }: PendingVa
 
               <div
                 style={{
-                  fontFamily: 'DMMono, ui-monospace, monospace',
+                  fontFamily: 'var(--font-mono)',
                   fontSize: 11,
                   color: 'var(--muted)',
                 }}
@@ -281,7 +281,7 @@ export default function PendingValidationsView({ embedded, onChange }: PendingVa
                     padding: '8px 14px',
                     borderRadius: 'var(--radius-pill)',
                     border: 'none',
-                    fontFamily: 'DMMono, ui-monospace, monospace',
+                    fontFamily: 'var(--font-mono)',
                     fontSize: 11,
                     fontWeight: 600,
                     textTransform: 'uppercase',
@@ -308,7 +308,7 @@ export default function PendingValidationsView({ embedded, onChange }: PendingVa
                     padding: '8px 14px',
                     borderRadius: 'var(--radius-pill)',
                     border: '1px solid var(--color-pig, #f5c6c0)',
-                    fontFamily: 'DMMono, ui-monospace, monospace',
+                    fontFamily: 'var(--font-mono)',
                     fontSize: 11,
                     fontWeight: 600,
                     textTransform: 'uppercase',
@@ -334,7 +334,7 @@ export default function PendingValidationsView({ embedded, onChange }: PendingVa
                     padding: '8px 14px',
                     borderRadius: 'var(--radius-pill)',
                     border: '1px solid var(--line)',
-                    fontFamily: 'DMMono, ui-monospace, monospace',
+                    fontFamily: 'var(--font-mono)',
                     fontSize: 11,
                     fontWeight: 600,
                     textTransform: 'uppercase',
@@ -395,7 +395,7 @@ export default function PendingValidationsView({ embedded, onChange }: PendingVa
         }}
       >
         <AlertCircle size={14} strokeWidth={1.75} />
-        <span style={{ fontFamily: 'DMMono, ui-monospace, monospace', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 500 }}>
+        <span style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 500 }}>
           Validation requise
         </span>
       </div>

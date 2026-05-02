@@ -51,7 +51,7 @@ export default function Sidebar({
         <div key={section.title}>
           <div
             style={{
-              fontFamily: 'DMMono, ui-monospace, monospace',
+              fontFamily: 'var(--font-mono)',
               fontSize: 9,
               letterSpacing: '0.20em',
               textTransform: 'uppercase',
@@ -82,7 +82,7 @@ export default function Sidebar({
                   borderRight: 0,
                   borderBottom: 0,
                   padding: '9px 18px',
-                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 14,
                   fontWeight: isActive ? 500 : 400,
                   display: 'flex',
@@ -114,7 +114,7 @@ export default function Sidebar({
                   <span
                     style={{
                       marginLeft: 'auto',
-                      fontFamily: 'DMMono, ui-monospace, monospace',
+                      fontFamily: 'var(--font-mono)',
                       fontSize: 10,
                       color: 'var(--muted)',
                       letterSpacing: '0.04em',

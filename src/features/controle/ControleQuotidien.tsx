@@ -71,7 +71,7 @@ const ControleQuotidien: React.FC = () => {
                 <Eyebrow dotColor="accent">Outils · Audit terrain</Eyebrow>
                 <h1
                   style={{
-                    fontFamily: 'BigShoulders, system-ui, sans-serif',
+                    fontFamily: 'var(--font-heading)',
                     fontSize: 34,
                     fontWeight: 700,
                     lineHeight: 1,
@@ -84,7 +84,7 @@ const ControleQuotidien: React.FC = () => {
                 </h1>
                 <div
                   style={{
-                    fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                    fontFamily: 'var(--font-body)',
                     fontSize: 13,
                     color: 'var(--muted)',
                   }}
@@ -150,7 +150,7 @@ const ControleQuotidien: React.FC = () => {
               <Eyebrow dotColor="accent">Outils · Audit terrain</Eyebrow>
               <h1
                 style={{
-                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: 34,
                   fontWeight: 700,
                   lineHeight: 1,
@@ -163,7 +163,7 @@ const ControleQuotidien: React.FC = () => {
               </h1>
               <div
                 style={{
-                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 13,
                   color: 'var(--muted)',
                   display: 'flex',

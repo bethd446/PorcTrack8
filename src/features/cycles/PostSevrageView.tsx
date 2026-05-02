@@ -148,7 +148,7 @@ const PostSevrageView: React.FC = () => {
               <Eyebrow dotColor="amber">Cycle · Post-sevrage</Eyebrow>
               <h1
                 style={{
-                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: 34,
                   fontWeight: 700,
                   lineHeight: 1,
@@ -161,7 +161,7 @@ const PostSevrageView: React.FC = () => {
               </h1>
               <div
                 style={{
-                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 13,
                   color: 'var(--muted)',
                 }}
@@ -328,7 +328,7 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
         />
         <span
           style={{
-            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontFamily: 'var(--font-mono)',
             fontSize: 10,
             letterSpacing: '0.06em',
             color: treatmentStyle.eyebrowColor,
@@ -355,7 +355,7 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
           <div className="flex items-center gap-2">
             <h3
               style={{
-                fontFamily: 'BigShoulders, system-ui, sans-serif',
+                fontFamily: 'var(--font-heading)',
                 fontSize: treatmentStyle.titleSize,
                 fontWeight: treatmentStyle.titleWeight,
                 color: isBloquant ? 'var(--color-danger, #EF4444)' : 'var(--ink)',

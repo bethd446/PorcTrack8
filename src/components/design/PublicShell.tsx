@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 import { IonPage, IonContent } from '@ionic/react';
 import Button from './Button';
 
-const FONT_DISPLAY = 'BigShoulders, "InstrumentSans", sans-serif';
-const FONT_BODY = 'InstrumentSans, -apple-system, system-ui, sans-serif';
-const FONT_MONO = 'DMMono, ui-monospace, monospace';
+const FONT_DISPLAY = 'var(--font-heading)';
+const FONT_BODY = 'var(--font-body)';
+const FONT_MONO = 'var(--font-mono)';
 
 /**
  * @deprecated theme-day est désormais forcé globalement dans main.tsx

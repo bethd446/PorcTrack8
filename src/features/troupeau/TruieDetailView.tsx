@@ -470,7 +470,7 @@ const TruieDetailView: React.FC = () => {
                         background: 'var(--amber-pork-deep)',
                         color: 'var(--bg-surface)',
                         border: 'none',
-                        fontFamily: 'DMMono, ui-monospace, monospace',
+                        fontFamily: 'var(--font-mono)',
                         fontSize: 11,
                         letterSpacing: '0.10em',
                         textTransform: 'uppercase',
@@ -496,7 +496,7 @@ const TruieDetailView: React.FC = () => {
                   <Eyebrow dotColor="amber">Reproduction en cours</Eyebrow>
                   <div
                     style={{
-                      fontFamily: 'InstrumentSans, ui-sans-serif, system-ui',
+                      fontFamily: 'var(--font-body)',
                       fontSize: 14,
                       color: 'var(--ink)',
                     }}
@@ -566,7 +566,7 @@ const TruieDetailView: React.FC = () => {
                   </div>
                   <div
                     style={{
-                      fontFamily: 'InstrumentSans, ui-sans-serif, system-ui',
+                      fontFamily: 'var(--font-body)',
                       fontSize: 13,
                       color: 'var(--muted)',
                       maxWidth: 360,
@@ -585,7 +585,7 @@ const TruieDetailView: React.FC = () => {
                       background: 'var(--color-accent-600, var(--amber-pork-deep))',
                       color: 'var(--bg-surface)',
                       border: 'none',
-                      fontFamily: 'DMMono, ui-monospace, monospace',
+                      fontFamily: 'var(--font-mono)',
                       fontSize: 11,
                       letterSpacing: '0.10em',
                       textTransform: 'uppercase',
@@ -622,7 +622,7 @@ const TruieDetailView: React.FC = () => {
                   >
                     <div
                       style={{
-                        fontFamily: 'DMMono, ui-monospace, monospace',
+                        fontFamily: 'var(--font-mono)',
                         fontSize: 9,
                         letterSpacing: '0.16em',
                         textTransform: 'uppercase',
@@ -860,7 +860,7 @@ const TruieDetailView: React.FC = () => {
                           background: 'var(--bg-surface)',
                           color: 'var(--pig-deep)',
                           border: '1px solid var(--pig-deep)',
-                          fontFamily: 'DMMono, ui-monospace, monospace',
+                          fontFamily: 'var(--font-mono)',
                           fontSize: 11,
                           letterSpacing: '0.10em',
                           textTransform: 'uppercase',
@@ -882,7 +882,7 @@ const TruieDetailView: React.FC = () => {
                         background: 'transparent',
                         color: 'var(--ink)',
                         border: '1px dashed var(--line)',
-                        fontFamily: 'DMMono, ui-monospace, monospace',
+                        fontFamily: 'var(--font-mono)',
                         fontSize: 11,
                         letterSpacing: '0.10em',
                         textTransform: 'uppercase',
@@ -903,7 +903,7 @@ const TruieDetailView: React.FC = () => {
                         background: 'transparent',
                         color: 'var(--muted)',
                         border: '1px dashed var(--line)',
-                        fontFamily: 'DMMono, ui-monospace, monospace',
+                        fontFamily: 'var(--font-mono)',
                         fontSize: 11,
                         letterSpacing: '0.10em',
                         textTransform: 'uppercase',
@@ -985,7 +985,7 @@ const TruieDetailView: React.FC = () => {
                   borderRadius: 'var(--radius-pill, 9999px)',
                   border: '1px solid var(--line)',
                   background: 'var(--bg-surface)',
-                  fontFamily: 'DMMono, ui-monospace, monospace',
+                  fontFamily: 'var(--font-mono)',
                   fontSize: 11,
                   letterSpacing: '0.08em',
                   color: 'var(--ink)',
@@ -1050,7 +1050,7 @@ function DataRow({ label, value, last }: { label: string; value: string; last?: 
     >
       <span
         style={{
-          fontFamily: 'DMMono, ui-monospace, monospace',
+          fontFamily: 'var(--font-mono)',
           fontSize: 11,
           color: 'var(--muted)',
           letterSpacing: '0.04em',
@@ -1060,7 +1060,7 @@ function DataRow({ label, value, last }: { label: string; value: string; last?: 
       </span>
       <span
         style={{
-          fontFamily: 'InstrumentSans, ui-sans-serif, system-ui',
+          fontFamily: 'var(--font-body)',
           fontSize: 13.5,
           color: 'var(--ink)',
           fontWeight: 500,
@@ -1095,7 +1095,7 @@ function DataRowEditable({
     >
       <span
         style={{
-          fontFamily: 'DMMono, ui-monospace, monospace',
+          fontFamily: 'var(--font-mono)',
           fontSize: 11,
           color: 'var(--muted)',
           letterSpacing: '0.04em',
@@ -1138,7 +1138,7 @@ const SaillieRow: React.FC<{ saillie: Saillie; num: number; last: boolean }> = (
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontFamily: 'DMMono, ui-monospace, monospace',
+          fontFamily: 'var(--font-mono)',
           fontSize: 10,
           fontWeight: 500,
         }}
@@ -1159,7 +1159,7 @@ const SaillieRow: React.FC<{ saillie: Saillie; num: number; last: boolean }> = (
         <small
           style={{
             display: 'block',
-            fontFamily: 'InstrumentSans, ui-sans-serif, system-ui',
+            fontFamily: 'var(--font-body)',
             fontSize: 11.5,
             color: 'var(--muted)',
             marginTop: 2,
@@ -1209,7 +1209,7 @@ const RationRecoBlock: React.FC<{ truie: Truie }> = ({ truie }) => {
       >
         <div
           style={{
-            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontFamily: 'var(--font-mono)',
             fontSize: 10,
             letterSpacing: '0.16em',
             textTransform: 'uppercase',
@@ -1243,7 +1243,7 @@ const RationRecoBlock: React.FC<{ truie: Truie }> = ({ truie }) => {
           <div>
             <div
               style={{
-                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontFamily: 'var(--font-mono)',
                 fontSize: 9.5,
                 letterSpacing: '0.16em',
                 textTransform: 'uppercase',
@@ -1269,7 +1269,7 @@ const RationRecoBlock: React.FC<{ truie: Truie }> = ({ truie }) => {
           <div>
             <div
               style={{
-                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontFamily: 'var(--font-mono)',
                 fontSize: 9.5,
                 letterSpacing: '0.16em',
                 textTransform: 'uppercase',
@@ -1302,7 +1302,7 @@ const RationRecoBlock: React.FC<{ truie: Truie }> = ({ truie }) => {
               borderRadius: 8,
               background: 'var(--amber-pork-soft, #fde7d2)',
               color: 'var(--amber-pork-deep, #c2662b)',
-              fontFamily: 'DMMono, ui-monospace, monospace',
+              fontFamily: 'var(--font-mono)',
               fontSize: 11,
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
@@ -1315,7 +1315,7 @@ const RationRecoBlock: React.FC<{ truie: Truie }> = ({ truie }) => {
           style={{
             fontSize: 11.5,
             color: 'var(--muted)',
-            fontFamily: 'InstrumentSans, ui-sans-serif, system-ui',
+            fontFamily: 'var(--font-body)',
           }}
         >
           Aliment référence : <strong style={{ color: 'var(--ink)' }}>{phaseCfg.aliment_ref}</strong>

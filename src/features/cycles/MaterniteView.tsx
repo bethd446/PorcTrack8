@@ -159,7 +159,7 @@ const MaterniteView: React.FC = () => {
               <Eyebrow dotColor="accent">Cycle · Maternité</Eyebrow>
               <h1
                 style={{
-                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: 34,
                   fontWeight: 700,
                   lineHeight: 1,
@@ -172,7 +172,7 @@ const MaterniteView: React.FC = () => {
               </h1>
               <div
                 style={{
-                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 13,
                   color: 'var(--muted)',
                 }}
@@ -327,7 +327,7 @@ const MaterniteCard: React.FC<{
         />
         <span
           style={{
-            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontFamily: 'var(--font-mono)',
             fontSize: 10,
             letterSpacing: '0.06em',
             color: treatmentStyle.eyebrowColor,
@@ -352,7 +352,7 @@ const MaterniteCard: React.FC<{
           <div className="flex items-center gap-2">
             <h3
               style={{
-                fontFamily: 'BigShoulders, system-ui, sans-serif',
+                fontFamily: 'var(--font-heading)',
                 fontSize: treatmentStyle.titleSize,
                 fontWeight: treatmentStyle.titleWeight,
                 color: isBloquant ? 'var(--color-danger, #EF4444)' : 'var(--ink)',
@@ -377,7 +377,7 @@ const MaterniteCard: React.FC<{
 
       {/* Message d'action unique en cas d'urgence */}
       {(isBloquant || isUrgent) && (
-        <p className="text-[11.5px] leading-snug text-text-1">
+        <p className="text-[12px] leading-snug text-text-1">
           Sevre la portée pour débloquer.
         </p>
       )}

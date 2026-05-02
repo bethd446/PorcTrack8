@@ -62,7 +62,7 @@ export function DataTable<TData, TValue>({
             border: '1px solid var(--line)',
             background: 'var(--bg-surface-2)',
             fontSize: 13,
-            fontFamily: 'InstrumentSans, system-ui, sans-serif',
+            fontFamily: 'var(--font-body)',
             color: 'var(--ink)',
             outline: 'none',
           }}
@@ -106,7 +106,7 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
       {table.getPageCount() > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--muted)', fontFamily: 'DMMono, ui-monospace, monospace', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--muted)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
           <span>Page {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}</span>
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} style={btnStyle}>Précédent</button>
@@ -124,7 +124,7 @@ const btnStyle: React.CSSProperties = {
   background: 'var(--bg-surface-2)',
   border: '1px solid var(--line)',
   fontSize: 11,
-  fontFamily: 'DMMono, ui-monospace, monospace',
+  fontFamily: 'var(--font-mono)',
   textTransform: 'uppercase',
   letterSpacing: '0.06em',
   color: 'var(--ink-soft)',

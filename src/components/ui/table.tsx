@@ -43,7 +43,7 @@ const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<
       className={cn('h-10 px-3 text-left align-middle font-medium [&:has([role=checkbox])]:pr-0', className)}
       style={{
         color: 'var(--muted)',
-        fontFamily: 'DMMono, ui-monospace, monospace',
+        fontFamily: 'var(--font-mono)',
         fontSize: 11,
         letterSpacing: '0.06em',
         textTransform: 'uppercase',

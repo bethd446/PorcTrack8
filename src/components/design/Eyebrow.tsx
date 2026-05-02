@@ -33,7 +33,7 @@ export default function Eyebrow({
     <div
       className={`flex items-center gap-2 ${className}`}
       style={{
-        fontFamily: 'DMMono, ui-monospace, monospace',
+        fontFamily: 'var(--font-mono)',
         fontSize: '9.5px',
         letterSpacing: '0.20em',
         textTransform: 'uppercase',

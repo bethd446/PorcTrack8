@@ -7,9 +7,9 @@ import { getAuthRedirectURL } from '../../lib/authRedirect';
 import Eyebrow from '../design/Eyebrow';
 import Button from '../design/Button';
 
-const FONT_DISPLAY = 'BigShoulders, "InstrumentSans", sans-serif';
-const FONT_BODY = 'InstrumentSans, -apple-system, system-ui, sans-serif';
-const FONT_MONO = 'DMMono, ui-monospace, monospace';
+const FONT_DISPLAY = 'var(--font-heading)';
+const FONT_BODY = 'var(--font-body)';
+const FONT_MONO = 'var(--font-mono)';
 
 type Mode = 'login' | 'reset';
 

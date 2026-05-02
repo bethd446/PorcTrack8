@@ -51,7 +51,7 @@ export function Combobox({
             borderRadius: 'var(--radius-pill, 9999px)',
             color: selected ? 'var(--ink)' : 'var(--muted)',
             fontSize: 14,
-            fontFamily: 'InstrumentSans, system-ui, sans-serif',
+            fontFamily: 'var(--font-body)',
             cursor: 'pointer',
           }}
         >

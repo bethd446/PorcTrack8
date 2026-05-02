@@ -138,7 +138,7 @@ export default function KpiCard({
   };
 
   const eyebrowStyle: React.CSSProperties = {
-    fontFamily: 'DMMono, ui-monospace, monospace',
+    fontFamily: 'var(--font-mono)',
     fontSize: 11,
     letterSpacing: '0.10em',
     textTransform: 'uppercase',
@@ -165,7 +165,7 @@ export default function KpiCard({
   };
 
   const valueStyle: React.CSSProperties = {
-    fontFamily: 'BigShoulders, system-ui, sans-serif',
+    fontFamily: 'var(--font-heading)',
     fontSize: 32,
     lineHeight: 1,
     fontWeight: 700,
@@ -181,7 +181,7 @@ export default function KpiCard({
   };
 
   const trendStyle: React.CSSProperties = {
-    fontFamily: 'DMMono, ui-monospace, monospace',
+    fontFamily: 'var(--font-mono)',
     fontSize: 11,
     color: deltaColor,
     marginTop: 10,

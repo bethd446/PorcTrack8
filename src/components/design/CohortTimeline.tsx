@@ -131,7 +131,7 @@ export const CohortTimeline: React.FC<Props> = ({
             {bandSub && (
               <div
                 style={{
-                  fontFamily: 'DMMono, ui-monospace, monospace',
+                  fontFamily: 'var(--font-mono)',
                   fontSize: 11,
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
@@ -206,7 +206,7 @@ export const CohortTimeline: React.FC<Props> = ({
             top: 0,
             left: nowLeft,
             transform: 'translateX(-50%)',
-            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontFamily: 'var(--font-mono)',
             fontSize: 10,
             fontWeight: 700,
             letterSpacing: '0.08em',
@@ -263,7 +263,7 @@ export const CohortTimeline: React.FC<Props> = ({
               <span
                 className="cohort-days"
                 style={{
-                  fontFamily: 'DMMono, ui-monospace, monospace',
+                  fontFamily: 'var(--font-mono)',
                   fontSize: 9,
                   color: 'var(--muted)',
                   letterSpacing: '0.04em',
@@ -317,7 +317,7 @@ const Stat: React.FC<{ value: string; label: string; unit?: string }> = ({
     </div>
     <div
       style={{
-        fontFamily: 'DMMono, ui-monospace, monospace',
+        fontFamily: 'var(--font-mono)',
         fontSize: 9,
         textTransform: 'uppercase',
         letterSpacing: '0.08em',

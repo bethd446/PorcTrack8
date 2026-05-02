@@ -72,7 +72,7 @@ const SECTION_HEADER_STYLE: React.CSSProperties = {
 };
 
 const SECTION_TITLE_STYLE: React.CSSProperties = {
-  fontFamily: 'DMMono, ui-monospace, monospace',
+  fontFamily: 'var(--font-mono)',
   fontSize: 11,
   letterSpacing: '0.18em',
   textTransform: 'uppercase',
@@ -81,7 +81,7 @@ const SECTION_TITLE_STYLE: React.CSSProperties = {
 };
 
 const COUNT_PILL_STYLE: React.CSSProperties = {
-  fontFamily: 'DMMono, ui-monospace, monospace',
+  fontFamily: 'var(--font-mono)',
   fontSize: 11,
   padding: '3px 10px',
   borderRadius: 'var(--radius-pill)',
@@ -187,7 +187,7 @@ function LogsPanel() {
             />
             <span
               style={{
-                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontFamily: 'var(--font-mono)',
                 fontSize: 11,
                 background: 'var(--color-accent-100)',
                 color: 'var(--color-accent-500)',
@@ -202,7 +202,7 @@ function LogsPanel() {
             <span
               className="hidden sm:inline"
               style={{
-                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontFamily: 'var(--font-mono)',
                 fontSize: 11,
                 color: 'var(--muted)',
               }}
@@ -211,7 +211,7 @@ function LogsPanel() {
             </span>
             <span
               style={{
-                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontFamily: 'var(--font-mono)',
                 fontSize: 11,
                 color: 'var(--muted)',
                 marginLeft: 'auto',
@@ -277,7 +277,7 @@ function UsersPanel({ users, loading, error, onUsersChange, onError, onInvite }:
   };
 
   const thStyle: React.CSSProperties = {
-    fontFamily: 'DMMono, ui-monospace, monospace',
+    fontFamily: 'var(--font-mono)',
     fontSize: 10,
     letterSpacing: '0.18em',
     textTransform: 'uppercase',
@@ -339,7 +339,7 @@ function UsersPanel({ users, loading, error, onUsersChange, onError, onInvite }:
                     <td
                       style={{
                         padding: '12px 20px',
-                        fontFamily: 'DMMono, ui-monospace, monospace',
+                        fontFamily: 'var(--font-mono)',
                         fontSize: 11,
                         color: 'var(--muted)',
                       }}
@@ -364,7 +364,7 @@ function UsersPanel({ users, loading, error, onUsersChange, onError, onInvite }:
                         disabled={updating === user.id}
                         onChange={e => handleRoleChange(user.id, e.target.value)}
                         style={{
-                          fontFamily: 'DMMono, ui-monospace, monospace',
+                          fontFamily: 'var(--font-mono)',
                           fontSize: 11,
                           padding: '4px 10px',
                           borderRadius: 'var(--radius-pill)',
@@ -384,7 +384,7 @@ function UsersPanel({ users, loading, error, onUsersChange, onError, onInvite }:
                     <td
                       style={{
                         padding: '12px 20px',
-                        fontFamily: 'DMMono, ui-monospace, monospace',
+                        fontFamily: 'var(--font-mono)',
                         fontSize: 11,
                         color: 'var(--muted)',
                       }}
@@ -428,7 +428,7 @@ function MonitoringPanel({ logs }: { logs: AdminLog[] }) {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
               <span
                 style={{
-                  fontFamily: 'DMMono, ui-monospace, monospace',
+                  fontFamily: 'var(--font-mono)',
                   fontSize: 11,
                   color: 'var(--ink)',
                 }}
@@ -544,7 +544,7 @@ function InviteOperatorModal({ isOpen, onClose, currentUserId, onInvited }: Invi
   };
 
   const labelStyle: React.CSSProperties = {
-    fontFamily: 'DMMono, ui-monospace, monospace',
+    fontFamily: 'var(--font-mono)',
     fontSize: 11,
     letterSpacing: '0.18em',
     textTransform: 'uppercase',
@@ -715,7 +715,7 @@ function OnboardingHero({ onInvite }: OnboardingHeroProps) {
 
       <h2
         style={{
-          fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
+          fontFamily: 'var(--font-heading)',
           fontSize: 'clamp(24px, 4vw, 32px)',
           lineHeight: 1.1,
           letterSpacing: '-0.01em',
@@ -916,7 +916,7 @@ export default function AdminDashboard() {
             <Eyebrow>Console d'administration</Eyebrow>
             <h1
               style={{
-                fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
+                fontFamily: 'var(--font-heading)',
                 fontSize: 'clamp(32px, 5vw, 44px)',
                 lineHeight: 1.05,
                 letterSpacing: '-0.01em',

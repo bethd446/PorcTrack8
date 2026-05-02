@@ -315,7 +315,7 @@ const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
           <div
             className="flex items-center gap-1.5 mb-0.5"
             style={{
-              fontFamily: 'DMMono, ui-monospace, monospace',
+              fontFamily: 'var(--font-mono)',
               fontSize: 9.5,
               letterSpacing: '0.10em',
               textTransform: 'uppercase',
@@ -346,7 +346,7 @@ const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
           {projection.joursRestants != null && (
             <div
               style={{
-                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontFamily: 'var(--font-mono)',
                 fontSize: 11,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
@@ -445,7 +445,7 @@ const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
               background: isUrgent ? 'var(--color-pig)' : 'var(--color-accent-500)',
               color: 'white',
               fontSize: 11,
-              fontFamily: 'DMMono, ui-monospace, monospace',
+              fontFamily: 'var(--font-mono)',
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
               textDecoration: 'none',
@@ -587,7 +587,7 @@ const AlimentsView: React.FC = () => {
                 <Eyebrow dotColor="accent">Ressources · Aliments</Eyebrow>
                 <h1
                   style={{
-                    fontFamily: 'BigShoulders, system-ui, sans-serif',
+                    fontFamily: 'var(--font-heading)',
                     fontSize: 34,
                     fontWeight: 700,
                     lineHeight: 1,
@@ -600,7 +600,7 @@ const AlimentsView: React.FC = () => {
                 </h1>
                 <div
                   style={{
-                    fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                    fontFamily: 'var(--font-body)',
                     fontSize: 13,
                     color: 'var(--muted)',
                   }}
@@ -610,7 +610,7 @@ const AlimentsView: React.FC = () => {
                 {treatmentSummaryLine && (
                   <div
                     style={{
-                      fontFamily: 'DMMono, ui-monospace, monospace',
+                      fontFamily: 'var(--font-mono)',
                       fontSize: 10.5,
                       letterSpacing: '0.10em',
                       textTransform: 'uppercase',
@@ -672,7 +672,7 @@ const AlimentsView: React.FC = () => {
                   background: 'var(--color-accent-500)',
                   color: 'var(--bg-surface)',
                   textDecoration: 'none',
-                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: 14,
                   fontWeight: 700,
                   letterSpacing: '0.04em',
@@ -702,7 +702,7 @@ const AlimentsView: React.FC = () => {
                   background: 'var(--bg-surface-2)',
                   color: 'var(--muted)',
                   border: '1px dashed var(--line)',
-                  fontFamily: 'DMMono, ui-monospace, monospace',
+                  fontFamily: 'var(--font-mono)',
                   fontSize: 11,
                   letterSpacing: '0.06em',
                   textTransform: 'uppercase',

@@ -135,7 +135,7 @@ const CroissanceView: React.FC = () => {
               <Eyebrow dotColor="accent">Cycle · Croissance</Eyebrow>
               <h1
                 style={{
-                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: 34,
                   fontWeight: 700,
                   lineHeight: 1,
@@ -148,7 +148,7 @@ const CroissanceView: React.FC = () => {
               </h1>
               <div
                 style={{
-                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 13,
                   color: 'var(--muted)',
                 }}
@@ -273,7 +273,7 @@ const CroissanceCard: React.FC<{ data: CroissanceRowData; onOpen: () => void }> 
         />
         <span
           style={{
-            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontFamily: 'var(--font-mono)',
             fontSize: 10,
             letterSpacing: '0.06em',
             color: treatmentStyle.eyebrowColor,
@@ -298,7 +298,7 @@ const CroissanceCard: React.FC<{ data: CroissanceRowData; onOpen: () => void }> 
           <div className="flex items-center gap-2">
             <h3
               style={{
-                fontFamily: 'BigShoulders, system-ui, sans-serif',
+                fontFamily: 'var(--font-heading)',
                 fontSize: treatmentStyle.titleSize,
                 fontWeight: treatmentStyle.titleWeight,
                 color: 'var(--ink)',

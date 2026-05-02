@@ -12,8 +12,8 @@ const PRINT_LINE = '#e5e7eb';
 const PRINT_ACCENT = '#2d5a1b';
 const PRINT_PIG = '#c2662b';
 
-const FONT_DISPLAY = 'BigShoulders, "InstrumentSans", sans-serif';
-const FONT_BODY = 'InstrumentSans, -apple-system, system-ui, sans-serif';
+const FONT_DISPLAY = 'var(--font-heading)';
+const FONT_BODY = 'var(--font-body)';
 
 const AuditPrintTemplate: React.FC<AuditPrintTemplateProps> = ({ data }) => {
   const headingStyle: React.CSSProperties = {

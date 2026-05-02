@@ -43,7 +43,7 @@ const EmptyState: React.FC<Props> = ({ icon, title, description, action, size = 
       )}
       <h3
         style={{
-          fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
+          fontFamily: 'var(--font-heading)',
           fontSize: size === 'sm' ? 18 : 22,
           fontWeight: 700,
           letterSpacing: '-0.01em',

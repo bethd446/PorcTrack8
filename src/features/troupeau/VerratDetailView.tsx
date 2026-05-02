@@ -124,7 +124,7 @@ const VerratDetailView: React.FC = () => {
                 <Eyebrow dotColor="accent">Cheptel · Verrat {decodedId}</Eyebrow>
                 <h1
                   style={{
-                    fontFamily: 'BigShoulders, system-ui, sans-serif',
+                    fontFamily: 'var(--font-heading)',
                     fontSize: 34,
                     fontWeight: 700,
                     lineHeight: 1,
@@ -137,7 +137,7 @@ const VerratDetailView: React.FC = () => {
                 </h1>
                 <div
                   style={{
-                    fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                    fontFamily: 'var(--font-body)',
                     fontSize: 13,
                     color: 'var(--muted)',
                   }}
@@ -195,7 +195,7 @@ const VerratDetailView: React.FC = () => {
               <Eyebrow dotColor="accent">Cheptel · Verrat {displayId}</Eyebrow>
               <h1
                 style={{
-                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: 34,
                   fontWeight: 700,
                   lineHeight: 1,
@@ -208,7 +208,7 @@ const VerratDetailView: React.FC = () => {
               </h1>
               <div
                 style={{
-                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 13,
                   color: 'var(--muted)',
                 }}
@@ -327,7 +327,7 @@ const VerratDetailView: React.FC = () => {
                 <div className="card-dense text-center py-6 mt-3 flex flex-col items-center gap-2.5">
                   <p
                     style={{
-                      fontFamily: 'BigShoulders, system-ui, sans-serif',
+                      fontFamily: 'var(--font-heading)',
                       fontSize: 16,
                       fontWeight: 600,
                       color: 'var(--ink)',

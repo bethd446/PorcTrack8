@@ -303,7 +303,7 @@ const CyclesHub: React.FC = () => {
               <Eyebrow dotColor="accent">Pipeline · {TOTAL_DAYS} jours</Eyebrow>
               <h1
                 style={{
-                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: 34,
                   fontWeight: 700,
                   lineHeight: 1,
@@ -316,7 +316,7 @@ const CyclesHub: React.FC = () => {
               </h1>
               <div
                 style={{
-                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 13,
                   color: 'var(--muted)',
                 }}
@@ -352,7 +352,7 @@ const CyclesHub: React.FC = () => {
                       background: count > 0 ? p.toneSoft : 'var(--bg-surface)',
                       color: count > 0 ? p.tone : 'var(--ink-soft)',
                       border: `1px solid ${count > 0 ? p.tone : 'var(--line)'}`,
-                      fontFamily: 'DMMono, ui-monospace, monospace',
+                      fontFamily: 'var(--font-mono)',
                       fontSize: 11,
                       letterSpacing: '0.04em',
                       fontWeight: 500,
@@ -420,7 +420,7 @@ const CyclesHub: React.FC = () => {
               >
                 <p
                   style={{
-                    fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                    fontFamily: 'var(--font-body)',
                     fontSize: 13,
                     color: 'var(--muted)',
                     margin: 0,
@@ -469,7 +469,7 @@ const PhaseLabels: React.FC = () => (
       <div key={p.id} style={{ flex: p.days, textAlign: 'center', minWidth: 0 }}>
         <div
           style={{
-            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontFamily: 'var(--font-mono)',
             fontSize: 9,
             letterSpacing: '0.04em',
             color: p.tone,
@@ -484,7 +484,7 @@ const PhaseLabels: React.FC = () => (
         </div>
         <div
           style={{
-            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontFamily: 'var(--font-mono)',
             fontSize: 9,
             color: 'var(--muted)',
             fontVariantNumeric: 'tabular-nums',
@@ -540,7 +540,7 @@ const BandesMarkers: React.FC<BandesMarkersProps> = ({ positions, onOpen }) => (
         >
           <span
             style={{
-              fontFamily: 'DMMono, ui-monospace, monospace',
+              fontFamily: 'var(--font-mono)',
               fontSize: 10,
               fontWeight: 600,
               padding: '3px 7px',
@@ -680,7 +680,7 @@ const BandeRow: React.FC<BandeRowProps> = ({ pos, treatment, onOpen }) => {
   };
 
   const titleStyle: React.CSSProperties = {
-    fontFamily: 'BigShoulders, system-ui, sans-serif',
+    fontFamily: 'var(--font-heading)',
     fontSize: isUrgent ? 18 : 16,
     fontWeight: isUrgent ? 700 : 600,
     color: 'var(--ink)',
@@ -726,7 +726,7 @@ const BandeRow: React.FC<BandeRowProps> = ({ pos, treatment, onOpen }) => {
             />
             <span
               style={{
-                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontFamily: 'var(--font-mono)',
                 fontSize: 10,
                 letterSpacing: '0.06em',
                 color: isUrgent ? 'var(--color-pig-deep, var(--color-pig))' : 'var(--muted)',
@@ -751,7 +751,7 @@ const BandeRow: React.FC<BandeRowProps> = ({ pos, treatment, onOpen }) => {
             <span style={titleStyle}>{pos.label}</span>
             <span
               style={{
-                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontFamily: 'var(--font-mono)',
                 fontSize: 11,
                 color: 'var(--muted)',
                 letterSpacing: '0.04em',
@@ -792,7 +792,7 @@ const BandeRow: React.FC<BandeRowProps> = ({ pos, treatment, onOpen }) => {
             </div>
             <span
               style={{
-                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontFamily: 'var(--font-mono)',
                 fontSize: 10,
                 color: 'var(--muted)',
                 fontVariantNumeric: 'tabular-nums',
@@ -806,7 +806,7 @@ const BandeRow: React.FC<BandeRowProps> = ({ pos, treatment, onOpen }) => {
 
           <div
             style={{
-              fontFamily: 'InstrumentSans, system-ui, sans-serif',
+              fontFamily: 'var(--font-body)',
               fontSize: 12,
               color: 'var(--muted)',
               marginTop: 4,

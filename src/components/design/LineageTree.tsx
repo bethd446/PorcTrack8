@@ -265,7 +265,7 @@ const chipBase: React.CSSProperties = {
   padding: '2px 8px',
   borderRadius: 9999,
   border: '1px solid var(--line)',
-  fontFamily: 'DMMono, ui-monospace, monospace',
+  fontFamily: 'var(--font-mono)',
   fontSize: 10,
   letterSpacing: '0.04em',
   color: 'var(--ink)',
@@ -284,7 +284,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, depth }) => {
       </span>
       <span
         style={{
-          fontFamily: 'BigShoulders, system-ui, sans-serif',
+          fontFamily: 'var(--font-heading)',
           fontSize: 18,
           fontWeight: 700,
           letterSpacing: '-0.01em',
@@ -296,7 +296,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, depth }) => {
       {node.label && (
         <span
           style={{
-            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontFamily: 'var(--font-mono)',
             fontSize: 10,
             letterSpacing: '0.06em',
             textTransform: 'uppercase',
@@ -311,7 +311,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, depth }) => {
       {node.hint && (
         <span
           style={{
-            fontFamily: 'InstrumentSans, system-ui, sans-serif',
+            fontFamily: 'var(--font-body)',
             fontSize: 11,
             color: 'var(--muted)',
           }}
@@ -390,7 +390,7 @@ const LineageTree: React.FC<Props> = ({
         <Eyebrow>Lignée généalogique</Eyebrow>
         <p
           style={{
-            fontFamily: 'InstrumentSans, system-ui, sans-serif',
+            fontFamily: 'var(--font-body)',
             fontSize: 13,
             color: 'var(--muted)',
             marginTop: 8,
@@ -419,7 +419,7 @@ const LineageTree: React.FC<Props> = ({
         <Eyebrow>Lignée généalogique</Eyebrow>
         <h2
           style={{
-            fontFamily: 'BigShoulders, system-ui, sans-serif',
+            fontFamily: 'var(--font-heading)',
             fontSize: 28,
             fontWeight: 700,
             letterSpacing: '-0.02em',

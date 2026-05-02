@@ -241,7 +241,7 @@ const RessourcesHub: React.FC = () => {
               <Eyebrow dotColor="amber">Inventaire · Approvisionnement</Eyebrow>
               <h1
                 style={{
-                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: 34,
                   fontWeight: 700,
                   lineHeight: 1,
@@ -254,7 +254,7 @@ const RessourcesHub: React.FC = () => {
               </h1>
               <div
                 style={{
-                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 13,
                   color: 'var(--muted)',
                 }}
@@ -287,7 +287,7 @@ const RessourcesHub: React.FC = () => {
                     background: 'var(--color-pig-soft, var(--bg-surface-2))',
                     color: 'var(--color-pig-deep, var(--color-pig))',
                     border: '1px solid var(--color-pig)',
-                    fontFamily: 'DMMono, ui-monospace, monospace',
+                    fontFamily: 'var(--font-mono)',
                     fontSize: 11,
                     letterSpacing: '0.06em',
                     textTransform: 'uppercase',
@@ -311,7 +311,7 @@ const RessourcesHub: React.FC = () => {
                     background: 'transparent',
                     color: 'var(--muted)',
                     border: '1px solid var(--line)',
-                    fontFamily: 'DMMono, ui-monospace, monospace',
+                    fontFamily: 'var(--font-mono)',
                     fontSize: 11,
                     letterSpacing: '0.06em',
                     textTransform: 'uppercase',
@@ -402,7 +402,7 @@ const RessourcesHub: React.FC = () => {
                   borderRadius: 'var(--radius-pill)',
                   paddingLeft: 38,
                   paddingRight: 16,
-                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 13,
                   color: 'var(--ink)',
                   outline: 'none',
@@ -419,7 +419,7 @@ const RessourcesHub: React.FC = () => {
                 role="status"
                 aria-live="polite"
                 style={{
-                  fontFamily: 'DMMono, ui-monospace, monospace',
+                  fontFamily: 'var(--font-mono)',
                   fontSize: 10.5,
                   letterSpacing: '0.10em',
                   textTransform: 'uppercase',
@@ -461,7 +461,7 @@ const RessourcesHub: React.FC = () => {
                   background: 'var(--color-accent-500)',
                   color: 'var(--bg-surface)',
                   textDecoration: 'none',
-                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: 14,
                   fontWeight: 700,
                   letterSpacing: '0.04em',
@@ -491,7 +491,7 @@ const RessourcesHub: React.FC = () => {
                   background: 'var(--bg-surface-2)',
                   color: 'var(--muted)',
                   border: '1px dashed var(--line)',
-                  fontFamily: 'DMMono, ui-monospace, monospace',
+                  fontFamily: 'var(--font-mono)',
                   fontSize: 11,
                   letterSpacing: '0.06em',
                   textTransform: 'uppercase',
@@ -704,7 +704,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
             display: 'inline-flex',
             alignItems: 'center',
             gap: 6,
-            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontFamily: 'var(--font-mono)',
             fontSize: 10,
             letterSpacing: '0.10em',
             textTransform: 'uppercase',
@@ -735,7 +735,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
         <div style={{ minWidth: 0, flex: 1 }}>
           <h3
             style={{
-              fontFamily: 'BigShoulders, system-ui, sans-serif',
+              fontFamily: 'var(--font-heading)',
               fontSize: style.titleSize,
               fontWeight: style.titleWeight,
               color: 'var(--ink)',
@@ -751,7 +751,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
           {category && (
             <p
               style={{
-                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontFamily: 'var(--font-mono)',
                 fontSize: 10,
                 letterSpacing: '0.10em',
                 textTransform: 'uppercase',
@@ -827,7 +827,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
         </span>
         <span
           style={{
-            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontFamily: 'var(--font-mono)',
             fontSize: 11,
             letterSpacing: '0.10em',
             textTransform: 'uppercase',
@@ -844,7 +844,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
           style={{
             display: 'flex',
             justifyContent: 'space-between',
-            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontFamily: 'var(--font-mono)',
             fontSize: 9.5,
             letterSpacing: '0.10em',
             textTransform: 'uppercase',
@@ -875,7 +875,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
         {joursRestants != null && (
           <div
             style={{
-              fontFamily: 'DMMono, ui-monospace, monospace',
+              fontFamily: 'var(--font-mono)',
               fontSize: 11,
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
@@ -909,7 +909,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
             background: isUrgent ? 'var(--color-pig)' : 'var(--color-accent-500)',
             color: 'var(--bg-surface)',
             border: 'none',
-            fontFamily: 'BigShoulders, system-ui, sans-serif',
+            fontFamily: 'var(--font-heading)',
             fontSize: 13,
             fontWeight: 700,
             letterSpacing: '0.04em',
@@ -940,7 +940,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
             background: 'var(--color-pig)',
             color: 'var(--bg-surface)',
             border: 'none',
-            fontFamily: 'BigShoulders, system-ui, sans-serif',
+            fontFamily: 'var(--font-heading)',
             fontSize: 13,
             fontWeight: 700,
             letterSpacing: '0.04em',
@@ -962,7 +962,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
       {notes && !isUrgent && !(orderUrl && isNormal) && (
         <p
           style={{
-            fontFamily: 'InstrumentSans, system-ui, sans-serif',
+            fontFamily: 'var(--font-body)',
             fontSize: 11,
             color: isNormal ? 'var(--amber-pork-deep)' : 'var(--muted)',
             fontStyle: isNormal ? 'normal' : 'italic',
@@ -1027,7 +1027,7 @@ const QuickAccess: React.FC<QuickAccessProps> = ({ icon, title, subtitle, onClic
     <div style={{ minWidth: 0, flex: 1 }}>
       <div
         style={{
-          fontFamily: 'BigShoulders, system-ui, sans-serif',
+          fontFamily: 'var(--font-heading)',
           fontSize: 14,
           fontWeight: 600,
           color: 'var(--ink)',
@@ -1038,7 +1038,7 @@ const QuickAccess: React.FC<QuickAccessProps> = ({ icon, title, subtitle, onClic
       </div>
       <div
         style={{
-          fontFamily: 'DMMono, ui-monospace, monospace',
+          fontFamily: 'var(--font-mono)',
           fontSize: 10,
           letterSpacing: '0.08em',
           textTransform: 'uppercase',

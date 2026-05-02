@@ -135,7 +135,7 @@ const EngraissementView: React.FC = () => {
               <Eyebrow dotColor="amber">Cycle · Engraissement</Eyebrow>
               <h1
                 style={{
-                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: 34,
                   fontWeight: 700,
                   lineHeight: 1,
@@ -148,7 +148,7 @@ const EngraissementView: React.FC = () => {
               </h1>
               <div
                 style={{
-                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 13,
                   color: 'var(--muted)',
                 }}
@@ -269,7 +269,7 @@ const EngraissementCard: React.FC<{ data: EngraissementRowData; onOpen: () => vo
         />
         <span
           style={{
-            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontFamily: 'var(--font-mono)',
             fontSize: 10,
             letterSpacing: '0.06em',
             color: treatmentStyle.eyebrowColor,
@@ -294,7 +294,7 @@ const EngraissementCard: React.FC<{ data: EngraissementRowData; onOpen: () => vo
           <div className="flex items-center gap-2">
             <h3
               style={{
-                fontFamily: 'BigShoulders, system-ui, sans-serif',
+                fontFamily: 'var(--font-heading)',
                 fontSize: treatmentStyle.titleSize,
                 fontWeight: treatmentStyle.titleWeight,
                 color: 'var(--ink)',

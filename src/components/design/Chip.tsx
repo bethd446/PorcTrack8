@@ -40,7 +40,7 @@ const Chip: React.FC<ChipProps> = ({ children, tone = 'green', className = '' })
         display: 'inline-flex',
         alignItems: 'center',
         gap: 6,
-        fontFamily: 'DMMono, ui-monospace, monospace',
+        fontFamily: 'var(--font-mono)',
         fontSize: '10px',
         letterSpacing: '0.10em',
         textTransform: 'uppercase',

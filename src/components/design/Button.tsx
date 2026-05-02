@@ -65,7 +65,7 @@ export default function Button({
       aria-label={ariaLabel}
       className={`pt-btn pt-btn--${variant} pt-btn--${size} ${className}`}
       style={{
-        fontFamily: 'DMMono, ui-monospace, monospace',
+        fontFamily: 'var(--font-mono)',
         fontSize: SIZE_FONT[size],
         letterSpacing: '0.10em',
         textTransform: 'uppercase',

@@ -164,7 +164,7 @@ const TroupeauHub: React.FC = () => {
               <Eyebrow dotColor="accent">Élevage · {nomFerme}</Eyebrow>
               <h1
                 style={{
-                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: 34,
                   fontWeight: 700,
                   lineHeight: 1,
@@ -177,7 +177,7 @@ const TroupeauHub: React.FC = () => {
               </h1>
               <div
                 style={{
-                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 13,
                   color: 'var(--muted)',
                 }}
@@ -319,7 +319,7 @@ const LogesMiniBar: React.FC<LogesMiniBarProps> = ({ label, occ }) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 6 }}>
         <span
           style={{
-            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontFamily: 'var(--font-mono)',
             fontSize: 9.5,
             letterSpacing: '0.18em',
             textTransform: 'uppercase',
@@ -331,7 +331,7 @@ const LogesMiniBar: React.FC<LogesMiniBarProps> = ({ label, occ }) => {
         </span>
         <span
           style={{
-            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontFamily: 'var(--font-mono)',
             fontSize: 11,
             color: 'var(--ink)',
             fontWeight: 600,
@@ -420,7 +420,7 @@ const BandesInline: React.FC<BandesInlineProps> = ({ bandes, onOpen, onSeeAll })
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    fontFamily: 'BigShoulders, system-ui, sans-serif',
+                    fontFamily: 'var(--font-heading)',
                     fontSize: 14,
                     fontWeight: 600,
                     color: 'var(--ink)',
@@ -432,7 +432,7 @@ const BandesInline: React.FC<BandesInlineProps> = ({ bandes, onOpen, onSeeAll })
                 </div>
                 <div
                   style={{
-                    fontFamily: 'DMMono, ui-monospace, monospace',
+                    fontFamily: 'var(--font-mono)',
                     fontSize: 10.5,
                     letterSpacing: '0.06em',
                     color: 'var(--muted)',
@@ -459,7 +459,7 @@ const BandesInline: React.FC<BandesInlineProps> = ({ bandes, onOpen, onSeeAll })
           border: 'none',
           borderTop: '1px solid var(--bg-app)',
           padding: '12px 16px',
-          fontFamily: 'DMMono, ui-monospace, monospace',
+          fontFamily: 'var(--font-mono)',
           fontSize: 11,
           letterSpacing: '0.10em',
           textTransform: 'uppercase',
@@ -508,7 +508,7 @@ const BatimentsSummary: React.FC<BatimentsSummaryProps> = ({ onSeeAll }) => {
           <div key={s.label} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span
               style={{
-                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontFamily: 'var(--font-mono)',
                 fontSize: 9.5,
                 letterSpacing: '0.04em',
                 color: 'var(--muted)',
@@ -531,7 +531,7 @@ const BatimentsSummary: React.FC<BatimentsSummaryProps> = ({ onSeeAll }) => {
             </span>
             <span
               style={{
-                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontFamily: 'var(--font-mono)',
                 fontSize: 10,
                 letterSpacing: '0.06em',
                 color: 'var(--muted)',
@@ -554,7 +554,7 @@ const BatimentsSummary: React.FC<BatimentsSummaryProps> = ({ onSeeAll }) => {
           border: 'none',
           borderRadius: 8,
           padding: '8px 14px',
-          fontFamily: 'DMMono, ui-monospace, monospace',
+          fontFamily: 'var(--font-mono)',
           fontSize: 11,
           letterSpacing: '0.10em',
           textTransform: 'uppercase',

@@ -170,7 +170,7 @@ const AppSidebar: React.FC = () => {
           padding: '16px 0 24px',
           flexShrink: 0,
           overflowY: 'auto',
-          fontFamily: 'InstrumentSans, system-ui, sans-serif',
+          fontFamily: 'var(--font-body)',
         }}
       >
         {/* Brand */}
@@ -185,7 +185,7 @@ const AppSidebar: React.FC = () => {
         >
           <span
             style={{
-              fontFamily: 'BigShoulders, InstrumentSans, sans-serif',
+              fontFamily: 'var(--font-heading)',
               fontSize: 18,
               fontWeight: 700,
               color: 'var(--ink)',
@@ -222,7 +222,7 @@ const AppSidebar: React.FC = () => {
             <span style={{ flex: 1, textAlign: 'left' }}>Rechercher</span>
             <kbd
               style={{
-                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontFamily: 'var(--font-mono)',
                 fontSize: 10,
                 padding: '1px 5px',
                 border: '1px solid var(--line)',
@@ -475,7 +475,7 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({
   <div style={{ marginBottom: 4 }}>
     <div
       style={{
-        fontFamily: 'DMMono, ui-monospace, monospace',
+        fontFamily: 'var(--font-mono)',
         fontSize: 11,
         letterSpacing: '0.20em',
         textTransform: 'uppercase',
@@ -586,7 +586,7 @@ const SidebarRow: React.FC<SidebarRowProps> = ({
       {count !== undefined && count > 0 ? (
         <span
           style={{
-            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontFamily: 'var(--font-mono)',
             fontSize: 10,
             color: active ? 'var(--color-accent-500)' : 'var(--muted)',
             background: active ? 'transparent' : 'var(--bg-surface-2)',

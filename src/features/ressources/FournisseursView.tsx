@@ -78,7 +78,7 @@ const FournisseursView: React.FC = () => {
             <header className="mb-6">
               <h1
                 style={{
-                  fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: 34,
                   fontWeight: 700,
                   lineHeight: 1,
@@ -91,7 +91,7 @@ const FournisseursView: React.FC = () => {
               </h1>
               <p
                 style={{
-                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 13,
                   color: 'var(--muted)',
                   margin: 0,
@@ -108,7 +108,7 @@ const FournisseursView: React.FC = () => {
               style={{
                 background: 'var(--color-accent-500)',
                 color: 'var(--bg-surface)',
-                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontFamily: 'var(--font-mono)',
               }}
             >
               <Plus size={14} aria-hidden="true" />
@@ -127,7 +127,7 @@ const FournisseursView: React.FC = () => {
               >
                 <p
                   className="text-[13px] mb-1"
-                  style={{ color: 'var(--ink)', fontFamily: 'InstrumentSans, system-ui' }}
+                  style={{ color: 'var(--ink)', fontFamily: 'var(--font-body)' }}
                 >
                   Aucun fournisseur enregistré
                 </p>

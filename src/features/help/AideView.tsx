@@ -6,9 +6,9 @@ import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { buildWhatsappUrl, getSupportWhatsapp } from '../../services/supportContact';
 
-const FONT_DISPLAY = 'BigShoulders, "InstrumentSans", sans-serif';
-const FONT_BODY = 'InstrumentSans, -apple-system, system-ui, sans-serif';
-const FONT_MONO = 'DMMono, ui-monospace, monospace';
+const FONT_DISPLAY = 'var(--font-heading)';
+const FONT_BODY = 'var(--font-body)';
+const FONT_MONO = 'var(--font-mono)';
 
 const WHATSAPP_BRAND = '#25D366';
 
@@ -107,7 +107,7 @@ const AideView: React.FC = () => {
               <Eyebrow dotColor="accent">Plus · Aide</Eyebrow>
               <h1
                 style={{
-                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: 34,
                   fontWeight: 700,
                   lineHeight: 1,
@@ -120,7 +120,7 @@ const AideView: React.FC = () => {
               </h1>
               <div
                 style={{
-                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 13,
                   color: 'var(--muted)',
                 }}

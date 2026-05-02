@@ -392,7 +392,7 @@ const AlertRow: React.FC<AlertRowProps> = ({
             alignItems: 'center',
             gap: 6,
             color: dotColor,
-            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontFamily: 'var(--font-mono)',
             fontSize: 10,
             letterSpacing: '0.10em',
             textTransform: 'uppercase',
@@ -415,7 +415,7 @@ const AlertRow: React.FC<AlertRowProps> = ({
           <span
             style={{
               color: 'var(--color-secondary-deep)',
-              fontFamily: 'DMMono, ui-monospace, monospace',
+              fontFamily: 'var(--font-mono)',
               fontSize: 10,
               letterSpacing: '0.10em',
               textTransform: 'uppercase',
@@ -433,7 +433,7 @@ const AlertRow: React.FC<AlertRowProps> = ({
           <span
             style={{
               marginLeft: 'auto',
-              fontFamily: 'DMMono, ui-monospace, monospace',
+              fontFamily: 'var(--font-mono)',
               fontSize: 11,
               color: 'var(--muted)',
               fontVariantNumeric: 'tabular-nums',
@@ -446,7 +446,7 @@ const AlertRow: React.FC<AlertRowProps> = ({
 
       <h3
         style={{
-          fontFamily: 'BigShoulders, system-ui, sans-serif',
+          fontFamily: 'var(--font-heading)',
           fontSize: titleSize,
           fontWeight: titleWeight,
           color: 'var(--ink)',
@@ -460,7 +460,7 @@ const AlertRow: React.FC<AlertRowProps> = ({
 
       <p
         style={{
-          fontFamily: 'InstrumentSans, system-ui, sans-serif',
+          fontFamily: 'var(--font-body)',
           fontSize: 13,
           color: 'var(--ink-soft)',
           lineHeight: 1.5,
@@ -478,7 +478,7 @@ const AlertRow: React.FC<AlertRowProps> = ({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 4,
-                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontFamily: 'var(--font-mono)',
                 fontSize: 10,
                 color: 'var(--muted)',
                 letterSpacing: '0.04em',
@@ -491,7 +491,7 @@ const AlertRow: React.FC<AlertRowProps> = ({
           {actionLabel && !isResolu && (
             <span
               style={{
-                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontFamily: 'var(--font-mono)',
                 fontSize: 10,
                 color: isUrgent ? 'var(--color-accent-500)' : 'var(--muted)',
                 fontWeight: 600,
@@ -636,7 +636,7 @@ const AlertsView: React.FC = () => {
               <Eyebrow dotColor="amber">Suivi terrain · Actions à valider</Eyebrow>
               <h1
                 style={{
-                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: 34,
                   fontWeight: 700,
                   lineHeight: 1,
@@ -649,7 +649,7 @@ const AlertsView: React.FC = () => {
               </h1>
               <div
                 style={{
-                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 13,
                   color: 'var(--muted)',
                 }}
@@ -726,7 +726,7 @@ const AlertsView: React.FC = () => {
                       background: active ? 'var(--color-accent-500)' : 'var(--bg-surface)',
                       color: active ? 'var(--bg-surface)' : 'var(--ink-soft)',
                       border: `1px solid ${active ? 'var(--color-accent-500)' : 'var(--line)'}`,
-                      fontFamily: 'DMMono, ui-monospace, monospace',
+                      fontFamily: 'var(--font-mono)',
                       fontSize: 11,
                       letterSpacing: '0.10em',
                       textTransform: 'uppercase',
@@ -815,7 +815,7 @@ const AlertsView: React.FC = () => {
                         background: 'none',
                         border: 'none',
                         color: 'var(--color-accent-500)',
-                        fontFamily: 'DMMono, ui-monospace, monospace',
+                        fontFamily: 'var(--font-mono)',
                         fontSize: 10,
                         letterSpacing: '0.10em',
                         textTransform: 'uppercase',
@@ -844,7 +844,7 @@ const AlertsView: React.FC = () => {
                     <AlertOctagon size={22} color="var(--muted)" aria-hidden="true" />
                     <p
                       style={{
-                        fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                        fontFamily: 'var(--font-body)',
                         fontSize: 13,
                         color: 'var(--muted)',
                         margin: 0,
@@ -973,7 +973,7 @@ const AlertsView: React.FC = () => {
                               color: 'var(--color-amber-pork-deep)',
                               padding: '3px 9px',
                               borderRadius: 'var(--radius-pill)',
-                              fontFamily: 'DMMono, ui-monospace, monospace',
+                              fontFamily: 'var(--font-mono)',
                               fontSize: 10,
                               letterSpacing: '0.10em',
                               textTransform: 'uppercase',
@@ -998,7 +998,7 @@ const AlertsView: React.FC = () => {
                           <span
                             style={{
                               marginLeft: 'auto',
-                              fontFamily: 'DMMono, ui-monospace, monospace',
+                              fontFamily: 'var(--font-mono)',
                               fontSize: 11,
                               color: 'var(--muted)',
                             }}
@@ -1011,7 +1011,7 @@ const AlertsView: React.FC = () => {
                         </div>
                         <h3
                           style={{
-                            fontFamily: 'BigShoulders, system-ui, sans-serif',
+                            fontFamily: 'var(--font-heading)',
                             fontSize: 17,
                             fontWeight: 600,
                             color: 'var(--ink)',
@@ -1023,7 +1023,7 @@ const AlertsView: React.FC = () => {
                         </h3>
                         <p
                           style={{
-                            fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                            fontFamily: 'var(--font-body)',
                             fontSize: 13,
                             color: 'var(--ink-soft)',
                             lineHeight: 1.5,

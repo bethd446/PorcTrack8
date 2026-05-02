@@ -45,7 +45,7 @@ export default function TopBarSync({
         display: 'flex',
         alignItems: 'center',
         gap: 14,
-        fontFamily: 'DMMono, ui-monospace, monospace',
+        fontFamily: 'var(--font-mono)',
         fontSize: 11,
         letterSpacing: '0.04em',
       }}
@@ -122,7 +122,7 @@ export default function TopBarSync({
               color: 'var(--ink)',
               padding: '6px 12px',
               borderRadius: 9999,
-              fontFamily: 'InstrumentSans, system-ui, sans-serif',
+              fontFamily: 'var(--font-body)',
               fontSize: 12,
               fontWeight: 500,
               letterSpacing: 0,

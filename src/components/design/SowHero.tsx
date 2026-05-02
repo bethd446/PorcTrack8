@@ -104,7 +104,7 @@ export default function SowHero({
                 type="button"
                 onClick={onUploadClick}
                 style={{
-                  fontFamily: 'DMMono, ui-monospace, monospace',
+                  fontFamily: 'var(--font-mono)',
                   fontSize: 11,
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase',
@@ -129,7 +129,7 @@ export default function SowHero({
               left: 12,
               background: 'var(--bg-surface)',
               color: 'var(--ink)',
-              fontFamily: 'DMMono, ui-monospace, monospace',
+              fontFamily: 'var(--font-mono)',
               fontSize: 9.5,
               letterSpacing: '0.10em',
               padding: '4px 8px',
@@ -185,7 +185,7 @@ export default function SowHero({
               <span
                 style={{
                   display: 'inline-block',
-                  fontFamily: 'InstrumentSans, ui-sans-serif, system-ui',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 18,
                   fontWeight: 400,
                   color: 'var(--muted)',

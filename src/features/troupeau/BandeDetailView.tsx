@@ -374,7 +374,7 @@ const BandeDetailView: React.FC = () => {
                 <Eyebrow dotColor="accent">Cheptel · Bande {decodedId}</Eyebrow>
                 <h1
                   style={{
-                    fontFamily: 'BigShoulders, system-ui, sans-serif',
+                    fontFamily: 'var(--font-heading)',
                     fontSize: 34,
                     fontWeight: 700,
                     lineHeight: 1,
@@ -387,7 +387,7 @@ const BandeDetailView: React.FC = () => {
                 </h1>
                 <div
                   style={{
-                    fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                    fontFamily: 'var(--font-body)',
                     fontSize: 13,
                     color: 'var(--muted)',
                   }}
@@ -473,7 +473,7 @@ const BandeDetailView: React.FC = () => {
               <Eyebrow dotColor="accent">Cheptel · Bande {idDisplay}</Eyebrow>
               <h1
                 style={{
-                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: 34,
                   fontWeight: 700,
                   lineHeight: 1,
@@ -486,7 +486,7 @@ const BandeDetailView: React.FC = () => {
               </h1>
               <div
                 style={{
-                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 13,
                   color: 'var(--muted)',
                 }}
@@ -775,7 +775,7 @@ const BandeDetailView: React.FC = () => {
                     borderRadius: 'var(--radius-pill, 9999px)',
                     border: '1px solid var(--line)',
                     background: 'var(--bg-surface)',
-                    fontFamily: 'DMMono, ui-monospace, monospace',
+                    fontFamily: 'var(--font-mono)',
                     fontSize: 11,
                     letterSpacing: '0.08em',
                     color: 'var(--ink)',

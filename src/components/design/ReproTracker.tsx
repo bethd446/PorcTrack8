@@ -68,7 +68,7 @@ export default function ReproTracker({ stages, progressPct, className = '' }: Re
             <div
               style={{
                 marginTop: 8,
-                fontFamily: 'DMMono, ui-monospace, monospace',
+                fontFamily: 'var(--font-mono)',
                 fontSize: 9,
                 letterSpacing: '0.10em',
                 textTransform: 'uppercase',
@@ -139,7 +139,7 @@ function Marker({ state }: { state: ReproStage['state'] }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontFamily: 'DMMono, ui-monospace, monospace',
+          fontFamily: 'var(--font-mono)',
           fontSize: 11,
           fontWeight: 600,
           zIndex: 2,
@@ -163,7 +163,7 @@ function Marker({ state }: { state: ReproStage['state'] }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontFamily: 'DMMono, ui-monospace, monospace',
+        fontFamily: 'var(--font-mono)',
         fontSize: 9,
         zIndex: 2,
       }}

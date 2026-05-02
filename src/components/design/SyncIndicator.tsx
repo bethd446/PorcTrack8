@@ -42,7 +42,7 @@ const SyncIndicator: React.FC<Props> = ({ state = 'online', compact = false }) =
         display: 'inline-flex',
         alignItems: 'center',
         gap: 8,
-        fontFamily: 'DMMono, ui-monospace, monospace',
+        fontFamily: 'var(--font-mono)',
         fontSize: 11,
         letterSpacing: '0.08em',
         textTransform: 'uppercase',

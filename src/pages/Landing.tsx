@@ -14,10 +14,10 @@ import Eyebrow from '../components/design/Eyebrow';
 import Button from '../components/design/Button';
 import Chip from '../components/design/Chip';
 
-const FONT_DISPLAY = 'BigShoulders, "InstrumentSans", sans-serif';
-const FONT_BODY = 'InstrumentSans, -apple-system, system-ui, sans-serif';
-const FONT_NUM = 'BigShoulders, "InstrumentSans", sans-serif';
-const FONT_MONO = 'DMMono, ui-monospace, monospace';
+const FONT_DISPLAY = 'var(--font-heading)';
+const FONT_BODY = 'var(--font-body)';
+const FONT_NUM = 'var(--font-heading)';
+const FONT_MONO = 'var(--font-mono)';
 
 export default function Landing() {
   // theme-day est désormais forcé globalement dans main.tsx (refonte v6 light).

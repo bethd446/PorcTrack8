@@ -136,7 +136,7 @@ const FilterChip: React.FC<{
       border: '1px solid var(--line)',
       background: active ? 'var(--color-accent-500, #047857)' : 'var(--bg-surface)',
       color: active ? 'var(--bg-surface)' : 'var(--ink)',
-      fontFamily: 'DMMono, ui-monospace, monospace',
+      fontFamily: 'var(--font-mono)',
       fontSize: 11,
       letterSpacing: '0.08em',
       textTransform: 'uppercase',
@@ -172,7 +172,7 @@ const ProgressSegment: React.FC<{
       <Icon size={14} aria-hidden="true" />
       <span
         style={{
-          fontFamily: 'DMMono, ui-monospace, monospace',
+          fontFamily: 'var(--font-mono)',
           fontSize: 13,
           fontWeight: 700,
           lineHeight: 1,
@@ -183,7 +183,7 @@ const ProgressSegment: React.FC<{
       <span
         className="text-[10px] uppercase"
         style={{
-          fontFamily: 'DMMono, ui-monospace, monospace',
+          fontFamily: 'var(--font-mono)',
           letterSpacing: '0.08em',
           maxWidth: '100%',
           overflow: 'hidden',
@@ -213,7 +213,7 @@ const TruieChip: React.FC<{
       border: '1px solid var(--line)',
       background: 'var(--bg-surface)',
       color: 'var(--ink)',
-      fontFamily: 'DMMono, ui-monospace, monospace',
+      fontFamily: 'var(--font-mono)',
       fontSize: 11,
       letterSpacing: '0.04em',
       cursor: 'pointer',
@@ -254,7 +254,7 @@ const BatchCard: React.FC<{
         <div style={{ flex: 1, minWidth: 0 }}>
           <h2
             style={{
-              fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
+              fontFamily: 'var(--font-heading)',
               fontSize: 18,
               fontWeight: 700,
               letterSpacing: '-0.01em',
@@ -267,7 +267,7 @@ const BatchCard: React.FC<{
           </h2>
           <p
             style={{
-              fontFamily: 'DMMono, ui-monospace, monospace',
+              fontFamily: 'var(--font-mono)',
               fontSize: 11,
               color: 'var(--muted)',
               letterSpacing: '0.06em',
@@ -283,7 +283,7 @@ const BatchCard: React.FC<{
             borderRadius: 'var(--radius-pill, 999px)',
             background: badge.bg,
             color: badge.fg,
-            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontFamily: 'var(--font-mono)',
             fontSize: 10,
             letterSpacing: '0.10em',
             textTransform: 'uppercase',
@@ -356,7 +356,7 @@ const ReproductionLotsView: React.FC = () => {
               <Eyebrow dotColor="accent">Reproduction · Lots</Eyebrow>
               <h1
                 style={{
-                  fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: 34,
                   fontWeight: 700,
                   lineHeight: 1,
@@ -369,7 +369,7 @@ const ReproductionLotsView: React.FC = () => {
               </h1>
               <p
                 style={{
-                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 13,
                   color: 'var(--muted)',
                   margin: 0,
@@ -395,7 +395,7 @@ const ReproductionLotsView: React.FC = () => {
                   border: '1px solid var(--line)',
                   borderRadius: 'var(--radius-pill, 999px)',
                   color: 'var(--ink)',
-                  fontFamily: 'DMMono, ui-monospace, monospace',
+                  fontFamily: 'var(--font-mono)',
                   fontSize: 11,
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase',
@@ -448,7 +448,7 @@ const ReproductionLotsView: React.FC = () => {
                       background: 'var(--bg-surface)',
                       color: 'var(--ink)',
                       border: '1px solid var(--line)',
-                      fontFamily: 'DMMono, ui-monospace, monospace',
+                      fontFamily: 'var(--font-mono)',
                       fontSize: 11,
                       letterSpacing: '0.10em',
                       textTransform: 'uppercase',
@@ -463,7 +463,7 @@ const ReproductionLotsView: React.FC = () => {
             ) : filteredBatches.length === 0 ? (
               <p
                 style={{
-                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 13,
                   color: 'var(--muted)',
                   padding: '12px 14px',

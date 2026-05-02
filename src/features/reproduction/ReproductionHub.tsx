@@ -68,7 +68,7 @@ const StepSection: React.FC<SectionProps> = ({ step, title, count, emptyLabel, c
     {count === 0 ? (
       <p
         style={{
-          fontFamily: 'InstrumentSans, system-ui, sans-serif',
+          fontFamily: 'var(--font-body)',
           fontSize: 13,
           color: 'var(--muted)',
           margin: '12px 0 0',
@@ -146,7 +146,7 @@ const StepRow: React.FC<RowProps> = ({ primary, secondary, cta, Icon, onPrimary,
         <span
           style={{
             display: 'block',
-            fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
+            fontFamily: 'var(--font-heading)',
             fontSize: 15,
             fontWeight: 600,
             color: 'var(--ink)',
@@ -161,7 +161,7 @@ const StepRow: React.FC<RowProps> = ({ primary, secondary, cta, Icon, onPrimary,
         <span
           style={{
             display: 'block',
-            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontFamily: 'var(--font-mono)',
             fontSize: 11,
             color: 'var(--muted)',
             letterSpacing: '0.06em',
@@ -184,7 +184,7 @@ const StepRow: React.FC<RowProps> = ({ primary, secondary, cta, Icon, onPrimary,
         background: 'var(--color-accent-500)',
         color: 'var(--bg-surface)',
         border: 'none',
-        fontFamily: 'DMMono, ui-monospace, monospace',
+        fontFamily: 'var(--font-mono)',
         fontSize: 11,
         letterSpacing: '0.10em',
         textTransform: 'uppercase',
@@ -246,7 +246,7 @@ const ReproductionHub: React.FC = () => {
               <Eyebrow customDotColor="var(--module-naissage)">Reproduction</Eyebrow>
               <h1
                 style={{
-                  fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: 34,
                   fontWeight: 700,
                   lineHeight: 1,
@@ -259,7 +259,7 @@ const ReproductionHub: React.FC = () => {
               </h1>
               <div
                 style={{
-                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 13,
                   color: 'var(--muted)',
                 }}
@@ -347,7 +347,7 @@ const ReproductionHub: React.FC = () => {
                   <span
                     style={{
                       display: 'block',
-                      fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
+                      fontFamily: 'var(--font-heading)',
                       fontSize: 15,
                       fontWeight: 600,
                       color: 'var(--ink)',
@@ -358,7 +358,7 @@ const ReproductionHub: React.FC = () => {
                   <span
                     style={{
                       display: 'block',
-                      fontFamily: 'DMMono, ui-monospace, monospace',
+                      fontFamily: 'var(--font-mono)',
                       fontSize: 11,
                       color: 'var(--muted)',
                       marginTop: 2,
@@ -510,7 +510,7 @@ const ReproductionHub: React.FC = () => {
                   <span
                     style={{
                       display: 'block',
-                      fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
+                      fontFamily: 'var(--font-heading)',
                       fontSize: 16,
                       fontWeight: 600,
                       color: 'var(--ink)',
@@ -522,7 +522,7 @@ const ReproductionHub: React.FC = () => {
                   <span
                     style={{
                       display: 'block',
-                      fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                      fontFamily: 'var(--font-body)',
                       fontSize: 13,
                       color: 'var(--ink-soft)',
                       marginTop: 2,

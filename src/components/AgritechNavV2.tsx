@@ -321,7 +321,7 @@ const NavTab: React.FC<NavTabProps> = ({ tab, isActive, onSelect, badgeCount, mo
         <span
           className="text-[11px] font-semibold leading-none transition-[color] duration-[180ms]"
           style={{
-            fontFamily: 'InstrumentSans, sans-serif',
+            fontFamily: 'var(--font-body)',
             color: isActive ? ACCENT : 'var(--ink-soft, var(--muted))',
           }}
         >

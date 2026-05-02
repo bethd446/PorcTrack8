@@ -563,7 +563,7 @@ const TodayHub: React.FC = () => {
               <Eyebrow dotColor="accent">Aujourd&rsquo;hui</Eyebrow>
               <h1
                 style={{
-                  fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: 34,
                   fontWeight: 700,
                   lineHeight: 1,
@@ -576,7 +576,7 @@ const TodayHub: React.FC = () => {
               </h1>
               <div
                 style={{
-                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 13,
                   color: 'var(--muted)',
                   textTransform: 'capitalize',
@@ -625,7 +625,7 @@ const TodayHub: React.FC = () => {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <h2
                       style={{
-                        fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
+                        fontFamily: 'var(--font-heading)',
                         fontSize: 22,
                         fontWeight: 700,
                         color: 'var(--ink)',
@@ -639,7 +639,7 @@ const TodayHub: React.FC = () => {
                     {primaryTask.detail ? (
                       <p
                         style={{
-                          fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                          fontFamily: 'var(--font-body)',
                           fontSize: 14,
                           color: 'var(--ink-soft)',
                           lineHeight: 1.45,
@@ -660,7 +660,7 @@ const TodayHub: React.FC = () => {
                     borderRadius: 'var(--radius-pill)',
                     background: 'var(--color-accent-500)',
                     color: 'var(--bg-surface)',
-                    fontFamily: 'DMMono, ui-monospace, monospace',
+                    fontFamily: 'var(--font-mono)',
                     fontSize: 12,
                     letterSpacing: '0.10em',
                     textTransform: 'uppercase',
@@ -766,7 +766,7 @@ const TodayHub: React.FC = () => {
                           <span
                             style={{
                               flex: 1,
-                              fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                              fontFamily: 'var(--font-body)',
                               fontSize: 14,
                               fontWeight: labelWeight,
                               color: 'var(--ink)',
@@ -832,7 +832,7 @@ const TodayHub: React.FC = () => {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div
                     style={{
-                      fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
+                      fontFamily: 'var(--font-heading)',
                       fontSize: 16,
                       fontWeight: 600,
                       color: 'var(--ink)',
@@ -847,7 +847,7 @@ const TodayHub: React.FC = () => {
                   </div>
                   <div
                     style={{
-                      fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                      fontFamily: 'var(--font-body)',
                       fontSize: 13,
                       color: 'var(--ink-soft)',
                       marginTop: 4,
@@ -894,7 +894,7 @@ const TodayHub: React.FC = () => {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div
                       style={{
-                        fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
+                        fontFamily: 'var(--font-heading)',
                         fontSize: 16,
                         fontWeight: 600,
                         color: 'var(--ink)',
@@ -905,7 +905,7 @@ const TodayHub: React.FC = () => {
                     </div>
                     <div
                       style={{
-                        fontFamily: 'DMMono, ui-monospace, monospace',
+                        fontFamily: 'var(--font-mono)',
                         fontSize: 11,
                         letterSpacing: '0.06em',
                         color: 'var(--muted)',
@@ -933,7 +933,7 @@ const TodayHub: React.FC = () => {
                     background: 'var(--color-accent-500)',
                     color: 'var(--bg-surface)',
                     border: '1.5px solid var(--color-accent-500)',
-                    fontFamily: 'DMMono, ui-monospace, monospace',
+                    fontFamily: 'var(--font-mono)',
                     fontSize: 12,
                     letterSpacing: '0.10em',
                     textTransform: 'uppercase',

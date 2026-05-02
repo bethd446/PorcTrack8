@@ -4,9 +4,9 @@ import Eyebrow from '../components/design/Eyebrow';
 import Button from '../components/design/Button';
 import PublicShell from '../components/design/PublicShell';
 
-const FONT_DISPLAY = 'BigShoulders, "InstrumentSans", sans-serif';
-const FONT_BODY = 'InstrumentSans, -apple-system, system-ui, sans-serif';
-const FONT_MONO = 'DMMono, ui-monospace, monospace';
+const FONT_DISPLAY = 'var(--font-heading)';
+const FONT_BODY = 'var(--font-body)';
+const FONT_MONO = 'var(--font-mono)';
 
 export default function NotFound() {
   return (

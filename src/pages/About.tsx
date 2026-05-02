@@ -6,10 +6,10 @@ import Button from '../components/design/Button';
 import Chip from '../components/design/Chip';
 import PublicShell from '../components/design/PublicShell';
 
-const FONT_DISPLAY = 'BigShoulders, "InstrumentSans", sans-serif';
-const FONT_BODY = 'InstrumentSans, -apple-system, system-ui, sans-serif';
-const FONT_MONO = 'DMMono, ui-monospace, monospace';
-const FONT_NUM = 'BigShoulders, "InstrumentSans", sans-serif';
+const FONT_DISPLAY = 'var(--font-heading)';
+const FONT_BODY = 'var(--font-body)';
+const FONT_MONO = 'var(--font-mono)';
+const FONT_NUM = 'var(--font-heading)';
 
 export default function About() {
   return (

@@ -108,7 +108,7 @@ const PilotageHub: React.FC = () => {
               <Eyebrow dotColor="accent">Pilotage · Vue globale</Eyebrow>
               <h1
                 style={{
-                  fontFamily: 'BigShoulders, system-ui, sans-serif',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: 34,
                   fontWeight: 700,
                   letterSpacing: '-0.02em',
@@ -207,7 +207,7 @@ const PilotageHub: React.FC = () => {
                 <Eyebrow dotColor="accent">Pilotage · Vue globale</Eyebrow>
                 <h1
                   style={{
-                    fontFamily: 'BigShoulders, system-ui, sans-serif',
+                    fontFamily: 'var(--font-heading)',
                     fontSize: 34,
                     fontWeight: 700,
                     lineHeight: 1,
@@ -220,7 +220,7 @@ const PilotageHub: React.FC = () => {
                 </h1>
                 <div
                   style={{
-                    fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                    fontFamily: 'var(--font-body)',
                     fontSize: 13,
                     color: 'var(--muted)',
                   }}
@@ -241,7 +241,7 @@ const PilotageHub: React.FC = () => {
                     background: 'var(--color-accent-500)',
                     color: 'var(--bg-surface)',
                     border: '1.5px solid var(--color-accent-500)',
-                    fontFamily: 'DMMono, ui-monospace, monospace',
+                    fontFamily: 'var(--font-mono)',
                     fontSize: 11,
                     letterSpacing: '0.10em',
                     textTransform: 'uppercase',
@@ -302,7 +302,7 @@ const PilotageHub: React.FC = () => {
               </div>
               <div
                 style={{
-                  fontFamily: 'DMMono, ui-monospace, monospace',
+                  fontFamily: 'var(--font-mono)',
                   fontSize: 13,
                   letterSpacing: '0.04em',
                   color: margeDeltaColor,
@@ -315,7 +315,7 @@ const PilotageHub: React.FC = () => {
               </div>
               <div
                 style={{
-                  fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                  fontFamily: 'var(--font-body)',
                   fontSize: 12,
                   color: 'var(--muted)',
                 }}
@@ -409,7 +409,7 @@ const PilotageHub: React.FC = () => {
                       borderRadius: 12,
                       padding: '20px',
                       textAlign: 'center',
-                      fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                      fontFamily: 'var(--font-body)',
                       fontSize: 13,
                       color: 'var(--muted)',
                     }}
@@ -445,7 +445,7 @@ const PilotageHub: React.FC = () => {
                 <div style={{ flex: 1 }}>
                   <div
                     style={{
-                      fontFamily: 'BigShoulders, system-ui, sans-serif',
+                      fontFamily: 'var(--font-heading)',
                       fontSize: 16,
                       fontWeight: 700,
                       color: 'var(--ink)',
@@ -545,7 +545,7 @@ const PerfBandeCard: React.FC<PerfBandeCardProps> = ({ tone, label, bandeId, met
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
-            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontFamily: 'var(--font-mono)',
             fontSize: 9.5,
             letterSpacing: '0.18em',
             textTransform: 'uppercase',
@@ -557,7 +557,7 @@ const PerfBandeCard: React.FC<PerfBandeCardProps> = ({ tone, label, bandeId, met
         </div>
         <h4
           style={{
-            fontFamily: 'BigShoulders, system-ui, sans-serif',
+            fontFamily: 'var(--font-heading)',
             fontSize: 16,
             fontWeight: 600,
             color: 'var(--ink)',
@@ -572,7 +572,7 @@ const PerfBandeCard: React.FC<PerfBandeCardProps> = ({ tone, label, bandeId, met
         </h4>
         <div
           style={{
-            fontFamily: 'InstrumentSans, system-ui, sans-serif',
+            fontFamily: 'var(--font-body)',
             fontSize: 12,
             color: 'var(--muted)',
           }}
@@ -631,7 +631,7 @@ const ModuleTile: React.FC<ModuleTileProps> = ({ icon, title, subtitle, onClick 
     <div style={{ minWidth: 0, flex: 1 }}>
       <div
         style={{
-          fontFamily: 'BigShoulders, system-ui, sans-serif',
+          fontFamily: 'var(--font-heading)',
           fontSize: 14,
           fontWeight: 600,
           color: 'var(--ink)',
@@ -642,7 +642,7 @@ const ModuleTile: React.FC<ModuleTileProps> = ({ icon, title, subtitle, onClick 
       </div>
       <div
         style={{
-          fontFamily: 'DMMono, ui-monospace, monospace',
+          fontFamily: 'var(--font-mono)',
           fontSize: 10,
           letterSpacing: '0.08em',
           textTransform: 'uppercase',

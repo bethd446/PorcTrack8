@@ -142,7 +142,7 @@ const FinitionView: React.FC = () => {
                 <Eyebrow dotColor="accent">Cycle · Finition</Eyebrow>
                 <h1
                   style={{
-                    fontFamily: 'BigShoulders, system-ui, sans-serif',
+                    fontFamily: 'var(--font-heading)',
                     fontSize: 34,
                     fontWeight: 700,
                     lineHeight: 1,
@@ -155,7 +155,7 @@ const FinitionView: React.FC = () => {
                 </h1>
                 <div
                   style={{
-                    fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                    fontFamily: 'var(--font-body)',
                     fontSize: 13,
                     color: 'var(--muted)',
                   }}
@@ -314,7 +314,7 @@ const FinitionCard: React.FC<{ data: FinitionRowData; onOpen: () => void; onSell
         />
         <span
           style={{
-            fontFamily: 'DMMono, ui-monospace, monospace',
+            fontFamily: 'var(--font-mono)',
             fontSize: 10,
             letterSpacing: '0.06em',
             color: treatmentStyle.eyebrowColor,
@@ -340,7 +340,7 @@ const FinitionCard: React.FC<{ data: FinitionRowData; onOpen: () => void; onSell
           <div className="flex items-center gap-2">
             <h3
               style={{
-                fontFamily: 'BigShoulders, system-ui, sans-serif',
+                fontFamily: 'var(--font-heading)',
                 fontSize: treatmentStyle.titleSize,
                 fontWeight: treatmentStyle.titleWeight,
                 color: 'var(--ink)',
