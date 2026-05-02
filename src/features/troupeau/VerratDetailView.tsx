@@ -25,6 +25,7 @@ import AnimalHero, { type AnimalHeroChip } from '../../components/design/AnimalH
 import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
 import NotesTimeline from '../../components/design/NotesTimeline';
+import PhotoStrip from '../../components/PhotoStrip';
 import { VerratIcon } from '../../components/icons';
 import { SectionDivider, BottomSheet, type ChipTone } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
@@ -280,6 +281,14 @@ const VerratDetailView: React.FC = () => {
                   subjectLabel={verrat.displayId ?? undefined}
                   onAddNote={() => setSheet('note')}
                 />
+              </div>
+            </section>
+
+            {/* ── Photos (V25 — documentation visuelle) ───────────────── */}
+            <section aria-label="Photos">
+              <SectionDivider label="Photos" />
+              <div className="mt-3">
+                <PhotoStrip subjectType="VERRAT" subjectId={verrat.id} />
               </div>
             </section>
 

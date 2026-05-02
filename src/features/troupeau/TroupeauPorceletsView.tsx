@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Search, ChevronRight, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useFarm } from '../../context/FarmContext';
@@ -10,6 +10,7 @@ import type { BandePorcelets, Loge } from '../../types/farm';
 import { usePhaseTransitions } from '../../hooks/usePhaseTransitions';
 import PhaseTransitionModal from '../../components/modals/PhaseTransitionModal';
 import type { PendingTransition } from '../../services/phaseEngine';
+import QuickAddBandeFromLogeForm from '../../components/forms/QuickAddBandeFromLogeForm';
 
 /* ═════════════════════════════════════════════════════════════════════════
    TroupeauPorceletsView · Vue par LOGE (refonte V25)
@@ -111,8 +112,12 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({
   const [manualTarget, setManualTarget] = useState<PendingTransition | null>(null);
 
   const [loges, setLoges] = useState<Loge[]>([]);
+  const [addBandeOpen, setAddBandeOpen] = useState(false);
+  const [addBandePreselectLogeId, setAddBandePreselectLogeId] = useState<
+    string | undefined
+  >(undefined);
 
-  useEffect(() => {
+  const refreshLoges = useCallback(() => {
     let cancelled = false;
     listLoges()
       .then(rows => {
@@ -125,6 +130,15 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    return refreshLoges();
+  }, [refreshLoges]);
+
+  const openAddBande = useCallback((logeId?: string) => {
+    setAddBandePreselectLogeId(logeId);
+    setAddBandeOpen(true);
   }, []);
 
   const realBandes = useMemo(() => Bandes.filterReal(bandes), [bandes]);
@@ -193,6 +207,18 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({
 
   return (
     <div className="flex flex-col gap-4">
+      {/* CTA primaire — Nouvelle bande */}
+      <button
+        type="button"
+        onClick={() => openAddBande()}
+        aria-label="Créer une nouvelle bande dans une loge"
+        data-testid="new-bande-cta"
+        className="pressable inline-flex items-center justify-center gap-2 h-12 rounded-md bg-accent text-bg-0 font-mono text-[12px] font-bold uppercase tracking-wide hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+      >
+        <Plus size={14} aria-hidden="true" />
+        Nouvelle bande
+      </button>
+
       {/* Summary strip */}
       <div
         className="flex items-stretch justify-between gap-3 card-dense py-3"
@@ -284,18 +310,19 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({
                       accessory={
                         <button
                           type="button"
-                          aria-label={`Assigner une bande à ${loge.numero}`}
+                          aria-label={`Créer une bande dans ${loge.numero}`}
+                          data-testid={`empty-loge-cta-${loge.id}`}
                           onClick={e => {
                             e.stopPropagation();
-                            navigate(`/troupeau/loges/${loge.id}`);
+                            openAddBande(loge.id);
                           }}
                           className="pressable inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 py-1 font-mono text-[10px] uppercase tracking-wide text-text-1 hover:border-accent hover:text-accent"
                         >
                           <Plus size={11} aria-hidden="true" />
-                          Assigner
+                          Nouvelle bande
                         </button>
                       }
-                      onClick={() => navigate(`/troupeau/loges/${loge.id}`)}
+                      onClick={() => openAddBande(loge.id)}
                       ariaLabel={`Loge vide ${logeNumeroPrefixed(loge)}`}
                     />
                   </li>
@@ -314,6 +341,15 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({
           setManualTarget(null);
         }}
         onDismiss={() => setManualTarget(null)}
+      />
+
+      <QuickAddBandeFromLogeForm
+        isOpen={addBandeOpen}
+        onClose={() => setAddBandeOpen(false)}
+        onSuccess={() => {
+          refreshLoges();
+        }}
+        preselectedLogeId={addBandePreselectLogeId}
       />
     </div>
   );

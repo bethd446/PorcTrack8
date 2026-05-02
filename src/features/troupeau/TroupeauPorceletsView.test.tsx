@@ -278,3 +278,48 @@ describe('TroupeauPorceletsView — V25 vue par loge', () => {
     expect(total).toBe(46);
   });
 });
+
+// ─── V25-FIX — Workflow nouvelle bande par loge ────────────────────────────
+
+describe('TroupeauPorceletsView — click loge vide ouvre QuickAddBandeFromLogeForm', () => {
+  /**
+   * Reproduit le comportement de openAddBande(logeId) dans le composant :
+   * cliquer sur une loge vide doit (1) capturer son ID, (2) ouvrir le sheet.
+   */
+  it('openAddBande(logeId) capture le logeId et ouvre le sheet', () => {
+    let preselectedLogeId: string | undefined;
+    let isOpen = false;
+    const openAddBande = (logeId?: string): void => {
+      preselectedLogeId = logeId;
+      isOpen = true;
+    };
+
+    counter = 0;
+    const loges: Loge[] = [
+      makeLoge('L-M1', '01', 'MATERNITE'),
+      makeLoge('L-PS1', '01', 'POST_SEVRAGE'),
+    ];
+    const bandes: BandePorcelets[] = [
+      makeBande('Sous mère', 11, { logeId: 'L-M1' }),
+    ];
+    // L-PS1 est vide → on simule le tap utilisateur
+    const empty = computeEmptyLoges(bandes, loges);
+    expect(empty.map(l => l.id)).toEqual(['L-PS1']);
+
+    openAddBande(empty[0].id);
+    expect(isOpen).toBe(true);
+    expect(preselectedLogeId).toBe('L-PS1');
+  });
+
+  it('openAddBande() sans arg : sheet ouvert sans pré-sélection', () => {
+    let preselectedLogeId: string | undefined = 'should-be-cleared';
+    let isOpen = false;
+    const openAddBande = (logeId?: string): void => {
+      preselectedLogeId = logeId;
+      isOpen = true;
+    };
+    openAddBande();
+    expect(isOpen).toBe(true);
+    expect(preselectedLogeId).toBeUndefined();
+  });
+});

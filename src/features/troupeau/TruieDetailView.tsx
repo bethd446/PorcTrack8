@@ -44,6 +44,7 @@ import NotesTimeline from '../../components/design/NotesTimeline';
 import LineageBreadcrumb, { type LineageNode } from '../../components/design/LineageBreadcrumb';
 import LineageTree from '../../components/design/LineageTree';
 import TopBarSync from '../../components/design/TopBarSync';
+import PhotoStrip from '../../components/PhotoStrip';
 
 import type { Truie, BandePorcelets, Saillie, TraitementSante } from '../../types/farm';
 import {
@@ -830,6 +831,12 @@ const TruieDetailView: React.FC = () => {
                   subjectId={truie.id}
                   subjectLabel={truie.boucle ?? truie.displayId ?? undefined}
                 />
+
+                {/* Photos (V25 — documentation visuelle) */}
+                <section aria-label="Photos" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <Eyebrow>Photos</Eyebrow>
+                  <PhotoStrip subjectType="TRUIE" subjectId={truie.id} />
+                </section>
               </div>
 
               {/* Séparateur vertical */}
