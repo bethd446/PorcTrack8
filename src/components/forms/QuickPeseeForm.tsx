@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useFarm } from '../../context/FarmContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   insertNote,
   updateSowByCode,
@@ -130,6 +131,7 @@ function jFrom(frDate: string | undefined): number | null {
 
 const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
   const { bandes, truies, verrats, refreshData } = useFarm();
+  const { user } = useAuth();
   const [presentAlert] = useIonAlert();
 
   const [step, setStep] = useState<Step>(1);
@@ -228,12 +230,15 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
       }
       if (obs) note += ` · ${obs}`;
 
-      const author = kvGet('user_name') || 'Anonyme';
+      // FIX V23-AUDIT-2 : author_id doit être un UUID (table notes.author_id uuid).
+      // Avant : kvGet('user_name') = string littéral → HTTP 400 invalid_uuid.
+      // user.id est l'UUID Supabase auth ; null si offline → on omet le champ.
+      const authorId = user?.id ?? null;
 
       await insertNote({
         content: `[${subjectType}:${selectedSubject.id}] ${note}`,
         category: 'PESEE',
-        author_id: author,
+        author_id: authorId,
       });
 
       // Si animal individuel, on met à jour son poids dans la fiche signalétique.

@@ -6,8 +6,9 @@
 
 | Email | user_id | troupeau_id | Origine |
 |---|---|---|---|
-| `audit-50-test@porctrack.test` | `58f2ca4d-0c45-48d0-9002-890d5b35991c` | `575371e4-97cd-4ff9-acb4-baba001df004` | Audit V23 (cette session) |
-| `test-audit@deltajohnsons.com` | `c7d775c8-9365-43d3-afd1-268f6fea14f3` | `7a43ab3f-4810-47d8-8f1a-0a437a86fd53` | Session précédente — résiduel |
+| `audit-50-test@porctrack.test` | `58f2ca4d-0c45-48d0-9002-890d5b35991c` | `575371e4-97cd-4ff9-acb4-baba001df004` | Audit V23 (1ère passe) — DÉJÀ SUPPRIMÉ |
+| `test-audit@deltajohnsons.com` | `c7d775c8-9365-43d3-afd1-268f6fea14f3` | `7a43ab3f-4810-47d8-8f1a-0a437a86fd53` | Session précédente — DÉJÀ SUPPRIMÉ |
+| `audit-50-test@porctrack.test` | `6c58cf67-de72-423e-b0c1-b35bd613400a` | `9a06fbd8-6f04-43b6-8885-2ebf7217444a` | Test interactif post-fix V23 (2ème passe) — À SUPPRIMER |
 
 ## Compte PRODUCTION à PRÉSERVER
 

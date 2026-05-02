@@ -327,6 +327,11 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
           result.normalized.poidsMoyen !== undefined
             ? result.normalized.poidsMoyen * vivants
             : null,
+        // FIX V23-AUDIT-2 : batches.poids_initial_kg NOT NULL CHECK >0 <=200.
+        // Sans cette ligne le INSERT échouait avec 23502 sur toute MB où
+        // l'éleveur n'avait pas saisi le poids moyen (champ marqué "optionnel"
+        // dans le form). Cible métier : porcelet ≈ 1.4 kg à la naissance.
+        poids_initial_kg: result.normalized.poidsMoyen ?? 1.4,
         statut: 'Sous mère',
         phase: 'maternite',
         notes: heure ? `MB ${heure} · ${notes}`.trim() : notes,

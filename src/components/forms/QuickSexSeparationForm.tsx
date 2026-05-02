@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { SplitSquareHorizontal, Search, CheckCircle2, ChevronRight, ArrowLeft } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   insertNote,
   updateBatchByCode,
@@ -90,6 +91,7 @@ function isoToShortFr(iso: string): string {
 
 const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen, onClose }) => {
   const { bandes } = useFarm();
+  const { user } = useAuth();
 
   const [step, setStep] = useState<Step>(1);
   const [query, setQuery] = useState('');
@@ -181,12 +183,13 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
 
       const note = `Séparation sexe · ${males} mâles · ${femelles} femelles · date=${dateShort}${obsTag}`;
 
-      const author = kvGet('user_name') || 'Anonyme';
+      // FIX V23-AUDIT-2 : author_id doit être un UUID Supabase auth.user.id.
+      const authorId = user?.id ?? null;
 
       await insertNote({
         content: `[BANDE:${selectedBande.id}] ${note}`,
         category: 'SEPARATION',
-        author_id: author,
+        author_id: authorId,
       });
 
       // Le schéma batches Supabase n'a pas nb_males / nb_femelles /
