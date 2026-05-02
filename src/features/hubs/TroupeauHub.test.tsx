@@ -255,6 +255,18 @@ vi.mock('../../components/forms/QuickSaillieForm', () => ({
     isOpen ? <div data-testid="quick-saillie-form-open" /> : null,
 }));
 
+// V6-C : TroupeauLogesListView consomme listLoges/getLogeContents
+vi.mock('../../services/supabaseWrites', () => ({
+  listLoges: async () => [],
+  getLogeContents: async () => ({
+    truies: [],
+    verrats: [],
+    bandes: [],
+    totalAnimaux: 0,
+  }),
+  createLoge: vi.fn(),
+}));
+
 // kvStore : Vitest 4 ne fournit plus de localStorage fonctionnel par défaut
 // (object stub sans getItem). On mocke kvGet/kvSet pour TroupeauTruiesView.
 vi.mock('../../services/kvStore', () => ({
@@ -388,15 +400,17 @@ describe('TroupeauHub — intégration multi-vues', () => {
     expect(psHeader).toBeDefined();
   });
 
-  it('5. click Loges → IsoBarn SVG (role=img) visible', async () => {
+  it('5. click Loges → liste plate des loges visible (V6-C)', async () => {
     renderHub();
 
     await clickSubTabUser(/loges/i);
 
-    // On attend l'apparition du SVG stubé (role=img + aria-label isométrique)
-    const svg = await screen.findByRole('img', { name: /isométrique/i });
-    expect(svg.tagName.toLowerCase()).toBe('svg');
-    expect(svg.getAttribute('aria-label')).toMatch(/isométrique/i);
+    // V6-C : tab Loges affiche maintenant TroupeauLogesListView (référentiel
+    // V24) au lieu de l'IsoBarn 3D legacy. Empty state quand 0 loge en base.
+    const region = await screen.findByRole('region', {
+      name: /liste des loges/i,
+    });
+    expect(region).toBeTruthy();
   });
 
   it('6. query `?view=porcelets` → ouvre directement la sous-vue Porcelets', async () => {

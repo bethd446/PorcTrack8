@@ -16,9 +16,11 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../services/supabaseClient';
 import { kvGet, kvSet } from '../../services/kvStore';
+import { createLoge } from '../../services/supabaseWrites';
+import type { LogeType } from '../../types/farm';
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   OnboardingWizard — 10 étapes pour configurer une nouvelle ferme
+   OnboardingWizard — 11 étapes pour configurer une nouvelle ferme
    ───────────────────────────────────────────────────────────────────────────
    Étapes :
      1. Bienvenue
@@ -30,14 +32,67 @@ import { kvGet, kvSet } from '../../services/kvStore';
      7. Cheptel verrats        → effectif_verrats_initial
      8. Objectif porcelets/an  → objectif_porcelets_an
      9. Notes de démarrage     → notes_demarrage
-    10. Récap + persistance Supabase
+    10. Loges (V24)            → quantités par type + numérotation libre
+    11. Récap + persistance Supabase + INSERT loges
 
    Persistance progressive : `kvSet('onboarding_draft', JSON)` à chaque étape.
-   À la fin, UPDATE troupeaux WHERE user_id=auth.uid() + onboarding_completed_at.
+   À la fin, UPDATE troupeaux WHERE user_id=auth.uid() + onboarding_completed_at,
+   puis INSERT N rows dans `loges` via `createLoge` pour chaque type avec qty>0.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-const TOTAL_STEPS = 10;
+const TOTAL_STEPS = 11;
 const DRAFT_KEY = 'onboarding_draft';
+
+// V24 — 6 catégories couvrant les types de loges saisis à l'onboarding.
+type LogeCategorie =
+  | 'GESTANTE'        // Truies vides / reproductrices
+  | 'MATERNITE'       // Mise-bas
+  | 'POST_SEVRAGE'    // Démarrage
+  | 'CROISSANCE'
+  | 'ENGRAISSEMENT'
+  | 'VERRAT';
+
+interface LogeCatConfig {
+  cat: LogeCategorie;
+  label: string;
+  prefix: string;
+  /** `LogeType` cible de la table `loges`. */
+  type: LogeType;
+  capaciteMax: number;
+}
+
+const LOGE_CATEGORIES: ReadonlyArray<LogeCatConfig> = [
+  { cat: 'GESTANTE',       label: 'Truies vides / reproductrices', prefix: 'V-',  type: 'GESTANTE',     capaciteMax: 8 },
+  { cat: 'MATERNITE',      label: 'Mise-bas (maternité)',          prefix: 'M-',  type: 'MATERNITE',    capaciteMax: 1 },
+  { cat: 'POST_SEVRAGE',   label: 'Démarrage (post-sevrage)',      prefix: 'PS-', type: 'POST_SEVRAGE', capaciteMax: 30 },
+  { cat: 'CROISSANCE',     label: 'Croissance',                    prefix: 'C-',  type: 'CROISSANCE',   capaciteMax: 24 },
+  { cat: 'ENGRAISSEMENT',  label: 'Engraissement / Finition',      prefix: 'E-',  type: 'ENGRAISSEMENT', capaciteMax: 18 },
+  { cat: 'VERRAT',         label: 'Verrats',                       prefix: 'B-',  type: 'VERRAT',       capaciteMax: 1 },
+];
+
+function defaultNumero(prefix: string, n: number): string {
+  return `${prefix}${String(n).padStart(2, '0')}`;
+}
+
+type LogesQuantites = Record<LogeCategorie, number>;
+type LogesNumeros = Record<LogeCategorie, string[]>;
+
+const INITIAL_LOGES_QTY: LogesQuantites = {
+  GESTANTE: 0,
+  MATERNITE: 0,
+  POST_SEVRAGE: 0,
+  CROISSANCE: 0,
+  ENGRAISSEMENT: 0,
+  VERRAT: 0,
+};
+const INITIAL_LOGES_NUMS: LogesNumeros = {
+  GESTANTE: [],
+  MATERNITE: [],
+  POST_SEVRAGE: [],
+  CROISSANCE: [],
+  ENGRAISSEMENT: [],
+  VERRAT: [],
+};
 
 type TypeProd = 'NAISSEUR' | 'NAISSEUR_ENGRAISSEUR' | 'ENGRAISSEUR_SEUL';
 
@@ -63,6 +118,10 @@ interface WizardState {
   effectif_verrats_initial: number;
   objectif_porcelets_an: number;
   notes_demarrage: string;
+  /** V6-C : quantités par catégorie de loges (étape 10). 0 = skip. */
+  logesQty: LogesQuantites;
+  /** V6-C : numéros édités par l'utilisateur. Initialisé à partir des suggestions. */
+  logesNums: LogesNumeros;
 }
 
 const INITIAL: WizardState = {
@@ -76,6 +135,8 @@ const INITIAL: WizardState = {
   effectif_verrats_initial: 0,
   objectif_porcelets_an: 0,
   notes_demarrage: '',
+  logesQty: { ...INITIAL_LOGES_QTY },
+  logesNums: { ...INITIAL_LOGES_NUMS },
 };
 
 function loadDraft(): WizardState {
@@ -83,7 +144,12 @@ function loadDraft(): WizardState {
     const raw = kvGet(DRAFT_KEY);
     if (!raw) return INITIAL;
     const parsed = JSON.parse(raw) as Partial<WizardState>;
-    return { ...INITIAL, ...parsed };
+    return {
+      ...INITIAL,
+      ...parsed,
+      logesQty: { ...INITIAL_LOGES_QTY, ...(parsed.logesQty ?? {}) },
+      logesNums: { ...INITIAL_LOGES_NUMS, ...(parsed.logesNums ?? {}) },
+    };
   } catch {
     return INITIAL;
   }
@@ -125,6 +191,19 @@ function validateStep(state: WizardState): boolean {
       return state.objectif_porcelets_an >= 0 && state.objectif_porcelets_an <= 500000;
     case 9:
       return state.notes_demarrage.length <= 500;
+    case 10: {
+      // Étape loges : tous les numéros édités doivent être non vides et ≤ 12 chars.
+      for (const c of LOGE_CATEGORIES) {
+        const qty = state.logesQty[c.cat];
+        if (qty < 0 || qty > 200) return false;
+        const nums = state.logesNums[c.cat] ?? [];
+        for (let i = 0; i < qty; i++) {
+          const v = (nums[i] ?? '').trim();
+          if (v.length === 0 || v.length > 12) return false;
+        }
+      }
+      return true;
+    }
     default:
       return true;
   }
@@ -181,6 +260,30 @@ const OnboardingWizard: React.FC = () => {
         .update(payload)
         .eq('user_id', user.id);
       if (upErr) throw upErr;
+
+      // V6-C : INSERT N loges par catégorie avec numéro édité par l'utilisateur.
+      // Best-effort : si une loge échoue, on continue (pas de rollback strict —
+      // l'utilisateur peut corriger via /troupeau/loges).
+      for (const c of LOGE_CATEGORIES) {
+        const qty = state.logesQty[c.cat] ?? 0;
+        if (qty <= 0) continue;
+        const nums = state.logesNums[c.cat] ?? [];
+        for (let i = 0; i < qty; i++) {
+          const numero = (nums[i] ?? defaultNumero(c.prefix, i + 1)).trim();
+          if (!numero) continue;
+          try {
+            await createLoge({
+              numero,
+              type: c.type,
+              capaciteMax: c.capaciteMax,
+              notes: 'Créée à l\'onboarding',
+            });
+          } catch (logeErr) {
+            console.warn('[onboarding] createLoge failed:', logeErr);
+          }
+        }
+      }
+
       await kvSet('onboarding_done', '1');
       await kvSet(DRAFT_KEY, '');
       navigate('/today', { replace: true });
@@ -518,6 +621,8 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, setState, onStart, e
         </StepCard>
       );
     case 10:
+      return <StepLoges state={state} setState={setState} />;
+    case 11:
       return <StepRecap state={state} error={error} />;
     default:
       return null;
@@ -558,7 +663,161 @@ const StepWelcome: React.FC<{ onStart: () => void }> = ({ onStart }) => (
   </div>
 );
 
-/* ─── Étape 10 : récap ─────────────────────────────────────────────────── */
+/* ─── Étape 10 : loges (V24) ───────────────────────────────────────────── */
+
+interface StepLogesProps {
+  state: WizardState;
+  setState: React.Dispatch<React.SetStateAction<WizardState>>;
+}
+
+const StepLoges: React.FC<StepLogesProps> = ({ state, setState }) => {
+  const totalLoges = LOGE_CATEGORIES.reduce(
+    (acc, c) => acc + (state.logesQty[c.cat] ?? 0),
+    0,
+  );
+
+  const setQty = (cat: LogeCategorie, qty: number): void => {
+    setState((s) => {
+      const next = Math.max(0, Math.min(200, qty));
+      const prevNums = s.logesNums[cat] ?? [];
+      const cfg = LOGE_CATEGORIES.find((c) => c.cat === cat);
+      const prefix = cfg?.prefix ?? '';
+      // Resize array : préserve les numéros déjà édités, complète avec défauts.
+      const nextNums = Array.from({ length: next }, (_, i) =>
+        prevNums[i] ?? defaultNumero(prefix, i + 1),
+      );
+      return {
+        ...s,
+        logesQty: { ...s.logesQty, [cat]: next },
+        logesNums: { ...s.logesNums, [cat]: nextNums },
+      };
+    });
+  };
+
+  const setNumero = (cat: LogeCategorie, idx: number, value: string): void => {
+    setState((s) => {
+      const arr = [...(s.logesNums[cat] ?? [])];
+      arr[idx] = value;
+      return { ...s, logesNums: { ...s.logesNums, [cat]: arr } };
+    });
+  };
+
+  const handleSkip = (): void => {
+    setState((s) => ({
+      ...s,
+      logesQty: { ...INITIAL_LOGES_QTY },
+      logesNums: { ...INITIAL_LOGES_NUMS },
+    }));
+  };
+
+  return (
+    <div className="bg-bg-1 border border-border rounded-2xl p-6">
+      <div className="flex items-start gap-3 mb-5">
+        <span
+          className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent shrink-0"
+          aria-hidden="true"
+        >
+          <Home size={20} />
+        </span>
+        <div className="flex-1">
+          <h2
+            className="ft-heading uppercase tracking-wide text-[20px] leading-tight"
+            style={{ letterSpacing: '0.02em' }}
+          >
+            Configuration des loges
+          </h2>
+          <p className="text-[13px] text-text-2 mt-1 leading-relaxed">
+            Combien de loges as-tu pour chaque type ? Tu pourras renommer chaque
+            loge librement. Skip si tu préfères configurer plus tard via
+            <code className="font-mono"> /troupeau/loges</code>.
+          </p>
+        </div>
+      </div>
+
+      {/* Sub-step A : quantités */}
+      <div className="flex flex-col gap-3">
+        {LOGE_CATEGORIES.map((c) => (
+          <div
+            key={c.cat}
+            className="flex items-center justify-between gap-3 bg-bg-0 border border-border rounded-md px-3 py-2.5"
+          >
+            <label
+              htmlFor={`onb-loge-qty-${c.cat}`}
+              className="flex-1 text-[13px] text-text-1"
+            >
+              {c.label}
+              <span className="ml-2 ft-code text-[10px] uppercase tracking-wide text-text-2">
+                {c.prefix} · cap. {c.capaciteMax}
+              </span>
+            </label>
+            <input
+              id={`onb-loge-qty-${c.cat}`}
+              aria-label={`Quantité de loges ${c.label}`}
+              type="number"
+              min={0}
+              max={200}
+              value={Number.isFinite(state.logesQty[c.cat]) ? state.logesQty[c.cat] : 0}
+              onChange={(e) => {
+                const n = parseInt(e.target.value, 10);
+                setQty(c.cat, Number.isNaN(n) ? 0 : n);
+              }}
+              className="w-20 h-10 px-3 rounded-md bg-bg-1 border border-border text-text-0 text-[14px] ft-values text-center outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+            />
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3 flex items-center justify-between">
+        <span className="ft-code text-[11px] uppercase tracking-wide text-text-2">
+          Total : {totalLoges} loge{totalLoges > 1 ? 's' : ''}
+        </span>
+        <button
+          type="button"
+          onClick={handleSkip}
+          className="ft-code text-[11px] uppercase tracking-wide text-text-2 underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
+        >
+          Skip cette étape
+        </button>
+      </div>
+
+      {/* Sub-step B : numérotation (affiché uniquement si totalLoges > 0) */}
+      {totalLoges > 0 && (
+        <div className="mt-6 flex flex-col gap-5" data-testid="onb-loges-numbering">
+          <p className="ft-code text-[11px] uppercase tracking-wide text-text-2">
+            Renommer les loges (12 caractères max)
+          </p>
+          {LOGE_CATEGORIES.map((c) => {
+            const qty = state.logesQty[c.cat] ?? 0;
+            if (qty <= 0) return null;
+            const nums = state.logesNums[c.cat] ?? [];
+            return (
+              <div key={c.cat} className="flex flex-col gap-2">
+                <span className="ft-code text-[11px] uppercase tracking-wide text-text-1">
+                  {c.label} · {qty} loge{qty > 1 ? 's' : ''}
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {Array.from({ length: qty }).map((_, i) => (
+                    <input
+                      key={`${c.cat}-${i}`}
+                      type="text"
+                      maxLength={12}
+                      aria-label={`Numéro loge ${c.label} ${i + 1}`}
+                      value={nums[i] ?? defaultNumero(c.prefix, i + 1)}
+                      onChange={(e) => setNumero(c.cat, i, e.target.value)}
+                      className="w-24 h-9 px-2 rounded-md bg-bg-0 border border-border text-text-0 text-[13px] font-mono text-center outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ─── Étape 11 : récap ─────────────────────────────────────────────────── */
 
 const StepRecap: React.FC<{ state: WizardState; error: string | null }> = ({ state, error }) => {
   const typeLabel: Record<TypeProd, string> = {
@@ -589,6 +848,20 @@ const StepRecap: React.FC<{ state: WizardState; error: string | null }> = ({ sta
   });
   if (state.notes_demarrage) {
     items.push({ label: 'Notes', value: state.notes_demarrage });
+  }
+  // V6-C : récap loges
+  const totalLoges = LOGE_CATEGORIES.reduce(
+    (acc, c) => acc + (state.logesQty[c.cat] ?? 0),
+    0,
+  );
+  if (totalLoges > 0) {
+    const detail = LOGE_CATEGORIES
+      .filter((c) => (state.logesQty[c.cat] ?? 0) > 0)
+      .map((c) => `${state.logesQty[c.cat]} ${c.label}`)
+      .join(' · ');
+    items.push({ label: 'Loges', value: `${totalLoges} (${detail})` });
+  } else {
+    items.push({ label: 'Loges', value: 'À configurer plus tard' });
   }
 
   return (

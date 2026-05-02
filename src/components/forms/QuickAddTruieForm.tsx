@@ -25,10 +25,9 @@
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { IonToast } from '@ionic/react';
 import { Plus, Save } from 'lucide-react';
 
-import { BottomSheet } from '../agritech';
+import { AppToast, BottomSheet, useAppToast } from '../agritech';
 import { insertSow } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
@@ -64,7 +63,7 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
   const [ration, setRation] = useState<string>('3.0');
   const [errors, setErrors] = useState<AddTruieValidation['errors']>({});
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string>('');
+  const { show: showToast, toastProps } = useAppToast();
 
   // Reset à l'ouverture (render-time sync)
   const [lastKey, setLastKey] = useState<{ isOpen: boolean; suggestedId: string }>({
@@ -114,10 +113,10 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
       });
       const online =
         typeof navigator !== 'undefined' && navigator.onLine;
-      setToast(
-        online
-          ? 'Truie ajoutée'
-          : 'Truie en file · sync auto',
+      showToast(
+        online ? 'Truie ajoutée' : 'Truie en file · sync auto',
+        online ? 'success' : 'info',
+        { duration: 1800 },
       );
       try {
         await refreshData(true);
@@ -127,8 +126,10 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
       if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
-      setToast(
+      showToast(
         err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement',
+        'error',
+        { duration: 1800 },
       );
     } finally {
       setSaving(false);
@@ -415,13 +416,7 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
         </form>
       </BottomSheet>
 
-      <IonToast
-        isOpen={toast !== ''}
-        message={toast}
-        duration={1800}
-        onDidDismiss={() => setToast('')}
-        position="bottom"
-      />
+      <AppToast {...toastProps} />
     </>
   );
 };

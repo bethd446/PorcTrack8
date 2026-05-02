@@ -419,6 +419,82 @@ describe('[6] conversion dates ISO → dd/MM/yyyy dans le patch', () => {
   });
 });
 
+// ─── [V24-1] Sources multi-mères — logique somme + warning ───────────────
+describe('[V24-1] sources multi-mères — somme + warning > NV', () => {
+  // Mirror la logique du composant : computeOverCapacityWarning(sources, nv).
+  function computeTotal(sources: { nbPorceletsApportes: number }[]): number {
+    return sources.reduce((sum, s) => sum + s.nbPorceletsApportes, 0);
+  }
+  function isOverCapacity(
+    sources: { nbPorceletsApportes: number }[],
+    nv: number,
+  ): boolean {
+    return Number.isFinite(nv) && nv > 0 && computeTotal(sources) > nv;
+  }
+
+  it('somme correcte sur 3 sources', () => {
+    const sources = [
+      { nbPorceletsApportes: 6 },
+      { nbPorceletsApportes: 4 },
+      { nbPorceletsApportes: 5 },
+    ];
+    expect(computeTotal(sources)).toBe(15);
+  });
+
+  it('warning UI déclenché quand total > NV (pas blocage submit)', () => {
+    const sources = [
+      { nbPorceletsApportes: 8 },
+      { nbPorceletsApportes: 7 },
+    ];
+    expect(isOverCapacity(sources, 12)).toBe(true);
+    // Le submit reste possible — ce n'est qu'une signalétique UI.
+  });
+
+  it('pas de warning quand total <= NV', () => {
+    const sources = [{ nbPorceletsApportes: 5 }];
+    expect(isOverCapacity(sources, 12)).toBe(false);
+  });
+
+  it('exclut les truies déjà sources du sélecteur', () => {
+    const truies = [
+      { id: 'sow-1' },
+      { id: 'sow-2' },
+      { id: 'sow-3' },
+    ];
+    const sources = [{ sowId: 'sow-1' }, { sowId: 'sow-3' }];
+    const sourceIds = new Set(sources.map(s => s.sowId));
+    const dispo = truies.filter(t => !sourceIds.has(t.id));
+    expect(dispo).toEqual([{ id: 'sow-2' }]);
+  });
+});
+
+// ─── [V24-2] Sélection loge — logique patch loge_id ──────────────────────
+describe('[V24-2] sélection loge — patch loge_id quand dirty', () => {
+  // Mirror la logique submit du composant : on patche loge_id seulement
+  // si l'utilisateur a explicitement changé la sélection.
+  function buildLogePatch(
+    selectedLogeId: string,
+    selectedLogeIdDirty: boolean,
+  ): Record<string, string | null> | null {
+    if (!selectedLogeIdDirty) return null;
+    return { loge_id: selectedLogeId || null };
+  }
+
+  it('produit { loge_id: <id> } quand dirty et id sélectionné', () => {
+    const patch = buildLogePatch('loge-uuid-1', true);
+    expect(patch).toEqual({ loge_id: 'loge-uuid-1' });
+  });
+
+  it('produit { loge_id: null } quand dirty et "Aucune"', () => {
+    const patch = buildLogePatch('', true);
+    expect(patch).toEqual({ loge_id: null });
+  });
+
+  it('null patch (aucun appel) si non-dirty', () => {
+    expect(buildLogePatch('loge-uuid-1', false)).toBeNull();
+  });
+});
+
 // ─── [7] Submit offline → queue ───────────────────────────────────────────
 describe('[7] submit offline → queue', () => {
   it('enqueue + mode offline quand navigator.onLine = false', async () => {

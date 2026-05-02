@@ -18,12 +18,12 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   IonContent, IonPage, IonRefresher, IonRefresherContent,
-  IonToast,
 } from '@ionic/react';
 import {
   ArrowRight, ChevronRight, ClipboardCheck, ShieldCheck, X,
 } from 'lucide-react';
 
+import { AppToast, useAppToast } from '../../components/agritech';
 import AgritechLayout from '../../components/AgritechLayout';
 import Eyebrow from '../../components/design/Eyebrow';
 import { useAuth } from '../../context/AuthContext';
@@ -107,9 +107,7 @@ const TodayHub: React.FC = () => {
   const { recomputeAlerts } = useMeta();
   const { bandes, truies, verrats } = useTroupeau();
   const lookup = useMemo(() => ({ bandes, truies, verrats }), [bandes, truies, verrats]);
-  const [dismissToast, setDismissToast] = useState<{ show: boolean; message: string }>({
-    show: false, message: '',
-  });
+  const { show: showToast, toastProps } = useAppToast();
 
   // ── Transitions de phase suggérées (R15/R16 — alertes ⨝ phaseEngine) ───
   const { pending: pendingTransitions, confirm: confirmTransition, dismiss: dismissTransition } =
@@ -120,13 +118,13 @@ const TodayHub: React.FC = () => {
     if (!user) return;
     try {
       await dismissAlert(user.id, alertId, 'manual');
-      setDismissToast({ show: true, message: 'Alerte ignorée pour 30 jours' });
+      showToast('Alerte ignorée pour 30 jours', 'info', { duration: 2200 });
       await recomputeAlerts();
     } catch (e) {
       console.warn('[TodayHub] dismiss failed', e);
-      setDismissToast({ show: true, message: 'Erreur lors de l\'ignorance' });
+      showToast('Erreur lors de l\'ignorance', 'error', { duration: 2200 });
     }
-  }, [user, recomputeAlerts]);
+  }, [user, recomputeAlerts, showToast]);
 
   // ── Confirmations en attente (file persistante) ───────────────────────
   const [pendingConfirmations, setPendingConfirmations] = useState<PendingConfirmation[]>([]);
@@ -458,14 +456,14 @@ const TodayHub: React.FC = () => {
       try {
         await confirmTransition(t, poidsKg);
         setSelectedTransition(null);
-        setDismissToast({ show: true, message: 'Transition de phase confirmée' });
+        showToast('Transition de phase confirmée', 'success', { duration: 2200 });
         await recomputeAlerts();
       } catch (e) {
         console.warn('[TodayHub] phase transition confirm failed', e);
-        setDismissToast({ show: true, message: 'Erreur lors de la confirmation' });
+        showToast('Erreur lors de la confirmation', 'error', { duration: 2200 });
       }
     },
-    [confirmTransition, recomputeAlerts],
+    [confirmTransition, recomputeAlerts, showToast],
   );
 
   function handleAussiClick(item: AussiItem): void {
@@ -969,13 +967,7 @@ const TodayHub: React.FC = () => {
           />
         </AgritechLayout>
 
-        <IonToast
-          isOpen={dismissToast.show}
-          message={dismissToast.message}
-          duration={2200}
-          position="bottom"
-          onDidDismiss={() => setDismissToast({ show: false, message: '' })}
-        />
+        <AppToast {...toastProps} />
       </IonContent>
     </IonPage>
   );

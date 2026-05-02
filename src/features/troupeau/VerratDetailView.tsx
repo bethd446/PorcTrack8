@@ -15,17 +15,18 @@ import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { IonContent, IonPage, IonToast } from '@ionic/react';
 import {
-  Syringe, Scale, Heart, FileText, AlertCircle, Edit3,
+  Syringe, Scale, Heart, FileText, AlertCircle, Pencil,
 } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
 import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
+import AnimalHero, { type AnimalHeroChip } from '../../components/design/AnimalHero';
 import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
 import NotesTimeline from '../../components/design/NotesTimeline';
 import { VerratIcon } from '../../components/icons';
-import { Chip, SectionDivider, BottomSheet, type ChipTone } from '../../components/agritech';
+import { SectionDivider, BottomSheet, type ChipTone } from '../../components/agritech';
 import { useFarm } from '../../context/FarmContext';
 import { updateBoar } from '../../services/supabaseWrites';
 import QuickHealthForm from '../../components/forms/QuickHealthForm';
@@ -52,11 +53,11 @@ function formatDate(s?: string): string {
   return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
 }
 
-function statutTone(statut: string | undefined): ChipTone {
+function statutHeroTone(statut: string | undefined): AnimalHeroChip['tone'] {
   const s = (statut || '').toLowerCase();
-  if (/réform|reform/.test(s)) return 'red';
-  if (/mort/.test(s)) return 'red';
-  return 'accent';
+  if (/réform|reform/.test(s)) return 'pig';
+  if (/mort/.test(s)) return 'pig';
+  return 'green';
 }
 
 function toneFromSoin(type: string): ChipTone {
@@ -158,7 +159,7 @@ const VerratDetailView: React.FC = () => {
     );
   }
 
-  const tone = statutTone(verrat.statut);
+  const heroTone = statutHeroTone(verrat.statut);
   const displayId = verrat.displayId || verrat.id;
   const title = verrat.nom ? `${displayId} · ${verrat.nom}` : displayId;
 
@@ -191,60 +192,22 @@ const VerratDetailView: React.FC = () => {
             className="px-4 pt-5 pb-32 flex flex-col gap-5"
             style={{ maxWidth: 1100, margin: '0 auto' }}
           >
-            <header>
-              <Eyebrow dotColor="accent">Cheptel · Verrat {displayId}</Eyebrow>
-              <h1
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '8px 0 4px',
-                }}
-              >
-                {title}
-              </h1>
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--muted)',
-                }}
-              >
-                Origine {verrat.origine || '—'} · statut {verrat.statut || '—'}
-              </div>
-            </header>
-
-            {/* ── Hero ───────────────────────────────────────────────── */}
-            <div className="card-dense flex items-center gap-3.5 !p-4">
-              {verrat.photoUrl ? (
-                <img
-                  src={verrat.photoUrl}
-                  alt={`Photo du verrat ${displayId}`}
-                  className="w-[88px] h-[88px] rounded-2xl object-cover shrink-0 border border-border"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="w-14 h-14 rounded-2xl-v2 bg-bg-1 border border-border flex items-center justify-center shrink-0 text-accent">
-                  <VerratIcon size={32} aria-hidden="true" />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="flex gap-1.5 flex-wrap items-center">
-                  <Chip label={verrat.statut || '—'} tone={tone} size="xs" />
-                  <button
-                    type="button"
-                    onClick={() => setEditOpen(true)}
-                    aria-label={`Éditer le verrat ${displayId}`}
-                    className="pressable inline-flex items-center justify-center w-7 h-7 rounded-md bg-bg-1 border border-border text-text-1 hover:text-accent hover:border-accent transition-colors duration-[160ms] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-                  >
-                    <Edit3 size={14} aria-hidden="true" />
-                  </button>
-                </div>
-              </div>
-            </div>
+            {/* ── Hero unifié (AnimalHero) ────────────────────────────── */}
+            <AnimalHero
+              eyebrow={`Cheptel · Verrat ${displayId}`}
+              chips={[{ label: verrat.statut || '—', tone: heroTone }]}
+              name={displayId}
+              subtitle={verrat.nom || undefined}
+              tagline={verrat.origine ? `Origine ${verrat.origine}` : undefined}
+              photoUrl={verrat.photoUrl}
+              fallbackIcon={<VerratIcon size={84} />}
+              onPrimaryAction={() => setSheet('saillie')}
+              primaryLabel="Saisir évènement"
+              onSecondaryAction={() => setEditOpen(true)}
+              secondaryLabel="Modifier"
+              secondaryIcon={<Pencil size={13} strokeWidth={2} aria-hidden />}
+              onUploadClick={() => setEditOpen(true)}
+            />
 
             {/* ── Identité ───────────────────────────────────────────── */}
             <section aria-label="Identité">

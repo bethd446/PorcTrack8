@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import Eyebrow from '../components/design/Eyebrow';
 import Button from '../components/design/Button';
-import Chip from '../components/design/Chip';
+import { Chip } from '../components/agritech';
 
 const FONT_DISPLAY = 'var(--font-heading)';
 const FONT_BODY = 'var(--font-body)';
@@ -331,9 +331,9 @@ export default function Landing() {
               historique pour proposer la décision suivante. Aucun fichier ne quitte votre serveur.
             </p>
             <div className="flex flex-wrap gap-2">
-              <Chip tone="amber">Local-first</Chip>
-              <Chip tone="green">RGPD</Chip>
-              <Chip tone="terre">VPS souverain</Chip>
+              <Chip tone="amber" label="Local-first" />
+              <Chip tone="accent" label="RGPD" />
+              <Chip tone="ochre" label="VPS souverain" />
             </div>
           </div>
 
@@ -382,8 +382,8 @@ export default function Landing() {
               className="mt-4 flex flex-wrap items-center gap-2"
               style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.08em', color: 'var(--muted)' }}
             >
-              <Chip tone="terre">B17</Chip>
-              <Chip tone="amber">Cycle en attente</Chip>
+              <Chip tone="ochre" label="B17" />
+              <Chip tone="amber" label="Cycle en attente" />
               <span className="uppercase">J19 / 35 · fenêtre J18-J24</span>
             </div>
           </article>

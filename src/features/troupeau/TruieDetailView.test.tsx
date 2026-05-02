@@ -206,14 +206,15 @@ describe('TruieDetailView', () => {
     expect(document.querySelector('svg')).not.toBeNull();
   });
 
-  it('affiche la chip de statut « Allaitante » avec le ton green', () => {
+  it('affiche la chip de statut « Allaitante » avec le ton accent', () => {
     renderAt('/troupeau/truies/T14');
     // FIX-4 : Le statut DB "Maternité" est canonisé visuellement en "Allaitante"
-    // via labelStatutTruie. La chip est un <span> avec le style tone green.
+    // via labelStatutTruie. Depuis V5-B, design/Chip délègue à agritech/Chip,
+    // qui rend un <span class="chip chip--accent ..."> (tone green → accent).
     const matches = screen.getAllByText('Allaitante');
     const chip = matches.find(el => {
-      const style = el.getAttribute('style') ?? '';
-      return el.tagName.toLowerCase() === 'span' && /color-accent/.test(style);
+      const className = el.getAttribute('class') ?? '';
+      return el.tagName.toLowerCase() === 'span' && /chip--accent/.test(className);
     });
     expect(chip).toBeDefined();
   });

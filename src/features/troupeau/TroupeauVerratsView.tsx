@@ -3,7 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, Plus, Search } from 'lucide-react';
 
 import { VerratIcon } from '../../components/icons';
-import { Chip, SectionDivider, type ChipTone } from '../../components/agritech';
+import {
+  AnimalListItem,
+  SectionDivider,
+  type ChipTone,
+} from '../../components/agritech';
 import EmptyState from '../../components/design/EmptyState';
 import QuickAddVerratForm from '../../components/forms/QuickAddVerratForm';
 import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
@@ -288,52 +292,30 @@ const VerratCard: React.FC<VerratCardProps> = ({
     ? `${nbSaillies} saillie${nbSaillies > 1 ? 's' : ''}${derniereDate ? ` · dernière ${derniereDate}` : ''}`
     : 'Aucune saillie enregistrée';
 
+  const secondaryNode = (
+    <span className="flex flex-col gap-0.5">
+      {boucle ? (
+        <span className="ft-code text-[12px] text-text-1 tabular-nums" aria-label={`Boucle ${boucle}`}>
+          {boucle}
+        </span>
+      ) : null}
+      <span>{meta1}</span>
+      <span>{meta2}</span>
+      <span className="text-text-1 tabular-nums">{statsLabel}</span>
+    </span>
+  );
+
   return (
     <div className="card-dense !p-0 overflow-hidden">
-      <button
-        type="button"
+      <AnimalListItem
+        avatar={<VerratIcon size={26} aria-hidden="true" />}
+        primary={title}
+        secondary={secondaryNode}
+        chip={{ label: statutLabel, tone: statutTone }}
+        ariaLabel={`Voir le détail de ${displayId}${boucle ? ` boucle ${boucle}` : ''}`}
         onClick={onCardClick}
-        aria-label={`Voir le détail de ${displayId}${boucle ? ` boucle ${boucle}` : ''}`}
-        className="pressable w-full text-left flex items-start gap-3 px-4 py-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-2px]"
-      >
-        <div className="w-11 h-11 rounded-md bg-bg-2 border border-border flex items-center justify-center shrink-0 text-accent">
-          <VerratIcon size={28} aria-hidden="true" />
-        </div>
-        <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-          <div className="flex items-start justify-between gap-2">
-            <div className="ft-heading text-[16px] text-text-0 leading-tight uppercase tracking-wide">
-              {title}
-            </div>
-            <Chip label={statutLabel} tone={statutTone} size="xs" />
-          </div>
-          <div className="flex items-baseline gap-1.5 flex-wrap">
-            <span className="ft-code text-[13px] text-text-0 font-semibold tabular-nums">
-              {displayId}
-            </span>
-            {boucle ? (
-              <>
-                <span className="font-mono text-[12px] text-text-2" aria-hidden="true">·</span>
-                <span
-                  className="ft-code text-[13px] text-text-1 tabular-nums"
-                  aria-label={`Boucle ${boucle}`}
-                >
-                  {boucle}
-                </span>
-              </>
-            ) : null}
-          </div>
-          <div className="font-mono text-[11px] text-text-2 leading-relaxed">
-            {meta1}
-          </div>
-          <div className="font-mono text-[11px] text-text-2 leading-relaxed">
-            {meta2}
-          </div>
-          <div className="font-mono text-[11px] text-text-1 tabular-nums mt-0.5">
-            {statsLabel}
-          </div>
-        </div>
-      </button>
-
+        className="!border-b-0"
+      />
       <div className="px-4 pb-3 pt-0">
         <button
           type="button"

@@ -80,6 +80,7 @@ const BandeDetailView = React.lazy(() => import(/* webpackChunkName: "troupeau-b
 const TruieDetailView = React.lazy(() => import(/* webpackChunkName: "troupeau-truie-detail" */ './features/troupeau/TruieDetailView'));
 const VerratDetailView = React.lazy(() => import(/* webpackChunkName: "troupeau-verrat-detail" */ './features/troupeau/VerratDetailView'));
 const BatimentsView = React.lazy(() => import(/* webpackChunkName: "troupeau-batiments" */ './features/troupeau/BatimentsView'));
+const LogeDetailView = React.lazy(() => import(/* webpackChunkName: "troupeau-loge-detail" */ './features/troupeau/LogeDetailView'));
 const RapportFinancierView = React.lazy(() => import(/* webpackChunkName: "pilotage-rapport" */ './features/pilotage/RapportFinancierView'));
 const ForecastView = React.lazy(() => import(/* webpackChunkName: "pilotage-previsions" */ './features/pilotage/ForecastView'));
 
@@ -249,6 +250,8 @@ const AppShell: React.FC = () => (
       {/* AUDIT-3 : redirige vers le hub unifié pour cohérence visuelle. */}
       <Route path="/troupeau/batiments" element={<Navigate to="/troupeau?view=batiments" replace />} />
       <Route path="/troupeau/classement" element={<ClassementView />} />
+      {/* V6-C : page détail loge (référentiel V24) */}
+      <Route path="/troupeau/loges/:id" element={<LogeDetailView />} />
 
       {/* Reproduction (V22-B3 hub fil conducteur) */}
       <Route path="/reproduction" element={<ReproductionHub />} />

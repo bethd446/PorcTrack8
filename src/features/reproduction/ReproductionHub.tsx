@@ -34,6 +34,8 @@ import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
 import QuickEchographieForm from '../../components/forms/QuickEchographieForm';
 import QuickMiseBasForm from '../../components/forms/QuickMiseBasForm';
 import QuickSevrageForm from '../../components/forms/QuickSevrageForm';
+import QuickSaillieBandeForm from '../../components/forms/QuickSaillieBandeForm';
+import MultiPorteeSevrageWizard from '../../components/forms/MultiPorteeSevrageWizard';
 
 // ─── Helpers display ─────────────────────────────────────────────────────────
 
@@ -244,6 +246,13 @@ const ReproductionHub: React.FC = () => {
   const [sevrageForm, setSevrageForm] = useState<{ open: boolean; bandeId?: string }>(
     { open: false },
   );
+  const [saillieBandeOpen, setSaillieBandeOpen] = useState(false);
+  const [multiSevrageOpen, setMultiSevrageOpen] = useState(false);
+
+  // Bande -> "À saillir" candidates count >= 2 enables saillie en bande
+  const canSaillieBande = dashboard.asaillir.length >= 2;
+  // À sevrer >= 2 enables sevrage multi-portées
+  const canMultiSevrage = dashboard.asevrer.length >= 2;
 
   return (
     <IonPage>
@@ -396,6 +405,37 @@ const ReproductionHub: React.FC = () => {
               count={dashboard.asaillir.length}
               emptyLabel="Aucune truie en attente de saillie."
             >
+              {canSaillieBande ? (
+                <button
+                  type="button"
+                  onClick={() => setSaillieBandeOpen(true)}
+                  className="pressable"
+                  data-testid="cta-saillie-bande"
+                  aria-label="Saillie en bande (multi-truies)"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    minHeight: 44,
+                    padding: '10px 14px',
+                    borderRadius: 12,
+                    background: 'var(--color-accent-100)',
+                    color: 'var(--color-accent-600)',
+                    border: '1px dashed var(--color-accent-500)',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 12,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Layers size={14} aria-hidden="true" />
+                  Saillie en bande ({dashboard.asaillir.length} truies)
+                </button>
+              ) : null}
               {dashboard.asaillir.map(item => (
                 <StepRow
                   key={item.truie.id}
@@ -500,6 +540,37 @@ const ReproductionHub: React.FC = () => {
                   />
                 );
               })}
+              {canMultiSevrage ? (
+                <button
+                  type="button"
+                  onClick={() => setMultiSevrageOpen(true)}
+                  className="pressable"
+                  data-testid="cta-multi-sevrage"
+                  aria-label="Sevrage multi-portées"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    minHeight: 44,
+                    padding: '10px 14px',
+                    borderRadius: 12,
+                    background: 'var(--color-accent-100)',
+                    color: 'var(--color-accent-600)',
+                    border: '1px dashed var(--color-accent-500)',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 12,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Layers size={14} aria-hidden="true" />
+                  Sevrage multi-portées ({dashboard.asevrer.length} portées)
+                </button>
+              ) : null}
             </StepSection>
 
             {/* ── Calendrier complet ───────────────────────────────── */}
@@ -575,6 +646,14 @@ const ReproductionHub: React.FC = () => {
             isOpen={sevrageForm.open}
             onClose={() => setSevrageForm({ open: false })}
             defaultBandeId={sevrageForm.bandeId}
+          />
+          <QuickSaillieBandeForm
+            isOpen={saillieBandeOpen}
+            onClose={() => setSaillieBandeOpen(false)}
+          />
+          <MultiPorteeSevrageWizard
+            isOpen={multiSevrageOpen}
+            onClose={() => setMultiSevrageOpen(false)}
           />
         </AgritechLayout>
       </IonContent>

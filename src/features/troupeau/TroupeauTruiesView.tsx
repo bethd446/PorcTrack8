@@ -16,7 +16,12 @@ import {
 } from 'lucide-react';
 
 import { TruieIcon } from '../../components/icons';
-import { Chip, SectionDivider, type ChipTone } from '../../components/agritech';
+import {
+  AnimalListItem,
+  Chip,
+  SectionDivider,
+  type ChipTone,
+} from '../../components/agritech';
 import EmptyStateShared from '../../components/design/EmptyState';
 import QuickAddTruieForm from '../../components/forms/QuickAddTruieForm';
 import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
@@ -415,43 +420,42 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
             const highlightBoucle =
               isBoucleLikeQuery(q) && boucleMatches(t.boucle, q);
             const boucleClass = highlightBoucle ? 'text-accent' : 'text-text-1';
+            const idLabel = t.displayId || t.id;
+            const primaryNode = t.nom ? `${idLabel} · ${t.nom}` : idLabel;
+            const secondaryNode = (
+              <span className="inline-flex items-baseline gap-1.5 flex-wrap">
+                {t.boucle ? (
+                  <span
+                    className={`ft-code tabular-nums ${boucleClass}`}
+                    aria-label={`Boucle ${t.boucle}`}
+                  >
+                    {t.boucle}
+                  </span>
+                ) : null}
+                {t.boucle ? (
+                  <span aria-hidden="true" className="text-text-2">·</span>
+                ) : null}
+                <span>{meta}</span>
+              </span>
+            );
             return (
               <IonItemSliding key={t.id}>
                 <li role="listitem">
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/troupeau/truies/${encodeURIComponent(t.id)}`)}
-                    aria-label={`Truie ${t.displayId || t.id}${t.boucle ? ` boucle ${t.boucle}` : ''} · ${v.label}`}
-                    className="pressable w-full text-left flex items-center gap-3 px-3 py-3 border-b border-border last:border-b-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-                  >
-                    <div className="w-9 h-9 rounded-lg bg-bg-2 flex items-center justify-center text-text-1 shrink-0">
-                      <TruieIcon size={22} aria-hidden="true" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-1.5 flex-wrap">
-                        <span className="font-mono text-[14px] font-semibold text-text-0 tabular-nums">
-                          {t.displayId || t.id}
-                        </span>
-                        {t.boucle ? (
-                          <>
-                            <span className="font-mono text-[12px] text-text-2" aria-hidden="true">·</span>
-                            <span className={`ft-code text-[13px] tabular-nums ${boucleClass}`} aria-label={`Boucle ${t.boucle}`}>
-                              {t.boucle}
-                            </span>
-                          </>
-                        ) : null}
-                      </div>
-                      <div className="font-mono text-[11px] text-text-2 mt-0.5 truncate">
-                        {meta}
-                      </div>
-                    </div>
-                    <Chip label={v.label} tone={v.tone} size="xs" />
-                  </button>
+                  <AnimalListItem
+                    avatar={<TruieIcon size={22} aria-hidden="true" />}
+                    primary={primaryNode}
+                    secondary={secondaryNode}
+                    chip={{ label: v.label, tone: v.tone }}
+                    ariaLabel={`Truie ${idLabel}${t.boucle ? ` boucle ${t.boucle}` : ''} · ${v.label}`}
+                    onClick={() =>
+                      navigate(`/troupeau/truies/${encodeURIComponent(t.id)}`)
+                    }
+                  />
                 </li>
                 <IonItemOptions side="end">
                   <IonItemOption
                     color="warning"
-                    aria-label={`Enregistrer une saillie pour ${t.displayId || t.id}`}
+                    aria-label={`Enregistrer une saillie pour ${idLabel}`}
                     onClick={() => handleSaillir(t)}
                   >
                     <div className="flex flex-col items-center gap-1 px-2">
@@ -461,7 +465,7 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
                   </IonItemOption>
                   <IonItemOption
                     color="danger"
-                    aria-label={`Enregistrer un soin pour ${t.displayId || t.id}`}
+                    aria-label={`Enregistrer un soin pour ${idLabel}`}
                     onClick={() => handleSoigner(t)}
                   >
                     <div className="flex flex-col items-center gap-1 px-2">

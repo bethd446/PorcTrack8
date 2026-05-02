@@ -45,31 +45,48 @@ export async function getTruies(
   cb?: (data: Truie[], header: string[]) => void
 ): Promise<SupabaseReadResult<Truie>> {
   try {
-    const { data, error } = await supabase
-      .from('sows')
-      .select('*')
-      .order('code_id');
+    // V24 : JOIN loges (numero). Fallback legacy si migration absente.
+    let data: unknown[] | null = null;
+    let error: { message: string } | null = null;
+    {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const res = await (supabase.from('sows') as any)
+        .select('*, loges(id, numero)')
+        .order('code_id');
+      data = res.data as unknown[] | null;
+      error = res.error;
+    }
+    if (error) {
+      const legacy = await supabase.from('sows').select('*').order('code_id');
+      if (legacy.error) return fail<Truie>(legacy.error.message);
+      data = legacy.data ?? [];
+    }
 
-    if (error) return fail<Truie>(error.message);
-
-    const mapped: Truie[] = (data ?? []).map(r => ({
-      id:            r.id,
-      displayId:     r.code_id,
-      boucle:        r.boucle ?? '',
-      nom:           r.name ?? undefined,
-      statut:        r.statut ?? 'En attente saillie',
-      stade:         r.statut_repro ?? undefined,
-      ration:        r.ration_kg_j ?? 0,
-      nbPortees:     r.nb_portees ?? 0,
-      dateMBPrevue:  r.date_mb_prevue ?? undefined,
-      notes:         r.notes ?? undefined,
-      race:          r.breed ?? undefined,
-      photoUrl:      r.photo_url ?? undefined,
-      dateNaissance: r.date_naissance ?? undefined,
-      origine:       r.origine ?? undefined,
-      loge:          r.localisation ?? undefined,
-      synced:        true,
-    }));
+    const mapped: Truie[] = (data ?? []).map((raw) => {
+      const r = raw as Record<string, unknown> & {
+        loges?: { id?: string; numero?: string } | null;
+      };
+      return {
+        id:            r.id as string,
+        displayId:     r.code_id as string,
+        boucle:        (r.boucle as string | null) ?? '',
+        nom:           (r.name as string | null) ?? undefined,
+        statut:        (r.statut as string | null) ?? 'En attente saillie',
+        stade:         (r.statut_repro as string | null) ?? undefined,
+        ration:        (r.ration_kg_j as number | null) ?? 0,
+        nbPortees:     (r.nb_portees as number | null) ?? 0,
+        dateMBPrevue:  (r.date_mb_prevue as string | null) ?? undefined,
+        notes:         (r.notes as string | null) ?? undefined,
+        race:          (r.breed as string | null) ?? undefined,
+        photoUrl:      (r.photo_url as string | null) ?? undefined,
+        dateNaissance: (r.date_naissance as string | null) ?? undefined,
+        origine:       (r.origine as string | null) ?? undefined,
+        loge:          (r.localisation as string | null) ?? undefined,
+        logeId:        (r.loge_id as string | null) ?? undefined,
+        logeNumero:    r.loges?.numero ?? undefined,
+        synced:        true,
+      };
+    });
 
     cb?.(mapped, TRUIES_HEADER);
     return ok(mapped, TRUIES_HEADER);
@@ -87,30 +104,47 @@ export async function getVerrats(
   cb?: (data: Verrat[], header: string[]) => void
 ): Promise<SupabaseReadResult<Verrat>> {
   try {
-    const { data, error } = await supabase
-      .from('boars')
-      .select('*')
-      .order('code_id');
+    // V24 : JOIN loges (numero). Fallback legacy si migration absente.
+    let data: unknown[] | null = null;
+    let error: { message: string } | null = null;
+    {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const res = await (supabase.from('boars') as any)
+        .select('*, loges(id, numero)')
+        .order('code_id');
+      data = res.data as unknown[] | null;
+      error = res.error;
+    }
+    if (error) {
+      const legacy = await supabase.from('boars').select('*').order('code_id');
+      if (legacy.error) return fail<Verrat>(legacy.error.message);
+      data = legacy.data ?? [];
+    }
 
-    if (error) return fail<Verrat>(error.message);
-
-    const mapped: Verrat[] = (data ?? []).map(r => ({
-      id:            r.id,
-      displayId:     r.code_id,
-      boucle:        r.boucle ?? '',
-      nom:           r.name ?? undefined,
-      statut:        r.statut ?? 'Actif',
-      origine:       r.origine ?? undefined,
-      alimentation:  r.alimentation ?? undefined,
-      ration:        r.ration_kg_j ?? 0,
-      notes:         r.notes ?? undefined,
-      photoUrl:      r.photo_url ?? undefined,
-      dateNaissance: r.date_naissance ?? undefined,
-      loge:          r.localisation ?? undefined,
-      race:          r.breed ?? undefined,
-      lignee:        r.lignee_parentale ?? undefined,
-      synced:        true,
-    }));
+    const mapped: Verrat[] = (data ?? []).map((raw) => {
+      const r = raw as Record<string, unknown> & {
+        loges?: { id?: string; numero?: string } | null;
+      };
+      return {
+        id:            r.id as string,
+        displayId:     r.code_id as string,
+        boucle:        (r.boucle as string | null) ?? '',
+        nom:           (r.name as string | null) ?? undefined,
+        statut:        (r.statut as string | null) ?? 'Actif',
+        origine:       (r.origine as string | null) ?? undefined,
+        alimentation:  (r.alimentation as string | null) ?? undefined,
+        ration:        (r.ration_kg_j as number | null) ?? 0,
+        notes:         (r.notes as string | null) ?? undefined,
+        photoUrl:      (r.photo_url as string | null) ?? undefined,
+        dateNaissance: (r.date_naissance as string | null) ?? undefined,
+        loge:          (r.localisation as string | null) ?? undefined,
+        logeId:        (r.loge_id as string | null) ?? undefined,
+        logeNumero:    r.loges?.numero ?? undefined,
+        race:          (r.breed as string | null) ?? undefined,
+        lignee:        (r.lignee_parentale as string | null) ?? undefined,
+        synced:        true,
+      };
+    });
 
     cb?.(mapped, VERRATS_HEADER);
     return ok(mapped, VERRATS_HEADER);
@@ -129,35 +163,87 @@ export async function getBandes(
   cb?: (data: BandePorcelets[], header: string[]) => void
 ): Promise<SupabaseReadResult<BandePorcelets>> {
   try {
-    const { data, error } = await supabase
-      .from('batches')
-      .select('*, sows(code_id, boucle), boars(code_id)')
-      .order('date_mise_bas', { ascending: false });
+    // V24 : JOIN batch_sows (multi-mères) + loges (référentiel structuré).
+    // Si la migration v24 n'est pas encore appliquée, le SELECT échoue ;
+    // on retombe alors sur la requête legacy (sans sources/loges).
+    let data: unknown[] | null = null;
+    let error: { message: string } | null = null;
+    {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const res = await (supabase.from('batches') as any)
+        .select(
+          '*, sows(code_id, boucle), boars(code_id), '
+          + 'batch_sows(id, sow_id, nb_porcelets_apportes, date_ajout, notes, sows(code_id, boucle, name)), '
+          + 'loges(id, numero)',
+        )
+        .order('date_mise_bas', { ascending: false });
+      data = res.data as unknown[] | null;
+      error = res.error;
+    }
+    if (error) {
+      // Fallback legacy (avant migration v24)
+      const legacy = await supabase
+        .from('batches')
+        .select('*, sows(code_id, boucle), boars(code_id)')
+        .order('date_mise_bas', { ascending: false });
+      if (legacy.error) return fail<BandePorcelets>(legacy.error.message);
+      data = legacy.data ?? [];
+      error = null;
+    }
 
-    if (error) return fail<BandePorcelets>(error.message);
+    type BatchSowJoin = {
+      id: string;
+      sow_id: string;
+      nb_porcelets_apportes: number;
+      date_ajout: string;
+      notes: string | null;
+      sows?: { code_id?: string | null; boucle?: string | null; name?: string | null } | null;
+    };
 
-    const mapped: BandePorcelets[] = (data ?? []).map(r => ({
-      id:                  r.id,
-      idPortee:            r.code_id,
-      truie:               (r.sows as { code_id: string } | null)?.code_id ?? undefined,
-      boucleMere:          (r.sows as { boucle: string } | null)?.boucle ?? undefined,
-      dateMB:              r.date_mise_bas ?? undefined,
-      nv:                  r.porcelets_nes_vivants ?? 0,
-      morts:               r.nb_mort_nes ?? 0,
-      vivants:             r.porcelets_nes_vivants != null && r.nb_mort_nes != null
-                             ? r.porcelets_nes_vivants - r.nb_mort_nes
-                             : r.porcelets_nes_vivants ?? 0,
-      statut:              r.statut ?? 'Sous mère',
-      dateSevragePrevue:   r.date_sevrage_prevue ?? undefined,
-      dateSevrageReelle:   r.date_sevrage ?? undefined,
-      notes:               r.notes ?? undefined,
-      photoUrl:            r.photo_url ?? undefined,
-      loge:                r.loge ?? undefined,
-      poidsMoyenKg:        r.poids_moyen_kg ?? undefined,
-      poidsInitialKg:      (r as { poids_initial_kg?: number | null }).poids_initial_kg ?? 0,
-      verratPere:          (r.boars as { code_id: string } | null)?.code_id ?? undefined,
-      synced:              true,
-    }));
+    const mapped: BandePorcelets[] = (data ?? []).map((raw) => {
+      const r = raw as Record<string, unknown> & {
+        sows?: { code_id?: string; boucle?: string } | null;
+        boars?: { code_id?: string } | null;
+        batch_sows?: BatchSowJoin[] | null;
+        loges?: { id?: string; numero?: string } | null;
+      };
+      const nv = (r.porcelets_nes_vivants as number | null | undefined) ?? 0;
+      const morts = (r.nb_mort_nes as number | null | undefined) ?? 0;
+      return {
+        id:                  r.id as string,
+        idPortee:            r.code_id as string,
+        truie:               r.sows?.code_id ?? undefined,
+        boucleMere:          r.sows?.boucle ?? undefined,
+        dateMB:              (r.date_mise_bas as string | null) ?? undefined,
+        nv,
+        morts,
+        vivants:             r.porcelets_nes_vivants != null && r.nb_mort_nes != null
+                               ? nv - morts
+                               : nv,
+        statut:              (r.statut as string | null) ?? 'Sous mère',
+        dateSevragePrevue:   (r.date_sevrage_prevue as string | null) ?? undefined,
+        dateSevrageReelle:   (r.date_sevrage as string | null) ?? undefined,
+        notes:               (r.notes as string | null) ?? undefined,
+        photoUrl:            (r.photo_url as string | null) ?? undefined,
+        loge:                (r.loge as string | null) ?? undefined,
+        poidsMoyenKg:        (r.poids_moyen_kg as number | null) ?? undefined,
+        poidsInitialKg:      (r.poids_initial_kg as number | null) ?? 0,
+        verratPere:          r.boars?.code_id ?? undefined,
+        sources:             (r.batch_sows ?? []).map(bs => ({
+                               id: bs.id,
+                               sowId: bs.sow_id,
+                               sowCode: bs.sows?.code_id ?? '',
+                               sowBoucle: bs.sows?.boucle ?? undefined,
+                               sowName: bs.sows?.name ?? undefined,
+                               nbPorceletsApportes: bs.nb_porcelets_apportes,
+                               dateAjout: bs.date_ajout,
+                               notes: bs.notes ?? undefined,
+                             })),
+        logeId:              (r.loge_id as string | null) ?? undefined,
+        logeNumero:          r.loges?.numero ?? undefined,
+        synced:              true,
+      };
+    });
 
     cb?.(mapped, BANDES_HEADER);
     return ok(mapped, BANDES_HEADER);

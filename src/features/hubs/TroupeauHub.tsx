@@ -19,7 +19,7 @@ import TopBarSync from '../../components/design/TopBarSync';
 import TroupeauTruiesView from '../troupeau/TroupeauTruiesView';
 import TroupeauVerratsView from '../troupeau/TroupeauVerratsView';
 import TroupeauPorceletsView from '../troupeau/TroupeauPorceletsView';
-import TroupeauLogesView from '../troupeau/TroupeauLogesView';
+import TroupeauLogesListView from '../troupeau/TroupeauLogesListView';
 import QuickAddBandeForm from '../../components/forms/QuickAddBandeForm';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs';
 
@@ -261,7 +261,7 @@ const TroupeauHub: React.FC = () => {
                 <TroupeauPorceletsView searchText={searchPorcelets} setSearchText={setSearchPorcelets} />
               </TabsContent>
               <TabsContent value="loges" className="animate-fade-in">
-                <TroupeauLogesView />
+                <TroupeauLogesListView />
               </TabsContent>
               <TabsContent value="bandes" className="animate-fade-in">
                 <div className="flex flex-col gap-4">

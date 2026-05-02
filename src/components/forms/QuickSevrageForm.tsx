@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { IonToast } from '@ionic/react';
 import { Baby, Check, CheckCircle2 } from 'lucide-react';
 
-import { BottomSheet } from '../agritech';
+import { AppToast, BottomSheet, useAppToast } from '../agritech';
 import { useFarm } from '../../context/FarmContext';
 import {
   updateBatchByCode,
@@ -51,10 +50,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string>('');
-  const [toast, setToast] = useState<{ open: boolean; message: string }>({
-    open: false,
-    message: '',
-  });
+  const { show: showToast, toastProps } = useAppToast();
 
   // Reset le formulaire à chaque ouverture (pattern aligné avec QuickMiseBasForm).
   const [lastOpenKey, setLastOpenKey] = useState<{ isOpen: boolean; defaultBandeId: string | undefined }>({
@@ -129,7 +125,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
         }
       }
       setSuccess(true);
-      setToast({ open: true, message: `Sevrage enregistré · ${nb} porcelets` });
+      showToast(`Sevrage enregistré · ${nb} porcelets`, 'success', { duration: 2200 });
       try { await refreshData(true); } catch { /* noop */ }
       if (onSuccess) onSuccess();
       setTimeout(() => {
@@ -341,13 +337,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
         )}
       </BottomSheet>
 
-      <IonToast
-        isOpen={toast.open}
-        message={toast.message}
-        duration={2200}
-        position="bottom"
-        onDidDismiss={() => setToast({ open: false, message: '' })}
-      />
+      <AppToast {...toastProps} />
     </>
   );
 };

@@ -1,59 +1,42 @@
 import React from 'react';
+import AgritechChip, { type ChipTone as AgritechTone } from '../agritech/Chip';
 
-type Tone = 'green' | 'amber' | 'terre' | 'pig' | 'neutral';
+/**
+ * @deprecated Use `Chip` from `src/components/agritech` instead.
+ * This file is a thin compat shim mapping the legacy `tone` palette
+ * (green/amber/terre/pig/neutral) and `children` API to the canonical
+ * agritech Chip. Kept only because TruieDetailView (V5-A locked) still
+ * references this path.
+ */
+type LegacyTone = 'green' | 'amber' | 'terre' | 'pig' | 'neutral';
 
 interface ChipProps {
   children: React.ReactNode;
-  tone?: Tone;
+  tone?: LegacyTone;
   className?: string;
 }
 
-const TONE_STYLE: Record<Tone, React.CSSProperties> = {
-  green: {
-    background: 'var(--color-accent-100)',
-    color: 'var(--color-accent-600)',
-  },
-  amber: {
-    background: 'var(--color-amber-pork-soft)',
-    color: 'var(--color-amber-pork-deep)',
-  },
-  terre: {
-    background: 'var(--color-secondary-soft)',
-    color: 'var(--color-secondary-deep)',
-  },
-  pig: {
-    background: 'var(--color-pig-soft)',
-    color: 'var(--color-pig-deep)',
-  },
-  neutral: {
-    background: 'var(--bg-surface-2)',
-    color: 'var(--muted)',
-    border: '0.5px solid var(--line)',
-  },
+const TONE_MAP: Record<LegacyTone, AgritechTone> = {
+  green: 'accent',
+  amber: 'amber',
+  terre: 'ochre',
+  pig: 'coral',
+  neutral: 'default',
 };
 
-const Chip: React.FC<ChipProps> = ({ children, tone = 'green', className = '' }) => {
-  return (
-    <span
-      className={className}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        fontFamily: 'var(--font-mono)',
-        fontSize: '12px',
-        letterSpacing: '0.10em',
-        textTransform: 'uppercase',
-        fontWeight: 500,
-        padding: '5px 10px',
-        borderRadius: 'var(--radius-pill)',
-        whiteSpace: 'nowrap',
-        ...TONE_STYLE[tone],
-      }}
-    >
-      {children}
-    </span>
-  );
+const Chip: React.FC<ChipProps> = ({ children, tone = 'green', className }) => {
+  const label = typeof children === 'string' || typeof children === 'number'
+    ? String(children)
+    : '';
+  if (!label) {
+    return (
+      <span className={className}>
+        <AgritechChip label="" tone={TONE_MAP[tone]} />
+        {children}
+      </span>
+    );
+  }
+  return <AgritechChip label={label} tone={TONE_MAP[tone]} className={className} />;
 };
 
 export default Chip;

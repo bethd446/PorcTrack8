@@ -48,8 +48,12 @@ export interface Truie {
   dateNaissance?: string;
   /** Origine / élevage de provenance (colonne `origine`). */
   origine?: string;
-  /** Emplacement loge / bâtiment (colonne `localisation`). */
+  /** Emplacement loge / bâtiment (colonne `localisation`, legacy texte). */
   loge?: string;
+  /** V24 — FK vers `loges.id` (référentiel structuré). NULL si non assigné. */
+  logeId?: string;
+  /** V24 — Numéro de loge résolu via JOIN (ex: "M-01"). */
+  logeNumero?: string;
   synced: boolean;
   raw?: (string | number | boolean)[];
 }
@@ -68,8 +72,12 @@ export interface Verrat {
   photoUrl?: string;
   /** Date de naissance ISO yyyy-MM-dd. */
   dateNaissance?: string;
-  /** Emplacement loge / bâtiment. */
+  /** Emplacement loge / bâtiment (legacy texte). */
   loge?: string;
+  /** V24 — FK vers `loges.id`. NULL si non assigné. */
+  logeId?: string;
+  /** V24 — Numéro de loge résolu via JOIN. */
+  logeNumero?: string;
   /** Race / lignée génétique (colonne `breed`). */
   race?: string;
   /** Lignée parentale libre (ex: "Père Titan / Mère Rose"). */
@@ -109,8 +117,72 @@ export interface BandePorcelets {
   /** ID/code du verrat père (résolu via saillie ou saisi directement). */
   verratPere?: string;
   notes?: string;
+  /** V24 — Liste des truies sources (multi-mères). Résolu via JOIN batch_sows. */
+  sources?: BatchSource[];
+  /** V24 — FK vers `loges.id` (loge portée par la bande entière). */
+  logeId?: string;
+  /** V24 — Numéro de loge résolu via JOIN loges. */
+  logeNumero?: string;
   synced: boolean;
   raw?: (string | number | boolean)[];
+}
+
+/**
+ * V24 — Une truie source d'une bande (table `batch_sows`).
+ * Une bande peut avoir N sources (regroupement, adoptions, péréquations).
+ */
+export interface BatchSource {
+  id: string;
+  sowId: string;
+  /** Code displayId de la truie (ex: T05). */
+  sowCode: string;
+  /** Boucle officielle de la truie (ex: BCL-0001). */
+  sowBoucle?: string;
+  /** Nom usuel de la truie. */
+  sowName?: string;
+  /** Nb de porcelets apportés par cette truie. CHECK 1..30. */
+  nbPorceletsApportes: number;
+  /** Date d'ajout au format ISO yyyy-MM-dd. */
+  dateAjout: string;
+  notes?: string;
+}
+
+/** V24 — 9 types de loges supportés. */
+export type LogeType =
+  | 'MATERNITE'
+  | 'POST_SEVRAGE'
+  | 'CROISSANCE'
+  | 'ENGRAISSEMENT'
+  | 'FINITION'
+  | 'GESTANTE'
+  | 'VERRAT'
+  | 'INFIRMERIE'
+  | 'AUTRE';
+
+/** V24 — Référentiel de loge structuré (table `loges`). */
+export interface Loge {
+  id: string;
+  /** Numéro libre user (ex: "M-01", "Salle 1A"). Unique par farm. */
+  numero: string;
+  type: LogeType;
+  batiment?: string;
+  /** Capacité max (animaux). NULL = pas de limite. CHECK 0..500. */
+  capaciteMax?: number;
+  notes?: string;
+  /** Soft-delete : false = archivée, masquée des sélecteurs. */
+  active: boolean;
+}
+
+/** V24 — Mouvement inter-loges historisé (table `loge_movements`). */
+export interface LogeMovement {
+  id: string;
+  subjectType: 'TRUIE' | 'VERRAT' | 'BANDE';
+  subjectId: string;
+  fromLogeId?: string;
+  toLogeId?: string;
+  /** Date du mouvement ISO yyyy-MM-dd. */
+  dateMvt: string;
+  reason?: string;
 }
 
 export interface TraitementSante {

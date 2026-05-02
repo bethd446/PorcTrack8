@@ -1,9 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { IonToast } from '@ionic/react';
 import { Baby, Check, CheckCircle2 } from 'lucide-react';
 
-import { BottomSheet } from '../agritech';
+import { AppToast, BottomSheet, useAppToast } from '../agritech';
 import {
   insertBatch,
   updateSowByCode,
@@ -86,10 +85,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
   const [errors, setErrors] = useState<MiseBasValidationErrors>({});
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [toast, setToast] = useState<{ show: boolean; message: string }>({
-    show: false,
-    message: '',
-  });
+  const { show: showToast, toastProps } = useAppToast();
   const [lastSaillie, setLastSaillie] = useState<LastSaillieResolved | null>(
     null,
   );
@@ -340,12 +336,13 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
       const online = typeof navigator !== 'undefined' && navigator.onLine;
 
       setSuccess(true);
-      setToast({
-        show: true,
-        message: online
+      showToast(
+        online
           ? `Mise-bas enregistrée. Portée ${idPortee} créée automatiquement.`
           : `Mise-bas en file · sync auto · ${idPortee}`,
-      });
+        online ? 'success' : 'info',
+        { duration: 2400 },
+      );
 
       try {
         await refreshData(true);
@@ -362,13 +359,13 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
       }, 1500);
     } catch (err) {
       console.error('[QuickMiseBasForm] enregistrement local échoué:', err);
-      setToast({
-        show: true,
-        message:
-          err instanceof Error
-            ? `Erreur : ${err.message}`
-            : 'Erreur enregistrement local',
-      });
+      showToast(
+        err instanceof Error
+          ? `Erreur : ${err.message}`
+          : 'Erreur enregistrement local',
+        'error',
+        { duration: 2400 },
+      );
     } finally {
       setSaving(false);
     }
@@ -668,13 +665,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
         )}
       </BottomSheet>
 
-      <IonToast
-        isOpen={toast.show}
-        message={toast.message}
-        duration={2400}
-        onDidDismiss={() => setToast({ show: false, message: '' })}
-        position="bottom"
-      />
+      <AppToast {...toastProps} />
     </>
   );
 };

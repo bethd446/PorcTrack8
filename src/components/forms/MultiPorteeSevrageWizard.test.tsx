@@ -25,8 +25,9 @@ import type { BandePorcelets, Truie, Verrat } from '../../types/farm';
 vi.mock('../../services/supabaseWrites', () => ({
   updateBatchByCode: vi.fn().mockResolvedValue({}),
   updateSowByCode: vi.fn().mockResolvedValue({}),
-  insertBatch: vi.fn().mockResolvedValue({}),
+  insertBatch: vi.fn().mockResolvedValue({ id: 'uuid-batch-new' }),
   resolveSowIdByCode: vi.fn().mockResolvedValue('uuid-sow-1'),
+  addBatchSource: vi.fn().mockResolvedValue({ id: 'bs-1' }),
 }));
 
 interface MockFarm {
@@ -61,6 +62,7 @@ vi.mock('@ionic/react', () => ({
 }));
 
 import {
+  addBatchSource,
   insertBatch,
   updateBatchByCode,
 } from '../../services/supabaseWrites';
@@ -219,5 +221,42 @@ describe('MultiPorteeSevrageWizard', () => {
       phase: 'post-sevrage',
     });
     expect(insertPayload.code_id).toMatch(/^B-/);
+  });
+
+  it("[5] V6-B : addBatchSource appelé N fois pour N sources", async () => {
+    render(
+      <MultiPorteeSevrageWizard isOpen onClose={() => undefined} />,
+    );
+
+    // Step 1 — sélection 2 portées (T07 + T08, total 23 vivants)
+    fireEvent.click(screen.getByLabelText(/Sélectionner 26-T7-01/i));
+    fireEvent.click(screen.getByLabelText(/Sélectionner 26-T8-01/i));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+
+    // Step 2 — destination unique
+    fireEvent.change(
+      screen.getByLabelText(/Nb porcelets destination 1/i),
+      { target: { value: '23' } },
+    );
+    fireEvent.change(
+      screen.getByLabelText(/Poids moyen destination 1/i),
+      { target: { value: '6.5' } },
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+
+    // Step 3 — confirmer
+    fireEvent.click(screen.getByRole('button', { name: /Valider sevrage/i }));
+
+    await waitFor(() => {
+      expect(addBatchSource).toHaveBeenCalledTimes(2);
+    });
+    const calls = (addBatchSource as ReturnType<typeof vi.fn>).mock.calls;
+    // Chaque call doit avoir batchId, sowId, nbPorcelets borné [1, 30]
+    for (const [args] of calls) {
+      expect(args.batchId).toBe('uuid-batch-new');
+      expect(args.sowId).toBe('uuid-sow-1');
+      expect(args.nbPorcelets).toBeGreaterThanOrEqual(1);
+      expect(args.nbPorcelets).toBeLessThanOrEqual(30);
+    }
   });
 });

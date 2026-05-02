@@ -16,6 +16,7 @@ import { ArrowRight, Baby, CheckCircle2, Plus, Scale, X } from 'lucide-react';
 import { BottomSheet } from '../agritech';
 import { useFarm } from '../../context/FarmContext';
 import {
+  addBatchSource,
   insertBatch,
   resolveSowIdByCode,
   updateBatchByCode,
@@ -277,25 +278,32 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
       }
     }
 
-    // 2) Crée chaque bande destination (best-effort)
-    // sow_id : on rattache la 1ère truie source par défaut (FK requise null-able)
-    let primarySowUuid: string | null = null;
-    const primarySowCode = selectedSources[0]?.truie?.trim();
-    if (primarySowCode) {
+    // 2) Résout les UUID des truies sources (1 fois pour toutes)
+    const sourceSowIds: { code: string; uuid: string | null; vivants: number }[] = [];
+    for (const src of selectedSources) {
+      const code = src.truie?.trim();
+      if (!code) continue;
+      let uuid: string | null = null;
       try {
-        primarySowUuid = await resolveSowIdByCode(primarySowCode);
+        uuid = await resolveSowIdByCode(code);
       } catch (e) {
-        console.warn('[multi-sevrage] resolve sow failed', primarySowCode, e);
+        console.warn('[multi-sevrage] resolve sow failed', code, e);
       }
+      sourceSowIds.push({ code, uuid, vivants: src.vivants ?? 0 });
     }
+    const totalSourceLive = sourceSowIds.reduce((s, x) => s + x.vivants, 0);
 
+    // 3) Crée chaque bande destination + lie batch_sows pour chaque source
+    // sow_id sur insertBatch laissé NULL : addBatchSource patche automatiquement
+    // batches.sow_id avec la 1ère source ajoutée si NULL.
     for (const dst of destinations) {
       const nb = parseInt(dst.nbPorcelets, 10);
       const poids = parseFloat(dst.poidsKg.replace(',', '.'));
+      let newBatch: { id: string } | null = null;
       try {
-        await insertBatch({
+        const inserted = await insertBatch({
           code_id: dst.codeId.trim(),
-          sow_id: primarySowUuid,
+          sow_id: null,
           boar_id: null,
           date_mise_bas: null,
           date_sevrage: dateIso,
@@ -309,10 +317,38 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
           loge: dst.loge.trim() || null,
           notes: `Issu sevrage groupé (${selectedSources.length} portées)`,
         });
+        newBatch = inserted;
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         failures.push(`Destination ${dst.codeId} : ${msg}`);
         console.warn('[multi-sevrage] insert destination failed', dst.codeId, e);
+      }
+
+      if (!newBatch) continue;
+
+      // Pour chaque source résolue, INSERT batch_sows (apport proportionnel).
+      // Borné [1, 30] (CHECK SQL).
+      for (const src of sourceSowIds) {
+        if (!src.uuid) continue;
+        let nbApportes = 1;
+        if (totalSourceLive > 0 && nb > 0) {
+          nbApportes = Math.max(
+            1,
+            Math.min(30, Math.round((src.vivants / totalSourceLive) * nb)),
+          );
+        }
+        try {
+          await addBatchSource({
+            batchId: newBatch.id,
+            sowId: src.uuid,
+            nbPorcelets: nbApportes,
+            dateAjout: dateIso,
+          });
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          failures.push(`Source ${src.code}→${dst.codeId} : ${msg}`);
+          console.warn('[multi-sevrage] addBatchSource failed', src.code, e);
+        }
       }
     }
 

@@ -60,6 +60,16 @@ vi.mock('../../services/kvStore', () => ({
   kvSet: (k: string, v: string) => kvSetMock(k, v),
 }));
 
+const createLogeMock = vi.fn(async (_data: unknown) => ({
+  id: 'l-uuid',
+  numero: 'X',
+  type: 'MATERNITE',
+  active: true,
+}));
+vi.mock('../../services/supabaseWrites', () => ({
+  createLoge: (data: unknown) => createLogeMock(data),
+}));
+
 import OnboardingWizard from './OnboardingWizard';
 
 const renderWizard = () =>
@@ -74,6 +84,7 @@ beforeEach(() => {
   updateMock.mockClear();
   eqMock.mockClear();
   kvSetMock.mockClear();
+  createLogeMock.mockClear();
 });
 afterEach(() => cleanup());
 
@@ -83,7 +94,7 @@ describe('OnboardingWizard', () => {
     expect(screen.getByText(/Bienvenue sur PorcTrack/i)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /Commencer/i }));
     expect(screen.getByRole('heading', { name: /Nom de la ferme/i })).toBeTruthy();
-    expect(screen.getByText('Étape 2 / 10')).toBeTruthy();
+    expect(screen.getByText('Étape 2 / 11')).toBeTruthy();
   });
 
   it('désactive le bouton Suivant tant que le nom de ferme est vide (validation KO)', () => {
@@ -115,7 +126,7 @@ describe('OnboardingWizard', () => {
     fireEvent.click(screen.getByRole('radio', { name: /Engraisseur seul/i }));
     fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
     // → doit sauter à l'étape 7 (Verrats), pas 5 (Races) ni 6 (Truies)
-    expect(screen.getByText('Étape 7 / 10')).toBeTruthy();
+    expect(screen.getByText('Étape 7 / 11')).toBeTruthy();
     expect(screen.getByText(/Cheptel initial — Verrats/i)).toBeTruthy();
   });
 
@@ -142,7 +153,10 @@ describe('OnboardingWizard', () => {
     fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
     // 9 : notes vides OK
     fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
-    // 10 : récap
+    // 10 : loges (skip — quantités à 0 par défaut, validation OK)
+    expect(screen.getByRole('heading', { name: /Configuration des loges/i })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // 11 : récap
     expect(screen.getByText(/Récapitulatif/i)).toBeTruthy();
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /Terminer/i }));
@@ -155,5 +169,84 @@ describe('OnboardingWizard', () => {
     expect(payload?.races).toEqual(['Large White']);
     expect(eqMock).toHaveBeenCalled();
     expect(navigateMock).toHaveBeenCalledWith('/today', { replace: true });
+  });
+
+  it('étape 10 (loges) : skip → handleFinish n\'appelle PAS createLoge', async () => {
+    renderWizard();
+    // Avance jusqu'au step 10 (loges)
+    fireEvent.click(screen.getByRole('button', { name: /Commencer/i }));
+    fireEvent.change(screen.getByLabelText(/Nom de la ferme/i), {
+      target: { value: 'Ferme Skip' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.change(screen.getByLabelText(/Secteur/i), { target: { value: 'Loire' } });
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('radio', { name: /^Naisseur$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Large White/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // 10 : loges — quantités à 0 (skip implicite via défaut)
+    expect(screen.getByRole('heading', { name: /Configuration des loges/i })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // 11 : récap
+    expect(screen.getByText(/Récapitulatif/i)).toBeTruthy();
+    expect(screen.getByText(/À configurer plus tard/i)).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Terminer/i }));
+    });
+    expect(updateMock).toHaveBeenCalled();
+    expect(createLogeMock).not.toHaveBeenCalled();
+  });
+
+  it('étape 10 (loges) : qty>0 → handleFinish appelle createLoge N fois', async () => {
+    renderWizard();
+    // Avance jusqu'au step 10
+    fireEvent.click(screen.getByRole('button', { name: /Commencer/i }));
+    fireEvent.change(screen.getByLabelText(/Nom de la ferme/i), {
+      target: { value: 'Ferme Loges' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.change(screen.getByLabelText(/Secteur/i), { target: { value: 'Loire' } });
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('radio', { name: /^Naisseur$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Large White/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // 10 : loges — saisit 2 maternité + 1 verrat
+    fireEvent.change(screen.getByLabelText(/Quantité de loges Mise-bas/i), {
+      target: { value: '2' },
+    });
+    fireEvent.change(screen.getByLabelText(/Quantité de loges Verrats/i), {
+      target: { value: '1' },
+    });
+    // Sub-step B doit apparaître
+    expect(screen.getByTestId('onb-loges-numbering')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // 11 : récap
+    expect(screen.getByText(/Récapitulatif/i)).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Terminer/i }));
+    });
+    expect(updateMock).toHaveBeenCalled();
+    // 2 maternité + 1 verrat = 3 loges à créer
+    expect(createLogeMock).toHaveBeenCalledTimes(3);
+    const calls = createLogeMock.mock.calls.map((c) => c[0]) as Array<{
+      numero: string;
+      type: string;
+      capaciteMax: number;
+    }>;
+    const types = calls.map((c) => c.type);
+    expect(types.filter((t) => t === 'MATERNITE')).toHaveLength(2);
+    expect(types.filter((t) => t === 'VERRAT')).toHaveLength(1);
+    // Numéros par défaut : M-01, M-02, B-01
+    expect(calls.map((c) => c.numero).sort()).toEqual(['B-01', 'M-01', 'M-02']);
   });
 });

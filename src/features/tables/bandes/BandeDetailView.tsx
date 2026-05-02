@@ -1,19 +1,29 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   IonContent, IonModal, IonSegment, IonSegmentButton, IonLabel, IonSpinner,
 } from '@ionic/react';
 import {
   AlertCircle, Activity, ClipboardList, ChevronLeft, ChevronRight,
   Stethoscope, TrendingUp, CalendarClock, CheckCircle2,
+  Edit3, Home, MapPin, Move,
 } from 'lucide-react';
 import PhotoStrip from '../../../components/PhotoStrip';
-import { Chip } from '../../../components/agritech';
+import { Chip, AnimalListItem } from '../../../components/agritech';
 import QuickNoteForm from '../../../components/forms/QuickNoteForm';
 import QuickHealthForm from '../../../components/forms/QuickHealthForm';
+import QuickEditBandeForm from '../../../components/forms/QuickEditBandeForm';
+import QuickMoveSubjectForm from '../../../components/forms/QuickMoveSubjectForm';
 import NotesTimeline from '../../../components/design/NotesTimeline';
 import BandeCroissanceCard from '../../../components/bande/BandeCroissanceCard';
+import TruieIcon from '../../../components/icons/TruieIcon';
 import { useFarm } from '../../../context/FarmContext';
 import { getJournalSante, getNotesTerrain } from '../../../services/supabaseService';
+import {
+  getBatchSources,
+  getLogeContents,
+  listLoges,
+} from '../../../services/supabaseWrites';
 import {
   getRecommendedHealthLogs,
   HEALTH_LOG_TEMPLATES,
@@ -22,6 +32,7 @@ import {
 import TableRowEdit from '../TableRowEdit';
 import CycleTimeline from './CycleTimeline';
 import type { AggregatedBande, DebugMeta, SheetRawRow } from './types';
+import type { BatchSource, Loge } from '../../../types/farm';
 
 interface BandeDetailViewProps {
   bande: AggregatedBande;
@@ -32,6 +43,7 @@ interface BandeDetailViewProps {
 }
 
 const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, onClose, onRefresh }) => {
+  const navigate = useNavigate();
   const [tab, setTab] = useState('resumé');
   const [editRow, setEditRow] = useState<SheetRawRow | null>(null);
   const [loading, setLoading] = useState(false);
@@ -41,6 +53,62 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
   const [notesHeader, setNotesHeader] = useState<string[]>([]);
   const { notes: notesAsNotes, getBandeById } = useFarm();
   const bandeTyped = getBandeById(bande.id);
+
+  // V6-B — Sources multi-mères + loge structurée
+  const [sources, setSources] = useState<BatchSource[]>([]);
+  const [loges, setLoges] = useState<Loge[]>([]);
+  const [logeOccupation, setLogeOccupation] = useState<number | null>(null);
+  const [editBandeOpen, setEditBandeOpen] = useState(false);
+  const [moveOpen, setMoveOpen] = useState(false);
+
+  const currentLoge = useMemo<Loge | undefined>(() => {
+    const id = bandeTyped?.logeId;
+    if (!id) return undefined;
+    return loges.find(l => l.id === id);
+  }, [bandeTyped?.logeId, loges]);
+
+  // Total porcelets apportés par les truies sources
+  const sourcesTotal = useMemo(
+    () => sources.reduce((acc, s) => acc + (s.nbPorceletsApportes ?? 0), 0),
+    [sources],
+  );
+
+  const nesVivants = bandeTyped?.nv ?? Number(bande.nv) ?? 0;
+  const ecart = sourcesTotal - nesVivants;
+
+  const loadSources = useCallback(async () => {
+    if (!bande.id) return;
+    try {
+      const rows = await getBatchSources(bande.id);
+      setSources(rows);
+    } catch (e) {
+      console.warn('[bande-detail] getBatchSources failed', e);
+    }
+  }, [bande.id]);
+
+  const loadLogeData = useCallback(async () => {
+    try {
+      const rows = await listLoges();
+      setLoges(rows);
+    } catch (e) {
+      console.warn('[bande-detail] listLoges failed', e);
+    }
+    if (bandeTyped?.logeId) {
+      try {
+        const c = await getLogeContents(bandeTyped.logeId);
+        setLogeOccupation(c.totalAnimaux);
+      } catch (e) {
+        console.warn('[bande-detail] getLogeContents failed', e);
+      }
+    } else {
+      setLogeOccupation(null);
+    }
+  }, [bandeTyped?.logeId]);
+
+  useEffect(() => {
+    loadSources();
+    loadLogeData();
+  }, [loadSources, loadLogeData]);
 
   const loadRelatedData = useCallback(async () => {
     setLoading(true);
@@ -212,6 +280,168 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                   ))}
                 </div>
               </div>
+
+              {/* ── V6-B · Origine — Truies sources ────────────────────── */}
+              <section
+                className="card-dense space-y-3"
+                aria-label="Truies sources"
+                data-testid="bande-section-sources"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <TruieIcon size={14} className="text-accent" />
+                    <h4 className="kpi-label">Origine — Truies sources</h4>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEditBandeOpen(true)}
+                    className="pressable inline-flex h-7 items-center gap-1 rounded-md bg-bg-2 px-2 text-text-1 hover:text-accent"
+                    aria-label="Modifier les truies sources"
+                  >
+                    <Edit3 size={12} aria-hidden="true" />
+                    <span className="font-mono text-[10px] uppercase tracking-wide">
+                      Modifier
+                    </span>
+                  </button>
+                </div>
+
+                {sources.length === 0 ? (
+                  <p className="rounded-md border border-dashed border-border bg-bg-1 px-3 py-3 font-mono text-[11px] text-text-2">
+                    Aucune truie source liée à cette portée
+                  </p>
+                ) : (
+                  <ul className="divide-y divide-border" aria-label="Liste truies sources">
+                    {sources.map(s => (
+                      <AnimalListItem
+                        key={s.id}
+                        avatar={<TruieIcon size={20} />}
+                        primary={
+                          <span>
+                            {s.sowCode}
+                            {s.sowName ? ` · ${s.sowName}` : ''}
+                          </span>
+                        }
+                        secondary={
+                          <span>
+                            {s.sowBoucle ?? ''}
+                            {s.sowBoucle ? ' · ' : ''}
+                            {s.nbPorceletsApportes} porcelet(s)
+                            {s.dateAjout ? ` · ${s.dateAjout}` : ''}
+                          </span>
+                        }
+                        accessory={<ChevronRight size={14} className="text-text-2" />}
+                        onClick={() => navigate(`/troupeau/truies/${s.sowId}`)}
+                        ariaLabel={`Voir fiche truie ${s.sowCode}`}
+                      />
+                    ))}
+                  </ul>
+                )}
+
+                {/* Indicateur cohérence */}
+                {sources.length > 0 && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2">
+                    <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+                      Total apporté · {sourcesTotal} / {nesVivants} NV
+                    </span>
+                    {ecart > 0 ? (
+                      <Chip
+                        label={`Adoptions à tracer (+${ecart})`}
+                        tone="amber"
+                        size="xs"
+                      />
+                    ) : ecart < 0 ? (
+                      <Chip
+                        label={`Apporté > vivants (${ecart})`}
+                        tone="accent"
+                        size="xs"
+                      />
+                    ) : (
+                      <Chip label="Cohérent" tone="accent" size="xs" />
+                    )}
+                  </div>
+                )}
+              </section>
+
+              {/* ── V6-B · Localisation — Loge ──────────────────────────── */}
+              <section
+                className="card-dense space-y-3"
+                aria-label="Localisation loge"
+                data-testid="bande-section-loge"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Home size={14} className="text-accent" />
+                    <h4 className="kpi-label">Localisation — Loge</h4>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setMoveOpen(true)}
+                    className="pressable inline-flex h-7 items-center gap-1 rounded-md bg-bg-2 px-2 text-text-1 hover:text-accent"
+                    aria-label="Déplacer cette bande"
+                  >
+                    <Move size={12} aria-hidden="true" />
+                    <span className="font-mono text-[10px] uppercase tracking-wide">
+                      Déplacer
+                    </span>
+                  </button>
+                </div>
+
+                {bandeTyped?.logeNumero || currentLoge ? (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (bandeTyped?.logeId) {
+                          navigate(`/troupeau/loges/${bandeTyped.logeId}`);
+                        }
+                      }}
+                      disabled={!bandeTyped?.logeId}
+                      className="pressable flex w-full items-center justify-between rounded-md border border-border bg-bg-0 px-3 py-2 text-left disabled:cursor-default"
+                      aria-label="Voir fiche loge"
+                    >
+                      <span className="flex items-center gap-2">
+                        <MapPin size={14} className="text-accent" aria-hidden="true" />
+                        <span className="font-mono text-[13px] text-text-0">
+                          {bandeTyped?.logeNumero ?? currentLoge?.numero}
+                        </span>
+                        {currentLoge?.batiment ? (
+                          <span className="font-mono text-[11px] text-text-2">
+                            · {currentLoge.batiment}
+                          </span>
+                        ) : null}
+                      </span>
+                      <ChevronRight size={14} className="text-text-2" aria-hidden="true" />
+                    </button>
+
+                    {currentLoge ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="rounded-md border border-border bg-bg-0 px-3 py-2">
+                          <p className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+                            Capacité
+                          </p>
+                          <p className="font-mono text-[13px] tabular-nums text-text-0">
+                            {currentLoge.capaciteMax != null
+                              ? `${currentLoge.capaciteMax}`
+                              : '—'}
+                          </p>
+                        </div>
+                        <div className="rounded-md border border-border bg-bg-0 px-3 py-2">
+                          <p className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+                            Occupation
+                          </p>
+                          <p className="font-mono text-[13px] tabular-nums text-text-0">
+                            {logeOccupation != null ? logeOccupation : '—'}
+                          </p>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : (
+                  <p className="rounded-md border border-dashed border-border bg-bg-1 px-3 py-3 font-mono text-[11px] text-text-2">
+                    Aucune loge assignée
+                  </p>
+                )}
+              </section>
 
               <QuickHealthForm subjectType="BANDE" subjectId={bande.id} onSuccess={() => { onRefresh(); loadRelatedData(); }} />
             </div>
@@ -420,6 +650,36 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
             />
           )}
         </IonModal>
+
+        {/* V6-B — Édition bande (sources/loge) */}
+        {bandeTyped ? (
+          <QuickEditBandeForm
+            isOpen={editBandeOpen}
+            onClose={() => setEditBandeOpen(false)}
+            bande={bandeTyped}
+            onSuccess={() => {
+              setEditBandeOpen(false);
+              onRefresh();
+              loadSources();
+              loadLogeData();
+            }}
+          />
+        ) : null}
+
+        {/* V6-B — Déplacement bande vers loge */}
+        <QuickMoveSubjectForm
+          isOpen={moveOpen}
+          onClose={() => setMoveOpen(false)}
+          subjectType="BANDE"
+          subjectId={bande.id}
+          subjectLabel={`Bande ${bande.id}`}
+          currentLogeId={bandeTyped?.logeId}
+          currentLogeNumero={bandeTyped?.logeNumero}
+          onSuccess={() => {
+            onRefresh();
+            loadLogeData();
+          }}
+        />
       </IonContent>
     </div>
   );

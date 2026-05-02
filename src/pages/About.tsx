@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Sprout, Shield, Hand } from 'lucide-react';
 import Eyebrow from '../components/design/Eyebrow';
 import Button from '../components/design/Button';
-import Chip from '../components/design/Chip';
+import { Chip } from '../components/agritech';
 import PublicShell from '../components/design/PublicShell';
 
 const FONT_DISPLAY = 'var(--font-heading)';
@@ -270,10 +270,10 @@ export default function About() {
           ses utilisateurs.
         </p>
         <div className="flex flex-wrap gap-2">
-          <Chip tone="green">Produit</Chip>
-          <Chip tone="terre">Terrain</Chip>
-          <Chip tone="amber">Vétérinaire conseil</Chip>
-          <Chip tone="neutral">Open contributions</Chip>
+          <Chip tone="accent" label="Produit" />
+          <Chip tone="ochre" label="Terrain" />
+          <Chip tone="amber" label="Vétérinaire conseil" />
+          <Chip tone="default" label="Open contributions" />
         </div>
       </section>
 

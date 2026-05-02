@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Search, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useFarm } from '../../context/FarmContext';
-import { Chip, SectionDivider } from '../../components/agritech';
+import { AnimalListItem, SectionDivider } from '../../components/agritech';
 import { BandeIcon } from '../../components/icons';
 import { FARM_CONFIG } from '../../config/farm';
 import { Bandes } from '../../services/bandAnalysisEngine';
@@ -273,50 +273,36 @@ const BandeRow: React.FC<BandeRowProps> = ({
   bande, phase, tone, onClick, pendingTransition, onTransition,
 }) => {
   const primary = bande.idPortee || bande.id;
+  const secondary = `${bande.boucleMere ? `Mère ${bande.boucleMere} · ` : ''}${bande.statut ?? ''}`.trim();
+
+  const transferAccessory = pendingTransition && onTransition ? (
+    <button
+      type="button"
+      aria-label={`Confirmer transfert ${pendingTransition.label}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        onTransition(pendingTransition);
+      }}
+      className="pressable px-2 py-2 rounded-md bg-amber/15 text-amber font-mono text-[10px] font-bold uppercase tracking-wide border border-amber/20"
+    >
+      Transfert →
+    </button>
+  ) : (
+    <ChevronRight size={14} className="text-text-2" />
+  );
 
   return (
-    <li className="border-b border-border last:border-b-0">
-      <div className="flex items-center w-full">
-        <button
-          type="button"
-          onClick={onClick}
-          className="pressable flex-1 text-left flex items-center gap-3 px-3 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
-        >
-          <div className="w-9 h-9 rounded-lg bg-bg-2 flex items-center justify-center text-text-1 shrink-0">
-            <BandeIcon size={20} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-mono text-[14px] font-semibold text-text-0 tabular-nums">{primary}</span>
-              <span className="text-[11px] text-text-2 font-mono truncate">{bande.vivants ?? 0} vivants</span>
-            </div>
-            <div className="font-mono text-[10px] text-text-2 mt-0.5 truncate">
-              {bande.boucleMere ? `Mère ${bande.boucleMere} · ` : ''}
-              {bande.statut}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Chip label={phase} tone={tone} size="xs" className="!normal-case" />
-            <ChevronRight size={14} className="text-text-2" />
-          </div>
-        </button>
-
-        {pendingTransition && onTransition && (
-          <div className="pr-3">
-            <button
-              type="button"
-              aria-label={`Confirmer transfert ${pendingTransition.label}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                onTransition(pendingTransition);
-              }}
-              className="pressable px-2 py-2 rounded-md bg-amber/15 text-amber font-mono text-[10px] font-bold uppercase tracking-wide border border-amber/20"
-            >
-              Transfert →
-            </button>
-          </div>
-        )}
-      </div>
+    <li>
+      <AnimalListItem
+        avatar={<BandeIcon size={20} aria-hidden="true" />}
+        primary={primary}
+        secondary={secondary || undefined}
+        meta={`${bande.vivants ?? 0} vivants`}
+        chip={{ label: phase, tone }}
+        accessory={transferAccessory}
+        onClick={onClick}
+        ariaLabel={`Voir le détail de la bande ${primary}`}
+      />
     </li>
   );
 };

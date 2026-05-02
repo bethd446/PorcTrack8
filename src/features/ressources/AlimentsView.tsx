@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { IonContent, IonPage, IonToast } from '@ionic/react';
+import { IonContent, IonPage } from '@ionic/react';
 import {
   Package,
   AlertOctagon,
@@ -15,7 +15,7 @@ import {
 import AgritechLayout from '../../components/AgritechLayout';
 import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
-import { Chip, SectionDivider, KpiCard } from '../../components/agritech';
+import { AppToast, Chip, KpiCard, SectionDivider, useAppToast } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
 import EmptyState from '../../components/design/EmptyState';
 import Eyebrow from '../../components/design/Eyebrow';
@@ -475,7 +475,7 @@ const AlimentsView: React.FC = () => {
   const { stockAliment, refreshData, truies, verrats, bandes } = useFarm();
   const { nomFerme: FARM_NAME } = useMeta();
   const cheptel = useMemo(() => ({ truies, verrats, bandes }), [truies, verrats, bandes]);
-  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const { toastProps } = useAppToast();
   const [addOpen, setAddOpen] = useState(false);
   const [fournisseurs, setFournisseurs] = useState<FournisseurRow[]>([]);
   const whatsappReady = hasWhatsAppSupport();
@@ -820,12 +820,7 @@ const AlimentsView: React.FC = () => {
           onClose={() => setAddOpen(false)}
         />
 
-        <IonToast
-          isOpen={toastMsg !== null}
-          message={toastMsg ?? ''}
-          duration={2400}
-          onDidDismiss={() => setToastMsg(null)}
-        />
+        <AppToast {...toastProps} />
       </IonContent>
     </IonPage>
   );

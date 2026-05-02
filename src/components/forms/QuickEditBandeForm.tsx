@@ -1,12 +1,18 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
-import { Edit3, Save } from 'lucide-react';
+import { Edit3, Plus, Save, Trash2, X } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { updateBatchByCode } from '../../services/supabaseWrites';
+import {
+  addBatchSource,
+  getBatchSources,
+  listLoges,
+  removeBatchSource,
+  updateBatchByCode,
+} from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
-import type { BandePorcelets } from '../../types/farm';
+import type { BandePorcelets, BatchSource, Loge } from '../../types/farm';
 import {
   validateBandeEdit,
   bandeToRawInput,
@@ -16,6 +22,7 @@ import {
 } from './quickEditBandeValidation';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import PhotoUploader from './PhotoUploader';
+import QuickAddLogeForm from './QuickAddLogeForm';
 
 /* ═════════════════════════════════════════════════════════════════════════
    QuickEditBandeForm · Édition rapide d'une bande/portée
@@ -50,7 +57,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
   bande,
   onSuccess,
 }) => {
-  const { refreshData, saillies, verrats, bandes } = useFarm();
+  const { refreshData, saillies, verrats, bandes, truies } = useFarm();
   const { user } = useAuth();
   const farmId = user?.id ?? '';
 
@@ -76,6 +83,45 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
   const [errors, setErrors] = useState<BandeEditErrors>({});
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string>('');
+
+  // V24 — Sources (multi-mères)
+  const [sources, setSources] = useState<BatchSource[]>(bande.sources ?? []);
+  const [addSourceOpen, setAddSourceOpen] = useState(false);
+  const [newSourceSowId, setNewSourceSowId] = useState('');
+  const [newSourceNb, setNewSourceNb] = useState('');
+  const [newSourceDate, setNewSourceDate] = useState(
+    new Date().toISOString().slice(0, 10),
+  );
+  const [newSourceNotes, setNewSourceNotes] = useState('');
+  const [sourceError, setSourceError] = useState('');
+  const [sourceBusy, setSourceBusy] = useState(false);
+
+  // V24 — Loge structurée
+  const [loges, setLoges] = useState<Loge[]>([]);
+  const [selectedLogeId, setSelectedLogeId] = useState<string>(bande.logeId ?? '');
+  const [selectedLogeIdDirty, setSelectedLogeIdDirty] = useState(false);
+  const [addLogeOpen, setAddLogeOpen] = useState(false);
+
+  // Charger les sources réelles à l'ouverture (le mapping côté service peut
+  // ne pas être encore propagé via refreshData).
+  useEffect(() => {
+    if (!isOpen || !bande.id) return;
+    let cancelled = false;
+    getBatchSources(bande.id).then(rows => {
+      if (cancelled) return;
+      // Si la table n'existe pas encore (migration v24 absente), on conserve
+      // les sources fournies dans le prop bande (qui peut être vide).
+      if (rows.length > 0) setSources(rows);
+      else if (bande.sources && bande.sources.length > 0) {
+        setSources(bande.sources);
+      }
+    });
+    listLoges().then(rows => {
+      if (cancelled) return;
+      setLoges(rows.filter(l => l.active));
+    });
+    return () => { cancelled = true; };
+  }, [isOpen, bande.id, bande.sources]);
 
   // Origine = parents truie + verrat (readonly, déduit via dernière saillie liée)
   const origineDeduite = useMemo(() => {
@@ -103,10 +149,103 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
       setPhotoDirty(false);
       setLoge(bande.loge ?? '');
       setLogeDirty(false);
+      setSources(bande.sources ?? []);
+      setSelectedLogeId(bande.logeId ?? '');
+      setSelectedLogeIdDirty(false);
       setErrors({});
       setSaving(false);
     }
   }
+
+  // Truies disponibles pour ajout source (exclut celles déjà sources).
+  const sourceSowIds = useMemo(() => new Set(sources.map(s => s.sowId)), [sources]);
+  const truiesDisponibles = useMemo(
+    () => truies.filter(t => !sourceSowIds.has(t.id)),
+    [truies, sourceSowIds],
+  );
+
+  // Total porcelets apportés (somme des sources).
+  const totalApportes = useMemo(
+    () => sources.reduce((sum, s) => sum + s.nbPorceletsApportes, 0),
+    [sources],
+  );
+  // Warning UI si sum > nv (pas blocage).
+  const overCapacityWarning = useMemo(() => {
+    const nv = Number(form.nv);
+    return Number.isFinite(nv) && nv > 0 && totalApportes > nv;
+  }, [form.nv, totalApportes]);
+
+  // Occupation actuelle des loges (autres bandes + truies + verrats).
+  const logeOccupation = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const b of bandes) {
+      if (b.id !== bande.id && b.logeId) {
+        map.set(b.logeId, (map.get(b.logeId) ?? 0) + (b.vivants ?? 0));
+      }
+    }
+    for (const t of truies) {
+      if (t.logeId) map.set(t.logeId, (map.get(t.logeId) ?? 0) + 1);
+    }
+    for (const v of verrats) {
+      if (v.logeId) map.set(v.logeId, (map.get(v.logeId) ?? 0) + 1);
+    }
+    return map;
+  }, [bandes, truies, verrats, bande.id]);
+
+  const handleAddSource = async (): Promise<void> => {
+    setSourceError('');
+    if (!newSourceSowId) {
+      setSourceError('Sélectionne une truie');
+      return;
+    }
+    const nb = Number(newSourceNb);
+    if (!Number.isFinite(nb) || nb <= 0 || nb > 30) {
+      setSourceError('Nb porcelets entre 1 et 30');
+      return;
+    }
+    setSourceBusy(true);
+    try {
+      const created = await addBatchSource({
+        batchId: bande.id,
+        sowId: newSourceSowId,
+        nbPorcelets: nb,
+        dateAjout: newSourceDate || undefined,
+        notes: newSourceNotes.trim() || undefined,
+      });
+      setSources(prev => [...prev, created]);
+      setNewSourceSowId('');
+      setNewSourceNb('');
+      setNewSourceNotes('');
+      setNewSourceDate(new Date().toISOString().slice(0, 10));
+      setAddSourceOpen(false);
+      setToast('Truie source ajoutée');
+    } catch (err) {
+      setSourceError(err instanceof Error ? err.message : 'Erreur');
+    } finally {
+      setSourceBusy(false);
+    }
+  };
+
+  const handleRemoveSource = async (id: string): Promise<void> => {
+    setSourceBusy(true);
+    try {
+      await removeBatchSource(id);
+      setSources(prev => prev.filter(s => s.id !== id));
+      setToast('Truie source retirée');
+    } catch (err) {
+      setToast(err instanceof Error ? `Erreur : ${err.message}` : 'Erreur');
+    } finally {
+      setSourceBusy(false);
+    }
+  };
+
+  const handleLogeCreated = (newLoge: Loge): void => {
+    setLoges(prev => [...prev, newLoge]);
+    setSelectedLogeId(newLoge.id);
+    setSelectedLogeIdDirty(true);
+    setAddLogeOpen(false);
+    setToast(`Loge ${newLoge.numero} créée`);
+  };
 
   const handleClose = useCallback(() => {
     if (saving) return;
@@ -148,7 +287,12 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
     setErrors({});
 
     // Patch vide et pas de modif photo/loge → pas d'appel réseau, on ferme.
-    if (Object.keys(result.patch).length === 0 && !photoDirty && !logeDirty) {
+    if (
+      Object.keys(result.patch).length === 0 &&
+      !photoDirty &&
+      !logeDirty &&
+      !selectedLogeIdDirty
+    ) {
       onClose();
       return;
     }
@@ -189,6 +333,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
       }
       if (photoDirty) supabasePatch.photo_url = photoUrl ?? null;
       if (logeDirty) supabasePatch.loge = loge.trim() || null;
+      if (selectedLogeIdDirty) supabasePatch.loge_id = selectedLogeId || null;
       // Champs sans équivalent Supabase : TRUIE (snapshot), BOUCLE_MERE,
       // NB_MALES, NB_FEMELLES, DATE_SEPARATION → ignorés silencieusement.
       await updateBatchByCode(bande.id, supabasePatch);
@@ -819,6 +964,269 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
             </div>
           </fieldset>
 
+          {/* ── V24 — Truies sources (multi-mères) ──────────────────── */}
+          <fieldset className="space-y-3" disabled={saving}>
+            <legend className={labelCls + ' mb-1'}>
+              Truies sources
+              <span className="ml-2 normal-case text-text-2">
+                · {sources.length} truie{sources.length > 1 ? 's' : ''}
+                {sources.length > 0
+                  ? ` · ${totalApportes} porcelet${totalApportes > 1 ? 's' : ''}`
+                  : ''}
+              </span>
+            </legend>
+
+            {overCapacityWarning ? (
+              <div
+                role="status"
+                className="rounded-md border border-amber-deep/40 bg-amber-pork/10 px-3 py-2 font-mono text-[11px] text-amber-deep"
+              >
+                ⚠ Total apportés ({totalApportes}) &gt; NV ({form.nv}).
+                Vérifie la cohérence (warning, pas blocage).
+              </div>
+            ) : null}
+
+            {sources.length === 0 ? (
+              <p className="font-mono text-[11px] text-text-2">
+                Aucune truie source liée. Ajoute la mère biologique ou les
+                sources d'un regroupement.
+              </p>
+            ) : (
+              <ul className="space-y-2" aria-label="Liste des truies sources">
+                {sources.map(s => (
+                  <li
+                    key={s.id}
+                    className="flex items-center gap-3 rounded-md border border-border bg-bg-1 px-3 py-2"
+                  >
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-bg-2 font-mono text-[11px] font-bold text-text-1">
+                      {s.sowCode || '—'}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-mono text-[12px] text-text-0">
+                        {s.sowCode}
+                        {s.sowName ? ` · ${s.sowName}` : ''}
+                        {s.sowBoucle ? ` · ${s.sowBoucle}` : ''}
+                      </p>
+                      <p className="font-mono text-[10px] text-text-2 tabular-nums">
+                        {s.nbPorceletsApportes} porcelet
+                        {s.nbPorceletsApportes > 1 ? 's' : ''} · {s.dateAjout}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSource(s.id)}
+                      disabled={sourceBusy}
+                      aria-label={`Retirer la truie ${s.sowCode}`}
+                      className="pressable rounded-md border border-border p-2 text-text-2 hover:text-red"
+                    >
+                      <Trash2 size={14} aria-hidden="true" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {!addSourceOpen ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setAddSourceOpen(true);
+                  setSourceError('');
+                }}
+                disabled={sourceBusy || truiesDisponibles.length === 0}
+                className={[
+                  'pressable inline-flex items-center gap-2 rounded-md',
+                  'border border-dashed border-border px-3 py-2',
+                  'font-mono text-[11px] uppercase tracking-wide text-text-1',
+                  'hover:border-accent hover:text-accent',
+                  truiesDisponibles.length === 0 ? 'opacity-40 cursor-not-allowed' : '',
+                ].join(' ')}
+              >
+                <Plus size={14} aria-hidden="true" />
+                Ajouter une truie source
+              </button>
+            ) : (
+              <div className="space-y-2 rounded-md border border-accent/40 bg-bg-1 p-3">
+                <div className="flex items-center justify-between">
+                  <p className="font-mono text-[11px] uppercase tracking-wide text-text-1">
+                    Nouvelle source
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAddSourceOpen(false);
+                      setSourceError('');
+                    }}
+                    className="text-text-2 hover:text-text-0"
+                    aria-label="Fermer le formulaire d'ajout"
+                  >
+                    <X size={14} aria-hidden="true" />
+                  </button>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label htmlFor="add-src-truie" className={labelCls}>
+                    Truie
+                  </label>
+                  <select
+                    id="add-src-truie"
+                    className={inputBase(false)}
+                    value={newSourceSowId}
+                    onChange={e => setNewSourceSowId(e.target.value)}
+                  >
+                    <option value="">— Choisir —</option>
+                    {truiesDisponibles.map(t => (
+                      <option key={t.id} value={t.id}>
+                        {t.displayId}
+                        {t.nom ? ` · ${t.nom}` : ''}
+                        {t.boucle ? ` · ${t.boucle}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1.5">
+                    <label htmlFor="add-src-nb" className={labelCls}>
+                      Nb porcelets
+                    </label>
+                    <input
+                      id="add-src-nb"
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={30}
+                      step={1}
+                      className={numInputCls(false)}
+                      placeholder="0"
+                      value={newSourceNb}
+                      onChange={e => setNewSourceNb(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label htmlFor="add-src-date" className={labelCls}>
+                      Date ajout
+                    </label>
+                    <input
+                      id="add-src-date"
+                      type="date"
+                      className={inputBase(false)}
+                      value={newSourceDate}
+                      onChange={e => setNewSourceDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label htmlFor="add-src-notes" className={labelCls}>
+                    Notes <span className="text-text-2 normal-case">· optionnel</span>
+                  </label>
+                  <input
+                    id="add-src-notes"
+                    type="text"
+                    maxLength={120}
+                    className={inputBase(false)}
+                    placeholder="Ex: adoption porcelets affaiblis"
+                    value={newSourceNotes}
+                    onChange={e => setNewSourceNotes(e.target.value)}
+                  />
+                </div>
+
+                {sourceError ? (
+                  <p role="alert" className="font-mono text-[11px] text-red">
+                    {sourceError}
+                  </p>
+                ) : null}
+
+                <button
+                  type="button"
+                  onClick={handleAddSource}
+                  disabled={sourceBusy}
+                  className={[
+                    'pressable w-full h-11 rounded-md',
+                    'bg-accent text-bg-0',
+                    'font-mono text-[12px] font-bold uppercase tracking-wide',
+                    sourceBusy ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
+                  ].join(' ')}
+                >
+                  {sourceBusy ? 'Ajout…' : 'Ajouter'}
+                </button>
+              </div>
+            )}
+          </fieldset>
+
+          {/* ── V24 — Loge structurée ──────────────────────────────── */}
+          <fieldset className="space-y-3" disabled={saving}>
+            <legend className={labelCls + ' mb-1'}>Loge (référentiel)</legend>
+
+            <div className="space-y-1.5">
+              <label htmlFor="edit-bande-loge-ref" className={labelCls}>
+                Loge actuelle{' '}
+                <span className="text-text-2 normal-case">· optionnel</span>
+              </label>
+              <select
+                id="edit-bande-loge-ref"
+                className={inputBase(false)}
+                value={selectedLogeId}
+                onChange={e => {
+                  setSelectedLogeId(e.target.value);
+                  setSelectedLogeIdDirty(true);
+                }}
+              >
+                <option value="">— Aucune —</option>
+                {loges.map(l => (
+                  <option key={l.id} value={l.id}>
+                    {l.numero} · {l.type.toLowerCase().replace('_', '-')}
+                    {l.batiment ? ` · ${l.batiment}` : ''}
+                  </option>
+                ))}
+              </select>
+
+              {selectedLogeId ? (
+                (() => {
+                  const l = loges.find(x => x.id === selectedLogeId);
+                  if (!l) return null;
+                  const occupation = logeOccupation.get(l.id) ?? 0;
+                  const own = bande.vivants ?? 0;
+                  const totalIfAssigned = occupation + own;
+                  const over =
+                    l.capaciteMax != null && totalIfAssigned > l.capaciteMax;
+                  return (
+                    <div
+                      className={[
+                        'rounded-md border px-3 py-2 font-mono text-[11px]',
+                        over
+                          ? 'border-amber-deep/40 bg-amber-pork/10 text-amber-deep'
+                          : 'border-border bg-bg-1 text-text-1',
+                      ].join(' ')}
+                    >
+                      Occupation autres : {occupation}
+                      {l.capaciteMax != null
+                        ? ` / capacité ${l.capaciteMax}`
+                        : ''}
+                      {own > 0 ? ` · cette bande +${own}` : ''}
+                      {over ? ' · ⚠ capacité dépassée (warning)' : ''}
+                    </div>
+                  );
+                })()
+              ) : null}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setAddLogeOpen(true)}
+              className={[
+                'pressable inline-flex items-center gap-2 rounded-md',
+                'border border-dashed border-border px-3 py-2',
+                'font-mono text-[11px] uppercase tracking-wide text-text-1',
+                'hover:border-accent hover:text-accent',
+              ].join(' ')}
+            >
+              <Plus size={14} aria-hidden="true" />
+              Nouvelle loge
+            </button>
+          </fieldset>
+
           {/* ── Statut ──────────────────────────────────────────────── */}
           <div className="space-y-1.5">
             <label htmlFor="edit-bande-statut" className={labelCls}>
@@ -948,6 +1356,12 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
           </div>
         </form>
       </BottomSheet>
+
+      <QuickAddLogeForm
+        isOpen={addLogeOpen}
+        onClose={() => setAddLogeOpen(false)}
+        onSuccess={handleLogeCreated}
+      />
 
       <IonToast
         isOpen={toast !== ''}
