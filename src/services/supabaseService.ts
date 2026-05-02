@@ -174,7 +174,8 @@ export async function getBandes(
         .select(
           '*, sows(code_id, boucle), boars(code_id), '
           + 'batch_sows(id, sow_id, nb_porcelets_apportes, date_ajout, notes, sows(code_id, boucle, name)), '
-          + 'loges(id, numero)',
+          + 'loges(id, numero), '
+          + 'porcelets_individuels(id, batch_id, boucle, sexe, poids_courant_kg, statut, notes)',
         )
         .order('date_mise_bas', { ascending: false });
       data = res.data as unknown[] | null;
@@ -200,12 +201,23 @@ export async function getBandes(
       sows?: { code_id?: string | null; boucle?: string | null; name?: string | null } | null;
     };
 
+    type PorceletJoin = {
+      id: string;
+      batch_id: string;
+      boucle: string;
+      sexe: 'M' | 'F' | 'INCONNU';
+      poids_courant_kg: number | null;
+      statut: 'VIVANT' | 'MORT' | 'VENDU' | 'MALADE' | 'QUARANTAINE';
+      notes: string | null;
+    };
+
     const mapped: BandePorcelets[] = (data ?? []).map((raw) => {
       const r = raw as Record<string, unknown> & {
         sows?: { code_id?: string; boucle?: string } | null;
         boars?: { code_id?: string } | null;
         batch_sows?: BatchSowJoin[] | null;
         loges?: { id?: string; numero?: string } | null;
+        porcelets_individuels?: PorceletJoin[] | null;
       };
       const nv = (r.porcelets_nes_vivants as number | null | undefined) ?? 0;
       const morts = (r.nb_mort_nes as number | null | undefined) ?? 0;
@@ -241,6 +253,15 @@ export async function getBandes(
                              })),
         logeId:              (r.loge_id as string | null) ?? undefined,
         logeNumero:          r.loges?.numero ?? undefined,
+        porcelets:           (r.porcelets_individuels ?? []).map(p => ({
+                               id: p.id,
+                               batchId: p.batch_id,
+                               boucle: p.boucle,
+                               sexe: p.sexe,
+                               poidsCourantKg: p.poids_courant_kg ?? undefined,
+                               statut: p.statut,
+                               notes: p.notes ?? undefined,
+                             })),
         synced:              true,
       };
     });

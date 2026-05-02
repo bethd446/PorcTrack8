@@ -56,7 +56,8 @@ import { fetchDismissedAlertIds } from './alertDismissals';
 import { supabase } from './supabaseClient';
 import { enqueueAlert } from './confirmationQueue';
 import { logger } from './logger';
-import { scheduleFromAlerts } from './notifications';
+import { scheduleFromAlerts, schedulePeseeReminders } from './notifications';
+import { listPeseePending } from './peseePlanifieesService';
 import type {
   Truie, Verrat, BandePorcelets, TraitementSante,
   StockAliment, StockVeto, AlerteServeur, Saillie, FinanceEntry,
@@ -315,6 +316,13 @@ export async function refreshAll(): Promise<void> {
     scheduleFromAlerts(newAlerts).catch(e =>
       logger.error('farmDataLoader', 'scheduleFromAlerts failed', e)
     );
+
+    // V25 — Pesées planifiées : notifs date_prévue + rappels J+1/J+3.
+    listPeseePending()
+      .then(pesees => schedulePeseeReminders(pesees))
+      .catch(e =>
+        logger.error('farmDataLoader', 'schedulePeseeReminders failed', e)
+      );
 
     // Queue de confirmation pour les alertes demandant une action
     for (const alert of newAlerts.filter(a => a.requiresAction)) {

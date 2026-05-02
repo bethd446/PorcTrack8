@@ -6,7 +6,7 @@ import {
 import {
   AlertCircle, Activity, ClipboardList, ChevronLeft, ChevronRight,
   Stethoscope, TrendingUp, CalendarClock, CheckCircle2,
-  Edit3, Home, MapPin, Move,
+  Edit3, Home, MapPin, Move, Tag, Plus,
 } from 'lucide-react';
 import PhotoStrip from '../../../components/PhotoStrip';
 import { Chip, AnimalListItem } from '../../../components/agritech';
@@ -14,6 +14,9 @@ import QuickNoteForm from '../../../components/forms/QuickNoteForm';
 import QuickHealthForm from '../../../components/forms/QuickHealthForm';
 import QuickEditBandeForm from '../../../components/forms/QuickEditBandeForm';
 import QuickMoveSubjectForm from '../../../components/forms/QuickMoveSubjectForm';
+import QuickAddPorceletForm from '../../../components/forms/QuickAddPorceletForm';
+import QuickEditPorceletForm from '../../../components/forms/QuickEditPorceletForm';
+import QuickHealthLogPorceletForm from '../../../components/forms/QuickHealthLogPorceletForm';
 import NotesTimeline from '../../../components/design/NotesTimeline';
 import BandeCroissanceCard from '../../../components/bande/BandeCroissanceCard';
 import TruieIcon from '../../../components/icons/TruieIcon';
@@ -23,6 +26,7 @@ import {
   getBatchSources,
   getLogeContents,
   listLoges,
+  listPorceletsByBatch,
 } from '../../../services/supabaseWrites';
 import {
   getRecommendedHealthLogs,
@@ -32,7 +36,12 @@ import {
 import TableRowEdit from '../TableRowEdit';
 import CycleTimeline from './CycleTimeline';
 import type { AggregatedBande, DebugMeta, SheetRawRow } from './types';
-import type { BatchSource, Loge } from '../../../types/farm';
+import type {
+  BatchSource,
+  Loge,
+  PorceletIndividuel,
+  PorceletStatut,
+} from '../../../types/farm';
 
 interface BandeDetailViewProps {
   bande: AggregatedBande;
@@ -60,6 +69,14 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
   const [logeOccupation, setLogeOccupation] = useState<number | null>(null);
   const [editBandeOpen, setEditBandeOpen] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
+
+  // V25 — Porcelets individuels rattachés à la bande
+  const [porcelets, setPorcelets] = useState<PorceletIndividuel[]>(
+    bandeTyped?.porcelets ?? [],
+  );
+  const [addPorceletOpen, setAddPorceletOpen] = useState(false);
+  const [editPorcelet, setEditPorcelet] = useState<PorceletIndividuel | null>(null);
+  const [healthLogPorceletOpen, setHealthLogPorceletOpen] = useState(false);
 
   const currentLoge = useMemo<Loge | undefined>(() => {
     const id = bandeTyped?.logeId;
@@ -105,10 +122,39 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
     }
   }, [bandeTyped?.logeId]);
 
+  const loadPorcelets = useCallback(async () => {
+    if (!bande.id) return;
+    try {
+      const rows = await listPorceletsByBatch(bande.id);
+      setPorcelets(rows);
+    } catch (e) {
+      console.warn('[bande-detail] listPorceletsByBatch failed', e);
+    }
+  }, [bande.id]);
+
   useEffect(() => {
     loadSources();
     loadLogeData();
-  }, [loadSources, loadLogeData]);
+    loadPorcelets();
+  }, [loadSources, loadLogeData, loadPorcelets]);
+
+  // Set unicité boucles (toutes les bandes du context, même celles non chargées
+  // localement). On utilise les porcelets locaux comme proxy. Pour une unicité
+  // globale ferme parfaite, l'erreur DB (UNIQUE constraint) reste le filet final.
+  const existingBoucles = useMemo(() => {
+    const s = new Set<string>();
+    for (const p of porcelets) s.add(p.boucle.toUpperCase());
+    return s;
+  }, [porcelets]);
+
+  // Couleurs statut chip — palette agritech (Chip tones)
+  const STATUT_TONE: Record<PorceletStatut, 'accent' | 'amber' | 'red' | 'default' | 'blue'> = {
+    VIVANT: 'accent',
+    MALADE: 'amber',
+    MORT: 'red',
+    VENDU: 'default',
+    QUARANTAINE: 'blue',
+  };
 
   const loadRelatedData = useCallback(async () => {
     setLoading(true);
@@ -443,6 +489,106 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                 )}
               </section>
 
+              {/* ── V25 · Porcelets de la bande ──────────────────────────── */}
+              <section
+                className="card-dense space-y-3"
+                aria-label="Porcelets de la bande"
+                data-testid="bande-section-porcelets"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Tag size={14} className="text-accent" />
+                    <h4 className="kpi-label">
+                      Porcelets de la bande
+                      {porcelets.length > 0 ? (
+                        <span className="ml-2 font-mono text-[11px] text-text-2 normal-case">
+                          ({porcelets.length})
+                        </span>
+                      ) : null}
+                    </h4>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {porcelets.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setHealthLogPorceletOpen(true)}
+                        className="pressable inline-flex h-7 items-center gap-1 rounded-md bg-bg-2 px-2 text-text-1 hover:text-red"
+                        aria-label="Signaler maladie porcelet"
+                      >
+                        <Stethoscope size={12} aria-hidden="true" />
+                        <span className="font-mono text-[10px] uppercase tracking-wide">
+                          Signaler maladie
+                        </span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setAddPorceletOpen(true)}
+                      className="pressable inline-flex h-7 items-center gap-1 rounded-md bg-bg-2 px-2 text-text-1 hover:text-accent"
+                      aria-label="Ajouter un porcelet"
+                    >
+                      <Plus size={12} aria-hidden="true" />
+                      <span className="font-mono text-[10px] uppercase tracking-wide">
+                        Ajouter porcelet
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                {porcelets.length === 0 ? (
+                  <div className="rounded-md border border-dashed border-border bg-bg-1 px-3 py-4 space-y-2">
+                    <p className="font-mono text-[11px] text-text-2">
+                      Aucun porcelet numéroté pour cette bande
+                    </p>
+                    <p className="font-mono text-[10px] text-text-2 leading-relaxed">
+                      Boucles individuelles permettent le suivi sanitaire détaillé
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setAddPorceletOpen(true)}
+                      className="pressable inline-flex h-9 items-center gap-2 rounded-md bg-accent px-3 text-bg-0 font-mono text-[11px] uppercase tracking-wide hover:brightness-110"
+                      aria-label="Numéroter les porcelets"
+                    >
+                      <Tag size={12} aria-hidden="true" />
+                      Numéroter les porcelets
+                    </button>
+                  </div>
+                ) : (
+                  <ul className="divide-y divide-border" aria-label="Liste porcelets">
+                    {porcelets.map(p => (
+                      <li key={p.id}>
+                        <button
+                          type="button"
+                          onClick={() => setEditPorcelet(p)}
+                          className="pressable flex w-full items-center justify-between py-2 px-1 text-left"
+                          aria-label={`Modifier porcelet ${p.boucle}`}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-[13px] text-text-0 uppercase">
+                                {p.boucle}
+                              </span>
+                              <span className="font-mono text-[10px] text-text-2 uppercase">
+                                {p.sexe === 'M' ? '♂' : p.sexe === 'F' ? '♀' : '?'}
+                              </span>
+                              {p.poidsCourantKg != null ? (
+                                <span className="font-mono text-[11px] tabular-nums text-text-1">
+                                  · {p.poidsCourantKg} kg
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Chip label={p.statut} tone={STATUT_TONE[p.statut]} size="xs" />
+                            <ChevronRight size={14} className="text-text-2" />
+                          </div>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+
               <QuickHealthForm subjectType="BANDE" subjectId={bande.id} onSuccess={() => { onRefresh(); loadRelatedData(); }} />
             </div>
           )}
@@ -678,6 +824,50 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
           onSuccess={() => {
             onRefresh();
             loadLogeData();
+          }}
+        />
+
+        {/* V25 — Ajout porcelet */}
+        <QuickAddPorceletForm
+          isOpen={addPorceletOpen}
+          onClose={() => setAddPorceletOpen(false)}
+          batchId={bande.id}
+          existingBoucles={existingBoucles}
+          onSuccess={() => {
+            loadPorcelets();
+            onRefresh();
+          }}
+        />
+
+        {/* V25 — Édition porcelet */}
+        {editPorcelet ? (
+          <QuickEditPorceletForm
+            isOpen={!!editPorcelet}
+            onClose={() => setEditPorcelet(null)}
+            porcelet={editPorcelet}
+            existingBoucles={existingBoucles}
+            onSuccess={() => {
+              setEditPorcelet(null);
+              loadPorcelets();
+              onRefresh();
+            }}
+            onDeleted={() => {
+              setEditPorcelet(null);
+              loadPorcelets();
+              onRefresh();
+            }}
+          />
+        ) : null}
+
+        {/* V25 — Signalement maladie porcelet (Sprint D) */}
+        <QuickHealthLogPorceletForm
+          isOpen={healthLogPorceletOpen}
+          onClose={() => setHealthLogPorceletOpen(false)}
+          bandeId={bande.id}
+          onSuccess={() => {
+            loadPorcelets();
+            loadRelatedData();
+            onRefresh();
           }}
         />
       </IonContent>

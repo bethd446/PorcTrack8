@@ -192,6 +192,30 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
     return map;
   }, [bandes, truies, verrats, bande.id]);
 
+  // V25 — Validation 1:1 : la loge sélectionnée est-elle déjà occupée par
+  // un AUTRE sujet actif ? (autre bande, truie ou verrat).
+  const logeConflict = useMemo<{ kind: 'bande' | 'truie' | 'verrat'; label: string } | null>(() => {
+    if (!selectedLogeId) return null;
+    const otherBande = bandes.find(
+      b => b.id !== bande.id && b.logeId === selectedLogeId,
+    );
+    if (otherBande) {
+      return { kind: 'bande', label: otherBande.idPortee || otherBande.id };
+    }
+    const truie = truies.find(t => t.logeId === selectedLogeId);
+    if (truie) {
+      return { kind: 'truie', label: truie.displayId || truie.boucle || truie.id };
+    }
+    const verrat = verrats.find(v => v.logeId === selectedLogeId);
+    if (verrat) {
+      return {
+        kind: 'verrat',
+        label: verrat.displayId || verrat.boucle || verrat.id,
+      };
+    }
+    return null;
+  }, [selectedLogeId, bandes, truies, verrats, bande.id]);
+
   const handleAddSource = async (): Promise<void> => {
     setSourceError('');
     if (!newSourceSowId) {
@@ -282,6 +306,19 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
     const result = validateBandeEdit(form, initial, existingCodes);
     if (!result.ok || !result.patch) {
       setErrors(result.errors);
+      return;
+    }
+    // V25 — Bloque si la loge choisie est déjà occupée par un autre sujet.
+    if (selectedLogeIdDirty && logeConflict) {
+      setToast(
+        `Loge déjà occupée par ${
+          logeConflict.kind === 'bande'
+            ? `bande ${logeConflict.label}`
+            : logeConflict.kind === 'truie'
+              ? `truie ${logeConflict.label}`
+              : `verrat ${logeConflict.label}`
+        }`,
+      );
       return;
     }
     setErrors({});
@@ -1209,6 +1246,23 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                     </div>
                   );
                 })()
+              ) : null}
+
+              {/* V25 — Conflit 1:1 (loge déjà occupée par autre sujet actif). */}
+              {logeConflict ? (
+                <div
+                  role="alert"
+                  data-testid="loge-conflict-warning"
+                  className="rounded-md border border-red/40 bg-red/10 px-3 py-2 font-mono text-[11px] text-red"
+                >
+                  Loge {loges.find(l => l.id === selectedLogeId)?.numero ?? ''} déjà
+                  occupée par{' '}
+                  {logeConflict.kind === 'bande'
+                    ? `bande ${logeConflict.label}`
+                    : logeConflict.kind === 'truie'
+                      ? `truie ${logeConflict.label}`
+                      : `verrat ${logeConflict.label}`}
+                </div>
               ) : null}
             </div>
 

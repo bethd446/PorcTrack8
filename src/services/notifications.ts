@@ -18,6 +18,7 @@ import {
   type ScheduleResult,
 } from '@capacitor/local-notifications';
 import type { FarmAlert } from './alertEngine';
+import type { PeseePlanifiee } from './peseePlanifieesService';
 import { logger } from './logger';
 
 const SCOPE = 'Notifications';
@@ -140,5 +141,107 @@ export async function scheduleFromAlerts(alerts: FarmAlert[]): Promise<void> {
     logger.info(SCOPE, `scheduled ${result.notifications.length} notifications`);
   } catch (err) {
     console.error(`[${SCOPE}] scheduleFromAlerts failed`, err);
+  }
+}
+
+// ─── Pesées planifiées (V25) ───────────────────────────────────────────────
+
+const NOTIF_PESEE_PREFIX = 'pesee:';
+
+function dateAt(dateIso: string, hour: number = NOTIF_HOUR): Date {
+  const d = new Date(dateIso);
+  d.setHours(hour, 0, 0, 0);
+  return d;
+}
+
+function startOfToday(now: Date = new Date()): Date {
+  const d = new Date(now);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+/**
+ * Construit jusqu'à 3 notifications par pesée non effectuée :
+ *  - 1 à `date_prevue` (07:00)
+ *  - 1 à J+1 si rappel_j1=false ET date_prevue < today
+ *  - 1 à J+3 si rappel_j3=false ET date_prevue + 3 < today
+ *
+ * Réutilise le pattern `LocalNotifications.schedule`. Les IDs sont des hashs
+ * stables pour éviter les doublons entre runs.
+ */
+export async function schedulePeseeReminders(
+  pesees: readonly PeseePlanifiee[],
+  now: Date = new Date(),
+): Promise<void> {
+  if (!Capacitor.isNativePlatform()) {
+    logger.debug(SCOPE, `schedulePeseeReminders skipped (non-native, ${pesees.length} pesees)`);
+    return;
+  }
+
+  const today = startOfToday(now);
+  const toSchedule: LocalNotificationSchema[] = [];
+
+  for (const p of pesees) {
+    if (p.effectuee) continue;
+    const datePrevue = new Date(p.datePrevue);
+    if (Number.isNaN(datePrevue.getTime())) continue;
+
+    // Notif principale à date_prevue.
+    const at = dateAt(p.datePrevue);
+    const futureAt = at.getTime() > now.getTime() ? at : new Date(now.getTime() + 2000);
+    toSchedule.push({
+      id: hashId(`${NOTIF_PESEE_PREFIX}${p.id}`),
+      title: 'Pesée prévue',
+      body: 'Une pesée est prévue aujourd\'hui — pense à la saisir.',
+      schedule: { at: futureAt },
+      extra: { peseeId: p.id, kind: 'PESEE_DUE' },
+    });
+
+    const dateOnly = startOfToday(datePrevue);
+
+    // Rappel J+1 si pas encore acquitté ET la date prévue est passée.
+    if (!p.rappelJ1 && dateOnly.getTime() < today.getTime()) {
+      const j1 = new Date(dateOnly);
+      j1.setDate(j1.getDate() + 1);
+      j1.setHours(NOTIF_HOUR, 0, 0, 0);
+      const j1At = j1.getTime() > now.getTime() ? j1 : new Date(now.getTime() + 2000);
+      toSchedule.push({
+        id: hashId(`${NOTIF_PESEE_PREFIX}${p.id}:j1`),
+        title: 'Rappel pesée (J+1)',
+        body: 'Pesée non effectuée hier — à rattraper.',
+        schedule: { at: j1At },
+        extra: { peseeId: p.id, kind: 'PESEE_REMIND_J1' },
+      });
+    }
+
+    // Rappel J+3 si pas encore acquitté ET date_prevue + 3j est passée.
+    const j3Threshold = new Date(dateOnly);
+    j3Threshold.setDate(j3Threshold.getDate() + 3);
+    if (!p.rappelJ3 && j3Threshold.getTime() < today.getTime()) {
+      const j3 = new Date(j3Threshold);
+      j3.setHours(NOTIF_HOUR, 0, 0, 0);
+      const j3At = j3.getTime() > now.getTime() ? j3 : new Date(now.getTime() + 2000);
+      toSchedule.push({
+        id: hashId(`${NOTIF_PESEE_PREFIX}${p.id}:j3`),
+        title: 'Rappel pesée (J+3)',
+        body: 'Pesée toujours non effectuée — action requise.',
+        schedule: { at: j3At },
+        extra: { peseeId: p.id, kind: 'PESEE_REMIND_J3' },
+      });
+    }
+  }
+
+  if (toSchedule.length === 0) {
+    logger.debug(SCOPE, 'no pesee reminders to schedule');
+    return;
+  }
+
+  try {
+    const result: ScheduleResult = await LocalNotifications.schedule({
+      notifications: toSchedule,
+    });
+    logger.info(SCOPE, `scheduled ${result.notifications.length} pesee reminders`);
+  } catch (err) {
+    console.error(`[${SCOPE}] schedulePeseeReminders failed`, err);
   }
 }

@@ -66,8 +66,12 @@ const createLogeMock = vi.fn(async (_data: unknown) => ({
   type: 'MATERNITE',
   active: true,
 }));
+const insertSowMock = vi.fn(async (_data: unknown) => ({ id: 's-uuid' }));
+const insertBoarMock = vi.fn(async (_data: unknown) => ({ id: 'b-uuid' }));
 vi.mock('../../services/supabaseWrites', () => ({
   createLoge: (data: unknown) => createLogeMock(data),
+  insertSow: (data: unknown) => insertSowMock(data),
+  insertBoar: (data: unknown) => insertBoarMock(data),
 }));
 
 import OnboardingWizard from './OnboardingWizard';
@@ -85,6 +89,10 @@ beforeEach(() => {
   eqMock.mockClear();
   kvSetMock.mockClear();
   createLogeMock.mockClear();
+  insertSowMock.mockClear();
+  insertBoarMock.mockClear();
+  insertSowMock.mockImplementation(async (_d: unknown) => ({ id: 's-uuid' }));
+  insertBoarMock.mockImplementation(async (_d: unknown) => ({ id: 'b-uuid' }));
 });
 afterEach(() => cleanup());
 
@@ -168,7 +176,10 @@ describe('OnboardingWizard', () => {
     expect(payload?.nom_ferme).toBe('Ferme Démo');
     expect(payload?.races).toEqual(['Large White']);
     expect(eqMock).toHaveBeenCalled();
-    expect(navigateMock).toHaveBeenCalledWith('/today', { replace: true });
+    expect(navigateMock).toHaveBeenCalledWith(
+      '/today',
+      expect.objectContaining({ replace: true }),
+    );
   });
 
   it('étape 10 (loges) : skip → handleFinish n\'appelle PAS createLoge', async () => {
@@ -248,5 +259,130 @@ describe('OnboardingWizard', () => {
     expect(types.filter((t) => t === 'VERRAT')).toHaveLength(1);
     // Numéros par défaut : M-01, M-02, B-01
     expect(calls.map((c) => c.numero).sort()).toEqual(['B-01', 'M-01', 'M-02']);
+  });
+
+  it('E2 — handleFinish avec 5 truies + 2 verrats appelle insertSow 5× et insertBoar 2×', async () => {
+    renderWizard();
+    fireEvent.click(screen.getByRole('button', { name: /Commencer/i }));
+    // 2 : nom ferme
+    fireEvent.change(screen.getByLabelText(/Nom de la ferme/i), {
+      target: { value: 'Ferme E2' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // 3 : secteur
+    fireEvent.change(screen.getByLabelText(/Secteur/i), { target: { value: 'Loire' } });
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // 4 : Naisseur (donc étapes 5/6 NON skippées)
+    fireEvent.click(screen.getByRole('radio', { name: /^Naisseur$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // 5 : races — 1 race
+    fireEvent.click(screen.getByRole('button', { name: /Large White/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // 6 : truies = 5
+    fireEvent.change(screen.getByLabelText(/Effectif truies initial/i), {
+      target: { value: '5' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // 7 : verrats = 2
+    fireEvent.change(screen.getByLabelText(/Effectif verrats initial/i), {
+      target: { value: '2' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // 8, 9 : valeurs par défaut
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // 10 : skip loges
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // 11 : récap
+    expect(screen.getByText(/Récapitulatif/i)).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Terminer/i }));
+    });
+    expect(insertSowMock).toHaveBeenCalledTimes(5);
+    expect(insertBoarMock).toHaveBeenCalledTimes(2);
+    // Vérifie quelques code_id et le contenu d'un appel.
+    const sowCalls = insertSowMock.mock.calls.map((c) => c[0]) as Array<{
+      code_id: string;
+      name: string;
+      breed: string | null;
+      statut: string;
+    }>;
+    expect(sowCalls.map((c) => c.code_id).sort()).toEqual([
+      'T-001',
+      'T-002',
+      'T-003',
+      'T-004',
+      'T-005',
+    ]);
+    expect(sowCalls[0].breed).toBe('Large White');
+    expect(sowCalls[0].statut).toBe('En attente saillie');
+    const boarCalls = insertBoarMock.mock.calls.map((c) => c[0]) as Array<{
+      code_id: string;
+      statut: string;
+    }>;
+    expect(boarCalls.map((c) => c.code_id).sort()).toEqual(['V-001', 'V-002']);
+    expect(boarCalls[0].statut).toBe('Actif');
+  });
+
+  it("E2 — Engraisseur seul : insertSow PAS appelé, insertBoar appelé selon verrats", async () => {
+    renderWizard();
+    fireEvent.click(screen.getByRole('button', { name: /Commencer/i }));
+    fireEvent.change(screen.getByLabelText(/Nom de la ferme/i), {
+      target: { value: 'Ferme Engr' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.change(screen.getByLabelText(/Secteur/i), { target: { value: 'Loire' } });
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // 4 : Engraisseur seul → skip 5 et 6
+    fireEvent.click(screen.getByRole('radio', { name: /Engraisseur seul/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // → étape 7 (Verrats)
+    fireEvent.change(screen.getByLabelText(/Effectif verrats initial/i), {
+      target: { value: '1' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Terminer/i }));
+    });
+    expect(insertSowMock).not.toHaveBeenCalled();
+    expect(insertBoarMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('E2 — insertSow échec sur 1 row : continue les autres et navigate quand même', async () => {
+    insertSowMock.mockImplementationOnce(async () => {
+      throw new Error('code_id duplicate');
+    });
+    renderWizard();
+    fireEvent.click(screen.getByRole('button', { name: /Commencer/i }));
+    fireEvent.change(screen.getByLabelText(/Nom de la ferme/i), {
+      target: { value: 'Ferme Fail' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.change(screen.getByLabelText(/Secteur/i), { target: { value: 'Loire' } });
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('radio', { name: /^Naisseur$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Large White/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.change(screen.getByLabelText(/Effectif truies initial/i), {
+      target: { value: '3' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Terminer/i }));
+    });
+    // Les 3 appels ont eu lieu (dont 1 qui a throw, capturée par try/catch).
+    expect(insertSowMock).toHaveBeenCalledTimes(3);
+    expect(navigateMock).toHaveBeenCalledWith(
+      '/today',
+      expect.objectContaining({ replace: true }),
+    );
   });
 });

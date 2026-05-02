@@ -34,6 +34,7 @@ import KpiCardV6 from '../../components/design/KpiCard';
 import Eyebrow from '../../components/design/Eyebrow';
 import EmptyState from '../../components/design/EmptyState';
 import TopBarSync from '../../components/design/TopBarSync';
+import AlertCard from '../../components/agritech/AlertCard';
 import { type FarmAlert, type AlertPriority, type AlertCategory } from '../../services/alertEngine';
 import { dismissAlert } from '../../services/alertDismissals';
 import { getPendingConfirmations, type PendingConfirmation } from '../../services/confirmationQueue';
@@ -539,6 +540,19 @@ const AlertsView: React.FC = () => {
     }
   }, [user, recomputeAlerts]);
 
+  // Sprint E1 : acquittement uniforme "OK ✓" via AlertCard.
+  const handleAcknowledge = useCallback(async (alertId: string) => {
+    if (!user) return;
+    try {
+      await dismissAlert(user.id, alertId, 'user_acknowledged');
+      setDismissToast({ show: true, message: 'Alerte acquittée' });
+      await recomputeAlerts();
+    } catch (e) {
+      console.warn('[AlertsView] acknowledge failed', e);
+      setDismissToast({ show: true, message: 'Erreur lors de l\'acquittement' });
+    }
+  }, [user, recomputeAlerts]);
+
   const loadConfirmations = useCallback(async () => {
     const pc = await getPendingConfirmations();
     setPendingConfirmations(pc);
@@ -892,40 +906,57 @@ const AlertsView: React.FC = () => {
                         return null;
                       })();
 
-                      const onClick = isGrouped
-                        ? () => navigate('/ressources?filter=stock-bas')
-                        : originalAlert && originalAlert.requiresAction && hasConfirm
+                      // Sprint E1 — alertes locales individuelles (non groupées) :
+                      // utilisent AlertCard avec bouton "OK ✓" d'acquittement uniforme.
+                      if (!isGrouped && originalAlert) {
+                        const onAction = originalAlert.requiresAction && hasConfirm
                           ? () => handleAction(originalAlert)
                           : fallbackRoute
                             ? () => navigate(fallbackRoute)
                             : undefined;
 
-                      const actionLabel = isGrouped
-                        ? 'Voir le détail des stocks'
-                        : originalAlert && originalAlert.requiresAction && hasConfirm
+                        const actionLabel = originalAlert.requiresAction && hasConfirm
                           ? 'Action requise'
-                          : originalAlert && originalAlert.requiresAction
+                          : originalAlert.requiresAction
                             ? "Voir l'alerte"
                             : fallbackRoute
                               ? 'Ouvrir'
                               : undefined;
+
+                        const resolvedAlert: FarmAlert = {
+                          ...originalAlert,
+                          title: resolveAlertSubject(originalAlert.title, lookup),
+                          message: resolveAlertSubject(originalAlert.message, lookup),
+                        };
+
+                        return (
+                          <li key={alert.id} data-alert-id={alert.id}>
+                            <AlertCard
+                              alert={resolvedAlert}
+                              onAcknowledge={(id) => void handleAcknowledge(id)}
+                              onAction={onAction}
+                              actionLabel={actionLabel}
+                            />
+                          </li>
+                        );
+                      }
+
+                      // Groupes (stock fusionné) : conserve AlertRow custom (multi-cibles).
+                      const onClick = (): void => {
+                        navigate('/ressources?filter=stock-bas');
+                      };
 
                       return (
                         <li key={alert.id}>
                           <AlertRow
                             treatment={treatment}
                             priority={alert.priority}
-                            title={isGrouped ? alert.title : resolveAlertSubject(alert.title, lookup)}
-                            description={isGrouped ? alert.message : resolveAlertSubject(alert.message, lookup)}
+                            title={alert.title}
+                            description={alert.message}
                             categoryLabel={alert.category}
-                            metaLabel={isGrouped ? `${alert.groupedIds?.length ?? 0} entrées` : resolveAlertSubject(alert.subjectLabel, lookup)}
-                            timeAgo={!isGrouped && alert.createdAt ? formatDistanceToNow(alert.createdAt, {
-                              addSuffix: true,
-                              locale: fr,
-                            }) : undefined}
-                            actionLabel={actionLabel}
+                            metaLabel={`${alert.groupedIds?.length ?? 0} entrées`}
+                            actionLabel="Voir le détail des stocks"
                             onClick={onClick}
-                            onDismiss={!isGrouped && user ? () => void handleDismiss(alert.id) : undefined}
                             ariaRole={alert.priority === 'CRITIQUE' ? 'alert' : 'listitem'}
                           />
                         </li>

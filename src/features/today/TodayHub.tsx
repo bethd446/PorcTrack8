@@ -20,10 +20,10 @@ import {
   IonContent, IonPage, IonRefresher, IonRefresherContent,
 } from '@ionic/react';
 import {
-  ArrowRight, ChevronRight, ClipboardCheck, ShieldCheck, X,
+  ArrowRight, ChevronRight, ClipboardCheck, ShieldCheck,
 } from 'lucide-react';
 
-import { AppToast, useAppToast } from '../../components/agritech';
+import { AppToast, AlertCard, useAppToast } from '../../components/agritech';
 import AgritechLayout from '../../components/AgritechLayout';
 import Eyebrow from '../../components/design/Eyebrow';
 import { useAuth } from '../../context/AuthContext';
@@ -42,13 +42,16 @@ import { getSevrages } from '../../services/proactiveCues';
 import { filterRealPortees } from '../../services/bandesAggregator';
 import { normaliseStatut } from '../../lib/truieStatut';
 import { safeDate } from '../../lib/truieHelpers';
-import type { Truie } from '../../types/farm';
+import type { BandePorcelets, Truie } from '../../types/farm';
 import QuickConfirmSevrageForm from '../../components/forms/QuickConfirmSevrageForm';
 import QuickConfirmReformeForm from '../../components/forms/QuickConfirmReformeForm';
+import QuickPeseeForm from '../../components/forms/QuickPeseeForm';
 import PhaseSuggestionCard from '../../components/cards/PhaseSuggestionCard';
 import PhaseTransitionModal from '../../components/modals/PhaseTransitionModal';
 import type { PendingTransition } from '../../services/phaseEngine';
 import { usePhaseTransitions } from '../../hooks/usePhaseTransitions';
+import { usePeseePending } from '../../hooks/usePeseePending';
+import type { PeseePlanifiee } from '../../services/peseePlanifieesService';
 
 /** Routing par catégorie pour les alertes (B2 sprint, ressoudé V14). */
 function alertHref(a: FarmAlert): string {
@@ -451,6 +454,10 @@ const TodayHub: React.FC = () => {
   const [reformeConfirmation, setReformeConfirmation] =
     useState<PendingConfirmation | null>(null);
 
+  // ── V25 — Pesées planifiées en attente ──────────────────────────────
+  const { pesees: peseesPending, refresh: refreshPesees } = usePeseePending();
+  const [peseeForm, setPeseeForm] = useState<{ pesee: PeseePlanifiee; subject: BandePorcelets } | null>(null);
+
   const handlePhaseModalConfirm = useCallback(
     async (t: PendingTransition, poidsKg?: number): Promise<void> => {
       try {
@@ -701,91 +708,144 @@ const TodayHub: React.FC = () => {
                     margin: '12px 0 0',
                     display: 'flex',
                     flexDirection: 'column',
+                    gap: 10,
                   }}
                 >
                   {aussiATraiter.map((item) => {
-                    const isCritical = item.priority === 'CRITIQUE';
-                    const dotColor = isCritical
-                      ? 'var(--color-pig-deep)'
-                      : 'var(--color-amber-pork-deep)';
-                    const dotSize = isCritical ? 8 : 6;
-                    const labelWeight = isCritical ? 600 : 400;
-                    const canDismiss = !!item.dismissableAlertId && !!user;
+                    const dismissId = item.dismissableAlertId;
+                    const sourceAlert = dismissId
+                      ? alerts.find(a => a.id === dismissId) ?? null
+                      : null;
+
+                    // Construit un FarmAlert synthétique pour AlertCard quand
+                    // l'item ne correspond pas à une alerte locale (confirmations
+                    // ou alertes serveur).
+                    const synthetic: FarmAlert = sourceAlert ?? {
+                      id: item.id,
+                      priority: item.priority,
+                      category: 'PLANNING',
+                      subjectId: '',
+                      subjectLabel: '',
+                      title: item.label,
+                      message: item.groupCount
+                        ? `${item.groupCount} entrées regroupées`
+                        : '',
+                      requiresAction: item.kind !== 'navigate',
+                      actions: [],
+                      createdAt: new Date(),
+                    };
+
+                    const actionLabel = item.kind === 'confirm-sevrage'
+                      ? 'Confirmer sevrage'
+                      : item.kind === 'confirm-reforme'
+                        ? 'Confirmer réforme'
+                        : 'Ouvrir';
+
+                    return (
+                      <li key={item.id}>
+                        <AlertCard
+                          alert={synthetic}
+                          onAcknowledge={() => {
+                            if (dismissId) {
+                              void handleDismissAussi(dismissId);
+                            } else {
+                              showToast('Alerte acquittée', 'success', { duration: 2000 });
+                            }
+                          }}
+                          onAction={() => handleAussiClick(item)}
+                          actionLabel={actionLabel}
+                        />
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            )}
+
+            {/* ── Pesées prévues (V25) ──────────────────────────────── */}
+            {peseesPending.length > 0 && (
+              <section aria-label="Pesées prévues">
+                <Eyebrow dotColor="amber">Pesées prévues</Eyebrow>
+                <ul
+                  style={{
+                    listStyle: 'none',
+                    padding: 0,
+                    margin: '12px 0 0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 8,
+                  }}
+                >
+                  {peseesPending.map((p) => {
+                    const bande = p.batchId ? bandes.find(b => b.id === p.batchId) : undefined;
+                    const label = bande
+                      ? formatBandeLabel(bande.idPortee || bande.id)
+                      : p.porceletId
+                        ? `Porcelet ${p.porceletId.slice(0, 8)}`
+                        : 'Pesée';
+                    const isOverdue = new Date(p.datePrevue).getTime() < Date.now();
                     return (
                       <li
-                        key={item.id}
+                        key={p.id}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
-                          borderBottom: '1px solid var(--line)',
+                          gap: 12,
+                          background: 'var(--bg-surface)',
+                          border: `1px solid ${isOverdue ? 'var(--color-pig-deep)' : 'var(--line)'}`,
+                          borderRadius: 12,
+                          padding: '12px 14px',
                         }}
                       >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontFamily: 'var(--font-heading)',
+                              fontSize: 15,
+                              fontWeight: 600,
+                              color: 'var(--ink)',
+                            }}
+                          >
+                            {label}
+                          </div>
+                          <div
+                            className="text-body"
+                            style={{
+                              color: isOverdue ? 'var(--color-pig-deep)' : 'var(--muted)',
+                              fontFamily: 'var(--font-mono)',
+                              fontSize: 11,
+                              marginTop: 2,
+                            }}
+                          >
+                            Prévue le {p.datePrevue}
+                          </div>
+                        </div>
                         <button
                           type="button"
-                          onClick={() => handleAussiClick(item)}
+                          onClick={() => {
+                            if (bande) setPeseeForm({ pesee: p, subject: bande });
+                          }}
+                          disabled={!bande}
+                          aria-label={`Saisir la pesée de ${label}`}
                           className="pressable"
                           style={{
-                            flex: 1,
-                            textAlign: 'left',
-                            background: 'transparent',
-                            border: 'none',
-                            padding: '12px 4px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 12,
-                            cursor: 'pointer',
                             minHeight: 44,
+                            padding: '10px 14px',
+                            borderRadius: 'var(--radius-pill)',
+                            background: 'var(--color-accent-500)',
+                            color: 'var(--bg-surface)',
+                            border: 'none',
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: 11,
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            fontWeight: 600,
+                            cursor: bande ? 'pointer' : 'not-allowed',
+                            opacity: bande ? 1 : 0.4,
                           }}
                         >
-                          <span
-                            aria-hidden="true"
-                            style={{
-                              width: dotSize,
-                              height: dotSize,
-                              borderRadius: '50%',
-                              background: dotColor,
-                              flexShrink: 0,
-                            }}
-                          />
-                          <span
-                            className="text-body-lg"
-                            style={{
-                              flex: 1,
-                              fontWeight: labelWeight,
-                              color: 'var(--ink)',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {item.label}
-                          </span>
-                          <ChevronRight size={16} color="var(--muted)" aria-hidden="true" />
+                          Saisir pesée
                         </button>
-                        {canDismiss && (
-                          <button
-                            type="button"
-                            onClick={() => void handleDismissAussi(item.dismissableAlertId!)}
-                            aria-label="Ignorer cette alerte pour 30 jours"
-                            className="pressable"
-                            style={{
-                              width: 36,
-                              height: 36,
-                              borderRadius: '50%',
-                              border: 'none',
-                              background: 'transparent',
-                              color: 'var(--muted)',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              cursor: 'pointer',
-                              padding: 0,
-                              marginLeft: 4,
-                            }}
-                          >
-                            <X size={14} aria-hidden="true" />
-                          </button>
-                        )}
                       </li>
                     );
                   })}
@@ -948,6 +1008,15 @@ const TodayHub: React.FC = () => {
             isOpen={selectedTransition !== null}
             onConfirm={(t, poidsKg) => { void handlePhaseModalConfirm(t, poidsKg); }}
             onDismiss={() => setSelectedTransition(null)}
+          />
+          <QuickPeseeForm
+            isOpen={peseeForm !== null}
+            onClose={() => {
+              setPeseeForm(null);
+              refreshPesees();
+            }}
+            peseeId={peseeForm?.pesee.id}
+            prefillSubject={peseeForm?.subject}
           />
         </AgritechLayout>
 

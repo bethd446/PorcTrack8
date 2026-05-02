@@ -386,18 +386,21 @@ describe('TroupeauHub — intégration multi-vues', () => {
     expect(actifChips.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('4. click Porcelets → sections "Sous mère" et "Post-sevrage" visibles', async () => {
+  it('4. click Porcelets → vue par loge (V25) : section "Loges occupées" + summary strip', async () => {
+    // V25 — La vue Porcelets a été refondue : groupe par LOGE au lieu de
+    // sections par phase. Avec listLoges() mocké à [], il y a 0 loge active
+    // donc 0 occupée et 0 vide → on vérifie le rendu de la structure.
     renderHub();
 
     await clickSubTabUser(/porcelets/i);
 
-    // Section "Sous mère · 4"
-    const sousMereHeader = await screen.findByText(/Sous mère · 4/i);
-    expect(sousMereHeader).toBeDefined();
+    // Summary strip présent
+    const summary = await screen.findByLabelText(/résumé porcelets/i);
+    expect(summary).toBeDefined();
 
-    // Section "Post-sevrage"
-    const psHeader = await screen.findByText(/Post-sevrage · \d+/i);
-    expect(psHeader).toBeDefined();
+    // Section "Loges occupées"
+    const occupiedHeader = await screen.findByText(/Loges occupées · \d+/i);
+    expect(occupiedHeader).toBeDefined();
   });
 
   it('5. click Loges → liste plate des loges visible (V6-C)', async () => {
@@ -421,9 +424,9 @@ describe('TroupeauHub — intégration multi-vues', () => {
     expect(porceletsTab).not.toBeNull();
     expect(porceletsTab?.getAttribute('aria-selected')).toBe('true');
 
-    // Contenu Porcelets chargé (section "Sous mère")
-    const sousMereHeader = await screen.findByText(/Sous mère · 4/i);
-    expect(sousMereHeader).toBeDefined();
+    // V25 — Contenu Porcelets chargé : section "Loges occupées" présente.
+    const occupiedHeader = await screen.findByText(/Loges occupées · \d+/i);
+    expect(occupiedHeader).toBeDefined();
 
     // La search bar "Truies" n'est PAS affichée (panneau Truies inactif)
     expect(

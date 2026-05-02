@@ -8,12 +8,12 @@
  * · capacité (0..500 opt) · notes (opt). Submit → `createLoge(...)`.
  */
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { IonToast } from '@ionic/react';
 import { Plus, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { createLoge } from '../../services/supabaseWrites';
+import { createLoge, listLoges } from '../../services/supabaseWrites';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import type { Loge, LogeType } from '../../types/farm';
 
@@ -48,6 +48,26 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState('');
+  const [existingNumeros, setExistingNumeros] = useState<Set<string>>(new Set());
+
+  // V25 — Charge les numéros existants pour vérifier l'unicité côté UI.
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    listLoges()
+      .then(rows => {
+        if (cancelled) return;
+        setExistingNumeros(
+          new Set(rows.filter(l => l.active).map(l => l.numero.trim().toLowerCase())),
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setExistingNumeros(new Set());
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
 
   const [lastOpen, setLastOpen] = useState(isOpen);
   if (lastOpen !== isOpen) {
@@ -73,8 +93,12 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({
 
   const validate = (): Record<string, string> => {
     const errs: Record<string, string> = {};
-    if (!numero.trim()) errs.numero = 'Numéro requis';
-    else if (numero.trim().length > 20) errs.numero = 'Maximum 20 caractères';
+    const trimmed = numero.trim();
+    if (!trimmed) errs.numero = 'Numéro requis';
+    else if (trimmed.length > 20) errs.numero = 'Maximum 20 caractères';
+    else if (existingNumeros.has(trimmed.toLowerCase())) {
+      errs.numero = `Numéro "${trimmed}" déjà utilisé`;
+    }
     if (capaciteMax) {
       const n = Number(capaciteMax);
       if (!Number.isFinite(n) || n < 0 || n > 500) {

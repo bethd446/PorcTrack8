@@ -29,6 +29,7 @@ import { Plus, Save } from 'lucide-react';
 
 import { AppToast, BottomSheet, useAppToast } from '../agritech';
 import { insertSow } from '../../services/supabaseWrites';
+import { enqueueInsert, isOnline } from '../../services/offlineQueue';
 import { useFarm } from '../../context/FarmContext';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import {
@@ -103,16 +104,22 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
     setSaving(true);
     try {
       const row = result.row;
-      await insertSow({
+      const sowValues = {
         code_id: row[0] as string,
         name: (row[1] as string) || null,
         boucle: (row[2] as string) || null,
         statut: row[3] as string,
         nb_portees: row[5] as number,
         ration_kg_j: row[8] as number,
-      });
-      const online =
-        typeof navigator !== 'undefined' && navigator.onLine;
+      };
+      // E3 : offline-aware. Online → insert direct. Offline → queue + flush
+      // automatique au reconnect (cf. installOnlineFlushListener).
+      const online = isOnline();
+      if (online) {
+        await insertSow(sowValues);
+      } else {
+        await enqueueInsert('sows', sowValues);
+      }
       showToast(
         online ? 'Truie ajoutée' : 'Truie en file · sync auto',
         online ? 'success' : 'info',

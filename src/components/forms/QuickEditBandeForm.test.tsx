@@ -495,6 +495,85 @@ describe('[V24-2] sélection loge — patch loge_id quand dirty', () => {
   });
 });
 
+// ─── [V25-1] Conflit 1:1 loge ─────────────────────────────────────────────
+// Mirror la logique `logeConflict` du composant : on cherche AUTRE bande
+// avec ce logeId, sinon truie, sinon verrat. Retourne {kind, label} ou null.
+describe('[V25-1] conflit loge 1:1 — bande déjà occupée', () => {
+  interface MiniBande {
+    id: string;
+    idPortee?: string;
+    logeId?: string;
+  }
+  interface MiniTruie {
+    id: string;
+    displayId?: string;
+    logeId?: string;
+  }
+  interface MiniVerrat {
+    id: string;
+    displayId?: string;
+    logeId?: string;
+  }
+
+  function detectConflict(
+    selectedLogeId: string,
+    currentBandeId: string,
+    bandes: MiniBande[],
+    truies: MiniTruie[],
+    verrats: MiniVerrat[],
+  ): { kind: 'bande' | 'truie' | 'verrat'; label: string } | null {
+    if (!selectedLogeId) return null;
+    const otherBande = bandes.find(
+      b => b.id !== currentBandeId && b.logeId === selectedLogeId,
+    );
+    if (otherBande) {
+      return { kind: 'bande', label: otherBande.idPortee || otherBande.id };
+    }
+    const t = truies.find(t0 => t0.logeId === selectedLogeId);
+    if (t) return { kind: 'truie', label: t.displayId || t.id };
+    const v = verrats.find(v0 => v0.logeId === selectedLogeId);
+    if (v) return { kind: 'verrat', label: v.displayId || v.id };
+    return null;
+  }
+
+  it('warning si loge déjà occupée par UNE AUTRE bande active', () => {
+    const conflict = detectConflict(
+      'L-A',
+      'bande-courante',
+      [
+        { id: 'bande-courante' },
+        { id: 'bande-autre', idPortee: 'P-2026-04', logeId: 'L-A' },
+      ],
+      [],
+      [],
+    );
+    expect(conflict).toEqual({ kind: 'bande', label: 'P-2026-04' });
+  });
+
+  it('warning si loge occupée par une truie', () => {
+    const conflict = detectConflict(
+      'L-A',
+      'bande-courante',
+      [{ id: 'bande-courante' }],
+      [{ id: 't1', displayId: 'T05', logeId: 'L-A' }],
+      [],
+    );
+    expect(conflict).toEqual({ kind: 'truie', label: 'T05' });
+  });
+
+  it('aucun conflit si on resélectionne la même loge que la bande courante', () => {
+    // La bande courante peut "garder" sa propre loge sans warning
+    const conflict = detectConflict(
+      'L-A',
+      'bande-courante',
+      [{ id: 'bande-courante', idPortee: 'P-1', logeId: 'L-A' }],
+      [],
+      [],
+    );
+    expect(conflict).toBeNull();
+  });
+});
+
 // ─── [7] Submit offline → queue ───────────────────────────────────────────
 describe('[7] submit offline → queue', () => {
   it('enqueue + mode offline quand navigator.onLine = false', async () => {

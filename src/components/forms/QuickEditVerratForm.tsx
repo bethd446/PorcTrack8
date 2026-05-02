@@ -1,12 +1,12 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
 import { Edit3, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { updateBoarByCode } from '../../services/supabaseWrites';
+import { listLoges, updateBoarByCode } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
-import type { Verrat } from '../../types/farm';
+import type { Loge, Verrat } from '../../types/farm';
 import {
   validateVerratEdit,
   ORIGINE_SUGGESTIONS,
@@ -104,6 +104,51 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string>('');
 
+  // V25 — Loge structurée (référentiel)
+  const [loges, setLoges] = useState<Loge[]>([]);
+  const [selectedLogeId, setSelectedLogeId] = useState<string>(verrat.logeId ?? '');
+  const [selectedLogeIdDirty, setSelectedLogeIdDirty] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    listLoges()
+      .then(rows => {
+        if (cancelled) return;
+        setLoges(rows.filter(l => l.active));
+      })
+      .catch(() => {
+        if (!cancelled) setLoges([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
+
+  // V25 — Validation 1:1 : la loge sélectionnée est-elle déjà occupée par
+  // un AUTRE sujet (autre verrat, truie ou bande active) ?
+  const logeConflict = useMemo<{ kind: 'verrat' | 'truie' | 'bande'; label: string } | null>(() => {
+    if (!selectedLogeId) return null;
+    const otherVerrat = verrats.find(
+      v => v.id !== verrat.id && v.logeId === selectedLogeId,
+    );
+    if (otherVerrat) {
+      return {
+        kind: 'verrat',
+        label: otherVerrat.displayId || otherVerrat.boucle || otherVerrat.id,
+      };
+    }
+    const t = truies.find(t0 => t0.logeId === selectedLogeId);
+    if (t) {
+      return { kind: 'truie', label: t.displayId || t.boucle || t.id };
+    }
+    const b = bandes.find(b0 => b0.logeId === selectedLogeId);
+    if (b) {
+      return { kind: 'bande', label: b.idPortee || b.id };
+    }
+    return null;
+  }, [selectedLogeId, verrats, truies, bandes, verrat.id]);
+
   // Render-time sync: reset on (re)open or verrat change (avoids setState-in-effect).
   const [lastKey, setLastKey] = useState<{ isOpen: boolean; verratId: string }>({
     isOpen,
@@ -126,6 +171,8 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
       setLignee(initial.lignee);
       setPhotoUrl(verrat.photoUrl);
       setPhotoDirty(false);
+      setSelectedLogeId(verrat.logeId ?? '');
+      setSelectedLogeIdDirty(false);
       setErrors({});
       setSaving(false);
     }
@@ -151,9 +198,26 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
       setErrors(result.errors);
       return;
     }
+    // V25 — Bloque si la loge sélectionnée est occupée par un autre sujet.
+    if (selectedLogeIdDirty && logeConflict) {
+      setToast(
+        `Loge déjà occupée par ${
+          logeConflict.kind === 'verrat'
+            ? `verrat ${logeConflict.label}`
+            : logeConflict.kind === 'truie'
+              ? `truie ${logeConflict.label}`
+              : `bande ${logeConflict.label}`
+        }`,
+      );
+      return;
+    }
     setErrors({});
     // Patch vide et pas de photo modifiée : on ferme sans réseau
-    if (Object.keys(result.patch).length === 0 && !photoDirty) {
+    if (
+      Object.keys(result.patch).length === 0 &&
+      !photoDirty &&
+      !selectedLogeIdDirty
+    ) {
       setToast('Aucune modification');
       onClose();
       return;
@@ -177,6 +241,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
       if ('RACE' in p) supabasePatch.breed = p.RACE;
       if ('LIGNEE' in p) supabasePatch.lignee_parentale = p.LIGNEE;
       if (photoDirty) supabasePatch.photo_url = photoUrl ?? null;
+      if (selectedLogeIdDirty) supabasePatch.loge_id = selectedLogeId || null;
       await updateBoarByCode(verrat.id, supabasePatch);
       const online = typeof navigator !== 'undefined' && navigator.onLine;
       setToast(
@@ -614,6 +679,53 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                   {errors.loge}
                 </p>
               ) : null}
+            </div>
+
+            {/* V25 — Loge structurée (référentiel) */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="edit-verrat-loge-ref"
+                className="block text-mono-label text-text-2"
+              >
+                Loge (référentiel){' '}
+                <span className="text-text-2 normal-case">· optionnel</span>
+              </label>
+              <select
+                id="edit-verrat-loge-ref"
+                className={inputBaseClass(false)}
+                value={selectedLogeId}
+                onChange={e => {
+                  setSelectedLogeId(e.target.value);
+                  setSelectedLogeIdDirty(true);
+                }}
+                disabled={saving}
+              >
+                <option value="">— Aucune —</option>
+                {loges.map(l => (
+                  <option key={l.id} value={l.id}>
+                    {l.numero} · {l.type.toLowerCase().replace('_', '-')}
+                    {l.batiment ? ` · ${l.batiment}` : ''}
+                  </option>
+                ))}
+              </select>
+              {logeConflict ? (
+                <p
+                  role="alert"
+                  data-testid="loge-conflict-warning"
+                  className="rounded-md border border-red/40 bg-red/10 px-3 py-2 font-mono text-[11px] text-red"
+                >
+                  Loge {loges.find(l => l.id === selectedLogeId)?.numero ?? ''}{' '}
+                  occupée par{' '}
+                  {logeConflict.kind === 'verrat'
+                    ? `verrat ${logeConflict.label}`
+                    : logeConflict.kind === 'truie'
+                      ? `truie ${logeConflict.label}`
+                      : `bande ${logeConflict.label}`}
+                </p>
+              ) : null}
+              <p className="font-mono text-[10px] text-text-2 tabular-nums">
+                1 verrat = 1 loge dédiée (spec).
+              </p>
             </div>
           </section>
 

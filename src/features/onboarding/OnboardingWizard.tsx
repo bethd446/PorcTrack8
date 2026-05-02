@@ -16,7 +16,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../services/supabaseClient';
 import { kvGet, kvSet } from '../../services/kvStore';
-import { createLoge } from '../../services/supabaseWrites';
+import { createLoge, insertSow, insertBoar } from '../../services/supabaseWrites';
 import type { LogeType } from '../../types/farm';
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -261,9 +261,52 @@ const OnboardingWizard: React.FC = () => {
         .eq('user_id', user.id);
       if (upErr) throw upErr;
 
+      // E2 — Auto-création truies/verrats vides selon les effectifs saisis.
+      // Best-effort : si une insertion échoue (ex: code_id en doublon), on
+      // continue les autres et on log l'erreur. L'utilisateur pourra corriger
+      // via /troupeau/cheptel.
+      let truiesCreated = 0;
+      let verratsCreated = 0;
+      let truiesFailed = 0;
+      let verratsFailed = 0;
+      const truiesCount =
+        state.typeProd === 'ENGRAISSEUR_SEUL' ? 0 : state.effectif_truies_initial;
+      for (let i = 1; i <= truiesCount; i++) {
+        try {
+          await insertSow({
+            code_id: `T-${String(i).padStart(3, '0')}`,
+            name: `Truie ${i}`,
+            breed: state.races[0] ?? null,
+            statut: 'En attente saillie',
+            notes: "Créée à l'onboarding — à compléter (boucle, photo, etc.)",
+          });
+          truiesCreated++;
+        } catch (sowErr) {
+          truiesFailed++;
+          console.warn('[onboarding] insertSow failed:', sowErr);
+        }
+      }
+      const verratsCount = state.effectif_verrats_initial;
+      for (let i = 1; i <= verratsCount; i++) {
+        try {
+          await insertBoar({
+            code_id: `V-${String(i).padStart(3, '0')}`,
+            name: `Verrat ${i}`,
+            statut: 'Actif',
+            notes: "Créé à l'onboarding — à compléter",
+          });
+          verratsCreated++;
+        } catch (boarErr) {
+          verratsFailed++;
+          console.warn('[onboarding] insertBoar failed:', boarErr);
+        }
+      }
+
       // V6-C : INSERT N loges par catégorie avec numéro édité par l'utilisateur.
       // Best-effort : si une loge échoue, on continue (pas de rollback strict —
       // l'utilisateur peut corriger via /troupeau/loges).
+      let logesCreated = 0;
+      let logesFailed = 0;
       for (const c of LOGE_CATEGORIES) {
         const qty = state.logesQty[c.cat] ?? 0;
         if (qty <= 0) continue;
@@ -276,17 +319,35 @@ const OnboardingWizard: React.FC = () => {
               numero,
               type: c.type,
               capaciteMax: c.capaciteMax,
-              notes: 'Créée à l\'onboarding',
+              notes: "Créée à l'onboarding",
             });
+            logesCreated++;
           } catch (logeErr) {
+            logesFailed++;
             console.warn('[onboarding] createLoge failed:', logeErr);
           }
         }
       }
 
+      // Toast final : succès complet OU warning si certaines créations ont
+      // échoué. Stocké dans kvStore pour lecture par /today (consumer décide
+      // de l'affichage). Format : `{kind:'success'|'warning', message:string}`.
+      const totalFailed = truiesFailed + verratsFailed + logesFailed;
+      const toastMessage =
+        totalFailed > 0
+          ? `Compte configuré · ${truiesCreated} truies + ${verratsCreated} verrats + ${logesCreated} loges créées. Quelques animaux n'ont pas pu être créés (vérifie via Cheptel).`
+          : `Compte configuré · ${truiesCreated} truies + ${verratsCreated} verrats + ${logesCreated} loges créées`;
+      await kvSet(
+        'onboarding_toast',
+        JSON.stringify({
+          kind: totalFailed > 0 ? 'warning' : 'success',
+          message: toastMessage,
+        }),
+      );
+
       await kvSet('onboarding_done', '1');
       await kvSet(DRAFT_KEY, '');
-      navigate('/today', { replace: true });
+      navigate('/today', { replace: true, state: { onboardingToast: toastMessage } });
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Erreur inconnue';
       setError(msg);

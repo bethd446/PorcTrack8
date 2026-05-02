@@ -14,6 +14,7 @@ import { Plus, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
 import { insertBoar } from '../../services/supabaseWrites';
+import { enqueueInsert, isOnline } from '../../services/offlineQueue';
 import { useFarm } from '../../context/FarmContext';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import {
@@ -105,9 +106,14 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
     setErrors({});
     setSaving(true);
     try {
-      await insertBoar(result.values);
-      const online =
-        typeof navigator !== 'undefined' && navigator.onLine;
+      // E3 : offline-aware. Online → insert direct. Offline → queue + flush
+      // automatique au reconnect (cf. installOnlineFlushListener).
+      const online = isOnline();
+      if (online) {
+        await insertBoar(result.values);
+      } else {
+        await enqueueInsert('boars', result.values as Record<string, unknown>);
+      }
       setToast(online ? 'Verrat ajouté' : 'Verrat en file · sync auto');
       try {
         await refreshData(true);

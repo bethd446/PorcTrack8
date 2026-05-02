@@ -123,8 +123,36 @@ export interface BandePorcelets {
   logeId?: string;
   /** V24 — Numéro de loge résolu via JOIN loges. */
   logeNumero?: string;
+  /** V25 — Porcelets individuels rattachés (JOIN porcelets_individuels). */
+  porcelets?: PorceletIndividuel[];
   synced: boolean;
   raw?: (string | number | boolean)[];
+}
+
+/** V25 — Statut d'un porcelet individuel. */
+export type PorceletStatut =
+  | 'VIVANT'
+  | 'MORT'
+  | 'VENDU'
+  | 'MALADE'
+  | 'QUARANTAINE';
+
+/** V25 — Sexe d'un porcelet individuel. */
+export type PorceletSexe = 'M' | 'F' | 'INCONNU';
+
+/**
+ * V25 — Porcelet individuel boucle-traçable (table `porcelets_individuels`).
+ * Permet le suivi sanitaire détaillé (health_logs.porcelet_id FK).
+ * Boucle UNIQUE par farm_id (CHECK constraint côté DB).
+ */
+export interface PorceletIndividuel {
+  id: string;
+  batchId: string;
+  boucle: string;
+  sexe: PorceletSexe;
+  poidsCourantKg?: number;
+  statut: PorceletStatut;
+  notes?: string;
 }
 
 /**

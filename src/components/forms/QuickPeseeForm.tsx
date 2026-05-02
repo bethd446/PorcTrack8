@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { useIonAlert, IonSegment, IonSegmentButton, IonLabel } from '@ionic/react';
-import { Search, CheckCircle2, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Search, CheckCircle2, ChevronRight, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,6 +14,8 @@ import {
 import { safeDate } from '../../lib/truieHelpers';
 import { BottomSheet, DataRow } from '../agritech';
 import type { BandePorcelets, Truie, Verrat } from '../../types/farm';
+import { extractPeseesForBande } from '../../services/growthAnalyzer';
+import { markPeseeEffectuee } from '../../services/peseePlanifieesService';
 
 type PeseeSubject = BandePorcelets | Truie | Verrat;
 import { biologyValidators } from '../../utils/biologyValidators';
@@ -41,9 +43,13 @@ import {
 interface QuickPeseeFormProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Si fourni, marque la pesée planifiée comme effectuée au submit final. */
+  peseeId?: string;
+  /** Sujet pré-sélectionné (saute l'étape 1 si fourni). */
+  prefillSubject?: PeseeSubject;
 }
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4;
 type SubjectType = 'BANDE' | 'TRUIE' | 'VERRAT';
 
 const peseeSchema = z.object({
@@ -129,8 +135,8 @@ function jFrom(frDate: string | undefined): number | null {
   return Math.round((today.getTime() - dt.getTime()) / 86_400_000);
 }
 
-const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
-  const { bandes, truies, verrats, refreshData } = useFarm();
+const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeId, prefillSubject }) => {
+  const { bandes, truies, verrats, notes, refreshData } = useFarm();
   const { user } = useAuth();
   const [presentAlert] = useIonAlert();
 
@@ -139,6 +145,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
   const [selectedSubject, setSelectedSubject] = useState<PeseeSubject | null>(null);
   const [saving, setSaving] = useState(false);
   const [, setSubmitError] = useState<string>('');
+  const [pendingValues, setPendingValues] = useState<PeseeFormValues | null>(null);
 
   const form = useForm<PeseeFormValues>({
     resolver: zodResolver(peseeSchema),
@@ -178,6 +185,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
     setSelectedSubject(null);
     setSubmitError('');
     setSaving(false);
+    setPendingValues(null);
     form.reset(INITIAL_VALUES);
   }, [form]);
 
@@ -206,6 +214,24 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
       form.setValue('maxVivants', undefined);
     }
   }, [subjectType, form]);
+
+  // ── Préfill depuis pesée planifiée ───────────────────────────────────
+  useEffect(() => {
+    if (!isOpen || !prefillSubject) return;
+    setSelectedSubject(prefillSubject);
+    const isBande = 'idPortee' in prefillSubject;
+    if (isBande) {
+      form.setValue('subjectType', 'BANDE');
+      const sb = prefillSubject as BandePorcelets;
+      form.setValue('nbPeses', sb.vivants !== undefined ? String(sb.vivants) : '');
+      form.setValue('maxVivants', sb.vivants);
+    } else {
+      form.setValue('subjectType', 'TRUIE');
+      form.setValue('nbPeses', '1');
+    }
+    setStep(2);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, prefillSubject]);
 
   const executeSubmit = async (values: PeseeFormValues): Promise<void> => {
     if (!selectedSubject) return;
@@ -254,7 +280,17 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
         });
       }
 
-      setStep(3);
+      // Si la pesée était planifiée (V25), marque comme effectuée.
+      if (peseeId) {
+        try {
+          await markPeseeEffectuee(peseeId);
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.warn('[QuickPeseeForm] markPeseeEffectuee failed', e);
+        }
+      }
+
+      setStep(4);
       try { await refreshData(true); } catch { /* noop */ }
     } catch (err) {
       // AUDIT-V1 P0-2 : log explicite sinon submit silencieux côté terrain.
@@ -286,14 +322,19 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
           cssClass: 'agritech-alert',
           buttons: [
             { text: 'Annuler', role: 'cancel' },
-            { text: 'Forcer la saisie', role: 'confirm', handler: () => executeSubmit(values) },
+            { text: 'Forcer la saisie', role: 'confirm', handler: () => {
+              setPendingValues(values);
+              setStep(3);
+            } },
           ],
         });
         return;
       }
     }
 
-    await executeSubmit(values);
+    // Au lieu d'executer directement → step 3 récap pour confirmation explicite.
+    setPendingValues(values);
+    setStep(3);
   }, (errors) => {
     // AUDIT-V1 P0-2 : second callback de RHF.handleSubmit appelé sur
     // validation FAIL. Sans ça, l'utilisateur voit un submit silencieux.
@@ -315,7 +356,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
   const watchedPoids = form.watch('poidsMoyen');
 
   const successSummary = useMemo(() => {
-    if (step !== 3 || !selectedSubject) return null;
+    if (step !== 4 || !selectedSubject) return null;
     const poids = (watchedPoids || '').replace(',', '.');
     if (subjectType === 'BANDE') {
       const nb = Number(watchedNb) || 0;
@@ -324,12 +365,107 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
     return `${subjectDisplay(selectedSubject)} · ${poids} kg`;
   }, [step, selectedSubject, watchedNb, watchedPoids, subjectType]);
 
+  // ─── Récap step 3 : ancien poids, écart, GMQ ───────────────────────────
+  interface RecapStats {
+    nouveauPoids: number;
+    ancienPoids: number | null;
+    ancienneDate: string | null;
+    ecartKg: number | null;
+    ecartPct: number | null;
+    gmqGrammesParJour: number | null;
+    joursEcart: number | null;
+    /** vert | ambre | rouge */
+    couleur: 'vert' | 'ambre' | 'rouge' | 'neutre';
+    anormal: boolean;
+  }
+
+  const recapStats = useMemo<RecapStats | null>(() => {
+    if (step !== 3 || !pendingValues || !selectedSubject) return null;
+    const nouveau = Number((pendingValues.poidsMoyen || '').replace(',', '.'));
+    if (!Number.isFinite(nouveau) || nouveau <= 0) return null;
+
+    let ancienPoids: number | null = null;
+    let ancienneDate: string | null = null;
+
+    if (subjectType === 'BANDE') {
+      const pesees = extractPeseesForBande(selectedSubject.id, notes);
+      if (pesees.length > 0) {
+        const last = pesees[pesees.length - 1];
+        ancienPoids = last.poidsMoyen;
+        ancienneDate = last.date;
+      }
+    } else {
+      // Pour TRUIE/VERRAT, parse la dernière pesée depuis les notes individuelles.
+      const regex = /(?:Dernière pesée|pes[ée]e?\s+individuelle)[^\d]*([\d.,]+)\s*kg/i;
+      const subjectNotes = notes
+        .filter(n => n.animalId === selectedSubject.id)
+        .filter(n => regex.test(n.texte))
+        .sort((a, b) => b.date.localeCompare(a.date));
+      if (subjectNotes.length > 0) {
+        const m = regex.exec(subjectNotes[0].texte);
+        if (m) {
+          const v = Number(m[1].replace(',', '.'));
+          if (Number.isFinite(v) && v > 0) {
+            ancienPoids = v;
+            ancienneDate = subjectNotes[0].date;
+          }
+        }
+      }
+    }
+
+    let ecartKg: number | null = null;
+    let ecartPct: number | null = null;
+    let gmq: number | null = null;
+    let jours: number | null = null;
+    if (ancienPoids !== null && ancienneDate !== null) {
+      ecartKg = Math.round((nouveau - ancienPoids) * 10) / 10;
+      ecartPct = Math.round(((nouveau - ancienPoids) / ancienPoids) * 1000) / 10;
+      const from = new Date(ancienneDate);
+      const today = new Date();
+      const j = Math.round((today.getTime() - from.getTime()) / 86_400_000);
+      if (j > 0) {
+        jours = j;
+        gmq = Math.round(((nouveau - ancienPoids) * 1000) / j);
+      }
+    }
+
+    let couleur: RecapStats['couleur'] = 'neutre';
+    let anormal = false;
+    if (ecartPct !== null) {
+      if (ecartPct < 0) couleur = 'rouge';
+      else if (ecartPct < 2) couleur = 'ambre';
+      else if (ecartPct > 5) couleur = 'vert';
+      else couleur = 'ambre';
+      // Anormal : gain > 50% ou perte > 10%
+      if (ecartPct > 50 || ecartPct < -10) anormal = true;
+    }
+
+    return {
+      nouveauPoids: nouveau,
+      ancienPoids,
+      ancienneDate,
+      ecartKg,
+      ecartPct,
+      gmqGrammesParJour: gmq,
+      joursEcart: jours,
+      couleur,
+      anormal,
+    };
+  }, [step, pendingValues, selectedSubject, subjectType, notes]);
+
+  const handleConfirmRecap = useCallback(async (): Promise<void> => {
+    if (!pendingValues) return;
+    await executeSubmit(pendingValues);
+    // executeSubmit place step=4 si succès
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingValues]); // executeSubmit closure stable assez
+
   return (
     <BottomSheet isOpen={isOpen} onClose={handleClose} title="Pesée rapide" height="full">
       <div role="dialog" className="space-y-5">
-        {/* Stepper */}
+        {/* Stepper (1=sélection, 2=saisie, 3=récap, 4=succès) */}
         <div className="flex items-center justify-center gap-2">
-          {[1, 2, 3].map(n => (
+          {[1, 2, 3, 4].map(n => (
             <span key={n} className={['h-1.5 rounded-full transition-all duration-[220ms]', n === step ? 'w-8 bg-accent' : n < step ? 'w-4 bg-accent/60' : 'w-4 bg-border'].join(' ')} />
           ))}
         </div>
@@ -498,8 +634,109 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose }) => {
           </Form>
         )}
 
-        {/* ÉTAPE 3 : Succès */}
-        {step === 3 && (
+        {/* ÉTAPE 3 : Récap & confirmation explicite */}
+        {step === 3 && selectedSubject && recapStats && (
+          <div data-testid="pesee-recap" className="space-y-4">
+            <div className="card-dense !p-3 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setStep(2)}
+                className="pressable h-9 w-9 flex items-center justify-center rounded-md bg-bg-2 text-text-1"
+                aria-label="Retour à la saisie"
+              >
+                <ArrowLeft size={14} />
+              </button>
+              <div className="min-w-0 flex-1">
+                <div className="font-mono text-[10px] uppercase text-text-2">Récapitulatif · {subjectType}</div>
+                <div className="truncate font-mono text-[13px] text-text-0">{subjectDisplay(selectedSubject)}</div>
+              </div>
+            </div>
+
+            {/* Anciens / nouveaux poids */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="card-dense !p-3">
+                <div className="font-mono text-[10px] uppercase text-text-2">Ancien poids</div>
+                <div className="font-mono text-[18px] text-text-0 mt-1" data-testid="recap-ancien-poids">
+                  {recapStats.ancienPoids !== null ? `${recapStats.ancienPoids} kg` : '—'}
+                </div>
+                {recapStats.ancienneDate && (
+                  <div className="font-mono text-[10px] text-text-2 mt-0.5">{recapStats.ancienneDate}</div>
+                )}
+              </div>
+              <div className="card-dense !p-3">
+                <div className="font-mono text-[10px] uppercase text-text-2">Nouveau poids</div>
+                <div className="font-mono text-[18px] text-text-0 mt-1" data-testid="recap-nouveau-poids">
+                  {recapStats.nouveauPoids} kg
+                </div>
+              </div>
+            </div>
+
+            {/* Écarts (color coded) */}
+            {recapStats.ecartKg !== null && recapStats.ecartPct !== null && (
+              <div
+                className="card-dense !p-3"
+                data-testid="recap-ecart"
+                style={{
+                  borderLeft: `4px solid ${
+                    recapStats.couleur === 'vert' ? '#16a34a'
+                    : recapStats.couleur === 'rouge' ? '#dc2626'
+                    : recapStats.couleur === 'ambre' ? '#d97706'
+                    : '#94a3b8'
+                  }`,
+                }}
+              >
+                <div className="font-mono text-[10px] uppercase text-text-2">Écart</div>
+                <div className="font-mono text-[16px] text-text-0 mt-1">
+                  {recapStats.ecartKg > 0 ? '+' : ''}{recapStats.ecartKg} kg
+                  {' · '}
+                  <span data-testid="recap-ecart-pct">
+                    {recapStats.ecartPct > 0 ? '+' : ''}{recapStats.ecartPct}%
+                  </span>
+                </div>
+                {recapStats.gmqGrammesParJour !== null && (
+                  <div className="font-mono text-[12px] text-text-2 mt-1" data-testid="recap-gmq">
+                    GMQ : {recapStats.gmqGrammesParJour} g/j ({recapStats.joursEcart}j)
+                  </div>
+                )}
+              </div>
+            )}
+
+            {recapStats.anormal && (
+              <div
+                role="alert"
+                data-testid="recap-warning"
+                className="card-dense !p-3 flex items-start gap-2"
+                style={{ borderLeft: '4px solid #dc2626', background: 'rgba(220,38,38,0.06)' }}
+              >
+                <AlertTriangle size={16} className="text-red mt-0.5" />
+                <div className="font-mono text-[12px] text-text-0">
+                  Écart inhabituel — vérifie la pesée.
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setStep(2)}
+                className="pressable flex-1 h-14 rounded-md bg-bg-1 border text-text-1 font-mono text-[12px] uppercase font-bold"
+              >
+                Modifier
+              </button>
+              <button
+                type="button"
+                onClick={() => { void handleConfirmRecap(); }}
+                disabled={saving}
+                className="pressable flex-[2] h-14 rounded-md bg-accent text-bg-0 font-mono text-[13px] uppercase font-bold"
+              >
+                {saving ? 'Enregistrement…' : 'Confirmer le nouveau poids'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ÉTAPE 4 : Succès */}
+        {step === 4 && (
           <div className="flex flex-col items-center justify-center py-16 animate-scale-in">
             <CheckCircle2 size={64} className="text-accent mb-4" strokeWidth={1.5} />
             <p className="agritech-heading text-[18px] uppercase">Pesée enregistrée</p>

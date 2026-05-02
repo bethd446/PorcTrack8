@@ -1,12 +1,12 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
 import { Edit3, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { updateSowByCode } from '../../services/supabaseWrites';
+import { listLoges, updateSowByCode } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
-import type { Truie } from '../../types/farm';
+import type { Loge, Truie } from '../../types/farm';
 import {
   validateTruieEditFull,
   frDateToIso,
@@ -111,7 +111,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
   truie,
   onSuccess,
 }) => {
-  const { refreshData, truies } = useFarm();
+  const { refreshData, truies, verrats, bandes } = useFarm();
   const { user } = useAuth();
   const farmId = user?.id ?? '';
 
@@ -134,6 +134,48 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string>('');
 
+  // V25 — Loge structurée (référentiel)
+  const [loges, setLoges] = useState<Loge[]>([]);
+  const [selectedLogeId, setSelectedLogeId] = useState<string>(truie.logeId ?? '');
+  const [selectedLogeIdDirty, setSelectedLogeIdDirty] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    listLoges()
+      .then(rows => {
+        if (cancelled) return;
+        setLoges(rows.filter(l => l.active));
+      })
+      .catch(() => {
+        if (!cancelled) setLoges([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
+
+  // V25 — Validation 1:1 : la loge sélectionnée est-elle déjà occupée par
+  // un AUTRE sujet (autre truie, verrat ou bande active) ?
+  const logeConflict = useMemo<{ kind: 'truie' | 'verrat' | 'bande'; label: string } | null>(() => {
+    if (!selectedLogeId) return null;
+    const otherTruie = truies.find(
+      t => t.id !== truie.id && t.logeId === selectedLogeId,
+    );
+    if (otherTruie) {
+      return { kind: 'truie', label: otherTruie.displayId || otherTruie.boucle || otherTruie.id };
+    }
+    const verrat = verrats.find(v => v.logeId === selectedLogeId);
+    if (verrat) {
+      return { kind: 'verrat', label: verrat.displayId || verrat.boucle || verrat.id };
+    }
+    const bande = bandes.find(b => b.logeId === selectedLogeId);
+    if (bande) {
+      return { kind: 'bande', label: bande.idPortee || bande.id };
+    }
+    return null;
+  }, [selectedLogeId, truies, verrats, bandes, truie.id]);
+
   // Render-time sync: reset on (re)open or truie change (avoids setState-in-effect).
   const [lastKey, setLastKey] = useState<{ isOpen: boolean; truieId: string }>({
     isOpen,
@@ -145,6 +187,8 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
       setDraft(initial);
       setPhotoUrl(truie.photoUrl);
       setPhotoDirty(false);
+      setSelectedLogeId(truie.logeId ?? '');
+      setSelectedLogeIdDirty(false);
       setErrors({});
       setSaving(false);
     }
@@ -173,10 +217,27 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
       setErrors(result.errors);
       return;
     }
+    // V25 — Bloque si la loge sélectionnée est occupée par un autre sujet.
+    if (selectedLogeIdDirty && logeConflict) {
+      setToast(
+        `Loge déjà occupée par ${
+          logeConflict.kind === 'truie'
+            ? `truie ${logeConflict.label}`
+            : logeConflict.kind === 'verrat'
+              ? `verrat ${logeConflict.label}`
+              : `bande ${logeConflict.label}`
+        }`,
+      );
+      return;
+    }
     setErrors({});
 
     // Si aucun champ modifié et pas de photo → rien à envoyer
-    if (Object.keys(result.patch).length === 0 && !photoDirty) {
+    if (
+      Object.keys(result.patch).length === 0 &&
+      !photoDirty &&
+      !selectedLogeIdDirty
+    ) {
       setToast('Aucune modification');
       onClose();
       return;
@@ -207,6 +268,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
       if ('LOGE' in p) supabasePatch.localisation = p.LOGE;
       if ('NOTES' in p) supabasePatch.notes = p.NOTES;
       if (photoDirty) supabasePatch.photo_url = photoUrl ?? null;
+      if (selectedLogeIdDirty) supabasePatch.loge_id = selectedLogeId || null;
       await updateSowByCode(truie.id, supabasePatch);
       const online = typeof navigator !== 'undefined' && navigator.onLine;
       setToast(
@@ -578,6 +640,48 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
                   {errors.loge}
                 </p>
               ) : null}
+            </div>
+
+            {/* V25 — Loge structurée (référentiel) */}
+            <div className="space-y-1.5">
+              <label htmlFor="edit-truie-loge-ref" className={labelCls}>
+                Loge (référentiel){' '}
+                <span className="text-text-2 normal-case">· optionnel</span>
+              </label>
+              <select
+                id="edit-truie-loge-ref"
+                className={[inputBase, inputOk].join(' ')}
+                value={selectedLogeId}
+                onChange={e => {
+                  setSelectedLogeId(e.target.value);
+                  setSelectedLogeIdDirty(true);
+                }}
+                disabled={saving}
+              >
+                <option value="">— Aucune —</option>
+                {loges.map(l => (
+                  <option key={l.id} value={l.id}>
+                    {l.numero} · {l.type.toLowerCase().replace('_', '-')}
+                    {l.batiment ? ` · ${l.batiment}` : ''}
+                  </option>
+                ))}
+              </select>
+              {logeConflict ? (
+                <p
+                  role="alert"
+                  data-testid="loge-conflict-warning"
+                  className="rounded-md border border-red/40 bg-red/10 px-3 py-2 font-mono text-[11px] text-red"
+                >
+                  Loge {loges.find(l => l.id === selectedLogeId)?.numero ?? ''}{' '}
+                  occupée par{' '}
+                  {logeConflict.kind === 'truie'
+                    ? `truie ${logeConflict.label}`
+                    : logeConflict.kind === 'verrat'
+                      ? `verrat ${logeConflict.label}`
+                      : `bande ${logeConflict.label}`}
+                </p>
+              ) : null}
+              <p className={hintCls}>1 truie = 1 loge dédiée (spec).</p>
             </div>
           </section>
 

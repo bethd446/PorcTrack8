@@ -34,3 +34,6 @@ export type { AnimalListItemProps, AnimalListItemBadge } from './AnimalListItem'
 
 export { default as AppToast, useAppToast } from './AppToast';
 export type { AppToastProps, ToastTone, AppToastAction, UseAppToastReturn } from './AppToast';
+
+export { default as AlertCard } from './AlertCard';
+export type { AlertCardProps } from './AlertCard';

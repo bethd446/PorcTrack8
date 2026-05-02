@@ -455,3 +455,119 @@ describe('validateTruieEditFull (v2 multi-champs)', () => {
     expect(res.patch).toEqual({ NOM: 'Changed' });
   });
 });
+
+// ─── V25 — Validation 1:1 loge (conflit avec autre sujet) ─────────────────
+// Reproduit fidèlement la dérivation `logeConflict` du composant :
+//   1. Cherche AUTRE truie avec ce logeId
+//   2. Sinon cherche un verrat
+//   3. Sinon cherche une bande
+// Retourne { kind, label } ou null.
+describe('[V25] QuickEditTruieForm — conflit loge 1:1', () => {
+  interface MiniTruie {
+    id: string;
+    displayId?: string;
+    boucle?: string;
+    logeId?: string;
+  }
+  interface MiniVerrat {
+    id: string;
+    displayId?: string;
+    boucle?: string;
+    logeId?: string;
+  }
+  interface MiniBande {
+    id: string;
+    idPortee?: string;
+    logeId?: string;
+  }
+
+  function detectLogeConflict(
+    selectedLogeId: string,
+    currentTruieId: string,
+    truies: MiniTruie[],
+    verrats: MiniVerrat[],
+    bandes: MiniBande[],
+  ): { kind: 'truie' | 'verrat' | 'bande'; label: string } | null {
+    if (!selectedLogeId) return null;
+    const otherTruie = truies.find(
+      t => t.id !== currentTruieId && t.logeId === selectedLogeId,
+    );
+    if (otherTruie) {
+      return { kind: 'truie', label: otherTruie.displayId || otherTruie.boucle || otherTruie.id };
+    }
+    const v = verrats.find(v0 => v0.logeId === selectedLogeId);
+    if (v) return { kind: 'verrat', label: v.displayId || v.boucle || v.id };
+    const b = bandes.find(b0 => b0.logeId === selectedLogeId);
+    if (b) return { kind: 'bande', label: b.idPortee || b.id };
+    return null;
+  }
+
+  it('affiche warning si loge occupée par un verrat (cas demandé)', () => {
+    const conflict = detectLogeConflict(
+      'L-01',
+      'truie-A',
+      [{ id: 'truie-A' }],
+      [{ id: 'verrat-X', displayId: 'V05', logeId: 'L-01' }],
+      [],
+    );
+    expect(conflict).toEqual({ kind: 'verrat', label: 'V05' });
+  });
+
+  it('affiche warning si loge occupée par une autre truie', () => {
+    const conflict = detectLogeConflict(
+      'L-02',
+      'truie-A',
+      [
+        { id: 'truie-A' },
+        { id: 'truie-B', displayId: 'T08', logeId: 'L-02' },
+      ],
+      [],
+      [],
+    );
+    expect(conflict).toEqual({ kind: 'truie', label: 'T08' });
+  });
+
+  it('affiche warning si loge occupée par une bande', () => {
+    const conflict = detectLogeConflict(
+      'L-03',
+      'truie-A',
+      [{ id: 'truie-A' }],
+      [],
+      [{ id: 'bande-1', idPortee: 'P-2026-03', logeId: 'L-03' }],
+    );
+    expect(conflict).toEqual({ kind: 'bande', label: 'P-2026-03' });
+  });
+
+  it('aucun conflit si loge vide', () => {
+    expect(
+      detectLogeConflict('L-99', 'truie-A', [{ id: 'truie-A' }], [], []),
+    ).toBeNull();
+  });
+
+  it('aucun conflit si selectedLogeId vide', () => {
+    expect(
+      detectLogeConflict(
+        '',
+        'truie-A',
+        [{ id: 'truie-A', logeId: 'L-01' }],
+        [{ id: 'v1', logeId: 'L-01' }],
+        [],
+      ),
+    ).toBeNull();
+  });
+
+  it('priorité : autre truie avant verrat avant bande', () => {
+    // Les 3 sont sur L-01 → priorité truie
+    const conflict = detectLogeConflict(
+      'L-01',
+      'truie-A',
+      [
+        { id: 'truie-A' },
+        { id: 'truie-B', displayId: 'T08', logeId: 'L-01' },
+      ],
+      [{ id: 'v1', displayId: 'V01', logeId: 'L-01' }],
+      [{ id: 'b1', idPortee: 'P1', logeId: 'L-01' }],
+    );
+    expect(conflict?.kind).toBe('truie');
+  });
+});

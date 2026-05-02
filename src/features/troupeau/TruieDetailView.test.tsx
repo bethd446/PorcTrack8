@@ -41,10 +41,12 @@ vi.mock('../../services/offlineQueue', () => ({
 }));
 
 // Mock supabaseWrites — non utilisé directement par les tests mais importé
-// par le composant.
+// par le composant. Inclut listLoges/updateSowByCode (V25).
 vi.mock('../../services/supabaseWrites', () => ({
   updateSow: vi.fn(async () => ({ success: true })),
   updateBatch: vi.fn(async () => ({ success: true })),
+  updateSowByCode: vi.fn(async () => null),
+  listLoges: vi.fn(async () => []),
 }));
 
 // Mock useIonAlert : expose presentAlertMock pour pouvoir simuler la confirmation
