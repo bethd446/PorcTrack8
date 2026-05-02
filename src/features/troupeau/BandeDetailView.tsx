@@ -1,5 +1,12 @@
 /**
- * BandeDetailView — /troupeau/bandes/:bandeId
+ * @deprecated AUDIT-V25-FIX (2026-05-02) — Composant ORPHELIN.
+ * La route `/troupeau/bandes/:bandeId` pointe désormais vers
+ * `src/features/tables/bandes/BandeDetailView.tsx` qui contient les
+ * sections V6-B (sources truies + loge) + V25 Sprint B+D (porcelets
+ * individuels + signalement maladie). Ce fichier est legacy v1.
+ * À supprimer en cleanup futur (vérifier d'abord aucun import résiduel).
+ *
+ * BandeDetailView — /troupeau/bandes/:bandeId (LEGACY v1 2026-04-20)
  * ══════════════════════════════════════════════════════════════════════════
  * Refonte Claude Design v1 (2026-04-20) : vue portée détaillée.
  *

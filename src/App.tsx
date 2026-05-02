@@ -76,7 +76,11 @@ const FournisseursView = React.lazy(() => import(/* webpackChunkName: "fournisse
 
 const PerfKpiView = React.lazy(() => import(/* webpackChunkName: "pilotage-perf" */ './features/pilotage/PerfKpiView'));
 const FinancesView = React.lazy(() => import(/* webpackChunkName: "pilotage-finances" */ './features/pilotage/FinancesView'));
-const BandeDetailView = React.lazy(() => import(/* webpackChunkName: "troupeau-bande-detail" */ './features/troupeau/BandeDetailView'));
+// AUDIT-V25-FIX : route pointe désormais vers tables/bandes/BandeDetailView
+// qui contient les sections V6-B (sources/loge) + V25 Sprint B+D (porcelets
+// individuels + signalement maladie). features/troupeau/BandeDetailView.tsx
+// est legacy orphelin à supprimer en cleanup futur.
+const BandeDetailView = React.lazy(() => import(/* webpackChunkName: "troupeau-bande-detail" */ './features/tables/bandes/BandeDetailView'));
 const TruieDetailView = React.lazy(() => import(/* webpackChunkName: "troupeau-truie-detail" */ './features/troupeau/TruieDetailView'));
 const VerratDetailView = React.lazy(() => import(/* webpackChunkName: "troupeau-verrat-detail" */ './features/troupeau/VerratDetailView'));
 const BatimentsView = React.lazy(() => import(/* webpackChunkName: "troupeau-batiments" */ './features/troupeau/BatimentsView'));

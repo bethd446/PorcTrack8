@@ -11,7 +11,8 @@
 | `audit-50-test@porctrack.test` | `6c58cf67-de72-423e-b0c1-b35bd613400a` | `9a06fbd8-6f04-43b6-8885-2ebf7217444a` | Test interactif post-fix V23 (2ème passe) — DÉJÀ SUPPRIMÉ |
 | `audit-50-test@porctrack.test` | `a5969ce9-cfc6-4853-9f48-5e6bb0653345` | (auto via trigger) | Test 50 points (3ème passe) — DÉJÀ SUPPRIMÉ |
 | `audit-50-test@porctrack.test` | `d312b8bf-5168-4804-b6fa-c4f5484592fd` | (auto via trigger) | Audit 100pts (4ème passe) — DÉJÀ SUPPRIMÉ |
-| `audit-final@porctrack.test` | `6fcb7281-5081-438b-9839-1929910e4d9c` | (auto via trigger) | Audit final V4-V7 mesure amélioration (5ème passe) — À SUPPRIMER |
+| `audit-final@porctrack.test` | `6fcb7281-5081-438b-9839-1929910e4d9c` | (auto via trigger) | Audit final V4-V7 (5ème passe) — DÉJÀ SUPPRIMÉ |
+| `audit-porcelets@porctrack.test` | `ee6e4d6b-d5ed-4cbb-b847-35ba228616d4` | (auto via trigger) | Test scénario refonte Porcelets V25 (6ème passe) — À SUPPRIMER |
 
 ## Compte PRODUCTION à PRÉSERVER
 
