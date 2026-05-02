@@ -339,7 +339,7 @@ const FinancesView: React.FC = () => {
                     }
                   />
                   <KpiCardV6
-                    label="Trésorerie cumul"
+                    label="Trésorerie cumul (depuis début)"
                     value={formatMontant(tresorerieCumul, currency)}
                     accentColor={tresorerieCumul >= 0 ? undefined : 'pig'}
                     tone={tresorerieCumul < 0 ? 'critical' : undefined}
@@ -352,7 +352,7 @@ const FinancesView: React.FC = () => {
                     trendDir={tresorerieCumul < 0 ? 'down' : 'neutral'}
                     ariaLabel={
                       tresorerieCumul < 0
-                        ? `Trésorerie cumul ${formatMontant(tresorerieCumul, currency)} — ATTENTION : solde négatif${moisNegatifs > 0 ? ` depuis ${moisNegatifs} mois` : ''}`
+                        ? `Trésorerie cumul (depuis début) ${formatMontant(tresorerieCumul, currency)} — ATTENTION : solde négatif${moisNegatifs > 0 ? ` depuis ${moisNegatifs} mois` : ''}`
                         : undefined
                     }
                   />

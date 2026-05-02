@@ -14,8 +14,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  Wallet, FileText, TrendingUp,
-  ArrowRight, Wind, BellRing, ChevronRight,
+  FileText, TrendingUp,
+  ArrowRight, BellRing, ChevronRight,
+  BarChart3, Coins, Calendar, Trophy,
 } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
@@ -37,6 +38,7 @@ import {
   semanticTrendDir,
 } from '../../utils/pilotageDelta';
 import { filterRealPortees } from '../../services/bandesAggregator';
+import { buildClassementRows } from '../../services/reproducteursClassement';
 
 const PilotageHub: React.FC = () => {
   const navigate = useNavigate();
@@ -45,6 +47,9 @@ const PilotageHub: React.FC = () => {
     alerts,
     bandes,
     transitions,
+    truies,
+    verrats,
+    saillies,
     nomFerme,
     currency,
   } = useFarm();
@@ -52,6 +57,24 @@ const PilotageHub: React.FC = () => {
   const [, setIsPrinting] = useState(false);
 
   const realBandes = useMemo(() => filterRealPortees(bandes), [bandes]);
+
+  // Top reproducteur (truie ou verrat) pour la tuile Classement
+  const topReproducteurId = useMemo(() => {
+    if (!truies.length && !verrats.length) return null;
+    const rows = buildClassementRows({
+      truies,
+      verrats,
+      bandes: realBandes,
+      saillies: saillies ?? [],
+      filter: 'TOUS',
+      sortBy: 'score',
+    });
+    return rows[0]?.displayId ?? null;
+  }, [truies, verrats, realBandes, saillies]);
+
+  // Compteur truies pour sous-titre
+  const nbTruies = truies.length;
+  const nbBandesActives = realBandes.length;
 
   const globalReport = useMemo(() => {
     if (loading || realBandes.length === 0) return null;
@@ -189,10 +212,10 @@ const PilotageHub: React.FC = () => {
           />
 
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            {/* ── En-tête + export ──────────────────────────────────── */}
+            {/* ── 1. Hero compact + export PDF ─────────────────────── */}
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
               <div>
-                <Eyebrow dotColor="accent">Pilotage · Vue globale</Eyebrow>
+                <Eyebrow dotColor="accent">Performance · {nomFerme}</Eyebrow>
                 <h1
                   className="text-page-title"
                   style={{ margin: '8px 0 4px' }}
@@ -203,7 +226,7 @@ const PilotageHub: React.FC = () => {
                   className="text-body"
                   style={{ color: 'var(--muted)' }}
                 >
-                  Cockpit financier · {realBandes.length} bande{realBandes.length > 1 ? 's' : ''} · marge théorique {nomFerme}
+                  {nbBandesActives} bande{nbBandesActives > 1 ? 's' : ''} active{nbBandesActives > 1 ? 's' : ''} · {nbTruies} truie{nbTruies > 1 ? 's' : ''}
                 </div>
               </div>
               {auditData && (
@@ -232,7 +255,38 @@ const PilotageHub: React.FC = () => {
               )}
             </header>
 
-            {/* ── Marge globale (hero) ─────────────────────────────── */}
+            {/* ── 2. Modules en navigation primaire (4 tuiles) ──────── */}
+            <section aria-label="Modules de gestion">
+              <Eyebrow dotColor="accent">Modules de gestion</Eyebrow>
+              <div className="grid grid-cols-2 gap-[10px] sm:grid-cols-4" style={{ marginTop: 12 }}>
+                <ModuleTile
+                  icon={<BarChart3 size={24} aria-hidden="true" />}
+                  title="Performance technique"
+                  miniStat="ISSE/IEM/Taux MB"
+                  onClick={() => navigate('/pilotage/perf')}
+                />
+                <ModuleTile
+                  icon={<Coins size={24} aria-hidden="true" />}
+                  title="Finances"
+                  miniStat={`Marge: ${formatCurrency(margeGlobaleEstimee, currency)}`}
+                  onClick={() => navigate('/pilotage/finances')}
+                />
+                <ModuleTile
+                  icon={<Calendar size={24} aria-hidden="true" />}
+                  title="Prévisions"
+                  miniStat={`MB 30j: ${nbBandesActives}`}
+                  onClick={() => navigate('/pilotage/previsions')}
+                />
+                <ModuleTile
+                  icon={<Trophy size={24} aria-hidden="true" />}
+                  title="Classement reproducteurs"
+                  miniStat={topReproducteurId ? `Top: ${topReproducteurId}` : 'Top: —'}
+                  onClick={() => navigate('/troupeau/classement')}
+                />
+              </div>
+            </section>
+
+            {/* ── 3. Marge globale (hero) ──────────────────────────── */}
             <section
               aria-label="Marge globale estimée"
               style={{
@@ -294,7 +348,7 @@ const PilotageHub: React.FC = () => {
               </div>
             </section>
 
-            {/* ── 4 KPI cards ──────────────────────────────────────── */}
+            {/* ── 4. KPIs financiers (4 cards) ─────────────────────── */}
             <section
               aria-label="KPIs financiers"
               className="grid grid-cols-2 gap-[10px] sm:grid-cols-4"
@@ -341,7 +395,7 @@ const PilotageHub: React.FC = () => {
               />
             </section>
 
-            {/* ── Performance bandes (top / flop) ──────────────────── */}
+            {/* ── 5. Top/Flop bandes (cliquables) ──────────────────── */}
             <section aria-label="Performance bandes">
               <Eyebrow dotColor="accent">Performance bandes</Eyebrow>
               <div
@@ -386,7 +440,7 @@ const PilotageHub: React.FC = () => {
               </div>
             </section>
 
-            {/* ── Alertes (carte sommaire) ─────────────────────────── */}
+            {/* ── 6. Alertes (carte sommaire) ──────────────────────── */}
             <section aria-label="Alertes en cours">
               <Eyebrow dotColor="pig">Alertes</Eyebrow>
               <Link
@@ -427,38 +481,6 @@ const PilotageHub: React.FC = () => {
                 </div>
                 <ChevronRight size={18} color="var(--muted)" aria-hidden="true" />
               </Link>
-            </section>
-
-            {/* ── Modules de gestion ───────────────────────────────── */}
-            <section aria-label="Modules de gestion">
-              <Eyebrow dotColor="muted">Modules de gestion</Eyebrow>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                  gap: 10,
-                  marginTop: 12,
-                }}
-              >
-                <ModuleTile
-                  icon={<Wallet size={18} aria-hidden="true" />}
-                  title="Trésorerie"
-                  subtitle="Flux réels"
-                  onClick={() => navigate('/pilotage/finances')}
-                />
-                <ModuleTile
-                  icon={<TrendingUp size={18} aria-hidden="true" />}
-                  title="Performance technique"
-                  subtitle="Benchmarks GTTT"
-                  onClick={() => navigate('/pilotage/perf')}
-                />
-                <ModuleTile
-                  icon={<Wind size={18} aria-hidden="true" />}
-                  title="Prévisions"
-                  subtitle="Projections"
-                  onClick={() => navigate('/pilotage/previsions')}
-                />
-              </div>
             </section>
           </div>
         </AgritechLayout>
@@ -565,11 +587,11 @@ export const PerfBandeCard: React.FC<PerfBandeCardProps> = ({ tone, label, bande
 interface ModuleTileProps {
   icon: React.ReactNode;
   title: string;
-  subtitle: string;
+  miniStat: string;
   onClick: () => void;
 }
 
-const ModuleTile: React.FC<ModuleTileProps> = ({ icon, title, subtitle, onClick }) => (
+const ModuleTile: React.FC<ModuleTileProps> = ({ icon, title, miniStat, onClick }) => (
   <button
     type="button"
     onClick={onClick}
@@ -578,22 +600,23 @@ const ModuleTile: React.FC<ModuleTileProps> = ({ icon, title, subtitle, onClick 
     style={{
       background: 'var(--bg-surface)',
       borderRadius: 12,
-      padding: '14px 16px',
+      padding: '16px 14px',
       boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
       border: 'none',
       cursor: 'pointer',
       textAlign: 'left',
       display: 'flex',
-      alignItems: 'center',
-      gap: 12,
-      minHeight: 44,
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+      gap: 10,
+      minHeight: 96,
       transition: 'transform 160ms var(--ease-emil)',
     }}
   >
     <span
       style={{
-        width: 36,
-        height: 36,
+        width: 40,
+        height: 40,
         borderRadius: 10,
         background: 'var(--color-accent-100)',
         color: 'var(--color-accent-600)',
@@ -605,29 +628,21 @@ const ModuleTile: React.FC<ModuleTileProps> = ({ icon, title, subtitle, onClick 
     >
       {icon}
     </span>
-    <div style={{ minWidth: 0, flex: 1 }}>
-      <div
-        style={{
-          fontFamily: 'var(--font-heading)',
-          fontSize: 14,
-          fontWeight: 600,
-          color: 'var(--ink)',
-          letterSpacing: '-0.005em',
-        }}
-      >
+    <div style={{ minWidth: 0, width: '100%' }}>
+      <div className="text-section-label" style={{ color: 'var(--ink)' }}>
         {title}
       </div>
       <div
+        className="text-mono-micro"
         style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 10,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
           color: 'var(--muted)',
-          marginTop: 2,
+          marginTop: 4,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
         }}
       >
-        {subtitle}
+        {miniStat}
       </div>
     </div>
   </button>
