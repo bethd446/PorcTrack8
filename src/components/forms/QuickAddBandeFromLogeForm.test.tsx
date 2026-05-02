@@ -14,6 +14,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   detectPhaseFromPoids,
   generateBandeCodeId,
+  parseAgeText,
   selectAvailableLoges,
   validateFromLogeStep2,
 } from './quickAddBandeFromLogeLogic';
@@ -274,6 +275,79 @@ describe('QuickAddBandeFromLogeForm — logic', () => {
       expect(call.sow_id).toBe('sow-uuid-123');
       expect(call.boar_id).toBe('boar-uuid-456');
       expect(call.phase).toBe('SOUS_MERE');
+    });
+  });
+
+  // ── [6] parseAgeText ─────────────────────────────────────────────────────
+
+  describe('parseAgeText (V26-FORM)', () => {
+    it('"30j" → 30 jours', () => {
+      expect(parseAgeText('30j')).toEqual({ jours: 30 });
+    });
+
+    it('"30 jours" → 30 jours', () => {
+      expect(parseAgeText('30 jours')).toEqual({ jours: 30 });
+    });
+
+    it('"1 mois" → 30 jours', () => {
+      expect(parseAgeText('1 mois')).toEqual({ jours: 30 });
+    });
+
+    it('"1 m" → 30 jours', () => {
+      expect(parseAgeText('1 m')).toEqual({ jours: 30 });
+    });
+
+    it('"2 mois" → 60 jours', () => {
+      expect(parseAgeText('2 mois')).toEqual({ jours: 60 });
+    });
+
+    it('"3 sem" → 21 jours', () => {
+      expect(parseAgeText('3 sem')).toEqual({ jours: 21 });
+    });
+
+    it('"3 s" → 21 jours', () => {
+      expect(parseAgeText('3 s')).toEqual({ jours: 21 });
+    });
+
+    it('"21 jours" → 21 jours', () => {
+      expect(parseAgeText('21 jours')).toEqual({ jours: 21 });
+    });
+
+    it('"2 mois 1 semaine" → 67 jours (60 + 7)', () => {
+      expect(parseAgeText('2 mois 1 semaine')).toEqual({ jours: 67 });
+    });
+
+    it('"1 mois 2 semaines" → 44 jours (30 + 14)', () => {
+      expect(parseAgeText('1 mois 2 semaines')).toEqual({ jours: 44 });
+    });
+
+    it('case-insensitive : "2 MOIS" et "2 Mois" → 60 jours', () => {
+      expect(parseAgeText('2 MOIS').jours).toBe(60);
+      expect(parseAgeText('2 Mois').jours).toBe(60);
+    });
+
+    it('chiffre nu sans unité ("45") → 45 jours par défaut', () => {
+      expect(parseAgeText('45')).toEqual({ jours: 45 });
+    });
+
+    it('"abc" non parsable → null', () => {
+      expect(parseAgeText('abc')).toEqual({ jours: null });
+    });
+
+    it('"" vide → null', () => {
+      expect(parseAgeText('')).toEqual({ jours: null });
+    });
+
+    it('"0" → 0 avec warning', () => {
+      const r = parseAgeText('0');
+      expect(r.jours).toBe(0);
+      expect(r.warning).toBeDefined();
+    });
+
+    it('"0j" → 0 avec warning', () => {
+      const r = parseAgeText('0j');
+      expect(r.jours).toBe(0);
+      expect(r.warning).toBeDefined();
     });
   });
 });

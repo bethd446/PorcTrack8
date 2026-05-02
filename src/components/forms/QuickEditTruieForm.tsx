@@ -3,7 +3,7 @@ import { IonToast } from '@ionic/react';
 import { Edit3, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { listLoges, updateSowByCode } from '../../services/supabaseWrites';
+import { listLoges, updateSow } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
 import type { Loge, Truie } from '../../types/farm';
@@ -269,7 +269,11 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
       if ('NOTES' in p) supabasePatch.notes = p.NOTES;
       if (photoDirty) supabasePatch.photo_url = photoUrl ?? null;
       if (selectedLogeIdDirty) supabasePatch.loge_id = selectedLogeId || null;
-      await updateSowByCode(truie.id, supabasePatch);
+      const writeResult = await updateSow(truie.id, supabasePatch);
+      if (!writeResult.success) {
+        setToast(`Erreur : ${writeResult.error ?? 'Enregistrement échoué'}`);
+        return;
+      }
       const online = typeof navigator !== 'undefined' && navigator.onLine;
       setToast(
         online

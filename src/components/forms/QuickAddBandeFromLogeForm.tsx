@@ -1,30 +1,37 @@
 /**
  * QuickAddBandeFromLogeForm — Workflow "Créer une bande dans une loge".
  * ════════════════════════════════════════════════════════════════════════
- * 3 steps simples pour le porcher :
+ * 5 steps simples pour le porcher :
  *   1. Sélection LOGE active et libre
- *   2. Effectif + poids moyen + date d'entrée (+ truie/verrat optionnels)
- *   3. Récap + génération auto (code_id, statut, phase)
+ *   2. Effectif + poids moyen + date d'entrée
+ *   3. Âge estimé (texte libre parsé : "1 mois", "30j", "3 sem"…)
+ *   4. Génétique (truie mère + verrat père, optionnel, bouton "Aléatoire")
+ *   5. Récap + génération auto (code_id, statut, phase)
  *
- * Cible : workflow quotidien Christophe — saisir une nouvelle bande de
- * porcelets en 30 secondes sans toucher à la mise-bas historique.
+ * Modes :
+ *   - Création : insertBatch + (optionnel) addBatchSource
+ *   - Édition d'une bande PENDING : précharge depuis Supabase, UPDATE avec
+ *     validation_status='VALIDATED'.
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
-import { ChevronLeft, ChevronRight, Save, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Save, Plus, Shuffle, X } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
 import {
+  addBatchSource,
   insertBatch,
   listLoges,
 } from '../../services/supabaseWrites';
+import { supabase } from '../../services/supabaseClient';
 import { useFarm } from '../../context/FarmContext';
 import { useEscapeKey } from './useFormA11y';
 import type { Loge } from '../../types/farm';
 import {
   detectPhaseFromPoids,
   generateBandeCodeId,
+  parseAgeText,
   selectAvailableLoges,
   todayIso,
   validateFromLogeStep2,
@@ -40,9 +47,44 @@ interface QuickAddBandeFromLogeFormProps {
   onSuccess?: () => void;
   /** Si fourni, ouvre le form directement à l'étape 2 avec la loge pré-sélectionnée. */
   preselectedLogeId?: string;
+  /**
+   * Mode édition : si fourni, le form précharge les valeurs de la bande
+   * `validation_status='PENDING'` correspondante et au submit fait UPDATE
+   * avec `validation_status='VALIDATED'` au lieu d'INSERT.
+   */
+  editPendingBatchId?: string;
 }
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4 | 5;
+
+interface PendingBatchPreload {
+  loge_id: string | null;
+  porcelets_nes_vivants: number | null;
+  poids_moyen_kg: number | null;
+  date_mise_bas: string | null;
+  notes: string | null;
+  sow_id: string | null;
+  boar_id: string | null;
+  age_jours_estime: number | null;
+}
+
+// Pattern utilisé pour extraire age_jours stocké en suffixe de notes quand
+// la colonne age_jours_estime n'existe pas en DB (fallback). Format :
+// "<notes utilisateur> [age_j=NN]"
+const AGE_NOTES_RE = /\s*\[age_j=(\d+)\]\s*$/;
+
+function extractAgeFromNotes(notes: string | null): number | null {
+  if (!notes) return null;
+  const m = AGE_NOTES_RE.exec(notes);
+  return m ? Number(m[1]) : null;
+}
+
+function notesWithAge(baseNotes: string | null | undefined, ageJours: number | null): string | null {
+  const cleaned = (baseNotes ?? '').replace(AGE_NOTES_RE, '').trimEnd();
+  if (ageJours == null) return cleaned || null;
+  const tag = `[age_j=${ageJours}]`;
+  return cleaned ? `${cleaned} ${tag}` : tag;
+}
 
 // ─── Composant ───────────────────────────────────────────────────────────────
 
@@ -51,30 +93,36 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
   onClose,
   onSuccess,
   preselectedLogeId,
+  editPendingBatchId,
 }) => {
   const { truies, verrats, bandes, refreshData } = useFarm();
+  const isEditMode = !!editPendingBatchId;
   const [step, setStep] = useState<Step>(1);
   const [loges, setLoges] = useState<Loge[]>([]);
   const [selectedLogeId, setSelectedLogeId] = useState<string>('');
   const [effectif, setEffectif] = useState('');
   const [poidsMoyenKg, setPoidsMoyenKg] = useState('');
   const [dateEntree, setDateEntree] = useState(todayIso());
+  const [ageText, setAgeText] = useState('');
+  const [ageInconnu, setAgeInconnu] = useState(false);
   const [truieMereId, setTruieMereId] = useState('');
   const [verratPereId, setVerratPereId] = useState('');
   const [errors, setErrors] = useState<FromLogeValidation['errors']>({});
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState('');
 
-  // Reset à l'ouverture / fetch loges
+  // Reset à l'ouverture
   const [lastOpen, setLastOpen] = useState(isOpen);
   if (lastOpen !== isOpen) {
     setLastOpen(isOpen);
     if (isOpen) {
-      setStep(preselectedLogeId ? 2 : 1);
+      setStep(preselectedLogeId || isEditMode ? 2 : 1);
       setSelectedLogeId(preselectedLogeId ?? '');
       setEffectif('');
       setPoidsMoyenKg('');
       setDateEntree(todayIso());
+      setAgeText('');
+      setAgeInconnu(false);
       setTruieMereId('');
       setVerratPereId('');
       setErrors({});
@@ -82,6 +130,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
     }
   }
 
+  // Fetch loges
   useEffect(() => {
     if (!isOpen) return;
     let cancelled = false;
@@ -98,13 +147,73 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
     };
   }, [isOpen]);
 
+  // Mode édition : précharge depuis batches PENDING
+  useEffect(() => {
+    if (!isOpen || !editPendingBatchId) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data, error } = await (supabase.from('batches') as any)
+          .select(
+            'loge_id, porcelets_nes_vivants, poids_moyen_kg, date_mise_bas, notes, sow_id, boar_id, age_jours_estime',
+          )
+          .eq('id', editPendingBatchId)
+          .maybeSingle();
+        if (cancelled) return;
+        if (error || !data) {
+          // age_jours_estime absent ? retry sans la colonne.
+          if (error && /age_jours_estime/i.test(error.message)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const retry = await (supabase.from('batches') as any)
+              .select(
+                'loge_id, porcelets_nes_vivants, poids_moyen_kg, date_mise_bas, notes, sow_id, boar_id',
+              )
+              .eq('id', editPendingBatchId)
+              .maybeSingle();
+            if (cancelled) return;
+            if (retry.data) preloadFrom({ ...retry.data, age_jours_estime: null });
+          }
+          return;
+        }
+        preloadFrom(data as PendingBatchPreload);
+      } catch {
+        /* noop */
+      }
+    })();
+    function preloadFrom(p: PendingBatchPreload): void {
+      setSelectedLogeId(p.loge_id ?? '');
+      setEffectif(p.porcelets_nes_vivants != null ? String(p.porcelets_nes_vivants) : '');
+      setPoidsMoyenKg(p.poids_moyen_kg != null ? String(p.poids_moyen_kg) : '');
+      setDateEntree(p.date_mise_bas ?? todayIso());
+      const ageDb = p.age_jours_estime ?? extractAgeFromNotes(p.notes);
+      if (ageDb != null) {
+        setAgeText(`${ageDb} jours`);
+        setAgeInconnu(false);
+      } else {
+        setAgeText('');
+        setAgeInconnu(true);
+      }
+      setTruieMereId(p.sow_id ?? '');
+      setVerratPereId(p.boar_id ?? '');
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, editPendingBatchId]);
+
   const occupiedLogeIds = useMemo(() => {
     const set = new Set<string>();
     for (const b of bandes) {
-      if (b.logeId && (b.statut !== 'RECAP')) set.add(b.logeId);
+      if (b.logeId && (b.statut !== 'RECAP')) {
+        // En mode édition, on n'exclut pas la loge déjà attribuée à la bande
+        // qu'on est en train d'éditer (sinon elle disparaîtrait de la liste).
+        if (isEditMode && b.id === editPendingBatchId) continue;
+        set.add(b.logeId);
+      }
     }
     return set;
-  }, [bandes]);
+  }, [bandes, isEditMode, editPendingBatchId]);
 
   const availableLoges = useMemo(
     () => selectAvailableLoges(loges, occupiedLogeIds),
@@ -134,6 +243,12 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
     return generateBandeCodeId(dateEntree, selectedLoge.numero);
   }, [dateEntree, selectedLoge]);
 
+  // Parser âge (live)
+  const ageParsed = useMemo(() => {
+    if (ageInconnu) return { jours: null };
+    return parseAgeText(ageText);
+  }, [ageText, ageInconnu]);
+
   // ─── Step navigation ─────────────────────────────────────────────────────
 
   const goStep2 = (logeId: string): void => {
@@ -151,6 +266,26 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
     setStep(3);
   };
 
+  const goStep4 = (): void => {
+    setStep(4);
+  };
+
+  const goStep5 = (): void => {
+    setStep(5);
+  };
+
+  // ── Sélection aléatoire d'une truie / verrat ─────────────────────────────
+  const pickRandomTruie = (): void => {
+    if (truies.length === 0) return;
+    const picked = truies[Math.floor(Math.random() * truies.length)];
+    setTruieMereId(picked.id);
+  };
+  const pickRandomVerrat = (): void => {
+    if (verrats.length === 0) return;
+    const picked = verrats[Math.floor(Math.random() * verrats.length)];
+    setVerratPereId(picked.id);
+  };
+
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     if (!selectedLoge) return;
@@ -160,26 +295,112 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
       setStep(2);
       return;
     }
+    const ageJours = ageInconnu ? null : ageParsed.jours;
+
     setSaving(true);
     try {
-      await insertBatch({
-        code_id: generatedCodeId,
-        sow_id: truieMereId || null,
-        boar_id: verratPereId || null,
-        loge_id: selectedLoge.id,
-        porcelets_nes_total: result.values.effectif,
-        porcelets_nes_vivants: result.values.effectif,
-        poids_initial_kg: result.values.poidsMoyenKg,
-        poids_moyen_kg: result.values.poidsMoyenKg,
-        date_mise_bas: result.values.dateEntree,
-        statut: phaseAuto.statut,
-        phase: phaseAuto.phase,
-        validation_status: 'VALIDATED',
-      } as Parameters<typeof insertBatch>[0]);
+      if (isEditMode && editPendingBatchId) {
+        // ── UPDATE bande PENDING → VALIDATED ────────────────────────────
+        const patch: Record<string, unknown> = {
+          loge_id: selectedLoge.id,
+          porcelets_nes_total: result.values.effectif,
+          porcelets_nes_vivants: result.values.effectif,
+          poids_initial_kg: result.values.poidsMoyenKg,
+          poids_moyen_kg: result.values.poidsMoyenKg,
+          date_mise_bas: result.values.dateEntree,
+          statut: phaseAuto.statut,
+          phase: phaseAuto.phase,
+          sow_id: truieMereId || null,
+          boar_id: verratPereId || null,
+          validation_status: 'VALIDATED',
+          age_jours_estime: ageJours,
+        };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase.from('batches') as any)
+          .update(patch)
+          .eq('id', editPendingBatchId);
+        if (error) {
+          // Fallback sans age_jours_estime : on stocke l'âge dans notes
+          if (/age_jours_estime/i.test(error.message)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { data: existing } = await (supabase.from('batches') as any)
+              .select('notes')
+              .eq('id', editPendingBatchId)
+              .maybeSingle();
+            const baseNotes = existing?.notes ?? null;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const patch2: Record<string, unknown> = { ...patch };
+            delete patch2.age_jours_estime;
+            patch2.notes = notesWithAge(baseNotes, ageJours);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { error: e2 } = await (supabase.from('batches') as any)
+              .update(patch2)
+              .eq('id', editPendingBatchId);
+            if (e2) throw new Error(e2.message);
+          } else {
+            throw new Error(error.message);
+          }
+        }
+        setToast(`Bande validée : ${logeNumeroPrefixed(selectedLoge)}`);
+      } else {
+        // ── INSERT nouvelle bande ───────────────────────────────────────
+        const insertPayload: Record<string, unknown> = {
+          code_id: generatedCodeId,
+          sow_id: truieMereId || null,
+          boar_id: verratPereId || null,
+          loge_id: selectedLoge.id,
+          porcelets_nes_total: result.values.effectif,
+          porcelets_nes_vivants: result.values.effectif,
+          poids_initial_kg: result.values.poidsMoyenKg,
+          poids_moyen_kg: result.values.poidsMoyenKg,
+          date_mise_bas: result.values.dateEntree,
+          statut: phaseAuto.statut,
+          phase: phaseAuto.phase,
+          validation_status: 'VALIDATED',
+          age_jours_estime: ageJours,
+        };
 
-      setToast(
-        `Bande ${generatedCodeId} créée dans ${logeNumeroPrefixed(selectedLoge)}`,
-      );
+        let createdId: string | null = null;
+        try {
+          const created = await insertBatch(
+            insertPayload as Parameters<typeof insertBatch>[0],
+          );
+          createdId = created?.id ?? null;
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          if (/age_jours_estime/i.test(msg)) {
+            // Fallback : stocker age_jours dans notes.
+            const fallbackPayload = { ...insertPayload };
+            delete fallbackPayload.age_jours_estime;
+            fallbackPayload.notes = notesWithAge(null, ageJours);
+            const created = await insertBatch(
+              fallbackPayload as Parameters<typeof insertBatch>[0],
+            );
+            createdId = created?.id ?? null;
+          } else {
+            throw err;
+          }
+        }
+
+        // Génétique : insère ligne batch_sows si truie fournie.
+        if (createdId && truieMereId) {
+          try {
+            await addBatchSource({
+              batchId: createdId,
+              sowId: truieMereId,
+              nbPorcelets: result.values.effectif,
+              dateAjout: result.values.dateEntree,
+            });
+          } catch {
+            // best-effort : ne pas bloquer la création si batch_sows échoue.
+          }
+        }
+
+        setToast(
+          `Bande ${generatedCodeId} créée dans ${logeNumeroPrefixed(selectedLoge)}`,
+        );
+      }
+
       try {
         await refreshData(true);
       } catch {
@@ -213,7 +434,9 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
   const titleByStep: Record<Step, string> = {
     1: 'Choisir une loge',
     2: 'Effectif et poids',
-    3: 'Vérifier et créer',
+    3: 'Âge des porcelets',
+    4: 'Génétique',
+    5: isEditMode ? 'Valider la bande' : 'Vérifier et créer',
   };
 
   // ─── Render ──────────────────────────────────────────────────────────────
@@ -230,21 +453,25 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
           onSubmit={handleSubmit}
           className="space-y-5"
           noValidate
-          aria-label="Création d'une nouvelle bande de porcelets"
+          aria-label={
+            isEditMode
+              ? 'Validation d\'une bande en attente'
+              : 'Création d\'une nouvelle bande de porcelets'
+          }
           data-testid="quick-add-bande-from-loge-form"
           data-step={step}
         >
           {/* Stepper visuel */}
           <ol
-            className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wide text-text-2"
+            className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-wide text-text-2"
             aria-label="Progression"
           >
-            {[1, 2, 3].map(n => (
+            {[1, 2, 3, 4, 5].map(n => (
               <li
                 key={n}
                 aria-current={step === n ? 'step' : undefined}
                 className={[
-                  'flex-1 text-center px-2 py-1 rounded-sm border',
+                  'flex-1 text-center px-1.5 py-1 rounded-sm border',
                   step === n
                     ? 'border-accent text-accent bg-bg-2'
                     : step > n
@@ -253,7 +480,15 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                 ].join(' ')}
               >
                 {n}.{' '}
-                {n === 1 ? 'Loge' : n === 2 ? 'Effectif' : 'Récap'}
+                {n === 1
+                  ? 'Loge'
+                  : n === 2
+                    ? 'Eff.'
+                    : n === 3
+                      ? 'Âge'
+                      : n === 4
+                        ? 'Gén.'
+                        : 'Récap'}
               </li>
             ))}
           </ol>
@@ -424,50 +659,6 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                 ) : null}
               </div>
 
-              <div className="space-y-1.5">
-                <label htmlFor="qabfl-truie" className={labelCls}>
-                  Truie mère <span className="text-text-2 normal-case">· optionnel</span>
-                </label>
-                <select
-                  id="qabfl-truie"
-                  className={inputBase(false)}
-                  value={truieMereId}
-                  onChange={e => setTruieMereId(e.target.value)}
-                >
-                  <option value="">— Inconnue —</option>
-                  {truies.map(t => (
-                    <option key={t.id} value={t.id}>
-                      {t.displayId || t.id}
-                      {t.nom ? ` · ${t.nom}` : ''}
-                      {t.boucle ? ` (${t.boucle})` : ''}
-                    </option>
-                  ))}
-                </select>
-                <p className="font-mono text-[10px] text-text-2">
-                  Si tu connais la truie mère, sélectionne-la pour la traçabilité.
-                </p>
-              </div>
-
-              <div className="space-y-1.5">
-                <label htmlFor="qabfl-verrat" className={labelCls}>
-                  Verrat père <span className="text-text-2 normal-case">· optionnel</span>
-                </label>
-                <select
-                  id="qabfl-verrat"
-                  className={inputBase(false)}
-                  value={verratPereId}
-                  onChange={e => setVerratPereId(e.target.value)}
-                >
-                  <option value="">— Inconnu —</option>
-                  {verrats.map(v => (
-                    <option key={v.id} value={v.id}>
-                      {v.displayId || v.id}
-                      {v.nom ? ` · ${v.nom}` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               <div className="flex items-center gap-2 pt-2">
                 <button
                   type="button"
@@ -482,7 +673,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                   type="button"
                   onClick={goStep3}
                   className="pressable flex-[2] h-12 rounded-md inline-flex items-center justify-center gap-2 bg-accent text-bg-0 font-mono text-[12px] font-bold uppercase tracking-wide hover:brightness-110"
-                  aria-label="Étape suivante : récap"
+                  aria-label="Étape suivante : âge"
                   data-testid="step-2-next"
                 >
                   Suivant
@@ -492,12 +683,226 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
             </section>
           )}
 
-          {/* ── Step 3 — Récap + génération ─────────────────────────────── */}
-          {step === 3 && selectedLoge && (
+          {/* ── Step 3 — Âge ────────────────────────────────────────────── */}
+          {step === 3 && (
+            <section
+              aria-label="Âge estimé"
+              className="space-y-4"
+              data-testid="step-3"
+            >
+              <p className="text-mono-label text-text-1">
+                Saisis l'âge estimé des porcelets en texte libre. Ex :{' '}
+                <span className="font-mono">"30j"</span>,{' '}
+                <span className="font-mono">"1 mois"</span>,{' '}
+                <span className="font-mono">"3 sem"</span>,{' '}
+                <span className="font-mono">"2 mois 1 semaine"</span>.
+              </p>
+
+              <div className="space-y-1.5">
+                <label htmlFor="qabfl-age" className={labelCls}>
+                  Âge des porcelets
+                </label>
+                <input
+                  id="qabfl-age"
+                  type="text"
+                  className={inputBase(false)}
+                  placeholder="Ex: 1 mois, 30j, 3 sem"
+                  value={ageText}
+                  disabled={ageInconnu}
+                  onChange={e => setAgeText(e.target.value)}
+                  data-testid="age-input"
+                  autoComplete="off"
+                />
+                <div
+                  className="font-mono text-[11px] tabular-nums"
+                  aria-live="polite"
+                  data-testid="age-live-indicator"
+                >
+                  {ageInconnu ? (
+                    <span className="text-text-2">Âge inconnu — passé</span>
+                  ) : ageParsed.jours == null ? (
+                    <span className="text-text-2">
+                      = ?? jours (saisie non reconnue)
+                    </span>
+                  ) : (
+                    <span className="text-accent">
+                      = {ageParsed.jours} jours
+                      {ageParsed.warning ? ` · ${ageParsed.warning}` : ''}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4"
+                  checked={ageInconnu}
+                  onChange={e => setAgeInconnu(e.target.checked)}
+                  data-testid="age-unknown-checkbox"
+                />
+                <span className="font-mono text-[12px] text-text-1">
+                  Je ne sais pas
+                </span>
+              </label>
+
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="pressable flex-1 h-12 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 font-mono text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
+                  aria-label="Retour à l'effectif"
+                >
+                  <ChevronLeft size={14} aria-hidden="true" />
+                  Retour
+                </button>
+                <button
+                  type="button"
+                  onClick={goStep4}
+                  className="pressable flex-[2] h-12 rounded-md inline-flex items-center justify-center gap-2 bg-accent text-bg-0 font-mono text-[12px] font-bold uppercase tracking-wide hover:brightness-110"
+                  aria-label="Étape suivante : génétique"
+                  data-testid="step-3-next"
+                >
+                  Suivant
+                  <ChevronRight size={14} aria-hidden="true" />
+                </button>
+              </div>
+            </section>
+          )}
+
+          {/* ── Step 4 — Génétique (optionnelle) ─────────────────────────── */}
+          {step === 4 && (
+            <section
+              aria-label="Génétique"
+              className="space-y-4"
+              data-testid="step-4"
+            >
+              <p className="text-mono-label text-text-1">
+                Renseigne la généalogie si elle est connue. Tu peux aussi tirer
+                une truie / un verrat au hasard ou laisser vide.
+              </p>
+
+              {/* Truie mère */}
+              <div className="space-y-1.5">
+                <label htmlFor="qabfl-truie" className={labelCls}>
+                  Truie mère <span className="text-text-2 normal-case">· optionnel</span>
+                </label>
+                <select
+                  id="qabfl-truie"
+                  className={inputBase(false)}
+                  value={truieMereId}
+                  onChange={e => setTruieMereId(e.target.value)}
+                  data-testid="truie-select"
+                >
+                  <option value="">— Inconnue —</option>
+                  {truies.map(t => (
+                    <option key={t.id} value={t.id}>
+                      {t.displayId || t.id}
+                      {t.nom ? ` · ${t.nom}` : ''}
+                      {t.boucle ? ` (${t.boucle})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={pickRandomTruie}
+                    disabled={truies.length === 0}
+                    className="pressable inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 h-8 font-mono text-[10px] uppercase tracking-wide text-text-1 hover:border-accent hover:text-accent disabled:opacity-40"
+                    aria-label="Choisir une truie au hasard"
+                    data-testid="truie-random"
+                  >
+                    <Shuffle size={11} aria-hidden="true" />
+                    Aléatoire
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTruieMereId('')}
+                    className="pressable inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 h-8 font-mono text-[10px] uppercase tracking-wide text-text-1 hover:border-text-2"
+                    aria-label="Ne pas renseigner la truie"
+                    data-testid="truie-clear"
+                  >
+                    <X size={11} aria-hidden="true" />
+                    Ne pas renseigner
+                  </button>
+                </div>
+              </div>
+
+              {/* Verrat père */}
+              <div className="space-y-1.5">
+                <label htmlFor="qabfl-verrat" className={labelCls}>
+                  Verrat père <span className="text-text-2 normal-case">· optionnel</span>
+                </label>
+                <select
+                  id="qabfl-verrat"
+                  className={inputBase(false)}
+                  value={verratPereId}
+                  onChange={e => setVerratPereId(e.target.value)}
+                  data-testid="verrat-select"
+                >
+                  <option value="">— Inconnu —</option>
+                  {verrats.map(v => (
+                    <option key={v.id} value={v.id}>
+                      {v.displayId || v.id}
+                      {v.nom ? ` · ${v.nom}` : ''}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={pickRandomVerrat}
+                    disabled={verrats.length === 0}
+                    className="pressable inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 h-8 font-mono text-[10px] uppercase tracking-wide text-text-1 hover:border-accent hover:text-accent disabled:opacity-40"
+                    aria-label="Choisir un verrat au hasard"
+                    data-testid="verrat-random"
+                  >
+                    <Shuffle size={11} aria-hidden="true" />
+                    Aléatoire
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVerratPereId('')}
+                    className="pressable inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 h-8 font-mono text-[10px] uppercase tracking-wide text-text-1 hover:border-text-2"
+                    aria-label="Ne pas renseigner le verrat"
+                    data-testid="verrat-clear"
+                  >
+                    <X size={11} aria-hidden="true" />
+                    Ne pas renseigner
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(3)}
+                  className="pressable flex-1 h-12 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 font-mono text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
+                  aria-label="Retour à l'âge"
+                >
+                  <ChevronLeft size={14} aria-hidden="true" />
+                  Retour
+                </button>
+                <button
+                  type="button"
+                  onClick={goStep5}
+                  className="pressable flex-[2] h-12 rounded-md inline-flex items-center justify-center gap-2 bg-accent text-bg-0 font-mono text-[12px] font-bold uppercase tracking-wide hover:brightness-110"
+                  aria-label="Étape suivante : récap"
+                  data-testid="step-4-next"
+                >
+                  Suivant
+                  <ChevronRight size={14} aria-hidden="true" />
+                </button>
+              </div>
+            </section>
+          )}
+
+          {/* ── Step 5 — Récap + génération ─────────────────────────────── */}
+          {step === 5 && selectedLoge && (
             <section
               aria-label="Récapitulatif"
               className="space-y-4"
-              data-testid="step-3"
+              data-testid="step-5"
             >
               <div className="card-dense space-y-2 py-3">
                 <RecapRow
@@ -510,15 +915,27 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                   value={`${poidsMoyenKg} kg`}
                 />
                 <RecapRow
+                  label="Âge estimé"
+                  value={
+                    ageInconnu
+                      ? 'Inconnu'
+                      : ageParsed.jours != null
+                        ? `${ageParsed.jours} jours`
+                        : '—'
+                  }
+                />
+                <RecapRow
                   label="Phase auto-détectée"
                   value={phaseAuto.label}
                   highlight
                 />
-                <RecapRow
-                  label="Code bande"
-                  value={generatedCodeId}
-                  mono
-                />
+                {!isEditMode && (
+                  <RecapRow
+                    label="Code bande"
+                    value={generatedCodeId}
+                    mono
+                  />
+                )}
                 <RecapRow
                   label="Date d'entrée"
                   value={dateEntree}
@@ -545,10 +962,10 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
               <div className="flex items-center gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setStep(2)}
+                  onClick={() => setStep(4)}
                   disabled={saving}
                   className="pressable flex-1 h-14 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 font-mono text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
-                  aria-label="Retour à l'effectif"
+                  aria-label="Retour à la génétique"
                 >
                   <ChevronLeft size={14} aria-hidden="true" />
                   Retour
@@ -558,15 +975,15 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                   disabled={saving}
                   aria-busy={saving}
                   className="pressable flex-[2] h-14 rounded-md inline-flex items-center justify-center gap-2 bg-accent text-bg-0 font-mono text-[13px] font-bold uppercase tracking-wide hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
-                  aria-label="Créer la bande"
-                  data-testid="step-3-submit"
+                  aria-label={isEditMode ? 'Valider la bande' : 'Créer la bande'}
+                  data-testid="step-5-submit"
                 >
                   {saving ? (
-                    <span className="animate-pulse">Création…</span>
+                    <span className="animate-pulse">{isEditMode ? 'Validation…' : 'Création…'}</span>
                   ) : (
                     <>
                       <Plus size={14} aria-hidden="true" />
-                      Créer la bande
+                      {isEditMode ? 'Valider' : 'Créer la bande'}
                       <Save size={14} aria-hidden="true" />
                     </>
                   )}

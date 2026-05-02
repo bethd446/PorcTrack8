@@ -44,6 +44,7 @@ const AdminDashboard = React.lazy(() => import('./features/admin/AdminDashboard'
 import AgritechNavV2, { QuickActionsProvider } from './components/AgritechNavV2';
 import { GlobalSearchProvider } from './context/GlobalSearchContext';
 import { loadChecklistDefinitions } from './services/checklistService';
+import PendingBandesBanner from './components/onboarding/PendingBandesBanner';
 
 // Lazy : FAB et widgets non critiques au LCP, montés au shell mais ouverts uniquement sur interaction
 const SaisirFAB = React.lazy(() => import(/* webpackChunkName: "saisir-fab" */ './components/SaisirFAB'));
@@ -208,8 +209,26 @@ const SaisirFABMount: React.FC = () => {
   );
 };
 
+/**
+ * BannerMount — affiche le PendingBandesBanner uniquement sur les écrans
+ * Hub principaux (Today + hubs racine). Pas sur les détails ou parcours
+ * guidés (checklist), sinon il devient envahissant.
+ */
+const BannerMount: React.FC = () => {
+  const { pathname } = useLocation();
+  const isHubRoot =
+    pathname === '/today' ||
+    pathname === '/troupeau' ||
+    pathname === '/cycles' ||
+    pathname === '/ressources' ||
+    pathname === '/pilotage';
+  if (!isHubRoot) return null;
+  return <PendingBandesBanner />;
+};
+
 const AppShell: React.FC = () => (
   <GlobalSearchProvider>
+    <BannerMount />
     <Routes>
       <Route path="/" element={<Navigate to="/today" replace />} />
       <Route path="/today" element={<TodayHub />} />

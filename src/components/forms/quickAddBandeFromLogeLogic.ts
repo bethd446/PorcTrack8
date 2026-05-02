@@ -171,3 +171,71 @@ export function todayIso(): string {
   const day = String(d.getDate()).padStart(2, '0');
   return `${d.getFullYear()}-${m}-${day}`;
 }
+
+// ─── Parser âge texte libre ──────────────────────────────────────────────────
+
+export interface AgeParseResult {
+  jours: number | null;
+  warning?: string;
+}
+
+/**
+ * Parse un âge saisi en texte libre par l'éleveur. Convention :
+ *   - 1 sem = 7 jours
+ *   - 1 mois = 30 jours
+ *
+ * Accepte combinaisons (ex: "2 mois 1 semaine"). Retourne `null` si rien de
+ * parsable. `0` valide retourné avec warning (probable saisie vide).
+ *
+ * Unités reconnues (case-insensitive, accents tolérés) :
+ *   - jours : `j`, `jour`, `jours`
+ *   - semaines : `s`, `sem`, `semaine`, `semaines`
+ *   - mois : `m`, `mois`
+ */
+export function parseAgeText(text: string): AgeParseResult {
+  const raw = (text ?? '').trim();
+  if (!raw) return { jours: null };
+
+  const norm = raw.toLowerCase().replace(/,/g, '.');
+
+  // Cas spécial : "0" seul (ou variantes "0j", "0 jours") → 0 avec warning
+  if (/^0+(\s*(j|jour|jours|s|sem|semaines?|m|mois))?$/i.test(norm)) {
+    return { jours: 0, warning: 'Âge nul saisi — vérifie' };
+  }
+
+  // Pattern global : nombre + unité, plusieurs occurrences possibles.
+  // Unités testées dans l'ordre de spécificité décroissante pour éviter que
+  // "mois" matche "m" avant.
+  const re =
+    /(\d+(?:\.\d+)?)\s*(jours?|j|semaines?|sem|s|mois|m)\b/gi;
+
+  let total = 0;
+  let matched = false;
+  for (const match of norm.matchAll(re)) {
+    const value = parseFloat(match[1]);
+    const unit = match[2].toLowerCase();
+    if (!Number.isFinite(value) || value < 0) continue;
+    matched = true;
+    if (unit === 'j' || unit === 'jour' || unit === 'jours') {
+      total += value;
+    } else if (unit === 's' || unit === 'sem' || unit === 'semaine' || unit === 'semaines') {
+      total += value * 7;
+    } else if (unit === 'm' || unit === 'mois') {
+      total += value * 30;
+    }
+  }
+
+  if (!matched) {
+    // Cas dégénéré : juste un nombre nu → on l'interprète en jours
+    const bare = /^(\d+(?:\.\d+)?)$/.exec(norm);
+    if (bare) {
+      const v = parseFloat(bare[1]);
+      if (Number.isFinite(v) && v > 0) {
+        return { jours: Math.round(v) };
+      }
+    }
+    return { jours: null };
+  }
+
+  return { jours: Math.round(total) };
+}

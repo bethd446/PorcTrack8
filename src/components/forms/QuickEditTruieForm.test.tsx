@@ -571,3 +571,101 @@ describe('[V25] QuickEditTruieForm — conflit loge 1:1', () => {
     expect(conflict?.kind).toBe('truie');
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// [V26-FIX] Persistence Supabase — appel updateSow(uuid) au lieu de
+//   updateSowByCode(uuid). Ce helper miroir le code du composant après fix.
+// ═══════════════════════════════════════════════════════════════════════════
+describe('[V26-FIX] submit Supabase persiste via updateSow(uuid)', () => {
+  type WriteResult = { success: boolean; error?: string };
+  type SupabasePatch = { code_id?: string; [k: string]: unknown };
+
+  /**
+   * Miroir exact du code QuickEditTruieForm.tsx ligne 272 après fix.
+   * Échec silencieux historique : updateSowByCode(uuid) → SELECT ne trouve
+   * rien (un UUID n'est pas un code_id) → return null sans throw → toast
+   * succès affiché à tort.
+   *
+   * Fix : updateSow(uuid) opère directement sur l'UUID, et on vérifie
+   * WriteResult.success avant d'afficher le toast.
+   */
+  async function submitSupabasePatch(
+    truieId: string,
+    patch: SupabasePatch,
+    updateSowFn: (id: string, p: SupabasePatch) => Promise<WriteResult>,
+    setToast: (msg: string) => void,
+  ): Promise<{ persisted: boolean }> {
+    const result = await updateSowFn(truieId, patch);
+    if (!result.success) {
+      setToast(`Erreur : ${result.error ?? 'Enregistrement échoué'}`);
+      return { persisted: false };
+    }
+    setToast('Modifications enregistrées');
+    return { persisted: true };
+  }
+
+  it('[V26-FIX-1] updateSow appelé avec UUID truie (pas avec displayId)', async () => {
+    const updateSowFn = vi.fn(async () => ({ success: true }));
+    const setToast = vi.fn();
+    const truieUuid = '3f8a1c92-1234-4abc-8def-9876543210ab';
+
+    await submitSupabasePatch(
+      truieUuid,
+      { code_id: 'T-009' },
+      updateSowFn,
+      setToast,
+    );
+
+    expect(updateSowFn).toHaveBeenCalledTimes(1);
+    expect(updateSowFn).toHaveBeenCalledWith(truieUuid, { code_id: 'T-009' });
+    expect(setToast).toHaveBeenCalledWith('Modifications enregistrées');
+  });
+
+  it('[V26-FIX-2] WriteResult.success=false affiche un toast erreur (plus de faux succès)', async () => {
+    const updateSowFn = vi.fn(async () => ({
+      success: false,
+      error: 'duplicate key value violates unique constraint sows_code_id_key',
+    }));
+    const setToast = vi.fn();
+
+    const out = await submitSupabasePatch(
+      'truie-uuid',
+      { code_id: 'T-001' },
+      updateSowFn,
+      setToast,
+    );
+
+    expect(out.persisted).toBe(false);
+    expect(setToast).toHaveBeenCalledTimes(1);
+    expect(setToast.mock.calls[0][0]).toContain('Erreur');
+    expect(setToast.mock.calls[0][0]).toContain('duplicate key');
+  });
+
+  it('[V26-FIX-3] WriteResult.success=false sans error → message générique', async () => {
+    const updateSowFn = vi.fn(async () => ({ success: false }));
+    const setToast = vi.fn();
+
+    await submitSupabasePatch('truie-uuid', { code_id: 'T-007' }, updateSowFn, setToast);
+
+    expect(setToast).toHaveBeenCalledWith('Erreur : Enregistrement échoué');
+  });
+
+  it('[V26-FIX-4] code_id modifié est bien transmis dans le patch (pas filtré)', async () => {
+    const updateSowFn =
+      vi.fn<(id: string, p: SupabasePatch) => Promise<WriteResult>>(
+        async () => ({ success: true }),
+      );
+    const setToast = vi.fn();
+
+    await submitSupabasePatch(
+      'truie-uuid',
+      { code_id: 'T-042', notes: 'changement numéro' },
+      updateSowFn,
+      setToast,
+    );
+
+    const patch = updateSowFn.mock.calls[0][1];
+    expect(patch).toHaveProperty('code_id', 'T-042');
+    expect(patch).toHaveProperty('notes', 'changement numéro');
+  });
+});
