@@ -36,9 +36,9 @@ import {
   summarizeAll,
   formatMontant,
   categorieToTone,
-  detectCurrency,
   dateToPeriode,
 } from '../../services/financesAnalyzer';
+import type { Currency } from '../../lib/currency';
 import type { FinanceEntry } from '../../types/farm';
 import QuickAddTransactionForm from '../../components/forms/QuickAddTransactionForm';
 import QuickEditTransactionForm, {
@@ -124,14 +124,9 @@ const FinancesView: React.FC = () => {
 
   const entries = finances as FinanceEntry[];
 
-  // Devise : on respecte la devise dérivée du pays (`farmCurrency`) sauf si
-  // une entrée Sheets contient un marqueur EUR explicite (cas legacy).
-  const currency = useMemo<'FCFA' | 'EUR'>(() => {
-    for (const e of entries) {
-      if (detectCurrency(e) === 'EUR') return 'EUR';
-    }
-    return farmCurrency === 'EUR' ? 'EUR' : 'FCFA';
-  }, [entries, farmCurrency]);
+  // Devise : source de vérité unique = pays de la ferme (`useMeta().currency`).
+  // Plus de detect ligne par ligne — Vague 4 cleanup, fix #10/#15.
+  const currency: Currency = farmCurrency;
 
   // Filtre selon la période sélectionnée
   const filteredEntries = useMemo<FinanceEntry[]>(() => {
@@ -535,7 +530,7 @@ const EmptyFinances: React.FC = () => (
 
 interface SparkCaProps {
   data: ReadonlyArray<{ periode: string; label: string; ca: number }>;
-  currency: 'FCFA' | 'EUR';
+  currency: Currency;
   deltaPct: number | null;
   recentVentes: readonly FinanceEntry[];
 }
@@ -670,7 +665,7 @@ const SparkCa: React.FC<SparkCaProps> = ({ data, currency, deltaPct, recentVente
 interface DonutVentilationProps {
   rows: ReadonlyArray<{ cat: string; montant: number }>;
   total: number;
-  currency: 'FCFA' | 'EUR';
+  currency: Currency;
 }
 
 /** Couleur CSS-var pour chaque tone pied de liste donut. */
@@ -788,7 +783,7 @@ const DonutVentilation: React.FC<DonutVentilationProps> = ({ rows, total, curren
 
 interface TransactionRowProps {
   entry: FinanceEntry;
-  currency: 'FCFA' | 'EUR';
+  currency: Currency;
   onEdit?: () => void;
 }
 

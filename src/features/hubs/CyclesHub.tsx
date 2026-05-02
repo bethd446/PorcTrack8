@@ -25,8 +25,9 @@ import {
   filterRealPortees,
 } from '../../services/bandesAggregator';
 import { FARM_CONFIG } from '../../config/farm';
-import type { BandePorcelets, Truie } from '../../types/farm';
+import type { BandePorcelets, Saillie, Truie } from '../../types/farm';
 import { normaliseStatut } from '../../lib/truieStatut';
+import { normalizeTruieId, safeDate } from '../../lib/truieHelpers';
 
 // ─── Phases ─────────────────────────────────────────────────────────────────
 
@@ -142,7 +143,9 @@ function parseDate(s?: string): Date | null {
 }
 
 function daysBetween(from: Date, to: Date): number {
-  return Math.max(0, Math.floor((to.getTime() - from.getTime()) / 86_400_000));
+  // V4-fix : Math.round pour absorber les DST (passage heure été/hiver crée
+  // un offset de 1h entre 2 dates qui chevauchent le switch → off-by-one).
+  return Math.max(0, Math.round((to.getTime() - from.getTime()) / 86_400_000));
 }
 
 interface BandePosition {
@@ -154,6 +157,8 @@ interface BandePosition {
   detail: string;
   /** Statut métier d'origine (bande ou truie) — sert à détecter les états résolus. */
   statut?: string;
+  /** Jours de retard sur la phase (0 si dans les temps, >0 si dépassé). */
+  overdueDays?: number;
 }
 
 type BandeTreatment = 'urgent' | 'normal' | 'resolu';
@@ -233,24 +238,78 @@ function globalDay(b: BandePosition): number {
   return PHASE_OFFSETS[b.phase.id] + b.dayInPhase;
 }
 
-function truieToPosition(t: Truie, today: Date): BandePosition | null {
+/**
+ * Trouve la dernière saillie d'une truie (la plus récente).
+ * Match par UUID, code_id (T07), puis boucle. Retourne null si aucune.
+ */
+function findLastSaillieFor(t: Truie, saillies: Saillie[]): Saillie | null {
+  const tCode = normalizeTruieId(t.displayId);
+  let best: Saillie | null = null;
+  let bestTs = 0;
+  for (const s of saillies) {
+    const sCode = normalizeTruieId(s.truieId);
+    const match =
+      s.truieId === t.id
+      || (!!tCode && sCode === tCode)
+      || (!!t.boucle && s.truieBoucle === t.boucle);
+    if (!match) continue;
+    const d = safeDate(s.dateSaillie);
+    if (!d) continue;
+    if (d.getTime() > bestTs) {
+      bestTs = d.getTime();
+      best = s;
+    }
+  }
+  return best;
+}
+
+/** Jours réels écoulés depuis la dernière saillie (0 si aucune saillie datée). */
+export function daysSinceSaillie(t: Truie, saillies: Saillie[], today: Date): number {
+  const last = findLastSaillieFor(t, saillies);
+  if (!last) return 0;
+  const d = safeDate(last.dateSaillie);
+  if (!d) return 0;
+  return Math.max(0, daysBetween(d, today));
+}
+
+function truieToPosition(t: Truie, saillies: Saillie[], today: Date): BandePosition | null {
   if (normaliseStatut(t.statut) !== 'PLEINE') return null;
   const def = PHASES.find((p) => p.id === 'gestation');
   if (!def) return null;
-  const mbPrev = parseDate(t.dateMBPrevue);
-  let dayInPhase = 0;
-  if (mbPrev) {
-    const diff = daysBetween(today, mbPrev);
-    dayInPhase = Math.max(0, def.days - diff);
+
+  // Préférer le calcul depuis la saillie réelle (source de vérité robuste)
+  // au lieu de `dateMBPrevue` qui est souvent vide ou mal saisie.
+  const sinceSaillie = daysSinceSaillie(t, saillies, today);
+  let dayInPhase = sinceSaillie > 0 ? Math.min(sinceSaillie, def.days) : 0;
+
+  if (sinceSaillie === 0) {
+    // Fallback : dériver depuis dateMBPrevue (legacy).
+    const mbPrev = parseDate(t.dateMBPrevue);
+    if (mbPrev) {
+      const diff = daysBetween(today, mbPrev);
+      dayInPhase = Math.max(0, def.days - diff);
+    }
   }
+
+  // Détail : J+X/115 + retard si dépassé.
+  const overdue = sinceSaillie > def.days ? sinceSaillie - def.days : 0;
+  const detail = overdue > 0
+    ? `J+${sinceSaillie}/${def.days} · retard ${overdue}j`
+    : sinceSaillie > 0
+      ? `J+${sinceSaillie}/${def.days}`
+      : t.dateMBPrevue
+        ? `MB prévue ${t.dateMBPrevue}`
+        : 'Gestation';
+
   return {
     id: `T-${t.id}`,
     label: t.displayId || t.id,
     truie: t.displayId || t.id,
     phase: def,
     dayInPhase,
-    detail: t.dateMBPrevue ? `MB prévue ${t.dateMBPrevue}` : 'Gestation',
+    detail,
     statut: t.statut,
+    overdueDays: overdue,
   };
 }
 
@@ -258,7 +317,7 @@ function truieToPosition(t: Truie, today: Date): BandePosition | null {
 
 const CyclesHub: React.FC = () => {
   const navigate = useNavigate();
-  const { truies, bandes } = useFarm();
+  const { truies, bandes, saillies } = useFarm();
   const { handleRefresh } = useAutoRefresh();
   const today = useMemo(() => new Date(), []);
 
@@ -268,10 +327,10 @@ const CyclesHub: React.FC = () => {
       .map((b) => bandePosition(b, today))
       .filter((x): x is BandePosition => x !== null);
     const fromTruies = truies
-      .map((t) => truieToPosition(t, today))
+      .map((t) => truieToPosition(t, saillies, today))
       .filter((x): x is BandePosition => x !== null);
     return [...fromTruies, ...fromBandes];
-  }, [bandes, truies, today]);
+  }, [bandes, truies, saillies, today]);
 
   const countByPhase = useMemo(() => {
     const c: Record<PhaseId, number> = {
@@ -588,7 +647,11 @@ const BandesList: React.FC<BandesListProps> = ({ positions, onOpen }) => {
       .sort((a, b) => {
         const r = TREATMENT_RANK[a.treatment] - TREATMENT_RANK[b.treatment];
         if (r !== 0) return r;
-        // Au sein d'un treatment : urgence croissante (jours restants), puis alpha.
+        // Retard décroissant en premier : ceux qui débordent depuis longtemps remontent.
+        const odA = a.pos.overdueDays ?? 0;
+        const odB = b.pos.overdueDays ?? 0;
+        if (odA !== odB) return odB - odA;
+        // Sinon urgence croissante (jours restants), puis alpha.
         const remA = Math.max(0, a.pos.phase.days - a.pos.dayInPhase);
         const remB = Math.max(0, b.pos.phase.days - b.pos.dayInPhase);
         if (remA !== remB) return remA - remB;
@@ -692,8 +755,11 @@ const BandeRow: React.FC<BandeRowProps> = ({ pos, treatment, onOpen }) => {
     ? 'var(--color-pig-deep, var(--color-pig))'
     : pos.phase.tone;
 
+  const overdue = pos.overdueDays ?? 0;
   const eyebrowText = isUrgent
-    ? `Imminent · J+${pos.dayInPhase}/${pos.phase.days} · ${remaining}j restant${remaining > 1 ? 's' : ''}`
+    ? overdue > 0
+      ? `EN RETARD · J+${pos.dayInPhase}/${pos.phase.days} · ${overdue}j de retard`
+      : `Imminent · J+${pos.dayInPhase}/${pos.phase.days} · ${remaining}j restant${remaining > 1 ? 's' : ''}`
     : `${pos.phase.label} · J+${pos.dayInPhase}/${pos.phase.days}`;
 
   return (

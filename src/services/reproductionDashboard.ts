@@ -106,6 +106,47 @@ function findTruieForBande(bande: BandePorcelets, truies: Truie[]): Truie | null
   );
 }
 
+/**
+ * Trouve la bande Sous-mère active liée à une truie donnée.
+ *
+ * Joint truie ↔ bande via 3 stratégies, dans l'ordre :
+ *   1. UUID match : `bande.truie === truie.id` (cas legacy supabase où
+ *      `sow_id` aurait pu être projeté dans `bande.truie`).
+ *   2. Code match : `bande.truie === truie.displayId` (ex: T07) — c'est
+ *      le mapping principal vu en prod (sows.code_id).
+ *   3. Boucle match : `bande.boucleMere === truie.boucle` (fallback legacy).
+ *
+ * Retourne la bande Sous-mère la plus récente (dateMB max) parmi les
+ * candidates, ou `null` si aucune. Limite à `maxAgeDays` pour éviter de
+ * lier une vieille portée déjà sevrée à une truie en nouveau cycle.
+ */
+export function findBandeForTruie(
+  truie: Truie,
+  bandes: BandePorcelets[],
+  maxAgeDays = MATERNITE_FIN_J,
+  today: Date = new Date(),
+): BandePorcelets | null {
+  if (!truie) return null;
+  let best: BandePorcelets | null = null;
+  let bestTs = 0;
+  for (const b of bandes) {
+    const matchUuid = !!truie.id && !!b.truie && b.truie === truie.id;
+    const matchCode = !!truie.displayId && !!b.truie && b.truie === truie.displayId;
+    const matchBoucle = !!truie.boucle && !!b.boucleMere && b.boucleMere === truie.boucle;
+    if (!matchUuid && !matchCode && !matchBoucle) continue;
+    if (!/sous.m/i.test(b.statut ?? '')) continue;
+    const dMB = safeDate(b.dateMB);
+    if (!dMB) continue;
+    const days = daysBetween(dMB, today);
+    if (days < 0 || days > maxAgeDays) continue;
+    if (dMB.getTime() > bestTs) {
+      bestTs = dMB.getTime();
+      best = b;
+    }
+  }
+  return best;
+}
+
 function isStillPotentiallyPending(truie: Truie | null): boolean {
   if (!truie) return true;
   const c = normaliseStatut(truie.statut);

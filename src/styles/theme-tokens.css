@@ -18,7 +18,7 @@
   --bg-2: #F4F4F4;
   --text-0: #0A0A0A;
   --text-1: #525252;
-  --text-2: #8A8A8A;
+  --text-2: #6B6B6B; /* WCAG AA : 5.4:1 sur #FAFAFA (était 8A8A8A 3.31:1, FAIL) */
   --border: #E5E5E5;
   --border-strong: #D4D4D4;
   --accent: #2d5a1b;

@@ -34,11 +34,12 @@ export default function Eyebrow({
       className={`flex items-center gap-2 ${className}`}
       style={{
         fontFamily: 'var(--font-mono)',
-        fontSize: '9.5px',
+        fontSize: '11px',
+        lineHeight: 1,
         letterSpacing: '0.20em',
         textTransform: 'uppercase',
         color: 'var(--muted)',
-        fontWeight: 500,
+        fontWeight: 600,
       }}
     >
       <span

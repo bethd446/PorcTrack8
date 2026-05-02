@@ -21,6 +21,12 @@ interface SowHeroProps {
   onSecondaryAction?: () => void;
   primaryLabel?: string;
   secondaryLabel?: string;
+  /** Icône custom pour le secondary CTA (défaut: Printer). */
+  secondaryIcon?: React.ReactNode;
+  /** Action tertiaire optionnelle (ex: "Modifier" depuis le hero). */
+  onTertiaryAction?: () => void;
+  tertiaryLabel?: string;
+  tertiaryIcon?: React.ReactNode;
   /** Icône SVG silhouette à afficher quand `photoUrl` est absent. */
   fallbackIcon?: React.ReactNode;
   /** Callback du bouton "+ Ajouter une photo" sur le placeholder. */
@@ -39,6 +45,10 @@ export default function SowHero({
   onSecondaryAction,
   primaryLabel = 'Saisir événement',
   secondaryLabel,
+  secondaryIcon,
+  onTertiaryAction,
+  tertiaryLabel,
+  tertiaryIcon,
   fallbackIcon,
   onUploadClick,
 }: SowHeroProps) {
@@ -219,8 +229,14 @@ export default function SowHero({
           </Button>
           {onSecondaryAction && secondaryLabel ? (
             <Button variant="secondary" size="md" onClick={onSecondaryAction}>
-              <Printer size={13} strokeWidth={2} aria-hidden />
+              {secondaryIcon ?? <Printer size={13} strokeWidth={2} aria-hidden />}
               {secondaryLabel}
+            </Button>
+          ) : null}
+          {onTertiaryAction && tertiaryLabel ? (
+            <Button variant="secondary" size="md" onClick={onTertiaryAction}>
+              {tertiaryIcon}
+              {tertiaryLabel}
             </Button>
           ) : null}
         </div>

@@ -23,6 +23,7 @@
  */
 
 export type VerratEditPatch = Partial<{
+  CODE_ID: string;
   NOM: string;
   BOUCLE: string;
   ORIGINE: string;
@@ -41,6 +42,7 @@ export interface VerratEditValidation {
   ok: boolean;
   patch?: VerratEditPatch;
   errors: {
+    codeId?: string;
     nom?: string;
     boucle?: string;
     origine?: string;
@@ -56,6 +58,7 @@ export interface VerratEditValidation {
 }
 
 export interface VerratEditInitial {
+  codeId?: string;
   nom: string;
   boucle: string;
   origine: string;
@@ -70,6 +73,7 @@ export interface VerratEditInitial {
 }
 
 export interface VerratEditForm {
+  codeId?: string;
   nom: string;
   boucle: string;
   origine: string;
@@ -83,6 +87,9 @@ export interface VerratEditForm {
   lignee: string;
 }
 
+/** Regex format code interne (displayId) éditable. */
+export const CODE_ID_REGEX = /^[A-Za-z0-9-]{3,15}$/;
+
 /** Arrondi au 0.1 près (évite les flottants parasites). */
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
@@ -95,8 +102,28 @@ function round1(n: number): number {
 export function validateVerratEdit(
   form: VerratEditForm,
   initial: VerratEditInitial,
+  /** Codes existants (sauf le code courant) pour valider l'unicité. */
+  existingCodes?: ReadonlySet<string>,
 ): VerratEditValidation {
   const errors: VerratEditValidation['errors'] = {};
+
+  // ── Code interne (displayId) ─────────────────────────────────────────
+  // Tolère l'absence si initial vide aussi (compatibilité tests legacy).
+  const codeId = (form.codeId ?? '').trim();
+  const initialCodeId = (initial.codeId ?? '').trim();
+  if (codeId.length === 0 && initialCodeId.length === 0) {
+    /* skip: legacy fixture sans code interne */
+  } else if (codeId.length === 0) {
+    errors.codeId = 'Code interne obligatoire';
+  } else if (!CODE_ID_REGEX.test(codeId)) {
+    errors.codeId = 'Format invalide (3-15 lettres/chiffres/tirets)';
+  } else if (
+    existingCodes &&
+    existingCodes.has(codeId) &&
+    initialCodeId !== codeId
+  ) {
+    errors.codeId = 'Ce code est déjà utilisé';
+  }
 
   // ── Nom ──────────────────────────────────────────────────────────────
   const nom = (form.nom ?? '').trim();
@@ -167,6 +194,7 @@ export function validateVerratEdit(
 
   const rationNormalized = round1(ration);
 
+  if (codeId !== '' && codeId !== initialCodeId) patch.CODE_ID = codeId;
   if (nom !== initialNom) patch.NOM = nom;
   if (boucle !== initialBoucle) patch.BOUCLE = boucle;
   if (origine !== initialOrigine) patch.ORIGINE = origine;

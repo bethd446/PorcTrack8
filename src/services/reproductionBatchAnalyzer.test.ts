@@ -271,3 +271,31 @@ describe('buildReproBatches — statut GESTATION', () => {
     expect(out[0].statut).toBe('GESTATION');
   });
 });
+
+// ─── FIX #7 — Bande Sous-mère liée → statut MATERNITE ──────────────────────
+
+describe('buildReproBatches — FIX #7 statut MATERNITE', () => {
+  it('passe le batch en MATERNITE quand une bande Sous-mère est liée à la saillie', () => {
+    // Saillie en janvier → MB attendue ~115j plus tard, fin avril.
+    // Today = 2026-05-01, donc dateMB d'avril → bande Sous-mère récente.
+    const truies = [makeTruie('T07', 'En maternité')];
+    const saillies = [makeSaillie('T07', '06/01/2026')];
+    const bandes: BandePorcelets[] = [
+      makeBande('B01', 'T07', 'Sous mère', { dateMB: '01/05/2026', vivants: 12 }),
+    ];
+
+    const out = buildReproBatches({ truies, saillies, bandes, today: TODAY });
+    expect(out).toHaveLength(1);
+    expect(out[0].nbPortees).toBe(1);
+    expect(out[0].porceletsVivants).toBe(12);
+    expect(out[0].statut).toBe('MATERNITE');
+  });
+
+  it("findBandeForSaillie matche par UUID quand bande.truie est l'UUID truie", () => {
+    const truie: Truie = makeTruie('uuid-zzzz', 'En maternité', { displayId: 'T08', boucle: 'FR-T08' });
+    const saillie = makeSaillie('T08', '06/01/2026'); // saillie référence le code
+    saillie.truieBoucle = 'FR-T08';
+    const bande = makeBande('B02', 'uuid-zzzz', 'Sous mère', { dateMB: '01/05/2026' });
+    expect(findBandeForSaillie(saillie, [bande], [truie])).toBe(bande);
+  });
+});

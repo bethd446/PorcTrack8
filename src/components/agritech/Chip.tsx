@@ -35,8 +35,8 @@ const toneClass: Record<ChipTone, string> = {
 };
 
 const sizeClass: Record<ChipSize, string> = {
-  xs: 'text-[10px] px-1.5 py-[1px]',
-  sm: 'text-[11px] px-2 py-[2px]',
+  xs: 'text-[12px] px-2 py-[2px]',
+  sm: 'text-[12px] px-[10px] py-[5px]',
 };
 
 /**

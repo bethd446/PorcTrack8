@@ -6,12 +6,12 @@
  * Responsabilités :
  *   • Synthèse par période (mois, ou "all") : dépenses · revenus · marge
  *   • Liste des périodes disponibles (YYYY-MM, tri décroissant)
- *   • Parsing / formatage de montants avec séparateurs (FCFA par défaut, EUR
- *     détecté si le libellé contient le symbole €)
+ *   • Parsing / formatage de montants — délègue à `lib/currency` pour le rendu
  *   • Mapping catégorie → tone (`ChipTone` pour l'UI)
  */
 
 import type { FinanceEntry, FinanceSummary } from '../types/farm';
+import { formatCurrency, type Currency } from '../lib/currency';
 
 // ─── Date helpers ────────────────────────────────────────────────────────────
 
@@ -106,7 +106,7 @@ export function parseMontant(s: unknown): number {
   if (!raw) return 0;
 
   // Retire tout ce qui n'est pas chiffre, point, virgule, ou signe.
-  // L'espace insécable (\u00A0) et l'espace simple sont séparateurs de milliers.
+  // L'espace insécable ( ) et l'espace simple sont séparateurs de milliers.
   const cleaned = raw.replace(/[^\d.,-]/g, '');
   if (!cleaned) return 0;
 
@@ -127,41 +127,16 @@ export function parseMontant(s: unknown): number {
 }
 
 /**
- * Formate un montant avec séparateurs de milliers (espace insécable) et la
- * devise en suffixe. Exemple : `formatMontant(12000)` → `"12 000 FCFA"`.
+ * Formate un montant avec séparateurs de milliers et la devise en suffixe.
+ * Façade historique : délègue à `formatCurrency` (lib/currency) — l'unique
+ * source de vérité pour le rendu monétaire.
  *
- * Arrondi à l'entier pour FCFA (pas de centimes), à 2 décimales pour EUR.
+ * `currency` accepte tout `Currency` (`'FCFA' | 'EUR' | 'XOF' | 'USD'`). Si
+ * absent, on conserve un fallback `FCFA` pour compat — mais TOUS les call
+ * sites doivent passer la devise dérivée du pays via `useFarm().currency`.
  */
-export function formatMontant(n: number, currency: 'FCFA' | 'EUR' = 'FCFA'): string {
-  if (!Number.isFinite(n)) return `0 ${currency}`;
-  const sign = n < 0 ? '-' : '';
-  const abs = Math.abs(n);
-
-  let body: string;
-  if (currency === 'EUR') {
-    // Format FR : 12 000,50 €
-    const fixed = abs.toFixed(2);
-    const [intPart, decPart] = fixed.split('.');
-    const withSep = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0');
-    body = `${withSep},${decPart}`;
-    return `${sign}${body} €`;
-  }
-
-  // FCFA : pas de décimales, espace insécable comme séparateur.
-  const rounded = Math.round(abs);
-  body = String(rounded).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0');
-  return `${sign}${body} FCFA`;
-}
-
-/**
- * Détecte la devise à partir d'une entrée. Par défaut FCFA (ferme K13 en
- * Côte d'Ivoire). Si le libellé ou les notes mentionnent `€` ou `EUR`,
- * renvoie `EUR`.
- */
-export function detectCurrency(entry: Pick<FinanceEntry, 'libelle' | 'notes'>): 'FCFA' | 'EUR' {
-  const hay = `${entry.libelle ?? ''} ${entry.notes ?? ''}`;
-  if (/€|\bEUR\b/i.test(hay)) return 'EUR';
-  return 'FCFA';
+export function formatMontant(n: number, currency: Currency = 'FCFA'): string {
+  return formatCurrency(n, currency);
 }
 
 // ─── Catégorie → ChipTone ────────────────────────────────────────────────────

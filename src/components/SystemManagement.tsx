@@ -6,10 +6,12 @@ import {
 import {
   User, Tractor, Users, RefreshCw, Bell, HelpCircle, ShieldAlert,
   ChevronRight, LogOut, Trash2, Mail, Lock, Truck,
+  ClipboardCheck, AlertTriangle, Stethoscope, BookOpen, Boxes, Building2,
 } from 'lucide-react';
 import AgritechLayout from './AgritechLayout';
 import { useAuth } from '../context/AuthContext';
 import { useMeta } from '../context/FarmContext';
+import { usePilotage } from '../context/PilotageContext';
 import { APP_VERSION } from '../config';
 import { kvGet, kvSet, kvClear } from '../services/kvStore';
 import { supabase } from '../services/supabaseClient';
@@ -488,6 +490,10 @@ export const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, profile, role, userName, signOut, refreshProfile } = useAuth();
   const { lastUpdate, refreshData, recomputeAlerts } = useMeta();
+  const { alerts, alertesServeur } = usePilotage();
+  const pendingAlertsCount =
+    alerts.filter(a => a.priority === 'CRITIQUE' || a.priority === 'HAUTE').length +
+    alertesServeur.filter(a => a.priorite === 'CRITIQUE' || a.priorite === 'HAUTE').length;
 
   const [farm, setFarm] = useState<FarmInfo | null>(null);
   const [showProfileEdit, setShowProfileEdit] = useState(false);
@@ -604,6 +610,65 @@ export const SettingsPage: React.FC = () => {
                 Ton profil, ta ferme et les réglages
               </p>
             </header>
+
+            {/* Outils terrain — accès rapide aux modules opérationnels */}
+            <SettingsSection title="Outils terrain" icon={<ClipboardCheck size={13} />}>
+              <ActionRow
+                label="Toutes les alertes"
+                description={
+                  pendingAlertsCount > 0
+                    ? `${pendingAlertsCount} en attente`
+                    : 'Aucune alerte en attente'
+                }
+                onClick={() => navigate('/alerts')}
+                trailing={
+                  pendingAlertsCount > 0 ? (
+                    <span
+                      className="inline-flex items-center justify-center min-w-[22px] h-[22px] rounded-full px-1.5 font-mono text-[11px] font-bold tabular-nums"
+                      style={{
+                        background: 'var(--red, #dc2626)',
+                        color: 'var(--bg-surface, #fff)',
+                      }}
+                      aria-label={`${pendingAlertsCount} alertes en attente`}
+                    >
+                      {pendingAlertsCount > 9 ? '9+' : pendingAlertsCount}
+                    </span>
+                  ) : (
+                    <AlertTriangle size={14} className="text-text-2" aria-hidden="true" />
+                  )
+                }
+              />
+              <ActionRow
+                label="Audit quotidien"
+                description="Checklist de contrôle journalier"
+                onClick={() => navigate('/controle')}
+                trailing={<ClipboardCheck size={14} className="text-text-2" aria-hidden="true" />}
+              />
+              <ActionRow
+                label="Journal santé"
+                description="Soins, traitements, mortalités"
+                onClick={() => navigate('/sante')}
+                trailing={<Stethoscope size={14} className="text-text-2" aria-hidden="true" />}
+              />
+              <ActionRow
+                label="Protocoles"
+                description="Guide métier et SOPs"
+                onClick={() => navigate('/protocoles')}
+                trailing={<BookOpen size={14} className="text-text-2" aria-hidden="true" />}
+              />
+              <ActionRow
+                label="Ressources & Stocks"
+                description="Aliments, pharmacie, suivi"
+                onClick={() => navigate('/ressources')}
+                trailing={<Boxes size={14} className="text-text-2" aria-hidden="true" />}
+              />
+              <ActionRow
+                label="Fournisseurs"
+                description="Carnet et commandes WhatsApp"
+                onClick={() => navigate('/fournisseurs')}
+                trailing={<Building2 size={14} className="text-text-2" aria-hidden="true" />}
+              />
+            </SettingsSection>
 
             {/* Profil */}
             <SettingsSection title="Profil" icon={<User size={13} />}>

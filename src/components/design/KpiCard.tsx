@@ -21,6 +21,12 @@ export interface KpiCardProps {
   ariaLabel?: string;
   accentColor?: AccentToken | string;
   tone?: Tone;
+  /**
+   * Petit message contextuel affiché sous la valeur (ex: "Pas assez de
+   * données (1/5 cycles)"). N'apparaît que si fourni. Utile pour
+   * remplacer un `—` muet par un fallback explicite.
+   */
+  hint?: string;
 }
 
 const ACCENT_VAR: Record<AccentToken, string> = {
@@ -101,6 +107,7 @@ export default function KpiCard({
   ariaLabel,
   accentColor,
   tone,
+  hint,
 }: KpiCardProps) {
   const isAccent = variant === 'accent';
   const { cssColor: dotColor } = resolveAccent(accentColor, tone);
@@ -217,6 +224,20 @@ export default function KpiCard({
         {unit ? <span style={unitStyle}>{unit}</span> : null}
       </div>
       {trend ? <div style={trendStyle}>{trend}</div> : null}
+      {hint ? (
+        <div
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10,
+            color: isAccent ? 'rgba(255,255,255,0.7)' : 'var(--muted)',
+            marginTop: 6,
+            letterSpacing: '0.04em',
+            lineHeight: 1.3,
+          }}
+        >
+          {hint}
+        </div>
+      ) : null}
       {sparkOk ? (
         <svg
           viewBox="0 0 56 22"

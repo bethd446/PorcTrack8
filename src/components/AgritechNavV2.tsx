@@ -211,7 +211,7 @@ const TABS: NavTabDef[] = [
     path: '/troupeau',
     label: 'Élevage',
     Icon: PiggyBank,
-    match: ['/troupeau', '/cycles', '/cheptel', '/bandes'],
+    match: ['/troupeau', '/cheptel', '/bandes'],
   },
   {
     id: 'repro',
@@ -222,7 +222,7 @@ const TABS: NavTabDef[] = [
   },
   {
     id: 'perf',
-    path: '/pilotage/perf',
+    path: '/pilotage',
     label: 'Perf',
     Icon: BarChart3,
     match: ['/pilotage'],
@@ -243,6 +243,8 @@ const TABS: NavTabDef[] = [
       '/alertes',
       '/protocoles',
       '/notes',
+      '/controle',
+      '/sante',
     ],
   },
 ];

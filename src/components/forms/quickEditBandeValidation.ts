@@ -30,6 +30,7 @@ import type { BandePorcelets } from '../../types/farm';
 import { safeDate } from '../../lib/truieHelpers';
 
 export type BandeEditPatch = Partial<{
+  CODE_ID: string;
   TRUIE: string;
   BOUCLE_MERE: string;
   DATE_MB: string;
@@ -50,6 +51,7 @@ export type BandeEditPatch = Partial<{
   Record<string, string | number | boolean | null>;
 
 export interface BandeEditErrors {
+  codeId?: string;
   truie?: string;
   boucleMere?: string;
   dateMB?: string;
@@ -85,8 +87,13 @@ export const BANDE_STATUTS = [
 ] as const;
 export type BandeStatutOption = (typeof BANDE_STATUTS)[number];
 
+/** Regex format code interne (displayId) éditable. */
+export const CODE_ID_REGEX = /^[A-Za-z0-9-]{3,15}$/;
+
 /** Raw input du formulaire (tous en string pour coller aux inputs HTML). */
 export interface BandeEditRawInput {
+  /** Code interne (idPortee / code_id) — éditable. */
+  codeId?: string;
   truie: string;
   boucleMere: string;
   dateMB: string;                 // ISO yyyy-MM-dd ou ''
@@ -183,8 +190,28 @@ const TOLERANCE_SEVRAGE_JOURS = 5;
 export function validateBandeEdit(
   input: BandeEditRawInput,
   initial: BandeEditRawInput,
+  /** Codes existants (sauf le code initial) pour valider l'unicité. */
+  existingCodes?: ReadonlySet<string>,
 ): BandeEditValidation {
   const errors: BandeEditErrors = {};
+
+  // ── Code interne (displayId) ─────────────────────────────────────────
+  // Tolère absence si initial vide aussi (legacy/tests).
+  const codeId = (input.codeId ?? '').trim();
+  const initialCodeId = (initial.codeId ?? '').trim();
+  if (codeId.length === 0 && initialCodeId.length === 0) {
+    /* skip */
+  } else if (codeId.length === 0) {
+    errors.codeId = 'Code interne obligatoire';
+  } else if (!CODE_ID_REGEX.test(codeId)) {
+    errors.codeId = 'Format invalide (3-15 lettres/chiffres/tirets)';
+  } else if (
+    existingCodes &&
+    existingCodes.has(codeId) &&
+    initialCodeId !== codeId
+  ) {
+    errors.codeId = 'Ce code est déjà utilisé';
+  }
 
   // ── Textes courts ────────────────────────────────────────────────────
   const truie = input.truie.trim();
@@ -305,6 +332,7 @@ export function validateBandeEdit(
   const patch: BandeEditPatch = {};
 
   // Texte : compare au trim près
+  if (codeId !== '' && codeId !== initialCodeId) patch.CODE_ID = codeId;
   if (truie !== initial.truie.trim()) patch.TRUIE = truie;
   if (boucleMere !== initial.boucleMere.trim()) patch.BOUCLE_MERE = boucleMere;
   if (statut !== initial.statut.trim()) patch.STATUT = statut;

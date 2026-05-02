@@ -24,10 +24,6 @@ import {
   type OrderItem,
 } from '../../utils/whatsappOrder';
 
-// AUDIT-V1 : FARM_NAME hardcodé conservé pour URL WhatsApp (scope module).
-// HEADER affiché utilise useMeta().nomFerme.
-const FARM_NAME_FALLBACK = 'K13';
-
 function manqueKgVeto(item: StockVeto): number {
   const stock = item.stockActuel ?? 0;
   const seuil =
@@ -426,6 +422,7 @@ const PharmacieView: React.FC = () => {
                           }
                           onRefresh={refreshData}
                           onRefill={() => setRefillItem(toRefillItem(item, 'VETO'))}
+                          farmName={FARM_NAME}
                         />
                       );
                     })}
@@ -487,6 +484,8 @@ interface VetoEditableRowProps {
   secondary?: string;
   onRefresh: () => Promise<void>;
   onRefill: () => void;
+  /** Nom de la ferme courante (lu depuis useMeta().nomFerme dans le parent). */
+  farmName: string;
 }
 
 const VetoEditableRow: React.FC<VetoEditableRowProps> = ({
@@ -494,6 +493,7 @@ const VetoEditableRow: React.FC<VetoEditableRowProps> = ({
   tone,
   secondary,
   onRefresh,
+  farmName,
 }) => {
   // `seuilAlerte` UI = `stock_min` DB. On préfère `stockMin` si fourni, sinon
   // on retombe sur `seuilAlerte` (legacy mapper).
@@ -596,7 +596,7 @@ const VetoEditableRow: React.FC<VetoEditableRowProps> = ({
           item.produit,
           manqueKgVeto(item),
           item.unite,
-          FARM_NAME_FALLBACK,
+          farmName,
         );
         if (!url) return null;
         return (

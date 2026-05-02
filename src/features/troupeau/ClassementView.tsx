@@ -1,8 +1,11 @@
 import React, { useMemo, useState } from 'react';
+import { IonContent, IonPage } from '@ionic/react';
 import { useNavigate } from 'react-router-dom';
 import { Award, Trophy } from 'lucide-react';
 
+import AgritechLayout from '../../components/AgritechLayout';
 import Eyebrow from '../../components/design/Eyebrow';
+import TopBarSync from '../../components/design/TopBarSync';
 import { SectionDivider } from '../../components/agritech';
 import EmptyStateShared from '../../components/design/EmptyState';
 import { useFarm } from '../../context/FarmContext';
@@ -105,7 +108,18 @@ const ClassementView: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <IonPage>
+      <IonContent fullscreen className="ion-no-padding">
+        <AgritechLayout>
+          <TopBarSync
+            crumbs={['Performance', 'Classement']}
+            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
+          />
+          <div
+            className="px-4 pt-5 pb-32 flex flex-col gap-5"
+            style={{ maxWidth: 1100, margin: '0 auto' }}
+          >
+            <div className="flex flex-col gap-4">
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="flex flex-col gap-2">
         <Eyebrow customDotColor="var(--module-naissage)">Performance · Classement</Eyebrow>
@@ -265,7 +279,11 @@ const ClassementView: React.FC = () => {
           </div>
         </>
       )}
-    </div>
+            </div>
+          </div>
+        </AgritechLayout>
+      </IonContent>
+    </IonPage>
   );
 };
 

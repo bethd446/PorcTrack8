@@ -106,20 +106,35 @@ function isBandeSevree(bande: BandePorcelets, today: Date): boolean {
 export function findBandeForSaillie(
   saillie: Saillie,
   bandes: BandePorcelets[],
+  truies: Truie[] = [],
 ): BandePorcelets | null {
   const dSaillie = safeDate(saillie.dateSaillie);
   if (!dSaillie) return null;
 
   const sid = normalizeTruieId(saillie.truieId);
+  // Résolution UUID ↔ code_id : si la saillie référence un code (T07) on
+  // récupère l'UUID associé pour matcher les bandes qui auraient stocké
+  // l'UUID dans `truie`. Idem dans l'autre sens.
+  const t = truies.find(
+    x =>
+      x.id === saillie.truieId
+      || normalizeTruieId(x.displayId) === sid
+      || (!!saillie.truieBoucle && x.boucle === saillie.truieBoucle),
+  );
+  const truieUuid = t?.id ?? '';
+  const truieCode = t ? normalizeTruieId(t.displayId) : sid;
+
   const expectedMB = dSaillie.getTime() + GESTATION_DUREE_J * MS_DAY;
 
   let best: BandePorcelets | null = null;
   let bestDelta = Infinity;
 
   for (const b of bandes) {
-    // Match par truie : id ou boucle.
+    // Match par truie : UUID, code (text), ou boucle (legacy).
+    const bTruieNorm = b.truie ? normalizeTruieId(b.truie) : '';
     const matchTruie =
-      (b.truie && normalizeTruieId(b.truie) === sid)
+      (!!truieUuid && b.truie === truieUuid)
+      || (!!bTruieNorm && bTruieNorm === truieCode)
       || (b.boucleMere && saillie.truieBoucle && b.boucleMere === saillie.truieBoucle);
     if (!matchTruie) continue;
 
@@ -214,7 +229,7 @@ function buildOneBatch(
 
   for (const s of groupSaillies) {
     const truie = findTruieFor(s, truies);
-    const bande = findBandeForSaillie(s, bandes);
+    const bande = findBandeForSaillie(s, bandes, truies);
 
     if (bande) {
       linkedBandes.push(bande);

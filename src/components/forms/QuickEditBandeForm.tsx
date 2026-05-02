@@ -50,11 +50,23 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
   bande,
   onSuccess,
 }) => {
-  const { refreshData, saillies, verrats } = useFarm();
+  const { refreshData, saillies, verrats, bandes } = useFarm();
   const { user } = useAuth();
   const farmId = user?.id ?? '';
 
-  const initial = useMemo<BandeEditRawInput>(() => bandeToRawInput(bande), [bande]);
+  const initial = useMemo<BandeEditRawInput>(
+    () => ({ ...bandeToRawInput(bande), codeId: bande.idPortee ?? '' }),
+    [bande],
+  );
+
+  // Codes existants (autres bandes) pour valider l'unicité.
+  const existingCodes = useMemo(() => {
+    const s = new Set<string>();
+    for (const b of bandes) {
+      if (b.id !== bande.id && b.idPortee) s.add(b.idPortee);
+    }
+    return s;
+  }, [bandes, bande.id]);
 
   const [form, setForm] = useState<BandeEditRawInput>(initial);
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(bande.photoUrl);
@@ -86,7 +98,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
   if (lastKey.isOpen !== isOpen || lastKey.bandeId !== bande.id) {
     setLastKey({ isOpen, bandeId: bande.id });
     if (isOpen) {
-      setForm(bandeToRawInput(bande));
+      setForm({ ...bandeToRawInput(bande), codeId: bande.idPortee ?? '' });
       setPhotoUrl(bande.photoUrl);
       setPhotoDirty(false);
       setLoge(bande.loge ?? '');
@@ -128,7 +140,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    const result = validateBandeEdit(form, initial);
+    const result = validateBandeEdit(form, initial, existingCodes);
     if (!result.ok || !result.patch) {
       setErrors(result.errors);
       return;
@@ -151,6 +163,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
         if (!m) return null;
         return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
       };
+      if ('CODE_ID' in p) supabasePatch.code_id = p.CODE_ID;
       if ('STATUT' in p) supabasePatch.statut = p.STATUT;
       if ('NOTES' in p) supabasePatch.notes = p.NOTES;
       if ('LOGE_ENGRAISSEMENT' in p) supabasePatch.loge = p.LOGE_ENGRAISSEMENT;
@@ -283,22 +296,44 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
 
             <div className="space-y-1.5">
               <label htmlFor="edit-bande-id" className={labelCls}>
-                ID Portée
+                Code interne <span className="text-red normal-case">· requis</span>
               </label>
               <input
                 id="edit-bande-id"
                 type="text"
-                readOnly
-                aria-readonly="true"
-                aria-label={`Identifiant portée ${displayId}`}
-                value={displayId}
-                className={[
-                  'w-full h-12 rounded-md px-3',
-                  'bg-bg-2 border border-border text-text-1',
-                  'font-mono text-[14px] tabular-nums',
-                  'cursor-not-allowed',
-                ].join(' ')}
+                maxLength={15}
+                aria-label={`Code interne portée ${displayId}`}
+                aria-required="true"
+                aria-invalid={!!errors.codeId}
+                aria-describedby={
+                  errors.codeId
+                    ? 'edit-bande-id-error'
+                    : 'edit-bande-id-hint'
+                }
+                className={inputBase(!!errors.codeId)}
+                placeholder="Ex: K13-P-001"
+                value={form.codeId}
+                onChange={e => update('codeId', e.target.value)}
+                disabled={saving}
+                autoComplete="off"
+                spellCheck={false}
               />
+              <p
+                id="edit-bande-id-hint"
+                className="font-mono text-[10px] text-text-2 tabular-nums"
+              >
+                Tu peux changer le préfixe (B → P, etc.) — code interne unique
+                pour ta ferme · 3-15 lettres/chiffres/tirets
+              </p>
+              {errors.codeId ? (
+                <p
+                  id="edit-bande-id-error"
+                  role="alert"
+                  className="font-mono text-[11px] text-red"
+                >
+                  {errors.codeId}
+                </p>
+              ) : null}
             </div>
 
             {/* Origine (parents truie × verrat) — readonly */}

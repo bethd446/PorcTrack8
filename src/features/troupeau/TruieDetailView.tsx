@@ -18,7 +18,7 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { IonContent, IonModal, IonPage, IonToast, useIonAlert } from '@ionic/react';
-import { Printer } from 'lucide-react';
+import { Pencil, Printer } from 'lucide-react';
 
 import { useFarm } from '../../context/FarmContext';
 import { enqueueUpdateRow } from '../../services/offlineQueue';
@@ -440,6 +440,9 @@ const TruieDetailView: React.FC = () => {
               photoStamp={`${truie.displayId} · ${formatDateShort(new Date().toISOString())}`}
               onPrimaryAction={() => setEventSheetOpen(true)}
               primaryLabel="+ Saisir évènement"
+              onSecondaryAction={() => setEditOpen(true)}
+              secondaryLabel="Modifier"
+              secondaryIcon={<Pencil size={14} strokeWidth={2} aria-hidden />}
               fallbackIcon={<TruieIcon size={128} />}
               onUploadClick={() => setEditOpen(true)}
             />
@@ -879,9 +882,9 @@ const TruieDetailView: React.FC = () => {
                       style={{
                         padding: '12px 16px',
                         borderRadius: 9999,
-                        background: 'transparent',
+                        background: 'var(--bg-2, var(--bg-surface-soft, #f5f4f1))',
                         color: 'var(--ink)',
-                        border: '1px dashed var(--line)',
+                        border: '1px solid var(--line)',
                         fontFamily: 'var(--font-mono)',
                         fontSize: 11,
                         letterSpacing: '0.10em',

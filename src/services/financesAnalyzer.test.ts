@@ -18,7 +18,6 @@ import {
   formatMontant,
   categorieToTone,
   dateToPeriode,
-  detectCurrency,
 } from './financesAnalyzer';
 import { mapFinance } from '../mappers';
 import type { FinanceEntry } from '../types/farm';
@@ -248,15 +247,6 @@ describe('dateToPeriode', () => {
   });
 });
 
-describe('detectCurrency', () => {
-  it('détecte EUR si le libellé contient €', () => {
-    expect(detectCurrency({ libelle: 'Achat vaccin 45 €' })).toBe('EUR');
-  });
-  it('détecte EUR si les notes contiennent EUR', () => {
-    expect(detectCurrency({ libelle: 'x', notes: 'paid in EUR' })).toBe('EUR');
-  });
-  it('FCFA par défaut', () => {
-    expect(detectCurrency({ libelle: 'Sac 40kg' })).toBe('FCFA');
-    expect(detectCurrency({ libelle: '', notes: '' })).toBe('FCFA');
-  });
-});
+// detectCurrency a été supprimée — la devise vient désormais exclusivement
+// du pays de la ferme via `useFarm().currency` (cf. lib/currency.ts).
+// Les tests d'inférence par pays sont dans currency.test.ts.

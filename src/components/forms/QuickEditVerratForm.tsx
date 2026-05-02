@@ -53,6 +53,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
 
   const initial: VerratEditInitial = useMemo(
     () => ({
+      codeId: verrat.displayId ?? '',
       nom: verrat.nom ?? '',
       boucle: verrat.boucle ?? '',
       origine: verrat.origine ?? '',
@@ -68,11 +69,22 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
     [verrat],
   );
 
+  const { verrats } = useFarm();
+  // Codes existants (autres verrats) pour valider l'unicité du code interne.
+  const existingCodes = useMemo(() => {
+    const s = new Set<string>();
+    for (const v of verrats) {
+      if (v.id !== verrat.id && v.displayId) s.add(v.displayId);
+    }
+    return s;
+  }, [verrats, verrat.id]);
+
   const performance = useMemo(
     () => computeVerratPerformance(verrat, bandes, saillies, truies),
     [verrat, bandes, saillies, truies],
   );
 
+  const [codeId, setCodeId] = useState<string>(initial.codeId);
   const [nom, setNom] = useState<string>(initial.nom);
   const [boucle, setBoucle] = useState<string>(initial.boucle);
   const [origine, setOrigine] = useState<string>(initial.origine);
@@ -100,6 +112,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
   if (lastKey.isOpen !== isOpen || lastKey.verratId !== verrat.id) {
     setLastKey({ isOpen, verratId: verrat.id });
     if (isOpen) {
+      setCodeId(initial.codeId);
       setNom(initial.nom);
       setBoucle(initial.boucle);
       setOrigine(initial.origine);
@@ -130,8 +143,9 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     const result = validateVerratEdit(
-      { nom, boucle, origine, alimentation, ration, statut, notes, dateNaissance, loge, race, lignee },
+      { codeId, nom, boucle, origine, alimentation, ration, statut, notes, dateNaissance, loge, race, lignee },
       initial,
+      existingCodes,
     );
     if (!result.ok || !result.patch) {
       setErrors(result.errors);
@@ -148,6 +162,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
     try {
       const supabasePatch: Record<string, unknown> = {};
       const p = result.patch as Record<string, unknown>;
+      if ('CODE_ID' in p) supabasePatch.code_id = p.CODE_ID;
       if ('NOM' in p) supabasePatch.name = p.NOM;
       if ('BOUCLE' in p) supabasePatch.boucle = p.BOUCLE;
       if ('ORIGINE' in p) supabasePatch.origine = p.ORIGINE;
@@ -256,6 +271,52 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
             <h3 className="font-mono text-[10px] uppercase tracking-wide text-text-2">
               Identité
             </h3>
+
+            {/* Code interne (displayId — éditable) */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="edit-verrat-codeid"
+                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+              >
+                Code interne <span className="text-red normal-case">· requis</span>
+              </label>
+              <input
+                id="edit-verrat-codeid"
+                type="text"
+                maxLength={15}
+                aria-label={`Code interne du verrat ${displayId}`}
+                aria-required="true"
+                aria-invalid={!!errors.codeId}
+                aria-describedby={
+                  errors.codeId
+                    ? 'edit-verrat-codeid-error'
+                    : 'edit-verrat-codeid-hint'
+                }
+                className={inputBaseClass(!!errors.codeId)}
+                placeholder="Ex: K13-V-001"
+                value={codeId}
+                onChange={e => setCodeId(e.target.value)}
+                disabled={saving}
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <p
+                id="edit-verrat-codeid-hint"
+                className="font-mono text-[10px] text-text-2 tabular-nums"
+              >
+                Tu peux changer le préfixe (V → K, etc.) — code interne unique
+                pour ta ferme · 3-15 lettres/chiffres/tirets
+              </p>
+              {errors.codeId ? (
+                <p
+                  id="edit-verrat-codeid-error"
+                  role="alert"
+                  className="font-mono text-[11px] text-red"
+                >
+                  {errors.codeId}
+                </p>
+              ) : null}
+            </div>
 
             {/* Nom */}
             <div className="space-y-1.5">

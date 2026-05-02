@@ -21,7 +21,7 @@ import {
   determinerAliment,
 } from '../../services/phaseEngine';
 import { FARM_CONFIG } from '../../config/farm';
-import { formatCurrency, currencySuffix } from '../../lib/currency';
+import { formatCurrency, currencySuffix, type Currency } from '../../lib/currency';
 import type { BandePorcelets } from '../../types/farm';
 import QuickVenteForm from '../../components/forms/QuickVenteForm';
 import {
@@ -48,17 +48,26 @@ const FINITION_PHASE_DAYS = Math.round(
 
 // ─── Constantes métier ──────────────────────────────────────────────────────
 /**
- * Prix de vente moyen par kg vif. Valeur historique calibrée pour la cible
- * Afrique de l'Ouest (FCFA). En zone EUR, l'estimation reste indicative —
- * un futur réglage par ferme dans les Settings remplacera cette constante.
+ * Prix de vente moyen par kg vif, calibré par devise. Approximation indicative
+ * tant qu'un réglage ferme dans les Settings n'a pas remplacé ces constantes.
+ *  - FCFA / XOF : 2 100 (cible Afrique de l'Ouest)
+ *  - EUR        : 3,2 (cible France / Belgique, prix carcasse vif courant)
+ *  - USD        : 3,5
  */
-const PRIX_KG_VIF = 2100;
+const PRIX_KG_VIF_BY_CURRENCY: Record<Currency, number> = {
+  FCFA: 2100,
+  XOF: 2100,
+  EUR: 3.2,
+  USD: 3.5,
+};
 const FINITION_SEUIL_KG = 100;
 
 const FinitionView: React.FC = () => {
   const navigate = useNavigate();
   const { bandes, currency } = useFarm();
   const [venteBande, setVenteBande] = useState<BandePorcelets | null>(null);
+
+  const prixKgVif = PRIX_KG_VIF_BY_CURRENCY[currency] ?? PRIX_KG_VIF_BY_CURRENCY.FCFA;
 
   const { portees, summary, projection } = useMemo(() => {
     const today = new Date();
@@ -112,7 +121,7 @@ const FinitionView: React.FC = () => {
       ? Math.round(rows.reduce((acc, r) => acc + r.weight, 0) / nbBandes)
       : 0;
 
-    const revenuEstime = rows.reduce((acc, r) => acc + (r.vivants * r.weight * PRIX_KG_VIF), 0);
+    const revenuEstime = rows.reduce((acc, r) => acc + (r.vivants * r.weight * prixKgVif), 0);
 
     return {
       portees: rows,
@@ -125,7 +134,7 @@ const FinitionView: React.FC = () => {
         revenuEstime,
       },
     };
-  }, [bandes]);
+  }, [bandes, prixKgVif]);
 
   return (
     <IonPage>
@@ -227,7 +236,7 @@ const FinitionView: React.FC = () => {
                   {formatNumber(projection.revenuEstime)} <span className="text-[14px] text-text-2">{currencySuffix(currency)}</span>
                 </div>
                 <p className="text-[11px] text-text-2 leading-tight">
-                  Basé sur un poids moyen de {summary.avgWeight}kg et un prix de {formatCurrency(PRIX_KG_VIF, currency)}/kg.
+                  Basé sur un poids moyen de {summary.avgWeight}kg et un prix de {formatCurrency(prixKgVif, currency)}/kg.
                 </p>
               </div>
             )}

@@ -25,6 +25,7 @@ export interface TruieEditValidation {
   ok: boolean;
   patch?: TruieEditPatch;
   errors: {
+    codeId?: string;
     nom?: string;
     boucle?: string;
     race?: string;
@@ -43,6 +44,8 @@ export interface TruieEditValidation {
 }
 
 export interface TruieEditDraft {
+  /** Code interne (displayId / code_id) — éditable, regex [A-Za-z0-9-]{3,15}. */
+  codeId?: string;
   nom: string;
   boucle: string;
   race: string;
@@ -67,6 +70,8 @@ export interface TruieEditDraft {
  * et n'émettre dans le patch QUE les champs modifiés.
  */
 export interface TruieEditInitial {
+  /** code_id initial (displayId courant). */
+  codeId?: string;
   nom: string;
   boucle: string;
   race: string;
@@ -84,6 +89,9 @@ export interface TruieEditInitial {
   loge: string;
   notes: string;
 }
+
+/** Regex officielle pour le code interne (displayId) éditable. */
+export const CODE_ID_REGEX = /^[A-Za-z0-9-]{3,15}$/;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -176,10 +184,13 @@ export function validateTruieEdit(
 export function validateTruieEditFull(
   draft: TruieEditDraft,
   initial?: TruieEditInitial,
+  /** Liste des codes existants (sauf le code initial) pour valider l'unicité. */
+  existingCodes?: ReadonlySet<string>,
 ): TruieEditValidation {
   const errors: TruieEditValidation['errors'] = {};
 
   // ── Normalisation ──────────────────────────────────────────────────────
+  const codeId = (draft.codeId ?? '').trim();
   const nom = (draft.nom ?? '').trim();
   const boucle = (draft.boucle ?? '').trim();
   const race = (draft.race ?? '').trim();
@@ -192,6 +203,21 @@ export function validateTruieEditFull(
   const loge = (draft.loge ?? '').trim();
 
   // ── Validation ─────────────────────────────────────────────────────────
+  // Code interne — tolère absence si initial vide aussi (legacy/tests).
+  const initialCodeId = (initial?.codeId ?? '').trim();
+  if (codeId.length === 0 && initialCodeId.length === 0) {
+    /* skip */
+  } else if (codeId.length === 0) {
+    errors.codeId = 'Code interne obligatoire';
+  } else if (!CODE_ID_REGEX.test(codeId)) {
+    errors.codeId = 'Format invalide (3-15 lettres/chiffres/tirets)';
+  } else if (
+    existingCodes &&
+    existingCodes.has(codeId) &&
+    initialCodeId !== codeId
+  ) {
+    errors.codeId = 'Ce code est déjà utilisé';
+  }
   if (boucle.length === 0) {
     errors.boucle = 'Boucle obligatoire';
   } else if (boucle.length > 30) {
@@ -276,6 +302,10 @@ export function validateTruieEditFull(
   };
 
   if (initial) {
+    // CODE_ID seulement si fourni (sinon legacy fixture sans code)
+    if (codeId !== '' && codeId !== initialCodeId) {
+      patch['CODE_ID'] = codeId;
+    }
     setIfChanged('NOM', nom, initial.nom);
     setIfChanged('BOUCLE', boucle, initial.boucle);
     setIfChanged('RACE', race, initial.race);
@@ -305,6 +335,7 @@ export function validateTruieEditFull(
     setIfChanged('NOTES', notes, initial.notes);
   } else {
     // Pas de snapshot → on inclut tous les champs
+    if (codeId !== '') patch['CODE_ID'] = codeId;
     patch['NOM'] = nom;
     patch['BOUCLE'] = boucle;
     patch['RACE'] = race;

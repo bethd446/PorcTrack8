@@ -298,6 +298,7 @@ export async function refreshAll(): Promise<void> {
       bandes: bandeRes.data,
       sante: santeRes.data,
       stockAliments: stockARes.data,
+      stockVetos: stockVRes.data,
       saillies: sailliesFinal,
       notes: notesRes.data,
     });
@@ -350,6 +351,7 @@ export async function recomputeAlerts(): Promise<void> {
     bandes: state.troupeau.bandes,
     sante: state.ressources.sante,
     stockAliments: state.ressources.stockAliment,
+    stockVetos: state.ressources.stockVeto,
     saillies: state.pilotage.saillies,
     notes: state.ressources.notes,
   });

@@ -21,6 +21,7 @@ import {
   logesMaterniteOccupation,
   filterRealPortees,
 } from '../../services/bandesAggregator';
+import { findBandeForTruie } from '../../services/reproductionDashboard';
 import { FARM_CONFIG } from '../../config/farm';
 import {
   computePhaseTerrain,
@@ -478,11 +479,9 @@ function daysSince(s: string | undefined, today: Date): number | null {
 }
 
 function getTruiePortee(truie: Truie, bandes: BandePorcelets[]): BandePorcelets | undefined {
-  const sm = bandes.filter(b => /sous.m/i.test(b.statut ?? ''));
-  return sm.find(b =>
-    (b.truie && b.truie === truie.id) ||
-    (b.boucleMere && truie.boucle && b.boucleMere === truie.boucle)
-  );
+  // Délégation à findBandeForTruie (source unique de vérité pour la jointure
+  // truie ↔ bande). Match prioritaire UUID, puis code_id, puis boucle.
+  return findBandeForTruie(truie, bandes) ?? undefined;
 }
 
 function mortsPercent(bande?: BandePorcelets): number {

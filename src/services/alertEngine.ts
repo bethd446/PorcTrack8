@@ -19,7 +19,7 @@ import React from 'react';
 import { Heart, Stethoscope, Layers, Box, Calendar } from 'lucide-react';
 import { differenceInCalendarDays, startOfDay } from 'date-fns';
 import { fromZonedTime, toZonedTime } from 'date-fns-tz';
-import type { Truie, BandePorcelets, TraitementSante, StockAliment, Saillie } from '../types/farm';
+import type { Truie, BandePorcelets, TraitementSante, StockAliment, StockVeto, Saillie } from '../types/farm';
 import type { Note } from '../types';
 import { normaliseStatut } from '../lib/truieStatut';
 import { computeBandePhase } from './bandesAggregator';
@@ -387,6 +387,54 @@ function checkStock(stock: StockAliment): FarmAlert | null {
   return null;
 }
 
+/**
+ * R5b — Stock vétérinaire (vaccins, antibiotiques, etc.).
+ * Logique identique à `checkStock` (aliments) mais avec un calcul du
+ * statut local : `StockVeto.statutStock` est optionnel et rarement
+ * renseigné côté Sheets/Supabase, donc on dérive du couple
+ * (stockActuel, seuilAlerte ?? stockMin).
+ */
+function checkStockVeto(stock: StockVeto): FarmAlert | null {
+  const stockActuel = stock.stockActuel ?? 0;
+  const seuil = stock.seuilAlerte > 0 ? stock.seuilAlerte : (stock.stockMin ?? 0);
+  const statut: 'RUPTURE' | 'BAS' | 'OK' =
+    stock.statutStock === 'RUPTURE' || stockActuel <= 0
+      ? 'RUPTURE'
+      : stock.statutStock === 'BAS' || (seuil > 0 && stockActuel <= seuil)
+        ? 'BAS'
+        : 'OK';
+
+  if (statut === 'RUPTURE') {
+    return {
+      id: alertId('VET', stock.id, 'RUPTURE'),
+      priority: 'CRITIQUE',
+      category: 'STOCK',
+      subjectId: stock.id,
+      subjectLabel: stock.produit,
+      title: `Véto Épuisé — ${stock.produit}`,
+      message: `Rupture de stock vétérinaire détectée. Commander immédiatement.`,
+      requiresAction: true,
+      actions: [{ type: 'DISMISS', label: 'C\'est fait' }],
+      createdAt: new Date(),
+    };
+  }
+  if (statut === 'BAS') {
+    return {
+      id: alertId('VET', stock.id, 'BAS'),
+      priority: 'HAUTE',
+      category: 'STOCK',
+      subjectId: stock.id,
+      subjectLabel: stock.produit,
+      title: `Véto Bas — ${stock.produit}`,
+      message: `Niveau de stock vétérinaire sous le seuil d'alerte (${stockActuel}${stock.unite}).`,
+      requiresAction: true,
+      actions: [{ type: 'DISMISS', label: 'Noté' }],
+      createdAt: new Date(),
+    };
+  }
+  return null;
+}
+
 function checkRegroupementBandes(bandes: BandePorcelets[], today: Date): FarmAlert[] {
   const sevrables = bandes.filter(b => {
     if (b.dateSevrageReelle || (b.statut || '').toLowerCase().includes('sevr')) return false;
@@ -692,6 +740,12 @@ export interface AlertEngineInput {
   bandes: BandePorcelets[];
   sante: TraitementSante[];
   stockAliments: StockAliment[];
+  /**
+   * Stock vétérinaire (vaccins, antibiotiques, désinfectants…).
+   * Optionnel pour rétrocompat avec les call sites qui ne le passent pas
+   * encore — sera traité comme `[]` si absent.
+   */
+  stockVetos?: StockVeto[];
   saillies: Saillie[];
   notes: Note[];
 }
@@ -718,6 +772,10 @@ export function runAlertEngine(input: AlertEngineInput): FarmAlert[] {
   }
   for (const stock of input.stockAliments) {
     const a = checkStock(stock);
+    if (a) alerts.push(a);
+  }
+  for (const v of input.stockVetos ?? []) {
+    const a = checkStockVeto(v);
     if (a) alerts.push(a);
   }
   const regroupementAlerts = checkRegroupementBandes(input.bandes, today);

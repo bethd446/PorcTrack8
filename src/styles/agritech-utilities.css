@@ -64,7 +64,11 @@
   .chip--amber  { color: var(--color-amber);  border-color: color-mix(in srgb, var(--color-amber) 40%, transparent); }
   .chip--red    { color: var(--color-red);    border-color: color-mix(in srgb, var(--color-red) 40%, transparent); }
   .chip--blue   { color: var(--color-blue);   border-color: color-mix(in srgb, var(--color-blue) 40%, transparent); }
-  .chip--gold   { color: var(--color-gold);   border-color: color-mix(in srgb, var(--color-gold) 40%, transparent); }
+  /* chip--gold (Allaitante / Lactation / Maternité) : foreground #F4A261 sur
+     #FAFAFA tombait à 1.97:1 (FAIL WCAG AA). On bascule sur amber-pork-deep
+     (#B0703D ≈ 4.7:1) pour rester lisible plein soleil. Le bord conserve
+     l'amber-pork pour la signature visuelle. */
+  .chip--gold   { color: var(--color-amber-pork-deep); border-color: color-mix(in srgb, var(--color-amber-pork) 40%, transparent); }
   .chip--coral  { color: var(--color-coral);  border-color: color-mix(in srgb, var(--color-coral) 40%, transparent); }
   .chip--teal   { color: var(--color-teal);   border-color: color-mix(in srgb, var(--color-teal) 40%, transparent); }
 

@@ -34,11 +34,6 @@ import {
 } from '../../utils/whatsappOrder';
 import { listFournisseurs, type FournisseurRow } from '../../services/supabaseWrites';
 
-// AUDIT-V1 : FARM_NAME hardcodé conservé pour URLs WhatsApp commande
-// (utilisé en scope module hors composant). Le HEADER affiché à l'utilisateur
-// utilise useMeta().nomFerme (cf. ligne 472).
-const FARM_NAME_FALLBACK = 'K13';
-
 function manqueKgOf(item: StockAliment): number {
   const stock = item.stockActuel ?? 0;
   const seuil = item.seuilAlerte ?? 0;
@@ -214,6 +209,7 @@ interface AlimentSectionProps {
   onRefresh: () => Promise<void>;
   cheptel: { truies: Truie[]; verrats: Verrat[]; bandes: BandePorcelets[] };
   fournisseurs?: FournisseurRow[];
+  farmName: string;
 }
 
 const AlimentSection: React.FC<AlimentSectionProps> = ({
@@ -228,6 +224,7 @@ const AlimentSection: React.FC<AlimentSectionProps> = ({
   onRefresh,
   cheptel,
   fournisseurs,
+  farmName,
 }) => {
   const isEmpty = items.length === 0;
   return (
@@ -275,6 +272,7 @@ const AlimentSection: React.FC<AlimentSectionProps> = ({
                 onSelect={onSelect}
                 cheptel={cheptel}
                 fournisseurs={fournisseurs}
+                farmName={farmName}
               />
             );
           })}
@@ -295,6 +293,8 @@ interface AlimentEditableRowProps {
   onSelect: (item: StockAliment) => void;
   cheptel: { truies: Truie[]; verrats: Verrat[]; bandes: BandePorcelets[] };
   fournisseurs?: FournisseurRow[];
+  /** Nom de la ferme courante (lu depuis useMeta().nomFerme dans le parent). */
+  farmName: string;
 }
 
 const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
@@ -303,6 +303,7 @@ const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
   onRefresh,
   cheptel,
   fournisseurs,
+  farmName,
 }) => {
   const projection = projectStockDuration(item, cheptel);
   const treatment = classifyTreatment(item);
@@ -419,7 +420,7 @@ const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
               fournisseur: { nom: f.nom, whatsapp_number: f.whatsapp_number },
               produit: item.libelle || item.id,
               qteKg: manqueKgOf(item),
-              farmName: FARM_NAME_FALLBACK,
+              farmName,
             })
           : null;
         const url =
@@ -428,7 +429,7 @@ const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
             item.libelle || item.id,
             manqueKgOf(item),
             item.unite,
-            FARM_NAME_FALLBACK,
+            farmName,
           );
         if (!url) return null;
         return (
@@ -631,7 +632,7 @@ const AlimentsView: React.FC = () => {
                 type="button"
                 onClick={() => setAddOpen(true)}
                 aria-label="Ajouter un nouvel aliment"
-                className="shrink-0 inline-flex h-9 items-center gap-1.5 px-3 rounded-md bg-accent text-bg-0 font-mono text-[11px] font-bold uppercase tracking-wide transition-colors duration-150 hover:brightness-110 active:scale-[0.96] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                className="shrink-0 inline-flex h-11 min-h-[44px] items-center gap-1.5 px-4 rounded-md bg-accent text-bg-0 font-mono text-[11px] font-bold uppercase tracking-wide transition-colors duration-150 hover:brightness-110 active:scale-[0.96] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
               >
                 <Plus size={14} aria-hidden="true" />
                 <span>Nouvel aliment</span>
@@ -774,6 +775,7 @@ const AlimentsView: React.FC = () => {
                   onRefresh={refreshData}
                   cheptel={cheptel}
                   fournisseurs={fournisseurs}
+                  farmName={FARM_NAME}
                 />
 
                 <AlimentSection
@@ -791,6 +793,7 @@ const AlimentsView: React.FC = () => {
                   onRefresh={refreshData}
                   cheptel={cheptel}
                   fournisseurs={fournisseurs}
+                  farmName={FARM_NAME}
                 />
 
                 {grouped.autres.length > 0 ? (
@@ -804,6 +807,7 @@ const AlimentsView: React.FC = () => {
                     onSelect={handleSelect}
                     onRefresh={refreshData}
                     cheptel={cheptel}
+                    farmName={FARM_NAME}
                   />
                 ) : null}
               </>

@@ -5,7 +5,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { buildReproductionDashboard } from './reproductionDashboard';
+import { buildReproductionDashboard, findBandeForTruie } from './reproductionDashboard';
 import type {
   Truie,
   Saillie,
@@ -182,5 +182,81 @@ describe('buildReproductionDashboard — étape 5 (À sevrer)', () => {
 
     expect(dash.asevrer.length).toBe(1);
     expect(dash.asevrer[0].daysOverdue).toBe(2);
+  });
+});
+
+// ─── findBandeForTruie ──────────────────────────────────────────────────────
+
+describe('findBandeForTruie — jointure truie ↔ bande', () => {
+  // Date de référence : on veut une dateMB récente (≤ 28j) pour passer le filtre.
+  const TODAY_LOCAL = new Date(2026, 4, 1); // 2026-05-01
+
+  it('match prioritaire par UUID (bande.truie === truie.id)', () => {
+    const truie: Truie = makeTruie('En maternité', {
+      id: 'uuid-1234-5678',
+      displayId: 'T07',
+      boucle: 'FR-T07',
+    });
+    const bande: BandePorcelets = makeBande('Sous mère', {
+      truie: 'uuid-1234-5678', // UUID, pas le code
+      boucleMere: undefined,
+      dateMB: '20/04/2026', // J+11
+    });
+    expect(findBandeForTruie(truie, [bande], 28, TODAY_LOCAL)).toBe(bande);
+  });
+
+  it('fallback par code_id (bande.truie === truie.displayId)', () => {
+    const truie: Truie = makeTruie('En maternité', {
+      id: 'uuid-aaaa',
+      displayId: 'T08',
+      boucle: 'FR-T08',
+    });
+    const bande: BandePorcelets = makeBande('Sous mère', {
+      truie: 'T08', // code_id, mapping principal supabase
+      boucleMere: undefined,
+      dateMB: '20/04/2026',
+    });
+    expect(findBandeForTruie(truie, [bande], 28, TODAY_LOCAL)).toBe(bande);
+  });
+
+  it('fallback par boucle (legacy)', () => {
+    const truie: Truie = makeTruie('En maternité', {
+      id: 'uuid-bbbb',
+      displayId: 'T09',
+      boucle: 'FR-T09',
+    });
+    const bande: BandePorcelets = makeBande('Sous mère', {
+      truie: undefined,
+      boucleMere: 'FR-T09',
+      dateMB: '20/04/2026',
+    });
+    expect(findBandeForTruie(truie, [bande], 28, TODAY_LOCAL)).toBe(bande);
+  });
+
+  it('retourne null si aucun match', () => {
+    const truie: Truie = makeTruie('En maternité', {
+      id: 'uuid-cccc',
+      displayId: 'T10',
+      boucle: 'FR-T10',
+    });
+    const bande: BandePorcelets = makeBande('Sous mère', {
+      truie: 'T99',
+      boucleMere: 'FR-T99',
+      dateMB: '20/04/2026',
+    });
+    expect(findBandeForTruie(truie, [bande], 28, TODAY_LOCAL)).toBeNull();
+  });
+
+  it('exclut les bandes qui ne sont plus Sous-mère', () => {
+    const truie: Truie = makeTruie('En maternité', {
+      id: 'uuid-dddd',
+      displayId: 'T11',
+      boucle: 'FR-T11',
+    });
+    const bande: BandePorcelets = makeBande('Sevrés', {
+      truie: 'T11',
+      dateMB: '20/04/2026',
+    });
+    expect(findBandeForTruie(truie, [bande], 28, TODAY_LOCAL)).toBeNull();
   });
 });

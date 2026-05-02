@@ -70,6 +70,7 @@ function buildInitial(truie: Truie): TruieEditInitial {
       ? String(truie.poids)
       : '';
   return {
+    codeId: truie.displayId ?? '',
     nom: truie.nom ?? '',
     boucle: truie.boucle ?? '',
     race: truie.race ?? '',
@@ -110,11 +111,21 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
   truie,
   onSuccess,
 }) => {
-  const { refreshData } = useFarm();
+  const { refreshData, truies } = useFarm();
   const { user } = useAuth();
   const farmId = user?.id ?? '';
 
   const initial = useMemo(() => buildInitial(truie), [truie]);
+
+  // Set des codes déjà pris par d'autres truies (pour valider l'unicité côté
+  // client). On exclut la truie en cours d'édition via initial.codeId.
+  const existingCodes = useMemo(() => {
+    const s = new Set<string>();
+    for (const t of truies) {
+      if (t.id !== truie.id && t.displayId) s.add(t.displayId);
+    }
+    return s;
+  }, [truies, truie.id]);
 
   const [draft, setDraft] = useState<TruieEditDraft>(initial);
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(truie.photoUrl);
@@ -157,7 +168,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    const result = validateTruieEditFull(draft, initial);
+    const result = validateTruieEditFull(draft, initial, existingCodes);
     if (!result.ok || !result.patch) {
       setErrors(result.errors);
       return;
@@ -175,6 +186,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
     try {
       const supabasePatch: Record<string, unknown> = {};
       const p = result.patch as Record<string, unknown>;
+      if ('CODE_ID' in p) supabasePatch.code_id = p.CODE_ID;
       if ('NOM' in p) supabasePatch.name = p.NOM;
       if ('BOUCLE' in p) supabasePatch.boucle = p.BOUCLE;
       if ('RACE' in p) supabasePatch.breed = p.RACE;
@@ -290,6 +302,45 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
             <h3 id="sect-identite" className={sectionTitleCls}>
               Identité
             </h3>
+
+            {/* Code interne (displayId — éditable) */}
+            <div className="space-y-1.5">
+              <label htmlFor="edit-truie-codeid" className={labelCls}>
+                Code interne <span className="text-red normal-case">· requis</span>
+              </label>
+              <input
+                id="edit-truie-codeid"
+                type="text"
+                maxLength={15}
+                aria-label="Code interne de la truie"
+                aria-required="true"
+                aria-invalid={!!errors.codeId}
+                aria-describedby={
+                  errors.codeId
+                    ? 'edit-truie-codeid-error'
+                    : 'edit-truie-codeid-hint'
+                }
+                className={[
+                  inputBase,
+                  errors.codeId ? inputErr : inputOk,
+                ].join(' ')}
+                placeholder="Ex: K13-T-001"
+                value={draft.codeId}
+                onChange={e => update('codeId', e.target.value)}
+                disabled={saving}
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <p id="edit-truie-codeid-hint" className={hintCls}>
+                Tu peux changer le préfixe (T → K, etc.) — code interne unique
+                pour ta ferme · 3-15 lettres/chiffres/tirets
+              </p>
+              {errors.codeId ? (
+                <p id="edit-truie-codeid-error" role="alert" className={errCls}>
+                  {errors.codeId}
+                </p>
+              ) : null}
+            </div>
 
             {/* Nom */}
             <div className="space-y-1.5">

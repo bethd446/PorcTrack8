@@ -42,6 +42,20 @@ function formatNumOrDash(n: number | null): string {
   return Number.isInteger(n) ? `${n}` : n.toFixed(1);
 }
 
+const KPI_REQUIRED_CYCLES = 5;
+
+/**
+ * Construit un hint quand un KPI vaut "—". Donne au porcher le contexte :
+ * "il manque X cycles avant que la valeur soit fiable".
+ */
+function buildKpiHint(value: number | null, actualCycles: number): string | undefined {
+  if (value !== null && Number.isFinite(value) && value !== 0) return undefined;
+  if (actualCycles >= KPI_REQUIRED_CYCLES) {
+    return 'Donnée non saisie';
+  }
+  return `Pas assez de données (${actualCycles}/${KPI_REQUIRED_CYCLES} cycles)`;
+}
+
 function truieDisplay(t: { displayId: string; nom?: string }): string {
   return t.nom ? `${t.displayId} (${t.nom})` : t.displayId;
 }
@@ -284,24 +298,28 @@ const ReproductionHub: React.FC = () => {
                   value={formatNumOrDash(kpis.isseMoyJours)}
                   unit="j"
                   ariaLabel={`Intervalle Sevrage-Saillie ${formatNumOrDash(kpis.isseMoyJours)} jours`}
+                  hint={buildKpiHint(kpis.isseMoyJours, kpis.nbPortees12m)}
                 />
                 <KpiCardV6
                   label="IEM"
                   value={formatNumOrDash(kpis.iemMoyJours)}
                   unit="j"
                   ariaLabel={`Intervalle Entre Mise-Bas ${formatNumOrDash(kpis.iemMoyJours)} jours`}
+                  hint={buildKpiHint(kpis.iemMoyJours, kpis.nbTruiesAvecMBMultiples)}
                 />
                 <KpiCardV6
                   label="Taux MB"
                   value={formatNumOrDash(kpis.tauxMBPct)}
                   unit="%"
                   ariaLabel={`Taux mise-bas ${formatNumOrDash(kpis.tauxMBPct)} pourcent`}
+                  hint={buildKpiHint(kpis.tauxMBPct, kpis.nbSaillies12m)}
                 />
                 <KpiCardV6
                   label="Renouv."
                   value={formatNumOrDash(kpis.tauxRenouvellementPct)}
                   unit="%"
                   ariaLabel={`Taux renouvellement ${formatNumOrDash(kpis.tauxRenouvellementPct)} pourcent`}
+                  hint={buildKpiHint(kpis.tauxRenouvellementPct, kpis.nbTruiesTotal)}
                 />
               </div>
             </section>

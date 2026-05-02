@@ -118,13 +118,7 @@ const PilotageHub: React.FC = () => {
               >
                 Pilotage
               </h1>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(4, 1fr)',
-                  gap: 10,
-                }}
-              >
+              <div className="grid grid-cols-2 gap-[10px] sm:grid-cols-4">
                 {[0, 1, 2, 3].map(i => (
                   <div
                     key={i}
@@ -327,11 +321,7 @@ const PilotageHub: React.FC = () => {
             {/* ── 4 KPI cards ──────────────────────────────────────── */}
             <section
               aria-label="KPIs financiers"
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                gap: 10,
-              }}
+              className="grid grid-cols-2 gap-[10px] sm:grid-cols-4"
             >
               <KpiCardV6
                 label="Valeur cheptel"
@@ -512,11 +502,16 @@ interface PerfBandeCardProps {
   metric: string;
 }
 
-const PerfBandeCard: React.FC<PerfBandeCardProps> = ({ tone, label, bandeId, metric }) => {
+export const PerfBandeCard: React.FC<PerfBandeCardProps> = ({ tone, label, bandeId, metric }) => {
+  const navigate = useNavigate();
   const color = tone === 'accent' ? 'var(--color-accent-500)' : 'var(--color-pig-deep)';
   const bg = tone === 'accent' ? 'var(--color-accent-100)' : 'var(--color-pig-soft)';
   return (
-    <div
+    <button
+      type="button"
+      onClick={() => navigate(`/troupeau/bandes/${bandeId}`)}
+      aria-label={`Ouvrir fiche bande ${bandeId}`}
+      className="pressable"
       style={{
         background: 'var(--bg-surface)',
         borderRadius: 12,
@@ -525,6 +520,12 @@ const PerfBandeCard: React.FC<PerfBandeCardProps> = ({ tone, label, bandeId, met
         display: 'flex',
         alignItems: 'center',
         gap: 14,
+        border: 'none',
+        cursor: 'pointer',
+        textAlign: 'left',
+        width: '100%',
+        minHeight: 44,
+        transition: 'transform 160ms var(--ease-emil)',
       }}
     >
       <div
@@ -581,7 +582,7 @@ const PerfBandeCard: React.FC<PerfBandeCardProps> = ({ tone, label, bandeId, met
         </div>
       </div>
       <ArrowRight size={16} color="var(--muted)" aria-hidden="true" />
-    </div>
+    </button>
   );
 };
 

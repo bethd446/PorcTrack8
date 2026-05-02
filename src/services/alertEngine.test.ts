@@ -11,7 +11,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runAlertEngine, type AlertEngineInput } from './alertEngine';
-import type { BandePorcelets, StockAliment, Truie, Saillie } from '../types/farm';
+import type { BandePorcelets, StockAliment, StockVeto, Truie, Saillie } from '../types/farm';
 
 // ─── Utilitaires de fixture ──────────────────────────────────────────────────
 
@@ -977,5 +977,68 @@ describe('runAlertEngine — tri global', () => {
     for (let i = 1; i < priorities.length; i++) {
       expect(order[priorities[i]]).toBeGreaterThanOrEqual(order[priorities[i - 1]]);
     }
+  });
+});
+
+// ─── R5b — Stock Vétérinaire (FIX #16) ──────────────────────────────────────
+
+function makeStockVeto(overrides: Partial<StockVeto> = {}): StockVeto {
+  return {
+    id: 'V001',
+    produit: 'Vaccin Parvo',
+    stockActuel: 100,
+    unite: 'doses',
+    seuilAlerte: 50,
+    statutStock: 'OK',
+    ...overrides,
+  };
+}
+
+describe('R5b — Stock Vétérinaire', () => {
+  it('déclenche HAUTE quand stockVeto BAS (sous seuilAlerte)', () => {
+    const veto: StockVeto = makeStockVeto({
+      id: 'VAC-PARVO',
+      produit: 'Vaccin Parvo',
+      stockActuel: 10,
+      seuilAlerte: 50,
+      // statutStock non renseigné — la dérivation locale doit suffire
+      statutStock: undefined,
+    });
+    const alerts = runAlertEngine(emptyInput({ stockVetos: [veto] }));
+    const a = alerts.find(x => x.id.startsWith('VET-'));
+    expect(a).toBeDefined();
+    expect(a?.priority).toBe('HAUTE');
+    expect(a?.title).toContain('Vaccin Parvo');
+    expect(a?.subjectLabel).toBe('Vaccin Parvo');
+  });
+
+  it('déclenche CRITIQUE quand stockVeto à 0 (RUPTURE)', () => {
+    const veto: StockVeto = makeStockVeto({
+      id: 'AB-AMOX',
+      produit: 'Amoxicilline',
+      stockActuel: 0,
+      seuilAlerte: 5,
+    });
+    const alerts = runAlertEngine(emptyInput({ stockVetos: [veto] }));
+    const a = alerts.find(x => x.id.startsWith('VET-'));
+    expect(a).toBeDefined();
+    expect(a?.priority).toBe('CRITIQUE');
+    expect(a?.title).toContain('Épuisé');
+  });
+
+  it('ne déclenche RIEN quand stockVeto OK (stock > seuil)', () => {
+    const veto: StockVeto = makeStockVeto({
+      stockActuel: 200,
+      seuilAlerte: 50,
+      statutStock: 'OK',
+    });
+    const alerts = runAlertEngine(emptyInput({ stockVetos: [veto] }));
+    expect(alerts.find(x => x.id.startsWith('VET-'))).toBeUndefined();
+  });
+
+  it("ne déclenche rien si stockVetos n'est pas passé (rétrocompat)", () => {
+    // Pas de stockVetos dans l'input — l'engine doit tolérer.
+    const alerts = runAlertEngine(emptyInput({}));
+    expect(alerts.find(x => x.id.startsWith('VET-'))).toBeUndefined();
   });
 });
