@@ -5,6 +5,7 @@ import { ChevronRight, Plus, Trophy } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
 import { useTroupeau } from '../../context/TroupeauContext';
+import { useMeta } from '../../context/FarmContext';
 import { normaliseStatut } from '../../lib/truieStatut';
 import { Bandes } from '../../services/bandAnalysisEngine';
 import type { LogeOccupationAlerte } from '../../services/bandesAggregator';
@@ -49,6 +50,7 @@ function isSubTab(v: string | null): v is SubTab {
 const TroupeauHub: React.FC = () => {
   const navigate = useNavigate();
   const { verrats, bandes } = useTroupeau();
+  const { nomFerme } = useMeta();
   const [searchParams, setSearchParams] = useSearchParams();
   const { activeTruies } = useTroupeauPipeline();
   const { handleRefresh } = useAutoRefresh();
@@ -157,7 +159,7 @@ const TroupeauHub: React.FC = () => {
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
             {/* ── En-tête ───────────────────────────────────────────── */}
             <header>
-              <Eyebrow dotColor="accent">Cheptel · Ferme {FARM_CONFIG.FARM_ID}</Eyebrow>
+              <Eyebrow dotColor="accent">Cheptel · {nomFerme}</Eyebrow>
               <h1
                 style={{
                   fontFamily: 'BigShoulders, system-ui, sans-serif',

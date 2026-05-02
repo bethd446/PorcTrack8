@@ -118,11 +118,11 @@ function validateStep(state: WizardState): boolean {
     case 5:
       return state.races.length >= 1 && state.races.length <= 5;
     case 6:
-      return state.effectif_truies_initial >= 0 && state.effectif_truies_initial <= 500;
+      return state.effectif_truies_initial >= 0 && state.effectif_truies_initial <= 5000;
     case 7:
-      return state.effectif_verrats_initial >= 0 && state.effectif_verrats_initial <= 50;
+      return state.effectif_verrats_initial >= 0 && state.effectif_verrats_initial <= 500;
     case 8:
-      return state.objectif_porcelets_an >= 0 && state.objectif_porcelets_an <= 50000;
+      return state.objectif_porcelets_an >= 0 && state.objectif_porcelets_an <= 500000;
     case 9:
       return state.notes_demarrage.length <= 500;
     default:
@@ -449,12 +449,12 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, setState, onStart, e
         <StepCard
           icon={<Users size={20} aria-hidden="true" />}
           title="Cheptel initial — Truies"
-          subtitle="Combien de truies ont déjà sur la ferme ?"
+          subtitle="Combien de truies as-tu déjà sur la ferme ?"
         >
           <NumberInput
             value={state.effectif_truies_initial}
             min={0}
-            max={500}
+            max={5000}
             onChange={(v) => setState((s) => ({ ...s, effectif_truies_initial: v }))}
             ariaLabel="Effectif truies initial"
           />
@@ -473,7 +473,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, setState, onStart, e
           <NumberInput
             value={state.effectif_verrats_initial}
             min={0}
-            max={50}
+            max={500}
             onChange={(v) => setState((s) => ({ ...s, effectif_verrats_initial: v }))}
             ariaLabel="Effectif verrats initial"
           />
@@ -489,7 +489,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, setState, onStart, e
           <NumberInput
             value={state.objectif_porcelets_an}
             min={0}
-            max={50000}
+            max={500000}
             onChange={(v) => setState((s) => ({ ...s, objectif_porcelets_an: v }))}
             ariaLabel="Objectif annuel porcelets"
           />

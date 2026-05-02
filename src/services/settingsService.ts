@@ -3,7 +3,9 @@ import { supabase } from './supabaseClient';
 export interface FarmInfo {
   id: string;
   nom: string;
+  nomFerme: string | null;
   secteur: string | null;
+  pays: string | null;
 }
 
 export interface ProfileUpdate {
@@ -18,11 +20,17 @@ export interface FarmUpdate {
 export async function fetchFarm(userId: string): Promise<FarmInfo | null> {
   const { data, error } = await supabase
     .from('troupeaux')
-    .select('id, nom, secteur')
+    .select('id, nom, nom_ferme, secteur, pays')
     .eq('user_id', userId)
     .maybeSingle();
   if (error || !data) return null;
-  return { id: data.id, nom: data.nom, secteur: data.secteur };
+  return {
+    id: data.id,
+    nom: data.nom,
+    nomFerme: data.nom_ferme,
+    secteur: data.secteur,
+    pays: data.pays,
+  };
 }
 
 export async function updateProfile(userId: string, patch: ProfileUpdate): Promise<void> {

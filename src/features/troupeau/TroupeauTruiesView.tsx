@@ -41,7 +41,7 @@ function statutVisu(statut: string | undefined): StatutVisu {
     case 'PLEINE':
       return { label: 'Pleine', tone: 'accent', filter: 'pleines' };
     case 'MATERNITE':
-      return { label: 'Maternité', tone: 'gold', filter: 'maternite' };
+      return { label: 'Allaitante', tone: 'gold', filter: 'maternite' };
     case 'CHALEUR':
       return { label: 'Chaleur', tone: 'coral', filter: 'chaleur' };
     case 'VIDE':
@@ -217,7 +217,7 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
   const ALL_FILTERS: ReadonlyArray<{ id: FilterKey; label: string }> = [
     { id: 'tout', label: 'Tout' },
     { id: 'pleines', label: 'Pleines' },
-    { id: 'maternite', label: 'Maternité' },
+    { id: 'maternite', label: 'Allaitantes' },
     { id: 'chaleur', label: 'Chaleur' },
     { id: 'vides', label: 'Vides' },
     { id: 'reforme', label: 'Réforme' },

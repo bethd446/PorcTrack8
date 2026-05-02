@@ -13,7 +13,6 @@ import type { ChipTone } from '../../components/agritech';
 import EmptyState from '../../components/design/EmptyState';
 import { TruieIcon, VerratIcon } from '../../components/icons';
 import { getStatusConfig } from '../../utils/statusConfig';
-import { FARM_CONFIG } from '../../config/farm';
 import { normaliseStatut } from '../../lib/truieStatut';
 import QuickEditTruieForm from '../../components/forms/QuickEditTruieForm';
 import QuickEditVerratForm from '../../components/forms/QuickEditVerratForm';
@@ -71,7 +70,7 @@ const SkeletonRow: React.FC = () => (
 const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { truies, verrats, loading, refreshData } = useFarm();
+  const { truies, verrats, loading, refreshData, nomFerme } = useFarm();
 
   // Derive initial tab from explicit prop → URL query (?tab=verrat) → default TRUIE.
   const queryTab = new URLSearchParams(location.search).get('tab');
@@ -130,8 +129,8 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
 
   const subtitle =
     tab === 'TRUIE'
-      ? `${truies.length} truie${truies.length > 1 ? 's' : ''} · ${FARM_CONFIG.FARM_ID}`
-      : `${verrats.length} verrat${verrats.length > 1 ? 's' : ''} · ${FARM_CONFIG.FARM_ID}`;
+      ? `${truies.length} truie${truies.length > 1 ? 's' : ''} · ${nomFerme}`
+      : `${verrats.length} verrat${verrats.length > 1 ? 's' : ''} · ${nomFerme}`;
 
   const EmptyIcon = tab === 'TRUIE' ? TruieIcon : VerratIcon;
 

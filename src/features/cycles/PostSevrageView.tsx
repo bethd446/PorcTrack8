@@ -198,24 +198,29 @@ const PostSevrageView: React.FC = () => {
             </div>
 
             {/* ── Analyse & Conseils ────────────────────────────────────── */}
-            <section className="space-y-3">
-              <SectionDivider label="Diagnostic Terrain" />
-              <div className="grid grid-cols-1 gap-3">
-                {ANALYSE_RECOMMANDATIONS.map((rec, i) => (
-                  <div key={i} className="card-dense bg-accent/5 border-accent/20 flex gap-3 p-3">
-                    <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
-                      <Lightbulb size={16} className="text-accent" />
+            {/* FIX-4 : Diagnostic uniquement quand des portées existent ET qu'au
+                moins une a un relevé chargé. Sinon les recommandations seraient
+                fictives. */}
+            {portees.length > 0 && portees.some(p => p.releve) && (
+              <section className="space-y-3">
+                <SectionDivider label="Diagnostic Terrain (Exemple)" />
+                <div className="grid grid-cols-1 gap-3">
+                  {ANALYSE_RECOMMANDATIONS.map((rec, i) => (
+                    <div key={i} className="card-dense bg-accent/5 border-accent/20 flex gap-3 p-3">
+                      <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+                        <Lightbulb size={16} className="text-accent" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-[12px] font-bold text-text-0 uppercase font-mono">{rec.titre}</h4>
+                        <p className="text-[11px] text-text-2 mt-1 leading-relaxed">
+                          {rec.constat} <span className="text-accent font-medium">{rec.action}</span>
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="text-[12px] font-bold text-text-0 uppercase font-mono">{rec.titre}</h4>
-                      <p className="text-[11px] text-text-2 mt-1 leading-relaxed">
-                        {rec.constat} <span className="text-accent font-medium">{rec.action}</span>
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* ── Liste des Loges / Bandes ──────────────────────────────── */}
             <section className="space-y-4">

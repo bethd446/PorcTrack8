@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { isArchivedTruie, normalizeTruieId, ARCHIVED_TRUIE_IDS } from './truieHelpers';
+import { isArchivedTruie, normalizeTruieId, ARCHIVED_TRUIE_IDS, safeDate } from './truieHelpers';
 
 describe('isArchivedTruie', () => {
   it('T08 est archivée (truie réformée)', () => {
@@ -58,5 +58,40 @@ describe('ARCHIVED_TRUIE_IDS', () => {
   it('contient T08 et T17 par défaut', () => {
     expect(ARCHIVED_TRUIE_IDS).toContain('T08');
     expect(ARCHIVED_TRUIE_IDS).toContain('T17');
+  });
+});
+
+describe('safeDate', () => {
+  it('parse ISO yyyy-MM-dd (Postgres standard)', () => {
+    const d = safeDate('2026-04-28');
+    expect(d).not.toBeNull();
+    expect(d!.getFullYear()).toBe(2026);
+    expect(d!.getMonth()).toBe(3); // April = index 3
+    expect(d!.getDate()).toBe(28);
+  });
+
+  it('parse FR dd/MM/yyyy (Sheets legacy)', () => {
+    const d = safeDate('28/04/2026');
+    expect(d).not.toBeNull();
+    expect(d!.getFullYear()).toBe(2026);
+    expect(d!.getMonth()).toBe(3);
+    expect(d!.getDate()).toBe(28);
+  });
+
+  it('null/undefined/empty → null', () => {
+    expect(safeDate(null)).toBeNull();
+    expect(safeDate(undefined)).toBeNull();
+    expect(safeDate('')).toBeNull();
+    expect(safeDate('   ')).toBeNull();
+  });
+
+  it('rejette les dates invalides (ex: 30 février)', () => {
+    expect(safeDate('2026-02-30')).toBeNull();
+    expect(safeDate('30/02/2026')).toBeNull();
+  });
+
+  it('rejette les formats inconnus', () => {
+    expect(safeDate('not-a-date')).toBeNull();
+    expect(safeDate('2026/04/28')).toBeNull();
   });
 });

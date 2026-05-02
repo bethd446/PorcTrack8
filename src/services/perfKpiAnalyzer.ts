@@ -21,17 +21,14 @@ import type {
   TruiePerformance,
 } from '../types/farm';
 import { computeTruiePerformance, findPorteesForTruie } from './performanceAnalyzer';
+import { safeDate } from '../lib/truieHelpers';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/** Parse une date dd/MM/yyyy → timestamp. 0 si invalide. */
+/** Parse une date (ISO yyyy-MM-dd ou FR dd/MM/yyyy) → timestamp. 0 si invalide. */
 function parseFr(s?: string | null): number {
-  if (!s) return 0;
-  const parts = s.split('/');
-  if (parts.length !== 3) return 0;
-  const d = new Date(+parts[2], +parts[1] - 1, +parts[0]);
-  const ts = d.getTime();
-  return Number.isFinite(ts) ? ts : 0;
+  const d = safeDate(s);
+  return d ? d.getTime() : 0;
 }
 
 /** Division sûre : retourne 0 si dénominateur = 0. */

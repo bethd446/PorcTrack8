@@ -1,3 +1,10 @@
+/**
+ * @deprecated Vue legacy basée sur Google Sheets (PORCELETS_BANDES_DETAIL).
+ * Casse en prod : "CONFIGURATION REQUISE — Impossible de détecter la colonne
+ * identifiant les portées". La route /troupeau/bandes redirige désormais vers
+ * /troupeau?view=bandes (TroupeauHub) qui consomme la source Supabase.
+ * Conservé pour archive — ne plus référencer dans le router.
+ */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {

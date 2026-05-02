@@ -18,6 +18,8 @@ import Eyebrow from './Eyebrow';
 export interface NotesTimelineProps {
   subjectType: 'BANDE' | 'TRUIE' | 'VERRAT';
   subjectId: string;
+  /** Libellé humain (boucle/displayId) pour l'empty state. Sinon fallback générique. */
+  subjectLabel?: string;
   /** Nombre maxi de notes affichées (default 10). */
   maxItems?: number;
   /** Callback bouton "+ Ajouter une note". */
@@ -68,6 +70,7 @@ const TRUNCATE_LEN = 100;
 const NotesTimeline: React.FC<NotesTimelineProps> = ({
   subjectType,
   subjectId,
+  subjectLabel,
   maxItems = 10,
   onAddNote,
 }) => {
@@ -99,7 +102,8 @@ const NotesTimeline: React.FC<NotesTimelineProps> = ({
         </div>
         <div style={{ textAlign: 'center', padding: '20px 8px' }}>
           <p className="font-mono text-[12px] text-text-2 mb-3">
-            Aucune note pour {subjectType.toLowerCase()} {subjectId}.
+            Aucune note pour {subjectType.toLowerCase()}
+            {subjectLabel ? ` ${subjectLabel}` : ''}.
           </p>
           {onAddNote && (
             <button

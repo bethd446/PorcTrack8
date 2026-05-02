@@ -139,7 +139,7 @@ describe('validateEffectif', () => {
   });
 
   it('rejects above max default (max+1)', () => {
-    expect(errCode(validateEffectif(301))).toBe('effectif.too_high');
+    expect(errCode(validateEffectif(5001))).toBe('effectif.too_high');
   });
 
   it('rejects NaN', () => {

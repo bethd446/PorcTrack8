@@ -117,19 +117,21 @@ function extractFinanceId(entry: FinanceEntry): string | null {
 
 const FinancesView: React.FC = () => {
   const navigate = useNavigate();
-  const { finances, refreshData } = useFarm();
+  const { finances, refreshData, currency: farmCurrency } = useFarm();
   const [periode, setPeriode] = useState<PeriodeKey>('mois');
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<FinanceEntryWithId | null>(null);
 
   const entries = finances as FinanceEntry[];
 
+  // Devise : on respecte la devise dérivée du pays (`farmCurrency`) sauf si
+  // une entrée Sheets contient un marqueur EUR explicite (cas legacy).
   const currency = useMemo<'FCFA' | 'EUR'>(() => {
     for (const e of entries) {
       if (detectCurrency(e) === 'EUR') return 'EUR';
     }
-    return 'FCFA';
-  }, [entries]);
+    return farmCurrency === 'EUR' ? 'EUR' : 'FCFA';
+  }, [entries, farmCurrency]);
 
   // Filtre selon la période sélectionnée
   const filteredEntries = useMemo<FinanceEntry[]>(() => {

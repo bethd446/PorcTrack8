@@ -143,7 +143,8 @@ const AppSidebar: React.FC = () => {
 
   const cyclesItems: NavItem[] = useMemo(
     () => [
-      { label: 'Reproduction', icon: RotateCcw, href: '/cycles/repro' },
+      { label: 'Reproduction', icon: RotateCcw, href: '/reproduction' },
+      { label: 'Calendrier saillies', icon: RotateCcw, href: '/cycles/repro' },
       { label: 'Maternité', icon: RotateCcw, href: '/cycles/maternite' },
       { label: 'Post-sevrage', icon: RotateCcw, href: '/cycles/post-sevrage' },
       { label: 'Croissance', icon: RotateCcw, href: '/cycles/croissance' },

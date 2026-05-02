@@ -206,12 +206,11 @@ describe('TruieDetailView', () => {
     expect(document.querySelector('svg')).not.toBeNull();
   });
 
-  it('affiche la chip de statut « Maternité » avec le ton green', () => {
+  it('affiche la chip de statut « Allaitante » avec le ton green', () => {
     renderAt('/troupeau/truies/T14');
-    // "Maternité" apparaît à 2 endroits : chip du SowHero + valeur Statut
-    // dans Vitales. La chip est un <span> avec le style tone green
-    // (chip--gold n'existe plus en v6).
-    const matches = screen.getAllByText('Maternité');
+    // FIX-4 : Le statut DB "Maternité" est canonisé visuellement en "Allaitante"
+    // via labelStatutTruie. La chip est un <span> avec le style tone green.
+    const matches = screen.getAllByText('Allaitante');
     const chip = matches.find(el => {
       const style = el.getAttribute('style') ?? '';
       return el.tagName.toLowerCase() === 'span' && /color-accent/.test(style);

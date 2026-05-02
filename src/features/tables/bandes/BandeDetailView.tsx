@@ -368,7 +368,11 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
               <QuickNoteForm subjectType="BANDE" subjectId={bande.id} onSuccess={() => { onRefresh(); loadRelatedData(); }} />
 
               {/* Historique notes V21-6 C2 */}
-              <NotesTimeline subjectType="BANDE" subjectId={bande.id} />
+              <NotesTimeline
+                subjectType="BANDE"
+                subjectId={bande.id}
+                subjectLabel={bande.id}
+              />
 
               <div className="flex items-center justify-between mb-1">
                 <h3 className="kpi-label">Journal de bord</h3>

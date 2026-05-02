@@ -235,7 +235,7 @@ export const ChatbotWidget: React.FC = () => {
         {messages.length === 0 && (
           <p className="text-xs text-center mt-8" style={{ color: 'var(--muted)' }}>
             Bonjour, je suis Marius.<br />
-            Posez une question sur votre élevage.
+            Pose une question sur ton élevage.
           </p>
         )}
         {messages.map((m, i) => {

@@ -24,6 +24,7 @@ import TopBarSync from '../../components/design/TopBarSync';
 import KpiCardV6 from '../../components/design/KpiCard';
 import { useFarm } from '../../context/FarmContext';
 import { useAutoRefresh } from '../../hooks/useAutoRefresh';
+import { formatCurrency, currencySuffix, type Currency } from '../../lib/currency';
 import { genererRapportGlobal } from '../../services/financialAnalyzer';
 import { prepareAuditSnapshot } from '../../services/exportService';
 import AuditPrintTemplate from '../pilotage/AuditPrintTemplate';
@@ -44,6 +45,8 @@ const PilotageHub: React.FC = () => {
     alerts,
     bandes,
     transitions,
+    nomFerme,
+    currency,
   } = useFarm();
   const { handleRefresh } = useAutoRefresh();
   const [, setIsPrinting] = useState(false);
@@ -222,7 +225,7 @@ const PilotageHub: React.FC = () => {
                     color: 'var(--muted)',
                   }}
                 >
-                  Cockpit financier · {realBandes.length} bande{realBandes.length > 1 ? 's' : ''} · marge théorique K13
+                  Cockpit financier · {realBandes.length} bande{realBandes.length > 1 ? 's' : ''} · marge théorique {nomFerme}
                 </div>
               </div>
               {auditData && (
@@ -283,7 +286,7 @@ const PilotageHub: React.FC = () => {
                   lineHeight: 1,
                 }}
               >
-                {formatFCFA(margeGlobaleEstimee)}
+                {formatNumber(margeGlobaleEstimee)}
                 <span
                   style={{
                     fontSize: 16,
@@ -294,7 +297,7 @@ const PilotageHub: React.FC = () => {
                     textTransform: 'uppercase',
                   }}
                 >
-                  FCFA
+                  {currencySuffix(currency)}
                 </span>
               </div>
               <div
@@ -332,24 +335,24 @@ const PilotageHub: React.FC = () => {
             >
               <KpiCardV6
                 label="Valeur cheptel"
-                value={formatFCFA(totalRevenuProjete)}
-                unit=" F"
+                value={formatNumber(totalRevenuProjete)}
+                unit={currencyUnit(currency)}
                 trend={buildTrend(revenuDelta, 'Revenus projetés')}
                 trendDir={semanticTrendDir(revenuDelta, 'higher-better')}
                 spark={spark(totalRevenuProjete || 1)}
               />
               <KpiCardV6
                 label="Coût aliment"
-                value={formatFCFA(totalCoutAlimentaire)}
-                unit=" F"
+                value={formatNumber(totalCoutAlimentaire)}
+                unit={currencyUnit(currency)}
                 trend={buildTrend(coutAlimDelta, 'Engagé')}
                 trendDir={semanticTrendDir(coutAlimDelta, 'lower-better')}
                 spark={spark(totalCoutAlimentaire || 1)}
               />
               <KpiCardV6
                 label="Frais fixes"
-                value={formatFCFA(totalCoutFixe)}
-                unit=" F"
+                value={formatNumber(totalCoutFixe)}
+                unit={currencyUnit(currency)}
                 trend={buildTrend(coutFixeDelta, 'Cumul cycle')}
                 trendDir={semanticTrendDir(coutFixeDelta, 'neutral')}
                 spark={spark(totalCoutFixe || 1)}
@@ -396,7 +399,7 @@ const PilotageHub: React.FC = () => {
                     tone="pig"
                     label="Attention requise"
                     bandeId={flopBande.bande.idPortee}
-                    metric={`Marge : ${formatFCFA(flopBande.report.margeNetteProjetee)} FCFA`}
+                    metric={`Marge : ${formatCurrency(flopBande.report.margeNetteProjetee, currency)}`}
                   />
                 )}
                 {!topBande && !flopBande && (
@@ -653,9 +656,19 @@ const ModuleTile: React.FC<ModuleTileProps> = ({ icon, title, subtitle, onClick 
   </button>
 );
 
-function formatFCFA(n: number | null | undefined): string {
+/**
+ * Formate un montant numérique avec séparateur "." (style banque francophone).
+ * Pas de suffixe devise — celui-ci est appliqué via `currencySuffix()` côté
+ * appelant pour rester aligné sur le pays de la ferme.
+ */
+function formatNumber(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(n)) return '0';
   return Math.round(n).toLocaleString('fr-FR').replace(/\s/g, '.');
+}
+
+/** Format unitaire pour KpiCard : " €", " FCFA", etc. (espace de tête). */
+function currencyUnit(c: Currency): string {
+  return ` ${currencySuffix(c)}`;
 }
 
 export default PilotageHub;

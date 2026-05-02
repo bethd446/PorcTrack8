@@ -5,6 +5,8 @@ import {
 import { genererRapportFinancierBande } from '../../services/financialAnalyzer';
 import type { BandePorcelets, TransitionBande } from '../../types/farm';
 import { Chip } from '../../components/agritech';
+import { useMeta } from '../../context/FarmContext';
+import { formatCurrency } from '../../lib/currency';
 
 interface BandeFinanceCardProps {
   bande: BandePorcelets;
@@ -20,6 +22,7 @@ const BandeFinanceCard: React.FC<BandeFinanceCardProps> = ({
   historique,
   poidsActuel
 }) => {
+  const { currency, nomFerme } = useMeta();
   const roi = useMemo(() =>
     genererRapportFinancierBande(bande, historique, poidsActuel),
   [bande, historique, poidsActuel]);
@@ -88,16 +91,16 @@ const BandeFinanceCard: React.FC<BandeFinanceCardProps> = ({
       <div className="grid grid-cols-3 gap-3 border-t border-border pt-4">
         <div className="flex flex-col gap-1">
           <span className="text-[8px] uppercase font-mono text-text-2">Aliment</span>
-          <span className="text-[13px] font-bold text-text-0 font-mono">{formatFCFA(coutAlimentaireEstime)}</span>
+          <span className="text-[13px] font-bold text-text-0 font-mono">{formatCurrency(coutAlimentaireEstime, currency)}</span>
         </div>
         <div className="flex flex-col gap-1">
           <span className="text-[8px] uppercase font-mono text-text-2">CA Estimé</span>
-          <span className="text-[13px] font-bold text-text-0 font-mono">{formatFCFA(revenuBrutProjete)}</span>
+          <span className="text-[13px] font-bold text-text-0 font-mono">{formatCurrency(revenuBrutProjete, currency)}</span>
         </div>
         <div className="flex flex-col gap-1 items-end text-right">
           <span className="text-[8px] uppercase font-mono text-text-2">Marge Nette</span>
           <span className={`text-[13px] font-bold font-mono ${margeNetteProjetee < 0 ? 'text-[var(--color-danger,#EF4444)]' : 'text-[var(--color-accent-500)]'}`}>
-            {margeNetteProjetee > 0 ? '+' : ''}{formatFCFA(margeNetteProjetee)}
+            {margeNetteProjetee > 0 ? '+' : ''}{formatCurrency(margeNetteProjetee, currency)}
           </span>
         </div>
       </div>
@@ -106,15 +109,11 @@ const BandeFinanceCard: React.FC<BandeFinanceCardProps> = ({
       <div className="flex items-center gap-1.5 opacity-40 group hover:opacity-100 transition-opacity">
         <Info size={10} className="text-text-2" />
         <span className="text-[8px] uppercase font-mono text-text-2 italic">
-          Calculé selon consommation théorique K13
+          Calculé selon consommation théorique {nomFerme}
         </span>
       </div>
     </div>
   );
 };
-
-function formatFCFA(n: number): string {
-  return Math.abs(Math.round(n)).toLocaleString('fr-FR').replace(/\s/g, '.');
-}
 
 export default BandeFinanceCard;

@@ -21,6 +21,7 @@ import {
   determinerAliment,
 } from '../../services/phaseEngine';
 import { FARM_CONFIG } from '../../config/farm';
+import { formatCurrency, currencySuffix } from '../../lib/currency';
 import type { BandePorcelets } from '../../types/farm';
 import QuickVenteForm from '../../components/forms/QuickVenteForm';
 import {
@@ -46,12 +47,17 @@ const FINITION_PHASE_DAYS = Math.round(
  */
 
 // ─── Constantes métier ──────────────────────────────────────────────────────
-const PRIX_KG_VIF_FCFA = 2100;
+/**
+ * Prix de vente moyen par kg vif. Valeur historique calibrée pour la cible
+ * Afrique de l'Ouest (FCFA). En zone EUR, l'estimation reste indicative —
+ * un futur réglage par ferme dans les Settings remplacera cette constante.
+ */
+const PRIX_KG_VIF = 2100;
 const FINITION_SEUIL_KG = 100;
 
 const FinitionView: React.FC = () => {
   const navigate = useNavigate();
-  const { bandes } = useFarm();
+  const { bandes, currency } = useFarm();
   const [venteBande, setVenteBande] = useState<BandePorcelets | null>(null);
 
   const { portees, summary, projection } = useMemo(() => {
@@ -106,7 +112,7 @@ const FinitionView: React.FC = () => {
       ? Math.round(rows.reduce((acc, r) => acc + r.weight, 0) / nbBandes)
       : 0;
 
-    const revenuEstime = rows.reduce((acc, r) => acc + (r.vivants * r.weight * PRIX_KG_VIF_FCFA), 0);
+    const revenuEstime = rows.reduce((acc, r) => acc + (r.vivants * r.weight * PRIX_KG_VIF), 0);
 
     return {
       portees: rows,
@@ -183,8 +189,8 @@ const FinitionView: React.FC = () => {
               />
               <KpiCardV6
                 label="Valeur Est."
-                value={formatFCFA(projection.revenuEstime)}
-                unit="FCFA"
+                value={formatNumber(projection.revenuEstime)}
+                unit={currencySuffix(currency)}
               />
             </div>
 
@@ -218,10 +224,10 @@ const FinitionView: React.FC = () => {
                   <span className="font-mono text-[11px] font-bold uppercase text-success">Projection de vente brute</span>
                 </div>
                 <div className="text-[28px] font-bold font-mono text-text-0 mb-1">
-                  {formatFCFA(projection.revenuEstime)} <span className="text-[14px] text-text-2">FCFA</span>
+                  {formatNumber(projection.revenuEstime)} <span className="text-[14px] text-text-2">{currencySuffix(currency)}</span>
                 </div>
                 <p className="text-[11px] text-text-2 leading-tight">
-                  Basé sur un poids moyen de {summary.avgWeight}kg et un prix de {PRIX_KG_VIF_FCFA} FCFA/kg.
+                  Basé sur un poids moyen de {summary.avgWeight}kg et un prix de {formatCurrency(PRIX_KG_VIF, currency)}/kg.
                 </p>
               </div>
             )}
@@ -430,7 +436,7 @@ function estimateWeightKg(bande: BandePorcelets, today: Date): number {
   return Math.min(25 + j * 0.65, 120);
 }
 
-function formatFCFA(n: number): string {
+function formatNumber(n: number): string {
   return Math.round(n).toLocaleString('fr-FR').replace(/\s/g, ' ');
 }
 

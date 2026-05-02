@@ -52,6 +52,7 @@ import {
   isRationEcartSignificatif,
 } from '../../services/rationCalculator';
 import { FEED_CONFIG } from '../../config/feed';
+import { labelStatutTruie } from '../../lib/labels';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -83,16 +84,17 @@ function daysBetween(from: Date, to: Date): number {
 }
 
 function statutToChip(statut: string): SowHeroChip {
+  const label = labelStatutTruie(statut);
   if (statut === 'Pleine' || statut === 'Maternité' || statut === 'En maternité') {
-    return { label: statut, tone: 'green' };
+    return { label, tone: 'green' };
   }
   if (statut === 'À surveiller' || statut === 'En attente saillie') {
-    return { label: statut, tone: 'amber' };
+    return { label, tone: 'amber' };
   }
   if (statut === 'Réforme' || statut === 'Morte') {
-    return { label: statut, tone: 'pig' };
+    return { label, tone: 'pig' };
   }
-  return { label: statut, tone: 'neutral' };
+  return { label, tone: 'neutral' };
 }
 
 // ─── Composant principal ─────────────────────────────────────────────────────
@@ -374,7 +376,11 @@ const TruieDetailView: React.FC = () => {
       date: formatDateShort(b.dateMB),
       tag: 'Mise-bas',
       title: `Portée ${b.idPortee || b.id}`,
-      description: `${b.nv ?? '—'} nés vivants${b.morts !== undefined ? `, ${b.morts} morts` : ''}.`,
+      description: `${b.nv ?? '—'} nés vivants${
+        b.morts !== undefined
+          ? `, ${b.morts} ${b.morts === 1 ? 'mort' : 'morts'}`
+          : ''
+      }.`,
     })),
   ]
     .filter(t => t.date !== '—')
@@ -695,7 +701,7 @@ const TruieDetailView: React.FC = () => {
                       boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04)',
                     }}
                   >
-                    <DataRow label="Statut" value={truie.statut || '—'} />
+                    <DataRow label="Statut" value={labelStatutTruie(truie.statut)} />
                     {truie.stade && <DataRow label="Stade" value={truie.stade} />}
                     <DataRow
                       label="NB portées"
@@ -816,7 +822,11 @@ const TruieDetailView: React.FC = () => {
                 </section>
 
                 {/* Historique des notes terrain (V21-6 C2) */}
-                <NotesTimeline subjectType="TRUIE" subjectId={truie.id} />
+                <NotesTimeline
+                  subjectType="TRUIE"
+                  subjectId={truie.id}
+                  subjectLabel={truie.boucle ?? truie.displayId ?? undefined}
+                />
               </div>
 
               {/* Séparateur vertical */}

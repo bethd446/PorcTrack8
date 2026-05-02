@@ -174,6 +174,9 @@ vi.mock('../../context/FarmContext', () => ({
     loading: false,
     dataSource: 'NETWORK',
     refreshData: vi.fn(),
+    nomFerme: 'Ferme K13',
+    pays: null,
+    currency: 'FCFA',
   }),
   FarmProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));

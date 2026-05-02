@@ -53,7 +53,6 @@ const ChatbotWidget = React.lazy(() =>
 
 // Lazy loading — chaque écran dans son propre chunk pour réduire le bundle initial
 const TableView = React.lazy(() => import(/* webpackChunkName: "table-view" */ './features/tables/TableView'));
-const BandesView = React.lazy(() => import(/* webpackChunkName: "bandes" */ './features/tables/BandesView'));
 const CheptelView = React.lazy(() => import(/* webpackChunkName: "cheptel" */ './features/tables/CheptelView'));
 const ControleQuotidien = React.lazy(() => import(/* webpackChunkName: "controle" */ './features/controle/ControleQuotidien'));
 const ChecklistFlow = React.lazy(() => import(/* webpackChunkName: "checklist" */ './features/controle/ChecklistFlow'));
@@ -216,6 +215,7 @@ const AppShell: React.FC = () => (
       <Route path="/checklist/:name" element={<ChecklistFlow />} />
       <Route path="/audit" element={<AuditView />} />
       <Route path="/alerts" element={<AlertsView />} />
+      <Route path="/alertes" element={<Navigate to="/alerts" replace />} />
       <Route path="/more" element={<SettingsPage />} />
       <Route path="/aide" element={<AideView />} />
 
@@ -237,7 +237,10 @@ const AppShell: React.FC = () => (
       <Route path="/troupeau/verrats" element={<CheptelView initialTab="VERRAT" />} />
       <Route path="/troupeau/truies/:id" element={<TruieDetailView />} />
       <Route path="/troupeau/verrats/:id" element={<VerratDetailView />} />
-      <Route path="/troupeau/bandes" element={<BandesView />} />
+      {/* Route legacy /troupeau/bandes : la vue Sheets BandesView est cassée
+          (config colonne Portée). On redirige vers le hub TROUPEAU onglet
+          BANDES qui consomme bandes Supabase. BandesView reste @deprecated. */}
+      <Route path="/troupeau/bandes" element={<Navigate to="/troupeau?view=bandes" replace />} />
       <Route path="/troupeau/bandes/:bandeId" element={<BandeDetailView />} />
       <Route path="/troupeau/batiments" element={<BatimentsView />} />
       <Route path="/troupeau/classement" element={<ClassementView />} />

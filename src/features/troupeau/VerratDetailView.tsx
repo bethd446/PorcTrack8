@@ -314,6 +314,7 @@ const VerratDetailView: React.FC = () => {
                 <NotesTimeline
                   subjectType="VERRAT"
                   subjectId={verrat.id}
+                  subjectLabel={verrat.displayId ?? undefined}
                   onAddNote={() => setSheet('note')}
                 />
               </div>

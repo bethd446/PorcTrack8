@@ -562,9 +562,17 @@ export const SettingsPage: React.FC = () => {
     void kvSet(NOTIF_ALERTS_KEY, v ? '1' : '0');
   };
 
-  const farmDisplayName = farm?.nom ?? 'Ferme non renseignée';
+  const farmDisplayName = farm?.nomFerme || farm?.nom || 'Ferme non renseignée';
   const farmSector = farm?.secteur ?? null;
-  const farmShortId = farm ? `K13-${farm.id.substring(0, 6).toUpperCase()}` : '—';
+  const farmCodePrefixValue = (farm?.nomFerme || farm?.nom)
+    ? (farm!.nomFerme || farm!.nom)
+        .toUpperCase()
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .replace(/[^A-Z0-9]/g, '')
+        .slice(0, 4) || 'FARM'
+    : 'FARM';
+  const farmShortId = farm ? `${farmCodePrefixValue}-${farm.id.substring(0, 6).toUpperCase()}` : '—';
 
   return (
     <IonPage>

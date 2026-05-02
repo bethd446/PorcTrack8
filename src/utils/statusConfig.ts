@@ -17,7 +17,9 @@ export interface StatusConfig {
 
 const STATUS_MAP: Array<[string, StatusConfig]> = [
   ['pleine',             { key: 'pleine',          label: 'Pleine' }],
-  ['maternit',           { key: 'maternite',       label: 'En maternité' }],
+  ['maternit',           { key: 'maternite',       label: 'Allaitante' }],
+  ['allaitant',          { key: 'maternite',       label: 'Allaitante' }],
+  ['lactation',          { key: 'maternite',       label: 'Allaitante' }],
   ['en attente saillie', { key: 'attente-saillie', label: 'En attente saillie' }],
   ['a surveiller',       { key: 'surveiller',      label: 'À surveiller' }],
   ['inactif',            { key: 'inactif',         label: 'Inactif' }],

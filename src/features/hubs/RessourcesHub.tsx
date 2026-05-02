@@ -259,7 +259,9 @@ const RessourcesHub: React.FC = () => {
                   color: 'var(--muted)',
                 }}
               >
-                {stats.total} référence{stats.total > 1 ? 's' : ''} suivies · {stockAliment.length} aliments · {stockVeto.length} produits véto
+                {stats.total === 0
+                  ? 'Aucune référence suivie'
+                  : `${stats.total} référence${stats.total > 1 ? 's' : ''} suivie${stats.total > 1 ? 's' : ''}`} · {stockAliment.length} aliments · {stockVeto.length} produits véto
               </div>
             </header>
 

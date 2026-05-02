@@ -152,7 +152,7 @@ export function validateDateFutureOrToday(
 export interface ValidateEffectifOpts {
   /** Borne min. Défaut 0. */
   min?: number;
-  /** Borne max. Défaut 300 (porcelets max par bande, large marge). */
+  /** Borne max. Défaut 5000 (audit/grandes fermes — couvre 50+ truies × portées simultanées). */
   max?: number;
   /** Nom du champ. Défaut 'effectif'. */
   field?: string;
@@ -163,7 +163,7 @@ export function validateEffectif(
   opts: ValidateEffectifOpts = {},
 ): ValidationResult {
   const min = opts.min ?? 0;
-  const max = opts.max ?? 300;
+  const max = opts.max ?? 5000;
   const field = opts.field ?? 'effectif';
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     return fail('effectif.invalid', 'Effectif invalide', field);

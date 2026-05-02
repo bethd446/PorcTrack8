@@ -233,7 +233,17 @@ const TABS: NavTabDef[] = [
     path: '/more',
     label: 'Plus',
     Icon: MoreHorizontal,
-    match: ['/more', '/admin', '/aide', '/fournisseurs', '/ressources'],
+    match: [
+      '/more',
+      '/admin',
+      '/aide',
+      '/fournisseurs',
+      '/ressources',
+      '/alerts',
+      '/alertes',
+      '/protocoles',
+      '/notes',
+    ],
   },
 ];
 

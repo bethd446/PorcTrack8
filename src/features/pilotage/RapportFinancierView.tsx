@@ -66,15 +66,15 @@ function extractBandeId(entry: FinanceEntry): string {
 // ─── Composant ──────────────────────────────────────────────────────────────
 
 const RapportFinancierView: React.FC = () => {
-  const { finances } = useFarm();
+  const { finances, currency: farmCurrency } = useFarm();
   const entries = finances as FinanceEntry[];
 
   const currency = useMemo<'FCFA' | 'EUR'>(() => {
     for (const e of entries) {
       if (detectCurrency(e) === 'EUR') return 'EUR';
     }
-    return 'FCFA';
-  }, [entries]);
+    return farmCurrency === 'EUR' ? 'EUR' : 'FCFA';
+  }, [entries, farmCurrency]);
 
   const keys = useMemo(() => last6MonthsKeys(), []);
 

@@ -47,6 +47,8 @@ import { TroupeauProvider, useTroupeau } from './TroupeauContext';
 import { RessourcesProvider, useRessources } from './RessourcesContext';
 import { PilotageProvider, usePilotage } from './PilotageContext';
 import { useAuth } from './AuthContext';
+import { fetchFarm } from '../services/settingsService';
+import { inferCurrencyFromCountry, type Currency } from '../lib/currency';
 
 // ── Shape publique (inchangée par rapport à l'existant) ────────────────────
 interface FarmContextType extends FarmState {
@@ -60,6 +62,9 @@ interface FarmContextType extends FarmState {
   alimentFormules: FormuleAliment[];
   criticalAlertCount: number;
   dataSource: 'NETWORK' | 'CACHE' | 'FALLBACK' | null;
+  nomFerme: string;
+  pays: string | null;
+  currency: Currency;
   refreshData: (force?: boolean) => Promise<void>;
   getTruieById: (id: string) => Truie | undefined;
   getVerratById: (id: string) => Verrat | undefined;
@@ -74,12 +79,18 @@ interface FarmContextType extends FarmState {
   recomputeAlerts: () => Promise<void>;
 }
 
-// ── Meta context (loading / dataSource / refreshData) ──────────────────────
+// ── Meta context (loading / dataSource / refreshData / identité ferme) ────
 interface MetaContextType {
   loading: boolean;
   dataSource: 'NETWORK' | 'CACHE' | 'FALLBACK' | null;
   syncStatus: FarmState['syncStatus'];
   lastUpdate: number;
+  /** Nom affichable de la ferme (nom_ferme ou nom, fallback "Ma ferme"). */
+  nomFerme: string;
+  /** Pays brut tel que saisi à l'onboarding (peut être null). */
+  pays: string | null;
+  /** Devise dérivée du pays (FCFA par défaut). */
+  currency: Currency;
   refreshData: (force?: boolean) => Promise<void>;
   pullData: () => Promise<void>;
   processQueue: () => Promise<void>;
@@ -88,8 +99,21 @@ interface MetaContextType {
 
 const MetaContext = createContext<MetaContextType | undefined>(undefined);
 
+interface FarmIdentity {
+  nomFerme: string;
+  pays: string | null;
+  currency: Currency;
+}
+
+const DEFAULT_FARM_IDENTITY: FarmIdentity = {
+  nomFerme: 'Ma ferme',
+  pays: null,
+  currency: 'FCFA',
+};
+
 const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [meta, setMeta] = useState(() => getSnapshot('meta'));
+  const [identity, setIdentity] = useState<FarmIdentity>(DEFAULT_FARM_IDENTITY);
   // Dépend de la session auth : RLS Supabase filtre par auth.uid() = farm_id.
   // Sans session, toutes les requêtes reviennent vides — il faut donc attendre
   // que la session soit attachée avant le premier refreshAll().
@@ -104,9 +128,33 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   // soit présente. Re-déclenché si l'utilisateur change (logout/login).
   useEffect(() => {
     if (authLoading) return;
-    if (!userId) return;
+    if (!userId) {
+      setIdentity(DEFAULT_FARM_IDENTITY);
+      return;
+    }
     // Legitimate I/O: initial data fetch (Supabase + alert engine)
     void refreshAll();
+    // Charge l'identité ferme (nom_ferme, pays) → devise.
+    let cancelled = false;
+    void fetchFarm(userId)
+      .then((f) => {
+        if (cancelled || !f) return;
+        const next: FarmIdentity = {
+          nomFerme: f.nomFerme?.trim() || f.nom?.trim() || 'Ma ferme',
+          pays: f.pays,
+          currency: inferCurrencyFromCountry(f.pays),
+        };
+        setIdentity(next);
+        if (typeof document !== 'undefined') {
+          document.title = `PorcTrack · ${next.nomFerme}`;
+        }
+      })
+      .catch(() => {
+        /* silent : offline / RLS — fallback identity already set. */
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [authLoading, userId]);
 
   useEffect(() => {
@@ -141,6 +189,9 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       dataSource: meta.dataSource,
       syncStatus: meta.syncStatus,
       lastUpdate: meta.lastUpdate,
+      nomFerme: identity.nomFerme,
+      pays: identity.pays,
+      currency: identity.currency,
       refreshData,
       pullData,
       processQueue,
@@ -230,6 +281,9 @@ export const useFarm = (): FarmContextType => {
     dataSource: meta.dataSource,
     syncStatus: meta.syncStatus,
     lastUpdate: meta.lastUpdate,
+    nomFerme: meta.nomFerme,
+    pays: meta.pays,
+    currency: meta.currency,
     refreshData: meta.refreshData,
     pullData: meta.pullData,
     processQueue: meta.processQueue,

@@ -5,6 +5,7 @@ import { IonModal, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons } fro
 import { supabase } from '../../services/supabaseClient';
 import { kvGet, kvSet } from '../../services/kvStore';
 import { useAuth } from '../../context/AuthContext';
+import { useMeta } from '../../context/FarmContext';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import AgritechLayout from '../../components/AgritechLayout';
 import KpiCardV6 from '../../components/design/KpiCard';
@@ -24,6 +25,21 @@ interface UserProfile {
   email?: string;
   role: string;
   last_sign_in_at?: string;
+}
+
+/**
+ * Extrait un préfixe court (≤4 caractères, A-Z0-9) pour un code ferme,
+ * dérivé du `nomFerme`. Fallback `FARM` si vide. Sert pour les codes
+ * d'invitation porchers et les short-IDs affichés dans Settings.
+ */
+function farmCodePrefix(nomFerme: string | null | undefined): string {
+  if (!nomFerme) return 'FARM';
+  const cleaned = nomFerme
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^A-Z0-9]/g, '');
+  return cleaned.slice(0, 4) || 'FARM';
 }
 
 function fmtDate(iso?: string | null): string {
@@ -476,6 +492,7 @@ interface InviteOperatorModalProps {
 }
 
 function InviteOperatorModal({ isOpen, onClose, currentUserId, onInvited }: InviteOperatorModalProps) {
+  const { nomFerme } = useMeta();
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<InviteRole>('PORCHER');
   const [message, setMessage] = useState('');
@@ -513,7 +530,8 @@ function InviteOperatorModal({ isOpen, onClose, currentUserId, onInvited }: Invi
       const list: PendingInvite[] = raw ? JSON.parse(raw) : [];
       list.push(invite);
       await kvSet(INVITES_KV_KEY, JSON.stringify(list));
-      const code = `K13-${currentUserId.substring(0, 6)}`;
+      const farmCode = farmCodePrefix(nomFerme);
+      const code = `${farmCode}-${currentUserId.substring(0, 6)}`;
       onInvited(`Invitation enregistrée. Envoi automatique bientôt disponible — contactez ${invite.email} avec le code ferme : ${code}`);
       reset();
       onClose();
@@ -582,7 +600,7 @@ function InviteOperatorModal({ isOpen, onClose, currentUserId, onInvited }: Invi
           }}
         >
           <p style={{ fontSize: 13, color: 'var(--ink-soft)', margin: 0 }}>
-            Le porcher recevra une invitation pour rejoindre ton élevage K13 avec le rôle choisi.
+            Le porcher recevra une invitation pour rejoindre ton élevage {nomFerme} avec le rôle choisi.
           </p>
 
           <div>
@@ -658,6 +676,7 @@ interface OnboardingHeroProps {
 }
 
 function OnboardingHero({ onInvite }: OnboardingHeroProps) {
+  const { nomFerme } = useMeta();
   const benefits = [
     'Saisies temps réel : pesées, mortalités, soins.',
     'Rôles ciblés : Porcher (terrain), Assistant (gestion), Gérant (pilotage).',
@@ -717,7 +736,7 @@ function OnboardingHero({ onInvite }: OnboardingHeroProps) {
           lineHeight: 1.5,
         }}
       >
-        Tu es seul sur la ferme K13. Invite un porcher, un assistant ou un
+        Tu es seul sur la ferme {nomFerme}. Invite un porcher, un assistant ou un
         gérant à rejoindre ton élevage pour partager le suivi quotidien.
       </p>
 
