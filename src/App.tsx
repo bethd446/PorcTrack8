@@ -81,6 +81,8 @@ const ForecastView = React.lazy(() => import(/* webpackChunkName: "pilotage-prev
 
 const ReproCalendarView = React.lazy(() => import(/* webpackChunkName: "cycle-repro" */ './features/cycles/ReproCalendarView'));
 const ReproductionHub = React.lazy(() => import(/* webpackChunkName: "reproduction-hub" */ './features/reproduction/ReproductionHub'));
+const ReproductionLotsView = React.lazy(() => import(/* webpackChunkName: "reproduction-lots" */ './features/reproduction/ReproductionLotsView'));
+const ClassementView = React.lazy(() => import(/* webpackChunkName: "troupeau-classement" */ './features/troupeau/ClassementView'));
 const MaterniteView = React.lazy(() => import(/* webpackChunkName: "cycle-maternite" */ './features/cycles/MaterniteView'));
 const PostSevrageView = React.lazy(() => import(/* webpackChunkName: "cycle-postsevrage" */ './features/cycles/PostSevrageView'));
 const CroissanceView = React.lazy(() => import(/* webpackChunkName: "cycle-croissance" */ './features/cycles/CroissanceView'));
@@ -182,9 +184,11 @@ const AppShell: React.FC = () => (
       <Route path="/troupeau/bandes" element={<BandesView />} />
       <Route path="/troupeau/bandes/:bandeId" element={<BandeDetailView />} />
       <Route path="/troupeau/batiments" element={<BatimentsView />} />
+      <Route path="/troupeau/classement" element={<ClassementView />} />
 
       {/* Reproduction (V22-B3 hub fil conducteur) */}
       <Route path="/reproduction" element={<ReproductionHub />} />
+      <Route path="/reproduction/lots" element={<ReproductionLotsView />} />
 
       {/* Cycles sub-routes */}
       <Route path="/cycles/repro" element={<ReproCalendarView />} />

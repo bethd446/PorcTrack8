@@ -25,6 +25,7 @@ import { normaliseStatut } from '../lib/truieStatut';
 import { computeBandePhase } from './bandesAggregator';
 import { detectTruiesAReformer } from './perfKpiAnalyzer';
 import { extractPeseesForBande } from './growthAnalyzer';
+import { detectPendingTransitions, PHASE_LABEL, type PendingTransition } from './phaseEngine';
 
 /** Fuseau horaire de référence pour toute la logique métier GTTT.
  *  L'élevage est en Côte d'Ivoire, mais les données Sheets sont saisies
@@ -46,7 +47,21 @@ export type AlertActionType =
   | 'CONFIRM_REGROUPEMENT_BANDE'
   | 'CONFIRM_REFORME'
   | 'CONFIRM_SOIN'
+  | 'OPEN_PHASE_MODAL'
   | 'DISMISS';
+
+/** Métadonnées attachées à une alerte de transition de phase par poids (R15/R16).
+ *  Permet à l'UI (TodayHub) de déclencher l'action 1-tap qui ouvre PhaseTransitionModal
+ *  pré-rempli avec la transition suggérée. */
+export interface AlertPhasePoidsMeta {
+  bandeId: string;
+  fromPhase: string;
+  toPhase: string;
+  poidsSeuilKg: number;
+  poidsReelKg: number;
+  reason: 'POIDS_ATTEINT' | 'POIDS_ET_AGE';
+  actionType: 'OPEN_PHASE_MODAL';
+}
 
 export interface AlertAction {
   type: AlertActionType;
@@ -74,6 +89,8 @@ export interface FarmAlert {
   dueDate?: Date;
   /** Nombre de jours en retard (>0) ou en avance (<0) */
   daysOffset?: number;
+  /** Métadonnées structurées pour les actions 1-tap (R15/R16). */
+  meta?: AlertPhasePoidsMeta;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -596,6 +613,80 @@ function checkPorteesOrphelines(truies: Truie[], bandes: BandePorcelets[]): Farm
   return alerts;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// R15 / R16 — Transitions de phase par poids (s'appuie sur phaseEngine)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** R15 — Passage de phase suggéré par poids (CROISSANCE / ENGRAISSEMENT / FINITION).
+ *  Filtre les transitions retournées par phaseEngine pour ne garder que celles
+ *  déclenchées par le poids (pas l'âge seul) et qui ne mènent pas à SORTIE
+ *  (R16 traite ce cas séparément avec une priorité plus élevée). */
+function evaluerR15PassagePhasePoids(transition: PendingTransition): FarmAlert | null {
+  if (transition.toPhase === 'SORTIE') return null;
+  if (transition.reason !== 'POIDS_ATTEINT' && transition.reason !== 'POIDS_ET_AGE') return null;
+  if (transition.poidsSeuilKg === undefined || transition.poidsReelKg === undefined) return null;
+
+  const labelPhase = PHASE_LABEL[transition.toPhase] ?? transition.toPhase;
+
+  return {
+    id: `phase-poids-${transition.bandeId}-${transition.toPhase}`,
+    priority: 'NORMALE',
+    category: 'BANDES',
+    subjectId: transition.bandeId,
+    subjectLabel: transition.label,
+    title: `Passage en ${labelPhase}`,
+    message: `Bande ${transition.bandeId} : poids ${transition.poidsReelKg} kg ≥ seuil ${transition.poidsSeuilKg} kg.`,
+    requiresAction: true,
+    actions: [
+      { type: 'OPEN_PHASE_MODAL', label: `Passer en ${labelPhase}`, variant: 'primary' },
+      { type: 'DISMISS', label: 'Plus tard', variant: 'secondary' },
+    ],
+    createdAt: new Date(),
+    meta: {
+      bandeId: transition.bandeId,
+      fromPhase: transition.fromPhase,
+      toPhase: transition.toPhase,
+      poidsSeuilKg: transition.poidsSeuilKg,
+      poidsReelKg: transition.poidsReelKg,
+      reason: transition.reason,
+      actionType: 'OPEN_PHASE_MODAL',
+    },
+  };
+}
+
+/** R16 — Sortie abattoir imminente (poids ≥ 110 kg).
+ *  Priorité HAUTE : la bande est commercialisable, programmer enlèvement. */
+function evaluerR16SortieImminente(transition: PendingTransition): FarmAlert | null {
+  if (transition.toPhase !== 'SORTIE') return null;
+  if (transition.reason !== 'POIDS_ATTEINT' && transition.reason !== 'POIDS_ET_AGE') return null;
+  if (transition.poidsSeuilKg === undefined || transition.poidsReelKg === undefined) return null;
+
+  return {
+    id: `sortie-${transition.bandeId}`,
+    priority: 'HAUTE',
+    category: 'BANDES',
+    subjectId: transition.bandeId,
+    subjectLabel: transition.label,
+    title: 'Bande prête abattoir',
+    message: `Bande ${transition.bandeId} : poids ${transition.poidsReelKg} kg ≥ ${transition.poidsSeuilKg} kg. Programmer enlèvement.`,
+    requiresAction: true,
+    actions: [
+      { type: 'OPEN_PHASE_MODAL', label: 'Programmer sortie', variant: 'primary' },
+      { type: 'DISMISS', label: 'Plus tard', variant: 'secondary' },
+    ],
+    createdAt: new Date(),
+    meta: {
+      bandeId: transition.bandeId,
+      fromPhase: transition.fromPhase,
+      toPhase: transition.toPhase,
+      poidsSeuilKg: transition.poidsSeuilKg,
+      poidsReelKg: transition.poidsReelKg,
+      reason: transition.reason,
+      actionType: 'OPEN_PHASE_MODAL',
+    },
+  };
+}
+
 export interface AlertEngineInput {
   truies: Truie[];
   bandes: BandePorcelets[];
@@ -656,6 +747,19 @@ export function runAlertEngine(input: AlertEngineInput): FarmAlert[] {
   }
   const orphelines = checkPorteesOrphelines(input.truies, input.bandes);
   for (const a of orphelines) alerts.push(a);
+
+  // R15 / R16 — Transitions de phase suggérées par poids (s'appuient sur phaseEngine)
+  try {
+    const transitions = detectPendingTransitions(input.bandes, today);
+    for (const t of transitions) {
+      const r16 = evaluerR16SortieImminente(t);
+      if (r16) { alerts.push(r16); continue; }
+      const r15 = evaluerR15PassagePhasePoids(t);
+      if (r15) alerts.push(r15);
+    }
+  } catch (e) {
+    console.error('[AlertEngine] R15/R16 error:', e);
+  }
 
   const PRIORITY_ORDER: Record<AlertPriority, number> = { CRITIQUE: 0, HAUTE: 1, NORMALE: 2, INFO: 3 };
   alerts.sort((a, b) => {

@@ -21,7 +21,7 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
-import { ChevronRight, Heart, Stethoscope, Baby, Home, Scissors, ArrowRight } from 'lucide-react';
+import { ChevronRight, Heart, Stethoscope, Baby, Home, Scissors, ArrowRight, Layers } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
 import Eyebrow from '../../components/design/Eyebrow';
@@ -302,6 +302,71 @@ const ReproductionHub: React.FC = () => {
                   ariaLabel={`Taux renouvellement ${formatNumOrDash(kpis.tauxRenouvellementPct)} pourcent`}
                 />
               </div>
+            </section>
+
+            {/* ── Lots de saillies ─────────────────────────────────── */}
+            <section aria-label="Lots de saillies">
+              <Eyebrow dotColor="accent">Lots de saillies</Eyebrow>
+              <button
+                type="button"
+                onClick={() => navigate('/reproduction/lots')}
+                className="pressable"
+                style={{
+                  width: '100%',
+                  marginTop: 12,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--line)',
+                  borderRadius: 12,
+                  padding: '14px 16px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+                aria-label="Voir les lots de saillies"
+              >
+                <span
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    background: 'var(--color-accent-100)',
+                    color: 'var(--color-accent-600)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Layers size={18} />
+                </span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span
+                    style={{
+                      display: 'block',
+                      fontFamily: 'var(--font-heading, BigShoulders), system-ui, sans-serif',
+                      fontSize: 15,
+                      fontWeight: 600,
+                      color: 'var(--ink)',
+                    }}
+                  >
+                    Lots de saillies
+                  </span>
+                  <span
+                    style={{
+                      display: 'block',
+                      fontFamily: 'DMMono, ui-monospace, monospace',
+                      fontSize: 11,
+                      color: 'var(--muted)',
+                      marginTop: 2,
+                    }}
+                  >
+                    Vagues regroupées par fenêtre de 5 jours
+                  </span>
+                </span>
+                <ChevronRight size={18} style={{ color: 'var(--muted)', flexShrink: 0 }} />
+              </button>
             </section>
 
             {/* ── Étape 1 — À saillir ──────────────────────────────── */}

@@ -822,6 +822,96 @@ describe('R14 — Portée Orpheline', () => {
   });
 });
 
+// ─── R15 — Passage de phase suggéré par poids ────────────────────────────────
+
+describe('R15 — Passage de phase par poids', () => {
+  it('déclenche NORMALE pour bande POST_SEVRAGE poids 26 kg ≥ seuil CROISSANCE (25 kg)', () => {
+    const bande = makeBande({
+      id: 'BP-R15',
+      idPortee: 'P-R15',
+      statut: 'Sevrés',
+      dateMB: toFrDate(dayOffset(NOW, -33)),         // age 33j → terrain POST_SEVRAGE (<63)
+      dateSevrageReelle: toFrDate(dayOffset(NOW, -5)), // declaree POST_SEVRAGE (<35)
+      poidsMoyenKg: 26,
+      vivants: 10,
+    });
+    const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
+    const r15 = alerts.find(a => a.id === 'phase-poids-BP-R15-CROISSANCE');
+    expect(r15).toBeDefined();
+    expect(r15?.priority).toBe('NORMALE');
+    expect(r15?.requiresAction).toBe(true);
+    expect(r15?.title).toContain('Croissance');
+    expect(r15?.message).toContain('26 kg');
+    expect(r15?.message).toContain('25 kg');
+    expect(r15?.meta?.actionType).toBe('OPEN_PHASE_MODAL');
+    expect(r15?.meta?.fromPhase).toBe('POST_SEVRAGE');
+    expect(r15?.meta?.toPhase).toBe('CROISSANCE');
+    expect(r15?.meta?.poidsSeuilKg).toBe(25);
+    expect(r15?.meta?.poidsReelKg).toBe(26);
+    expect(r15?.meta?.reason).toBe('POIDS_ATTEINT');
+    expect(r15?.actions.find(a => a.type === 'OPEN_PHASE_MODAL')).toBeDefined();
+  });
+
+  it('ne déclenche pas si poids 24 kg < seuil CROISSANCE (25 kg)', () => {
+    const bande = makeBande({
+      id: 'BP-R15B',
+      statut: 'Sevrés',
+      dateMB: toFrDate(dayOffset(NOW, -33)),
+      dateSevrageReelle: toFrDate(dayOffset(NOW, -5)),
+      poidsMoyenKg: 24,
+      vivants: 10,
+    });
+    const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
+    expect(alerts.find(a => a.id?.startsWith('phase-poids-BP-R15B'))).toBeUndefined();
+    expect(alerts.find(a => a.id === 'sortie-BP-R15B')).toBeUndefined();
+  });
+
+  it('ne déclenche pas si poidsMoyenKg est absent (fallback âge ne déclenche PAS R15)', () => {
+    const bande = makeBande({
+      id: 'BP-R15C',
+      statut: 'Sevrés',
+      dateMB: toFrDate(dayOffset(NOW, -33)),
+      dateSevrageReelle: toFrDate(dayOffset(NOW, -5)),
+      // poidsMoyenKg: undefined
+      vivants: 10,
+    });
+    const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
+    expect(alerts.find(a => a.id?.startsWith('phase-poids-BP-R15C'))).toBeUndefined();
+    expect(alerts.find(a => a.id === 'sortie-BP-R15C')).toBeUndefined();
+  });
+});
+
+// ─── R16 — Sortie abattoir imminente (poids ≥ 110 kg) ────────────────────────
+
+describe('R16 — Sortie abattoir imminente', () => {
+  it('déclenche HAUTE pour bande FINITION poids 112 kg ≥ 110 kg', () => {
+    // FINITION declared (statut "En finition") + age > 180 → terrain FINITION
+    const bande = makeBande({
+      id: 'BP-R16',
+      idPortee: 'P-R16',
+      statut: 'En finition',
+      dateMB: toFrDate(dayOffset(NOW, -200)), // age 200 > FIN (180)
+      poidsMoyenKg: 112,
+      vivants: 10,
+    });
+    const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
+    const r16 = alerts.find(a => a.id === 'sortie-BP-R16');
+    expect(r16).toBeDefined();
+    expect(r16?.priority).toBe('HAUTE');
+    expect(r16?.requiresAction).toBe(true);
+    expect(r16?.title).toBe('Bande prête abattoir');
+    expect(r16?.message).toContain('112 kg');
+    expect(r16?.message).toContain('110 kg');
+    expect(r16?.meta?.actionType).toBe('OPEN_PHASE_MODAL');
+    expect(r16?.meta?.toPhase).toBe('SORTIE');
+    expect(r16?.meta?.fromPhase).toBe('FINITION');
+    expect(r16?.meta?.poidsSeuilKg).toBe(110);
+    expect(r16?.meta?.poidsReelKg).toBe(112);
+    // R15 ne doit PAS doublonner sur la même bande
+    expect(alerts.find(a => a.id?.startsWith('phase-poids-BP-R16'))).toBeUndefined();
+  });
+});
+
 // ─── Tri global des alertes ──────────────────────────────────────────────────
 
 describe('runAlertEngine — tri global', () => {

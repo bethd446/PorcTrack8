@@ -14,6 +14,15 @@ import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import type { Truie, Verrat, BandePorcelets, Saillie } from '../../types/farm';
 
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
 // ─── Fixtures ───────────────────────────────────────────────────────────────
 
 function makeTruie(o: Partial<Truie> & { id: string }): Truie {
@@ -160,6 +169,7 @@ afterEach(() => cleanup());
 
 describe('ReproductionHub', () => {
   beforeEach(() => {
+    mockNavigate.mockClear();
     mockCtx = {
       truies: POPULATED_TRUIES,
       verrats: POPULATED_VERRATS,
@@ -203,5 +213,13 @@ describe('ReproductionHub', () => {
     // Chaque étape vide affiche un placeholder (texte "Aucun*").
     const placeholders = screen.getAllByText(/Aucun/i);
     expect(placeholders.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it('[5] bouton "Lots de saillies" → navigate vers /reproduction/lots', () => {
+    renderHub();
+    const btn = screen.getByRole('button', { name: /Voir les lots de saillies/i });
+    expect(btn).toBeTruthy();
+    fireEvent.click(btn);
+    expect(mockNavigate).toHaveBeenCalledWith('/reproduction/lots');
   });
 });

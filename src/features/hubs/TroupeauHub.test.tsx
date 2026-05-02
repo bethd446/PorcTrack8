@@ -264,6 +264,18 @@ vi.mock('../../services/kvStore', () => ({
   __resetKvCacheForTests: () => {},
 }));
 
+// Mock useNavigate pour vérifier la navigation vers /troupeau/classement
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>(
+    'react-router-dom',
+  );
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
 // Import APRÈS les vi.mock (hoistés par Vitest mais ordre explicite plus clair)
 import TroupeauHub from './TroupeauHub';
 
@@ -411,6 +423,21 @@ describe('TroupeauHub — intégration multi-vues', () => {
     expect(screen.getAllByText(/17 truies/i).length).toBeGreaterThan(0);
     // "7 pleines" dans le header subtitle (peut aussi apparaître dans un filter chip)
     expect(screen.getAllByText(/7 pleines/i).length).toBeGreaterThan(0);
+  });
+
+  it('9. lien "Classement" visible et navigue vers /troupeau/classement', async () => {
+    renderHub();
+
+    const classementBtn = screen.getByRole('button', {
+      name: /classement des reproducteurs/i,
+    });
+    expect(classementBtn).toBeDefined();
+    expect(classementBtn.textContent).toMatch(/Classement/i);
+
+    const user = userEvent.setup();
+    await user.click(classementBtn);
+
+    expect(mockNavigate).toHaveBeenCalledWith('/troupeau/classement');
   });
 
   it('8. filtre CHALEUR : chip "Chaleur 1" visible (1 truie statut=Chaleur)', () => {

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
-import { ChevronRight, Plus } from 'lucide-react';
+import { ChevronRight, Plus, Trophy } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
 import { useTroupeau } from '../../context/TroupeauContext';
@@ -179,6 +179,22 @@ const TroupeauHub: React.FC = () => {
                 }}
               >
                 {summary.total} truie{summary.total > 1 ? 's' : ''} · {verrats.length} verrat{verrats.length > 1 ? 's' : ''} ({totalAnimals} animaux) — {truieBreakdown}
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => navigate('/troupeau/classement')}
+                  aria-label="Voir le classement des reproducteurs"
+                  className="pressable inline-flex items-center gap-2 h-10 px-4 rounded-full bg-accent text-bg-0 font-mono text-[12px] font-medium uppercase tracking-wide shadow-sm hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-opacity"
+                >
+                  <Trophy size={15} aria-hidden="true" />
+                  <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1 }}>
+                    <span>Classement</span>
+                    <span style={{ fontSize: 9, opacity: 0.85, textTransform: 'none', letterSpacing: 0 }}>
+                      Top truies & verrats par score
+                    </span>
+                  </span>
+                </button>
               </div>
             </header>
 

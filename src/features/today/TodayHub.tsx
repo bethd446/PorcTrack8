@@ -45,6 +45,10 @@ import { safeDate } from '../../lib/truieHelpers';
 import type { Truie } from '../../types/farm';
 import QuickConfirmSevrageForm from '../../components/forms/QuickConfirmSevrageForm';
 import QuickConfirmReformeForm from '../../components/forms/QuickConfirmReformeForm';
+import PhaseSuggestionCard from '../../components/cards/PhaseSuggestionCard';
+import PhaseTransitionModal from '../../components/modals/PhaseTransitionModal';
+import type { PendingTransition } from '../../services/phaseEngine';
+import { usePhaseTransitions } from '../../hooks/usePhaseTransitions';
 
 /** Routing par catégorie pour les alertes (B2 sprint, ressoudé V14). */
 function alertHref(a: FarmAlert): string {
@@ -106,6 +110,11 @@ const TodayHub: React.FC = () => {
   const [dismissToast, setDismissToast] = useState<{ show: boolean; message: string }>({
     show: false, message: '',
   });
+
+  // ── Transitions de phase suggérées (R15/R16 — alertes ⨝ phaseEngine) ───
+  const { pending: pendingTransitions, confirm: confirmTransition, dismiss: dismissTransition } =
+    usePhaseTransitions();
+  const [selectedTransition, setSelectedTransition] = useState<PendingTransition | null>(null);
 
   const handleDismissAussi = useCallback(async (alertId: string) => {
     if (!user) return;
@@ -311,8 +320,10 @@ const TodayHub: React.FC = () => {
     }
 
     // 2. Alertes locales (CRITIQUE/HAUTE) — navigate vers la vue ciblée.
+    //    Exclut R15/R16 (OPEN_PHASE_MODAL) : rendues comme suggestions dédiées.
     for (const a of alerts) {
       if (a.priority !== 'CRITIQUE' && a.priority !== 'HAUTE') continue;
+      if (a.meta?.actionType === 'OPEN_PHASE_MODAL') continue;
       const key = `alert:${a.id}`;
       if (seen.has(key)) continue;
       seen.add(key);
@@ -404,11 +415,58 @@ const TodayHub: React.FC = () => {
     return out.slice(0, 5);
   }, [alerts, alertesServeur, pendingConfirmations, lookup]);
 
+  // ── Suggestions de transition (R15/R16 dédupliquées par bande+toPhase) ─
+  // Jointure alerte ⨝ pendingTransitions : on ne garde que les transitions
+  // qui ont déclenché une alerte (cohérence UI/moteur) et dont la bande existe.
+  interface PhaseSuggestion {
+    transition: PendingTransition;
+    alertId: string;
+    bandeDisplayId: string;
+  }
+  const phaseSuggestions = useMemo<PhaseSuggestion[]>(() => {
+    const out: PhaseSuggestion[] = [];
+    const seenKey = new Set<string>();
+    for (const a of alerts) {
+      if (a.meta?.actionType !== 'OPEN_PHASE_MODAL') continue;
+      const meta = a.meta;
+      const bande = bandes.find(b => b.id === meta.bandeId);
+      if (!bande) continue;
+      const transition = pendingTransitions.find(
+        t => t.bandeId === meta.bandeId && t.toPhase === meta.toPhase,
+      );
+      if (!transition) continue;
+      const key = `${meta.bandeId}:${meta.toPhase}`;
+      if (seenKey.has(key)) continue;
+      seenKey.add(key);
+      out.push({
+        transition,
+        alertId: a.id,
+        bandeDisplayId: bande.idPortee || bande.id,
+      });
+    }
+    return out;
+  }, [alerts, pendingTransitions, bandes]);
+
   // ── State pour les forms confirmation (ressoudé V14, ex-Agent C) ─────
   const [sevrageConfirmation, setSevrageConfirmation] =
     useState<PendingConfirmation | null>(null);
   const [reformeConfirmation, setReformeConfirmation] =
     useState<PendingConfirmation | null>(null);
+
+  const handlePhaseModalConfirm = useCallback(
+    async (t: PendingTransition, poidsKg?: number): Promise<void> => {
+      try {
+        await confirmTransition(t, poidsKg);
+        setSelectedTransition(null);
+        setDismissToast({ show: true, message: 'Transition de phase confirmée' });
+        await recomputeAlerts();
+      } catch (e) {
+        console.warn('[TodayHub] phase transition confirm failed', e);
+        setDismissToast({ show: true, message: 'Erreur lors de la confirmation' });
+      }
+    },
+    [confirmTransition, recomputeAlerts],
+  );
 
   function handleAussiClick(item: AussiItem): void {
     if (item.kind === 'confirm-sevrage' && item.confirmation) {
@@ -617,6 +675,36 @@ const TodayHub: React.FC = () => {
                 </div>
               </button>
             </section>
+
+            {/* ── Transitions de phase (R15/R16) ─────────────────────── */}
+            {phaseSuggestions.length > 0 && (
+              <section aria-label="Transitions de phase">
+                <Eyebrow dotColor="amber">Transitions de phase</Eyebrow>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 12,
+                    marginTop: 12,
+                  }}
+                >
+                  {phaseSuggestions.map(({ transition, alertId, bandeDisplayId }) => (
+                    <PhaseSuggestionCard
+                      key={alertId}
+                      transition={transition}
+                      bandeDisplayId={bandeDisplayId}
+                      onConfirm={() => setSelectedTransition(transition)}
+                      onDismiss={() => {
+                        dismissTransition(transition.bandeId);
+                        if (user) {
+                          void dismissAlert(user.id, alertId, 'manual').catch(() => {});
+                        }
+                      }}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* ── Aussi à traiter ────────────────────────────────────── */}
             {aussiATraiter.length > 0 && (
@@ -872,6 +960,12 @@ const TodayHub: React.FC = () => {
             onClose={() => setReformeConfirmation(null)}
             pending={reformeConfirmation}
             onSuccess={() => recomputeAlerts()}
+          />
+          <PhaseTransitionModal
+            transition={selectedTransition}
+            isOpen={selectedTransition !== null}
+            onConfirm={(t, poidsKg) => { void handlePhaseModalConfirm(t, poidsKg); }}
+            onDismiss={() => setSelectedTransition(null)}
           />
         </AgritechLayout>
 
