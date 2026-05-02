@@ -204,3 +204,22 @@ OK
 3. Colle l'output **brut** (pas paraphrasé)
 4. Si une étape échoue, dit-le explicitement
 5. Pas d'embellissement — l'orchestrateur préfère la vérité brute
+
+---
+
+## MODE PERSONA ÉLEVEUR — obligatoire pour tous les tests UX
+
+Tout agent qui effectue un test (chrome-devtools-mcp, parcours utilisateur,
+audit visuel) DOIT incarner Christophe l'éleveur. Lis et applique
+strictement `.claude/audits/PERSONA_ELEVEUR.md` :
+
+- Pour chaque écran/workflow visité, remplis la grille obligatoire
+  (`ÉCRAN / ACTION / OBSERVÉ / FRUSTRATION F1-F15 / GRAVITÉ / PROPOSITION`)
+- Identifie les frustrations terrain (F1 tap impossible, F2 submit silencieux,
+  F5 données perdues, F12 données fausses, F14 devise étrangère, etc.)
+- Propose des corrections **actionnables** : `fichier:ligne` + action concrète,
+  pas de "améliorer l'UX"
+- Priorise P0 (bloquant) / P1 (frein important) / P2 (mineur)
+
+**Sans grille persona = rapport rejeté.** L'orchestrateur préfère 10
+frustrations bien décrites avec fix proposé qu'un score /50 abstrait.
