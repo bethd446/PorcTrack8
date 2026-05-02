@@ -108,7 +108,7 @@ const ClassementView: React.FC = () => {
     <div className="flex flex-col gap-4">
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="flex flex-col gap-2">
-        <Eyebrow>Performance · Classement</Eyebrow>
+        <Eyebrow customDotColor="var(--module-naissage)">Performance · Classement</Eyebrow>
         <h1 className="ft-heading text-[22px] uppercase tracking-tight text-text-0 flex items-center gap-2">
           <Trophy size={20} aria-hidden="true" className="text-accent" />
           Classement reproducteurs

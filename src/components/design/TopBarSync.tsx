@@ -22,6 +22,10 @@ const crumbHref = (c: Crumb): string | undefined =>
  * Le statut sync historique a été retiré (Vague 3) — plus aucune notion
  * de synchronisation visible côté UI, toutes les écritures passent par
  * supabaseWrites.ts.
+ *
+ * @deprecated Le mini-indicateur sync interne s'appuie sur `useSyncState` legacy.
+ * Préférer `SyncStatusBadge` (RT2) basé sur `useOfflineQueue` pour les nouvelles
+ * vues. Migration globale différée (~25 consumers).
  */
 export default function TopBarSync({
   crumbs,

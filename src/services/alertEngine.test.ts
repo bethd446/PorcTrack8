@@ -879,6 +879,43 @@ describe('R15 — Passage de phase par poids', () => {
     expect(alerts.find(a => a.id?.startsWith('phase-poids-BP-R15C'))).toBeUndefined();
     expect(alerts.find(a => a.id === 'sortie-BP-R15C')).toBeUndefined();
   });
+
+  it('déclenche pour bande ENGRAISSEMENT poids 82 kg ≥ seuil FINITION (80 kg)', () => {
+    const bande = makeBande({
+      id: 'BP-R15D',
+      idPortee: 'P-R15D',
+      statut: 'En engraissement',
+      dateMB: toFrDate(dayOffset(NOW, -120)), // age 120j → terrain ENGRAISSEMENT
+      poidsMoyenKg: 82,
+      vivants: 10,
+    });
+    const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
+    const r15 = alerts.find(a => a.id === 'phase-poids-BP-R15D-FINITION');
+    expect(r15).toBeDefined();
+    expect(r15?.priority).toBe('NORMALE');
+    expect(r15?.title).toContain('Finition');
+    expect(r15?.message).toContain('82 kg');
+    expect(r15?.message).toContain('80 kg');
+    expect(r15?.meta?.toPhase).toBe('FINITION');
+    expect(r15?.meta?.fromPhase).toBe('ENGRAISSEMENT');
+    expect(r15?.meta?.poidsSeuilKg).toBe(80);
+    expect(r15?.meta?.poidsReelKg).toBe(82);
+  });
+
+  it('ne déclenche pas R15 vers CROISSANCE si bande est déjà déclarée CROISSANCE', () => {
+    // Bande déjà CROISSANCE : R15 ne doit pas suggérer un passage vers CROISSANCE
+    // (la transition next devient ENGRAISSEMENT, seuil 50 kg).
+    const bande = makeBande({
+      id: 'BP-R15E',
+      statut: 'En croissance',
+      dateMB: toFrDate(dayOffset(NOW, -70)), // age 70j → terrain CROISSANCE
+      poidsMoyenKg: 30, // au-delà seuil CROISSANCE (25), mais sous seuil ENGRAISSEMENT (50)
+      vivants: 10,
+    });
+    const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
+    expect(alerts.find(a => a.id === 'phase-poids-BP-R15E-CROISSANCE')).toBeUndefined();
+    expect(alerts.find(a => a.id === 'phase-poids-BP-R15E-ENGRAISSEMENT')).toBeUndefined();
+  });
 });
 
 // ─── R16 — Sortie abattoir imminente (poids ≥ 110 kg) ────────────────────────

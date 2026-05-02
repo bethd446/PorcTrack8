@@ -54,7 +54,7 @@
   --bg-surface-2: #F7F5F0;
   --ink:          #111827;
   --ink-soft:     #374151;
-  --muted:        #6B7280;
+  --muted:        #525965; /* foncé pour contraste WCAG AA sur fond surface (≥6.5:1) */
 
   /* Aliases sémantiques (mapping vers Tailwind v4 vars) */
   --accent-500: var(--color-accent-500);

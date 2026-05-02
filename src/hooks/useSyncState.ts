@@ -1,3 +1,8 @@
+/**
+ * @deprecated Migrer vers `useOfflineQueue` (RT2) qui expose `pendingCount`,
+ * `isOnline`, `isFlushing` plutôt qu'un `SyncState` agrégé.
+ * Conservé pour `SyncIndicator` / `TopBarSync` legacy.
+ */
 import { useSyncExternalStore } from 'react';
 import type { SyncState } from '../components/design/SyncIndicator';
 import { getQueueLength } from '../services/offlineQueue';

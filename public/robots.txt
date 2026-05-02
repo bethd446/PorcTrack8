@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://porctrack.tech/sitemap.xml

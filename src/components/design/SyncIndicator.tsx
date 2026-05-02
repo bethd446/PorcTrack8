@@ -1,3 +1,8 @@
+/**
+ * @deprecated Migrer vers `useOfflineQueue` + `SyncStatusBadge` (RT2).
+ * Conservé tant que `TopBarSync` (utilisé dans ~25 vues) en dépend.
+ * Ne plus l'utiliser dans le nouveau code.
+ */
 import React from 'react';
 
 export type SyncState = 'online' | 'pending' | 'offline';

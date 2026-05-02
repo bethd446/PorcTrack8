@@ -20,6 +20,7 @@ import {
   Baby,
   Truck,
   HelpCircle,
+  Trophy,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -345,6 +346,13 @@ const AppSidebar: React.FC = () => {
               label="KPIs techniques"
               active={isActive('/pilotage/perf')}
               onClick={() => navigate('/pilotage/perf')}
+            />
+            <SidebarRow
+              icon={Trophy}
+              label="Classement"
+              active={isActive('/troupeau/classement')}
+              onClick={() => navigate('/troupeau/classement')}
+              moduleAccent={accentFor('/troupeau/classement')}
             />
             <SidebarRow
               icon={BarChart3}
