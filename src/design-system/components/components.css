@@ -207,3 +207,10 @@
 .pt-insight { background: var(--pt-surface-insight); border-left: 3px solid var(--pt-accent); border-radius: var(--pt-radius-md); padding: var(--pt-space-4) var(--pt-space-5); box-shadow: var(--pt-shadow-card); display: flex; flex-direction: column; gap: var(--pt-space-2); }
 .pt-insight__title { display: flex; align-items: center; gap: 6px; font-family: var(--pt-font-body); font-size: var(--pt-text-label); letter-spacing: var(--pt-tracking-label); text-transform: uppercase; color: var(--pt-accent); font-weight: 700; }
 .pt-insight__body { font-family: var(--pt-font-body); font-size: var(--pt-text-body); color: var(--pt-text); line-height: 1.5; }
+
+/* === PAGE HEADER (V41) — pattern canonique architecture de page === */
+.pt-page-header { margin-bottom: 24px; }
+.pt-page-header__eyebrow { display: flex; align-items: center; gap: 8px; font-family: var(--pt-font-body); font-size: var(--pt-text-label); font-weight: 600; letter-spacing: var(--pt-tracking-label); color: var(--pt-text-muted); text-transform: uppercase; margin-bottom: 8px; }
+.pt-page-header__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--pt-primary); flex-shrink: 0; }
+.pt-page-header__title { font-family: var(--pt-font-display); font-size: var(--pt-text-display); font-weight: 700; line-height: 1; letter-spacing: -0.02em; margin: 0 0 4px; color: var(--pt-text); }
+.pt-page-header__subtitle { font-family: var(--pt-font-body); font-size: var(--pt-text-small); color: var(--pt-text-muted); margin: 0; line-height: 1.5; }

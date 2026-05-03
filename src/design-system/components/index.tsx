@@ -933,3 +933,26 @@ export function DataTable<T extends { id?: string | number }>({
     </div>
   );
 }
+
+// ============================================================
+// PAGE HEADER — V41 pattern canonique architecture de page
+// ============================================================
+// Pattern strict : eyebrow (1 mot UPPERCASE auto) + H1 (Big Shoulders) +
+// subtitle 1 ligne max. Pas de prop "actions"/"cta" : un header ne contient
+// JAMAIS de bouton (règle V41 LA 11e RÈGLE D'OR — ARCHITECTURE DE PAGE).
+export function PageHeader({ eyebrow, title, subtitle }: {
+  eyebrow: string;
+  title: string;
+  subtitle?: string;
+}) {
+  return (
+    <header className="pt-page-header">
+      <div className="pt-page-header__eyebrow">
+        <span className="pt-page-header__dot" aria-hidden="true" />
+        <span>{eyebrow.toUpperCase()}</span>
+      </div>
+      <h1 className="pt-page-header__title">{title}</h1>
+      {subtitle && <p className="pt-page-header__subtitle">{subtitle}</p>}
+    </header>
+  );
+}
