@@ -13,14 +13,17 @@ import { useTroupeauPipeline } from '../../hooks/useTroupeauStats';
 import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import { FARM_CONFIG } from '../../config/farm';
 
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import {
+  Section,
   Card,
   Button,
-  SectionHeader,
   Tag,
   IconBox,
+  StatsGrid,
+  Stat,
+  Tabs,
+  safeDisplay,
 } from '../../design-system';
 
 import TroupeauTruiesView from '../troupeau/TroupeauTruiesView';
@@ -28,7 +31,6 @@ import TroupeauVerratsView from '../troupeau/TroupeauVerratsView';
 import TroupeauPorceletsView from '../troupeau/TroupeauPorceletsView';
 import TroupeauLogesListView from '../troupeau/TroupeauLogesListView';
 import QuickAddBandeForm from '../../components/forms/QuickAddBandeForm';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs';
 
 // ─── Sub-tabs ────────────────────────────────────────────────────────────────
 
@@ -66,7 +68,6 @@ const TroupeauHub: React.FC = () => {
   const initialSubTab: SubTab = isSubTab(viewParam) ? viewParam : 'truies';
   const [activeSubTab, setActiveSubTab] = useState<SubTab>(initialSubTab);
 
-  // Sync state with URL parameter (deep links / back nav)
   useEffect(() => {
     if (isSubTab(viewParam) && viewParam !== activeSubTab) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -82,12 +83,9 @@ const TroupeauHub: React.FC = () => {
     setSearchParams(next, { replace: true });
   };
 
-  // Search states lifted to Hub to persist during tab changes
   const [searchTruies, setSearchTruies] = useState('');
   const [searchVerrats, setSearchVerrats] = useState('');
   const [searchPorcelets, setSearchPorcelets] = useState('');
-
-  // CTA "Bande historique" — ouverture du form
   const [addBandeOpen, setAddBandeOpen] = useState(false);
 
   const today = useMemo(() => new Date(), []);
@@ -147,6 +145,12 @@ const TroupeauHub: React.FC = () => {
     return segments.join(' · ');
   }, [summary]);
 
+  const tabOptions = SUB_TABS.map((t) => ({
+    value: t.id,
+    label: t.label,
+    count: tabCounts[t.id],
+  }));
+
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
@@ -163,152 +167,101 @@ const TroupeauHub: React.FC = () => {
             }}
           />
 
-          <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            {/* ── En-tête V30-MASTER ─────────────────────────────────
-                Eyebrow · H1 Big Shoulders · sous-titre muted · bouton Classement pill */}
-            <header>
-              <Eyebrow dotColor="accent">Élevage · {nomFerme}</Eyebrow>
-              <h1
-                className="text-page-title"
-                style={{ margin: '8px 0 4px' }}
-              >
-                Élevage
-              </h1>
-              <div
-                className="text-body"
-                style={{ color: 'var(--pt-text-muted)' }}
-              >
-                {summary.total} truie{summary.total > 1 ? 's' : ''} · {verrats.length} verrat{verrats.length > 1 ? 's' : ''} ({totalAnimals} animaux)
-              </div>
-              <div
-                className="text-body"
-                style={{ color: 'var(--pt-text-subtle)', fontSize: 13, marginTop: 4 }}
-              >
-                {truieBreakdown}
-              </div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => navigate('/troupeau/classement')}
-                  aria-label="Voir le classement des reproducteurs"
-                >
-                  <Trophy size={15} aria-hidden="true" />
-                  <span>Classement Top Truies & Verrats</span>
-                  <ChevronRight size={14} aria-hidden="true" />
-                </Button>
-              </div>
-            </header>
+          <div className="pt-page" style={{ padding: '8px 18px 24px', maxWidth: 1100, margin: '0 auto' }}>
+            <Section label={`Élevage · ${nomFerme}`} />
+            <h1 style={{ fontSize: 'var(--pt-text-display)', marginBottom: 4 }}>Élevage</h1>
+            <p style={{ color: 'var(--pt-text-muted)', margin: '0 0 4px', fontSize: 14 }}>
+              {summary.total} truie{summary.total > 1 ? 's' : ''} · {verrats.length} verrat{verrats.length > 1 ? 's' : ''} ({totalAnimals} animaux)
+            </p>
+            <p style={{ color: 'var(--pt-text-subtle)', margin: '0 0 16px', fontSize: 13 }}>
+              {truieBreakdown}
+            </p>
 
-            {/* ── Aperçu loges (occupation Mat/P-sev/Eng) ──────────── */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => navigate('/troupeau/classement')}
+                ariaLabel="Voir le classement des reproducteurs"
+              >
+                <Trophy size={15} aria-hidden="true" />
+                <span>Classement Top Truies & Verrats</span>
+                <ChevronRight size={14} aria-hidden="true" />
+              </Button>
+            </div>
+
             <section aria-label="Aperçu des loges">
-              <SectionHeader label="Aperçu" />
-              <Card
-                role="group"
-                style={{
-                  marginTop: 12,
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: 14,
-                }}
-              >
-                <LogesMiniBar label="Mat." occ={summary.mat} />
-                <LogesMiniBar label="P-sev" occ={summary.post} />
-                <LogesMiniBar label="Eng." occ={summary.eng} />
-              </Card>
-            </section>
-
-            {/* ── V30-MASTER : Inventaire (TRUIES/VERRATS/LOGES/BANDES) ── */}
-            <section aria-label="Inventaire">
-              <SectionHeader label="Inventaire" />
-              <Card
-                role="group"
-                style={{
-                  marginTop: 12,
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(4, 1fr)',
-                  gap: 12,
-                }}
-              >
-                <InventaireStat label="Truies" value={activeTruies.length} />
-                <InventaireStat label="Verrats" value={verrats.length} />
-                <InventaireStat
-                  label="Loges"
-                  value={`${summary.mat.occupees + summary.post.occupees + summary.eng.occupees}/${totalLogesCapacity}`}
-                />
-                <InventaireStat label="Bandes" value={realBandes.length} />
-              </Card>
-            </section>
-
-            {/* ── V30-MASTER : Section Troupeau header ─────────────── */}
-            <SectionHeader label="Troupeau" />
-
-            {/* ── Sub-tabs (Radix) ─────────────────────────────────── */}
-            <Tabs
-              value={activeSubTab}
-              onValueChange={(v) => {
-                if (isSubTab(v)) handleSubTabChange(v);
-              }}
-            >
-              <TabsList aria-label="Sélectionner une vue du troupeau">
-                {SUB_TABS.map((t) => {
-                  const count = tabCounts[t.id];
-                  const countLabel = t.id === 'loges'
-                    ? `${count}/${totalLogesCapacity}`
-                    : String(count);
-                  return (
-                    <TabsTrigger key={t.id} value={t.id} id={`troupeau-tab-${t.id}`} style={{ minHeight: 36, gap: 8 }}>
-                      <span>{t.label}</span>
-                      <span
-                        style={{
-                          fontSize: 10,
-                          opacity: 0.75,
-                          fontWeight: 500,
-                          letterSpacing: '0.04em',
-                        }}
-                      >
-                        {countLabel}
-                      </span>
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
-              <TabsContent value="truies" className="animate-fade-in">
-                <TroupeauTruiesView searchText={searchTruies} setSearchText={setSearchTruies} />
-              </TabsContent>
-              <TabsContent value="verrats" className="animate-fade-in">
-                <TroupeauVerratsView searchText={searchVerrats} setSearchText={setSearchVerrats} />
-              </TabsContent>
-              <TabsContent value="porcelets" className="animate-fade-in">
-                <TroupeauPorceletsView searchText={searchPorcelets} setSearchText={setSearchPorcelets} />
-              </TabsContent>
-              <TabsContent value="loges" className="animate-fade-in">
-                <TroupeauLogesListView />
-              </TabsContent>
-              <TabsContent value="bandes" className="animate-fade-in">
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center justify-end">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => setAddBandeOpen(true)}
-                      aria-label="Ajouter une bande historique"
-                    >
-                      <Plus size={15} aria-hidden="true" />
-                      Ajouter une bande
-                    </Button>
-                  </div>
-                  <BandesInline
-                    bandes={realBandes}
-                    onOpen={(id) => navigate(`/troupeau/bandes/${id}`)}
-                    onSeeAll={() => navigate('/troupeau/bandes')}
-                  />
+              <Section label="APERÇU" />
+              <Card>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+                  <LogesMiniBar label="Mat." occ={summary.mat} />
+                  <LogesMiniBar label="P-sev" occ={summary.post} />
+                  <LogesMiniBar label="Eng." occ={summary.eng} />
                 </div>
-              </TabsContent>
-              <TabsContent value="batiments" className="animate-fade-in">
-                <BatimentsSummary onSeeAll={() => navigate('/troupeau/batiments')} />
-              </TabsContent>
-            </Tabs>
+              </Card>
+            </section>
+
+            <section aria-label="Inventaire">
+              <Section label="INVENTAIRE" />
+              <Card>
+                <StatsGrid cols={4}>
+                  <Stat value={activeTruies.length} label="Truies" />
+                  <Stat value={verrats.length} label="Verrats" />
+                  <Stat
+                    value={`${summary.mat.occupees + summary.post.occupees + summary.eng.occupees}/${totalLogesCapacity}`}
+                    label="Loges"
+                  />
+                  <Stat value={realBandes.length} label="Bandes" />
+                </StatsGrid>
+              </Card>
+            </section>
+
+            <Section label="TROUPEAU" />
+
+            <div style={{ marginBottom: 16 }}>
+              <Tabs
+                value={activeSubTab}
+                onChange={(v) => {
+                  if (isSubTab(v)) handleSubTabChange(v);
+                }}
+                options={tabOptions}
+                ariaLabel="Sélectionner une vue du troupeau"
+              />
+            </div>
+
+            {activeSubTab === 'truies' && (
+              <TroupeauTruiesView searchText={searchTruies} setSearchText={setSearchTruies} />
+            )}
+            {activeSubTab === 'verrats' && (
+              <TroupeauVerratsView searchText={searchVerrats} setSearchText={setSearchVerrats} />
+            )}
+            {activeSubTab === 'porcelets' && (
+              <TroupeauPorceletsView searchText={searchPorcelets} setSearchText={setSearchPorcelets} />
+            )}
+            {activeSubTab === 'loges' && <TroupeauLogesListView />}
+            {activeSubTab === 'bandes' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => setAddBandeOpen(true)}
+                    ariaLabel="Ajouter une bande historique"
+                  >
+                    <Plus size={15} aria-hidden="true" />
+                    Ajouter une bande
+                  </Button>
+                </div>
+                <BandesInline
+                  bandes={realBandes}
+                  onOpen={(id) => navigate(`/troupeau/bandes/${id}`)}
+                  onSeeAll={() => navigate('/troupeau/bandes')}
+                />
+              </div>
+            )}
+            {activeSubTab === 'batiments' && (
+              <BatimentsSummary onSeeAll={() => navigate('/troupeau/batiments')} />
+            )}
           </div>
 
           <QuickAddBandeForm
@@ -324,9 +277,9 @@ const TroupeauHub: React.FC = () => {
 // ─── Sous-composants ───────────────────────────────────────────────────────
 
 const ALERT_FILL: Record<LogeOccupationAlerte, string> = {
-  OK: 'var(--color-accent-500)',
-  HIGH: 'var(--color-amber-pork)',
-  FULL: 'var(--color-pig)',
+  OK: 'var(--pt-accent)',
+  HIGH: 'var(--pt-warning)',
+  FULL: 'var(--pt-danger)',
 };
 
 interface LogesMiniBarProps {
@@ -341,11 +294,10 @@ const LogesMiniBar: React.FC<LogesMiniBarProps> = ({ label, occ }) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 6 }}>
         <span
           style={{
-            fontFamily: 'var(--pt-font-body)',
-            fontSize: 9.5,
-            letterSpacing: '0.18em',
+            fontSize: 'var(--pt-text-label)',
+            letterSpacing: 'var(--pt-tracking-label)',
             textTransform: 'uppercase',
-            color: 'var(--muted)',
+            color: 'var(--pt-text-subtle)',
             fontWeight: 600,
           }}
         >
@@ -353,9 +305,8 @@ const LogesMiniBar: React.FC<LogesMiniBarProps> = ({ label, occ }) => {
         </span>
         <span
           style={{
-            fontFamily: 'var(--pt-font-body)',
-            fontSize: 11,
-            color: 'var(--ink)',
+            fontSize: 12,
+            color: 'var(--pt-text)',
             fontWeight: 600,
             fontVariantNumeric: 'tabular-nums',
           }}
@@ -366,8 +317,8 @@ const LogesMiniBar: React.FC<LogesMiniBarProps> = ({ label, occ }) => {
       <div
         style={{
           height: 6,
-          background: 'var(--bg-app)',
-          borderRadius: 999,
+          background: 'var(--pt-surface-alt)',
+          borderRadius: 'var(--pt-radius-pill)',
           overflow: 'hidden',
         }}
       >
@@ -376,51 +327,14 @@ const LogesMiniBar: React.FC<LogesMiniBarProps> = ({ label, occ }) => {
             height: '100%',
             width: `${width}%`,
             background: ALERT_FILL[occ.alerte],
-            borderRadius: 999,
-            transition: 'width 240ms var(--ease-emil)',
+            borderRadius: 'var(--pt-radius-pill)',
+            transition: 'width 240ms ease',
           }}
         />
       </div>
     </div>
   );
 };
-
-// ─── V30-MASTER : InventaireStat ───────────────────────────────────────────
-
-interface InventaireStatProps {
-  label: string;
-  value: number | string;
-}
-
-const InventaireStat: React.FC<InventaireStatProps> = ({ label, value }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-    <span
-      style={{
-        fontFamily: 'var(--pt-font-body)',
-        fontSize: 'var(--pt-text-label)',
-        letterSpacing: 'var(--pt-tracking-label)',
-        color: 'var(--pt-text-subtle)',
-        fontWeight: 600,
-        textTransform: 'uppercase',
-      }}
-    >
-      {label}
-    </span>
-    <span
-      style={{
-        fontFamily: 'var(--pt-font-display)',
-        fontSize: 28,
-        fontWeight: 700,
-        color: 'var(--pt-text)',
-        letterSpacing: '-0.02em',
-        lineHeight: 1,
-        fontVariantNumeric: 'tabular-nums',
-      }}
-    >
-      {value}
-    </span>
-  </div>
-);
 
 // ─── BandesInline ──────────────────────────────────────────────────────────
 
@@ -430,14 +344,12 @@ interface BandesInlineProps {
   onSeeAll: () => void;
 }
 
-/** Map statut bande → variant Tag V29 (palette DNA "Aujourd'hui"). */
-function bandeStatutTagVariant(
-  statut: string | undefined,
-): 'default' | 'accent' | 'primary' | 'success' | 'warning' {
+type TagVariant = 'default' | 'primary' | 'accent' | 'soft' | 'danger' | 'warning' | 'success';
+
+function bandeStatutTagVariant(statut: string | undefined): TagVariant {
   const s = (statut ?? '').toLowerCase();
   if (/sous m[èe]re|maternit/.test(s)) return 'success';
   if (/sevr/.test(s)) return 'accent';
-  if (/recap/.test(s)) return 'default';
   return 'default';
 }
 
@@ -445,13 +357,7 @@ const BandesInline: React.FC<BandesInlineProps> = ({ bandes, onOpen, onSeeAll })
   if (bandes.length === 0) {
     return (
       <Card>
-        <div
-          style={{
-            textAlign: 'center',
-            color: 'var(--ds-text-muted)',
-            fontSize: 'var(--ds-text-small)',
-          }}
-        >
+        <div style={{ textAlign: 'center', color: 'var(--pt-text-muted)', fontSize: 14 }}>
           Aucune bande active.
         </div>
       </Card>
@@ -459,79 +365,37 @@ const BandesInline: React.FC<BandesInlineProps> = ({ bandes, onOpen, onSeeAll })
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <ul
-        style={{
-          listStyle: 'none',
-          margin: 0,
-          padding: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 10,
-        }}
-      >
-        {bandes.map((b) => {
-          const tagVariant = bandeStatutTagVariant(b.statut);
-          return (
-            <li key={b.id}>
-              <Card
-                as="button"
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                {...({
-                  type: 'button',
-                  onClick: () => onOpen(b.id),
-                  'aria-label': `Ouvrir bande ${b.idPortee ?? b.id}`,
-                } as any)}
-                style={{
-                  width: '100%',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 14,
-                  minHeight: 44,
-                }}
-              >
+      {bandes.map((b) => {
+        const tagVariant = bandeStatutTagVariant(b.statut);
+        const code = safeDisplay(b.idPortee ?? b.id);
+        const truie = b.truie ? ` · ${safeDisplay(b.truie)}` : '';
+        return (
+          <div key={b.id}>
+            <Card
+              compact
+              interactive
+              onClick={() => onOpen(b.id)}
+              ariaLabel={`Ouvrir bande ${code}`}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, minHeight: 44 }}>
                 <IconBox tone="accent">
                   <Layers size={20} aria-hidden="true" />
                 </IconBox>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontFamily: 'var(--ds-font-serif)',
-                      fontSize: 16,
-                      fontWeight: 600,
-                      color: 'var(--ds-text)',
-                      letterSpacing: '-0.005em',
-                    }}
-                  >
-                    {b.idPortee ?? b.id}
-                    {b.truie ? ` · ${b.truie}` : ''}
+                  <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--pt-text)' }}>
+                    {code}{truie}
                   </div>
-                  <div
-                    style={{
-                      fontFamily: 'var(--ds-font-sans)',
-                      fontSize: 'var(--ds-text-small)',
-                      color: 'var(--ds-text-muted)',
-                      marginTop: 2,
-                      fontVariantNumeric: 'tabular-nums',
-                    }}
-                  >
+                  <div style={{ fontSize: 12, color: 'var(--pt-text-muted)', marginTop: 2, fontVariantNumeric: 'tabular-nums' }}>
                     {typeof b.vivants === 'number' ? `${b.vivants} viv.` : '—'}
                   </div>
                 </div>
-                {b.statut ? (
-                  <Tag variant={tagVariant}>{b.statut}</Tag>
-                ) : null}
-                <ChevronRight
-                  size={18}
-                  aria-hidden="true"
-                  style={{ color: 'var(--ds-text-subtle)', flexShrink: 0 }}
-                />
-              </Card>
-            </li>
-          );
-        })}
-      </ul>
+                {b.statut ? <Tag variant={tagVariant}>{b.statut}</Tag> : null}
+                <ChevronRight size={18} aria-hidden="true" style={{ color: 'var(--pt-text-subtle)', flexShrink: 0 }} />
+              </div>
+            </Card>
+          </div>
+        );
+      })}
       <Button variant="ghost" size="sm" onClick={onSeeAll}>
         Voir toutes les bandes
       </Button>
@@ -552,61 +416,19 @@ const BatimentsSummary: React.FC<BatimentsSummaryProps> = ({ onSeeAll }) => {
     { label: 'Engraissement', cap: FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY },
   ];
   return (
-    <Card style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 12,
-        }}
-      >
+    <Card>
+      <StatsGrid cols={3}>
         {stats.map((s) => (
-          <div key={s.label} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <span
-              style={{
-                fontFamily: 'var(--ds-font-sans)',
-                fontSize: 'var(--ds-text-label)',
-                letterSpacing: 'var(--ds-tracking-label)',
-                color: 'var(--ds-text-subtle)',
-                fontWeight: 600,
-                textTransform: 'uppercase',
-              }}
-            >
-              {s.label}
-            </span>
-            <span
-              style={{
-                fontFamily: 'var(--ds-font-serif)',
-                fontSize: 28,
-                fontWeight: 600,
-                color: 'var(--ds-text)',
-                letterSpacing: '-0.02em',
-                lineHeight: 1,
-              }}
-            >
-              {s.cap}
-            </span>
-            <span
-              style={{
-                fontFamily: 'var(--ds-font-sans)',
-                fontSize: 12,
-                color: 'var(--ds-text-muted)',
-                fontVariantNumeric: 'tabular-nums',
-              }}
-            >
-              loges
-            </span>
+          <div key={s.label}>
+            <Stat value={s.cap} label={`${s.label} (loges)`} />
           </div>
         ))}
+      </StatsGrid>
+      <div style={{ marginTop: 16 }}>
+        <Button variant="secondary" size="sm" onClick={onSeeAll}>
+          Voir le plan complet
+        </Button>
       </div>
-      <Button
-        variant="secondary"
-        size="sm"
-        onClick={onSeeAll}
-        style={{ alignSelf: 'flex-start' }}
-      >
-        Voir le plan complet
-      </Button>
     </Card>
   );
 };

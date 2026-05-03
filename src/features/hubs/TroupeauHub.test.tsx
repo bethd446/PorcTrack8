@@ -304,33 +304,32 @@ function renderHub(initialPath = '/troupeau') {
   );
 }
 
-/** Clique sur le sous-onglet demandé (role=tab dans le tablist principal). */
-function clickSubTab(label: RegExp): void {
-  // Plusieurs role=tablist peuvent coexister (le panneau Truies a un
-  // tablist de filtres). On cible les tabs avec `id="troupeau-tab-*"`.
-  const tab = screen
-    .getAllByRole('tab')
-    .find(
-      (t) =>
-        t.id.startsWith('troupeau-tab-')
-        && label.test(t.textContent ?? ''),
-    );
-  if (!tab) throw new Error(`Sous-onglet introuvable : ${label}`);
-  fireEvent.click(tab);
+/** Récupère le tablist principal du hub (DS Tabs avec aria-label dédié). */
+function getHubTablist(): HTMLElement {
+  const list = screen.getByRole('tablist', {
+    name: /sélectionner une vue du troupeau/i,
+  });
+  return list;
 }
 
-/** Variante async : Radix Tabs réagit à pointerdown → utiliser userEvent. */
+/** Récupère un sous-onglet du hub par son label texte (regex). */
+function findHubTab(label: RegExp): HTMLElement {
+  const list = getHubTablist();
+  const tabs = Array.from(list.querySelectorAll('[role="tab"]')) as HTMLElement[];
+  const tab = tabs.find((t) => label.test(t.textContent ?? ''));
+  if (!tab) throw new Error(`Sous-onglet introuvable : ${label}`);
+  return tab;
+}
+
+/** Clique sur le sous-onglet demandé (role=tab dans le tablist principal). */
+function clickSubTab(label: RegExp): void {
+  fireEvent.click(findHubTab(label));
+}
+
+/** Variante async via userEvent (compat tests qui le préfèrent). */
 async function clickSubTabUser(label: RegExp): Promise<void> {
   const user = userEvent.setup();
-  const tab = screen
-    .getAllByRole('tab')
-    .find(
-      (t) =>
-        t.id.startsWith('troupeau-tab-')
-        && label.test(t.textContent ?? ''),
-    );
-  if (!tab) throw new Error(`Sous-onglet introuvable : ${label}`);
-  await user.click(tab);
+  await user.click(findHubTab(label));
 }
 
 // ─── Tests ──────────────────────────────────────────────────────────────────
@@ -366,9 +365,8 @@ describe('TroupeauHub — intégration multi-vues', () => {
     expect((searchInput as HTMLInputElement).type).toBe('search');
 
     // L'onglet Truies est sélectionné (aria-selected=true)
-    const truiesTab = document.getElementById('troupeau-tab-truies');
-    expect(truiesTab).not.toBeNull();
-    expect(truiesTab?.getAttribute('aria-selected')).toBe('true');
+    const truiesTab = findHubTab(/truies/i);
+    expect(truiesTab.getAttribute('aria-selected')).toBe('true');
   });
 
   it('3. click Verrats → VerratsView affichée (V01 / V02 présents)', async () => {
@@ -420,9 +418,8 @@ describe('TroupeauHub — intégration multi-vues', () => {
     renderHub('/troupeau?view=porcelets');
 
     // Le sous-onglet Porcelets est sélectionné d'entrée
-    const porceletsTab = document.getElementById('troupeau-tab-porcelets');
-    expect(porceletsTab).not.toBeNull();
-    expect(porceletsTab?.getAttribute('aria-selected')).toBe('true');
+    const porceletsTab = findHubTab(/porcelets/i);
+    expect(porceletsTab.getAttribute('aria-selected')).toBe('true');
 
     // V25 — Contenu Porcelets chargé : section "Loges occupées" présente.
     const occupiedHeader = await screen.findByText(/Loges occupées · \d+/i);
