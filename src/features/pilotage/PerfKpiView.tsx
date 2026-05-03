@@ -21,6 +21,7 @@ import {
   Stat,
   ListItem,
   Empty,
+  PageHeader,
   safeDisplay,
 } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
@@ -297,11 +298,8 @@ const PerfKpiView: React.FC = () => {
           />
 
           <div className="pt-page" style={{ padding: '8px 18px 24px', maxWidth: 1100, margin: '0 auto' }}>
-            <Section label="PILOTAGE · GTTT" />
-            <h1 style={{ fontSize: 'var(--pt-text-display)', marginBottom: 4 }}>Performance</h1>
-            <p style={{ color: 'var(--pt-text-muted)', margin: '0 0 20px', fontSize: 13 }}>
-              Indicateurs techniques · {nbBandes} bande{nbBandes > 1 ? 's' : ''}
-            </p>
+            {/* V41 Phase C2 — Header sobre via PageHeader (pas de métriques chiffrées en subtitle) */}
+            <PageHeader eyebrow="Pilotage" title="Performance" subtitle="KPIs clés de ta ferme" />
 
             <Section label="TON TROUPEAU EN UN COUP D'ŒIL" />
             <Card>
@@ -558,6 +556,20 @@ const PerfKpiView: React.FC = () => {
                 )}
               </>
             ))}
+
+            {/* V41 Phase C2 — Bouton "Classement Top Truies & Verrats" déplacé
+                depuis /troupeau (pattern interdit "CTA dans header"). */}
+            <Section label="CLASSEMENT" />
+            <div style={{ marginBottom: 18 }}>
+              <Button
+                variant="primary"
+                fullWidth
+                onClick={() => navigate('/troupeau/classement')}
+                ariaLabel="Voir le classement des reproducteurs"
+              >
+                Classement top truies & verrats
+              </Button>
+            </div>
 
             <Section label="EXPORT" />
             <Card compact>
