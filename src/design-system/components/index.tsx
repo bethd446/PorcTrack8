@@ -93,7 +93,7 @@ export function InsightCard({ title, children, className, style }: {
 // ============================================================
 // BUTTON
 // ============================================================
-type ButtonLegacyVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'destructive';
+type ButtonLegacyVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'destructive' | 'inverse';
 type ButtonLegacySize = 'small' | 'medium' | 'sm' | 'md' | 'lg';
 
 export function Button({
@@ -116,16 +116,20 @@ export function Button({
   const v: 'primary' | 'secondary' | 'danger' =
     variant === 'ghost' ? 'secondary'
     : variant === 'destructive' ? 'danger'
+    : variant === 'inverse' ? 'secondary'
     : variant;
   const isSmall = size === 'small' || size === 'sm';
   const classes = ['pt-btn', `pt-btn--${v}`,
     isSmall && 'pt-btn--small',
     fullWidth && 'pt-btn--full',
     variant === 'ghost' && 'pt-btn--ghost',
+    variant === 'inverse' && 'pt-btn--inverse',
     className,
   ].filter(Boolean).join(' ');
   const ghostStyle: React.CSSProperties | undefined =
-    variant === 'ghost' ? { background: 'transparent', border: 'none' } : undefined;
+    variant === 'ghost' ? { background: 'transparent', border: 'none' }
+    : variant === 'inverse' ? { background: 'var(--pt-surface)', color: 'var(--pt-primary)', border: '1.5px solid var(--pt-surface)' }
+    : undefined;
   // data-pt="button" + inline borderRadius/textTransform : exposés pour la
   // compat des tests V29/V30 (ces tests vérifient l'attribut/style direct).
   const pillStyle: React.CSSProperties = {

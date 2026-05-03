@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Bell } from 'lucide-react';
 import Eyebrow from '../components/design/Eyebrow';
-import Button from '../components/design/Button';
+import { Button } from '../design-system';
 import PublicShell from '../components/design/PublicShell';
 
 const FONT_DISPLAY = 'var(--font-heading)';

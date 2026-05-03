@@ -5,7 +5,7 @@ import { ArrowRight, Mail, CheckCircle2, Loader2 } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
 import { getAuthRedirectURL } from '../../lib/authRedirect';
 import Eyebrow from '../design/Eyebrow';
-import Button from '../design/Button';
+import { Button } from '../../design-system';
 
 const FONT_DISPLAY = 'var(--font-heading)';
 const FONT_BODY = 'var(--font-body)';

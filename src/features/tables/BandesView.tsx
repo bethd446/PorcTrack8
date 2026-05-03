@@ -19,7 +19,7 @@ import { getTableByKey } from '../../services/tableLoader';
 import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { SectionDivider } from '../../components/agritech';
-import Button from '../../components/design/Button';
+import { Button } from '../../design-system';
 import EmptyState from '../../components/design/EmptyState';
 import { BandeIcon } from '../../components/icons';
 import QuickSexSeparationForm from '../../components/forms/QuickSexSeparationForm';
