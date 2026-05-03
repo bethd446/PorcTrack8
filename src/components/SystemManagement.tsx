@@ -3,12 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import {
   IonContent, IonPage, IonAlert, IonModal, IonHeader, IonToolbar, IonTitle, IonButtons,
 } from '@ionic/react';
-import {
-  User, Tractor, Users, RefreshCw, Bell, HelpCircle,
-  ChevronRight, LogOut, Trash2, Mail, Lock,
-} from 'lucide-react';
+import { LogOut, Trash2, Mail, Lock } from 'lucide-react';
 import AgritechLayout from './AgritechLayout';
-import { Button as DsButton } from '../design-system';
+import {
+  Button as DsButton,
+  Section,
+  Card,
+  ActionRow as DsActionRow,
+  KeyValueRow,
+  Input,
+  FormField,
+} from '../design-system';
 import { useAuth } from '../context/AuthContext';
 import { useMeta } from '../context/FarmContext';
 import { APP_VERSION } from '../config';
@@ -43,77 +48,35 @@ function formatRelativeTime(ts: number | null | undefined): string {
 
 const SettingsSection: React.FC<{
   title: string;
-  icon: React.ReactNode;
   children: React.ReactNode;
-}> = ({ title, icon, children }) => (
-  <section className="mb-7" aria-label={title}>
-    <div className="flex items-center gap-2 mb-3 px-1">
-      <span className="text-text-2" aria-hidden="true">{icon}</span>
-      <h2
-        className="uppercase tracking-[0.18em] text-[11px] text-text-2"
-        style={{ fontFamily: 'var(--pt-font-body)', fontWeight: 600 }}
-      >
-        {title}
-      </h2>
-      <span className="flex-1 h-px bg-border" aria-hidden="true" />
-    </div>
-    <div
-      className="rounded-[var(--radius-card,12px)] overflow-hidden"
-      style={{
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--line)',
-      }}
-    >
+}> = ({ title, children }) => (
+  <section style={{ marginBottom: 28 }} aria-label={title}>
+    <Section label={title} />
+    <Card compact style={{ marginTop: 8 }}>
       {children}
-    </div>
+    </Card>
   </section>
 );
 
 const InfoRow: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
-  <div className="px-5 py-3.5 flex items-baseline justify-between gap-3 border-b border-border last:border-b-0">
-    <span
-      className="uppercase tracking-wide text-[11px] text-text-2 shrink-0"
-      style={{ fontFamily: 'var(--pt-font-body)', fontWeight: 600 }}
-    >
-      {label}
-    </span>
-    <span className="text-[13px] text-text-0 text-right truncate">{value}</span>
-  </div>
+  <KeyValueRow label={label} value={value} />
 );
 
-const ActionRow: React.FC<{
+interface SettingsRowProps {
   label: string;
   description?: string;
   onClick: () => void;
   destructive?: boolean;
   trailing?: React.ReactNode;
-}> = ({ label, description, onClick, destructive = false, trailing }) => (
-  <button
-    type="button"
+}
+const ActionRow: React.FC<SettingsRowProps> = ({ label, description, onClick, destructive, trailing }) => (
+  <DsActionRow
+    title={label}
+    subtitle={description}
+    destructive={destructive}
+    trailing={trailing}
     onClick={onClick}
-    className="w-full px-5 py-4 flex items-center justify-between gap-3 text-left pressable hover:bg-bg-2 transition-colors border-b border-border last:border-b-0"
-  >
-    <div className="min-w-0">
-      <p
-        className={
-          'text-[14px] font-semibold truncate ' +
-          (destructive ? 'text-red' : 'text-text-0')
-        }
-      >
-        {label}
-      </p>
-      {description ? (
-        <p className="mt-0.5 text-[12px] text-text-2 truncate">{description}</p>
-      ) : null}
-    </div>
-    {trailing ?? (
-      <ChevronRight
-        size={16}
-        className={destructive ? 'text-red' : 'text-text-2'}
-        aria-hidden="true"
-      />
-    )}
-  </button>
+  />
 );
 
 const ToggleRow: React.FC<{
@@ -122,11 +85,39 @@ const ToggleRow: React.FC<{
   checked: boolean;
   onChange: (v: boolean) => void;
 }> = ({ label, description, checked, onChange }) => (
-  <div className="px-5 py-4 flex items-center justify-between gap-3 border-b border-border last:border-b-0">
-    <div className="min-w-0">
-      <p className="text-[14px] font-semibold text-text-0 truncate">{label}</p>
+  <div
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+      padding: '14px 16px',
+      borderBottom: '1px solid var(--pt-border)',
+    }}
+  >
+    <div style={{ minWidth: 0 }}>
+      <p
+        style={{
+          margin: 0,
+          fontFamily: 'var(--pt-font-body)',
+          fontSize: 14,
+          fontWeight: 600,
+          color: 'var(--pt-text)',
+        }}
+      >
+        {label}
+      </p>
       {description ? (
-        <p className="mt-0.5 text-[12px] text-text-2 truncate">{description}</p>
+        <p
+          style={{
+            margin: '2px 0 0',
+            fontFamily: 'var(--pt-font-body)',
+            fontSize: 12,
+            color: 'var(--pt-text-muted)',
+          }}
+        >
+          {description}
+        </p>
       ) : null}
     </div>
     <button
@@ -134,19 +125,31 @@ const ToggleRow: React.FC<{
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className="relative h-6 w-10 rounded-full transition-colors duration-150 shrink-0"
       style={{
-        background: checked ? 'var(--color-accent-500)' : 'var(--color-bg-2)',
-        border: '1px solid var(--line)',
+        position: 'relative',
+        height: 24,
+        width: 40,
+        borderRadius: 'var(--pt-radius-pill)',
+        background: checked ? 'var(--pt-accent)' : 'var(--pt-surface-alt)',
+        border: '1px solid var(--pt-border)',
+        flexShrink: 0,
+        cursor: 'pointer',
+        padding: 0,
       }}
     >
       <span
         aria-hidden="true"
-        className="absolute top-1/2 -translate-y-1/2 h-4 w-4 rounded-full transition-transform duration-150"
         style={{
-          background: 'var(--bg-surface)',
-          left: checked ? 'calc(100% - 19px)' : '3px',
+          position: 'absolute',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          height: 16,
+          width: 16,
+          borderRadius: 'var(--pt-radius-pill)',
+          background: 'var(--pt-surface)',
+          left: checked ? 'calc(100% - 19px)' : 3,
           boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
+          transition: 'left 150ms ease',
         }}
       />
     </button>
@@ -155,26 +158,14 @@ const ToggleRow: React.FC<{
 
 // ─── modals ────────────────────────────────────────────────────────────────
 
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '10px 12px',
-  border: '1px solid var(--line)',
-  borderRadius: 'var(--radius-input, 8px)',
-  background: 'var(--bg-surface)',
-  color: 'var(--ink)',
-  fontSize: 14,
-  fontFamily: 'inherit',
-};
-
-const labelStyle: React.CSSProperties = {
+const errorStyle: React.CSSProperties = {
+  padding: '10px 14px',
+  borderRadius: 'var(--pt-radius-md)',
+  background: 'rgba(220, 38, 38, 0.08)',
+  color: 'var(--pt-danger)',
+  fontSize: 13,
+  margin: 0,
   fontFamily: 'var(--pt-font-body)',
-  fontSize: 11,
-  letterSpacing: '0.18em',
-  textTransform: 'uppercase',
-  color: 'var(--ink-soft)',
-  fontWeight: 600,
-  display: 'block',
-  marginBottom: 6,
 };
 
 const ProfileEditForm: React.FC<{
@@ -214,31 +205,25 @@ const ProfileEditForm: React.FC<{
         onSubmit={handleSubmit}
         style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 520, margin: '0 auto' }}
       >
-        <div>
-          <label style={labelStyle} htmlFor="profile-name">Nom complet</label>
-          <input
+        <FormField label="Nom complet" required>
+          <Input
             id="profile-name"
             type="text"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Christophe Liégeois"
-            style={inputStyle}
             disabled={submitting}
           />
-        </div>
-        {error ? (
-          <p role="alert" style={{ padding: '10px 14px', borderRadius: 8, background: 'var(--color-pig-soft, #fdecea)', color: 'var(--color-pig-deep, #c0392b)', fontSize: 13, margin: 0 }}>
-            {error}
-          </p>
-        ) : null}
-        <button
+        </FormField>
+        {error ? <p role="alert" style={errorStyle}>{error}</p> : null}
+        <DsButton
           type="submit"
+          variant="primary"
           disabled={submitting || !name.trim()}
-          className="pressable mt-2 h-11 px-4 rounded-md bg-accent text-bg-0 text-[12px] font-semibold uppercase tracking-wide disabled:opacity-50"
         >
           {submitting ? 'Enregistrement…' : 'Enregistrer'}
-        </button>
+        </DsButton>
       </form>
     </IonContent>
   );
@@ -256,12 +241,7 @@ const ProfileEditModal: React.FC<{
       <IonToolbar>
         <IonTitle>Modifier mon profil</IonTitle>
         <IonButtons slot="end">
-          <button
-            onClick={onClose}
-            style={{ background: 'transparent', border: 'none', color: 'var(--ink-soft)', fontSize: 14, padding: '8px 16px' }}
-          >
-            Annuler
-          </button>
+          <DsButton variant="ghost" size="small" onClick={onClose}>Annuler</DsButton>
         </IonButtons>
       </IonToolbar>
     </IonHeader>
@@ -315,9 +295,8 @@ const PasswordForm: React.FC<{
         onSubmit={handleSubmit}
         style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 520, margin: '0 auto' }}
       >
-        <div>
-          <label style={labelStyle} htmlFor="pwd-new">Nouveau mot de passe</label>
-          <input
+        <FormField label="Nouveau mot de passe" required>
+          <Input
             id="pwd-new"
             type="password"
             required
@@ -325,13 +304,11 @@ const PasswordForm: React.FC<{
             autoComplete="new-password"
             value={pwd}
             onChange={(e) => setPwd(e.target.value)}
-            style={inputStyle}
             disabled={submitting}
           />
-        </div>
-        <div>
-          <label style={labelStyle} htmlFor="pwd-confirm">Confirme le mot de passe</label>
-          <input
+        </FormField>
+        <FormField label="Confirme le mot de passe" required>
+          <Input
             id="pwd-confirm"
             type="password"
             required
@@ -339,22 +316,13 @@ const PasswordForm: React.FC<{
             autoComplete="new-password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
-            style={inputStyle}
             disabled={submitting}
           />
-        </div>
-        {error ? (
-          <p role="alert" style={{ padding: '10px 14px', borderRadius: 8, background: 'var(--color-pig-soft, #fdecea)', color: 'var(--color-pig-deep, #c0392b)', fontSize: 13, margin: 0 }}>
-            {error}
-          </p>
-        ) : null}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="pressable mt-2 h-11 px-4 rounded-md bg-accent text-bg-0 text-[12px] font-semibold uppercase tracking-wide disabled:opacity-50"
-        >
+        </FormField>
+        {error ? <p role="alert" style={errorStyle}>{error}</p> : null}
+        <DsButton type="submit" variant="primary" disabled={submitting}>
           {submitting ? 'Mise à jour…' : 'Mettre à jour'}
-        </button>
+        </DsButton>
       </form>
     </IonContent>
   );
@@ -370,12 +338,7 @@ const PasswordModal: React.FC<{
       <IonToolbar>
         <IonTitle>Changer mot de passe</IonTitle>
         <IonButtons slot="end">
-          <button
-            onClick={onClose}
-            style={{ background: 'transparent', border: 'none', color: 'var(--ink-soft)', fontSize: 14, padding: '8px 16px' }}
-          >
-            Annuler
-          </button>
+          <DsButton variant="ghost" size="small" onClick={onClose}>Annuler</DsButton>
         </IonButtons>
       </IonToolbar>
     </IonHeader>
@@ -418,42 +381,30 @@ const FarmEditForm: React.FC<{
         onSubmit={handleSubmit}
         style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 520, margin: '0 auto' }}
       >
-        <div>
-          <label style={labelStyle} htmlFor="farm-nom">Nom de la ferme</label>
-          <input
+        <FormField label="Nom de la ferme" required>
+          <Input
             id="farm-nom"
             type="text"
             required
             value={nom}
             onChange={(e) => setNom(e.target.value)}
-            style={inputStyle}
             disabled={submitting}
           />
-        </div>
-        <div>
-          <label style={labelStyle} htmlFor="farm-secteur">Secteur</label>
-          <input
+        </FormField>
+        <FormField label="Secteur">
+          <Input
             id="farm-secteur"
             type="text"
             value={secteur}
             onChange={(e) => setSecteur(e.target.value)}
             placeholder="Ex: Nord — Côte d'Ivoire"
-            style={inputStyle}
             disabled={submitting}
           />
-        </div>
-        {error ? (
-          <p role="alert" style={{ padding: '10px 14px', borderRadius: 8, background: 'var(--color-pig-soft, #fdecea)', color: 'var(--color-pig-deep, #c0392b)', fontSize: 13, margin: 0 }}>
-            {error}
-          </p>
-        ) : null}
-        <button
-          type="submit"
-          disabled={submitting || !nom.trim()}
-          className="pressable mt-2 h-11 px-4 rounded-md bg-accent text-bg-0 text-[12px] font-semibold uppercase tracking-wide disabled:opacity-50"
-        >
+        </FormField>
+        {error ? <p role="alert" style={errorStyle}>{error}</p> : null}
+        <DsButton type="submit" variant="primary" disabled={submitting || !nom.trim()}>
           {submitting ? 'Enregistrement…' : 'Enregistrer'}
-        </button>
+        </DsButton>
       </form>
     </IonContent>
   );
@@ -470,12 +421,7 @@ const FarmEditModal: React.FC<{
       <IonToolbar>
         <IonTitle>Modifier la ferme</IonTitle>
         <IonButtons slot="end">
-          <button
-            onClick={onClose}
-            style={{ background: 'transparent', border: 'none', color: 'var(--ink-soft)', fontSize: 14, padding: '8px 16px' }}
-          >
-            Annuler
-          </button>
+          <DsButton variant="ghost" size="small" onClick={onClose}>Annuler</DsButton>
         </IonButtons>
       </IonToolbar>
     </IonHeader>
@@ -582,38 +528,26 @@ export const SettingsPage: React.FC = () => {
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout withNav={true}>
           <div className="px-4 pt-5 pb-32 max-w-md mx-auto">
-            <header className="mb-6">
-              <p
-                style={{
-                  fontFamily: 'var(--pt-font-body)',
-                  fontSize: 11,
-                  letterSpacing: '0.20em',
-                  textTransform: 'uppercase',
-                  color: 'var(--muted)',
-                  margin: '0 0 8px',
-                  fontWeight: 600,
-                }}
-              >
-                Réglages
-              </p>
+            <header style={{ marginBottom: 24 }}>
+              <Section label="Réglages" />
               <h1
                 style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
+                  fontFamily: 'var(--pt-font-display)',
+                  fontSize: 'var(--pt-text-display)',
                   fontWeight: 700,
-                  lineHeight: 1,
+                  lineHeight: 1.05,
                   letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '0 0 4px',
+                  color: 'var(--pt-text)',
+                  margin: '8px 0 4px',
                 }}
               >
                 Plus
               </h1>
               <p
                 style={{
-                  fontFamily: 'var(--font-body)',
+                  fontFamily: 'var(--pt-font-body)',
                   fontSize: 13,
-                  color: 'var(--muted)',
+                  color: 'var(--pt-text-muted)',
                   margin: 0,
                 }}
               >
@@ -626,9 +560,12 @@ export const SettingsPage: React.FC = () => {
                 purement settings. */}
 
             {/* Profil */}
-            <SettingsSection title="Profil" icon={<User size={13} />}>
+            <SettingsSection title="Profil">
               <InfoRow label="Nom" value={userName} />
-              <InfoRow label="Email" value={<span className="font-mono text-[12px]">{userEmail}</span>} />
+              <InfoRow
+                label="Email"
+                value={<span style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 12 }}>{userEmail}</span>}
+              />
               <ActionRow
                 label="Modifier mon profil"
                 onClick={() => setShowProfileEdit(true)}
@@ -636,13 +573,16 @@ export const SettingsPage: React.FC = () => {
               <ActionRow
                 label="Changer mot de passe"
                 onClick={() => setShowPwd(true)}
-                trailing={<Lock size={14} className="text-text-2" aria-hidden="true" />}
+                trailing={<Lock size={14} aria-hidden="true" style={{ color: 'var(--pt-text-muted)' }} />}
               />
             </SettingsSection>
 
             {/* Ferme */}
-            <SettingsSection title="Ferme" icon={<Tractor size={13} />}>
-              <InfoRow label="Code" value={<span className="font-mono text-[12px]">{farmShortId}</span>} />
+            <SettingsSection title="Ferme">
+              <InfoRow
+                label="Code"
+                value={<span style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 12 }}>{farmShortId}</span>}
+              />
               <InfoRow label="Nom" value={farmDisplayName} />
               {farmSector ? <InfoRow label="Secteur" value={farmSector} /> : null}
               <ActionRow
@@ -654,7 +594,7 @@ export const SettingsPage: React.FC = () => {
 
             {/* Utilisateurs (OWNER only) */}
             {isOwner ? (
-              <SettingsSection title="Utilisateurs" icon={<Users size={13} />}>
+              <SettingsSection title="Utilisateurs">
                 <InfoRow label="Membres" value={`${userName} (toi)`} />
                 <ActionRow
                   label="Ajouter un porcher"
@@ -670,12 +610,10 @@ export const SettingsPage: React.FC = () => {
             ) : null}
 
             {/* Synchronisation */}
-            <SettingsSection title="Synchronisation" icon={<RefreshCw size={13} />}>
+            <SettingsSection title="Synchronisation">
               <InfoRow
                 label="Dernière sync"
-                value={
-                  <span className="text-[13px]">{formatRelativeTime(lastUpdate)}</span>
-                }
+                value={formatRelativeTime(lastUpdate)}
               />
               <ActionRow
                 label={syncing ? 'Synchronisation…' : 'Synchroniser maintenant'}
@@ -687,14 +625,14 @@ export const SettingsPage: React.FC = () => {
                 description="Déconnecte et supprime toutes les données locales"
                 onClick={() => setConfirmReset(true)}
                 destructive
-                trailing={<Trash2 size={14} className="text-red" aria-hidden="true" />}
+                trailing={<Trash2 size={14} aria-hidden="true" style={{ color: 'var(--pt-danger)' }} />}
               />
             </SettingsSection>
 
             {/* V33 : Carnet fournisseurs migré vers /outils. */}
 
             {/* Notifications (V21 candidate) */}
-            <SettingsSection title="Notifications" icon={<Bell size={13} />}>
+            <SettingsSection title="Notifications">
               <ToggleRow
                 label="Confirmation des saisies"
                 description="Email après chaque saisie validée"
@@ -710,7 +648,7 @@ export const SettingsPage: React.FC = () => {
             </SettingsSection>
 
             {/* Aide & support */}
-            <SettingsSection title="Aide & support" icon={<HelpCircle size={13} />}>
+            <SettingsSection title="Aide & support">
               <ActionRow
                 label="FAQ"
                 description="Réponses aux questions fréquentes"
@@ -722,12 +660,18 @@ export const SettingsPage: React.FC = () => {
                 onClick={() => {
                   window.location.href = `mailto:${SUPPORT_EMAIL}?subject=Support%20PorcTrack`;
                 }}
-                trailing={<Mail size={14} className="text-text-2" aria-hidden="true" />}
+                trailing={<Mail size={14} aria-hidden="true" style={{ color: 'var(--pt-text-muted)' }} />}
               />
-              <div className="px-5 py-3.5 border-b border-border last:border-b-0">
+              <div style={{ padding: '14px 16px' }}>
                 <span
-                  className="text-[11px] text-text-2 uppercase tracking-wide"
-                  style={{ fontFamily: 'var(--pt-font-body)', fontWeight: 600 }}
+                  style={{
+                    fontFamily: 'var(--pt-font-body)',
+                    fontSize: 11,
+                    color: 'var(--pt-text-muted)',
+                    textTransform: 'uppercase',
+                    letterSpacing: 'var(--pt-tracking-label)',
+                    fontWeight: 600,
+                  }}
                 >
                   PorcTrack v29 · build <span style={{ fontFamily: 'var(--pt-font-mono)' }}>{APP_VERSION}</span>
                 </span>
@@ -735,14 +679,13 @@ export const SettingsPage: React.FC = () => {
             </SettingsSection>
 
             {/* Sécurité */}
-            <div className="mt-4 mb-2 flex justify-center">
+            <div style={{ marginTop: 16, marginBottom: 8, display: 'flex', justifyContent: 'center' }}>
               <DsButton
-                variant="destructive"
-                size="md"
+                variant="danger"
                 onClick={() => setConfirmSignOut(true)}
-                aria-label="Se déconnecter"
+                ariaLabel="Se déconnecter"
               >
-                <LogOut size={16} aria-hidden="true" />
+                <LogOut size={16} aria-hidden="true" style={{ marginRight: 6 }} />
                 Se déconnecter
               </DsButton>
             </div>
@@ -751,10 +694,19 @@ export const SettingsPage: React.FC = () => {
               <div
                 role="status"
                 aria-live="polite"
-                className="fixed bottom-24 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-full text-[12px] uppercase tracking-wide z-50"
                 style={{
-                  background: 'var(--ink)',
-                  color: 'var(--bg-surface)',
+                  position: 'fixed',
+                  bottom: 96,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  padding: '10px 16px',
+                  borderRadius: 'var(--pt-radius-pill)',
+                  fontSize: 12,
+                  textTransform: 'uppercase',
+                  letterSpacing: 'var(--pt-tracking-label)',
+                  zIndex: 50,
+                  background: 'var(--pt-text)',
+                  color: 'var(--pt-surface)',
                   fontFamily: 'var(--pt-font-body)',
                   fontWeight: 600,
                 }}
