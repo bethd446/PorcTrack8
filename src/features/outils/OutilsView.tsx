@@ -26,10 +26,9 @@ import {
 } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import {
   Card,
-  SectionHeader,
+  Section,
   ActionRow,
   IconBox,
 } from '../../design-system';
@@ -59,7 +58,7 @@ const OutilsView: React.FC = () => {
             }}
           >
             <header style={{ marginBottom: 24 }}>
-              <Eyebrow>Outils terrain</Eyebrow>
+              <Section label="Outils terrain" />
               <h1
                 style={{
                   fontFamily: 'var(--pt-font-display)',
@@ -89,7 +88,7 @@ const OutilsView: React.FC = () => {
               aria-label="Outils terrain"
               style={{ display: 'flex', flexDirection: 'column', gap: 24 }}
             >
-              <SectionHeader label="Au quotidien" />
+              <Section label="Au quotidien" />
               <Card style={{ padding: 8 }}>
                 <ActionRow
                   icon={
@@ -138,7 +137,7 @@ const OutilsView: React.FC = () => {
                 />
               </Card>
 
-              <SectionHeader label="Ressources" />
+              <Section label="Ressources" />
               <Card style={{ padding: 8 }}>
                 <ActionRow
                   icon={
