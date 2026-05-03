@@ -35,7 +35,7 @@ import TruieEventActionSheet, { type TruieEventAction } from '../../components/f
 import Eyebrow from '../../components/design/Eyebrow';
 import Chip from '../../components/design/Chip';
 import SowHero, { type SowHeroChip } from '../../components/design/SowHero';
-import { Tabs, Button, safeDisplay } from '@/design-system';
+import { Tabs, Button, CycleTimeline, safeDisplay } from '@/design-system';
 import EditTruieWizard from '../../components/forms/EditTruieWizard';
 import { TruieIcon } from '../../components/icons';
 import ReproTracker, { type ReproStage } from '../../components/design/ReproTracker';
@@ -449,7 +449,7 @@ const TruieDetailView: React.FC = () => {
               photoUrl={truie.photoUrl}
               photoStamp={`${safeDisplay(truie.displayId)} · ${formatDateShort(new Date().toISOString())}`}
               onPrimaryAction={() => setEventSheetOpen(true)}
-              primaryLabel="+ Saisir évènement"
+              primaryLabel="Saisir évènement"
               onSecondaryAction={() => setEditWizardOpen(true)}
               secondaryLabel="Modifier"
               secondaryIcon={<Pencil size={14} strokeWidth={2} aria-hidden />}
@@ -499,6 +499,23 @@ const TruieDetailView: React.FC = () => {
                 ]}
               />
             </div>
+
+            {/* V40 F5/F6 — Cycle timeline horizontal (Saillie/Surveillance/Écho/MB) */}
+            {cycleData && activeTab === 'apercu' && (
+              <section aria-label="Cycle reproductif" style={sectionStyle()}>
+                <CycleTimeline
+                  currentDay={cycleData.dayPost}
+                  totalDays={115}
+                  eyebrow={`Saillie · jour ${cycleData.dayPost}/115`}
+                  steps={[
+                    { label: 'Saillie', day: 0, done: true },
+                    { label: 'Surveillance', day: 7, done: cycleData.dayPost >= 7 },
+                    { label: 'Échographie', day: 28, done: cycleData.dayPost >= 28 },
+                    { label: 'Mise-bas', day: 115, done: false, target: true },
+                  ]}
+                />
+              </section>
+            )}
 
             {/* Reproduction en cours (visible dans Aperçu et Reproduction) */}
             {cycleData && (activeTab === 'apercu' || activeTab === 'repro') && (

@@ -1,8 +1,17 @@
 import React from 'react';
 import { Plus, Printer } from 'lucide-react';
 import Eyebrow from './Eyebrow';
-import Chip from './Chip';
-import { Button } from '@/design-system';
+import { Button, Tag } from '@/design-system';
+
+type ChipToneLegacy = 'green' | 'amber' | 'terre' | 'pig' | 'neutral';
+type TagVariant = 'default' | 'primary' | 'accent' | 'soft' | 'danger' | 'warning';
+const TONE_TO_TAG_VARIANT: Record<ChipToneLegacy, TagVariant> = {
+  green: 'primary',
+  amber: 'warning',
+  terre: 'soft',
+  pig: 'accent',
+  neutral: 'default',
+};
 
 export interface AnimalHeroChip {
   label: string;
@@ -61,19 +70,22 @@ export default function AnimalHero({
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: 'minmax(0, 240px) 1fr',
-        background: 'var(--bg-surface)',
-        borderBottom: '1px solid var(--line)',
-        borderRadius: 12,
+        gridTemplateColumns: 'minmax(0, 96px) 1fr',
+        background: 'var(--pt-surface)',
+        borderRadius: 'var(--pt-radius-lg)',
         overflow: 'hidden',
+        gap: 16,
+        padding: 'var(--pt-space-3)',
       }}
       className="sow-hero"
     >
       <div
         style={{
           position: 'relative',
-          background: photoUrl ? 'var(--color-secondary-deep)' : 'var(--bg-surface-soft, #f5f4f1)',
-          minHeight: 280,
+          background: photoUrl ? 'var(--pt-surface-warm)' : 'var(--pt-surface-alt)',
+          width: 64,
+          height: 64,
+          borderRadius: 'var(--pt-radius-md)',
           overflow: 'hidden',
           display: 'flex',
           alignItems: 'center',
@@ -103,7 +115,7 @@ export default function AnimalHero({
             }}
           >
             {fallbackIcon ? (
-              <span style={{ display: 'inline-flex', opacity: 0.4 }} aria-hidden="true">
+              <span style={{ display: 'inline-flex', opacity: 0.4, width: 40, height: 40 }} aria-hidden="true">
                 {fallbackIcon}
               </span>
             ) : (
@@ -111,7 +123,7 @@ export default function AnimalHero({
                 src="/images/porc-mark.svg"
                 alt=""
                 aria-hidden="true"
-                style={{ width: 84, height: 84, opacity: 0.3 }}
+                style={{ width: 36, height: 36, opacity: 0.3 }}
               />
             )}
             {onUploadClick && (
@@ -177,13 +189,9 @@ export default function AnimalHero({
           >
             <Eyebrow withRule={false}>{eyebrow}</Eyebrow>
             {chips.map((c, i) => (
-              <Chip
-                key={`${c.label}-${i}`}
-                tone={c.tone}
-                className={`chip--${c.tone === 'green' ? 'accent' : c.tone}`}
-              >
-                {c.label}
-              </Chip>
+              <span key={`${c.label}-${i}`}>
+                <Tag variant={TONE_TO_TAG_VARIANT[c.tone]}>{c.label}</Tag>
+              </span>
             ))}
           </div>
 

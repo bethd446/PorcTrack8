@@ -171,11 +171,13 @@ describe('VerratDetailView', () => {
     expect(within(identite).getByText('Origine')).toBeDefined();
   });
 
-  it('chip « Actif » visible avec le ton accent', () => {
+  it('chip « Actif » visible avec le ton accent (DS V2 Tag pill)', () => {
     renderAt('/troupeau/verrats/V01');
+    // V40 F1/F2 : AnimalHero utilise <Tag variant="primary"> du DS V2
+    // (mapping tone='green' → variant='primary' = pill vert).
     const chip = screen.getByText('Actif');
     expect(chip.tagName.toLowerCase()).toBe('span');
-    expect(chip.className).toContain('chip--accent');
+    expect(chip.className).toContain('pt-tag');
   });
 
   it('bouton « Saillir » présent avec aria-label', () => {
