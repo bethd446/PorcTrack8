@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Tests unitaires — QuickEditTruieForm (logic-level).
  * ════════════════════════════════════════════════════════════════════════

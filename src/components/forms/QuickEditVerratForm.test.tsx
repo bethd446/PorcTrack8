@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Tests unitaires — QuickEditVerratForm (logic-level).
  * ════════════════════════════════════════════════════════════════════════

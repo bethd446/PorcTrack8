@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Tests unitaires — QuickEditSaillieForm (logic-level).
  * ════════════════════════════════════════════════════════════════════════
