@@ -25,7 +25,7 @@ import {
 
 import { AppToast, AlertCard, useAppToast } from '../../components/agritech';
 import AgritechLayout from '../../components/AgritechLayout';
-import { Section, Card, Button, IconBox } from '@/design-system';
+import { Section, Card, Button, IconBox, PageHeader } from '@/design-system';
 import { useAuth } from '../../context/AuthContext';
 import { usePilotage } from '../../context/PilotageContext';
 import { useRessources } from '../../context/RessourcesContext';
@@ -603,33 +603,9 @@ const TodayHub: React.FC = () => {
             className="px-4 pt-5 pb-32 flex flex-col gap-7"
             style={{ maxWidth: 1100, margin: '0 auto' }}
           >
-            {/* ── En-tête ───────────────────────────────────────────── */}
-            <header>
-              <Section label="Aujourd'hui" />
-              <h1
-                style={{
-                  fontFamily: 'var(--pt-font-display)',
-                  fontSize: 'var(--pt-text-display)',
-                  fontWeight: 700,
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1.05,
-                  color: 'var(--pt-text)',
-                  margin: '8px 0 4px',
-                }}
-              >
-                Bonjour, {firstName}
-              </h1>
-              <div
-                style={{
-                  fontFamily: 'var(--pt-font-body)',
-                  fontSize: 13,
-                  color: 'var(--pt-text-muted)',
-                  textTransform: 'capitalize',
-                }}
-              >
-                {headerDate}
-              </div>
-            </header>
+            {/* V41 Phase D — Header canonique via PageHeader. Conservation
+                de la salutation personnalisée (firstName) en title. */}
+            <PageHeader eyebrow="Aujourd'hui" title={`Bonjour, ${firstName}`} subtitle={headerDate} />
 
             {/* ── Tâche prioritaire (single hero) ────────────────────── */}
             <section aria-label="Tâche prioritaire">

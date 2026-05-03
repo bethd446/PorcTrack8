@@ -14,6 +14,7 @@ import {
   Input,
   FormField,
   Toggle,
+  PageHeader,
 } from '@/design-system';
 import { useAuth } from '../context/AuthContext';
 import { useMeta } from '../context/FarmContext';
@@ -497,32 +498,8 @@ export const SettingsPage: React.FC = () => {
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout withNav={true}>
           <div className="px-4 pt-5 pb-32 max-w-md mx-auto">
-            <header style={{ marginBottom: 24 }}>
-              <Section label="Réglages" />
-              <h1
-                style={{
-                  fontFamily: 'var(--pt-font-display)',
-                  fontSize: 'var(--pt-text-display)',
-                  fontWeight: 700,
-                  lineHeight: 1.05,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--pt-text)',
-                  margin: '8px 0 4px',
-                }}
-              >
-                Plus
-              </h1>
-              <p
-                style={{
-                  fontFamily: 'var(--pt-font-body)',
-                  fontSize: 13,
-                  color: 'var(--pt-text-muted)',
-                  margin: 0,
-                }}
-              >
-                Ton profil, ta ferme, l’équipe
-              </p>
-            </header>
+            {/* V41 Phase D — Header canonique via PageHeader */}
+            <PageHeader eyebrow="Réglages" title="Plus" subtitle="Ton profil, ta ferme, l'équipe" />
 
             {/* V33 : Outils Terrain / Audit / Journal santé / Protocoles /
                 Stocks / Fournisseurs migrés vers /outils. La page Plus est

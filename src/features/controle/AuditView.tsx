@@ -13,7 +13,7 @@ import {
 } from '../../services/supabaseService';
 import AgritechLayout from '../../components/AgritechLayout';
 import TopBarSync from '../../components/design/TopBarSync';
-import { AlertGroup, AlertRow, Section, Tabs, safeDisplay } from '@/design-system';
+import { AlertGroup, AlertRow, Section, Tabs, PageHeader, safeDisplay } from '@/design-system';
 
 /**
  * AuditView — V31-FIX-PACK-01
@@ -275,56 +275,8 @@ const AuditView: React.FC = () => {
             className="px-4 pt-5 pb-32 flex flex-col gap-6"
             style={{ maxWidth: 900, margin: '0 auto' }}
           >
-            {/* HEADER ─────────────────────────────────────────────────── */}
-            <header style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <span
-                style={{
-                  fontFamily: 'var(--pt-font-body)',
-                  fontSize: 'var(--pt-text-label)',
-                  letterSpacing: 'var(--pt-tracking-label)',
-                  textTransform: 'uppercase',
-                  color: 'var(--pt-text-subtle)',
-                  fontWeight: 600,
-                }}
-              >
-                Outils · Audit du jour
-              </span>
-              <h1
-                style={{
-                  margin: 0,
-                  fontFamily: 'var(--pt-font-display)',
-                  fontSize: 'var(--pt-text-display)',
-                  fontWeight: 700,
-                  lineHeight: 1.05,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--pt-text)',
-                }}
-              >
-                Audit du jour
-              </h1>
-              {!loading && counts.total > 0 ? (
-                <div
-                  style={{
-                    fontFamily: 'var(--pt-font-body)',
-                    fontSize: 14,
-                    color: 'var(--pt-text-muted)',
-                    marginTop: 2,
-                  }}
-                >
-                  <span style={{ color: counts.critiques > 0 ? 'var(--pt-danger)' : 'var(--pt-text-muted)', fontWeight: 600 }}>
-                    {counts.critiques} critique{counts.critiques > 1 ? 's' : ''}
-                  </span>
-                  {' · '}
-                  <span style={{ color: 'var(--pt-accent)', fontWeight: 600 }}>
-                    {counts.stocks} stock{counts.stocks > 1 ? 's' : ''} bas
-                  </span>
-                  {' · '}
-                  <span style={{ color: 'var(--pt-text)', fontWeight: 600 }}>
-                    {counts.sante} santé
-                  </span>
-                </div>
-              ) : null}
-            </header>
+            {/* V41 Phase D — Header sobre via PageHeader (subtitle non-numérique) */}
+            <PageHeader eyebrow="Audit" title="Alertes & contrôles" subtitle="Suivi qualité de ta ferme" />
 
             {/* TABS FILTRES ──────────────────────────────────────────── */}
             {!loading && counts.total > 0 ? (

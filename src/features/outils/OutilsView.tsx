@@ -31,6 +31,7 @@ import {
   Section,
   ActionRow,
   IconBox,
+  PageHeader,
 } from '@/design-system';
 import { usePilotage } from '../../context/PilotageContext';
 
@@ -57,32 +58,8 @@ const OutilsView: React.FC = () => {
               margin: '0 auto',
             }}
           >
-            <header style={{ marginBottom: 24 }}>
-              <Section label="Outils terrain" />
-              <h1
-                style={{
-                  fontFamily: 'var(--pt-font-display)',
-                  fontSize: 'var(--pt-text-display)',
-                  fontWeight: 700,
-                  margin: '8px 0 4px',
-                  color: 'var(--pt-text)',
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1.05,
-                }}
-              >
-                Outils
-              </h1>
-              <p
-                style={{
-                  margin: 0,
-                  fontFamily: 'var(--pt-font-body)',
-                  fontSize: 'var(--pt-text-small)',
-                  color: 'var(--pt-text-muted)',
-                }}
-              >
-                Tout pour ton quotidien terrain
-              </p>
-            </header>
+            {/* V41 Phase D — Header canonique via PageHeader */}
+            <PageHeader eyebrow="Outils" title="Outils terrain" subtitle="Tes raccourcis quotidiens" />
 
             <section
               aria-label="Outils terrain"
