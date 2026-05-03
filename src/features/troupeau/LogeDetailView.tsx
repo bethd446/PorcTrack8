@@ -316,7 +316,7 @@ const LogeDetailView: React.FC = () => {
                       primary={`${t.displayId}${t.nom ? ` · ${t.nom}` : ''}`}
                       secondary={`Truie · ${t.statut ?? '—'}`}
                       chip={{ label: 'TRUIE', tone: 'gold' }}
-                      onClick={() => navigate(`/troupeau/truies/${t.id}`)}
+                      onClick={() => navigate(`/troupeau/truies/${t.displayId}`)}
                     />
                   ))}
                   {contents.verrats.map((v) => (
@@ -325,7 +325,7 @@ const LogeDetailView: React.FC = () => {
                       primary={`${v.displayId}${v.nom ? ` · ${v.nom}` : ''}`}
                       secondary={`Verrat · ${v.statut ?? '—'}`}
                       chip={{ label: 'VERRAT', tone: 'blue' }}
-                      onClick={() => navigate(`/troupeau/verrats/${v.id}`)}
+                      onClick={() => navigate(`/troupeau/verrats/${v.displayId}`)}
                     />
                   ))}
                   {contents.bandes.map((b) => (
