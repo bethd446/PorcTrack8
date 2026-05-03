@@ -8,7 +8,7 @@ import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { SectionDivider } from '../../components/agritech';
 import EmptyStateShared from '../../components/design/EmptyState';
-import { Tag } from '../../design-system';
+import { Tag, DataTable } from '../../design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   buildClassementRows,
@@ -253,31 +253,22 @@ const ClassementView: React.FC = () => {
             ))}
           </ul>
 
-          {/* ── Desktop : table classique ─────────────────────── */}
-          <div className="hidden sm:block card-dense !p-0 overflow-hidden">
-            <table className="w-full border-collapse">
-              <thead className="sticky top-0 bg-bg-1 z-10">
-                <tr className="border-b border-border">
-                  <Th className="w-12 text-left">#</Th>
-                  <Th className="text-left">Nom</Th>
-                  <Th className="text-left">Type</Th>
-                  <Th className="text-right">Score</Th>
-                  <Th className="text-right">Portées</Th>
-                  <Th className="text-right">Porcelets</Th>
-                  <Th className="text-right">Réussite</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, idx) => (
-                  <RowDesktop
-                    key={`${row.type}-${row.id}`}
-                    row={row}
-                    rank={idx + 1}
-                    onClick={() => handleRowClick(row)}
-                  />
-                ))}
-              </tbody>
-            </table>
+          {/* V40 C1 — Desktop : <DataTable> du DS V2 */}
+          <div className="hidden sm:block">
+            <DataTable<ClassementRow & { rank: number }>
+              ariaLabel="Classement reproducteurs"
+              columns={[
+                { key: 'rank', label: '#', width: 48, render: (row) => <span className="tabular-nums" style={{ color: 'var(--pt-text-subtle)' }}>#{row.rank}</span> },
+                { key: 'displayId', label: 'Nom', render: (row) => <span className="tabular-nums" style={{ fontWeight: 600, color: 'var(--pt-text)' }}>{row.displayId}</span> },
+                { key: 'type', label: 'Type', render: (row) => <TypeBadge type={row.type} /> },
+                { key: 'score', label: 'Score', render: (row) => <TierBadge tier={row.tier} score={row.score} /> },
+                { key: 'nbPortees', label: 'Portées', render: (row) => <span className="tabular-nums">{row.nbPortees}</span> },
+                { key: 'porceletsMoyens', label: 'Porcelets', render: (row) => <span className="tabular-nums">{formatPorcelets(row.porceletsMoyens)}</span> },
+                { key: 'tauxReussite', label: 'Réussite', render: (row) => <span className="tabular-nums">{formatTaux(row.tauxReussite)}</span> },
+              ]}
+              rows={rows.map((r, idx) => ({ ...r, id: `${r.type}-${r.id}`, rank: idx + 1 }))}
+              onRowClick={(row) => handleRowClick(row)}
+            />
           </div>
         </>
       )}
