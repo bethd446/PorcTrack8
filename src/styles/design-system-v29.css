@@ -69,6 +69,15 @@
      ──────────────────────────────────────────────────────────────────────── */
   --pt-shadow-card: 0 1px 3px rgba(45, 74, 31, 0.04);
   --pt-shadow-elevated: 0 4px 16px rgba(45, 74, 31, 0.08);
+  --pt-shadow-fab: 0 6px 20px rgba(45, 74, 31, 0.25);
+
+  /* ════════════════════════════════════════════════════════════════════════
+     V38-A — Tokens supplémentaires PDF master FINAL
+     ──────────────────────────────────────────────────────────────────────── */
+  --pt-surface-warm: #F5E9D8;       /* fond crème chaud (cards Marius) */
+  --pt-surface-warning: #FDF1DC;    /* fond avertissement doux */
+  --pt-accent-deep: #B8703D;        /* accent terracotta foncé (texte sur soft) */
+  --pt-primary-soft: rgba(45, 74, 31, 0.08); /* fond pastel vert (chips) */
 
   /* ════════════════════════════════════════════════════════════════════════
      ALIAS RÉTROCOMPAT — toute référence --ds-* hérite des valeurs --pt-*

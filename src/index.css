@@ -166,6 +166,13 @@
 .tracking-premium { letter-spacing: 0.04em; }
 .tracking-wide    { letter-spacing: 0.05em; }
 
+/* V38-A FIX — Tailwind v4 (4.2.2) génère .rounded-full avec
+   `border-radius: calc(infinity * 1px)` qui se sérialise en `3.40282e38px`
+   (Number.MAX_VALUE float32). Au-delà de la limite navigateur (~17M px),
+   la valeur est ignorée et tous les `<button class="rounded-full">` rendent
+   carrés. On override avec une valeur saine (9999px = pill effective). */
+.rounded-full { border-radius: 9999px !important; }
+
 /* ── Cards ─────────────────────────────────────────────────────────────── */
 .premium-card {
   background: var(--bg-surface);

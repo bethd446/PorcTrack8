@@ -46,6 +46,23 @@ function daysBetween(a: number, b: number): number {
   return (b - a) / 86_400_000;
 }
 
+/** RFC 4122 UUID — utilisé pour décider si un id Truie vient de Supabase
+ *  (UUID, donc displayId est obligatoire pour matcher les saillies via
+ *  code_id) ou d'un mock/legacy (id == code_id, pas de double match). */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** V38-A — Match tolérant truie ↔ saillie (UUID, code_id, boucle).
+ *  Quand truie.id est un UUID, saillies provenant de Supabase peuvent porter
+ *  soit l'UUID soit le code_id (selon JOIN). Quand id n'est pas un UUID
+ *  (mocks/legacy), on évite le double match avec displayId pour ne pas créer
+ *  de faux positifs entre fixtures qui partageraient un displayId par défaut. */
+function matchSaillie(s: Saillie, t: Truie): boolean {
+  if (s.truieId === t.id) return true;
+  if (UUID_RE.test(t.id) && t.displayId && s.truieId === t.displayId) return true;
+  if (t.boucle && s.truieBoucle === t.boucle) return true;
+  return false;
+}
+
 // ─── Types publics ───────────────────────────────────────────────────────────
 
 export interface GlobalKpis {
@@ -160,10 +177,13 @@ function sevrageTsForTruie(truie: Truie, bandes: BandePorcelets[]): number[] {
 
 /**
  * Récupère les saillies d'une truie sous forme de timestamps triés.
+ *
+ * V38-A — Matching tolérant via `matchSaillie` : id (UUID), displayId
+ * (code_id), boucle. Détails dans `matchSaillie`.
  */
 function saillieTsForTruie(truie: Truie, saillies: Saillie[]): number[] {
   return saillies
-    .filter(s => s.truieId === truie.id || (!!truie.boucle && s.truieBoucle === truie.boucle))
+    .filter(s => matchSaillie(s, truie))
     .map(s => parseFr(s.dateSaillie))
     .filter(ts => ts > 0)
     .sort((a, b) => a - b);
@@ -526,9 +546,10 @@ export function detectTruiesAReformer(
       (perf.tier === 'FAIBLE' || perf.tier === 'INSUFFISANT') &&
       perf.nbPortees >= MIN_PORTEES_POUR_JUGER;
 
-    // INACTIVE : statut "En attente saillie" + aucune saillie récente
+    // INACTIVE : statut "En attente saillie" + aucune saillie récente.
+    // V38-A — Match code_id/UUID/boucle (cf. matchSaillie).
     const truieSailliesTs = saillies
-      .filter(s => s.truieId === t.id || (!!t.boucle && s.truieBoucle === t.boucle))
+      .filter(s => matchSaillie(s, t))
       .map(s => parseFr(s.dateSaillie))
       .filter(ts => ts > 0);
     const lastSaillieTs = truieSailliesTs.length > 0 ? Math.max(...truieSailliesTs) : 0;

@@ -1,0 +1,62 @@
+# PorcTrack 8 — Dossiers à exclure du vault Obsidian
+#
+# Configure dans Obsidian → Settings → Files & Links → Excluded files
+# (Obsidian ne lit PAS automatiquement ce fichier — c'est une référence
+# pour copier-coller dans les réglages.)
+
+# === BUILD & DEPS ===
+node_modules/
+dist/
+build/
+coverage/
+.next/
+.cache/
+
+# === GIT & SYS ===
+.git/
+.DS_Store
+
+# === ENV PYTHON ===
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# === VITE / WEBPACK CACHE ===
+.vite/
+.parcel-cache/
+
+# === TESTS ===
+test-results/
+playwright-report/
+tests/playwright-artifacts/
+tests/playwright-report/
+
+# === IOS / ANDROID NATIFS ===
+ios/
+android/
+.gradle/
+DerivedData/
+
+# === ASSETS ===
+public/images/
+src/assets/
+*.woff
+*.woff2
+*.ttf
+*.otf
+
+# === ARTEFACTS ===
+graphify-out/
+*.log
+*.pem
+*.key
+
+# === ARCHIVES ===
+.claude/_archive/
+
+# === BIG SNAPSHOTS ===
+.claude/audits/V33-screens/
+
+# === VAULT INTERNES OBSIDIAN ===
+.obsidian/

@@ -823,3 +823,64 @@ describe('computeZootechniqueKpis — façade (V36-A)', () => {
     expect(r.nbPorteesSevrees12m).toBe(6);
   });
 });
+
+// ─── V38-A : régression matching truie ↔ saillie (UUID Supabase / code_id) ──
+
+describe('V38-A — matching truie ↔ saillie (UUID + displayId)', () => {
+  it('truie.id = UUID, saillie.truieId = code_id (JOIN sows.code_id) → INACTIVE_LONG correct', () => {
+    // Reproduit le bug T-001 : la truie est servie en UUID par Supabase,
+    // les saillies portent le code_id via JOIN. Sans le double match, le
+    // detect retourne "Jamais saillie" alors qu'il y a une saillie récente.
+    const TODAY = new Date(2025, 5, 15);
+    const truies: Truie[] = [
+      makeTruie({
+        id: 'eb528b12-3997-4a1d-aaaa-000000000001',
+        displayId: 'T-001',
+        boucle: 'BCL-T001',
+        statut: 'En attente saillie',
+      }),
+    ];
+    const saillies: Saillie[] = [
+      // saillie récente (10j) sous code_id — pas d'UUID ici
+      makeSaillie({ truieId: 'T-001', dateSaillie: '05/06/2025' }),
+    ];
+    const rep = detectTruiesAReformer(truies, [], saillies, TODAY);
+    // Récente (10j << 90j) → ne doit PAS être candidate INACTIVE_LONG
+    expect(rep.find(r => r.truie.displayId === 'T-001')).toBeUndefined();
+  });
+
+  it('truie.id = UUID, aucune saillie → INACTIVE_LONG (Jamais saillie)', () => {
+    const TODAY = new Date(2025, 5, 15);
+    const truies: Truie[] = [
+      makeTruie({
+        id: 'eb528b12-3997-4a1d-aaaa-000000000002',
+        displayId: 'T-002',
+        boucle: 'BCL-T002',
+        statut: 'En attente saillie',
+      }),
+    ];
+    const rep = detectTruiesAReformer(truies, [], [], TODAY);
+    expect(rep).toHaveLength(1);
+    expect(rep[0].motif).toBe('INACTIVE_LONG');
+    expect(rep[0].detail).toMatch(/jamais saillie/i);
+  });
+
+  it('truie.id non-UUID (legacy/mock), displayId partagé → pas de cross-match', () => {
+    // Garantit qu'on ne casse pas les fixtures où displayId par défaut serait
+    // identique entre plusieurs truies (cas test ISSE moyen).
+    const TODAY = new Date(2025, 5, 15);
+    const truies: Truie[] = [
+      makeTruie({ id: 'T01', displayId: 'COMMON', boucle: 'B01', statut: 'En attente saillie' }),
+      makeTruie({ id: 'T02', displayId: 'COMMON', boucle: 'B02', statut: 'En attente saillie' }),
+    ];
+    const saillies: Saillie[] = [
+      // Saillie sur T01 uniquement, recently
+      makeSaillie({ truieId: 'T01', dateSaillie: '01/06/2025' }),
+    ];
+    const rep = detectTruiesAReformer(truies, [], saillies, TODAY);
+    // T02 doit être INACTIVE (jamais saillie), T01 ne doit PAS hériter via displayId
+    const t02 = rep.find(r => r.truie.id === 'T02');
+    expect(t02?.motif).toBe('INACTIVE_LONG');
+    expect(rep.find(r => r.truie.id === 'T01')).toBeUndefined();
+  });
+});

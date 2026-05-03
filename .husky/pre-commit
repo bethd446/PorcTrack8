@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# DS v2.0 Compliance — bloque le commit si une règle est violée
+./scripts/check-ds-compliance.sh

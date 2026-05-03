@@ -30,6 +30,7 @@ import {
   listLoges,
   listPorceletsByBatch,
 } from '../../../services/supabaseWrites';
+import { useNoUUID } from '../../../lib/uuidGuard';
 import {
   getRecommendedHealthLogs,
   HEALTH_LOG_TEMPLATES,
@@ -84,6 +85,10 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
 
   const bandeTyped = getBandeById(bande.id);
 
+  // V38-A — H1 affiche idPortee (code lisible: B01, L5RM…) jamais l'UUID brut.
+  const portéeLabel = bandeTyped?.idPortee || '—';
+  useNoUUID(`Portée ${portéeLabel}`, 'BandeDetailView.h1');
+
   // V6-B — Sources multi-mères + loge structurée
   const [sources, setSources] = useState<BatchSource[]>([]);
   const [loges, setLoges] = useState<Loge[]>([]);
@@ -122,12 +127,19 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
     [bandeTyped],
   );
 
-  // V36-E P3 — Splitter visible uniquement si phase ∈ {SOUS_MERE, POST_SEVRAGE} ET ≥ 2 porcelets.
+  // V38-A — Splitter visible si phase ∈ {SOUS_MERE, POST_SEVRAGE, CROISSANCE,
+  // ENGRAISSEMENT} ET ≥ 2 porcelets. Élargi vs V36-E pour permettre le split
+  // post-sevrage (séparation par sexe ou regroupement) à toutes les phases.
   const canSplit = useMemo(() => {
     if (!bandeTyped) return false;
     if (porcelets.length < 2) return false;
     const phase = computeBandePhase(bandeTyped);
-    return phase === 'SOUS_MERE' || phase === 'POST_SEVRAGE';
+    return (
+      phase === 'SOUS_MERE' ||
+      phase === 'POST_SEVRAGE' ||
+      phase === 'CROISSANCE' ||
+      phase === 'ENGRAISSEMENT'
+    );
   }, [bandeTyped, porcelets.length]);
 
   const loadSources = useCallback(async () => {
@@ -312,7 +324,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
           </button>
           <div className="min-w-0 flex-1">
             <h1 className="agritech-heading uppercase leading-none truncate" style={{ fontSize: 'clamp(20px, 5vw, 24px)' }}>
-              Portée {bande.id}
+              Portée {portéeLabel}
             </h1>
             <p className="mt-1 text-[11px] text-text-2 leading-none truncate">
               {(bande.status as string) || 'Détails'} {bande.truie ? `· ${bande.truie}` : ''}

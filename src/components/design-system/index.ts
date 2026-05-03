@@ -71,3 +71,11 @@ export type { StatProps, StatTone } from './Stat';
 
 export { default as StatsGrid } from './StatsGrid';
 export type { StatsGridProps, StatsGridCols } from './StatsGrid';
+
+// V38-A — Aliases PDF master (Section / Empty / usePageFab) ────────────────
+// SectionHeader → alias `Section` avec API `{label, variant}` du PDF.
+// EmptyState (components/design) → alias `Empty`.
+// usePageFab (lib/) → re-export pour pouvoir importer depuis le DS.
+export { default as Section } from './SectionHeader';
+export { default as Empty } from '../design/EmptyState';
+export { usePageFab } from '../../lib/usePageFab';
