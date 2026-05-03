@@ -10,16 +10,12 @@ import {
   alertCircle,
   closeCircle,
 } from 'ionicons/icons';
+import './design-system/tokens/tokens.css';
+import './design-system/components/components.css';
 import App from './App.tsx';
 import './index.css';
 
-// V35 — préenregistrement des Ionicons utilisés par IonToast (AppToast.tsx).
-// Sans ça, Ionic warn `[Ionicons Warning]: Could not load icon with name "..."`
-// au runtime quand un toast s'affiche.
 addIcons({ informationCircle, checkmarkCircle, alertCircle, closeCircle });
-// V29 — Layer DNA "Aujourd'hui" : tokens --ds-* importés APRÈS les tokens
-// existants (theme/agritech) pour servir de surcharge non destructive.
-import './styles/design-system-v29.css';
 import { ThemeProvider } from './context/ThemeContext';
 import { Toaster } from './components/ui/sonner';
 
