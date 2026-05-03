@@ -4,10 +4,11 @@ import {
   IonContent, IonPage, IonAlert, IonModal, IonHeader, IonToolbar, IonTitle, IonButtons,
 } from '@ionic/react';
 import {
-  User, Tractor, Users, RefreshCw, Bell, HelpCircle, ShieldAlert,
+  User, Tractor, Users, RefreshCw, Bell, HelpCircle,
   ChevronRight, LogOut, Trash2, Mail, Lock,
 } from 'lucide-react';
 import AgritechLayout from './AgritechLayout';
+import { Button as DsButton } from './design-system';
 import { useAuth } from '../context/AuthContext';
 import { useMeta } from '../context/FarmContext';
 import { APP_VERSION } from '../config';
@@ -49,8 +50,8 @@ const SettingsSection: React.FC<{
     <div className="flex items-center gap-2 mb-3 px-1">
       <span className="text-text-2" aria-hidden="true">{icon}</span>
       <h2
-        className="font-mono uppercase tracking-[0.18em] text-[11px] text-text-2"
-        style={{ fontFamily: 'var(--font-mono)' }}
+        className="uppercase tracking-[0.18em] text-[11px] text-text-2"
+        style={{ fontFamily: 'var(--pt-font-body)', fontWeight: 600 }}
       >
         {title}
       </h2>
@@ -71,8 +72,8 @@ const SettingsSection: React.FC<{
 const InfoRow: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
   <div className="px-5 py-3.5 flex items-baseline justify-between gap-3 border-b border-border last:border-b-0">
     <span
-      className="font-mono uppercase tracking-wide text-[11px] text-text-2 shrink-0"
-      style={{ fontFamily: 'var(--font-mono)' }}
+      className="uppercase tracking-wide text-[11px] text-text-2 shrink-0"
+      style={{ fontFamily: 'var(--pt-font-body)', fontWeight: 600 }}
     >
       {label}
     </span>
@@ -102,7 +103,7 @@ const ActionRow: React.FC<{
         {label}
       </p>
       {description ? (
-        <p className="mt-0.5 font-mono text-[11px] text-text-2 truncate">{description}</p>
+        <p className="mt-0.5 text-[12px] text-text-2 truncate">{description}</p>
       ) : null}
     </div>
     {trailing ?? (
@@ -125,7 +126,7 @@ const ToggleRow: React.FC<{
     <div className="min-w-0">
       <p className="text-[14px] font-semibold text-text-0 truncate">{label}</p>
       {description ? (
-        <p className="mt-0.5 font-mono text-[11px] text-text-2 truncate">{description}</p>
+        <p className="mt-0.5 text-[12px] text-text-2 truncate">{description}</p>
       ) : null}
     </div>
     <button
@@ -166,12 +167,12 @@ const inputStyle: React.CSSProperties = {
 };
 
 const labelStyle: React.CSSProperties = {
-  fontFamily: 'var(--font-mono)',
+  fontFamily: 'var(--pt-font-body)',
   fontSize: 11,
   letterSpacing: '0.18em',
   textTransform: 'uppercase',
   color: 'var(--ink-soft)',
-  fontWeight: 500,
+  fontWeight: 600,
   display: 'block',
   marginBottom: 6,
 };
@@ -584,7 +585,7 @@ export const SettingsPage: React.FC = () => {
             <header className="mb-6">
               <p
                 style={{
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--pt-font-body)',
                   fontSize: 11,
                   letterSpacing: '0.20em',
                   textTransform: 'uppercase',
@@ -673,7 +674,7 @@ export const SettingsPage: React.FC = () => {
               <InfoRow
                 label="Dernière sync"
                 value={
-                  <span className="font-mono text-[12px]">{formatRelativeTime(lastUpdate)}</span>
+                  <span className="text-[13px]">{formatRelativeTime(lastUpdate)}</span>
                 }
               />
               <ActionRow
@@ -725,33 +726,37 @@ export const SettingsPage: React.FC = () => {
               />
               <div className="px-5 py-3.5 border-b border-border last:border-b-0">
                 <span
-                  className="font-mono text-[11px] text-text-2 uppercase tracking-wide"
-                  style={{ fontFamily: 'var(--font-mono)' }}
+                  className="text-[11px] text-text-2 uppercase tracking-wide"
+                  style={{ fontFamily: 'var(--pt-font-body)', fontWeight: 600 }}
                 >
-                  PorcTrack v29 · build {APP_VERSION}
+                  PorcTrack v29 · build <span style={{ fontFamily: 'var(--pt-font-mono)' }}>{APP_VERSION}</span>
                 </span>
               </div>
             </SettingsSection>
 
             {/* Sécurité */}
-            <SettingsSection title="Sécurité" icon={<ShieldAlert size={13} />}>
-              <ActionRow
-                label="Se déconnecter"
+            <div className="mt-4 mb-2 flex justify-center">
+              <DsButton
+                variant="destructive"
+                size="md"
                 onClick={() => setConfirmSignOut(true)}
-                destructive
-                trailing={<LogOut size={14} className="text-red" aria-hidden="true" />}
-              />
-            </SettingsSection>
+                aria-label="Se déconnecter"
+              >
+                <LogOut size={16} aria-hidden="true" />
+                Se déconnecter
+              </DsButton>
+            </div>
 
             {toast ? (
               <div
                 role="status"
                 aria-live="polite"
-                className="fixed bottom-24 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-full text-[12px] font-mono uppercase tracking-wide z-50"
+                className="fixed bottom-24 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-full text-[12px] uppercase tracking-wide z-50"
                 style={{
                   background: 'var(--ink)',
                   color: 'var(--bg-surface)',
-                  fontFamily: 'var(--font-mono)',
+                  fontFamily: 'var(--pt-font-body)',
+                  fontWeight: 600,
                 }}
               >
                 {toast}

@@ -160,11 +160,11 @@ const QuickAddPorceletForm: React.FC<QuickAddPorceletFormProps> = ({
               disabled={saving}
             />
             {errors.boucle ? (
-              <p id="add-porcelet-boucle-error" role="alert" className="font-mono text-[11px] text-red">
+              <p id="add-porcelet-boucle-error" role="alert" className="text-[12px] text-red">
                 {errors.boucle}
               </p>
             ) : (
-              <p id="add-porcelet-boucle-hint" className="font-mono text-[10px] text-text-2">
+              <p id="add-porcelet-boucle-hint" className="text-[12px] text-text-2">
                 2–15 car. (lettres, chiffres, tirets) · unique par ferme
               </p>
             )}
@@ -197,12 +197,12 @@ const QuickAddPorceletForm: React.FC<QuickAddPorceletFormProps> = ({
                     disabled={saving}
                     className={[
                       'pressable inline-flex items-center justify-center',
-                      'flex-1 h-10 px-3 rounded-md border',
-                      'font-mono text-[12px] uppercase tracking-wide',
+                      'flex-1 h-11 px-3 rounded-md border',
+                      'text-[12px] font-semibold uppercase tracking-wide',
                       'transition-colors duration-[160ms]',
                       'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                       selected
-                        ? 'bg-accent text-bg-0 border-accent font-semibold'
+                        ? 'bg-accent text-bg-0 border-accent'
                         : 'bg-bg-0 text-text-1 border-border hover:border-text-2',
                     ].join(' ')}
                   >
@@ -232,7 +232,7 @@ const QuickAddPorceletForm: React.FC<QuickAddPorceletFormProps> = ({
               aria-describedby={errors.poidsCourantKg ? 'add-porcelet-poids-error' : undefined}
               className={[
                 'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[16px] tabular-nums text-center outline-none transition-colors duration-[160ms]',
+                'text-[16px] tabular-nums text-center font-semibold outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.poidsCourantKg ? 'border-red' : 'border-border hover:border-text-2',
               ].join(' ')}
@@ -242,7 +242,7 @@ const QuickAddPorceletForm: React.FC<QuickAddPorceletFormProps> = ({
               disabled={saving}
             />
             {errors.poidsCourantKg ? (
-              <p id="add-porcelet-poids-error" role="alert" className="font-mono text-[11px] text-red">
+              <p id="add-porcelet-poids-error" role="alert" className="text-[12px] text-red">
                 {errors.poidsCourantKg}
               </p>
             ) : null}
@@ -263,7 +263,7 @@ const QuickAddPorceletForm: React.FC<QuickAddPorceletFormProps> = ({
               aria-invalid={!!errors.notes}
               className={[
                 'w-full rounded-md px-3 py-2 bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[13px] outline-none transition-colors duration-[160ms] resize-none',
+                'text-[13px] outline-none transition-colors duration-[160ms] resize-none',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.notes ? 'border-red' : 'border-border hover:border-text-2',
               ].join(' ')}
@@ -273,7 +273,7 @@ const QuickAddPorceletForm: React.FC<QuickAddPorceletFormProps> = ({
               disabled={saving}
             />
             {errors.notes ? (
-              <p role="alert" className="font-mono text-[11px] text-red">
+              <p role="alert" className="text-[12px] text-red">
                 {errors.notes}
               </p>
             ) : null}
@@ -290,7 +290,7 @@ const QuickAddPorceletForm: React.FC<QuickAddPorceletFormProps> = ({
                 'pressable flex-1 h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-bg-1 border border-border text-text-1',
-                'font-mono text-[12px] font-bold uppercase tracking-wide',
+                'text-[12px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms] hover:border-text-2',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : '',
@@ -307,7 +307,7 @@ const QuickAddPorceletForm: React.FC<QuickAddPorceletFormProps> = ({
                 'pressable flex-[2] h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-accent text-bg-0',
-                'font-mono text-[13px] font-bold uppercase tracking-wide',
+                'text-[13px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms]',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',

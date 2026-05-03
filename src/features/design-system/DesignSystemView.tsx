@@ -8,7 +8,7 @@
 
 import React from 'react';
 import { IonContent, IonPage } from '@ionic/react';
-import { Box, Heart, Truck, Bell, ClipboardCheck, Stethoscope } from 'lucide-react';
+import { Box, Heart, Truck, Bell, ClipboardCheck, Stethoscope, Plus, AlertTriangle } from 'lucide-react';
 
 import {
   Card,
@@ -28,6 +28,8 @@ import {
   ActionRow,
   Stat,
   StatsGrid,
+  AlertGroup,
+  AlertRow,
 } from '../../components/design-system';
 
 const Block: React.FC<{ title: string; children: React.ReactNode }> = ({
@@ -53,6 +55,8 @@ const DesignSystemView: React.FC = () => {
   const [segmentValue, setSegmentValue] = React.useState<string>('liste');
   const [chipFilter, setChipFilter] = React.useState<'tout' | 'pleines' | 'vides'>('tout');
   const [searchValue, setSearchValue] = React.useState<string>('');
+  const [wizardStep, setWizardStep] = React.useState<number>(0);
+  const wizardSteps = ['Étape 1', 'Étape 2', 'Étape 3'];
   return (
     <IonPage>
       <IonContent fullscreen>
@@ -338,6 +342,177 @@ const DesignSystemView: React.FC = () => {
                 <Stat value="29" label="Pleines" tone="accent" />
                 <Stat value="3" label="Alertes" tone="danger" />
               </StatsGrid>
+            </Block>
+
+            <Block title="V31 — AlertGroup + AlertRow">
+              <AlertGroup
+                icon={<AlertTriangle size={18} strokeWidth={2} />}
+                title="Stocks véto en rupture"
+                subtitle="3 produits à recommander"
+                severity="urgent"
+                count={3}
+                action={{ label: 'Voir le stock', onClick: () => {} }}
+              >
+                <AlertRow
+                  primary="Ivermectine"
+                  secondary="Vermifuge injectable"
+                  value="0"
+                  unit="ml"
+                  valueDanger
+                />
+                <AlertRow
+                  primary="Amoxicilline LA"
+                  secondary="Antibiotique large spectre"
+                  value="2"
+                  unit="doses"
+                  valueDanger
+                />
+                <AlertRow
+                  primary="Fer dextran"
+                  secondary="Anti-anémie porcelets"
+                  value="0"
+                  unit="ml"
+                  valueDanger
+                />
+              </AlertGroup>
+            </Block>
+
+            <Block title="V32 — Wizard (3 étapes)">
+              <Card>
+                <p
+                  style={{
+                    fontFamily: 'var(--pt-font-body)',
+                    fontSize: 11,
+                    letterSpacing: 'var(--pt-tracking-label)',
+                    textTransform: 'uppercase',
+                    color: 'var(--ds-text-muted)',
+                    margin: '0 0 6px',
+                    fontWeight: 600,
+                  }}
+                >
+                  Étape {wizardStep + 1} sur {wizardSteps.length}
+                </p>
+                <h3
+                  style={{
+                    fontFamily: 'var(--pt-font-display)',
+                    fontSize: 22,
+                    fontWeight: 700,
+                    margin: '0 0 12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '-0.01em',
+                  }}
+                >
+                  {wizardSteps[wizardStep]}
+                </h3>
+                <div
+                  role="progressbar"
+                  aria-valuemin={1}
+                  aria-valuemax={wizardSteps.length}
+                  aria-valuenow={wizardStep + 1}
+                  style={{
+                    display: 'flex',
+                    gap: 4,
+                    marginBottom: 16,
+                  }}
+                >
+                  {wizardSteps.map((_, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        flex: 1,
+                        height: 4,
+                        borderRadius: 'var(--pt-radius-pill)',
+                        background:
+                          i <= wizardStep ? 'var(--pt-primary)' : 'var(--pt-surface-alt)',
+                        transition: 'background 200ms ease',
+                      }}
+                    />
+                  ))}
+                </div>
+                <p style={{ margin: '0 0 18px', color: 'var(--ds-text-muted)', fontSize: 13 }}>
+                  Démo visuelle de progression. Le composant Wizard plein-écran s'utilise
+                  dans les flows édition (ex : éditer une truie, créer une bande).
+                </p>
+                <Row>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setWizardStep((s) => Math.max(0, s - 1))}
+                    disabled={wizardStep === 0}
+                  >
+                    ← Précédent
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={() =>
+                      setWizardStep((s) => Math.min(wizardSteps.length - 1, s + 1))
+                    }
+                    disabled={wizardStep === wizardSteps.length - 1}
+                  >
+                    Suivant →
+                  </Button>
+                </Row>
+              </Card>
+            </Block>
+
+            <Block title="V33 — FAB (preview)">
+              <Card>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 18,
+                    padding: '8px 4px',
+                  }}
+                >
+                  <button
+                    type="button"
+                    aria-label="Aperçu FAB (non interactif)"
+                    style={{
+                      height: 56,
+                      width: 56,
+                      minHeight: 56,
+                      minWidth: 56,
+                      borderRadius: '50%',
+                      background: 'var(--pt-primary)',
+                      color: 'var(--pt-primary-text)',
+                      border: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow:
+                        '0 6px 16px color-mix(in srgb, var(--pt-primary) 40%, transparent)',
+                      cursor: 'default',
+                    }}
+                  >
+                    <Plus size={26} strokeWidth={2.5} aria-hidden />
+                  </button>
+                  <div style={{ minWidth: 0 }}>
+                    <strong
+                      style={{
+                        fontFamily: 'var(--pt-font-display)',
+                        fontSize: 18,
+                        textTransform: 'uppercase',
+                        letterSpacing: '-0.01em',
+                      }}
+                    >
+                      FAB rond contextuel
+                    </strong>
+                    <p
+                      style={{
+                        margin: '6px 0 0',
+                        color: 'var(--ds-text-muted)',
+                        fontSize: 13,
+                        lineHeight: 1.45,
+                      }}
+                    >
+                      Visible uniquement sur certaines pages via{' '}
+                      <code style={{ fontFamily: 'var(--pt-font-mono)' }}>usePageFab</code>.
+                      Position : <code style={{ fontFamily: 'var(--pt-font-mono)' }}>fixed</code>{' '}
+                      bottom-center, au-dessus de la nav.
+                    </p>
+                  </div>
+                </div>
+              </Card>
             </Block>
 
             <Block title="Composition (preview ligne Élevage)">

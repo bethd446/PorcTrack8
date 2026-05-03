@@ -3,8 +3,20 @@ import { createRoot } from 'react-dom/client';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
+import { addIcons } from 'ionicons';
+import {
+  informationCircle,
+  checkmarkCircle,
+  alertCircle,
+  closeCircle,
+} from 'ionicons/icons';
 import App from './App.tsx';
 import './index.css';
+
+// V35 — préenregistrement des Ionicons utilisés par IonToast (AppToast.tsx).
+// Sans ça, Ionic warn `[Ionicons Warning]: Could not load icon with name "..."`
+// au runtime quand un toast s'affiche.
+addIcons({ informationCircle, checkmarkCircle, alertCircle, closeCircle });
 // V29 — Layer DNA "Aujourd'hui" : tokens --ds-* importés APRÈS les tokens
 // existants (theme/agritech) pour servir de surcharge non destructive.
 import './styles/design-system-v29.css';

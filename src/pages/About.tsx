@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Sprout, Shield, Hand } from 'lucide-react';
 import Eyebrow from '../components/design/Eyebrow';
 import Button from '../components/design/Button';
-import { Chip } from '../components/agritech';
 import PublicShell from '../components/design/PublicShell';
 
 const FONT_DISPLAY = 'var(--font-heading)';
@@ -269,10 +268,10 @@ export default function About() {
           ses utilisateurs.
         </p>
         <div className="flex flex-wrap gap-2">
-          <Chip tone="accent" label="Produit" />
-          <Chip tone="ochre" label="Terrain" />
-          <Chip tone="amber" label="Vétérinaire conseil" />
-          <Chip tone="default" label="Open contributions" />
+          <RoleTag tone="accent" label="Produit" />
+          <RoleTag tone="ochre" label="Terrain" />
+          <RoleTag tone="amber" label="Vétérinaire conseil" />
+          <RoleTag tone="default" label="Open contributions" />
         </div>
       </section>
 
@@ -413,6 +412,45 @@ function Value({ tone, icon, title, body }: ValueProps) {
         {body}
       </p>
     </article>
+  );
+}
+
+type RoleTone = 'accent' | 'amber' | 'ochre' | 'default';
+
+const ROLE_FG: Record<RoleTone, string> = {
+  accent: 'var(--color-accent-600, var(--color-accent-500))',
+  amber: 'var(--color-amber-pork-deep)',
+  ochre: 'var(--color-amber-pork-deep)',
+  default: 'var(--ink-soft)',
+};
+const ROLE_BORDER: Record<RoleTone, string> = {
+  accent: 'color-mix(in srgb, var(--color-accent-500) 35%, transparent)',
+  amber: 'color-mix(in srgb, var(--color-amber-pork) 40%, transparent)',
+  ochre: 'color-mix(in srgb, var(--color-amber-pork) 40%, transparent)',
+  default: 'var(--line)',
+};
+
+function RoleTag({ tone, label }: { tone: RoleTone; label: string }) {
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '5px 12px',
+        border: `1px solid ${ROLE_BORDER[tone]}`,
+        borderRadius: 'var(--radius-pill, 999px)',
+        fontFamily: FONT_BODY,
+        fontSize: 12,
+        fontWeight: 600,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        color: ROLE_FG[tone],
+        background: 'transparent',
+        lineHeight: 1.4,
+      }}
+    >
+      {label}
+    </span>
   );
 }
 

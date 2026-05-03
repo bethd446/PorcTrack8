@@ -141,7 +141,17 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({
     [
       'w-full h-12 rounded-md px-3',
       'bg-bg-0 border text-text-0 placeholder:text-text-2',
-      'font-mono text-[14px]',
+      'text-[14px]',
+      'outline-none transition-colors duration-[160ms]',
+      'focus:border-accent focus:ring-1 focus:ring-accent',
+      hasError ? 'border-red' : 'border-border hover:border-text-2',
+    ].join(' ');
+
+  const inputCode = (hasError: boolean): string =>
+    [
+      'w-full h-12 rounded-md px-3',
+      'bg-bg-0 border text-text-0 placeholder:text-text-2',
+      'font-mono text-[14px] uppercase tracking-wide',
       'outline-none transition-colors duration-[160ms]',
       'focus:border-accent focus:ring-1 focus:ring-accent',
       hasError ? 'border-red' : 'border-border hover:border-text-2',
@@ -172,7 +182,7 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({
               <p className="text-mono-label text-text-1">
                 Ajouter une loge
               </p>
-              <p className="font-mono text-[10px] text-text-2 mt-0.5">
+              <p className="text-[12px] text-text-2 mt-0.5">
                 Numéro libre · type · capacité optionnelle
               </p>
             </div>
@@ -189,7 +199,7 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({
               maxLength={20}
               aria-invalid={!!errors.numero}
               aria-describedby={errors.numero ? 'add-loge-numero-error' : undefined}
-              className={inputBase(!!errors.numero)}
+              className={inputCode(!!errors.numero)}
               placeholder="Ex: M-01"
               value={numero}
               onChange={e => setNumero(e.target.value)}
@@ -200,7 +210,7 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({
               <p
                 id="add-loge-numero-error"
                 role="alert"
-                className="font-mono text-[11px] text-red"
+                className="text-[12px] text-red"
               >
                 {errors.numero}
               </p>
@@ -266,7 +276,7 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({
               <p
                 id="add-loge-capacite-error"
                 role="alert"
-                className="font-mono text-[11px] text-red"
+                className="text-[12px] text-red"
               >
                 {errors.capaciteMax}
               </p>
@@ -283,7 +293,7 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({
               className={[
                 'w-full rounded-md px-3 py-3',
                 'bg-bg-0 border border-border text-text-0',
-                'font-mono text-[13px]',
+                'text-[13px]',
                 'outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 'min-h-[72px] resize-y',
@@ -303,7 +313,7 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({
                 'pressable flex-1 h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-bg-1 border border-border text-text-1',
-                'font-mono text-[12px] font-bold uppercase tracking-wide',
+                'text-[12px] font-bold uppercase tracking-wide',
                 saving ? 'opacity-40 cursor-not-allowed' : '',
               ].join(' ')}
             >
@@ -317,7 +327,7 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({
                 'pressable flex-[2] h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-accent text-bg-0',
-                'font-mono text-[13px] font-bold uppercase tracking-wide',
+                'text-[13px] font-bold uppercase tracking-wide',
                 saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
               ].join(' ')}
             >

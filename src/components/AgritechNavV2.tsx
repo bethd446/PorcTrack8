@@ -221,14 +221,6 @@ const TABS: NavTabDef[] = [
     Icon: Heart,
     match: ['/reproduction', '/cycles/repro', '/cycles/maternite'],
   },
-  {
-    id: 'perf',
-    path: '/pilotage',
-    label: 'Perf',
-    Icon: BarChart3,
-    match: ['/pilotage'],
-    ownerOnly: true,
-  },
   // V33 — Onglet Outils : tout ce qui était dans Plus mais qui est un outil
   // métier (alertes, audit, journal santé, protocoles, stocks, fournisseurs).
   // La page Plus garde uniquement les réglages (profil, ferme, équipe…).
@@ -248,6 +240,16 @@ const TABS: NavTabDef[] = [
       '/ressources',
       '/fournisseurs',
     ],
+  },
+  // V35 — Perf placé après Outils (PDF DS v2 brief). OWNER-only : si non-OWNER
+  // on tombe sur 5 onglets (Aujourd'hui / Élevage / Repro / Outils / Plus).
+  {
+    id: 'perf',
+    path: '/pilotage',
+    label: 'Perf',
+    Icon: BarChart3,
+    match: ['/pilotage'],
+    ownerOnly: true,
   },
   {
     id: 'more',

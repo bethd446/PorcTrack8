@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps
@@ -24,6 +24,11 @@ const VARIANT_STYLE: Record<ButtonVariant, React.CSSProperties> = {
     background: 'transparent',
     color: 'var(--ds-text)',
     border: '1px solid transparent',
+  },
+  destructive: {
+    background: 'transparent',
+    color: 'var(--pt-danger)',
+    border: '1.5px solid var(--pt-danger)',
   },
 };
 

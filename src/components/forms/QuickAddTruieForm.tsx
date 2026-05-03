@@ -205,14 +205,14 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
               <p
                 id="add-truie-id-error"
                 role="alert"
-                className="font-mono text-[11px] text-red"
+                className="text-[12px] text-red"
               >
                 {errors.id}
               </p>
             ) : (
               <p
                 id="add-truie-id-hint"
-                className="font-mono text-[10px] text-text-2"
+                className="text-[12px] text-text-2"
               >
                 Format T suivi de chiffres (ex: T20)
               </p>
@@ -253,7 +253,7 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
               <p
                 id="add-truie-boucle-error"
                 role="alert"
-                className="font-mono text-[11px] text-red"
+                className="text-[12px] text-red"
               >
                 {errors.boucle}
               </p>
@@ -273,7 +273,7 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
               type="text"
               maxLength={30}
               aria-label="Nom de la truie"
-              className="w-full h-12 rounded-md px-3 bg-bg-0 border border-border hover:border-text-2 text-text-0 placeholder:text-text-2 font-mono text-[14px] outline-none transition-colors duration-[160ms] focus:border-accent focus:ring-1 focus:ring-accent"
+              className="w-full h-12 rounded-md px-3 bg-bg-0 border border-border hover:border-text-2 text-text-0 placeholder:text-text-2 text-[14px] outline-none transition-colors duration-[160ms] focus:border-accent focus:ring-1 focus:ring-accent"
               placeholder="Ex: Berthe"
               value={nom}
               onChange={e => setNom(e.target.value)}
@@ -308,12 +308,12 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
                     disabled={saving}
                     className={[
                       'pressable inline-flex items-center justify-center',
-                      'h-10 px-3 rounded-md border',
-                      'font-mono text-[12px] uppercase tracking-wide',
+                      'h-11 px-3 rounded-md border',
+                      'text-[12px] font-semibold uppercase tracking-wide',
                       'transition-colors duration-[160ms]',
                       'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                       selected
-                        ? 'bg-accent text-bg-0 border-accent font-semibold'
+                        ? 'bg-accent text-bg-0 border-accent'
                         : 'bg-bg-0 text-text-1 border-border hover:border-text-2',
                     ].join(' ')}
                   >
@@ -348,7 +348,7 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
               className={[
                 'w-full h-14 rounded-md px-4',
                 'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[22px] tabular-nums text-center',
+                'text-[22px] tabular-nums text-center font-semibold',
                 'outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.ration ? 'border-red' : 'border-border hover:border-text-2',
@@ -362,14 +362,14 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
               <p
                 id="add-truie-ration-error"
                 role="alert"
-                className="font-mono text-[11px] text-red"
+                className="text-[12px] text-red"
               >
                 {errors.ration}
               </p>
             ) : (
               <p
                 id="add-truie-ration-hint"
-                className="font-mono text-[10px] text-text-2 tabular-nums"
+                className="text-[12px] text-text-2 tabular-nums"
               >
                 0 à 10 kg/j · défaut 3.0
               </p>
@@ -387,7 +387,7 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
                 'pressable flex-1 h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-bg-1 border border-border text-text-1',
-                'font-mono text-[12px] font-bold uppercase tracking-wide',
+                'text-[12px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms] hover:border-text-2',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : '',
@@ -404,7 +404,7 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
                 'pressable flex-[2] h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-accent text-bg-0',
-                'font-mono text-[13px] font-bold uppercase tracking-wide',
+                'text-[13px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms]',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
