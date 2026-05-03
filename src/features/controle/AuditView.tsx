@@ -13,7 +13,7 @@ import {
 } from '../../services/supabaseService';
 import AgritechLayout from '../../components/AgritechLayout';
 import TopBarSync from '../../components/design/TopBarSync';
-import { AlertGroup, AlertRow, SectionHeader, Tabs } from '../../design-system';
+import { AlertGroup, AlertRow, Section, Tabs, safeDisplay } from '../../design-system';
 
 /**
  * AuditView — V31-FIX-PACK-01
@@ -101,7 +101,7 @@ const AuditView: React.FC = () => {
       // 1. Bandes — agrégation par type d'incohérence
       if (bandeRes.success) {
         bandeRes.data.forEach(b => {
-          const code = b.idPortee; // code_id lisible (pas l'UUID)
+          const code = safeDisplay(b.idPortee, 'Bande'); // code_id lisible (jamais l'UUID)
           const morts = b.morts ?? 0;
           const nv = b.nv ?? 0;
           const vivants = b.vivants ?? 0;
@@ -158,7 +158,7 @@ const AuditView: React.FC = () => {
       // 2. Truies — gestation prolongée
       if (truieRes.success) {
         truieRes.data.forEach(t => {
-          const code = t.displayId;
+          const code = safeDisplay(t.displayId, 'Truie');
           const mb = t.dateMBPrevue;
           const statut = String(t.statut ?? '').toUpperCase();
           if (mb && (statut.includes('GESTANTE') || statut.includes('ATTENTE') || statut.includes('PLEINE'))) {
@@ -411,7 +411,7 @@ const AuditView: React.FC = () => {
                 {/* SECTION CRITIQUES ─────────────────────────────────── */}
                 {hasCritique ? (
                   <>
-                    <SectionHeader label="Critiques" tone="accent" />
+                    <Section label="Critiques" tone="danger" />
 
                     {showCritique && audit.vetoRupture.length > 0 ? (
                       <AlertGroup
@@ -514,7 +514,7 @@ const AuditView: React.FC = () => {
                 {/* SECTION À SURVEILLER ──────────────────────────────── */}
                 {hasSurveil ? (
                   <>
-                    <SectionHeader label="À surveiller" tone="primary" />
+                    <Section label="À surveiller" tone="accent" />
 
                     {showStock && audit.vetoBas.length > 0 ? (
                       <AlertGroup
