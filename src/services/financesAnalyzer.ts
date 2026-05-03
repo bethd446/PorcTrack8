@@ -106,7 +106,7 @@ export function parseMontant(s: unknown): number {
   if (!raw) return 0;
 
   // Retire tout ce qui n'est pas chiffre, point, virgule, ou signe.
-  // L'espace insécable ( ) et l'espace simple sont séparateurs de milliers.
+  // L'espace insécable ( ) et l'espace simple sont séparateurs de milliers.
   const cleaned = raw.replace(/[^\d.,-]/g, '');
   if (!cleaned) return 0;
 
