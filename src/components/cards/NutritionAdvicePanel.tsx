@@ -94,10 +94,10 @@ interface NutrientCellProps {
 
 const NutrientCell: React.FC<NutrientCellProps> = ({ label, value }) => (
   <div className="bg-bg-1 rounded-lg p-3 border border-border/50">
-    <div className="text-[10px] uppercase font-mono text-text-2 tracking-wider truncate">
+    <div className="text-[10px] uppercase text-text-2 tracking-wider truncate">
       {label}
     </div>
-    <div className="mt-1 font-mono text-[16px] text-text-0 font-bold whitespace-nowrap">
+    <div className="mt-1 text-[16px] text-text-0 font-bold whitespace-nowrap">
       {value}
     </div>
   </div>
@@ -117,8 +117,8 @@ const SubScoreBar: React.FC<SubScoreBarProps> = ({ label, value, max = 25 }) => 
   return (
     <div>
       <div className="flex justify-between items-baseline mb-1">
-        <span className="text-[11px] uppercase font-mono text-text-2 tracking-wider">{label}</span>
-        <span className="text-[11px] font-mono text-text-1">
+        <span className="text-[11px] uppercase text-text-2 tracking-wider">{label}</span>
+        <span className="text-[11px] text-text-1">
           {Math.round(value)}<span className="text-text-2">/{max}</span>
         </span>
       </div>
@@ -175,7 +175,7 @@ export const NutritionAdvicePanel: React.FC<NutritionAdvicePanelProps> = ({
         data-state="missing-weight"
       >
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-[11px] uppercase font-mono text-text-2 tracking-wider">
+          <span className="text-[11px] uppercase text-text-2 tracking-wider">
             Nutrition · Conseils
           </span>
         </div>
@@ -187,7 +187,7 @@ export const NutritionAdvicePanel: React.FC<NutritionAdvicePanelProps> = ({
           <button
             type="button"
             disabled
-            className="text-[11px] uppercase font-mono tracking-wider px-3 py-2 rounded-lg border border-border text-text-2 opacity-60 cursor-not-allowed"
+            className="text-[11px] uppercase tracking-wider px-3 py-2 rounded-lg border border-border text-text-2 opacity-60 cursor-not-allowed"
           >
             Voir comment peser
           </button>
@@ -212,7 +212,7 @@ export const NutritionAdvicePanel: React.FC<NutritionAdvicePanelProps> = ({
     >
       {/* ─── Header : eyebrow + score ─────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-3">
-        <span className="text-[11px] uppercase font-mono text-text-2 tracking-wider mt-1">
+        <span className="text-[11px] uppercase text-text-2 tracking-wider mt-1">
           Nutrition · Conseils
         </span>
         {score && (
@@ -224,7 +224,7 @@ export const NutritionAdvicePanel: React.FC<NutritionAdvicePanelProps> = ({
             <span className={`font-mono font-bold text-[28px] leading-none ${TONE_TEXT[tone]}`}>
               {score.total}
             </span>
-            <span className="text-[11px] font-mono text-text-2 uppercase">/100</span>
+            <span className="text-[11px] text-text-2 uppercase">/100</span>
           </div>
         )}
       </div>
@@ -237,14 +237,14 @@ export const NutritionAdvicePanel: React.FC<NutritionAdvicePanelProps> = ({
             data-testid="nutrition-phase-badge"
           >
             <Wheat size={14} aria-hidden="true" />
-            <span className="text-[11px] uppercase font-mono tracking-wider font-medium">
+            <span className="text-[11px] uppercase tracking-wider font-medium">
               {PHASE_LABEL[phase]} / {targets.poidsMinKg}-{targets.poidsMaxKg} kg
             </span>
           </span>
         </div>
         <p className="text-[12px] text-text-1 mt-1.5 leading-snug">{targets.objectif}</p>
         {showPhaseBio && (
-          <p className="text-[10px] uppercase font-mono text-text-2 mt-1 tracking-wider">
+          <p className="text-[10px] uppercase text-text-2 mt-1 tracking-wider">
             Phase biologique : {phaseBiologique}
           </p>
         )}
@@ -269,13 +269,13 @@ export const NutritionAdvicePanel: React.FC<NutritionAdvicePanelProps> = ({
 
       {/* ─── Vitamines clés ───────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-[10px] uppercase font-mono text-text-2 tracking-wider mr-1">
+        <span className="text-[10px] uppercase text-text-2 tracking-wider mr-1">
           Vitamines :
         </span>
         {targets.vitaminesCles.map((v) => (
           <span
             key={v}
-            className="inline-flex items-center px-2 py-0.5 rounded-full bg-bg-1 border border-border/50 text-[10px] font-mono uppercase text-text-1 tracking-wider whitespace-nowrap"
+            className="inline-flex items-center px-2 py-0.5 rounded-full bg-bg-1 border border-border/50 text-[10px] uppercase text-text-1 tracking-wider whitespace-nowrap"
           >
             {v}
           </span>
@@ -310,7 +310,7 @@ export const NutritionAdvicePanel: React.FC<NutritionAdvicePanelProps> = ({
         <div className="border-t border-border/50 pt-3">
           <button
             type="button"
-            className="w-full flex items-center justify-between text-[11px] uppercase font-mono text-text-2 tracking-wider"
+            className="w-full flex items-center justify-between text-[11px] uppercase text-text-2 tracking-wider"
             onClick={() => setBreakdownOpen((v) => !v)}
             aria-expanded={breakdownOpen}
             data-testid="nutrition-breakdown-toggle"

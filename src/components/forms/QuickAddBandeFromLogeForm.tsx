@@ -423,7 +423,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
     [
       'w-full h-12 rounded-md px-3',
       'bg-bg-0 border text-text-0 placeholder:text-text-2',
-      'font-mono text-[14px]',
+      'text-[14px]',
       'outline-none transition-colors duration-[160ms]',
       'focus:border-accent focus:ring-1 focus:ring-accent',
       hasError ? 'border-red' : 'border-border hover:border-text-2',
@@ -463,7 +463,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
         >
           {/* Stepper visuel */}
           <ol
-            className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-wide text-text-2"
+            className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-text-2"
             aria-label="Progression"
           >
             {[1, 2, 3, 4, 5].map(n => (
@@ -508,7 +508,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                   <p className="text-mono-label text-text-1">
                     Toutes les loges sont occupées
                   </p>
-                  <p className="font-mono text-[11px] text-text-2 mt-1">
+                  <p className="text-[11px] text-text-2 mt-1">
                     Libère une loge ou crée-en une nouvelle.
                   </p>
                 </div>
@@ -527,10 +527,10 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                         data-testid={`loge-option-${l.id}`}
                       >
                         <div className="flex flex-col min-w-0">
-                          <span className="font-mono text-[13px] font-bold text-text-0">
+                          <span className="ft-code text-[13px] font-bold text-text-0">
                             {logeNumeroPrefixed(l)}
                           </span>
-                          <span className="font-mono text-[10px] text-text-2 mt-0.5">
+                          <span className="text-[10px] text-text-2 mt-0.5">
                             {l.type.replace('_', '-').toLowerCase()}
                             {l.capaciteMax != null
                               ? ` · capacité ${l.capaciteMax}`
@@ -556,14 +556,14 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
             >
               {selectedLoge && (
                 <div className="card-dense flex items-center gap-3 py-3">
-                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent font-mono text-[10px] font-bold">
+                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent ft-code text-[10px] font-bold">
                     {logeNumeroPrefixed(selectedLoge).split('-')[0]}
                   </div>
                   <div className="min-w-0">
                     <p className="text-mono-label text-text-0">
                       {logeNumeroPrefixed(selectedLoge)}
                     </p>
-                    <p className="font-mono text-[10px] text-text-2 mt-0.5">
+                    <p className="text-[10px] text-text-2 mt-0.5">
                       {selectedLoge.type.replace('_', '-').toLowerCase()}
                       {selectedLoge.capaciteMax != null
                         ? ` · capacité ${selectedLoge.capaciteMax}`
@@ -597,7 +597,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                     <p
                       id="qabfl-effectif-err"
                       role="alert"
-                      className="font-mono text-[11px] text-red"
+                      className="text-[11px] text-red"
                     >
                       {errors.effectif}
                     </p>
@@ -627,7 +627,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                     <p
                       id="qabfl-poids-err"
                       role="alert"
-                      className="font-mono text-[11px] text-red"
+                      className="text-[11px] text-red"
                     >
                       {errors.poidsMoyenKg}
                     </p>
@@ -652,7 +652,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                   <p
                     id="qabfl-date-err"
                     role="alert"
-                    className="font-mono text-[11px] text-red"
+                    className="text-[11px] text-red"
                   >
                     {errors.dateEntree}
                   </p>
@@ -663,7 +663,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="pressable flex-1 h-12 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 font-mono text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
+                  className="pressable flex-1 h-12 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
                   aria-label="Retour à la sélection de loge"
                 >
                   <ChevronLeft size={14} aria-hidden="true" />
@@ -672,7 +672,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                 <button
                   type="button"
                   onClick={goStep3}
-                  className="pressable flex-[2] h-12 rounded-md inline-flex items-center justify-center gap-2 bg-accent text-bg-0 font-mono text-[12px] font-bold uppercase tracking-wide hover:brightness-110"
+                  className="pressable flex-[2] h-12 rounded-md inline-flex items-center justify-center gap-2 bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide hover:brightness-110"
                   aria-label="Étape suivante : âge"
                   data-testid="step-2-next"
                 >
@@ -692,10 +692,10 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
             >
               <p className="text-mono-label text-text-1">
                 Saisis l'âge estimé des porcelets en texte libre. Ex :{' '}
-                <span className="font-mono">"30j"</span>,{' '}
-                <span className="font-mono">"1 mois"</span>,{' '}
-                <span className="font-mono">"3 sem"</span>,{' '}
-                <span className="font-mono">"2 mois 1 semaine"</span>.
+                <span className="ft-code">"30j"</span>,{' '}
+                <span className="ft-code">"1 mois"</span>,{' '}
+                <span className="ft-code">"3 sem"</span>,{' '}
+                <span className="ft-code">"2 mois 1 semaine"</span>.
               </p>
 
               <div className="space-y-1.5">
@@ -714,7 +714,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                   autoComplete="off"
                 />
                 <div
-                  className="font-mono text-[11px] tabular-nums"
+                  className="text-[11px] tabular-nums"
                   aria-live="polite"
                   data-testid="age-live-indicator"
                 >
@@ -741,7 +741,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                   onChange={e => setAgeInconnu(e.target.checked)}
                   data-testid="age-unknown-checkbox"
                 />
-                <span className="font-mono text-[12px] text-text-1">
+                <span className="text-[12px] text-text-1">
                   Je ne sais pas
                 </span>
               </label>
@@ -750,7 +750,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="pressable flex-1 h-12 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 font-mono text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
+                  className="pressable flex-1 h-12 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
                   aria-label="Retour à l'effectif"
                 >
                   <ChevronLeft size={14} aria-hidden="true" />
@@ -759,7 +759,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                 <button
                   type="button"
                   onClick={goStep4}
-                  className="pressable flex-[2] h-12 rounded-md inline-flex items-center justify-center gap-2 bg-accent text-bg-0 font-mono text-[12px] font-bold uppercase tracking-wide hover:brightness-110"
+                  className="pressable flex-[2] h-12 rounded-md inline-flex items-center justify-center gap-2 bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide hover:brightness-110"
                   aria-label="Étape suivante : génétique"
                   data-testid="step-3-next"
                 >
@@ -808,7 +808,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                     type="button"
                     onClick={pickRandomTruie}
                     disabled={truies.length === 0}
-                    className="pressable inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 h-8 font-mono text-[10px] uppercase tracking-wide text-text-1 hover:border-accent hover:text-accent disabled:opacity-40"
+                    className="pressable inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 h-8 text-[10px] uppercase tracking-wide text-text-1 hover:border-accent hover:text-accent disabled:opacity-40"
                     aria-label="Choisir une truie au hasard"
                     data-testid="truie-random"
                   >
@@ -818,7 +818,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                   <button
                     type="button"
                     onClick={() => setTruieMereId('')}
-                    className="pressable inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 h-8 font-mono text-[10px] uppercase tracking-wide text-text-1 hover:border-text-2"
+                    className="pressable inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 h-8 text-[10px] uppercase tracking-wide text-text-1 hover:border-text-2"
                     aria-label="Ne pas renseigner la truie"
                     data-testid="truie-clear"
                   >
@@ -853,7 +853,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                     type="button"
                     onClick={pickRandomVerrat}
                     disabled={verrats.length === 0}
-                    className="pressable inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 h-8 font-mono text-[10px] uppercase tracking-wide text-text-1 hover:border-accent hover:text-accent disabled:opacity-40"
+                    className="pressable inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 h-8 text-[10px] uppercase tracking-wide text-text-1 hover:border-accent hover:text-accent disabled:opacity-40"
                     aria-label="Choisir un verrat au hasard"
                     data-testid="verrat-random"
                   >
@@ -863,7 +863,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                   <button
                     type="button"
                     onClick={() => setVerratPereId('')}
-                    className="pressable inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 h-8 font-mono text-[10px] uppercase tracking-wide text-text-1 hover:border-text-2"
+                    className="pressable inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 h-8 text-[10px] uppercase tracking-wide text-text-1 hover:border-text-2"
                     aria-label="Ne pas renseigner le verrat"
                     data-testid="verrat-clear"
                   >
@@ -877,7 +877,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                 <button
                   type="button"
                   onClick={() => setStep(3)}
-                  className="pressable flex-1 h-12 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 font-mono text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
+                  className="pressable flex-1 h-12 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
                   aria-label="Retour à l'âge"
                 >
                   <ChevronLeft size={14} aria-hidden="true" />
@@ -886,7 +886,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                 <button
                   type="button"
                   onClick={goStep5}
-                  className="pressable flex-[2] h-12 rounded-md inline-flex items-center justify-center gap-2 bg-accent text-bg-0 font-mono text-[12px] font-bold uppercase tracking-wide hover:brightness-110"
+                  className="pressable flex-[2] h-12 rounded-md inline-flex items-center justify-center gap-2 bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide hover:brightness-110"
                   aria-label="Étape suivante : récap"
                   data-testid="step-4-next"
                 >
@@ -964,7 +964,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                   type="button"
                   onClick={() => setStep(4)}
                   disabled={saving}
-                  className="pressable flex-1 h-14 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 font-mono text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
+                  className="pressable flex-1 h-14 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
                   aria-label="Retour à la génétique"
                 >
                   <ChevronLeft size={14} aria-hidden="true" />
@@ -974,7 +974,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                   type="submit"
                   disabled={saving}
                   aria-busy={saving}
-                  className="pressable flex-[2] h-14 rounded-md inline-flex items-center justify-center gap-2 bg-accent text-bg-0 font-mono text-[13px] font-bold uppercase tracking-wide hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="pressable flex-[2] h-14 rounded-md inline-flex items-center justify-center gap-2 bg-accent text-bg-0 text-[13px] font-bold uppercase tracking-wide hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
                   aria-label={isEditMode ? 'Valider la bande' : 'Créer la bande'}
                   data-testid="step-5-submit"
                 >
@@ -1016,12 +1016,12 @@ interface RecapRowProps {
 
 const RecapRow: React.FC<RecapRowProps> = ({ label, value, mono, highlight }) => (
   <div className="flex items-center justify-between gap-3 py-1">
-    <span className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+    <span className="text-[10px] uppercase tracking-wide text-text-2">
       {label}
     </span>
     <span
       className={[
-        mono ? 'font-mono tabular-nums' : '',
+        mono ? 'tabular-nums' : '',
         'text-[13px]',
         highlight ? 'text-accent font-bold' : 'text-text-0',
       ]

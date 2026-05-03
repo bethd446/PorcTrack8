@@ -151,7 +151,7 @@ const LogeDetailView: React.FC = () => {
           <AgritechLayout>
             <div className="px-4 pt-5 pb-32" style={{ maxWidth: 1100, margin: '0 auto' }}>
               <p
-                className="font-mono text-[12px] mt-8 text-center"
+                className="text-[12px] mt-8 text-center"
                 style={{ color: 'var(--muted)' }}
               >
                 Chargement…
@@ -177,7 +177,7 @@ const LogeDetailView: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => navigate('/troupeau?view=loges', { replace: true })}
-                    className="pressable inline-flex items-center gap-2 h-11 px-5 rounded-full bg-accent text-bg-0 font-mono text-[12px] font-bold uppercase tracking-wide"
+                    className="pressable inline-flex items-center gap-2 h-11 px-5 rounded-full bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide"
                   >
                     <ChevronLeft size={14} aria-hidden="true" />
                     Retour aux loges
@@ -262,7 +262,7 @@ const LogeDetailView: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => navigate('/troupeau?view=loges')}
-                    className="pressable inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-bg-1 border border-border text-text-1 font-mono text-[11px] font-semibold uppercase tracking-wide"
+                    className="pressable inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-bg-1 border border-border text-text-1 text-[11px] font-semibold uppercase tracking-wide"
                   >
                     <Pencil size={13} aria-hidden="true" />
                     Modifier
@@ -270,7 +270,7 @@ const LogeDetailView: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleDeactivate}
-                    className="pressable inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-red/10 border border-red/30 text-red font-mono text-[11px] font-semibold uppercase tracking-wide"
+                    className="pressable inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-red/10 border border-red/30 text-red text-[11px] font-semibold uppercase tracking-wide"
                     data-testid="deactivate-button"
                   >
                     <Archive size={13} aria-hidden="true" />
@@ -299,7 +299,7 @@ const LogeDetailView: React.FC = () => {
                     style={{ color: 'var(--muted)' }}
                   />
                   <p
-                    className="font-mono text-[12px]"
+                    className="text-[12px]"
                     style={{ color: 'var(--muted)' }}
                   >
                     Loge vide
@@ -358,7 +358,7 @@ const LogeDetailView: React.FC = () => {
                     style={{ color: 'var(--muted)' }}
                   />
                   <p
-                    className="font-mono text-[12px]"
+                    className="text-[12px]"
                     style={{ color: 'var(--muted)' }}
                   >
                     Aucun mouvement enregistré
@@ -385,7 +385,7 @@ const LogeDetailView: React.FC = () => {
                               size="xs"
                             />
                             <span
-                              className="font-mono text-[12px]"
+                              className="ft-code text-[12px]"
                               style={{ color: 'var(--text-1)' }}
                             >
                               {m.subject_type} · {m.subject_id.slice(0, 8)}
@@ -401,7 +401,7 @@ const LogeDetailView: React.FC = () => {
                           ) : null}
                         </div>
                         <span
-                          className="font-mono text-[11px] tabular-nums shrink-0"
+                          className="text-[11px] tabular-nums shrink-0"
                           style={{ color: 'var(--muted)' }}
                         >
                           {m.date_mvt}

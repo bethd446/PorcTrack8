@@ -350,13 +350,13 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
           {step === 1 && (
             <div className="space-y-4">
               <IonSegment value={subjectType} onIonChange={e => { setSubjectType(e.detail.value as SubjectType); setQuery(''); }} className="premium-segment bg-bg-1 border border-border rounded-md">
-                <IonSegmentButton value="BANDE"><IonLabel className="text-[11px] font-mono">Bandes</IonLabel></IonSegmentButton>
-                <IonSegmentButton value="TRUIE"><IonLabel className="text-[11px] font-mono">Truies</IonLabel></IonSegmentButton>
-                <IonSegmentButton value="VERRAT"><IonLabel className="text-[11px] font-mono">Verrats</IonLabel></IonSegmentButton>
+                <IonSegmentButton value="BANDE"><IonLabel className="text-[11px]">Bandes</IonLabel></IonSegmentButton>
+                <IonSegmentButton value="TRUIE"><IonLabel className="text-[11px]">Truies</IonLabel></IonSegmentButton>
+                <IonSegmentButton value="VERRAT"><IonLabel className="text-[11px]">Verrats</IonLabel></IonSegmentButton>
               </IonSegment>
               <div className="flex items-center gap-2 h-11 px-3 rounded-md bg-bg-0 border border-border focus-within:border-accent">
                 <Search size={14} className="text-text-2" />
-                <input type="search" className="flex-1 bg-transparent outline-none font-mono text-[13px] text-text-0" placeholder="Rechercher sujet…" value={query} onChange={e => setQuery(e.target.value)} />
+                <input type="search" className="flex-1 bg-transparent outline-none text-[13px] text-text-0" placeholder="Rechercher sujet…" value={query} onChange={e => setQuery(e.target.value)} />
               </div>
 
               {/* Necessary for a11y tests */}
@@ -387,13 +387,13 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
               <div className="card-dense !p-3 flex items-center gap-3">
                 <button type="button" onClick={() => setStep(1)} className="pressable h-9 w-9 flex items-center justify-center rounded-md bg-bg-2 text-text-1"><ArrowLeft size={14} /></button>
                 <div className="min-w-0 flex-1">
-                  <div className="font-mono text-[10px] uppercase text-text-2">{subjectType}</div>
-                  <div className="truncate font-mono text-[13px] text-text-0">{subjectDisplay(selectedSubject)}</div>
+                  <div className="text-[10px] uppercase text-text-2">{subjectType}</div>
+                  <div className="truncate ft-code text-[13px] text-text-0">{subjectDisplay(selectedSubject)}</div>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="block font-mono text-[11px] uppercase text-text-2">Cause suspectée</label>
+                <label className="block text-[11px] uppercase text-text-2">Cause suspectée</label>
                 <div className="rounded-md bg-bg-0 border border-border">
                   <IonSelect value={cause} onIonChange={e => setCause(e.detail.value)} interface="popover" className="agritech-select" style={{'--padding-start': '12px'}}>
                     {CAUSE_OPTIONS.map(opt => <IonSelectOption key={opt.value} value={opt.value}>{opt.label}</IonSelectOption>)}
@@ -407,7 +407,7 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
                 const maxMorts = Math.max(MIN_DEATHS, Math.min(MAX_DEATHS, vivants > 0 ? vivants : MAX_DEATHS));
                 return (
                   <div className="space-y-2">
-                    <label htmlFor="mortality-count" className="block font-mono text-[11px] uppercase text-text-2">Nombre de morts</label>
+                    <label htmlFor="mortality-count" className="block text-[11px] uppercase text-text-2">Nombre de morts</label>
                     <div className="flex items-center gap-2">
                       <button type="button" aria-label="Diminuer le nombre de morts" onClick={() => setNbMorts(n => Math.max(1, n-1))} className="pressable h-12 w-12 rounded-md border bg-bg-0 text-text-1">−</button>
                       <input
@@ -417,13 +417,13 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
                         type="number"
                         min={MIN_DEATHS}
                         max={maxMorts}
-                        className="flex-1 h-12 rounded-md px-3 text-center bg-bg-0 border text-text-0 font-mono text-xl font-bold"
+                        className="flex-1 h-12 rounded-md px-3 text-center bg-bg-0 border text-text-0 text-xl font-bold"
                         value={nbMorts}
                         onChange={e => setNbMorts(Math.min(maxMorts, clampDeaths(Number(e.target.value))))}
                       />
                       <button type="button" aria-label="Augmenter le nombre de morts" onClick={() => setNbMorts(n => Math.min(maxMorts, n+1))} className="pressable h-12 w-12 rounded-md border bg-bg-0 text-text-1">+</button>
                     </div>
-                    <span id="mortality-count-hint" className="block font-mono text-[11px] text-text-2">
+                    <span id="mortality-count-hint" className="block text-[11px] text-text-2">
                       Maximum : {vivants} porcelet{vivants > 1 ? 's' : ''} vivant{vivants > 1 ? 's' : ''} actuellement.
                     </span>
                   </div>
@@ -431,13 +431,13 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
               })()}
 
               <div className="space-y-2">
-                <label htmlFor="mortality-obs" className="block font-mono text-[11px] uppercase text-text-2">Observation (optionnel)</label>
-                <textarea id="mortality-obs" aria-label="Observation sur la mortalité" aria-describedby="mortality-obs-hint" className="w-full rounded-md px-3 py-3 bg-bg-0 border text-text-0 font-mono text-[12px] min-h-[88px] resize-y" placeholder="Détails…" value={observation} onChange={e => setObservation(e.target.value)} maxLength={240} />
+                <label htmlFor="mortality-obs" className="block text-[11px] uppercase text-text-2">Observation (optionnel)</label>
+                <textarea id="mortality-obs" aria-label="Observation sur la mortalité" aria-describedby="mortality-obs-hint" className="w-full rounded-md px-3 py-3 bg-bg-0 border text-text-0 text-[12px] min-h-[88px] resize-y" placeholder="Détails…" value={observation} onChange={e => setObservation(e.target.value)} maxLength={240} />
                 <span id="mortality-obs-hint" className="sr-only">Optionnel — description de la cause de mortalité</span>
               </div>
 
-              {error && <p id="mortality-error" className="font-mono text-[11px] text-red" role="alert">{error}</p>}
-              <button type="button" aria-label="Enregistrer la mortalité" aria-busy={saving} onClick={handleSave} disabled={saving || !selectedBandeId || bandesDispo.length === 0} className="pressable w-full h-14 rounded-md bg-coral text-bg-0 font-mono text-[12px] font-bold uppercase tracking-wide">
+              {error && <p id="mortality-error" className="text-[11px] text-red" role="alert">{error}</p>}
+              <button type="button" aria-label="Enregistrer la mortalité" aria-busy={saving} onClick={handleSave} disabled={saving || !selectedBandeId || bandesDispo.length === 0} className="pressable w-full h-14 rounded-md bg-coral text-bg-0 text-[12px] font-bold uppercase tracking-wide">
                 {saving ? 'Enregistrement…' : 'Enregistrer'}
               </button>
             </div>
@@ -447,9 +447,9 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
             <div className="flex flex-col items-center justify-center py-16 animate-scale-in text-center">
               <CheckCircle2 size={64} className="text-coral mb-4" strokeWidth={1.5} />
               <p className="agritech-heading text-[18px] uppercase">Mortalité enregistrée</p>
-              <p className="mt-2 font-mono text-[12px] text-text-2">{subjectDisplay(selectedSubject)}</p>
+              <p className="mt-2 ft-code text-[12px] text-text-2">{subjectDisplay(selectedSubject)}</p>
               <div className="mt-6 p-4 rounded-xl border" style={{ background: 'color-mix(in srgb, var(--color-danger, #EF4444) 10%, transparent)', borderColor: 'color-mix(in srgb, var(--color-danger, #EF4444) 20%, transparent)' }}>
-                 <div className="text-[10px] uppercase font-mono mb-1" style={{ color: 'var(--color-danger, #EF4444)' }}>Impact financier estimé</div>
+                 <div className="text-[10px] uppercase mb-1" style={{ color: 'var(--color-danger, #EF4444)' }}>Impact financier estimé</div>
                  <div className="text-xl font-bold" style={{ color: 'var(--color-danger, #EF4444)' }}>-{impactFCFA.toLocaleString('fr-FR')} FCFA</div>
               </div>
             </div>

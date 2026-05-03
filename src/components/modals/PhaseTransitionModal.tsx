@@ -78,7 +78,7 @@ const PhaseTransitionModal: React.FC<PhaseTransitionModalProps> = ({
             <p className="ft-heading text-[11px] uppercase tracking-wider text-text-2">
               Transition requise
             </p>
-            <p className="font-mono font-bold text-[18px] text-text-0">
+            <p className="font-bold text-[18px] text-text-0">
               {transition.label}
               {transition.ageJours !== null
                 ? <span className="text-[13px] font-normal text-text-2 ml-2">J+{transition.ageJours}</span>
@@ -104,7 +104,7 @@ const PhaseTransitionModal: React.FC<PhaseTransitionModalProps> = ({
         {(transition.reason === 'POIDS_ATTEINT' || transition.reason === 'POIDS_ET_AGE')
           && transition.poidsReelKg !== undefined
           && transition.poidsSeuilKg !== undefined && (
-          <p className="font-mono text-[12px] text-text-1 leading-snug">
+          <p className="text-[12px] text-text-1 leading-snug">
             Poids {transition.poidsReelKg} kg ≥ seuil {transition.poidsSeuilKg} kg pour{' '}
             {PHASE_LABEL[transition.toPhase] ?? transition.toPhase}.
           </p>
@@ -115,7 +115,7 @@ const PhaseTransitionModal: React.FC<PhaseTransitionModalProps> = ({
           <div className="flex flex-col gap-1.5">
             <label
               htmlFor="poids-confirmation"
-              className="font-mono text-[12px] text-text-1 uppercase tracking-wide"
+              className="text-[12px] text-text-1 uppercase tracking-wide"
             >
               Poids actuel (kg)
             </label>
@@ -137,7 +137,7 @@ const PhaseTransitionModal: React.FC<PhaseTransitionModalProps> = ({
             type="button"
             aria-label="Plus tard"
             onClick={onDismiss}
-            className="pressable flex-1 h-12 rounded-xl border border-border font-mono text-[13px] text-text-2 hover:text-text-0 transition-colors"
+            className="pressable flex-1 h-12 rounded-xl border border-border text-[13px] text-text-2 hover:text-text-0 transition-colors"
           >
             Plus tard
           </button>
@@ -145,7 +145,7 @@ const PhaseTransitionModal: React.FC<PhaseTransitionModalProps> = ({
             type="button"
             aria-label="Confirmer"
             onClick={handleConfirm}
-            className={`pressable flex-[2] h-12 rounded-xl font-mono font-bold text-[13px] text-white flex items-center justify-center gap-2 transition-colors ${
+            className={`pressable flex-[2] h-12 rounded-xl font-bold text-[13px] text-white flex items-center justify-center gap-2 transition-colors ${
               critical ? 'bg-red' : 'bg-accent'
             }`}
           >

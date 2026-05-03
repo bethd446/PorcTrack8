@@ -391,7 +391,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
   const renderStep1 = (): React.ReactNode => (
     <div className="space-y-4">
       <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-2 border-b border-border bg-bg-1 px-4 py-3">
-        <p className="font-mono text-[12px] uppercase tracking-wide text-text-2">
+        <p className="text-[12px] uppercase tracking-wide text-text-2">
           Étape 1 / 3 — Portées source
         </p>
         <p className="mt-1 font-heading text-[16px] uppercase tracking-wide tabular-nums">
@@ -400,7 +400,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
       </div>
 
       {bandesEligibles.length === 0 ? (
-        <p className="font-mono text-[12px] uppercase tracking-wide text-text-2">
+        <p className="text-[12px] uppercase tracking-wide text-text-2">
           Aucune portée éligible (Sous mère / Maternité avec date MB)
         </p>
       ) : (
@@ -423,7 +423,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
                     aria-label={`Sélectionner ${code}`}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-mono text-[13px] tabular-nums text-text-0">
+                    <p className="truncate ft-code tabular-nums text-[13px] text-text-0">
                       {code}
                       {b.truie ? ` · ${b.truie}` : ''}
                     </p>
@@ -449,7 +449,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
     return (
       <div className="space-y-4">
         <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-2 border-b border-border bg-bg-1 px-4 py-3">
-          <p className="font-mono text-[12px] uppercase tracking-wide text-text-2">
+          <p className="text-[12px] uppercase tracking-wide text-text-2">
             Étape 2 / 3 — Bandes destinations
           </p>
           <p className="mt-1 font-heading text-[16px] uppercase tracking-wide tabular-nums">
@@ -499,7 +499,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
                     updateDestination(d.uid, { codeId: e.target.value })
                   }
                   aria-label={`ID bande destination ${idx + 1}`}
-                  className="w-full rounded-md border border-border bg-bg-0 px-2 py-2 font-mono text-[12px] outline-none focus:border-accent"
+                  className="w-full rounded-md border border-border bg-bg-0 px-2 py-2 ft-code text-[12px] outline-none focus:border-accent"
                 />
 
                 <input
@@ -534,7 +534,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
                     }
                     placeholder="kg"
                     aria-label={`Poids moyen destination ${idx + 1}`}
-                    className="w-full rounded-md border border-border bg-bg-0 py-2 pl-7 pr-2 text-center font-mono text-[14px] tabular-nums outline-none focus:border-accent"
+                    className="w-full rounded-md border border-border bg-bg-0 py-2 pl-7 pr-2 text-center text-[14px] tabular-nums outline-none focus:border-accent"
                   />
                 </div>
 
@@ -552,7 +552,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
                   }
                   placeholder="Loge"
                   aria-label={`Loge destination ${idx + 1}`}
-                  className="w-full rounded-md border border-border bg-bg-0 px-2 py-2 font-mono text-[12px] outline-none focus:border-accent"
+                  className="w-full rounded-md border border-border bg-bg-0 px-2 py-2 text-[12px] outline-none focus:border-accent"
                 />
               </div>
             );
@@ -562,7 +562,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
         <button
           type="button"
           onClick={addDestination}
-          className="pressable inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-dashed border-border font-mono text-[12px] uppercase tracking-wide text-text-1"
+          className="pressable inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-dashed border-border text-[12px] uppercase tracking-wide text-text-1"
         >
           <Plus size={14} aria-hidden="true" />
           Ajouter destination
@@ -574,7 +574,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
   const renderStep3 = (): React.ReactNode => (
     <div className="space-y-4">
       <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-2 border-b border-border bg-bg-1 px-4 py-3">
-        <p className="font-mono text-[12px] uppercase tracking-wide text-text-2">
+        <p className="text-[12px] uppercase tracking-wide text-text-2">
           Étape 3 / 3 — Confirmation
         </p>
         <p className="mt-1 font-heading text-[16px] uppercase tracking-wide tabular-nums">
@@ -607,7 +607,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
           {selectedSources.map(s => (
             <li
               key={s.id}
-              className="font-mono text-[12px] tabular-nums text-text-0"
+              className="ft-code tabular-nums text-[12px] text-text-0"
             >
               {s.idPortee || s.id} · {s.vivants ?? 0} vivants
             </li>
@@ -623,7 +623,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
           {destinations.map(d => (
             <li
               key={d.uid}
-              className="font-mono text-[12px] tabular-nums text-text-0"
+              className="ft-code tabular-nums text-[12px] text-text-0"
             >
               {d.codeId} · {d.nbPorcelets || 0} porcelets · {d.poidsKg || '—'} kg
               {d.loge ? ` · ${d.loge}` : ''}
@@ -694,7 +694,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
                   type="button"
                   onClick={goPrev}
                   disabled={saving}
-                  className="pressable h-14 flex-1 rounded-md border border-border bg-bg-1 font-mono text-[12px] font-bold uppercase tracking-wide text-text-1"
+                  className="pressable h-14 flex-1 rounded-md border border-border bg-bg-1 text-[12px] font-bold uppercase tracking-wide text-text-1"
                 >
                   Retour
                 </button>
@@ -703,7 +703,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
                   type="button"
                   onClick={onClose}
                   disabled={saving}
-                  className="pressable h-14 flex-1 rounded-md border border-border bg-bg-1 font-mono text-[12px] font-bold uppercase tracking-wide text-text-1"
+                  className="pressable h-14 flex-1 rounded-md border border-border bg-bg-1 text-[12px] font-bold uppercase tracking-wide text-text-1"
                 >
                   Annuler
                 </button>
@@ -717,7 +717,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
                     saving ||
                     (step === 1 && selectedSourceIds.length === 0)
                   }
-                  className="pressable inline-flex h-14 flex-[2] items-center justify-center gap-2 rounded-md bg-accent font-mono text-[13px] font-bold uppercase tracking-wide text-bg-0 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="pressable inline-flex h-14 flex-[2] items-center justify-center gap-2 rounded-md bg-accent text-[13px] font-bold uppercase tracking-wide text-bg-0 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Suivant
                   <ArrowRight size={16} aria-hidden="true" />
@@ -728,7 +728,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
                   onClick={handleConfirm}
                   disabled={saving}
                   aria-busy={saving}
-                  className="pressable inline-flex h-14 flex-[2] items-center justify-center gap-2 rounded-md bg-accent font-mono text-[13px] font-bold uppercase tracking-wide text-bg-0 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="pressable inline-flex h-14 flex-[2] items-center justify-center gap-2 rounded-md bg-accent text-[13px] font-bold uppercase tracking-wide text-bg-0 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {saving ? (
                     <span className="animate-pulse">Enregistrement…</span>

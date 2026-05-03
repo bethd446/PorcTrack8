@@ -28,7 +28,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useMeta } from '../../context/FarmContext';
 import { usePilotage } from '../../context/PilotageContext';
 import { useTroupeau } from '../../context/TroupeauContext';
-import { resolveAlertSubject } from '../../utils/alertSubject';
+import { resolveAlertSubject, isAlertSubjectOrphan } from '../../utils/alertSubject';
 import AgritechLayout from '../../components/AgritechLayout';
 import KpiCardV6 from '../../components/design/KpiCard';
 import Eyebrow from '../../components/design/Eyebrow';
@@ -566,26 +566,33 @@ const AlertsView: React.FC = () => {
     return () => { cancelled = true; };
   }, [alerts]);
 
+  // V36-A — Filtre les alertes orphelines (subject supprimé) pour ne pas
+  // afficher d'identifiants techniques sans contexte (BUG-2).
+  const liveAlerts = useMemo(
+    () => alerts.filter(a => !isAlertSubjectOrphan(a.subjectId, a.category, lookup)),
+    [alerts, lookup],
+  );
+
   // ── Summary counts ────────────────────────────────────────────────────────
   const summary = useMemo(() => ({
-    critique: alerts.filter(a => a.priority === 'CRITIQUE').length,
-    haute:    alerts.filter(a => a.priority === 'HAUTE').length,
-    normale:  alerts.filter(a => a.priority === 'NORMALE').length,
-    info:     alerts.filter(a => a.priority === 'INFO').length,
-  }), [alerts]);
+    critique: liveAlerts.filter(a => a.priority === 'CRITIQUE').length,
+    haute:    liveAlerts.filter(a => a.priority === 'HAUTE').length,
+    normale:  liveAlerts.filter(a => a.priority === 'NORMALE').length,
+    info:     liveAlerts.filter(a => a.priority === 'INFO').length,
+  }), [liveAlerts]);
 
   // ── Category counts ──────────────────────────────────────────────────────
   const categoryCounts = useMemo(() => {
     const counts: Record<FilterId, number> = {
-      ALL: alerts.length,
+      ALL: liveAlerts.length,
       REPRO: 0, SANTE: 0, BANDES: 0, STOCK: 0, PLANNING: 0,
     };
-    for (const a of alerts) counts[a.category] = (counts[a.category] ?? 0) + 1;
+    for (const a of liveAlerts) counts[a.category] = (counts[a.category] ?? 0) + 1;
     return counts;
-  }, [alerts]);
+  }, [liveAlerts]);
 
   const filteredAlerts = useMemo<DisplayAlert[]>(() => {
-    const base = activeFilter === 'ALL' ? alerts : alerts.filter(a => a.category === activeFilter);
+    const base = activeFilter === 'ALL' ? liveAlerts : liveAlerts.filter(a => a.category === activeFilter);
     const grouped = activeFilter === 'STOCK' ? base.map<DisplayAlert>(a => ({
       id: a.id,
       priority: a.priority,
@@ -605,7 +612,7 @@ const AlertsView: React.FC = () => {
       const db = b.createdAt ? b.createdAt.getTime() : 0;
       return db - da;
     });
-  }, [alerts, activeFilter]);
+  }, [liveAlerts, activeFilter]);
 
   const handleAction = useCallback((alert: FarmAlert) => {
     if (!alert.requiresAction) return;

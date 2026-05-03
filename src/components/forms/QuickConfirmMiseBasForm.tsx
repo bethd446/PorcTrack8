@@ -218,7 +218,7 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
     [
       'w-full h-12 rounded-md px-3',
       'bg-bg-0 border text-text-0 placeholder:text-text-2',
-      'font-mono text-[14px]',
+      'text-[14px]',
       'outline-none transition-colors duration-[160ms]',
       'focus:border-accent focus:ring-1 focus:ring-accent',
       hasError ? 'border-red' : 'border-border hover:border-text-2',
@@ -250,33 +250,33 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
               data-testid="saillie-recap"
             >
               <div className="flex items-center justify-between gap-3">
-                <span className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+                <span className="text-[10px] uppercase tracking-wide text-text-2">
                   Truie
                 </span>
-                <span className="font-mono tabular-nums text-[13px] text-text-0">
+                <span className="ft-code tabular-nums text-[13px] text-text-0">
                   {truieDisplay?.displayId ?? saillie.sow_code_id ?? '—'}
                   {truieDisplay?.nom ? ` · ${truieDisplay.nom}` : ''}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-3">
-                <span className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+                <span className="text-[10px] uppercase tracking-wide text-text-2">
                   Verrat
                 </span>
-                <span className="font-mono tabular-nums text-[13px] text-text-0">
+                <span className="ft-code tabular-nums text-[13px] text-text-0">
                   {verratDisplay?.displayId ?? saillie.boar_code_id ?? '—'}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-3">
-                <span className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+                <span className="text-[10px] uppercase tracking-wide text-text-2">
                   Date saillie
                 </span>
-                <span className="font-mono tabular-nums text-[13px] text-text-0">
+                <span className="ft-code tabular-nums text-[13px] text-text-0">
                   {saillie.date_saillie ?? '—'}
                 </span>
               </div>
             </div>
           ) : (
-            <p className="font-mono text-[12px] text-text-2 italic">
+            <p className="text-[12px] text-text-2 italic">
               Chargement de la saillie…
             </p>
           )}
@@ -295,7 +295,7 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
               aria-invalid={!!errors.dateMiseBas}
             />
             {errors.dateMiseBas ? (
-              <p role="alert" className="font-mono text-[11px] text-red">
+              <p role="alert" className="text-[11px] text-red">
                 {errors.dateMiseBas}
               </p>
             ) : null}
@@ -322,7 +322,7 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
                 data-testid="qcmb-total"
               />
               {errors.nbTotal ? (
-                <p role="alert" className="font-mono text-[11px] text-red">
+                <p role="alert" className="text-[11px] text-red">
                   {errors.nbTotal}
                 </p>
               ) : null}
@@ -346,7 +346,7 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
                 data-testid="qcmb-vivants"
               />
               {errors.nbVivants ? (
-                <p role="alert" className="font-mono text-[11px] text-red">
+                <p role="alert" className="text-[11px] text-red">
                   {errors.nbVivants}
                 </p>
               ) : null}
@@ -355,11 +355,11 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
 
           {/* Mort-nés (auto, lecture seule) */}
           <div className="card-dense flex items-center justify-between gap-3 py-2">
-            <span className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+            <span className="text-[10px] uppercase tracking-wide text-text-2">
               Mort-nés (auto)
             </span>
             <span
-              className="font-mono tabular-nums text-[13px] text-accent"
+              className="tabular-nums text-[13px] text-accent"
               data-testid="qcmb-mort-nes"
             >
               {mortNesDerivé}
@@ -385,7 +385,7 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
                 onChange={e => setPoidsPorteeKg(e.target.value)}
               />
               {errors.poidsPorteeKg ? (
-                <p role="alert" className="font-mono text-[11px] text-red">
+                <p role="alert" className="text-[11px] text-red">
                   {errors.poidsPorteeKg}
                 </p>
               ) : null}
@@ -428,7 +428,7 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
             </div>
           </div>
           {errors.nbMales ? (
-            <p role="alert" className="font-mono text-[11px] text-red">
+            <p role="alert" className="text-[11px] text-red">
               {errors.nbMales}
             </p>
           ) : null}
@@ -455,7 +455,7 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
               ))}
             </select>
             {errors.logeId ? (
-              <p role="alert" className="font-mono text-[11px] text-red">
+              <p role="alert" className="text-[11px] text-red">
                 {errors.logeId}
               </p>
             ) : null}
@@ -467,7 +467,7 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
               type="button"
               onClick={handleClose}
               disabled={saving}
-              className="pressable flex-1 h-14 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 font-mono text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
+              className="pressable flex-1 h-14 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
             >
               Annuler
             </button>
@@ -475,7 +475,7 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
               type="submit"
               disabled={saving || !saillie}
               aria-busy={saving}
-              className="pressable flex-[2] h-14 rounded-md inline-flex items-center justify-center gap-2 bg-accent text-bg-0 font-mono text-[13px] font-bold uppercase tracking-wide hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="pressable flex-[2] h-14 rounded-md inline-flex items-center justify-center gap-2 bg-accent text-bg-0 text-[13px] font-bold uppercase tracking-wide hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
               data-testid="qcmb-submit"
             >
               {saving ? (

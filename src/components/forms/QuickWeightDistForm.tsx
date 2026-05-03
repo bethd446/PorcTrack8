@@ -194,7 +194,7 @@ const QuickWeightDistForm: React.FC<QuickWeightDistFormProps> = ({
               Tri enregistré
             </p>
             {selected ? (
-              <p className="mt-2 font-mono text-[12px] uppercase tracking-wide text-text-2 tabular-nums">
+              <p className="mt-2 text-[12px] uppercase tracking-wide text-text-2 tabular-nums">
                 {selected.idPortee || selected.id} · {total} porcs
               </p>
             ) : null}
@@ -230,7 +230,7 @@ const QuickWeightDistForm: React.FC<QuickWeightDistFormProps> = ({
                 aria-invalid={!!errors.bandeId}
                 className={[
                   'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0',
-                  'font-mono text-[13px] outline-none focus:border-accent',
+                  'text-[13px] outline-none focus:border-accent',
                   errors.bandeId ? 'border-red' : 'border-border',
                 ].join(' ')}
               >
@@ -265,7 +265,7 @@ const QuickWeightDistForm: React.FC<QuickWeightDistFormProps> = ({
                 aria-invalid={!!errors.dateIso}
                 className={[
                   'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0',
-                  'font-mono text-[13px] outline-none focus:border-accent',
+                  'font-mono text-[13px] tabular-nums outline-none focus:border-accent',
                   errors.dateIso ? 'border-red' : 'border-border',
                 ].join(' ')}
               />
@@ -318,7 +318,7 @@ const QuickWeightDistForm: React.FC<QuickWeightDistFormProps> = ({
               </span>
               <span
                 className={[
-                  'font-mono text-[14px] tabular-nums font-bold',
+                  'text-[14px] tabular-nums font-bold',
                   Math.abs(diff) <= WEIGHT_DIST_TOLERANCE
                     ? 'text-accent'
                     : 'text-red',
@@ -331,7 +331,7 @@ const QuickWeightDistForm: React.FC<QuickWeightDistFormProps> = ({
             {errors.total ? (
               <p
                 role="alert"
-                className="font-mono text-[11px] text-red"
+                className="text-[11px] text-red"
               >
                 {errors.total}
               </p>
@@ -351,9 +351,9 @@ const QuickWeightDistForm: React.FC<QuickWeightDistFormProps> = ({
                 disabled={saving}
                 maxLength={WEIGHT_DIST_NOTES_MAX}
                 placeholder="Ex : pesée pré-départ, lot 1"
-                className="w-full rounded-md px-3 py-3 bg-bg-0 border border-border text-text-0 placeholder:text-text-2 font-mono text-[12px] outline-none focus:border-accent min-h-[60px] resize-y"
+                className="w-full rounded-md px-3 py-3 bg-bg-0 border border-border text-text-0 placeholder:text-text-2 text-[12px] outline-none focus:border-accent min-h-[60px] resize-y"
               />
-              <p className="font-mono text-[10px] text-text-2 tabular-nums">
+              <p className="text-[10px] text-text-2 tabular-nums">
                 {notes.length}/{WEIGHT_DIST_NOTES_MAX}
               </p>
             </div>
@@ -372,7 +372,7 @@ const QuickWeightDistForm: React.FC<QuickWeightDistFormProps> = ({
                 type="button"
                 onClick={onClose}
                 disabled={saving}
-                className="pressable flex-1 h-14 rounded-md bg-bg-1 border border-border text-text-1 font-mono text-[12px] font-bold uppercase tracking-wide"
+                className="pressable flex-1 h-14 rounded-md bg-bg-1 border border-border text-text-1 text-[12px] font-bold uppercase tracking-wide"
               >
                 Annuler
               </button>
@@ -380,7 +380,7 @@ const QuickWeightDistForm: React.FC<QuickWeightDistFormProps> = ({
                 type="submit"
                 disabled={saving || !isValid}
                 aria-busy={saving}
-                className="pressable flex-[2] h-14 rounded-md bg-accent text-bg-0 font-mono text-[13px] font-bold uppercase tracking-wide inline-flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="pressable flex-[2] h-14 rounded-md bg-accent text-bg-0 text-[13px] font-bold uppercase tracking-wide inline-flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {saving ? (
                   <span className="animate-pulse">Enregistrement…</span>
@@ -452,7 +452,7 @@ const DistField: React.FC<DistFieldProps> = ({
       <p
         id={`${id}-error`}
         role="alert"
-        className="font-mono text-[10px] text-red"
+        className="text-[10px] text-red"
       >
         {error}
       </p>

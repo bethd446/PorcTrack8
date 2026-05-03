@@ -190,7 +190,7 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
               className={[
                 'w-full h-12 rounded-md px-3',
                 'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[14px] uppercase tabular-nums',
+                'ft-code text-[14px] uppercase tabular-nums',
                 'outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.id ? 'border-red' : 'border-border hover:border-text-2',
@@ -238,7 +238,7 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
               className={[
                 'w-full h-12 rounded-md px-3',
                 'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[14px] tabular-nums',
+                'ft-code text-[14px] tabular-nums',
                 'outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.boucle ? 'border-red' : 'border-border hover:border-text-2',

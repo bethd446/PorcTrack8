@@ -250,7 +250,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                 className={[
                   'w-full h-12 rounded-md px-3',
                   'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                  'font-mono text-[14px]',
+                  'text-[14px]',
                   'outline-none transition-colors duration-[160ms]',
                   'focus:border-accent focus:ring-1 focus:ring-accent',
                   errors.libelle ? 'border-red' : 'border-border hover:border-text-2',
@@ -265,7 +265,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                 <p
                   id="edit-stock-libelle-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.libelle}
                 </p>
@@ -294,7 +294,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                   className={[
                     'w-full h-12 rounded-md px-3',
                     'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                    'font-mono text-[14px]',
+                    'text-[14px]',
                     'outline-none transition-colors duration-[160ms]',
                     'focus:border-accent focus:ring-1 focus:ring-accent',
                     errors.produit ? 'border-red' : 'border-border hover:border-text-2',
@@ -309,7 +309,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                   <p
                     id="edit-stock-produit-error"
                     role="alert"
-                    className="font-mono text-[11px] text-red"
+                    className="text-[11px] text-red"
                   >
                     {errors.produit}
                   </p>
@@ -336,7 +336,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                     className={[
                       'w-full h-11 rounded-md px-3',
                       'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                      'font-mono text-[13px]',
+                      'text-[13px]',
                       'outline-none transition-colors duration-[160ms]',
                       'focus:border-accent focus:ring-1 focus:ring-accent',
                       errors.type ? 'border-red' : 'border-border hover:border-text-2',
@@ -351,7 +351,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                     <p
                       id="edit-stock-type-error"
                       role="alert"
-                      className="font-mono text-[11px] text-red"
+                      className="text-[11px] text-red"
                     >
                       {errors.type}
                     </p>
@@ -377,7 +377,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                     className={[
                       'w-full h-11 rounded-md px-3',
                       'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                      'font-mono text-[13px]',
+                      'text-[13px]',
                       'outline-none transition-colors duration-[160ms]',
                       'focus:border-accent focus:ring-1 focus:ring-accent',
                       errors.usage ? 'border-red' : 'border-border hover:border-text-2',
@@ -392,7 +392,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                     <p
                       id="edit-stock-usage-error"
                       role="alert"
-                      className="font-mono text-[11px] text-red"
+                      className="text-[11px] text-red"
                     >
                       {errors.usage}
                     </p>
@@ -448,7 +448,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                   <p
                     id="edit-stock-actuel-error"
                     role="alert"
-                    className="font-mono text-[11px] text-red"
+                    className="text-[11px] text-red"
                   >
                     {errors.stockActuel}
                   </p>
@@ -476,7 +476,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                   className={[
                     'w-full h-12 rounded-md px-3',
                     'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                    'font-mono text-[14px]',
+                    'text-[14px]',
                     'outline-none transition-colors duration-[160ms]',
                     'focus:border-accent focus:ring-1 focus:ring-accent',
                     errors.unite ? 'border-red' : 'border-border hover:border-text-2',
@@ -496,7 +496,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                   <p
                     id="edit-stock-unite-error"
                     role="alert"
-                    className="font-mono text-[11px] text-red"
+                    className="text-[11px] text-red"
                   >
                     {errors.unite}
                   </p>
@@ -545,14 +545,14 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                 <p
                   id="edit-stock-seuil-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.seuilAlerte}
                 </p>
               ) : (
                 <p
                   id="edit-stock-seuil-hint"
-                  className="font-mono text-[10px] text-text-2"
+                  className="text-[10px] text-text-2"
                 >
                   Stock ≤ ce seuil → statut BAS
                 </p>
@@ -594,7 +594,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
               className={[
                 'w-full h-12 rounded-md px-3',
                 'bg-bg-0 border text-text-0',
-                'font-mono text-[14px] uppercase tracking-wide',
+                'text-[14px] uppercase tracking-wide',
                 'outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.statut ? 'border-red' : 'border-border hover:border-text-2',
@@ -608,7 +608,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
               <option value="RUPTURE">RUPTURE</option>
             </select>
             {errors.statut ? (
-              <p role="alert" className="font-mono text-[11px] text-red">
+              <p role="alert" className="text-[11px] text-red">
                 {errors.statut}
               </p>
             ) : null}
@@ -634,7 +634,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
               className={[
                 'w-full rounded-md px-3 py-2',
                 'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[13px] resize-none',
+                'text-[13px] resize-none',
                 'outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.notes ? 'border-red' : 'border-border hover:border-text-2',
@@ -646,7 +646,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
             />
             <p
               id="edit-stock-notes-hint"
-              className="font-mono text-[10px] text-text-2 tabular-nums"
+              className="text-[10px] text-text-2 tabular-nums"
             >
               {notes.length}/200
             </p>
@@ -654,7 +654,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
               <p
                 id="edit-stock-notes-error"
                 role="alert"
-                className="font-mono text-[11px] text-red"
+                className="text-[11px] text-red"
               >
                 {errors.notes}
               </p>
@@ -672,7 +672,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                 'pressable flex-1 h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-bg-1 border border-border text-text-1',
-                'font-mono text-[12px] font-bold uppercase tracking-wide',
+                'text-[12px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms] hover:border-text-2',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : '',
@@ -689,7 +689,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                 'pressable flex-[2] h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-accent text-bg-0',
-                'font-mono text-[13px] font-bold uppercase tracking-wide',
+                'text-[13px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms]',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',

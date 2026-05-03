@@ -175,7 +175,7 @@ const MaterniteView: React.FC = () => {
             <button
               type="button"
               onClick={() => openMiseBas()}
-              className="pressable w-full h-[58px] rounded-xl bg-accent text-bg-0 font-mono text-[13px] font-bold tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-accent/20"
+              className="pressable w-full h-[58px] rounded-xl bg-accent text-bg-0 text-[13px] font-bold tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-accent/20"
             >
               <Plus size={20} />
               <span>Saisir une mise-bas</span>
@@ -374,7 +374,7 @@ const MaterniteCard: React.FC<{
         {/* Portée Stats */}
         <div className="bg-bg-1 rounded-xl p-3 border border-border/50">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-[10px] uppercase font-mono text-text-2">Portée</span>
+            <span className="text-[10px] uppercase text-text-2">Portée</span>
             <Baby size={12} className="text-accent" />
           </div>
           <div className="flex items-baseline gap-2">
@@ -382,7 +382,7 @@ const MaterniteCard: React.FC<{
             <span className="text-[10px] text-text-2 uppercase">vivants</span>
           </div>
           {mortsPct > 0 && (
-            <div className={`text-[10px] mt-1 font-mono ${mortsPct > MORTALITE_SEUIL_PCT ? 'text-red font-bold' : 'text-text-2'}`}>
+            <div className={`text-[10px] mt-1 ${mortsPct > MORTALITE_SEUIL_PCT ? 'text-red font-bold' : 'text-text-2'}`}>
               Mortalité: {Math.round(mortsPct)}%
             </div>
           )}
@@ -391,13 +391,13 @@ const MaterniteCard: React.FC<{
         {/* Nutrition Truie */}
         <div className="bg-bg-1 rounded-xl p-3 border border-border/50">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-[10px] uppercase font-mono text-text-2">Ration</span>
+            <span className="text-[10px] uppercase text-text-2">Ration</span>
             <Droplets size={12} className="text-accent" />
           </div>
           <div className="text-[14px] font-bold text-accent">
             {truie.ration} kg/j
           </div>
-          <div className="mt-1 text-[10px] text-text-2 font-mono leading-tight truncate">
+          <div className="mt-1 text-[10px] text-text-2 leading-tight truncate">
             Plan: {feedConfig.label}
           </div>
         </div>

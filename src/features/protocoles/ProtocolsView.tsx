@@ -316,7 +316,7 @@ const ProtocolsView: React.FC = () => {
                     <span>{t.label}</span>
                     <span
                       className={
-                        'font-mono tabular-nums text-[10px] ' +
+                        'tabular-nums text-[10px] ' +
                         (active ? 'text-bg-0/80' : 'text-text-2')
                       }
                     >
@@ -338,7 +338,7 @@ const ProtocolsView: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="ft-heading text-[14px] uppercase text-text-0 leading-tight">Système Naisseur-Engraisseur</h4>
-                    <p className="font-mono text-[10px] text-text-2 uppercase tracking-wider mt-0.5">De la naissance à l'abattage</p>
+                    <p className="text-[10px] text-text-2 uppercase tracking-wider mt-0.5">De la naissance à l'abattage</p>
                   </div>
                 </div>
 
@@ -362,7 +362,7 @@ const ProtocolsView: React.FC = () => {
                               <h3 className="ft-heading text-[15px] text-text-0 leading-none">{s.title}</h3>
                               <div className="flex items-center gap-1.5 mt-1">
                                 <Info size={10} className="text-text-2" />
-                                <span className="font-mono text-[10px] uppercase text-text-2 tracking-wide font-bold">{s.age}</span>
+                                <span className="text-[10px] uppercase text-text-2 tracking-wide font-bold">{s.age}</span>
                               </div>
                             </div>
                           </div>
@@ -376,7 +376,7 @@ const ProtocolsView: React.FC = () => {
 
                           <div className="grid grid-cols-1 gap-3">
                             <div className="space-y-1">
-                              <p className="font-mono text-[9px] uppercase text-text-2 font-bold flex items-center gap-1.5">
+                              <p className="text-[9px] uppercase text-text-2 font-bold flex items-center gap-1.5">
                                 <Target size={10} /> Objectif
                               </p>
                               <p className="text-[12px] text-text-0 leading-snug">{s.objective}</p>
@@ -384,7 +384,7 @@ const ProtocolsView: React.FC = () => {
 
                             {s.aliment && (
                               <div className="space-y-1">
-                                <p className="font-mono text-[9px] uppercase text-text-2 font-bold flex items-center gap-1.5">
+                                <p className="text-[9px] uppercase text-text-2 font-bold flex items-center gap-1.5">
                                   <Apple size={10} /> Aliment
                                 </p>
                                 <p className="text-[12px] font-semibold text-accent leading-snug bg-accent/5 px-2 py-1 rounded inline-block">{s.aliment}</p>
@@ -393,7 +393,7 @@ const ProtocolsView: React.FC = () => {
 
                             {s.action && (
                               <div className="space-y-1">
-                                <p className="font-mono text-[9px] uppercase text-text-2 font-bold flex items-center gap-1.5 text-amber">
+                                <p className="text-[9px] uppercase text-text-2 font-bold flex items-center gap-1.5 text-amber">
                                   <ClipboardCheck size={10} /> Action Importante
                                 </p>
                                 <p className="text-[12px] text-text-0 leading-snug">{s.action}</p>
@@ -401,7 +401,7 @@ const ProtocolsView: React.FC = () => {
                             )}
 
                             <div className="space-y-1">
-                              <p className="font-mono text-[9px] uppercase text-text-2 font-bold flex items-center gap-1.5">
+                              <p className="text-[9px] uppercase text-text-2 font-bold flex items-center gap-1.5">
                                 <Stethoscope size={10} /> Surveiller
                               </p>
                               <p className="text-[12px] text-text-1 leading-snug">{s.monitor}</p>
@@ -409,7 +409,7 @@ const ProtocolsView: React.FC = () => {
 
                             {s.destination && (
                               <div className="space-y-1 pt-1 mt-1 border-t border-border">
-                                <p className="font-mono text-[9px] uppercase text-blue font-bold flex items-center gap-1.5">
+                                <p className="text-[9px] uppercase text-blue font-bold flex items-center gap-1.5">
                                   <Truck size={10} /> Destination
                                 </p>
                                 <p className="text-[12px] font-bold text-blue leading-snug uppercase tracking-tight">{s.destination}</p>
@@ -532,7 +532,7 @@ const ProtocolsView: React.FC = () => {
                           <h3 className="agritech-heading text-[14px] uppercase leading-none">
                             {r.title}
                           </h3>
-                          <p className="mt-2 font-mono text-[12px] text-text-1 leading-relaxed bg-bg-0 border border-border rounded-md p-3">
+                          <p className="mt-2 text-[12px] text-text-1 leading-relaxed bg-bg-0 border border-border rounded-md p-3">
                             {r.content}
                           </p>
                         </div>
@@ -550,7 +550,7 @@ const ProtocolsView: React.FC = () => {
                     <SectionDivider
                       label={c.title}
                       action={
-                        <span className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wide text-text-2">
+                        <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-text-2">
                           <ClipboardCheck size={12} aria-hidden="true" />
                           {c.tasks.length} tâches
                         </span>

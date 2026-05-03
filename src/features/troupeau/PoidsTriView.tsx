@@ -116,15 +116,15 @@ const PoidsTriView: React.FC<PoidsTriViewProps> = ({
           <Scale size={16} aria-hidden="true" />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+          <div className="text-[10px] uppercase tracking-wide text-text-2">
             Tri par poids
           </div>
-          <div className="font-mono text-[12px] text-text-0 truncate">
+          <div className="text-[12px] text-text-0 truncate">
             Bande {bande.idPortee || bande.id}
           </div>
         </div>
         {summary ? (
-          <span className="font-mono text-[10px] tabular-nums text-text-2">
+          <span className="text-[10px] tabular-nums text-text-2">
             {formatDateFr(summary.date)}
           </span>
         ) : null}
@@ -133,7 +133,7 @@ const PoidsTriView: React.FC<PoidsTriViewProps> = ({
       <div className="hairline" />
 
       {loading ? (
-        <p className="font-mono text-[11px] text-text-2">Chargement…</p>
+        <p className="text-[11px] text-text-2">Chargement…</p>
       ) : error ? (
         <div
           className="flex items-center gap-2 text-red"
@@ -141,7 +141,7 @@ const PoidsTriView: React.FC<PoidsTriViewProps> = ({
           aria-live="polite"
         >
           <AlertTriangle size={14} aria-hidden="true" />
-          <p className="font-mono text-[11px]">{error}</p>
+          <p className="text-[11px]">{error}</p>
         </div>
       ) : !summary ? (
         <div
@@ -149,10 +149,10 @@ const PoidsTriView: React.FC<PoidsTriViewProps> = ({
           role="status"
           aria-label="Aucun tri par poids enregistré"
         >
-          <p className="font-mono text-[12px] text-text-2">
+          <p className="text-[12px] text-text-2">
             Aucun tri enregistré
           </p>
-          <p className="font-mono text-[10px] text-text-2 mt-1">
+          <p className="text-[10px] text-text-2 mt-1">
             Saisis ton premier tri pour visualiser la distribution.
           </p>
         </div>
@@ -183,7 +183,7 @@ const PoidsTriView: React.FC<PoidsTriViewProps> = ({
             tone="red"
           />
           <div className="hairline" />
-          <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-wide">
+          <div className="flex items-center justify-between text-[11px] uppercase tracking-wide">
             <span className="text-text-2">Total pesé</span>
             <span className="text-text-0 tabular-nums">{summary.total}</span>
           </div>
@@ -195,7 +195,7 @@ const PoidsTriView: React.FC<PoidsTriViewProps> = ({
           type="button"
           onClick={onSaisirTri}
           aria-label="Saisir un nouveau tri par poids"
-          className="pressable flex-1 h-11 rounded-md bg-bg-1 border border-border text-text-1 font-mono text-[11px] font-bold uppercase tracking-wide inline-flex items-center justify-center gap-2"
+          className="pressable flex-1 h-11 rounded-md bg-bg-1 border border-border text-text-1 text-[11px] font-bold uppercase tracking-wide inline-flex items-center justify-center gap-2"
         >
           <Scale size={14} aria-hidden="true" />
           <span>Saisir tri</span>
@@ -205,7 +205,7 @@ const PoidsTriView: React.FC<PoidsTriViewProps> = ({
           onClick={() => onVendrePrets(summary?.above110 ?? 0)}
           disabled={!summary || summary.above110 <= 0}
           aria-label="Vendre les porcs prêts à la vente"
-          className="pressable flex-1 h-11 rounded-md bg-amber text-bg-0 font-mono text-[11px] font-bold uppercase tracking-wide inline-flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="pressable flex-1 h-11 rounded-md bg-amber text-bg-0 text-[11px] font-bold uppercase tracking-wide inline-flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <ShoppingCart size={14} aria-hidden="true" />
           <span>
@@ -234,8 +234,8 @@ const TONE_CLASSES: Record<DistRowProps['tone'], string> = {
 const DistRow: React.FC<DistRowProps> = ({ label, tag, count, tone }) => (
   <div className="flex items-center justify-between gap-2">
     <div className="flex items-center gap-2 min-w-0">
-      <span className="font-mono text-[12px] text-text-0">{label}</span>
-      <span className="font-mono text-[10px] uppercase tracking-wide text-text-2 truncate">
+      <span className="text-[12px] text-text-0">{label}</span>
+      <span className="text-[10px] uppercase tracking-wide text-text-2 truncate">
         · {tag}
       </span>
     </div>

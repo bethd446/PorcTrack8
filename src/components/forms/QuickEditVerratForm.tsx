@@ -274,7 +274,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
     [
       'w-full h-12 rounded-md px-3',
       'bg-bg-0 border text-text-0 placeholder:text-text-2',
-      'font-mono text-[14px]',
+      'text-[14px]',
       'outline-none transition-colors duration-[160ms]',
       'focus:border-accent focus:ring-1 focus:ring-accent',
       invalid ? 'border-red' : 'border-border hover:border-text-2',
@@ -367,7 +367,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
               />
               <p
                 id="edit-verrat-codeid-hint"
-                className="font-mono text-[10px] text-text-2 tabular-nums"
+                className="text-[10px] text-text-2 tabular-nums"
               >
                 Tu peux changer le préfixe (V → K, etc.) — code interne unique
                 pour ta ferme · 3-15 lettres/chiffres/tirets
@@ -376,7 +376,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                 <p
                   id="edit-verrat-codeid-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.codeId}
                 </p>
@@ -410,7 +410,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
               />
               <p
                 id="edit-verrat-nom-hint"
-                className="font-mono text-[10px] text-text-2 tabular-nums"
+                className="text-[10px] text-text-2 tabular-nums"
               >
                 {nom.trim().length}/30 · laisser vide pour retirer
               </p>
@@ -418,7 +418,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                 <p
                   id="edit-verrat-nom-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.nom}
                 </p>
@@ -454,7 +454,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
               />
               <p
                 id="edit-verrat-boucle-hint"
-                className="font-mono text-[10px] text-text-2 tabular-nums"
+                className="text-[10px] text-text-2 tabular-nums"
               >
                 {boucle.trim().length}/30
               </p>
@@ -462,7 +462,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                 <p
                   id="edit-verrat-boucle-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.boucle}
                 </p>
@@ -503,7 +503,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
               </datalist>
               <p
                 id="edit-verrat-origine-hint"
-                className="font-mono text-[10px] text-text-2 tabular-nums"
+                className="text-[10px] text-text-2 tabular-nums"
               >
                 {origine.trim().length}/40
               </p>
@@ -511,7 +511,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                 <p
                   id="edit-verrat-origine-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.origine}
                 </p>
@@ -543,7 +543,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                 <p
                   id="edit-verrat-naissance-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.dateNaissance}
                 </p>
@@ -582,7 +582,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
               </datalist>
               <p
                 id="edit-verrat-race-hint"
-                className="font-mono text-[10px] text-text-2 tabular-nums"
+                className="text-[10px] text-text-2 tabular-nums"
               >
                 {race.trim().length}/40
               </p>
@@ -590,7 +590,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                 <p
                   id="edit-verrat-race-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.race}
                 </p>
@@ -625,7 +625,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
               />
               <p
                 id="edit-verrat-lignee-hint"
-                className="font-mono text-[10px] text-text-2 tabular-nums"
+                className="text-[10px] text-text-2 tabular-nums"
               >
                 {lignee.trim().length}/80
               </p>
@@ -633,7 +633,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                 <p
                   id="edit-verrat-lignee-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.lignee}
                 </p>
@@ -666,7 +666,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
               />
               <p
                 id="edit-verrat-loge-hint"
-                className="font-mono text-[10px] text-text-2 tabular-nums"
+                className="text-[10px] text-text-2 tabular-nums"
               >
                 {loge.trim().length}/30
               </p>
@@ -674,7 +674,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                 <p
                   id="edit-verrat-loge-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.loge}
                 </p>
@@ -712,7 +712,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                 <p
                   role="alert"
                   data-testid="loge-conflict-warning"
-                  className="rounded-md border border-red/40 bg-red/10 px-3 py-2 font-mono text-[11px] text-red"
+                  className="rounded-md border border-red/40 bg-red/10 px-3 py-2 text-[11px] text-red"
                 >
                   Loge {loges.find(l => l.id === selectedLogeId)?.numero ?? ''}{' '}
                   occupée par{' '}
@@ -723,7 +723,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                       : `bande ${logeConflict.label}`}
                 </p>
               ) : null}
-              <p className="font-mono text-[10px] text-text-2 tabular-nums">
+              <p className="text-[10px] text-text-2 tabular-nums">
                 1 verrat = 1 loge dédiée (spec).
               </p>
             </div>
@@ -769,7 +769,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
               </datalist>
               <p
                 id="edit-verrat-alimentation-hint"
-                className="font-mono text-[10px] text-text-2 tabular-nums"
+                className="text-[10px] text-text-2 tabular-nums"
               >
                 {alimentation.trim().length}/40
               </p>
@@ -777,7 +777,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                 <p
                   id="edit-verrat-alimentation-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.alimentation}
                 </p>
@@ -824,7 +824,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
               />
               <p
                 id="edit-verrat-ration-hint"
-                className="font-mono text-[10px] text-text-2 tabular-nums"
+                className="text-[10px] text-text-2 tabular-nums"
               >
                 0 à 10 kg/j · pas 0.1
               </p>
@@ -832,7 +832,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                 <p
                   id="edit-verrat-ration-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.ration}
                 </p>
@@ -862,7 +862,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                 className={[
                   'w-full h-12 rounded-md px-3',
                   'bg-bg-0 border text-text-0',
-                  'font-mono text-[14px]',
+                  'text-[14px]',
                   'outline-none transition-colors duration-[160ms]',
                   'focus:border-accent focus:ring-1 focus:ring-accent',
                   errors.statut
@@ -883,7 +883,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                 <p
                   id="edit-verrat-statut-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.statut}
                 </p>
@@ -914,7 +914,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                 </p>
               </div>
             </div>
-            <p className="font-mono text-[10px] text-text-2">
+            <p className="text-[10px] text-text-2">
               {performance.nbPorteesEngendrees} portées engendrées · {performance.tier}
             </p>
           </section>
@@ -945,7 +945,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                 className={[
                   'w-full rounded-md px-3 py-2',
                   'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                  'font-mono text-[13px]',
+                  'text-[13px]',
                   'outline-none transition-colors duration-[160ms]',
                   'focus:border-accent focus:ring-1 focus:ring-accent',
                   'resize-none',
@@ -960,7 +960,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
               />
               <p
                 id="edit-verrat-notes-hint"
-                className="font-mono text-[10px] text-text-2 tabular-nums"
+                className="text-[10px] text-text-2 tabular-nums"
               >
                 {notes.trim().length}/200
               </p>
@@ -968,7 +968,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                 <p
                   id="edit-verrat-notes-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.notes}
                 </p>
@@ -987,7 +987,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                 'pressable flex-1 h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-bg-1 border border-border text-text-1',
-                'font-mono text-[12px] font-bold uppercase tracking-wide',
+                'text-[12px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms] hover:border-text-2',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : '',
@@ -1004,7 +1004,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                 'pressable flex-[2] h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-accent text-bg-0',
-                'font-mono text-[13px] font-bold uppercase tracking-wide',
+                'text-[13px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms]',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',

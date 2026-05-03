@@ -3,6 +3,10 @@ import tseslint from 'typescript-eslint';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import prettier from 'eslint-config-prettier';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const noUuidJsx = require('./eslint-rules/no-uuid-jsx.cjs');
 
 export default tseslint.config(
   {
@@ -47,6 +51,7 @@ export default tseslint.config(
     plugins: {
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
+      porctrack: { rules: { 'no-uuid-jsx': noUuidJsx } },
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
@@ -64,6 +69,7 @@ export default tseslint.config(
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
       'no-useless-escape': 'warn',
       'no-empty': 'warn',
+      'porctrack/no-uuid-jsx': 'warn',
     },
   },
   prettier,

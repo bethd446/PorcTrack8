@@ -138,7 +138,7 @@ const BandesView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowSexSeparation(true)}
-                  className="pressable inline-flex h-9 px-3 items-center justify-center rounded-md transition-colors bg-bg-2 text-text-1 hover:bg-bg-1 font-mono text-[11px] uppercase tracking-wide"
+                  className="pressable inline-flex h-9 px-3 items-center justify-center rounded-md transition-colors bg-bg-2 text-text-1 hover:bg-bg-1 text-[11px] uppercase tracking-wide"
                   aria-label="Séparation par sexe"
                 >
                   ♂ / ♀
@@ -164,7 +164,7 @@ const BandesView: React.FC = () => {
             <div className="flex items-center gap-2 bg-bg-1 border border-border rounded-md px-3 h-10">
               <Search size={16} className="text-text-2 shrink-0" />
               <input
-                className="bg-transparent border-none text-text-0 placeholder-text-2 text-sm w-full outline-none font-mono"
+                className="bg-transparent border-none text-text-0 placeholder-text-2 text-sm w-full outline-none"
                 placeholder="Rechercher une portée, truie, boucle..."
                 value={searchText}
                 onChange={e => setSearchText(e.target.value)}
@@ -221,7 +221,7 @@ const BandesView: React.FC = () => {
                     <AlertTriangle size={28} className="text-red" aria-hidden="true" />
                   </span>
                   <h3 className="agritech-heading text-[14px] uppercase mb-2">Erreur flux</h3>
-                  <p className="font-mono text-[11px] text-text-2 uppercase mb-6">{error}</p>
+                  <p className="text-[11px] text-text-2 uppercase mb-6">{error}</p>
                   <Button variant="primary" size="md" onClick={loadData}>
                     Réessayer
                   </Button>
@@ -232,7 +232,7 @@ const BandesView: React.FC = () => {
                     <AlertCircle size={18} />
                     <h3 className="agritech-heading text-[13px] uppercase">Configuration requise</h3>
                   </div>
-                  <p className="font-mono text-[11px] text-text-2 leading-relaxed mb-4">
+                  <p className="text-[11px] text-text-2 leading-relaxed mb-4">
                     Impossible de détecter la colonne identifiant les portées. Veuillez la sélectionner.
                   </p>
                   <IonSelect
@@ -285,7 +285,7 @@ const BandesView: React.FC = () => {
                 className="pressable w-full h-14 rounded-md bg-accent text-bg-0 flex items-center justify-center gap-3 shadow-2xl shadow-black/40 transition-transform active:scale-[0.98]"
               >
                 <CheckCheck size={18} />
-                <span className="font-mono text-[12px] uppercase tracking-wide font-semibold">
+                <span className="text-[12px] uppercase tracking-wide font-semibold">
                   Clôturer sevrage ({selectedIds.length})
                 </span>
               </button>
@@ -330,10 +330,10 @@ const BandesView: React.FC = () => {
               ) : (
                 <div className="agritech-root p-10 text-center flex flex-col items-center justify-center min-h-[60vh] gap-4">
                   <AlertTriangle size={32} className="text-red" />
-                  <p className="font-mono text-[12px] uppercase text-text-1">Portée introuvable</p>
+                  <p className="text-[12px] uppercase text-text-1">Portée introuvable</p>
                   <button
                     onClick={handleCloseBande}
-                    className="pressable h-11 px-6 rounded-md bg-accent text-bg-0 font-mono text-[12px] uppercase tracking-wide"
+                    className="pressable h-11 px-6 rounded-md bg-accent text-bg-0 text-[12px] uppercase tracking-wide"
                   >
                     Fermer
                   </button>

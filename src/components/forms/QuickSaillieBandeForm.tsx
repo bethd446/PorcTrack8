@@ -238,7 +238,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
   const renderStep1 = (): React.ReactNode => (
     <div className="space-y-4">
       <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-2 border-b border-border bg-bg-1 px-4 py-3">
-        <p className="font-mono text-[12px] uppercase tracking-wide text-text-2">
+        <p className="text-[12px] uppercase tracking-wide text-text-2">
           Étape 1 / 3 — Truies à saillir
         </p>
         <p className="mt-1 font-heading text-[16px] uppercase tracking-wide tabular-nums">
@@ -247,7 +247,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
       </div>
 
       {truiesDispo.length === 0 ? (
-        <p className="font-mono text-[12px] uppercase tracking-wide text-text-2">
+        <p className="text-[12px] uppercase tracking-wide text-text-2">
           Aucune truie disponible (vide / chaleur)
         </p>
       ) : (
@@ -268,7 +268,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
                     aria-label={`Sélectionner ${t.displayId}`}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-mono text-[13px] tabular-nums text-text-0">
+                    <p className="truncate ft-code tabular-nums text-[13px] text-text-0">
                       {t.displayId}
                       {t.nom ? ` · ${t.nom}` : ''}
                     </p>
@@ -288,7 +288,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
   const renderStep2 = (): React.ReactNode => (
     <div className="space-y-4">
       <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-2 border-b border-border bg-bg-1 px-4 py-3">
-        <p className="font-mono text-[12px] uppercase tracking-wide text-text-2">
+        <p className="text-[12px] uppercase tracking-wide text-text-2">
           Étape 2 / 3 — Verrat
         </p>
         <p className="mt-1 font-heading text-[16px] uppercase tracking-wide tabular-nums">
@@ -297,7 +297,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
       </div>
 
       {verratsActifs.length === 0 ? (
-        <p className="font-mono text-[12px] uppercase tracking-wide text-text-2">
+        <p className="text-[12px] uppercase tracking-wide text-text-2">
           Aucun verrat actif
         </p>
       ) : (
@@ -320,7 +320,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
                 className={[
                   'pressable inline-flex items-center justify-center',
                   'h-9 px-3 rounded-md border',
-                  'font-mono text-[12px] uppercase tracking-wide tabular-nums',
+                  'ft-code text-[12px] uppercase tracking-wide tabular-nums',
                   isSel
                     ? 'bg-accent text-bg-0 border-accent font-semibold'
                     : 'bg-bg-0 text-text-1 border-border hover:border-text-2',
@@ -339,7 +339,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
   const renderStep3 = (): React.ReactNode => (
     <div className="space-y-4">
       <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-2 border-b border-border bg-bg-1 px-4 py-3">
-        <p className="font-mono text-[12px] uppercase tracking-wide text-text-2">
+        <p className="text-[12px] uppercase tracking-wide text-text-2">
           Étape 3 / 3 — Date & notes
         </p>
         <p className="mt-1 font-heading text-[16px] uppercase tracking-wide tabular-nums">
@@ -366,7 +366,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
             value={dateIso}
             onChange={e => setDateIso(e.target.value)}
             disabled={saving}
-            className="h-12 w-full rounded-md border border-border bg-bg-0 pl-9 pr-3 font-mono text-[13px] outline-none focus:border-accent"
+            className="h-12 w-full rounded-md border border-border bg-bg-0 pl-9 pr-3 font-mono text-[13px] tabular-nums outline-none focus:border-accent"
           />
         </div>
       </div>
@@ -384,7 +384,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
           className={[
             'w-full rounded-md px-3 py-3',
             'bg-bg-0 border border-border text-text-0',
-            'font-mono text-[13px]',
+            'text-[13px]',
             'outline-none transition-colors duration-[160ms]',
             'focus:border-accent focus:ring-1 focus:ring-accent',
             'min-h-[64px] resize-y',
@@ -403,7 +403,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
           {selectedTruieIds.map(id => (
             <li
               key={id}
-              className="font-mono text-[12px] tabular-nums text-text-0"
+              className="ft-code tabular-nums text-[12px] text-text-0"
             >
               {id} × {selectedVerratId} · {formatDateFr(dateIso)}
             </li>
@@ -436,7 +436,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
             <p className="font-heading text-[18px] uppercase tracking-wide">
               {selectedTruieIds.length} saillies enregistrées
             </p>
-            <p className="mt-2 font-mono text-[12px] uppercase tracking-wide text-text-2">
+            <p className="mt-2 text-[12px] uppercase tracking-wide text-text-2">
               MB prévue {formatDateFr(dateMBPrevue)}
             </p>
           </div>
@@ -470,7 +470,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
                   type="button"
                   onClick={goPrev}
                   disabled={saving}
-                  className="pressable h-14 flex-1 rounded-md border border-border bg-bg-1 font-mono text-[12px] font-bold uppercase tracking-wide text-text-1"
+                  className="pressable h-14 flex-1 rounded-md border border-border bg-bg-1 text-[12px] font-bold uppercase tracking-wide text-text-1"
                 >
                   Retour
                 </button>
@@ -479,7 +479,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
                   type="button"
                   onClick={onClose}
                   disabled={saving}
-                  className="pressable h-14 flex-1 rounded-md border border-border bg-bg-1 font-mono text-[12px] font-bold uppercase tracking-wide text-text-1"
+                  className="pressable h-14 flex-1 rounded-md border border-border bg-bg-1 text-[12px] font-bold uppercase tracking-wide text-text-1"
                 >
                   Annuler
                 </button>
@@ -494,7 +494,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
                     (step === 1 && selectedTruieIds.length < 2) ||
                     (step === 2 && !selectedVerratId)
                   }
-                  className="pressable inline-flex h-14 flex-[2] items-center justify-center gap-2 rounded-md bg-accent font-mono text-[13px] font-bold uppercase tracking-wide text-bg-0 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="pressable inline-flex h-14 flex-[2] items-center justify-center gap-2 rounded-md bg-accent text-[13px] font-bold uppercase tracking-wide text-bg-0 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Suivant
                   <ArrowRight size={16} aria-hidden="true" />
@@ -505,7 +505,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
                   onClick={handleSubmit}
                   disabled={saving}
                   aria-busy={saving}
-                  className="pressable inline-flex h-14 flex-[2] items-center justify-center gap-2 rounded-md bg-accent font-mono text-[13px] font-bold uppercase tracking-wide text-bg-0 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="pressable inline-flex h-14 flex-[2] items-center justify-center gap-2 rounded-md bg-accent text-[13px] font-bold uppercase tracking-wide text-bg-0 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {saving ? (
                     <span className="animate-pulse">Enregistrement…</span>

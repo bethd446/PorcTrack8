@@ -405,7 +405,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
     [
       'w-full h-12 rounded-md px-3',
       'bg-bg-0 border text-text-0 placeholder:text-text-2',
-      'font-mono text-[14px] tabular-nums',
+      'text-[14px]',
       'outline-none transition-colors duration-[160ms]',
       'focus:border-accent focus:ring-1 focus:ring-accent',
       hasError ? 'border-red' : 'border-border hover:border-text-2',
@@ -502,7 +502,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
               />
               <p
                 id="edit-bande-id-hint"
-                className="font-mono text-[10px] text-text-2 tabular-nums"
+                className="text-[10px] text-text-2"
               >
                 Tu peux changer le préfixe (B → P, etc.) — code interne unique
                 pour ta ferme · 3-15 lettres/chiffres/tirets
@@ -511,7 +511,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                 <p
                   id="edit-bande-id-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.codeId}
                 </p>
@@ -532,7 +532,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                 className={[
                   'w-full h-12 rounded-md px-3',
                   'bg-bg-2 border border-border text-text-1',
-                  'font-mono text-[13px]',
+                  'text-[13px]',
                   'cursor-not-allowed',
                 ].join(' ')}
               />
@@ -550,7 +550,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                 className={[
                   'w-full h-12 rounded-md px-3',
                   'bg-bg-0 border text-text-0',
-                  'font-mono text-[14px]',
+                  'text-[14px]',
                   'outline-none transition-colors duration-[160ms]',
                   'focus:border-accent focus:ring-1 focus:ring-accent',
                   errors.verratPere
@@ -571,7 +571,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                 <p
                   id="edit-bande-verrat-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.verratPere}
                 </p>
@@ -621,7 +621,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                   <p
                     id="edit-bande-truie-error"
                     role="alert"
-                    className="font-mono text-[11px] text-red"
+                    className="text-[11px] text-red"
                   >
                     {errors.truie}
                   </p>
@@ -650,7 +650,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                   <p
                     id="edit-bande-boucle-error"
                     role="alert"
-                    className="font-mono text-[11px] text-red"
+                    className="text-[11px] text-red"
                   >
                     {errors.boucleMere}
                   </p>
@@ -680,7 +680,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                 <p
                   id="edit-bande-dmb-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.dateMB}
                 </p>
@@ -710,7 +710,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                   <p
                     id="edit-bande-nv-error"
                     role="alert"
-                    className="font-mono text-[11px] text-red"
+                    className="text-[11px] text-red"
                   >
                     {errors.nv}
                   </p>
@@ -741,7 +741,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                   <p
                     id="edit-bande-morts-error"
                     role="alert"
-                    className="font-mono text-[11px] text-red"
+                    className="text-[11px] text-red"
                   >
                     {errors.morts}
                   </p>
@@ -772,7 +772,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                   <p
                     id="edit-bande-viv-error"
                     role="alert"
-                    className="font-mono text-[11px] text-red"
+                    className="text-[11px] text-red"
                   >
                     {errors.vivants}
                   </p>
@@ -806,7 +806,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                 <p
                   id="edit-bande-pmoy-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.poidsMoyenKg}
                 </p>
@@ -838,7 +838,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                   <p
                     id="edit-bande-sprev-error"
                     role="alert"
-                    className="font-mono text-[11px] text-red"
+                    className="text-[11px] text-red"
                   >
                     {errors.dateSevragePrevue}
                   </p>
@@ -864,7 +864,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                   <p
                     id="edit-bande-sreel-error"
                     role="alert"
-                    className="font-mono text-[11px] text-red"
+                    className="text-[11px] text-red"
                   >
                     {errors.dateSevrageReelle}
                   </p>
@@ -902,7 +902,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                   <p
                     id="edit-bande-males-error"
                     role="alert"
-                    className="font-mono text-[11px] text-red"
+                    className="text-[11px] text-red"
                   >
                     {errors.nbMales}
                   </p>
@@ -933,7 +933,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                   <p
                     id="edit-bande-fem-error"
                     role="alert"
-                    className="font-mono text-[11px] text-red"
+                    className="text-[11px] text-red"
                   >
                     {errors.nbFemelles}
                   </p>
@@ -961,7 +961,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                   <p
                     id="edit-bande-dsep-error"
                     role="alert"
-                    className="font-mono text-[11px] text-red"
+                    className="text-[11px] text-red"
                   >
                     {errors.dateSeparation}
                   </p>
@@ -978,7 +978,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                   className={[
                     'w-full h-12 rounded-md px-3',
                     'bg-bg-0 border text-text-0',
-                    'font-mono text-[14px]',
+                    'text-[14px]',
                     'outline-none transition-colors duration-[160ms]',
                     'focus:border-accent focus:ring-1 focus:ring-accent',
                     errors.logeEngraissement
@@ -1016,7 +1016,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
             {overCapacityWarning ? (
               <div
                 role="status"
-                className="rounded-md border border-amber-deep/40 bg-amber-pork/10 px-3 py-2 font-mono text-[11px] text-amber-deep"
+                className="rounded-md border border-amber-deep/40 bg-amber-pork/10 px-3 py-2 text-[11px] text-amber-deep"
               >
                 ⚠ Total apportés ({totalApportes}) &gt; NV ({form.nv}).
                 Vérifie la cohérence (warning, pas blocage).
@@ -1024,7 +1024,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
             ) : null}
 
             {sources.length === 0 ? (
-              <p className="font-mono text-[11px] text-text-2">
+              <p className="text-[11px] text-text-2">
                 Aucune truie source liée. Ajoute la mère biologique ou les
                 sources d'un regroupement.
               </p>
@@ -1035,16 +1035,16 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                     key={s.id}
                     className="flex items-center gap-3 rounded-md border border-border bg-bg-1 px-3 py-2"
                   >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-bg-2 font-mono text-[11px] font-bold text-text-1">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-bg-2 ft-code text-[11px] font-bold text-text-1">
                       {s.sowCode || '—'}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-mono text-[12px] text-text-0">
+                      <p className="truncate ft-code text-[12px] text-text-0">
                         {s.sowCode}
                         {s.sowName ? ` · ${s.sowName}` : ''}
                         {s.sowBoucle ? ` · ${s.sowBoucle}` : ''}
                       </p>
-                      <p className="font-mono text-[10px] text-text-2 tabular-nums">
+                      <p className="text-[10px] text-text-2 tabular-nums">
                         {s.nbPorceletsApportes} porcelet
                         {s.nbPorceletsApportes > 1 ? 's' : ''} · {s.dateAjout}
                       </p>
@@ -1170,7 +1170,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                 </div>
 
                 {sourceError ? (
-                  <p role="alert" className="font-mono text-[11px] text-red">
+                  <p role="alert" className="text-[11px] text-red">
                     {sourceError}
                   </p>
                 ) : null}
@@ -1182,7 +1182,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                   className={[
                     'pressable w-full h-11 rounded-md',
                     'bg-accent text-bg-0',
-                    'font-mono text-[12px] font-bold uppercase tracking-wide',
+                    'text-[12px] font-bold uppercase tracking-wide',
                     sourceBusy ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
                   ].join(' ')}
                 >
@@ -1231,7 +1231,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                   return (
                     <div
                       className={[
-                        'rounded-md border px-3 py-2 font-mono text-[11px]',
+                        'rounded-md border px-3 py-2 text-[11px]',
                         over
                           ? 'border-amber-deep/40 bg-amber-pork/10 text-amber-deep'
                           : 'border-border bg-bg-1 text-text-1',
@@ -1253,7 +1253,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                 <div
                   role="alert"
                   data-testid="loge-conflict-warning"
-                  className="rounded-md border border-red/40 bg-red/10 px-3 py-2 font-mono text-[11px] text-red"
+                  className="rounded-md border border-red/40 bg-red/10 px-3 py-2 text-[11px] text-red"
                 >
                   Loge {loges.find(l => l.id === selectedLogeId)?.numero ?? ''} déjà
                   occupée par{' '}
@@ -1294,7 +1294,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
               className={[
                 'w-full h-12 rounded-md px-3',
                 'bg-bg-0 border text-text-0',
-                'font-mono text-[14px]',
+                'text-[14px]',
                 'outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.statut ? 'border-red' : 'border-border hover:border-text-2',
@@ -1314,7 +1314,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
               <p
                 id="edit-bande-statut-error"
                 role="alert"
-                className="font-mono text-[11px] text-red"
+                className="text-[11px] text-red"
               >
                 {errors.statut}
               </p>
@@ -1336,7 +1336,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
               className={[
                 'w-full rounded-md px-3 py-3',
                 'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[13px]',
+                'text-[13px]',
                 'outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 'min-h-[88px] resize-y',
@@ -1349,7 +1349,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
             />
             <p
               id="edit-bande-notes-hint"
-              className="font-mono text-[10px] text-text-2 tabular-nums"
+              className="text-[10px] text-text-2 tabular-nums"
             >
               {form.notes.length}/300
             </p>
@@ -1357,7 +1357,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
               <p
                 id="edit-bande-notes-error"
                 role="alert"
-                className="font-mono text-[11px] text-red"
+                className="text-[11px] text-red"
               >
                 {errors.notes}
               </p>
@@ -1375,7 +1375,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                 'pressable flex-1 h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-bg-1 border border-border text-text-1',
-                'font-mono text-[12px] font-bold uppercase tracking-wide',
+                'text-[12px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms] hover:border-text-2',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : '',
@@ -1392,7 +1392,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                 'pressable flex-[2] h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-accent text-bg-0',
-                'font-mono text-[13px] font-bold uppercase tracking-wide',
+                'text-[13px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms]',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',

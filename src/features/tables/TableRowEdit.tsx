@@ -288,7 +288,7 @@ const TableRowEdit: React.FC<TableRowEditProps> = ({ meta, header, rowData, onCl
             Édition
           </h2>
           {idValue && (
-            <p className="mt-1 font-mono text-[11px] text-text-2 leading-none truncate tabular-nums">
+            <p className="mt-1 ft-code text-[11px] text-text-2 leading-none truncate tabular-nums">
               {idValue}
             </p>
           )}
@@ -301,7 +301,7 @@ const TableRowEdit: React.FC<TableRowEditProps> = ({ meta, header, rowData, onCl
           aria-label="Valider les modifications"
           className={[
             'pressable inline-flex items-center gap-1.5 h-9 px-3 rounded-md',
-            'bg-accent text-bg-0 font-mono text-[12px] font-semibold uppercase tracking-wide',
+            'bg-accent text-bg-0 text-[12px] font-semibold uppercase tracking-wide',
             'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
             (!headerReady || loading) ? 'opacity-40 cursor-not-allowed' : '',
           ].join(' ')}
@@ -321,10 +321,10 @@ const TableRowEdit: React.FC<TableRowEditProps> = ({ meta, header, rowData, onCl
             role="status"
           >
             <AlertCircle size={32} className="text-amber" aria-hidden="true" />
-            <p className="font-mono text-[12px] uppercase tracking-wide text-text-1">
+            <p className="text-[12px] uppercase tracking-wide text-text-1">
               Chargement du schéma de la table…
             </p>
-            <p className="font-mono text-[11px] text-text-2 max-w-xs leading-relaxed">
+            <p className="text-[11px] text-text-2 max-w-xs leading-relaxed">
               L'édition sera disponible dès que les colonnes seront synchronisées avec Sheets.
             </p>
           </div>
@@ -346,7 +346,7 @@ const TableRowEdit: React.FC<TableRowEditProps> = ({ meta, header, rowData, onCl
                     {/* Label */}
                     <label
                       htmlFor={`tr-edit-${col}`}
-                      className="block font-mono text-[11px] uppercase tracking-wide text-text-1"
+                      className="block text-[11px] uppercase tracking-wide text-text-1"
                     >
                       {col}
                     </label>
@@ -359,7 +359,7 @@ const TableRowEdit: React.FC<TableRowEditProps> = ({ meta, header, rowData, onCl
                       className={[
                         'w-full rounded-md px-3 py-2.5',
                         'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                        'font-mono text-[13px] tabular-nums',
+                        'text-[13px] tabular-nums',
                         'outline-none transition-colors duration-[160ms]',
                         'focus:border-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-1px]',
                         isId
@@ -379,7 +379,7 @@ const TableRowEdit: React.FC<TableRowEditProps> = ({ meta, header, rowData, onCl
                     {isId && (
                       <div className="flex items-center gap-1.5">
                         <ShieldCheck size={11} className="shrink-0 text-text-2" aria-hidden="true" />
-                        <span className="font-mono text-[10px] uppercase tracking-wide text-text-2 italic">
+                        <span className="text-[10px] uppercase tracking-wide text-text-2 italic">
                           Clé primaire immuable
                         </span>
                       </div>

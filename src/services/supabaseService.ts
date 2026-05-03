@@ -362,6 +362,8 @@ export async function getStockAliments(
       // V21-D1 : fournisseur_id (colonne ajoutée par migration, pas encore dans
       // le type Database généré). Cast ciblé pour conserver le typage du reste.
       const fournisseurId = (r as { fournisseur_id?: string | null }).fournisseur_id ?? undefined;
+      // V36 : short_code (colonne post-migration, pas encore dans Database typegen)
+      const shortCode = (r as { short_code?: string | null }).short_code ?? undefined;
       return {
         id:           r.id,
         libelle:      r.libelle,
@@ -373,6 +375,7 @@ export async function getStockAliments(
                     : 'OK',
         notes:        r.notes ?? undefined,
         fournisseurId,
+        shortCode,
       };
     });
 
@@ -403,6 +406,8 @@ export async function getStockVeto(
       const stockActuel = r.stock_actuel ?? 0;
       const stockMin    = r.stock_min ?? 0;
       const fournisseurId = (r as { fournisseur_id?: string | null }).fournisseur_id ?? undefined;
+      // V36 : short_code (colonne post-migration, pas encore dans Database typegen)
+      const shortCode = (r as { short_code?: string | null }).short_code ?? undefined;
       return {
         id:           r.id,
         produit:      r.libelle,
@@ -417,6 +422,7 @@ export async function getStockVeto(
                     : 'OK',
         notes:        r.notes ?? undefined,
         fournisseurId,
+        shortCode,
       };
     });
 

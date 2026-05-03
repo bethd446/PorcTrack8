@@ -302,13 +302,13 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
 
   // ─── Classes réutilisables ────────────────────────────────────────────
   const inputBase =
-    'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2 font-mono text-[14px] outline-none transition-colors duration-[160ms] focus:border-accent focus:ring-1 focus:ring-accent';
+    'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2 text-[14px] outline-none transition-colors duration-[160ms] focus:border-accent focus:ring-1 focus:ring-accent';
   const inputOk = 'border-border hover:border-text-2';
   const inputErr = 'border-red';
   const labelCls =
     'block text-mono-label text-text-2';
-  const hintCls = 'font-mono text-[10px] text-text-2 tabular-nums';
-  const errCls = 'font-mono text-[11px] text-red';
+  const hintCls = 'text-[10px] text-text-2 tabular-nums';
+  const errCls = 'text-[11px] text-red';
   const sectionTitleCls =
     'text-mono-micror text-text-2 pb-1 border-b border-border';
 
@@ -674,7 +674,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
                 <p
                   role="alert"
                   data-testid="loge-conflict-warning"
-                  className="rounded-md border border-red/40 bg-red/10 px-3 py-2 font-mono text-[11px] text-red"
+                  className="rounded-md border border-red/40 bg-red/10 px-3 py-2 text-[11px] text-red"
                 >
                   Loge {loges.find(l => l.id === selectedLogeId)?.numero ?? ''}{' '}
                   occupée par{' '}
@@ -916,7 +916,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
                 className={[
                   'w-full rounded-md px-3 py-2',
                   'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                  'font-mono text-[13px]',
+                  'text-[13px]',
                   'outline-none transition-colors duration-[160ms]',
                   'focus:border-accent focus:ring-1 focus:ring-accent',
                   errors.notes ? inputErr : inputOk,
@@ -948,7 +948,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
                 'pressable flex-1 h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-bg-1 border border-border text-text-1',
-                'font-mono text-[12px] font-bold uppercase tracking-wide',
+                'text-[12px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms] hover:border-text-2',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : '',
@@ -965,7 +965,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
                 'pressable flex-[2] h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-accent text-bg-0',
-                'font-mono text-[13px] font-bold uppercase tracking-wide',
+                'text-[13px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms]',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',

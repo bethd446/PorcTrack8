@@ -164,7 +164,7 @@ const FinitionView: React.FC = () => {
               </div>
               <button
                 onClick={() => navigate('/cycles/sortie')}
-                className="pressable inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-accent/40 text-accent font-mono text-[11px] uppercase tracking-wide transition-colors shrink-0"
+                className="pressable inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-accent/40 text-accent text-[11px] uppercase tracking-wide transition-colors shrink-0"
               >
                 <Calendar size={14} />
                 Calendrier
@@ -220,7 +220,7 @@ const FinitionView: React.FC = () => {
               <div className="card-dense bg-success/5 border-success/20 p-4 mt-2">
                 <div className="flex items-center gap-2 mb-3">
                   <Coins size={18} className="text-success" />
-                  <span className="font-mono text-[11px] font-bold uppercase text-success">Projection de vente brute</span>
+                  <span className="text-[11px] font-bold uppercase text-success">Projection de vente brute</span>
                 </div>
                 <div className="text-[28px] font-bold font-mono text-text-0 mb-1">
                   {formatNumber(projection.revenuEstime)} <span className="text-[14px] text-text-2">{currencySuffix(currency)}</span>
@@ -364,7 +364,7 @@ const FinitionCard: React.FC<{ data: FinitionRowData; onOpen: () => void; onSell
         {/* Progress Gauge */}
         <div className="bg-bg-1 rounded-xl p-3 border border-border/50">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-[10px] uppercase font-mono text-text-2">Obj. 110kg</span>
+            <span className="text-[10px] uppercase text-text-2">Obj. 110kg</span>
             <TrendingUp size={12} className={data.isReadyForExit ? 'text-success' : 'text-gold'} />
           </div>
           <div className="flex items-baseline gap-1">
@@ -382,13 +382,13 @@ const FinitionCard: React.FC<{ data: FinitionRowData; onOpen: () => void; onSell
         {/* Nutrition Info */}
         <div className="bg-bg-1 rounded-xl p-3 border border-border/50">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-[10px] uppercase font-mono text-text-2">Alimentation</span>
+            <span className="text-[10px] uppercase text-text-2">Alimentation</span>
             <Droplets size={12} className="text-accent" />
           </div>
           <div className="text-[12px] font-bold text-accent truncate">
             {feedConfig?.label || currentAliment}
           </div>
-          <div className="mt-1 text-[10px] text-text-2 font-mono leading-tight truncate">
+          <div className="mt-1 text-[10px] text-text-2 leading-tight truncate">
             Maïs: {feedConfig?.formule.mais}% | KPC: {feedConfig?.formule.kpc_5}%
           </div>
         </div>

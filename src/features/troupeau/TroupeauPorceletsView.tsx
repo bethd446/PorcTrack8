@@ -197,9 +197,14 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({
       });
   }, [loges, occupiedLoges]);
 
+  // V36-A — BUG-4 : aligner totalTetes avec le badge tab (Hub).
+  // Le badge tab compte les vivants sur TOUTES les realBandes (avec ou sans
+  // logeId résolu). On somme donc les vivants sur la même base ici, plutôt
+  // que de limiter à `occupiedLoges` — cela évite l'écart "tab 75 vs liste 65".
+  // `nbBandes` reste sur les occupiedLoges (= nb de cards affichées).
   const totalTetes = useMemo(
-    () => occupiedLoges.reduce((acc, o) => acc + (o.bande.vivants ?? 0), 0),
-    [occupiedLoges],
+    () => realBandes.reduce((acc, b) => acc + (b.vivants ?? 0), 0),
+    [realBandes],
   );
   const nbBandes = occupiedLoges.length;
 
@@ -213,7 +218,7 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({
         onClick={() => openAddBande()}
         aria-label="Créer une nouvelle bande dans une loge"
         data-testid="new-bande-cta"
-        className="pressable inline-flex items-center justify-center gap-2 h-12 rounded-md bg-accent text-bg-0 font-mono text-[12px] font-bold uppercase tracking-wide hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+        className="pressable inline-flex items-center justify-center gap-2 h-12 rounded-md bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
       >
         <Plus size={14} aria-hidden="true" />
         Nouvelle bande
@@ -254,7 +259,7 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({
           placeholder="Loge, bande, truie, boucle…"
           value={searchText}
           onChange={e => setSearchText(e.target.value)}
-          className="w-full pl-10 pr-3 py-2.5 rounded-lg bg-bg-2 border border-border font-mono text-[13px] text-text-0 placeholder:text-text-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+          className="w-full pl-10 pr-3 py-2.5 rounded-lg bg-bg-2 border border-border text-[13px] text-text-0 placeholder:text-text-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
         />
         <Search
           size={16}
@@ -273,7 +278,7 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({
           <section role="region" aria-label="Loges occupées par une bande">
             <SectionDivider label={`Loges occupées · ${occupiedLoges.length}`} />
             {occupiedLoges.length === 0 ? (
-              <p className="px-1 font-mono text-[11px] text-text-2">
+              <p className="px-1 text-[11px] text-text-2">
                 Aucune bande assignée à une loge structurée.
               </p>
             ) : (
@@ -300,7 +305,7 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({
                   <li key={loge.id}>
                     <AnimalListItem
                       avatar={
-                        <div className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-bg-2 text-text-2 font-mono text-[10px] font-bold">
+                        <div className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-bg-2 text-text-2 ft-code text-[10px] font-bold">
                           {logeNumeroPrefixed(loge).split('-')[0]}
                         </div>
                       }
@@ -316,7 +321,7 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({
                             e.stopPropagation();
                             openAddBande(loge.id);
                           }}
-                          className="pressable inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 py-1 font-mono text-[10px] uppercase tracking-wide text-text-1 hover:border-accent hover:text-accent"
+                          className="pressable inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 py-1 text-[10px] uppercase tracking-wide text-text-1 hover:border-accent hover:text-accent"
                         >
                           <Plus size={11} aria-hidden="true" />
                           Nouvelle bande
@@ -388,7 +393,7 @@ const LogeBandeRow: React.FC<LogeBandeRowProps> = ({
         e.stopPropagation();
         onTransition(pendingTransition);
       }}
-      className="pressable px-2 py-2 rounded-md bg-amber/15 text-amber font-mono text-[10px] font-bold uppercase tracking-wide border border-amber/20"
+      className="pressable px-2 py-2 rounded-md bg-amber/15 text-amber text-[10px] font-bold uppercase tracking-wide border border-amber/20"
     >
       Transfert →
     </button>

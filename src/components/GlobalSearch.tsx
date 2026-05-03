@@ -221,7 +221,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ open, onClose }) => {
           style={{ borderColor: 'var(--line, #e5e7eb)' }}
         >
           <span>Entrée pour ouvrir · Échap pour fermer</span>
-          <span className="font-mono">Cmd K</span>
+          <span className="ft-code">Cmd K</span>
         </div>
       </div>
     </div>,

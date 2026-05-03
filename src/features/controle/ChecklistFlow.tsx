@@ -342,7 +342,7 @@ const ChecklistFlow: React.FC = () => {
             <AgritechHeader title="Chargement" subtitle="Préparation du parcours" />
             <div className="flex flex-col items-center justify-center py-20 px-4">
               <IonSpinner name="crescent" style={{ color: 'var(--color-accent)' }} />
-              <p className="mt-4 font-mono text-[11px] uppercase tracking-wide text-text-2">
+              <p className="mt-4 text-[11px] uppercase tracking-wide text-text-2">
                 Initialisation…
               </p>
             </div>
@@ -385,10 +385,10 @@ const ChecklistFlow: React.FC = () => {
                   >
                     <span className="text-[24px]" aria-hidden="true">{meta.emoji}</span>
                     <span className="flex-1 min-w-0">
-                      <span className="block font-mono text-[13px] font-bold uppercase tracking-wide text-text-0">
+                      <span className="block text-[13px] font-bold uppercase tracking-wide text-text-0">
                         {meta.label}
                       </span>
-                      <span className="block font-mono text-[11px] text-text-2 mt-0.5">
+                      <span className="block text-[11px] text-text-2 mt-0.5">
                         {meta.description}
                       </span>
                     </span>
@@ -403,7 +403,7 @@ const ChecklistFlow: React.FC = () => {
                   data-testid="tpl-COMBINED"
                   className="pressable w-full flex items-center justify-center gap-2 px-4 py-3 mt-3 rounded-md border-2 border-dashed border-accent/60 bg-bg-1 hover:bg-bg-2 active:scale-[0.98] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
                 >
-                  <span className="font-mono text-[12px] font-bold uppercase tracking-wide text-accent">
+                  <span className="text-[12px] font-bold uppercase tracking-wide text-accent">
                     Tout combiné · les 4 enchaînés
                   </span>
                 </button>
@@ -436,7 +436,7 @@ const ChecklistFlow: React.FC = () => {
               <h2 className="agritech-heading text-[24px] uppercase leading-none mb-2">
                 {isFriday ? 'Bilan validé' : 'Tour validé'}
               </h2>
-              <p className="font-mono text-[12px] text-text-2 mb-8">
+              <p className="text-[12px] text-text-2 mb-8">
                 Registre mis à jour · {questions.length} questions répondues
               </p>
 
@@ -447,19 +447,19 @@ const ChecklistFlow: React.FC = () => {
                 >
                   <div className="flex justify-between items-center border-b border-border pb-3">
                     <span className="kpi-label">Module</span>
-                    <span className="font-mono text-[12px] font-semibold text-text-0 uppercase">
+                    <span className="text-[12px] font-semibold text-text-0 uppercase">
                       S38 2026
                     </span>
                   </div>
                   <div className="flex justify-between items-center border-b border-border pb-3">
                     <span className="kpi-label">Questions</span>
-                    <span className="font-mono text-[12px] font-semibold text-text-0 tabular-nums">
+                    <span className="text-[12px] font-semibold text-text-0 tabular-nums">
                       {questions.length} / {questions.length}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="kpi-label">Statut</span>
-                    <span className="font-mono text-[12px] font-semibold text-accent uppercase">
+                    <span className="text-[12px] font-semibold text-accent uppercase">
                       100% validé
                     </span>
                   </div>
@@ -506,7 +506,7 @@ const ChecklistFlow: React.FC = () => {
               <h2 className="agritech-heading text-[20px] uppercase leading-none mb-2">
                 Erreur de chargement
               </h2>
-              <p className="font-mono text-[11px] text-text-2 mb-8 max-w-xs">
+              <p className="text-[11px] text-text-2 mb-8 max-w-xs">
                 Impossible de trouver les questions pour cette checklist.
               </p>
               <button
@@ -592,7 +592,7 @@ const ChecklistFlow: React.FC = () => {
                         color: 'var(--color-text-0)',
                       } as React.CSSProperties
                     }
-                    className="w-full px-3 h-12 font-mono text-[13px]"
+                    className="w-full px-3 h-12 text-[13px]"
                   >
                     {contextOptions.map(opt => (
                       <IonSelectOption key={opt.id} value={opt.id}>

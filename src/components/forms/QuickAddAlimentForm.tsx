@@ -218,7 +218,7 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
               className={[
                 'w-full h-12 rounded-md px-3',
                 'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[14px] uppercase tabular-nums',
+                'ft-code text-[14px] uppercase',
                 'outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.id ? 'border-red' : 'border-border hover:border-text-2',
@@ -233,14 +233,14 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
               <p
                 id="add-aliment-id-error"
                 role="alert"
-                className="font-mono text-[11px] text-red"
+                className="text-[11px] text-red"
               >
                 {errors.id}
               </p>
             ) : (
               <p
                 id="add-aliment-id-hint"
-                className="font-mono text-[10px] text-text-2"
+                className="text-[10px] text-text-2"
               >
                 Format A suivi de chiffres (ex: A01)
               </p>
@@ -285,7 +285,7 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
               <p
                 id="add-aliment-libelle-error"
                 role="alert"
-                className="font-mono text-[11px] text-red"
+                className="text-[11px] text-red"
               >
                 {errors.libelle}
               </p>
@@ -332,7 +332,7 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
                 <p
                   id="add-aliment-stock-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.stockActuel}
                 </p>
@@ -360,7 +360,7 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
                 className={[
                   'w-full h-12 rounded-md px-3',
                   'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                  'font-mono text-[14px]',
+                  'text-[14px]',
                   'outline-none transition-colors duration-[160ms]',
                   'focus:border-accent focus:ring-1 focus:ring-accent',
                   errors.unite
@@ -382,7 +382,7 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
                 <p
                   id="add-aliment-unite-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.unite}
                 </p>
@@ -431,14 +431,14 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
               <p
                 id="add-aliment-seuil-error"
                 role="alert"
-                className="font-mono text-[11px] text-red"
+                className="text-[11px] text-red"
               >
                 {errors.seuilAlerte}
               </p>
             ) : (
               <p
                 id="add-aliment-seuil-hint"
-                className="font-mono text-[10px] text-text-2"
+                className="text-[10px] text-text-2"
               >
                 Statut auto-calculé :{' '}
                 {previewStatut ? (
@@ -488,7 +488,7 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
               <p
                 id="add-aliment-notes-error"
                 role="alert"
-                className="font-mono text-[11px] text-red"
+                className="text-[11px] text-red"
               >
                 {errors.notes}
               </p>
@@ -506,7 +506,7 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
                 'pressable flex-1 h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-bg-1 border border-border text-text-1',
-                'font-mono text-[12px] font-bold uppercase tracking-wide',
+                'text-[12px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms] hover:border-text-2',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : '',
@@ -523,7 +523,7 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
                 'pressable flex-[2] h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-accent text-bg-0',
-                'font-mono text-[13px] font-bold uppercase tracking-wide',
+                'text-[13px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms]',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',

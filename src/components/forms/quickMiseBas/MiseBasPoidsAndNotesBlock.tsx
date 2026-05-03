@@ -26,7 +26,7 @@ const MiseBasPoidsAndNotesBlock: React.FC<MiseBasPoidsAndNotesBlockProps> = ({
       <div className="space-y-1.5">
         <label
           htmlFor="mb-poids"
-          className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+          className="block text-[11px] uppercase tracking-wide text-text-2"
         >
           Poids moyen porcelet (kg){' '}
           <span className="text-text-2 normal-case">· optionnel</span>
@@ -60,14 +60,14 @@ const MiseBasPoidsAndNotesBlock: React.FC<MiseBasPoidsAndNotesBlockProps> = ({
           <p
             id="mb-poids-error"
             role="alert"
-            className="font-mono text-[11px] text-red"
+            className="text-[11px] text-red"
           >
             {errors.poidsMoyen}
           </p>
         ) : (
           <p
             id="mb-poids-hint"
-            className="font-mono text-[10px] text-text-2 tabular-nums"
+            className="text-[10px] text-text-2 tabular-nums"
           >
             {MISE_BAS_BOUNDS.minPoids} à {MISE_BAS_BOUNDS.maxPoids} kg · stocké en Notes
           </p>
@@ -77,7 +77,7 @@ const MiseBasPoidsAndNotesBlock: React.FC<MiseBasPoidsAndNotesBlockProps> = ({
       <div className="space-y-1.5">
         <label
           htmlFor="mb-notes"
-          className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+          className="block text-[11px] uppercase tracking-wide text-text-2"
         >
           Notes <span className="text-text-2 normal-case">· optionnel</span>
         </label>
@@ -89,7 +89,7 @@ const MiseBasPoidsAndNotesBlock: React.FC<MiseBasPoidsAndNotesBlockProps> = ({
           className={[
             'w-full rounded-md px-3 py-3',
             'bg-bg-0 border text-text-0 placeholder:text-text-2',
-            'font-mono text-[12px]',
+            'text-[12px]',
             'outline-none transition-colors duration-[160ms]',
             'focus:border-accent focus:ring-1 focus:ring-accent',
             'min-h-[88px] resize-y',
@@ -103,7 +103,7 @@ const MiseBasPoidsAndNotesBlock: React.FC<MiseBasPoidsAndNotesBlockProps> = ({
         />
         <p
           id="mb-notes-hint"
-          className="font-mono text-[10px] text-text-2 tabular-nums"
+          className="text-[10px] text-text-2 tabular-nums"
         >
           {notes.length}/{MISE_BAS_BOUNDS.maxNotes}
         </p>

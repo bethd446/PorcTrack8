@@ -261,7 +261,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
             <p className="agritech-heading text-[18px] uppercase tracking-wide">
               Réception enregistrée
             </p>
-            <p className="mt-2 font-mono text-[12px] uppercase tracking-wide text-text-2 tabular-nums text-center px-4">
+            <p className="mt-2 text-[12px] uppercase tracking-wide text-text-2 tabular-nums text-center px-4">
               Nouveau stock · {previewStock} {unite} ({previewStatut})
             </p>
           </div>
@@ -276,10 +276,10 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                 <div className="text-mono-micro text-text-2">
                   {stockItem.kind === 'ALIMENT' ? 'Aliment' : 'Véto / soin'}
                 </div>
-                <div className="truncate font-mono text-[13px] text-text-0">
+                <div className="truncate text-[13px] text-text-0">
                   {name}
                 </div>
-                <div className="mt-1 flex flex-wrap gap-3 font-mono text-[11px] tabular-nums text-text-2">
+                <div className="mt-1 flex flex-wrap gap-3 text-[11px] tabular-nums text-text-2">
                   <span>
                     Stock actuel · <span className="text-text-0">{stockActuel} {unite}</span>
                   </span>
@@ -329,7 +329,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                   }
                   disabled={saving}
                 />
-                <span className="font-mono text-[14px] text-text-2 uppercase tracking-wide shrink-0 w-14 text-center">
+                <span className="text-[14px] text-text-2 uppercase tracking-wide shrink-0 w-14 text-center">
                   {unite}
                 </span>
               </div>
@@ -337,7 +337,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                 <p
                   id="refill-qty-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.quantite}
                 </p>
@@ -348,7 +348,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                 <p
                   id="refill-qty-hint"
                   aria-live="polite"
-                  className="font-mono text-[11px] tabular-nums text-text-2"
+                  className="text-[11px] tabular-nums text-text-2"
                 >
                   Nouveau stock · <span className="text-text-0">{previewStock} {unite}</span>
                   {' · '}
@@ -357,7 +357,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
               ) : (
                 <p
                   id="refill-qty-hint"
-                  className="font-mono text-[10px] text-text-2"
+                  className="text-[10px] text-text-2"
                 >
                   Saisis la quantité reçue en {unite}.
                 </p>
@@ -379,7 +379,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                 className={[
                   'w-full h-11 rounded-md px-3',
                   'bg-bg-0 border border-border text-text-0 placeholder:text-text-2',
-                  'font-mono text-[13px]',
+                  'text-[13px]',
                   'outline-none transition-colors duration-[160ms]',
                   'focus:border-accent focus:ring-1 focus:ring-accent',
                   'hover:border-text-2',
@@ -411,7 +411,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                   className={[
                     'w-full h-11 rounded-md px-3',
                     'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                    'font-mono text-[13px] tabular-nums',
+                    'text-[13px] tabular-nums',
                     'outline-none transition-colors duration-[160ms]',
                     'focus:border-accent focus:ring-1 focus:ring-accent',
                     errors.prix ? 'border-red' : 'border-border hover:border-text-2',
@@ -427,7 +427,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                   <p
                     id="refill-price-error"
                     role="alert"
-                    className="font-mono text-[11px] text-red"
+                    className="text-[11px] text-red"
                   >
                     {errors.prix}
                   </p>
@@ -464,7 +464,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                   <p
                     id="refill-date-error"
                     role="alert"
-                    className="font-mono text-[11px] text-red"
+                    className="text-[11px] text-red"
                   >
                     {errors.date}
                   </p>
@@ -478,7 +478,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                 <span className="text-mono-label text-text-2">
                   Montant total
                 </span>
-                <span className="font-mono text-[14px] tabular-nums text-text-0">
+                <span className="text-[14px] tabular-nums text-text-0">
                   {totalMontant.toLocaleString('fr-FR')} FCFA
                 </span>
               </div>
@@ -495,7 +495,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                   'pressable flex-1 h-14 rounded-md',
                   'inline-flex items-center justify-center gap-2',
                   'bg-bg-1 border border-border text-text-1',
-                  'font-mono text-[12px] font-bold uppercase tracking-wide',
+                  'text-[12px] font-bold uppercase tracking-wide',
                   'transition-colors duration-[160ms]',
                   'hover:border-text-2',
                   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
@@ -513,7 +513,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                   'pressable flex-[2] h-14 rounded-md',
                   'inline-flex items-center justify-center gap-2',
                   'bg-accent text-bg-0',
-                  'font-mono text-[13px] font-bold uppercase tracking-wide',
+                  'text-[13px] font-bold uppercase tracking-wide',
                   'transition-colors duration-[160ms]',
                   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                   saving || !isValid ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
@@ -531,7 +531,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
             </div>
           </form>
         ) : (
-          <p className="font-mono text-[12px] text-text-2">
+          <p className="text-[12px] text-text-2">
             Aucun produit sélectionné.
           </p>
         )}

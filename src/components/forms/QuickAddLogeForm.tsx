@@ -151,7 +151,7 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({
     [
       'w-full h-12 rounded-md px-3',
       'bg-bg-0 border text-text-0 placeholder:text-text-2',
-      'font-mono text-[14px] uppercase tracking-wide',
+      'ft-code text-[14px] uppercase tracking-wide',
       'outline-none transition-colors duration-[160ms]',
       'focus:border-accent focus:ring-1 focus:ring-accent',
       hasError ? 'border-red' : 'border-border hover:border-text-2',

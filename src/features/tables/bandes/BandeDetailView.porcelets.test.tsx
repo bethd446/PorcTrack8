@@ -71,6 +71,16 @@ vi.mock('../../../components/forms/QuickEditPorceletForm', () => ({
     isOpen ? <div data-testid="edit-porcelet-form" /> : null,
 }));
 
+vi.mock('../../../components/forms/QuickSplitBandeForm', () => ({
+  default: ({ isOpen }: { isOpen: boolean }) =>
+    isOpen ? <div data-testid="split-bande-form" /> : null,
+}));
+
+vi.mock('../../../components/forms/QuickHealthLogPorceletForm', () => ({
+  default: ({ isOpen }: { isOpen: boolean }) =>
+    isOpen ? <div data-testid="health-log-porcelet-form" /> : null,
+}));
+
 const mockListPorcelets = vi.fn<(batchId: string) => Promise<PorceletIndividuel[]>>();
 vi.mock('../../../services/supabaseWrites', () => ({
   getBatchSources: vi.fn().mockResolvedValue([]),
@@ -89,6 +99,7 @@ vi.mock('../../../context/FarmContext', () => ({
   useFarm: () => ({
     notes: [],
     getBandeById: mockGetBandeById,
+    bandes: [],
   }),
 }));
 

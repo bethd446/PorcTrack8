@@ -192,7 +192,7 @@ const QuickEditPorceletForm: React.FC<QuickEditPorceletFormProps> = ({
               aria-invalid={!!errors.boucle}
               className={[
                 'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0',
-                'font-mono text-[14px] uppercase outline-none transition-colors duration-[160ms]',
+                'ft-code text-[14px] uppercase outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.boucle ? 'border-red' : 'border-border hover:border-text-2',
               ].join(' ')}

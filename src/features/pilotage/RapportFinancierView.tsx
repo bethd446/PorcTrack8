@@ -198,7 +198,7 @@ const RapportFinancierView: React.FC = () => {
                 />
               ) : (
                 <div className="card-dense text-center py-8 mt-3">
-                  <p className="font-mono text-[11px] text-text-2">
+                  <p className="text-[11px] text-text-2">
                     Aucune vente enregistrée sur les 6 derniers mois.
                   </p>
                 </div>
@@ -217,14 +217,14 @@ const RapportFinancierView: React.FC = () => {
                         key={b.id}
                         className="flex items-center gap-3 px-3 py-3 border-b border-border last:border-b-0"
                       >
-                        <span className="font-mono text-[11px] text-text-2 w-5">
+                        <span className="text-[11px] text-text-2 w-5">
                           #{idx + 1}
                         </span>
-                        <span className="font-mono text-[13px] font-semibold text-text-0 flex-1 min-w-0 truncate">
+                        <span className="ft-code text-[13px] font-semibold text-text-0 flex-1 min-w-0 truncate">
                           {b.id}
                         </span>
                         <Chip label={`${pct}%`} tone="accent" size="xs" />
-                        <span className="font-mono text-[13px] font-semibold text-accent tabular-nums whitespace-nowrap">
+                        <span className="text-[13px] font-semibold text-accent tabular-nums whitespace-nowrap">
                           {formatMontant(b.v, currency)}
                         </span>
                       </li>
@@ -286,7 +286,7 @@ const StackedBars: React.FC<StackedBarsProps> = ({ data, maxTotal, currency }) =
             className="flex-1 flex flex-col items-center justify-end gap-0.5 h-full"
           >
             <span
-              className={`font-mono text-[9px] tabular-nums mb-1 ${
+              className={`text-[9px] tabular-nums mb-1 ${
                 isLast(i) ? 'text-accent' : 'text-text-2'
               }`}
             >
@@ -317,7 +317,7 @@ const StackedBars: React.FC<StackedBarsProps> = ({ data, maxTotal, currency }) =
         {data.map((m, i) => (
           <div key={m.periode} className="flex-1 text-center">
             <span
-              className={`font-mono text-[10px] ${
+              className={`text-[10px] ${
                 isLast(i) ? 'text-accent font-semibold' : 'text-text-2'
               }`}
             >

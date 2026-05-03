@@ -667,3 +667,159 @@ describe('detectTruiesAReformer — régression BUG-1 INACTIVE_LONG', () => {
     expect(rep.filter(r => r.motif === 'INACTIVE_LONG')).toHaveLength(0);
   });
 });
+
+// ─── V36-A KPIs zootechniques ────────────────────────────────────────────────
+
+import {
+  computeICR,
+  computeGMQParTranche,
+  computeICGlobal,
+  computeMargeBruteParTruie,
+  computeMortaliteParPhase,
+  computeZootechniqueKpis,
+} from './perfKpiAnalyzer';
+
+describe('computeICR (V36-A)', () => {
+  it('null si aucune bande ne renseigne aliment+gain', () => {
+    const bandes: BandePorcelets[] = [makeBande()];
+    expect(computeICR(bandes)).toBeNull();
+  });
+
+  it('agrège correctement aliment/gain sur bandes équipées', () => {
+    const b: BandePorcelets = makeBande();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (b as any).alimentConsommeKg = 280;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (b as any).gainPoidsKg = 100;
+    expect(computeICR([b])).toBe(2.8);
+  });
+
+  it('ignore les bandes avec gain ≤ 0', () => {
+    const b1: BandePorcelets = makeBande();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (b1 as any).alimentConsommeKg = 100;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (b1 as any).gainPoidsKg = 0;
+    const b2: BandePorcelets = makeBande();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (b2 as any).alimentConsommeKg = 200;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (b2 as any).gainPoidsKg = 80;
+    expect(computeICR([b1, b2])).toBe(2.5);
+  });
+});
+
+describe('computeGMQParTranche (V36-A)', () => {
+  it('classe une bande par poids → tranche correcte (croissance 35kg)', () => {
+    const today = new Date(2025, 5, 30);
+    const bande = makeBande({
+      poidsMoyenKg: 35,
+      dateSevrageReelle: '01/06/2025', // 29 jours en post-sev
+    });
+    const r = computeGMQParTranche([bande], today);
+    // 35-25=10kg gain en 29j → 344 g/j (croissance)
+    expect(r.CROISSANCE).not.toBeNull();
+    expect(r.CROISSANCE!).toBeGreaterThan(300);
+    expect(r.POST_SEVRAGE).toBeNull();
+  });
+
+  it('null partout si aucune bande pesée', () => {
+    const r = computeGMQParTranche([makeBande()]);
+    expect(r.POST_SEVRAGE).toBeNull();
+    expect(r.CROISSANCE).toBeNull();
+    expect(r.ENGRAISSEMENT).toBeNull();
+    expect(r.FINITION).toBeNull();
+  });
+});
+
+describe('computeICGlobal (V36-A)', () => {
+  it('null si aucun aliment renseigné', () => {
+    expect(computeICGlobal([makeBande({ poidsMoyenKg: 50, vivants: 10 })], 0)).toBeNull();
+  });
+
+  it('IC = aliment / poids vif total', () => {
+    const bandes: BandePorcelets[] = [
+      makeBande({ poidsMoyenKg: 50, vivants: 10 }), // 500 kg
+      makeBande({ poidsMoyenKg: 80, vivants: 5 }),  // 400 kg
+    ];
+    // 2700 kg aliment / 900 kg vif = 3.0
+    expect(computeICGlobal(bandes, 2700)).toBe(3.0);
+  });
+
+  it('null si aucune bande pesée', () => {
+    const bandes: BandePorcelets[] = [makeBande({ vivants: 10 })];
+    expect(computeICGlobal(bandes, 1000)).toBeNull();
+  });
+});
+
+describe('computeMargeBruteParTruie (V36-A)', () => {
+  it('marge = (revenu - coût) / nb_truies', () => {
+    expect(computeMargeBruteParTruie(50000, 20000, 17)).toBe(Math.round(30000 / 17));
+  });
+
+  it('null si nb_truies <= 0', () => {
+    expect(computeMargeBruteParTruie(50000, 20000, 0)).toBeNull();
+  });
+
+  it('null si tous les inputs financiers à 0 (donnée non saisie)', () => {
+    expect(computeMargeBruteParTruie(0, 0, 17)).toBeNull();
+  });
+});
+
+describe('computeMortaliteParPhase (V36-A)', () => {
+  it('mortalité maternité agrège morts/NV ; phases plus tardives null si <5 portées', () => {
+    const today = new Date(2025, 5, 15);
+    // 5 portées récentes en maternité (J0-J28)
+    const bandes: BandePorcelets[] = Array.from({ length: 5 }).map((_, i) =>
+      makeBande({
+        id: `B${i}`,
+        dateMB: '01/06/2025', // ~14 jours
+        nv: 12,
+        morts: 2,
+        vivants: 10,
+      }),
+    );
+    const r = computeMortaliteParPhase(bandes, today);
+    // 10 morts / 60 NV = 16.7%
+    expect(r.maternitePct).not.toBeNull();
+    expect(r.maternitePct!).toBeCloseTo(16.7, 1);
+    // Pas assez de portées en post-sev/eng/finition → null
+    expect(r.postSevragePct).toBeNull();
+  });
+
+  it('null partout si pas de portées sevrées dans la période', () => {
+    const r = computeMortaliteParPhase([], new Date(2025, 5, 15));
+    expect(r.maternitePct).toBeNull();
+    expect(r.postSevragePct).toBeNull();
+  });
+});
+
+describe('computeZootechniqueKpis — façade (V36-A)', () => {
+  it('garde anti-explosion : nbPorteesSevrees<5 → ICR/IC/Marge à null', () => {
+    const today = new Date(2025, 5, 15);
+    const bandes: BandePorcelets[] = [
+      makeBande({ dateMB: '01/05/2025', dateSevrageReelle: '29/05/2025' }),
+    ];
+    const r = computeZootechniqueKpis(bandes, 1000, 50000, 20000, 17, today);
+    expect(r.icrKg).toBeNull();
+    expect(r.icGlobal).toBeNull();
+    expect(r.margeBruteParTruie).toBeNull();
+    expect(r.nbPorteesSevrees12m).toBe(1);
+  });
+
+  it('5+ portées sevrées → margeBrute calculée', () => {
+    const today = new Date(2025, 5, 15);
+    const bandes: BandePorcelets[] = Array.from({ length: 6 }).map((_, i) =>
+      makeBande({
+        id: `B${i}`,
+        dateMB: '01/03/2025',
+        dateSevrageReelle: '29/03/2025',
+        poidsMoyenKg: 30,
+        vivants: 10,
+      }),
+    );
+    const r = computeZootechniqueKpis(bandes, 0, 50000, 20000, 10, today);
+    expect(r.margeBruteParTruie).toBe(Math.round(30000 / 10));
+    expect(r.nbPorteesSevrees12m).toBe(6);
+  });
+});

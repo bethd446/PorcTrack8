@@ -179,7 +179,7 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
           <Stethoscope size={18} aria-hidden="true" />
         </div>
         <div>
-          <h3 className="font-mono text-[11px] font-bold uppercase tracking-wide text-text-1">
+          <h3 className="text-[11px] font-bold uppercase tracking-wide text-text-1">
             Saisie rapide santé
           </h3>
           <p className="text-mono-micro text-text-2 mt-0.5">
@@ -260,7 +260,7 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
             </span>
           </div>
           {errors.type && (
-            <p role="alert" className="font-mono text-[11px] text-red mt-1">
+            <p role="alert" className="text-[11px] text-red mt-1">
               {errors.type}
             </p>
           )}
@@ -282,7 +282,7 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
             className={[
               'w-full h-9 rounded-md px-3',
               'bg-bg-0 border text-text-0 placeholder:text-text-2',
-              'font-mono text-[12px]',
+              'text-[12px]',
               'outline-none transition-colors duration-[160ms]',
               'focus:border-accent focus:ring-1 focus:ring-accent',
               'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-1px]',
@@ -297,7 +297,7 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
             <p
               id="health-treatment-error"
               role="alert"
-              className="font-mono text-[11px] text-red mt-1"
+              className="text-[11px] text-red mt-1"
             >
               {errors.treatmentName}
             </p>
@@ -319,7 +319,7 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
               className={[
                 'w-full h-9 rounded-md px-3',
                 'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[12px]',
+                'text-[12px]',
                 'outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 'border-border hover:border-text-2',
@@ -398,7 +398,7 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
             className={[
               'w-full rounded-md px-3 py-3',
               'bg-bg-0 border text-text-0 placeholder:text-text-2',
-              'font-mono text-[12px]',
+              'text-[12px]',
               'outline-none transition-colors duration-[160ms]',
               'focus:border-accent focus:ring-1 focus:ring-accent',
               'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-1px]',
@@ -419,7 +419,7 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
           className={[
             'pressable w-full h-[48px] rounded-md',
             'inline-flex items-center justify-center gap-2',
-            'bg-red text-text-0 font-mono text-[12px] font-bold uppercase tracking-wide',
+            'bg-red text-text-0 text-[12px] font-bold uppercase tracking-wide',
             'transition-colors duration-[160ms]',
             'focus-visible:outline focus-visible:outline-2 focus-visible:outline-red focus-visible:outline-offset-2',
             (loading || !formData.treatmentName.trim())

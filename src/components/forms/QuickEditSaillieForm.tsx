@@ -229,7 +229,7 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
     [
       'w-full h-12 rounded-md px-3',
       'bg-bg-0 border text-text-0 placeholder:text-text-2',
-      'font-mono text-[14px]',
+      'text-[14px]',
       'outline-none transition-colors duration-[160ms]',
       'focus:border-accent focus:ring-1 focus:ring-accent',
       invalid ? 'border-red' : 'border-border hover:border-text-2',
@@ -288,7 +288,7 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
                 className={[
                   'w-full h-12 rounded-md px-3',
                   'bg-bg-2 border border-border text-text-1',
-                  'font-mono text-[14px]',
+                  'text-[14px]',
                   'cursor-not-allowed',
                 ].join(' ')}
                 value={truieLabel}
@@ -334,7 +334,7 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
                 <p
                   id="edit-saillie-verrat-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.verratId}
                 </p>
@@ -384,7 +384,7 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
               </div>
               <p
                 id="edit-saillie-date-hint"
-                className="font-mono text-[10px] text-text-2"
+                className="text-[10px] text-text-2"
               >
                 Détermine la date MB prévue ({GESTATION_DAYS}j gestation)
               </p>
@@ -392,7 +392,7 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
                 <p
                   id="edit-saillie-date-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.dateSaillie}
                 </p>
@@ -441,7 +441,7 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
               <div className="flex items-center justify-between gap-2">
                 <p
                   id="edit-saillie-mb-hint"
-                  className="font-mono text-[10px] text-text-2"
+                  className="text-[10px] text-text-2"
                 >
                   {mbHasAutoDrift
                     ? `Auto suggéré : ${autoMbIso}`
@@ -466,7 +466,7 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
                 <p
                   id="edit-saillie-mb-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.dateMBPrevue}
                 </p>
@@ -514,7 +514,7 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
                 <p
                   id="edit-saillie-statut-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.statut}
                 </p>
@@ -548,7 +548,7 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
                 className={[
                   'w-full rounded-md px-3 py-2',
                   'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                  'font-mono text-[13px]',
+                  'text-[13px]',
                   'outline-none transition-colors duration-[160ms]',
                   'focus:border-accent focus:ring-1 focus:ring-accent',
                   'resize-none',
@@ -561,7 +561,7 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
               />
               <p
                 id="edit-saillie-notes-hint"
-                className="font-mono text-[10px] text-text-2 tabular-nums"
+                className="text-[10px] text-text-2 tabular-nums"
               >
                 {notes.trim().length}/200
               </p>
@@ -569,7 +569,7 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
                 <p
                   id="edit-saillie-notes-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.notes}
                 </p>
@@ -588,7 +588,7 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
                 'pressable flex-1 h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-bg-1 border border-border text-text-1',
-                'font-mono text-[12px] font-bold uppercase tracking-wide',
+                'text-[12px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms] hover:border-text-2',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : '',
@@ -605,7 +605,7 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
                 'pressable flex-[2] h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-accent text-bg-0',
-                'font-mono text-[13px] font-bold uppercase tracking-wide',
+                'text-[13px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms]',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',

@@ -239,7 +239,7 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
               Échographie enregistrée
             </p>
             {selectedSaillie?.sow_code_id ? (
-              <p className="mt-2 font-mono text-[12px] uppercase tracking-wide text-text-2 tabular-nums">
+              <p className="mt-2 text-[12px] uppercase tracking-wide text-text-2 tabular-nums">
                 {selectedSaillie.sow_code_id} · {statut}
               </p>
             ) : null}
@@ -283,7 +283,7 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
                 className={[
                   'w-full h-12 rounded-md px-3',
                   'bg-bg-0 border text-text-0',
-                  'font-mono text-[13px]',
+                  'text-[13px]',
                   'outline-none transition-colors duration-[160ms]',
                   'focus:border-accent focus:ring-1 focus:ring-accent',
                   errors.saillieId ? 'border-red' : 'border-border',
@@ -307,12 +307,12 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
                 <p
                   id="echo-saillie-error"
                   role="alert"
-                  className="font-mono text-[10px] text-red"
+                  className="text-[10px] text-red"
                 >
                   {errors.saillieId}
                 </p>
               ) : pending.length === 0 && !pendingLoading ? (
-                <p className="font-mono text-[10px] text-text-2">
+                <p className="text-[10px] text-text-2">
                   Aucune saillie en attente d'écho.
                 </p>
               ) : null}
@@ -336,7 +336,7 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
                 className={[
                   'w-full h-12 rounded-md px-3',
                   'bg-bg-0 border text-text-0',
-                  'font-mono text-[13px]',
+                  'font-mono text-[13px] tabular-nums',
                   'outline-none transition-colors duration-[160ms]',
                   'focus:border-accent focus:ring-1 focus:ring-accent',
                   errors.dateEchoIso ? 'border-red' : 'border-border',
@@ -350,7 +350,7 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
                 <p
                   id="echo-date-error"
                   role="alert"
-                  className="font-mono text-[10px] text-red"
+                  className="text-[10px] text-red"
                 >
                   {errors.dateEchoIso}
                 </p>
@@ -385,7 +385,7 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
                       className={[
                         'pressable inline-flex flex-col items-center justify-center',
                         'h-14 rounded-md border px-2',
-                        'font-mono text-[12px] uppercase tracking-wide',
+                        'text-[12px] uppercase tracking-wide',
                         'transition-colors duration-[160ms]',
                         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                         isSelected
@@ -399,7 +399,7 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
                 })}
               </div>
               {errors.statut ? (
-                <p role="alert" className="font-mono text-[10px] text-red">
+                <p role="alert" className="text-[10px] text-red">
                   {errors.statut}
                 </p>
               ) : null}
@@ -423,7 +423,7 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
                 className={[
                   'w-full rounded-md px-3 py-2',
                   'bg-bg-0 border text-text-0',
-                  'font-mono text-[13px]',
+                  'text-[13px]',
                   'outline-none transition-colors duration-[160ms]',
                   'focus:border-accent focus:ring-1 focus:ring-accent',
                   errors.notes ? 'border-red' : 'border-border',
@@ -436,7 +436,7 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
                 <p
                   id="echo-notes-error"
                   role="alert"
-                  className="font-mono text-[10px] text-red"
+                  className="text-[10px] text-red"
                 >
                   {errors.notes}
                 </p>
@@ -453,7 +453,7 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
                   'pressable flex-1 h-14 rounded-md',
                   'inline-flex items-center justify-center gap-2',
                   'bg-bg-1 border border-border text-text-1',
-                  'font-mono text-[12px] font-bold uppercase tracking-wide',
+                  'text-[12px] font-bold uppercase tracking-wide',
                   'transition-colors duration-[160ms] hover:border-text-2',
                   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                   saving ? 'opacity-40 cursor-not-allowed' : '',
@@ -470,7 +470,7 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
                   'pressable flex-[2] h-14 rounded-md',
                   'inline-flex items-center justify-center gap-2',
                   'bg-accent text-bg-0',
-                  'font-mono text-[13px] font-bold uppercase tracking-wide',
+                  'text-[13px] font-bold uppercase tracking-wide',
                   'transition-colors duration-[160ms]',
                   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                   (saving || !saillieId || !statut)

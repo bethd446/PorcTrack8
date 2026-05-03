@@ -310,7 +310,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
                   id="sep-search"
                   type="search"
                   aria-label="Rechercher par ID portée, truie ou boucle mère"
-                  className="flex-1 bg-transparent outline-none font-mono text-[13px] text-text-0 placeholder:text-text-2"
+                  className="flex-1 bg-transparent outline-none text-[13px] text-text-0 placeholder:text-text-2"
                   placeholder="ID portée, truie, boucle mère…"
                   value={query}
                   onChange={e => setQuery(e.target.value)}
@@ -322,7 +322,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
             {/* Liste bandes éligibles */}
             {eligibleBandes.length === 0 ? (
               <div className="card-dense">
-                <p className="font-mono text-[12px] text-text-2">
+                <p className="text-[12px] text-text-2">
                   {query.trim()
                     ? 'Aucune bande ne correspond à la recherche.'
                     : 'Aucune bande éligible. Les bandes en engraissement (J+70 post-sevrage) non encore séparées apparaissent ici.'}
@@ -385,12 +385,12 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
                 <div className="text-mono-micro text-text-2">
                   Bande
                 </div>
-                <div className="truncate font-mono text-[13px] text-text-0 tabular-nums">
+                <div className="truncate ft-code tabular-nums text-[13px] text-text-0">
                   {selectedBande.idPortee || selectedBande.id}
                   {selectedBande.truie ? ` · ${selectedBande.truie}` : ''}
                   {selectedBande.boucleMere ? ` · ${selectedBande.boucleMere}` : ''}
                 </div>
-                <div className="font-mono text-[11px] text-text-2 tabular-nums">
+                <div className="text-[11px] text-text-2 tabular-nums">
                   {selectedBande.vivants ?? 0} vivants
                   {jSinceSevrage !== null ? ` · J+${jSinceSevrage} post-sevrage` : ''}
                 </div>
@@ -481,12 +481,12 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
             </div>
 
             {errors.nbMales ? (
-              <p id="sep-males-error" role="alert" className="font-mono text-[11px] text-red">
+              <p id="sep-males-error" role="alert" className="text-[11px] text-red">
                 {errors.nbMales}
               </p>
             ) : null}
             {errors.nbFemelles && errors.nbFemelles !== errors.nbMales ? (
-              <p id="sep-femelles-error" role="alert" className="font-mono text-[11px] text-red">
+              <p id="sep-femelles-error" role="alert" className="text-[11px] text-red">
                 {errors.nbFemelles}
               </p>
             ) : null}
@@ -521,7 +521,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
                 <p
                   id="sep-date-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.dateSeparation}
                 </p>
@@ -542,7 +542,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
                 className={[
                   'w-full rounded-md px-3 py-3',
                   'bg-bg-0 border border-border text-text-0 placeholder:text-text-2',
-                  'font-mono text-[13px]',
+                  'text-[13px]',
                   'outline-none transition-colors duration-[160ms]',
                   'focus:border-accent focus:ring-1 focus:ring-accent',
                   'min-h-[80px] resize-y',
@@ -556,7 +556,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
             </div>
 
             {submitError ? (
-              <p role="alert" className="font-mono text-[11px] text-red">
+              <p role="alert" className="text-[11px] text-red">
                 {submitError}
               </p>
             ) : null}
@@ -571,7 +571,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
                   'pressable flex-1 h-14 rounded-md',
                   'inline-flex items-center justify-center gap-2',
                   'bg-bg-1 border border-border text-text-1',
-                  'font-mono text-[12px] font-bold uppercase tracking-wide',
+                  'text-[12px] font-bold uppercase tracking-wide',
                   'transition-colors duration-[160ms]',
                   'hover:border-text-2',
                   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
@@ -588,7 +588,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
                   'pressable flex-[2] h-14 rounded-md',
                   'inline-flex items-center justify-center gap-2',
                   'bg-accent text-bg-0',
-                  'font-mono text-[13px] font-bold uppercase tracking-wide',
+                  'text-[13px] font-bold uppercase tracking-wide',
                   'transition-colors duration-[160ms]',
                   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                   saving || !isValid ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
@@ -621,7 +621,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
               Séparation enregistrée
             </p>
             {successSummary ? (
-              <p className="mt-2 font-mono text-[12px] uppercase tracking-wide text-text-2 tabular-nums text-center px-4">
+              <p className="mt-2 text-[12px] uppercase tracking-wide text-text-2 tabular-nums text-center px-4">
                 {successSummary}
               </p>
             ) : null}
@@ -629,7 +629,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
             <button
               type="button"
               onClick={handleClose}
-              className="pressable mt-8 h-12 px-8 rounded-md bg-accent text-bg-0 font-mono text-[12px] font-bold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+              className="pressable mt-8 h-12 px-8 rounded-md bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
             >
               OK
             </button>

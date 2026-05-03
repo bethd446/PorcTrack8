@@ -121,7 +121,7 @@ const TroupeauLogesView: React.FC = () => {
             style={{ color: 'var(--accent)' }}
           />
           <span
-            className="font-mono text-[11px] uppercase tracking-wide"
+            className="text-[11px] uppercase tracking-wide"
             style={{ color: 'var(--text-2)' }}
           >
             Loges totales
@@ -202,7 +202,7 @@ const TroupeauLogesView: React.FC = () => {
               style={{ background: LOGES_TONES.maternite }}
             />
             <span
-              className="font-mono uppercase tracking-wide"
+              className="uppercase tracking-wide"
               style={{ color: 'var(--text-1)' }}
             >
               Maternité · {FARM_CONFIG.MATERNITE_LOGES_CAPACITY}
@@ -215,7 +215,7 @@ const TroupeauLogesView: React.FC = () => {
               style={{ background: LOGES_TONES.postSevrage }}
             />
             <span
-              className="font-mono uppercase tracking-wide"
+              className="uppercase tracking-wide"
               style={{ color: 'var(--text-1)' }}
             >
               Post-sev · {FARM_CONFIG.POST_SEVRAGE_LOGES_CAPACITY}
@@ -228,7 +228,7 @@ const TroupeauLogesView: React.FC = () => {
               style={{ background: LOGES_TONES.engraissement }}
             />
             <span
-              className="font-mono uppercase tracking-wide"
+              className="uppercase tracking-wide"
               style={{ color: 'var(--text-1)' }}
             >
               Engr · {FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY}
@@ -279,7 +279,7 @@ const TroupeauLogesView: React.FC = () => {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span
-                        className="font-mono text-[12px] font-semibold"
+                        className="ft-code text-[12px] font-semibold"
                         style={{ color: 'var(--text-0)' }}
                       >
                         {t.displayId}
@@ -295,7 +295,7 @@ const TroupeauLogesView: React.FC = () => {
                       <Chip tone="gold" label={logeLabel} size="xs" />
                     </div>
                     <div
-                      className="mt-0.5 font-mono text-[11px] flex items-center gap-2"
+                      className="mt-0.5 text-[11px] flex items-center gap-2"
                       style={{ color: 'var(--text-2)' }}
                     >
                       {porcelets != null ? (
@@ -330,7 +330,7 @@ const TroupeauLogesView: React.FC = () => {
             <div key={i} className="bg-accent/10 border border-accent/20 rounded-xl p-3 flex gap-3">
               <Lightbulb size={18} className="text-accent shrink-0 mt-0.5" />
               <div className="min-w-0 flex-1">
-                <p className="text-[12px] font-bold text-accent uppercase font-mono">{rec.titre}</p>
+                <p className="text-[12px] font-bold text-accent uppercase">{rec.titre}</p>
                 <p className="text-[11px] text-text-1 mt-1 leading-relaxed">
                   <span className="font-bold">Constat:</span> {rec.constat}
                   {rec.diagnostic && <><br /><span className="font-bold">Diag:</span> {rec.diagnostic}</>}
@@ -364,7 +364,7 @@ const TroupeauLogesView: React.FC = () => {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-[11px] uppercase tracking-wide font-bold text-text-0">
+                    <span className="ft-code text-[11px] uppercase tracking-wide font-bold text-text-0">
                       {rep.id}
                     </span>
                     {releve && (
@@ -392,7 +392,7 @@ const TroupeauLogesView: React.FC = () => {
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {releve.weights.map((w, idx) => (
-                        <span key={idx} className="text-[9px] font-mono bg-bg-2 px-1.5 py-0.5 rounded text-text-2">
+                        <span key={idx} className="text-[9px] bg-bg-2 px-1.5 py-0.5 rounded text-text-2">
                           {w}
                         </span>
                       ))}
@@ -402,12 +402,12 @@ const TroupeauLogesView: React.FC = () => {
 
                 <div className="flex justify-between items-end mt-0.5">
                    <div className="flex flex-col">
-                      <span className="font-mono text-[10px] text-text-2">
+                      <span className="text-[10px] text-text-2">
                         {rep.porcelets} têtes
                       </span>
-                      {aliment && <span className="font-mono text-[9px] uppercase text-accent font-bold mt-0.5">{aliment}</span>}
+                      {aliment && <span className="text-[9px] uppercase text-accent font-bold mt-0.5">{aliment}</span>}
                    </div>
-                   {debut && <span className="font-mono text-[8px] text-text-2 opacity-60">depuis {debut}</span>}
+                   {debut && <span className="text-[8px] text-text-2 opacity-60">depuis {debut}</span>}
                 </div>
               </div>
             );
@@ -426,7 +426,7 @@ const TroupeauLogesView: React.FC = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span
-                  className="font-mono text-[11px] uppercase tracking-wide"
+                  className="text-[11px] uppercase tracking-wide"
                   style={{ color: 'var(--text-0)' }}
                 >
                   Mâles
@@ -434,7 +434,7 @@ const TroupeauLogesView: React.FC = () => {
                 <Chip tone="amber" label="CR-M" size="xs" />
               </div>
               <span
-                className="font-mono text-[11px]"
+                className="text-[11px]"
                 style={{ color: 'var(--text-2)' }}
               >
                 {bandesMales.length} bande{bandesMales.length > 1 ? 's' : ''}
@@ -455,13 +455,13 @@ const TroupeauLogesView: React.FC = () => {
                     className="flex items-center justify-between text-[12px]"
                   >
                     <span
-                      className="font-mono"
+                      className="ft-code"
                       style={{ color: 'var(--text-1)' }}
                     >
                       {b.idPortee || b.id}
                     </span>
                     <span
-                      className="font-mono text-[11px]"
+                      className="text-[11px]"
                       style={{ color: 'var(--text-2)' }}
                     >
                       {b.nbMales ?? b.vivants ?? 0} porcelets
@@ -477,7 +477,7 @@ const TroupeauLogesView: React.FC = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span
-                  className="font-mono text-[11px] uppercase tracking-wide"
+                  className="text-[11px] uppercase tracking-wide"
                   style={{ color: 'var(--text-0)' }}
                 >
                   Femelles
@@ -485,7 +485,7 @@ const TroupeauLogesView: React.FC = () => {
                 <Chip tone="amber" label="CR-F" size="xs" />
               </div>
               <span
-                className="font-mono text-[11px]"
+                className="text-[11px]"
                 style={{ color: 'var(--text-2)' }}
               >
                 {bandesFemelles.length} bande
@@ -507,13 +507,13 @@ const TroupeauLogesView: React.FC = () => {
                     className="flex items-center justify-between text-[12px]"
                   >
                     <span
-                      className="font-mono"
+                      className="ft-code"
                       style={{ color: 'var(--text-1)' }}
                     >
                       {b.idPortee || b.id}
                     </span>
                     <span
-                      className="font-mono text-[11px]"
+                      className="text-[11px]"
                       style={{ color: 'var(--text-2)' }}
                     >
                       {b.nbFemelles ?? b.vivants ?? 0} porcelets

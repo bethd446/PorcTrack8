@@ -160,7 +160,7 @@ const EditableNumber: React.FC<Props> = ({
             if (status === 'editing') void commit();
           }}
           onKeyDown={onKeyDown}
-          className="min-h-[44px] min-w-[64px] px-2 py-1 rounded-md border-2 bg-bg-0 font-mono tabular-nums text-right text-text-0 outline-none"
+          className="min-h-[44px] min-w-[64px] px-2 py-1 rounded-md border-2 bg-bg-0 tabular-nums text-right text-text-0 outline-none"
           style={{
             borderColor: 'var(--color-accent-500)',
             transition: `border-color 160ms ${EASE}, background-color 160ms ${EASE}`,
@@ -177,13 +177,13 @@ const EditableNumber: React.FC<Props> = ({
             transition: `background-color 200ms ${EASE}`,
           }}
         >
-          <span className="font-mono tabular-nums text-text-0">
+          <span className="tabular-nums text-text-0">
             {displayValue === null || displayValue === undefined
               ? placeholder
               : displayValue}
           </span>
           {unit && (
-            <span className="text-xs text-text-2 font-mono">{unit}</span>
+            <span className="text-xs text-text-2">{unit}</span>
           )}
         </button>
       )}

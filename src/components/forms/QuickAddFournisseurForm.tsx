@@ -150,7 +150,7 @@ const QuickAddFournisseurForm: React.FC<QuickAddFournisseurFormProps> = ({
               autoComplete="off"
             />
             {errors.nom ? (
-              <p id="add-fourn-nom-error" role="alert" className="font-mono text-[11px] text-red">
+              <p id="add-fourn-nom-error" role="alert" className="text-[11px] text-red">
                 {errors.nom}
               </p>
             ) : null}
@@ -170,7 +170,7 @@ const QuickAddFournisseurForm: React.FC<QuickAddFournisseurFormProps> = ({
               className={[
                 'w-full h-12 rounded-md px-3',
                 'bg-bg-0 border text-text-0',
-                'font-mono text-[13px] uppercase',
+                'text-[13px] uppercase',
                 'outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.type ? 'border-red' : 'border-border hover:border-text-2',
@@ -207,7 +207,7 @@ const QuickAddFournisseurForm: React.FC<QuickAddFournisseurFormProps> = ({
               className={[
                 'w-full h-12 rounded-md px-3',
                 'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[14px] tabular-nums',
+                'text-[14px] tabular-nums',
                 'outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.whatsappNumber ? 'border-red' : 'border-border hover:border-text-2',
@@ -219,11 +219,11 @@ const QuickAddFournisseurForm: React.FC<QuickAddFournisseurFormProps> = ({
               autoComplete="off"
             />
             {errors.whatsappNumber ? (
-              <p id="add-fourn-wa-error" role="alert" className="font-mono text-[11px] text-red">
+              <p id="add-fourn-wa-error" role="alert" className="text-[11px] text-red">
                 {errors.whatsappNumber}
               </p>
             ) : (
-              <p id="add-fourn-wa-hint" className="font-mono text-[10px] text-text-2">
+              <p id="add-fourn-wa-hint" className="text-[10px] text-text-2">
                 Min 8 chiffres. Préfixe pays inclus si possible.
               </p>
             )}
@@ -259,7 +259,7 @@ const QuickAddFournisseurForm: React.FC<QuickAddFournisseurFormProps> = ({
               autoComplete="off"
             />
             {errors.email ? (
-              <p id="add-fourn-email-error" role="alert" className="font-mono text-[11px] text-red">
+              <p id="add-fourn-email-error" role="alert" className="text-[11px] text-red">
                 {errors.email}
               </p>
             ) : null}
@@ -293,7 +293,7 @@ const QuickAddFournisseurForm: React.FC<QuickAddFournisseurFormProps> = ({
               disabled={saving}
             />
             {errors.notes ? (
-              <p id="add-fourn-notes-error" role="alert" className="font-mono text-[11px] text-red">
+              <p id="add-fourn-notes-error" role="alert" className="text-[11px] text-red">
                 {errors.notes}
               </p>
             ) : null}
@@ -328,7 +328,7 @@ const QuickAddFournisseurForm: React.FC<QuickAddFournisseurFormProps> = ({
                 'pressable flex-1 h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-bg-1 border border-border text-text-1',
-                'font-mono text-[12px] font-bold uppercase tracking-wide',
+                'text-[12px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms] hover:border-text-2',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : '',
@@ -345,7 +345,7 @@ const QuickAddFournisseurForm: React.FC<QuickAddFournisseurFormProps> = ({
                 'pressable flex-[2] h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-accent text-bg-0',
-                'font-mono text-[13px] font-bold uppercase tracking-wide',
+                'text-[13px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms]',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',

@@ -105,20 +105,20 @@ const BatchWeaningModal: React.FC<BatchWeaningModalProps> = ({
         <div className="relative">
           <div className="w-28 h-28 rounded-full border-2 border-border border-t-accent animate-spin" />
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="font-mono text-[18px] font-semibold text-accent tabular-nums">
+            <span className="text-[18px] font-semibold text-accent tabular-nums">
               {Math.round((progress.current / progress.total) * 100)}%
             </span>
           </div>
         </div>
         <div className="text-center space-y-2">
           <h3 className="agritech-heading text-[14px] uppercase">Traitement en cours</h3>
-          <p className="font-mono text-[11px] uppercase tracking-wide text-text-2 animate-pulse">{progress.phase}</p>
-          <p className="font-mono text-[12px] text-accent tabular-nums">{progress.current} / {progress.total}</p>
+          <p className="text-[11px] uppercase tracking-wide text-text-2 animate-pulse">{progress.phase}</p>
+          <p className="text-[12px] text-accent tabular-nums">{progress.current} / {progress.total}</p>
         </div>
         {errors.length > 0 && (
           <div className="w-full max-w-sm card-dense max-h-40 overflow-y-auto">
             {errors.map((err, i) => (
-              <p key={i} className="font-mono text-[11px] text-red mb-1">{err}</p>
+              <p key={i} className="text-[11px] text-red mb-1">{err}</p>
             ))}
           </div>
         )}
@@ -134,7 +134,7 @@ const BatchWeaningModal: React.FC<BatchWeaningModalProps> = ({
             <h2 className="agritech-heading uppercase leading-none" style={{ fontSize: 'clamp(20px, 5vw, 24px)' }}>
               Clôture sevrage
             </h2>
-            <p className="mt-1 font-mono text-[11px] text-text-2 leading-none">
+            <p className="mt-1 text-[11px] text-text-2 leading-none">
               {selectedBandes.length} portée{selectedBandes.length > 1 ? 's' : ''} sélectionnée{selectedBandes.length > 1 ? 's' : ''}
             </p>
           </div>
@@ -147,11 +147,11 @@ const BatchWeaningModal: React.FC<BatchWeaningModalProps> = ({
           </button>
         </div>
         <div className="card-dense flex items-center gap-3 !py-3">
-          <div className="w-10 h-10 rounded-md bg-accent text-bg-0 flex items-center justify-center font-mono text-[16px] font-semibold tabular-nums">
+          <div className="w-10 h-10 rounded-md bg-accent text-bg-0 flex items-center justify-center text-[16px] font-semibold tabular-nums">
             {selectedBandes.length}
           </div>
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-wide text-text-2">Lots prêts</p>
+            <p className="text-[10px] uppercase tracking-wide text-text-2">Lots prêts</p>
             <p className="text-[12px] text-text-0 font-medium">Pour le sevrage</p>
           </div>
         </div>
@@ -161,11 +161,11 @@ const BatchWeaningModal: React.FC<BatchWeaningModalProps> = ({
         <div className="agritech-root px-4 py-5 space-y-4">
           {errors.length > 0 && (
             <div className="card-dense">
-              <h4 className="font-mono text-[11px] font-semibold uppercase tracking-wide text-red mb-2">
+              <h4 className="text-[11px] font-semibold uppercase tracking-wide text-red mb-2">
                 Erreurs lors de la dernière tentative
               </h4>
               {errors.map((err, i) => (
-                <p key={i} className="font-mono text-[11px] text-red mb-1">• {err}</p>
+                <p key={i} className="text-[11px] text-red mb-1">• {err}</p>
               ))}
             </div>
           )}
@@ -177,7 +177,7 @@ const BatchWeaningModal: React.FC<BatchWeaningModalProps> = ({
             </div>
 
             <div>
-              <label className="block font-mono text-[11px] uppercase tracking-wide text-text-2 mb-2">
+              <label className="block text-[11px] uppercase tracking-wide text-text-2 mb-2">
                 Date de sevrage
               </label>
               <input
@@ -189,7 +189,7 @@ const BatchWeaningModal: React.FC<BatchWeaningModalProps> = ({
             </div>
 
             <div>
-              <label className="block font-mono text-[11px] uppercase tracking-wide text-text-2 mb-2">
+              <label className="block text-[11px] uppercase tracking-wide text-text-2 mb-2">
                 Poids moyen de la bande (kg)
               </label>
               <input
@@ -198,12 +198,12 @@ const BatchWeaningModal: React.FC<BatchWeaningModalProps> = ({
                 placeholder="Ex: 7.5"
                 value={poidsMoyen}
                 onChange={e => setPoidsMoyen(e.target.value)}
-                className="w-full bg-bg-2 border border-border rounded-md px-3 h-11 font-mono text-[13px] text-text-0 placeholder-text-2 outline-none focus:border-accent transition-colors"
+                className="w-full bg-bg-2 border border-border rounded-md px-3 h-11 text-[13px] text-text-0 placeholder-text-2 outline-none focus:border-accent transition-colors"
               />
             </div>
 
             <div>
-              <label className="block font-mono text-[11px] uppercase tracking-wide text-text-2 mb-2">
+              <label className="block text-[11px] uppercase tracking-wide text-text-2 mb-2">
                 Observations
               </label>
               <textarea
@@ -229,10 +229,10 @@ const BatchWeaningModal: React.FC<BatchWeaningModalProps> = ({
                 <TrendingUp size={16} />
               </div>
               <div>
-                <h4 className={`font-mono text-[11px] uppercase tracking-wide ${pointHebdo ? 'text-text-0' : 'text-text-1'}`}>
+                <h4 className={`text-[11px] uppercase tracking-wide ${pointHebdo ? 'text-text-0' : 'text-text-1'}`}>
                   Rapport d'activité
                 </h4>
-                <p className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+                <p className="text-[10px] uppercase tracking-wide text-text-2">
                   Générer Point Hebdo auto
                 </p>
               </div>
@@ -253,13 +253,13 @@ const BatchWeaningModal: React.FC<BatchWeaningModalProps> = ({
           className="pressable w-full h-14 rounded-md bg-accent text-bg-0 flex items-center justify-center gap-3 transition-transform active:scale-[0.98]"
         >
           <CheckCheck size={18} />
-          <span className="font-mono text-[12px] uppercase tracking-wide font-semibold">
+          <span className="text-[12px] uppercase tracking-wide font-semibold">
             Lancer le sevrage
           </span>
         </button>
         <button
           onClick={onClose}
-          className="pressable w-full h-11 rounded-md bg-bg-1 border border-border text-text-1 font-mono text-[11px] uppercase tracking-wide transition-colors"
+          className="pressable w-full h-11 rounded-md bg-bg-1 border border-border text-text-1 text-[11px] uppercase tracking-wide transition-colors"
         >
           Annuler
         </button>

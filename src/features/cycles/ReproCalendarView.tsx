@@ -283,11 +283,11 @@ const ReproCalendarView: React.FC = () => {
                 />
                 <p className="text-[12px] text-text-1 leading-relaxed">
                   Connectez{' '}
-                  <span className="font-mono text-text-0">
+                  <span className="ft-code text-text-0">
                     SUIVI_REPRODUCTION_ACTUEL
                   </span>{' '}
                   pour l'historique saillies. Les MB prévues sont affichées
-                  depuis le champ <span className="font-mono">dateMBPrevue</span>{' '}
+                  depuis le champ <span className="ft-code">dateMBPrevue</span>{' '}
                   des truies.
                 </p>
               </div>
@@ -321,7 +321,7 @@ const ReproCalendarView: React.FC = () => {
                 <div className="text-[14px] font-medium text-text-0">
                   Voir le forecast complet 14 jours
                 </div>
-                <div className="mt-0.5 font-mono text-[11px] text-text-2">
+                <div className="mt-0.5 text-[11px] text-text-2">
                   MB · Sevrages · Retours chaleur · Saturation
                 </div>
               </div>
@@ -386,11 +386,11 @@ const ReproCalendarView: React.FC = () => {
                               <div className="truncate text-[14px] font-medium text-text-0">
                                 {item.primary}
                               </div>
-                              <div className="mt-0.5 truncate font-mono text-[11px] text-text-2">
+                              <div className="mt-0.5 truncate text-[11px] text-text-2">
                                 {ago} · {mbLabel}
                               </div>
                             </div>
-                            <div className="shrink-0 font-mono text-[11px] tabular-nums text-text-2">
+                            <div className="shrink-0 text-[11px] tabular-nums text-text-2">
                               {formatDateFr(item.date)}
                             </div>
                           </button>

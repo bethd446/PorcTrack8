@@ -254,7 +254,7 @@ const StepPhone: React.FC<StepPhoneProps> = ({ value, onChange, onSkip, onContin
       onChange={(e) => onChange(e.target.value)}
       placeholder="+225 07 XX XX XX XX"
       aria-label="Ton numéro WhatsApp"
-      className="w-full h-12 px-4 rounded-md bg-bg-1 border border-border text-text-0 placeholder-text-2 font-mono text-[14px] outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
+      className="w-full h-12 px-4 rounded-md bg-bg-1 border border-border text-text-0 placeholder-text-2 text-[14px] outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors"
     />
     <div className="flex-1" />
     <StepActions onSkip={onSkip} onContinue={onContinue} canContinue={true} />

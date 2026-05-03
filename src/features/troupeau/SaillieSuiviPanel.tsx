@@ -415,7 +415,7 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
                   Saillie en cours
                 </h2>
               </div>
-              <p className="mt-1 font-mono text-[10px] uppercase tracking-wide text-text-2">
+              <p className="mt-1 text-[10px] uppercase tracking-wide text-text-2">
                 Suivi cycle gestation · 115 jours
               </p>
             </div>
@@ -424,7 +424,7 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
                 <div className="ft-heading text-[22px] leading-none text-accent tabular-nums">
                   J+{jour}
                 </div>
-                <div className="mt-1 font-mono text-[9px] uppercase tracking-wide text-text-2">
+                <div className="mt-1 text-[9px] uppercase tracking-wide text-text-2">
                   jour cycle
                 </div>
               </div>
@@ -451,7 +451,7 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
                 style={{ left: `${(30 / 115) * 100}%` }}
               />
             </div>
-            <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-wide text-text-2 tabular-nums">
+            <div className="flex items-center justify-between text-[9px] uppercase tracking-wide text-text-2 tabular-nums">
               <span>J0 · {formatFrShort(dateSaillie)}</span>
               <span>J21 chaleur</span>
               <span>J30 écho</span>
@@ -527,7 +527,7 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
                 <span className="ft-heading block text-[12px] uppercase tracking-wide text-gold">
                   Confirmer gestation (présumée)
                 </span>
-                <span className="mt-0.5 block font-mono text-[10px] text-text-1">
+                <span className="mt-0.5 block text-[10px] text-text-1">
                   J+{jour} · pas de retour chaleur observé
                 </span>
               </span>
@@ -541,7 +541,7 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
               onClick={() => openModal('confirmer')}
               disabled={saving}
               aria-label="Confirmer la saillie"
-              className="pressable inline-flex h-11 items-center justify-center gap-1.5 rounded-md bg-accent text-bg-0 font-mono text-[11px] font-bold uppercase tracking-wide transition-opacity hover:brightness-110 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+              className="pressable inline-flex h-11 items-center justify-center gap-1.5 rounded-md bg-accent text-bg-0 text-[11px] font-bold uppercase tracking-wide transition-opacity hover:brightness-110 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
             >
               <CheckCircle2 size={14} aria-hidden="true" />
               Confirmer saillie
@@ -551,7 +551,7 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
               onClick={() => openModal('retour')}
               disabled={saving}
               aria-label="Signaler un retour chaleur"
-              className="pressable inline-flex h-11 items-center justify-center gap-1.5 rounded-md border border-red/60 bg-bg-1 text-red font-mono text-[11px] font-bold uppercase tracking-wide transition-colors hover:bg-red/10 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red focus-visible:outline-offset-2"
+              className="pressable inline-flex h-11 items-center justify-center gap-1.5 rounded-md border border-red/60 bg-bg-1 text-red text-[11px] font-bold uppercase tracking-wide transition-colors hover:bg-red/10 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red focus-visible:outline-offset-2"
             >
               <HeartPulse size={14} aria-hidden="true" />
               Retour chaleur
@@ -577,7 +577,7 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
                 <span className="ft-heading block text-[11px] uppercase tracking-wide text-text-0">
                   Conseils saillie réussie
                 </span>
-                <span className="mt-0.5 block font-mono text-[9px] uppercase tracking-wide text-text-2">
+                <span className="mt-0.5 block text-[9px] uppercase tracking-wide text-text-2">
                   {CONSEILS.length} règles métier
                 </span>
               </span>
@@ -600,7 +600,7 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
                     className="flex gap-2.5 rounded-md bg-bg-1 px-2.5 py-2"
                   >
                     <span
-                      className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber/15 font-mono text-[10px] font-bold text-amber tabular-nums"
+                      className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber/15 text-[10px] font-bold text-amber tabular-nums"
                       aria-hidden="true"
                     >
                       {i + 1}
@@ -688,7 +688,7 @@ interface KpiTileProps {
 
 const KpiTile: React.FC<KpiTileProps> = ({ label, value, sub, icon, tone = 'default' }) => (
   <div className="flex flex-col gap-1 rounded-md border border-border bg-bg-0/60 px-2.5 py-2">
-    <div className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-wide text-text-2">
+    <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-wide text-text-2">
       {icon ? (
         <span aria-hidden="true" className="text-text-2">
           {icon}
@@ -704,7 +704,7 @@ const KpiTile: React.FC<KpiTileProps> = ({ label, value, sub, icon, tone = 'defa
       {value}
     </div>
     {sub ? (
-      <div className="font-mono text-[9px] text-text-2 tabular-nums truncate">
+      <div className="text-[9px] text-text-2 tabular-nums truncate">
         {sub}
       </div>
     ) : null}
@@ -750,17 +750,17 @@ const WindowTile: React.FC<WindowTileProps> = ({ kind, active, label, range, dat
         </div>
         {active ? (
           <span
-            className="font-mono text-[8px] font-bold uppercase tracking-wide rounded-full px-1.5 py-[1px]"
+            className="text-[8px] font-bold uppercase tracking-wide rounded-full px-1.5 py-[1px]"
             style={{ backgroundColor: 'color-mix(in srgb, currentColor 15%, transparent)' }}
           >
             Active
           </span>
         ) : null}
       </div>
-      <div className="font-mono text-[10px] uppercase tracking-wide">
+      <div className="text-[10px] uppercase tracking-wide">
         {range}
       </div>
-      <div className="font-mono text-[10px] text-text-1 tabular-nums truncate">
+      <div className="text-[10px] text-text-1 tabular-nums truncate">
         {dates}
       </div>
     </div>
@@ -845,7 +845,7 @@ const ConfirmBody: React.FC<ConfirmBodyProps> = ({
           onClick={onCancel}
           disabled={saving}
           aria-label="Annuler"
-          className="pressable flex-1 inline-flex h-12 items-center justify-center gap-1.5 rounded-md bg-bg-1 border border-border text-text-1 font-mono text-[11px] font-bold uppercase tracking-wide transition-colors hover:border-text-2 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+          className="pressable flex-1 inline-flex h-12 items-center justify-center gap-1.5 rounded-md bg-bg-1 border border-border text-text-1 text-[11px] font-bold uppercase tracking-wide transition-colors hover:border-text-2 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
         >
           <X size={14} aria-hidden="true" />
           Annuler
@@ -857,7 +857,7 @@ const ConfirmBody: React.FC<ConfirmBodyProps> = ({
           aria-label={isDanger ? 'Signaler le retour chaleur' : 'Confirmer'}
           className={[
             'pressable flex-[2] inline-flex h-12 items-center justify-center gap-1.5 rounded-md',
-            'font-mono text-[12px] font-bold uppercase tracking-wide',
+            'text-[12px] font-bold uppercase tracking-wide',
             'transition-opacity disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
             isDanger
               ? 'bg-red text-bg-0 hover:brightness-110 focus-visible:outline-red'
@@ -895,11 +895,11 @@ const SummaryRow: React.FC<SummaryRowProps> = ({ label, value, mono, last }) => 
       last ? '' : 'border-b border-border'
     }`}
   >
-    <dt className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+    <dt className="text-[10px] uppercase tracking-wide text-text-2">
       {label}
     </dt>
     <dd
-      className={`text-[12px] text-text-0 ${mono ? 'font-mono tabular-nums' : ''}`}
+      className={`text-[12px] text-text-0 ${mono ? 'tabular-nums' : ''}`}
     >
       {value}
     </dd>

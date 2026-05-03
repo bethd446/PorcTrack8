@@ -3,7 +3,7 @@
  * Boucle : regex `^[A-Za-z0-9-]{2,15}$`, unicité côté ferme via set fourni.
  * Sexe : enum strict. Poids : optionnel, 0.5–200 kg si renseigné.
  */
-import type { PorceletSexe } from '../../types/farm';
+import type { PorceletIndividuel, PorceletSexe } from '../../types/farm';
 
 export interface AddPorceletInput {
   boucle: string;
@@ -85,4 +85,41 @@ export function validateAddPorcelet(
       notes: notes || undefined,
     },
   };
+}
+
+// ─── V36-E P3 — Détection doublon boucle (warning UI non-bloquant) ──────────
+
+export interface DuplicateBoucleMatch {
+  /** Boucle existante (telle que stockée). */
+  boucle: string;
+  /** Sexe de l'enregistrement existant. */
+  sexe: PorceletSexe;
+  /** UUID du batch contenant le porcelet existant. */
+  batchId: string;
+}
+
+/**
+ * Cherche un porcelet existant avec la même boucle ET le même sexe.
+ * Comparaison case-insensitive sur la boucle. Retourne le PREMIER match.
+ *
+ * Règle : si la boucle est saisie mais le sexe différent, ce n'est PAS un
+ * doublon (porcelets distincts utilisant la même numérotation).
+ */
+export function findDuplicateBoucle(
+  inputBoucle: string,
+  inputSexe: PorceletSexe,
+  existing: ReadonlyArray<PorceletIndividuel>,
+): DuplicateBoucleMatch | null {
+  const target = inputBoucle.trim().toUpperCase();
+  if (!target) return null;
+  for (const p of existing) {
+    if (p.boucle.trim().toUpperCase() === target && p.sexe === inputSexe) {
+      return {
+        boucle: p.boucle,
+        sexe: p.sexe,
+        batchId: p.batchId,
+      };
+    }
+  }
+  return null;
 }

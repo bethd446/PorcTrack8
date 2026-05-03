@@ -367,7 +367,7 @@ const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
             </div>
           )}
         </div>
-        <div className="shrink-0 flex items-center gap-1 font-mono text-[12px] tabular-nums text-text-1">
+        <div className="shrink-0 flex items-center gap-1 text-[12px] tabular-nums text-text-1">
           <EditableNumber
             value={item.stockActuel ?? null}
             min={0}
@@ -397,7 +397,7 @@ const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
           <Chip tone={tone} label={labelForStatut(item.statutStock)} />
         </div>
       </div>
-      <div className="font-mono text-[11px] text-text-2 pl-0.5">
+      <div className="text-[11px] text-text-2 pl-0.5">
         <EditableText
           value={item.notes ?? null}
           maxLength={200}
@@ -632,7 +632,7 @@ const AlimentsView: React.FC = () => {
                 type="button"
                 onClick={() => setAddOpen(true)}
                 aria-label="Ajouter un nouvel aliment"
-                className="shrink-0 inline-flex h-11 min-h-[44px] items-center gap-1.5 px-4 rounded-md bg-accent text-bg-0 font-mono text-[11px] font-bold uppercase tracking-wide transition-colors duration-150 hover:brightness-110 active:scale-[0.96] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                className="shrink-0 inline-flex h-11 min-h-[44px] items-center gap-1.5 px-4 rounded-md bg-accent text-bg-0 text-[11px] font-bold uppercase tracking-wide transition-colors duration-150 hover:brightness-110 active:scale-[0.96] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
               >
                 <Plus size={14} aria-hidden="true" />
                 <span>Nouvel aliment</span>
@@ -738,7 +738,7 @@ const AlimentsView: React.FC = () => {
                   <div className="text-[13px] font-semibold text-text-0">
                     {summary.rupture} matière{summary.rupture > 1 ? 's' : ''} en rupture
                   </div>
-                  <div className="mt-0.5 font-mono text-[11px] text-text-2">
+                  <div className="mt-0.5 text-[11px] text-text-2">
                     Commander d'urgence — production à l'arrêt si non réapprovisionné.
                   </div>
                 </div>

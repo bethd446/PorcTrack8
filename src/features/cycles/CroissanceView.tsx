@@ -299,7 +299,7 @@ const CroissanceCard: React.FC<{ data: CroissanceRowData; onOpen: () => void }> 
             <Chip tone="default" label={`${data.vivants} porcs`} size="xs" />
           </div>
           <p className="text-[11px] text-text-2 mt-0.5">
-            Phase: <span className="text-amber font-medium">Croissance</span> · Âge: <span className="text-text-1 font-mono">{data.ageJours}j</span>
+            Phase: <span className="text-amber font-medium">Croissance</span> · Âge: <span className="text-text-1">{data.ageJours}j</span>
           </p>
         </div>
         {isTransitionRequired ? (
@@ -313,7 +313,7 @@ const CroissanceCard: React.FC<{ data: CroissanceRowData; onOpen: () => void }> 
         {/* Performance Gauge */}
         <div className="bg-bg-1 rounded-xl p-3 border border-border/50">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-[10px] uppercase font-mono text-text-2">GMQ Phase</span>
+            <span className="text-[10px] uppercase text-text-2">GMQ Phase</span>
             <TrendingUp size={12} className={gmq >= gmqTarget ? 'text-success' : 'text-amber'} />
           </div>
           <div className="flex items-baseline gap-1">
@@ -331,13 +331,13 @@ const CroissanceCard: React.FC<{ data: CroissanceRowData; onOpen: () => void }> 
         {/* Nutrition Info */}
         <div className="bg-bg-1 rounded-xl p-3 border border-border/50">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-[10px] uppercase font-mono text-text-2">Alimentation</span>
+            <span className="text-[10px] uppercase text-text-2">Alimentation</span>
             <Droplets size={12} className="text-amber" />
           </div>
           <div className="text-[12px] font-bold text-amber truncate">
             {feedConfig.label}
           </div>
-          <div className="mt-1 text-[10px] text-text-2 font-mono leading-tight truncate">
+          <div className="mt-1 text-[10px] text-text-2 leading-tight truncate">
             Maïs: {feedConfig.formule.mais}% | Soja: {feedConfig.formule.tourteau_soja}%
           </div>
         </div>

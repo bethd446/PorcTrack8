@@ -92,20 +92,20 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
         <div className="space-y-5">
           <div className="card-dense !p-4 space-y-1">
             <div className="text-mono-micro text-text-2">Bande</div>
-            <div className="font-mono text-[13px] text-text-0">{bandeId}</div>
-            <p className="mt-2 font-mono text-[12px] text-text-1 leading-relaxed">
+            <div className="ft-code text-[13px] text-text-0">{bandeId}</div>
+            <p className="mt-2 text-[12px] text-text-1 leading-relaxed">
               {pending.alertMessage}
             </p>
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="sevrage-date" className="block font-mono text-[11px] uppercase text-text-2">
+            <label htmlFor="sevrage-date" className="block text-[11px] uppercase text-text-2">
               Date de sevrage réelle
             </label>
             <input
               id="sevrage-date"
               type="date"
-              className="w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 font-mono text-[13px]"
+              className="w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 font-mono text-[13px] tabular-nums"
               value={dateSevrage}
               onChange={e => setDateSevrage(e.target.value)}
               max={todayIso()}
@@ -113,25 +113,25 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="sevrage-nb" className="block font-mono text-[11px] uppercase text-text-2">
+            <label htmlFor="sevrage-nb" className="block text-[11px] uppercase text-text-2">
               Nombre de porcelets sevrés
             </label>
             <input
               id="sevrage-nb"
               type="number"
               min={0}
-              className="w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 font-mono text-[13px]"
+              className="w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 text-[13px]"
               value={nbSevres}
               onChange={e => setNbSevres(Math.max(0, Number(e.target.value) || 0))}
             />
-            <span className="block font-mono text-[11px] text-text-2">
+            <span className="block text-[11px] text-text-2">
               Suggéré : {sevresDefault} porcelet(s) sous mère
             </span>
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <label htmlFor="sevrage-poids" className="block font-mono text-[11px] uppercase text-text-2">
+              <label htmlFor="sevrage-poids" className="block text-[11px] uppercase text-text-2">
                 Poids moyen sevrage (kg) <span className="text-red normal-case">· obligatoire</span>
               </label>
               <span className="inline-flex items-center px-2 h-6 rounded-full bg-bg-2 border border-border text-mono-micro text-text-1">
@@ -146,7 +146,7 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
               min={0.5}
               max={50}
               aria-required="true"
-              className="w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 font-mono text-[13px] tabular-nums"
+              className="w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 text-[13px] tabular-nums"
               value={poidsKg}
               onChange={e => setPoidsKg(e.target.value)}
               placeholder="6.0"
@@ -167,12 +167,12 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
               return null;
             })()}
             {poidsError && (
-              <p role="alert" className="font-mono text-[11px] text-red">{poidsError}</p>
+              <p role="alert" className="text-[11px] text-red">{poidsError}</p>
             )}
           </div>
 
           {error && (
-            <p role="alert" className="font-mono text-[11px] text-red">
+            <p role="alert" className="text-[11px] text-red">
               {error}
             </p>
           )}
@@ -183,7 +183,7 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
             disabled={saving || !poidsKg}
             aria-busy={saving}
             aria-label="Confirmer le sevrage"
-            className="pressable w-full h-14 rounded-md bg-accent text-bg-0 font-mono text-[12px] font-bold uppercase tracking-wide disabled:opacity-40 disabled:cursor-not-allowed"
+            className="pressable w-full h-14 rounded-md bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? 'Enregistrement…' : 'Confirmer le sevrage'}
           </button>

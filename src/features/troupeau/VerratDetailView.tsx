@@ -149,7 +149,7 @@ const VerratDetailView: React.FC = () => {
               </header>
               <div className="flex flex-col items-center gap-3">
                 <AlertCircle size={40} className="text-coral" aria-hidden="true" />
-                <p className="font-mono text-[12px] text-text-2 text-center max-w-xs">
+                <p className="text-[12px] text-text-2 text-center max-w-xs">
                   Ce verrat n'existe pas (ou plus) dans ta feuille VERRATS.
                 </p>
               </div>
@@ -315,7 +315,7 @@ const VerratDetailView: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setSheet('saillie')}
-                    className="pressable mt-2 px-4 py-2.5 rounded-full bg-accent text-bg-0 font-mono text-[11px] font-bold uppercase tracking-wider"
+                    className="pressable mt-2 px-4 py-2.5 rounded-full bg-accent text-bg-0 text-[11px] font-bold uppercase tracking-wider"
                   >
                     + Saisir une saillie
                   </button>
@@ -350,7 +350,7 @@ const VerratDetailView: React.FC = () => {
                             {truieName(s)}
                             {s.statut ? ` · ${s.statut}` : ''}
                           </div>
-                          <div className="font-mono text-[11px] text-text-2 mt-0.5 truncate">
+                          <div className="text-[11px] text-text-2 mt-0.5 truncate">
                             {formatDate(s.dateSaillie)}
                             {s.dateMBPrevue ? ` · MB ${formatDate(s.dateMBPrevue)}` : ''}
                           </div>
@@ -367,7 +367,7 @@ const VerratDetailView: React.FC = () => {
               <SectionDivider label={`Historique soins · ${soins.length}`} />
               {soins.length === 0 ? (
                 <div className="card-dense text-center py-6 mt-3">
-                  <p className="font-mono text-[11px] text-text-2">
+                  <p className="text-[11px] text-text-2">
                     Aucun soin enregistré pour ce verrat.
                   </p>
                 </div>
@@ -403,7 +403,7 @@ const VerratDetailView: React.FC = () => {
                             {s.typeSoin}
                             {s.traitement ? ` · ${s.traitement}` : ''}
                           </div>
-                          <div className="font-mono text-[11px] text-text-2 mt-0.5 truncate">
+                          <div className="text-[11px] text-text-2 mt-0.5 truncate">
                             {formatDate(s.date)}
                             {s.observation ? ` · ${s.observation}` : ''}
                           </div>
@@ -513,7 +513,7 @@ const DetailRow: React.FC<DetailRowProps> = ({ label, value, mono, accent }) => 
     <div className="flex items-center justify-between px-3.5 py-3 border-b border-border last:border-b-0">
       <span className="text-[13px] text-text-1">{label}</span>
       <span
-        className={`${mono ? 'font-mono tabular-nums' : ''} text-[13px] font-medium`}
+        className={`${mono ? 'tabular-nums' : ''} text-[13px] font-medium`}
         style={{
           color: accent || 'var(--text-0)',
           opacity: isEmpty ? 0.4 : 1,
@@ -556,7 +556,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({ icon, label, onClick }) => 
     <span className="inline-flex w-8 h-8 rounded-lg bg-bg-1 border border-border items-center justify-center text-accent">
       {icon}
     </span>
-    <span className="font-mono text-[11px] font-semibold uppercase tracking-wide text-text-1">
+    <span className="text-[11px] font-semibold uppercase tracking-wide text-text-1">
       {label}
     </span>
   </button>

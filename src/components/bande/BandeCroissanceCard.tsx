@@ -140,7 +140,7 @@ const BandeCroissanceCard: React.FC<BandeCroissanceCardProps> = ({ bande, notes 
       />
 
       {showHelp ? (
-        <div className="mb-3 rounded-md bg-bg-2 p-3 font-mono text-[11px] leading-relaxed text-text-1">
+        <div className="mb-3 rounded-md bg-bg-2 p-3 text-[11px] leading-relaxed text-text-1">
           Le GMQ (Gain Moyen Quotidien) est calculé entre pesées successives.
           Cibles professionnelles :<br />
           <span className="text-text-2">• Sous mère (0-21j) : 180-250 g/j</span><br />
@@ -154,10 +154,10 @@ const BandeCroissanceCard: React.FC<BandeCroissanceCardProps> = ({ bande, notes 
         /* ── État vide : aucune pesée ─────────────────────────────────── */
         <div className="flex flex-col items-center justify-center py-8 text-center">
           <Scale size={36} className="text-text-2 mb-3" aria-hidden="true" strokeWidth={1.5} />
-          <p className="font-mono text-[12px] text-text-1 uppercase tracking-wide">
+          <p className="text-[12px] text-text-1 uppercase tracking-wide">
             Aucune pesée enregistrée
           </p>
-          <p className="mt-1.5 font-mono text-[11px] text-text-2">
+          <p className="mt-1.5 text-[11px] text-text-2">
             Utilisez le bouton Pesée pour commencer.
           </p>
         </div>
@@ -201,7 +201,7 @@ const BandeCroissanceCard: React.FC<BandeCroissanceCardProps> = ({ bande, notes 
 
           {/* ── Historique pesées (DESC) ─────────────────────────────── */}
           <div className="mt-4">
-            <div className="mb-1 font-mono text-[10px] uppercase tracking-wide text-text-2">
+            <div className="mb-1 text-[10px] uppercase tracking-wide text-text-2">
               Historique
             </div>
             <ul className="card-dense !p-0 overflow-hidden">
@@ -224,10 +224,10 @@ const BandeCroissanceCard: React.FC<BandeCroissanceCardProps> = ({ bande, notes 
           {/* ── Projection finition (ENGRAISSEMENT) ──────────────────── */}
           {projectionInfo && poidsProjeteFin ? (
             <div className="mt-3 rounded-md border border-border bg-bg-2 p-3">
-              <div className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+              <div className="text-[10px] uppercase tracking-wide text-text-2">
                 Projection finition
               </div>
-              <div className="mt-1 font-mono text-[13px] tabular-nums text-text-0">
+              <div className="mt-1 text-[13px] tabular-nums text-text-0">
                 {poidsProjeteFin} kg dans {projectionInfo.joursAvant}j
                 <span className="ml-1.5 text-text-2">
                   ({fmtDateCourt(projectionInfo.dateFinition)})

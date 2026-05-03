@@ -1,9 +1,14 @@
 /**
  * Tests unitaires — quickAddPorceletLogic (validation pure).
- * Couvre : regex boucle, unicité ferme, sexe, poids optionnel borné, notes.
+ * Couvre : regex boucle, unicité ferme, sexe, poids optionnel borné, notes,
+ * et V36-E P3 findDuplicateBoucle (warning non-bloquant boucle+sexe).
  */
 import { describe, it, expect } from 'vitest';
-import { validateAddPorcelet } from './quickAddPorceletLogic';
+import {
+  findDuplicateBoucle,
+  validateAddPorcelet,
+} from './quickAddPorceletLogic';
+import type { PorceletIndividuel } from '../../types/farm';
 
 describe('validateAddPorcelet — boucle', () => {
   const empty = new Set<string>();
@@ -165,5 +170,68 @@ describe('validateAddPorcelet — sexe & notes', () => {
     );
     expect(r.ok).toBe(true);
     expect(r.values?.notes).toBeUndefined();
+  });
+});
+
+// ─── V36-E P3 — findDuplicateBoucle ─────────────────────────────────────────
+
+describe('findDuplicateBoucle (V36-E P3)', () => {
+  function p(
+    id: string,
+    boucle: string,
+    sexe: PorceletIndividuel['sexe'],
+    batchId = 'b1',
+  ): PorceletIndividuel {
+    return { id, boucle, sexe, batchId, statut: 'VIVANT' };
+  }
+
+  it('retourne null si aucun porcelet existant', () => {
+    expect(findDuplicateBoucle('B45', 'M', [])).toBeNull();
+  });
+
+  it('retourne null si la boucle saisie est vide', () => {
+    const ex = [p('p1', 'B45', 'M')];
+    expect(findDuplicateBoucle('   ', 'M', ex)).toBeNull();
+  });
+
+  it('match exact boucle+sexe → warning', () => {
+    const ex = [p('p1', 'B45', 'M', 'b-add')];
+    const m = findDuplicateBoucle('B45', 'M', ex);
+    expect(m).not.toBeNull();
+    expect(m?.boucle).toBe('B45');
+    expect(m?.sexe).toBe('M');
+    expect(m?.batchId).toBe('b-add');
+  });
+
+  it('match case-insensitive sur la boucle', () => {
+    const ex = [p('p1', 'B45', 'M')];
+    expect(findDuplicateBoucle('b45', 'M', ex)).not.toBeNull();
+    expect(findDuplicateBoucle('  B45 ', 'M', ex)).not.toBeNull();
+  });
+
+  it('boucle identique mais sexe différent → null (pas un doublon)', () => {
+    const ex = [p('p1', 'B45', 'M')];
+    expect(findDuplicateBoucle('B45', 'F', ex)).toBeNull();
+    expect(findDuplicateBoucle('B45', 'INCONNU', ex)).toBeNull();
+  });
+
+  it('retourne le premier match si plusieurs doublons existent', () => {
+    const ex = [
+      p('p1', 'B45', 'M', 'b-1'),
+      p('p2', 'B45', 'M', 'b-2'),
+    ];
+    const m = findDuplicateBoucle('B45', 'M', ex);
+    expect(m?.batchId).toBe('b-1');
+  });
+
+  it('cas christophe : B45 × 3 mêmes sexe → match (warning attendu)', () => {
+    const ex = [
+      p('p1', 'B45', 'M', 'b-A'),
+      p('p2', 'B45', 'M', 'b-B'),
+      p('p3', 'B45', 'M', 'b-C'),
+    ];
+    const m = findDuplicateBoucle('B45', 'M', ex);
+    expect(m).not.toBeNull();
+    expect(m?.batchId).toBe('b-A');
   });
 });

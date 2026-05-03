@@ -201,7 +201,7 @@ const PostSevrageView: React.FC = () => {
                         <Lightbulb size={16} className="text-accent" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h4 className="text-[12px] font-bold text-text-0 uppercase font-mono">{rec.titre}</h4>
+                        <h4 className="text-[12px] font-bold text-text-0 uppercase">{rec.titre}</h4>
                         <p className="text-[11px] text-text-2 mt-1 leading-relaxed">
                           {rec.constat} <span className="text-accent font-medium">{rec.action}</span>
                         </p>
@@ -356,7 +356,7 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
             <Chip tone={isBloquant ? 'red' : 'default'} label={isBloquant ? 'Blocage' : `${data.vivants} porcelet${data.vivants > 1 ? 's' : ''}`} size="xs" />
           </div>
           <p className="text-[11px] text-text-2 mt-0.5">
-            Mère: {data.truie || '—'} · Âge: <span className="text-text-1 font-mono">{data.ageJours}j</span>
+            Mère: {data.truie || '—'} · Âge: <span className="text-text-1">{data.ageJours}j</span>
           </p>
           {isBloquant && (
             <div className="flex items-center gap-1.5 mt-1 animate-pulse" style={{ color: 'var(--color-danger, #EF4444)' }}>
@@ -387,7 +387,7 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
         {/* Performance Gauge (Custom) */}
         <div className="bg-bg-1 rounded-xl p-3 border border-border/50">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-[10px] uppercase font-mono text-text-2">GMQ Moyen</span>
+            <span className="text-[10px] uppercase text-text-2">GMQ Moyen</span>
             <TrendingUp size={12} className={gmq >= gmqTarget ? 'text-success' : 'text-amber'} />
           </div>
           <div className="flex items-baseline gap-1">
@@ -405,13 +405,13 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
         {/* Nutrition Info */}
         <div className="bg-bg-1 rounded-xl p-3 border border-border/50">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-[10px] uppercase font-mono text-text-2">Alimentation</span>
+            <span className="text-[10px] uppercase text-text-2">Alimentation</span>
             <Droplets size={12} className="text-accent" />
           </div>
           <div className="text-[12px] font-bold text-accent truncate">
             {feedConfig?.label || currentAliment}
           </div>
-          <div className="mt-1 text-[10px] text-text-2 font-mono leading-tight truncate">
+          <div className="mt-1 text-[10px] text-text-2 leading-tight truncate">
             Maïs: {feedConfig?.formule.mais}% | Soja: {feedConfig?.formule.tourteau_soja}%
           </div>
         </div>
@@ -427,7 +427,7 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
             </p>
             <div className="mt-1.5 flex flex-wrap gap-1">
               {data.releve.weights.slice(0, 8).map((w: number, i: number) => (
-                <span key={i} className="text-[10px] font-mono bg-bg-1 px-1.5 py-0.5 rounded text-text-2 whitespace-nowrap">{w}kg</span>
+                <span key={i} className="text-[10px] bg-bg-1 px-1.5 py-0.5 rounded text-text-2 whitespace-nowrap">{w}kg</span>
               ))}
               {data.releve.weights.length > 8 && <span className="text-[10px] text-text-2">…</span>}
             </div>

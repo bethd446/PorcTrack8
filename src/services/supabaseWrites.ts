@@ -1420,3 +1420,91 @@ export async function setPorceletStatut(
 ): Promise<void> {
   return updatePorcelet(id, { statut });
 }
+
+// ── V36-E P3 — Split d'une bande ───────────────────────────────────────────
+
+export interface SplitBatchResult {
+  /** ID UUID de la nouvelle bande créée. */
+  newBatchId: string;
+  /** Code_id de la nouvelle bande (B-YYYYMMDD-{logeNumero}). */
+  newCodeId: string;
+  /** Nombre de porcelets effectivement déplacés. */
+  movedCount: number;
+  /** Si true, la bande source a été passée en RECAP (vide après split). */
+  sourceArchivedAsRecap: boolean;
+}
+
+/**
+ * Splitte une bande source en déplaçant un sous-ensemble de porcelets vers
+ * une nouvelle bande dans une loge destination.
+ *
+ * Effets (séquentiels, pas en transaction RPC — Supabase JS ne l'expose pas
+ * sans Edge Function dédiée) :
+ *  1. INSERT batches (sow_id=NULL, validation_status=VALIDATED, loge_id, phase)
+ *  2. UPDATE porcelets_individuels SET batch_id=newId WHERE id IN (...)
+ *  3. Si la source est vide après split → UPDATE batches SET statut='RECAP'
+ *
+ * En cas d'échec sur l'étape 2, l'INSERT batch n'est PAS rollback (best-effort).
+ * L'utilisateur peut alors supprimer la bande créée manuellement si besoin.
+ */
+// Pattern UUID v4 / v1 (basique, suffisant pour distinguer d'un code_id type "B-...").
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export async function splitBatch(args: {
+  sourceBatchId: string;
+  porceletsIds: string[];
+  newBatchPayload: WithoutFarm<BatchInsert>;
+}): Promise<SplitBatchResult> {
+  if (!args.sourceBatchId) throw new Error('sourceBatchId manquant');
+  if (!args.porceletsIds || args.porceletsIds.length === 0) {
+    throw new Error('Aucun porcelet à déplacer');
+  }
+  if (!args.newBatchPayload) throw new Error('newBatchPayload manquant');
+
+  // Résolution code_id → UUID si nécessaire (rétrocompat avec callers
+  // qui passent l'ID display de la bande).
+  let sourceUuid = args.sourceBatchId;
+  if (!UUID_PATTERN.test(sourceUuid)) {
+    const resolved = await resolveIdByCode('batches', args.sourceBatchId);
+    if (!resolved) {
+      throw new Error(`[split] bande source introuvable: ${args.sourceBatchId}`);
+    }
+    sourceUuid = resolved;
+  }
+
+  // 1. INSERT nouvelle bande
+  const created = await runInsert<BatchRow>('batches', args.newBatchPayload);
+  const newBatchId = created.id;
+  const newCodeId = (created as unknown as { code_id?: string }).code_id ?? '';
+
+  // 2. UPDATE porcelets_individuels.batch_id
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: updErr } = await (supabase.from('porcelets_individuels' as any) as any)
+    .update({ batch_id: newBatchId })
+    .in('id', args.porceletsIds);
+  if (updErr) {
+    throw new Error(`[split] update porcelets failed: ${updErr.message}`);
+  }
+
+  // 3. Si bande source vide → marquer RECAP
+  let sourceArchivedAsRecap = false;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { count, error: cntErr } = await (supabase.from('porcelets_individuels' as any) as any)
+    .select('id', { count: 'exact', head: true })
+    .eq('batch_id', sourceUuid);
+  if (!cntErr && (count ?? 0) === 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: srcErr } = await (supabase.from('batches') as any)
+      .update({ statut: 'RECAP' })
+      .eq('id', sourceUuid);
+    if (!srcErr) sourceArchivedAsRecap = true;
+  }
+
+  return {
+    newBatchId,
+    newCodeId,
+    movedCount: args.porceletsIds.length,
+    sourceArchivedAsRecap,
+  };
+}

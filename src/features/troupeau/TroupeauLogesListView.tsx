@@ -131,7 +131,7 @@ const TroupeauLogesListView: React.FC = () => {
           type="button"
           onClick={() => setAddOpen(true)}
           aria-label="Ajouter une nouvelle loge"
-          className="pressable inline-flex items-center gap-2 h-10 px-4 rounded-full bg-accent text-bg-0 font-mono text-[12px] font-medium uppercase tracking-wide shadow-sm hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-opacity"
+          className="pressable inline-flex items-center gap-2 h-10 px-4 rounded-full bg-accent text-bg-0 text-[12px] font-medium uppercase tracking-wide shadow-sm hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-opacity"
         >
           <Plus size={14} aria-hidden="true" />
           Nouvelle loge
@@ -154,7 +154,7 @@ const TroupeauLogesListView: React.FC = () => {
               aria-selected={active}
               onClick={() => setFilter(opt.value)}
               className={[
-                'pressable h-8 px-3 rounded-full font-mono text-[11px] font-semibold uppercase tracking-wide transition-colors',
+                'pressable h-8 px-3 rounded-full text-[11px] font-semibold uppercase tracking-wide transition-colors',
                 active
                   ? 'bg-accent text-bg-0'
                   : 'bg-bg-1 border border-border text-text-1 hover:bg-bg-2',
@@ -174,7 +174,7 @@ const TroupeauLogesListView: React.FC = () => {
           aria-live="polite"
         >
           <p
-            className="font-mono text-[12px]"
+            className="text-[12px]"
             style={{ color: 'var(--muted)' }}
           >
             Chargement…
@@ -189,7 +189,7 @@ const TroupeauLogesListView: React.FC = () => {
             <button
               type="button"
               onClick={() => setAddOpen(true)}
-              className="pressable inline-flex items-center gap-2 h-11 px-5 rounded-full bg-accent text-bg-0 font-mono text-[12px] font-bold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+              className="pressable inline-flex items-center gap-2 h-11 px-5 rounded-full bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
             >
               <Plus size={14} aria-hidden="true" />
               Créer la première loge
@@ -202,7 +202,7 @@ const TroupeauLogesListView: React.FC = () => {
           role="status"
         >
           <p
-            className="font-mono text-[12px]"
+            className="text-[12px]"
             style={{ color: 'var(--muted)' }}
           >
             Aucune loge pour ce filtre.

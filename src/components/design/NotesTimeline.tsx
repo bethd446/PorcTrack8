@@ -101,7 +101,7 @@ const NotesTimeline: React.FC<NotesTimelineProps> = ({
           <Eyebrow>Historique notes</Eyebrow>
         </div>
         <div style={{ textAlign: 'center', padding: '20px 8px' }}>
-          <p className="font-mono text-[12px] text-text-2 mb-3">
+          <p className="text-[12px] text-text-2 mb-3">
             Aucune note pour {subjectType.toLowerCase()}
             {subjectLabel ? ` ${subjectLabel}` : ''}.
           </p>
@@ -109,7 +109,7 @@ const NotesTimeline: React.FC<NotesTimelineProps> = ({
             <button
               type="button"
               onClick={onAddNote}
-              className="pressable inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-accent text-bg-0 font-mono text-[11px] font-bold uppercase tracking-wide"
+              className="pressable inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-accent text-bg-0 text-[11px] font-bold uppercase tracking-wide"
               aria-label="Ajouter une note"
             >
               <Plus size={13} aria-hidden="true" />
@@ -132,7 +132,7 @@ const NotesTimeline: React.FC<NotesTimelineProps> = ({
           <button
             type="button"
             onClick={onAddNote}
-            className="pressable inline-flex items-center gap-1 text-accent font-mono text-[11px] font-bold uppercase tracking-wide"
+            className="pressable inline-flex items-center gap-1 text-accent text-[11px] font-bold uppercase tracking-wide"
             aria-label="Ajouter une note"
           >
             <Plus size={12} aria-hidden="true" />
@@ -174,7 +174,7 @@ const NotesTimeline: React.FC<NotesTimelineProps> = ({
               <div style={{ flex: 1, minWidth: 0 }}>
                 {/* Date + tags + audio indicator */}
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+                  <span className="text-[11px] uppercase tracking-wide text-text-2">
                     {relativeDate(n.date)}
                   </span>
                   {(n.tags ?? []).map(tag => {
@@ -182,7 +182,7 @@ const NotesTimeline: React.FC<NotesTimelineProps> = ({
                     return (
                       <span
                         key={tag}
-                        className="font-mono text-[10px] uppercase tracking-wide"
+                        className="text-[10px] uppercase tracking-wide"
                         style={{
                           background: tone.bg,
                           color: tone.fg,
@@ -212,7 +212,7 @@ const NotesTimeline: React.FC<NotesTimelineProps> = ({
                     <button
                       type="button"
                       onClick={() => setExpanded(prev => ({ ...prev, [n.id]: true }))}
-                      className="ml-1 text-accent font-mono text-[11px] font-bold uppercase"
+                      className="ml-1 text-accent text-[11px] font-bold uppercase"
                       aria-label="Voir la note complète"
                     >
                       voir +
@@ -241,7 +241,7 @@ const NotesTimeline: React.FC<NotesTimelineProps> = ({
 
                 {/* Auteur */}
                 {n.auteur && (
-                  <p className="font-mono text-[10px] text-text-2 mt-1 uppercase tracking-wide" style={{ margin: '4px 0 0' }}>
+                  <p className="text-[10px] text-text-2 mt-1 uppercase tracking-wide" style={{ margin: '4px 0 0' }}>
                     {n.auteur}
                   </p>
                 )}
@@ -253,7 +253,7 @@ const NotesTimeline: React.FC<NotesTimelineProps> = ({
 
       {hasMore && (
         <div style={{ marginTop: 8, textAlign: 'center' }}>
-          <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+          <span className="text-[11px] uppercase tracking-wide text-text-2">
             +{filtered.length - maxItems} notes plus anciennes
           </span>
         </div>

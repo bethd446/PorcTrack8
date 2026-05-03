@@ -225,7 +225,7 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
         <div className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-bg-2 text-accent">
           <ClipboardList size={16} aria-hidden="true" />
         </div>
-        <h3 className="font-mono text-[11px] font-bold uppercase tracking-wide text-text-1">
+        <h3 className="text-[11px] font-bold uppercase tracking-wide text-text-1">
           Saisie rapide note
         </h3>
       </div>
@@ -242,7 +242,7 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
               className={[
                 'inline-flex items-center h-9 w-full px-3 rounded-md',
                 'bg-bg-0 border border-border',
-                'font-mono text-[12px] uppercase tracking-wide text-text-1 tabular-nums truncate',
+                'ft-code text-[12px] uppercase tracking-wide text-text-1 tabular-nums truncate',
               ].join(' ')}
               aria-label={`Sujet ${subjectType} ${subjectId}`}
             >
@@ -258,7 +258,7 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
               className={[
                 'inline-flex items-center h-9 w-full px-3 rounded-md',
                 'bg-bg-0 border border-border',
-                'font-mono text-[12px] uppercase tracking-wide text-text-1 truncate',
+                'text-[12px] uppercase tracking-wide text-text-1 truncate',
               ].join(' ')}
               aria-label={`Auteur ${author}`}
             >
@@ -313,7 +313,7 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
               </button>
             )}
             {photoError ? (
-              <p role="alert" className="font-mono text-[10px] text-red max-w-[180px]">
+              <p role="alert" className="text-[10px] text-red max-w-[180px]">
                 {photoError}
               </p>
             ) : null}
@@ -415,7 +415,7 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
             className={[
               'w-full rounded-md px-3 py-3',
               'bg-bg-0 border text-text-0 placeholder:text-text-2',
-              'font-mono text-[13px]',
+              'text-[13px]',
               'outline-none transition-colors duration-[160ms]',
               'focus:border-accent focus:ring-1 focus:ring-accent',
               'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-1px]',
@@ -429,13 +429,13 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
           />
           <div className="flex items-center justify-between">
             {errors.note ? (
-              <p id="quick-note-error" role="alert" className="font-mono text-[11px] text-red">
+              <p id="quick-note-error" role="alert" className="text-[11px] text-red">
                 {errors.note}
               </p>
             ) : (
               <span />
             )}
-            <span className="font-mono text-[10px] text-text-2 tabular-nums">
+            <span className="text-[10px] text-text-2 tabular-nums">
               {note.length}/{MAX_NOTE_LEN}
             </span>
           </div>
@@ -448,7 +448,7 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
           className={[
             'pressable w-full h-[48px] rounded-md',
             'inline-flex items-center justify-center gap-2',
-            'bg-accent text-bg-0 font-mono text-[12px] font-bold uppercase tracking-wide',
+            'bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide',
             'transition-colors duration-[160ms]',
             'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
             submitDisabled ? 'opacity-40 cursor-not-allowed' : '',

@@ -243,7 +243,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
               aria-describedby={errors.truieId ? 'add-bande-truie-error' : undefined}
               className={[
                 'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0',
-                'font-mono text-[14px] outline-none transition-colors duration-[160ms]',
+                'text-[14px] outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.truieId ? 'border-red' : 'border-border hover:border-text-2',
               ].join(' ')}
@@ -259,7 +259,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
               ))}
             </select>
             {errors.truieId ? (
-              <p id="add-bande-truie-error" role="alert" className="font-mono text-[11px] text-red">
+              <p id="add-bande-truie-error" role="alert" className="text-[11px] text-red">
                 {errors.truieId}
               </p>
             ) : null}
@@ -278,7 +278,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
               aria-invalid={!!errors.verratId}
               className={[
                 'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0',
-                'font-mono text-[14px] outline-none transition-colors duration-[160ms]',
+                'text-[14px] outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.verratId ? 'border-red' : 'border-border hover:border-text-2',
               ].join(' ')}
@@ -313,7 +313,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
               aria-describedby={errors.idPortee ? 'add-bande-id-error' : 'add-bande-id-hint'}
               className={[
                 'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[14px] uppercase tabular-nums outline-none transition-colors duration-[160ms]',
+                'ft-code text-[14px] uppercase outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.idPortee ? 'border-red' : 'border-border hover:border-text-2',
               ].join(' ')}
@@ -324,11 +324,11 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
               autoComplete="off"
             />
             {errors.idPortee ? (
-              <p id="add-bande-id-error" role="alert" className="font-mono text-[11px] text-red">
+              <p id="add-bande-id-error" role="alert" className="text-[11px] text-red">
                 {errors.idPortee}
               </p>
             ) : (
-              <p id="add-bande-id-hint" className="font-mono text-[10px] text-text-2">
+              <p id="add-bande-id-hint" className="text-[10px] text-text-2">
                 Format YY-T{'<n>'}-NN (ex: 26-T1-01)
               </p>
             )}
@@ -348,7 +348,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
               aria-invalid={!!errors.dateMb}
               className={[
                 'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0',
-                'font-mono text-[14px] tabular-nums outline-none transition-colors duration-[160ms]',
+                'text-[14px] tabular-nums outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.dateMb ? 'border-red' : 'border-border hover:border-text-2',
               ].join(' ')}
@@ -357,7 +357,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
               disabled={saving}
             />
             {errors.dateMb ? (
-              <p role="alert" className="font-mono text-[11px] text-red">{errors.dateMb}</p>
+              <p role="alert" className="text-[11px] text-red">{errors.dateMb}</p>
             ) : null}
           </div>
 
@@ -391,7 +391,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
                 disabled={saving}
               />
               {errors.nesVivants ? (
-                <p id="add-bande-nv-error" role="alert" className="font-mono text-[11px] text-red">
+                <p id="add-bande-nv-error" role="alert" className="text-[11px] text-red">
                   {errors.nesVivants}
                 </p>
               ) : null}
@@ -423,7 +423,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
                 disabled={saving}
               />
               {errors.mortsNes ? (
-                <p role="alert" className="font-mono text-[11px] text-red">{errors.mortsNes}</p>
+                <p role="alert" className="text-[11px] text-red">{errors.mortsNes}</p>
               ) : null}
             </div>
           </div>
@@ -457,7 +457,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
                 disabled={saving}
               />
               {errors.mortsNesMales ? (
-                <p role="alert" className="font-mono text-[11px] text-red">{errors.mortsNesMales}</p>
+                <p role="alert" className="text-[11px] text-red">{errors.mortsNesMales}</p>
               ) : null}
             </div>
             <div className="space-y-1.5">
@@ -487,13 +487,13 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
                 disabled={saving}
               />
               {errors.mortsNesFemelles ? (
-                <p role="alert" className="font-mono text-[11px] text-red">{errors.mortsNesFemelles}</p>
+                <p role="alert" className="text-[11px] text-red">{errors.mortsNesFemelles}</p>
               ) : null}
             </div>
           </div>
 
           {errors.coherence ? (
-            <p role="alert" className="font-mono text-[11px] text-red">
+            <p role="alert" className="text-[11px] text-red">
               {errors.coherence}
             </p>
           ) : null}
@@ -525,7 +525,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
                     className={[
                       'pressable inline-flex items-center justify-center',
                       'h-10 px-3 rounded-md border',
-                      'font-mono text-[12px] uppercase tracking-wide',
+                      'text-[12px] uppercase tracking-wide',
                       'transition-colors duration-[160ms]',
                       'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                       selected
@@ -580,7 +580,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
               disabled={saving}
             />
             {errors.poidsKg ? (
-              <p id="add-bande-poids-error" role="alert" className="font-mono text-[11px] text-red">
+              <p id="add-bande-poids-error" role="alert" className="text-[11px] text-red">
                 {errors.poidsKg}
               </p>
             ) : (() => {
@@ -615,7 +615,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
               aria-invalid={!!errors.loge}
               className={[
                 'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[14px] outline-none transition-colors duration-[160ms]',
+                'text-[14px] outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.loge ? 'border-red' : 'border-border hover:border-text-2',
               ].join(' ')}
@@ -626,7 +626,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
               autoComplete="off"
             />
             {errors.loge ? (
-              <p role="alert" className="font-mono text-[11px] text-red">{errors.loge}</p>
+              <p role="alert" className="text-[11px] text-red">{errors.loge}</p>
             ) : null}
           </div>
 
@@ -645,7 +645,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
               aria-invalid={!!errors.notes}
               className={[
                 'w-full rounded-md px-3 py-2 bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[13px] outline-none transition-colors duration-[160ms] resize-none',
+                'text-[13px] outline-none transition-colors duration-[160ms] resize-none',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.notes ? 'border-red' : 'border-border hover:border-text-2',
               ].join(' ')}
@@ -655,7 +655,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
               disabled={saving}
             />
             {errors.notes ? (
-              <p role="alert" className="font-mono text-[11px] text-red">{errors.notes}</p>
+              <p role="alert" className="text-[11px] text-red">{errors.notes}</p>
             ) : null}
           </div>
 
@@ -670,7 +670,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
                 'pressable flex-1 h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-bg-1 border border-border text-text-1',
-                'font-mono text-[12px] font-bold uppercase tracking-wide',
+                'text-[12px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms] hover:border-text-2',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : '',
@@ -687,7 +687,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
                 'pressable flex-[2] h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-accent text-bg-0',
-                'font-mono text-[13px] font-bold uppercase tracking-wide',
+                'text-[13px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms]',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',

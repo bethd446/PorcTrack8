@@ -127,7 +127,7 @@ const TroupeauVerratsView: React.FC<TroupeauVerratsViewProps> = ({ searchText, s
           type="button"
           onClick={() => setAddOpen(true)}
           aria-label="Ajouter un verrat"
-          className="pressable inline-flex items-center gap-2 h-10 px-4 rounded-full bg-accent text-bg-0 font-mono text-[12px] font-medium uppercase tracking-wide shadow-sm hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-opacity"
+          className="pressable inline-flex items-center gap-2 h-10 px-4 rounded-full bg-accent text-bg-0 text-[12px] font-medium uppercase tracking-wide shadow-sm hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-opacity"
         >
           <Plus size={15} aria-hidden="true" />
           Ajouter un verrat
@@ -173,7 +173,7 @@ const TroupeauVerratsView: React.FC<TroupeauVerratsViewProps> = ({ searchText, s
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           aria-label="Rechercher un verrat"
-          className="w-full pl-10 pr-3 py-2.5 rounded-lg bg-bg-2 border border-border font-mono text-[13px] text-text-0 placeholder:text-text-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+          className="w-full pl-10 pr-3 py-2.5 rounded-lg bg-bg-2 border border-border text-[13px] text-text-0 placeholder:text-text-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
         />
         <Search
           size={16}
@@ -235,7 +235,7 @@ const TroupeauVerratsView: React.FC<TroupeauVerratsViewProps> = ({ searchText, s
           })}
 
           {filteredVerrats.length === 0 && (
-            <p className="text-center py-8 font-mono text-[12px] text-text-2">
+            <p className="text-center py-8 text-[12px] text-text-2">
               Aucun verrat ne correspond à ta recherche.
             </p>
           )}
@@ -324,7 +324,7 @@ const VerratCard: React.FC<VerratCardProps> = ({
             onSaillieClick();
           }}
           aria-label={`Saisir une saillie avec le verrat ${displayId}`}
-          className="pressable w-full inline-flex items-center justify-center gap-2 h-10 rounded-md border border-border bg-bg-1 text-text-1 hover:border-accent hover:text-accent font-mono text-[11px] uppercase tracking-wide transition-colors duration-[160ms] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+          className="pressable w-full inline-flex items-center justify-center gap-2 h-10 rounded-md border border-border bg-bg-1 text-text-1 hover:border-accent hover:text-accent text-[11px] uppercase tracking-wide transition-colors duration-[160ms] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
         >
           <Heart size={14} aria-hidden="true" />
           Saisir saillie avec ce verrat

@@ -44,7 +44,7 @@ const MiseBasCountsBlock: React.FC<MiseBasCountsBlockProps> = ({
         <div className="space-y-1.5">
           <label
             htmlFor="mb-nv"
-            className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+            className="block text-[11px] uppercase tracking-wide text-text-2"
           >
             Nés vivants
           </label>
@@ -69,7 +69,7 @@ const MiseBasCountsBlock: React.FC<MiseBasCountsBlockProps> = ({
             <p
               id="mb-nv-error"
               role="alert"
-              className="font-mono text-[10px] text-red"
+              className="text-[10px] text-red"
             >
               {errors.nesVivants}
             </p>
@@ -78,7 +78,7 @@ const MiseBasCountsBlock: React.FC<MiseBasCountsBlockProps> = ({
         <div className="space-y-1.5">
           <label
             htmlFor="mb-mn"
-            className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+            className="block text-[11px] uppercase tracking-wide text-text-2"
           >
             Morts-nés
           </label>
@@ -102,7 +102,7 @@ const MiseBasCountsBlock: React.FC<MiseBasCountsBlockProps> = ({
             <p
               id="mb-mn-error"
               role="alert"
-              className="font-mono text-[10px] text-red"
+              className="text-[10px] text-red"
             >
               {errors.mortsNes}
             </p>
@@ -111,7 +111,7 @@ const MiseBasCountsBlock: React.FC<MiseBasCountsBlockProps> = ({
         <div className="space-y-1.5">
           <label
             htmlFor="mb-nt"
-            className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+            className="block text-[11px] uppercase tracking-wide text-text-2"
           >
             Nés totaux
           </label>
@@ -140,14 +140,14 @@ const MiseBasCountsBlock: React.FC<MiseBasCountsBlockProps> = ({
             <p
               id="mb-nt-error"
               role="alert"
-              className="font-mono text-[10px] text-red"
+              className="text-[10px] text-red"
             >
               {errors.nesTotaux}
             </p>
           ) : (
             <p
               id="mb-nt-hint"
-              className="font-mono text-[9px] text-text-2 tabular-nums"
+              className="text-[9px] text-text-2 tabular-nums"
             >
               = vivants + morts-nés
             </p>
@@ -156,7 +156,7 @@ const MiseBasCountsBlock: React.FC<MiseBasCountsBlockProps> = ({
       </div>
 
       {errors.coherence ? (
-        <p role="alert" className="font-mono text-[11px] text-red">
+        <p role="alert" className="text-[11px] text-red">
           {errors.coherence}
         </p>
       ) : null}

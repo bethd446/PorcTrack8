@@ -45,7 +45,7 @@ const FormuleCard: React.FC<{
           <div className="agritech-heading text-[16px] uppercase leading-tight truncate">
             {formule.nom}
           </div>
-          <div className="mt-1 font-mono text-[11px] text-text-2">
+          <div className="mt-1 text-[11px] text-text-2">
             {formule.phase} · {formule.poidsRange}
           </div>
         </div>
@@ -61,7 +61,7 @@ const FormuleCard: React.FC<{
           aria-label={`Ingrédients ${formule.nom}`}
         >
           <div
-            className="grid grid-cols-[1fr_auto_auto] gap-x-3 px-3 py-1.5 bg-bg-2 text-[10px] uppercase tracking-wider text-text-2 font-mono"
+            className="grid grid-cols-[1fr_auto_auto] gap-x-3 px-3 py-1.5 bg-bg-2 text-[10px] uppercase tracking-wider text-text-2"
             role="row"
           >
             <span role="columnheader">Nom</span>
@@ -79,13 +79,13 @@ const FormuleCard: React.FC<{
               </span>
               <span
                 role="cell"
-                className="font-mono tabular-nums text-right text-text-2"
+                className="tabular-nums text-right text-text-2"
               >
                 {ing.pourcent}
               </span>
               <span
                 role="cell"
-                className="font-mono tabular-nums text-right text-text-0 font-semibold min-w-[56px]"
+                className="tabular-nums text-right text-text-0 font-semibold min-w-[56px]"
               >
                 {formatKg(ing.kg)}
               </span>
@@ -104,7 +104,7 @@ const FormuleCard: React.FC<{
             aria-label={`Additifs ${formule.nom}`}
           >
             <div
-              className="grid grid-cols-[1fr_auto_auto] gap-x-3 px-3 py-1.5 bg-bg-2 text-[10px] uppercase tracking-wider text-text-2 font-mono"
+              className="grid grid-cols-[1fr_auto_auto] gap-x-3 px-3 py-1.5 bg-bg-2 text-[10px] uppercase tracking-wider text-text-2"
               role="row"
             >
               <span role="columnheader">Nom</span>
@@ -124,13 +124,13 @@ const FormuleCard: React.FC<{
                 </span>
                 <span
                   role="cell"
-                  className="font-mono tabular-nums text-right text-text-2"
+                  className="tabular-nums text-right text-text-2"
                 >
                   {add.doseRef}
                 </span>
                 <span
                   role="cell"
-                  className="font-mono tabular-nums text-right text-text-0 font-semibold min-w-[72px]"
+                  className="tabular-nums text-right text-text-0 font-semibold min-w-[72px]"
                 >
                   {add.quantiteAffiche}
                 </span>
@@ -247,7 +247,7 @@ const FormulesView: React.FC = () => {
                 />
                 <p
                   id="masse-aliment-help"
-                  className="mt-1 font-mono text-[11px] text-text-2"
+                  className="mt-1 text-[11px] text-text-2"
                 >
                   Les quantités ci-dessous se recalculent automatiquement.
                 </p>
@@ -267,7 +267,7 @@ const FormulesView: React.FC = () => {
                       onClick={() => setMasseKg(p.value)}
                       aria-pressed={active}
                       className={cn(
-                        'pressable inline-flex items-center justify-center h-8 px-3 rounded-full text-[12px] font-mono uppercase tracking-wide border transition-colors',
+                        'pressable inline-flex items-center justify-center h-8 px-3 rounded-full text-[12px] uppercase tracking-wide border transition-colors',
                         active
                           ? 'bg-accent text-bg-0 border-accent'
                           : 'bg-bg-2 text-text-1 border-border hover:border-accent/60',

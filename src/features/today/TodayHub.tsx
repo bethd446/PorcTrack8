@@ -520,6 +520,10 @@ const TodayHub: React.FC = () => {
   );
 
   // ── "Ton élevage" — composition fermière ─────────────────────────────
+  // V36-A — Alignement /today vs /troupeau (BUG-3) : on expose total + actives
+  // séparément. Total = toutes les truies (incluses réformées/mortes) pour
+  // cohérence avec /troupeau (qui affiche le total brut). Actives = en cycle
+  // pour les KPI repro.
   const cheptelStats = useMemo(() => {
     const truiesActives = truies.filter(t => {
       const s = (t.statut || '').toLowerCase();
@@ -538,7 +542,9 @@ const TodayHub: React.FC = () => {
     }
     return {
       bandesCount: realBandes.length,
-      truiesCount: truiesActives.length,
+      truiesTotalCount: truies.length,
+      truiesActivesCount: truiesActives.length,
+      truiesReformeCount: truies.length - truiesActives.length,
       verratsCount: verratsActifs.length,
       pleines,
       maternite,
@@ -920,7 +926,10 @@ const TodayHub: React.FC = () => {
                   >
                     {cheptelStats.bandesCount} bande{cheptelStats.bandesCount > 1 ? 's' : ''} active{cheptelStats.bandesCount > 1 ? 's' : ''}
                     {' · '}
-                    {cheptelStats.truiesCount} truie{cheptelStats.truiesCount > 1 ? 's' : ''}
+                    {cheptelStats.truiesTotalCount} truie{cheptelStats.truiesTotalCount > 1 ? 's' : ''}
+                    {cheptelStats.truiesReformeCount > 0
+                      ? ` (${cheptelStats.truiesActivesCount} actives)`
+                      : ''}
                     {' · '}
                     {cheptelStats.verratsCount} verrat{cheptelStats.verratsCount > 1 ? 's' : ''}
                   </div>

@@ -58,7 +58,7 @@ const BandeFinanceCard: React.FC<BandeFinanceCardProps> = ({
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <Coins size={16} className="text-text-2" />
-            <span className="text-[10px] uppercase font-mono text-text-2 tracking-widest">Analyse de Rentabilité</span>
+            <span className="text-[10px] uppercase text-text-2 tracking-widest">Analyse de Rentabilité</span>
           </div>
           <h3 className={`text-xl font-bold font-mono text-text-0`}>
             {roiPct}% <span className="text-xs font-normal text-text-2">ROI</span>
@@ -69,7 +69,7 @@ const BandeFinanceCard: React.FC<BandeFinanceCardProps> = ({
 
       {/* ROI Progress Bar (Cost vs Revenue) */}
       <div className="space-y-2">
-        <div className="flex justify-between text-[10px] font-mono uppercase text-text-2">
+        <div className="flex justify-between text-[10px] uppercase text-text-2">
           <span>Coût de revient</span>
           <span>Revenu Projeté</span>
         </div>
@@ -90,16 +90,16 @@ const BandeFinanceCard: React.FC<BandeFinanceCardProps> = ({
       {/* KPI Grid */}
       <div className="grid grid-cols-3 gap-3 border-t border-border pt-4">
         <div className="flex flex-col gap-1">
-          <span className="text-[8px] uppercase font-mono text-text-2">Aliment</span>
-          <span className="text-[13px] font-bold text-text-0 font-mono">{formatCurrency(coutAlimentaireEstime, currency)}</span>
+          <span className="text-[8px] uppercase text-text-2">Aliment</span>
+          <span className="text-[13px] font-bold text-text-0">{formatCurrency(coutAlimentaireEstime, currency)}</span>
         </div>
         <div className="flex flex-col gap-1">
-          <span className="text-[8px] uppercase font-mono text-text-2">CA Estimé</span>
-          <span className="text-[13px] font-bold text-text-0 font-mono">{formatCurrency(revenuBrutProjete, currency)}</span>
+          <span className="text-[8px] uppercase text-text-2">CA Estimé</span>
+          <span className="text-[13px] font-bold text-text-0">{formatCurrency(revenuBrutProjete, currency)}</span>
         </div>
         <div className="flex flex-col gap-1 items-end text-right">
-          <span className="text-[8px] uppercase font-mono text-text-2">Marge Nette</span>
-          <span className={`text-[13px] font-bold font-mono ${margeNetteProjetee < 0 ? 'text-[var(--color-danger,#EF4444)]' : 'text-[var(--color-accent-500)]'}`}>
+          <span className="text-[8px] uppercase text-text-2">Marge Nette</span>
+          <span className={`text-[13px] font-bold ${margeNetteProjetee < 0 ? 'text-[var(--color-danger,#EF4444)]' : 'text-[var(--color-accent-500)]'}`}>
             {margeNetteProjetee > 0 ? '+' : ''}{formatCurrency(margeNetteProjetee, currency)}
           </span>
         </div>
@@ -108,7 +108,7 @@ const BandeFinanceCard: React.FC<BandeFinanceCardProps> = ({
       {/* Footer Info */}
       <div className="flex items-center gap-1.5 opacity-40 group hover:opacity-100 transition-opacity">
         <Info size={10} className="text-text-2" />
-        <span className="text-[8px] uppercase font-mono text-text-2 italic">
+        <span className="text-[8px] uppercase text-text-2 italic">
           Calculé selon consommation théorique {nomFerme}
         </span>
       </div>

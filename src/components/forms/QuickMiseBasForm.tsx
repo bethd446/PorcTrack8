@@ -401,7 +401,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
             <p className="agritech-heading text-[18px] uppercase tracking-wide">
               Portée créée
             </p>
-            <p className="mt-2 font-mono text-[12px] uppercase tracking-wide text-text-2 tabular-nums">
+            <p className="mt-2 ft-code text-[12px] uppercase tracking-wide text-text-2 tabular-nums">
               {idPortee}
             </p>
           </div>
@@ -520,7 +520,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
                 >
                   Répartition M/F (optionnel)
                 </span>
-                <span className="font-mono text-[10px] text-text-2">
+                <span className="text-[10px] text-text-2">
                   Auto : femelles = vivants − mâles
                 </span>
               </div>
@@ -559,7 +559,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
                     <p
                       id="mb-males-error"
                       role="alert"
-                      className="font-mono text-[10px] text-red"
+                      className="text-[10px] text-red"
                     >
                       {errors.nbMales}
                     </p>
@@ -602,7 +602,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
                     <p
                       id="mb-femelles-error"
                       role="alert"
-                      className="font-mono text-[10px] text-red"
+                      className="text-[10px] text-red"
                     >
                       {errors.nbFemelles}
                     </p>
@@ -610,7 +610,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
                 </div>
               </div>
               {errors.sexRatio ? (
-                <p role="alert" className="font-mono text-[11px] text-red">
+                <p role="alert" className="text-[11px] text-red">
                   {errors.sexRatio}
                 </p>
               ) : null}
@@ -626,7 +626,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
                   'pressable flex-1 h-14 rounded-md',
                   'inline-flex items-center justify-center gap-2',
                   'bg-bg-1 border border-border text-text-1',
-                  'font-mono text-[12px] font-bold uppercase tracking-wide',
+                  'text-[12px] font-bold uppercase tracking-wide',
                   'transition-colors duration-[160ms] hover:border-text-2',
                   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                   saving ? 'opacity-40 cursor-not-allowed' : '',
@@ -643,7 +643,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
                   'pressable flex-[2] h-14 rounded-md',
                   'inline-flex items-center justify-center gap-2',
                   'bg-accent text-bg-0',
-                  'font-mono text-[13px] font-bold uppercase tracking-wide',
+                  'text-[13px] font-bold uppercase tracking-wide',
                   'transition-colors duration-[160ms]',
                   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                   (saving || !truieId || truiesEligibles.length === 0)

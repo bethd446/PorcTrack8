@@ -198,7 +198,7 @@ const TableDenseRow: React.FC<TableDenseRowProps> = ({
     >
       {/* Top line: ID (mono) + status chip */}
       <div className="flex items-center gap-2">
-        <span className="font-mono text-[13px] font-semibold tracking-wide text-text-0 tabular-nums truncate">
+        <span className="ft-code text-[13px] font-semibold tracking-wide text-text-0 tabular-nums truncate">
           {idValue || '—'}
         </span>
         {statusValue && (
@@ -218,10 +218,10 @@ const TableDenseRow: React.FC<TableDenseRowProps> = ({
         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
           {columns.map((col, i) => (
             <div key={`${col.label}-${i}`} className="min-w-0">
-              <div className="font-mono text-[10px] uppercase tracking-wide text-text-2 truncate">
+              <div className="text-[10px] uppercase tracking-wide text-text-2 truncate">
                 {col.label}
               </div>
-              <div className="font-mono text-[12px] text-text-1 tabular-nums truncate">
+              <div className="text-[12px] text-text-1 tabular-nums truncate">
                 {col.isDate ? formatDate(col.value) : col.value}
               </div>
             </div>
@@ -308,7 +308,7 @@ const TableView: React.FC<TableViewProps> = ({ tableKey }) => {
               <Search size={16} className="shrink-0 text-text-2" aria-hidden="true" />
               <input
                 type="search"
-                className="w-full bg-transparent border-none outline-none text-text-0 placeholder:text-text-2 font-mono text-[13px]"
+                className="w-full bg-transparent border-none outline-none text-text-0 placeholder:text-text-2 text-[13px]"
                 placeholder="Filtrer les données…"
                 value={searchText}
                 onChange={e => setSearchText(e.target.value)}
@@ -352,7 +352,7 @@ const TableView: React.FC<TableViewProps> = ({ tableKey }) => {
                 >
                   Erreur de flux
                 </p>
-                <p className="font-mono text-[11px] uppercase tracking-wide text-text-2 max-w-xs">
+                <p className="text-[11px] uppercase tracking-wide text-text-2 max-w-xs">
                   {error}
                 </p>
                 <Button variant="primary" size="md" onClick={loadData} className="mt-2">
@@ -372,7 +372,7 @@ const TableView: React.FC<TableViewProps> = ({ tableKey }) => {
                   {searchText.trim() ? 'Aucun résultat' : descriptor.emptyLabel}
                 </p>
                 {searchText.trim() && (
-                  <p className="font-mono text-[11px] text-text-2">
+                  <p className="text-[11px] text-text-2">
                     Aucune ligne ne correspond à « {searchText} ».
                   </p>
                 )}

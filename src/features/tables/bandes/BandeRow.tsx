@@ -37,7 +37,7 @@ const BandeRow: React.FC<BandeRowProps> = ({ bande, isSelected, selectionMode, o
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2 mb-1">
             <div className="min-w-0 flex items-baseline gap-2 flex-wrap">
-              <span className="font-mono text-[14px] font-semibold text-text-0 tabular-nums">
+              <span className="ft-code text-[14px] font-semibold text-text-0 tabular-nums">
                 {bande.id}
               </span>
               {bande.truie ? (
@@ -49,7 +49,7 @@ const BandeRow: React.FC<BandeRowProps> = ({ bande, isSelected, selectionMode, o
                 </>
               ) : null}
               {bande.boucleMere ? (
-                <span className="font-mono text-[11px] text-text-2">
+                <span className="ft-code text-[11px] text-text-2">
                   ({String(bande.boucleMere)})
                 </span>
               ) : null}
@@ -63,7 +63,7 @@ const BandeRow: React.FC<BandeRowProps> = ({ bande, isSelected, selectionMode, o
             ) : null}
           </div>
 
-          <div className="flex items-center gap-3 font-mono text-[11px] text-text-2 flex-wrap">
+          <div className="flex items-center gap-3 text-[11px] text-text-2 flex-wrap">
             {bande.dateMB ? (
               <span>MB&nbsp;{String(bande.dateMB)}</span>
             ) : null}

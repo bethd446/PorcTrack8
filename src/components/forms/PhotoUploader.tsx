@@ -90,7 +90,7 @@ const PhotoUploader: React.FC<PhotoUploaderProps> = ({
   return (
     <div className="flex flex-col gap-2">
       <label
-        className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+        className="block text-[11px] uppercase tracking-wide text-text-2"
       >
         {label}
       </label>
@@ -120,7 +120,7 @@ const PhotoUploader: React.FC<PhotoUploaderProps> = ({
           ) : (
             <div className="flex flex-col items-center gap-1 text-text-2">
               <Camera size={26} aria-hidden="true" />
-              <span className="font-mono text-[10px] uppercase">Ajouter</span>
+              <span className="text-[10px] uppercase">Ajouter</span>
             </div>
           )}
           {busy === 'upload' ? (
@@ -138,7 +138,7 @@ const PhotoUploader: React.FC<PhotoUploaderProps> = ({
             className={[
               'pressable inline-flex items-center gap-2 px-3 h-9 rounded-md',
               'bg-bg-app border border-border-default text-text-1',
-              'font-mono text-[11px] uppercase tracking-wide',
+              'text-[11px] uppercase tracking-wide',
               'hover:border-text-2 transition-colors duration-[160ms]',
               disabled || busy !== null ? 'opacity-50 cursor-not-allowed' : '',
             ].join(' ')}
@@ -154,7 +154,7 @@ const PhotoUploader: React.FC<PhotoUploaderProps> = ({
               className={[
                 'pressable inline-flex items-center gap-2 px-3 h-9 rounded-md',
                 'bg-bg-app border border-red text-red',
-                'font-mono text-[11px] uppercase tracking-wide',
+                'text-[11px] uppercase tracking-wide',
                 'hover:bg-red hover:text-bg-0 transition-colors duration-[160ms]',
                 disabled || busy !== null ? 'opacity-50 cursor-not-allowed' : '',
               ].join(' ')}
@@ -168,11 +168,11 @@ const PhotoUploader: React.FC<PhotoUploaderProps> = ({
             </button>
           ) : null}
           {error ? (
-            <p role="alert" className="font-mono text-[10px] text-red max-w-[180px]">
+            <p role="alert" className="text-[10px] text-red max-w-[180px]">
               {error}
             </p>
           ) : (
-            <p className="font-mono text-[10px] text-text-2 max-w-[180px]">
+            <p className="text-[10px] text-text-2 max-w-[180px]">
               JPEG/PNG · max 1 MB · compressé auto
             </p>
           )}

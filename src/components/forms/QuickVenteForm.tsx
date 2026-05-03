@@ -325,7 +325,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
             <p className="agritech-heading text-[18px] uppercase tracking-wide">
               Vente enregistrée
             </p>
-            <p className="mt-2 font-mono text-[12px] uppercase tracking-wide text-text-2 tabular-nums text-center px-4">
+            <p className="mt-2 ft-code text-[12px] uppercase tracking-wide text-text-2 tabular-nums text-center px-4">
               {idBandeDisplay} · {nbNum} porc{nbNum > 1 ? 's' : ''} · {montantTotal.toLocaleString('fr-FR')} FCFA
             </p>
           </div>
@@ -340,11 +340,11 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                 <div className="text-mono-micro text-text-2">
                   Bande en finition
                 </div>
-                <div className="truncate font-mono text-[13px] text-text-0">
+                <div className="truncate ft-code text-[13px] text-text-0">
                   {idBandeDisplay}
                   {bande.boucleMere ? ` · ${bande.boucleMere}` : ''}
                 </div>
-                <div className="mt-1 flex flex-wrap gap-3 font-mono text-[11px] tabular-nums text-text-2">
+                <div className="mt-1 flex flex-wrap gap-3 text-[11px] text-text-2">
                   <span>
                     Vivants actuels ·{' '}
                     <span className="text-text-0">{vivantsActuels}</span>
@@ -390,7 +390,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                 <p
                   id="vente-nb-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.nbVendus}
                 </p>
@@ -417,7 +417,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                   className={[
                     'w-full h-11 rounded-md px-3',
                     'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                    'font-mono text-[13px] tabular-nums',
+                    'text-[13px] tabular-nums',
                     'outline-none transition-colors duration-[160ms]',
                     'focus:border-amber focus:ring-1 focus:ring-amber',
                     errors.poids ? 'border-red' : 'border-border hover:border-text-2',
@@ -433,7 +433,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                   <p
                     id="vente-poids-error"
                     role="alert"
-                    className="font-mono text-[11px] text-red"
+                    className="text-[11px] text-red"
                   >
                     {errors.poids}
                   </p>
@@ -458,7 +458,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                   className={[
                     'w-full h-11 rounded-md px-3',
                     'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                    'font-mono text-[13px] tabular-nums',
+                    'text-[13px] tabular-nums',
                     'outline-none transition-colors duration-[160ms]',
                     'focus:border-amber focus:ring-1 focus:ring-amber',
                     errors.prix ? 'border-red' : 'border-border hover:border-text-2',
@@ -474,7 +474,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                   <p
                     id="vente-prix-error"
                     role="alert"
-                    className="font-mono text-[11px] text-red"
+                    className="text-[11px] text-red"
                   >
                     {errors.prix}
                   </p>
@@ -514,7 +514,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                 className={[
                   'w-full h-11 rounded-md px-3',
                   'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                  'font-mono text-[13px]',
+                  'text-[13px]',
                   'outline-none transition-colors duration-[160ms]',
                   'focus:border-amber focus:ring-1 focus:ring-amber',
                   errors.acheteur ? 'border-red' : 'border-border hover:border-text-2',
@@ -529,7 +529,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                 <p
                   id="vente-acheteur-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.acheteur}
                 </p>
@@ -567,7 +567,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                 <p
                   id="vente-date-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.date}
                 </p>
@@ -590,7 +590,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                 className={[
                   'w-full h-11 rounded-md px-3',
                   'bg-bg-0 border text-text-0',
-                  'font-mono text-[13px]',
+                  'text-[13px]',
                   'outline-none transition-colors duration-[160ms]',
                   'focus:border-amber focus:ring-1 focus:ring-amber',
                   errors.canal ? 'border-red' : 'border-border hover:border-text-2',
@@ -607,7 +607,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                 <p
                   id="vente-canal-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.canal}
                 </p>
@@ -637,7 +637,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                     className={[
                       'w-full h-11 rounded-md px-3',
                       'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                      'font-mono text-[13px]',
+                      'text-[13px]',
                       'outline-none transition-colors duration-[160ms]',
                       'focus:border-amber focus:ring-1 focus:ring-amber',
                       errors.abattoirNom ? 'border-red' : 'border-border hover:border-text-2',
@@ -652,7 +652,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                     <p
                       id="vente-abattoir-error"
                       role="alert"
-                      className="font-mono text-[11px] text-red"
+                      className="text-[11px] text-red"
                     >
                       {errors.abattoirNom}
                     </p>
@@ -678,7 +678,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                       className={[
                         'w-full h-11 rounded-md px-3',
                         'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                        'font-mono text-[13px] tabular-nums',
+                        'text-[13px] tabular-nums',
                         'outline-none transition-colors duration-[160ms]',
                         'focus:border-amber focus:ring-1 focus:ring-amber',
                         errors.poidsCarcasse ? 'border-red' : 'border-border hover:border-text-2',
@@ -694,7 +694,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                       <p
                         id="vente-carcasse-error"
                         role="alert"
-                        className="font-mono text-[11px] text-red"
+                        className="text-[11px] text-red"
                       >
                         {errors.poidsCarcasse}
                       </p>
@@ -719,7 +719,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                       className={[
                         'w-full h-11 rounded-md px-3',
                         'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                        'font-mono text-[13px] tabular-nums',
+                        'text-[13px] tabular-nums',
                         'outline-none transition-colors duration-[160ms]',
                         'focus:border-amber focus:ring-1 focus:ring-amber',
                         errors.prixCarcasse ? 'border-red' : 'border-border hover:border-text-2',
@@ -735,7 +735,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                       <p
                         id="vente-prix-carcasse-error"
                         role="alert"
-                        className="font-mono text-[11px] text-red"
+                        className="text-[11px] text-red"
                       >
                         {errors.prixCarcasse}
                       </p>
@@ -755,7 +755,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                     </span>
                     <span
                       className={[
-                        'font-mono text-[14px] tabular-nums font-bold rounded-full px-3 py-0.5',
+                        'text-[14px] tabular-nums font-bold rounded-full px-3 py-0.5',
                         rendementPct >= VENTE_RENDEMENT_SEUIL_BON
                           ? 'bg-green-500/15 text-green-600'
                           : 'bg-amber/15 text-amber',
@@ -783,7 +783,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                 className={[
                   'w-full rounded-md px-3 py-3',
                   'bg-bg-0 border border-border text-text-0 placeholder:text-text-2',
-                  'font-mono text-[12px]',
+                  'text-[12px]',
                   'outline-none transition-colors duration-[160ms]',
                   'focus:border-amber focus:ring-1 focus:ring-amber',
                   'min-h-[72px] resize-y',
@@ -796,7 +796,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
               />
               <p
                 id="vente-notes-hint"
-                className="font-mono text-[10px] text-text-2 tabular-nums"
+                className="text-[10px] text-text-2 tabular-nums"
               >
                 {notes.length}/{VENTE_NOTES_MAX}
               </p>
@@ -813,7 +813,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                   'pressable flex-1 h-14 rounded-md',
                   'inline-flex items-center justify-center gap-2',
                   'bg-bg-1 border border-border text-text-1',
-                  'font-mono text-[12px] font-bold uppercase tracking-wide',
+                  'text-[12px] font-bold uppercase tracking-wide',
                   'transition-colors duration-[160ms]',
                   'hover:border-text-2',
                   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber focus-visible:outline-offset-2',
@@ -831,7 +831,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                   'pressable flex-[2] h-14 rounded-md',
                   'inline-flex items-center justify-center gap-2',
                   'bg-amber text-bg-0',
-                  'font-mono text-[13px] font-bold uppercase tracking-wide',
+                  'text-[13px] font-bold uppercase tracking-wide',
                   'transition-colors duration-[160ms]',
                   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber focus-visible:outline-offset-2',
                   saving || !isValid ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',

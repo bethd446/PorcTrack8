@@ -33,7 +33,7 @@ const MiseBasIdAndDateBlock: React.FC<MiseBasIdAndDateBlockProps> = ({
       <div className="space-y-1.5">
         <label
           htmlFor="mb-id-portee"
-          className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+          className="block text-[11px] uppercase tracking-wide text-text-2"
         >
           ID portée <span className="text-text-2 normal-case">· auto-suggéré</span>
         </label>
@@ -51,7 +51,7 @@ const MiseBasIdAndDateBlock: React.FC<MiseBasIdAndDateBlockProps> = ({
           className={[
             'w-full h-12 rounded-md px-3',
             'bg-bg-0 border text-text-0 placeholder:text-text-2',
-            'font-mono text-[14px] uppercase tabular-nums',
+            'ft-code text-[14px] uppercase',
             'outline-none transition-colors duration-[160ms]',
             'focus:border-accent focus:ring-1 focus:ring-accent',
             errorIdPortee ? 'border-red' : 'border-border hover:border-text-2',
@@ -69,14 +69,14 @@ const MiseBasIdAndDateBlock: React.FC<MiseBasIdAndDateBlockProps> = ({
           <p
             id="mb-id-portee-error"
             role="alert"
-            className="font-mono text-[11px] text-red"
+            className="text-[11px] text-red"
           >
             {errorIdPortee}
           </p>
         ) : (
           <p
             id="mb-id-portee-hint"
-            className="font-mono text-[10px] text-text-2 tabular-nums"
+            className="text-[10px] text-text-2 tabular-nums"
           >
             Format YY-T{'{N}'}-SEQ (ex: 26-T7-01)
           </p>
@@ -87,7 +87,7 @@ const MiseBasIdAndDateBlock: React.FC<MiseBasIdAndDateBlockProps> = ({
         <div className="space-y-1.5">
           <label
             htmlFor="mb-date"
-            className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+            className="block text-[11px] uppercase tracking-wide text-text-2"
           >
             Date MB
           </label>
@@ -108,7 +108,7 @@ const MiseBasIdAndDateBlock: React.FC<MiseBasIdAndDateBlockProps> = ({
             disabled={saving}
           />
           {errorDateIso ? (
-            <p id="mb-date-error" role="alert" className="font-mono text-[11px] text-red">
+            <p id="mb-date-error" role="alert" className="text-[11px] text-red">
               {errorDateIso}
             </p>
           ) : null}
@@ -116,7 +116,7 @@ const MiseBasIdAndDateBlock: React.FC<MiseBasIdAndDateBlockProps> = ({
         <div className="space-y-1.5">
           <label
             htmlFor="mb-heure"
-            className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+            className="block text-[11px] uppercase tracking-wide text-text-2"
           >
             Heure
           </label>

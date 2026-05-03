@@ -147,7 +147,7 @@ const DailyMBChecklistForm: React.FC<DailyMBChecklistFormProps> = ({
     [
       'w-full h-12 rounded-md px-3',
       'bg-bg-0 border text-text-0 placeholder:text-text-2',
-      'font-mono text-[14px]',
+      'text-[14px]',
       'outline-none transition-colors duration-[160ms]',
       'focus:border-accent focus:ring-1 focus:ring-accent',
       hasError ? 'border-red' : 'border-border hover:border-text-2',
@@ -173,7 +173,7 @@ const DailyMBChecklistForm: React.FC<DailyMBChecklistFormProps> = ({
           type="button"
           onClick={() => onChange(value === o.v ? '' : o.v)}
           className={[
-            'pressable flex-1 h-10 rounded-md font-mono text-[12px] uppercase tracking-wide border',
+            'pressable flex-1 h-10 rounded-md text-[12px] uppercase tracking-wide border',
             value === o.v
               ? 'bg-accent text-bg-0 border-accent'
               : 'bg-bg-1 text-text-1 border-border hover:border-text-2',
@@ -195,7 +195,7 @@ const DailyMBChecklistForm: React.FC<DailyMBChecklistFormProps> = ({
         type="button"
         onClick={() => onChange(value === true ? null : true)}
         className={[
-          'pressable flex-1 h-10 rounded-md font-mono text-[12px] uppercase tracking-wide border',
+          'pressable flex-1 h-10 rounded-md text-[12px] uppercase tracking-wide border',
           value === true
             ? 'bg-accent text-bg-0 border-accent'
             : 'bg-bg-1 text-text-1 border-border hover:border-text-2',
@@ -207,7 +207,7 @@ const DailyMBChecklistForm: React.FC<DailyMBChecklistFormProps> = ({
         type="button"
         onClick={() => onChange(value === false ? null : false)}
         className={[
-          'pressable flex-1 h-10 rounded-md font-mono text-[12px] uppercase tracking-wide border',
+          'pressable flex-1 h-10 rounded-md text-[12px] uppercase tracking-wide border',
           value === false
             ? 'bg-red text-bg-0 border-red'
             : 'bg-bg-1 text-text-1 border-border hover:border-text-2',
@@ -234,7 +234,7 @@ const DailyMBChecklistForm: React.FC<DailyMBChecklistFormProps> = ({
           data-testid="daily-mb-checklist-form"
         >
           {editMode ? (
-            <p className="font-mono text-[11px] text-amber-500">
+            <p className="text-[11px] text-amber-500">
               Un check existe déjà aujourd'hui — modification en cours.
             </p>
           ) : null}
@@ -257,7 +257,7 @@ const DailyMBChecklistForm: React.FC<DailyMBChecklistFormProps> = ({
               data-testid="dmb-morts"
             />
             {errors.mortsJour ? (
-              <p role="alert" className="font-mono text-[11px] text-red">
+              <p role="alert" className="text-[11px] text-red">
                 {errors.mortsJour}
               </p>
             ) : null}
@@ -344,7 +344,7 @@ const DailyMBChecklistForm: React.FC<DailyMBChecklistFormProps> = ({
               data-testid="dmb-notes"
             />
             {errors.notes ? (
-              <p role="alert" className="font-mono text-[11px] text-red">
+              <p role="alert" className="text-[11px] text-red">
                 {errors.notes}
               </p>
             ) : null}
@@ -372,7 +372,7 @@ const DailyMBChecklistForm: React.FC<DailyMBChecklistFormProps> = ({
               type="button"
               onClick={handleClose}
               disabled={saving}
-              className="pressable flex-1 h-14 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 font-mono text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
+              className="pressable flex-1 h-14 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
             >
               Annuler
             </button>
@@ -380,7 +380,7 @@ const DailyMBChecklistForm: React.FC<DailyMBChecklistFormProps> = ({
               type="submit"
               disabled={saving}
               aria-busy={saving}
-              className="pressable flex-[2] h-14 rounded-md inline-flex items-center justify-center gap-2 bg-accent text-bg-0 font-mono text-[13px] font-bold uppercase tracking-wide hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="pressable flex-[2] h-14 rounded-md inline-flex items-center justify-center gap-2 bg-accent text-bg-0 text-[13px] font-bold uppercase tracking-wide hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
               data-testid="dmb-submit"
             >
               {saving ? (

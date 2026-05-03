@@ -187,11 +187,11 @@ const QuickMoveSubjectForm: React.FC<QuickMoveSubjectFormProps> = ({
                 {subjectLabel}
               </p>
               {currentLogeNumero ? (
-                <p className="font-mono text-[10px] text-text-2 mt-0.5">
+                <p className="text-[10px] text-text-2 mt-0.5">
                   De : {currentLogeNumero}
                 </p>
               ) : (
-                <p className="font-mono text-[10px] text-text-2 mt-0.5">
+                <p className="text-[10px] text-text-2 mt-0.5">
                   Aucune loge actuelle
                 </p>
               )}
@@ -203,12 +203,12 @@ const QuickMoveSubjectForm: React.FC<QuickMoveSubjectFormProps> = ({
               Vers loge <span className="text-red normal-case">· requis</span>
             </span>
             {loadingLoges ? (
-              <p className="font-mono text-[11px] text-text-2">
+              <p className="text-[11px] text-text-2">
                 Chargement des loges…
               </p>
             ) : grouped.length === 0 ? (
               <p
-                className="rounded-md border border-dashed border-border bg-bg-1 px-3 py-3 font-mono text-[11px] text-text-2"
+                className="rounded-md border border-dashed border-border bg-bg-1 px-3 py-3 text-[11px] text-text-2"
                 role="status"
               >
                 Aucune loge compatible disponible
@@ -239,7 +239,7 @@ const QuickMoveSubjectForm: React.FC<QuickMoveSubjectFormProps> = ({
                             className={[
                               'pressable inline-flex items-center justify-center',
                               'h-9 px-3 rounded-md border',
-                              'font-mono text-[12px] uppercase tracking-wide tabular-nums',
+                              'ft-code text-[12px] uppercase tracking-wide tabular-nums',
                               'transition-colors duration-[160ms]',
                               isSel
                                 ? 'bg-accent text-bg-0 border-accent font-semibold'
@@ -272,7 +272,7 @@ const QuickMoveSubjectForm: React.FC<QuickMoveSubjectFormProps> = ({
               className={[
                 'w-full rounded-md px-3 py-3',
                 'bg-bg-0 border border-border text-text-0',
-                'font-mono text-[13px]',
+                'text-[13px]',
                 'outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 'min-h-[64px] resize-y',
@@ -301,7 +301,7 @@ const QuickMoveSubjectForm: React.FC<QuickMoveSubjectFormProps> = ({
                 'pressable flex-1 h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-bg-1 border border-border text-text-1',
-                'font-mono text-[12px] font-bold uppercase tracking-wide',
+                'text-[12px] font-bold uppercase tracking-wide',
                 saving ? 'opacity-40 cursor-not-allowed' : '',
               ].join(' ')}
             >
@@ -315,7 +315,7 @@ const QuickMoveSubjectForm: React.FC<QuickMoveSubjectFormProps> = ({
                 'pressable flex-[2] h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-accent text-bg-0',
-                'font-mono text-[13px] font-bold uppercase tracking-wide',
+                'text-[13px] font-bold uppercase tracking-wide',
                 saving || !selectedLogeId
                   ? 'opacity-40 cursor-not-allowed'
                   : 'hover:brightness-110',

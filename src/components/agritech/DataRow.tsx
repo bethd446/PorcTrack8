@@ -50,7 +50,7 @@ const DataRow: React.FC<DataRowProps> = ({
       </div>
 
       {meta !== undefined && meta !== null ? (
-        <div className="shrink-0 font-mono text-[12px] tabular-nums text-text-1">
+        <div className="shrink-0 text-[12px] tabular-nums text-text-1">
           {typeof meta === 'string' ? meta : meta}
         </div>
       ) : null}

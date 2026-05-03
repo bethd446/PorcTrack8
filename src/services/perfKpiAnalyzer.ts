@@ -922,3 +922,291 @@ export function computeCyclesReussis(
 
   return { value, delta, series };
 }
+
+// ═════════════════════════════════════════════════════════════════════════════
+// V36-A — KPIs zootechniques GTTT (Technique / Reproduction / Finances)
+// ═════════════════════════════════════════════════════════════════════════════
+//
+// Tous ces KPIs respectent une **garde anti-explosion** : si les données sont
+// insuffisantes (< MIN_PORTEES_SEVREES portées sevrées sur 12 mois, ou champs
+// non renseignés), la fonction retourne `null` → l'UI affiche "—" + un hint.
+// Cible : terrain naisseur-engraisseur typique (17 truies, 12 bandes actives).
+
+/** Nombre minimum de portées sevrées requis pour considérer les KPIs fiables. */
+const MIN_PORTEES_SEVREES = 5;
+
+/** Cible biologique GMQ (g/j) par tranche d'âge porcelet. */
+export const GMQ_CIBLES = {
+  POST_SEVRAGE: 450,    // 7-25 kg : objectif 400-500 g/j
+  CROISSANCE: 700,      // 25-65 kg : objectif 650-750 g/j
+  ENGRAISSEMENT: 850,   // 65-110 kg : objectif 800-900 g/j
+  FINITION: 900,        // > 110 kg : 850-950 g/j
+} as const;
+
+export type TrancheAge = keyof typeof GMQ_CIBLES;
+
+/**
+ * ICR (Indice de Consommation Réel) : kg aliment / kg viande produite.
+ *
+ * Cible filière : 2.6-2.9 (post-sev → finition). Au-dessus : excès de gaspillage.
+ *
+ * Calcul : Σ(aliment_consomme_kg) / Σ(poids_sortie_kg - poids_entree_kg).
+ *
+ * Limitation : la BD ne possède pas systématiquement `aliment_consomme_kg`.
+ * Si aucune bande ne renseigne ces champs → null (UI affiche "—").
+ */
+export function computeICR(bandes: BandePorcelets[]): number | null {
+  let totalAliment = 0;
+  let totalGain = 0;
+  for (const b of bandes) {
+    const r = b as unknown as Record<string, unknown>;
+    const aliment = typeof r.alimentConsommeKg === 'number' ? r.alimentConsommeKg : null;
+    const gain = typeof r.gainPoidsKg === 'number' ? r.gainPoidsKg : null;
+    if (aliment === null || gain === null || gain <= 0) continue;
+    totalAliment += aliment;
+    totalGain += gain;
+  }
+  if (totalGain === 0) return null;
+  return round1(totalAliment / totalGain);
+}
+
+/**
+ * GMQ (Gain Moyen Quotidien) en g/jour par tranche d'âge.
+ *
+ * Calcul par bande : (poids_actuel - poids_initial) * 1000 / jours_ecoules.
+ * Agrégation par tranche selon `phase` actuelle de la bande.
+ *
+ * Retourne `null` pour une tranche si moins de 1 bande exploitable.
+ */
+export function computeGMQParTranche(
+  bandes: BandePorcelets[],
+  today: Date = new Date(),
+): Record<TrancheAge, number | null> {
+  const result: Record<TrancheAge, number | null> = {
+    POST_SEVRAGE: null,
+    CROISSANCE: null,
+    ENGRAISSEMENT: null,
+    FINITION: null,
+  };
+
+  // Buckets par phase
+  const buckets: Record<TrancheAge, number[]> = {
+    POST_SEVRAGE: [],
+    CROISSANCE: [],
+    ENGRAISSEMENT: [],
+    FINITION: [],
+  };
+
+  const POIDS_INITIAL = {
+    POST_SEVRAGE: 7,    // sevrage = ~7 kg
+    CROISSANCE: 25,
+    ENGRAISSEMENT: 65,
+    FINITION: 110,
+  } as const;
+
+  for (const b of bandes) {
+    const poidsActuel = typeof b.poidsMoyenKg === 'number' ? b.poidsMoyenKg : null;
+    if (poidsActuel === null) continue;
+
+    // Détermination de la tranche par poids
+    let tranche: TrancheAge;
+    if (poidsActuel < 25) tranche = 'POST_SEVRAGE';
+    else if (poidsActuel < 65) tranche = 'CROISSANCE';
+    else if (poidsActuel < 110) tranche = 'ENGRAISSEMENT';
+    else tranche = 'FINITION';
+
+    // Date de référence = sevrage réel ou prévu (entrée en post-sev)
+    const dateRef = parseFr(b.dateSevrageReelle ?? b.dateSevragePrevue);
+    if (dateRef === 0) continue;
+    const jours = Math.floor(daysBetween(dateRef, today.getTime()));
+    if (jours <= 0) continue;
+
+    const gain = (poidsActuel - POIDS_INITIAL[tranche]) * 1000;
+    if (gain <= 0) continue;
+
+    buckets[tranche].push(gain / jours);
+  }
+
+  for (const k of Object.keys(buckets) as TrancheAge[]) {
+    const arr = buckets[k];
+    if (arr.length === 0) continue;
+    const avg = arr.reduce((s, v) => s + v, 0) / arr.length;
+    result[k] = Math.round(avg);
+  }
+  return result;
+}
+
+/**
+ * IC global (Indice de Conversion) : aliment_total / poids_vif_total.
+ *
+ * Variante simplifiée de l'ICR : utilise le poids vif total du troupeau (pas
+ * uniquement la portion engraissement). Utile pour comparer ferme à ferme.
+ *
+ * Si pas de stock aliment ni de poids → null.
+ */
+export function computeICGlobal(
+  bandes: BandePorcelets[],
+  totalAlimentKg: number,
+): number | null {
+  if (totalAlimentKg <= 0) return null;
+  let totalPoidsVif = 0;
+  for (const b of bandes) {
+    const poids = typeof b.poidsMoyenKg === 'number' ? b.poidsMoyenKg : null;
+    const vivants = b.vivants ?? 0;
+    if (poids === null || vivants === 0) continue;
+    totalPoidsVif += poids * vivants;
+  }
+  if (totalPoidsVif === 0) return null;
+  return round1(totalAlimentKg / totalPoidsVif);
+}
+
+/**
+ * Marge brute par truie productive : (revenu - coût aliment) / nb_truies_prod.
+ *
+ * Inputs déjà agrégés (revenu et coût en unités monétaires identiques).
+ * Retourne null si aucune truie productive ou inputs manquants.
+ */
+export function computeMargeBruteParTruie(
+  revenuTotal: number,
+  coutAlimentTotal: number,
+  nbTruiesProductives: number,
+): number | null {
+  if (nbTruiesProductives <= 0) return null;
+  if (!Number.isFinite(revenuTotal) || !Number.isFinite(coutAlimentTotal)) return null;
+  if (revenuTotal === 0 && coutAlimentTotal === 0) return null;
+  return Math.round((revenuTotal - coutAlimentTotal) / nbTruiesProductives);
+}
+
+/**
+ * Mortalité par phase (%) — répartition des morts sur le cycle.
+ *
+ *   - Maternité (J0-J28 post-MB)    : (morts naissance + lactation) / NV
+ *   - Post-sevrage (J28-J70 post-MB) : pertes après sevrage
+ *   - Engraissement (J70-J160)
+ *   - Finition (> J160)
+ *
+ * Retourne un breakdown détaillé. Phase à null si < MIN_PORTEES_SEVREES bandes
+ * exploitables sur 12 mois.
+ */
+export interface MortaliteParPhase {
+  maternitePct: number | null;
+  postSevragePct: number | null;
+  engraissementPct: number | null;
+  finitionPct: number | null;
+}
+
+export function computeMortaliteParPhase(
+  bandes: BandePorcelets[],
+  today: Date = new Date(),
+): MortaliteParPhase {
+  const nowTs = today.getTime();
+  const cutoff12m = nowTs - HORIZON_12M * 86_400_000;
+
+  // Maternité : utilise nv et morts directs.
+  let matNV = 0;
+  let matMorts = 0;
+  let matCount = 0;
+  for (const b of bandes) {
+    const ts = parseFr(b.dateMB);
+    if (ts < cutoff12m || ts > nowTs) continue;
+    const nv = b.nv ?? 0;
+    const morts = b.morts ?? 0;
+    if (nv === 0) continue;
+    matNV += nv;
+    matMorts += morts;
+    matCount += 1;
+  }
+
+  // Post-sevrage / Engraissement / Finition : on infère par âge (jours post-MB).
+  let postNV = 0, postMorts = 0, postCount = 0;
+  let engNV = 0, engMorts = 0, engCount = 0;
+  let finNV = 0, finMorts = 0, finCount = 0;
+
+  for (const b of bandes) {
+    const ts = parseFr(b.dateMB);
+    if (ts === 0) continue;
+    const jours = Math.floor(daysBetween(ts, nowTs));
+    const nv = b.nv ?? 0;
+    const vivants = b.vivants ?? 0;
+    const morts = Math.max(0, nv - vivants);
+    if (nv === 0) continue;
+
+    if (jours >= 28 && jours < 70) {
+      postNV += nv; postMorts += morts; postCount += 1;
+    } else if (jours >= 70 && jours < 160) {
+      engNV += nv; engMorts += morts; engCount += 1;
+    } else if (jours >= 160) {
+      finNV += nv; finMorts += morts; finCount += 1;
+    }
+  }
+
+  const pct = (m: number, n: number, count: number): number | null => {
+    if (count < MIN_PORTEES_SEVREES || n === 0) return null;
+    return round1((m / n) * 100);
+  };
+
+  return {
+    maternitePct: pct(matMorts, matNV, matCount),
+    postSevragePct: pct(postMorts, postNV, postCount),
+    engraissementPct: pct(engMorts, engNV, engCount),
+    finitionPct: pct(finMorts, finNV, finCount),
+  };
+}
+
+/**
+ * Bundle KPIs zootechniques retourné par `computeZootechniqueKpis`.
+ * Tout champ peut valoir `null` : l'UI affiche alors "—" et un hint.
+ */
+export interface ZootechniqueKpis {
+  /** ICR (kg aliment / kg viande). null si données aliment manquantes. */
+  icrKg: number | null;
+  /** GMQ par tranche (g/j). Chaque tranche peut valoir null. */
+  gmqParTranche: Record<TrancheAge, number | null>;
+  /** IC global (kg aliment total / kg poids vif total). null si insuffisant. */
+  icGlobal: number | null;
+  /** Marge brute moyenne par truie productive (unité monétaire). */
+  margeBruteParTruie: number | null;
+  /** Mortalité par phase (%). */
+  mortalite: MortaliteParPhase;
+  /** Méta : nombre de portées sevrées 12m exploitées. */
+  nbPorteesSevrees12m: number;
+}
+
+/**
+ * Façade publique — calcule l'ensemble des KPIs zootechniques pour PerfKpiView.
+ *
+ * @param bandes - bandes (non filtrées RECAP)
+ * @param totalAlimentKg - tonnage aliment consommé sur la période (0 si inconnu)
+ * @param revenuTotal - revenu total période (0 si inconnu)
+ * @param coutAlimentTotal - coût aliment total période (0 si inconnu)
+ * @param nbTruiesProductives - count truies ayant ≥ 1 portée
+ */
+export function computeZootechniqueKpis(
+  bandes: BandePorcelets[],
+  totalAlimentKg: number,
+  revenuTotal: number,
+  coutAlimentTotal: number,
+  nbTruiesProductives: number,
+  today: Date = new Date(),
+): ZootechniqueKpis {
+  const nowTs = today.getTime();
+  const cutoff12m = nowTs - HORIZON_12M * 86_400_000;
+  const nbPorteesSevrees12m = bandes.filter(b => {
+    const ts = parseFr(b.dateMB);
+    if (ts < cutoff12m || ts > nowTs) return false;
+    return !!b.dateSevrageReelle;
+  }).length;
+
+  const fiable = nbPorteesSevrees12m >= MIN_PORTEES_SEVREES;
+
+  return {
+    icrKg: fiable ? computeICR(bandes) : null,
+    gmqParTranche: computeGMQParTranche(bandes, today),
+    icGlobal: fiable ? computeICGlobal(bandes, totalAlimentKg) : null,
+    margeBruteParTruie: fiable
+      ? computeMargeBruteParTruie(revenuTotal, coutAlimentTotal, nbTruiesProductives)
+      : null,
+    mortalite: computeMortaliteParPhase(bandes, today),
+    nbPorteesSevrees12m,
+  };
+}

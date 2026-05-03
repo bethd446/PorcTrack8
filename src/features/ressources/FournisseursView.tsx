@@ -104,7 +104,7 @@ const FournisseursView: React.FC = () => {
             <button
               type="button"
               onClick={() => setAddOpen(true)}
-              className="w-full mb-5 inline-flex items-center justify-center gap-2 h-12 rounded-md font-mono text-[12px] uppercase tracking-wide font-bold"
+              className="w-full mb-5 inline-flex items-center justify-center gap-2 h-12 rounded-md text-[12px] uppercase tracking-wide font-bold"
               style={{
                 background: 'var(--color-accent-500)',
                 color: 'var(--bg-surface)',
@@ -116,7 +116,7 @@ const FournisseursView: React.FC = () => {
             </button>
 
             {loading ? (
-              <p className="text-[12px] text-text-2 font-mono uppercase">Chargement…</p>
+              <p className="text-[12px] text-text-2 uppercase">Chargement…</p>
             ) : rows.length === 0 ? (
               <div
                 className="rounded-md p-6 text-center"
@@ -157,7 +157,7 @@ const FournisseursView: React.FC = () => {
                         {row.nom}
                         {row.is_default ? (
                           <span
-                            className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono uppercase"
+                            className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] uppercase"
                             style={{
                               background: 'var(--amber-pork-soft, #fde7d2)',
                               color: 'var(--amber-pork-deep, #c2662b)',
@@ -168,7 +168,7 @@ const FournisseursView: React.FC = () => {
                         ) : null}
                       </div>
                       <div
-                        className="text-[11px] font-mono uppercase mt-0.5"
+                        className="text-[11px] uppercase mt-0.5"
                         style={{ color: 'var(--muted)' }}
                       >
                         {row.type ?? 'AUTRE'}

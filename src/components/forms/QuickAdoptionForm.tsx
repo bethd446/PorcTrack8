@@ -201,7 +201,7 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
               className={[
                 'w-full h-12 rounded-md px-3',
                 'bg-bg-0 border text-text-0',
-                'font-mono text-[13px]',
+                'text-[13px]',
                 'outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.fromBatchId ? 'border-red' : 'border-border hover:border-text-2',
@@ -218,7 +218,7 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
               ))}
             </select>
             {errors.fromBatchId ? (
-              <p id="add-adoption-from-error" role="alert" className="font-mono text-[11px] text-red">
+              <p id="add-adoption-from-error" role="alert" className="text-[11px] text-red">
                 {errors.fromBatchId}
               </p>
             ) : null}
@@ -240,7 +240,7 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
               className={[
                 'w-full h-12 rounded-md px-3',
                 'bg-bg-0 border text-text-0',
-                'font-mono text-[13px]',
+                'text-[13px]',
                 'outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.toBatchId ? 'border-red' : 'border-border hover:border-text-2',
@@ -259,7 +259,7 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
                 ))}
             </select>
             {errors.toBatchId ? (
-              <p id="add-adoption-to-error" role="alert" className="font-mono text-[11px] text-red">
+              <p id="add-adoption-to-error" role="alert" className="text-[11px] text-red">
                 {errors.toBatchId}
               </p>
             ) : null}
@@ -299,7 +299,7 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
                 disabled={saving}
               />
               {errors.nbPorcelets ? (
-                <p id="add-adoption-nb-error" role="alert" className="font-mono text-[11px] text-red">
+                <p id="add-adoption-nb-error" role="alert" className="text-[11px] text-red">
                   {errors.nbPorcelets}
                 </p>
               ) : null}
@@ -333,7 +333,7 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
                 disabled={saving}
               />
               {errors.dateAdoption ? (
-                <p id="add-adoption-date-error" role="alert" className="font-mono text-[11px] text-red">
+                <p id="add-adoption-date-error" role="alert" className="text-[11px] text-red">
                   {errors.dateAdoption}
                 </p>
               ) : null}
@@ -353,7 +353,7 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
               className={[
                 'w-full h-12 rounded-md px-3',
                 'bg-bg-0 border border-border text-text-0',
-                'font-mono text-[13px]',
+                'text-[13px]',
                 'outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
               ].join(' ')}
@@ -408,7 +408,7 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
                 'pressable flex-1 h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-bg-1 border border-border text-text-1',
-                'font-mono text-[12px] font-bold uppercase tracking-wide',
+                'text-[12px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms] hover:border-text-2',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : '',
@@ -425,7 +425,7 @@ const QuickAdoptionForm: React.FC<QuickAdoptionFormProps> = ({
                 'pressable flex-[2] h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-accent text-bg-0',
-                'font-mono text-[13px] font-bold uppercase tracking-wide',
+                'text-[13px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms]',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',

@@ -6,7 +6,7 @@ import {
 import {
   AlertCircle, Activity, ClipboardList, ChevronLeft, ChevronRight,
   Stethoscope, TrendingUp, CalendarClock, CheckCircle2,
-  Edit3, Home, MapPin, Move, Tag, Plus, ClipboardCheck,
+  Edit3, Home, MapPin, Move, Tag, Plus, ClipboardCheck, Split,
 } from 'lucide-react';
 import PhotoStrip from '../../../components/PhotoStrip';
 import { Chip, AnimalListItem } from '../../../components/agritech';
@@ -18,6 +18,7 @@ import QuickMoveSubjectForm from '../../../components/forms/QuickMoveSubjectForm
 import QuickAddPorceletForm from '../../../components/forms/QuickAddPorceletForm';
 import QuickEditPorceletForm from '../../../components/forms/QuickEditPorceletForm';
 import QuickHealthLogPorceletForm from '../../../components/forms/QuickHealthLogPorceletForm';
+import QuickSplitBandeForm from '../../../components/forms/QuickSplitBandeForm';
 import NotesTimeline from '../../../components/design/NotesTimeline';
 import BandeCroissanceCard from '../../../components/bande/BandeCroissanceCard';
 import TruieIcon from '../../../components/icons/TruieIcon';
@@ -61,7 +62,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
   const [healthHeader, setHealthHeader] = useState<string[]>([]);
   const [notesData, setNotesData] = useState<SheetRawRow[]>([]);
   const [notesHeader, setNotesHeader] = useState<string[]>([]);
-  const { notes: notesAsNotes, getBandeById } = useFarm();
+  const { notes: notesAsNotes, getBandeById, bandes: allBandes } = useFarm();
 
   // V29-FIX-P0 : garde défensive contre bande=undefined (cas SW cache stale ou
   // route directe /troupeau/bandes/:id avec wrapper qui foire). Évite le
@@ -97,6 +98,8 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
   const [addPorceletOpen, setAddPorceletOpen] = useState(false);
   const [editPorcelet, setEditPorcelet] = useState<PorceletIndividuel | null>(null);
   const [healthLogPorceletOpen, setHealthLogPorceletOpen] = useState(false);
+  // V36-E P3 — Splitter une bande
+  const [splitOpen, setSplitOpen] = useState(false);
 
   const currentLoge = useMemo<Loge | undefined>(() => {
     const id = bandeTyped?.logeId;
@@ -118,6 +121,14 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
     () => (bandeTyped ? computeBandePhase(bandeTyped) === 'SOUS_MERE' : false),
     [bandeTyped],
   );
+
+  // V36-E P3 — Splitter visible uniquement si phase ∈ {SOUS_MERE, POST_SEVRAGE} ET ≥ 2 porcelets.
+  const canSplit = useMemo(() => {
+    if (!bandeTyped) return false;
+    if (porcelets.length < 2) return false;
+    const phase = computeBandePhase(bandeTyped);
+    return phase === 'SOUS_MERE' || phase === 'POST_SEVRAGE';
+  }, [bandeTyped, porcelets.length]);
 
   const loadSources = useCallback(async () => {
     if (!bande.id) return;
@@ -172,6 +183,31 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
     for (const p of porcelets) s.add(p.boucle.toUpperCase());
     return s;
   }, [porcelets]);
+
+  // V36-E P3 — Liste enrichie de tous les porcelets de la ferme pour détecter
+  // les doublons boucle+sexe (warning non-bloquant côté UI).
+  const allPorcelets = useMemo<PorceletIndividuel[]>(() => {
+    const acc: PorceletIndividuel[] = [];
+    for (const b of allBandes) {
+      if (b.porcelets) {
+        for (const p of b.porcelets) acc.push(p);
+      }
+    }
+    // Inclut aussi les porcelets de la bande courante s'ils ne sont pas
+    // encore propagés au context (loadPorcelets local).
+    for (const p of porcelets) {
+      if (!acc.some(x => x.id === p.id)) acc.push(p);
+    }
+    return acc;
+  }, [allBandes, porcelets]);
+
+  const resolveBatchCodeId = useCallback(
+    (id: string): string | undefined => {
+      const b = allBandes.find(x => x.id === id);
+      return b?.idPortee || b?.id;
+    },
+    [allBandes],
+  );
 
   // Couleurs statut chip — palette agritech (Chip tones)
   const STATUT_TONE: Record<PorceletStatut, 'accent' | 'amber' | 'red' | 'default' | 'blue'> = {
@@ -549,6 +585,20 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                     </h4>
                   </div>
                   <div className="flex items-center gap-2">
+                    {canSplit && (
+                      <button
+                        type="button"
+                        onClick={() => setSplitOpen(true)}
+                        data-testid="bande-split-cta"
+                        className="pressable inline-flex h-7 items-center gap-1 rounded-md bg-bg-2 px-2 text-text-1 hover:text-accent"
+                        aria-label="Splitter cette bande"
+                      >
+                        <Split size={12} aria-hidden="true" />
+                        <span className="text-[10px] uppercase tracking-wide">
+                          Splitter
+                        </span>
+                      </button>
+                    )}
                     {porcelets.length > 0 && (
                       <button
                         type="button"
@@ -874,6 +924,8 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
           onClose={() => setAddPorceletOpen(false)}
           batchId={bande.id}
           existingBoucles={existingBoucles}
+          existingPorcelets={allPorcelets}
+          resolveBatchCodeId={resolveBatchCodeId}
           onSuccess={() => {
             loadPorcelets();
             onRefresh();
@@ -908,6 +960,20 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
           onSuccess={() => {
             loadPorcelets();
             loadRelatedData();
+            onRefresh();
+          }}
+        />
+
+        {/* V36-E P3 — Splitter cette bande (porcelets vers nouvelle loge) */}
+        <QuickSplitBandeForm
+          isOpen={splitOpen}
+          onClose={() => setSplitOpen(false)}
+          bandeId={bande.id}
+          bandeCodeId={bandeTyped?.idPortee || bande.id}
+          onSuccess={() => {
+            setSplitOpen(false);
+            loadPorcelets();
+            loadLogeData();
             onRefresh();
           }}
         />

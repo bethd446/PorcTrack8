@@ -226,7 +226,7 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
               className={[
                 'w-full h-12 rounded-md px-3',
                 'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[14px] uppercase tabular-nums',
+                'ft-code text-[14px] uppercase',
                 'outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.id ? 'border-red' : 'border-border hover:border-text-2',
@@ -238,11 +238,11 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
               autoComplete="off"
             />
             {errors.id ? (
-              <p id="add-veto-id-error" role="alert" className="font-mono text-[11px] text-red">
+              <p id="add-veto-id-error" role="alert" className="text-[11px] text-red">
                 {errors.id}
               </p>
             ) : (
-              <p id="add-veto-id-hint" className="font-mono text-[10px] text-text-2">
+              <p id="add-veto-id-hint" className="text-[10px] text-text-2">
                 Format V suivi de chiffres (ex: V01)
               </p>
             )}
@@ -267,7 +267,7 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
               className={[
                 'w-full h-12 rounded-md px-3',
                 'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[14px]',
+                'text-[14px]',
                 'outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.produit ? 'border-red' : 'border-border hover:border-text-2',
@@ -279,7 +279,7 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
               autoComplete="off"
             />
             {errors.produit ? (
-              <p id="add-veto-produit-error" role="alert" className="font-mono text-[11px] text-red">
+              <p id="add-veto-produit-error" role="alert" className="text-[11px] text-red">
                 {errors.produit}
               </p>
             ) : null}
@@ -300,7 +300,7 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
                 list="add-veto-types"
                 maxLength={40}
                 aria-label="Type de produit vétérinaire"
-                className="w-full h-11 rounded-md px-3 bg-bg-0 border border-border hover:border-text-2 text-text-0 placeholder:text-text-2 font-mono text-[13px] outline-none transition-colors duration-[160ms] focus:border-accent focus:ring-1 focus:ring-accent"
+                className="w-full h-11 rounded-md px-3 bg-bg-0 border border-border hover:border-text-2 text-text-0 placeholder:text-text-2 text-[13px] outline-none transition-colors duration-[160ms] focus:border-accent focus:ring-1 focus:ring-accent"
                 placeholder="Antiparasitaire"
                 value={type}
                 onChange={e => setType(e.target.value)}
@@ -322,7 +322,7 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
                 list="add-veto-usages"
                 maxLength={40}
                 aria-label="Usage du produit vétérinaire"
-                className="w-full h-11 rounded-md px-3 bg-bg-0 border border-border hover:border-text-2 text-text-0 placeholder:text-text-2 font-mono text-[13px] outline-none transition-colors duration-[160ms] focus:border-accent focus:ring-1 focus:ring-accent"
+                className="w-full h-11 rounded-md px-3 bg-bg-0 border border-border hover:border-text-2 text-text-0 placeholder:text-text-2 text-[13px] outline-none transition-colors duration-[160ms] focus:border-accent focus:ring-1 focus:ring-accent"
                 placeholder="Prévention"
                 value={usage}
                 onChange={e => setUsage(e.target.value)}
@@ -363,7 +363,7 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
                 disabled={saving}
               />
               {errors.stockActuel ? (
-                <p id="add-veto-stock-error" role="alert" className="font-mono text-[11px] text-red">
+                <p id="add-veto-stock-error" role="alert" className="text-[11px] text-red">
                   {errors.stockActuel}
                 </p>
               ) : null}
@@ -388,7 +388,7 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
                 className={[
                   'w-full h-14 rounded-md px-3',
                   'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                  'font-mono text-[14px] uppercase tracking-wide text-center',
+                  'text-[14px] uppercase tracking-wide text-center',
                   'outline-none transition-colors duration-[160ms]',
                   'focus:border-accent focus:ring-1 focus:ring-accent',
                   errors.unite ? 'border-red' : 'border-border hover:border-text-2',
@@ -400,7 +400,7 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
                 autoComplete="off"
               />
               {errors.unite ? (
-                <p id="add-veto-unite-error" role="alert" className="font-mono text-[11px] text-red">
+                <p id="add-veto-unite-error" role="alert" className="text-[11px] text-red">
                   {errors.unite}
                 </p>
               ) : null}
@@ -427,7 +427,7 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
               className={[
                 'w-full h-12 rounded-md px-3',
                 'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[14px] tabular-nums',
+                'text-[14px] tabular-nums',
                 'outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.seuilAlerte ? 'border-red' : 'border-border hover:border-text-2',
@@ -438,19 +438,19 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
               disabled={saving}
             />
             {errors.seuilAlerte ? (
-              <p id="add-veto-seuil-error" role="alert" className="font-mono text-[11px] text-red">
+              <p id="add-veto-seuil-error" role="alert" className="text-[11px] text-red">
                 {errors.seuilAlerte}
               </p>
             ) : previewStatut ? (
               <p
                 id="add-veto-seuil-hint"
                 aria-live="polite"
-                className="font-mono text-[10px] text-text-2"
+                className="text-[10px] text-text-2"
               >
                 Statut calculé · <span className={previewTone}>{previewStatut}</span>
               </p>
             ) : (
-              <p id="add-veto-seuil-hint" className="font-mono text-[10px] text-text-2">
+              <p id="add-veto-seuil-hint" className="text-[10px] text-text-2">
                 Notification stock bas si stock ≤ seuil
               </p>
             )}
@@ -469,13 +469,13 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
               maxLength={200}
               rows={3}
               aria-label="Notes sur le produit"
-              className="w-full rounded-md px-3 py-2 bg-bg-0 border border-border hover:border-text-2 text-text-0 placeholder:text-text-2 font-mono text-[13px] outline-none transition-colors duration-[160ms] focus:border-accent focus:ring-1 focus:ring-accent resize-none"
+              className="w-full rounded-md px-3 py-2 bg-bg-0 border border-border hover:border-text-2 text-text-0 placeholder:text-text-2 text-[13px] outline-none transition-colors duration-[160ms] focus:border-accent focus:ring-1 focus:ring-accent resize-none"
               placeholder="Posologie, précautions, fournisseur…"
               value={notes}
               onChange={e => setNotes(e.target.value)}
               disabled={saving}
             />
-            <p className="font-mono text-[10px] text-text-2 tabular-nums text-right">
+            <p className="text-[10px] text-text-2 tabular-nums text-right">
               {notes.length}/200
             </p>
           </div>
@@ -491,7 +491,7 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
                 'pressable flex-1 h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-bg-1 border border-border text-text-1',
-                'font-mono text-[12px] font-bold uppercase tracking-wide',
+                'text-[12px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms] hover:border-text-2',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : '',
@@ -508,7 +508,7 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
                 'pressable flex-[2] h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-accent text-bg-0',
-                'font-mono text-[13px] font-bold uppercase tracking-wide',
+                'text-[13px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms]',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',

@@ -384,17 +384,50 @@ function buildASevrer(
 
 // ─── Façade publique ─────────────────────────────────────────────────────────
 
+/**
+ * Construit le dashboard reproduction pour `/reproduction`.
+ *
+ * V36-A — Exclusivité de phase (BUG-1) :
+ *   Une truie en gestation/maternité confirmée ne doit JAMAIS être listée
+ *   "À saillir" ou "Écho à faire" — sinon le porcher voit le même animal
+ *   dans deux étapes incompatibles (cas T-001 vu en prod : "Sevrée 0j" +
+ *   "MB J-2"). Règle :
+ *
+ *     EnMaternité (4) ∪ MBImminente (3)  →  consomment la truie
+ *     Étapes 1 et 2 sont alors filtrées pour cette truie.
+ *
+ *   En revanche Écho (2) et À saillir (1) peuvent coexister légitimement :
+ *   une truie Vide juste après saillie (J+5) est à la fois "en attente
+ *   d'écho" et "candidate à re-saillir" si retour chaleur. C'est intentionnel.
+ *
+ *   `asevrer` n'est pas dédupliqué : il référence des bandes (pas des truies)
+ *   et reste cohérent avec maternité.
+ */
 export function buildReproductionDashboard(
   truies: Truie[],
   saillies: Saillie[],
   bandes: BandePorcelets[],
   today: Date,
 ): ReproductionDashboard {
+  const enMaternite = buildEnMaternite(truies, bandes, today);
+  const mbImminente = buildMBImminente(truies, today);
+  const echo = buildEcho(truies, saillies, bandes, today);
+  const asaillir = buildAsaillir(truies, saillies, bandes, today);
+
+  // Truies engagées dans une phase de gestation/maternité confirmée.
+  // Elles ne peuvent pas être simultanément "à saillir" ou "écho à faire".
+  const claimedByGestationOrMaternite = new Set<string>();
+  for (const it of enMaternite) claimedByGestationOrMaternite.add(it.truie.id);
+  for (const it of mbImminente) claimedByGestationOrMaternite.add(it.truie.id);
+
+  const echoFiltered = echo.filter(it => !claimedByGestationOrMaternite.has(it.truie.id));
+  const asaillirFiltered = asaillir.filter(it => !claimedByGestationOrMaternite.has(it.truie.id));
+
   return {
-    asaillir: buildAsaillir(truies, saillies, bandes, today),
-    echo: buildEcho(truies, saillies, bandes, today),
-    mbImminente: buildMBImminente(truies, today),
-    enMaternite: buildEnMaternite(truies, bandes, today),
+    asaillir: asaillirFiltered,
+    echo: echoFiltered,
+    mbImminente,
+    enMaternite,
     asevrer: buildASevrer(bandes, truies, today),
   };
 }

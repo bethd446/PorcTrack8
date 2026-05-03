@@ -87,19 +87,19 @@ const QuickConfirmReformeForm: React.FC<QuickConfirmReformeFormProps> = ({
         <div className="space-y-5">
           <div className="card-dense !p-4 space-y-1">
             <div className="text-mono-micro text-text-2">Truie</div>
-            <div className="font-mono text-[13px] text-text-0">{truieId}</div>
-            <p className="mt-2 font-mono text-[12px] text-text-1 leading-relaxed">
+            <div className="ft-code text-[13px] text-text-0">{truieId}</div>
+            <p className="mt-2 text-[12px] text-text-1 leading-relaxed">
               {pending.alertMessage}
             </p>
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="reforme-motif" className="block font-mono text-[11px] uppercase text-text-2">
+            <label htmlFor="reforme-motif" className="block text-[11px] uppercase text-text-2">
               Motif retenu
             </label>
             <select
               id="reforme-motif"
-              className="w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 font-mono text-[13px]"
+              className="w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 text-[13px]"
               value={motif}
               onChange={e => setMotif(e.target.value)}
             >
@@ -111,14 +111,14 @@ const QuickConfirmReformeForm: React.FC<QuickConfirmReformeFormProps> = ({
 
           {motif === 'AUTRE' && (
             <div className="space-y-2">
-              <label htmlFor="reforme-motif-autre" className="block font-mono text-[11px] uppercase text-text-2">
+              <label htmlFor="reforme-motif-autre" className="block text-[11px] uppercase text-text-2">
                 Préciser le motif
               </label>
               <input
                 id="reforme-motif-autre"
                 type="text"
                 maxLength={120}
-                className="w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 font-mono text-[13px]"
+                className="w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 text-[13px]"
                 value={motifAutre}
                 onChange={e => setMotifAutre(e.target.value)}
                 placeholder="Ex. comportement agressif"
@@ -127,7 +127,7 @@ const QuickConfirmReformeForm: React.FC<QuickConfirmReformeFormProps> = ({
           )}
 
           <div className="space-y-2">
-            <label htmlFor="reforme-date" className="block font-mono text-[11px] uppercase text-text-2">
+            <label htmlFor="reforme-date" className="block text-[11px] uppercase text-text-2">
               Date de sortie
             </label>
             <input
@@ -141,7 +141,7 @@ const QuickConfirmReformeForm: React.FC<QuickConfirmReformeFormProps> = ({
           </div>
 
           {error && (
-            <p role="alert" className="font-mono text-[11px] text-red">
+            <p role="alert" className="text-[11px] text-red">
               {error}
             </p>
           )}
@@ -152,7 +152,7 @@ const QuickConfirmReformeForm: React.FC<QuickConfirmReformeFormProps> = ({
             disabled={saving}
             aria-busy={saving}
             aria-label="Confirmer la réforme"
-            className="pressable w-full h-14 rounded-md bg-accent text-bg-0 font-mono text-[12px] font-bold uppercase tracking-wide"
+            className="pressable w-full h-14 rounded-md bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide"
           >
             {saving ? 'Enregistrement…' : 'Confirmer la réforme'}
           </button>

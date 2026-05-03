@@ -58,7 +58,7 @@ const BandeICRealCard: React.FC<BandeICRealCardProps> = ({
   if (loading) {
     return (
       <div className="card-dense !p-4 animate-pulse">
-        <p className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+        <p className="text-[11px] uppercase tracking-wide text-text-2">
           Indicateur alimentaire — chargement…
         </p>
       </div>
@@ -68,7 +68,7 @@ const BandeICRealCard: React.FC<BandeICRealCardProps> = ({
   if (error) {
     return (
       <div className="card-dense !p-4">
-        <p className="font-mono text-[11px] text-red">
+        <p className="text-[11px] text-red">
           IC réel indisponible : {error}
         </p>
       </div>
@@ -84,7 +84,7 @@ const BandeICRealCard: React.FC<BandeICRealCardProps> = ({
             <Wheat size={18} aria-hidden="true" />
           </div>
           <div className="flex-1 space-y-2">
-            <p className="font-mono text-[12px] uppercase tracking-wide text-text-1">
+            <p className="text-[12px] uppercase tracking-wide text-text-1">
               IC réel — non disponible
             </p>
             <p className="font-sans text-[13px] text-text-2">
@@ -96,7 +96,7 @@ const BandeICRealCard: React.FC<BandeICRealCardProps> = ({
               <button
                 type="button"
                 onClick={onSaisirConso}
-                className="pressable inline-flex h-10 items-center gap-2 rounded-md bg-accent px-4 font-mono text-[12px] font-bold uppercase tracking-wide text-bg-0 hover:brightness-110"
+                className="pressable inline-flex h-10 items-center gap-2 rounded-md bg-accent px-4 text-[12px] font-bold uppercase tracking-wide text-bg-0 hover:brightness-110"
               >
                 <Wheat size={14} aria-hidden="true" />
                 Saisir ma conso
@@ -116,12 +116,12 @@ const BandeICRealCard: React.FC<BandeICRealCardProps> = ({
   return (
     <div className="card-dense !p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <p className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+        <p className="text-[11px] uppercase tracking-wide text-text-2">
           Indicateur alimentaire
         </p>
         {!data.fiable ? (
           <span
-            className="font-mono text-[10px] uppercase tracking-wide rounded-full px-2 py-0.5 bg-amber-pork/15 text-amber-pork border border-amber-pork/30"
+            className="text-[10px] uppercase tracking-wide rounded-full px-2 py-0.5 bg-amber-pork/15 text-amber-pork border border-amber-pork/30"
             title={`${data.nb_saisies} saisie(s) — peu fiable`}
           >
             Peu fiable
@@ -131,7 +131,7 @@ const BandeICRealCard: React.FC<BandeICRealCardProps> = ({
 
       <div className="grid grid-cols-3 gap-3">
         <div className="space-y-1">
-          <p className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+          <p className="text-[10px] uppercase tracking-wide text-text-2">
             IC théorique
           </p>
           <p className="font-mono text-[20px] tabular-nums text-text-0">
@@ -139,7 +139,7 @@ const BandeICRealCard: React.FC<BandeICRealCardProps> = ({
           </p>
         </div>
         <div className="space-y-1">
-          <p className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+          <p className="text-[10px] uppercase tracking-wide text-text-2">
             IC réel
           </p>
           <p
@@ -152,7 +152,7 @@ const BandeICRealCard: React.FC<BandeICRealCardProps> = ({
           </p>
         </div>
         <div className="space-y-1">
-          <p className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+          <p className="text-[10px] uppercase tracking-wide text-text-2">
             Écart
           </p>
           <p
@@ -166,7 +166,7 @@ const BandeICRealCard: React.FC<BandeICRealCardProps> = ({
         </div>
       </div>
 
-      <p className="font-mono text-[10px] text-text-2">
+      <p className="text-[10px] text-text-2">
         {data.total_kg_livre.toFixed(0)} kg livrés ·{' '}
         {data.total_kg_porc_produit.toFixed(0)} kg produit ·{' '}
         {data.nb_saisies} saisie{data.nb_saisies > 1 ? 's' : ''}

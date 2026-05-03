@@ -175,7 +175,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
               className={[
                 'w-full h-12 rounded-md px-3',
                 'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[14px] uppercase tabular-nums',
+                'ft-code text-[14px] uppercase',
                 'outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.id ? 'border-red' : 'border-border hover:border-text-2',
@@ -187,11 +187,11 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
               autoComplete="off"
             />
             {errors.id ? (
-              <p id="add-verrat-id-error" role="alert" className="font-mono text-[11px] text-red">
+              <p id="add-verrat-id-error" role="alert" className="text-[11px] text-red">
                 {errors.id}
               </p>
             ) : (
-              <p id="add-verrat-id-hint" className="font-mono text-[10px] text-text-2">
+              <p id="add-verrat-id-hint" className="text-[10px] text-text-2">
                 Format V suivi de chiffres (ex: V01)
               </p>
             )}
@@ -212,7 +212,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
               aria-invalid={!!errors.nom}
               className={[
                 'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[14px] outline-none transition-colors duration-[160ms]',
+                'text-[14px] outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.nom ? 'border-red' : 'border-border hover:border-text-2',
               ].join(' ')}
@@ -223,7 +223,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
               autoComplete="off"
             />
             {errors.nom ? (
-              <p role="alert" className="font-mono text-[11px] text-red">{errors.nom}</p>
+              <p role="alert" className="text-[11px] text-red">{errors.nom}</p>
             ) : null}
           </div>
 
@@ -244,7 +244,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
               aria-describedby={errors.boucle ? 'add-verrat-boucle-error' : undefined}
               className={[
                 'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[14px] tabular-nums outline-none transition-colors duration-[160ms]',
+                'ft-code text-[14px] outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.boucle ? 'border-red' : 'border-border hover:border-text-2',
               ].join(' ')}
@@ -255,7 +255,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
               autoComplete="off"
             />
             {errors.boucle ? (
-              <p id="add-verrat-boucle-error" role="alert" className="font-mono text-[11px] text-red">
+              <p id="add-verrat-boucle-error" role="alert" className="text-[11px] text-red">
                 {errors.boucle}
               </p>
             ) : null}
@@ -277,7 +277,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
               aria-invalid={!!errors.race}
               className={[
                 'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[14px] outline-none transition-colors duration-[160ms]',
+                'text-[14px] outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.race ? 'border-red' : 'border-border hover:border-text-2',
               ].join(' ')}
@@ -293,7 +293,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
               ))}
             </datalist>
             {errors.race ? (
-              <p role="alert" className="font-mono text-[11px] text-red">{errors.race}</p>
+              <p role="alert" className="text-[11px] text-red">{errors.race}</p>
             ) : null}
           </div>
 
@@ -311,7 +311,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
               aria-invalid={!!errors.dateNaissance}
               className={[
                 'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0',
-                'font-mono text-[14px] tabular-nums outline-none transition-colors duration-[160ms]',
+                'text-[14px] tabular-nums outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.dateNaissance ? 'border-red' : 'border-border hover:border-text-2',
               ].join(' ')}
@@ -320,7 +320,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
               disabled={saving}
             />
             {errors.dateNaissance ? (
-              <p role="alert" className="font-mono text-[11px] text-red">{errors.dateNaissance}</p>
+              <p role="alert" className="text-[11px] text-red">{errors.dateNaissance}</p>
             ) : null}
           </div>
 
@@ -339,7 +339,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
               aria-invalid={!!errors.origine}
               className={[
                 'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[14px] outline-none transition-colors duration-[160ms]',
+                'text-[14px] outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.origine ? 'border-red' : 'border-border hover:border-text-2',
               ].join(' ')}
@@ -350,7 +350,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
               autoComplete="off"
             />
             {errors.origine ? (
-              <p role="alert" className="font-mono text-[11px] text-red">{errors.origine}</p>
+              <p role="alert" className="text-[11px] text-red">{errors.origine}</p>
             ) : null}
           </div>
 
@@ -369,7 +369,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
               aria-invalid={!!errors.loge}
               className={[
                 'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[14px] outline-none transition-colors duration-[160ms]',
+                'text-[14px] outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.loge ? 'border-red' : 'border-border hover:border-text-2',
               ].join(' ')}
@@ -380,7 +380,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
               autoComplete="off"
             />
             {errors.loge ? (
-              <p role="alert" className="font-mono text-[11px] text-red">{errors.loge}</p>
+              <p role="alert" className="text-[11px] text-red">{errors.loge}</p>
             ) : null}
           </div>
 
@@ -411,7 +411,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
                     className={[
                       'pressable inline-flex items-center justify-center',
                       'h-10 px-3 rounded-md border',
-                      'font-mono text-[12px] uppercase tracking-wide',
+                      'text-[12px] uppercase tracking-wide',
                       'transition-colors duration-[160ms]',
                       'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                       selected
@@ -458,11 +458,11 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
               disabled={saving}
             />
             {errors.ration ? (
-              <p id="add-verrat-ration-error" role="alert" className="font-mono text-[11px] text-red">
+              <p id="add-verrat-ration-error" role="alert" className="text-[11px] text-red">
                 {errors.ration}
               </p>
             ) : (
-              <p id="add-verrat-ration-hint" className="font-mono text-[10px] text-text-2 tabular-nums">
+              <p id="add-verrat-ration-hint" className="text-[10px] text-text-2 tabular-nums">
                 0 à 10 kg/j · défaut 3.0
               </p>
             )}
@@ -479,7 +479,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
                 'pressable flex-1 h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-bg-1 border border-border text-text-1',
-                'font-mono text-[12px] font-bold uppercase tracking-wide',
+                'text-[12px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms] hover:border-text-2',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : '',
@@ -496,7 +496,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
                 'pressable flex-[2] h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-accent text-bg-0',
-                'font-mono text-[13px] font-bold uppercase tracking-wide',
+                'text-[13px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms]',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',

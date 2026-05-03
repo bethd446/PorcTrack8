@@ -235,6 +235,8 @@ export interface StockAliment {
   notes?: string;
   /** UUID du fournisseur préféré (V21-D1). */
   fournisseurId?: string;
+  /** V36 — short_code lisible humain (ex: MAIS-CONCASSE), stable per farm. */
+  shortCode?: string;
 }
 
 export interface StockVeto {
@@ -250,6 +252,8 @@ export interface StockVeto {
   notes?: string;
   /** UUID du fournisseur préféré (V21-D1). */
   fournisseurId?: string;
+  /** V36 — short_code lisible humain (ex: IVRM), stable per farm. */
+  shortCode?: string;
 }
 
 /**

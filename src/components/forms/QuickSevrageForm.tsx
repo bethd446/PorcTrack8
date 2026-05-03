@@ -164,7 +164,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
               Sevrage enregistré
             </p>
             {selected && (
-              <p className="mt-2 font-mono text-[12px] uppercase tracking-wide text-text-2 tabular-nums">
+              <p className="mt-2 ft-code text-[12px] uppercase tracking-wide text-text-2 tabular-nums">
                 {selected.idPortee || selected.id}
               </p>
             )}
@@ -197,7 +197,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
                 value={bandeId}
                 onChange={e => setBandeId(e.target.value)}
                 disabled={saving}
-                className="w-full h-12 rounded-md px-3 bg-bg-0 border border-border text-text-0 font-mono text-[13px] outline-none focus:border-accent"
+                className="w-full h-12 rounded-md px-3 bg-bg-0 border border-border text-text-0 text-[13px] outline-none focus:border-accent"
               >
                 <option value="">— Sélectionner une bande —</option>
                 {bandesEligibles.map(b => (

@@ -294,7 +294,7 @@ const PharmacieView: React.FC = () => {
                 type="button"
                 onClick={() => setAddOpen(true)}
                 aria-label="Ajouter un nouveau produit vétérinaire"
-                className="pressable shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-accent/40 text-accent font-mono text-[11px] uppercase tracking-wide hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-colors"
+                className="pressable shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-accent/40 text-accent text-[11px] uppercase tracking-wide hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-colors"
               >
                 <Plus size={14} aria-hidden="true" />
                 Nouveau produit
@@ -543,12 +543,12 @@ const VetoEditableRow: React.FC<VetoEditableRowProps> = ({
             {item.produit}
           </div>
           {secondary ? (
-            <div className="mt-0.5 truncate font-mono text-[11px] text-text-2">
+            <div className="mt-0.5 truncate text-[11px] text-text-2">
               {secondary}
             </div>
           ) : null}
         </div>
-        <div className="shrink-0 flex items-center gap-1 font-mono text-[12px] tabular-nums text-text-1">
+        <div className="shrink-0 flex items-center gap-1 text-[12px] tabular-nums text-text-1">
           <EditableNumber
             value={item.stockActuel ?? null}
             min={0}
@@ -578,7 +578,7 @@ const VetoEditableRow: React.FC<VetoEditableRowProps> = ({
           <Chip tone={tone} label={labelForStatut(item.statutStock)} />
         </div>
       </div>
-      <div className="font-mono text-[11px] text-text-2 pl-0.5">
+      <div className="text-[11px] text-text-2 pl-0.5">
         <EditableText
           value={item.notes ?? null}
           maxLength={200}

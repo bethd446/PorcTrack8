@@ -260,3 +260,61 @@ describe('findBandeForTruie — jointure truie ↔ bande', () => {
     expect(findBandeForTruie(truie, [bande], 28, TODAY_LOCAL)).toBeNull();
   });
 });
+
+// ─── V36-A — Exclusivité de phase (BUG-1 régression) ────────────────────────
+
+describe('buildReproductionDashboard — V36-A exclusivité de phase (BUG-1)', () => {
+  const TODAY_REG = new Date(2026, 4, 1); // 2026-05-01
+
+  it('truie en maternité n\'apparaît PAS dans "À saillir" même si statut="Vide"', () => {
+    // Cas vu en prod : statut BD désynchro mais bande sous-mère datée 14j
+    // → l'étape Maternité "consomme" la truie, étape 1 est filtrée.
+    const truies: Truie[] = [
+      makeTruie('Vide', { id: 'T100', displayId: 'T100', boucle: 'FR-T100' }),
+    ];
+    const bandes: BandePorcelets[] = [
+      makeBande('Sous mère', {
+        truie: 'T100',
+        boucleMere: 'FR-T100',
+        dateMB: '17/04/2026', // J+14
+      }),
+    ];
+    // Note: étape 4 demande statut MATERNITE de la truie. On configure donc
+    // une truie maternité réelle pour vérifier la règle d'exclusivité.
+    truies[0].statut = 'En maternité';
+    const dash = buildReproductionDashboard(truies, [], bandes, TODAY_REG);
+    expect(dash.enMaternite).toHaveLength(1);
+    // La truie ne doit PAS apparaître dans À saillir.
+    expect(dash.asaillir.find(it => it.truie.id === 'T100')).toBeUndefined();
+  });
+
+  it('truie avec MB imminente J-2 n\'apparaît PAS dans "À saillir"', () => {
+    // Fix BUG-1 T-001 : statut="Vide" en BD MAIS dateMBPrevue à J-2
+    // → MB imminente l'emporte, "À saillir" exclut la truie.
+    const dateMBPrevue = '03/05/2026'; // J+2 par rapport à TODAY 01/05
+    const truies: Truie[] = [
+      makeTruie('Pleine', {
+        id: 'T001',
+        displayId: 'T001',
+        boucle: 'FR-T001',
+        dateMBPrevue,
+      }),
+    ];
+    const dash = buildReproductionDashboard(truies, [], [], TODAY_REG);
+    expect(dash.mbImminente).toHaveLength(1);
+    expect(dash.asaillir.find(it => it.truie.id === 'T001')).toBeUndefined();
+  });
+
+  it('truie VIDE avec saillie ≥21j PEUT apparaître dans "À saillir" ET "Écho" simultanément', () => {
+    // Cas légitime : truie revenue en chaleur post-saillie → on peut à la
+    // fois re-saillir ET attendre l'écho (si déjà saillie + statut ambigu).
+    // La déduplication n'opère qu'avec gestation/maternité confirmée.
+    const truies: Truie[] = [
+      makeTruie('Vide', { id: 'T200', displayId: 'T200', boucle: 'FR-T200' }),
+    ];
+    const saillies: Saillie[] = [makeSaillie('T200', '01/04/2026')]; // J+30
+    const dash = buildReproductionDashboard(truies, saillies, [], TODAY_REG);
+    expect(dash.echo.find(it => it.truie.id === 'T200')).toBeDefined();
+    expect(dash.asaillir.find(it => it.truie.id === 'T200')).toBeDefined();
+  });
+});

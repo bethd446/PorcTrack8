@@ -175,7 +175,7 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
             <Stethoscope size={18} aria-hidden="true" />
           </div>
           <div>
-            <p className="font-mono text-[11px] font-bold uppercase tracking-wide text-text-1">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-text-1">
               {step === 1 ? 'Étape 1 — Sélection porcelet' : 'Étape 2 — Saisie maladie'}
             </p>
             <p className="text-mono-micro text-text-2 mt-0.5">
@@ -192,9 +192,9 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
             data-testid="porcelet-list"
           >
             {loadingList ? (
-              <p className="font-mono text-[11px] text-text-2">Chargement…</p>
+              <p className="text-[11px] text-text-2">Chargement…</p>
             ) : eligible.length === 0 ? (
-              <p className="rounded-md border border-dashed border-border bg-bg-1 px-3 py-3 font-mono text-[11px] text-text-2">
+              <p className="rounded-md border border-dashed border-border bg-bg-1 px-3 py-3 text-[11px] text-text-2">
                 Aucun porcelet vivant ou malade dans cette bande
               </p>
             ) : (
@@ -209,10 +209,10 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
                   data-testid={`porcelet-item-${p.id}`}
                 >
                   <div className="min-w-0">
-                    <p className="font-mono text-[13px] text-text-0">
+                    <p className="ft-code text-[13px] text-text-0">
                       {p.boucle}
                     </p>
-                    <p className="font-mono text-[10px] uppercase tracking-wide text-text-2 mt-0.5">
+                    <p className="text-[10px] uppercase tracking-wide text-text-2 mt-0.5">
                       {p.sexe} · {p.statut}
                       {p.poidsCourantKg != null
                         ? ` · ${p.poidsCourantKg} kg`
@@ -241,10 +241,10 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
             {selectedPorcelet && (
               <div className="rounded-md border border-border bg-bg-0 px-3 py-2 flex items-center justify-between">
                 <div>
-                  <p className="font-mono text-[12px] text-text-0">
+                  <p className="ft-code text-[12px] text-text-0">
                     {selectedPorcelet.boucle}
                   </p>
-                  <p className="font-mono text-[10px] uppercase tracking-wide text-text-2 mt-0.5">
+                  <p className="text-[10px] uppercase tracking-wide text-text-2 mt-0.5">
                     {selectedPorcelet.sexe} · {selectedPorcelet.statut}
                   </p>
                 </div>
@@ -254,7 +254,7 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
                     onClick={() => setStep(1)}
                     className="pressable inline-flex h-7 items-center gap-1 rounded-md bg-bg-2 px-2 text-text-1 hover:text-accent"
                   >
-                    <span className="font-mono text-[10px] uppercase tracking-wide">
+                    <span className="text-[10px] uppercase tracking-wide">
                       Changer
                     </span>
                   </button>
@@ -273,7 +273,7 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
               <select
                 id="hl-porc-type"
                 aria-label="Type d'intervention santé"
-                className="w-full h-10 rounded-md px-3 bg-bg-0 border border-border text-text-0 font-mono text-[12px] outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                className="w-full h-10 rounded-md px-3 bg-bg-0 border border-border text-text-0 text-[12px] outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 value={logType}
                 onChange={e =>
                   setLogType(e.target.value as PorceletHealthLogType)
@@ -304,7 +304,7 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
                 aria-describedby={errors.symptome ? 'hl-porc-sympt-err' : undefined}
                 className={[
                   'w-full rounded-md px-3 py-2 bg-bg-0 border text-text-0',
-                  'font-mono text-[12px] outline-none min-h-[60px] resize-y',
+                  'text-[12px] outline-none min-h-[60px] resize-y',
                   errors.symptome
                     ? 'border-red'
                     : 'border-border focus:border-accent focus:ring-1 focus:ring-accent',
@@ -318,7 +318,7 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
                 <p
                   id="hl-porc-sympt-err"
                   role="alert"
-                  className="font-mono text-[11px] text-red mt-1"
+                  className="text-[11px] text-red mt-1"
                 >
                   {errors.symptome}
                 </p>
@@ -336,7 +336,7 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
               <textarea
                 id="hl-porc-diag"
                 aria-label="Diagnostic"
-                className="w-full rounded-md px-3 py-2 bg-bg-0 border border-border text-text-0 font-mono text-[12px] outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[50px] resize-y"
+                className="w-full rounded-md px-3 py-2 bg-bg-0 border border-border text-text-0 text-[12px] outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[50px] resize-y"
                 value={diagnostic}
                 onChange={e => setDiagnostic(e.target.value)}
                 disabled={saving}
@@ -355,7 +355,7 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
               <input
                 id="hl-porc-trt"
                 aria-label="Traitement administré"
-                className="w-full h-10 rounded-md px-3 bg-bg-0 border border-border text-text-0 font-mono text-[12px] outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                className="w-full h-10 rounded-md px-3 bg-bg-0 border border-border text-text-0 text-[12px] outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 value={treatment}
                 onChange={e => setTreatment(e.target.value)}
                 disabled={saving}
@@ -382,7 +382,7 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
                   aria-invalid={!!errors.doseCount}
                   className={[
                     'w-full h-10 rounded-md px-3 bg-bg-0 border text-text-0',
-                    'font-mono text-[12px] outline-none',
+                    'text-[12px] outline-none',
                     errors.doseCount
                       ? 'border-red'
                       : 'border-border focus:border-accent focus:ring-1 focus:ring-accent',
@@ -392,7 +392,7 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
                   disabled={saving}
                 />
                 {errors.doseCount && (
-                  <p role="alert" className="font-mono text-[11px] text-red mt-1">
+                  <p role="alert" className="text-[11px] text-red mt-1">
                     {errors.doseCount}
                   </p>
                 )}
@@ -415,7 +415,7 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
                   aria-invalid={!!errors.weightKg}
                   className={[
                     'w-full h-10 rounded-md px-3 bg-bg-0 border text-text-0',
-                    'font-mono text-[12px] outline-none',
+                    'text-[12px] outline-none',
                     errors.weightKg
                       ? 'border-red'
                       : 'border-border focus:border-accent focus:ring-1 focus:ring-accent',
@@ -425,7 +425,7 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
                   disabled={saving}
                 />
                 {errors.weightKg && (
-                  <p role="alert" className="font-mono text-[11px] text-red mt-1">
+                  <p role="alert" className="text-[11px] text-red mt-1">
                     {errors.weightKg}
                   </p>
                 )}
@@ -443,7 +443,7 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
               <textarea
                 id="hl-porc-notes"
                 aria-label="Notes additionnelles"
-                className="w-full rounded-md px-3 py-2 bg-bg-0 border border-border text-text-0 font-mono text-[12px] outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[50px] resize-y"
+                className="w-full rounded-md px-3 py-2 bg-bg-0 border border-border text-text-0 text-[12px] outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[50px] resize-y"
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
                 disabled={saving}
@@ -457,7 +457,7 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
               aria-label="Enregistrer le signalement"
               className={[
                 'pressable w-full h-12 rounded-md inline-flex items-center justify-center gap-2',
-                'bg-red text-text-0 font-mono text-[12px] font-bold uppercase tracking-wide',
+                'bg-red text-text-0 text-[12px] font-bold uppercase tracking-wide',
                 saving || !symptome.trim()
                   ? 'opacity-40 cursor-not-allowed'
                   : 'hover:brightness-110',

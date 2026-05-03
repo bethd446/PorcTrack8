@@ -164,7 +164,7 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                 onChange={(e) => setSearchText(e.target.value)}
                 placeholder="Chercher par nom, ID ou boucle..."
                 aria-label="Rechercher un animal par nom, ID ou boucle"
-                className="w-full bg-transparent border-none outline-none font-mono text-[13px] text-text-0 placeholder:text-text-2"
+                className="w-full bg-transparent border-none outline-none text-[13px] text-text-0 placeholder:text-text-2"
               />
             </label>
 
@@ -194,7 +194,7 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                     ].join(' ')}
                   >
                     <Icon size={14} className="shrink-0" />
-                    <span className="font-mono text-[11px] font-semibold uppercase tracking-wide">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide">
                       {key === 'TRUIE' ? 'Truies' : 'Verrats'}
                     </span>
                   </button>
@@ -211,7 +211,7 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
               />
               <div className="card-dense">
                 {groupsEntries.length === 0 ? (
-                  <p className="font-mono text-[12px] text-text-2">
+                  <p className="text-[12px] text-text-2">
                     {tab === 'TRUIE' ? 'Aucune truie enregistrée' : 'Aucun verrat enregistré'}
                   </p>
                 ) : (
@@ -346,7 +346,7 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                             <Icon size={20} className="text-text-1" />
                           </div>
                           <span
-                            className="absolute -bottom-1 -left-1 px-1.5 py-0.5 rounded-sm bg-accent text-bg-0 font-mono font-semibold text-[9px] tabular-nums shadow-sm"
+                            className="absolute -bottom-1 -left-1 px-1.5 py-0.5 rounded-sm bg-accent text-bg-0 ft-code font-semibold text-[9px] tabular-nums shadow-sm"
                           >
                             {item.displayId}
                           </span>
@@ -359,13 +359,13 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                           </div>
                           <div className="mt-0.5 flex items-center gap-2 min-w-0">
                             {item.boucle ? (
-                              <span className="inline-flex items-center gap-1 font-mono text-[11px] text-text-2 truncate">
+                              <span className="inline-flex items-center gap-1 ft-code text-[11px] text-text-2 truncate">
                                 <Tag size={10} className="text-accent shrink-0" aria-hidden="true" />
                                 B.{item.boucle}
                               </span>
                             ) : null}
                             {secondaryBits ? (
-                              <span className="font-mono text-[11px] text-text-2 truncate">
+                              <span className="text-[11px] text-text-2 truncate">
                                 {secondaryBits}
                               </span>
                             ) : null}
@@ -378,7 +378,7 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                                   style={{ width: `${gestPct}%` }}
                                 />
                               </div>
-                              <span className="font-mono tabular-nums text-[11px] font-semibold text-accent">
+                              <span className="tabular-nums text-[11px] font-semibold text-accent">
                                 {gestPct}%
                               </span>
                             </div>

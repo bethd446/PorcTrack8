@@ -481,16 +481,16 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
               }}
               className="premium-segment bg-bg-1 border border-border rounded-md"
             >
-              <IonSegmentButton value="BANDE"><IonLabel className="text-[11px] font-mono">Bandes</IonLabel></IonSegmentButton>
-              <IonSegmentButton value="TRUIE"><IonLabel className="text-[11px] font-mono">Truies</IonLabel></IonSegmentButton>
-              <IonSegmentButton value="VERRAT"><IonLabel className="text-[11px] font-mono">Verrats</IonLabel></IonSegmentButton>
+              <IonSegmentButton value="BANDE"><IonLabel className="text-[11px]">Bandes</IonLabel></IonSegmentButton>
+              <IonSegmentButton value="TRUIE"><IonLabel className="text-[11px]">Truies</IonLabel></IonSegmentButton>
+              <IonSegmentButton value="VERRAT"><IonLabel className="text-[11px]">Verrats</IonLabel></IonSegmentButton>
             </IonSegment>
 
             <div className="space-y-1.5">
               <label className="block text-mono-label text-text-2">Rechercher</label>
               <div className="flex items-center gap-2 h-11 px-3 rounded-md bg-bg-0 border border-border focus-within:border-accent">
                 <Search size={14} className="text-text-2" />
-                <input type="search" className="flex-1 bg-transparent outline-none font-mono text-[13px] text-text-0" placeholder="ID, Nom, Boucle…" value={query} onChange={e => setQuery(e.target.value)} />
+                <input type="search" className="flex-1 bg-transparent outline-none text-[13px] text-text-0" placeholder="ID, Nom, Boucle…" value={query} onChange={e => setQuery(e.target.value)} />
               </div>
             </div>
 
@@ -505,7 +505,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
                   />
                 </li>
               ))}
-              {filteredSubjects.length === 0 && <li className="p-4 text-center text-text-2 font-mono text-[11px]">Aucun résultat</li>}
+              {filteredSubjects.length === 0 && <li className="p-4 text-center text-text-2 text-[11px]">Aucun résultat</li>}
             </ul>
           </div>
         )}
@@ -517,8 +517,8 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
               <div className="card-dense !p-3 flex items-center gap-3">
                 <button type="button" onClick={() => setStep(1)} className="pressable h-9 w-9 flex items-center justify-center rounded-md bg-bg-2 text-text-1"><ArrowLeft size={14} /></button>
                 <div className="min-w-0 flex-1">
-                  <div className="font-mono text-[10px] uppercase text-text-2">{subjectType}</div>
-                  <div className="truncate font-mono text-[13px] text-text-0">{subjectDisplay(selectedSubject)}</div>
+                  <div className="text-[10px] uppercase text-text-2">{subjectType}</div>
+                  <div className="truncate ft-code text-[13px] text-text-0">{subjectDisplay(selectedSubject)}</div>
                 </div>
               </div>
 
@@ -528,7 +528,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
                   name="nbPeses"
                   render={({ field }) => (
                     <FormItem className="space-y-1.5">
-                      <FormLabel className="block font-mono text-[11px] uppercase text-text-2">Nombre pesés</FormLabel>
+                      <FormLabel className="block text-[11px] uppercase text-text-2">Nombre pesés</FormLabel>
                       <FormControl>
                         <input
                           type="text"
@@ -541,7 +541,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
                           ref={field.ref}
                         />
                       </FormControl>
-                      <FormMessage className="text-red font-mono text-[11px]" />
+                      <FormMessage className="text-red text-[11px]" />
                     </FormItem>
                   )}
                 />
@@ -552,7 +552,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
                 name="poidsMoyen"
                 render={({ field }) => (
                   <FormItem className="space-y-1.5">
-                    <FormLabel className="block font-mono text-[11px] uppercase text-text-2">
+                    <FormLabel className="block text-[11px] uppercase text-text-2">
                       Poids {subjectType === 'BANDE' ? 'moyen' : ''} (kg)
                     </FormLabel>
                     <FormControl>
@@ -569,7 +569,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
                         autoFocus
                       />
                     </FormControl>
-                    <FormMessage className="text-red font-mono text-[11px]" />
+                    <FormMessage className="text-red text-[11px]" />
                   </FormItem>
                 )}
               />
@@ -580,14 +580,14 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
                   name="ecartType"
                   render={({ field }) => (
                     <FormItem className="space-y-1.5">
-                      <FormLabel className="block font-mono text-[11px] uppercase text-text-2">
+                      <FormLabel className="block text-[11px] uppercase text-text-2">
                         Écart-type (kg) · <span className="text-text-2 normal-case">opt</span>
                       </FormLabel>
                       <FormControl>
                         <input
                           type="text"
                           inputMode="decimal"
-                          className="w-full h-11 rounded-md px-3 bg-bg-0 border text-text-0 font-mono text-[14px] outline-none focus:border-accent"
+                          className="w-full h-11 rounded-md px-3 bg-bg-0 border text-text-0 text-[14px] outline-none focus:border-accent"
                           placeholder="0.0"
                           value={field.value ?? ''}
                           onChange={e => field.onChange(e.target.value.replace(/[^\d.,]/g, ''))}
@@ -596,7 +596,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
                           ref={field.ref}
                         />
                       </FormControl>
-                      <FormMessage className="text-red font-mono text-[11px]" />
+                      <FormMessage className="text-red text-[11px]" />
                     </FormItem>
                   )}
                 />
@@ -607,12 +607,12 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
                 name="observation"
                 render={({ field }) => (
                   <FormItem className="space-y-1.5">
-                    <FormLabel className="block font-mono text-[11px] uppercase text-text-2">
+                    <FormLabel className="block text-[11px] uppercase text-text-2">
                       Observation · <span className="text-text-2 normal-case">opt</span>
                     </FormLabel>
                     <FormControl>
                       <textarea
-                        className="w-full rounded-md px-3 py-3 bg-bg-0 border text-text-0 font-mono text-[13px] outline-none focus:border-accent min-h-[80px]"
+                        className="w-full rounded-md px-3 py-3 bg-bg-0 border text-text-0 text-[13px] outline-none focus:border-accent min-h-[80px]"
                         placeholder="Note terrain…"
                         value={field.value ?? ''}
                         onChange={field.onChange}
@@ -621,14 +621,14 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
                         ref={field.ref}
                       />
                     </FormControl>
-                    <FormMessage className="text-red font-mono text-[11px]" />
+                    <FormMessage className="text-red text-[11px]" />
                   </FormItem>
                 )}
               />
 
               <div className="flex gap-2 pt-2">
-                <button type="button" onClick={handleClose} className="pressable flex-1 h-14 rounded-md bg-bg-1 border text-text-1 font-mono text-[12px] uppercase font-bold">Annuler</button>
-                <button type="submit" disabled={saving} className="pressable flex-[2] h-14 rounded-md bg-accent text-bg-0 font-mono text-[13px] uppercase font-bold">{saving ? 'Enregistrement…' : 'Enregistrer'}</button>
+                <button type="button" onClick={handleClose} className="pressable flex-1 h-14 rounded-md bg-bg-1 border text-text-1 text-[12px] uppercase font-bold">Annuler</button>
+                <button type="submit" disabled={saving} className="pressable flex-[2] h-14 rounded-md bg-accent text-bg-0 text-[13px] uppercase font-bold">{saving ? 'Enregistrement…' : 'Enregistrer'}</button>
               </div>
             </form>
           </Form>
@@ -647,25 +647,25 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
                 <ArrowLeft size={14} />
               </button>
               <div className="min-w-0 flex-1">
-                <div className="font-mono text-[10px] uppercase text-text-2">Récapitulatif · {subjectType}</div>
-                <div className="truncate font-mono text-[13px] text-text-0">{subjectDisplay(selectedSubject)}</div>
+                <div className="text-[10px] uppercase text-text-2">Récapitulatif · {subjectType}</div>
+                <div className="truncate ft-code text-[13px] text-text-0">{subjectDisplay(selectedSubject)}</div>
               </div>
             </div>
 
             {/* Anciens / nouveaux poids */}
             <div className="grid grid-cols-2 gap-2">
               <div className="card-dense !p-3">
-                <div className="font-mono text-[10px] uppercase text-text-2">Ancien poids</div>
-                <div className="font-mono text-[18px] text-text-0 mt-1" data-testid="recap-ancien-poids">
+                <div className="text-[10px] uppercase text-text-2">Ancien poids</div>
+                <div className="ft-values text-[18px] text-text-0 mt-1" data-testid="recap-ancien-poids">
                   {recapStats.ancienPoids !== null ? `${recapStats.ancienPoids} kg` : '—'}
                 </div>
                 {recapStats.ancienneDate && (
-                  <div className="font-mono text-[10px] text-text-2 mt-0.5">{recapStats.ancienneDate}</div>
+                  <div className="ft-code text-[10px] text-text-2 mt-0.5">{recapStats.ancienneDate}</div>
                 )}
               </div>
               <div className="card-dense !p-3">
-                <div className="font-mono text-[10px] uppercase text-text-2">Nouveau poids</div>
-                <div className="font-mono text-[18px] text-text-0 mt-1" data-testid="recap-nouveau-poids">
+                <div className="text-[10px] uppercase text-text-2">Nouveau poids</div>
+                <div className="ft-values text-[18px] text-text-0 mt-1" data-testid="recap-nouveau-poids">
                   {recapStats.nouveauPoids} kg
                 </div>
               </div>
@@ -685,8 +685,8 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
                   }`,
                 }}
               >
-                <div className="font-mono text-[10px] uppercase text-text-2">Écart</div>
-                <div className="font-mono text-[16px] text-text-0 mt-1">
+                <div className="text-[10px] uppercase text-text-2">Écart</div>
+                <div className="ft-values text-[16px] text-text-0 mt-1">
                   {recapStats.ecartKg > 0 ? '+' : ''}{recapStats.ecartKg} kg
                   {' · '}
                   <span data-testid="recap-ecart-pct">
@@ -694,7 +694,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
                   </span>
                 </div>
                 {recapStats.gmqGrammesParJour !== null && (
-                  <div className="font-mono text-[12px] text-text-2 mt-1" data-testid="recap-gmq">
+                  <div className="text-[12px] text-text-2 mt-1" data-testid="recap-gmq">
                     GMQ : {recapStats.gmqGrammesParJour} g/j ({recapStats.joursEcart}j)
                   </div>
                 )}
@@ -709,7 +709,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
                 style={{ borderLeft: '4px solid #dc2626', background: 'rgba(220,38,38,0.06)' }}
               >
                 <AlertTriangle size={16} className="text-red mt-0.5" />
-                <div className="font-mono text-[12px] text-text-0">
+                <div className="text-[12px] text-text-0">
                   Écart inhabituel — vérifie la pesée.
                 </div>
               </div>
@@ -719,7 +719,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="pressable flex-1 h-14 rounded-md bg-bg-1 border text-text-1 font-mono text-[12px] uppercase font-bold"
+                className="pressable flex-1 h-14 rounded-md bg-bg-1 border text-text-1 text-[12px] uppercase font-bold"
               >
                 Modifier
               </button>
@@ -727,7 +727,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
                 type="button"
                 onClick={() => { void handleConfirmRecap(); }}
                 disabled={saving}
-                className="pressable flex-[2] h-14 rounded-md bg-accent text-bg-0 font-mono text-[13px] uppercase font-bold"
+                className="pressable flex-[2] h-14 rounded-md bg-accent text-bg-0 text-[13px] uppercase font-bold"
               >
                 {saving ? 'Enregistrement…' : 'Confirmer le nouveau poids'}
               </button>
@@ -740,8 +740,8 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
           <div className="flex flex-col items-center justify-center py-16 animate-scale-in">
             <CheckCircle2 size={64} className="text-accent mb-4" strokeWidth={1.5} />
             <p className="agritech-heading text-[18px] uppercase">Pesée enregistrée</p>
-            {successSummary && <p className="mt-2 font-mono text-[12px] text-text-2 text-center px-4">{successSummary}</p>}
-            <button type="button" onClick={handleClose} className="pressable mt-8 h-12 px-8 rounded-md bg-accent text-bg-0 font-mono text-[12px] font-bold uppercase">OK</button>
+            {successSummary && <p className="mt-2 text-[12px] text-text-2 text-center px-4">{successSummary}</p>}
+            <button type="button" onClick={handleClose} className="pressable mt-8 h-12 px-8 rounded-md bg-accent text-bg-0 text-[12px] font-bold uppercase">OK</button>
           </div>
         )}
       </div>

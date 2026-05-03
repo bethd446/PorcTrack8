@@ -295,7 +295,7 @@ const EngraissementCard: React.FC<{ data: EngraissementRowData; onOpen: () => vo
             <Chip tone="default" label={`${data.vivants} porcs`} size="xs" />
           </div>
           <p className="text-[11px] text-text-2 mt-0.5">
-            Mère: {data.truie || '—'} · Âge: <span className="text-text-1 font-mono">{data.ageJours}j</span>
+            Mère: {data.truie || '—'} · Âge: <span className="text-text-1">{data.ageJours}j</span>
           </p>
         </div>
         {isTransitionRequired ? (
@@ -309,7 +309,7 @@ const EngraissementCard: React.FC<{ data: EngraissementRowData; onOpen: () => vo
         {/* Weight Gauge */}
         <div className="bg-bg-1 rounded-xl p-3 border border-border/50">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-[10px] uppercase font-mono text-text-2">Poids Estimé</span>
+            <span className="text-[10px] uppercase text-text-2">Poids Estimé</span>
             <Scale size={12} className="text-accent" />
           </div>
           <div className="flex items-baseline gap-1">
@@ -327,13 +327,13 @@ const EngraissementCard: React.FC<{ data: EngraissementRowData; onOpen: () => vo
         {/* Nutrition Info */}
         <div className="bg-bg-1 rounded-xl p-3 border border-border/50">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-[10px] uppercase font-mono text-text-2">Alimentation</span>
+            <span className="text-[10px] uppercase text-text-2">Alimentation</span>
             <Droplets size={12} className="text-accent" />
           </div>
           <div className="text-[12px] font-bold text-accent truncate">
             {feedConfig?.label || currentAliment}
           </div>
-          <div className="mt-1 text-[10px] text-text-2 font-mono leading-tight truncate">
+          <div className="mt-1 text-[10px] text-text-2 leading-tight truncate">
             Maïs: {feedConfig?.formule.mais}% | KPC: {feedConfig?.formule.kpc_5}%
           </div>
         </div>

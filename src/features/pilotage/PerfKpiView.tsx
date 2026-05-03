@@ -21,9 +21,12 @@ import {
   computeGlobalKpis,
   rankTruiesByPerformance,
   detectTruiesAReformer,
+  computeZootechniqueKpis,
+  GMQ_CIBLES,
   type TruieRanking,
   type TruiesAReformer,
   type MotifReforme,
+  type TrancheAge,
 } from '../../services/perfKpiAnalyzer';
 import { genererRapportGlobal } from '../../services/financialAnalyzer';
 import type { PerformanceTier } from '../../types/farm';
@@ -190,6 +193,21 @@ const PerfKpiView: React.FC = () => {
   const finance = useMemo(
     () => genererRapportGlobal(bandes, transitions ?? []),
     [bandes, transitions],
+  );
+
+  // V36-A — KPIs zootechniques (ICR/GMQ/IC global/Marge brute/Mortalité par phase).
+  // Tous les inputs financiers viennent de `finance` ; les inputs aliment du
+  // contexte ne sont pas exposés ici (totalAlimentKg = 0 → ICR/IC null OK).
+  const zooKpis = useMemo(
+    () =>
+      computeZootechniqueKpis(
+        bandes,
+        0, // totalAlimentKg : pas de stream consommation aliment côté ferme
+        finance.totalRevenuProjete ?? 0,
+        finance.totalCout ?? 0,
+        kpis.nbTruiesProductives,
+      ),
+    [bandes, finance.totalRevenuProjete, finance.totalCout, kpis.nbTruiesProductives],
   );
 
   const nbBandes = bandes.length;
@@ -631,6 +649,137 @@ const PerfKpiView: React.FC = () => {
                               {kpis.tauxRenouvellementPct === null ? emptyHint(nbBandes) : 'cible 30-40 %/an'}
                             </span>
                           </div>
+                        </div>
+                      </section>
+
+                      {/* V36-A — Section Technique (ICR / GMQ / IC global / Mortalité phase) */}
+                      <section>
+                        <SectionDivider label="Technique" />
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="flex flex-col gap-1">
+                            <KpiCardV6
+                              label="ICR"
+                              value={zooKpis.icrKg !== null ? formatNum(zooKpis.icrKg) : '—'}
+                              unit={zooKpis.icrKg !== null ? 'kg/kg' : undefined}
+                            />
+                            <span className="px-1 font-mono text-[10px] text-text-2">
+                              {zooKpis.icrKg === null
+                                ? `Saisie aliment manquante (${zooKpis.nbPorteesSevrees12m} portée${zooKpis.nbPorteesSevrees12m > 1 ? 's' : ''} sevrée${zooKpis.nbPorteesSevrees12m > 1 ? 's' : ''})`
+                                : 'cible 2.6-2.9 kg/kg'}
+                            </span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <KpiCardV6
+                              label="IC global"
+                              value={zooKpis.icGlobal !== null ? formatNum(zooKpis.icGlobal) : '—'}
+                              unit={zooKpis.icGlobal !== null ? 'kg/kg' : undefined}
+                            />
+                            <span className="px-1 font-mono text-[10px] text-text-2">
+                              {zooKpis.icGlobal === null
+                                ? 'Tonnage aliment requis'
+                                : 'aliment / poids vif total'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* GMQ par tranche */}
+                        <div className="mt-3 grid grid-cols-2 gap-2">
+                          {(['POST_SEVRAGE', 'CROISSANCE', 'ENGRAISSEMENT', 'FINITION'] as TrancheAge[]).map(
+                            (tr) => {
+                              const v = zooKpis.gmqParTranche[tr];
+                              const cible = GMQ_CIBLES[tr];
+                              const trLabel: Record<TrancheAge, string> = {
+                                POST_SEVRAGE: 'GMQ post-sev',
+                                CROISSANCE: 'GMQ croissance',
+                                ENGRAISSEMENT: 'GMQ engr.',
+                                FINITION: 'GMQ finition',
+                              };
+                              return (
+                                <div key={tr} className="flex flex-col gap-1">
+                                  <KpiCardV6
+                                    label={trLabel[tr]}
+                                    value={v !== null ? `${v}` : '—'}
+                                    unit={v !== null ? 'g/j' : undefined}
+                                  />
+                                  <span className="px-1 font-mono text-[10px] text-text-2">
+                                    {v === null
+                                      ? 'Pesée requise'
+                                      : `cible ${cible} g/j`}
+                                  </span>
+                                </div>
+                              );
+                            },
+                          )}
+                        </div>
+
+                        {/* Mortalité par phase */}
+                        <div className="mt-3 grid grid-cols-2 gap-2">
+                          <div className="flex flex-col gap-1">
+                            <KpiCardV6
+                              label="Mort. maternité"
+                              value={zooKpis.mortalite.maternitePct !== null
+                                ? formatNum(zooKpis.mortalite.maternitePct) : '—'}
+                              unit={zooKpis.mortalite.maternitePct !== null ? '%' : undefined}
+                              accentColor={
+                                zooKpis.mortalite.maternitePct !== null && zooKpis.mortalite.maternitePct > 15
+                                  ? 'var(--color-danger, #EF4444)'
+                                  : undefined
+                              }
+                            />
+                            <span className="px-1 font-mono text-[10px] text-text-2">cible &lt; 12 %</span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <KpiCardV6
+                              label="Mort. post-sev"
+                              value={zooKpis.mortalite.postSevragePct !== null
+                                ? formatNum(zooKpis.mortalite.postSevragePct) : '—'}
+                              unit={zooKpis.mortalite.postSevragePct !== null ? '%' : undefined}
+                            />
+                            <span className="px-1 font-mono text-[10px] text-text-2">cible &lt; 3 %</span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <KpiCardV6
+                              label="Mort. engr."
+                              value={zooKpis.mortalite.engraissementPct !== null
+                                ? formatNum(zooKpis.mortalite.engraissementPct) : '—'}
+                              unit={zooKpis.mortalite.engraissementPct !== null ? '%' : undefined}
+                            />
+                            <span className="px-1 font-mono text-[10px] text-text-2">cible &lt; 2 %</span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <KpiCardV6
+                              label="Mort. finition"
+                              value={zooKpis.mortalite.finitionPct !== null
+                                ? formatNum(zooKpis.mortalite.finitionPct) : '—'}
+                              unit={zooKpis.mortalite.finitionPct !== null ? '%' : undefined}
+                            />
+                            <span className="px-1 font-mono text-[10px] text-text-2">cible &lt; 1.5 %</span>
+                          </div>
+                        </div>
+                      </section>
+
+                      {/* V36-A — Section Finances (marge brute par truie) */}
+                      <section>
+                        <SectionDivider label="Finances" />
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="flex flex-col gap-1">
+                            <KpiCardV6
+                              label="Marge brute / truie"
+                              value={zooKpis.margeBruteParTruie !== null
+                                ? `${zooKpis.margeBruteParTruie}` : '—'}
+                              unit={zooKpis.margeBruteParTruie !== null ? '€/an' : undefined}
+                            />
+                            <span className="px-1 font-mono text-[10px] text-text-2">
+                              {zooKpis.margeBruteParTruie === null
+                                ? 'Données financières manquantes'
+                                : 'revenu - coût aliment'}
+                            </span>
+                          </div>
+                          <KpiCardV6
+                            label="ROI moyen"
+                            value={roiMoyen !== null ? `${roiMoyen}` : '—'}
+                            unit={roiMoyen !== null ? '%' : undefined}
+                          />
                         </div>
                       </section>
 

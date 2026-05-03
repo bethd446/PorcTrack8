@@ -235,7 +235,7 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
                   className="accent-accent"
                   disabled={saving}
                 />
-                <span className="font-mono text-[12px] uppercase">Bande</span>
+                <span className="text-[12px] uppercase">Bande</span>
               </label>
               <label
                 className={[
@@ -254,7 +254,7 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
                   className="accent-accent"
                   disabled={saving}
                 />
-                <span className="font-mono text-[12px] uppercase">Truie indiv.</span>
+                <span className="text-[12px] uppercase">Truie indiv.</span>
               </label>
             </div>
           </fieldset>
@@ -277,7 +277,7 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
                 className={[
                   'w-full h-12 rounded-md px-3',
                   'bg-bg-0 border text-text-0',
-                  'font-mono text-[14px]',
+                  'text-[14px]',
                   'outline-none transition-colors duration-[160ms]',
                   'focus:border-accent focus:ring-1 focus:ring-accent',
                   errors.bandeId ? 'border-red' : 'border-border hover:border-text-2',
@@ -297,7 +297,7 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
                 <p
                   id="conso-bande-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.bandeId}
                 </p>
@@ -319,7 +319,7 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
                 className={[
                   'w-full h-12 rounded-md px-3',
                   'bg-bg-0 border text-text-0',
-                  'font-mono text-[14px]',
+                  'text-[14px]',
                   'outline-none transition-colors duration-[160ms]',
                   'focus:border-accent focus:ring-1 focus:ring-accent',
                   errors.truieId ? 'border-red' : 'border-border hover:border-text-2',
@@ -339,7 +339,7 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
                 <p
                   id="conso-truie-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.truieId}
                 </p>
@@ -365,7 +365,7 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
               className={[
                 'w-full h-12 rounded-md px-3',
                 'bg-bg-0 border text-text-0',
-                'font-mono text-[14px]',
+                'text-[14px]',
                 'outline-none transition-colors duration-[160ms]',
                 'focus:border-accent focus:ring-1 focus:ring-accent',
                 errors.alimentId ? 'border-red' : 'border-border hover:border-text-2',
@@ -385,14 +385,14 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
               <p
                 id="conso-aliment-error"
                 role="alert"
-                className="font-mono text-[11px] text-red"
+                className="text-[11px] text-red"
               >
                 {errors.alimentId}
               </p>
             ) : (
               <p
                 id="conso-aliment-hint"
-                className="font-mono text-[10px] text-text-2"
+                className="text-[10px] text-text-2"
               >
                 Seuls les aliments avec stock &gt; 0 sont listés.
               </p>
@@ -435,7 +435,7 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
                 <p
                   id="conso-qty-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.qtyKg}
                 </p>
@@ -474,7 +474,7 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
                 <p
                   id="conso-date-error"
                   role="alert"
-                  className="font-mono text-[11px] text-red"
+                  className="text-[11px] text-red"
                 >
                   {errors.dateConso}
                 </p>
@@ -486,7 +486,7 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
           {ruptureImminente && selectedAliment ? (
             <div
               role="alert"
-              className="flex items-start gap-2 rounded-md border border-amber-pork bg-amber-pork/10 px-3 py-2 font-mono text-[12px] text-amber-pork"
+              className="flex items-start gap-2 rounded-md border border-amber-pork bg-amber-pork/10 px-3 py-2 text-[12px] text-amber-pork"
             >
               <AlertTriangle size={14} className="shrink-0 mt-px" aria-hidden="true" />
               <span className="min-w-0 break-words">
@@ -526,7 +526,7 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
               <p
                 id="conso-notes-error"
                 role="alert"
-                className="font-mono text-[11px] text-red"
+                className="text-[11px] text-red"
               >
                 {errors.notes}
               </p>
@@ -544,7 +544,7 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
                 'pressable flex-1 h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-bg-1 border border-border text-text-1',
-                'font-mono text-[12px] font-bold uppercase tracking-wide',
+                'text-[12px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms] hover:border-text-2',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : '',
@@ -561,7 +561,7 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
                 'pressable flex-[2] h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
                 'bg-accent text-bg-0',
-                'font-mono text-[13px] font-bold uppercase tracking-wide',
+                'text-[13px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms]',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',

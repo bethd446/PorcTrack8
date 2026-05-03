@@ -224,7 +224,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                     <span className="text-[11px] uppercase tracking-wide text-text-2">
                       Table
                     </span>
-                    <span className="font-mono text-[11px] text-text-0 bg-bg-2 px-2 py-0.5 rounded tabular-nums">
+                    <span className="ft-code text-[11px] text-text-0 bg-bg-2 px-2 py-0.5 rounded tabular-nums">
                       {primaryAction.payload.sheet}
                     </span>
                   </div>
@@ -234,7 +234,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                     <span className="text-[11px] uppercase tracking-wide text-text-2">
                       ID concerné
                     </span>
-                    <span className="font-mono text-[11px] text-accent bg-bg-2 px-2 py-0.5 rounded tabular-nums">
+                    <span className="ft-code text-[11px] text-accent bg-bg-2 px-2 py-0.5 rounded tabular-nums">
                       {primaryAction.payload.idValue}
                     </span>
                   </div>
@@ -245,7 +245,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                       <span className="text-[11px] uppercase tracking-wide text-text-2">
                         {key}
                       </span>
-                      <span className="font-mono text-[11px] text-text-0 tabular-nums truncate max-w-[60%]">
+                      <span className="ft-code text-[11px] text-text-0 tabular-nums truncate max-w-[60%]">
                         {String(val)}
                       </span>
                     </div>
@@ -369,7 +369,7 @@ export const AlertBadge: React.FC<AlertBadgeProps> = ({ count, onClick }) => {
         className={[
           'absolute -top-1 -right-1 inline-flex h-4 min-w-4 px-1 items-center justify-center rounded-full',
           'bg-red text-text-0 border border-bg-1',
-          'font-mono text-[10px] font-bold tabular-nums leading-none',
+          'text-[10px] font-bold tabular-nums leading-none',
         ].join(' ')}
       >
         {count > 9 ? '9+' : count}
