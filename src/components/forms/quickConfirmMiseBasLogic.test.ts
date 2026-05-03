@@ -195,3 +195,36 @@ describe('selectSailliesProchesMB', () => {
     expect(r.map(s => s.id)).toEqual(['s-late', 's-now', 's-future']);
   });
 });
+
+// ─── Régression BUG-4 : mapping vivants MB (11→10) ──────────────────────────
+
+describe('validateMiseBas — régression BUG-4 vivants', () => {
+  it('input {total: 12, vivants: 11, mort-nés: 1} → values.nbVivants = 11 (pas 10)', () => {
+    // La validation doit préserver exactement nbVivants tel que saisi.
+    // Avant fix du service, la DB stockait porcelets_nes_vivants=11 mais
+    // le mapping recalculait vivants = nv - morts = 11 - 1 = 10.
+    const r = validateMiseBas({
+      dateMiseBas: '2026-05-02',
+      nbTotal: '12',
+      nbVivants: '11',
+      poidsPorteeKg: '',
+      nbMales: '6',
+      nbFemelles: '5',
+      logeId: 'loge-uuid',
+    });
+    expect(r.ok).toBe(true);
+    expect(r.values?.nbTotal).toBe(12);
+    expect(r.values?.nbVivants).toBe(11);
+    expect(r.values?.nbMortNes).toBe(1);
+    // nbVivants + nbMortNes doit égaler nbTotal
+    expect((r.values?.nbVivants ?? 0) + (r.values?.nbMortNes ?? 0)).toBe(r.values?.nbTotal ?? 0);
+  });
+
+  it('computeMortNes(12, 11) = 1, jamais 2', () => {
+    // Vérifie que la soustraction mortNes = total - vivants est correcte
+    // et non vivants - mortNes (qui produirait 10).
+    expect(computeMortNes(12, 11)).toBe(1);
+    expect(computeMortNes(12, 12)).toBe(0);
+    expect(computeMortNes(12, 0)).toBe(12);
+  });
+});

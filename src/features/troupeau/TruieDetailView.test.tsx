@@ -388,4 +388,51 @@ describe('TruieDetailView', () => {
     // Valeur 235 affichée séparément de l'unité "kg" (split valeur/small).
     expect(within(vitales).getByText('235')).toBeDefined();
   });
+
+  // ── V32 PHASE 4 — Onglets ─────────────────────────────────────────────────
+  describe('V32 PHASE 4 — onglets', () => {
+    it('rend les 4 onglets (Vue d’ensemble · Reproduction · Santé · Historique)', () => {
+      renderAt('/troupeau/truies/T14');
+      const tablist = screen.getByRole('tablist', { name: /sections de la fiche truie/i });
+      const tabs = within(tablist).getAllByRole('tab');
+      expect(tabs.length).toBe(4);
+      expect(tabs[0].textContent).toMatch(/vue d.?ensemble/i);
+      expect(tabs[1].textContent).toMatch(/reproduction/i);
+      expect(tabs[2].textContent).toMatch(/santé/i);
+      expect(tabs[3].textContent).toMatch(/historique/i);
+    });
+
+    it('par défaut, onglet « Vue d’ensemble » actif → section Identité visible', () => {
+      renderAt('/troupeau/truies/T14');
+      expect(screen.queryByRole('region', { name: /identité/i })).not.toBeNull();
+      // Repro & rations doit être masquée par défaut.
+      expect(screen.queryByRole('region', { name: /repro et rations/i })).toBeNull();
+    });
+
+    it('clique « Reproduction » → bascule sur l’onglet repro, masque Identité', () => {
+      renderAt('/troupeau/truies/T14');
+      const tablist = screen.getByRole('tablist', { name: /sections de la fiche truie/i });
+      const reproTab = within(tablist).getByRole('tab', { name: /reproduction/i });
+      fireEvent.click(reproTab);
+      expect(reproTab.getAttribute('aria-selected')).toBe('true');
+      expect(screen.queryByRole('region', { name: /repro et rations/i })).not.toBeNull();
+      expect(screen.queryByRole('region', { name: /identité/i })).toBeNull();
+    });
+
+    it('clique « Historique » → affiche le Journal et masque Vitales', () => {
+      renderAt('/troupeau/truies/T14');
+      const tablist = screen.getByRole('tablist', { name: /sections de la fiche truie/i });
+      fireEvent.click(within(tablist).getByRole('tab', { name: /historique/i }));
+      expect(screen.queryByRole('region', { name: /^journal$/i })).not.toBeNull();
+      expect(screen.queryByRole('region', { name: /vitales/i })).toBeNull();
+    });
+
+    it('clique « Santé » → masque Identité, affiche Notes', () => {
+      renderAt('/troupeau/truies/T14');
+      const tablist = screen.getByRole('tablist', { name: /sections de la fiche truie/i });
+      fireEvent.click(within(tablist).getByRole('tab', { name: /santé/i }));
+      expect(screen.queryByRole('region', { name: /^notes$/i })).not.toBeNull();
+      expect(screen.queryByRole('region', { name: /identité/i })).toBeNull();
+    });
+  });
 });

@@ -616,3 +616,54 @@ describe('computeCyclesReussis', () => {
     expect(result.series.every(p => p.y === 0)).toBe(true);
   });
 });
+
+// ─── Régression BUG-1 : INACTIVE_LONG fausses sur truies non "En attente saillie" ─
+
+describe('detectTruiesAReformer — régression BUG-1 INACTIVE_LONG', () => {
+  it('0 INACTIVE_LONG sur 30 truies Gestante avec saillie active < 90j', () => {
+    // Reproduit le scénario du compte test : 30 truies Gestante avec saillies récentes.
+    // Avant fix : statut NULL → fallback "En attente saillie" → INACTIVE_LONG triggé.
+    // Après fix : statut NULL → fallback "Vide" (OU statut explicite) → pas d'INACTIVE_LONG.
+    const truies: Truie[] = Array.from({ length: 30 }, (_, i) =>
+      makeTruie({
+        id: `T${String(i).padStart(2, '0')}`,
+        boucle: `B${i}`,
+        statut: 'Gestante',
+      }),
+    );
+    const saillies: Saillie[] = truies.map(t =>
+      // Saillie il y a 30j (< seuil 90j)
+      makeSaillie({ truieId: t.id, dateSaillie: '15/05/2025' }),
+    );
+    const rep = detectTruiesAReformer(truies, [], saillies, TODAY);
+    const inactiveLong = rep.filter(
+      r => r.motif === 'INACTIVE_LONG' || r.motif === 'MULTIPLE',
+    );
+    expect(inactiveLong).toHaveLength(0);
+  });
+
+  it('0 INACTIVE_LONG sur 10 truies Allaitante même sans saillie récente', () => {
+    // Une truie Allaitante n'est pas inactive — elle est en cycle actif.
+    const truies: Truie[] = Array.from({ length: 10 }, (_, i) =>
+      makeTruie({
+        id: `TA${i}`,
+        boucle: `BA${i}`,
+        statut: 'Allaitante',
+      }),
+    );
+    const rep = detectTruiesAReformer(truies, [], [], TODAY);
+    const inactiveLong = rep.filter(
+      r => r.motif === 'INACTIVE_LONG' || r.motif === 'MULTIPLE',
+    );
+    expect(inactiveLong).toHaveLength(0);
+  });
+
+  it('truie statut null-fallback "Vide" ne génère pas INACTIVE_LONG si saillie < 90j', () => {
+    // Simule le cas d'une truie dont statut est null en DB (mappé en "Vide" après fix).
+    // "Vide" n'est pas "En attente saillie" → pas d'INACTIVE_LONG.
+    const truie = makeTruie({ id: 'TX', boucle: 'BX', statut: 'Vide' });
+    const saillies: Saillie[] = [makeSaillie({ truieId: 'TX', dateSaillie: '15/05/2025' })];
+    const rep = detectTruiesAReformer([truie], [], saillies, TODAY);
+    expect(rep.filter(r => r.motif === 'INACTIVE_LONG')).toHaveLength(0);
+  });
+});

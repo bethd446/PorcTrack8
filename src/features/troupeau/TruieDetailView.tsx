@@ -35,6 +35,8 @@ import TruieEventActionSheet, { type TruieEventAction } from '../../components/f
 import Eyebrow from '../../components/design/Eyebrow';
 import Chip from '../../components/design/Chip';
 import SowHero, { type SowHeroChip } from '../../components/design/SowHero';
+import { Tabs } from '../../components/design-system';
+import EditTruieWizard from '../../components/forms/EditTruieWizard';
 import { TruieIcon } from '../../components/icons';
 import ReproTracker, { type ReproStage } from '../../components/design/ReproTracker';
 import DecisionBinaire from '../../components/design/DecisionBinaire';
@@ -106,7 +108,10 @@ const TruieDetailView: React.FC = () => {
   const { truies, verrats, bandes, saillies, sante, refreshData } = useFarm();
   const [presentAlert] = useIonAlert();
   const [editOpen, setEditOpen] = useState(false);
+  const [editWizardOpen, setEditWizardOpen] = useState(false);
   const [toast, setToast] = useState('');
+  // V32 PHASE 4 — Refonte 4 onglets (apercu | repro | sante | historique).
+  const [activeTab, setActiveTab] = useState<'apercu' | 'repro' | 'sante' | 'historique'>('apercu');
   const [treeOpen, setTreeOpen] = useState(false);
   const [eventSheetOpen, setEventSheetOpen] = useState(false);
   const [saillieOpen, setSaillieOpen] = useState(false);
@@ -130,14 +135,28 @@ const TruieDetailView: React.FC = () => {
 
   const historique = useMemo<BandePorcelets[]>(() => {
     if (!truie) return [];
+    // FIX V32 : `b.truie` est mappé sur `sows.code_id` (displayId) côté
+    // supabaseService, pas sur l'UUID. On compare donc contre les 3 clés
+    // possibles (uuid pour compat tests legacy, displayId pour BD réelle,
+    // boucle pour compat ascendante).
     return bandes
-      .filter(b => b.truie === truie.id || (!!truie.boucle && b.boucleMere === truie.boucle))
+      .filter(b =>
+        b.truie === truie.id ||
+        (!!truie.displayId && b.truie === truie.displayId) ||
+        (!!truie.boucle && b.boucleMere === truie.boucle),
+      )
       .sort((a, b) => (parseDate(a.dateMB)?.getTime() ?? 0) - (parseDate(b.dateMB)?.getTime() ?? 0));
   }, [bandes, truie]);
 
   const sowSaillies = useMemo<Saillie[]>(() => {
     if (!truie) return [];
-    return [...saillies.filter(s => s.truieId === truie.id)]
+    // FIX V32 : `s.truieId` est mappé sur `sows.code_id` (displayId) côté
+    // supabaseService, pas sur l'UUID. On accepte les deux pour rester
+    // compatible avec les fixtures tests (id === displayId).
+    return [...saillies.filter(s =>
+      s.truieId === truie.id ||
+      (!!truie.displayId && s.truieId === truie.displayId),
+    )]
       .sort((a, b) => (parseDate(b.dateSaillie)?.getTime() ?? 0) - (parseDate(a.dateSaillie)?.getTime() ?? 0));
   }, [saillies, truie]);
 
@@ -441,11 +460,11 @@ const TruieDetailView: React.FC = () => {
               photoStamp={`${truie.displayId} · ${formatDateShort(new Date().toISOString())}`}
               onPrimaryAction={() => setEventSheetOpen(true)}
               primaryLabel="+ Saisir évènement"
-              onSecondaryAction={() => setEditOpen(true)}
+              onSecondaryAction={() => setEditWizardOpen(true)}
               secondaryLabel="Modifier"
               secondaryIcon={<Pencil size={14} strokeWidth={2} aria-hidden />}
               fallbackIcon={<TruieIcon size={128} />}
-              onUploadClick={() => setEditOpen(true)}
+              onUploadClick={() => setEditWizardOpen(true)}
             />
 
             {/* CTA Mise-bas imminente : J-3 → J+5 si truie Pleine */}
@@ -493,8 +512,23 @@ const TruieDetailView: React.FC = () => {
             {/* Lignée (kit v2.1) */}
             <LineageBreadcrumb nodes={lineageNodes} onTreeClick={() => setTreeOpen(true)} />
 
-            {/* Reproduction en cours */}
-            {cycleData && (
+            {/* V32 PHASE 4 — Onglets (Vue d'ensemble · Reproduction · Santé · Historique) */}
+            <div style={{ display: 'flex', justifyContent: 'flex-start', overflowX: 'auto' }}>
+              <Tabs
+                ariaLabel="Sections de la fiche truie"
+                value={activeTab}
+                onChange={(id) => setActiveTab(id as typeof activeTab)}
+                items={[
+                  { id: 'apercu', label: 'Vue d’ensemble' },
+                  { id: 'repro', label: 'Reproduction', count: sowSaillies.length || undefined },
+                  { id: 'sante', label: 'Santé', count: healthLogs.length || undefined },
+                  { id: 'historique', label: 'Historique' },
+                ]}
+              />
+            </div>
+
+            {/* Reproduction en cours (visible dans Aperçu et Reproduction) */}
+            {cycleData && (activeTab === 'apercu' || activeTab === 'repro') && (
               <section aria-label="Reproduction en cours" style={sectionStyle()}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
                   <Eyebrow dotColor="amber">Reproduction en cours</Eyebrow>
@@ -538,7 +572,8 @@ const TruieDetailView: React.FC = () => {
               </section>
             )}
 
-            {/* Vitales · 5 KPI */}
+            {/* Vitales · 5 KPI (Aperçu uniquement) */}
+            {activeTab === 'apercu' && (
             <section aria-label="Vitales">
               <div style={{ marginBottom: 12 }}>
                 <Eyebrow>Vitales</Eyebrow>
@@ -668,12 +703,14 @@ const TruieDetailView: React.FC = () => {
               </div>
               )}
             </section>
+            )}
 
-            {/* Body 2 col */}
+            {/* Body 2 col (V32 PHASE 4 — restructuré en onglets) */}
             <div className="sow-body">
               {/* Colonne gauche */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 24, minWidth: 0 }}>
-                {/* Identité */}
+                {/* Identité (Aperçu uniquement) */}
+                {activeTab === 'apercu' && (
                 <section aria-label="Identité" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <Eyebrow>Identité</Eyebrow>
                   <div
@@ -693,8 +730,10 @@ const TruieDetailView: React.FC = () => {
                     <DataRow label="Loge" value={truie.loge || '—'} last />
                   </div>
                 </section>
+                )}
 
-                {/* Repro & rations */}
+                {/* Repro & rations (Reproduction uniquement) */}
+                {activeTab === 'repro' && (
                 <section aria-label="Repro et rations" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <Eyebrow>Repro &amp; rations</Eyebrow>
                   <div
@@ -762,11 +801,13 @@ const TruieDetailView: React.FC = () => {
                     )}
                   </div>
                 </section>
+                )}
 
-                {/* Plan ration recommandée (V21-D3) */}
-                <RationRecoBlock truie={truie} />
+                {/* Plan ration recommandée (V21-D3) — Reproduction uniquement */}
+                {activeTab === 'repro' && <RationRecoBlock truie={truie} />}
 
-                {/* Historique saillies */}
+                {/* Historique saillies — Reproduction uniquement */}
+                {activeTab === 'repro' && (
                 <section aria-label="Historique saillies" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <Eyebrow>Historique saillies</Eyebrow>
                   {sowSaillies.length === 0 ? (
@@ -798,8 +839,11 @@ const TruieDetailView: React.FC = () => {
                     </div>
                   )}
                 </section>
+                )}
 
-                {/* Notes inline */}
+                {/* Notes inline + journal santé — Onglet "Santé" */}
+                {activeTab === 'sante' && (
+                <>
                 <section aria-label="Notes" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <Eyebrow>Notes terrain</Eyebrow>
                   <div
@@ -831,12 +875,16 @@ const TruieDetailView: React.FC = () => {
                   subjectId={truie.id}
                   subjectLabel={truie.boucle ?? truie.displayId ?? undefined}
                 />
+                </>
+                )}
 
-                {/* Photos (V25 — documentation visuelle) */}
+                {/* Photos (V25 — documentation visuelle) — Onglet "Historique" */}
+                {activeTab === 'historique' && (
                 <section aria-label="Photos" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <Eyebrow>Photos</Eyebrow>
                   <PhotoStrip subjectType="TRUIE" subjectId={truie.id} />
                 </section>
+                )}
               </div>
 
               {/* Séparateur vertical */}
@@ -844,19 +892,24 @@ const TruieDetailView: React.FC = () => {
 
               {/* Colonne droite */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 24, minWidth: 0 }}>
-                {/* Marius */}
+                {/* Marius — Aperçu */}
+                {activeTab === 'apercu' && (
                 <section aria-label="Lecture du dossier" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <Eyebrow dotColor="amber">Lecture du dossier · Marius</Eyebrow>
                   <MariusPanel title="Analyse automatique">{mariusAnalysis}</MariusPanel>
                 </section>
+                )}
 
-                {/* Journal */}
+                {/* Journal — Historique */}
+                {activeTab === 'historique' && (
                 <section aria-label="Journal" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <Eyebrow>Journal · 30 derniers jours</Eyebrow>
                   <TimelineVerticale items={timelineItems} />
                 </section>
+                )}
 
-                {/* Actions métier contextuelles */}
+                {/* Actions métier contextuelles — Aperçu */}
+                {activeTab === 'apercu' && (
                 <section aria-label="Actions métier" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <Eyebrow>Actions</Eyebrow>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -884,7 +937,7 @@ const TruieDetailView: React.FC = () => {
                     )}
                     <button
                       type="button"
-                      onClick={() => setEditOpen(true)}
+                      onClick={() => setEditWizardOpen(true)}
                       aria-label={`Éditer la fiche de la truie ${truie.displayId}`}
                       style={{
                         padding: '12px 16px',
@@ -931,6 +984,7 @@ const TruieDetailView: React.FC = () => {
                     </button>
                   </div>
                 </section>
+                )}
               </div>
             </div>
           </div>
@@ -938,10 +992,17 @@ const TruieDetailView: React.FC = () => {
           {/* FAB Marius : rendu globalement dans App.tsx via ChatbotWidget — pas de double instance ici. */}
         </div>
 
-        {/* Sheet édition */}
+        {/* Sheet édition (legacy — gardé pour rétrocompat tests) */}
         <QuickEditTruieForm
           isOpen={editOpen}
           onClose={() => setEditOpen(false)}
+          truie={truie}
+        />
+
+        {/* V32 PHASE 4 — Wizard d'édition 3 étapes (par défaut) */}
+        <EditTruieWizard
+          isOpen={editWizardOpen}
+          onClose={() => setEditWizardOpen(false)}
           truie={truie}
         />
 

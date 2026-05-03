@@ -45,3 +45,7 @@ export type { AlertGroupProps, AlertSeverity } from './AlertGroup';
 
 export { default as AlertRow } from './AlertRow';
 export type { AlertRowProps } from './AlertRow';
+
+// V32 PHASE 4 ───────────────────────────────────────────────────────────────
+export { default as Wizard } from './Wizard';
+export type { WizardProps, WizardStep } from './Wizard';

@@ -71,7 +71,7 @@ export async function getTruies(
         displayId:     r.code_id as string,
         boucle:        (r.boucle as string | null) ?? '',
         nom:           (r.name as string | null) ?? undefined,
-        statut:        (r.statut as string | null) ?? 'En attente saillie',
+        statut:        (r.statut as string | null) ?? 'Vide',
         stade:         (r.statut_repro as string | null) ?? undefined,
         ration:        (r.ration_kg_j as number | null) ?? 0,
         nbPortees:     (r.nb_portees as number | null) ?? 0,
@@ -229,9 +229,7 @@ export async function getBandes(
         dateMB:              (r.date_mise_bas as string | null) ?? undefined,
         nv,
         morts,
-        vivants:             r.porcelets_nes_vivants != null && r.nb_mort_nes != null
-                               ? nv - morts
-                               : nv,
+        vivants:             nv,
         statut:              (r.statut as string | null) ?? 'Sous mère',
         dateSevragePrevue:   (r.date_sevrage_prevue as string | null) ?? undefined,
         dateSevrageReelle:   (r.date_sevrage as string | null) ?? undefined,

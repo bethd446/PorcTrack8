@@ -198,14 +198,32 @@ const PerfKpiView: React.FC = () => {
   const [indicateursOuverts, setIndicateursOuverts] = useState<boolean>(indicateursFiables);
 
   // ── Hero : statut global + ROI moyen ─────────────────────────────────────
-  const truiesProductivesPct =
+  // "En cycle" = truie ayant au moins 1 portée enregistrée OU au moins 1 saillie active.
+  // Définition plus large que "productive" (qui exige une portée sevrée) pour
+  // refléter correctement les troupeaux en démarrage avec saillies actives non encore portées.
+  const nbTruiesEnCycle = useMemo(() => {
+    const saillieTruieIds = new Set(saillies.map(s => s.truieId));
+    return truies.filter(t => {
+      const aPortee = kpis.nbTruiesProductives > 0 && bandes.some(
+        b => b.truie === t.id || (!!t.boucle && b.boucleMere === t.boucle),
+      );
+      const aSaillie = saillieTruieIds.has(t.id);
+      return aPortee || aSaillie;
+    }).length;
+  }, [truies, bandes, saillies, kpis.nbTruiesProductives]);
+
+  const truiesEnCyclePct =
     kpis.nbTruiesTotal > 0
-      ? Math.round((kpis.nbTruiesProductives / kpis.nbTruiesTotal) * 100)
+      ? Math.round((nbTruiesEnCycle / kpis.nbTruiesTotal) * 100)
       : 0;
 
   const roiMoyen = useMemo<number | null>(() => {
-    if (finance.totalCout <= 0) return null;
-    return Math.round((finance.margeGlobaleEstimee / finance.totalCout) * 100);
+    // Garde anti-explosion : si le coût total est trop bas (<1 000 unités),
+    // les données sont insuffisantes (bandes trop jeunes) → ne pas afficher.
+    if (finance.totalCout < 1_000) return null;
+    const raw = Math.round((finance.margeGlobaleEstimee / finance.totalCout) * 100);
+    // Cap symétrique à ±999 % pour éviter les valeurs invraisemblables.
+    return Math.max(-999, Math.min(999, raw));
   }, [finance.totalCout, finance.margeGlobaleEstimee]);
 
   type StatutGlobal = 'OK' | 'SURVEILLER' | 'CRITIQUE' | 'INDISPONIBLE';
@@ -363,13 +381,13 @@ const PerfKpiView: React.FC = () => {
                       className="font-heading text-text-0"
                       style={{ fontSize: 28, fontWeight: 700, lineHeight: 1 }}
                     >
-                      {kpis.nbTruiesProductives}
+                      {nbTruiesEnCycle}
                       <span className="text-text-2" style={{ fontSize: 16, fontWeight: 500 }}>
                         /{kpis.nbTruiesTotal}
                       </span>
                     </span>
                     <span className="font-mono text-text-2 mt-1" style={{ fontSize: 11 }}>
-                      Truies productives ({truiesProductivesPct} %)
+                      Truies en cycle ({truiesEnCyclePct} %)
                     </span>
                   </div>
                   <div className="flex flex-col">
