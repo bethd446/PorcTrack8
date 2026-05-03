@@ -1,14 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
 import { useNavigate } from 'react-router-dom';
-import { Award, Trophy } from 'lucide-react';
+import { Award } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { SectionDivider } from '../../components/agritech';
 import EmptyStateShared from '../../components/design/EmptyState';
-import { Tag, DataTable } from '../../design-system';
+import { Tag, DataTable, PageHeader } from '../../design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   buildClassementRows,
@@ -122,17 +121,12 @@ const ClassementView: React.FC = () => {
             style={{ maxWidth: 1100, margin: '0 auto' }}
           >
             <div className="flex flex-col gap-4">
-      {/* ── Header ──────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-2">
-        <Eyebrow customDotColor="var(--module-naissage)">Performance · Classement</Eyebrow>
-        <h1 className="ft-heading text-[22px] uppercase tracking-tight text-text-0 flex items-center gap-2">
-          <Trophy size={20} aria-hidden="true" className="text-accent" />
-          Classement reproducteurs
-        </h1>
-        <p className="text-[12px] text-text-2">
-          Top et flop des truies et verrats par score composite
-        </p>
-      </div>
+      {/* V41 Phase C3 — Header sobre via PageHeader (eyebrow + h1 + subtitle 1 ligne) */}
+      <PageHeader
+        eyebrow="Pilotage · Classement"
+        title="Classement reproducteurs"
+        subtitle="Top et flop par score composite"
+      />
 
       {/* ── Filtre type ─────────────────────────────────────────── */}
       <div className="flex items-center gap-2">
@@ -281,18 +275,8 @@ const ClassementView: React.FC = () => {
 };
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
-
-const Th: React.FC<{ children: React.ReactNode; className?: string }> = ({
-  children,
-  className = '',
-}) => (
-  <th
-    scope="col"
-    className={`text-[10px] uppercase tracking-wide text-text-2 px-3 py-2 ${className}`}
-  >
-    {children}
-  </th>
-);
+// V41 Phase C3 : <Th> et <RowDesktop> supprimés (V40 a déjà migré la table
+// desktop vers <DataTable> du DS V2).
 
 interface RowProps {
   row: ClassementRow;
@@ -341,42 +325,6 @@ const RowCardMobile: React.FC<RowProps> = ({ row, rank, onClick }) => (
   </button>
 );
 
-const RowDesktop: React.FC<RowProps> = ({ row, rank, onClick }) => (
-  <tr
-    role="button"
-    tabIndex={0}
-    aria-label={`Rang ${rank} ${row.type === 'TRUIE' ? 'Truie' : 'Verrat'} ${row.displayId}`}
-    onClick={onClick}
-    onKeyDown={(e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        onClick();
-      }
-    }}
-    className="border-b border-border last:border-b-0 cursor-pointer hover:bg-bg-1/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-  >
-    <td className="px-3 py-2.5 text-[12px] tabular-nums text-text-2">
-      #{rank}
-    </td>
-    <td className="px-3 py-2.5 text-[13px] font-semibold text-text-0 tabular-nums truncate max-w-[160px]">
-      {row.displayId}
-    </td>
-    <td className="px-3 py-2.5">
-      <TypeBadge type={row.type} />
-    </td>
-    <td className="px-3 py-2.5 text-right">
-      <TierBadge tier={row.tier} score={row.score} />
-    </td>
-    <td className="px-3 py-2.5 text-[12px] tabular-nums text-text-1 text-right">
-      {row.nbPortees}
-    </td>
-    <td className="px-3 py-2.5 text-[12px] tabular-nums text-text-1 text-right">
-      {formatPorcelets(row.porceletsMoyens)}
-    </td>
-    <td className="px-3 py-2.5 text-[12px] tabular-nums text-text-1 text-right">
-      {formatTaux(row.tauxReussite)}
-    </td>
-  </tr>
-);
+// V41 Phase C3 : RowDesktop supprimé (DataTable du DS V2 prend le relais).
 
 export default ClassementView;
