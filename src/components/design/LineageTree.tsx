@@ -127,7 +127,7 @@ export function buildLineageTree(opts: BuildOpts): LineageTreeNode | null {
           id: tr?.id ?? tid,
           displayId: tr?.displayId ?? tid,
           label: tr?.nbPortees ? `${tr.nbPortees} portées` : 'Saillie',
-          href: tr ? `/troupeau/truies/${tr.id}` : undefined,
+          href: tr ? `/troupeau/truies/${tr.displayId}` : undefined,
           children: [],
         };
       });
@@ -139,7 +139,7 @@ export function buildLineageTree(opts: BuildOpts): LineageTreeNode | null {
         label: verratRef?.nom
           ? `${verratRef.nom}${lastSaillie?.dateSaillie ? ` · ${lastSaillie.dateSaillie}` : ''}`
           : `Verrat${lastSaillie?.dateSaillie ? ` · ${lastSaillie.dateSaillie}` : ''}`,
-        href: verratRef ? `/troupeau/verrats/${verratRef.id}` : undefined,
+        href: verratRef ? `/troupeau/verrats/${verratRef.displayId}` : undefined,
         children: otherChildren,
       });
     }
@@ -156,7 +156,7 @@ export function buildLineageTree(opts: BuildOpts): LineageTreeNode | null {
       label: [truie.nom, truie.race, truie.nbPortees ? `${truie.nbPortees}e portée` : null]
         .filter(Boolean)
         .join(' · '),
-      href: `/troupeau/truies/${truie.id}`,
+      href: `/troupeau/truies/${truie.displayId}`,
       perf: { nbPortees: truie.nbPortees },
       children,
     };
@@ -178,7 +178,7 @@ export function buildLineageTree(opts: BuildOpts): LineageTreeNode | null {
         id: truieRef.id,
         displayId: truieRef.displayId,
         label: [truieRef.nom, truieRef.race].filter(Boolean).join(' · ') || 'Truie mère',
-        href: `/troupeau/truies/${truieRef.id}`,
+        href: `/troupeau/truies/${truieRef.displayId}`,
         perf: { nbPortees: truieRef.nbPortees },
         children: sisters.slice(0, 6).map(bandeNode),
       };

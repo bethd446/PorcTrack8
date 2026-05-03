@@ -244,7 +244,9 @@ const TodayHub: React.FC = () => {
         title: `Mise-bas imminente : ${m.truie.displayId}`,
         detail: `À surveiller ${labelDelai}`,
         cta: 'Voir la truie',
-        to: `/troupeau/truies/${m.truie.id}`,
+        // V42-bugfix B3 : displayId (T-016) au lieu de l'UUID Supabase pour
+        // garder une URL lisible et conforme à la règle PDF "JAMAIS d'UUID exposé".
+        to: `/troupeau/truies/${m.truie.displayId}`,
       };
     }
 

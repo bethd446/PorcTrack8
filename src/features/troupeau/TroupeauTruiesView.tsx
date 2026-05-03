@@ -129,14 +129,29 @@ const SORT_OPTIONS: ReadonlyArray<{ id: SortKey; label: string }> = [
 type ViewMode = 'list' | 'grid';
 const VIEW_MODE_KEY = 'troupeau_view_mode';
 
-function parseDateMsFR(dateFr: string | undefined): number | null {
-  if (!dateFr) return null;
-  const parts = dateFr.split('/');
-  if (parts.length !== 3) return null;
-  const [d, m, y] = parts.map(Number);
-  if (!d || !m || !y) return null;
-  const dt = new Date(y, m - 1, d);
-  return dt.getTime();
+/**
+ * V42-bugfix B1 : accepte les deux formats stockés dans Supabase
+ *   - ISO `YYYY-MM-DD` (format renvoyé par les colonnes date Postgres)
+ *   - Locale FR `DD/MM/YYYY` (format saisie utilisateur historique)
+ * Retourne un timestamp ms ou null si pas parseable.
+ */
+function parseDateMs(dateStr: string | undefined): number | null {
+  if (!dateStr) return null;
+  // ISO YYYY-MM-DD
+  const iso = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) {
+    const [, y, m, d] = iso.map(Number);
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d).getTime();
+  }
+  // FR DD/MM/YYYY
+  const parts = dateStr.split('/');
+  if (parts.length === 3) {
+    const [d, m, y] = parts.map(Number);
+    if (!d || !m || !y) return null;
+    return new Date(y, m - 1, d).getTime();
+  }
+  return null;
 }
 
 function idSortKey(t: Truie): string {
@@ -201,8 +216,8 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
     const arr = [...base];
     if (sortBy === 'mbPrevue') {
       arr.sort((a, b) => {
-        const da = parseDateMsFR(a.dateMBPrevue);
-        const db = parseDateMsFR(b.dateMBPrevue);
+        const da = parseDateMs(a.dateMBPrevue);
+        const db = parseDateMs(b.dateMBPrevue);
         if (da === null && db === null) return 0;
         if (da === null) return 1;
         if (db === null) return -1;

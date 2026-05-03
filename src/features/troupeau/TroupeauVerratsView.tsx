@@ -112,7 +112,7 @@ const TroupeauVerratsView: React.FC<TroupeauVerratsViewProps> = ({ searchText, s
   }, [verrats, searchText]);
 
   const goToDetail = (v: Verrat): void => {
-    navigate(`/troupeau/verrats/${v.id}`);
+    navigate(`/troupeau/verrats/${v.displayId}`);
   };
 
   const openSaillieFor = (v: Verrat): void => {

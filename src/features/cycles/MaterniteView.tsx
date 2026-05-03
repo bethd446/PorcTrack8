@@ -425,7 +425,7 @@ const MaterniteCard: React.FC<{
         </div>
         <button
           disabled={isBloquant}
-          onClick={(e) => { e.stopPropagation(); navigate(`/troupeau/truies/${truie.id}?tab=sante`); }}
+          onClick={(e) => { e.stopPropagation(); navigate(`/troupeau/truies/${truie.displayId}?tab=sante`); }}
           className="w-8 h-8 rounded-lg bg-bg-2 flex items-center justify-center text-text-2 hover:text-accent transition-colors disabled:opacity-30 disabled:grayscale"
         >
           {isBloquant ? <Lock size={14} /> : <Scale size={14} />}

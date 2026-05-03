@@ -156,13 +156,16 @@ describe('PilotageHub V8 — refonte navigation primaire', () => {
     cleanup();
   });
 
-  it('affiche le hero compact (titre Pilotage + sous-titre bandes/truies)', () => {
+  it('V42-bugfix B7 : PageHeader sobre (eyebrow PILOTAGE + titre + subtitle non-numérique)', () => {
     renderHub();
-    // H1 Pilotage
+    // H1 "Pilotage" via <PageHeader>
     const h1 = screen.getByRole('heading', { level: 1, name: /pilotage/i });
     expect(h1).toBeTruthy();
-    // Sous-titre : "{N} bande{s} active{s} · {M} truies"
-    expect(screen.getByText(/2 bandes actives · 3 truies/i)).toBeTruthy();
+    // V42-B7 : sous-titre métriques chiffrées remplacé par "Vue globale de ta ferme"
+    // (LA 11e RÈGLE D'OR V41 — pas de métriques chiffrées dans subtitle).
+    const subtitle = document.querySelector('.pt-page-header__subtitle');
+    expect(subtitle?.textContent).toBe('Vue globale de ta ferme');
+    expect(screen.queryByText(/2 bandes actives · 3 truies/i)).toBeNull();
   });
 
   it('affiche les 4 tuiles Modules de gestion en navigation primaire', () => {

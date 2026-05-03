@@ -138,7 +138,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onOpenChange }) =
               <CommandItem
                 key={`truie-${t.id}`}
                 value={`truie ${t.displayId} ${t.nom ?? ''} ${t.boucle}`}
-                onSelect={() => go(`/troupeau/truies/${t.id}`)}
+                onSelect={() => go(`/troupeau/truies/${t.displayId}`)}
               >
                 <PawPrint size={14} />
                 <span>{t.nom ? `${t.nom} (${t.displayId})` : `Truie ${t.displayId}`}</span>
@@ -154,7 +154,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onOpenChange }) =
               <CommandItem
                 key={`verrat-${v.id}`}
                 value={`verrat ${v.displayId} ${v.nom ?? ''} ${v.boucle}`}
-                onSelect={() => go(`/troupeau/verrats/${v.id}`)}
+                onSelect={() => go(`/troupeau/verrats/${v.displayId}`)}
               >
                 <Heart size={14} />
                 <span>{v.nom ? `${v.nom} (${v.displayId})` : `Verrat ${v.displayId}`}</span>

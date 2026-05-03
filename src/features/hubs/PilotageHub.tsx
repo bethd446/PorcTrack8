@@ -23,7 +23,7 @@ import AgritechLayout from '../../components/AgritechLayout';
 import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import KpiCardV6 from '../../components/design/KpiCard';
-import { Card, IconBox } from '../../design-system';
+import { Card, IconBox, PageHeader, Section, Button } from '../../design-system';
 import { useFarm } from '../../context/FarmContext';
 import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import { formatCurrency, currencySuffix, type Currency } from '../../lib/currency';
@@ -51,7 +51,6 @@ const PilotageHub: React.FC = () => {
     truies,
     verrats,
     saillies,
-    nomFerme,
     currency,
   } = useFarm();
   const { handleRefresh } = useAutoRefresh();
@@ -73,8 +72,7 @@ const PilotageHub: React.FC = () => {
     return rows[0]?.displayId ?? null;
   }, [truies, verrats, realBandes, saillies]);
 
-  // Compteur truies pour sous-titre
-  const nbTruies = truies.length;
+  // Compteur bandes actives pour la tuile Prévisions
   const nbBandesActives = realBandes.length;
 
   const globalReport = useMemo(() => {
@@ -213,48 +211,11 @@ const PilotageHub: React.FC = () => {
           />
 
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            {/* ── 1. Hero compact + export PDF ─────────────────────── */}
-            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-              <div>
-                <Eyebrow dotColor="accent">Performance · {nomFerme}</Eyebrow>
-                <h1
-                  className="text-page-title"
-                  style={{ margin: '8px 0 4px' }}
-                >
-                  Pilotage
-                </h1>
-                <div
-                  className="text-body"
-                  style={{ color: 'var(--muted)' }}
-                >
-                  {nbBandesActives} bande{nbBandesActives > 1 ? 's' : ''} active{nbBandesActives > 1 ? 's' : ''} · {nbTruies} truie{nbTruies > 1 ? 's' : ''}
-                </div>
-              </div>
-              {auditData && (
-                <button
-                  type="button"
-                  onClick={handlePrint}
-                  aria-label="Exporter le rapport PDF"
-                  className="pressable text-mono-label"
-                  style={{
-                    minHeight: 44,
-                    padding: '8px 16px',
-                    borderRadius: 'var(--radius-pill)',
-                    background: 'var(--color-accent-500)',
-                    color: 'var(--bg-surface)',
-                    border: '1.5px solid var(--color-accent-500)',
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    transition: 'transform 160ms var(--ease-emil)',
-                  }}
-                >
-                  <FileText size={13} aria-hidden="true" />
-                  Export PDF
-                </button>
-              )}
-            </header>
+            {/* V42-bugfix B7 — Header sobre via PageHeader (LA 11e RÈGLE D'OR V41).
+                Avant : eyebrow surchargé "Performance · Ferme Audit Test" + subtitle
+                métriques chiffrées "{N} bandes · {N} truies" + CTA "Export PDF" dans
+                le header (3 anti-patterns). */}
+            <PageHeader eyebrow="Pilotage" title="Pilotage" subtitle="Vue globale de ta ferme" />
 
             {/* ── 2. Modules en navigation primaire (4 tuiles) ──────── */}
             <section aria-label="Modules de gestion">
@@ -483,6 +444,23 @@ const PilotageHub: React.FC = () => {
                 <ChevronRight size={18} color="var(--muted)" aria-hidden="true" />
               </Link>
             </section>
+
+            {/* V42-bugfix B7 — Export PDF déplacé du header vers une section
+                dédiée (interdit V41 d'avoir un CTA dans le PageHeader). */}
+            {auditData && (
+              <section aria-label="Export rapport">
+                <Section label="EXPORT" />
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={handlePrint}
+                  ariaLabel="Exporter le rapport PDF"
+                >
+                  <FileText size={14} aria-hidden="true" />
+                  Exporter le rapport PDF
+                </Button>
+              </section>
+            )}
           </div>
         </AgritechLayout>
 
