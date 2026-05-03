@@ -26,7 +26,7 @@ import '@ionic/react/css/text-transformation.css';
 import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
 
-import { FarmProvider } from './context/FarmContext';
+import { FarmProvider, useFarm } from './context/FarmContext';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import SupabaseProtectedRoute from './components/auth/ProtectedRoute';
@@ -269,6 +269,68 @@ const DailyCheckRoute: React.FC = () => {
   );
 };
 
+/**
+ * V28-FIX — wrapper pour route /troupeau/bandes/:bandeId
+ *
+ * AVANT : la route rendait <BandeDetailView /> sans props → crash JS
+ * "Cannot read properties of undefined (reading 'id')" car le composant
+ * exige bande/header/meta/onClose/onRefresh.
+ *
+ * APRÈS : récupère la bande via useFarm(), construit une AggregatedBande
+ * minimaliste (le composant utilise principalement bande.id et fait son
+ * propre fetch interne via getBandeById()), et passe les props requises.
+ */
+const BandeDetailRoute: React.FC = () => {
+  const { bandeId = '' } = useParams<{ bandeId: string }>();
+  const navigate = useNavigate();
+  const { getBandeById, refreshData } = useFarm();
+  const bandeTyped = getBandeById(bandeId);
+  const handleClose = useCallback(() => navigate(-1), [navigate]);
+  const handleRefresh = useCallback(() => {
+    void refreshData(true);
+  }, [refreshData]);
+
+  if (!bandeTyped) {
+    return (
+      <div className="agritech-root p-10 text-center flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <p className="font-mono text-[14px] uppercase text-text-1">Bande introuvable</p>
+        <button
+          type="button"
+          onClick={handleClose}
+          className="pressable h-11 px-6 rounded-md bg-accent text-bg-0 font-mono text-[12px] uppercase tracking-wide"
+        >
+          Retour
+        </button>
+      </div>
+    );
+  }
+
+  const aggregated = {
+    id: bandeTyped.id,
+    count: 1,
+    truie: bandeTyped.truie ?? null,
+    boucleMere: bandeTyped.boucleMere ?? null,
+    dateMB: bandeTyped.dateMB ?? null,
+    age: null,
+    nv: bandeTyped.nv ?? 0,
+    morts: bandeTyped.morts ?? 0,
+    vivants: bandeTyped.vivants ?? bandeTyped.nv ?? 0,
+    status: bandeTyped.statut ?? null,
+    hasAlert: false,
+    rows: [],
+  };
+
+  return (
+    <BandeDetailView
+      bande={aggregated}
+      header={[]}
+      meta={null}
+      onClose={handleClose}
+      onRefresh={handleRefresh}
+    />
+  );
+};
+
 const AppShell: React.FC = () => (
   <GlobalSearchProvider>
     <BannerMount />
@@ -315,7 +377,7 @@ const AppShell: React.FC = () => (
           (config colonne Portée). On redirige vers le hub TROUPEAU onglet
           BANDES qui consomme bandes Supabase. BandesView reste @deprecated. */}
       <Route path="/troupeau/bandes" element={<Navigate to="/troupeau?view=bandes" replace />} />
-      <Route path="/troupeau/bandes/:bandeId" element={<BandeDetailView />} />
+      <Route path="/troupeau/bandes/:bandeId" element={<BandeDetailRoute />} />
       {/* AUDIT-3 : redirige vers le hub unifié pour cohérence visuelle. */}
       <Route path="/troupeau/batiments" element={<Navigate to="/troupeau?view=batiments" replace />} />
       <Route path="/troupeau/classement" element={<ClassementView />} />
