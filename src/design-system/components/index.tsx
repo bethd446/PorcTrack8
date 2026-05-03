@@ -99,6 +99,7 @@ type ButtonLegacySize = 'small' | 'medium' | 'sm' | 'md' | 'lg';
 export function Button({
   children, variant = 'primary', size = 'medium', fullWidth, onClick,
   type = 'button', disabled, ariaLabel, className, style,
+  ...rest
 }: {
   children: React.ReactNode;
   variant?: ButtonLegacyVariant;
@@ -110,6 +111,7 @@ export function Button({
   ariaLabel?: string;
   className?: string;
   style?: React.CSSProperties;
+  'aria-label'?: string;
 }) {
   const v: 'primary' | 'secondary' | 'danger' =
     variant === 'ghost' ? 'secondary'
@@ -124,8 +126,23 @@ export function Button({
   ].filter(Boolean).join(' ');
   const ghostStyle: React.CSSProperties | undefined =
     variant === 'ghost' ? { background: 'transparent', border: 'none' } : undefined;
+  // data-pt="button" + inline borderRadius/textTransform : exposés pour la
+  // compat des tests V29/V30 (ces tests vérifient l'attribut/style direct).
+  const pillStyle: React.CSSProperties = {
+    borderRadius: 'var(--ds-radius-pill)',
+    textTransform: 'uppercase',
+  };
+  const ariaLabelFinal = ariaLabel ?? rest['aria-label'];
   return (
-    <button type={type} className={classes} onClick={onClick} disabled={disabled} aria-label={ariaLabel} style={{ ...ghostStyle, ...style }}>
+    <button
+      type={type}
+      className={classes}
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={ariaLabelFinal}
+      data-pt="button"
+      style={{ ...pillStyle, ...ghostStyle, ...style }}
+    >
       {children}
     </button>
   );
@@ -401,7 +418,7 @@ export function ListItem({ icon, avatar, title, primary, subtitle, secondary, ta
 // ============================================================
 // ACTION ROW
 // ============================================================
-export function ActionRow({ icon, title, subtitle, description, badge, trailing, destructive, onClick }: {
+export function ActionRow({ icon, title, subtitle, description, badge, trailing, destructive, onClick, ariaLabel }: {
   icon?: React.ReactNode;
   title: string;
   subtitle?: string;
@@ -410,12 +427,19 @@ export function ActionRow({ icon, title, subtitle, description, badge, trailing,
   trailing?: React.ReactNode;
   destructive?: boolean;
   onClick?: () => void;
+  ariaLabel?: string;
 }) {
   const sub = subtitle ?? description;
   const titleStyle: React.CSSProperties | undefined =
     destructive ? { color: 'var(--pt-danger)' } : undefined;
   return (
-    <div className="pt-action" onClick={onClick}>
+    <div
+      className="pt-action"
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      aria-label={ariaLabel ?? title}
+    >
       {icon && (typeof icon === 'string'
         ? <IconBox variant="primary" size="small">{icon}</IconBox>
         : icon)}

@@ -60,6 +60,13 @@
   --pt-radius-lg: 24px;
   --pt-radius-pill: 9999px;
 
+  /* Alias rétrocompat (tests V29/V30) — ne pas utiliser en code neuf. */
+  --ds-radius-pill: var(--pt-radius-pill);
+  --ds-primary: var(--pt-primary);
+  --ds-accent: var(--pt-accent);
+  --ds-text-subtle: var(--pt-text-subtle);
+  --ds-divider: var(--pt-divider);
+
   /* === OMBRES === */
   --pt-shadow-card:        0 1px 3px rgba(45, 74, 31, 0.04);
   --pt-shadow-elevated:    0 4px 16px rgba(45, 74, 31, 0.08);

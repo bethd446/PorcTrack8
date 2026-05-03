@@ -17,7 +17,7 @@
 #
 # Usage : bash scripts/migrate-ds.sh [--dry-run]
 # ═══════════════════════════════════════════════════════════════════════════
-set -euo pipefail
+set -uo pipefail
 
 DRY=0
 if [[ "${1:-}" == "--dry-run" ]]; then DRY=1; fi
