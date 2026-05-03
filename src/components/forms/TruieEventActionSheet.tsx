@@ -92,7 +92,7 @@ const TruieEventActionSheet: React.FC<TruieEventActionSheetProps> = ({
       height="auto"
     >
       <div className="space-y-2 py-1">
-        <p className="px-1 font-mono text-[10px] uppercase tracking-wide text-text-2">
+        <p className="px-1 text-[10px] uppercase tracking-wide text-text-2">
           Statut courant : {truieStatut || '—'}
         </p>
         <ul className="card-dense !p-0 overflow-hidden">
@@ -130,7 +130,7 @@ const TruieEventActionSheet: React.FC<TruieEventActionSheetProps> = ({
                     <span className="block font-heading text-[14px] uppercase tracking-wide text-text-0">
                       {a.title}
                     </span>
-                    <span className="block font-mono text-[11px] text-text-2 mt-0.5">
+                    <span className="block text-[11px] text-text-2 mt-0.5">
                       {a.subtitle}
                     </span>
                   </span>
@@ -144,7 +144,7 @@ const TruieEventActionSheet: React.FC<TruieEventActionSheetProps> = ({
         <button
           type="button"
           onClick={onClose}
-          className="pressable mt-3 w-full h-12 rounded-md bg-bg-1 border border-border text-text-1 font-mono text-[12px] font-bold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+          className="pressable mt-3 w-full h-12 rounded-md bg-bg-1 border border-border text-text-1 text-[12px] font-bold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
         >
           Annuler
         </button>

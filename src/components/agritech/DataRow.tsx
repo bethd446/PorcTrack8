@@ -45,7 +45,7 @@ const DataRow: React.FC<DataRowProps> = ({
           {primary}
         </div>
         {secondary ? (
-          <div className="mt-0.5 truncate font-mono text-[11px] text-text-2">{secondary}</div>
+          <div className="mt-0.5 truncate text-[11px] text-text-2">{secondary}</div>
         ) : null}
       </div>
 

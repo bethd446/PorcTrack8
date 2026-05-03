@@ -51,7 +51,6 @@ export default function Sidebar({
         <div key={section.title}>
           <div
             style={{
-              fontFamily: 'var(--font-mono)',
               fontSize: 9,
               letterSpacing: '0.20em',
               textTransform: 'uppercase',

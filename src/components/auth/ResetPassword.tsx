@@ -8,7 +8,6 @@ import Button from '../design/Button';
 
 const FONT_DISPLAY = 'var(--font-heading)';
 const FONT_BODY = 'var(--font-body)';
-const FONT_MONO = 'var(--font-mono)';
 
 type SessionState = 'checking' | 'valid' | 'invalid';
 
@@ -131,7 +130,6 @@ export default function ResetPassword() {
                 to="/login"
                 className="inline-flex items-center px-3"
                 style={{
-                  fontFamily: FONT_MONO,
                   fontSize: 11,
                   letterSpacing: '0.10em',
                   textTransform: 'uppercase',
@@ -192,8 +190,7 @@ export default function ResetPassword() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: 10,
-                      fontFamily: FONT_MONO,
-                      fontSize: 11,
+                          fontSize: 11,
                       letterSpacing: '0.16em',
                       textTransform: 'uppercase',
                       color: 'var(--muted)',
@@ -351,7 +348,6 @@ export default function ResetPassword() {
             <div
               className="mx-auto flex max-w-6xl flex-col items-start gap-3 px-5 py-6 md:flex-row md:items-center md:justify-between md:px-8"
               style={{
-                fontFamily: FONT_MONO,
                 fontSize: 11,
                 letterSpacing: '0.06em',
                 color: 'var(--muted)',
@@ -405,7 +401,6 @@ function Field({ label, type, value, onChange, autoComplete, placeholder, requir
       <span
         style={{
           display: 'block',
-          fontFamily: FONT_MONO,
           fontSize: 10,
           letterSpacing: '0.16em',
           textTransform: 'uppercase',

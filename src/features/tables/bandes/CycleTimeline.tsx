@@ -36,7 +36,7 @@ const CycleTimeline: React.FC<{ age: number | null; status: string }> = ({ age, 
               }`}>
                 {isCompleted || isCurrent ? <CheckCheck size={12} /> : <span className="w-1.5 h-1.5 rounded-full bg-text-2" />}
               </div>
-              <span className={`font-mono text-[9px] uppercase tracking-wide text-center w-14 ${
+              <span className={`text-[9px] uppercase tracking-wide text-center w-14 ${
                 isCurrent ? 'text-text-0' : 'text-text-2'
               }`}>
                 {phase.label}

@@ -72,7 +72,7 @@ export default function Landing() {
 
           <nav
             className="flex items-center gap-1 md:gap-2"
-            style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase' }}
+            style={{ fontSize: 11, letterSpacing: '0.10em', textTransform: 'uppercase' }}
           >
             <Link
               to="/a-propos"
@@ -109,7 +109,6 @@ export default function Landing() {
             <span
               className="inline-flex items-center gap-2 self-start"
               style={{
-                fontFamily: FONT_MONO,
                 fontSize: '9.5px',
                 letterSpacing: '0.16em',
                 textTransform: 'uppercase',
@@ -192,7 +191,6 @@ export default function Landing() {
             <div
               className="mt-8 inline-flex items-center gap-2"
               style={{
-                fontFamily: FONT_MONO,
                 fontSize: '10px',
                 letterSpacing: '0.06em',
                 color: 'var(--muted)',
@@ -350,7 +348,6 @@ export default function Landing() {
             <div
               className="inline-flex items-center gap-2"
               style={{
-                fontFamily: FONT_MONO,
                 fontSize: '10px',
                 letterSpacing: '0.16em',
                 textTransform: 'uppercase',
@@ -401,7 +398,6 @@ export default function Landing() {
           <div className="max-w-2xl">
             <span
               style={{
-                fontFamily: FONT_MONO,
                 fontSize: '10px',
                 letterSpacing: '0.20em',
                 textTransform: 'uppercase',
@@ -454,7 +450,7 @@ export default function Landing() {
       >
         <div
           className="mx-auto flex max-w-6xl flex-col items-start gap-4 px-5 py-8 md:flex-row md:items-center md:justify-between md:px-8"
-          style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '0.06em', color: 'var(--muted)' }}
+          style={{ fontSize: 11, letterSpacing: '0.06em', color: 'var(--muted)' }}
         >
           <span className="uppercase">© 2026 PorcTrack · porctrack.tech</span>
           <nav className="flex flex-wrap gap-5">
@@ -510,7 +506,6 @@ function Stat({ num, suffix, label, border = '' }: StatProps) {
       </div>
       <div
         style={{
-          fontFamily: FONT_MONO,
           fontSize: 9.5,
           color: 'var(--muted)',
           letterSpacing: '0.14em',

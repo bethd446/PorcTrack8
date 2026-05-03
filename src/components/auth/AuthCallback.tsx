@@ -7,7 +7,6 @@ import Button from '../design/Button';
 
 const FONT_DISPLAY = 'var(--font-heading)';
 const FONT_BODY = 'var(--font-body)';
-const FONT_MONO = 'var(--font-mono)';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -132,7 +131,6 @@ export default function AuthCallback() {
                 </h1>
                 <p
                   style={{
-                    fontFamily: FONT_MONO,
                     fontSize: 11,
                     letterSpacing: '0.16em',
                     textTransform: 'uppercase',

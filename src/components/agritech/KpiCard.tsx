@@ -72,7 +72,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
       <div className="mt-3 flex items-baseline gap-1.5">
         <span className={cn('kpi-value', toneValue[tone])}>{value}</span>
         {unit ? (
-          <span className="font-mono text-[12px] font-medium text-text-2 uppercase tracking-wide">
+          <span className="text-[12px] font-medium text-text-2 uppercase tracking-wide">
             {unit}
           </span>
         ) : null}
@@ -87,7 +87,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
             </span>
           ) : null}
           {deltaLabel ? (
-            <span className="font-mono text-[11px] text-text-2">{deltaLabel}</span>
+            <span className="text-[11px] text-text-2">{deltaLabel}</span>
           ) : null}
         </div>
       )}

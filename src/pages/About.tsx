@@ -8,7 +8,6 @@ import PublicShell from '../components/design/PublicShell';
 
 const FONT_DISPLAY = 'var(--font-heading)';
 const FONT_BODY = 'var(--font-body)';
-const FONT_MONO = 'var(--font-mono)';
 const FONT_NUM = 'var(--font-heading)';
 
 export default function About() {
@@ -288,7 +287,6 @@ export default function About() {
           <div className="max-w-xl">
             <span
               style={{
-                fontFamily: FONT_MONO,
                 fontSize: 10,
                 letterSpacing: '0.20em',
                 textTransform: 'uppercase',
@@ -442,7 +440,6 @@ function VisionStat({ num, label }: { num: string; label: string }) {
       </div>
       <div
         style={{
-          fontFamily: FONT_MONO,
           fontSize: 10,
           color: 'var(--muted)',
           letterSpacing: '0.14em',

@@ -36,7 +36,6 @@ const LineageBreadcrumb: React.FC<Props> = ({ nodes, treeHref, onTreeClick }) =>
   const treeLabel = 'Arbre genetique →';
   const treeStyle: React.CSSProperties = {
     marginLeft: 'auto',
-    fontFamily: 'var(--font-mono)',
     fontSize: 11,
     letterSpacing: '0.08em',
     textTransform: 'uppercase',
@@ -64,7 +63,6 @@ const LineageBreadcrumb: React.FC<Props> = ({ nodes, treeHref, onTreeClick }) =>
     >
       <span
         style={{
-          fontFamily: 'var(--font-mono)',
           fontSize: 10,
           letterSpacing: '0.10em',
           textTransform: 'uppercase',
@@ -93,7 +91,6 @@ const LineageBreadcrumb: React.FC<Props> = ({ nodes, treeHref, onTreeClick }) =>
               </span>
               <span
                 style={{
-                  fontFamily: 'var(--font-mono)',
                   fontSize: 10,
                   letterSpacing: '0.06em',
                   textTransform: 'uppercase',

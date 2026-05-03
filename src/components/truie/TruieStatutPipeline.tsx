@@ -73,7 +73,7 @@ const TruieStatutPipeline: React.FC<TruieStatutPipelineProps> = ({
         <h2 className="agritech-heading text-[13px] uppercase tracking-wide">
           Pipeline reproduction
         </h2>
-        <span className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+        <span className="text-[10px] uppercase tracking-wide text-text-2">
           Funnel cycle
         </span>
       </div>
@@ -115,7 +115,7 @@ const TruieStatutPipeline: React.FC<TruieStatutPipelineProps> = ({
                 </span>
               </div>
 
-              <div className="font-mono text-[10px] uppercase tracking-wide text-text-2 leading-tight">
+              <div className="text-[10px] uppercase tracking-wide text-text-2 leading-tight">
                 {etape.label}
               </div>
 

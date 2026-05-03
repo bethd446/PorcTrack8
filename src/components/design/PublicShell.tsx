@@ -5,8 +5,6 @@ import Button from './Button';
 
 const FONT_DISPLAY = 'var(--font-heading)';
 const FONT_BODY = 'var(--font-body)';
-const FONT_MONO = 'var(--font-mono)';
-
 /**
  * @deprecated theme-day est désormais forcé globalement dans main.tsx
  * (refonte v6 light). Conservé en no-op pour la compat avec les imports.
@@ -59,7 +57,6 @@ export function PublicHeader() {
         <nav
           className="flex items-center gap-1 md:gap-2"
           style={{
-            fontFamily: FONT_MONO,
             fontSize: 11,
             letterSpacing: '0.10em',
             textTransform: 'uppercase',
@@ -101,7 +98,6 @@ export function PublicFooter() {
       <div
         className="mx-auto flex max-w-6xl flex-col items-start gap-4 px-5 py-8 md:flex-row md:items-center md:justify-between md:px-8"
         style={{
-          fontFamily: FONT_MONO,
           fontSize: 11,
           letterSpacing: '0.06em',
           color: 'var(--muted)',

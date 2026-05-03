@@ -111,7 +111,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
           <p className="agritech-heading text-[18px] uppercase tracking-wide">
             Saillie enregistrée
           </p>
-          <p className="mt-2 font-mono text-[12px] uppercase tracking-wide text-text-2">
+          <p className="mt-2 text-[12px] uppercase tracking-wide text-text-2">
             {selectedTruie} × {selectedVerrat}
           </p>
         </div>
@@ -155,7 +155,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
                       className={[
                         'pressable inline-flex items-center justify-center',
                         'h-9 px-3 rounded-md border',
-                        'font-mono text-[12px] uppercase tracking-wide tabular-nums',
+                        'text-[12px] uppercase tracking-wide tabular-nums',
                         'transition-colors duration-[160ms]',
                         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                         isSelected
@@ -202,7 +202,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
                       className={[
                         'pressable inline-flex items-center justify-center',
                         'h-9 px-3 rounded-md border',
-                        'font-mono text-[12px] uppercase tracking-wide tabular-nums',
+                        'text-[12px] uppercase tracking-wide tabular-nums',
                         'transition-colors duration-[160ms]',
                         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                         isSelected
@@ -231,7 +231,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
             className={[
               'pressable w-full h-[52px] rounded-md',
               'inline-flex items-center justify-center gap-2',
-              'bg-accent text-bg-0 font-mono text-[12px] font-bold uppercase tracking-wide',
+              'bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide',
               'transition-colors duration-[160ms]',
               'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
               (!selectedTruie || !selectedVerrat || saving)

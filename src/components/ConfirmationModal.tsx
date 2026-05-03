@@ -166,7 +166,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                 >
                   {displayTitle}
                 </h2>
-                <p className="mt-1 font-mono text-[11px] uppercase tracking-wide text-text-2 tabular-nums truncate">
+                <p className="mt-1 text-[11px] uppercase tracking-wide text-text-2 tabular-nums truncate">
                   {displaySubjectLabel}
                 </p>
               </div>
@@ -193,13 +193,13 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
               id={descId}
               className="rounded-md border border-border bg-bg-0 p-4"
             >
-              <p className="font-mono text-[12px] text-text-1 leading-relaxed">
+              <p className="text-[12px] text-text-1 leading-relaxed">
                 {displayMessage}
               </p>
               {alert.dueDate && alert.daysOffset !== undefined && (
                 <div className="flex items-center gap-1.5 mt-3">
                   <Calendar size={12} className="text-text-2" aria-hidden="true" />
-                  <span className="font-mono text-[11px] uppercase tracking-wide text-text-2 tabular-nums">
+                  <span className="text-[11px] uppercase tracking-wide text-text-2 tabular-nums">
                     {alert.daysOffset > 0
                       ? `${alert.daysOffset} jour(s) de retard`
                       : alert.daysOffset < 0
@@ -215,13 +215,13 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
               <div className="rounded-md border border-border bg-bg-0 p-4 space-y-2">
                 <div className="flex items-center gap-2 mb-2">
                   <FileText size={12} className="text-text-2" aria-hidden="true" />
-                  <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+                  <span className="text-[11px] uppercase tracking-wide text-text-2">
                     Action enregistrée
                   </span>
                 </div>
                 {primaryAction.payload.sheet && (
                   <div className="flex justify-between items-center gap-2">
-                    <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+                    <span className="text-[11px] uppercase tracking-wide text-text-2">
                       Table
                     </span>
                     <span className="font-mono text-[11px] text-text-0 bg-bg-2 px-2 py-0.5 rounded tabular-nums">
@@ -231,7 +231,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                 )}
                 {primaryAction.payload.idValue && (
                   <div className="flex justify-between items-center gap-2">
-                    <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+                    <span className="text-[11px] uppercase tracking-wide text-text-2">
                       ID concerné
                     </span>
                     <span className="font-mono text-[11px] text-accent bg-bg-2 px-2 py-0.5 rounded tabular-nums">
@@ -242,7 +242,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                 {primaryAction.payload.patch &&
                   Object.entries(primaryAction.payload.patch).map(([key, val]) => (
                     <div key={key} className="flex justify-between items-center gap-2">
-                      <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+                      <span className="text-[11px] uppercase tracking-wide text-text-2">
                         {key}
                       </span>
                       <span className="font-mono text-[11px] text-text-0 tabular-nums truncate max-w-[60%]">
@@ -257,7 +257,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="confirm-note"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-[11px] uppercase tracking-wide text-text-2"
               >
                 Note du porcher (optionnel)
               </label>
@@ -270,7 +270,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                 className={[
                   'w-full rounded-md px-3 py-2.5',
                   'bg-bg-0 border border-border text-text-0 placeholder:text-text-2',
-                  'font-mono text-[12px]',
+                  'text-[12px]',
                   'outline-none transition-colors duration-[160ms]',
                   'focus:border-accent focus:ring-1 focus:ring-accent',
                   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-1px]',
@@ -291,7 +291,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                 className={[
                   'pressable w-full h-[48px] rounded-md',
                   'inline-flex items-center justify-center gap-2',
-                  'bg-accent text-bg-0 font-mono text-[12px] font-bold uppercase tracking-wide',
+                  'bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide',
                   'transition-colors duration-[160ms]',
                   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                   loading ? 'opacity-40 cursor-not-allowed' : '',
@@ -317,7 +317,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                   'pressable w-full h-[44px] rounded-md',
                   'inline-flex items-center justify-center',
                   'bg-bg-1 border border-border text-text-1',
-                  'font-mono text-[12px] uppercase tracking-wide',
+                  'text-[12px] uppercase tracking-wide',
                   'hover:bg-bg-2 hover:text-text-0 transition-colors duration-[160ms]',
                   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 ].join(' ')}

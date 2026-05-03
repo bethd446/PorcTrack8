@@ -140,7 +140,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ target, isOpen, onClose, onDe
                 </h2>
                 <p
                   id={descId}
-                  className="mt-1 font-mono text-[11px] uppercase tracking-wide text-text-2 tabular-nums truncate"
+                  className="mt-1 text-[11px] uppercase tracking-wide text-text-2 tabular-nums truncate"
                 >
                   {target.label}
                 </p>
@@ -170,10 +170,10 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ target, isOpen, onClose, onDe
             >
               <AlertOctagon size={18} className="text-red flex-shrink-0 mt-0.5" aria-hidden="true" />
               <div className="min-w-0">
-                <p className="font-mono text-[11px] font-bold uppercase tracking-wide text-red">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-red">
                   Action irréversible
                 </p>
-                <p className="mt-1 font-mono text-[11px] text-text-1 leading-relaxed">
+                <p className="mt-1 text-[11px] text-text-1 leading-relaxed">
                   La ligne sera supprimée définitivement. La raison sera tracée dans le journal d'audit.
                 </p>
               </div>
@@ -183,7 +183,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ target, isOpen, onClose, onDe
             <div className="space-y-3">
               <label
                 htmlFor="delete-reason"
-                className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+                className="block text-[11px] uppercase tracking-wide text-text-2"
               >
                 Raison de la suppression *
               </label>
@@ -201,7 +201,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ target, isOpen, onClose, onDe
                       onClick={() => setReason(p)}
                       className={[
                         'pressable inline-flex items-center h-8 px-3 rounded-md border',
-                        'font-mono text-[11px] uppercase tracking-wide',
+                        'text-[11px] uppercase tracking-wide',
                         'transition-colors duration-[160ms]',
                         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                         isSelected
@@ -226,7 +226,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ target, isOpen, onClose, onDe
                 className={[
                   'w-full rounded-md px-3 py-2.5',
                   'bg-bg-0 border border-border text-text-0 placeholder:text-text-2',
-                  'font-mono text-[12px]',
+                  'text-[12px]',
                   'outline-none transition-colors duration-[160ms]',
                   'focus:border-accent focus:ring-1 focus:ring-accent',
                   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-1px]',
@@ -246,7 +246,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ target, isOpen, onClose, onDe
               className={[
                 'pressable w-full h-[48px] rounded-md',
                 'inline-flex items-center justify-center gap-2',
-                'bg-red text-text-0 font-mono text-[12px] font-bold uppercase tracking-wide',
+                'bg-red text-text-0 text-[12px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms]',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-red focus-visible:outline-offset-2',
                 (loading || !reason.trim())
@@ -271,7 +271,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ target, isOpen, onClose, onDe
                 'pressable w-full h-[44px] rounded-md',
                 'inline-flex items-center justify-center',
                 'bg-bg-1 border border-border text-text-1',
-                'font-mono text-[12px] uppercase tracking-wide',
+                'text-[12px] uppercase tracking-wide',
                 'hover:bg-bg-2 hover:text-text-0 transition-colors duration-[160ms]',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
               ].join(' ')}

@@ -140,16 +140,16 @@ const PendingBandesBanner: React.FC<PendingBandesBannerProps> = ({ injectedState
         <div className="flex items-center gap-3 min-w-0">
           <AlertTriangle size={18} className="text-amber shrink-0" aria-hidden="true" />
           <div className="flex flex-col min-w-0 text-left">
-            <span className="font-mono text-[12px] font-bold uppercase tracking-wide text-amber">
+            <span className="text-[12px] font-bold uppercase tracking-wide text-amber">
               {label}
             </span>
-            <span className="font-mono text-[11px] text-text-1">
+            <span className="text-[11px] text-text-1">
               Clique pour compléter les informations manquantes.
             </span>
           </div>
         </div>
         <span
-          className="font-mono text-[10px] uppercase tracking-wide text-amber"
+          className="text-[10px] uppercase tracking-wide text-amber"
           aria-hidden="true"
         >
           Compléter →

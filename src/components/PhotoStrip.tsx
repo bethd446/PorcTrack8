@@ -53,10 +53,10 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ subjectType, subjectId }) => {
     <div className="space-y-3">
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
-        <h3 className="font-mono text-[11px] font-bold uppercase tracking-wide text-text-2">
+        <h3 className="text-[11px] font-bold uppercase tracking-wide text-text-2">
           Documentation visuelle
         </h3>
-        <span className="font-mono text-[11px] font-bold uppercase tracking-wide text-accent tabular-nums bg-bg-2 border border-border px-2 py-0.5 rounded-sm">
+        <span className="text-[11px] font-bold uppercase tracking-wide text-accent tabular-nums bg-bg-2 border border-border px-2 py-0.5 rounded-sm">
           {photos.length} photo{photos.length > 1 ? 's' : ''}
         </span>
       </div>
@@ -77,7 +77,7 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ subjectType, subjectId }) => {
           ].join(' ')}
         >
           <Camera size={20} className="text-text-2" aria-hidden="true" />
-          <span className="font-mono text-[10px] font-bold uppercase tracking-wide text-text-2">
+          <span className="text-[10px] font-bold uppercase tracking-wide text-text-2">
             Ajouter
           </span>
         </button>
@@ -181,7 +181,7 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ subjectType, subjectId }) => {
             <div className="p-6 text-center">
               <p
                 id={captionId}
-                className="font-mono text-[11px] uppercase tracking-wide text-text-2 tabular-nums"
+                className="text-[11px] uppercase tracking-wide text-text-2 tabular-nums"
               >
                 Capturé le{' '}
                 {selectedPhoto ? new Date(selectedPhoto.ts).toLocaleString('fr-FR') : ''}

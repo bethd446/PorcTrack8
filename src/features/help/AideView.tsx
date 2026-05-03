@@ -8,8 +8,6 @@ import { buildWhatsappUrl, getSupportWhatsapp } from '../../services/supportCont
 
 const FONT_DISPLAY = 'var(--font-heading)';
 const FONT_BODY = 'var(--font-body)';
-const FONT_MONO = 'var(--font-mono)';
-
 const WHATSAPP_BRAND = '#25D366';
 
 interface FaqEntry {
@@ -48,7 +46,6 @@ const FAQ: ReadonlyArray<FaqEntry> = [
 const SUPPORT_MESSAGE = "Bonjour, j'ai besoin d'aide avec PorcTrack.";
 
 const sectionLabelStyle: React.CSSProperties = {
-  fontFamily: FONT_MONO,
   fontSize: 10,
   letterSpacing: '0.20em',
   textTransform: 'uppercase',
@@ -211,7 +208,6 @@ const AideView: React.FC = () => {
                           aria-hidden="true"
                           className="group-open:rotate-45"
                           style={{
-                            fontFamily: FONT_MONO,
                             fontSize: 18,
                             color: 'var(--muted)',
                             transition: 'transform 150ms var(--ease-emil)',
@@ -256,7 +252,6 @@ const AideView: React.FC = () => {
                     color: '#ffffff',
                     border: `1.5px solid ${WHATSAPP_BRAND}`,
                     borderRadius: 'var(--radius-pill)',
-                    fontFamily: FONT_MONO,
                     fontSize: 13,
                     letterSpacing: '0.10em',
                     textTransform: 'uppercase',

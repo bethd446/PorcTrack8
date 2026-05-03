@@ -38,7 +38,6 @@ const TabsTrigger = React.forwardRef<
       className,
     )}
     style={{
-      fontFamily: 'var(--font-mono)',
       fontSize: 11,
       letterSpacing: '0.08em',
       textTransform: 'uppercase',

@@ -7,7 +7,6 @@ import PublicShell from '../components/design/PublicShell';
 
 const FONT_DISPLAY = 'var(--font-heading)';
 const FONT_BODY = 'var(--font-body)';
-const FONT_MONO = 'var(--font-mono)';
 
 export default function CGU() {
   return (
@@ -29,7 +28,6 @@ export default function CGU() {
         </h1>
         <p
           style={{
-            fontFamily: FONT_MONO,
             fontSize: 11,
             letterSpacing: '0.10em',
             textTransform: 'uppercase',

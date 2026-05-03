@@ -45,7 +45,6 @@ export default function TopBarSync({
         display: 'flex',
         alignItems: 'center',
         gap: 14,
-        fontFamily: 'var(--font-mono)',
         fontSize: 11,
         letterSpacing: '0.04em',
       }}

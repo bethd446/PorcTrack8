@@ -30,7 +30,6 @@ const PhaseBadge: React.FC<Props> = ({ phase, label, size = 'md' }) => {
         gap: 6,
         background: `var(--phase-${phase}-soft)`,
         color: `var(--phase-${phase})`,
-        fontFamily: 'var(--font-mono)',
         fontSize: isSm ? 10 : 11,
         fontWeight: 600,
         letterSpacing: '0.04em',

@@ -289,11 +289,11 @@ const BandeDetailRoute: React.FC = () => {
   if (!bandeTyped) {
     return (
       <div className="agritech-root p-10 text-center flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <p className="font-mono text-[14px] uppercase text-text-1">Bande introuvable</p>
+        <p className="text-[14px] uppercase text-text-1">Bande introuvable</p>
         <button
           type="button"
           onClick={handleClose}
-          className="pressable h-11 px-6 rounded-md bg-accent text-bg-0 font-mono text-[12px] uppercase tracking-wide"
+          className="pressable h-11 px-6 rounded-md bg-accent text-bg-0 text-[12px] uppercase tracking-wide"
         >
           Retour
         </button>

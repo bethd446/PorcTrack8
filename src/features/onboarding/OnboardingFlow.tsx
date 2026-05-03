@@ -217,7 +217,7 @@ const StepRole: React.FC<StepRoleProps> = ({ value, onChange, onSkip, onContinue
             aria-checked={active}
             onClick={() => onChange(key)}
             className={
-              'pressable h-12 rounded-md font-mono text-[12px] uppercase tracking-wide transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 ' +
+              'pressable h-12 rounded-md text-[12px] uppercase tracking-wide transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 ' +
               (active
                 ? 'bg-accent text-bg-0'
                 : 'bg-bg-1 border border-border text-text-1 hover:bg-bg-2')

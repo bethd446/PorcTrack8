@@ -26,7 +26,6 @@ export default function MariusPanel({
     >
       <div
         style={{
-          fontFamily: 'var(--font-mono)',
           fontSize: 9.5,
           letterSpacing: '0.18em',
           textTransform: 'uppercase',

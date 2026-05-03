@@ -103,7 +103,7 @@ const ControleQuotidien: React.FC = () => {
               <h2 className="agritech-heading text-[24px] uppercase leading-none mb-2">
                 Tour validé
               </h2>
-              <p className="font-mono text-[12px] text-text-2 mb-10">
+              <p className="text-[12px] text-text-2 mb-10">
                 Toutes les réponses ont été enregistrées.
               </p>
 
@@ -197,7 +197,7 @@ const ControleQuotidien: React.FC = () => {
                 }}
               />
             </div>
-            <p className="mt-2 font-mono text-[11px] uppercase tracking-wide text-text-2">
+            <p className="mt-2 text-[11px] uppercase tracking-wide text-text-2">
               Étape {currentStep + 1} sur {CONTROLE_QUESTIONS.length}
             </p>
 
@@ -253,7 +253,7 @@ const ControleQuotidien: React.FC = () => {
               </div>
             </section>
 
-            <p className="mt-6 text-center font-mono text-[10px] uppercase tracking-wide text-text-2">
+            <p className="mt-6 text-center text-[10px] uppercase tracking-wide text-text-2">
               PorcTrack · registre audité
             </p>
           </div>

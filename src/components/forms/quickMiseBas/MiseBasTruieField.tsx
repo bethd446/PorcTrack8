@@ -25,7 +25,7 @@ const MiseBasTruieField: React.FC<MiseBasTruieFieldProps> = ({
     <div className="space-y-1.5">
       <label
         htmlFor="mb-truie"
-        className="block font-mono text-[11px] uppercase tracking-wide text-text-2"
+        className="block text-[11px] uppercase tracking-wide text-text-2"
       >
         Truie mère <span className="text-red normal-case">· obligatoire</span>
       </label>
@@ -34,7 +34,7 @@ const MiseBasTruieField: React.FC<MiseBasTruieFieldProps> = ({
           className={[
             'w-full h-12 rounded-md',
             'bg-bg-0 border text-text-0',
-            'font-mono text-[12px] uppercase tracking-wide tabular-nums',
+            'text-[12px] uppercase tracking-wide tabular-nums',
             'transition-colors duration-[160ms]',
             'focus-within:border-accent focus-within:ring-1 focus-within:ring-accent',
             error ? 'border-red' : 'border-border',
@@ -73,7 +73,7 @@ const MiseBasTruieField: React.FC<MiseBasTruieFieldProps> = ({
           </IonSelect>
         </div>
       ) : (
-        <p className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+        <p className="text-[11px] uppercase tracking-wide text-text-2">
           Aucune truie éligible (pleine / maternité)
         </p>
       )}
@@ -81,7 +81,7 @@ const MiseBasTruieField: React.FC<MiseBasTruieFieldProps> = ({
         <p
           id="mb-truie-error"
           role="alert"
-          className="font-mono text-[11px] text-red"
+          className="text-[11px] text-red"
         >
           {error}
         </p>

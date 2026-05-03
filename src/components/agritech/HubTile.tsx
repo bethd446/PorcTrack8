@@ -107,7 +107,7 @@ const HubTile: React.FC<HubTileProps> = ({
             {title}
           </div>
           {subtitle ? (
-            <div className="mt-1 font-mono text-[10px] text-text-2 truncate tracking-wide uppercase">
+            <div className="mt-1 text-[10px] text-text-2 truncate tracking-wide uppercase">
               {subtitle}
             </div>
           ) : null}
@@ -143,7 +143,7 @@ const HubTile: React.FC<HubTileProps> = ({
           {title}
         </div>
         {subtitle ? (
-          <div className="mt-1 font-mono text-[11px] text-text-2 truncate">{subtitle}</div>
+          <div className="mt-1 text-[11px] text-text-2 truncate">{subtitle}</div>
         ) : null}
       </div>
 

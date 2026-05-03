@@ -186,7 +186,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ open, onClose }) => {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <span
-                            className="truncate font-mono text-[14px]"
+                            className="truncate text-[14px]"
                             style={{ color: 'var(--text-0, #0f172a)' }}
                           >
                             {r.primary}

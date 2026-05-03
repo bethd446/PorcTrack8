@@ -28,7 +28,7 @@ const BandeActionToolbar: React.FC<BandeActionToolbarProps> = ({
         style={{ background: 'transparent', borderColor: 'var(--color-pig, var(--color-danger, #EF4444))' }}
       >
         <Skull size={18} style={{ color: 'var(--color-pig, var(--color-danger, #EF4444))' }} />
-        <span className="text-[9px] font-bold uppercase font-mono" style={{ color: 'var(--color-pig, var(--color-danger, #EF4444))' }}>Mortalité</span>
+        <span className="text-[9px] font-bold uppercase" style={{ color: 'var(--color-pig, var(--color-danger, #EF4444))' }}>Mortalité</span>
       </button>
 
       <button
@@ -36,7 +36,7 @@ const BandeActionToolbar: React.FC<BandeActionToolbarProps> = ({
         className="flex-1 h-14 rounded-2xl bg-bg-2 border border-border flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
       >
         <HeartPulse size={18} className="text-text-2" />
-        <span className="text-[9px] font-bold uppercase font-mono text-text-2">Soin</span>
+        <span className="text-[9px] font-bold uppercase text-text-2">Soin</span>
       </button>
 
       {onTransfert && (
@@ -46,7 +46,7 @@ const BandeActionToolbar: React.FC<BandeActionToolbarProps> = ({
           style={{ background: 'color-mix(in srgb, var(--amber-pork) 10%, transparent)', borderColor: 'color-mix(in srgb, var(--amber-pork) 20%, transparent)' }}
         >
           <ArrowRightLeft size={18} style={{ color: 'var(--amber-pork-deep)' }} />
-          <span className="text-[9px] font-bold uppercase font-mono" style={{ color: 'var(--amber-pork-deep)' }}>Transfert</span>
+          <span className="text-[9px] font-bold uppercase" style={{ color: 'var(--amber-pork-deep)' }}>Transfert</span>
         </button>
       )}
 
@@ -60,7 +60,7 @@ const BandeActionToolbar: React.FC<BandeActionToolbarProps> = ({
         }`}
       >
         <Scale size={20} />
-        <span className="text-[10px] font-bold uppercase font-mono">Nouvelle Pesée</span>
+        <span className="text-[10px] font-bold uppercase">Nouvelle Pesée</span>
       </button>
     </div>
   );

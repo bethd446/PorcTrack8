@@ -100,7 +100,6 @@ export default function TimelineVerticale({ items, className = '' }: TimelineVer
 
             <div
               style={{
-                fontFamily: 'var(--font-mono)',
                 fontSize: 9.5,
                 letterSpacing: '0.16em',
                 textTransform: 'uppercase',
@@ -151,7 +150,6 @@ export default function TimelineVerticale({ items, className = '' }: TimelineVer
             {item.meta && (
               <div
                 style={{
-                  fontFamily: 'var(--font-mono)',
                   fontSize: 9.5,
                   color: 'var(--muted)',
                   marginTop: 6,

@@ -145,7 +145,6 @@ export default function KpiCard({
   };
 
   const eyebrowStyle: React.CSSProperties = {
-    fontFamily: 'var(--font-mono)',
     fontSize: 11,
     letterSpacing: '0.10em',
     textTransform: 'uppercase',
@@ -188,7 +187,6 @@ export default function KpiCard({
   };
 
   const trendStyle: React.CSSProperties = {
-    fontFamily: 'var(--font-mono)',
     fontSize: 11,
     color: deltaColor,
     marginTop: 10,
@@ -227,7 +225,6 @@ export default function KpiCard({
       {hint ? (
         <div
           style={{
-            fontFamily: 'var(--font-mono)',
             fontSize: 10,
             color: isAccent ? 'rgba(255,255,255,0.7)' : 'var(--muted)',
             marginTop: 6,

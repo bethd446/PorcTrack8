@@ -18,7 +18,7 @@ const DebugPanel: React.FC<DebugPanelProps> = ({ meta, header, rowsCount, error,
     <div className="mx-4 mb-4">
       <button
         onClick={() => setOpen(!open)}
-        className="pressable w-full flex items-center justify-between bg-bg-1 text-accent border border-border px-3 py-2 rounded-md font-mono text-[11px] uppercase tracking-wide transition-colors"
+        className="pressable w-full flex items-center justify-between bg-bg-1 text-accent border border-border px-3 py-2 rounded-md text-[11px] uppercase tracking-wide transition-colors"
       >
         <div className="flex items-center gap-2">
           <Bug size={14} />

@@ -9,7 +9,6 @@ import Button from '../design/Button';
 
 const FONT_DISPLAY = 'var(--font-heading)';
 const FONT_BODY = 'var(--font-body)';
-const FONT_MONO = 'var(--font-mono)';
 
 type Mode = 'magic' | 'password';
 
@@ -192,7 +191,6 @@ export default function Signup() {
             to="/login"
             className="inline-flex items-center px-3"
             style={{
-              fontFamily: FONT_MONO,
               fontSize: 11,
               letterSpacing: '0.10em',
               textTransform: 'uppercase',
@@ -295,8 +293,7 @@ export default function Signup() {
                         border: '1px solid var(--color-accent-500)',
                         cursor: resendCooldown > 0 || resendLoading ? 'not-allowed' : 'pointer',
                         opacity: resendCooldown > 0 || resendLoading ? 0.6 : 1,
-                        fontFamily: FONT_MONO,
-                        fontSize: 11,
+                                  fontSize: 11,
                         letterSpacing: '0.10em',
                         textTransform: 'uppercase',
                         color: 'var(--color-accent-600)',
@@ -408,8 +405,7 @@ export default function Signup() {
                       background: 'transparent',
                       border: 'none',
                       cursor: 'pointer',
-                      fontFamily: FONT_MONO,
-                      fontSize: 11,
+                              fontSize: 11,
                       letterSpacing: '0.10em',
                       textTransform: 'uppercase',
                       color: 'var(--color-accent-600)',
@@ -484,7 +480,6 @@ export default function Signup() {
         <div
           className="mx-auto flex max-w-6xl flex-col items-start gap-3 px-5 py-6 md:flex-row md:items-center md:justify-between md:px-8"
           style={{
-            fontFamily: FONT_MONO,
             fontSize: 11,
             letterSpacing: '0.06em',
             color: 'var(--muted)',
@@ -538,7 +533,6 @@ function Field({ label, type, value, onChange, autoComplete, placeholder, requir
       <span
         style={{
           display: 'block',
-          fontFamily: FONT_MONO,
           fontSize: 10,
           letterSpacing: '0.16em',
           textTransform: 'uppercase',

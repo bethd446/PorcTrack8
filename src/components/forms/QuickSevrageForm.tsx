@@ -313,7 +313,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
                 type="button"
                 onClick={onClose}
                 disabled={saving}
-                className="pressable flex-1 h-14 rounded-md bg-bg-1 border border-border text-text-1 font-mono text-[12px] font-bold uppercase tracking-wide"
+                className="pressable flex-1 h-14 rounded-md bg-bg-1 border border-border text-text-1 text-[12px] font-bold uppercase tracking-wide"
               >
                 Annuler
               </button>
@@ -321,7 +321,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
                 type="submit"
                 disabled={saving || !bandeId || !nbSevres || !poidsKg}
                 aria-busy={saving}
-                className="pressable flex-[2] h-14 rounded-md bg-accent text-bg-0 font-mono text-[13px] font-bold uppercase tracking-wide inline-flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="pressable flex-[2] h-14 rounded-md bg-accent text-bg-0 text-[13px] font-bold uppercase tracking-wide inline-flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {saving ? (
                   <span className="animate-pulse">Enregistrement…</span>

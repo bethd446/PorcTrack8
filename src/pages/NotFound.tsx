@@ -6,7 +6,6 @@ import PublicShell from '../components/design/PublicShell';
 
 const FONT_DISPLAY = 'var(--font-heading)';
 const FONT_BODY = 'var(--font-body)';
-const FONT_MONO = 'var(--font-mono)';
 
 export default function NotFound() {
   return (
@@ -82,7 +81,6 @@ export default function NotFound() {
           <div
             className="mt-10 inline-flex items-center gap-2"
             style={{
-              fontFamily: FONT_MONO,
               fontSize: 10,
               letterSpacing: '0.10em',
               textTransform: 'uppercase',

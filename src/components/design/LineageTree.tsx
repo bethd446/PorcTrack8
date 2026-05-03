@@ -296,7 +296,6 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, depth }) => {
       {node.label && (
         <span
           style={{
-            fontFamily: 'var(--font-mono)',
             fontSize: 10,
             letterSpacing: '0.06em',
             textTransform: 'uppercase',

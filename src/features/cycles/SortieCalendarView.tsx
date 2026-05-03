@@ -127,7 +127,7 @@ const SortieCalendarView: React.FC = () => {
               {calendar.length === 0 ? (
                 <div className="card-dense text-center py-12">
                   <Calendar size={40} className="mx-auto text-text-2 mb-3 opacity-20" />
-                  <p className="font-mono text-[12px] text-text-2">Aucune bande sevrée enregistrée.</p>
+                  <p className="text-[12px] text-text-2">Aucune bande sevrée enregistrée.</p>
                 </div>
               ) : (
                 <div className="card-dense !p-0 overflow-hidden mt-3">
@@ -151,7 +151,7 @@ const SortieCalendarView: React.FC = () => {
                               e.stopPropagation();
                               setVenteBande(bande);
                             }}
-                            className="pressable inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-amber/10 text-amber border border-amber/30 font-mono text-[11px] font-bold uppercase tracking-wide transition-colors hover:bg-amber/20"
+                            className="pressable inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-amber/10 text-amber border border-amber/30 text-[11px] font-bold uppercase tracking-wide transition-colors hover:bg-amber/20"
                           >
                             <TrendingUp size={12} aria-hidden="true" />
                             Saisir sortie abattoir
