@@ -12,9 +12,16 @@ echo "============================================="
 echo ""
 
 # CHECK 1 — Aucun UUID affiché dans le JSX
-# Regex : {xxx.id} dans le JSX (hors key={...})
+# V42-pre — regex resserré pour ne matcher QUE les UUID rendus dans du
+# contenu JSX entre tags ouvrants/fermants (`>...{x.id}...<`).
+# L'ancien regex `{xxx.id}` matchait massivement des faux positifs :
+#   - URLs   : navigate(`/troupeau/truies/${truie.id}`)
+#   - Props  : subjectId={bande.id}
+#   - Sets   : seen.add(`truie|${t.id}|${iso}`)
+#   - Calls  : getBandeById(bande.id)
+# Ces patterns ne rendent JAMAIS un UUID dans l'UI utilisateur.
 echo "CHECK 1 : UUID affiché dans le JSX"
-MATCHES=$(grep -rn '{[a-zA-Z_]*\.id}' "$SRC" --include="*.tsx" | grep -v 'key={' | grep -v 'key =' || true)
+MATCHES=$(grep -rnE ">[^<]*\{[a-zA-Z_]*\.id\}[^>]*<" "$SRC" --include="*.tsx" | grep -v 'key={' | grep -v 'key =' || true)
 if [ -n "$MATCHES" ]; then
   echo "✗  UUID brut affiché dans le JSX :"
   echo "$MATCHES" | sed 's/^/   /'
