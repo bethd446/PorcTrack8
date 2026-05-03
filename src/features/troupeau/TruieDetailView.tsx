@@ -35,7 +35,7 @@ import TruieEventActionSheet, { type TruieEventAction } from '../../components/f
 import Eyebrow from '../../components/design/Eyebrow';
 import Chip from '../../components/design/Chip';
 import SowHero, { type SowHeroChip } from '../../components/design/SowHero';
-import { Tabs } from '../../design-system';
+import { Tabs, Button, safeDisplay } from '../../design-system';
 import EditTruieWizard from '../../components/forms/EditTruieWizard';
 import { TruieIcon } from '../../components/icons';
 import ReproTracker, { type ReproStage } from '../../components/design/ReproTracker';
@@ -246,34 +246,24 @@ const TruieDetailView: React.FC = () => {
         <IonContent className="ion-padding">
           <h1
             style={{
-              fontFamily: 'var(--font-heading)',
+              fontFamily: 'var(--pt-font-display)',
               fontSize: 28,
               fontWeight: 700,
-              color: 'var(--ink)',
+              color: 'var(--pt-text)',
               textTransform: 'uppercase',
               letterSpacing: '-0.02em',
             }}
           >
             Truie introuvable
           </h1>
-          <p style={{ marginTop: 8, color: 'var(--muted)' }}>
+          <p style={{ marginTop: 8, color: 'var(--pt-text-muted)' }}>
             Cette truie n'existe pas dans les données de votre exploitation.
           </p>
-          <button
-            onClick={() => navigate('/troupeau')}
-            style={{
-              marginTop: 16,
-              color: 'var(--color-accent-500)',
-              fontSize: 13,
-              textDecoration: 'underline',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: 0,
-            }}
-          >
-            Retour au troupeau
-          </button>
+          <div style={{ marginTop: 16 }}>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/troupeau')}>
+              Retour au troupeau
+            </Button>
+          </div>
         </IonContent>
       </IonPage>
     );
@@ -451,13 +441,13 @@ const TruieDetailView: React.FC = () => {
           <div style={{ padding: '16px 22px 24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
             {/* Hero */}
             <SowHero
-              eyebrow={`Fiche truie · ${truie.displayId}`}
+              eyebrow={`Fiche truie · ${safeDisplay(truie.displayId)}`}
               chips={heroChips}
-              name={truie.nom || truie.displayId}
+              name={safeDisplay(truie.nom ?? truie.boucle ?? truie.displayId)}
               subtitle={truie.race ? `— ${truie.race}` : undefined}
               tagline={tagline}
               photoUrl={truie.photoUrl}
-              photoStamp={`${truie.displayId} · ${formatDateShort(new Date().toISOString())}`}
+              photoStamp={`${safeDisplay(truie.displayId)} · ${formatDateShort(new Date().toISOString())}`}
               onPrimaryAction={() => setEventSheetOpen(true)}
               primaryLabel="+ Saisir évènement"
               onSecondaryAction={() => setEditWizardOpen(true)}
@@ -484,26 +474,9 @@ const TruieDetailView: React.FC = () => {
                     {miseBasCTALabel}
                   </div>
                   <div>
-                    <button
-                      type="button"
-                      onClick={() => setMiseBasOpen(true)}
-                      style={{
-                        padding: '12px 18px',
-                        borderRadius: 9999,
-                        background: 'var(--amber-pork-deep)',
-                        color: 'var(--bg-surface)',
-                        border: 'none',
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: 11,
-                        letterSpacing: '0.10em',
-                        textTransform: 'uppercase',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        minHeight: 44,
-                      }}
-                    >
+                    <Button variant="primary" size="sm" onClick={() => setMiseBasOpen(true)}>
                       + Saisir la mise-bas
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </section>
@@ -614,27 +587,11 @@ const TruieDetailView: React.FC = () => {
                   >
                     Lance la repro pour activer le suivi.
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setSaillieOpen(true)}
-                    style={{
-                      marginTop: 4,
-                      padding: '12px 18px',
-                      borderRadius: 9999,
-                      background: 'var(--color-accent-600, var(--amber-pork-deep))',
-                      color: 'var(--bg-surface)',
-                      border: 'none',
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 11,
-                      letterSpacing: '0.10em',
-                      textTransform: 'uppercase',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      minHeight: 44,
-                    }}
-                  >
-                    + Saisir une saillie
-                  </button>
+                  <div style={{ marginTop: 4 }}>
+                    <Button variant="primary" size="sm" onClick={() => setSaillieOpen(true)}>
+                      + Saisir une saillie
+                    </Button>
+                  </div>
                 </div>
               ) : (
               <div
@@ -914,74 +871,27 @@ const TruieDetailView: React.FC = () => {
                   <Eyebrow>Actions</Eyebrow>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {(truie.statut === 'À surveiller' || truie.statut === 'Réforme') && (
-                      <button
-                        type="button"
-                        onClick={handleReformer}
-                        style={{
-                          padding: '12px 16px',
-                          borderRadius: 9999,
-                          background: 'var(--bg-surface)',
-                          color: 'var(--pig-deep)',
-                          border: '1px solid var(--pig-deep)',
-                          fontFamily: 'var(--font-mono)',
-                          fontSize: 11,
-                          letterSpacing: '0.10em',
-                          textTransform: 'uppercase',
-                          fontWeight: 500,
-                          cursor: 'pointer',
-                          minHeight: 44,
-                        }}
-                      >
+                      <Button variant="danger" size="sm" onClick={handleReformer}>
                         Passer en réforme
-                      </button>
+                      </Button>
                     )}
-                    <button
-                      type="button"
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => setEditWizardOpen(true)}
-                      aria-label={`Éditer la fiche de la truie ${truie.displayId}`}
-                      style={{
-                        padding: '12px 16px',
-                        borderRadius: 9999,
-                        background: 'var(--bg-2, var(--bg-surface-soft, #f5f4f1))',
-                        color: 'var(--ink)',
-                        border: '1px solid var(--line)',
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: 11,
-                        letterSpacing: '0.10em',
-                        textTransform: 'uppercase',
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                        minHeight: 44,
-                      }}
+                      ariaLabel={`Éditer la fiche de la truie ${safeDisplay(truie.displayId)}`}
                     >
                       Éditer la fiche
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => window.print()}
-                      aria-label={`Imprimer la fiche de la truie ${truie.displayId}`}
-                      style={{
-                        padding: '12px 16px',
-                        borderRadius: 9999,
-                        background: 'transparent',
-                        color: 'var(--muted)',
-                        border: '1px dashed var(--line)',
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: 11,
-                        letterSpacing: '0.10em',
-                        textTransform: 'uppercase',
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                        minHeight: 44,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 8,
-                      }}
+                      ariaLabel={`Imprimer la fiche de la truie ${safeDisplay(truie.displayId)}`}
                     >
                       <Printer size={13} strokeWidth={2} aria-hidden />
                       Imprimer la fiche
-                    </button>
+                    </Button>
                   </div>
                 </section>
                 )}
@@ -1047,24 +957,11 @@ const TruieDetailView: React.FC = () => {
                 bandes={bandes}
                 saillies={saillies}
               />
-              <button
-                type="button"
-                onClick={() => setTreeOpen(false)}
-                style={{
-                  marginTop: 16,
-                  padding: '10px 18px',
-                  borderRadius: 'var(--radius-pill, 9999px)',
-                  border: '1px solid var(--line)',
-                  background: 'var(--bg-surface)',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 11,
-                  letterSpacing: '0.08em',
-                  color: 'var(--ink)',
-                  cursor: 'pointer',
-                }}
-              >
-                Fermer l'arbre
-              </button>
+              <div style={{ marginTop: 16 }}>
+                <Button variant="secondary" size="sm" onClick={() => setTreeOpen(false)}>
+                  Fermer l'arbre
+                </Button>
+              </div>
             </div>
           </IonContent>
         </IonModal>
@@ -1371,8 +1268,8 @@ const RationRecoBlock: React.FC<{ truie: Truie }> = ({ truie }) => {
               marginTop: 4,
               padding: '8px 12px',
               borderRadius: 8,
-              background: 'var(--amber-pork-soft, #fde7d2)',
-              color: 'var(--amber-pork-deep, #c2662b)',
+              background: 'var(--pt-surface-warm)',
+              color: 'var(--pt-accent-deep)',
               fontFamily: 'var(--font-mono)',
               fontSize: 11,
               letterSpacing: '0.06em',
