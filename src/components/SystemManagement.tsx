@@ -13,7 +13,7 @@ import {
   KeyValueRow,
   Input,
   FormField,
-} from '../design-system';
+} from '@/design-system';
 import { useAuth } from '../context/AuthContext';
 import { useMeta } from '../context/FarmContext';
 import { APP_VERSION } from '../config';

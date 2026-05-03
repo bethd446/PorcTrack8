@@ -13,7 +13,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { IonModal, IonToast } from '@ionic/react';
 
-import { Wizard, type WizardStep } from '../../design-system';
+import { Wizard, type WizardStep } from '@/design-system';
 import {
   getLogeContents,
   listLoges,

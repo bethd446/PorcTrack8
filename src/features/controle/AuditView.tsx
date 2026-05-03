@@ -13,7 +13,7 @@ import {
 } from '../../services/supabaseService';
 import AgritechLayout from '../../components/AgritechLayout';
 import TopBarSync from '../../components/design/TopBarSync';
-import { AlertGroup, AlertRow, Section, Tabs, safeDisplay } from '../../design-system';
+import { AlertGroup, AlertRow, Section, Tabs, safeDisplay } from '@/design-system';
 
 /**
  * AuditView — V31-FIX-PACK-01

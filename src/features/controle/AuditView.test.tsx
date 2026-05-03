@@ -14,7 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
 import { render, screen, cleanup, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { UUID_REGEX } from '../../design-system';
+import { UUID_REGEX } from '@/design-system';
 
 // ─── Mocks services ────────────────────────────────────────────────────────
 const getBandesMock = vi.fn();

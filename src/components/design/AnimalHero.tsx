@@ -2,7 +2,7 @@ import React from 'react';
 import { Plus, Printer } from 'lucide-react';
 import Eyebrow from './Eyebrow';
 import Chip from './Chip';
-import { Button } from '../../design-system';
+import { Button } from '@/design-system';
 
 export interface AnimalHeroChip {
   label: string;

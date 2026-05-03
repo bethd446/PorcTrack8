@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import Eyebrow from '../components/design/Eyebrow';
-import { Button } from '../design-system';
+import { Button } from '@/design-system';
 import PublicShell from '../components/design/PublicShell';
 
 const FONT_DISPLAY = 'var(--font-heading)';

@@ -31,7 +31,7 @@ import {
   Section,
   ActionRow,
   IconBox,
-} from '../../design-system';
+} from '@/design-system';
 import { usePilotage } from '../../context/PilotageContext';
 
 const OutilsView: React.FC = () => {

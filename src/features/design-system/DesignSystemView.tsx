@@ -30,7 +30,7 @@ import {
   StatsGrid,
   AlertGroup,
   AlertRow,
-} from '../../design-system';
+} from '@/design-system';
 
 const Block: React.FC<{ title: string; children: React.ReactNode }> = ({
   title,

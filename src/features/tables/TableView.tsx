@@ -33,7 +33,7 @@ import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { BottomSheet, Chip } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
-import { Button } from '../../design-system';
+import { Button } from '@/design-system';
 
 interface TableViewProps {
   tableKey: string;

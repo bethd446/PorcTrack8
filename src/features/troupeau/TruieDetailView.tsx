@@ -35,7 +35,7 @@ import TruieEventActionSheet, { type TruieEventAction } from '../../components/f
 import Eyebrow from '../../components/design/Eyebrow';
 import Chip from '../../components/design/Chip';
 import SowHero, { type SowHeroChip } from '../../components/design/SowHero';
-import { Tabs, Button, safeDisplay } from '../../design-system';
+import { Tabs, Button, safeDisplay } from '@/design-system';
 import EditTruieWizard from '../../components/forms/EditTruieWizard';
 import { TruieIcon } from '../../components/icons';
 import ReproTracker, { type ReproStage } from '../../components/design/ReproTracker';

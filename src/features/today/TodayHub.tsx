@@ -25,7 +25,7 @@ import {
 
 import { AppToast, AlertCard, useAppToast } from '../../components/agritech';
 import AgritechLayout from '../../components/AgritechLayout';
-import { Section, Card, Button, IconBox } from '../../design-system';
+import { Section, Card, Button, IconBox } from '@/design-system';
 import { useAuth } from '../../context/AuthContext';
 import { usePilotage } from '../../context/PilotageContext';
 import { useRessources } from '../../context/RessourcesContext';

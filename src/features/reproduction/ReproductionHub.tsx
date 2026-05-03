@@ -27,7 +27,7 @@ import {
   Stat,
   ActionRow,
   safeDisplay,
-} from '../../design-system';
+} from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import { buildReproductionDashboard } from '../../services/reproductionDashboard';
 import { computeGlobalKpis } from '../../services/perfKpiAnalyzer';

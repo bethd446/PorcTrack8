@@ -11,7 +11,7 @@ import {
   Layers,
 } from 'lucide-react';
 import Eyebrow from '../components/design/Eyebrow';
-import { Button } from '../design-system';
+import { Button } from '@/design-system';
 import { Chip } from '../components/agritech';
 
 const FONT_DISPLAY = 'var(--font-heading)';

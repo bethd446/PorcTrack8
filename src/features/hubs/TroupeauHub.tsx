@@ -24,7 +24,7 @@ import {
   Stat,
   Tabs,
   safeDisplay,
-} from '../../design-system';
+} from '@/design-system';
 
 import TroupeauTruiesView from '../troupeau/TroupeauTruiesView';
 import TroupeauVerratsView from '../troupeau/TroupeauVerratsView';

@@ -22,7 +22,7 @@ import {
   ListItem,
   Empty,
   safeDisplay,
-} from '../../design-system';
+} from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   computeGlobalKpis,
