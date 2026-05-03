@@ -35,7 +35,7 @@ import TruieEventActionSheet, { type TruieEventAction } from '../../components/f
 import Eyebrow from '../../components/design/Eyebrow';
 import Chip from '../../components/design/Chip';
 import SowHero, { type SowHeroChip } from '../../components/design/SowHero';
-import { Tabs, Button, CycleTimeline, safeDisplay } from '@/design-system';
+import { Tabs, Button, Card, IconBox, Tag, PageHeader, CycleTimeline, safeDisplay } from '@/design-system';
 import EditTruieWizard from '../../components/forms/EditTruieWizard';
 import { TruieIcon } from '../../components/icons';
 import ReproTracker, { type ReproStage } from '../../components/design/ReproTracker';
@@ -284,19 +284,9 @@ const TruieDetailView: React.FC = () => {
     },
   ];
 
-  // ── Tagline contextuelle ───────────────────────────────────────────────────
-
-  const tagline = (() => {
-    if (cycleData && cycleData.dayPost >= 18 && cycleData.dayPost <= 24) {
-      return `Saillie effectuée le ${formatDate(lastSaillie!.dateSaillie)} avec verrat ${lastSaillie!.verratId}. Aujourd'hui J${cycleData.dayPost} post-saillie : entrée en fenêtre critique de retour en chaleur.`;
-    }
-    if (cycleData) {
-      return `Saillie effectuée le ${formatDate(lastSaillie!.dateSaillie)} avec verrat ${lastSaillie!.verratId}. J${cycleData.dayPost} post-saillie.`;
-    }
-    return truie.statut === 'En attente saillie'
-      ? 'Aucune saillie en cours. Prête pour la prochaine bande de saillie.'
-      : `Statut courant : ${truie.statut}.`;
-  })();
+  // V41 Phase C1 : tagline supprimée du hero (redondante avec CycleTimeline qui
+  // affiche déjà jour X/Y et étapes). Le statut est maintenant le subtitle du
+  // PageHeader.
 
   // ── Fenêtre retour chaleur active ──────────────────────────────────────────
 
@@ -439,23 +429,42 @@ const TruieDetailView: React.FC = () => {
           />
 
           <div style={{ padding: '16px 22px 24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-            {/* Hero */}
-            <SowHero
-              eyebrow={`Fiche truie · ${safeDisplay(truie.displayId)}`}
-              chips={heroChips}
-              name={safeDisplay(truie.nom ?? truie.boucle ?? truie.displayId)}
-              subtitle={truie.race ? `— ${truie.race}` : undefined}
-              tagline={tagline}
-              photoUrl={truie.photoUrl}
-              photoStamp={`${safeDisplay(truie.displayId)} · ${formatDateShort(new Date().toISOString())}`}
-              onPrimaryAction={() => setEventSheetOpen(true)}
-              primaryLabel="Saisir évènement"
-              onSecondaryAction={() => setEditWizardOpen(true)}
-              secondaryLabel="Modifier"
-              secondaryIcon={<Pencil size={14} strokeWidth={2} aria-hidden />}
-              fallbackIcon={<TruieIcon size={128} />}
-              onUploadClick={() => setEditWizardOpen(true)}
+            {/* V41 Phase C1 — Header sobre via PageHeader (eyebrow + h1 + subtitle 1 ligne) */}
+            <PageHeader
+              eyebrow="Fiche truie"
+              title={safeDisplay(truie.displayId)}
+              subtitle={truie.statut || undefined}
             />
+
+            {/* V41 Phase C1 — Hero compact dans 1 Card : IconBox 64x64 + tags + boutons à droite */}
+            <Card>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                <IconBox variant="warm" size="medium">
+                  <TruieIcon size={28} />
+                </IconBox>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 160 }}>
+                  <div style={{ fontFamily: 'var(--pt-font-display)', fontSize: 18, fontWeight: 700, color: 'var(--pt-text)' }}>
+                    {safeDisplay(truie.nom ?? truie.boucle ?? truie.displayId)}
+                    {truie.race ? <span style={{ fontFamily: 'var(--pt-font-body)', fontSize: 13, fontWeight: 400, color: 'var(--pt-text-muted)', marginLeft: 8 }}>— {truie.race}</span> : null}
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {heroChips.map((c, i) => (
+                      <span key={`${c.label}-${i}`}>
+                        <Tag variant={c.tone === 'amber' ? 'warning' : c.tone === 'green' ? 'primary' : c.tone === 'pig' ? 'accent' : c.tone === 'terre' ? 'soft' : 'default'}>{c.label}</Tag>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginLeft: 'auto', flexShrink: 0, flexWrap: 'wrap' }}>
+                  <Button variant="primary" size="sm" onClick={() => setEventSheetOpen(true)}>
+                    + Saisir évènement
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={() => setEditWizardOpen(true)}>
+                    <Pencil size={14} strokeWidth={2} aria-hidden /> Modifier
+                  </Button>
+                </div>
+              </div>
+            </Card>
 
             {/* CTA Mise-bas imminente : J-3 → J+5 si truie Pleine */}
             {showMiseBasCTA && (
@@ -482,8 +491,7 @@ const TruieDetailView: React.FC = () => {
               </section>
             )}
 
-            {/* Lignée (kit v2.1) */}
-            <LineageBreadcrumb nodes={lineageNodes} onTreeClick={() => setTreeOpen(true)} />
+            {/* V41 Phase C1 — Lignée déplacée dans onglet "Vue d'ensemble" */}
 
             {/* V32 PHASE 4 — Onglets (Vue d'ensemble · Reproduction · Santé · Historique) */}
             <div style={{ display: 'flex', justifyContent: 'flex-start', overflowX: 'auto' }}>
@@ -515,6 +523,11 @@ const TruieDetailView: React.FC = () => {
                   ]}
                 />
               </section>
+            )}
+
+            {/* V41 Phase C1 — Lignée déplacée dans onglet "Vue d'ensemble" */}
+            {activeTab === 'apercu' && (
+              <LineageBreadcrumb nodes={lineageNodes} onTreeClick={() => setTreeOpen(true)} />
             )}
 
             {/* Reproduction en cours (visible dans Aperçu et Reproduction) */}

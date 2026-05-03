@@ -210,13 +210,13 @@ describe('TruieDetailView', () => {
     cleanup();
   });
 
-  it('affiche le nom de la truie comme h1 et son displayId dans le breadcrumb', () => {
+  it('V41 : affiche le displayId comme h1 (PageHeader sobre) et le nom dans la Card hero', () => {
     renderAt('/troupeau/truies/T14');
     const heading = screen.getByRole('heading', { level: 1 });
-    // En v6, h1 = nom de la truie (Marguerite) et non plus "TRUIE T14".
-    expect(heading.textContent).toContain('Marguerite');
-    // Le displayId apparaît dans le breadcrumb / vitales.
-    expect(document.body.textContent).toContain('T14');
+    // V41 PageHeader : h1 = displayId (shortCode) "T14". Le nom Marguerite est
+    // dans la Card hero compacte sous le PageHeader.
+    expect(heading.textContent).toContain('T14');
+    expect(document.body.textContent).toContain('Marguerite');
   });
 
   it('rend le hero avec le displayId et au moins un svg', () => {
