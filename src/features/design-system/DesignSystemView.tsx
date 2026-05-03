@@ -30,7 +30,7 @@ import {
   StatsGrid,
   AlertGroup,
   AlertRow,
-} from '../../components/design-system';
+} from '@/design-system';
 
 const Block: React.FC<{ title: string; children: React.ReactNode }> = ({
   title,
@@ -448,7 +448,7 @@ const DesignSystemView: React.FC = () => {
                     }
                     disabled={wizardStep === wizardSteps.length - 1}
                   >
-                    Suivant →
+                    Suivant ›
                   </Button>
                 </Row>
               </Card>

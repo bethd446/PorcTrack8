@@ -100,10 +100,10 @@ const TruieEventActionSheet: React.FC<TruieEventActionSheetProps> = ({
             const a = baseActions[key];
             const toneColor =
               a.tone === 'pig'
-                ? 'var(--color-pig, var(--coral, #EF4444))'
+                ? 'var(--pt-danger)'
                 : a.tone === 'amber'
-                ? 'var(--amber-pork-deep)'
-                : 'var(--color-accent-500, var(--accent))';
+                ? 'var(--pt-accent-deep)'
+                : 'var(--pt-primary)';
             return (
               <li key={a.key}>
                 <button

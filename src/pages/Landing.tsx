@@ -11,7 +11,7 @@ import {
   Layers,
 } from 'lucide-react';
 import Eyebrow from '../components/design/Eyebrow';
-import Button from '../components/design/Button';
+import { Button } from '@/design-system';
 import { Chip } from '../components/agritech';
 
 const FONT_DISPLAY = 'var(--font-heading)';
@@ -31,8 +31,8 @@ export default function Landing() {
         zIndex: 1,
         minHeight: '100%',
         width: '100%',
-        background: 'var(--bg-app, #f0f4f3)',
-        color: 'var(--ink, #111827)',
+        background: 'var(--pt-bg)',
+        color: 'var(--pt-text)',
         fontFamily: FONT_BODY,
       }}
     >

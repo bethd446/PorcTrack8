@@ -14,7 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
 import { render, screen, cleanup, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { UUID_REGEX } from '../../lib/uuidGuard';
+import { UUID_REGEX } from '@/design-system';
 
 // ─── Mocks services ────────────────────────────────────────────────────────
 const getBandesMock = vi.fn();
@@ -224,8 +224,8 @@ describe('AuditView V31 — bannissement des UUIDs', () => {
   });
 });
 
-describe('AuditView V31 — header counters', () => {
-  it('affiche les compteurs critiques/stocks/santé dans le sous-titre', async () => {
+describe('AuditView V41 — PageHeader sobre', () => {
+  it('V41 : header sobre, compteurs métriques retirés du subtitle (déplacés vers tabs)', async () => {
     getBandesMock.mockReturnValue(okBandes([]));
     getTruiesMock.mockReturnValue(okTruies([]));
     getStockAlimentsMock.mockReturnValue(okStock([
@@ -239,22 +239,16 @@ describe('AuditView V31 — header counters', () => {
       },
     ]));
     getJournalSanteMock.mockReturnValue(okSante([]));
-    getStockVetoMock.mockReturnValue(okVeto([
-      {
-        id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
-        produit: 'P',
-        stockActuel: 0,
-        unite: 'ml',
-        statutStock: 'RUPTURE',
-      },
-    ]));
+    getStockVetoMock.mockReturnValue(okVeto([]));
 
     renderWithRouter();
 
-    // Header sous-titre format : "1 critique · 1 stock bas · 0 santé"
+    // V41 : le subtitle doit être "Suivi qualité de ta ferme" (pas de chiffres).
+    // Les compteurs sont rendus dans les Tabs ci-dessous (chips count) + AlertGroups.
     await waitFor(() => {
-      expect(screen.getByText(/^\s*1 critique\s*$/)).toBeDefined();
-      expect(screen.getByText(/^\s*1 stock bas\s*$/)).toBeDefined();
+      const subtitle = document.querySelector('.pt-page-header__subtitle');
+      expect(subtitle?.textContent).toBe('Suivi qualité de ta ferme');
+      expect(subtitle?.textContent).not.toMatch(/\d+\s*(critique|stock|santé)/i);
     });
   });
 });

@@ -9,9 +9,9 @@ export default function SmartRoot() {
     return (
       <div
         className="flex items-center justify-center min-h-screen"
-        style={{ background: 'var(--bg-app, #f0f4f3)' }}
+        style={{ background: 'var(--pt-bg)' }}
       >
-        <p className="text-xs uppercase tracking-widest" style={{ color: 'var(--muted, #6B7280)' }}>
+        <p className="text-xs uppercase tracking-widest" style={{ color: 'var(--pt-text-muted)' }}>
           Chargement…
         </p>
       </div>

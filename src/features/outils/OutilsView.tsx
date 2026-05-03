@@ -26,13 +26,13 @@ import {
 } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import {
   Card,
-  SectionHeader,
+  Section,
   ActionRow,
   IconBox,
-} from '../../components/design-system';
+  PageHeader,
+} from '@/design-system';
 import { usePilotage } from '../../context/PilotageContext';
 
 const OutilsView: React.FC = () => {
@@ -58,38 +58,14 @@ const OutilsView: React.FC = () => {
               margin: '0 auto',
             }}
           >
-            <header style={{ marginBottom: 24 }}>
-              <Eyebrow>Outils terrain</Eyebrow>
-              <h1
-                style={{
-                  fontFamily: 'var(--pt-font-display)',
-                  fontSize: 'var(--pt-text-display)',
-                  fontWeight: 700,
-                  margin: '8px 0 4px',
-                  color: 'var(--pt-text)',
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1.05,
-                }}
-              >
-                Outils
-              </h1>
-              <p
-                style={{
-                  margin: 0,
-                  fontFamily: 'var(--pt-font-body)',
-                  fontSize: 'var(--pt-text-small)',
-                  color: 'var(--pt-text-muted)',
-                }}
-              >
-                Tout pour ton quotidien terrain
-              </p>
-            </header>
+            {/* V41 Phase D — Header canonique via PageHeader */}
+            <PageHeader eyebrow="Outils" title="Outils terrain" subtitle="Tes raccourcis quotidiens" />
 
             <section
               aria-label="Outils terrain"
               style={{ display: 'flex', flexDirection: 'column', gap: 24 }}
             >
-              <SectionHeader label="Au quotidien" />
+              <Section label="Au quotidien" />
               <Card style={{ padding: 8 }}>
                 <ActionRow
                   icon={
@@ -138,7 +114,7 @@ const OutilsView: React.FC = () => {
                 />
               </Card>
 
-              <SectionHeader label="Ressources" />
+              <Section label="Ressources" />
               <Card style={{ padding: 8 }}>
                 <ActionRow
                   icon={

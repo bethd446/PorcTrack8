@@ -210,13 +210,13 @@ describe('TruieDetailView', () => {
     cleanup();
   });
 
-  it('affiche le nom de la truie comme h1 et son displayId dans le breadcrumb', () => {
+  it('V41 : affiche le displayId comme h1 (PageHeader sobre) et le nom dans la Card hero', () => {
     renderAt('/troupeau/truies/T14');
     const heading = screen.getByRole('heading', { level: 1 });
-    // En v6, h1 = nom de la truie (Marguerite) et non plus "TRUIE T14".
-    expect(heading.textContent).toContain('Marguerite');
-    // Le displayId apparaît dans le breadcrumb / vitales.
-    expect(document.body.textContent).toContain('T14');
+    // V41 PageHeader : h1 = displayId (shortCode) "T14". Le nom Marguerite est
+    // dans la Card hero compacte sous le PageHeader.
+    expect(heading.textContent).toContain('T14');
+    expect(document.body.textContent).toContain('Marguerite');
   });
 
   it('rend le hero avec le displayId et au moins un svg', () => {
@@ -230,15 +230,15 @@ describe('TruieDetailView', () => {
 
   it('affiche la chip de statut « Allaitante » avec le ton accent', () => {
     renderAt('/troupeau/truies/T14');
-    // FIX-4 : Le statut DB "Maternité" est canonisé visuellement en "Allaitante"
-    // via labelStatutTruie. Depuis V5-B, design/Chip délègue à agritech/Chip,
-    // qui rend un <span class="chip chip--accent ..."> (tone green → accent).
+    // V40 F1/F2 : AnimalHero utilise <Tag variant="primary"> du DS V2
+    // (mapping tone='green' → variant='primary'). Le label "Allaitante" reste
+    // visible mais porte les classes pt-tag pt-tag--primary, plus chip--accent.
     const matches = screen.getAllByText('Allaitante');
-    const chip = matches.find(el => {
+    const tag = matches.find(el => {
       const className = el.getAttribute('class') ?? '';
-      return el.tagName.toLowerCase() === 'span' && /chip--accent/.test(className);
+      return /pt-tag/.test(className);
     });
-    expect(chip).toBeDefined();
+    expect(tag).toBeDefined();
   });
 
   it('section « Identité » affiche la boucle FR-0014-42', () => {

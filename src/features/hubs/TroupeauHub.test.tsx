@@ -304,33 +304,32 @@ function renderHub(initialPath = '/troupeau') {
   );
 }
 
-/** Clique sur le sous-onglet demandé (role=tab dans le tablist principal). */
-function clickSubTab(label: RegExp): void {
-  // Plusieurs role=tablist peuvent coexister (le panneau Truies a un
-  // tablist de filtres). On cible les tabs avec `id="troupeau-tab-*"`.
-  const tab = screen
-    .getAllByRole('tab')
-    .find(
-      (t) =>
-        t.id.startsWith('troupeau-tab-')
-        && label.test(t.textContent ?? ''),
-    );
-  if (!tab) throw new Error(`Sous-onglet introuvable : ${label}`);
-  fireEvent.click(tab);
+/** Récupère le tablist principal du hub (DS Tabs avec aria-label dédié). */
+function getHubTablist(): HTMLElement {
+  const list = screen.getByRole('tablist', {
+    name: /sélectionner une vue du troupeau/i,
+  });
+  return list;
 }
 
-/** Variante async : Radix Tabs réagit à pointerdown → utiliser userEvent. */
+/** Récupère un sous-onglet du hub par son label texte (regex). */
+function findHubTab(label: RegExp): HTMLElement {
+  const list = getHubTablist();
+  const tabs = Array.from(list.querySelectorAll('[role="tab"]')) as HTMLElement[];
+  const tab = tabs.find((t) => label.test(t.textContent ?? ''));
+  if (!tab) throw new Error(`Sous-onglet introuvable : ${label}`);
+  return tab;
+}
+
+/** Clique sur le sous-onglet demandé (role=tab dans le tablist principal). */
+function clickSubTab(label: RegExp): void {
+  fireEvent.click(findHubTab(label));
+}
+
+/** Variante async via userEvent (compat tests qui le préfèrent). */
 async function clickSubTabUser(label: RegExp): Promise<void> {
   const user = userEvent.setup();
-  const tab = screen
-    .getAllByRole('tab')
-    .find(
-      (t) =>
-        t.id.startsWith('troupeau-tab-')
-        && label.test(t.textContent ?? ''),
-    );
-  if (!tab) throw new Error(`Sous-onglet introuvable : ${label}`);
-  await user.click(tab);
+  await user.click(findHubTab(label));
 }
 
 // ─── Tests ──────────────────────────────────────────────────────────────────
@@ -351,9 +350,10 @@ describe('TroupeauHub — intégration multi-vues', () => {
     const heading = screen.getByRole('heading', { level: 1 });
     expect(heading.textContent).toMatch(/élevage/i);
 
-    // Subtitle : "Ferme K13 · 19 animaux" (17 truies actives + 2 verrats)
-    expect(document.body.textContent).toMatch(/Ferme K13/);
-    expect(document.body.textContent).toMatch(/19 animaux/);
+    // V41 : subtitle sobre "Le troupeau de ta ferme" (pas de métriques chiffrées,
+    // pas de "Ferme K13"). Les chiffres sont dans la VUE D'ENSEMBLE Card.
+    const subtitle = document.querySelector('.pt-page-header__subtitle');
+    expect(subtitle?.textContent).toBe('Le troupeau de ta ferme');
   });
 
   it('2. sous-onglet par défaut = Truies (search bar visible)', () => {
@@ -366,9 +366,8 @@ describe('TroupeauHub — intégration multi-vues', () => {
     expect((searchInput as HTMLInputElement).type).toBe('search');
 
     // L'onglet Truies est sélectionné (aria-selected=true)
-    const truiesTab = document.getElementById('troupeau-tab-truies');
-    expect(truiesTab).not.toBeNull();
-    expect(truiesTab?.getAttribute('aria-selected')).toBe('true');
+    const truiesTab = findHubTab(/truies/i);
+    expect(truiesTab.getAttribute('aria-selected')).toBe('true');
   });
 
   it('3. click Verrats → VerratsView affichée (V01 / V02 présents)', async () => {
@@ -420,9 +419,8 @@ describe('TroupeauHub — intégration multi-vues', () => {
     renderHub('/troupeau?view=porcelets');
 
     // Le sous-onglet Porcelets est sélectionné d'entrée
-    const porceletsTab = document.getElementById('troupeau-tab-porcelets');
-    expect(porceletsTab).not.toBeNull();
-    expect(porceletsTab?.getAttribute('aria-selected')).toBe('true');
+    const porceletsTab = findHubTab(/porcelets/i);
+    expect(porceletsTab.getAttribute('aria-selected')).toBe('true');
 
     // V25 — Contenu Porcelets chargé : section "Loges occupées" présente.
     const occupiedHeader = await screen.findByText(/Loges occupées · \d+/i);
@@ -436,65 +434,55 @@ describe('TroupeauHub — intégration multi-vues', () => {
     ).toBeNull();
   });
 
-  it('7. header subtitle : "17 truies" et "7 pleines" visibles', () => {
+  it('7. V41 — header subtitle ne contient PLUS de métriques chiffrées', () => {
     renderHub();
-
-    // Le subtitle du header expose "17 truies · 2 verrats … — 7 pleines · 4 maternité · …"
-    expect(screen.getAllByText(/17 truies/i).length).toBeGreaterThan(0);
-    // "7 pleines" dans le header subtitle (peut aussi apparaître dans un filter chip)
-    expect(screen.getAllByText(/7 pleines/i).length).toBeGreaterThan(0);
+    // V41 : le subtitle est désormais "Le troupeau de ta ferme" (sobre).
+    // Les métriques (17 truies, 7 pleines) sont dans la VUE D'ENSEMBLE Card,
+    // pas dans le PageHeader. Le subtitle doit être visible et NON-numérique.
+    const subtitle = document.querySelector('.pt-page-header__subtitle');
+    expect(subtitle).not.toBeNull();
+    expect(subtitle!.textContent).toBe('Le troupeau de ta ferme');
+    expect(subtitle!.textContent).not.toMatch(/\d+\s*(truies|pleines|verrats)/i);
   });
 
-  it('9. lien "Classement" visible et navigue vers /troupeau/classement', async () => {
+  it('9. V41 — bouton Classement supprimé du header (déplacé vers /pilotage)', () => {
     renderHub();
-
-    const classementBtn = screen.getByRole('button', {
+    // V41 : le bouton "Classement Top Truies & Verrats" a été retiré du header
+    // de /troupeau (pattern interdit : pas de CTA secondaire dans le header).
+    // Il est désormais sur /pilotage où il a sa place.
+    const classementBtn = screen.queryByRole('button', {
       name: /classement des reproducteurs/i,
     });
-    expect(classementBtn).toBeDefined();
-    expect(classementBtn.textContent).toMatch(/Classement/i);
-
-    const user = userEvent.setup();
-    await user.click(classementBtn);
-
-    expect(mockNavigate).toHaveBeenCalledWith('/troupeau/classement');
+    expect(classementBtn).toBeNull();
   });
 
   it('8. filtre CHALEUR : chip "Chaleur 1" visible (1 truie statut=Chaleur)', () => {
     renderHub();
 
-    // Le panneau Truies contient un tablist "Filtrer par statut". Le filtre
-    // "Chaleur" n'est visible que si counts[chaleur] > 0 (P2 du hub).
-    const chaleurTab = screen
-      .getAllByRole('tab')
+    // V41 : sub-filter statuts uniformisé via DS V2 <Chip> (role=button)
+    // au lieu d'un tablist custom. Le filtre "Chaleur" reste visible si
+    // counts[chaleur] > 0 (P2 du hub).
+    const chaleurChip = screen
+      .getAllByRole('button')
       .find((t) => /chaleur/i.test(t.textContent ?? ''));
 
-    expect(chaleurTab).toBeDefined();
-    expect(chaleurTab?.textContent).toMatch(/chaleur/i);
+    expect(chaleurChip).toBeDefined();
+    expect(chaleurChip?.textContent).toMatch(/chaleur/i);
     // Compteur sans padStart : "1" et non "01"
-    expect(chaleurTab?.textContent).toMatch(/1$/);
-    expect(chaleurTab?.textContent).not.toMatch(/01/);
+    expect(chaleurChip?.textContent).toMatch(/1$/);
+    expect(chaleurChip?.textContent).not.toMatch(/01/);
   });
 
-  // ── Tests régression V29 (refonte DNA "Aujourd'hui") ─────────────────
-  it('V29-1. Section "Aperçu" rendue avec SectionHeader + Card', () => {
+  // ── Tests régression V41 (refonte architecture de page) ─────────────────
+  it('V41-1. Section "VUE D\'ENSEMBLE" rendue avec Card + 4 stats (fusion APERÇU+INVENTAIRE)', () => {
     renderHub();
-
-    // Le label SMALL CAPS "APERÇU" doit être visible (SectionHeader V29)
-    expect(screen.getAllByText(/APERÇU/i).length).toBeGreaterThan(0);
-    // L'aria-label de la section reflète son intention
-    expect(screen.getByLabelText(/aperçu des loges/i)).toBeDefined();
+    expect(screen.getAllByText(/VUE D[’']ENSEMBLE/i).length).toBeGreaterThan(0);
+    expect(screen.getByLabelText(/vue d[’']ensemble/i)).toBeDefined();
   });
 
-  it('V29-2. Bouton "Classement" est un pill V29 (border-radius pill)', () => {
+  it('V41-2. Section "APERÇU" supprimée (fusion dans VUE D\'ENSEMBLE)', () => {
     renderHub();
-    const classementBtn = screen.getByRole('button', {
-      name: /classement des reproducteurs/i,
-    });
-    // V29 Button utilise --ds-radius-pill comme border-radius
-    expect(classementBtn.style.borderRadius).toBe('var(--ds-radius-pill)');
-    // Et UPPERCASE via CSS
-    expect(classementBtn.style.textTransform).toBe('uppercase');
+    expect(screen.queryByLabelText(/aperçu des loges/i)).toBeNull();
   });
 
   it('V29-3. Bouton "Ajouter une bande" pill V29 dans onglet Bandes', async () => {
@@ -507,44 +495,32 @@ describe('TroupeauHub — intégration multi-vues', () => {
     expect(addBtn.style.textTransform).toBe('uppercase');
   });
 
-  // ── Tests régression V30-MASTER (refonte PDF master) ────────────────
-  it('V30-1. Eyebrow "Élevage · {ferme}" présent', () => {
+  // ── Tests régression V41 — header sobre via PageHeader ──────────────
+  it('V41-3. Eyebrow "ÉLEVAGE" simple (sans "FERME ...")', () => {
     renderHub();
-    // Eyebrow rendu via composant Eyebrow (children "Élevage · Ferme K13")
-    expect(document.body.textContent).toMatch(/Élevage\s*·\s*Ferme K13/);
+    const eyebrow = document.querySelector('.pt-page-header__eyebrow');
+    expect(eyebrow).not.toBeNull();
+    expect(eyebrow!.textContent?.trim()).toMatch(/^.*ÉLEVAGE$/);
+    expect(eyebrow!.textContent).not.toMatch(/Ferme K13/i);
   });
 
-  it('V30-2. Section "Inventaire" rendue avec 4 stats (Truies/Verrats/Loges/Bandes)', () => {
+  it('V41-4. Les 4 stats (Truies/Verrats/Loges/Bandes) sont dans VUE D\'ENSEMBLE', () => {
     renderHub();
-    // SectionHeader "INVENTAIRE" présent
-    expect(screen.getAllByText(/INVENTAIRE/i).length).toBeGreaterThan(0);
-    // Section a un aria-label
-    expect(screen.getByLabelText(/^inventaire$/i)).toBeDefined();
-    // Les 4 labels stats : TRUIES / VERRATS / LOGES / BANDES (uppercase via CSS,
-    // texte source en titlecase)
     expect(screen.getAllByText(/^Truies$/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/^Verrats$/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/^Loges$/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/^Bandes$/i).length).toBeGreaterThan(0);
   });
 
-  it('V30-3. Bouton "Classement" porte data-pt="button" (override Ionic)', () => {
+  it('V41-5. SectionHeader "TROUPEAU" toujours rendu (transition vers tabs)', () => {
     renderHub();
-    const btn = screen.getByRole('button', {
-      name: /classement des reproducteurs/i,
-    });
-    expect(btn.getAttribute('data-pt')).toBe('button');
-  });
-
-  it('V30-4. SectionHeader "Troupeau" rendu (transition vers les tabs)', () => {
-    renderHub();
-    // Le label "TROUPEAU" est rendu en SMALL CAPS via SectionHeader
     expect(screen.getAllByText(/^TROUPEAU$/i).length).toBeGreaterThan(0);
   });
 
-  it('V30-5. Hub affiche "{N} animaux" dans subtitle (data du contexte)', () => {
+  it('V41-6. Subtitle ne contient PAS de pattern numérique animaux', () => {
     renderHub();
-    // Subtitle lu : "17 truies · 2 verrats (19 animaux)"
-    expect(document.body.textContent).toMatch(/19 animaux/);
+    const subtitle = document.querySelector('.pt-page-header__subtitle');
+    expect(subtitle?.textContent).not.toMatch(/animaux/i);
+    expect(subtitle?.textContent).not.toMatch(/\d+\s*(truies|verrats)/i);
   });
 });

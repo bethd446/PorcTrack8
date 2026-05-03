@@ -58,12 +58,12 @@ const renderView = () =>
   );
 
 describe('OutilsView V33', () => {
-  it('renders header (eyebrow + h1 + subtitle)', () => {
+  it('V41 : renders PageHeader (eyebrow OUTILS + h1 "Outils terrain" + subtitle "Tes raccourcis quotidiens")', () => {
     usePilotageMock.mockReturnValue({ alerts: [], alertesServeur: [] });
     renderView();
-    expect(screen.getByText('Outils terrain')).toBeDefined();
-    expect(screen.getByRole('heading', { name: 'Outils' })).toBeDefined();
-    expect(screen.getByText('Tout pour ton quotidien terrain')).toBeDefined();
+    expect(screen.getByText('OUTILS')).toBeDefined();
+    expect(screen.getByRole('heading', { name: 'Outils terrain' })).toBeDefined();
+    expect(screen.getByText('Tes raccourcis quotidiens')).toBeDefined();
   });
 
   it('renders all 6 ActionRow entries (alertes/audit/santé/protocoles/stocks/fournisseurs)', () => {

@@ -9,7 +9,7 @@ import { useMeta } from '../../context/FarmContext';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import AgritechLayout from '../../components/AgritechLayout';
 import KpiCardV6 from '../../components/design/KpiCard';
-import Button from '../../components/design/Button';
+import { Button } from '@/design-system';
 import Eyebrow from '../../components/design/Eyebrow';
 import PendingValidationsView from './PendingValidationsView';
 
@@ -796,7 +796,7 @@ function OnboardingHero({ onInvite }: OnboardingHeroProps) {
           marginTop: 4,
         }}
       >
-        Aide : guide multi-utilisateur →
+        Aide : guide multi-utilisateur ›
       </a>
     </section>
   );

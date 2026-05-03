@@ -16,6 +16,12 @@
     "allowJs": true,
     "jsx": "react-jsx",
     "paths": {
+      "@/design-system": [
+        "./src/design-system/index.ts"
+      ],
+      "@/design-system/*": [
+        "./src/design-system/*"
+      ],
       "@/*": [
         "./*"
       ]

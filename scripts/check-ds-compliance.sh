@@ -130,6 +130,117 @@ else
 fi
 echo ""
 
+# CHECK 9 — Pas de className contenant tag-rect / btn-rect / icon-outline / tag-outline / btn-outline
+echo "CHECK 9 : Variants illégitimes (tag-rect, btn-rect, icon-outline)"
+MATCHES=$(grep -rnE "className=[\"'][^\"']*\b(tag-rect|btn-rect|icon-outline|tag-outline|btn-outline)\b" "$SRC" --include="*.tsx" || true)
+if [ -n "$MATCHES" ]; then
+  echo "✗  Variants illégitimes détectés — utiliser <Tag>/<Button>/<IconBox> du DS :"
+  echo "$MATCHES" | sed 's/^/   /'
+  ERRORS=$((ERRORS + 1))
+else
+  echo "✓  Aucun variant illégitime (tag-rect, btn-rect, icon-outline, etc.)"
+fi
+echo ""
+
+# CHECK 10 — Pas de caractère ASCII → dans JSX rendu (warning, faux positifs possibles)
+echo "CHECK 10 : Caractère → ASCII dans JSX (avertissement)"
+MATCHES=$(grep -rn "→" "$SRC" --include="*.tsx" \
+  | grep -v "\.test\.tsx" \
+  | grep -vE "^[^:]+:[0-9]+:\s*//" \
+  | grep -vE "^[^:]+:[0-9]+:\s*\*" \
+  | grep -v "console\." \
+  | grep -v "throw new Error" \
+  | grep -vE "describe\(|^\s*it\(|expect\(" \
+  | grep -vE "J[0-9]+\s*→\s*J[0-9]+" \
+  || true)
+if [ -n "$MATCHES" ]; then
+  echo "⚠  Caractère → ASCII détecté dans JSX (utiliser › ou <ActionRow>) :"
+  echo "$MATCHES" | sed 's/^/   /' | head -10
+  WARNINGS=$((WARNINGS + 1))
+else
+  echo "✓  Aucun → ASCII dans JSX rendu"
+fi
+echo ""
+
+# CHECK 11 — Pas de double <Fab> dans une même page
+echo "CHECK 11 : Double <Fab> dans une même page"
+DOUBLE_FAB_FILES=$(grep -rln "<Fab" "$SRC" --include="*.tsx" 2>/dev/null | while read -r f; do
+  count=$(grep -c "<Fab" "$f" 2>/dev/null || echo 0)
+  if [ "$count" -gt 1 ]; then
+    echo "$f ($count occurrences)"
+  fi
+done)
+if [ -n "$DOUBLE_FAB_FILES" ]; then
+  echo "✗  Page(s) avec >1 <Fab> détectée(s) :"
+  echo "$DOUBLE_FAB_FILES" | sed 's/^/   /'
+  ERRORS=$((ERRORS + 1))
+else
+  echo "✓  Aucune page avec double <Fab>"
+fi
+echo ""
+
+# CHECK 12 — Pas de filtre scroll horizontal custom (préférer <Tabs> ou <Chips>)
+echo "CHECK 12 : Scroll horizontal custom (avertissement)"
+MATCHES=$(grep -rnE "overflowX:\s*['\"]auto['\"]|overflow-x:\s*auto" "$SRC" --include="*.tsx" \
+  | grep -v "design-system" \
+  | grep -v "pt-tabs" \
+  | grep -v "pt-chips" \
+  || true)
+if [ -n "$MATCHES" ]; then
+  echo "⚠  Scroll horizontal custom détecté (préférer <Tabs> ou <Chips>) :"
+  echo "$MATCHES" | sed 's/^/   /' | head -10
+  WARNINGS=$((WARNINGS + 1))
+else
+  echo "✓  Aucun scroll horizontal custom"
+fi
+echo ""
+
+# V41 — LA 11e RÈGLE D'OR : ARCHITECTURE DE PAGE
+# CHECK 13: <Button> (DS) à l'intérieur d'un <PageHeader> (interdit V41)
+echo "CHECK 13 : <Button> dans <PageHeader> (interdit V41)"
+MATCHES=$(grep -rPzo --include="*.tsx" '(?s)<PageHeader[^/]*?>.*?</PageHeader>' "$SRC" 2>/dev/null \
+  | tr '\0' '\n' \
+  | grep -E "<Button" \
+  || true)
+if [ -n "$MATCHES" ]; then
+  echo "✗  <Button> détecté dans <PageHeader> (pattern V41 interdit) :"
+  echo "$MATCHES" | sed 's/^/   /' | head -5
+  ERRORS=$((ERRORS + 1))
+else
+  echo "✓  Aucun <Button> dans <PageHeader>"
+fi
+echo ""
+
+# CHECK 14: <PageHeader subtitle="..."> contenant un pattern numérique (métriques)
+echo "CHECK 14 : subtitle de <PageHeader> avec métriques chiffrées (interdit V41)"
+MATCHES=$(grep -rnE "subtitle=\\{?[\"\`'][^\"\`']*[0-9]+\\s*(truies?|verrats?|animaux|pleines?|allaitantes?|vides?|réformes?|critiques?|bandes?|portées?)[^\"\`']*[\"\`']" "$SRC" --include="*.tsx" 2>/dev/null || true)
+if [ -n "$MATCHES" ]; then
+  echo "✗  PageHeader avec subtitle métrique chiffré (anti-pattern V41) :"
+  echo "$MATCHES" | sed 's/^/   /' | head -10
+  ERRORS=$((ERRORS + 1))
+else
+  echo "✓  Aucun subtitle PageHeader avec métriques chiffrées"
+fi
+echo ""
+
+# CHECK 15: 2 <Section><StatsGrid></Section> consécutives (avertissement)
+# Heuristique : un fichier avec >= 2 occurrences de "<StatsGrid" est suspect.
+echo "CHECK 15 : 2+ <StatsGrid> dans un même fichier (avertissement)"
+MULTI_STATS_FILES=$(grep -rln "<StatsGrid" "$SRC" --include="*.tsx" 2>/dev/null | while read -r f; do
+  count=$(grep -c "<StatsGrid" "$f" 2>/dev/null || echo 0)
+  if [ "$count" -gt 1 ]; then
+    echo "$f ($count <StatsGrid>)"
+  fi
+done)
+if [ -n "$MULTI_STATS_FILES" ]; then
+  echo "⚠  2+ <StatsGrid> dans un même fichier (consolidation V41 recommandée) :"
+  echo "$MULTI_STATS_FILES" | sed 's/^/   /' | head -10
+  WARNINGS=$((WARNINGS + 1))
+else
+  echo "✓  Aucun fichier avec 2+ <StatsGrid>"
+fi
+echo ""
+
 echo "============================================="
 if [ "$ERRORS" -gt 0 ]; then
   echo "✗  ÉCHEC : $ERRORS erreur(s) bloquante(s), $WARNINGS avertissement(s)"

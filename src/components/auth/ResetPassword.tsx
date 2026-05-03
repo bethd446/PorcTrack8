@@ -4,7 +4,7 @@ import { IonPage, IonContent } from '@ionic/react';
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
 import Eyebrow from '../design/Eyebrow';
-import Button from '../design/Button';
+import { Button } from '@/design-system';
 
 const FONT_DISPLAY = 'var(--font-heading)';
 const FONT_BODY = 'var(--font-body)';

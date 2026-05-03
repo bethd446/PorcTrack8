@@ -9,6 +9,9 @@ export type Crumb = string | { label: string; href?: string };
 export interface TopBarSyncProps {
   crumbs: Crumb[];
   onMariusClick?: () => void;
+  /** V40 T1 : pill Marius visible UNIQUEMENT si suggestion active.
+   *  Default false — onMariusClick seul ne suffit plus à l'afficher. */
+  mariusActive?: boolean;
   className?: string;
 }
 
@@ -30,6 +33,7 @@ const crumbHref = (c: Crumb): string | undefined =>
 export default function TopBarSync({
   crumbs,
   onMariusClick,
+  mariusActive = false,
   className = '',
 }: TopBarSyncProps) {
   const syncState = useSyncState();
@@ -111,7 +115,7 @@ export default function TopBarSync({
 
       <div style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 14 }}>
         <SyncIndicator state={syncState} />
-        {onMariusClick ? (
+        {onMariusClick && mariusActive ? (
           <button
             type="button"
             onClick={onMariusClick}

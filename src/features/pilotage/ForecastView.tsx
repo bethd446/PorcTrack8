@@ -339,7 +339,7 @@ const ForecastView: React.FC = () => {
                     </div>
                     {report.topCritical.actionRequise ? (
                       <div className="mt-1 text-[12px] text-amber">
-                        → {report.topCritical.actionRequise}
+                        › {report.topCritical.actionRequise}
                       </div>
                     ) : null}
                   </div>

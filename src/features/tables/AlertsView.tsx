@@ -501,7 +501,7 @@ const AlertRow: React.FC<AlertRowProps> = ({
               }}
               aria-label="Action requise"
             >
-              {actionLabel} →
+              {actionLabel} ›
             </span>
           )}
         </div>

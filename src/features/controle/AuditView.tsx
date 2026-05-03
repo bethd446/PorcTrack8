@@ -13,7 +13,7 @@ import {
 } from '../../services/supabaseService';
 import AgritechLayout from '../../components/AgritechLayout';
 import TopBarSync from '../../components/design/TopBarSync';
-import { AlertGroup, AlertRow, SectionHeader, Tabs } from '../../components/design-system';
+import { AlertGroup, AlertRow, Section, Tabs, PageHeader, safeDisplay } from '@/design-system';
 
 /**
  * AuditView — V31-FIX-PACK-01
@@ -101,7 +101,7 @@ const AuditView: React.FC = () => {
       // 1. Bandes — agrégation par type d'incohérence
       if (bandeRes.success) {
         bandeRes.data.forEach(b => {
-          const code = b.idPortee; // code_id lisible (pas l'UUID)
+          const code = safeDisplay(b.idPortee, 'Bande'); // code_id lisible (jamais l'UUID)
           const morts = b.morts ?? 0;
           const nv = b.nv ?? 0;
           const vivants = b.vivants ?? 0;
@@ -158,7 +158,7 @@ const AuditView: React.FC = () => {
       // 2. Truies — gestation prolongée
       if (truieRes.success) {
         truieRes.data.forEach(t => {
-          const code = t.displayId;
+          const code = safeDisplay(t.displayId, 'Truie');
           const mb = t.dateMBPrevue;
           const statut = String(t.statut ?? '').toUpperCase();
           if (mb && (statut.includes('GESTANTE') || statut.includes('ATTENTE') || statut.includes('PLEINE'))) {
@@ -275,56 +275,8 @@ const AuditView: React.FC = () => {
             className="px-4 pt-5 pb-32 flex flex-col gap-6"
             style={{ maxWidth: 900, margin: '0 auto' }}
           >
-            {/* HEADER ─────────────────────────────────────────────────── */}
-            <header style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <span
-                style={{
-                  fontFamily: 'var(--pt-font-body)',
-                  fontSize: 'var(--pt-text-label)',
-                  letterSpacing: 'var(--pt-tracking-label)',
-                  textTransform: 'uppercase',
-                  color: 'var(--pt-text-subtle)',
-                  fontWeight: 600,
-                }}
-              >
-                Outils · Audit du jour
-              </span>
-              <h1
-                style={{
-                  margin: 0,
-                  fontFamily: 'var(--pt-font-display)',
-                  fontSize: 'var(--pt-text-display)',
-                  fontWeight: 700,
-                  lineHeight: 1.05,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--pt-text)',
-                }}
-              >
-                Audit du jour
-              </h1>
-              {!loading && counts.total > 0 ? (
-                <div
-                  style={{
-                    fontFamily: 'var(--pt-font-body)',
-                    fontSize: 14,
-                    color: 'var(--pt-text-muted)',
-                    marginTop: 2,
-                  }}
-                >
-                  <span style={{ color: counts.critiques > 0 ? 'var(--pt-danger)' : 'var(--pt-text-muted)', fontWeight: 600 }}>
-                    {counts.critiques} critique{counts.critiques > 1 ? 's' : ''}
-                  </span>
-                  {' · '}
-                  <span style={{ color: 'var(--pt-accent)', fontWeight: 600 }}>
-                    {counts.stocks} stock{counts.stocks > 1 ? 's' : ''} bas
-                  </span>
-                  {' · '}
-                  <span style={{ color: 'var(--pt-text)', fontWeight: 600 }}>
-                    {counts.sante} santé
-                  </span>
-                </div>
-              ) : null}
-            </header>
+            {/* V41 Phase D — Header sobre via PageHeader (subtitle non-numérique) */}
+            <PageHeader eyebrow="Audit" title="Alertes & contrôles" subtitle="Suivi qualité de ta ferme" />
 
             {/* TABS FILTRES ──────────────────────────────────────────── */}
             {!loading && counts.total > 0 ? (
@@ -411,7 +363,7 @@ const AuditView: React.FC = () => {
                 {/* SECTION CRITIQUES ─────────────────────────────────── */}
                 {hasCritique ? (
                   <>
-                    <SectionHeader label="Critiques" tone="accent" />
+                    <Section label="Critiques" tone="danger" />
 
                     {showCritique && audit.vetoRupture.length > 0 ? (
                       <AlertGroup
@@ -514,7 +466,7 @@ const AuditView: React.FC = () => {
                 {/* SECTION À SURVEILLER ──────────────────────────────── */}
                 {hasSurveil ? (
                   <>
-                    <SectionHeader label="À surveiller" tone="primary" />
+                    <Section label="À surveiller" tone="accent" />
 
                     {showStock && audit.vetoBas.length > 0 ? (
                       <AlertGroup

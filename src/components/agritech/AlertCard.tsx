@@ -42,26 +42,26 @@ interface PriorityVisual {
 const PRIORITY_VISUAL: Record<AlertPriority, PriorityVisual> = {
   CRITIQUE: {
     Icon: AlertTriangle,
-    color: 'var(--color-pig-deep, #b91c1c)',
-    background: 'var(--color-pig-soft, #fee2e2)',
+    color: 'var(--pt-danger)',
+    background: 'var(--pt-surface-danger)',
     label: 'Critique',
   },
   HAUTE: {
     Icon: Bell,
-    color: 'var(--color-amber-pork-deep, #c2662b)',
-    background: 'var(--color-amber-pork-soft, #fef3c7)',
+    color: 'var(--pt-accent-deep)',
+    background: 'var(--pt-surface-warning)',
     label: 'Haute',
   },
   NORMALE: {
     Icon: Info,
-    color: 'var(--color-info, #2563eb)',
-    background: 'var(--color-info-soft, #dbeafe)',
+    color: 'var(--pt-accent)',
+    background: 'var(--pt-surface-warm)',
     label: 'Normale',
   },
   INFO: {
     Icon: Info,
-    color: 'var(--muted, #6b7280)',
-    background: 'var(--bg-surface-2, #f3f4f6)',
+    color: 'var(--pt-text-muted)',
+    background: 'var(--pt-surface-alt)',
     label: 'Info',
   },
 };
@@ -96,10 +96,10 @@ const AlertCard: React.FC<AlertCardProps> = ({
       data-priority={alert.priority}
       className="pressable"
       style={{
-        background: 'var(--bg-surface, #ffffff)',
-        border: '1px solid var(--line, #e5e7eb)',
-        borderRadius: 12,
-        boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
+        background: 'var(--pt-surface)',
+        border: '1px solid var(--pt-divider)',
+        borderRadius: 'var(--pt-radius-md)',
+        boxShadow: 'var(--pt-shadow-card)',
         padding: '14px 16px',
         display: 'flex',
         flexDirection: 'column',
@@ -126,10 +126,10 @@ const AlertCard: React.FC<AlertCardProps> = ({
         <div style={{ flex: 1, minWidth: 0 }}>
           <h3
             style={{
-              fontFamily: 'var(--font-heading, inherit)',
+              fontFamily: 'var(--pt-font-display)',
               fontSize: 15,
               fontWeight: 600,
-              color: 'var(--ink, #111827)',
+              color: 'var(--pt-text)',
               margin: 0,
               letterSpacing: '-0.005em',
               lineHeight: 1.3,
@@ -140,9 +140,9 @@ const AlertCard: React.FC<AlertCardProps> = ({
           {alert.message && (
             <p
               style={{
-                fontFamily: 'var(--font-body, inherit)',
+                fontFamily: 'var(--pt-font-body)',
                 fontSize: 13,
-                color: 'var(--ink-soft, #4b5563)',
+                color: 'var(--pt-text-muted)',
                 lineHeight: 1.5,
                 margin: '4px 0 0',
               }}
@@ -158,7 +158,7 @@ const AlertCard: React.FC<AlertCardProps> = ({
           style={{
             fontFamily: 'var(--pt-font-body)',
             fontSize: 10,
-            color: 'var(--muted, #6b7280)',
+            color: 'var(--pt-text-subtle)',
             letterSpacing: '0.06em',
             textTransform: 'uppercase',
           }}
@@ -178,9 +178,9 @@ const AlertCard: React.FC<AlertCardProps> = ({
             flex: 1,
             minHeight: 44,
             padding: '10px 14px',
-            borderRadius: 'var(--radius-pill, 999px)',
-            background: 'var(--color-accent-500, #064e3b)',
-            color: 'var(--bg-surface, #ffffff)',
+            borderRadius: 'var(--pt-radius-pill)',
+            background: 'var(--pt-primary)',
+            color: 'var(--pt-primary-text)',
             border: 'none',
             fontFamily: 'var(--pt-font-body)',
             fontSize: 12,
@@ -207,10 +207,10 @@ const AlertCard: React.FC<AlertCardProps> = ({
               flex: 1,
               minHeight: 44,
               padding: '10px 14px',
-              borderRadius: 'var(--radius-pill, 999px)',
-              background: 'var(--bg-surface, #ffffff)',
-              color: 'var(--ink, #111827)',
-              border: '1.5px solid var(--line, #e5e7eb)',
+              borderRadius: 'var(--pt-radius-pill)',
+              background: 'var(--pt-surface)',
+              color: 'var(--pt-text)',
+              border: '1.5px solid var(--pt-divider)',
               fontFamily: 'var(--pt-font-body)',
               fontSize: 12,
               letterSpacing: '0.10em',

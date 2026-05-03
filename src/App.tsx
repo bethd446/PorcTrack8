@@ -27,7 +27,7 @@ import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
 
 import { FarmProvider, useFarm } from './context/FarmContext';
-import { usePageFab } from './lib/usePageFab';
+import { usePageFab, usePageFabConfig, Fab } from './design-system';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import SupabaseProtectedRoute from './components/auth/ProtectedRoute';
@@ -199,15 +199,25 @@ const TroupeauTruiesRedirect: React.FC = () => {
 };
 
 const SaisirFABMount: React.FC = () => {
-  // V31-FIX-PACK-01 : présence contextuelle via usePageFab.
-  // Le FAB n'est plus monté partout — uniquement sur les pages où la saisie
-  // est l'action principale (élevage, repro, cycles, stocks véto/aliments).
-  const enabled = usePageFab();
-  if (!enabled) return null;
+  // V40 R3 : usePageFabConfig retourne null | true | {action, label}.
+  //   null  => rien (page sans saisie ou contextuel désactivé)
+  //   true  => SaisirFAB générique rond
+  //   { action, label } => Fab DS V2 extended (ex: + MISE-BAS sur /reproduction)
+  const config = usePageFabConfig();
+  if (config === null) return null;
+  if (config === true) {
+    return (
+      <React.Suspense fallback={null}>
+        <SaisirFAB />
+      </React.Suspense>
+    );
+  }
   return (
-    <React.Suspense fallback={null}>
-      <SaisirFAB />
-    </React.Suspense>
+    <Fab
+      label={config.label}
+      onClick={() => window.dispatchEvent(new CustomEvent('pt-fab-action', { detail: config }))}
+      ariaLabel={`Action contextuelle : ${config.label}`}
+    />
   );
 };
 

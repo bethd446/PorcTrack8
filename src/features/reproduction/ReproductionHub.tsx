@@ -1,11 +1,7 @@
 /**
  * ReproductionHub — /reproduction
  * ══════════════════════════════════════════════════════════════════════════
- * Hub fil conducteur du cycle truie pour le naisseur-engraisseur (V22-B3).
- *
- * Contrairement à `/cycles/repro` (calendrier visuel), cette page donne une
- * vision séquentielle : 5 étapes du cycle truie + KPIs de synthèse + lien
- * vers le calendrier complet.
+ * Hub fil conducteur du cycle truie pour le naisseur-engraisseur.
  *
  *   1. KPIs Repro      : ISSE / IEM / Taux MB / Renouvellement
  *   2. À saillir       : truies VIDE/CHALEUR avec contexte temporel
@@ -13,19 +9,25 @@
  *   4. MB imminente    : truies pleines J-3 .. J+5
  *   5. En maternité    : truies allaitantes J+0 .. J+28
  *   6. À sevrer        : bandes sous-mère dont le sevrage est dépassé
- *
- * CTA contextuels par item, ouverts dans des BottomSheet locaux pour
- * pré-remplir la truie/bande sélectionnée (ne passe pas par le FAB global).
  */
 
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
-import { ChevronRight, Heart, Stethoscope, Baby, Home, Scissors, ArrowRight, Layers } from 'lucide-react';
+import { ChevronRight, Heart, Stethoscope, Baby, Home, Scissors, Layers } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
-import { default as KpiCardV6 } from '../../components/design/KpiCard';
+import {
+  Section,
+  Card,
+  Button,
+  Tag,
+  IconBox,
+  StatsGrid,
+  Stat,
+  ActionRow,
+  safeDisplay,
+} from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import { buildReproductionDashboard } from '../../services/reproductionDashboard';
 import { computeGlobalKpis } from '../../services/perfKpiAnalyzer';
@@ -44,31 +46,17 @@ function formatNumOrDash(n: number | null): string {
   return Number.isInteger(n) ? `${n}` : n.toFixed(1);
 }
 
-const KPI_REQUIRED_CYCLES = 5;
-
-/**
- * Construit un hint quand un KPI vaut "—". Donne au porcher le contexte :
- * "il manque X cycles avant que la valeur soit fiable".
- */
-function buildKpiHint(value: number | null, actualCycles: number): string | undefined {
-  if (value !== null && Number.isFinite(value) && value !== 0) return undefined;
-  if (actualCycles >= KPI_REQUIRED_CYCLES) {
-    return 'Donnée non saisie';
-  }
-  return `Pas assez de données (${actualCycles}/${KPI_REQUIRED_CYCLES} cycles)`;
-}
-
 function truieDisplay(t: { displayId: string; nom?: string }): string {
-  return t.nom ? `${t.displayId} (${t.nom})` : t.displayId;
+  return safeDisplay(t.nom ? `${t.displayId} (${t.nom})` : t.displayId);
 }
 
 function bandeDisplay(b: { idPortee: string; id: string }): string {
-  return b.idPortee || b.id;
+  return safeDisplay(b.idPortee || b.id);
 }
 
 // ─── Sous-composants ─────────────────────────────────────────────────────────
 
-interface SectionProps {
+interface StepProps {
   step: number;
   title: string;
   count: number;
@@ -76,29 +64,24 @@ interface SectionProps {
   children: React.ReactNode;
 }
 
-const StepSection: React.FC<SectionProps> = ({ step, title, count, emptyLabel, children }) => (
-  <section aria-label={title} style={{ marginTop: 8 }}>
-    <Eyebrow dotColor={count > 0 ? 'pig' : 'muted'}>
-      Étape {step} — {title} ({count})
-    </Eyebrow>
+const StepSection: React.FC<StepProps> = ({ step, title, count, emptyLabel, children }) => (
+  <section aria-label={title}>
+    <Section
+      label={`Étape ${step} — ${title} (${count})`}
+      tone={count > 0 ? 'accent' : 'primary'}
+    />
     {count === 0 ? (
-      <p
-        className="text-body"
-        style={{
-          color: 'var(--muted)',
-          margin: '12px 0 0',
-          padding: '12px 14px',
-          background: 'var(--bg-surface)',
-          border: '1px dashed var(--line)',
-          borderRadius: 12,
-        }}
-      >
-        {emptyLabel ?? 'Rien à signaler.'}
-      </p>
+      <Card compact>
+        <p style={{ margin: 0, color: 'var(--pt-text-muted)', fontSize: 13 }}>
+          {emptyLabel ?? 'Rien à signaler.'}
+        </p>
+      </Card>
     ) : (
-      <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {children}
-      </div>
+      <Card compact>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {children}
+        </div>
+      </Card>
     )}
   </section>
 );
@@ -107,105 +90,50 @@ interface RowProps {
   primary: string;
   secondary: string;
   cta: string;
-  Icon: React.ComponentType<{ size?: number; color?: string }>;
+  Icon: React.ComponentType<{ size?: number }>;
   onPrimary: () => void;
   onCta: () => void;
 }
 
 const StepRow: React.FC<RowProps> = ({ primary, secondary, cta, Icon, onPrimary, onCta }) => (
-  <div
-    style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 12,
-      background: 'var(--bg-surface)',
-      border: '1px solid var(--line)',
-      borderRadius: 12,
-      padding: '12px 14px',
-      boxShadow: '0 1px 2px rgba(17,24,39,0.04)',
-    }}
-  >
-    <button
-      type="button"
+  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onPrimary}
-      className="pressable"
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onPrimary(); }}
       style={{
         flex: 1,
-        textAlign: 'left',
-        background: 'transparent',
-        border: 'none',
-        padding: 0,
-        cursor: 'pointer',
-        minHeight: 44,
+        minWidth: 0,
         display: 'flex',
         alignItems: 'center',
         gap: 12,
-      }}
-    >
-      <span
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: 10,
-          background: 'var(--color-accent-100)',
-          color: 'var(--color-accent-600)',
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-        }}
-      >
-        <Icon size={18} />
-      </span>
-      <span style={{ flex: 1, minWidth: 0 }}>
-        <span
-          style={{
-            display: 'block',
-            fontFamily: 'var(--font-heading)',
-            fontSize: 15,
-            fontWeight: 600,
-            color: 'var(--ink)',
-            letterSpacing: '-0.005em',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {primary}
-        </span>
-        <span
-          style={{
-            display: 'block',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 11,
-            color: 'var(--muted)',
-            letterSpacing: '0.06em',
-            marginTop: 2,
-          }}
-        >
-          {secondary}
-        </span>
-      </span>
-    </button>
-    <button
-      type="button"
-      onClick={onCta}
-      className="pressable text-mono-label"
-      aria-label={cta}
-      style={{
-        minHeight: 44,
-        padding: '8px 14px',
-        borderRadius: 'var(--radius-pill)',
-        background: 'var(--color-accent-500)',
-        color: 'var(--bg-surface)',
-        border: 'none',
-        fontWeight: 600,
         cursor: 'pointer',
-        whiteSpace: 'nowrap',
+        minHeight: 44,
       }}
     >
+      <IconBox tone="accent">
+        <Icon size={18} />
+      </IconBox>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontSize: 14,
+          fontWeight: 600,
+          color: 'var(--pt-text)',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}>
+          {primary}
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--pt-text-muted)', marginTop: 2 }}>
+          {secondary}
+        </div>
+      </div>
+    </div>
+    <Button variant="primary" size="sm" onClick={onCta} ariaLabel={cta}>
       {cta}
-    </button>
+    </Button>
   </div>
 );
 
@@ -228,7 +156,6 @@ const ReproductionHub: React.FC = () => {
     [truies, realBandes, saillies],
   );
 
-  // ── Forms locaux (avec pré-remplissage par truie/bande) ────────────────────
   const [saillieForm, setSaillieForm] = useState<{ open: boolean; truieDisplayId?: string }>(
     { open: false },
   );
@@ -244,146 +171,53 @@ const ReproductionHub: React.FC = () => {
   const [saillieBandeOpen, setSaillieBandeOpen] = useState(false);
   const [multiSevrageOpen, setMultiSevrageOpen] = useState(false);
 
-  // Bande -> "À saillir" candidates count >= 2 enables saillie en bande
   const canSaillieBande = dashboard.asaillir.length >= 2;
-  // À sevrer >= 2 enables sevrage multi-portées
   const canMultiSevrage = dashboard.asevrer.length >= 2;
 
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
-          <div
-            className="px-4 pt-5 pb-32 flex flex-col gap-7"
-            style={{ maxWidth: 1100, margin: '0 auto' }}
-          >
-            {/* ── En-tête ──────────────────────────────────────────── */}
-            <header>
-              {/* RT4 : eyebrow accent module (naissage = bleu) — différenciation
-                  visuelle subtile du hub Reproduction. */}
-              <Eyebrow customDotColor="var(--module-naissage)">Reproduction</Eyebrow>
-              <h1
-                className="text-page-title"
-                style={{ margin: '8px 0 4px' }}
-              >
-                Reproduction
-              </h1>
-              <div
-                className="text-body"
-                style={{ color: 'var(--muted)' }}
-              >
-                Le cycle truie de ta ferme
-              </div>
-            </header>
+          <div className="pt-page" style={{ padding: '8px 18px 24px', maxWidth: 1100, margin: '0 auto' }}>
+            <Section label="REPRODUCTION" tone="accent" />
+            <h1 style={{ fontSize: 'var(--pt-text-display)', marginBottom: 4 }}>Reproduction</h1>
+            <p style={{ color: 'var(--pt-text-muted)', margin: '0 0 20px', fontSize: 13 }}>
+              Le cycle truie de ta ferme
+            </p>
 
-            {/* ── KPIs Repro ───────────────────────────────────────── */}
-            <section aria-label="KPIs Repro">
-              <Eyebrow dotColor="accent">KPIs repro</Eyebrow>
-              <div
-                style={{
-                  marginTop: 12,
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                  gap: 10,
-                }}
-              >
-                <KpiCardV6
+            <Section label="KPIs REPRO" />
+            <Card>
+              <StatsGrid cols={4}>
+                <Stat
+                  value={kpis.isseMoyJours !== null ? `${formatNumOrDash(kpis.isseMoyJours)} j` : '—'}
                   label="ISSE"
-                  value={formatNumOrDash(kpis.isseMoyJours)}
-                  unit="j"
-                  ariaLabel={`Intervalle Sevrage-Saillie ${formatNumOrDash(kpis.isseMoyJours)} jours`}
-                  hint={buildKpiHint(kpis.isseMoyJours, kpis.nbPortees12m)}
                 />
-                <KpiCardV6
+                <Stat
+                  value={kpis.iemMoyJours !== null ? `${formatNumOrDash(kpis.iemMoyJours)} j` : '—'}
                   label="IEM"
-                  value={formatNumOrDash(kpis.iemMoyJours)}
-                  unit="j"
-                  ariaLabel={`Intervalle Entre Mise-Bas ${formatNumOrDash(kpis.iemMoyJours)} jours`}
-                  hint={buildKpiHint(kpis.iemMoyJours, kpis.nbTruiesAvecMBMultiples)}
                 />
-                <KpiCardV6
+                <Stat
+                  value={kpis.tauxMBPct !== null ? `${formatNumOrDash(kpis.tauxMBPct)} %` : '—'}
                   label="Taux MB"
-                  value={formatNumOrDash(kpis.tauxMBPct)}
-                  unit="%"
-                  ariaLabel={`Taux mise-bas ${formatNumOrDash(kpis.tauxMBPct)} pourcent`}
-                  hint={buildKpiHint(kpis.tauxMBPct, kpis.nbSaillies12m)}
                 />
-                <KpiCardV6
+                <Stat
+                  value={kpis.tauxRenouvellementPct !== null ? `${formatNumOrDash(kpis.tauxRenouvellementPct)} %` : '—'}
                   label="Renouv."
-                  value={formatNumOrDash(kpis.tauxRenouvellementPct)}
-                  unit="%"
-                  ariaLabel={`Taux renouvellement ${formatNumOrDash(kpis.tauxRenouvellementPct)} pourcent`}
-                  hint={buildKpiHint(kpis.tauxRenouvellementPct, kpis.nbTruiesTotal)}
                 />
-              </div>
-            </section>
+              </StatsGrid>
+            </Card>
 
-            {/* ── Lots de saillies ─────────────────────────────────── */}
-            <section aria-label="Lots de saillies">
-              <Eyebrow dotColor="accent">Lots de saillies</Eyebrow>
-              <button
-                type="button"
+            <Section label="LOTS DE SAILLIES" />
+            <Card compact>
+              <ActionRow
+                icon={<IconBox tone="accent"><Layers size={18} /></IconBox>}
+                title="Voir les lots de saillies"
+                subtitle="Vagues regroupées par fenêtre de 5 jours"
                 onClick={() => navigate('/reproduction/lots')}
-                className="pressable"
-                style={{
-                  width: '100%',
-                  marginTop: 12,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  background: 'var(--bg-surface)',
-                  border: '1px solid var(--line)',
-                  borderRadius: 12,
-                  padding: '14px 16px',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                }}
-                aria-label="Voir les lots de saillies"
-              >
-                <span
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    background: 'var(--color-accent-100)',
-                    color: 'var(--color-accent-600)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                >
-                  <Layers size={18} />
-                </span>
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span
-                    style={{
-                      display: 'block',
-                      fontFamily: 'var(--font-heading)',
-                      fontSize: 15,
-                      fontWeight: 600,
-                      color: 'var(--ink)',
-                    }}
-                  >
-                    Lots de saillies
-                  </span>
-                  <span
-                    style={{
-                      display: 'block',
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 11,
-                      color: 'var(--muted)',
-                      marginTop: 2,
-                    }}
-                  >
-                    Vagues regroupées par fenêtre de 5 jours
-                  </span>
-                </span>
-                <ChevronRight size={18} style={{ color: 'var(--muted)', flexShrink: 0 }} />
-              </button>
-            </section>
+                trailing={<ChevronRight size={18} aria-hidden="true" style={{ color: 'var(--pt-text-subtle)' }} />}
+              />
+            </Card>
 
-            {/* ── Étape 1 — À saillir ──────────────────────────────── */}
             <StepSection
               step={1}
               title="À saillir"
@@ -391,50 +225,33 @@ const ReproductionHub: React.FC = () => {
               emptyLabel="Aucune truie en attente de saillie."
             >
               {canSaillieBande ? (
-                <button
-                  type="button"
-                  onClick={() => setSaillieBandeOpen(true)}
-                  className="pressable"
-                  data-testid="cta-saillie-bande"
-                  aria-label="Saillie en bande (multi-truies)"
-                  style={{
-                    width: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 8,
-                    minHeight: 44,
-                    padding: '10px 14px',
-                    borderRadius: 12,
-                    background: 'var(--color-accent-100)',
-                    color: 'var(--color-accent-600)',
-                    border: '1px dashed var(--color-accent-500)',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 12,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <Layers size={14} aria-hidden="true" />
-                  Saillie en bande ({dashboard.asaillir.length} truies)
-                </button>
+                <div data-testid="cta-saillie-bande" style={{ marginBottom: 4 }}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    fullWidth
+                    onClick={() => setSaillieBandeOpen(true)}
+                    ariaLabel="Saillie en bande (multi-truies)"
+                  >
+                    <Layers size={14} aria-hidden="true" />
+                    Saillie en bande ({dashboard.asaillir.length} truies)
+                  </Button>
+                </div>
               ) : null}
               {dashboard.asaillir.map(item => (
-                <StepRow
-                  key={item.truie.id}
-                  Icon={Heart}
-                  primary={truieDisplay(item.truie)}
-                  secondary={item.reason}
-                  cta="+ Saillir"
-                  onPrimary={() => navigate(`/troupeau/truies/${item.truie.id}`)}
-                  onCta={() => setSaillieForm({ open: true, truieDisplayId: item.truie.displayId })}
-                />
+                <div key={item.truie.id}>
+                  <StepRow
+                    Icon={Heart}
+                    primary={truieDisplay(item.truie)}
+                    secondary={item.reason}
+                    cta="+ Saillir"
+                    onPrimary={() => navigate(`/troupeau/truies/${item.truie.id}`)}
+                    onCta={() => setSaillieForm({ open: true, truieDisplayId: item.truie.displayId })}
+                  />
+                </div>
               ))}
             </StepSection>
 
-            {/* ── Étape 2 — Écho J28 en attente ────────────────────── */}
             <StepSection
               step={2}
               title="Écho J28 en attente"
@@ -442,19 +259,19 @@ const ReproductionHub: React.FC = () => {
               emptyLabel="Aucune écho en attente."
             >
               {dashboard.echo.map(item => (
-                <StepRow
-                  key={`${item.truie.id}-${item.saillie.dateSaillie}`}
-                  Icon={Stethoscope}
-                  primary={truieDisplay(item.truie)}
-                  secondary={`Saillie ${item.saillie.dateSaillie} · J+${item.daysSinceSaillie}`}
-                  cta="+ Écho"
-                  onPrimary={() => navigate(`/troupeau/truies/${item.truie.id}`)}
-                  onCta={() => setEchoForm({ open: true, truieDisplayId: item.truie.displayId })}
-                />
+                <div key={`${item.truie.id}-${item.saillie.dateSaillie}`}>
+                  <StepRow
+                    Icon={Stethoscope}
+                    primary={truieDisplay(item.truie)}
+                    secondary={`Saillie ${item.saillie.dateSaillie} · J+${item.daysSinceSaillie}`}
+                    cta="+ Écho"
+                    onPrimary={() => navigate(`/troupeau/truies/${item.truie.id}`)}
+                    onCta={() => setEchoForm({ open: true, truieDisplayId: item.truie.displayId })}
+                  />
+                </div>
               ))}
             </StepSection>
 
-            {/* ── Étape 3 — Mise-bas imminente ─────────────────────── */}
             <StepSection
               step={3}
               title="Mise-bas imminente J-3 .. J+5"
@@ -468,20 +285,20 @@ const ReproductionHub: React.FC = () => {
                     ? "Aujourd'hui"
                     : `J+${Math.abs(item.daysToMB)} (retard)`;
                 return (
-                  <StepRow
-                    key={item.truie.id}
-                    Icon={Baby}
-                    primary={truieDisplay(item.truie)}
-                    secondary={`MB prévue ${item.truie.dateMBPrevue ?? '—'} · ${tag}`}
-                    cta="+ Mise-bas"
-                    onPrimary={() => navigate(`/troupeau/truies/${item.truie.id}`)}
-                    onCta={() => setMiseBasForm({ open: true, truieId: item.truie.displayId })}
-                  />
+                  <div key={item.truie.id}>
+                    <StepRow
+                      Icon={Baby}
+                      primary={truieDisplay(item.truie)}
+                      secondary={`MB prévue ${item.truie.dateMBPrevue ?? '—'} · ${tag}`}
+                      cta="+ Mise-bas"
+                      onPrimary={() => navigate(`/troupeau/truies/${item.truie.id}`)}
+                      onCta={() => setMiseBasForm({ open: true, truieId: item.truie.displayId })}
+                    />
+                  </div>
                 );
               })}
             </StepSection>
 
-            {/* ── Étape 4 — En maternité ───────────────────────────── */}
             <StepSection
               step={4}
               title="En maternité J+0 → J+28"
@@ -489,19 +306,19 @@ const ReproductionHub: React.FC = () => {
               emptyLabel="Aucune truie en maternité active."
             >
               {dashboard.enMaternite.map(item => (
-                <StepRow
-                  key={item.bande.id}
-                  Icon={Home}
-                  primary={`${truieDisplay(item.truie)} · ${bandeDisplay(item.bande)}`}
-                  secondary={`J+${item.daysSinceMB} sous mère`}
-                  cta="Voir bande"
-                  onPrimary={() => navigate(`/troupeau/bandes/${item.bande.id}`)}
-                  onCta={() => navigate(`/troupeau/bandes/${item.bande.id}`)}
-                />
+                <div key={item.bande.id}>
+                  <StepRow
+                    Icon={Home}
+                    primary={`${truieDisplay(item.truie)} · ${bandeDisplay(item.bande)}`}
+                    secondary={`J+${item.daysSinceMB} sous mère`}
+                    cta="Voir bande"
+                    onPrimary={() => navigate(`/troupeau/bandes/${item.bande.id}`)}
+                    onCta={() => navigate(`/troupeau/bandes/${item.bande.id}`)}
+                  />
+                </div>
               ))}
             </StepSection>
 
-            {/* ── Étape 5 — À sevrer ───────────────────────────────── */}
             <StepSection
               step={5}
               title="À sevrer"
@@ -514,103 +331,46 @@ const ReproductionHub: React.FC = () => {
                   : "Aujourd'hui";
                 const truieLabel = item.truie ? truieDisplay(item.truie) : 'Truie inconnue';
                 return (
-                  <StepRow
-                    key={item.bande.id}
-                    Icon={Scissors}
-                    primary={`${bandeDisplay(item.bande)} · ${truieLabel}`}
-                    secondary={`J+${item.daysSinceMB} · ${tag}`}
-                    cta="+ Sevrer"
-                    onPrimary={() => navigate(`/troupeau/bandes/${item.bande.id}`)}
-                    onCta={() => setSevrageForm({ open: true, bandeId: item.bande.idPortee || item.bande.id })}
-                  />
+                  <div key={item.bande.id}>
+                    <StepRow
+                      Icon={Scissors}
+                      primary={`${bandeDisplay(item.bande)} · ${truieLabel}`}
+                      secondary={`J+${item.daysSinceMB} · ${tag}`}
+                      cta="+ Sevrer"
+                      onPrimary={() => navigate(`/troupeau/bandes/${item.bande.id}`)}
+                      onCta={() => setSevrageForm({ open: true, bandeId: item.bande.idPortee || item.bande.id })}
+                    />
+                  </div>
                 );
               })}
               {canMultiSevrage ? (
-                <button
-                  type="button"
-                  onClick={() => setMultiSevrageOpen(true)}
-                  className="pressable"
-                  data-testid="cta-multi-sevrage"
-                  aria-label="Sevrage multi-portées"
-                  style={{
-                    width: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 8,
-                    minHeight: 44,
-                    padding: '10px 14px',
-                    borderRadius: 12,
-                    background: 'var(--color-accent-100)',
-                    color: 'var(--color-accent-600)',
-                    border: '1px dashed var(--color-accent-500)',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 12,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <Layers size={14} aria-hidden="true" />
-                  Sevrage multi-portées ({dashboard.asevrer.length} portées)
-                </button>
+                <div data-testid="cta-multi-sevrage">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    fullWidth
+                    onClick={() => setMultiSevrageOpen(true)}
+                    ariaLabel="Sevrage multi-portées"
+                  >
+                    <Layers size={14} aria-hidden="true" />
+                    Sevrage multi-portées ({dashboard.asevrer.length} portées)
+                  </Button>
+                </div>
               ) : null}
             </StepSection>
 
-            {/* ── Calendrier complet ───────────────────────────────── */}
-            <section aria-label="Calendrier complet" style={{ marginTop: 8 }}>
-              <Eyebrow dotColor="amber">Calendrier visuel</Eyebrow>
-              <button
-                type="button"
+            <Section label="CALENDRIER VISUEL" tone="accent" />
+            <Card compact>
+              <ActionRow
+                title="Voir le calendrier complet"
+                subtitle="Saillies, échos, mises-bas et sevrages sur le calendrier mensuel."
                 onClick={() => navigate('/cycles/repro')}
-                className="pressable"
-                style={{
-                  marginTop: 12,
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  background: 'var(--bg-surface)',
-                  border: '1px solid var(--line)',
-                  borderRadius: 12,
-                  padding: '14px 16px',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  boxShadow: '0 1px 2px rgba(17,24,39,0.04)',
-                }}
-              >
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span
-                    style={{
-                      display: 'block',
-                      fontFamily: 'var(--font-heading)',
-                      fontSize: 16,
-                      fontWeight: 600,
-                      color: 'var(--ink)',
-                      letterSpacing: '-0.005em',
-                    }}
-                  >
-                    Voir le calendrier complet
-                  </span>
-                  <span
-                    className="text-body"
-                    style={{
-                      display: 'block',
-                      color: 'var(--ink-soft)',
-                      marginTop: 2,
-                    }}
-                  >
-                    Saillies, échos, mises-bas et sevrages sur le calendrier mensuel.
-                  </span>
-                </span>
-                <ArrowRight size={18} color="var(--muted)" aria-hidden="true" />
-                <ChevronRight size={16} color="var(--muted)" aria-hidden="true" />
-              </button>
-            </section>
+                trailing={<ChevronRight size={18} aria-hidden="true" style={{ color: 'var(--pt-text-subtle)' }} />}
+              />
+            </Card>
           </div>
 
-          {/* ── Forms (BottomSheet pré-remplis) ───────────────────────── */}
+          {/* Forms (BottomSheet pré-remplis) */}
           <QuickSaillieForm
             isOpen={saillieForm.open}
             onClose={() => setSaillieForm({ open: false })}

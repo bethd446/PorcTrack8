@@ -152,7 +152,7 @@ const PendingBandesBanner: React.FC<PendingBandesBannerProps> = ({ injectedState
           className="text-[10px] uppercase tracking-wide text-amber"
           aria-hidden="true"
         >
-          Compléter →
+          Compléter ›
         </span>
       </button>
     </div>

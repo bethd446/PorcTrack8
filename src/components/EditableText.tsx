@@ -208,7 +208,7 @@ const EditableText: React.FC<Props> = ({
           role="alert"
           className="ml-2 text-xs px-2 py-0.5 rounded-md"
           style={{
-            color: 'var(--color-danger, #EF4444)',
+            color: 'var(--pt-danger)',
             backgroundColor: 'rgba(220, 38, 38, 0.08)',
           }}
         >

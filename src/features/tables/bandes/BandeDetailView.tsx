@@ -30,7 +30,7 @@ import {
   listLoges,
   listPorceletsByBatch,
 } from '../../../services/supabaseWrites';
-import { useNoUUID } from '../../../lib/uuidGuard';
+import { useNoUUID } from '@/design-system';
 import {
   getRecommendedHealthLogs,
   HEALTH_LOG_TEMPLATES,

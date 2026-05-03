@@ -11,6 +11,9 @@ interface Props {
   state?: SyncState;
   /** Si true, affiche juste le dot pulsé sans texte (compact mobile) */
   compact?: boolean;
+  /** Si true, rend toujours l'indicateur même en état idle (online).
+   *  Par défaut (V40 T1), state=online ne rend rien — moins de bruit visuel. */
+  alwaysVisible?: boolean;
 }
 
 const LABELS: Record<SyncState, string> = {
@@ -31,7 +34,8 @@ const PULSE_CLASS: Record<SyncState, string> = {
   offline: '',
 };
 
-const SyncIndicator: React.FC<Props> = ({ state = 'online', compact = false }) => {
+const SyncIndicator: React.FC<Props> = ({ state = 'online', compact = false, alwaysVisible = false }) => {
+  if (state === 'online' && !alwaysVisible) return null;
   const c = COLORS[state];
   return (
     <span

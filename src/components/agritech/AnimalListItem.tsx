@@ -1,10 +1,27 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
-import Chip, { type ChipTone } from './Chip';
+import { type ChipTone } from './Chip';
+import { Tag, IconBox } from '../../design-system';
 
 export interface AnimalListItemBadge {
   label: string;
   tone: ChipTone;
+}
+
+// V40 T3-final : mapping ChipTone (legacy agritech) → Tag DS V2 variant.
+// Ce mapping duplique celui de TroupeauTruiesView.tsx ; à factoriser en util
+// partagé une fois tous les Chip migrés (V41).
+type TagVariantKind = 'default' | 'primary' | 'accent' | 'soft' | 'danger' | 'warning';
+function chipToneToTagVariant(tone: ChipTone): TagVariantKind {
+  switch (tone) {
+    case 'accent':  return 'primary';
+    case 'gold':    return 'soft';
+    case 'coral':   return 'warning';
+    case 'red':     return 'accent';
+    case 'amber':   return 'warning';
+    case 'default':
+    default:        return 'default';
+  }
 }
 
 export interface AnimalListItemProps {
@@ -51,46 +68,88 @@ const AnimalListItem: React.FC<AnimalListItemProps> = ({
 }) => {
   const interactive = typeof onClick === 'function';
 
+  // V40 align : IconBox carrée beige (variant="warm") + tokens DS V2
+  // Pattern aligné sur StepRow /reproduction (carré beige avec icône foncée).
   const inner = (
     <>
       {avatar ? (
-        <div className="shrink-0 w-10 h-10 rounded-full bg-bg-2 border border-border flex items-center justify-center overflow-hidden text-text-1">
-          {avatar}
-        </div>
+        <span style={{ flexShrink: 0 }}>
+          <IconBox variant="warm" size="medium">
+            {avatar}
+          </IconBox>
+        </span>
       ) : null}
 
       <div className="flex-1 min-w-0">
-        <div className="text-[15px] font-semibold text-text-0 leading-snug truncate">
+        <div
+          style={{
+            fontSize: 14,
+            fontWeight: 600,
+            color: 'var(--pt-text)',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
           {primary}
         </div>
         {secondary ? (
-          <div className="mt-0.5 text-[11px] text-text-2 leading-relaxed truncate">
+          <div
+            style={{
+              fontSize: 12,
+              color: 'var(--pt-text-muted)',
+              marginTop: 2,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {secondary}
           </div>
         ) : null}
         {badges && badges.length > 0 ? (
-          <div className="mt-1 flex flex-wrap gap-1">
+          <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
             {badges.map((b, i) => (
-              <Chip key={`${b.label}-${i}`} label={b.label} tone={b.tone} size="xs" />
+              <span key={`${b.label}-${i}`}>
+                <Tag variant={chipToneToTagVariant(b.tone)}>{b.label}</Tag>
+              </span>
             ))}
           </div>
         ) : null}
       </div>
 
       {meta !== undefined && meta !== null && meta !== '' ? (
-        <div className="shrink-0 text-[11px] tabular-nums text-text-1">
+        <div
+          style={{
+            flexShrink: 0,
+            fontSize: 11,
+            color: 'var(--pt-text-muted)',
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
           {meta}
         </div>
       ) : null}
 
-      {chip ? <Chip label={chip.label} tone={chip.tone} size="xs" /> : null}
+      {chip ? <Tag variant={chipToneToTagVariant(chip.tone)}>{chip.label}</Tag> : null}
 
-      {accessory ? <div className="shrink-0">{accessory}</div> : null}
+      {accessory ? <span style={{ flexShrink: 0 }}>{accessory}</span> : null}
     </>
   );
 
-  const baseClass =
-    'flex w-full items-center gap-3 px-3 py-3 min-h-[56px] border-b border-border last:border-b-0';
+  // V40 align : padding aéré + séparateur fin via var(--pt-divider).
+  const rowStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    padding: '12px 16px',
+    minHeight: 56,
+    borderBottom: '1px solid var(--pt-divider)',
+    background: 'transparent',
+    width: '100%',
+    textAlign: 'left',
+  };
+  const baseClass = 'animal-list-item';
 
   if (interactive) {
     return (
@@ -98,12 +157,8 @@ const AnimalListItem: React.FC<AnimalListItemProps> = ({
         type="button"
         onClick={onClick}
         aria-label={ariaLabel}
-        className={cn(
-          'animal-list-item pressable text-left',
-          baseClass,
-          'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-2px]',
-          className,
-        )}
+        className={cn(baseClass, 'pressable', className)}
+        style={{ ...rowStyle, border: 'none', borderBottom: rowStyle.borderBottom, cursor: 'pointer' }}
       >
         {inner}
       </button>
@@ -113,7 +168,8 @@ const AnimalListItem: React.FC<AnimalListItemProps> = ({
   return (
     <div
       aria-label={ariaLabel}
-      className={cn('animal-list-item', baseClass, className)}
+      className={cn(baseClass, className)}
+      style={rowStyle}
     >
       {inner}
     </div>

@@ -23,6 +23,7 @@ import AgritechLayout from '../../components/AgritechLayout';
 import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import KpiCardV6 from '../../components/design/KpiCard';
+import { Card, IconBox } from '../../design-system';
 import { useFarm } from '../../context/FarmContext';
 import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import { formatCurrency, currencySuffix, type Currency } from '../../lib/currency';
@@ -476,7 +477,7 @@ const PilotageHub: React.FC = () => {
                       : 'Aucune alerte'}
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-                    Voir toutes les alertes →
+                    Voir toutes les alertes ›
                   </div>
                 </div>
                 <ChevronRight size={18} color="var(--muted)" aria-hidden="true" />
@@ -502,84 +503,61 @@ interface PerfBandeCardProps {
 
 export const PerfBandeCard: React.FC<PerfBandeCardProps> = ({ tone, label, bandeId, metric }) => {
   const navigate = useNavigate();
-  const color = tone === 'accent' ? 'var(--color-accent-500)' : 'var(--color-pig-deep)';
-  const bg = tone === 'accent' ? 'var(--color-accent-100)' : 'var(--color-pig-soft)';
+  const isWarning = tone === 'pig';
+  const labelColor = isWarning ? 'var(--pt-danger)' : 'var(--pt-accent-deep)';
   return (
     <button
       type="button"
       onClick={() => navigate(`/troupeau/bandes/${bandeId}`)}
       aria-label={`Ouvrir fiche bande ${bandeId}`}
-      className="pressable"
+      data-pt="perf-bande-card"
       style={{
-        background: 'var(--bg-surface)',
-        borderRadius: 12,
-        boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-        padding: '14px 16px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 14,
+        background: 'transparent',
         border: 'none',
+        padding: 0,
         cursor: 'pointer',
         textAlign: 'left',
         width: '100%',
-        minHeight: 44,
-        transition: 'transform 160ms var(--ease-emil)',
+        minHeight: '44px',
       }}
     >
-      <div
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: '50%',
-          background: bg,
-          color,
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-        }}
-      >
-        <TrendingUp size={20} aria-hidden="true" style={{ transform: tone === 'pig' ? 'rotate(180deg)' : 'none' }} />
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 9.5,
-            letterSpacing: '0.18em',
-            textTransform: 'uppercase',
-            color,
-            fontWeight: 600,
-          }}
-        >
-          {label}
+      <Card compact warning={isWarning} interactive>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <IconBox variant={isWarning ? 'danger' : 'warm'} size="medium">
+            <TrendingUp size={18} aria-hidden="true" style={{ transform: isWarning ? 'rotate(180deg)' : 'none' }} />
+          </IconBox>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: 11,
+                letterSpacing: 'var(--pt-tracking-label)',
+                textTransform: 'uppercase',
+                color: labelColor,
+                fontWeight: 600,
+                fontFamily: 'var(--pt-font-body)',
+              }}
+            >
+              {label}
+            </div>
+            <div
+              style={{
+                fontFamily: 'var(--pt-font-display)',
+                fontSize: 17,
+                fontWeight: 700,
+                color: 'var(--pt-text)',
+                margin: '4px 0 2px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {bandeId}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--pt-text-muted)' }}>{metric}</div>
+          </div>
+          <span style={{ color: 'var(--pt-text-subtle)', fontSize: 18, lineHeight: 1 }} aria-hidden="true">›</span>
         </div>
-        <h4
-          style={{
-            fontFamily: 'var(--font-heading)',
-            fontSize: 16,
-            fontWeight: 600,
-            color: 'var(--ink)',
-            margin: '4px 0 2px',
-            letterSpacing: '-0.005em',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {bandeId}
-        </h4>
-        <div
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: 12,
-            color: 'var(--muted)',
-          }}
-        >
-          {metric}
-        </div>
-      </div>
-      <ArrowRight size={16} color="var(--muted)" aria-hidden="true" />
+      </Card>
     </button>
   );
 };

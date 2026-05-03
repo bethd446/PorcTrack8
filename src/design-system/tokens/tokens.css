@@ -1,0 +1,163 @@
+/* PORCTRACK DS v2.0 — TOKENS · SOURCE UNIQUE DE VÉRITÉ */
+
+:root {
+  /* === FONDS === */
+  --pt-bg:                 #F2EEE3;
+  --pt-surface:            #FBF8F1;
+  --pt-surface-alt:        #EFEBE0;
+  --pt-surface-warm:       #F5E9D8;
+  --pt-surface-insight:    #F8E4CC;
+  --pt-surface-danger:     #FBE9E5;
+  --pt-surface-warning:    #FDF1DC;
+
+  /* === MARQUE === */
+  --pt-primary:            #2D4A1F;
+  --pt-primary-hover:      #3A5C28;
+  --pt-primary-soft:       rgba(45, 74, 31, 0.08);
+  --pt-primary-text:       #FFFFFF;
+
+  --pt-accent:             #D4915C;
+  --pt-accent-soft:        #F5D9B8;
+  --pt-accent-pill:        #E8B07A;
+  --pt-accent-deep:        #B8703D;
+
+  /* === TEXTE === */
+  --pt-text:               #1A1A1A;
+  --pt-text-muted:         #5C5C5C;
+  --pt-text-subtle:        #8A8A8A;
+  --pt-divider:            #D4CFC2;
+  --pt-danger:             #B23A2A;
+  --pt-warning:            #D4915C;
+
+  /* === TYPO === */
+  --pt-font-display:       'Big Shoulders', Impact, sans-serif;
+  --pt-font-body:          'Instrument Sans', -apple-system, system-ui, sans-serif;
+  --pt-font-mono:          'JetBrains Mono', monospace;
+
+  --pt-text-display: 32px;
+  --pt-text-h1: 24px;
+  --pt-text-h2: 20px;
+  --pt-text-body: 16px;
+  --pt-text-small: 14px;
+  --pt-text-label: 11px;
+
+  --pt-tracking-label: 0.18em;
+  --pt-tracking-button: 0.12em;
+
+  /* === ESPACEMENTS === */
+  --pt-space-1: 4px;
+  --pt-space-2: 8px;
+  --pt-space-3: 12px;
+  --pt-space-4: 16px;
+  --pt-space-5: 20px;
+  --pt-space-6: 24px;
+  --pt-space-7: 32px;
+  --pt-space-8: 48px;
+
+  /* === RADIUS === */
+  --pt-radius-sm: 8px;
+  --pt-radius-md: 16px;
+  --pt-radius-lg: 24px;
+  --pt-radius-pill: 9999px;
+
+  /* Alias rétrocompat (tests V29/V30) — ne pas utiliser en code neuf. */
+  --ds-radius-pill: var(--pt-radius-pill);
+  --ds-primary: var(--pt-primary);
+  --ds-accent: var(--pt-accent);
+  --ds-text-subtle: var(--pt-text-subtle);
+  --ds-divider: var(--pt-divider);
+
+  /* === OMBRES === */
+  --pt-shadow-card:        0 1px 3px rgba(45, 74, 31, 0.04);
+  --pt-shadow-elevated:    0 4px 16px rgba(45, 74, 31, 0.08);
+  --pt-shadow-hover:       0 6px 20px rgba(45, 74, 31, 0.12);
+  --pt-shadow-fab:         0 6px 20px rgba(45, 74, 31, 0.25);
+
+  /* === TRANSITIONS === */
+  --pt-t-fast: 120ms ease-out;
+  --pt-t-normal: 200ms ease-out;
+}
+
+/* === RESET DE BASE === */
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--pt-font-body);
+  font-size: var(--pt-text-body);
+  color: var(--pt-text);
+  background: var(--pt-bg);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--pt-font-display);
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0;
+  letter-spacing: -0.01em;
+  color: var(--pt-text);
+}
+
+/* === OVERRIDE IONIC GLOBAL === */
+ion-app, ion-content, ion-page {
+  --background: var(--pt-bg);
+  background: var(--pt-bg);
+}
+
+ion-button {
+  --background: var(--pt-primary);
+  --color: white;
+  --border-radius: var(--pt-radius-pill);
+  --padding-start: 22px;
+  --padding-end: 22px;
+  text-transform: uppercase;
+  letter-spacing: var(--pt-tracking-button);
+  font-family: var(--pt-font-body);
+  font-weight: 600;
+  font-size: 12px;
+  height: 44px;
+}
+
+ion-button[fill="outline"], ion-button[fill="clear"] {
+  --background: transparent;
+  --color: var(--pt-text);
+  --border-color: var(--pt-divider);
+  --border-width: 1.5px;
+}
+
+ion-card {
+  background: var(--pt-surface);
+  border-radius: var(--pt-radius-lg);
+  box-shadow: var(--pt-shadow-card);
+  margin: 0 0 var(--pt-space-3);
+  border: none;
+}
+
+ion-input, ion-textarea, ion-select {
+  --background: var(--pt-surface);
+  --border-radius: var(--pt-radius-pill);
+  --padding-start: 18px;
+  --padding-end: 18px;
+  font-family: var(--pt-font-body);
+}
+
+ion-chip {
+  --background: var(--pt-surface);
+  border-radius: var(--pt-radius-pill);
+  font-family: var(--pt-font-body);
+  font-weight: 500;
+}
+
+ion-toolbar, ion-header {
+  background: transparent;
+  --background: transparent;
+  --border-color: transparent;
+}
+
+ion-tab-bar {
+  background: var(--pt-surface);
+  --background: var(--pt-surface);
+  border-top: 1px solid var(--pt-divider);
+}

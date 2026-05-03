@@ -1,0 +1,8 @@
+{
+  "userIgnoreFilters": [
+    "android/",
+    "dist/",
+    "node_modules/",
+    "PorcTrack8/orchestrator/"
+  ]
+}

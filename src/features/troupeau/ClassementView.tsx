@@ -1,13 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
 import { useNavigate } from 'react-router-dom';
-import { Award, Trophy } from 'lucide-react';
+import { Award } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { SectionDivider } from '../../components/agritech';
 import EmptyStateShared from '../../components/design/EmptyState';
+import { Tag, DataTable, PageHeader } from '../../design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   buildClassementRows,
@@ -42,12 +42,13 @@ const SORTS: ReadonlyArray<SortOption> = [
   { id: 'porceletsMoyens', label: 'Porcelets' },
 ];
 
-const TIER_CLASSES: Record<Tier, string> = {
-  ELITE: 'text-success bg-success/10',
-  BON: 'text-accent bg-accent/10',
-  MOYEN: 'text-text-1 bg-bg-1',
-  FAIBLE: 'text-amber bg-amber/10',
-  INSUFFISANT: 'text-red bg-red/10',
+type TagVariant = 'default' | 'primary' | 'accent' | 'soft' | 'danger' | 'warning';
+const TIER_VARIANTS: Record<Tier, TagVariant> = {
+  ELITE: 'primary',
+  BON: 'accent',
+  MOYEN: 'soft',
+  FAIBLE: 'warning',
+  INSUFFISANT: 'danger',
 };
 
 const TIER_LABEL: Record<Tier, string> = {
@@ -120,17 +121,12 @@ const ClassementView: React.FC = () => {
             style={{ maxWidth: 1100, margin: '0 auto' }}
           >
             <div className="flex flex-col gap-4">
-      {/* ── Header ──────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-2">
-        <Eyebrow customDotColor="var(--module-naissage)">Performance · Classement</Eyebrow>
-        <h1 className="ft-heading text-[22px] uppercase tracking-tight text-text-0 flex items-center gap-2">
-          <Trophy size={20} aria-hidden="true" className="text-accent" />
-          Classement reproducteurs
-        </h1>
-        <p className="text-[12px] text-text-2">
-          Top et flop des truies et verrats par score composite
-        </p>
-      </div>
+      {/* V41 Phase C3 — Header sobre via PageHeader (eyebrow + h1 + subtitle 1 ligne) */}
+      <PageHeader
+        eyebrow="Pilotage · Classement"
+        title="Classement reproducteurs"
+        subtitle="Top et flop par score composite"
+      />
 
       {/* ── Filtre type ─────────────────────────────────────────── */}
       <div className="flex items-center gap-2">
@@ -251,31 +247,22 @@ const ClassementView: React.FC = () => {
             ))}
           </ul>
 
-          {/* ── Desktop : table classique ─────────────────────── */}
-          <div className="hidden sm:block card-dense !p-0 overflow-hidden">
-            <table className="w-full border-collapse">
-              <thead className="sticky top-0 bg-bg-1 z-10">
-                <tr className="border-b border-border">
-                  <Th className="w-12 text-left">#</Th>
-                  <Th className="text-left">Nom</Th>
-                  <Th className="text-left">Type</Th>
-                  <Th className="text-right">Score</Th>
-                  <Th className="text-right">Portées</Th>
-                  <Th className="text-right">Porcelets</Th>
-                  <Th className="text-right">Réussite</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, idx) => (
-                  <RowDesktop
-                    key={`${row.type}-${row.id}`}
-                    row={row}
-                    rank={idx + 1}
-                    onClick={() => handleRowClick(row)}
-                  />
-                ))}
-              </tbody>
-            </table>
+          {/* V40 C1 — Desktop : <DataTable> du DS V2 */}
+          <div className="hidden sm:block">
+            <DataTable<ClassementRow & { rank: number }>
+              ariaLabel="Classement reproducteurs"
+              columns={[
+                { key: 'rank', label: '#', width: 48, render: (row) => <span className="tabular-nums" style={{ color: 'var(--pt-text-subtle)' }}>#{row.rank}</span> },
+                { key: 'displayId', label: 'Nom', render: (row) => <span className="tabular-nums" style={{ fontWeight: 600, color: 'var(--pt-text)' }}>{row.displayId}</span> },
+                { key: 'type', label: 'Type', render: (row) => <TypeBadge type={row.type} /> },
+                { key: 'score', label: 'Score', render: (row) => <TierBadge tier={row.tier} score={row.score} /> },
+                { key: 'nbPortees', label: 'Portées', render: (row) => <span className="tabular-nums">{row.nbPortees}</span> },
+                { key: 'porceletsMoyens', label: 'Porcelets', render: (row) => <span className="tabular-nums">{formatPorcelets(row.porceletsMoyens)}</span> },
+                { key: 'tauxReussite', label: 'Réussite', render: (row) => <span className="tabular-nums">{formatTaux(row.tauxReussite)}</span> },
+              ]}
+              rows={rows.map((r, idx) => ({ ...r, id: `${r.type}-${r.id}`, rank: idx + 1 }))}
+              onRowClick={(row) => handleRowClick(row)}
+            />
           </div>
         </>
       )}
@@ -288,18 +275,8 @@ const ClassementView: React.FC = () => {
 };
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
-
-const Th: React.FC<{ children: React.ReactNode; className?: string }> = ({
-  children,
-  className = '',
-}) => (
-  <th
-    scope="col"
-    className={`text-[10px] uppercase tracking-wide text-text-2 px-3 py-2 ${className}`}
-  >
-    {children}
-  </th>
-);
+// V41 Phase C3 : <Th> et <RowDesktop> supprimés (V40 a déjà migré la table
+// desktop vers <DataTable> du DS V2).
 
 interface RowProps {
   row: ClassementRow;
@@ -308,25 +285,17 @@ interface RowProps {
 }
 
 const TierBadge: React.FC<{ tier: Tier; score: number }> = ({ tier, score }) => (
-  <span
-    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${TIER_CLASSES[tier]}`}
-    aria-label={`Tier ${TIER_LABEL[tier]} score ${formatScore(score)}`}
-  >
-    <span>{TIER_LABEL[tier]}</span>
-    <span className="tabular-nums">{formatScore(score)}</span>
+  <span aria-label={`Tier ${TIER_LABEL[tier]} score ${formatScore(score)}`}>
+    <Tag variant={TIER_VARIANTS[tier]}>
+      {TIER_LABEL[tier]} <span className="tabular-nums">{formatScore(score)}</span>
+    </Tag>
   </span>
 );
 
 const TypeBadge: React.FC<{ type: ClassementRow['type'] }> = ({ type }) => (
-  <span
-    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide border ${
-      type === 'TRUIE'
-        ? 'border-accent/30 text-accent bg-accent/5'
-        : 'border-border text-text-1 bg-bg-1'
-    }`}
-  >
+  <Tag variant={type === 'TRUIE' ? 'soft' : 'default'}>
     {type === 'TRUIE' ? 'Truie' : 'Verrat'}
-  </span>
+  </Tag>
 );
 
 const RowCardMobile: React.FC<RowProps> = ({ row, rank, onClick }) => (
@@ -356,42 +325,6 @@ const RowCardMobile: React.FC<RowProps> = ({ row, rank, onClick }) => (
   </button>
 );
 
-const RowDesktop: React.FC<RowProps> = ({ row, rank, onClick }) => (
-  <tr
-    role="button"
-    tabIndex={0}
-    aria-label={`Rang ${rank} ${row.type === 'TRUIE' ? 'Truie' : 'Verrat'} ${row.displayId}`}
-    onClick={onClick}
-    onKeyDown={(e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        onClick();
-      }
-    }}
-    className="border-b border-border last:border-b-0 cursor-pointer hover:bg-bg-1/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-  >
-    <td className="px-3 py-2.5 text-[12px] tabular-nums text-text-2">
-      #{rank}
-    </td>
-    <td className="px-3 py-2.5 text-[13px] font-semibold text-text-0 tabular-nums truncate max-w-[160px]">
-      {row.displayId}
-    </td>
-    <td className="px-3 py-2.5">
-      <TypeBadge type={row.type} />
-    </td>
-    <td className="px-3 py-2.5 text-right">
-      <TierBadge tier={row.tier} score={row.score} />
-    </td>
-    <td className="px-3 py-2.5 text-[12px] tabular-nums text-text-1 text-right">
-      {row.nbPortees}
-    </td>
-    <td className="px-3 py-2.5 text-[12px] tabular-nums text-text-1 text-right">
-      {formatPorcelets(row.porceletsMoyens)}
-    </td>
-    <td className="px-3 py-2.5 text-[12px] tabular-nums text-text-1 text-right">
-      {formatTaux(row.tauxReussite)}
-    </td>
-  </tr>
-);
+// V41 Phase C3 : RowDesktop supprimé (DataTable du DS V2 prend le relais).
 
 export default ClassementView;
