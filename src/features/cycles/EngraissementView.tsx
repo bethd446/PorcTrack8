@@ -164,7 +164,7 @@ const EngraissementView: React.FC = () => {
               <KpiCardV6
                 label="Loges Occ."
                 value={`${occupation.occupees}/${occupation.capacite}`}
-                accentColor={occupation.alerte === 'FULL' ? 'var(--color-danger, #EF4444)' : undefined}
+                accentColor={occupation.alerte === 'FULL' ? 'var(--color-danger)' : undefined}
               />
             </div>
 

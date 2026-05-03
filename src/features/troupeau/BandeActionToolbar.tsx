@@ -25,10 +25,10 @@ const BandeActionToolbar: React.FC<BandeActionToolbarProps> = ({
         onClick={onMortalite}
         aria-label="Déclarer mortalité (confirmation requise)"
         className="flex-1 h-14 rounded-2xl border flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
-        style={{ background: 'transparent', borderColor: 'var(--color-pig, var(--color-danger, #EF4444))' }}
+        style={{ background: 'transparent', borderColor: 'var(--color-pig, var(--color-danger))' }}
       >
-        <Skull size={18} style={{ color: 'var(--color-pig, var(--color-danger, #EF4444))' }} />
-        <span className="text-[9px] font-bold uppercase" style={{ color: 'var(--color-pig, var(--color-danger, #EF4444))' }}>Mortalité</span>
+        <Skull size={18} style={{ color: 'var(--color-pig, var(--color-danger))' }} />
+        <span className="text-[9px] font-bold uppercase" style={{ color: 'var(--color-pig, var(--color-danger))' }}>Mortalité</span>
       </button>
 
       <button

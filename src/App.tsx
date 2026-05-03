@@ -115,7 +115,7 @@ const DailyMBChecklistForm = React.lazy(() => import(/* webpackChunkName: "v27-d
 const SuspenseFallback = () => (
   <div
     className="flex flex-col items-center justify-center h-screen"
-    style={{ background: 'var(--bg-app, #f0f4f3)' }}
+    style={{ background: 'var(--bg-app)' }}
   >
     <div className="animate-pulse-soft flex flex-col items-center gap-5">
       <img src="/images/icon.svg" alt="PorcTrack" className="w-16 h-16 rounded-xl" />

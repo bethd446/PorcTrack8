@@ -34,7 +34,7 @@ const ACCENT_VAR: Record<AccentToken, string> = {
   amber: 'var(--color-amber-pork-deep)',
   pig: 'var(--color-pig)',
   muted: 'var(--muted)',
-  info: 'var(--color-info, #3b82f6)',
+  info: 'var(--color-info)',
 };
 
 function resolveAccent(
@@ -130,7 +130,7 @@ export default function KpiCard({
 
   const containerStyle: React.CSSProperties = {
     background: isAccent ? 'var(--color-accent-500)' : 'var(--bg-surface)',
-    color: isAccent ? '#fff' : 'var(--ink)',
+    color: isAccent ? 'var(--bg-surface)' : 'var(--ink)',
     padding: '20px',
     borderRadius: 'var(--radius-card, 14px)',
     border: isAccent ? '1px solid var(--color-accent-500)' : '1px solid var(--line)',
@@ -176,7 +176,7 @@ export default function KpiCard({
     lineHeight: 1,
     fontWeight: 700,
     letterSpacing: '-0.02em',
-    color: isAccent ? '#fff' : 'var(--ink)',
+    color: isAccent ? 'var(--bg-surface)' : 'var(--ink)',
   };
 
   const unitStyle: React.CSSProperties = {

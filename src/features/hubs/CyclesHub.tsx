@@ -102,8 +102,8 @@ const PHASES: readonly PhaseDef[] = [
     label: 'Sortie',
     short: 'Sort.',
     days: 7,
-    tone: 'var(--color-ink-soft, #4b5563)',
-    toneSoft: 'var(--bg-surface-2, #f3f4f6)',
+    tone: 'var(--color-ink-soft)',
+    toneSoft: 'var(--bg-surface-2)',
     route: '/cycles/sortie',
   },
 ];

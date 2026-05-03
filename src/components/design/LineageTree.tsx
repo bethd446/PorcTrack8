@@ -206,14 +206,14 @@ const TYPE_BULLET: Record<LineageNodeType, string> = {
 
 const TYPE_DOT_COLOR: Record<LineageNodeType, string> = {
   truie: 'var(--color-pig, var(--color-accent-500))',
-  verrat: 'var(--color-amber-pork, #c2662b)',
+  verrat: 'var(--color-amber-pork)',
   bande: 'var(--color-accent-500)',
 };
 
 function survieTone(taux: number): { bg: string; fg: string } {
-  if (taux >= 90) return { bg: 'var(--color-accent-100)', fg: 'var(--color-accent-700, #065f46)' };
-  if (taux >= 75) return { bg: 'rgba(244, 162, 97, 0.18)', fg: '#9a4a16' };
-  return { bg: 'rgba(220, 38, 38, 0.15)', fg: '#991b1b' };
+  if (taux >= 90) return { bg: 'var(--color-accent-100)', fg: 'var(--color-accent-700)' };
+  if (taux >= 75) return { bg: 'rgba(244, 162, 97, 0.18)', fg: 'var(--color-amber-pork-deep)' };
+  return { bg: 'rgba(220, 38, 38, 0.15)', fg: 'var(--color-pig-deep)' };
 }
 
 interface TreeNodeProps {

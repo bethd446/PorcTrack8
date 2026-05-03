@@ -153,7 +153,7 @@ function LogsPanel() {
           </p>
         )}
         {!loading && error && (
-          <p role="alert" style={{ padding: '16px 24px', fontSize: 13, color: 'var(--color-pig-deep, #c0392b)', background: 'var(--color-pig-soft, #fdecea)', borderBottom: '1px solid var(--line-2)' }}>
+          <p role="alert" style={{ padding: '16px 24px', fontSize: 13, color: 'var(--color-pig-deep)', background: 'var(--color-pig-soft)', borderBottom: '1px solid var(--line-2)' }}>
             {error}
           </p>
         )}
@@ -234,8 +234,8 @@ interface RoleStyle {
 
 const ROLE_STYLES: Record<string, RoleStyle> = {
   ADMIN: {
-    background: 'var(--amber-pork-soft, #fde7d3)',
-    color: 'var(--amber-pork-deep, #c2662b)',
+    background: 'var(--amber-pork-soft)',
+    color: 'var(--amber-pork-deep)',
   },
   OWNER: {
     background: 'var(--color-accent-100)',
@@ -306,7 +306,7 @@ function UsersPanel({ users, loading, error, onUsersChange, onError, onInvite }:
           </p>
         )}
         {!loading && error && (
-          <p role="alert" style={{ padding: '16px 24px', fontSize: 13, color: 'var(--color-pig-deep, #c0392b)', background: 'var(--color-pig-soft, #fdecea)', borderBottom: '1px solid var(--line-2)' }}>
+          <p role="alert" style={{ padding: '16px 24px', fontSize: 13, color: 'var(--color-pig-deep)', background: 'var(--color-pig-soft)', borderBottom: '1px solid var(--line-2)' }}>
             {error}
           </p>
         )}
@@ -651,8 +651,8 @@ function InviteOperatorModal({ isOpen, onClose, currentUserId, onInvited }: Invi
               style={{
                 padding: '10px 14px',
                 borderRadius: 'var(--radius-card)',
-                background: 'var(--color-pig-soft, #fdecea)',
-                color: 'var(--color-pig-deep, #c0392b)',
+                background: 'var(--color-pig-soft)',
+                color: 'var(--color-pig-deep)',
                 fontSize: 13,
                 margin: 0,
               }}
@@ -943,9 +943,9 @@ export default function AdminDashboard() {
             style={{
               padding: '12px 16px',
               borderRadius: 'var(--radius-card)',
-              background: 'var(--color-pig-soft, #fdecea)',
-              color: 'var(--color-pig-deep, #c0392b)',
-              border: '1px solid var(--color-pig, #f5c6c0)',
+              background: 'var(--color-pig-soft)',
+              color: 'var(--color-pig-deep)',
+              border: '1px solid var(--color-pig)',
               fontSize: 13,
             }}
           >
@@ -988,7 +988,7 @@ export default function AdminDashboard() {
               <KpiCardV6
                 label="Logs aujourd'hui"
                 value={todayCount}
-                accentColor="var(--amber-pork, #F4A261)"
+                accentColor="var(--amber-pork)"
               />
               <KpiCardV6
                 label="Utilisateurs"

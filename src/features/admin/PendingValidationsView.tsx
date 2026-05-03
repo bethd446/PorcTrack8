@@ -40,8 +40,8 @@ const COUNT_PILL_STYLE: React.CSSProperties = {
   fontSize: 11,
   padding: '3px 10px',
   borderRadius: 'var(--radius-pill)',
-  background: 'var(--amber-pork-soft, #fde7d3)',
-  color: 'var(--amber-pork-deep, #c2662b)',
+  background: 'var(--amber-pork-soft)',
+  color: 'var(--amber-pork-deep)',
   fontWeight: 500,
 };
 
@@ -182,8 +182,8 @@ export default function PendingValidationsView({ embedded, onChange }: PendingVa
           style={{
             padding: '16px 24px',
             fontSize: 13,
-            color: 'var(--color-pig-deep, #c0392b)',
-            background: 'var(--color-pig-soft, #fdecea)',
+            color: 'var(--color-pig-deep)',
+            background: 'var(--color-pig-soft)',
           }}
         >
           {error}
@@ -229,8 +229,8 @@ export default function PendingValidationsView({ embedded, onChange }: PendingVa
                     fontSize: 10,
                     letterSpacing: '0.18em',
                     textTransform: 'uppercase',
-                    color: 'var(--amber-pork-deep, #c2662b)',
-                    background: 'var(--amber-pork-soft, #fde7d3)',
+                    color: 'var(--amber-pork-deep)',
+                    background: 'var(--amber-pork-soft)',
                     padding: '2px 8px',
                     borderRadius: 'var(--radius-pill)',
                     fontWeight: 600,
@@ -288,7 +288,7 @@ export default function PendingValidationsView({ embedded, onChange }: PendingVa
                     letterSpacing: '0.08em',
                     cursor: actingId === item.id ? 'not-allowed' : 'pointer',
                     background: 'var(--color-accent-500)',
-                    color: '#fff',
+                    color: 'var(--bg-surface)',
                     opacity: actingId === item.id ? 0.5 : 1,
                   }}
                 >
@@ -307,15 +307,15 @@ export default function PendingValidationsView({ embedded, onChange }: PendingVa
                     gap: 6,
                     padding: '8px 14px',
                     borderRadius: 'var(--radius-pill)',
-                    border: '1px solid var(--color-pig, #f5c6c0)',
+                    border: '1px solid var(--color-pig)',
                     fontFamily: 'var(--font-mono)',
                     fontSize: 11,
                     fontWeight: 600,
                     textTransform: 'uppercase',
                     letterSpacing: '0.08em',
                     cursor: actingId === item.id ? 'not-allowed' : 'pointer',
-                    background: 'var(--color-pig-soft, #fdecea)',
-                    color: 'var(--color-pig-deep, #c0392b)',
+                    background: 'var(--color-pig-soft)',
+                    color: 'var(--color-pig-deep)',
                     opacity: actingId === item.id ? 0.5 : 1,
                   }}
                 >
@@ -363,8 +363,8 @@ export default function PendingValidationsView({ embedded, onChange }: PendingVa
             transform: 'translateX(-50%)',
             padding: '10px 18px',
             borderRadius: 'var(--radius-pill)',
-            background: 'var(--ink, #111827)',
-            color: '#fff',
+            background: 'var(--ink)',
+            color: 'var(--bg-surface)',
             fontSize: 13,
             zIndex: 1000,
             boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
@@ -385,12 +385,12 @@ export default function PendingValidationsView({ embedded, onChange }: PendingVa
       <div
         style={{
           padding: '12px 20px',
-          background: 'var(--amber-pork-soft, #fde7d3)',
+          background: 'var(--amber-pork-soft)',
           borderBottom: '1px solid var(--line-2)',
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          color: 'var(--amber-pork-deep, #c2662b)',
+          color: 'var(--amber-pork-deep)',
           fontSize: 12,
         }}
       >

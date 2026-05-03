@@ -44,7 +44,7 @@ const BandeFinanceCard: React.FC<BandeFinanceCardProps> = ({
         return { color: 'bg-[var(--amber-pork)]', text: 'text-[var(--amber-pork)]', label: 'Rentabilité Correcte', tone: 'amber' as const };
       case 'DEFICITAIRE':
       default:
-        return { color: 'bg-[var(--color-danger,#EF4444)]', text: 'text-[var(--color-danger,#EF4444)]', label: 'Déficitaire', tone: 'red' as const };
+        return { color: 'bg-[var(--color-danger)]', text: 'text-[var(--color-danger)]', label: 'Déficitaire', tone: 'red' as const };
     }
   }, [statutRentabilite]);
 
@@ -99,7 +99,7 @@ const BandeFinanceCard: React.FC<BandeFinanceCardProps> = ({
         </div>
         <div className="flex flex-col gap-1 items-end text-right">
           <span className="text-[8px] uppercase text-text-2">Marge Nette</span>
-          <span className={`text-[13px] font-bold ${margeNetteProjetee < 0 ? 'text-[var(--color-danger,#EF4444)]' : 'text-[var(--color-accent-500)]'}`}>
+          <span className={`text-[13px] font-bold ${margeNetteProjetee < 0 ? 'text-[var(--color-danger)]' : 'text-[var(--color-accent-500)]'}`}>
             {margeNetteProjetee > 0 ? '+' : ''}{formatCurrency(margeNetteProjetee, currency)}
           </span>
         </div>

@@ -25,6 +25,14 @@
 
   /* Accent v6 — pastel vert clair */
   --color-accent-100: #e3edd9;
+
+  /* V42-pre — 5 variables ajoutées pour supprimer les fallbacks hex (CHECK 4 DS).
+     Valeurs reprises strictement des fallbacks pré-existants pour 0 régression. */
+  --color-amber-deep:    #c2662b;
+  --color-amber-pork-bg: #fde9d4;
+  --color-ink-soft:      #4b5563;
+  --color-success-bg:    #d1fae5;
+  --color-success-fg:    #065f46;
 }
 
 /* ── :root variables non-Tailwind (animations, layout) ─────────────────── */
@@ -69,7 +77,7 @@
   /* ── Aliases phases biologiques GTTT (kit v2.1) ────────────────────────── */
   --phase-repro:       var(--color-pig);
   --phase-repro-soft:  var(--color-pig-soft);
-  --phase-mater:       var(--color-info, #3B82F6);
+  --phase-mater:       var(--color-info);
   --phase-mater-soft:  rgba(59, 130, 246, 0.10);
   --phase-sevr:        var(--amber-pork);
   --phase-sevr-soft:   var(--amber-pork-soft);

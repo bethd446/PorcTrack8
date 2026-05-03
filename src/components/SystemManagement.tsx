@@ -699,7 +699,7 @@ export const SettingsPage: React.FC = () => {
             { text: 'Annuler', role: 'cancel' },
             {
               text: 'Vider',
-              cssClass: 'text-[var(--color-danger,#EF4444)]',
+              cssClass: 'text-[var(--color-danger)]',
               handler: handleResetCache,
             },
           ]}
@@ -713,7 +713,7 @@ export const SettingsPage: React.FC = () => {
             { text: 'Annuler', role: 'cancel' },
             {
               text: 'Se déconnecter',
-              cssClass: 'text-[var(--color-danger,#EF4444)]',
+              cssClass: 'text-[var(--color-danger)]',
               handler: handleSignOut,
             },
           ]}

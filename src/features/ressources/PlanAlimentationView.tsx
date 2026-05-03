@@ -134,7 +134,7 @@ const PlanAlimentationView: React.FC = () => {
                   !isFinite(plan.joursCouvertureMoyenne)
                     ? undefined
                     : plan.joursCouvertureMoyenne < 7
-                    ? 'var(--color-danger, #EF4444)'
+                    ? 'var(--color-danger)'
                     : plan.joursCouvertureMoyenne < 14
                     ? 'var(--amber-pork)'
                     : undefined
