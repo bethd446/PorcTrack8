@@ -678,10 +678,10 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
                 data-testid="recap-ecart"
                 style={{
                   borderLeft: `4px solid ${
-                    recapStats.couleur === 'vert' ? '#16a34a'
-                    : recapStats.couleur === 'rouge' ? '#dc2626'
-                    : recapStats.couleur === 'ambre' ? '#d97706'
-                    : '#94a3b8'
+                    recapStats.couleur === 'vert' ? 'var(--pt-primary)'
+                    : recapStats.couleur === 'rouge' ? 'var(--pt-danger)'
+                    : recapStats.couleur === 'ambre' ? 'var(--pt-accent-deep)'
+                    : 'var(--pt-text-subtle)'
                   }`,
                 }}
               >
@@ -706,7 +706,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
                 role="alert"
                 data-testid="recap-warning"
                 className="card-dense !p-3 flex items-start gap-2"
-                style={{ borderLeft: '4px solid #dc2626', background: 'rgba(220,38,38,0.06)' }}
+                style={{ borderLeft: '4px solid var(--pt-danger)', background: 'rgba(220,38,38,0.06)' }}
               >
                 <AlertTriangle size={16} className="text-red mt-0.5" />
                 <div className="text-[12px] text-text-0">

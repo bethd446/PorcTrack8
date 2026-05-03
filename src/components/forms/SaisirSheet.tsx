@@ -122,14 +122,14 @@ const ACTIONS: ActionDef[] = [
 ];
 
 const TONE_BG: Record<ActionDef['tone'], string> = {
-  default: 'var(--bg-2, #f3f4f6)',
+  default: 'var(--pt-surface-alt)',
   accent: 'color-mix(in srgb, var(--color-accent-500) 14%, transparent)',
   amber: 'color-mix(in srgb, var(--amber-pork, #F4A261) 18%, transparent)',
   red: 'color-mix(in srgb, var(--red, #dc2626) 14%, transparent)',
 };
 
 const TONE_FG: Record<ActionDef['tone'], string> = {
-  default: 'var(--ink, #111827)',
+  default: 'var(--pt-text)',
   accent: 'var(--color-accent-500)',
   amber: 'var(--amber-pork, #F4A261)',
   red: 'var(--red, #dc2626)',
@@ -214,7 +214,7 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
         className="relative w-full max-w-[520px] rounded-t-2xl shadow-2xl animate-fade-in-up"
         style={{
           background: 'var(--bg-app, #f0f4f3)',
-          borderTop: '1px solid var(--line, rgba(0,0,0,0.08))',
+          borderTop: '1px solid var(--pt-divider)',
           paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)',
         }}
       >
@@ -224,7 +224,7 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
             className="text-[22px] uppercase tracking-wide"
             style={{
               fontFamily: 'var(--font-heading)',
-              color: 'var(--ink, #111827)',
+              color: 'var(--pt-text)',
               fontWeight: 700,
             }}
           >
@@ -237,8 +237,8 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
             aria-label="Fermer"
             className="inline-flex h-10 w-10 items-center justify-center rounded-full active:scale-[0.94] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
             style={{
-              background: 'var(--bg-2, #f3f4f6)',
-              color: 'var(--ink, #111827)',
+              background: 'var(--pt-surface-alt)',
+              color: 'var(--pt-text)',
               outlineColor: 'var(--color-accent-500)',
               transition: 'transform var(--duration-press) var(--ease-emil)',
             }}
@@ -254,7 +254,7 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
                 <div
                   aria-hidden="true"
                   className="my-2 h-px"
-                  style={{ background: 'var(--line, rgba(0,0,0,0.08))' }}
+                  style={{ background: 'var(--pt-divider)' }}
                 />
               ) : null}
               <button
@@ -262,8 +262,8 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
                 onClick={() => handlePick(kind)}
                 className="flex w-full items-center gap-3 rounded-2xl px-4 py-4 text-left active:scale-[0.985] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
                 style={{
-                  background: 'var(--bg-surface, #fff)',
-                  border: '1px solid var(--line, rgba(0,0,0,0.08))',
+                  background: 'var(--pt-surface)',
+                  border: '1px solid var(--pt-divider)',
                   outlineColor: 'var(--color-accent-500)',
                   transition: 'transform var(--duration-press) var(--ease-emil)',
                 }}
@@ -280,7 +280,7 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
                     className="block text-[15px] font-semibold leading-tight"
                     style={{
                       fontFamily: 'var(--font-body)',
-                      color: 'var(--ink, #111827)',
+                      color: 'var(--pt-text)',
                     }}
                   >
                     {title}
@@ -289,7 +289,7 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
                     className="mt-0.5 block text-[12px] leading-snug"
                     style={{
                       fontFamily: 'var(--font-body)',
-                      color: 'var(--ink-soft, var(--muted, #6b7280))',
+                      color: 'var(--pt-text-muted)',
                     }}
                   >
                     {description}

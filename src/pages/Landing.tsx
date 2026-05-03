@@ -31,8 +31,8 @@ export default function Landing() {
         zIndex: 1,
         minHeight: '100%',
         width: '100%',
-        background: 'var(--bg-app, #f0f4f3)',
-        color: 'var(--ink, #111827)',
+        background: 'var(--pt-bg)',
+        color: 'var(--pt-text)',
         fontFamily: FONT_BODY,
       }}
     >

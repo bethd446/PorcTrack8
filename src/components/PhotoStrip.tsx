@@ -132,7 +132,7 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ subjectType, subjectId }) => {
         onDidDismiss={() => setSelectedPhoto(null)}
         className="agritech-photo-modal"
       >
-        <IonContent className="ion-padding" style={{ '--background': '#000' } as React.CSSProperties}>
+        <IonContent className="ion-padding" style={{ '--background': 'black' } as React.CSSProperties}>
           <div
             className="h-full flex flex-col"
             role="dialog"

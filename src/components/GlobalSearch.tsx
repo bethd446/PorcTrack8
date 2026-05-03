@@ -111,16 +111,16 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ open, onClose }) => {
           'sm:max-w-[560px] sm:rounded-xl',
         )}
         style={{
-          background: 'var(--bg-surface, #ffffff)',
+          background: 'var(--pt-surface)',
           borderColor: 'var(--line)',
         }}
       >
         {/* Header / input */}
         <div
           className="flex items-center gap-3 border-b px-4 py-3"
-          style={{ borderColor: 'var(--line, #e5e7eb)' }}
+          style={{ borderColor: 'var(--pt-divider)' }}
         >
-          <Search size={18} aria-hidden="true" className="shrink-0 text-[color:var(--text-2,#64748b)]" />
+          <Search size={18} aria-hidden="true" className="shrink-0 text-[color:var(--pt-text-muted)]" />
           <input
             ref={inputRef}
             type="text"
@@ -130,14 +130,14 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ open, onClose }) => {
             aria-label="Texte de recherche"
             autoComplete="off"
             spellCheck={false}
-            className="flex-1 bg-transparent text-[15px] outline-none placeholder:text-[color:var(--text-3,#94a3b8)]"
-            style={{ color: 'var(--text-0, #0f172a)' }}
+            className="flex-1 bg-transparent text-[15px] outline-none placeholder:text-[color:var(--pt-text-subtle)]"
+            style={{ color: 'var(--pt-text)' }}
           />
           <button
             type="button"
             onClick={close}
             aria-label="Fermer la recherche"
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md hover:bg-[color:var(--bg-2,#f1f5f9)]"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md hover:bg-[color:var(--pt-surface-alt)]"
           >
             <X size={16} aria-hidden="true" />
           </button>
@@ -146,11 +146,11 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ open, onClose }) => {
         {/* Results */}
         <div className="flex-1 overflow-y-auto" role="listbox" aria-label="Résultats de recherche">
           {query.trim() === '' ? (
-            <div className="px-4 py-6 text-center text-[13px] text-[color:var(--text-2,#64748b)]">
+            <div className="px-4 py-6 text-center text-[13px] text-[color:var(--pt-text-muted)]">
               Tape un numéro de boucle, un nom de truie ou un identifiant de bande.
             </div>
           ) : results.length === 0 ? (
-            <div className="px-4 py-6 text-center text-[13px] text-[color:var(--text-2,#64748b)]">
+            <div className="px-4 py-6 text-center text-[13px] text-[color:var(--pt-text-muted)]">
               Aucun résultat pour "{query}".
             </div>
           ) : (
@@ -169,15 +169,15 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ open, onClose }) => {
                       className={cn(
                         'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors',
                         active
-                          ? 'bg-[color:var(--bg-2,#f1f5f9)]'
-                          : 'hover:bg-[color:var(--bg-2,#f1f5f9)]',
+                          ? 'bg-[color:var(--pt-surface-alt)]'
+                          : 'hover:bg-[color:var(--pt-surface-alt)]',
                       )}
                     >
                       <span
                         className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
                         style={{
-                          background: 'var(--accent-soft, #d1fae5)',
-                          color: 'var(--accent, #065f46)',
+                          background: 'var(--pt-accent-soft)',
+                          color: 'var(--pt-accent-deep)',
                         }}
                         aria-hidden="true"
                       >
@@ -187,22 +187,22 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ open, onClose }) => {
                         <div className="flex items-center gap-2">
                           <span
                             className="truncate text-[14px]"
-                            style={{ color: 'var(--text-0, #0f172a)' }}
+                            style={{ color: 'var(--pt-text)' }}
                           >
                             {r.primary}
                           </span>
                           <span
                             className="shrink-0 rounded-full px-2 py-0.5 text-[11px] uppercase tracking-wide"
                             style={{
-                              background: 'var(--bg-2, #f1f5f9)',
-                              color: 'var(--text-2, #64748b)',
+                              background: 'var(--pt-surface-alt)',
+                              color: 'var(--pt-text-muted)',
                             }}
                           >
                             {LABEL_BY_TYPE[r.type]}
                           </span>
                         </div>
                         {r.secondary ? (
-                          <div className="truncate text-[12px] text-[color:var(--text-2,#64748b)]">
+                          <div className="truncate text-[12px] text-[color:var(--pt-text-muted)]">
                             {r.secondary}
                           </div>
                         ) : null}
@@ -217,8 +217,8 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ open, onClose }) => {
 
         {/* Footer */}
         <div
-          className="hidden items-center justify-between border-t px-4 py-2 text-[12px] text-[color:var(--text-2,#64748b)] sm:flex"
-          style={{ borderColor: 'var(--line, #e5e7eb)' }}
+          className="hidden items-center justify-between border-t px-4 py-2 text-[12px] text-[color:var(--pt-text-muted)] sm:flex"
+          style={{ borderColor: 'var(--pt-divider)' }}
         >
           <span>Entrée pour ouvrir · Échap pour fermer</span>
           <span className="ft-code">Cmd K</span>
