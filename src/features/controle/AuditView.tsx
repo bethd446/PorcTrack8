@@ -1,11 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  IonPage, IonContent, IonSpinner, IonRefresher, IonRefresherContent
+  IonPage, IonContent, IonSpinner, IonRefresher, IonRefresherContent,
 } from '@ionic/react';
-import {
-  Layers, Leaf, Box, ChevronRight, AlertCircle, CheckCircle2,
-  AlertTriangle, ShieldAlert
-} from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Package, Heart, Layers, Pill } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   getBandes,
@@ -15,30 +12,82 @@ import {
   getStockVeto,
 } from '../../services/supabaseService';
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
-import { Chip, SectionDivider } from '../../components/agritech';
+import { AlertGroup, AlertRow, SectionHeader, Tabs } from '../../components/design-system';
 
-interface AuditAlert {
-  id: string;
-  source: 'BANDE' | 'TRUIE' | 'STOCK' | 'SANTE';
-  targetId: string;
-  title: string;
-  description: string;
-  severity: 'HIGH' | 'MEDIUM' | 'LOW';
+/**
+ * AuditView — V31-FIX-PACK-01
+ * ════════════════════════════════════════════════════════════════════════════
+ * Refonte complète de la page /audit. Migre du rendu "carte par alerte avec
+ * UUID visible" vers un rendu groupé en AlertGroup + AlertRow alignés sur le
+ * Design System V30/V31 (--pt-* tokens, DNA "Aujourd'hui").
+ *
+ * Sectioning :
+ *   - CRITIQUES (severity urgent · bordure rouge)
+ *   - À SURVEILLER (severity surveil · bordure orange)
+ *
+ * Catégories d'alertes (groupées par AlertGroup) :
+ *   1. Stocks véto en rupture           → urgent
+ *   2. Stocks véto bas                  → surveil
+ *   3. Stocks aliments critiques        → urgent (rupture) / surveil (bas)
+ *   4. Bandes — anomalies               → urgent (mortalité, retard sevrage)
+ *                                       → surveil (portée faible, incohérence)
+ *   5. Truies — gestation prolongée     → urgent
+ *   6. Santé — cibles manquantes        → surveil
+ *
+ * UUIDs : aucun n'est rendu dans le DOM textuel. Pour les stocks, on utilise
+ * `libelle` / `produit`. Pour les bandes, `idPortee` (code_id lisible). Pour
+ * les truies, `displayId`. Pour santé, le label "type de soin".
+ */
+
+type CategoryKey = 'ALL' | 'CRITIQUE' | 'STOCK' | 'SANTE';
+
+interface VetoIssue { name: string; type?: string; value: number; unit: string; statut: 'RUPTURE' | 'BAS' }
+interface AlimentIssue { name: string; value: number; unit: string; statut: 'RUPTURE' | 'BAS' }
+interface BandeIssue { code: string; kind: 'mortalite' | 'retard-sevrage' | 'portee-faible' | 'incoherence' | 'date-illogique' | 'erreur-saisie'; detail: string; severity: 'urgent' | 'surveil' }
+interface TruieIssue { code: string; daysLate: number }
+interface SanteIssue { typeSoin: string }
+
+interface AuditState {
+  vetoRupture: VetoIssue[];
+  vetoBas: VetoIssue[];
+  alimentsRupture: AlimentIssue[];
+  alimentsBas: AlimentIssue[];
+  bandesUrgent: BandeIssue[];
+  bandesSurveil: BandeIssue[];
+  truiesRetard: TruieIssue[];
+  santeMissing: SanteIssue[];
 }
 
-type FilterKey = 'ALL' | 'BANDE' | 'TRUIE' | 'STOCK' | 'SANTE';
+const EMPTY_AUDIT: AuditState = {
+  vetoRupture: [],
+  vetoBas: [],
+  alimentsRupture: [],
+  alimentsBas: [],
+  bandesUrgent: [],
+  bandesSurveil: [],
+  truiesRetard: [],
+  santeMissing: [],
+};
 
 const AuditView: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [alerts, setAlerts] = useState<AuditAlert[]>([]);
-  const [filter, setFilter] = useState<FilterKey>('ALL');
+  const [audit, setAudit] = useState<AuditState>(EMPTY_AUDIT);
+  const [filter, setFilter] = useState<CategoryKey>('ALL');
 
   const runAudit = useCallback(async (): Promise<void> => {
     setLoading(true);
-    const newAlerts: AuditAlert[] = [];
+    const next: AuditState = {
+      vetoRupture: [],
+      vetoBas: [],
+      alimentsRupture: [],
+      alimentsBas: [],
+      bandesUrgent: [],
+      bandesSurveil: [],
+      truiesRetard: [],
+      santeMissing: [],
+    };
 
     try {
       const [bandeRes, truieRes, stockRes, healthRes, vetoRes] = await Promise.all([
@@ -49,10 +98,10 @@ const AuditView: React.FC = () => {
         getStockVeto(),
       ]);
 
-      // 1. Audit Bandes
+      // 1. Bandes — agrégation par type d'incohérence
       if (bandeRes.success) {
         bandeRes.data.forEach(b => {
-          const id = b.idPortee;
+          const code = b.idPortee; // code_id lisible (pas l'UUID)
           const morts = b.morts ?? 0;
           const nv = b.nv ?? 0;
           const vivants = b.vivants ?? 0;
@@ -61,130 +110,107 @@ const AuditView: React.FC = () => {
           const mb = b.dateMB;
 
           if (morts > 0) {
-            newAlerts.push({
-              id: `CHK_B1_${id}`, source: 'BANDE', targetId: id,
-              title: 'Mortalité détectée', severity: 'HIGH',
-              description: `${morts} porcelet(s) mort(s) signalés dans la bande ${id}.`,
+            next.bandesUrgent.push({
+              code, kind: 'mortalite',
+              detail: `${morts} porcelet(s) mort(s)`, severity: 'urgent',
             });
           }
-
           if (morts > nv) {
-            newAlerts.push({
-              id: `CHK_B4_${id}`, source: 'BANDE', targetId: id,
-              title: 'Erreur saisie morts', severity: 'HIGH',
-              description: `Le nombre de morts (${morts}) est supérieur aux nés vivants (${nv}).`,
+            next.bandesUrgent.push({
+              code, kind: 'erreur-saisie',
+              detail: `Morts (${morts}) > NV (${nv})`, severity: 'urgent',
             });
           }
-
           if (vivants !== (nv - morts)) {
-            newAlerts.push({
-              id: `CHK_B5_${id}`, source: 'BANDE', targetId: id,
-              title: 'Incohérence effectif', severity: 'MEDIUM',
-              description: `Vivants (${vivants}) ≠ NV (${nv}) - Morts (${morts}).`,
+            next.bandesSurveil.push({
+              code, kind: 'incoherence',
+              detail: `Vivants (${vivants}) ≠ NV-Morts`, severity: 'surveil',
             });
           }
-
           if (nv < 5 && nv > 0) {
-            newAlerts.push({
-              id: `CHK_B2_${id}`, source: 'BANDE', targetId: id,
-              title: 'Portée faible', severity: 'MEDIUM',
-              description: `Seulement ${nv} nés vivants. Vérifier l'état de la truie.`,
+            next.bandesSurveil.push({
+              code, kind: 'portee-faible',
+              detail: `${nv} nés vivants`, severity: 'surveil',
             });
           }
-
           if (sp && mb) {
             const spDate = new Date(sp);
             const mbDate = new Date(mb);
             if (!isNaN(spDate.getTime()) && !isNaN(mbDate.getTime()) && spDate < mbDate) {
-              newAlerts.push({
-                id: `CHK_B6_${id}`, source: 'BANDE', targetId: id,
-                title: 'Date sevrage illogique', severity: 'HIGH',
-                description: `Date sevrage prévue (${sp}) avant Date MB (${mb}).`,
+              next.bandesUrgent.push({
+                code, kind: 'date-illogique',
+                detail: 'Sevrage prévu avant MB', severity: 'urgent',
               });
             }
           }
-
           if (sp && !sr) {
             const spDate = new Date(sp);
             if (!isNaN(spDate.getTime()) && spDate < new Date()) {
-              newAlerts.push({
-                id: `CHK_B3_${id}`, source: 'BANDE', targetId: id,
-                title: 'Retard sevrage', severity: 'HIGH',
-                description: `Date de sevrage prévue (${sp}) dépassée.`,
+              next.bandesUrgent.push({
+                code, kind: 'retard-sevrage',
+                detail: 'Date sevrage dépassée', severity: 'urgent',
               });
             }
           }
         });
       }
 
-      // 2. Audit Truies
+      // 2. Truies — gestation prolongée
       if (truieRes.success) {
         truieRes.data.forEach(t => {
-          const id = t.displayId;
+          const code = t.displayId;
           const mb = t.dateMBPrevue;
           const statut = String(t.statut ?? '').toUpperCase();
-
           if (mb && (statut.includes('GESTANTE') || statut.includes('ATTENTE') || statut.includes('PLEINE'))) {
             const mbDate = new Date(mb);
             if (!isNaN(mbDate.getTime())) {
-              const diffDays = Math.floor(
-                (new Date().getTime() - mbDate.getTime()) / (1000 * 3600 * 24)
-              );
-              if (diffDays > 3) {
-                newAlerts.push({
-                  id: `CHK_T1_${id}`, source: 'TRUIE', targetId: id,
-                  title: 'Mise-bas en retard', severity: 'HIGH',
-                  description: `Gestation prolongée pour ${id} (+${diffDays}j). Risque de complications.`,
-                });
-              }
+              const diffDays = Math.floor((Date.now() - mbDate.getTime()) / 86_400_000);
+              if (diffDays > 3) next.truiesRetard.push({ code, daysLate: diffDays });
             }
           }
         });
       }
 
-      // 3. Audit Stocks
+      // 3. Stocks Aliments
       if (stockRes.success) {
         stockRes.data.forEach(s => {
-          if (s.stockActuel < 100) {
-            newAlerts.push({
-              id: `CHK_S1_${s.id}`, source: 'STOCK', targetId: s.id,
-              title: 'Stock critique', severity: 'HIGH',
-              description: `Il ne reste que ${s.stockActuel}${s.unite || 'kg'} de ${s.libelle}.`,
+          if (s.stockActuel <= 0) {
+            next.alimentsRupture.push({
+              name: s.libelle, value: s.stockActuel, unit: s.unite || 'kg', statut: 'RUPTURE',
+            });
+          } else if (s.stockActuel < 100) {
+            next.alimentsBas.push({
+              name: s.libelle, value: s.stockActuel, unit: s.unite || 'kg', statut: 'BAS',
             });
           }
         });
       }
 
-      // 4. Audit Santé — cibles manquantes
-      if (healthRes.success) {
-        healthRes.data.forEach((row, i) => {
-          if (row.cibleType && row.cibleType !== 'GENERAL' && (!row.cibleId || row.cibleId === 'N/A')) {
-            newAlerts.push({
-              id: `CHK_H1_${i}`, source: 'SANTE', targetId: 'N/A',
-              title: 'Cible manquante', severity: 'MEDIUM',
-              description: `Intervention type "${row.typeSoin}" sans animal/bande rattaché.`,
-            });
-          }
-        });
-      }
-
-      // 5. Audit Stock Véto — pas de DLC dans le schéma Supabase actuel.
-      // Sémantique perdue : la péremption DLC n'est plus auditée (champ absent
-      // de produits_veto). Ruptures stocks véto auditées à la place.
+      // 4. Stocks Véto
       if (vetoRes.success) {
         vetoRes.data.forEach(v => {
-          if (v.statutStock === 'RUPTURE' || v.statutStock === 'BAS') {
-            newAlerts.push({
-              id: `CHK_V1_${v.id}`, source: 'STOCK', targetId: v.id,
-              title: v.statutStock === 'RUPTURE' ? 'Rupture véto' : 'Stock véto bas',
-              severity: v.statutStock === 'RUPTURE' ? 'HIGH' : 'MEDIUM',
-              description: `${v.produit} : ${v.stockActuel}${v.unite || 'doses'} restant.`,
+          if (v.statutStock === 'RUPTURE') {
+            next.vetoRupture.push({
+              name: v.produit, type: v.type, value: v.stockActuel, unit: v.unite || 'doses', statut: 'RUPTURE',
+            });
+          } else if (v.statutStock === 'BAS') {
+            next.vetoBas.push({
+              name: v.produit, type: v.type, value: v.stockActuel, unit: v.unite || 'doses', statut: 'BAS',
             });
           }
         });
       }
 
-      setAlerts(newAlerts.sort((a, _b) => (a.severity === 'HIGH' ? -1 : 1)));
+      // 5. Santé — cibles manquantes
+      if (healthRes.success) {
+        healthRes.data.forEach(row => {
+          if (row.cibleType && row.cibleType !== 'GENERAL' && (!row.cibleId || row.cibleId === 'N/A')) {
+            next.santeMissing.push({ typeSoin: row.typeSoin });
+          }
+        });
+      }
+
+      setAudit(next);
     } catch (e) {
       console.error(e);
     } finally {
@@ -198,56 +224,43 @@ const AuditView: React.FC = () => {
     runAudit();
   }, [runAudit]);
 
-  const getSourceIcon = (source: string): React.ComponentType<{ size?: number; className?: string; 'aria-hidden'?: boolean }> => {
-    switch (source) {
-      case 'BANDE':
-        return Layers;
-      case 'TRUIE':
-        return Leaf;
-      case 'STOCK':
-        return Box;
-      case 'SANTE':
-        return ShieldAlert;
-      default:
-        return AlertCircle;
-    }
-  };
-
-  const handleAlertClick = (alert: AuditAlert): void => {
-    if (alert.source === 'BANDE') navigate(`/troupeau/bandes/${alert.targetId}`);
-    if (alert.source === 'TRUIE') navigate(`/troupeau/truies/${alert.targetId}`);
-    if (alert.source === 'STOCK') navigate(`/ressources/aliments`);
-  };
-
-  const filtered = useMemo<AuditAlert[]>(() => {
-    if (filter === 'ALL') return alerts;
-    return alerts.filter(a => a.source === filter);
-  }, [alerts, filter]);
-
+  // Compteurs
   const counts = useMemo(() => {
+    const critiques = audit.vetoRupture.length
+      + audit.alimentsRupture.length
+      + audit.bandesUrgent.length
+      + audit.truiesRetard.length;
+    const stocks = audit.vetoBas.length + audit.alimentsBas.length;
+    const sante = audit.santeMissing.length + audit.bandesSurveil.length;
     return {
-      ALL: alerts.length,
-      BANDE: alerts.filter(a => a.source === 'BANDE').length,
-      TRUIE: alerts.filter(a => a.source === 'TRUIE').length,
-      STOCK: alerts.filter(a => a.source === 'STOCK').length,
-      SANTE: alerts.filter(a => a.source === 'SANTE').length,
+      critiques,
+      stocks,
+      sante,
+      total: critiques + stocks + sante,
     };
-  }, [alerts]);
+  }, [audit]);
 
-  const filterDefs: { key: FilterKey; label: string }[] = [
-    { key: 'ALL', label: 'Tout' },
-    { key: 'BANDE', label: 'Bandes' },
-    { key: 'TRUIE', label: 'Truies' },
-    { key: 'STOCK', label: 'Stocks' },
-    { key: 'SANTE', label: 'Santé' },
-  ];
+  const tabItems = useMemo(() => [
+    { id: 'ALL' as const, label: 'Toutes', count: counts.total },
+    { id: 'CRITIQUE' as const, label: 'Critiques', count: counts.critiques },
+    { id: 'STOCK' as const, label: 'Stocks', count: counts.stocks },
+    { id: 'SANTE' as const, label: 'Santé', count: counts.sante },
+  ], [counts]);
+
+  // Helpers d'affichage
+  const showCritique = filter === 'ALL' || filter === 'CRITIQUE';
+  const showStock = filter === 'ALL' || filter === 'STOCK';
+  const showSante = filter === 'ALL' || filter === 'SANTE';
+
+  const hasCritique = counts.critiques > 0 && showCritique;
+  const hasSurveil = (counts.stocks > 0 && showStock) || (counts.sante > 0 && showSante);
 
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout withNav={true}>
           <TopBarSync
-            crumbs={['Outils', 'Audit']}
+            crumbs={['Outils', 'Audit du jour']}
             onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
           />
 
@@ -258,148 +271,346 @@ const AuditView: React.FC = () => {
             <IonRefresherContent />
           </IonRefresher>
 
-          <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <header>
-              <Eyebrow dotColor="accent">Outils · Audit</Eyebrow>
+          <div
+            className="px-4 pt-5 pb-32 flex flex-col gap-6"
+            style={{ maxWidth: 900, margin: '0 auto' }}
+          >
+            {/* HEADER ─────────────────────────────────────────────────── */}
+            <header style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <span
+                style={{
+                  fontFamily: 'var(--pt-font-body)',
+                  fontSize: 'var(--pt-text-label)',
+                  letterSpacing: 'var(--pt-tracking-label)',
+                  textTransform: 'uppercase',
+                  color: 'var(--pt-text-subtle)',
+                  fontWeight: 600,
+                }}
+              >
+                Outils · Audit du jour
+              </span>
               <h1
                 style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
+                  margin: 0,
+                  fontFamily: 'var(--pt-font-display)',
+                  fontSize: 'var(--pt-text-display)',
                   fontWeight: 700,
-                  lineHeight: 1,
+                  lineHeight: 1.05,
                   letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '8px 0 4px',
+                  color: 'var(--pt-text)',
                 }}
               >
-                Audit cohérence
+                Audit du jour
               </h1>
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--muted)',
-                }}
-              >
-                {alerts.length} incohérence{alerts.length > 1 ? 's' : ''} détectée{alerts.length > 1 ? 's' : ''}
-              </div>
+              {!loading && counts.total > 0 ? (
+                <div
+                  style={{
+                    fontFamily: 'var(--pt-font-body)',
+                    fontSize: 14,
+                    color: 'var(--pt-text-muted)',
+                    marginTop: 2,
+                  }}
+                >
+                  <span style={{ color: counts.critiques > 0 ? 'var(--pt-danger)' : 'var(--pt-text-muted)', fontWeight: 600 }}>
+                    {counts.critiques} critique{counts.critiques > 1 ? 's' : ''}
+                  </span>
+                  {' · '}
+                  <span style={{ color: 'var(--pt-accent)', fontWeight: 600 }}>
+                    {counts.stocks} stock{counts.stocks > 1 ? 's' : ''} bas
+                  </span>
+                  {' · '}
+                  <span style={{ color: 'var(--pt-text)', fontWeight: 600 }}>
+                    {counts.sante} santé
+                  </span>
+                </div>
+              ) : null}
             </header>
 
-            <div
-              className="flex gap-2 overflow-x-auto -mx-1 px-1"
-              role="tablist"
-              aria-label="Filtres"
-            >
-              {filterDefs.map(f => {
-                const active = filter === f.key;
-                return (
-                  <button
-                    key={f.key}
-                    type="button"
-                    role="tab"
-                    aria-selected={active}
-                    onClick={() => setFilter(f.key)}
-                    className={
-                      'pressable shrink-0 inline-flex items-center gap-1.5 px-3 h-8 rounded-md border text-[11px] font-semibold uppercase tracking-wide transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 ' +
-                      (active
-                        ? 'bg-accent text-bg-0 border-accent'
-                        : 'bg-bg-1 text-text-1 border-border hover:border-accent/60 hover:text-text-0')
-                    }
-                  >
-                    <span>{f.label}</span>
-                    <span
-                      className={
-                        'font-mono tabular-nums text-[10px] ' +
-                        (active ? 'text-bg-0/80' : 'text-text-2')
-                      }
-                    >
-                      {counts[f.key]}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+            {/* TABS FILTRES ──────────────────────────────────────────── */}
+            {!loading && counts.total > 0 ? (
+              <div style={{ overflowX: 'auto', margin: '0 -4px', padding: '0 4px' }}>
+                <Tabs
+                  items={tabItems}
+                  value={filter}
+                  onChange={(id: string) => setFilter(id as CategoryKey)}
+                  ariaLabel="Filtres audit"
+                />
+              </div>
+            ) : null}
 
+            {/* LOADING ───────────────────────────────────────────────── */}
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20">
-                <IonSpinner
-                  name="crescent"
-                  style={{ color: 'var(--color-accent)' }}
-                />
-                <p className="mt-3 font-mono text-[11px] uppercase tracking-wide text-text-2">
+                <IonSpinner name="crescent" style={{ color: 'var(--pt-primary)' }} />
+                <p
+                  style={{
+                    marginTop: 12,
+                    fontFamily: 'var(--pt-font-body)',
+                    fontSize: 11,
+                    textTransform: 'uppercase',
+                    letterSpacing: 'var(--pt-tracking-label)',
+                    color: 'var(--pt-text-subtle)',
+                  }}
+                >
                   Analyse transversale…
                 </p>
               </div>
-            ) : alerts.length === 0 ? (
-              <div className="card-dense flex flex-col items-center text-center py-12">
+            ) : counts.total === 0 ? (
+              <section
+                aria-label="Registre intègre"
+                style={{
+                  background: 'var(--pt-surface)',
+                  borderRadius: 'var(--pt-radius-lg)',
+                  boxShadow: 'var(--pt-shadow-card)',
+                  padding: 'var(--pt-space-7) var(--pt-space-5)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                }}
+              >
                 <div
-                  className="inline-flex h-16 w-16 items-center justify-center rounded-md bg-bg-2 border border-accent/40 text-accent mb-5"
                   aria-hidden="true"
+                  style={{
+                    width: 64, height: 64, borderRadius: 16,
+                    background: 'rgba(45, 74, 31, 0.10)',
+                    color: 'var(--pt-primary)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    marginBottom: 'var(--pt-space-4)',
+                  }}
                 >
                   <CheckCircle2 size={32} />
                 </div>
-                <h3 className="agritech-heading text-[18px] uppercase mb-2">
+                <h3
+                  style={{
+                    margin: 0,
+                    fontFamily: 'var(--pt-font-display)',
+                    fontSize: 'var(--pt-text-h2)',
+                    fontWeight: 700,
+                    color: 'var(--pt-text)',
+                    textTransform: 'uppercase',
+                  }}
+                >
                   Registre intègre
                 </h3>
-                <p className="font-mono text-[11px] text-text-2 max-w-xs leading-relaxed">
+                <p
+                  style={{
+                    marginTop: 8,
+                    fontFamily: 'var(--pt-font-body)',
+                    fontSize: 13,
+                    color: 'var(--pt-text-muted)',
+                    maxWidth: 320,
+                    lineHeight: 1.5,
+                  }}
+                >
                   Aucune incohérence majeure détectée dans les bases de données actuelles.
                 </p>
-              </div>
+              </section>
             ) : (
               <>
-                <SectionDivider label={filter === 'ALL' ? 'Incohérences' : `Incohérences · ${filter}`} />
-                <ul className="space-y-3" aria-label="Liste des incohérences">
-                  {filtered.map(alert => {
-                    const Icon = getSourceIcon(alert.source);
-                    const isHigh = alert.severity === 'HIGH';
-                    return (
-                      <li key={alert.id}>
-                        <button
-                          type="button"
-                          onClick={() => handleAlertClick(alert)}
-                          className="card-dense pressable w-full text-left flex items-start gap-3 relative focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-                        >
-                          <span
-                            className={
-                              'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-bg-2 ' +
-                              (isHigh ? 'text-red' : 'text-amber')
-                            }
-                            aria-hidden="true"
-                          >
-                            {isHigh ? (
-                              <AlertTriangle size={16} />
-                            ) : (
-                              <Icon size={16} />
-                            )}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="agritech-heading text-[14px] uppercase leading-none">
-                                {alert.title}
-                              </h3>
-                              <Chip
-                                label={alert.severity}
-                                size="xs"
-                                tone={isHigh ? 'red' : 'amber'}
-                              />
-                            </div>
-                            <div className="mt-1 font-mono text-[11px] text-text-2">
-                              {alert.source} · #{alert.targetId}
-                            </div>
-                            <p className="mt-2 text-[13px] text-text-1 leading-relaxed pr-6">
-                              {alert.description}
-                            </p>
-                          </div>
-                          <ChevronRight
-                            size={16}
-                            className="shrink-0 text-text-2 mt-1"
-                            aria-hidden="true"
+                {/* SECTION CRITIQUES ─────────────────────────────────── */}
+                {hasCritique ? (
+                  <>
+                    <SectionHeader label="Critiques" tone="accent" />
+
+                    {showCritique && audit.vetoRupture.length > 0 ? (
+                      <AlertGroup
+                        icon={<Pill size={20} aria-hidden="true" />}
+                        title="Stocks véto en rupture"
+                        subtitle={`${audit.vetoRupture.length} produit${audit.vetoRupture.length > 1 ? 's' : ''} à recommander`}
+                        severity="urgent"
+                        count={audit.vetoRupture.length}
+                        action={{
+                          label: 'VOIR LE STOCK',
+                          onClick: () => navigate('/ressources/pharmacie'),
+                        }}
+                      >
+                        {audit.vetoRupture.map((v, i) => (
+                          <AlertRow
+                            key={`vrup-${i}-${v.name}`}
+                            primary={v.name}
+                            secondary={v.type}
+                            value={String(v.value)}
+                            unit={v.unit}
+                            valueDanger
                           />
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
+                        ))}
+                      </AlertGroup>
+                    ) : null}
+
+                    {showCritique && audit.alimentsRupture.length > 0 ? (
+                      <AlertGroup
+                        icon={<Package size={20} aria-hidden="true" />}
+                        title="Aliments en rupture"
+                        subtitle={`${audit.alimentsRupture.length} aliment${audit.alimentsRupture.length > 1 ? 's' : ''} à recommander`}
+                        severity="urgent"
+                        count={audit.alimentsRupture.length}
+                        action={{
+                          label: 'VOIR LE STOCK',
+                          onClick: () => navigate('/ressources/aliments'),
+                        }}
+                      >
+                        {audit.alimentsRupture.map((s, i) => (
+                          <AlertRow
+                            key={`arup-${i}-${s.name}`}
+                            primary={s.name}
+                            value={String(s.value)}
+                            unit={s.unit}
+                            valueDanger
+                          />
+                        ))}
+                      </AlertGroup>
+                    ) : null}
+
+                    {showCritique && audit.bandesUrgent.length > 0 ? (
+                      <AlertGroup
+                        icon={<Layers size={20} aria-hidden="true" />}
+                        title="Bandes — anomalies"
+                        subtitle={`${audit.bandesUrgent.length} incohérence${audit.bandesUrgent.length > 1 ? 's' : ''} sur portées`}
+                        severity="urgent"
+                        count={audit.bandesUrgent.length}
+                        action={{
+                          label: 'VOIR LES BANDES',
+                          onClick: () => navigate('/troupeau?view=bandes'),
+                        }}
+                      >
+                        {audit.bandesUrgent.map((b, i) => (
+                          <AlertRow
+                            key={`bu-${i}-${b.code}-${b.kind}`}
+                            primary={b.code}
+                            secondary={b.detail}
+                            value="!"
+                            valueDanger
+                            onClick={() => navigate(`/troupeau/bandes/${b.code}`)}
+                          />
+                        ))}
+                      </AlertGroup>
+                    ) : null}
+
+                    {showCritique && audit.truiesRetard.length > 0 ? (
+                      <AlertGroup
+                        icon={<Heart size={20} aria-hidden="true" />}
+                        title="Truies — gestation prolongée"
+                        subtitle={`${audit.truiesRetard.length} truie${audit.truiesRetard.length > 1 ? 's' : ''} en retard`}
+                        severity="urgent"
+                        count={audit.truiesRetard.length}
+                      >
+                        {audit.truiesRetard.map((t, i) => (
+                          <AlertRow
+                            key={`tr-${i}-${t.code}`}
+                            primary={t.code}
+                            secondary="Mise-bas en retard"
+                            value={`+${t.daysLate}`}
+                            unit="j"
+                            valueDanger
+                            onClick={() => navigate(`/troupeau/truies/${t.code}`)}
+                          />
+                        ))}
+                      </AlertGroup>
+                    ) : null}
+                  </>
+                ) : null}
+
+                {/* SECTION À SURVEILLER ──────────────────────────────── */}
+                {hasSurveil ? (
+                  <>
+                    <SectionHeader label="À surveiller" tone="primary" />
+
+                    {showStock && audit.vetoBas.length > 0 ? (
+                      <AlertGroup
+                        icon={<Pill size={20} aria-hidden="true" />}
+                        title="Stocks véto bas"
+                        subtitle={`${audit.vetoBas.length} produit${audit.vetoBas.length > 1 ? 's' : ''} sous le seuil`}
+                        severity="surveil"
+                        count={audit.vetoBas.length}
+                        action={{
+                          label: 'VOIR LE STOCK',
+                          onClick: () => navigate('/ressources/pharmacie'),
+                        }}
+                      >
+                        {audit.vetoBas.map((v, i) => (
+                          <AlertRow
+                            key={`vbas-${i}-${v.name}`}
+                            primary={v.name}
+                            secondary={v.type}
+                            value={String(v.value)}
+                            unit={v.unit}
+                          />
+                        ))}
+                      </AlertGroup>
+                    ) : null}
+
+                    {showStock && audit.alimentsBas.length > 0 ? (
+                      <AlertGroup
+                        icon={<Package size={20} aria-hidden="true" />}
+                        title="Aliments — stock bas"
+                        subtitle={`${audit.alimentsBas.length} aliment${audit.alimentsBas.length > 1 ? 's' : ''} sous 100${audit.alimentsBas[0]?.unit ?? 'kg'}`}
+                        severity="surveil"
+                        count={audit.alimentsBas.length}
+                        action={{
+                          label: 'VOIR LE STOCK',
+                          onClick: () => navigate('/ressources/aliments'),
+                        }}
+                      >
+                        {audit.alimentsBas.map((s, i) => (
+                          <AlertRow
+                            key={`abas-${i}-${s.name}`}
+                            primary={s.name}
+                            value={String(s.value)}
+                            unit={s.unit}
+                          />
+                        ))}
+                      </AlertGroup>
+                    ) : null}
+
+                    {showSante && audit.bandesSurveil.length > 0 ? (
+                      <AlertGroup
+                        icon={<Layers size={20} aria-hidden="true" />}
+                        title="Portées à surveiller"
+                        subtitle={`${audit.bandesSurveil.length} bande${audit.bandesSurveil.length > 1 ? 's' : ''} hors norme`}
+                        severity="surveil"
+                        count={audit.bandesSurveil.length}
+                        action={{
+                          label: 'VOIR LES BANDES',
+                          onClick: () => navigate('/troupeau?view=bandes'),
+                        }}
+                      >
+                        {audit.bandesSurveil.map((b, i) => (
+                          <AlertRow
+                            key={`bs-${i}-${b.code}-${b.kind}`}
+                            primary={b.code}
+                            secondary={b.detail}
+                            value={b.kind === 'portee-faible' ? 'faible' : 'incoh.'}
+                            onClick={() => navigate(`/troupeau/bandes/${b.code}`)}
+                          />
+                        ))}
+                      </AlertGroup>
+                    ) : null}
+
+                    {showSante && audit.santeMissing.length > 0 ? (
+                      <AlertGroup
+                        icon={<AlertTriangle size={20} aria-hidden="true" />}
+                        title="Santé — cibles manquantes"
+                        subtitle={`${audit.santeMissing.length} intervention${audit.santeMissing.length > 1 ? 's' : ''} sans rattachement`}
+                        severity="surveil"
+                        count={audit.santeMissing.length}
+                        action={{
+                          label: 'VOIR JOURNAL SANTÉ',
+                          onClick: () => navigate('/sante'),
+                        }}
+                      >
+                        {audit.santeMissing.map((s, i) => (
+                          <AlertRow
+                            key={`sm-${i}-${s.typeSoin}`}
+                            primary={s.typeSoin || 'Soin sans type'}
+                            secondary="Aucun animal/bande rattaché"
+                            value="?"
+                          />
+                        ))}
+                      </AlertGroup>
+                    ) : null}
+                  </>
+                ) : null}
               </>
             )}
           </div>

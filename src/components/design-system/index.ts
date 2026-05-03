@@ -38,3 +38,10 @@ export type { FormFieldProps } from './FormField';
 
 export { default as Tabs } from './Tabs';
 export type { TabsProps, TabItem } from './Tabs';
+
+// V31-FIX-PACK-01 ───────────────────────────────────────────────────────────
+export { default as AlertGroup } from './AlertGroup';
+export type { AlertGroupProps, AlertSeverity } from './AlertGroup';
+
+export { default as AlertRow } from './AlertRow';
+export type { AlertRowProps } from './AlertRow';

@@ -45,14 +45,34 @@ describe('SaisirFAB — rendu', () => {
     render(<SaisirFAB />);
     const btn = screen.getByRole('button', { name: 'Saisir un évènement métier' });
     expect(btn.className).toContain('fixed');
-    // right inline style à 18 px (cf. SaisirFAB.tsx)
-    expect(btn.style.right).toBe('18px');
+    // V31 : right inline style à 20 px
+    expect(btn.style.right).toBe('20px');
   });
 
-  it('utilise le token design system --color-accent-500 en background', () => {
+  it('utilise le token design system --pt-primary en background (V31)', () => {
     render(<SaisirFAB />);
     const btn = screen.getByRole('button', { name: 'Saisir un évènement métier' });
-    expect(btn.style.background).toContain('var(--color-accent-500)');
+    expect(btn.style.background).toContain('var(--pt-primary)');
+  });
+
+  it('est rond (border-radius 50%) et carré 56×56 (V31)', () => {
+    render(<SaisirFAB />);
+    const btn = screen.getByRole('button', { name: 'Saisir un évènement métier' });
+    expect(btn.style.borderRadius).toBe('50%');
+    expect(btn.style.width).toBe('56px');
+    expect(btn.style.height).toBe('56px');
+  });
+
+  it('porte data-pt="fab" pour neutraliser le reset Ionic', () => {
+    render(<SaisirFAB />);
+    const btn = screen.getByRole('button', { name: 'Saisir un évènement métier' });
+    expect(btn.getAttribute('data-pt')).toBe('fab');
+  });
+
+  it('z-index 1010 (au-dessus de la nav Ionic)', () => {
+    render(<SaisirFAB />);
+    const btn = screen.getByRole('button', { name: 'Saisir un évènement métier' });
+    expect(btn.style.zIndex).toBe('1010');
   });
 });
 

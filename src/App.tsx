@@ -27,6 +27,7 @@ import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
 
 import { FarmProvider, useFarm } from './context/FarmContext';
+import { usePageFab } from './lib/usePageFab';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import SupabaseProtectedRoute from './components/auth/ProtectedRoute';
@@ -197,18 +198,11 @@ const TroupeauTruiesRedirect: React.FC = () => {
 };
 
 const SaisirFABMount: React.FC = () => {
-  const { pathname } = useLocation();
-  // SaisirFAB visible partout dans l'app protégée SAUF :
-  // - /admin (réservé admin)
-  // - /onboarding (UX guidée, pas pertinent)
-  // - /checklist/* (parcours guidé plein écran)
-  if (
-    pathname.startsWith('/admin') ||
-    pathname.startsWith('/onboarding') ||
-    pathname.startsWith('/checklist/')
-  ) {
-    return null;
-  }
+  // V31-FIX-PACK-01 : présence contextuelle via usePageFab.
+  // Le FAB n'est plus monté partout — uniquement sur les pages où la saisie
+  // est l'action principale (élevage, repro, cycles, stocks véto/aliments).
+  const enabled = usePageFab();
+  if (!enabled) return null;
   return (
     <React.Suspense fallback={null}>
       <SaisirFAB />

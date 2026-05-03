@@ -141,3 +141,17 @@ input[data-pt="input"],
 .pt-input {
   border-radius: 9999px !important;
 }
+
+/* AlertGroup V31 — la première row d'un groupe ne porte pas de séparateur
+   supérieur (le header sert de bordure visuelle). */
+[data-pt="alert-group-rows"] > [data-pt="alert-row"]:first-child {
+  border-top: none !important;
+}
+
+/* FAB V31 — bouton rond 1:1 (50%). Override Ionic qui force border-radius:0
+   sur les buttons natifs. */
+button[data-pt="fab"],
+[data-pt="fab"] {
+  border-radius: 50% !important;
+  text-transform: none !important;
+}
