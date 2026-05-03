@@ -69,11 +69,11 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
   if (!bande?.id) {
     return (
       <div className="agritech-root p-10 text-center flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <p className="font-mono text-[14px] uppercase text-text-1">Bande introuvable</p>
+        <p className="text-[14px] uppercase text-text-1">Bande introuvable</p>
         <button
           type="button"
           onClick={onClose ?? (() => navigate(-1))}
-          className="pressable h-11 px-6 rounded-md bg-accent text-bg-0 font-mono text-[12px] uppercase tracking-wide"
+          className="pressable h-11 px-6 rounded-md bg-accent text-bg-0 text-[12px] uppercase tracking-wide"
         >
           Retour
         </button>
@@ -278,7 +278,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
             <h1 className="agritech-heading uppercase leading-none truncate" style={{ fontSize: 'clamp(20px, 5vw, 24px)' }}>
               Portée {bande.id}
             </h1>
-            <p className="mt-1 font-mono text-[11px] text-text-2 leading-none truncate">
+            <p className="mt-1 text-[11px] text-text-2 leading-none truncate">
               {(bande.status as string) || 'Détails'} {bande.truie ? `· ${bande.truie}` : ''}
             </p>
           </div>
@@ -289,10 +289,10 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
           onIonChange={e => setTab(e.detail.value as string)}
           className="premium-segment bg-bg-1 border border-border rounded-md overflow-hidden"
         >
-          <IonSegmentButton value="resumé"><IonLabel className="text-[11px] font-mono uppercase tracking-wide">Résumé</IonLabel></IonSegmentButton>
-          <IonSegmentButton value="details"><IonLabel className="text-[11px] font-mono uppercase tracking-wide">Détails</IonLabel></IonSegmentButton>
-          <IonSegmentButton value="sante"><IonLabel className="text-[11px] font-mono uppercase tracking-wide">Santé</IonLabel></IonSegmentButton>
-          <IonSegmentButton value="notes"><IonLabel className="text-[11px] font-mono uppercase tracking-wide">Notes</IonLabel></IonSegmentButton>
+          <IonSegmentButton value="resumé"><IonLabel className="text-[11px] uppercase tracking-wide">Résumé</IonLabel></IonSegmentButton>
+          <IonSegmentButton value="details"><IonLabel className="text-[11px] uppercase tracking-wide">Détails</IonLabel></IonSegmentButton>
+          <IonSegmentButton value="sante"><IonLabel className="text-[11px] uppercase tracking-wide">Santé</IonLabel></IonSegmentButton>
+          <IonSegmentButton value="notes"><IonLabel className="text-[11px] uppercase tracking-wide">Notes</IonLabel></IonSegmentButton>
         </IonSegment>
       </header>
 
@@ -310,7 +310,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                   type="button"
                   data-testid="bande-daily-check-cta"
                   onClick={() => navigate(`/troupeau/daily-check/${bande.id}`)}
-                  className="pressable w-full inline-flex items-center justify-center gap-2 rounded-md bg-accent text-bg-0 font-mono text-[12px] uppercase tracking-wide hover:brightness-110"
+                  className="pressable w-full inline-flex items-center justify-center gap-2 rounded-md bg-accent text-bg-0 text-[12px] uppercase tracking-wide hover:brightness-110"
                   style={{ minHeight: 44, padding: '10px 16px' }}
                   aria-label="Démarrer le daily check du jour"
                 >
@@ -330,8 +330,8 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                     <span className="kpi-label">Performances</span>
                   </div>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="font-mono text-[22px] font-semibold tabular-nums text-text-0">{String(bande.vivants || 0)}</span>
-                    <span className="font-mono text-[11px] uppercase text-text-2">Vivants</span>
+                    <span className="text-[22px] font-semibold tabular-nums text-text-0">{String(bande.vivants || 0)}</span>
+                    <span className="text-[11px] uppercase text-text-2">Vivants</span>
                   </div>
                 </div>
                 <div className="card-dense">
@@ -339,7 +339,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                     <Stethoscope size={14} className="text-red" />
                     <span className="kpi-label">Alertes santé</span>
                   </div>
-                  <span className={`font-mono text-[22px] font-semibold tabular-nums ${filteredHealth.length > 0 ? 'text-red' : 'text-text-0'}`}>
+                  <span className={`text-[22px] font-semibold tabular-nums ${filteredHealth.length > 0 ? 'text-red' : 'text-text-0'}`}>
                     {filteredHealth.length}
                   </span>
                 </div>
@@ -361,8 +361,8 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                     { label: 'Statut actuel', value: bande.status },
                   ].map((item, idx) => (
                     <div key={idx} className="flex justify-between items-center border-b border-border last:border-b-0 py-2">
-                      <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">{item.label}</span>
-                      <span className="font-mono text-[12px] text-text-0">{String(item.value || '—')}</span>
+                      <span className="text-[11px] uppercase tracking-wide text-text-2">{item.label}</span>
+                      <span className="text-[12px] text-text-0">{String(item.value || '—')}</span>
                     </div>
                   ))}
                 </div>
@@ -386,14 +386,14 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                     aria-label="Modifier les truies sources"
                   >
                     <Edit3 size={12} aria-hidden="true" />
-                    <span className="font-mono text-[10px] uppercase tracking-wide">
+                    <span className="text-[10px] uppercase tracking-wide">
                       Modifier
                     </span>
                   </button>
                 </div>
 
                 {sources.length === 0 ? (
-                  <p className="rounded-md border border-dashed border-border bg-bg-1 px-3 py-3 font-mono text-[11px] text-text-2">
+                  <p className="rounded-md border border-dashed border-border bg-bg-1 px-3 py-3 text-[11px] text-text-2">
                     Aucune truie source liée à cette portée
                   </p>
                 ) : (
@@ -427,7 +427,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                 {/* Indicateur cohérence */}
                 {sources.length > 0 && (
                   <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2">
-                    <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+                    <span className="text-[11px] uppercase tracking-wide text-text-2">
                       Total apporté · {sourcesTotal} / {nesVivants} NV
                     </span>
                     {ecart > 0 ? (
@@ -467,7 +467,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                     aria-label="Déplacer cette bande"
                   >
                     <Move size={12} aria-hidden="true" />
-                    <span className="font-mono text-[10px] uppercase tracking-wide">
+                    <span className="text-[10px] uppercase tracking-wide">
                       Déplacer
                     </span>
                   </button>
@@ -488,11 +488,11 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                     >
                       <span className="flex items-center gap-2">
                         <MapPin size={14} className="text-accent" aria-hidden="true" />
-                        <span className="font-mono text-[13px] text-text-0">
+                        <span className="text-[13px] text-text-0">
                           {bandeTyped?.logeNumero ?? currentLoge?.numero}
                         </span>
                         {currentLoge?.batiment ? (
-                          <span className="font-mono text-[11px] text-text-2">
+                          <span className="text-[11px] text-text-2">
                             · {currentLoge.batiment}
                           </span>
                         ) : null}
@@ -503,20 +503,20 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                     {currentLoge ? (
                       <div className="grid grid-cols-2 gap-2">
                         <div className="rounded-md border border-border bg-bg-0 px-3 py-2">
-                          <p className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+                          <p className="text-[10px] uppercase tracking-wide text-text-2">
                             Capacité
                           </p>
-                          <p className="font-mono text-[13px] tabular-nums text-text-0">
+                          <p className="text-[13px] tabular-nums text-text-0">
                             {currentLoge.capaciteMax != null
                               ? `${currentLoge.capaciteMax}`
                               : '—'}
                           </p>
                         </div>
                         <div className="rounded-md border border-border bg-bg-0 px-3 py-2">
-                          <p className="font-mono text-[10px] uppercase tracking-wide text-text-2">
+                          <p className="text-[10px] uppercase tracking-wide text-text-2">
                             Occupation
                           </p>
-                          <p className="font-mono text-[13px] tabular-nums text-text-0">
+                          <p className="text-[13px] tabular-nums text-text-0">
                             {logeOccupation != null ? logeOccupation : '—'}
                           </p>
                         </div>
@@ -524,7 +524,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                     ) : null}
                   </div>
                 ) : (
-                  <p className="rounded-md border border-dashed border-border bg-bg-1 px-3 py-3 font-mono text-[11px] text-text-2">
+                  <p className="rounded-md border border-dashed border-border bg-bg-1 px-3 py-3 text-[11px] text-text-2">
                     Aucune loge assignée
                   </p>
                 )}
@@ -542,7 +542,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                     <h4 className="kpi-label">
                       Porcelets de la bande
                       {porcelets.length > 0 ? (
-                        <span className="ml-2 font-mono text-[11px] text-text-2 normal-case">
+                        <span className="ml-2 text-[11px] text-text-2 normal-case">
                           ({porcelets.length})
                         </span>
                       ) : null}
@@ -557,7 +557,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                         aria-label="Signaler maladie porcelet"
                       >
                         <Stethoscope size={12} aria-hidden="true" />
-                        <span className="font-mono text-[10px] uppercase tracking-wide">
+                        <span className="text-[10px] uppercase tracking-wide">
                           Signaler maladie
                         </span>
                       </button>
@@ -569,7 +569,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                       aria-label="Ajouter un porcelet"
                     >
                       <Plus size={12} aria-hidden="true" />
-                      <span className="font-mono text-[10px] uppercase tracking-wide">
+                      <span className="text-[10px] uppercase tracking-wide">
                         Ajouter porcelet
                       </span>
                     </button>
@@ -578,16 +578,16 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
 
                 {porcelets.length === 0 ? (
                   <div className="rounded-md border border-dashed border-border bg-bg-1 px-3 py-4 space-y-2">
-                    <p className="font-mono text-[11px] text-text-2">
+                    <p className="text-[11px] text-text-2">
                       Aucun porcelet numéroté pour cette bande
                     </p>
-                    <p className="font-mono text-[10px] text-text-2 leading-relaxed">
+                    <p className="text-[10px] text-text-2 leading-relaxed">
                       Boucles individuelles permettent le suivi sanitaire détaillé
                     </p>
                     <button
                       type="button"
                       onClick={() => setAddPorceletOpen(true)}
-                      className="pressable inline-flex h-9 items-center gap-2 rounded-md bg-accent px-3 text-bg-0 font-mono text-[11px] uppercase tracking-wide hover:brightness-110"
+                      className="pressable inline-flex h-9 items-center gap-2 rounded-md bg-accent px-3 text-bg-0 text-[11px] uppercase tracking-wide hover:brightness-110"
                       aria-label="Numéroter les porcelets"
                     >
                       <Tag size={12} aria-hidden="true" />
@@ -606,14 +606,14 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                         >
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="font-mono text-[13px] text-text-0 uppercase">
+                              <span className="text-[13px] text-text-0 uppercase">
                                 {p.boucle}
                               </span>
-                              <span className="font-mono text-[10px] text-text-2 uppercase">
+                              <span className="text-[10px] text-text-2 uppercase">
                                 {p.sexe === 'M' ? '♂' : p.sexe === 'F' ? '♀' : '?'}
                               </span>
                               {p.poidsCourantKg != null ? (
-                                <span className="font-mono text-[11px] tabular-nums text-text-1">
+                                <span className="text-[11px] tabular-nums text-text-1">
                                   · {p.poidsCourantKg} kg
                                 </span>
                               ) : null}
@@ -649,20 +649,20 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                     className="card-dense pressable w-full text-left flex items-center justify-between transition-colors"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-md bg-bg-2 border border-border flex items-center justify-center text-text-2 font-mono text-[11px]">
+                      <div className="w-8 h-8 rounded-md bg-bg-2 border border-border flex items-center justify-center text-text-2 text-[11px]">
                         #{i + 1}
                       </div>
                       <div className="min-w-0">
                         <p className="text-[12px] font-medium text-text-0">Ligne de registre</p>
-                        <p className="font-mono text-[10px] uppercase tracking-wide text-text-2 truncate">
+                        <p className="text-[10px] uppercase tracking-wide text-text-2 truncate">
                           {header && header.includes('DATE MB') ? String(row[header.indexOf('DATE MB')]) : 'ID: ' + bande.id}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="text-right">
-                        <p className="font-mono text-[11px] text-text-0">{String(row[header.indexOf('STATUT') || 0] || '—')}</p>
-                        <p className="font-mono text-[9px] uppercase tracking-wide text-text-2">Statut</p>
+                        <p className="text-[11px] text-text-0">{String(row[header.indexOf('STATUT') || 0] || '—')}</p>
+                        <p className="text-[9px] uppercase tracking-wide text-text-2">Statut</p>
                       </div>
                       <ChevronRight size={14} className="text-text-2" />
                     </div>
@@ -671,7 +671,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
               ) : (
                 <div className="card-dense text-center py-10">
                   <AlertCircle size={32} className="text-text-2 mb-2 mx-auto opacity-50" />
-                  <p className="font-mono text-[11px] uppercase tracking-wide text-text-2">Aucune donnée brute</p>
+                  <p className="text-[11px] uppercase tracking-wide text-text-2">Aucune donnée brute</p>
                 </div>
               )}
             </div>
@@ -708,11 +708,11 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                               ) : (
                                 <CalendarClock size={12} className="text-accent shrink-0" />
                               )}
-                              <span className="font-mono text-[11px] uppercase tracking-wide text-text-1 truncate">
+                              <span className="text-[11px] uppercase tracking-wide text-text-1 truncate">
                                 {tpl.label}
                               </span>
                             </div>
-                            <span className="font-mono text-[10px] text-text-2 ml-[18px]">
+                            <span className="text-[10px] text-text-2 ml-[18px]">
                               {reco.done ? 'Fait' : `Prévu ${dateStr}`}
                               {tpl.defaultDose ? ` · ${tpl.defaultDose}` : ''}
                             </span>
@@ -721,7 +721,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                             <button
                               type="button"
                               onClick={() => setPresetType(reco.type)}
-                              className="pressable shrink-0 inline-flex items-center justify-center h-7 px-2.5 rounded-md bg-accent text-bg-0 font-mono text-[10px] uppercase tracking-wide hover:brightness-110"
+                              className="pressable shrink-0 inline-flex items-center justify-center h-7 px-2.5 rounded-md bg-accent text-bg-0 text-[10px] uppercase tracking-wide hover:brightness-110"
                             >
                               Saisir
                             </button>
@@ -751,14 +751,14 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
               ) : filteredHealth.length === 0 ? (
                 <div className="card-dense text-center py-10">
                   <Stethoscope size={32} className="text-text-2 mb-2 mx-auto opacity-50" />
-                  <p className="font-mono text-[11px] uppercase tracking-wide text-text-2">Aucun soin pour cette portée</p>
+                  <p className="text-[11px] uppercase tracking-wide text-text-2">Aucun soin pour cette portée</p>
                 </div>
               ) : (
                 <div className="space-y-2">
                   {filteredHealth.map((row, i) => (
                     <div key={i} className="card-dense">
                       <div className="flex justify-between items-start mb-2">
-                        <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+                        <span className="text-[11px] uppercase tracking-wide text-text-2">
                           {String(row[healthHeader.findIndex(h => h.toUpperCase().includes('DATE')) || 0])}
                         </span>
                         <Chip
@@ -770,7 +770,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                       <p className="text-[13px] font-medium text-text-0 mb-1">
                         {String(row[healthHeader.findIndex(h => h.toUpperCase().includes('SOIN') || h.toUpperCase().includes('TRAITEMENT')) || 2])}
                       </p>
-                      <p className="font-mono text-[11px] text-text-2 leading-relaxed">
+                      <p className="text-[11px] text-text-2 leading-relaxed">
                         {String(row[healthHeader.findIndex(h => h.toUpperCase().includes('OBS')) || 3])}
                       </p>
                     </div>
@@ -802,14 +802,14 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
               ) : filteredNotes.length === 0 ? (
                 <div className="card-dense text-center py-10">
                   <ClipboardList size={32} className="text-text-2 mb-2 mx-auto opacity-50" />
-                  <p className="font-mono text-[11px] uppercase tracking-wide text-text-2">Journal vide</p>
+                  <p className="text-[11px] uppercase tracking-wide text-text-2">Journal vide</p>
                 </div>
               ) : (
                 <div className="space-y-2">
                   {filteredNotes.map((row, i) => (
                     <div key={i} className="card-dense">
                       <div className="flex justify-between items-start mb-2">
-                        <span className="font-mono text-[11px] uppercase tracking-wide text-text-2">
+                        <span className="text-[11px] uppercase tracking-wide text-text-2">
                           {String(row[notesHeader.indexOf('DATE') || 0])}
                         </span>
                       </div>

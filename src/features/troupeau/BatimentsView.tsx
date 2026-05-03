@@ -184,7 +184,7 @@ const BatimentsView: React.FC = () => {
                     style={{ background: 'var(--gold)' }}
                   />
                   <span
-                    className="font-mono uppercase tracking-wide"
+                    className="uppercase tracking-wide"
                     style={{ color: 'var(--text-1)' }}
                   >
                     Maternité · {FARM_CONFIG.MATERNITE_LOGES_CAPACITY}
@@ -197,7 +197,7 @@ const BatimentsView: React.FC = () => {
                     style={{ background: 'var(--accent)' }}
                   />
                   <span
-                    className="font-mono uppercase tracking-wide"
+                    className="uppercase tracking-wide"
                     style={{ color: 'var(--text-1)' }}
                   >
                     Post-sevrage · {FARM_CONFIG.POST_SEVRAGE_LOGES_CAPACITY}
@@ -210,7 +210,7 @@ const BatimentsView: React.FC = () => {
                     style={{ background: 'var(--amber)' }}
                   />
                   <span
-                    className="font-mono uppercase tracking-wide"
+                    className="uppercase tracking-wide"
                     style={{ color: 'var(--text-1)' }}
                   >
                     Croissance · {FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY}
@@ -228,7 +228,7 @@ const BatimentsView: React.FC = () => {
               {selectedBuilding ? (
                 <div className="flex flex-col gap-1">
                   <span
-                    className="font-mono text-[11px] uppercase tracking-wide"
+                    className="text-[11px] uppercase tracking-wide"
                     style={{ color: 'var(--text-2)' }}
                   >
                     Loge sélectionnée · {selectedBuilding.cap ?? selectedBuilding.id}
@@ -242,7 +242,7 @@ const BatimentsView: React.FC = () => {
                 </div>
               ) : (
                 <span
-                  className="font-mono text-[12px]"
+                  className="text-[12px]"
                   style={{ color: 'var(--text-2)' }}
                 >
                   Touchez une loge pour afficher son détail.

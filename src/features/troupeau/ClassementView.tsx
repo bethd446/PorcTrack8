@@ -127,7 +127,7 @@ const ClassementView: React.FC = () => {
           <Trophy size={20} aria-hidden="true" className="text-accent" />
           Classement reproducteurs
         </h1>
-        <p className="font-mono text-[12px] text-text-2">
+        <p className="text-[12px] text-text-2">
           Top et flop des truies et verrats par score composite
         </p>
       </div>
@@ -136,7 +136,7 @@ const ClassementView: React.FC = () => {
       <div className="flex items-center gap-2">
         <span
           id="classement-filter-label"
-          className="shrink-0 font-mono text-[10px] uppercase tracking-wide text-text-2"
+          className="shrink-0 text-[10px] uppercase tracking-wide text-text-2"
         >
           Type
         </span>
@@ -156,7 +156,7 @@ const ClassementView: React.FC = () => {
                 aria-checked={active}
                 aria-label={`Filtrer par ${f.label}`}
                 onClick={() => setFilter(f.id)}
-                className={`pressable shrink-0 rounded-full px-3 py-1.5 font-mono text-[11px] uppercase tracking-wide border transition-colors flex items-center gap-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 ${
+                className={`pressable shrink-0 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-wide border transition-colors flex items-center gap-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 ${
                   active
                     ? 'bg-accent/10 border-accent text-accent'
                     : 'bg-transparent border-border text-text-1 hover:text-text-0'
@@ -178,7 +178,7 @@ const ClassementView: React.FC = () => {
       <div className="flex items-center gap-2">
         <span
           id="classement-sort-label"
-          className="shrink-0 font-mono text-[10px] uppercase tracking-wide text-text-2"
+          className="shrink-0 text-[10px] uppercase tracking-wide text-text-2"
         >
           Trier par
         </span>
@@ -197,7 +197,7 @@ const ClassementView: React.FC = () => {
                 aria-checked={active}
                 aria-label={`Trier par ${s.label}`}
                 onClick={() => setSortBy(s.id)}
-                className={`pressable shrink-0 rounded-full px-3 py-1.5 font-mono text-[11px] uppercase tracking-wide border transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 ${
+                className={`pressable shrink-0 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-wide border transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 ${
                   active
                     ? 'bg-accent/10 border-accent text-accent'
                     : 'bg-transparent border-border text-text-1 hover:text-text-0'
@@ -227,7 +227,7 @@ const ClassementView: React.FC = () => {
           <button
             type="button"
             onClick={handleResetFilters}
-            className="pressable inline-flex items-center gap-2 h-9 px-4 rounded-full bg-accent text-bg-0 font-mono text-[11px] font-medium uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+            className="pressable inline-flex items-center gap-2 h-9 px-4 rounded-full bg-accent text-bg-0 text-[11px] font-medium uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
           >
             Réinitialiser filtres
           </button>
@@ -295,7 +295,7 @@ const Th: React.FC<{ children: React.ReactNode; className?: string }> = ({
 }) => (
   <th
     scope="col"
-    className={`font-mono text-[10px] uppercase tracking-wide text-text-2 px-3 py-2 ${className}`}
+    className={`text-[10px] uppercase tracking-wide text-text-2 px-3 py-2 ${className}`}
   >
     {children}
   </th>
@@ -309,7 +309,7 @@ interface RowProps {
 
 const TierBadge: React.FC<{ tier: Tier; score: number }> = ({ tier, score }) => (
   <span
-    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide ${TIER_CLASSES[tier]}`}
+    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${TIER_CLASSES[tier]}`}
     aria-label={`Tier ${TIER_LABEL[tier]} score ${formatScore(score)}`}
   >
     <span>{TIER_LABEL[tier]}</span>
@@ -319,7 +319,7 @@ const TierBadge: React.FC<{ tier: Tier; score: number }> = ({ tier, score }) => 
 
 const TypeBadge: React.FC<{ type: ClassementRow['type'] }> = ({ type }) => (
   <span
-    className={`inline-flex items-center rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide border ${
+    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide border ${
       type === 'TRUIE'
         ? 'border-accent/30 text-accent bg-accent/5'
         : 'border-border text-text-1 bg-bg-1'
@@ -337,18 +337,18 @@ const RowCardMobile: React.FC<RowProps> = ({ row, rank, onClick }) => (
     className="pressable w-full text-left flex flex-col gap-1.5 rounded-xl bg-bg-1 border border-border p-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
   >
     <div className="flex items-center gap-2 min-w-0">
-      <span className="font-mono text-[11px] tabular-nums text-text-2 shrink-0">
+      <span className="text-[11px] tabular-nums text-text-2 shrink-0">
         #{rank}
       </span>
       <TypeBadge type={row.type} />
-      <span className="font-mono text-[13px] font-semibold text-text-0 tabular-nums truncate flex-1 min-w-0">
+      <span className="text-[13px] font-semibold text-text-0 tabular-nums truncate flex-1 min-w-0">
         {row.displayId}
       </span>
       <span className="shrink-0">
         <TierBadge tier={row.tier} score={row.score} />
       </span>
     </div>
-    <div className="font-mono text-[11px] text-text-2 tabular-nums">
+    <div className="text-[11px] text-text-2 tabular-nums">
       {row.nbPortees} portée{row.nbPortees !== 1 ? 's' : ''} ·{' '}
       {formatPorcelets(row.porceletsMoyens)} porcelets ·{' '}
       {formatTaux(row.tauxReussite)} réussite
@@ -370,10 +370,10 @@ const RowDesktop: React.FC<RowProps> = ({ row, rank, onClick }) => (
     }}
     className="border-b border-border last:border-b-0 cursor-pointer hover:bg-bg-1/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
   >
-    <td className="px-3 py-2.5 font-mono text-[12px] tabular-nums text-text-2">
+    <td className="px-3 py-2.5 text-[12px] tabular-nums text-text-2">
       #{rank}
     </td>
-    <td className="px-3 py-2.5 font-mono text-[13px] font-semibold text-text-0 tabular-nums truncate max-w-[160px]">
+    <td className="px-3 py-2.5 text-[13px] font-semibold text-text-0 tabular-nums truncate max-w-[160px]">
       {row.displayId}
     </td>
     <td className="px-3 py-2.5">
@@ -382,13 +382,13 @@ const RowDesktop: React.FC<RowProps> = ({ row, rank, onClick }) => (
     <td className="px-3 py-2.5 text-right">
       <TierBadge tier={row.tier} score={row.score} />
     </td>
-    <td className="px-3 py-2.5 font-mono text-[12px] tabular-nums text-text-1 text-right">
+    <td className="px-3 py-2.5 text-[12px] tabular-nums text-text-1 text-right">
       {row.nbPortees}
     </td>
-    <td className="px-3 py-2.5 font-mono text-[12px] tabular-nums text-text-1 text-right">
+    <td className="px-3 py-2.5 text-[12px] tabular-nums text-text-1 text-right">
       {formatPorcelets(row.porceletsMoyens)}
     </td>
-    <td className="px-3 py-2.5 font-mono text-[12px] tabular-nums text-text-1 text-right">
+    <td className="px-3 py-2.5 text-[12px] tabular-nums text-text-1 text-right">
       {formatTaux(row.tauxReussite)}
     </td>
   </tr>

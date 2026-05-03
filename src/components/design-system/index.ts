@@ -1,8 +1,8 @@
 /**
- * Design System V29 — DNA "Aujourd'hui"
+ * Design System V30-MASTER — DNA "Aujourd'hui"
  * ════════════════════════════════════════════════════════════════════════════
  * Composants canoniques pour la refonte des hubs (Élevage, Cycles…).
- * Tokens : src/styles/design-system-v29.css
+ * Tokens : src/styles/design-system-v29.css (--pt-* canoniques + alias --ds-*).
  *
  * Référence visuelle : src/features/today/TodayHub.tsx
  * Page demo : /design-system (DesignSystemView)
@@ -22,3 +22,19 @@ export type { TagProps, TagVariant } from './Tag';
 
 export { default as IconBox } from './IconBox';
 export type { IconBoxProps, IconBoxTone } from './IconBox';
+
+// V30-MASTER ─────────────────────────────────────────────────────────────────
+export { default as KeyValueRow } from './KeyValueRow';
+export type { KeyValueRowProps, KeyValueRowTone } from './KeyValueRow';
+
+export { default as InsightCard } from './InsightCard';
+export type { InsightCardProps } from './InsightCard';
+
+export { default as Input } from './Input';
+export type { InputProps } from './Input';
+
+export { default as FormField } from './FormField';
+export type { FormFieldProps } from './FormField';
+
+export { default as Tabs } from './Tabs';
+export type { TabsProps, TabItem } from './Tabs';

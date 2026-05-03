@@ -156,7 +156,7 @@ const AlertCard: React.FC<AlertCardProps> = ({
       {depuis && (
         <div
           style={{
-            fontFamily: 'var(--font-mono, inherit)',
+            fontFamily: 'var(--pt-font-body)',
             fontSize: 10,
             color: 'var(--muted, #6b7280)',
             letterSpacing: '0.06em',
@@ -182,7 +182,7 @@ const AlertCard: React.FC<AlertCardProps> = ({
             background: 'var(--color-accent-500, #064e3b)',
             color: 'var(--bg-surface, #ffffff)',
             border: 'none',
-            fontFamily: 'var(--font-mono, inherit)',
+            fontFamily: 'var(--pt-font-body)',
             fontSize: 12,
             letterSpacing: '0.10em',
             textTransform: 'uppercase',
@@ -211,7 +211,7 @@ const AlertCard: React.FC<AlertCardProps> = ({
               background: 'var(--bg-surface, #ffffff)',
               color: 'var(--ink, #111827)',
               border: '1.5px solid var(--line, #e5e7eb)',
-              fontFamily: 'var(--font-mono, inherit)',
+              fontFamily: 'var(--pt-font-body)',
               fontSize: 12,
               letterSpacing: '0.10em',
               textTransform: 'uppercase',

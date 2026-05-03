@@ -685,7 +685,7 @@ const TodayHub: React.FC = () => {
                     borderRadius: 'var(--radius-pill)',
                     background: 'var(--color-accent-500)',
                     color: 'var(--bg-surface)',
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--pt-font-body)',
                     fontSize: 12,
                     letterSpacing: '0.10em',
                     textTransform: 'uppercase',
@@ -848,7 +848,7 @@ const TodayHub: React.FC = () => {
                             className="text-body"
                             style={{
                               color: isOverdue ? 'var(--color-pig-deep)' : 'var(--muted)',
-                              fontFamily: 'var(--font-mono)',
+                              fontFamily: 'var(--pt-font-body)',
                               fontSize: 11,
                               marginTop: 2,
                             }}
@@ -871,7 +871,7 @@ const TodayHub: React.FC = () => {
                             background: 'var(--color-accent-500)',
                             color: 'var(--bg-surface)',
                             border: 'none',
-                            fontFamily: 'var(--font-mono)',
+                            fontFamily: 'var(--pt-font-body)',
                             fontSize: 11,
                             letterSpacing: '0.08em',
                             textTransform: 'uppercase',
@@ -983,7 +983,7 @@ const TodayHub: React.FC = () => {
                     </div>
                     <div
                       style={{
-                        fontFamily: 'var(--font-mono)',
+                        fontFamily: 'var(--pt-font-body)',
                         fontSize: 11,
                         letterSpacing: '0.06em',
                         color: 'var(--muted)',
@@ -1011,7 +1011,7 @@ const TodayHub: React.FC = () => {
                     background: 'var(--color-accent-500)',
                     color: 'var(--bg-surface)',
                     border: '1.5px solid var(--color-accent-500)',
-                    fontFamily: 'var(--font-mono)',
+                    fontFamily: 'var(--pt-font-body)',
                     fontSize: 12,
                     letterSpacing: '0.10em',
                     textTransform: 'uppercase',

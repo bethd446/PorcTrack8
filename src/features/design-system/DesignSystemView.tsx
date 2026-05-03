@@ -16,6 +16,11 @@ import {
   SectionHeader,
   Tag,
   IconBox,
+  KeyValueRow,
+  InsightCard,
+  Input,
+  FormField,
+  Tabs,
 } from '../../components/design-system';
 
 const Block: React.FC<{ title: string; children: React.ReactNode }> = ({
@@ -37,6 +42,7 @@ const Row: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 );
 
 const DesignSystemView: React.FC = () => {
+  const [tabValue, setTabValue] = React.useState<string>('liste');
   return (
     <IonPage>
       <IonContent fullscreen>
@@ -147,6 +153,64 @@ const DesignSystemView: React.FC = () => {
                   <Truck size={24} />
                 </IconBox>
               </Row>
+            </Block>
+
+            <Block title="V30 — KeyValueRow">
+              <Card>
+                <KeyValueRow label="ID" value="T03" />
+                <KeyValueRow label="Boucle" value="FR-3-01" tone="muted" />
+                <KeyValueRow label="Cycle" value="4" />
+                <KeyValueRow
+                  label="MB prévue"
+                  value="15/05/2026"
+                  tone="accent"
+                />
+              </Card>
+            </Block>
+
+            <Block title="V30 — InsightCard (Marius)">
+              <InsightCard title="Analyse Marius">
+                Le sevrage de la bande B07 est prévu dans 2 jours. Penser à
+                préparer la transition aliment.
+              </InsightCard>
+            </Block>
+
+            <Block title="V30 — Input + FormField">
+              <FormField label="Nom de la truie" hint="Champ libre, 32 car. max">
+                <Input placeholder="Monette" />
+              </FormField>
+              <FormField label="Code" required hint="Format : T01, T02…">
+                <Input placeholder="T01" />
+              </FormField>
+              <FormField
+                label="Boucle"
+                error="Le format attendu est FR-XX-YY"
+              >
+                <Input placeholder="FR-3-01" invalid />
+              </FormField>
+            </Block>
+
+            <Block title="V30 — Tabs (segment control)">
+              <Tabs
+                items={[
+                  { id: 'liste', label: 'Liste' },
+                  { id: 'grille', label: 'Grille' },
+                ]}
+                value={tabValue}
+                onChange={setTabValue}
+                ariaLabel="Mode d'affichage"
+              />
+              <Tabs
+                items={[
+                  { id: 'recent', label: 'Récent' },
+                  { id: 'mb', label: 'MB prévue' },
+                  { id: 'parite', label: 'Parité' },
+                  { id: 'id', label: 'ID' },
+                ]}
+                value="recent"
+                onChange={() => {}}
+                ariaLabel="Tri"
+              />
             </Block>
 
             <Block title="Composition (preview ligne Élevage)">

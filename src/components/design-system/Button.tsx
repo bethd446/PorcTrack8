@@ -44,6 +44,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         type={type ?? 'button'}
+        data-pt="button"
         className={className}
         style={{
           display: 'inline-flex',

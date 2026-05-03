@@ -64,7 +64,7 @@ const AnimalListItem: React.FC<AnimalListItemProps> = ({
           {primary}
         </div>
         {secondary ? (
-          <div className="mt-0.5 font-mono text-[11px] text-text-2 leading-relaxed truncate">
+          <div className="mt-0.5 text-[11px] text-text-2 leading-relaxed truncate">
             {secondary}
           </div>
         ) : null}
@@ -78,7 +78,7 @@ const AnimalListItem: React.FC<AnimalListItemProps> = ({
       </div>
 
       {meta !== undefined && meta !== null && meta !== '' ? (
-        <div className="shrink-0 font-mono text-[11px] tabular-nums text-text-1">
+        <div className="shrink-0 text-[11px] tabular-nums text-text-1">
           {meta}
         </div>
       ) : null}

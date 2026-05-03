@@ -164,9 +164,8 @@ const TroupeauHub: React.FC = () => {
           />
 
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            {/* ── En-tête ───────────────────────────────────────────── */}
-            {/* AUDIT-5 : vocabulaire canonique "Élevage" partout (vs ancien
-                mélange Cheptel/Troupeau/Élevage). Cohérent avec bottom-tab. */}
+            {/* ── En-tête V30-MASTER ─────────────────────────────────
+                Eyebrow · H1 Big Shoulders · sous-titre muted · bouton Classement pill */}
             <header>
               <Eyebrow dotColor="accent">Élevage · {nomFerme}</Eyebrow>
               <h1
@@ -177,19 +176,26 @@ const TroupeauHub: React.FC = () => {
               </h1>
               <div
                 className="text-body"
-                style={{ color: 'var(--muted)' }}
+                style={{ color: 'var(--pt-text-muted)' }}
               >
-                {summary.total} truie{summary.total > 1 ? 's' : ''} · {verrats.length} verrat{verrats.length > 1 ? 's' : ''} ({totalAnimals} animaux) — {truieBreakdown}
+                {summary.total} truie{summary.total > 1 ? 's' : ''} · {verrats.length} verrat{verrats.length > 1 ? 's' : ''} ({totalAnimals} animaux)
+              </div>
+              <div
+                className="text-body"
+                style={{ color: 'var(--pt-text-subtle)', fontSize: 13, marginTop: 4 }}
+              >
+                {truieBreakdown}
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
                 <Button
-                  variant="primary"
+                  variant="secondary"
                   size="sm"
                   onClick={() => navigate('/troupeau/classement')}
                   aria-label="Voir le classement des reproducteurs"
                 >
                   <Trophy size={15} aria-hidden="true" />
-                  <span>Classement</span>
+                  <span>Classement Top Truies & Verrats</span>
+                  <ChevronRight size={14} aria-hidden="true" />
                 </Button>
               </div>
             </header>
@@ -211,6 +217,31 @@ const TroupeauHub: React.FC = () => {
                 <LogesMiniBar label="Eng." occ={summary.eng} />
               </Card>
             </section>
+
+            {/* ── V30-MASTER : Inventaire (TRUIES/VERRATS/LOGES/BANDES) ── */}
+            <section aria-label="Inventaire">
+              <SectionHeader label="Inventaire" />
+              <Card
+                role="group"
+                style={{
+                  marginTop: 12,
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(4, 1fr)',
+                  gap: 12,
+                }}
+              >
+                <InventaireStat label="Truies" value={activeTruies.length} />
+                <InventaireStat label="Verrats" value={verrats.length} />
+                <InventaireStat
+                  label="Loges"
+                  value={`${summary.mat.occupees + summary.post.occupees + summary.eng.occupees}/${totalLogesCapacity}`}
+                />
+                <InventaireStat label="Bandes" value={realBandes.length} />
+              </Card>
+            </section>
+
+            {/* ── V30-MASTER : Section Troupeau header ─────────────── */}
+            <SectionHeader label="Troupeau" />
 
             {/* ── Sub-tabs (Radix) ─────────────────────────────────── */}
             <Tabs
@@ -310,7 +341,7 @@ const LogesMiniBar: React.FC<LogesMiniBarProps> = ({ label, occ }) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 6 }}>
         <span
           style={{
-            fontFamily: 'var(--font-mono)',
+            fontFamily: 'var(--pt-font-body)',
             fontSize: 9.5,
             letterSpacing: '0.18em',
             textTransform: 'uppercase',
@@ -322,7 +353,7 @@ const LogesMiniBar: React.FC<LogesMiniBarProps> = ({ label, occ }) => {
         </span>
         <span
           style={{
-            fontFamily: 'var(--font-mono)',
+            fontFamily: 'var(--pt-font-body)',
             fontSize: 11,
             color: 'var(--ink)',
             fontWeight: 600,
@@ -353,6 +384,43 @@ const LogesMiniBar: React.FC<LogesMiniBarProps> = ({ label, occ }) => {
     </div>
   );
 };
+
+// ─── V30-MASTER : InventaireStat ───────────────────────────────────────────
+
+interface InventaireStatProps {
+  label: string;
+  value: number | string;
+}
+
+const InventaireStat: React.FC<InventaireStatProps> = ({ label, value }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+    <span
+      style={{
+        fontFamily: 'var(--pt-font-body)',
+        fontSize: 'var(--pt-text-label)',
+        letterSpacing: 'var(--pt-tracking-label)',
+        color: 'var(--pt-text-subtle)',
+        fontWeight: 600,
+        textTransform: 'uppercase',
+      }}
+    >
+      {label}
+    </span>
+    <span
+      style={{
+        fontFamily: 'var(--pt-font-display)',
+        fontSize: 28,
+        fontWeight: 700,
+        color: 'var(--pt-text)',
+        letterSpacing: '-0.02em',
+        lineHeight: 1,
+        fontVariantNumeric: 'tabular-nums',
+      }}
+    >
+      {value}
+    </span>
+  </div>
+);
 
 // ─── BandesInline ──────────────────────────────────────────────────────────
 

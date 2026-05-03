@@ -506,4 +506,45 @@ describe('TroupeauHub — intégration multi-vues', () => {
     expect(addBtn.style.borderRadius).toBe('var(--ds-radius-pill)');
     expect(addBtn.style.textTransform).toBe('uppercase');
   });
+
+  // ── Tests régression V30-MASTER (refonte PDF master) ────────────────
+  it('V30-1. Eyebrow "Élevage · {ferme}" présent', () => {
+    renderHub();
+    // Eyebrow rendu via composant Eyebrow (children "Élevage · Ferme K13")
+    expect(document.body.textContent).toMatch(/Élevage\s*·\s*Ferme K13/);
+  });
+
+  it('V30-2. Section "Inventaire" rendue avec 4 stats (Truies/Verrats/Loges/Bandes)', () => {
+    renderHub();
+    // SectionHeader "INVENTAIRE" présent
+    expect(screen.getAllByText(/INVENTAIRE/i).length).toBeGreaterThan(0);
+    // Section a un aria-label
+    expect(screen.getByLabelText(/^inventaire$/i)).toBeDefined();
+    // Les 4 labels stats : TRUIES / VERRATS / LOGES / BANDES (uppercase via CSS,
+    // texte source en titlecase)
+    expect(screen.getAllByText(/^Truies$/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/^Verrats$/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/^Loges$/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/^Bandes$/i).length).toBeGreaterThan(0);
+  });
+
+  it('V30-3. Bouton "Classement" porte data-pt="button" (override Ionic)', () => {
+    renderHub();
+    const btn = screen.getByRole('button', {
+      name: /classement des reproducteurs/i,
+    });
+    expect(btn.getAttribute('data-pt')).toBe('button');
+  });
+
+  it('V30-4. SectionHeader "Troupeau" rendu (transition vers les tabs)', () => {
+    renderHub();
+    // Le label "TROUPEAU" est rendu en SMALL CAPS via SectionHeader
+    expect(screen.getAllByText(/^TROUPEAU$/i).length).toBeGreaterThan(0);
+  });
+
+  it('V30-5. Hub affiche "{N} animaux" dans subtitle (data du contexte)', () => {
+    renderHub();
+    // Subtitle lu : "17 truies · 2 verrats (19 animaux)"
+    expect(document.body.textContent).toMatch(/19 animaux/);
+  });
 });

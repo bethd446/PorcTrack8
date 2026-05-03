@@ -250,7 +250,7 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
           type="button"
           onClick={() => setAddOpen(true)}
           aria-label="Ajouter une truie"
-          className="pressable inline-flex items-center gap-2 h-10 px-4 rounded-full bg-accent text-bg-0 font-mono text-[12px] font-medium uppercase tracking-wide shadow-sm hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-opacity"
+          className="pressable inline-flex items-center gap-2 h-10 px-4 rounded-full bg-accent text-bg-0 text-[12px] font-medium uppercase tracking-wide shadow-sm hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-opacity"
         >
           <Plus size={15} aria-hidden="true" />
           Ajouter une truie
@@ -268,7 +268,7 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           aria-label="Rechercher une truie par ID, nom, boucle ou stade"
-          className="w-full pl-10 pr-3 py-2.5 rounded-lg bg-bg-2 border border-border font-mono text-[13px] text-text-0 placeholder:text-text-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+          className="w-full pl-10 pr-3 py-2.5 rounded-lg bg-bg-2 border border-border text-[13px] text-text-0 placeholder:text-text-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
         />
         <Search
           size={16}
@@ -281,7 +281,7 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
       <div className="flex items-center gap-2">
         <span
           id="truies-sort-label"
-          className="shrink-0 font-mono text-[10px] uppercase tracking-wide text-text-2"
+          className="shrink-0 text-[10px] uppercase tracking-wide text-text-2"
         >
           Trier par
         </span>
@@ -299,7 +299,7 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
                 aria-checked={active}
                 aria-label={`Trier par ${o.label}`}
                 onClick={() => setSortBy(o.id)}
-                className={`pressable shrink-0 rounded-full px-3 py-1.5 font-mono text-[11px] uppercase tracking-wide border transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 ${
+                className={`pressable shrink-0 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-wide border transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 ${
                   active
                     ? 'bg-accent/10 border-accent text-accent'
                     : 'bg-transparent border-border text-text-1 hover:text-text-0'
@@ -327,7 +327,7 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
               role="tab"
               aria-selected={active}
               onClick={() => setFilter(f.id)}
-              className={`pressable shrink-0 rounded-full px-3 py-2 font-mono text-[11px] font-medium uppercase tracking-wide border transition-colors flex items-center gap-1.5 ${
+              className={`pressable shrink-0 rounded-full px-3 py-2 text-[11px] font-medium uppercase tracking-wide border transition-colors flex items-center gap-1.5 ${
                 active
                   ? 'bg-bg-2 border-teal text-teal'
                   : 'bg-transparent border-border text-text-1 hover:text-text-0'
@@ -383,7 +383,7 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
                   className="pressable w-full flex flex-col items-center gap-1.5 rounded-xl bg-bg-1 border border-border p-3 aspect-square justify-between focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
                 >
                   <TruieIcon size={30} aria-hidden="true" />
-                  <div className="font-mono text-[14px] font-semibold text-text-0 tabular-nums">
+                  <div className="text-[14px] font-semibold text-text-0 tabular-nums">
                     {t.displayId || t.id}
                   </div>
                   <Chip label={v.label} tone={v.tone} size="xs" />
@@ -399,7 +399,7 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
                       —
                     </div>
                   )}
-                  <div className="font-mono text-[10px] text-text-2 truncate w-full text-center">
+                  <div className="text-[10px] text-text-2 truncate w-full text-center">
                     {meta}
                   </div>
                 </button>
@@ -460,7 +460,7 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
                   >
                     <div className="flex flex-col items-center gap-1 px-2">
                       <Heart size={18} aria-hidden="true" />
-                      <span className="font-mono text-[10px] uppercase tracking-wide">Saillir</span>
+                      <span className="text-[10px] uppercase tracking-wide">Saillir</span>
                     </div>
                   </IonItemOption>
                   <IonItemOption
@@ -470,7 +470,7 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
                   >
                     <div className="flex flex-col items-center gap-1 px-2">
                       <Syringe size={18} aria-hidden="true" />
-                      <span className="font-mono text-[10px] uppercase tracking-wide">Soigner</span>
+                      <span className="text-[10px] uppercase tracking-wide">Soigner</span>
                     </div>
                   </IonItemOption>
                 </IonItemOptions>

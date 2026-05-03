@@ -171,7 +171,7 @@ const PendingBandesSection: React.FC<PendingBandesSectionProps> = ({
       className="space-y-2"
       data-testid={`pending-section-${badge}`}
     >
-      <h2 className="font-mono text-[11px] uppercase tracking-wide text-text-2 px-3 pt-2">
+      <h2 className="text-[11px] uppercase tracking-wide text-text-2 px-3 pt-2">
         {title} ({rows.length})
       </h2>
       <ul className="card-dense !p-0 overflow-hidden divide-y divide-border">
@@ -192,7 +192,7 @@ const PendingBandesSection: React.FC<PendingBandesSectionProps> = ({
                 avatar={
                   <span
                     className={[
-                      'font-mono text-[12px] font-bold',
+                      'text-[12px] font-bold',
                       badge === 'M' ? 'text-blue' : 'text-coral',
                     ].join(' ')}
                     aria-label={badge === 'M' ? 'Mâles' : 'Femelles'}
@@ -277,10 +277,10 @@ const PendingBandesView: React.FC<PendingBandesViewProps> = ({ injectedState }) 
           <ChevronLeft size={18} aria-hidden="true" />
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="font-mono text-[14px] font-bold uppercase tracking-wide text-text-0 truncate">
+          <h1 className="text-[14px] font-bold uppercase tracking-wide text-text-0 truncate">
             Bandes à valider
           </h1>
-          <p className="font-mono text-[11px] text-text-2 truncate">
+          <p className="text-[11px] text-text-2 truncate">
             {loading
               ? 'Chargement…'
               : `${rows.length} bande${rows.length > 1 ? 's' : ''} en attente`}
@@ -305,11 +305,11 @@ const PendingBandesView: React.FC<PendingBandesViewProps> = ({ injectedState }) 
             className="card-dense text-center py-8"
             data-testid="pending-bandes-error"
           >
-            <p className="font-mono text-[12px] text-red">Erreur : {error}</p>
+            <p className="text-[12px] text-red">Erreur : {error}</p>
             <button
               type="button"
               onClick={refresh}
-              className="pressable mt-3 inline-flex h-10 px-4 rounded-md bg-bg-2 border border-border font-mono text-[11px] uppercase tracking-wide hover:border-text-2"
+              className="pressable mt-3 inline-flex h-10 px-4 rounded-md bg-bg-2 border border-border text-[11px] uppercase tracking-wide hover:border-text-2"
             >
               Réessayer
             </button>
@@ -322,13 +322,13 @@ const PendingBandesView: React.FC<PendingBandesViewProps> = ({ injectedState }) 
             <p className="text-[15px] font-semibold text-text-0">
               Aucune bande à valider
             </p>
-            <p className="font-mono text-[11px] text-text-2">
+            <p className="text-[11px] text-text-2">
               Toutes les bandes ont été validées.
             </p>
             <button
               type="button"
               onClick={handleBack}
-              className="pressable inline-flex h-11 px-5 rounded-md bg-accent text-bg-0 font-mono text-[12px] font-bold uppercase tracking-wide hover:brightness-110"
+              className="pressable inline-flex h-11 px-5 rounded-md bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide hover:brightness-110"
               data-testid="pending-bandes-empty-back"
             >
               Retour
@@ -354,13 +354,13 @@ const PendingBandesView: React.FC<PendingBandesViewProps> = ({ injectedState }) 
               <button
                 type="button"
                 onClick={() => setBulkOpen(true)}
-                className="pressable w-full h-12 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 font-mono text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
+                className="pressable w-full h-12 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
                 data-testid="pending-bandes-bulk-cta"
               >
                 <CheckCheck size={14} aria-hidden="true" />
                 Valider toutes (avec valeurs actuelles)
               </button>
-              <p className="font-mono text-[10px] text-text-2 mt-2 text-center">
+              <p className="text-[10px] text-text-2 mt-2 text-center">
                 Garde les estimations en l'état pour les {rows.length} bandes.
               </p>
             </div>
@@ -391,10 +391,10 @@ const PendingBandesView: React.FC<PendingBandesViewProps> = ({ injectedState }) 
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-3 pb-3 sm:p-4"
         >
           <div className="w-full max-w-md card-dense space-y-3 py-5">
-            <h3 className="font-mono text-[13px] font-bold uppercase tracking-wide text-text-0">
+            <h3 className="text-[13px] font-bold uppercase tracking-wide text-text-0">
               Valider {rows.length} bande{rows.length > 1 ? 's' : ''} ?
             </h3>
-            <p className="font-mono text-[11px] text-text-2">
+            <p className="text-[11px] text-text-2">
               Toutes les estimations actuelles (effectif, poids, phase) seront
               acceptées telles quelles. Tu pourras modifier les détails plus
               tard depuis la fiche bande.
@@ -402,7 +402,7 @@ const PendingBandesView: React.FC<PendingBandesViewProps> = ({ injectedState }) 
             {bulkError ? (
               <p
                 role="alert"
-                className="font-mono text-[11px] text-red"
+                className="text-[11px] text-red"
                 data-testid="pending-bandes-bulk-error"
               >
                 Erreur : {bulkError}
@@ -413,7 +413,7 @@ const PendingBandesView: React.FC<PendingBandesViewProps> = ({ injectedState }) 
                 type="button"
                 onClick={() => setBulkOpen(false)}
                 disabled={bulkSaving}
-                className="pressable flex-1 h-11 rounded-md bg-bg-1 border border-border text-text-1 font-mono text-[11px] font-bold uppercase tracking-wide hover:border-text-2"
+                className="pressable flex-1 h-11 rounded-md bg-bg-1 border border-border text-text-1 text-[11px] font-bold uppercase tracking-wide hover:border-text-2"
               >
                 Annuler
               </button>
@@ -422,7 +422,7 @@ const PendingBandesView: React.FC<PendingBandesViewProps> = ({ injectedState }) 
                 onClick={handleBulkValidate}
                 disabled={bulkSaving}
                 aria-busy={bulkSaving}
-                className="pressable flex-[2] h-11 rounded-md bg-accent text-bg-0 font-mono text-[11px] font-bold uppercase tracking-wide hover:brightness-110 disabled:opacity-40"
+                className="pressable flex-[2] h-11 rounded-md bg-accent text-bg-0 text-[11px] font-bold uppercase tracking-wide hover:brightness-110 disabled:opacity-40"
                 data-testid="pending-bandes-bulk-confirm-btn"
               >
                 {bulkSaving ? 'Validation…' : 'Valider toutes'}

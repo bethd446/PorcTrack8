@@ -96,7 +96,7 @@ const AgritechHeader: React.FC<AgritechHeaderProps> = ({
               {title}
             </h1>
             {subtitle ? (
-              <p className="mt-1 font-mono text-[12px] text-text-2 leading-none truncate">
+              <p className="mt-1 text-[12px] text-text-2 leading-none truncate">
                 {subtitle}
               </p>
             ) : null}
