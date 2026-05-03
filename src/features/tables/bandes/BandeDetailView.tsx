@@ -65,25 +65,11 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
   const [notesHeader, setNotesHeader] = useState<string[]>([]);
   const { notes: notesAsNotes, getBandeById, bandes: allBandes } = useFarm();
 
-  // V29-FIX-P0 : garde défensive contre bande=undefined (cas SW cache stale ou
-  // route directe /troupeau/bandes/:id avec wrapper qui foire). Évite le
-  // crash JS "Cannot read properties of undefined (reading 'id')".
-  if (!bande?.id) {
-    return (
-      <div className="agritech-root p-10 text-center flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <p className="text-[14px] uppercase text-text-1">Bande introuvable</p>
-        <button
-          type="button"
-          onClick={onClose ?? (() => navigate(-1))}
-          className="pressable h-11 px-6 rounded-md bg-accent text-bg-0 text-[12px] uppercase tracking-wide"
-        >
-          Retour
-        </button>
-      </div>
-    );
-  }
-
-  const bandeTyped = getBandeById(bande.id);
+  // V42-pre : garde défensive `if (!bande?.id) return ...` déplacée APRÈS tous
+  // les hooks (juste avant le return JSX principal) pour respecter
+  // react-hooks/rules-of-hooks. Tous les hooks ci-dessous tolèrent désormais
+  // un `bande` undefined via narrowing local (`const id = bande?.id`).
+  const bandeTyped = bande?.id ? getBandeById(bande.id) : undefined;
 
   // V38-A — H1 affiche idPortee (code lisible: B01, L5RM…) jamais l'UUID brut.
   const portéeLabel = bandeTyped?.idPortee || '—';
@@ -118,7 +104,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
     [sources],
   );
 
-  const nesVivants = bandeTyped?.nv ?? Number(bande.nv) ?? 0;
+  const nesVivants = bandeTyped?.nv ?? Number(bande?.nv ?? 0);
   const ecart = sourcesTotal - nesVivants;
 
   // V28-CTA — Daily Check disponible uniquement pour les bandes en phase Sous mère.
@@ -143,14 +129,15 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
   }, [bandeTyped, porcelets.length]);
 
   const loadSources = useCallback(async () => {
-    if (!bande.id) return;
+    const id = bande?.id;
+    if (!id) return;
     try {
-      const rows = await getBatchSources(bande.id);
+      const rows = await getBatchSources(id);
       setSources(rows);
     } catch (e) {
       console.warn('[bande-detail] getBatchSources failed', e);
     }
-  }, [bande.id]);
+  }, [bande?.id]);
 
   const loadLogeData = useCallback(async () => {
     try {
@@ -172,14 +159,15 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
   }, [bandeTyped?.logeId]);
 
   const loadPorcelets = useCallback(async () => {
-    if (!bande.id) return;
+    const id = bande?.id;
+    if (!id) return;
     try {
-      const rows = await listPorceletsByBatch(bande.id);
+      const rows = await listPorceletsByBatch(id);
       setPorcelets(rows);
     } catch (e) {
       console.warn('[bande-detail] listPorceletsByBatch failed', e);
     }
-  }, [bande.id]);
+  }, [bande?.id]);
 
   useEffect(() => {
     loadSources();
@@ -262,7 +250,8 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
   }, [loadRelatedData]);
 
   const filteredHealth = useMemo(() => {
-    if (!bande.id || healthData.length === 0) return [];
+    const id = bande?.id;
+    if (!id || healthData.length === 0) return [];
     const typeIdx = healthHeader.findIndex(h => ['CIBLE_TYPE', 'SUJET_TYPE', 'TYPE'].includes(h.toUpperCase()));
     const idIdx = healthHeader.findIndex(h => ['CIBLE_ID', 'SUJET_ID', 'ID', 'BOUCLE'].includes(h.toUpperCase()));
 
@@ -270,11 +259,11 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
 
     return healthData.filter(r => {
       const rowId = String(r[idIdx]).trim().toUpperCase();
-      const targetId = String(bande.id).trim().toUpperCase();
+      const targetId = String(id).trim().toUpperCase();
       const rowType = typeIdx !== -1 ? String(r[typeIdx]).trim().toUpperCase() : 'BANDE';
       return rowId === targetId && (rowType === 'BANDE' || typeIdx === -1);
     });
-  }, [healthData, healthHeader, bande.id]);
+  }, [healthData, healthHeader, bande?.id]);
 
   // ── Protocole sanitaire recommandé selon phase de la bande ────────────
   const recommendedHealth = useMemo(() => {
@@ -285,31 +274,51 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
     const typeIdx = healthHeader.findIndex(h => h.toUpperCase().includes('TYPE'));
     const idIdx = healthHeader.findIndex(h => ['CIBLE_ID', 'SUJET_ID', 'ID', 'BOUCLE'].includes(h.toUpperCase()));
     const doneTypes = new Set<string>();
-    if (typeIdx !== -1 && idIdx !== -1) {
+    const id = bande?.id;
+    if (id && typeIdx !== -1 && idIdx !== -1) {
       for (const r of healthData) {
-        if (String(r[idIdx]).trim().toUpperCase() === String(bande.id).trim().toUpperCase()) {
+        if (String(r[idIdx]).trim().toUpperCase() === String(id).trim().toUpperCase()) {
           doneTypes.add(String(r[typeIdx]).trim().toUpperCase());
         }
       }
     }
     return recos.map(r => ({ ...r, done: doneTypes.has(r.type) }));
-  }, [bandeTyped, bande.id, healthHeader, healthData]);
+  }, [bandeTyped, bande?.id, healthHeader, healthData]);
 
   const [presetType, setPresetType] = useState<HealthLogType | undefined>(undefined);
 
   const filteredNotes = useMemo(() => {
-    if (!bande.id || notesData.length === 0) return [];
+    const id = bande?.id;
+    if (!id || notesData.length === 0) return [];
     const typeIdx = notesHeader.findIndex(h => ['SUBJECTTYPE', 'TYPE_SUJET'].includes(h.toUpperCase()));
     const idIdx = notesHeader.findIndex(h => ['SUBJECTID', 'ID_SUJET'].includes(h.toUpperCase()));
 
     if (idIdx !== -1 && typeIdx !== -1) {
       return notesData.filter(r =>
-        String(r[idIdx]).trim().toUpperCase() === String(bande.id).trim().toUpperCase() &&
+        String(r[idIdx]).trim().toUpperCase() === String(id).trim().toUpperCase() &&
         String(r[typeIdx]).trim().toUpperCase() === 'BANDE'
       );
     }
-    return notesData.filter(r => r.some(cell => String(cell).trim().toUpperCase() === String(bande.id).trim().toUpperCase()));
-  }, [notesData, notesHeader, bande.id]);
+    return notesData.filter(r => r.some(cell => String(cell).trim().toUpperCase() === String(id).trim().toUpperCase()));
+  }, [notesData, notesHeader, bande?.id]);
+
+  // V42-pre : early return déplacé ICI (juste avant le JSX) pour respecter
+  // react-hooks/rules-of-hooks. Tous les hooks ci-dessus tolèrent un
+  // `bande` undefined via narrowing local.
+  if (!bande?.id) {
+    return (
+      <div className="agritech-root p-10 text-center flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <p className="text-[14px] uppercase text-text-1">Bande introuvable</p>
+        <button
+          type="button"
+          onClick={onClose ?? (() => navigate(-1))}
+          className="pressable h-11 px-6 rounded-md bg-accent text-bg-0 text-[12px] uppercase tracking-wide"
+        >
+          Retour
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="agritech-root h-full flex flex-col">
