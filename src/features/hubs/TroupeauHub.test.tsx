@@ -475,4 +475,35 @@ describe('TroupeauHub — intégration multi-vues', () => {
     expect(chaleurTab?.textContent).toMatch(/1$/);
     expect(chaleurTab?.textContent).not.toMatch(/01/);
   });
+
+  // ── Tests régression V29 (refonte DNA "Aujourd'hui") ─────────────────
+  it('V29-1. Section "Aperçu" rendue avec SectionHeader + Card', () => {
+    renderHub();
+
+    // Le label SMALL CAPS "APERÇU" doit être visible (SectionHeader V29)
+    expect(screen.getAllByText(/APERÇU/i).length).toBeGreaterThan(0);
+    // L'aria-label de la section reflète son intention
+    expect(screen.getByLabelText(/aperçu des loges/i)).toBeDefined();
+  });
+
+  it('V29-2. Bouton "Classement" est un pill V29 (border-radius pill)', () => {
+    renderHub();
+    const classementBtn = screen.getByRole('button', {
+      name: /classement des reproducteurs/i,
+    });
+    // V29 Button utilise --ds-radius-pill comme border-radius
+    expect(classementBtn.style.borderRadius).toBe('var(--ds-radius-pill)');
+    // Et UPPERCASE via CSS
+    expect(classementBtn.style.textTransform).toBe('uppercase');
+  });
+
+  it('V29-3. Bouton "Ajouter une bande" pill V29 dans onglet Bandes', async () => {
+    renderHub();
+    await clickSubTabUser(/bandes/i);
+    const addBtn = await screen.findByRole('button', {
+      name: /ajouter une bande historique/i,
+    });
+    expect(addBtn.style.borderRadius).toBe('var(--ds-radius-pill)');
+    expect(addBtn.style.textTransform).toBe('uppercase');
+  });
 });

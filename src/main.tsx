@@ -5,6 +5,9 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
 import App from './App.tsx';
 import './index.css';
+// V29 — Layer DNA "Aujourd'hui" : tokens --ds-* importés APRÈS les tokens
+// existants (theme/agritech) pour servir de surcharge non destructive.
+import './styles/design-system-v29.css';
 import { ThemeProvider } from './context/ThemeContext';
 import { Toaster } from './components/ui/sonner';
 

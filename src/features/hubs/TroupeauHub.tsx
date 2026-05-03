@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
-import { ChevronRight, Plus, Trophy } from 'lucide-react';
+import { ChevronRight, Layers, Plus, Trophy } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
 import { useTroupeau } from '../../context/TroupeauContext';
@@ -15,6 +15,13 @@ import { FARM_CONFIG } from '../../config/farm';
 
 import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
+import {
+  Card,
+  Button,
+  SectionHeader,
+  Tag,
+  IconBox,
+} from '../../components/design-system';
 
 import TroupeauTruiesView from '../troupeau/TroupeauTruiesView';
 import TroupeauVerratsView from '../troupeau/TroupeauVerratsView';
@@ -175,40 +182,34 @@ const TroupeauHub: React.FC = () => {
                 {summary.total} truie{summary.total > 1 ? 's' : ''} · {verrats.length} verrat{verrats.length > 1 ? 's' : ''} ({totalAnimals} animaux) — {truieBreakdown}
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-                <button
-                  type="button"
+                <Button
+                  variant="primary"
+                  size="sm"
                   onClick={() => navigate('/troupeau/classement')}
                   aria-label="Voir le classement des reproducteurs"
-                  className="pressable inline-flex items-center gap-2 h-10 px-4 rounded-full bg-accent text-bg-0 font-mono text-[12px] font-medium uppercase tracking-wide shadow-sm hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-opacity"
                 >
                   <Trophy size={15} aria-hidden="true" />
-                  <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1 }}>
-                    <span>Classement</span>
-                    <span style={{ fontSize: 9, opacity: 0.85, textTransform: 'none', letterSpacing: 0 }}>
-                      Top truies & verrats par score
-                    </span>
-                  </span>
-                </button>
+                  <span>Classement</span>
+                </Button>
               </div>
             </header>
 
-            {/* ── Mini KPIs loges (occupation Mat/P-sev/Eng) ──────────── */}
-            <section
-              aria-label="Occupation des loges"
-              role="group"
-              style={{
-                background: 'var(--bg-surface)',
-                borderRadius: 12,
-                padding: '14px 16px',
-                boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: 14,
-              }}
-            >
-              <LogesMiniBar label="Mat." occ={summary.mat} />
-              <LogesMiniBar label="P-sev" occ={summary.post} />
-              <LogesMiniBar label="Eng." occ={summary.eng} />
+            {/* ── Aperçu loges (occupation Mat/P-sev/Eng) ──────────── */}
+            <section aria-label="Aperçu des loges">
+              <SectionHeader label="Aperçu" />
+              <Card
+                role="group"
+                style={{
+                  marginTop: 12,
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gap: 14,
+                }}
+              >
+                <LogesMiniBar label="Mat." occ={summary.mat} />
+                <LogesMiniBar label="P-sev" occ={summary.post} />
+                <LogesMiniBar label="Eng." occ={summary.eng} />
+              </Card>
             </section>
 
             {/* ── Sub-tabs (Radix) ─────────────────────────────────── */}
@@ -256,15 +257,15 @@ const TroupeauHub: React.FC = () => {
               <TabsContent value="bandes" className="animate-fade-in">
                 <div className="flex flex-col gap-4">
                   <div className="flex items-center justify-end">
-                    <button
-                      type="button"
+                    <Button
+                      variant="primary"
+                      size="sm"
                       onClick={() => setAddBandeOpen(true)}
                       aria-label="Ajouter une bande historique"
-                      className="pressable inline-flex items-center gap-2 h-10 px-4 rounded-full bg-accent text-bg-0 font-mono text-[12px] font-medium uppercase tracking-wide shadow-sm hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-opacity"
                     >
                       <Plus size={15} aria-hidden="true" />
-                      Ajouter une bande historique
-                    </button>
+                      Ajouter une bande
+                    </Button>
                   </div>
                   <BandesInline
                     bandes={realBandes}
@@ -361,100 +362,111 @@ interface BandesInlineProps {
   onSeeAll: () => void;
 }
 
+/** Map statut bande → variant Tag V29 (palette DNA "Aujourd'hui"). */
+function bandeStatutTagVariant(
+  statut: string | undefined,
+): 'default' | 'accent' | 'primary' | 'success' | 'warning' {
+  const s = (statut ?? '').toLowerCase();
+  if (/sous m[èe]re|maternit/.test(s)) return 'success';
+  if (/sevr/.test(s)) return 'accent';
+  if (/recap/.test(s)) return 'default';
+  return 'default';
+}
+
 const BandesInline: React.FC<BandesInlineProps> = ({ bandes, onOpen, onSeeAll }) => {
   if (bandes.length === 0) {
     return (
-      <div
-        style={{
-          background: 'var(--bg-surface)',
-          borderRadius: 12,
-          padding: '20px 16px',
-          textAlign: 'center',
-          color: 'var(--muted)',
-          fontSize: 13,
-        }}
-      >
-        Aucune bande active.
-      </div>
+      <Card>
+        <div
+          style={{
+            textAlign: 'center',
+            color: 'var(--ds-text-muted)',
+            fontSize: 'var(--ds-text-small)',
+          }}
+        >
+          Aucune bande active.
+        </div>
+      </Card>
     );
   }
   return (
-    <div
-      style={{
-        background: 'var(--bg-surface)',
-        borderRadius: 12,
-        boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-        overflow: 'hidden',
-      }}
-    >
-      <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-        {bandes.map((b, idx) => (
-          <li key={b.id}>
-            <button
-              type="button"
-              onClick={() => onOpen(b.id)}
-              className="pressable"
-              style={{
-                width: '100%',
-                background: 'transparent',
-                border: 'none',
-                borderTop: idx === 0 ? 'none' : '1px solid var(--bg-app)',
-                padding: '12px 16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                cursor: 'pointer',
-                textAlign: 'left',
-              }}
-            >
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-heading)',
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: 'var(--ink)',
-                    letterSpacing: '-0.005em',
-                  }}
-                >
-                  {b.idPortee ?? b.id}
-                  {b.truie ? ` · ${b.truie}` : ''}
-                </div>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 10.5,
-                    letterSpacing: '0.06em',
-                    color: 'var(--muted)',
-                    marginTop: 2,
-                    fontVariantNumeric: 'tabular-nums',
-                  }}
-                >
-                  {b.statut ?? '—'}
-                  {typeof b.vivants === 'number' ? ` · ${b.vivants} viv.` : ''}
-                </div>
-              </div>
-              <ChevronRight size={16} aria-hidden="true" style={{ color: 'var(--muted)', flexShrink: 0 }} />
-            </button>
-          </li>
-        ))}
-      </ul>
-      <button
-        type="button"
-        onClick={onSeeAll}
-        className="pressable text-mono-label"
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <ul
         style={{
-          width: '100%',
-          background: 'transparent',
-          border: 'none',
-          borderTop: '1px solid var(--bg-app)',
-          padding: '12px 16px',
-          color: 'var(--color-accent-600)',
-          cursor: 'pointer',
+          listStyle: 'none',
+          margin: 0,
+          padding: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10,
         }}
       >
+        {bandes.map((b) => {
+          const tagVariant = bandeStatutTagVariant(b.statut);
+          return (
+            <li key={b.id}>
+              <Card
+                as="button"
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                {...({
+                  type: 'button',
+                  onClick: () => onOpen(b.id),
+                  'aria-label': `Ouvrir bande ${b.idPortee ?? b.id}`,
+                } as any)}
+                style={{
+                  width: '100%',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 14,
+                  minHeight: 44,
+                }}
+              >
+                <IconBox tone="accent">
+                  <Layers size={20} aria-hidden="true" />
+                </IconBox>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontFamily: 'var(--ds-font-serif)',
+                      fontSize: 16,
+                      fontWeight: 600,
+                      color: 'var(--ds-text)',
+                      letterSpacing: '-0.005em',
+                    }}
+                  >
+                    {b.idPortee ?? b.id}
+                    {b.truie ? ` · ${b.truie}` : ''}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: 'var(--ds-font-sans)',
+                      fontSize: 'var(--ds-text-small)',
+                      color: 'var(--ds-text-muted)',
+                      marginTop: 2,
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    {typeof b.vivants === 'number' ? `${b.vivants} viv.` : '—'}
+                  </div>
+                </div>
+                {b.statut ? (
+                  <Tag variant={tagVariant}>{b.statut}</Tag>
+                ) : null}
+                <ChevronRight
+                  size={18}
+                  aria-hidden="true"
+                  style={{ color: 'var(--ds-text-subtle)', flexShrink: 0 }}
+                />
+              </Card>
+            </li>
+          );
+        })}
+      </ul>
+      <Button variant="ghost" size="sm" onClick={onSeeAll}>
         Voir toutes les bandes
-      </button>
+      </Button>
     </div>
   );
 };
@@ -472,17 +484,7 @@ const BatimentsSummary: React.FC<BatimentsSummaryProps> = ({ onSeeAll }) => {
     { label: 'Engraissement', cap: FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY },
   ];
   return (
-    <div
-      style={{
-        background: 'var(--bg-surface)',
-        borderRadius: 12,
-        boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-        padding: '16px 18px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 14,
-      }}
-    >
+    <Card style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div
         style={{
           display: 'grid',
@@ -494,21 +496,22 @@ const BatimentsSummary: React.FC<BatimentsSummaryProps> = ({ onSeeAll }) => {
           <div key={s.label} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span
               style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 9.5,
-                letterSpacing: '0.04em',
-                color: 'var(--muted)',
+                fontFamily: 'var(--ds-font-sans)',
+                fontSize: 'var(--ds-text-label)',
+                letterSpacing: 'var(--ds-tracking-label)',
+                color: 'var(--ds-text-subtle)',
                 fontWeight: 600,
+                textTransform: 'uppercase',
               }}
             >
               {s.label}
             </span>
             <span
               style={{
-                fontFamily: 'var(--font-heading)',
-                fontSize: 22,
+                fontFamily: 'var(--ds-font-serif)',
+                fontSize: 28,
                 fontWeight: 600,
-                color: 'var(--ink)',
+                color: 'var(--ds-text)',
                 letterSpacing: '-0.02em',
                 lineHeight: 1,
               }}
@@ -517,10 +520,9 @@ const BatimentsSummary: React.FC<BatimentsSummaryProps> = ({ onSeeAll }) => {
             </span>
             <span
               style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 10,
-                letterSpacing: '0.06em',
-                color: 'var(--muted)',
+                fontFamily: 'var(--ds-font-sans)',
+                fontSize: 12,
+                color: 'var(--ds-text-muted)',
                 fontVariantNumeric: 'tabular-nums',
               }}
             >
@@ -529,24 +531,15 @@ const BatimentsSummary: React.FC<BatimentsSummaryProps> = ({ onSeeAll }) => {
           </div>
         ))}
       </div>
-      <button
-        type="button"
+      <Button
+        variant="secondary"
+        size="sm"
         onClick={onSeeAll}
-        className="pressable text-mono-label"
-        style={{
-          alignSelf: 'flex-start',
-          background: 'var(--color-accent-100)',
-          color: 'var(--color-accent-600)',
-          border: 'none',
-          borderRadius: 8,
-          padding: '8px 14px',
-          fontWeight: 600,
-          cursor: 'pointer',
-        }}
+        style={{ alignSelf: 'flex-start' }}
       >
         Voir le plan complet
-      </button>
-    </div>
+      </Button>
+    </Card>
   );
 };
 

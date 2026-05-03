@@ -65,6 +65,7 @@ const AlertsView = React.lazy(() => import(/* webpackChunkName: "alertes" */ './
 const SettingsPage = React.lazy(() => import(/* webpackChunkName: "settings" */ './components/SystemManagement').then(m => ({ default: m.SettingsPage })));
 
 const TodayHub = React.lazy(() => import(/* webpackChunkName: "today-hub" */ './features/today/TodayHub'));
+const DesignSystemView = React.lazy(() => import(/* webpackChunkName: "design-system" */ './features/design-system/DesignSystemView'));
 const TroupeauHub = React.lazy(() => import(/* webpackChunkName: "troupeau-hub" */ './features/hubs/TroupeauHub'));
 const CyclesHub = React.lazy(() => import(/* webpackChunkName: "cycles-hub" */ './features/hubs/CyclesHub'));
 const RessourcesHub = React.lazy(() => import(/* webpackChunkName: "ressources-hub" */ './features/hubs/RessourcesHub'));
@@ -348,6 +349,7 @@ const AppShell: React.FC = () => (
       <Route path="/alertes" element={<Navigate to="/alerts" replace />} />
       <Route path="/more" element={<SettingsPage />} />
       <Route path="/aide" element={<AideView />} />
+      <Route path="/design-system" element={<DesignSystemView />} />
 
       {/* V27-VALIDATION : écran de validation des bandes PENDING */}
       <Route path="/onboarding/bandes-pending" element={<PendingBandesView />} />
