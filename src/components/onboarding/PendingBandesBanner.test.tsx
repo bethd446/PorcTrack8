@@ -16,19 +16,15 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 
 // ── Mocks ───────────────────────────────────────────────────────────────────
 
-// On mock le QuickAddBandeFromLogeForm pour ne tester ici que le banner.
-vi.mock('../forms/QuickAddBandeFromLogeForm', () => ({
-  default: ({
-    isOpen,
-    editPendingBatchId,
-  }: {
-    isOpen: boolean;
-    editPendingBatchId?: string;
-  }) =>
-    isOpen ? (
-      <div role="dialog" data-testid="mock-edit-form" data-batch-id={editPendingBatchId} />
-    ) : null,
-}));
+// V27-VALIDATION : le banner navigue désormais vers /onboarding/bandes-pending
+// au lieu d'ouvrir le form direct.
+const navigateMock = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>(
+    'react-router-dom',
+  );
+  return { ...actual, useNavigate: () => navigateMock };
+});
 
 vi.mock('../../services/supabaseClient', () => ({
   supabase: { from: () => ({}) },
@@ -40,7 +36,10 @@ import PendingBandesBanner, {
   sortBandesPendingMaleFirst,
 } from './PendingBandesBanner';
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  navigateMock.mockClear();
+});
 
 function makeState(over: Partial<PendingBandesState> = {}): PendingBandesState {
   return {
@@ -92,19 +91,17 @@ describe('PendingBandesBanner', () => {
     expect(banner.textContent).not.toMatch(/1 bandes/);
   });
 
-  it('[5] tap ouvre le form en mode édition avec le bon batchId', () => {
+  it('[5] tap navigue vers /onboarding/bandes-pending (V27)', () => {
     render(
       <PendingBandesBanner
         injectedState={makeState({ count: 2, firstPendingId: 'batch-uuid-42' })}
       />,
     );
-    expect(screen.queryByTestId('mock-edit-form')).toBeNull();
 
     fireEvent.click(screen.getByTestId('pending-bandes-banner-cta'));
 
-    const form = screen.getByTestId('mock-edit-form');
-    expect(form).toBeTruthy();
-    expect(form.getAttribute('data-batch-id')).toBe('batch-uuid-42');
+    expect(navigateMock).toHaveBeenCalledTimes(1);
+    expect(navigateMock).toHaveBeenCalledWith('/onboarding/bandes-pending');
   });
 });
 

@@ -12,15 +12,18 @@ import {
   Home,
   Factory,
   Loader2,
+  Layers,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../services/supabaseClient';
 import { kvGet, kvSet } from '../../services/kvStore';
-import { createLoge, insertSow, insertBoar } from '../../services/supabaseWrites';
+import { createLoge, insertSow, insertBoar, insertBatch } from '../../services/supabaseWrites';
 import type { LogeType } from '../../types/farm';
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   OnboardingWizard — 11 étapes pour configurer une nouvelle ferme
+   OnboardingWizard — 12 étapes pour configurer une nouvelle ferme
    ───────────────────────────────────────────────────────────────────────────
    Étapes :
      1. Bienvenue
@@ -33,14 +36,16 @@ import type { LogeType } from '../../types/farm';
      8. Objectif porcelets/an  → objectif_porcelets_an
      9. Notes de démarrage     → notes_demarrage
     10. Loges (V24)            → quantités par type + numérotation libre
-    11. Récap + persistance Supabase + INSERT loges
+    11. Bandes existantes (V27)→ liste de bandes en cours (optionnel)
+    12. Récap + persistance Supabase + INSERT loges + INSERT batches PENDING
 
    Persistance progressive : `kvSet('onboarding_draft', JSON)` à chaque étape.
    À la fin, UPDATE troupeaux WHERE user_id=auth.uid() + onboarding_completed_at,
-   puis INSERT N rows dans `loges` via `createLoge` pour chaque type avec qty>0.
+   puis INSERT N rows dans `loges` via `createLoge` pour chaque type avec qty>0,
+   puis INSERT N rows dans `batches` via `insertBatch` pour chaque bande déclarée.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-const TOTAL_STEPS = 11;
+const TOTAL_STEPS = 12;
 const DRAFT_KEY = 'onboarding_draft';
 
 // V24 — 6 catégories couvrant les types de loges saisis à l'onboarding.
@@ -94,6 +99,59 @@ const INITIAL_LOGES_NUMS: LogesNumeros = {
   VERRAT: [],
 };
 
+// V27 — Phases déclarables pour une bande existante à l'onboarding.
+// Mapping vers la colonne `batches.phase` (BandePhase) + `batches.statut`.
+type WizardBandePhase =
+  | 'SOUS_MERE'
+  | 'POST_SEVRAGE'
+  | 'CROISSANCE'
+  | 'ENGRAISSEMENT'
+  | 'FINITION'
+  | 'VENDU';
+
+interface WizardBandePhaseConfig {
+  key: WizardBandePhase;
+  label: string;
+  /** Statut métier persisté dans `batches.statut`. */
+  statut: string;
+  /** Valeur persistée dans `batches.phase` (NULL pour VENDU). */
+  dbPhase: 'SOUS_MERE' | 'POST_SEVRAGE' | 'CROISSANCE' | 'ENGRAISSEMENT' | 'FINITION' | null;
+}
+
+const WIZARD_BANDE_PHASES: ReadonlyArray<WizardBandePhaseConfig> = [
+  { key: 'SOUS_MERE',     label: 'Sous mère',     statut: 'Sous mère',     dbPhase: 'SOUS_MERE' },
+  { key: 'POST_SEVRAGE',  label: 'Post-sevrage',  statut: 'Sevrés',        dbPhase: 'POST_SEVRAGE' },
+  { key: 'CROISSANCE',    label: 'Croissance',    statut: 'Croissance',    dbPhase: 'CROISSANCE' },
+  { key: 'ENGRAISSEMENT', label: 'Engraissement', statut: 'Engraissement', dbPhase: 'ENGRAISSEMENT' },
+  { key: 'FINITION',      label: 'Finition',      statut: 'Finition',      dbPhase: 'FINITION' },
+  { key: 'VENDU',         label: 'Vendu',         statut: 'Vendu',         dbPhase: null },
+];
+
+/** V27 — Une bande déclarée à l'onboarding (saisie libre). */
+interface WizardBande {
+  /** ID local UI (uuid simple, jamais persisté). */
+  uid: string;
+  phase: WizardBandePhase;
+  effectif: number;
+  poidsKg: number;
+  /** Index `cat_idx` dans la liste plate des loges déclarées à l'étape 10. */
+  logeRef: string;
+}
+
+function makeUid(): string {
+  return `b_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function defaultBande(): WizardBande {
+  return {
+    uid: makeUid(),
+    phase: 'POST_SEVRAGE',
+    effectif: 0,
+    poidsKg: 0,
+    logeRef: '',
+  };
+}
+
 type TypeProd = 'NAISSEUR' | 'NAISSEUR_ENGRAISSEUR' | 'ENGRAISSEUR_SEUL';
 
 const RACES_DISPONIBLES = [
@@ -122,6 +180,8 @@ interface WizardState {
   logesQty: LogesQuantites;
   /** V6-C : numéros édités par l'utilisateur. Initialisé à partir des suggestions. */
   logesNums: LogesNumeros;
+  /** V27 : bandes existantes pré-déclarées (étape 11). Vide = skip. */
+  bandes: WizardBande[];
 }
 
 const INITIAL: WizardState = {
@@ -137,6 +197,7 @@ const INITIAL: WizardState = {
   notes_demarrage: '',
   logesQty: { ...INITIAL_LOGES_QTY },
   logesNums: { ...INITIAL_LOGES_NUMS },
+  bandes: [],
 };
 
 function loadDraft(): WizardState {
@@ -149,6 +210,7 @@ function loadDraft(): WizardState {
       ...parsed,
       logesQty: { ...INITIAL_LOGES_QTY, ...(parsed.logesQty ?? {}) },
       logesNums: { ...INITIAL_LOGES_NUMS, ...(parsed.logesNums ?? {}) },
+      bandes: Array.isArray(parsed.bandes) ? parsed.bandes : [],
     };
   } catch {
     return INITIAL;
@@ -204,9 +266,45 @@ function validateStep(state: WizardState): boolean {
       }
       return true;
     }
+    case 11: {
+      // Étape bandes : skip OK (liste vide) ; sinon chaque bande doit être valide.
+      for (const b of state.bandes) {
+        if (!Number.isFinite(b.effectif) || b.effectif < 1 || b.effectif > 5000) return false;
+        if (!Number.isFinite(b.poidsKg) || b.poidsKg <= 0 || b.poidsKg > 500) return false;
+        if (!b.logeRef || b.logeRef.trim().length === 0) return false;
+      }
+      return true;
+    }
     default:
       return true;
   }
+}
+
+/** V27 — Aplatit les loges déclarées étape 10 en options selectables (index, label, type). */
+function flattenLogesForSelect(state: WizardState): Array<{ value: string; label: string; type: LogeType }> {
+  const out: Array<{ value: string; label: string; type: LogeType }> = [];
+  for (const c of LOGE_CATEGORIES) {
+    const qty = state.logesQty[c.cat] ?? 0;
+    const nums = state.logesNums[c.cat] ?? [];
+    for (let i = 0; i < qty; i++) {
+      const numero = (nums[i] ?? defaultNumero(c.prefix, i + 1)).trim();
+      if (!numero) continue;
+      out.push({
+        value: `${c.cat}::${i}`,
+        label: `${numero} (${c.label})`,
+        type: c.type,
+      });
+    }
+  }
+  return out;
+}
+
+/** V27 — Génère le code_id `B-{YYYYMMDD}-W{n}` pour une bande wizard (n = ordre 1-based). */
+function wizardBandeCodeId(orderIdx: number, now: Date = new Date()): string {
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `B-${y}${m}${d}-W${orderIdx}`;
 }
 
 const OnboardingWizard: React.FC = () => {
@@ -305,8 +403,11 @@ const OnboardingWizard: React.FC = () => {
       // V6-C : INSERT N loges par catégorie avec numéro édité par l'utilisateur.
       // Best-effort : si une loge échoue, on continue (pas de rollback strict —
       // l'utilisateur peut corriger via /troupeau/loges).
+      // V27 : on indexe les ID des loges créées par référence `${cat}::${i}`
+      // pour pouvoir lier les bandes pré-déclarées à leur loge réelle.
       let logesCreated = 0;
       let logesFailed = 0;
+      const logeIdByRef = new Map<string, string>();
       for (const c of LOGE_CATEGORIES) {
         const qty = state.logesQty[c.cat] ?? 0;
         if (qty <= 0) continue;
@@ -315,13 +416,16 @@ const OnboardingWizard: React.FC = () => {
           const numero = (nums[i] ?? defaultNumero(c.prefix, i + 1)).trim();
           if (!numero) continue;
           try {
-            await createLoge({
+            const created = await createLoge({
               numero,
               type: c.type,
               capaciteMax: c.capaciteMax,
               notes: "Créée à l'onboarding",
             });
             logesCreated++;
+            const ref = `${c.cat}::${i}`;
+            const newId = (created as { id?: string } | null | undefined)?.id;
+            if (newId) logeIdByRef.set(ref, newId);
           } catch (logeErr) {
             logesFailed++;
             console.warn('[onboarding] createLoge failed:', logeErr);
@@ -329,14 +433,55 @@ const OnboardingWizard: React.FC = () => {
         }
       }
 
+      // V27 : INSERT bandes pré-déclarées en `validation_status='PENDING'`.
+      // L'éleveur les complétera plus tard via PendingBandesBanner.
+      // Best-effort : log + agrégation des erreurs, navigation toujours OK.
+      let bandesCreated = 0;
+      let bandesFailed = 0;
+      for (let idx = 0; idx < state.bandes.length; idx++) {
+        const b = state.bandes[idx];
+        const phaseCfg = WIZARD_BANDE_PHASES.find((p) => p.key === b.phase);
+        if (!phaseCfg) {
+          bandesFailed++;
+          console.warn('[onboarding] insertBatch skip — phase inconnue:', b.phase);
+          continue;
+        }
+        const logeId = logeIdByRef.get(b.logeRef) ?? null;
+        const codeId = wizardBandeCodeId(idx + 1);
+        const payload: Record<string, unknown> = {
+          code_id: codeId,
+          phase: phaseCfg.dbPhase,
+          statut: 'En cours',
+          poids_initial_kg: b.poidsKg,
+          poids_moyen_kg: b.poidsKg,
+          porcelets_nes_total: b.effectif,
+          porcelets_nes_vivants: b.effectif,
+          validation_status: 'PENDING',
+          loge_id: logeId,
+          notes: `Pré-déclarée à l'onboarding (phase saisie : ${phaseCfg.label})`,
+        };
+        try {
+          await insertBatch(payload as Parameters<typeof insertBatch>[0]);
+          bandesCreated++;
+        } catch (batchErr) {
+          bandesFailed++;
+          console.warn('[onboarding] insertBatch failed:', batchErr);
+        }
+      }
+
       // Toast final : succès complet OU warning si certaines créations ont
       // échoué. Stocké dans kvStore pour lecture par /today (consumer décide
       // de l'affichage). Format : `{kind:'success'|'warning', message:string}`.
-      const totalFailed = truiesFailed + verratsFailed + logesFailed;
+      const totalFailed = truiesFailed + verratsFailed + logesFailed + bandesFailed;
+      const baseSummary = `${truiesCreated} truies + ${verratsCreated} verrats + ${logesCreated} loges créées`;
+      const bandesSuffix =
+        bandesCreated > 0
+          ? ` · ${bandesCreated} bande${bandesCreated > 1 ? 's' : ''} pré-déclarée${bandesCreated > 1 ? 's' : ''} (à compléter via le banner sur la home)`
+          : '';
       const toastMessage =
         totalFailed > 0
-          ? `Compte configuré · ${truiesCreated} truies + ${verratsCreated} verrats + ${logesCreated} loges créées. Quelques animaux n'ont pas pu être créés (vérifie via Cheptel).`
-          : `Compte configuré · ${truiesCreated} truies + ${verratsCreated} verrats + ${logesCreated} loges créées`;
+          ? `Compte configuré · ${baseSummary}${bandesSuffix}. Quelques éléments n'ont pas pu être créés (vérifie via Cheptel / Bandes).`
+          : `Compte configuré · ${baseSummary}${bandesSuffix}`;
       await kvSet(
         'onboarding_toast',
         JSON.stringify({
@@ -684,6 +829,8 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, setState, onStart, e
     case 10:
       return <StepLoges state={state} setState={setState} />;
     case 11:
+      return <StepBandes state={state} setState={setState} />;
+    case 12:
       return <StepRecap state={state} error={error} />;
     default:
       return null;
@@ -710,7 +857,7 @@ const StepWelcome: React.FC<{ onStart: () => void }> = ({ onStart }) => (
       Bienvenue sur PorcTrack
     </h1>
     <p className="text-[14px] text-text-1 max-w-sm leading-relaxed mb-8">
-      10 questions rapides pour configurer ton interface. Tu peux interrompre à tout moment et
+      Quelques questions rapides pour configurer ton interface. Tu peux interrompre à tout moment et
       reprendre plus tard.
     </p>
     <button
@@ -878,7 +1025,199 @@ const StepLoges: React.FC<StepLogesProps> = ({ state, setState }) => {
   );
 };
 
-/* ─── Étape 11 : récap ─────────────────────────────────────────────────── */
+/* ─── Étape 11 : bandes existantes (V27) ───────────────────────────────── */
+
+interface StepBandesProps {
+  state: WizardState;
+  setState: React.Dispatch<React.SetStateAction<WizardState>>;
+}
+
+const StepBandes: React.FC<StepBandesProps> = ({ state, setState }) => {
+  const logeOptions = useMemo(() => flattenLogesForSelect(state), [state]);
+  const noLoges = logeOptions.length === 0;
+
+  const addBande = (): void => {
+    setState((s) => {
+      const fresh = defaultBande();
+      // Pré-remplit la 1re loge dispo si possible.
+      if (logeOptions.length > 0) fresh.logeRef = logeOptions[0].value;
+      return { ...s, bandes: [...s.bandes, fresh] };
+    });
+  };
+
+  const removeBande = (uid: string): void => {
+    setState((s) => ({ ...s, bandes: s.bandes.filter((b) => b.uid !== uid) }));
+  };
+
+  const patchBande = (uid: string, patch: Partial<WizardBande>): void => {
+    setState((s) => ({
+      ...s,
+      bandes: s.bandes.map((b) => (b.uid === uid ? { ...b, ...patch } : b)),
+    }));
+  };
+
+  return (
+    <div className="bg-bg-1 border border-border rounded-2xl p-6">
+      <div className="flex items-start gap-3 mb-5">
+        <span
+          className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent shrink-0"
+          aria-hidden="true"
+        >
+          <Layers size={20} />
+        </span>
+        <div className="flex-1">
+          <h2
+            className="ft-heading uppercase tracking-wide text-[20px] leading-tight"
+            style={{ letterSpacing: '0.02em' }}
+          >
+            Bandes existantes
+          </h2>
+          <p className="text-[13px] text-text-2 mt-1 leading-relaxed">
+            Décrivez vos bandes en cours (optionnel). Chaque bande sera créée en
+            statut <span className="ft-code">PENDING</span> et apparaîtra sur la
+            home pour être complétée plus tard.
+          </p>
+        </div>
+      </div>
+
+      {noLoges && (
+        <p className="text-[12px] text-text-2 bg-bg-0 border border-border rounded-md px-3 py-2 mb-4">
+          Aucune loge déclarée à l'étape précédente — impossible de pré-déclarer
+          des bandes maintenant. Tu pourras les ajouter via la home après création
+          des loges.
+        </p>
+      )}
+
+      <div className="flex flex-col gap-3" data-testid="onb-bandes-list">
+        {state.bandes.map((b, idx) => {
+          const effectifInvalid = !Number.isFinite(b.effectif) || b.effectif < 1;
+          const poidsInvalid = !Number.isFinite(b.poidsKg) || b.poidsKg <= 0;
+          const logeInvalid = !b.logeRef;
+          return (
+            <div
+              key={b.uid}
+              className="bg-bg-0 border border-border rounded-md p-3 flex flex-col gap-2"
+              data-testid={`onb-bande-row-${idx}`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="ft-code text-[11px] uppercase tracking-wide text-text-2">
+                  Bande {idx + 1}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeBande(b.uid)}
+                  aria-label={`Supprimer la bande ${idx + 1}`}
+                  className="text-text-2 hover:text-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded p-1"
+                >
+                  <Trash2 size={16} aria-hidden="true" />
+                </button>
+              </div>
+
+              <label className="block ft-code text-[10px] uppercase tracking-wide text-text-2">
+                Phase
+              </label>
+              <select
+                aria-label={`Phase bande ${idx + 1}`}
+                value={b.phase}
+                onChange={(e) => patchBande(b.uid, { phase: e.target.value as WizardBandePhase })}
+                className="w-full h-10 px-3 rounded-md bg-bg-1 border border-border text-text-0 text-[14px] outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+              >
+                {WIZARD_BANDE_PHASES.map((p) => (
+                  <option key={p.key} value={p.key}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block ft-code text-[10px] uppercase tracking-wide text-text-2">
+                    Effectif
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={5000}
+                    aria-label={`Effectif bande ${idx + 1}`}
+                    value={Number.isFinite(b.effectif) ? b.effectif : 0}
+                    onChange={(e) => {
+                      const n = parseInt(e.target.value, 10);
+                      patchBande(b.uid, { effectif: Number.isNaN(n) ? 0 : n });
+                    }}
+                    className={
+                      'w-full h-10 px-3 rounded-md bg-bg-1 border text-text-0 text-[14px] ft-values outline-none focus:ring-2 focus:ring-accent focus:border-accent ' +
+                      (effectifInvalid ? 'border-red-500' : 'border-border')
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="block ft-code text-[10px] uppercase tracking-wide text-text-2">
+                    Poids moyen (kg)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={500}
+                    step="0.1"
+                    aria-label={`Poids moyen bande ${idx + 1}`}
+                    value={Number.isFinite(b.poidsKg) ? b.poidsKg : 0}
+                    onChange={(e) => {
+                      const n = parseFloat(e.target.value.replace(',', '.'));
+                      patchBande(b.uid, { poidsKg: Number.isNaN(n) ? 0 : n });
+                    }}
+                    className={
+                      'w-full h-10 px-3 rounded-md bg-bg-1 border text-text-0 text-[14px] ft-values outline-none focus:ring-2 focus:ring-accent focus:border-accent ' +
+                      (poidsInvalid ? 'border-red-500' : 'border-border')
+                    }
+                  />
+                </div>
+              </div>
+
+              <label className="block ft-code text-[10px] uppercase tracking-wide text-text-2">
+                Loge
+              </label>
+              <select
+                aria-label={`Loge bande ${idx + 1}`}
+                value={b.logeRef}
+                onChange={(e) => patchBande(b.uid, { logeRef: e.target.value })}
+                disabled={noLoges}
+                className={
+                  'w-full h-10 px-3 rounded-md bg-bg-1 border text-text-0 text-[14px] outline-none focus:ring-2 focus:ring-accent focus:border-accent disabled:opacity-50 ' +
+                  (logeInvalid ? 'border-red-500' : 'border-border')
+                }
+              >
+                <option value="">— Sélectionner —</option>
+                {logeOptions.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          );
+        })}
+      </div>
+
+      <button
+        type="button"
+        onClick={addBande}
+        disabled={noLoges}
+        className="mt-4 h-10 px-4 rounded-md bg-bg-0 border border-border text-text-1 text-[12px] font-semibold uppercase tracking-wide flex items-center gap-2 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+      >
+        <Plus size={14} aria-hidden="true" />
+        Ajouter une bande
+      </button>
+
+      <p className="text-[11px] text-text-2 mt-3">
+        {state.bandes.length === 0
+          ? 'Aucune bande déclarée — clique sur Suivant pour passer cette étape.'
+          : `${state.bandes.length} bande${state.bandes.length > 1 ? 's' : ''} pré-déclarée${state.bandes.length > 1 ? 's' : ''}`}
+      </p>
+    </div>
+  );
+};
+
+/* ─── Étape 12 : récap ─────────────────────────────────────────────────── */
 
 const StepRecap: React.FC<{ state: WizardState; error: string | null }> = ({ state, error }) => {
   const typeLabel: Record<TypeProd, string> = {
@@ -923,6 +1262,15 @@ const StepRecap: React.FC<{ state: WizardState; error: string | null }> = ({ sta
     items.push({ label: 'Loges', value: `${totalLoges} (${detail})` });
   } else {
     items.push({ label: 'Loges', value: 'À configurer plus tard' });
+  }
+  // V27 : récap bandes pré-déclarées.
+  if (state.bandes.length > 0) {
+    items.push({
+      label: 'Bandes pré-déclarées',
+      value: `${state.bandes.length} bande${state.bandes.length > 1 ? 's' : ''} (à compléter via le banner)`,
+    });
+  } else {
+    items.push({ label: 'Bandes pré-déclarées', value: 'Aucune' });
   }
 
   return (

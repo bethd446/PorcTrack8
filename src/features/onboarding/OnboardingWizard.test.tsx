@@ -60,18 +60,26 @@ vi.mock('../../services/kvStore', () => ({
   kvSet: (k: string, v: string) => kvSetMock(k, v),
 }));
 
-const createLogeMock = vi.fn(async (_data: unknown) => ({
-  id: 'l-uuid',
-  numero: 'X',
-  type: 'MATERNITE',
-  active: true,
-}));
+// V27 : on prépare un id stable côté mock pour que `logeIdByRef` retrouve la
+// loge correspondante lors de l'INSERT batches.
+let logeMockCounter = 0;
+const createLogeMock = vi.fn(async (_data: unknown) => {
+  logeMockCounter += 1;
+  return {
+    id: `l-${logeMockCounter}`,
+    numero: 'X',
+    type: 'MATERNITE',
+    active: true,
+  };
+});
 const insertSowMock = vi.fn(async (_data: unknown) => ({ id: 's-uuid' }));
 const insertBoarMock = vi.fn(async (_data: unknown) => ({ id: 'b-uuid' }));
+const insertBatchMock = vi.fn(async (_data: unknown) => ({ id: 'batch-uuid' }));
 vi.mock('../../services/supabaseWrites', () => ({
   createLoge: (data: unknown) => createLogeMock(data),
   insertSow: (data: unknown) => insertSowMock(data),
   insertBoar: (data: unknown) => insertBoarMock(data),
+  insertBatch: (data: unknown) => insertBatchMock(data),
 }));
 
 import OnboardingWizard from './OnboardingWizard';
@@ -91,8 +99,15 @@ beforeEach(() => {
   createLogeMock.mockClear();
   insertSowMock.mockClear();
   insertBoarMock.mockClear();
+  insertBatchMock.mockClear();
+  logeMockCounter = 0;
+  createLogeMock.mockImplementation(async (_d: unknown) => {
+    logeMockCounter += 1;
+    return { id: `l-${logeMockCounter}`, numero: 'X', type: 'MATERNITE', active: true };
+  });
   insertSowMock.mockImplementation(async (_d: unknown) => ({ id: 's-uuid' }));
   insertBoarMock.mockImplementation(async (_d: unknown) => ({ id: 'b-uuid' }));
+  insertBatchMock.mockImplementation(async (_d: unknown) => ({ id: 'batch-uuid' }));
 });
 afterEach(() => cleanup());
 
@@ -102,7 +117,7 @@ describe('OnboardingWizard', () => {
     expect(screen.getByText(/Bienvenue sur PorcTrack/i)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /Commencer/i }));
     expect(screen.getByRole('heading', { name: /Nom de la ferme/i })).toBeTruthy();
-    expect(screen.getByText('Étape 2 / 11')).toBeTruthy();
+    expect(screen.getByText('Étape 2 / 12')).toBeTruthy();
   });
 
   it('désactive le bouton Suivant tant que le nom de ferme est vide (validation KO)', () => {
@@ -134,7 +149,7 @@ describe('OnboardingWizard', () => {
     fireEvent.click(screen.getByRole('radio', { name: /Engraisseur seul/i }));
     fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
     // → doit sauter à l'étape 7 (Verrats), pas 5 (Races) ni 6 (Truies)
-    expect(screen.getByText('Étape 7 / 11')).toBeTruthy();
+    expect(screen.getByText('Étape 7 / 12')).toBeTruthy();
     expect(screen.getByText(/Cheptel initial — Verrats/i)).toBeTruthy();
   });
 
@@ -164,7 +179,10 @@ describe('OnboardingWizard', () => {
     // 10 : loges (skip — quantités à 0 par défaut, validation OK)
     expect(screen.getByRole('heading', { name: /Configuration des loges/i })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
-    // 11 : récap
+    // 11 : bandes (skip — liste vide par défaut)
+    expect(screen.getByRole('heading', { name: /Bandes existantes/i })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // 12 : récap
     expect(screen.getByText(/Récapitulatif/i)).toBeTruthy();
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /Terminer/i }));
@@ -203,7 +221,10 @@ describe('OnboardingWizard', () => {
     // 10 : loges — quantités à 0 (skip implicite via défaut)
     expect(screen.getByRole('heading', { name: /Configuration des loges/i })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
-    // 11 : récap
+    // 11 : bandes (skip — liste vide par défaut)
+    expect(screen.getByRole('heading', { name: /Bandes existantes/i })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // 12 : récap
     expect(screen.getByText(/Récapitulatif/i)).toBeTruthy();
     expect(screen.getByText(/À configurer plus tard/i)).toBeTruthy();
     await act(async () => {
@@ -241,7 +262,10 @@ describe('OnboardingWizard', () => {
     // Sub-step B doit apparaître
     expect(screen.getByTestId('onb-loges-numbering')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
-    // 11 : récap
+    // 11 : bandes (skip)
+    expect(screen.getByRole('heading', { name: /Bandes existantes/i })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // 12 : récap
     expect(screen.getByText(/Récapitulatif/i)).toBeTruthy();
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /Terminer/i }));
@@ -293,7 +317,9 @@ describe('OnboardingWizard', () => {
     fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
     // 10 : skip loges
     fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
-    // 11 : récap
+    // 11 : skip bandes
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // 12 : récap
     expect(screen.getByText(/Récapitulatif/i)).toBeTruthy();
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /Terminer/i }));
@@ -341,6 +367,8 @@ describe('OnboardingWizard', () => {
       target: { value: '1' },
     });
     fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // 8, 9, 10, 11 (skip)
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
     fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
     fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
     fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
@@ -370,6 +398,8 @@ describe('OnboardingWizard', () => {
     fireEvent.change(screen.getByLabelText(/Effectif truies initial/i), {
       target: { value: '3' },
     });
+    // 6 → 7 → 8 → 9 → 10 → 11 → 12
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
     fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
     fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
     fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
@@ -380,6 +410,180 @@ describe('OnboardingWizard', () => {
     });
     // Les 3 appels ont eu lieu (dont 1 qui a throw, capturée par try/catch).
     expect(insertSowMock).toHaveBeenCalledTimes(3);
+    expect(navigateMock).toHaveBeenCalledWith(
+      '/today',
+      expect.objectContaining({ replace: true }),
+    );
+  });
+
+  // ─── V27 : étape Bandes existantes ──────────────────────────────────────
+
+  /**
+   * Helper : avance le wizard jusqu'au step 11 (Bandes) avec 1 loge
+   * Maternité + 1 loge Verrat déclarées étape 10.
+   */
+  function advanceToBandesStep(nomFerme = 'Ferme V27'): void {
+    fireEvent.click(screen.getByRole('button', { name: /Commencer/i }));
+    fireEvent.change(screen.getByLabelText(/Nom de la ferme/i), {
+      target: { value: nomFerme },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.change(screen.getByLabelText(/Secteur/i), { target: { value: 'Loire' } });
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('radio', { name: /^Naisseur$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Large White/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // 6, 7, 8, 9 : valeurs par défaut OK
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // 10 : 1 maternité + 1 verrat
+    fireEvent.change(screen.getByLabelText(/Quantité de loges Mise-bas/i), {
+      target: { value: '1' },
+    });
+    fireEvent.change(screen.getByLabelText(/Quantité de loges Verrats/i), {
+      target: { value: '1' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+  }
+
+  it('V27 — étape 11 (Bandes) : skip vide → Suivant active, 0 insertBatch', async () => {
+    renderWizard();
+    advanceToBandesStep('Ferme Skip Bandes');
+    expect(screen.getByRole('heading', { name: /Bandes existantes/i })).toBeTruthy();
+    expect(screen.getByText('Étape 11 / 12')).toBeTruthy();
+    // Suivant doit être actif (pas de bandes saisies = skip OK).
+    const suivant = screen.getByRole('button', { name: /Suivant/i }) as HTMLButtonElement;
+    expect(suivant.disabled).toBe(false);
+    fireEvent.click(suivant);
+    // 12 : récap doit afficher "Aucune"
+    expect(screen.getByText(/Récapitulatif/i)).toBeTruthy();
+    expect(screen.getByText(/Aucune/i)).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Terminer/i }));
+    });
+    expect(insertBatchMock).not.toHaveBeenCalled();
+  });
+
+  it('V27 — Ajouter une bande remplie → insertBatch appelé avec phase/effectif/poids/code_id', async () => {
+    renderWizard();
+    advanceToBandesStep('Ferme Add Bande');
+    // Ajoute une bande
+    fireEvent.click(screen.getByRole('button', { name: /Ajouter une bande/i }));
+    // Phase = CROISSANCE
+    fireEvent.change(screen.getByLabelText(/Phase bande 1/i), {
+      target: { value: 'CROISSANCE' },
+    });
+    fireEvent.change(screen.getByLabelText(/Effectif bande 1/i), {
+      target: { value: '24' },
+    });
+    fireEvent.change(screen.getByLabelText(/Poids moyen bande 1/i), {
+      target: { value: '35.5' },
+    });
+    // Loge : sélection de la 1re option auto-remplie ; on s'assure qu'il y a bien une valeur.
+    const logeSelect = screen.getByLabelText(/Loge bande 1/i) as HTMLSelectElement;
+    expect(logeSelect.value).not.toBe('');
+    // Suivant
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    // Récap : ligne "Bandes pré-déclarées" + valeur "1 bande (...)"
+    expect(screen.getByText(/Bandes pré-déclarées/i)).toBeTruthy();
+    expect(screen.getByText(/^1 bande \(/i)).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Terminer/i }));
+    });
+    expect(insertBatchMock).toHaveBeenCalledTimes(1);
+    const call = insertBatchMock.mock.calls[0][0] as Record<string, unknown>;
+    expect(call.phase).toBe('CROISSANCE');
+    expect(call.statut).toBe('En cours');
+    expect(call.validation_status).toBe('PENDING');
+    expect(call.porcelets_nes_total).toBe(24);
+    expect(call.porcelets_nes_vivants).toBe(24);
+    expect(call.poids_initial_kg).toBe(35.5);
+    expect(call.poids_moyen_kg).toBe(35.5);
+    expect(typeof call.code_id).toBe('string');
+    expect((call.code_id as string).startsWith('B-')).toBe(true);
+    expect((call.code_id as string).endsWith('-W1')).toBe(true);
+    // loge_id résolu depuis le mock createLoge
+    expect(call.loge_id).toBeTruthy();
+  });
+
+  it('V27 — étape 11 : effectif < 1 désactive Suivant (validation KO)', () => {
+    renderWizard();
+    advanceToBandesStep('Ferme Eff Invalid');
+    fireEvent.click(screen.getByRole('button', { name: /Ajouter une bande/i }));
+    // effectif=0 par défaut → validation KO
+    const suivant = screen.getByRole('button', { name: /Suivant/i }) as HTMLButtonElement;
+    expect(suivant.disabled).toBe(true);
+    // Corrige : effectif=10 + poids=20
+    fireEvent.change(screen.getByLabelText(/Effectif bande 1/i), {
+      target: { value: '10' },
+    });
+    fireEvent.change(screen.getByLabelText(/Poids moyen bande 1/i), {
+      target: { value: '20' },
+    });
+    expect((screen.getByRole('button', { name: /Suivant/i }) as HTMLButtonElement).disabled).toBe(
+      false,
+    );
+  });
+
+  it('V27 — étape 11 : poids ≤ 0 désactive Suivant (validation KO)', () => {
+    renderWizard();
+    advanceToBandesStep('Ferme Poids Invalid');
+    fireEvent.click(screen.getByRole('button', { name: /Ajouter une bande/i }));
+    fireEvent.change(screen.getByLabelText(/Effectif bande 1/i), {
+      target: { value: '5' },
+    });
+    // poids=0 → KO
+    const suivant = screen.getByRole('button', { name: /Suivant/i }) as HTMLButtonElement;
+    expect(suivant.disabled).toBe(true);
+  });
+
+  it('V27 — 2 bandes ajoutées → insertBatch appelé 2× avec code_id W1 puis W2', async () => {
+    renderWizard();
+    advanceToBandesStep('Ferme Multi');
+    // Bande 1
+    fireEvent.click(screen.getByRole('button', { name: /Ajouter une bande/i }));
+    fireEvent.change(screen.getByLabelText(/Effectif bande 1/i), { target: { value: '12' } });
+    fireEvent.change(screen.getByLabelText(/Poids moyen bande 1/i), { target: { value: '30' } });
+    // Bande 2
+    fireEvent.click(screen.getByRole('button', { name: /Ajouter une bande/i }));
+    fireEvent.change(screen.getByLabelText(/Phase bande 2/i), { target: { value: 'FINITION' } });
+    fireEvent.change(screen.getByLabelText(/Effectif bande 2/i), { target: { value: '18' } });
+    fireEvent.change(screen.getByLabelText(/Poids moyen bande 2/i), { target: { value: '95' } });
+    // Suivant → récap
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    expect(screen.getByText(/^2 bandes \(/i)).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Terminer/i }));
+    });
+    expect(insertBatchMock).toHaveBeenCalledTimes(2);
+    const calls = insertBatchMock.mock.calls.map((c) => c[0] as Record<string, unknown>);
+    const codeIds = calls.map((c) => c.code_id as string);
+    expect(codeIds[0].endsWith('-W1')).toBe(true);
+    expect(codeIds[1].endsWith('-W2')).toBe(true);
+    expect(calls[1].phase).toBe('FINITION');
+    expect(calls[1].porcelets_nes_total).toBe(18);
+  });
+
+  it('V27 — insertBatch échec sur 1 bande : continue les autres et navigate quand même', async () => {
+    insertBatchMock.mockImplementationOnce(async () => {
+      throw new Error('code_id duplicate');
+    });
+    renderWizard();
+    advanceToBandesStep('Ferme Bande Fail');
+    fireEvent.click(screen.getByRole('button', { name: /Ajouter une bande/i }));
+    fireEvent.change(screen.getByLabelText(/Effectif bande 1/i), { target: { value: '10' } });
+    fireEvent.change(screen.getByLabelText(/Poids moyen bande 1/i), { target: { value: '25' } });
+    fireEvent.click(screen.getByRole('button', { name: /Ajouter une bande/i }));
+    fireEvent.change(screen.getByLabelText(/Effectif bande 2/i), { target: { value: '15' } });
+    fireEvent.change(screen.getByLabelText(/Poids moyen bande 2/i), { target: { value: '40' } });
+    fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Terminer/i }));
+    });
+    expect(insertBatchMock).toHaveBeenCalledTimes(2);
     expect(navigateMock).toHaveBeenCalledWith(
       '/today',
       expect.objectContaining({ replace: true }),

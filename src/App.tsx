@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
@@ -6,6 +6,7 @@ import {
   Navigate,
   useNavigate,
   useLocation,
+  useParams,
 } from 'react-router-dom';
 import { IonApp } from '@ionic/react';
 import OnboardingFlow from './features/onboarding/OnboardingFlow';
@@ -102,6 +103,11 @@ const SortieCalendarView = React.lazy(() => import(/* webpackChunkName: "cycle-s
 
 const AideView = React.lazy(() => import(/* webpackChunkName: "aide" */ './features/help/AideView'));
 const OnboardingWizard = React.lazy(() => import(/* webpackChunkName: "onboarding-wizard" */ './features/onboarding/OnboardingWizard'));
+const PendingBandesView = React.lazy(() => import(/* webpackChunkName: "pending-bandes-view" */ './features/onboarding/PendingBandesView'));
+
+// V27 — Mise Bas confirmation + Daily check Sous mère (forms montés en plein écran via routes dédiées)
+const QuickConfirmMiseBasForm = React.lazy(() => import(/* webpackChunkName: "v27-confirm-mb" */ './components/forms/QuickConfirmMiseBasForm'));
+const DailyMBChecklistForm = React.lazy(() => import(/* webpackChunkName: "v27-daily-mb" */ './components/forms/DailyMBChecklistForm'));
 
 const SuspenseFallback = () => (
   <div
@@ -226,6 +232,43 @@ const BannerMount: React.FC = () => {
   return <PendingBandesBanner />;
 };
 
+/**
+ * V27 — Wrappers route plein écran pour les forms MB / Daily Check.
+ * Ouvre le form en mode "isOpen=true permanent" tant que la route est montée ;
+ * fermeture = navigate back.
+ */
+const ConfirmMiseBasRoute: React.FC = () => {
+  const { saillieId = '' } = useParams<{ saillieId: string }>();
+  const navigate = useNavigate();
+  const handleClose = useCallback(() => {
+    navigate(-1);
+  }, [navigate]);
+  return (
+    <QuickConfirmMiseBasForm
+      isOpen={true}
+      onClose={handleClose}
+      saillieId={saillieId}
+      onSuccess={() => navigate('/cycles/maternite', { replace: true })}
+    />
+  );
+};
+
+const DailyCheckRoute: React.FC = () => {
+  const { batchId = '' } = useParams<{ batchId: string }>();
+  const navigate = useNavigate();
+  const handleClose = useCallback(() => {
+    navigate(-1);
+  }, [navigate]);
+  return (
+    <DailyMBChecklistForm
+      isOpen={true}
+      onClose={handleClose}
+      batchId={batchId}
+      onSuccess={() => navigate(-1)}
+    />
+  );
+};
+
 const AppShell: React.FC = () => (
   <GlobalSearchProvider>
     <BannerMount />
@@ -243,6 +286,9 @@ const AppShell: React.FC = () => (
       <Route path="/alertes" element={<Navigate to="/alerts" replace />} />
       <Route path="/more" element={<SettingsPage />} />
       <Route path="/aide" element={<AideView />} />
+
+      {/* V27-VALIDATION : écran de validation des bandes PENDING */}
+      <Route path="/onboarding/bandes-pending" element={<PendingBandesView />} />
 
       {/* Agritech hubs */}
       <Route path="/troupeau" element={<TroupeauHub />} />
@@ -288,6 +334,11 @@ const AppShell: React.FC = () => (
       <Route path="/cycles/engraissement" element={<EngraissementView />} />
       <Route path="/cycles/finition" element={<FinitionView />} />
       <Route path="/cycles/sortie" element={<SortieCalendarView />} />
+
+      {/* V27 — Confirmation MB rigoureuse (plein écran via route dédiée) */}
+      <Route path="/cycles/confirmer-mb/:saillieId" element={<ConfirmMiseBasRoute />} />
+      {/* V27 — Daily check 10 questions pour bandes "Sous mère" */}
+      <Route path="/troupeau/daily-check/:batchId" element={<DailyCheckRoute />} />
 
       {/* Pilotage sub-routes */}
       <Route

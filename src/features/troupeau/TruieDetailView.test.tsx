@@ -40,6 +40,26 @@ vi.mock('../../services/offlineQueue', () => ({
   enqueueUpdateRow: (...args: unknown[]) => enqueueUpdateRowMock(...args),
 }));
 
+// V27 — Preferences mock (Capacitor) requis par PhotoStrip → service photos
+const _prefsStoreTD = new Map<string, string>();
+vi.mock('@capacitor/preferences', () => ({
+  Preferences: {
+    get: vi.fn(async ({ key }: { key: string }) => ({
+      value: _prefsStoreTD.get(key) ?? null,
+    })),
+    set: vi.fn(async ({ key, value }: { key: string; value: string }) => {
+      _prefsStoreTD.set(key, value);
+    }),
+    remove: vi.fn(async ({ key }: { key: string }) => {
+      _prefsStoreTD.delete(key);
+    }),
+    keys: vi.fn(async () => ({ keys: Array.from(_prefsStoreTD.keys()) })),
+    clear: vi.fn(async () => {
+      _prefsStoreTD.clear();
+    }),
+  },
+}));
+
 // Mock supabaseWrites — non utilisé directement par les tests mais importé
 // par le composant. Inclut listLoges/updateSowByCode (V25).
 vi.mock('../../services/supabaseWrites', () => ({

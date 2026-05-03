@@ -1,20 +1,20 @@
 /**
- * PendingBandesBanner — Onboarding forcé V26-FORM.
+ * PendingBandesBanner — Onboarding forcé V26-FORM / V27-VALIDATION.
  * ════════════════════════════════════════════════════════════════════════
  * Affiche un banner haut de page tant qu'il reste des bandes
  * `validation_status='PENDING'` pour la ferme courante.
  *
- * Tap → ouvre QuickAddBandeFromLogeForm en mode édition sur la 1ère PENDING.
- * Au submit du form, la bande passe à VALIDATED et le banner se réactualise.
+ * Tap → navigate vers `/onboarding/bandes-pending` (PendingBandesView)
+ * qui liste TOUTES les bandes PENDING (mâles d'abord puis femelles).
  *
  * Hook custom exposé pour les tests : `usePendingBandes()`.
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
 
 import { supabase } from '../../services/supabaseClient';
-import QuickAddBandeFromLogeForm from '../forms/QuickAddBandeFromLogeForm';
 
 // ─── Hook : count des bandes PENDING ─────────────────────────────────────────
 
@@ -113,10 +113,10 @@ interface PendingBandesBannerProps {
 const PendingBandesBanner: React.FC<PendingBandesBannerProps> = ({ injectedState }) => {
   const realState = usePendingBandes();
   const state = injectedState ?? realState;
-  const [editOpen, setEditOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleOpen = (): void => {
-    if (state.firstPendingId) setEditOpen(true);
+    navigate('/onboarding/bandes-pending');
   };
 
   if (state.loading || state.count === 0) return null;
@@ -124,52 +124,38 @@ const PendingBandesBanner: React.FC<PendingBandesBannerProps> = ({ injectedState
   const label = `${state.count} bande${state.count > 1 ? 's' : ''} à valider`;
 
   return (
-    <>
-      <div
-        role="alert"
-        aria-live="polite"
-        data-testid="pending-bandes-banner"
-        className="px-4 pt-3"
+    <div
+      role="alert"
+      aria-live="polite"
+      data-testid="pending-bandes-banner"
+      className="px-4 pt-3"
+    >
+      <button
+        type="button"
+        onClick={handleOpen}
+        className="pressable w-full flex items-center justify-between gap-3 px-3 py-3 rounded-md border border-amber bg-amber/10 hover:bg-amber/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber focus-visible:outline-offset-2"
+        aria-label={`${label} — clique pour compléter`}
+        data-testid="pending-bandes-banner-cta"
       >
-        <button
-          type="button"
-          onClick={handleOpen}
-          className="pressable w-full flex items-center justify-between gap-3 px-3 py-3 rounded-md border border-amber bg-amber/10 hover:bg-amber/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber focus-visible:outline-offset-2"
-          aria-label={`${label} — clique pour compléter`}
-          data-testid="pending-bandes-banner-cta"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <AlertTriangle size={18} className="text-amber shrink-0" aria-hidden="true" />
-            <div className="flex flex-col min-w-0 text-left">
-              <span className="font-mono text-[12px] font-bold uppercase tracking-wide text-amber">
-                {label}
-              </span>
-              <span className="font-mono text-[11px] text-text-1">
-                Clique pour compléter les informations manquantes.
-              </span>
-            </div>
+        <div className="flex items-center gap-3 min-w-0">
+          <AlertTriangle size={18} className="text-amber shrink-0" aria-hidden="true" />
+          <div className="flex flex-col min-w-0 text-left">
+            <span className="font-mono text-[12px] font-bold uppercase tracking-wide text-amber">
+              {label}
+            </span>
+            <span className="font-mono text-[11px] text-text-1">
+              Clique pour compléter les informations manquantes.
+            </span>
           </div>
-          <span
-            className="font-mono text-[10px] uppercase tracking-wide text-amber"
-            aria-hidden="true"
-          >
-            Compléter →
-          </span>
-        </button>
-      </div>
-
-      {state.firstPendingId ? (
-        <QuickAddBandeFromLogeForm
-          isOpen={editOpen}
-          onClose={() => setEditOpen(false)}
-          onSuccess={() => {
-            setEditOpen(false);
-            state.refresh();
-          }}
-          editPendingBatchId={state.firstPendingId}
-        />
-      ) : null}
-    </>
+        </div>
+        <span
+          className="font-mono text-[10px] uppercase tracking-wide text-amber"
+          aria-hidden="true"
+        >
+          Compléter →
+        </span>
+      </button>
+    </div>
   );
 };
 

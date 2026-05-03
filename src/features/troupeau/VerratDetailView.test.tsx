@@ -36,6 +36,27 @@ const verratBobi: Verrat = {
 };
 
 // ── Mocks ───────────────────────────────────────────────────────────────────
+
+// V27 — Preferences mock (Capacitor) requis par PhotoStrip → service photos
+const _prefsStoreVD = new Map<string, string>();
+vi.mock('@capacitor/preferences', () => ({
+  Preferences: {
+    get: vi.fn(async ({ key }: { key: string }) => ({
+      value: _prefsStoreVD.get(key) ?? null,
+    })),
+    set: vi.fn(async ({ key, value }: { key: string; value: string }) => {
+      _prefsStoreVD.set(key, value);
+    }),
+    remove: vi.fn(async ({ key }: { key: string }) => {
+      _prefsStoreVD.delete(key);
+    }),
+    keys: vi.fn(async () => ({ keys: Array.from(_prefsStoreVD.keys()) })),
+    clear: vi.fn(async () => {
+      _prefsStoreVD.clear();
+    }),
+  },
+}));
+
 vi.mock('../../context/AuthContext', () => ({
   useAuth: () => ({
     user: { id: 'farm-test' },
