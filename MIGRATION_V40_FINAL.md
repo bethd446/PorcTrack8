@@ -28,7 +28,11 @@
   - `SyncIndicator` : `state='online'` ne rend rien (sauf `alwaysVisible=true`)
   - `TopBarSync` : nouvelle prop `mariusActive` (default `false`) → pill Marius cachée tant qu'aucune suggestion
 - [x] **T2** — Chevrons ASCII → vers › (10 occurrences sur 10 CTA, intervalles `J0→J28` préservés)
-- [x] **T3** — Tags rectangle vers Tag pills DS V2 (ClassementView TierBadge/TypeBadge, TroupeauTruiesView grid view)
+- [x] **T3** — Tags rectangle vers Tag pills DS V2 — couverture complète :
+  - `ClassementView.tsx` : TierBadge + TypeBadge (commit `0170968`)
+  - `TroupeauTruiesView.tsx` grid view : `<Chip>` agritech → `<Tag>` (commit `0170968`)
+  - `AnimalListItem.tsx` : `chip` + `badges` props migrés (commit `61614a7`, T3-final). Vérif visuelle /troupeau : 50 `.pt-tag` rendus, 0 `.chip` agritech.
+  - `AnimalHero.tsx` : chips hero (couvre fiches truies/verrats, F1+F2)
 
 ### Reproduction
 - [x] **R1** — Boutons "+ SAILLIR" rectangulaires : déjà conformes (V39-B)
@@ -122,13 +126,26 @@ a31ffbf fix(v40): T1 - sync/Marius headers conditionnels (5 pages)
 
 ## Dette technique restante
 
-1. **3 erreurs check-ds-compliance** (toutes héritées V39) :
+### Acceptée (à traiter en V41)
+
+1. **`mariusActive` câblage côté appelant — TODO V41** :
+   - `TopBarSync` accepte la prop `mariusActive?: boolean` (default `false`) depuis V40 T1, mais **aucune des ~25 pages consommatrices ne la passe**. Résultat : pill Marius cachée partout par défaut, ce qui correspond à l'esprit du PDF V40 ("visible uniquement si suggestion active") mais désactive la fonctionnalité Marius dans l'UI.
+   - **TODO précis V41** :
+     1. Créer `src/hooks/useMariusInsight.ts` exportant `useMariusInsight()` qui retourne `{ hasActiveSuggestion: boolean, suggestion?: MariusInsight }`. Source initiale : context Marius existant ou état dérivé des alertes/KPIs (à clarifier produit).
+     2. Appeler le hook dans les 5 pages PDF V40 (Pilotage, Reproduction, Élevage, Fiche truie, Classement) et toutes les autres consommatrices `TopBarSync`.
+     3. Passer `mariusActive={hasActiveSuggestion}` à chaque `<TopBarSync>`.
+     4. Ajouter test unit `useMariusInsight.test.ts`.
+
+### Héritée V39 (hors scope V40)
+
+2. **3 erreurs check-ds-compliance** :
    - Hex fallbacks dans `AgritechNavV2`, `SaisirSheet`, `EditableNumber/Text` (CHECK 4) — pattern `var(--x, #fff)`
    - Boutons natifs `<button>` dans formulaires hors scope DS (CHECK 2)
    - UUID dans tests `perfKpiAnalyzer.test.ts` (CHECK 1, faux positifs sur literals de test)
-2. **CHECK 10 imprécis** : matche encore certains intervalles non protégés (`J95 → J165 · X bandes` dans cycles views). À durcir en V41 ou whitelister.
-3. **Rétro-compat DS** : `Button.variant=ghost|destructive`, `tone=` alias, `Tabs.items[]` toujours présents (V39-CLEANUP les a documentés). Migration finale > V40.
-4. **CSS legacy** dans `src/styles/` (7 fichiers `agritech-*`, `terra-v2-*`, `theme-tokens-*`) toujours en place. ~83 fichiers les consomment.
+3. **CHECK 10 imprécis** : matche encore certains intervalles non protégés (`J95 → J165 · X bandes` dans cycles views). À durcir en V41 ou whitelister.
+4. **Rétro-compat DS** : `Button.variant=ghost|destructive`, `tone=` alias, `Tabs.items[]` toujours présents (V39-CLEANUP les a documentés). Migration finale > V40.
+5. **CSS legacy** dans `src/styles/` (7 fichiers `agritech-*`, `terra-v2-*`, `theme-tokens-*`) toujours en place. ~83 fichiers les consomment.
+6. **`chipToneToTagVariant` dupliqué** dans `AnimalListItem.tsx` et `TroupeauTruiesView.tsx`. À factoriser en util partagé (`src/lib/chipToTagVariant.ts`) une fois tous les `<Chip>` agritech migrés en V41.
 
 ---
 
