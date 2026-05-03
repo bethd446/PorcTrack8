@@ -496,7 +496,7 @@ export function AlertGroup({ severity, icon, title, count, subtitle, badge, acti
         {action && (
           <div className="alert-group__action">
             <Button size="small" variant={sev === 'critical' ? 'primary' : 'secondary'} onClick={action.onClick}>
-              {action.label} →
+              {action.label} ›
             </Button>
           </div>
         )}
@@ -769,7 +769,7 @@ export const Wizard: React.FC<WizardProps> = ({
           className="pt-btn pt-btn--primary"
           style={{ opacity: busy || navBusy ? 0.7 : 1 }}
         >
-          {isLast ? completeLabel : 'Suivant →'}
+          {isLast ? completeLabel : 'Suivant ›'}
         </button>
       </footer>
     </div>

@@ -395,7 +395,7 @@ const LogeBandeRow: React.FC<LogeBandeRowProps> = ({
       }}
       className="pressable px-2 py-2 rounded-md bg-amber/15 text-amber text-[10px] font-bold uppercase tracking-wide border border-amber/20"
     >
-      Transfert →
+      Transfert ›
     </button>
   ) : (
     <ChevronRight size={14} className="text-text-2" />

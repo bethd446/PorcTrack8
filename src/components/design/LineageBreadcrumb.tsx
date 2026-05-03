@@ -33,7 +33,7 @@ interface Props {
 }
 
 const LineageBreadcrumb: React.FC<Props> = ({ nodes, treeHref, onTreeClick }) => {
-  const treeLabel = 'Arbre genetique →';
+  const treeLabel = 'Arbre genetique ›';
   const treeStyle: React.CSSProperties = {
     marginLeft: 'auto',
     fontSize: 11,

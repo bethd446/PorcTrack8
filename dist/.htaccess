@@ -17,6 +17,14 @@ RewriteRule ^ /app/index.html [L]
 
 # ── porctrack.tech → vitrine statique ────────────────────────────────────
 
+# V29-FIX-INFRA P0 : assets/*.js inexistants → 404 strict, JAMAIS SPA fallback.
+# Évite "MIME text/html" sur les chunks renommés au build, qui causaient
+# "Failed to fetch dynamically imported module" et écrans blancs.
+RewriteCond %{HTTP_HOST} ^(www\.)?porctrack\.tech$ [NC]
+RewriteCond %{REQUEST_URI} ^/assets/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ - [R=404,L]
+
 # Catch-all : chemins inconnus → index.html vitrine
 RewriteCond %{HTTP_HOST} ^(www\.)?porctrack\.tech$ [NC]
 RewriteCond %{REQUEST_FILENAME} !-f

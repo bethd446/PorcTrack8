@@ -415,8 +415,8 @@ export default function Signup() {
                     }}
                   >
                     {mode === 'magic'
-                      ? '→ Utiliser un mot de passe'
-                      : '→ Utiliser un lien magique'}
+                      ? '› Utiliser un mot de passe'
+                      : '› Utiliser un lien magique'}
                   </button>
                 </div>
               </>

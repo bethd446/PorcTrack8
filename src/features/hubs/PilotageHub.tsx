@@ -476,7 +476,7 @@ const PilotageHub: React.FC = () => {
                       : 'Aucune alerte'}
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-                    Voir toutes les alertes →
+                    Voir toutes les alertes ›
                   </div>
                 </div>
                 <ChevronRight size={18} color="var(--muted)" aria-hidden="true" />

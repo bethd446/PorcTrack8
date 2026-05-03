@@ -448,7 +448,7 @@ const DesignSystemView: React.FC = () => {
                     }
                     disabled={wizardStep === wizardSteps.length - 1}
                   >
-                    Suivant →
+                    Suivant ›
                   </Button>
                 </Row>
               </Card>

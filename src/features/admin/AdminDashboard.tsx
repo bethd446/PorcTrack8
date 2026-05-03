@@ -796,7 +796,7 @@ function OnboardingHero({ onInvite }: OnboardingHeroProps) {
           marginTop: 4,
         }}
       >
-        Aide : guide multi-utilisateur →
+        Aide : guide multi-utilisateur ›
       </a>
     </section>
   );
