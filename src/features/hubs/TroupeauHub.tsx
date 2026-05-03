@@ -1,14 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
-import { ChevronRight, Layers, Plus, Trophy } from 'lucide-react';
+import { ChevronRight, Layers, Plus } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
 import { useTroupeau } from '../../context/TroupeauContext';
 import { useMeta } from '../../context/FarmContext';
 import { normaliseStatut } from '../../lib/truieStatut';
 import { Bandes } from '../../services/bandAnalysisEngine';
-import type { LogeOccupationAlerte } from '../../services/bandesAggregator';
 import { useTroupeauPipeline } from '../../hooks/useTroupeauStats';
 import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import { FARM_CONFIG } from '../../config/farm';
@@ -23,6 +22,7 @@ import {
   StatsGrid,
   Stat,
   Tabs,
+  PageHeader,
   safeDisplay,
 } from '@/design-system';
 
@@ -59,7 +59,7 @@ function isSubTab(v: string | null): v is SubTab {
 const TroupeauHub: React.FC = () => {
   const navigate = useNavigate();
   const { verrats, bandes } = useTroupeau();
-  const { nomFerme } = useMeta();
+  useMeta(); // V41 : nomFerme retiré du header (eyebrow simplifié à "ÉLEVAGE")
   const [searchParams, setSearchParams] = useSearchParams();
   const { activeTruies } = useTroupeauPipeline();
   const { handleRefresh } = useAutoRefresh();
@@ -130,20 +130,8 @@ const TroupeauHub: React.FC = () => {
     batiments: 3,
   };
 
-  const totalAnimals = activeTruies.length + verrats.length;
-
-  const truieBreakdown = useMemo(() => {
-    const segments: string[] = [
-      `${summary.pleines} pleines`,
-      `${summary.maternite} maternité`,
-      `${summary.vides} vides`,
-    ];
-    if (summary.chaleur > 0) segments.push(`${summary.chaleur} chaleur`);
-    if (summary.flushing > 0) segments.push(`${summary.flushing} flushing`);
-    if (summary.surveillance > 0) segments.push(`${summary.surveillance} à surveiller`);
-    if (summary.reforme > 0) segments.push(`${summary.reforme} réforme`);
-    return segments.join(' · ');
-  }, [summary]);
+  // V41 : totalAnimals + truieBreakdown supprimés (sous-titres métriques redondants
+  // avec la VUE D'ENSEMBLE StatsGrid).
 
   const tabOptions = SUB_TABS.map((t) => ({
     value: t.id,
@@ -168,41 +156,12 @@ const TroupeauHub: React.FC = () => {
           />
 
           <div className="pt-page" style={{ padding: '8px 18px 24px', maxWidth: 1100, margin: '0 auto' }}>
-            <Section label={`Élevage · ${nomFerme}`} />
-            <h1 style={{ fontSize: 'var(--pt-text-display)', marginBottom: 4 }}>Élevage</h1>
-            <p style={{ color: 'var(--pt-text-muted)', margin: '0 0 4px', fontSize: 14 }}>
-              {summary.total} truie{summary.total > 1 ? 's' : ''} · {verrats.length} verrat{verrats.length > 1 ? 's' : ''} ({totalAnimals} animaux)
-            </p>
-            <p style={{ color: 'var(--pt-text-subtle)', margin: '0 0 16px', fontSize: 13 }}>
-              {truieBreakdown}
-            </p>
+            {/* V41 Phase B — header sobre via PageHeader, pas de CTA, pas de métriques en sous-titre */}
+            <PageHeader eyebrow="ÉLEVAGE" title="Élevage" subtitle="Le troupeau de ta ferme" />
 
-            <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => navigate('/troupeau/classement')}
-                ariaLabel="Voir le classement des reproducteurs"
-              >
-                <Trophy size={15} aria-hidden="true" />
-                <span>Classement Top Truies & Verrats</span>
-                <ChevronRight size={14} aria-hidden="true" />
-              </Button>
-            </div>
-
-            <section aria-label="Aperçu des loges">
-              <Section label="APERÇU" />
-              <Card>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
-                  <LogesMiniBar label="Mat." occ={summary.mat} />
-                  <LogesMiniBar label="P-sev" occ={summary.post} />
-                  <LogesMiniBar label="Eng." occ={summary.eng} />
-                </div>
-              </Card>
-            </section>
-
-            <section aria-label="Inventaire">
-              <Section label="INVENTAIRE" />
+            {/* V41 — 1 hero card unique : VUE D'ENSEMBLE = 4 stats clés (fusion APERÇU+INVENTAIRE) */}
+            <section aria-label="Vue d'ensemble">
+              <Section label="VUE D'ENSEMBLE" />
               <Card>
                 <StatsGrid cols={4}>
                   <Stat value={activeTruies.length} label="Truies" />
@@ -276,65 +235,7 @@ const TroupeauHub: React.FC = () => {
 
 // ─── Sous-composants ───────────────────────────────────────────────────────
 
-const ALERT_FILL: Record<LogeOccupationAlerte, string> = {
-  OK: 'var(--pt-accent)',
-  HIGH: 'var(--pt-warning)',
-  FULL: 'var(--pt-danger)',
-};
-
-interface LogesMiniBarProps {
-  label: string;
-  occ: { occupees: number; capacite: number; tauxPct: number; alerte: LogeOccupationAlerte };
-}
-
-const LogesMiniBar: React.FC<LogesMiniBarProps> = ({ label, occ }) => {
-  const width = Math.min(occ.tauxPct, 100);
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 6 }}>
-        <span
-          style={{
-            fontSize: 'var(--pt-text-label)',
-            letterSpacing: 'var(--pt-tracking-label)',
-            textTransform: 'uppercase',
-            color: 'var(--pt-text-subtle)',
-            fontWeight: 600,
-          }}
-        >
-          {label}
-        </span>
-        <span
-          style={{
-            fontSize: 12,
-            color: 'var(--pt-text)',
-            fontWeight: 600,
-            fontVariantNumeric: 'tabular-nums',
-          }}
-        >
-          {occ.occupees}/{occ.capacite}
-        </span>
-      </div>
-      <div
-        style={{
-          height: 6,
-          background: 'var(--pt-surface-alt)',
-          borderRadius: 'var(--pt-radius-pill)',
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            height: '100%',
-            width: `${width}%`,
-            background: ALERT_FILL[occ.alerte],
-            borderRadius: 'var(--pt-radius-pill)',
-            transition: 'width 240ms ease',
-          }}
-        />
-      </div>
-    </div>
-  );
-};
+// V41 : ALERT_FILL + LogesMiniBar supprimés (section APERÇU retirée — fusion dans VUE D'ENSEMBLE StatsGrid).
 
 // ─── BandesInline ──────────────────────────────────────────────────────────
 
