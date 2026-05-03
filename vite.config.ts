@@ -38,6 +38,15 @@ export default defineConfig(() => {
           // heures après un push (régressions V23 fantômes observées).
           skipWaiting: true,
           clientsClaim: true,
+          // AUDIT-V29 P0 : élimine les chunks stale d'anciennes versions
+          // qui restaient en cache et causaient "Failed to fetch dynamically
+          // imported module" + "expected JS but got text/html" quand l'index
+          // référençait des hash de chunks supprimés au build suivant.
+          cleanupOutdatedCaches: true,
+          // Ne pas servir index.html quand un chunk JS/CSS est demandé →
+          // permet au browser de fallback réseau au lieu de servir l'index
+          // (qui causait Content-Type: text/html sur des .js inexistants).
+          navigateFallbackDenylist: [/^\/assets\//, /\.(js|css|map|woff2|png|svg|ico)$/],
           globPatterns: ['**/*.{js,css,html,ico,svg,png,woff2}'],
           runtimeCaching: [
             {
