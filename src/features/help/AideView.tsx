@@ -249,7 +249,7 @@ const AideView: React.FC = () => {
                     minHeight: 52,
                     padding: '14px 22px',
                     background: WHATSAPP_BRAND,
-                    color: '#ffffff',
+                    color: 'var(--bg-surface)',
                     border: `1.5px solid ${WHATSAPP_BRAND}`,
                     borderRadius: 'var(--radius-pill)',
                     fontSize: 13,

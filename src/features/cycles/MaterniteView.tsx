@@ -192,7 +192,7 @@ const MaterniteView: React.FC = () => {
                 value={`${summary.occupation.tauxPct}%`}
                 accentColor={
                   summary.occupation.alerte === 'FULL'
-                    ? 'var(--color-danger, #EF4444)'
+                    ? 'var(--color-danger)'
                     : summary.occupation.alerte === 'HIGH'
                       ? 'var(--amber-pork)'
                       : undefined
@@ -205,7 +205,7 @@ const MaterniteView: React.FC = () => {
               <KpiCardV6
                 label="Mortalité"
                 value={`${summary.mortsGlobalPct.toFixed(1)}%`}
-                accentColor={summary.mortsGlobalPct > MORTALITE_SEUIL_PCT ? 'var(--color-danger, #EF4444)' : undefined}
+                accentColor={summary.mortsGlobalPct > MORTALITE_SEUIL_PCT ? 'var(--color-danger)' : undefined}
                 trendDir={summary.mortsGlobalPct > MORTALITE_SEUIL_PCT ? 'down' : 'neutral'}
               />
             </div>
@@ -343,7 +343,7 @@ const MaterniteCard: React.FC<{
                 fontFamily: 'var(--font-heading)',
                 fontSize: treatmentStyle.titleSize,
                 fontWeight: treatmentStyle.titleWeight,
-                color: isBloquant ? 'var(--color-danger, #EF4444)' : 'var(--ink)',
+                color: isBloquant ? 'var(--color-danger)' : 'var(--ink)',
                 letterSpacing: '-0.01em',
                 lineHeight: 1.1,
                 margin: 0,

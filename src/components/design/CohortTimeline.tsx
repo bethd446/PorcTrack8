@@ -194,7 +194,7 @@ export const CohortTimeline: React.FC<Props> = ({
             width: 16,
             height: 16,
             borderRadius: '50%',
-            background: '#FFFFFF',
+            background: 'var(--bg-surface)',
             border: '2px solid var(--ink)',
             boxShadow: '0 2px 6px rgba(17,24,39,0.18)',
             zIndex: 2,

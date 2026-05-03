@@ -53,6 +53,11 @@ fi
 echo ""
 
 # CHECK 4 — Aucune couleur hex en dur (hors tokens.css, design-system-v29.css)
+# V42-pre — whitelists ajoutées :
+#   - AuditPrintTemplate.tsx : print constants intentionnelles (rendu PDF
+#     où les CSS vars peuvent ne pas s'appliquer)
+#   - WHATSAPP_BRAND : couleur officielle WhatsApp (#25D366), constante de
+#     service externe non négociable
 echo "CHECK 4 : Couleurs hex en dur"
 MATCHES=$(grep -rn '#[0-9a-fA-F]\{3,8\}' "$SRC" --include="*.tsx" --include="*.css" \
   | grep -v 'tokens\.css' \
@@ -65,6 +70,8 @@ MATCHES=$(grep -rn '#[0-9a-fA-F]\{3,8\}' "$SRC" --include="*.tsx" --include="*.c
   | grep -v 'agritech-utilities\.css' \
   | grep -v 'typography-utils\.css' \
   | grep -v '\.css:' \
+  | grep -v 'AuditPrintTemplate\.tsx' \
+  | grep -v 'WHATSAPP_BRAND' \
   || true)
 if [ -n "$MATCHES" ]; then
   echo "✗  Couleur(s) hex en dur trouvée(s) — utiliser var(--pt-*) :"

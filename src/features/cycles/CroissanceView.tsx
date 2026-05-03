@@ -165,7 +165,7 @@ const CroissanceView: React.FC = () => {
               <KpiCardV6
                 label="Loges Occ."
                 value={`${occupation.occupees}/${occupation.capacite}`}
-                accentColor={occupation.alerte === 'FULL' ? 'var(--color-danger, #EF4444)' : 'var(--amber-pork)'}
+                accentColor={occupation.alerte === 'FULL' ? 'var(--color-danger)' : 'var(--amber-pork)'}
               />
             </div>
 

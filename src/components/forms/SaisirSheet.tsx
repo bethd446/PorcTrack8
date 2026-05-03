@@ -124,15 +124,15 @@ const ACTIONS: ActionDef[] = [
 const TONE_BG: Record<ActionDef['tone'], string> = {
   default: 'var(--pt-surface-alt)',
   accent: 'color-mix(in srgb, var(--color-accent-500) 14%, transparent)',
-  amber: 'color-mix(in srgb, var(--amber-pork, #F4A261) 18%, transparent)',
-  red: 'color-mix(in srgb, var(--red, #dc2626) 14%, transparent)',
+  amber: 'color-mix(in srgb, var(--amber-pork) 18%, transparent)',
+  red: 'color-mix(in srgb, var(--red) 14%, transparent)',
 };
 
 const TONE_FG: Record<ActionDef['tone'], string> = {
   default: 'var(--pt-text)',
   accent: 'var(--color-accent-500)',
-  amber: 'var(--amber-pork, #F4A261)',
-  red: 'var(--red, #dc2626)',
+  amber: 'var(--amber-pork)',
+  red: 'var(--red)',
 };
 
 const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
@@ -213,7 +213,7 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
         ref={sheetRef}
         className="relative w-full max-w-[520px] rounded-t-2xl shadow-2xl animate-fade-in-up"
         style={{
-          background: 'var(--bg-app, #f0f4f3)',
+          background: 'var(--bg-app)',
           borderTop: '1px solid var(--pt-divider)',
           paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)',
         }}

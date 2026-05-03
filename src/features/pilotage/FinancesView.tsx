@@ -332,7 +332,7 @@ const FinancesView: React.FC = () => {
                     value={formatMontant(summary.margeNette, currency)}
                     accentColor={
                       margeTone === 'critical'
-                        ? 'var(--color-danger, #EF4444)'
+                        ? 'var(--color-danger)'
                         : margeTone === 'success'
                           ? undefined
                           : undefined

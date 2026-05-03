@@ -27,19 +27,19 @@ export interface NotesTimelineProps {
 }
 
 const TAG_TONES: Record<string, { bg: string; fg: string }> = {
-  santé: { bg: 'var(--color-pig-soft, #fee2e2)', fg: 'var(--color-pig-deep, #991b1b)' },
-  sante: { bg: 'var(--color-pig-soft, #fee2e2)', fg: 'var(--color-pig-deep, #991b1b)' },
-  urgent: { bg: 'var(--color-pig-soft, #fee2e2)', fg: 'var(--color-pig-deep, #991b1b)' },
-  alimentation: { bg: 'var(--color-amber-pork-soft, #fef3c7)', fg: 'var(--color-amber-pork-deep, #92400e)' },
-  audit: { bg: 'var(--color-secondary-soft, #e0e7ff)', fg: 'var(--color-secondary-deep, #3730a3)' },
-  comportement: { bg: 'var(--color-accent-100, #d1fae5)', fg: 'var(--color-accent-600, #047857)' },
+  santé: { bg: 'var(--color-pig-soft)', fg: 'var(--color-pig-deep)' },
+  sante: { bg: 'var(--color-pig-soft)', fg: 'var(--color-pig-deep)' },
+  urgent: { bg: 'var(--color-pig-soft)', fg: 'var(--color-pig-deep)' },
+  alimentation: { bg: 'var(--color-amber-pork-soft)', fg: 'var(--color-amber-pork-deep)' },
+  audit: { bg: 'var(--color-secondary-soft)', fg: 'var(--color-secondary-deep)' },
+  comportement: { bg: 'var(--color-accent-100)', fg: 'var(--color-accent-600)' },
 };
 
 function tagTone(tag: string): { bg: string; fg: string } {
   return (
     TAG_TONES[tag.toLowerCase()] ?? {
-      bg: 'var(--bg-surface-2, #f3f4f6)',
-      fg: 'var(--muted, #6b7280)',
+      bg: 'var(--bg-surface-2)',
+      fg: 'var(--muted)',
     }
   );
 }
@@ -165,7 +165,7 @@ const NotesTimeline: React.FC<NotesTimelineProps> = ({
                   width: 8,
                   height: 8,
                   borderRadius: '50%',
-                  background: 'var(--color-accent-500, #047857)',
+                  background: 'var(--color-accent-500)',
                   marginTop: 6,
                   flexShrink: 0,
                 }}
@@ -233,7 +233,7 @@ const NotesTimeline: React.FC<NotesTimelineProps> = ({
                       objectFit: 'cover',
                       borderRadius: 8,
                       marginTop: 8,
-                      border: '1px solid var(--line, #e5e7eb)',
+                      border: '1px solid var(--line)',
                     }}
                     loading="lazy"
                   />

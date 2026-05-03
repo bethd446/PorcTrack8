@@ -159,8 +159,8 @@ const FournisseursView: React.FC = () => {
                           <span
                             className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] uppercase"
                             style={{
-                              background: 'var(--amber-pork-soft, #fde7d2)',
-                              color: 'var(--amber-pork-deep, #c2662b)',
+                              background: 'var(--amber-pork-soft)',
+                              color: 'var(--amber-pork-deep)',
                             }}
                           >
                             Défaut
@@ -191,7 +191,7 @@ const FournisseursView: React.FC = () => {
                       onClick={() => handleDelete(row)}
                       aria-label={`Supprimer ${row.nom}`}
                       className="p-2 rounded-full hover:bg-bg-2"
-                      style={{ color: 'var(--red, #dc2626)' }}
+                      style={{ color: 'var(--red)' }}
                     >
                       <Trash2 size={14} aria-hidden="true" />
                     </button>

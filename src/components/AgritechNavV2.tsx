@@ -327,8 +327,8 @@ const NavTab: React.FC<NavTabProps> = ({ tab, isActive, onSelect, badgeCount, mo
               aria-hidden="true"
               className="absolute -top-1 -right-2 inline-flex min-w-[16px] h-[16px] items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none"
               style={{
-                background: 'var(--red, #dc2626)',
-                color: 'var(--bg-surface, #fff)',
+                background: 'var(--red)',
+                color: 'var(--bg-surface)',
                 fontFamily: 'var(--font-heading)',
               }}
             >

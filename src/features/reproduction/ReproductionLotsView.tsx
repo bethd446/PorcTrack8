@@ -52,27 +52,27 @@ const STATUT_BADGE: Record<
   { bg: string; fg: string; label: string }
 > = {
   EN_SAILLIE: {
-    bg: 'var(--bg-surface-2, #eef1ee)',
+    bg: 'var(--bg-surface-2)',
     fg: 'var(--ink)',
     label: 'En saillie',
   },
   GESTATION: {
-    bg: 'var(--color-accent-100, #d6efe2)',
-    fg: 'var(--color-accent-600, #047857)',
+    bg: 'var(--color-accent-100)',
+    fg: 'var(--color-accent-600)',
     label: 'Gestation',
   },
   MATERNITE: {
-    bg: 'var(--color-amber-pork-bg, #fde9d4)',
-    fg: 'var(--color-amber-deep, #c2662b)',
+    bg: 'var(--color-amber-pork-bg)',
+    fg: 'var(--color-amber-deep)',
     label: 'Maternité',
   },
   SEVRE: {
-    bg: 'var(--color-success-bg, #d1fae5)',
-    fg: 'var(--color-success-fg, #065f46)',
+    bg: 'var(--color-success-bg)',
+    fg: 'var(--color-success-fg)',
     label: 'Sevré',
   },
   TERMINE: {
-    bg: 'var(--bg-surface-2, #eef1ee)',
+    bg: 'var(--bg-surface-2)',
     fg: 'var(--text-2, var(--muted))',
     label: 'Terminé',
   },
@@ -94,9 +94,9 @@ const STEP_LABELS = {
 
 // Couleurs de progression : un segment "actif" (≥1) prend la teinte accent,
 // un segment "inactif" reste neutre.
-const SEGMENT_ACTIVE_BG = 'var(--color-accent-500, #047857)';
-const SEGMENT_INACTIVE_BG = 'var(--bg-surface-2, #eef1ee)';
-const SEGMENT_ACTIVE_FG = 'var(--bg-surface, #fff)';
+const SEGMENT_ACTIVE_BG = 'var(--color-accent-500)';
+const SEGMENT_INACTIVE_BG = 'var(--bg-surface-2)';
+const SEGMENT_ACTIVE_FG = 'var(--bg-surface)';
 const SEGMENT_INACTIVE_FG = 'var(--muted)';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -134,7 +134,7 @@ const FilterChip: React.FC<{
       padding: '6px 12px',
       borderRadius: 'var(--radius-pill, 999px)',
       border: '1px solid var(--line)',
-      background: active ? 'var(--color-accent-500, #047857)' : 'var(--bg-surface)',
+      background: active ? 'var(--color-accent-500)' : 'var(--bg-surface)',
       color: active ? 'var(--bg-surface)' : 'var(--ink)',
       fontFamily: 'var(--font-mono)',
       fontSize: 11,

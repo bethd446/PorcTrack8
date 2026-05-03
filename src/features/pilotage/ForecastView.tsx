@@ -120,13 +120,13 @@ type Horizon = 14 | 30 | 60 | 90;
 /** Couleur sémantique par type d'événement prévisionnel. */
 function previsionnelColor(type: PrevisionnelEventType): string {
   switch (type) {
-    case 'MISE_BAS':       return 'var(--color-info, #3B82F6)';
-    case 'SEVRAGE':        return 'var(--amber-pork, #F4A261)';
-    case 'RETOUR_CHALEUR': return 'var(--color-pig, #C2662B)';
-    case 'PESEE':          return 'var(--color-accent-500, #2D5A1B)';
-    case 'ECHO':           return 'var(--color-info, #3B82F6)';
-    case 'SORTIE':         return 'var(--color-secondary, #8B5E3C)';
-    case 'RE_SAILLIE':     return 'var(--color-pig, #C2662B)';
+    case 'MISE_BAS':       return 'var(--color-info)';
+    case 'SEVRAGE':        return 'var(--amber-pork)';
+    case 'RETOUR_CHALEUR': return 'var(--color-pig)';
+    case 'PESEE':          return 'var(--color-accent-500)';
+    case 'ECHO':           return 'var(--color-info)';
+    case 'SORTIE':         return 'var(--color-secondary)';
+    case 'RE_SAILLIE':     return 'var(--color-pig)';
   }
 }
 
@@ -359,10 +359,10 @@ const ForecastView: React.FC = () => {
                   const staggerClass = staggerIdx === 0 ? '' : `stagger-${staggerIdx}`;
                   const pct = Math.min(100, Math.round((w.nbMBPrevues / w.capaciteMaternite) * 100));
                   const fillColor = w.saturation === 'FULL'
-                    ? 'var(--color-danger, #EF4444)'
+                    ? 'var(--color-danger)'
                     : w.saturation === 'HIGH'
                       ? 'var(--amber-pork)'
-                      : 'var(--color-info, #3B82F6)';
+                      : 'var(--color-info)';
                   return (
                     <div
                       key={w.semaineIso}

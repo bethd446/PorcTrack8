@@ -179,7 +179,7 @@ const PostSevrageView: React.FC = () => {
                 value={`${occupation.tauxPct}%`}
                 accentColor={
                   occupation.alerte === 'FULL'
-                    ? 'var(--color-danger, #EF4444)'
+                    ? 'var(--color-danger)'
                     : occupation.alerte === 'HIGH'
                       ? 'var(--amber-pork)'
                       : undefined
@@ -345,7 +345,7 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
                 fontFamily: 'var(--font-heading)',
                 fontSize: treatmentStyle.titleSize,
                 fontWeight: treatmentStyle.titleWeight,
-                color: isBloquant ? 'var(--color-danger, #EF4444)' : 'var(--ink)',
+                color: isBloquant ? 'var(--color-danger)' : 'var(--ink)',
                 letterSpacing: '-0.01em',
                 lineHeight: 1.1,
                 margin: 0,
@@ -359,7 +359,7 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
             Mère: {data.truie || '—'} · Âge: <span className="text-text-1">{data.ageJours}j</span>
           </p>
           {isBloquant && (
-            <div className="flex items-center gap-1.5 mt-1 animate-pulse" style={{ color: 'var(--color-danger, #EF4444)' }}>
+            <div className="flex items-center gap-1.5 mt-1 animate-pulse" style={{ color: 'var(--color-danger)' }}>
               <AlertCircle size={14} />
               <span className="text-[10px] font-bold uppercase">Urgence Critique</span>
             </div>
@@ -375,7 +375,7 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
       {/* Message de blocage */}
       {isBloquant && (
         <div className="bg-red-500/10 rounded-lg p-3 border border-red-500/20">
-          <p className="text-[11px] leading-tight" style={{ color: 'var(--color-danger, #EF4444)' }}>
+          <p className="text-[11px] leading-tight" style={{ color: 'var(--color-danger)' }}>
             <strong>Action bloquée :</strong> Retard critique de transition (+{joursEnRetard}j).
             Veuillez transférer cette loge vers l'Engraissement pour débloquer les saisies.
           </p>
