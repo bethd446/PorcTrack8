@@ -8,7 +8,7 @@
 
 import React from 'react';
 import { IonContent, IonPage } from '@ionic/react';
-import { Box, Heart, Truck } from 'lucide-react';
+import { Box, Heart, Truck, Bell, ClipboardCheck, Stethoscope } from 'lucide-react';
 
 import {
   Card,
@@ -21,6 +21,13 @@ import {
   Input,
   FormField,
   Tabs,
+  Segment,
+  Chip,
+  Search,
+  ListItem,
+  ActionRow,
+  Stat,
+  StatsGrid,
 } from '../../components/design-system';
 
 const Block: React.FC<{ title: string; children: React.ReactNode }> = ({
@@ -43,6 +50,9 @@ const Row: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 const DesignSystemView: React.FC = () => {
   const [tabValue, setTabValue] = React.useState<string>('liste');
+  const [segmentValue, setSegmentValue] = React.useState<string>('liste');
+  const [chipFilter, setChipFilter] = React.useState<'tout' | 'pleines' | 'vides'>('tout');
+  const [searchValue, setSearchValue] = React.useState<string>('');
   return (
     <IonPage>
       <IonContent fullscreen>
@@ -211,6 +221,123 @@ const DesignSystemView: React.FC = () => {
                 onChange={() => {}}
                 ariaLabel="Tri"
               />
+            </Block>
+
+            <Block title="V33 — Segment (toggle Liste/Grille)">
+              <Segment
+                options={[
+                  { value: 'liste', label: 'Liste' },
+                  { value: 'grille', label: 'Grille' },
+                ]}
+                value={segmentValue}
+                onChange={setSegmentValue}
+                ariaLabel="Mode d'affichage"
+              />
+            </Block>
+
+            <Block title="V33 — Chip (filtres avec compteur)">
+              <Row>
+                <Chip
+                  label="Tout"
+                  count={17}
+                  active={chipFilter === 'tout'}
+                  onClick={() => setChipFilter('tout')}
+                />
+                <Chip
+                  label="Pleines"
+                  count={6}
+                  active={chipFilter === 'pleines'}
+                  onClick={() => setChipFilter('pleines')}
+                />
+                <Chip
+                  label="Vides"
+                  count={6}
+                  active={chipFilter === 'vides'}
+                  onClick={() => setChipFilter('vides')}
+                />
+                <Chip label="Passive" count={42} />
+              </Row>
+            </Block>
+
+            <Block title="V33 — Search (input pill loupe)">
+              <Search
+                placeholder="Chercher une truie, une bande…"
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                onClear={() => setSearchValue('')}
+              />
+            </Block>
+
+            <Block title="V33 — ListItem (ligne animal)">
+              <Card style={{ padding: 8 }}>
+                <ListItem
+                  avatar={
+                    <IconBox tone="accent">
+                      <Heart size={20} />
+                    </IconBox>
+                  }
+                  primary="T01 · Monette"
+                  secondary="B.22 · Allaitante"
+                  trailing={<Tag variant="success">Pleine</Tag>}
+                  onClick={() => {}}
+                />
+                <ListItem
+                  avatar={
+                    <IconBox tone="primary">
+                      <Box size={20} />
+                    </IconBox>
+                  }
+                  primary="T02 · Coquette"
+                  secondary="B.23 · Vide"
+                  trailing={<Tag>Vide</Tag>}
+                  onClick={() => {}}
+                />
+              </Card>
+            </Block>
+
+            <Block title="V33 — ActionRow (entrée menu)">
+              <Card style={{ padding: 8 }}>
+                <ActionRow
+                  icon={
+                    <IconBox tone="primary" size={36}>
+                      <Bell size={18} />
+                    </IconBox>
+                  }
+                  title="Toutes les alertes"
+                  description="3 en attente"
+                  badge={3}
+                  onClick={() => {}}
+                />
+                <ActionRow
+                  icon={
+                    <IconBox tone="primary" size={36}>
+                      <ClipboardCheck size={18} />
+                    </IconBox>
+                  }
+                  title="Audit du jour"
+                  description="Checklist matinale"
+                  onClick={() => {}}
+                />
+                <ActionRow
+                  icon={
+                    <IconBox tone="accent" size={36}>
+                      <Stethoscope size={18} />
+                    </IconBox>
+                  }
+                  title="Se déconnecter"
+                  destructive
+                  onClick={() => {}}
+                />
+              </Card>
+            </Block>
+
+            <Block title="V33 — Stat + StatsGrid (Inventaire)">
+              <StatsGrid cols={4}>
+                <Stat value="17" label="Truies" />
+                <Stat value="2" label="Verrats" />
+                <Stat value="29" label="Pleines" tone="accent" />
+                <Stat value="3" label="Alertes" tone="danger" />
+              </StatsGrid>
             </Block>
 
             <Block title="Composition (preview ligne Élevage)">

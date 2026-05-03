@@ -49,3 +49,25 @@ export type { AlertRowProps } from './AlertRow';
 // V32 PHASE 4 ───────────────────────────────────────────────────────────────
 export { default as Wizard } from './Wizard';
 export type { WizardProps, WizardStep } from './Wizard';
+
+// V33 DS-COMPLETION ─────────────────────────────────────────────────────────
+export { default as Segment } from './Segment';
+export type { SegmentProps, SegmentOption } from './Segment';
+
+export { default as Chip } from './Chip';
+export type { ChipProps } from './Chip';
+
+export { default as Search } from './Search';
+export type { SearchProps } from './Search';
+
+export { default as ListItem } from './ListItem';
+export type { ListItemProps } from './ListItem';
+
+export { default as ActionRow } from './ActionRow';
+export type { ActionRowProps } from './ActionRow';
+
+export { default as Stat } from './Stat';
+export type { StatProps, StatTone } from './Stat';
+
+export { default as StatsGrid } from './StatsGrid';
+export type { StatsGridProps, StatsGridCols } from './StatsGrid';

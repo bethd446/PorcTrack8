@@ -11,6 +11,7 @@ import {
   PiggyBank,
   Heart,
   BarChart3,
+  Wrench,
   MoreHorizontal,
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -182,7 +183,7 @@ export const QuickActionsProvider: React.FC<{ children: React.ReactNode }> = ({
 
 /* ── Tabs definition ─────────────────────────────────────────────────────── */
 
-type TabId = 'today' | 'elevage' | 'repro' | 'perf' | 'more';
+type TabId = 'today' | 'elevage' | 'repro' | 'perf' | 'outils' | 'more';
 
 interface NavTabDef {
   id: TabId;
@@ -228,6 +229,26 @@ const TABS: NavTabDef[] = [
     match: ['/pilotage'],
     ownerOnly: true,
   },
+  // V33 — Onglet Outils : tout ce qui était dans Plus mais qui est un outil
+  // métier (alertes, audit, journal santé, protocoles, stocks, fournisseurs).
+  // La page Plus garde uniquement les réglages (profil, ferme, équipe…).
+  {
+    id: 'outils',
+    path: '/outils',
+    label: 'Outils',
+    Icon: Wrench,
+    match: [
+      '/outils',
+      '/alerts',
+      '/alertes',
+      '/audit',
+      '/controle',
+      '/sante',
+      '/protocoles',
+      '/ressources',
+      '/fournisseurs',
+    ],
+  },
   {
     id: 'more',
     path: '/more',
@@ -237,14 +258,7 @@ const TABS: NavTabDef[] = [
       '/more',
       '/admin',
       '/aide',
-      '/fournisseurs',
-      '/ressources',
-      '/alerts',
-      '/alertes',
-      '/protocoles',
       '/notes',
-      '/controle',
-      '/sante',
     ],
   },
 ];
