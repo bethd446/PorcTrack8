@@ -8,6 +8,7 @@ import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { SectionDivider } from '../../components/agritech';
 import EmptyStateShared from '../../components/design/EmptyState';
+import { Tag } from '../../design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   buildClassementRows,
@@ -42,12 +43,13 @@ const SORTS: ReadonlyArray<SortOption> = [
   { id: 'porceletsMoyens', label: 'Porcelets' },
 ];
 
-const TIER_CLASSES: Record<Tier, string> = {
-  ELITE: 'text-success bg-success/10',
-  BON: 'text-accent bg-accent/10',
-  MOYEN: 'text-text-1 bg-bg-1',
-  FAIBLE: 'text-amber bg-amber/10',
-  INSUFFISANT: 'text-red bg-red/10',
+type TagVariant = 'default' | 'primary' | 'accent' | 'soft' | 'danger' | 'warning';
+const TIER_VARIANTS: Record<Tier, TagVariant> = {
+  ELITE: 'primary',
+  BON: 'accent',
+  MOYEN: 'soft',
+  FAIBLE: 'warning',
+  INSUFFISANT: 'danger',
 };
 
 const TIER_LABEL: Record<Tier, string> = {
@@ -308,25 +310,17 @@ interface RowProps {
 }
 
 const TierBadge: React.FC<{ tier: Tier; score: number }> = ({ tier, score }) => (
-  <span
-    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${TIER_CLASSES[tier]}`}
-    aria-label={`Tier ${TIER_LABEL[tier]} score ${formatScore(score)}`}
-  >
-    <span>{TIER_LABEL[tier]}</span>
-    <span className="tabular-nums">{formatScore(score)}</span>
+  <span aria-label={`Tier ${TIER_LABEL[tier]} score ${formatScore(score)}`}>
+    <Tag variant={TIER_VARIANTS[tier]}>
+      {TIER_LABEL[tier]} <span className="tabular-nums">{formatScore(score)}</span>
+    </Tag>
   </span>
 );
 
 const TypeBadge: React.FC<{ type: ClassementRow['type'] }> = ({ type }) => (
-  <span
-    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide border ${
-      type === 'TRUIE'
-        ? 'border-accent/30 text-accent bg-accent/5'
-        : 'border-border text-text-1 bg-bg-1'
-    }`}
-  >
+  <Tag variant={type === 'TRUIE' ? 'soft' : 'default'}>
     {type === 'TRUIE' ? 'Truie' : 'Verrat'}
-  </span>
+  </Tag>
 );
 
 const RowCardMobile: React.FC<RowProps> = ({ row, rank, onClick }) => (

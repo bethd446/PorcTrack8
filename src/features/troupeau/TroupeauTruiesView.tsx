@@ -23,6 +23,20 @@ import {
   type ChipTone,
 } from '../../components/agritech';
 import EmptyStateShared from '../../components/design/EmptyState';
+import { Tag } from '../../design-system';
+
+type TagVariantKind = 'default' | 'primary' | 'accent' | 'soft' | 'danger' | 'warning';
+function chipToneToTagVariant(tone: ChipTone): TagVariantKind {
+  switch (tone) {
+    case 'accent':  return 'primary';
+    case 'gold':    return 'soft';
+    case 'coral':   return 'warning';
+    case 'red':     return 'accent';
+    case 'amber':   return 'warning';
+    case 'default':
+    default:        return 'default';
+  }
+}
 import QuickAddTruieForm from '../../components/forms/QuickAddTruieForm';
 import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
 import type { Truie } from '../../types/farm';
@@ -386,7 +400,7 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
                   <div className="text-[14px] font-semibold text-text-0 tabular-nums">
                     {t.displayId || t.id}
                   </div>
-                  <Chip label={v.label} tone={v.tone} size="xs" />
+                  <Tag variant={chipToneToTagVariant(v.tone)}>{v.label}</Tag>
                   {t.boucle ? (
                     <div
                       className={`ft-code text-[18px] font-semibold tabular-nums leading-none ${boucleClass}`}

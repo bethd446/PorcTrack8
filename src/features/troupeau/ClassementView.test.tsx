@@ -252,7 +252,7 @@ describe('ClassementView', () => {
     expect(document.body.textContent).toMatch(/aucun reproducteur correspondant au filtre/i);
   });
 
-  it('tier badge ELITE → applique classes success', () => {
+  it('tier badge ELITE → utilise Tag variant primary du DS V2', () => {
     mockRows = [TRUIE_ELITE];
 
     renderView();
@@ -262,9 +262,11 @@ describe('ClassementView', () => {
     expect(badges.length).toBeGreaterThanOrEqual(1);
 
     const badge = badges[0];
-    // Vérifie l'application des classes du tier ELITE
-    expect(badge.className).toContain('text-success');
-    expect(badge.className).toContain('bg-success/10');
+    // V40 T3: TierBadge utilise <Tag variant="primary"> du DS V2.0
+    // Le span enfant porte les classes pt-tag pt-tag--primary
+    const tagInner = badge.querySelector('.pt-tag');
+    expect(tagInner).not.toBeNull();
+    expect(tagInner!.className).toContain('pt-tag--primary');
     // Score "92" est rendu dans le badge
     expect(badge.textContent).toMatch(/92/);
   });
