@@ -8,7 +8,7 @@ import {
   ChevronRight, LogOut, Trash2, Mail, Lock,
 } from 'lucide-react';
 import AgritechLayout from './AgritechLayout';
-import { Button as DsButton } from './design-system';
+import { Button as DsButton } from '../design-system';
 import { useAuth } from '../context/AuthContext';
 import { useMeta } from '../context/FarmContext';
 import { APP_VERSION } from '../config';

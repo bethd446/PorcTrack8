@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { assertNoUUID, containsUUID, UUID_REGEX, useNoUUID } from './uuidGuard';
+import { assertNoUUID, containsUUID, UUID_REGEX, useNoUUID } from './uuid-guard';
 
 describe('uuidGuard — UUID_REGEX', () => {
   it('matches a canonical UUID v4', () => {

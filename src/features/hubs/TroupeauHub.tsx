@@ -21,7 +21,7 @@ import {
   SectionHeader,
   Tag,
   IconBox,
-} from '../../components/design-system';
+} from '../../design-system';
 
 import TroupeauTruiesView from '../troupeau/TroupeauTruiesView';
 import TroupeauVerratsView from '../troupeau/TroupeauVerratsView';

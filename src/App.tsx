@@ -27,7 +27,7 @@ import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
 
 import { FarmProvider, useFarm } from './context/FarmContext';
-import { usePageFab } from './lib/usePageFab';
+import { usePageFab } from './design-system';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import SupabaseProtectedRoute from './components/auth/ProtectedRoute';

@@ -32,7 +32,7 @@ import {
   SectionHeader,
   ActionRow,
   IconBox,
-} from '../../components/design-system';
+} from '../../design-system';
 import { usePilotage } from '../../context/PilotageContext';
 
 const OutilsView: React.FC = () => {
