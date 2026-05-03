@@ -25,7 +25,7 @@ import {
 
 import { AppToast, AlertCard, useAppToast } from '../../components/agritech';
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
+import { Section, Card, Button, IconBox } from '../../design-system';
 import { useAuth } from '../../context/AuthContext';
 import { usePilotage } from '../../context/PilotageContext';
 import { useRessources } from '../../context/RessourcesContext';
@@ -605,17 +605,25 @@ const TodayHub: React.FC = () => {
           >
             {/* ── En-tête ───────────────────────────────────────────── */}
             <header>
-              <Eyebrow dotColor="accent">Aujourd&rsquo;hui</Eyebrow>
+              <Section label="Aujourd'hui" />
               <h1
-                className="text-page-title"
-                style={{ margin: '8px 0 4px' }}
+                style={{
+                  fontFamily: 'var(--pt-font-display)',
+                  fontSize: 'var(--pt-text-display)',
+                  fontWeight: 700,
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.05,
+                  color: 'var(--pt-text)',
+                  margin: '8px 0 4px',
+                }}
               >
                 Bonjour, {firstName}
               </h1>
               <div
-                className="text-body"
                 style={{
-                  color: 'var(--muted)',
+                  fontFamily: 'var(--pt-font-body)',
+                  fontSize: 13,
+                  color: 'var(--pt-text-muted)',
                   textTransform: 'capitalize',
                 }}
               >
@@ -625,92 +633,62 @@ const TodayHub: React.FC = () => {
 
             {/* ── Tâche prioritaire (single hero) ────────────────────── */}
             <section aria-label="Tâche prioritaire">
-              <Eyebrow dotColor={primaryTask.kind === 'IDLE' ? 'accent' : 'pig'}>
-                Tâche prioritaire
-              </Eyebrow>
-              <button
-                type="button"
+              <Section label="Tâche prioritaire" tone={primaryTask.kind === 'IDLE' ? 'primary' : 'accent'} />
+              <Card
+                interactive
                 onClick={() => navigate(primaryTask.to)}
-                aria-label={primaryTask.title}
-                className="pressable"
-                style={{
-                  width: '100%',
-                  textAlign: 'left',
-                  marginTop: 12,
-                  background: primaryTask.kind === 'IDLE'
-                    ? 'var(--bg-surface)'
-                    : 'var(--color-accent-50, var(--bg-surface))',
-                  border: primaryTask.kind === 'IDLE'
-                    ? '1px solid var(--color-accent-100)'
-                    : '2px solid var(--color-accent-500)',
-                  borderRadius: 16,
-                  padding: '20px 22px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 14,
-                  cursor: 'pointer',
-                  boxShadow: primaryTask.kind === 'IDLE'
-                    ? '0 1px 2px rgba(17,24,39,0.04)'
-                    : '0 4px 12px rgba(17,24,39,0.08)',
-                  transition: 'transform 160ms var(--ease-emil)',
-                }}
+                role="button"
+                ariaLabel={primaryTask.title}
+                style={{ marginTop: 12 }}
               >
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-                  {primaryTask.kind === 'IDLE' ? (
-                    <ShieldCheck size={26} color="var(--color-accent-500)" aria-hidden="true" />
-                  ) : null}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <h2
-                      className="text-section-title"
-                      style={{
-                        color: 'var(--ink)',
-                        margin: 0,
-                      }}
-                    >
-                      {primaryTask.title}
-                    </h2>
-                    {primaryTask.detail ? (
-                      <p
-                        className="text-body-lg"
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+                    {primaryTask.kind === 'IDLE' ? (
+                      <IconBox tone="primary">
+                        <ShieldCheck size={20} aria-hidden="true" />
+                      </IconBox>
+                    ) : null}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <h2
                         style={{
-                          color: 'var(--ink-soft)',
-                          margin: '6px 0 0',
+                          fontFamily: 'var(--pt-font-display)',
+                          fontSize: 'var(--pt-text-h2)',
+                          fontWeight: 700,
+                          letterSpacing: '-0.01em',
+                          color: 'var(--pt-text)',
+                          margin: 0,
                         }}
                       >
-                        {primaryTask.detail}
-                      </p>
-                    ) : null}
+                        {primaryTask.title}
+                      </h2>
+                      {primaryTask.detail ? (
+                        <p
+                          style={{
+                            fontFamily: 'var(--pt-font-body)',
+                            fontSize: 14,
+                            color: 'var(--pt-text-muted)',
+                            margin: '6px 0 0',
+                          }}
+                        >
+                          {primaryTask.detail}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div style={{ alignSelf: 'flex-start' }}>
+                    <Button variant="primary" size="small" onClick={() => navigate(primaryTask.to)}>
+                      {primaryTask.cta}
+                      <ArrowRight size={14} aria-hidden="true" style={{ marginLeft: 6 }} />
+                    </Button>
                   </div>
                 </div>
-                <div
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    padding: '10px 16px',
-                    borderRadius: 'var(--radius-pill)',
-                    background: 'var(--color-accent-500)',
-                    color: 'var(--bg-surface)',
-                    fontFamily: 'var(--pt-font-body)',
-                    fontSize: 12,
-                    letterSpacing: '0.10em',
-                    textTransform: 'uppercase',
-                    fontWeight: 600,
-                    alignSelf: 'flex-start',
-                    minHeight: 44,
-                    boxSizing: 'border-box',
-                  }}
-                >
-                  {primaryTask.cta}
-                  <ArrowRight size={14} aria-hidden="true" />
-                </div>
-              </button>
+              </Card>
             </section>
 
             {/* ── Transitions de phase (R15/R16) ─────────────────────── */}
             {phaseSuggestions.length > 0 && (
               <section aria-label="Transitions de phase">
-                <Eyebrow dotColor="amber">Transitions de phase</Eyebrow>
+                <Section label="Transitions de phase" tone="accent" />
                 <div
                   style={{
                     display: 'flex',
@@ -740,7 +718,7 @@ const TodayHub: React.FC = () => {
             {/* ── Aussi à traiter ────────────────────────────────────── */}
             {aussiATraiter.length > 0 && (
               <section aria-label="Aussi à traiter">
-                <Eyebrow dotColor="amber">Aussi à traiter</Eyebrow>
+                <Section label="Aussi à traiter" tone="accent" />
                 <ul
                   style={{
                     listStyle: 'none',
@@ -807,15 +785,13 @@ const TodayHub: React.FC = () => {
             {/* ── Pesées prévues (V25) ──────────────────────────────── */}
             {peseesPending.length > 0 && (
               <section aria-label="Pesées prévues">
-                <Eyebrow dotColor="amber">Pesées prévues</Eyebrow>
-                <ul
+                <Section label="Pesées prévues" tone="accent" />
+                <div
                   style={{
-                    listStyle: 'none',
-                    padding: 0,
-                    margin: '12px 0 0',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 8,
+                    marginTop: 12,
                   }}
                 >
                   {peseesPending.map((p) => {
@@ -827,211 +803,144 @@ const TodayHub: React.FC = () => {
                         : 'Pesée';
                     const isOverdue = new Date(p.datePrevue).getTime() < Date.now();
                     return (
-                      <li
-                        key={p.id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 12,
-                          background: 'var(--bg-surface)',
-                          border: `1px solid ${isOverdue ? 'var(--color-pig-deep)' : 'var(--line)'}`,
-                          borderRadius: 12,
-                          padding: '12px 14px',
-                        }}
-                      >
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div
-                            style={{
-                              fontFamily: 'var(--font-heading)',
-                              fontSize: 15,
-                              fontWeight: 600,
-                              color: 'var(--ink)',
+                      <div key={p.id}>
+                      <Card compact danger={isOverdue}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div
+                              style={{
+                                fontFamily: 'var(--pt-font-display)',
+                                fontSize: 15,
+                                fontWeight: 600,
+                                color: 'var(--pt-text)',
+                              }}
+                            >
+                              {label}
+                            </div>
+                            <div
+                              style={{
+                                color: isOverdue ? 'var(--pt-danger)' : 'var(--pt-text-muted)',
+                                fontFamily: 'var(--pt-font-body)',
+                                fontSize: 11,
+                                marginTop: 2,
+                              }}
+                            >
+                              Prévue le {p.datePrevue}
+                            </div>
+                          </div>
+                          <Button
+                            variant="primary"
+                            size="small"
+                            disabled={!bande}
+                            ariaLabel={`Saisir la pesée de ${label}`}
+                            onClick={() => {
+                              if (bande) setPeseeForm({ pesee: p, subject: bande });
                             }}
                           >
-                            {label}
-                          </div>
-                          <div
-                            className="text-body"
-                            style={{
-                              color: isOverdue ? 'var(--color-pig-deep)' : 'var(--muted)',
-                              fontFamily: 'var(--pt-font-body)',
-                              fontSize: 11,
-                              marginTop: 2,
-                            }}
-                          >
-                            Prévue le {p.datePrevue}
-                          </div>
+                            Saisir pesée
+                          </Button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (bande) setPeseeForm({ pesee: p, subject: bande });
-                          }}
-                          disabled={!bande}
-                          aria-label={`Saisir la pesée de ${label}`}
-                          className="pressable"
-                          style={{
-                            minHeight: 44,
-                            padding: '10px 14px',
-                            borderRadius: 'var(--radius-pill)',
-                            background: 'var(--color-accent-500)',
-                            color: 'var(--bg-surface)',
-                            border: 'none',
-                            fontFamily: 'var(--pt-font-body)',
-                            fontSize: 11,
-                            letterSpacing: '0.08em',
-                            textTransform: 'uppercase',
-                            fontWeight: 600,
-                            cursor: bande ? 'pointer' : 'not-allowed',
-                            opacity: bande ? 1 : 0.4,
-                          }}
-                        >
-                          Saisir pesée
-                        </button>
-                      </li>
+                      </Card>
+                      </div>
                     );
                   })}
-                </ul>
+                </div>
               </section>
             )}
 
             {/* ── Ton élevage ────────────────────────────────────────── */}
             <section aria-label="Ton élevage">
-              <Eyebrow dotColor="accent">Ton élevage</Eyebrow>
+              <Section label="Ton élevage" />
               <Link
                 to="/troupeau"
-                className="pressable"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 14,
-                  background: 'var(--bg-surface)',
-                  border: '1px solid var(--line)',
-                  borderRadius: 12,
-                  padding: '16px 18px',
-                  textDecoration: 'none',
-                  marginTop: 12,
-                  boxShadow: '0 1px 2px rgba(17,24,39,0.04)',
-                }}
+                style={{ textDecoration: 'none', display: 'block', marginTop: 12 }}
+                aria-label="Voir le troupeau"
               >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-heading)',
-                      fontSize: 16,
-                      fontWeight: 600,
-                      color: 'var(--ink)',
-                      letterSpacing: '-0.005em',
-                    }}
-                  >
-                    {cheptelStats.bandesCount} bande{cheptelStats.bandesCount > 1 ? 's' : ''} active{cheptelStats.bandesCount > 1 ? 's' : ''}
-                    {' · '}
-                    {cheptelStats.truiesTotalCount} truie{cheptelStats.truiesTotalCount > 1 ? 's' : ''}
-                    {cheptelStats.truiesReformeCount > 0
-                      ? ` (${cheptelStats.truiesActivesCount} actives)`
-                      : ''}
-                    {' · '}
-                    {cheptelStats.verratsCount} verrat{cheptelStats.verratsCount > 1 ? 's' : ''}
+                <Card interactive>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontFamily: 'var(--pt-font-display)',
+                          fontSize: 16,
+                          fontWeight: 600,
+                          color: 'var(--pt-text)',
+                          letterSpacing: '-0.005em',
+                        }}
+                      >
+                        {cheptelStats.bandesCount} bande{cheptelStats.bandesCount > 1 ? 's' : ''} active{cheptelStats.bandesCount > 1 ? 's' : ''}
+                        {' · '}
+                        {cheptelStats.truiesTotalCount} truie{cheptelStats.truiesTotalCount > 1 ? 's' : ''}
+                        {cheptelStats.truiesReformeCount > 0
+                          ? ` (${cheptelStats.truiesActivesCount} actives)`
+                          : ''}
+                        {' · '}
+                        {cheptelStats.verratsCount} verrat{cheptelStats.verratsCount > 1 ? 's' : ''}
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: 'var(--pt-font-body)',
+                          fontSize: 13,
+                          color: 'var(--pt-text-muted)',
+                          marginTop: 4,
+                        }}
+                      >
+                        Reproduction&nbsp;: {cheptelStats.pleines} pleine{cheptelStats.pleines > 1 ? 's' : ''}, {cheptelStats.maternite} maternité, {cheptelStats.vides} vide{cheptelStats.vides > 1 ? 's' : ''}
+                      </div>
+                    </div>
+                    <ChevronRight size={18} color="var(--pt-text-muted)" aria-hidden="true" />
                   </div>
-                  <div
-                    className="text-body"
-                    style={{
-                      color: 'var(--ink-soft)',
-                      marginTop: 4,
-                    }}
-                  >
-                    Reproduction&nbsp;: {cheptelStats.pleines} pleine{cheptelStats.pleines > 1 ? 's' : ''}, {cheptelStats.maternite} maternité, {cheptelStats.vides} vide{cheptelStats.vides > 1 ? 's' : ''}
-                  </div>
-                </div>
-                <ChevronRight size={18} color="var(--muted)" aria-hidden="true" />
+                </Card>
               </Link>
             </section>
 
             {/* ── Tournée du jour ────────────────────────────────────── */}
             <section aria-label="Tournée du jour">
-              <Eyebrow dotColor="amber">Tournée du jour</Eyebrow>
-              <div
-                style={{
-                  marginTop: 12,
-                  background: 'var(--bg-surface)',
-                  borderRadius: 12,
-                  padding: '16px 18px',
-                  boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 12,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 10,
-                      background: 'var(--color-accent-100)',
-                      color: 'var(--color-accent-600)',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <ClipboardCheck size={20} aria-hidden="true" />
-                  </span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-heading)',
-                        fontSize: 16,
-                        fontWeight: 600,
-                        color: 'var(--ink)',
-                        letterSpacing: '-0.005em',
-                      }}
-                    >
-                      Tournée terrain
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: 'var(--pt-font-body)',
-                        fontSize: 11,
-                        letterSpacing: '0.06em',
-                        color: 'var(--muted)',
-                        marginTop: 2,
-                      }}
-                    >
-                      {tourneeAujourdHui
-                        ? `Tournée ${lastAuditAgo}`
-                        : lastAuditAgo
-                          ? `Aucune tournée enregistrée aujourd'hui · dernière ${lastAuditAgo}`
-                          : "Aucune tournée enregistrée aujourd'hui"}
+              <Section label="Tournée du jour" tone="accent" />
+              <Card style={{ marginTop: 12 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <IconBox tone="primary">
+                      <ClipboardCheck size={20} aria-hidden="true" />
+                    </IconBox>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontFamily: 'var(--pt-font-display)',
+                          fontSize: 16,
+                          fontWeight: 600,
+                          color: 'var(--pt-text)',
+                          letterSpacing: '-0.005em',
+                        }}
+                      >
+                        Tournée terrain
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: 'var(--pt-font-body)',
+                          fontSize: 12,
+                          color: 'var(--pt-text-muted)',
+                          marginTop: 2,
+                        }}
+                      >
+                        {tourneeAujourdHui
+                          ? `Tournée ${lastAuditAgo}`
+                          : lastAuditAgo
+                            ? `Aucune tournée enregistrée aujourd'hui · dernière ${lastAuditAgo}`
+                            : "Aucune tournée enregistrée aujourd'hui"}
+                      </div>
                     </div>
                   </div>
+                  <Button
+                    variant="primary"
+                    fullWidth
+                    onClick={() => navigate('/audit')}
+                    ariaLabel="Démarrer la tournée"
+                  >
+                    Démarrer la tournée
+                  </Button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => navigate('/audit')}
-                  aria-label="Démarrer la tournée"
-                  className="pressable"
-                  style={{
-                    width: '100%',
-                    minHeight: 44,
-                    padding: '10px 16px',
-                    borderRadius: 'var(--radius-pill)',
-                    background: 'var(--color-accent-500)',
-                    color: 'var(--bg-surface)',
-                    border: '1.5px solid var(--color-accent-500)',
-                    fontFamily: 'var(--pt-font-body)',
-                    fontSize: 12,
-                    letterSpacing: '0.10em',
-                    textTransform: 'uppercase',
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    transition: 'transform 160ms var(--ease-emil)',
-                  }}
-                >
-                  Démarrer la tournée
-                </button>
-              </div>
+              </Card>
             </section>
 
           </div>
