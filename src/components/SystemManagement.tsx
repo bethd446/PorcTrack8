@@ -781,7 +781,7 @@ export const SettingsPage: React.FC = () => {
                   className="font-mono text-[11px] text-text-2 uppercase tracking-wide"
                   style={{ fontFamily: 'var(--font-mono)' }}
                 >
-                  PorcTrack v20 · build {APP_VERSION}
+                  PorcTrack v29 · build {APP_VERSION}
                 </span>
               </div>
             </SettingsSection>

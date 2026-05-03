@@ -387,6 +387,7 @@ const AppShell: React.FC = () => (
       <Route path="/troupeau/loges/:id" element={<LogeDetailView />} />
 
       {/* Reproduction (V22-B3 hub fil conducteur) */}
+      <Route path="/repro" element={<Navigate to="/reproduction" replace />} />
       <Route path="/reproduction" element={<ReproductionHub />} />
       <Route path="/reproduction/lots" element={<ReproductionLotsView />} />
 

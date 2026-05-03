@@ -62,6 +62,25 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
   const [notesData, setNotesData] = useState<SheetRawRow[]>([]);
   const [notesHeader, setNotesHeader] = useState<string[]>([]);
   const { notes: notesAsNotes, getBandeById } = useFarm();
+
+  // V29-FIX-P0 : garde défensive contre bande=undefined (cas SW cache stale ou
+  // route directe /troupeau/bandes/:id avec wrapper qui foire). Évite le
+  // crash JS "Cannot read properties of undefined (reading 'id')".
+  if (!bande?.id) {
+    return (
+      <div className="agritech-root p-10 text-center flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <p className="font-mono text-[14px] uppercase text-text-1">Bande introuvable</p>
+        <button
+          type="button"
+          onClick={onClose ?? (() => navigate(-1))}
+          className="pressable h-11 px-6 rounded-md bg-accent text-bg-0 font-mono text-[12px] uppercase tracking-wide"
+        >
+          Retour
+        </button>
+      </div>
+    );
+  }
+
   const bandeTyped = getBandeById(bande.id);
 
   // V6-B — Sources multi-mères + loge structurée
