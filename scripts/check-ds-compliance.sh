@@ -195,6 +195,52 @@ else
 fi
 echo ""
 
+# V41 — LA 11e RÈGLE D'OR : ARCHITECTURE DE PAGE
+# CHECK 13: <Button> (DS) à l'intérieur d'un <PageHeader> (interdit V41)
+echo "CHECK 13 : <Button> dans <PageHeader> (interdit V41)"
+MATCHES=$(grep -rPzo --include="*.tsx" '(?s)<PageHeader[^/]*?>.*?</PageHeader>' "$SRC" 2>/dev/null \
+  | tr '\0' '\n' \
+  | grep -E "<Button" \
+  || true)
+if [ -n "$MATCHES" ]; then
+  echo "✗  <Button> détecté dans <PageHeader> (pattern V41 interdit) :"
+  echo "$MATCHES" | sed 's/^/   /' | head -5
+  ERRORS=$((ERRORS + 1))
+else
+  echo "✓  Aucun <Button> dans <PageHeader>"
+fi
+echo ""
+
+# CHECK 14: <PageHeader subtitle="..."> contenant un pattern numérique (métriques)
+echo "CHECK 14 : subtitle de <PageHeader> avec métriques chiffrées (interdit V41)"
+MATCHES=$(grep -rnE "subtitle=\\{?[\"\`'][^\"\`']*[0-9]+\\s*(truies?|verrats?|animaux|pleines?|allaitantes?|vides?|réformes?|critiques?|bandes?|portées?)[^\"\`']*[\"\`']" "$SRC" --include="*.tsx" 2>/dev/null || true)
+if [ -n "$MATCHES" ]; then
+  echo "✗  PageHeader avec subtitle métrique chiffré (anti-pattern V41) :"
+  echo "$MATCHES" | sed 's/^/   /' | head -10
+  ERRORS=$((ERRORS + 1))
+else
+  echo "✓  Aucun subtitle PageHeader avec métriques chiffrées"
+fi
+echo ""
+
+# CHECK 15: 2 <Section><StatsGrid></Section> consécutives (avertissement)
+# Heuristique : un fichier avec >= 2 occurrences de "<StatsGrid" est suspect.
+echo "CHECK 15 : 2+ <StatsGrid> dans un même fichier (avertissement)"
+MULTI_STATS_FILES=$(grep -rln "<StatsGrid" "$SRC" --include="*.tsx" 2>/dev/null | while read -r f; do
+  count=$(grep -c "<StatsGrid" "$f" 2>/dev/null || echo 0)
+  if [ "$count" -gt 1 ]; then
+    echo "$f ($count <StatsGrid>)"
+  fi
+done)
+if [ -n "$MULTI_STATS_FILES" ]; then
+  echo "⚠  2+ <StatsGrid> dans un même fichier (consolidation V41 recommandée) :"
+  echo "$MULTI_STATS_FILES" | sed 's/^/   /' | head -10
+  WARNINGS=$((WARNINGS + 1))
+else
+  echo "✓  Aucun fichier avec 2+ <StatsGrid>"
+fi
+echo ""
+
 echo "============================================="
 if [ "$ERRORS" -gt 0 ]; then
   echo "✗  ÉCHEC : $ERRORS erreur(s) bloquante(s), $WARNINGS avertissement(s)"
