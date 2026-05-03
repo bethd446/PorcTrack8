@@ -6,10 +6,11 @@ import {
 import {
   AlertCircle, Activity, ClipboardList, ChevronLeft, ChevronRight,
   Stethoscope, TrendingUp, CalendarClock, CheckCircle2,
-  Edit3, Home, MapPin, Move, Tag, Plus,
+  Edit3, Home, MapPin, Move, Tag, Plus, ClipboardCheck,
 } from 'lucide-react';
 import PhotoStrip from '../../../components/PhotoStrip';
 import { Chip, AnimalListItem } from '../../../components/agritech';
+import { computeBandePhase } from '../../../services/bandesAggregator';
 import QuickNoteForm from '../../../components/forms/QuickNoteForm';
 import QuickHealthForm from '../../../components/forms/QuickHealthForm';
 import QuickEditBandeForm from '../../../components/forms/QuickEditBandeForm';
@@ -92,6 +93,12 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
 
   const nesVivants = bandeTyped?.nv ?? Number(bande.nv) ?? 0;
   const ecart = sourcesTotal - nesVivants;
+
+  // V28-CTA — Daily Check disponible uniquement pour les bandes en phase Sous mère.
+  const isSousMere = useMemo(
+    () => (bandeTyped ? computeBandePhase(bandeTyped) === 'SOUS_MERE' : false),
+    [bandeTyped],
+  );
 
   const loadSources = useCallback(async () => {
     if (!bande.id) return;
@@ -277,6 +284,21 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
               <PhotoStrip subjectType="BANDE" subjectId={bande.id} />
 
               <CycleTimeline age={bande.age} status={(bande.status as string) || ''} />
+
+              {/* V28-CTA — Daily Check du jour (bandes Sous mère uniquement) */}
+              {isSousMere && (
+                <button
+                  type="button"
+                  data-testid="bande-daily-check-cta"
+                  onClick={() => navigate(`/troupeau/daily-check/${bande.id}`)}
+                  className="pressable w-full inline-flex items-center justify-center gap-2 rounded-md bg-accent text-bg-0 font-mono text-[12px] uppercase tracking-wide hover:brightness-110"
+                  style={{ minHeight: 44, padding: '10px 16px' }}
+                  aria-label="Démarrer le daily check du jour"
+                >
+                  <ClipboardCheck size={16} aria-hidden="true" />
+                  Daily Check du jour
+                </button>
+              )}
 
               {bandeTyped ? (
                 <BandeCroissanceCard bande={bandeTyped} notes={notesAsNotes} />

@@ -34,6 +34,7 @@ import { useTroupeau } from '../../context/TroupeauContext';
 import { resolveAlertSubject } from '../../utils/alertSubject';
 import type { AlertPriority, FarmAlert } from '../../services/alertEngine';
 import { dismissAlert } from '../../services/alertDismissals';
+import { supabase } from '../../services/supabaseClient';
 import {
   getPendingConfirmations,
   type PendingConfirmation,
@@ -283,7 +284,7 @@ const TodayHub: React.FC = () => {
   }, [sevrages, mbImminentes, stocksRupture, stocksBas, sevragesProches]);
 
   // ── "Aussi à traiter" — fusion + déduplication par alertId ────────────
-  type AussiKind = 'navigate' | 'confirm-sevrage' | 'confirm-reforme';
+  type AussiKind = 'navigate' | 'confirm-sevrage' | 'confirm-reforme' | 'confirm-mb';
   interface AussiItem {
     id: string;
     priority: AlertPriority;
@@ -295,6 +296,8 @@ const TodayHub: React.FC = () => {
     dismissableAlertId?: string;
     /** Compte d'items du même type fusionnés en ce groupe (≥2 si groupé, sinon undefined). */
     groupCount?: number;
+    /** UUID de la truie pour kind='confirm-mb' (alertes R1 — résolution saillie au clic). */
+    mbTruieId?: string;
   }
 
   const aussiATraiter = useMemo<AussiItem[]>(() => {
@@ -322,18 +325,21 @@ const TodayHub: React.FC = () => {
 
     // 2. Alertes locales (CRITIQUE/HAUTE) — navigate vers la vue ciblée.
     //    Exclut R15/R16 (OPEN_PHASE_MODAL) : rendues comme suggestions dédiées.
+    //    R1 (CONFIRM_MISE_BAS) : action 1-tap "Confirmer la mise bas" (V28-CTA).
     for (const a of alerts) {
       if (a.priority !== 'CRITIQUE' && a.priority !== 'HAUTE') continue;
       if (a.meta?.actionType === 'OPEN_PHASE_MODAL') continue;
       const key = `alert:${a.id}`;
       if (seen.has(key)) continue;
       seen.add(key);
+      const isMbAlert = a.actions.some(act => act.type === 'CONFIRM_MISE_BAS');
       flat.push({
         id: a.id,
         priority: a.priority,
         label: resolveAlertSubject(a.title, lookup),
-        kind: 'navigate',
-        to: alertHref(a),
+        kind: isMbAlert ? 'confirm-mb' : 'navigate',
+        to: isMbAlert ? undefined : alertHref(a),
+        mbTruieId: isMbAlert ? a.subjectId : undefined,
         dismissableAlertId: a.id,
       });
     }
@@ -482,8 +488,36 @@ const TodayHub: React.FC = () => {
       setReformeConfirmation(item.confirmation);
       return;
     }
+    if (item.kind === 'confirm-mb' && item.mbTruieId) {
+      void resolveActiveSaillieAndNavigate(item.mbTruieId);
+      return;
+    }
     if (item.to) navigate(item.to);
   }
+
+  /** V28-CTA — Résout la dernière saillie ouverte de la truie (sans batch lié)
+   *  puis navigue vers /cycles/confirmer-mb/:saillieId. Toast d'erreur si introuvable. */
+  const resolveActiveSaillieAndNavigate = useCallback(
+    async (truieUuid: string): Promise<void> => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data, error } = await (supabase.from('saillies') as any)
+          .select('id, date_saillie')
+          .eq('sow_id', truieUuid)
+          .order('date_saillie', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (error || !data?.id) {
+          showToast('Aucune saillie active trouvée pour cette truie', 'error', { duration: 2400 });
+          return;
+        }
+        navigate(`/cycles/confirmer-mb/${data.id}`);
+      } catch {
+        showToast('Erreur résolution saillie', 'error', { duration: 2400 });
+      }
+    },
+    [navigate, showToast],
+  );
 
   // ── "Ton élevage" — composition fermière ─────────────────────────────
   const cheptelStats = useMemo(() => {
@@ -739,7 +773,9 @@ const TodayHub: React.FC = () => {
                       ? 'Confirmer sevrage'
                       : item.kind === 'confirm-reforme'
                         ? 'Confirmer réforme'
-                        : 'Ouvrir';
+                        : item.kind === 'confirm-mb'
+                          ? 'Confirmer la mise bas'
+                          : 'Ouvrir';
 
                     return (
                       <li key={item.id}>
