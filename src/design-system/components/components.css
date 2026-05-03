@@ -149,6 +149,13 @@
 /* === EMPTY === */
 .pt-empty { text-align: center; padding: 32px 20px; color: var(--pt-text-subtle); font-size: 14px; font-family: var(--pt-font-body); }
 
+/* === TOGGLE / SWITCH === */
+.pt-toggle { position: relative; height: 24px; width: 40px; border-radius: var(--pt-radius-pill); background: var(--pt-surface-alt); border: 1px solid var(--pt-border); flex-shrink: 0; cursor: pointer; padding: 0; transition: background 200ms var(--pt-t-fast), border-color 200ms var(--pt-t-fast); }
+.pt-toggle:disabled { opacity: 0.4; cursor: not-allowed; }
+.pt-toggle--on { background: var(--pt-accent); border-color: var(--pt-accent); }
+.pt-toggle__thumb { position: absolute; top: 50%; transform: translateY(-50%); height: 16px; width: 16px; border-radius: var(--pt-radius-pill); background: var(--pt-surface); left: 3px; box-shadow: 0 1px 2px rgba(0,0,0,0.15); transition: left 200ms var(--pt-t-fast); }
+.pt-toggle--on .pt-toggle__thumb { left: calc(100% - 19px); }
+
 /* === SEARCH (V33 — repris du DS V38) === */
 .pt-search { position: relative; display: flex; align-items: center; width: 100%; }
 .pt-search__icon { position: absolute; left: 16px; color: var(--pt-text-subtle); pointer-events: none; flex-shrink: 0; }

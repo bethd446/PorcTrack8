@@ -13,6 +13,7 @@ import {
   KeyValueRow,
   Input,
   FormField,
+  Toggle,
 } from '@/design-system';
 import { useAuth } from '../context/AuthContext';
 import { useMeta } from '../context/FarmContext';
@@ -120,39 +121,7 @@ const ToggleRow: React.FC<{
         </p>
       ) : null}
     </div>
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      style={{
-        position: 'relative',
-        height: 24,
-        width: 40,
-        borderRadius: 'var(--pt-radius-pill)',
-        background: checked ? 'var(--pt-accent)' : 'var(--pt-surface-alt)',
-        border: '1px solid var(--pt-border)',
-        flexShrink: 0,
-        cursor: 'pointer',
-        padding: 0,
-      }}
-    >
-      <span
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          height: 16,
-          width: 16,
-          borderRadius: 'var(--pt-radius-pill)',
-          background: 'var(--pt-surface)',
-          left: checked ? 'calc(100% - 19px)' : 3,
-          boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
-          transition: 'left 150ms ease',
-        }}
-      />
-    </button>
+    <Toggle checked={checked} onChange={onChange} ariaLabel={label} />
   </div>
 );
 

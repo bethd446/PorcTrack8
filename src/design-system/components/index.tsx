@@ -566,6 +566,33 @@ export function Empty({ children }: { children: React.ReactNode }) {
 }
 
 // ============================================================
+// TOGGLE / SWITCH
+// ============================================================
+export function Toggle({ checked, onChange, label, disabled, ariaLabel }: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label?: string;
+  disabled?: boolean;
+  ariaLabel?: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={ariaLabel ?? label}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={`pt-toggle ${checked ? 'pt-toggle--on' : ''}`}
+    >
+      <span aria-hidden="true" className="pt-toggle__thumb" />
+    </button>
+  );
+}
+
+export const Switch = Toggle;
+
+// ============================================================
 // WIZARD
 // ============================================================
 export interface WizardStep {
