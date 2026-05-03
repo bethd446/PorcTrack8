@@ -459,17 +459,18 @@ describe('TroupeauHub — intégration multi-vues', () => {
   it('8. filtre CHALEUR : chip "Chaleur 1" visible (1 truie statut=Chaleur)', () => {
     renderHub();
 
-    // Le panneau Truies contient un tablist "Filtrer par statut". Le filtre
-    // "Chaleur" n'est visible que si counts[chaleur] > 0 (P2 du hub).
-    const chaleurTab = screen
-      .getAllByRole('tab')
+    // V41 : sub-filter statuts uniformisé via DS V2 <Chip> (role=button)
+    // au lieu d'un tablist custom. Le filtre "Chaleur" reste visible si
+    // counts[chaleur] > 0 (P2 du hub).
+    const chaleurChip = screen
+      .getAllByRole('button')
       .find((t) => /chaleur/i.test(t.textContent ?? ''));
 
-    expect(chaleurTab).toBeDefined();
-    expect(chaleurTab?.textContent).toMatch(/chaleur/i);
+    expect(chaleurChip).toBeDefined();
+    expect(chaleurChip?.textContent).toMatch(/chaleur/i);
     // Compteur sans padStart : "1" et non "01"
-    expect(chaleurTab?.textContent).toMatch(/1$/);
-    expect(chaleurTab?.textContent).not.toMatch(/01/);
+    expect(chaleurChip?.textContent).toMatch(/1$/);
+    expect(chaleurChip?.textContent).not.toMatch(/01/);
   });
 
   // ── Tests régression V41 (refonte architecture de page) ─────────────────

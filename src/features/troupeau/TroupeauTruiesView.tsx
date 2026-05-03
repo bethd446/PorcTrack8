@@ -18,12 +18,11 @@ import {
 import { TruieIcon } from '../../components/icons';
 import {
   AnimalListItem,
-  Chip,
   SectionDivider,
   type ChipTone,
 } from '../../components/agritech';
 import EmptyStateShared from '../../components/design/EmptyState';
-import { Tag } from '../../design-system';
+import { Tag, Segment, Chip as DsChip } from '../../design-system';
 
 type TagVariantKind = 'default' | 'primary' | 'accent' | 'soft' | 'danger' | 'warning';
 function chipToneToTagVariant(tone: ChipTone): TagVariantKind {
@@ -254,19 +253,26 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
 
   return (
     <div className="flex flex-col gap-4">
-      {/* ── CTA primaire : ajouter une truie + toggle viewMode ─────── */}
+      {/* V41 : toolbar uniformisée — composants DS V2 (Segment + Chips) */}
+      {/* ── CTA primaire : ajouter une truie + toggle viewMode (DS V2 Segment) ── */}
       <div className="flex items-center justify-between gap-2">
-        <ViewModeToggle
-          mode={viewMode}
+        <Segment<ViewMode>
+          ariaLabel="Mode d'affichage"
+          value={viewMode}
           onChange={setViewMode}
+          options={[
+            { value: 'list', label: <ListIcon size={14} aria-label="Liste" /> },
+            { value: 'grid', label: <LayoutGrid size={14} aria-label="Grille" /> },
+          ]}
         />
         <button
           type="button"
           onClick={() => setAddOpen(true)}
           aria-label="Ajouter une truie"
-          className="pressable inline-flex items-center gap-2 h-10 px-4 rounded-full bg-accent text-bg-0 text-[12px] font-medium uppercase tracking-wide shadow-sm hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-opacity"
+          className="pt-btn pt-btn--primary pt-btn--small"
+          data-pt="button"
         >
-          <Plus size={15} aria-hidden="true" />
+          <Plus size={14} aria-hidden="true" />
           Ajouter une truie
         </button>
       </div>
@@ -282,80 +288,55 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           aria-label="Rechercher une truie par ID, nom, boucle ou stade"
-          className="w-full pl-10 pr-3 py-2.5 rounded-lg bg-bg-2 border border-border text-[13px] text-text-0 placeholder:text-text-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+          className="pt-field__input"
+          style={{ paddingLeft: 38 }}
         />
         <Search
           size={16}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-text-2 pointer-events-none"
           aria-hidden="true"
+          style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--pt-text-subtle)', pointerEvents: 'none' }}
         />
       </div>
 
-      {/* ── Tri segmented ────────────────────────────────────── */}
-      <div className="flex items-center gap-2">
+      {/* ── Tri (DS V2 Segment) ─────────────────────────────────── */}
+      <div className="flex items-center gap-2 flex-wrap">
         <span
-          id="truies-sort-label"
-          className="shrink-0 text-[10px] uppercase tracking-wide text-text-2"
+          style={{
+            flexShrink: 0,
+            fontSize: 11,
+            letterSpacing: 'var(--pt-tracking-label)',
+            textTransform: 'uppercase',
+            color: 'var(--pt-text-muted)',
+            fontWeight: 600,
+          }}
         >
           Trier par
         </span>
-        <div
-          role="radiogroup"
-          aria-labelledby="truies-sort-label"
-          className="flex gap-1.5 overflow-x-auto scrollbar-hide"
-        >
-          {SORT_OPTIONS.map((o) => {
-            const active = sortBy === o.id;
-            return (
-              <button
-                key={o.id}
-                role="radio"
-                aria-checked={active}
-                aria-label={`Trier par ${o.label}`}
-                onClick={() => setSortBy(o.id)}
-                className={`pressable shrink-0 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-wide border transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 ${
-                  active
-                    ? 'bg-accent/10 border-accent text-accent'
-                    : 'bg-transparent border-border text-text-1 hover:text-text-0'
-                }`}
-              >
-                {o.label}
-              </button>
-            );
-          })}
-        </div>
+        <Segment<SortKey>
+          ariaLabel="Trier par"
+          value={sortBy}
+          onChange={setSortBy}
+          options={SORT_OPTIONS.map((o) => ({ value: o.id, label: o.label }))}
+        />
       </div>
 
-      {/* ── Segmented filters (scrollable) ──────────────────────── */}
+      {/* ── Sub-filter statuts (DS V2 Chips) ────────────────────── */}
       <div
         role="tablist"
         aria-label="Filtrer par statut"
-        className="flex gap-1.5 overflow-x-auto -mx-4 px-4 pb-1 scrollbar-hide"
+        style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}
+        className="pt-chips"
       >
-        {visibleFilters.map((f) => {
-          const active = filter === f.id;
-          const count = counts[f.id];
-          return (
-            <button
-              key={f.id}
-              role="tab"
-              aria-selected={active}
+        {visibleFilters.map((f) => (
+          <span key={f.id}>
+            <DsChip
+              label={f.label}
+              count={counts[f.id]}
+              active={filter === f.id}
               onClick={() => setFilter(f.id)}
-              className={`pressable shrink-0 rounded-full px-3 py-2 text-[11px] font-medium uppercase tracking-wide border transition-colors flex items-center gap-1.5 ${
-                active
-                  ? 'bg-bg-2 border-teal text-teal'
-                  : 'bg-transparent border-border text-text-1 hover:text-text-0'
-              }`}
-            >
-              {f.label}
-              <span
-                className={`text-[10px] tabular-nums ${active ? 'text-teal/70' : 'text-text-2'}`}
-              >
-                {count}
-              </span>
-            </button>
-          );
-        })}
+            />
+          </span>
+        ))}
       </div>
 
       {/* ── Divider + compteur résultats ────────────────────────── */}
@@ -500,42 +481,6 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
   );
 };
 
-// ─── ViewMode toggle ────────────────────────────────────────────────────────
-
-const ViewModeToggle: React.FC<{ mode: ViewMode; onChange: (m: ViewMode) => void }> = ({
-  mode,
-  onChange,
-}) => (
-  <div
-    role="radiogroup"
-    aria-label="Mode d'affichage de la liste des truies"
-    className="inline-flex rounded-full border border-border bg-bg-1 p-0.5"
-  >
-    <button
-      type="button"
-      role="radio"
-      aria-checked={mode === 'list'}
-      aria-label="Affichage en liste"
-      onClick={() => onChange('list')}
-      className={`pressable inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 ${
-        mode === 'list' ? 'bg-accent text-bg-0' : 'text-text-1 hover:text-text-0'
-      }`}
-    >
-      <ListIcon size={18} aria-hidden="true" />
-    </button>
-    <button
-      type="button"
-      role="radio"
-      aria-checked={mode === 'grid'}
-      aria-label="Affichage en grille"
-      onClick={() => onChange('grid')}
-      className={`pressable inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 ${
-        mode === 'grid' ? 'bg-accent text-bg-0' : 'text-text-1 hover:text-text-0'
-      }`}
-    >
-      <LayoutGrid size={18} aria-hidden="true" />
-    </button>
-  </div>
-);
+// V41 : ViewModeToggle local supprimé — remplacé par <Segment> du DS V2 (uniformité).
 
 export default TroupeauTruiesView;
