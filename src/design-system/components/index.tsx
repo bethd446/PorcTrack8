@@ -568,14 +568,15 @@ export function Empty({ children }: { children: React.ReactNode }) {
 // ============================================================
 // TOGGLE / SWITCH
 // ============================================================
-export function Toggle({ checked, onChange, label, disabled, ariaLabel }: {
+export function Toggle({ checked, onChange, label, description, disabled, ariaLabel }: {
   checked: boolean;
   onChange: (v: boolean) => void;
   label?: string;
+  description?: string;
   disabled?: boolean;
   ariaLabel?: string;
 }) {
-  return (
+  const control = (
     <button
       type="button"
       role="switch"
@@ -587,6 +588,16 @@ export function Toggle({ checked, onChange, label, disabled, ariaLabel }: {
     >
       <span aria-hidden="true" className="pt-toggle__thumb" />
     </button>
+  );
+  if (!label && !description) return control;
+  return (
+    <div className="pt-toggle-row">
+      <div className="pt-toggle-row__text">
+        {label && <span className="pt-toggle-row__label">{label}</span>}
+        {description && <span className="pt-toggle-row__desc">{description}</span>}
+      </div>
+      {control}
+    </div>
   );
 }
 
@@ -764,3 +775,161 @@ export const Wizard: React.FC<WizardProps> = ({
     </div>
   );
 };
+
+// ============================================================
+// CYCLE TIMELINE
+// ============================================================
+export type CycleStep = {
+  label: string;
+  day: number;
+  done?: boolean;
+  target?: boolean;
+};
+
+export function CycleTimeline({ currentDay, totalDays, steps, eyebrow }: {
+  currentDay: number;
+  totalDays: number;
+  steps: CycleStep[];
+  eyebrow?: string;
+}) {
+  const safeTotal = Math.max(totalDays, 1);
+  const progressPct = Math.min(100, Math.max(0, (currentDay / safeTotal) * 100));
+  const sorted = [...steps].sort((a, b) => a.day - b.day);
+  // Si deux steps consécutifs sont espacés de moins de 18% du total, on alterne
+  // les labels haut/bas pour éviter la superposition (corrige bug F6 du PDF V40).
+  const positions = sorted.map((s) => Math.min(100, Math.max(0, (s.day / safeTotal) * 100)));
+  const placements: ('below' | 'above')[] = [];
+  positions.forEach((p, i) => {
+    if (i === 0) {
+      placements.push('below');
+      return;
+    }
+    const tooClose = p - positions[i - 1] < 18;
+    placements.push(tooClose && placements[i - 1] === 'below' ? 'above' : 'below');
+  });
+  return (
+    <div className="pt-cycle">
+      {eyebrow && (
+        <div className="pt-cycle__eyebrow">
+          {eyebrow} · jour {currentDay}/{totalDays}
+        </div>
+      )}
+      <div className="pt-cycle__track" aria-hidden="true">
+        <div className="pt-cycle__progress" style={{ width: `${progressPct}%` }} />
+        {sorted.map((step, i) => {
+          const left = positions[i];
+          const stateClass = step.done
+            ? 'pt-cycle__node--done'
+            : step.target
+              ? 'pt-cycle__node--target'
+              : 'pt-cycle__node--idle';
+          return (
+            <div
+              key={`${step.label}-${step.day}`}
+              className={`pt-cycle__step pt-cycle__step--${placements[i]}`}
+              style={{ left: `${left}%` }}
+            >
+              <span className={`pt-cycle__node ${stateClass}`}>
+                {step.done && (
+                  <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+                    <path d="M2 5l2 2 4-4" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </span>
+              <span className="pt-cycle__label">{step.label}</span>
+              <span className="pt-cycle__day">J{step.day}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// DATA TABLE
+// ============================================================
+export type Column<T> = {
+  key: keyof T | string;
+  label: string;
+  width?: number;
+  render?: (row: T) => React.ReactNode;
+  format?: (value: unknown) => React.ReactNode;
+};
+
+export type DataTableProps<T> = {
+  columns: Column<T>[];
+  rows: T[];
+  onRowClick?: (row: T) => void;
+  emptyMessage?: string;
+  ariaLabel?: string;
+};
+
+export function DataTable<T extends { id?: string | number }>({
+  columns,
+  rows,
+  onRowClick,
+  emptyMessage = 'Aucune donnée',
+  ariaLabel,
+}: DataTableProps<T>) {
+  if (rows.length === 0) {
+    return <Empty>{emptyMessage}</Empty>;
+  }
+  return (
+    <div className="pt-data-table">
+      <table className="pt-data-table__table" aria-label={ariaLabel}>
+        <thead>
+          <tr>
+            {columns.map((col) => (
+              <th
+                key={String(col.key)}
+                className="pt-data-table__th"
+                style={col.width ? { width: col.width } : undefined}
+              >
+                {col.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, idx) => (
+            <tr
+              key={row.id ?? idx}
+              className={`pt-data-table__tr ${onRowClick ? 'pt-data-table__tr--clickable' : ''}`}
+              onClick={onRowClick ? () => onRowClick(row) : undefined}
+              role={onRowClick ? 'button' : undefined}
+              tabIndex={onRowClick ? 0 : undefined}
+              onKeyDown={
+                onRowClick
+                  ? (e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onRowClick(row);
+                      }
+                    }
+                  : undefined
+              }
+            >
+              {columns.map((col) => {
+                const raw = (row as Record<string, unknown>)[col.key as string];
+                let content: React.ReactNode;
+                if (col.render) content = col.render(row);
+                else if (col.format) content = col.format(raw);
+                else content = raw as React.ReactNode;
+                return (
+                  <td
+                    key={String(col.key)}
+                    className="pt-data-table__td"
+                    style={col.width ? { width: col.width } : undefined}
+                  >
+                    {content}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
