@@ -1,10 +1,27 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
-import Chip, { type ChipTone } from './Chip';
+import { type ChipTone } from './Chip';
+import { Tag } from '../../design-system';
 
 export interface AnimalListItemBadge {
   label: string;
   tone: ChipTone;
+}
+
+// V40 T3-final : mapping ChipTone (legacy agritech) → Tag DS V2 variant.
+// Ce mapping duplique celui de TroupeauTruiesView.tsx ; à factoriser en util
+// partagé une fois tous les Chip migrés (V41).
+type TagVariantKind = 'default' | 'primary' | 'accent' | 'soft' | 'danger' | 'warning';
+function chipToneToTagVariant(tone: ChipTone): TagVariantKind {
+  switch (tone) {
+    case 'accent':  return 'primary';
+    case 'gold':    return 'soft';
+    case 'coral':   return 'warning';
+    case 'red':     return 'accent';
+    case 'amber':   return 'warning';
+    case 'default':
+    default:        return 'default';
+  }
 }
 
 export interface AnimalListItemProps {
@@ -71,7 +88,9 @@ const AnimalListItem: React.FC<AnimalListItemProps> = ({
         {badges && badges.length > 0 ? (
           <div className="mt-1 flex flex-wrap gap-1">
             {badges.map((b, i) => (
-              <Chip key={`${b.label}-${i}`} label={b.label} tone={b.tone} size="xs" />
+              <span key={`${b.label}-${i}`}>
+                <Tag variant={chipToneToTagVariant(b.tone)}>{b.label}</Tag>
+              </span>
             ))}
           </div>
         ) : null}
@@ -83,7 +102,7 @@ const AnimalListItem: React.FC<AnimalListItemProps> = ({
         </div>
       ) : null}
 
-      {chip ? <Chip label={chip.label} tone={chip.tone} size="xs" /> : null}
+      {chip ? <Tag variant={chipToneToTagVariant(chip.tone)}>{chip.label}</Tag> : null}
 
       {accessory ? <div className="shrink-0">{accessory}</div> : null}
     </>
