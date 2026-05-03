@@ -179,7 +179,7 @@ const PendingBandesSection: React.FC<PendingBandesSectionProps> = ({
           const code = r.code_id ?? '—';
           const eff = r.porcelets_nes_vivants ?? null;
           const poids = r.poids_moyen_kg ?? null;
-          const loge = r.loge_numero ?? '—';
+          const loge = r.loge_numero ?? null;
           const meta = [
             eff != null ? `${eff} porc.` : null,
             poids != null ? `${poids} kg` : null,
@@ -201,7 +201,7 @@ const PendingBandesSection: React.FC<PendingBandesSectionProps> = ({
                   </span>
                 }
                 primary={code}
-                secondary={`Loge ${loge}`}
+                secondary={loge ? `Loge ${loge}` : 'Loge à choisir'}
                 meta={meta || undefined}
                 chip={{
                   label: phaseLabel(r.phase),
