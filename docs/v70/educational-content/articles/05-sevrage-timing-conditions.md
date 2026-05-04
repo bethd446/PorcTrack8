@@ -32,7 +32,7 @@ En climat tropical, le stress thermique aggrave le stress du sevrage. Anticiper 
 - Poids minimum au sevrage : **6 kg** (idéal 7 à 8 kg)
 - Température post-sevrage S1 : **28 à 30 °C**
 - Aliment 1er âge en maternité : dès **J10 à J14** (créep feeding)
-- Retour en chaleur post-sevrage : **5 à 7 jours**
+- Retour en chaleur post-sevrage : **3 à 7 jours**
 - Mortalité post-sevrage cible : **< 3 %** sur les 14 premiers jours
 
 ## Bonnes pratiques
