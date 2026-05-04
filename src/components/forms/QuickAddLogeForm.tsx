@@ -13,6 +13,7 @@ import { IonToast } from '@ionic/react';
 import { Plus, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { FormField, Input, Select, Textarea, Button } from '@/design-system';
 import { createLoge, listLoges } from '../../services/supabaseWrites';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import type { Loge, LogeType } from '../../types/farm';
@@ -137,29 +138,6 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({
     }
   };
 
-  const inputBase = (hasError: boolean): string =>
-    [
-      'w-full h-12 rounded-md px-3',
-      'bg-bg-0 border text-text-0 placeholder:text-text-2',
-      'text-[14px]',
-      'outline-none transition-colors duration-[160ms]',
-      'focus:border-accent focus:ring-1 focus:ring-accent',
-      hasError ? 'border-red' : 'border-border hover:border-text-2',
-    ].join(' ');
-
-  const inputCode = (hasError: boolean): string =>
-    [
-      'w-full h-12 rounded-md px-3',
-      'bg-bg-0 border text-text-0 placeholder:text-text-2',
-      'ft-code text-[14px] uppercase tracking-wide',
-      'outline-none transition-colors duration-[160ms]',
-      'focus:border-accent focus:ring-1 focus:ring-accent',
-      hasError ? 'border-red' : 'border-border hover:border-text-2',
-    ].join(' ');
-
-  const labelCls =
-    'block text-mono-label text-text-2';
-
   return (
     <>
       <BottomSheet
@@ -188,42 +166,29 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label htmlFor="add-loge-numero" className={labelCls}>
-              Numéro <span className="text-red normal-case">· requis</span>
-            </label>
-            <input
+          <FormField label="Numéro" required error={errors.numero}>
+            <Input
               id="add-loge-numero"
               ref={firstFieldRef}
               type="text"
+              aria-label="Numéro de la loge"
               maxLength={20}
               aria-invalid={!!errors.numero}
               aria-describedby={errors.numero ? 'add-loge-numero-error' : undefined}
-              className={inputCode(!!errors.numero)}
+              className="ft-code uppercase tracking-wide"
               placeholder="Ex: M-01"
               value={numero}
               onChange={e => setNumero(e.target.value)}
               autoComplete="off"
               spellCheck={false}
+              invalid={!!errors.numero}
             />
-            {errors.numero ? (
-              <p
-                id="add-loge-numero-error"
-                role="alert"
-                className="text-[12px] text-red"
-              >
-                {errors.numero}
-              </p>
-            ) : null}
-          </div>
+          </FormField>
 
-          <div className="space-y-1.5">
-            <label htmlFor="add-loge-type" className={labelCls}>
-              Type <span className="text-red normal-case">· requis</span>
-            </label>
-            <select
+          <FormField label="Type" required>
+            <Select
               id="add-loge-type"
-              className={inputBase(false)}
+              aria-label="Type de loge"
               value={type}
               onChange={e => setType(e.target.value as LogeType)}
             >
@@ -232,33 +197,27 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({
                   {t.label}
                 </option>
               ))}
-            </select>
-          </div>
+            </Select>
+          </FormField>
 
-          <div className="space-y-1.5">
-            <label htmlFor="add-loge-batiment" className={labelCls}>
-              Bâtiment <span className="text-text-2 normal-case">· optionnel</span>
-            </label>
-            <input
+          <FormField label="Bâtiment" hint="optionnel">
+            <Input
               id="add-loge-batiment"
               type="text"
+              aria-label="Bâtiment"
               maxLength={30}
-              className={inputBase(false)}
               placeholder="Ex: Bât. A"
               value={batiment}
               onChange={e => setBatiment(e.target.value)}
               autoComplete="off"
             />
-          </div>
+          </FormField>
 
-          <div className="space-y-1.5">
-            <label htmlFor="add-loge-capacite" className={labelCls}>
-              Capacité max{' '}
-              <span className="text-text-2 normal-case">· optionnel (0-500)</span>
-            </label>
-            <input
+          <FormField label="Capacité max" hint="optionnel (0-500)" error={errors.capaciteMax}>
+            <Input
               id="add-loge-capacite"
               type="number"
+              aria-label="Capacité max"
               inputMode="numeric"
               min={0}
               max={500}
@@ -267,79 +226,45 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({
               aria-describedby={
                 errors.capaciteMax ? 'add-loge-capacite-error' : undefined
               }
-              className={inputBase(!!errors.capaciteMax)}
               placeholder="0"
               value={capaciteMax}
               onChange={e => setCapaciteMax(e.target.value)}
+              invalid={!!errors.capaciteMax}
             />
-            {errors.capaciteMax ? (
-              <p
-                id="add-loge-capacite-error"
-                role="alert"
-                className="text-[12px] text-red"
-              >
-                {errors.capaciteMax}
-              </p>
-            ) : null}
-          </div>
+          </FormField>
 
-          <div className="space-y-1.5">
-            <label htmlFor="add-loge-notes" className={labelCls}>
-              Notes <span className="text-text-2 normal-case">· optionnel</span>
-            </label>
-            <textarea
+          <FormField label="Notes" hint="optionnel">
+            <Textarea
               id="add-loge-notes"
+              aria-label="Notes"
               maxLength={200}
-              className={[
-                'w-full rounded-md px-3 py-3',
-                'bg-bg-0 border border-border text-text-0',
-                'text-[13px]',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                'min-h-[72px] resize-y',
-              ].join(' ')}
               placeholder="Observations…"
               value={notes}
               onChange={e => setNotes(e.target.value)}
             />
-          </div>
+          </FormField>
 
-          <div className="flex items-center gap-2 pt-2">
-            <button
-              type="button"
+          <div className="flex gap-3 justify-end pt-2 border-t border-border">
+            <Button
+              variant="secondary"
               onClick={handleClose}
               disabled={saving}
-              className={[
-                'pressable flex-1 h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-bg-1 border border-border text-text-1',
-                'text-[12px] font-bold uppercase tracking-wide',
-                saving ? 'opacity-40 cursor-not-allowed' : '',
-              ].join(' ')}
             >
               Annuler
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={saving}
               aria-busy={saving}
-              className={[
-                'pressable flex-[2] h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-accent text-bg-0',
-                'text-[13px] font-bold uppercase tracking-wide',
-                saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
-              ].join(' ')}
             >
-              {saving ? (
-                <span className="animate-pulse">Création…</span>
-              ) : (
-                <>
-                  <span>Créer la loge</span>
+              {saving ? 'Création…' : (
+                <span className="inline-flex items-center gap-2">
+                  Créer la loge
                   <Save size={14} aria-hidden="true" />
-                </>
+                </span>
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </BottomSheet>
