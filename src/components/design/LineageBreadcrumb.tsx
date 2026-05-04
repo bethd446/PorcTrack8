@@ -12,6 +12,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Button } from '@/design-system';
 
 export interface LineageNode {
   /** Identifiant affiche (ex: "T19") */
@@ -143,9 +144,9 @@ const LineageBreadcrumb: React.FC<Props> = ({ nodes, treeHref, onTreeClick }) =>
         })}
       </div>
       {onTreeClick ? (
-        <button type="button" onClick={onTreeClick} style={treeStyle}>
+        <Button variant="ghost" size="small" onClick={onTreeClick} style={treeStyle}>
           {treeLabel}
-        </button>
+        </Button>
       ) : treeHref ? (
         <Link to={treeHref} style={treeStyle}>
           {treeLabel}

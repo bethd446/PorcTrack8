@@ -35,6 +35,7 @@ import Eyebrow from '../../components/design/Eyebrow';
 import EmptyState from '../../components/design/EmptyState';
 import TopBarSync from '../../components/design/TopBarSync';
 import AlertCard from '../../components/agritech/AlertCard';
+import { Button } from '@/design-system';
 import { type FarmAlert, type AlertPriority, type AlertCategory } from '../../services/alertEngine';
 import { dismissAlert } from '../../services/alertDismissals';
 import { getPendingConfirmations, type PendingConfirmation } from '../../services/confirmationQueue';
@@ -358,10 +359,12 @@ const AlertRow: React.FC<AlertRowProps> = ({
       }}
     >
       {hasDismiss && !isResolu && (
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="small"
           onClick={(e) => {
-            e.stopPropagation();
+            e?.stopPropagation();
             onDismiss?.();
           }}
           aria-label="Ignorer cette alerte pour 30 jours"
@@ -384,7 +387,7 @@ const AlertRow: React.FC<AlertRowProps> = ({
           }}
         >
           <X size={14} aria-hidden="true" />
-        </button>
+        </Button>
       )}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <span
@@ -732,9 +735,11 @@ const AlertsView: React.FC = () => {
                 const active = activeFilter === f.id;
                 const Icon = f.icon;
                 return (
-                  <button
+                  <Button
                     key={f.id}
                     type="button"
+                    variant={active ? 'primary' : 'secondary'}
+                    size="small"
                     role="tab"
                     aria-selected={active}
                     aria-label={`Filtrer ${f.label} — ${count} alerte${count > 1 ? 's' : ''}`}
@@ -762,7 +767,7 @@ const AlertsView: React.FC = () => {
                     <Icon size={13} aria-hidden="true" />
                     <span>{f.label}</span>
                     <span style={{ opacity: 0.7, fontSize: 10 }}>{count}</span>
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -828,8 +833,10 @@ const AlertsView: React.FC = () => {
                 <Eyebrow dotColor="accent">
                   Locales · {filteredAlerts.length}
                   {activeFilter !== 'ALL' && (
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="small"
                       onClick={() => setActiveFilter('ALL')}
                       style={{
                         marginLeft: 8,
@@ -845,7 +852,7 @@ const AlertsView: React.FC = () => {
                       }}
                     >
                       Effacer filtre
-                    </button>
+                    </Button>
                   )}
                 </Eyebrow>
                 {filteredAlerts.length === 0 ? (

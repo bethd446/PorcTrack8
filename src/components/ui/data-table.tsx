@@ -13,6 +13,7 @@ import {
 } from '@tanstack/react-table';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/src/components/ui/table';
+import { Button } from '@/design-system';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -109,8 +110,8 @@ export function DataTable<TData, TValue>({
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
           <span>Page {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}</span>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} style={btnStyle}>Précédent</button>
-            <button onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} style={btnStyle}>Suivant</button>
+            <Button variant="secondary" size="small" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} style={btnStyle}>Précédent</Button>
+            <Button variant="secondary" size="small" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} style={btnStyle}>Suivant</Button>
           </div>
         </div>
       )}
