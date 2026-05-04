@@ -34,9 +34,9 @@ import TruieEventActionSheet, { type TruieEventAction } from '../../components/f
 
 import Chip from '../../components/design/Chip';
 import SowHero, { type SowHeroChip } from '../../components/design/SowHero';
-import { Tabs, Button, Card, IconBox, Tag, PageHeader, CycleTimeline, Section, safeDisplay } from '@/design-system';
+import { Tabs, Button, Card, Tag, PageHeader, Section, safeDisplay } from '@/design-system';
+import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import EditTruieWizard from '../../components/forms/EditTruieWizard';
-import { TruieIcon } from '../../components/icons';
 import ReproTracker, { type ReproStage } from '../../components/design/ReproTracker';
 import DecisionBinaire from '../../components/design/DecisionBinaire';
 import MariusPanel from '../../components/design/MariusPanel';
@@ -435,13 +435,16 @@ const TruieDetailView: React.FC = () => {
               subtitle={truie.statut || undefined}
             />
 
-            {/* V41 Phase C1 — Hero compact dans 1 Card : IconBox 64x64 + tags + boutons à droite */}
+            {/* V45 P3A — Hero compact archétype 4 : EntityAvatar xl + tags + actions inline */}
             <Card>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-                <IconBox variant="warm" size="medium">
-                  <TruieIcon size={28} />
-                </IconBox>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 160 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', minHeight: 96 }}>
+                <EntityAvatar
+                  species="truie"
+                  photoUrl={truie.photoUrl}
+                  size="xl"
+                  shortCode={truie.displayId}
+                />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 200 }}>
                   <div style={{ fontFamily: 'var(--pt-font-display)', fontSize: 18, fontWeight: 700, color: 'var(--pt-text)' }}>
                     {safeDisplay(truie.nom ?? truie.boucle ?? truie.displayId)}
                     {truie.race ? <span style={{ fontFamily: 'var(--pt-font-body)', fontSize: 13, fontWeight: 400, color: 'var(--pt-text-muted)', marginLeft: 8 }}>— {truie.race}</span> : null}
@@ -508,25 +511,8 @@ const TruieDetailView: React.FC = () => {
               ]}
             />
 
-            {/* V40 F5/F6 — Cycle timeline horizontal (Saillie/Surveillance/Écho/MB) */}
-            {/* min-height réservé pour éviter CLS quand cycleData arrive après chargement */}
-            <div style={{ minHeight: activeTab === 'apercu' && lastSaillie ? 100 : undefined }}>
-            {cycleData && activeTab === 'apercu' && (
-              <section aria-label="Cycle reproductif" style={sectionStyle()}>
-                <CycleTimeline
-                  currentDay={cycleData.dayPost}
-                  totalDays={115}
-                  eyebrow={`Saillie · jour ${cycleData.dayPost}/115`}
-                  steps={[
-                    { label: 'Saillie', day: 0, done: true },
-                    { label: 'Surveillance', day: 7, done: cycleData.dayPost >= 7 },
-                    { label: 'Échographie', day: 28, done: cycleData.dayPost >= 28 },
-                    { label: 'Mise-bas', day: 115, done: false, target: true },
-                  ]}
-                />
-              </section>
-            )}
-            </div>
+            {/* V45 P3A — Mini-timeline doublon supprimée (CycleTimeline). */}
+            {/*           Timeline complète conservée plus bas dans la section REPRODUCTION EN COURS. */}
 
             {/* V41 Phase C1 — Lignée déplacée dans onglet "Vue d'ensemble" */}
             {activeTab === 'apercu' && (

@@ -32,7 +32,7 @@ describe('CycleTimeline', () => {
     const { container } = render(
       <CycleTimeline currentDay={50} totalDays={100} steps={baseSteps} />,
     );
-    const progress = container.querySelector('.pt-cycle__progress') as HTMLElement;
+    const progress = container.querySelector('.pt-cycle__progress-fill') as HTMLElement;
     expect(progress).toBeTruthy();
     expect(progress.style.width).toBe('50%');
   });
@@ -45,13 +45,31 @@ describe('CycleTimeline', () => {
     expect(container.querySelectorAll('.pt-cycle__node--target').length).toBe(1);
   });
 
-  it('alterne le placement des labels rapprochés (anti-collision)', () => {
+  it('place tous les labels en dessous (pas d’alternance, pas de superposition)', () => {
     const tight = [
       { label: 'A', day: 0, done: true },
       { label: 'B', day: 5, done: true },
       { label: 'C', day: 100, done: false },
     ];
     const { container } = render(<CycleTimeline currentDay={50} totalDays={100} steps={tight} />);
-    expect(container.querySelectorAll('.pt-cycle__step--above').length).toBeGreaterThan(0);
+    expect(container.querySelectorAll('.pt-cycle__step--above').length).toBe(0);
+    expect(container.querySelectorAll('.pt-cycle__step--below').length).toBe(3);
+  });
+
+  it('marque l’étape "active" (premier non-done) avec aria-current="step"', () => {
+    const { container } = render(
+      <CycleTimeline
+        currentDay={20}
+        totalDays={115}
+        steps={[
+          { label: 'Saillie', day: 0, done: true },
+          { label: 'Surveillance', day: 7, done: false },
+          { label: 'Mise-bas', day: 115, done: false, target: true },
+        ]}
+      />,
+    );
+    const active = container.querySelector('[aria-current="step"]');
+    expect(active).toBeTruthy();
+    expect(active?.textContent).toContain('SURV');
   });
 });
