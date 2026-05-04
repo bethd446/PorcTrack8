@@ -3,15 +3,15 @@
  * ══════════════════════════════════════════════════════════════════════════
  * Copilote de décision matinal. Point d'entrée par défaut de l'app.
  *
- * Hiérarchie (refonte V13) :
- *   1. Header BigShoulders : "Bonjour, {firstName}" + date
- *   2. TÂCHE PRIORITAIRE — single hero card (algorithme : sevrage retard ≥5j
+ * Hiérarchie (V44 — archétype 1 Dashboard, 4 sections cap) :
+ *   - PageHeader : "Bonjour, {firstName}" + date
+ *   1. TÂCHE PRIORITAIRE — single hero card (algorithme : sevrage retard ≥5j
  *      > mise-bas imminente J-1/J0 > stock rupture > stock bas + sevrages
  *      proches > "tout sous contrôle")
- *   3. AUSSI À TRAITER — top 5 alertes urgentes dédupliquées (CRITIQUE+HAUTE
- *      fusionne alertes locales/serveur + confirmations en attente)
- *   4. TON ÉLEVAGE — résumé fermier (bandes, truies/verrats, repro)
- *   5. TOURNÉE DU JOUR — checklist terrain
+ *   2. À TRAITER — fusion (V44) : transitions de phase + alertes top 5 +
+ *      pesées planifiées en attente, regroupées sous une seule section
+ *   3. TON ÉLEVAGE — résumé fermier (bandes, truies/verrats, repro)
+ *   4. TOURNÉE DU JOUR — checklist terrain
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -20,7 +20,7 @@ import {
   IonContent, IonPage, IonRefresher, IonRefresherContent,
 } from '@ionic/react';
 import {
-  ArrowRight, ChevronRight, ClipboardCheck, ShieldCheck,
+  AlertTriangle, ArrowRight, ChevronRight, ClipboardCheck, ShieldCheck,
 } from 'lucide-react';
 
 import { AppToast, AlertCard, useAppToast } from '../../components/agritech';
@@ -613,9 +613,17 @@ const TodayHub: React.FC = () => {
                 de la salutation personnalisée (firstName) en title. */}
             <PageHeader eyebrow="Aujourd'hui" title={`Bonjour, ${firstName}`} subtitle={headerDate} />
 
-            {/* ── Tâche prioritaire (single hero) ────────────────────── */}
+            {/* ══════════════════════════════════════════════════════════
+                V44 — Archétype 1 (Dashboard) : 4 sections cap.
+                  1. TÂCHE PRIORITAIRE (hero)
+                  2. À TRAITER (fusion : transitions + alertes + pesées)
+                  3. TON ÉLEVAGE (résumé fermier)
+                  4. TOURNÉE DU JOUR (CTA terrain)
+                ══════════════════════════════════════════════════════════ */}
+
+            {/* ── 1. TÂCHE PRIORITAIRE (single hero) ─────────────────── */}
             <section aria-label="Tâche prioritaire">
-              <Section label="Tâche prioritaire" tone={primaryTask.kind === 'IDLE' ? 'primary' : 'accent'} />
+              <Section label="TÂCHE PRIORITAIRE" tone={primaryTask.kind === 'IDLE' ? 'primary' : 'accent'} />
               <Card
                 interactive
                 onClick={() => navigate(primaryTask.to)}
@@ -625,11 +633,11 @@ const TodayHub: React.FC = () => {
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-                    {primaryTask.kind === 'IDLE' ? (
-                      <IconBox tone="primary">
-                        <ShieldCheck size={20} aria-hidden="true" />
-                      </IconBox>
-                    ) : null}
+                    <IconBox tone="primary" size={48}>
+                      {primaryTask.kind === 'IDLE'
+                        ? <ShieldCheck size={24} aria-hidden="true" />
+                        : <AlertTriangle size={24} aria-hidden="true" />}
+                    </IconBox>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <h2
                         style={{
@@ -667,178 +675,167 @@ const TodayHub: React.FC = () => {
               </Card>
             </section>
 
-            {/* ── Transitions de phase (R15/R16) ─────────────────────── */}
-            {phaseSuggestions.length > 0 && (
-              <section aria-label="Transitions de phase">
-                <Section label="Transitions de phase" tone="accent" />
+            {/* ── 2. À TRAITER (fusion transitions + alertes + pesées) ─ */}
+            {/* min-height réservé pendant les chargements async pour éviter CLS (V43.7) */}
+            {(phaseSuggestions.length > 0 || aussiATraiter.length > 0 || peseesPending.length > 0
+              || !confirmsLoaded || peseesLoading) && (
+              <section aria-label="À traiter">
+                <Section label="À TRAITER" tone="accent" />
                 <div
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 12,
                     marginTop: 12,
+                    minHeight: (!confirmsLoaded || peseesLoading) ? 80 : undefined,
                   }}
                 >
-                  {phaseSuggestions.map(({ transition, alertId, bandeDisplayId }) => (
-                    <PhaseSuggestionCard
-                      key={alertId}
-                      transition={transition}
-                      bandeDisplayId={bandeDisplayId}
-                      onConfirm={() => setSelectedTransition(transition)}
-                      onDismiss={() => {
-                        dismissTransition(transition.bandeId);
-                        if (user) {
-                          void dismissAlert(user.id, alertId, 'manual').catch(() => {});
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* ── Aussi à traiter ────────────────────────────────────── */}
-            {/* min-height réservé pendant le chargement des confirmations pour éviter CLS */}
-            <div style={{ minHeight: !confirmsLoaded ? 80 : undefined }}>
-            {aussiATraiter.length > 0 && (
-              <section aria-label="Aussi à traiter">
-                <Section label="Aussi à traiter" tone="accent" />
-                <ul
-                  style={{
-                    listStyle: 'none',
-                    padding: 0,
-                    margin: '12px 0 0',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 10,
-                  }}
-                >
-                  {aussiATraiter.map((item) => {
-                    const dismissId = item.dismissableAlertId;
-                    const sourceAlert = dismissId
-                      ? alerts.find(a => a.id === dismissId) ?? null
-                      : null;
-
-                    // Construit un FarmAlert synthétique pour AlertCard quand
-                    // l'item ne correspond pas à une alerte locale (confirmations
-                    // ou alertes serveur).
-                    const synthetic: FarmAlert = sourceAlert ?? {
-                      id: item.id,
-                      priority: item.priority,
-                      category: 'PLANNING',
-                      subjectId: '',
-                      subjectLabel: '',
-                      title: item.label,
-                      message: item.groupCount
-                        ? `${item.groupCount} entrées regroupées`
-                        : '',
-                      requiresAction: item.kind !== 'navigate',
-                      actions: [],
-                      createdAt: new Date(),
-                    };
-
-                    const actionLabel = item.kind === 'confirm-sevrage'
-                      ? 'Confirmer sevrage'
-                      : item.kind === 'confirm-reforme'
-                        ? 'Confirmer réforme'
-                        : item.kind === 'confirm-mb'
-                          ? 'Confirmer la mise bas'
-                          : 'Ouvrir';
-
-                    return (
-                      <li key={item.id}>
-                        <AlertCard
-                          alert={synthetic}
-                          onAcknowledge={() => {
-                            if (dismissId) {
-                              void handleDismissAussi(dismissId);
-                            } else {
-                              showToast('Alerte acquittée', 'success', { duration: 2000 });
+                  {/* 2a. Transitions de phase (R15/R16) — sous-groupe préservé
+                       pour ARIA et continuité des tests. */}
+                  {phaseSuggestions.length > 0 && (
+                    <div role="group" aria-label="Transitions de phase" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      {phaseSuggestions.map(({ transition, alertId, bandeDisplayId }) => (
+                        <PhaseSuggestionCard
+                          key={alertId}
+                          transition={transition}
+                          bandeDisplayId={bandeDisplayId}
+                          onConfirm={() => setSelectedTransition(transition)}
+                          onDismiss={() => {
+                            dismissTransition(transition.bandeId);
+                            if (user) {
+                              void dismissAlert(user.id, alertId, 'manual').catch(() => {});
                             }
                           }}
-                          onAction={() => handleAussiClick(item)}
-                          actionLabel={actionLabel}
                         />
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
-            )}
-            </div>
+                      ))}
+                    </div>
+                  )}
 
-            {/* ── Pesées prévues (V25) ──────────────────────────────── */}
-            {/* min-height réservé pendant le chargement async pour éviter CLS */}
-            <div style={{ minHeight: peseesLoading ? 80 : undefined }}>
-            {peseesPending.length > 0 && (
-              <section aria-label="Pesées prévues">
-                <Section label="Pesées prévues" tone="accent" />
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 8,
-                    marginTop: 12,
-                  }}
-                >
-                  {peseesPending.map((p) => {
-                    const bande = p.batchId ? bandes.find(b => b.id === p.batchId) : undefined;
-                    const label = bande
-                      ? formatBandeLabel(bande.idPortee || bande.id)
-                      : p.porceletId
-                        ? `Porcelet ${p.porceletId.slice(0, 8)}`
-                        : 'Pesée';
-                    const isOverdue = new Date(p.datePrevue).getTime() < Date.now();
-                    return (
-                      <div key={p.id}>
-                      <Card compact danger={isOverdue}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div
-                              style={{
-                                fontFamily: 'var(--pt-font-display)',
-                                fontSize: 15,
-                                fontWeight: 600,
-                                color: 'var(--pt-text)',
+                  {/* 2b. Alertes (locales + serveur + confirmations) */}
+                  {aussiATraiter.length > 0 && (
+                    <ul
+                      style={{
+                        listStyle: 'none',
+                        padding: 0,
+                        margin: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 10,
+                      }}
+                    >
+                      {aussiATraiter.map((item) => {
+                        const dismissId = item.dismissableAlertId;
+                        const sourceAlert = dismissId
+                          ? alerts.find(a => a.id === dismissId) ?? null
+                          : null;
+
+                        // FarmAlert synthétique pour AlertCard quand l'item ne correspond
+                        // pas à une alerte locale (confirmations ou alertes serveur).
+                        const synthetic: FarmAlert = sourceAlert ?? {
+                          id: item.id,
+                          priority: item.priority,
+                          category: 'PLANNING',
+                          subjectId: '',
+                          subjectLabel: '',
+                          title: item.label,
+                          message: item.groupCount
+                            ? `${item.groupCount} entrées regroupées`
+                            : '',
+                          requiresAction: item.kind !== 'navigate',
+                          actions: [],
+                          createdAt: new Date(),
+                        };
+
+                        const actionLabel = item.kind === 'confirm-sevrage'
+                          ? 'Confirmer sevrage'
+                          : item.kind === 'confirm-reforme'
+                            ? 'Confirmer réforme'
+                            : item.kind === 'confirm-mb'
+                              ? 'Confirmer la mise bas'
+                              : 'Ouvrir';
+
+                        return (
+                          <li key={item.id}>
+                            <AlertCard
+                              alert={synthetic}
+                              onAcknowledge={() => {
+                                if (dismissId) {
+                                  void handleDismissAussi(dismissId);
+                                } else {
+                                  showToast('Alerte acquittée', 'success', { duration: 2000 });
+                                }
                               }}
-                            >
-                              {label}
-                            </div>
-                            <div
-                              style={{
-                                color: isOverdue ? 'var(--pt-danger)' : 'var(--pt-text-muted)',
-                                fontFamily: 'var(--pt-font-body)',
-                                fontSize: 11,
-                                marginTop: 2,
-                              }}
-                            >
-                              Prévue le {p.datePrevue}
-                            </div>
+                              onAction={() => handleAussiClick(item)}
+                              actionLabel={actionLabel}
+                            />
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+
+                  {/* 2c. Pesées planifiées en attente (V25) */}
+                  {peseesPending.length > 0 && (
+                    <div role="group" aria-label="Pesées prévues" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {peseesPending.map((p) => {
+                        const bande = p.batchId ? bandes.find(b => b.id === p.batchId) : undefined;
+                        const label = bande
+                          ? formatBandeLabel(bande.idPortee || bande.id)
+                          : p.porceletId
+                            ? `Porcelet ${p.porceletId.slice(0, 8)}`
+                            : 'Pesée';
+                        const isOverdue = new Date(p.datePrevue).getTime() < Date.now();
+                        return (
+                          <div key={p.id}>
+                            <Card compact danger={isOverdue}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div
+                                    style={{
+                                      fontFamily: 'var(--pt-font-display)',
+                                      fontSize: 15,
+                                      fontWeight: 600,
+                                      color: 'var(--pt-text)',
+                                    }}
+                                  >
+                                    {label}
+                                  </div>
+                                  <div
+                                    style={{
+                                      color: isOverdue ? 'var(--pt-danger)' : 'var(--pt-text-muted)',
+                                      fontFamily: 'var(--pt-font-body)',
+                                      fontSize: 11,
+                                      marginTop: 2,
+                                    }}
+                                  >
+                                    Prévue le {p.datePrevue}
+                                  </div>
+                                </div>
+                                <Button
+                                  variant="primary"
+                                  size="small"
+                                  disabled={!bande}
+                                  ariaLabel={`Saisir la pesée de ${label}`}
+                                  onClick={() => {
+                                    if (bande) setPeseeForm({ pesee: p, subject: bande });
+                                  }}
+                                >
+                                  Saisir pesée
+                                </Button>
+                              </div>
+                            </Card>
                           </div>
-                          <Button
-                            variant="primary"
-                            size="small"
-                            disabled={!bande}
-                            ariaLabel={`Saisir la pesée de ${label}`}
-                            onClick={() => {
-                              if (bande) setPeseeForm({ pesee: p, subject: bande });
-                            }}
-                          >
-                            Saisir pesée
-                          </Button>
-                        </div>
-                      </Card>
-                      </div>
-                    );
-                  })}
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </section>
             )}
-            </div>
 
-            {/* ── Ton élevage ────────────────────────────────────────── */}
+            {/* ── 3. TON ÉLEVAGE ─────────────────────────────────────── */}
             <section aria-label="Ton élevage">
-              <Section label="Ton élevage" />
+              <Section label="TON ÉLEVAGE" />
               <Link
                 to="/troupeau"
                 style={{ textDecoration: 'none', display: 'block', marginTop: 12 }}
@@ -882,9 +879,9 @@ const TodayHub: React.FC = () => {
               </Link>
             </section>
 
-            {/* ── Tournée du jour ────────────────────────────────────── */}
+            {/* ── 4. TOURNÉE DU JOUR ─────────────────────────────────── */}
             <section aria-label="Tournée du jour">
-              <Section label="Tournée du jour" tone="accent" />
+              <Section label="TOURNÉE DU JOUR" tone="accent" />
               <Card style={{ marginTop: 12 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
