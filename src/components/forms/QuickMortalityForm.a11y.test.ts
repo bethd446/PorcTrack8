@@ -41,15 +41,19 @@ describe('QuickMortalityForm · accessibilité', () => {
     );
   });
 
-  it('expose le ref focus-first sur le select bande', () => {
-    expect(SRC).toMatch(/id="mortality-bande"[^]*?ref=\{firstFieldRef\}/);
+  it('expose le ref focus-first sur la recherche de sujet (V44 step 1)', () => {
+    // V44 — refonte F4 : sélection sujet via Input search au step 1
+    // (truie/verrat/bande) au lieu d'un select bande direct. firstFieldRef
+    // est sur cet input search.
+    expect(SRC).toMatch(/ref=\{firstFieldRef\}/);
+    expect(SRC).toMatch(/aria-label="Rechercher un sujet"/);
   });
 
   it('chaque champ a un aria-label explicite', () => {
-    // select bande
-    expect(SRC).toMatch(
-      /id="mortality-bande"[^]*?aria-label="Sélectionner la bande/,
-    );
+    // input search sujet (step 1, V44)
+    expect(SRC).toMatch(/aria-label="Rechercher un sujet"/);
+    // select cause
+    expect(SRC).toMatch(/aria-label="Cause suspectée"/);
     // input count
     expect(SRC).toMatch(
       /id="mortality-count"[^]*?aria-label="Nombre de porcelets morts/,
@@ -58,15 +62,18 @@ describe('QuickMortalityForm · accessibilité', () => {
     expect(SRC).toMatch(
       /id="mortality-obs"[^]*?aria-label="Observation sur la mortalité/,
     );
-    // boutons − / +
-    expect(SRC).toMatch(/aria-label="Diminuer le nombre de morts"/);
-    expect(SRC).toMatch(/aria-label="Augmenter le nombre de morts"/);
+    // boutons − / + (Button DS expose ariaLabel prop, pas attribut HTML)
+    expect(SRC).toMatch(/ariaLabel="Diminuer le nombre de morts"/);
+    expect(SRC).toMatch(/ariaLabel="Augmenter le nombre de morts"/);
     // submit
-    expect(SRC).toMatch(/aria-label="Enregistrer la mortalité"/);
+    expect(SRC).toMatch(/ariaLabel="Enregistrer la mortalité"/);
   });
 
   it('expose aria-describedby sur input count + textarea', () => {
-    expect(SRC).toMatch(/aria-describedby="mortality-count-hint"/);
+    // V44 — aria-describedby pointe vers le hint id (et l'error id en fallback
+    // quand validation échoue). Le code utilise une expression conditionnelle
+    // qui résout vers 'mortality-count-hint' ou 'mortality-error mortality-count-hint'.
+    expect(SRC).toMatch(/mortality-count-hint/);
     expect(SRC).toMatch(/aria-describedby="mortality-obs-hint"/);
     expect(SRC).toMatch(/id="mortality-count-hint"/);
     expect(SRC).toMatch(/id="mortality-obs-hint"/);

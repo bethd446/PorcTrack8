@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { IonSpinner, IonToast, IonSelect, IonSelectOption } from '@ionic/react';
 import { Stethoscope, Send, Bandage, Scissors, AlertTriangle, FileText } from 'lucide-react';
 import { insertHealthLog } from '../../services/supabaseWrites';
-import { Button, Input, Textarea } from '@/design-system';
+import { AppToast, useAppToast } from '../agritech';
+import { Button, FormField, Input, Section, Select, Textarea } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import { kvGet } from '../../services/kvStore';
 import { useAuth } from '../../context/AuthContext';
@@ -15,12 +15,13 @@ import {
 } from '../../services/healthProtocolPlanner';
 
 /**
- * QuickHealthForm — Saisie rapide d'une intervention santé (Agritech Dark)
+ * QuickHealthForm — Saisie rapide d'une intervention santé (V44 archétype 5).
  *
- * Refonte V21-2 :
- *  - log_type passe en enum strict (14 valeurs, miroir Postgres)
- *  - regroupé par catégorie (SOIN / INTERVENTION / PROBLEME / AUTRE)
- *  - auto-suggestion dose + produit véto (depuis stockVeto contextuel)
+ * Refonte V44 :
+ *  - Remplace 12 IonSelect/IonInput legacy par Select/Input/Textarea du DS V2
+ *  - Sections UPPERCASE (INFORMATIONS PRINCIPALES / TRAITEMENT / NOTES)
+ *  - useAppToast (file d'attente standardisée) à la place d'IonToast
+ *  - Logique métier 100 % préservée : insertHealthLog + auto-suggestions dose/produit véto
  */
 export interface QuickHealthFormProps {
   subjectType: 'BANDE' | 'TRUIE' | 'PORTEE' | 'VERRAT';
@@ -84,10 +85,7 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
   const { refreshData, stockVeto } = useFarm();
   const { role } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState<{ show: boolean; message: string }>({
-    show: false,
-    message: '',
-  });
+  const { show: showToast, toastProps } = useAppToast();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState<FormDataState>(() => ({
     type: defaultLogType ?? 'AUTRE',
@@ -152,10 +150,10 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
         notes: '',
       });
       const online = typeof navigator !== 'undefined' && navigator.onLine;
-      setToast({
-        show: true,
-        message: online ? `${tplLabel} enregistré` : `${tplLabel} mis en file · sync auto`,
-      });
+      showToast(
+        online ? `${tplLabel} enregistré` : `${tplLabel} mis en file · sync auto`,
+        'success',
+      );
       try {
         await refreshData(true);
       } catch {
@@ -163,7 +161,7 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
       }
       if (onSuccess) onSuccess();
     } catch {
-      setToast({ show: true, message: 'Erreur enregistrement local' });
+      showToast('Erreur enregistrement local', 'error');
     } finally {
       setLoading(false);
     }
@@ -190,122 +188,70 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
       </div>
 
       {/* ── Form ────────────────────────────────────────────────────────── */}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* ── 1. Type d'intervention ────────────────────────────────────── */}
-        <div className="space-y-1.5">
-          <label
-            htmlFor="health-type"
-            className="block text-mono-label text-text-2"
+      <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+        {/* ═══ Section : Informations principales ═════════════════════════ */}
+        <Section label="INFORMATIONS PRINCIPALES" />
+
+        <FormField label="Type d'intervention" required error={errors.type}>
+          <Select
+            id="health-type"
+            aria-label="Type d'intervention santé"
+            aria-required="true"
+            aria-invalid={!!errors.type}
+            value={formData.type}
+            onChange={e =>
+              setFormData(prev => ({
+                ...prev,
+                type: e.target.value as HealthLogType,
+                // Reset doses/treatment/produit pour permettre l'auto-suggestion fraîche
+                dose: '',
+                treatmentName: '',
+                produitId: '',
+              }))
+            }
+            disabled={loading}
           >
-            Type d'intervention
-          </label>
-          <div
-            className={[
-              'rounded-md border overflow-hidden',
-              'bg-bg-0 transition-colors duration-[160ms]',
-              errors.type ? 'border-red' : 'border-border focus-within:border-accent',
-            ].join(' ')}
-          >
-            <IonSelect
-              id="health-type"
-              aria-label="Type d'intervention santé"
-              className="agritech-select"
-              style={
-                {
-                  '--background': 'var(--color-bg-0)',
-                  '--color': 'var(--color-text-0)',
-                  '--placeholder-color': 'var(--color-text-2)',
-                  '--placeholder-opacity': 1,
-                  '--padding-start': '12px',
-                  '--padding-end': '12px',
-                  '--padding-top': '8px',
-                  '--padding-bottom': '8px',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '12px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em',
-                  minHeight: '36px',
-                } as React.CSSProperties
-              }
-              value={formData.type}
-              onIonChange={e =>
-                setFormData(prev => ({
-                  ...prev,
-                  type: e.detail.value as HealthLogType,
-                  // Reset doses/treatment/produit pour permettre l'auto-suggestion fraîche
-                  dose: '',
-                  treatmentName: '',
-                  produitId: '',
-                }))
-              }
-              interface="popover"
-            >
-              {groupedTypes.map(({ cat, types }) => (
-                <React.Fragment key={cat}>
-                  <IonSelectOption disabled value={`__cat_${cat}`}>
-                    {`— ${CATEGORY_META[cat].label} —`}
-                  </IonSelectOption>
-                  {types.map(t => (
-                    <IonSelectOption key={t} value={t}>
-                      {HEALTH_LOG_TEMPLATES[t].label}
-                    </IonSelectOption>
-                  ))}
-                </React.Fragment>
-              ))}
-            </IonSelect>
-          </div>
-          <div className="flex items-center gap-1.5 mt-1">
-            <CatIcon size={11} aria-hidden className={CATEGORY_META[currentCat].tone} />
-            <span className="text-mono-micro text-text-2">
-              {CATEGORY_META[currentCat].label}
-            </span>
-          </div>
-          {errors.type && (
-            <p role="alert" className="text-[11px] text-red mt-1">
-              {errors.type}
-            </p>
-          )}
+            {groupedTypes.map(({ cat, types }) => (
+              <optgroup key={cat} label={`— ${CATEGORY_META[cat].label} —`}>
+                {types.map(t => (
+                  <option key={t} value={t}>
+                    {HEALTH_LOG_TEMPLATES[t].label}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </Select>
+        </FormField>
+
+        <div className="flex items-center gap-1.5 -mt-2">
+          <CatIcon size={11} aria-hidden className={CATEGORY_META[currentCat].tone} />
+          <span className="text-mono-micro text-text-2">
+            {CATEGORY_META[currentCat].label}
+          </span>
         </div>
 
-        {/* ── 2. Description / molécule ─────────────────────────────────── */}
-        <div className="space-y-1.5">
-          <label
-            htmlFor="health-treatment"
-            className="block text-mono-label text-text-2"
-          >
-            Description / molécule
-          </label>
+        {/* ═══ Section : Traitement ═══════════════════════════════════════ */}
+        <Section label="TRAITEMENT" />
+
+        <FormField
+          label="Description / molécule"
+          required
+          error={errors.treatmentName}
+        >
           <Input
             id="health-treatment"
             aria-label="Description du soin ou molécule administrée"
             aria-invalid={!!errors.treatmentName}
-            aria-describedby={errors.treatmentName ? 'health-treatment-error' : undefined}
             invalid={!!errors.treatmentName}
             placeholder="Ex: Fer dextran, Ivermectine…"
             value={formData.treatmentName}
             onChange={e => setFormData({ ...formData, treatmentName: e.target.value })}
             disabled={loading}
           />
-          {errors.treatmentName && (
-            <p
-              id="health-treatment-error"
-              role="alert"
-              className="text-[11px] text-red mt-1"
-            >
-              {errors.treatmentName}
-            </p>
-          )}
-        </div>
+        </FormField>
 
-        {/* ── 3. Dose & produit (auto-suggérés) ─────────────────────────── */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <label
-              htmlFor="health-dose"
-              className="block text-mono-label text-text-2"
-            >
-              Dose / quantité
-            </label>
+          <FormField label="Dose / quantité" hint="optionnel">
             <Input
               id="health-dose"
               aria-label="Dose ou quantité administrée"
@@ -314,69 +260,32 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
               onChange={e => setFormData({ ...formData, dose: e.target.value })}
               disabled={loading}
             />
-          </div>
+          </FormField>
 
-          <div className="space-y-1.5">
-            <label
-              htmlFor="health-produit"
-              className="block text-mono-label text-text-2"
+          <FormField label="Produit véto" hint="optionnel">
+            <Select
+              id="health-produit"
+              aria-label="Produit vétérinaire utilisé"
+              value={formData.produitId}
+              onChange={e =>
+                setFormData({ ...formData, produitId: e.target.value })
+              }
+              disabled={loading}
             >
-              Produit véto
-            </label>
-            <div
-              className={[
-                'rounded-md border overflow-hidden',
-                'bg-bg-0 transition-colors duration-[160ms]',
-                'border-border focus-within:border-accent',
-              ].join(' ')}
-            >
-              <IonSelect
-                id="health-produit"
-                aria-label="Produit vétérinaire utilisé"
-                className="agritech-select"
-                style={
-                  {
-                    '--background': 'var(--color-bg-0)',
-                    '--color': 'var(--color-text-0)',
-                    '--placeholder-color': 'var(--color-text-2)',
-                    '--placeholder-opacity': 1,
-                    '--padding-start': '12px',
-                    '--padding-end': '12px',
-                    '--padding-top': '8px',
-                    '--padding-bottom': '8px',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '12px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
-                    minHeight: '36px',
-                  } as React.CSSProperties
-                }
-                value={formData.produitId}
-                onIonChange={e =>
-                  setFormData({ ...formData, produitId: e.detail.value as string })
-                }
-                interface="popover"
-                placeholder="—"
-              >
-                <IonSelectOption value="">— Aucun —</IonSelectOption>
-                {stockVeto.map(p => (
-                  <IonSelectOption key={p.id} value={p.id}>
-                    {p.produit}
-                  </IonSelectOption>
-                ))}
-              </IonSelect>
-            </div>
-          </div>
+              <option value="">— Aucun —</option>
+              {stockVeto.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.produit}
+                </option>
+              ))}
+            </Select>
+          </FormField>
         </div>
 
-        {/* ── 4. Observation libre ──────────────────────────────────────── */}
-        <div className="space-y-1.5">
-          <label
-            htmlFor="health-obs"
-            className="block text-mono-label text-text-2"
-          >
-            Observation
-          </label>
+        {/* ═══ Section : Notes ════════════════════════════════════════════ */}
+        <Section label="NOTES" />
+
+        <FormField label="Observation" hint="optionnel">
           <Textarea
             id="health-obs"
             aria-label="Observation du traitement"
@@ -385,33 +294,46 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
             onChange={e => setFormData({ ...formData, notes: e.target.value })}
             disabled={loading}
           />
-        </div>
+        </FormField>
 
-        <Button
-          variant="danger"
-          fullWidth
-          type="submit"
-          disabled={loading || !formData.treatmentName.trim()}
-          ariaLabel="Valider l'intervention"
-        >
-          {loading ? (
-            <IonSpinner name="bubbles" className="w-5 h-5" aria-hidden="true" />
-          ) : (
-            <span className="inline-flex items-center gap-2">
-              Valider intervention
-              <Send size={14} className="flex-shrink-0" aria-hidden="true" />
-            </span>
-          )}
-        </Button>
+        <div className="flex gap-3 justify-end pt-2 border-t border-border">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setFormData({
+                type: 'AUTRE',
+                treatmentName: '',
+                dose: '',
+                produitId: '',
+                notes: '',
+              });
+              setErrors({});
+            }}
+            disabled={loading}
+            ariaLabel="Annuler la saisie"
+          >
+            Annuler
+          </Button>
+          <Button
+            variant="danger"
+            type="submit"
+            disabled={loading || !formData.treatmentName.trim()}
+            aria-busy={loading}
+            ariaLabel="Valider l'intervention"
+          >
+            {loading ? (
+              <span className="animate-pulse">Enregistrement…</span>
+            ) : (
+              <span className="inline-flex items-center gap-2">
+                Valider intervention
+                <Send size={14} className="flex-shrink-0" aria-hidden="true" />
+              </span>
+            )}
+          </Button>
+        </div>
       </form>
 
-      <IonToast
-        isOpen={toast.show}
-        message={toast.message}
-        duration={3000}
-        onDidDismiss={() => setToast({ show: false, message: '' })}
-        position="bottom"
-      />
+      <AppToast {...toastProps} />
     </div>
   );
 };

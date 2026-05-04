@@ -3,7 +3,13 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Baby, Check, CheckCircle2 } from 'lucide-react';
 
 import { AppToast, BottomSheet, useAppToast } from '../agritech';
-import { Button, Input } from '@/design-system';
+import {
+  Button,
+  FormField,
+  Input,
+  Section,
+  Textarea,
+} from '@/design-system';
 import {
   insertBatch,
   updateSowByCode,
@@ -17,6 +23,7 @@ import { normaliseStatut } from '../../lib/truieStatut';
 import type { Truie } from '../../types/farm';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import {
+  MISE_BAS_BOUNDS,
   validateMiseBas,
   suggestIdPortee,
   todayIsoLocal,
@@ -29,9 +36,6 @@ import {
   validateEffectif,
 } from '../../lib/validation/farmValidators';
 import MiseBasTruieField from './quickMiseBas/MiseBasTruieField';
-import MiseBasIdAndDateBlock from './quickMiseBas/MiseBasIdAndDateBlock';
-import MiseBasCountsBlock from './quickMiseBas/MiseBasCountsBlock';
-import MiseBasPoidsAndNotesBlock from './quickMiseBas/MiseBasPoidsAndNotesBlock';
 
 export {
   MISE_BAS_BOUNDS,
@@ -95,6 +99,8 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
 
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Auto-suggestion totaux = vivants + morts-nés tant que l'utilisateur
+  // n'a pas saisi explicitement la valeur.
   const [lastAutoInputs, setLastAutoInputs] = useState<{ nesVivants: string; mortsNes: string }>({
     nesVivants,
     mortsNes,
@@ -427,6 +433,9 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
               </div>
             </div>
 
+            {/* ── INFORMATIONS PRINCIPALES ───────────────────────────── */}
+            <Section label="INFORMATIONS PRINCIPALES" />
+
             <MiseBasTruieField
               truies={truiesEligibles}
               truieId={truieId}
@@ -477,146 +486,253 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
               </div>
             ) : null}
 
-            <MiseBasIdAndDateBlock
-              idPortee={idPortee}
-              setIdPortee={setIdPortee}
-              setIdPorteeEditedManually={setIdPorteeEditedManually}
-              truieId={truieId}
-              dateIso={dateIso}
-              setDateIso={setDateIso}
-              heure={heure}
-              setHeure={setHeure}
-              saving={saving}
-              errorIdPortee={errors.idPortee}
-              errorDateIso={errors.dateIso}
-            />
+            <FormField
+              label="ID portée"
+              required
+              hint="Format YY-T{N}-SEQ (ex: 26-T7-01)"
+              error={errors.idPortee}
+            >
+              <Input
+                id="mb-id-portee"
+                type="text"
+                maxLength={20}
+                autoCapitalize="characters"
+                aria-label="Identifiant de la portée (auto-suggéré)"
+                aria-required="true"
+                aria-invalid={!!errors.idPortee}
+                invalid={!!errors.idPortee}
+                placeholder="26-T7-01"
+                value={idPortee}
+                onChange={e => {
+                  setIdPortee(e.target.value);
+                  setIdPorteeEditedManually(true);
+                }}
+                disabled={saving || !truieId}
+                autoComplete="off"
+                className="ft-code uppercase"
+              />
+            </FormField>
 
-            <MiseBasCountsBlock
-              nesVivants={nesVivants}
-              setNesVivants={setNesVivants}
-              mortsNes={mortsNes}
-              setMortsNes={setMortsNes}
-              nesTotaux={nesTotaux}
-              setNesTotaux={setNesTotaux}
-              setNesTotauxEditedManually={setNesTotauxEditedManually}
-              saving={saving}
-              errors={errors}
-            />
-
-            <MiseBasPoidsAndNotesBlock
-              poidsMoyen={poidsMoyen}
-              setPoidsMoyen={setPoidsMoyen}
-              notes={notes}
-              setNotes={setNotes}
-              saving={saving}
-              errors={errors}
-            />
-
-            {/* ── Sex ratio M/F (V21, optionnel) ──────────────────────── */}
-            <div className="space-y-2">
-              <div className="flex items-baseline justify-between">
-                <span
-                  id="mb-sex-label"
-                  className="block text-mono-label text-text-2"
-                >
-                  Répartition M/F (optionnel)
-                </span>
-                <span className="text-[10px] text-text-2">
-                  Auto : femelles = vivants − mâles
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-2" aria-labelledby="mb-sex-label">
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="mb-males"
-                    className="block text-mono-micro text-text-2"
-                  >
-                    Mâles
-                  </label>
-                  <Input
-                    id="mb-males"
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    max={25}
-                    step={1}
-                    aria-label="Nombre de porcelets mâles"
-                    aria-invalid={!!errors.nbMales}
-                    aria-describedby={errors.nbMales ? 'mb-males-error' : undefined}
-                    invalid={!!errors.nbMales}
-                    placeholder="—"
-                    value={nbMales}
-                    onChange={e => setNbMales(e.target.value)}
-                    disabled={saving}
-                  />
-                  {errors.nbMales ? (
-                    <p
-                      id="mb-males-error"
-                      role="alert"
-                      className="text-[10px] text-red"
-                    >
-                      {errors.nbMales}
-                    </p>
-                  ) : null}
-                </div>
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="mb-femelles"
-                    className="block text-mono-micro text-text-2"
-                  >
-                    Femelles
-                  </label>
-                  <Input
-                    id="mb-femelles"
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    max={25}
-                    step={1}
-                    aria-label="Nombre de porcelets femelles"
-                    aria-invalid={!!errors.nbFemelles}
-                    aria-describedby={errors.nbFemelles ? 'mb-femelles-error' : undefined}
-                    invalid={!!errors.nbFemelles}
-                    placeholder="—"
-                    value={nbFemelles}
-                    onChange={e => {
-                      setNbFemelles(e.target.value);
-                      setNbFemellesEditedManually(true);
-                    }}
-                    disabled={saving}
-                  />
-                  {errors.nbFemelles ? (
-                    <p
-                      id="mb-femelles-error"
-                      role="alert"
-                      className="text-[10px] text-red"
-                    >
-                      {errors.nbFemelles}
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-              {errors.sexRatio ? (
-                <p role="alert" className="text-[11px] text-red">
-                  {errors.sexRatio}
-                </p>
-              ) : null}
+            <div className="grid grid-cols-2 gap-3">
+              <FormField label="Date MB" required error={errors.dateIso}>
+                <Input
+                  id="mb-date"
+                  type="date"
+                  aria-label="Date de mise-bas"
+                  aria-invalid={!!errors.dateIso}
+                  invalid={!!errors.dateIso}
+                  value={dateIso}
+                  onChange={e => setDateIso(e.target.value)}
+                  disabled={saving}
+                />
+              </FormField>
+              <FormField label="Heure">
+                <Input
+                  id="mb-heure"
+                  type="time"
+                  aria-label="Heure de mise-bas"
+                  value={heure}
+                  onChange={e => setHeure(e.target.value)}
+                  disabled={saving}
+                />
+              </FormField>
             </div>
 
-            <div className="flex gap-3 justify-end px-4 py-3 border-t border-border">
+            {/* ── PORTÉE ─────────────────────────────────────────────── */}
+            <Section label="PORTÉE" />
+
+            <div className="grid grid-cols-3 gap-3">
+              <FormField
+                label="Nés vivants"
+                required
+                error={errors.nesVivants}
+              >
+                <Input
+                  id="mb-nv"
+                  type="number"
+                  inputMode="numeric"
+                  min={MISE_BAS_BOUNDS.minNes}
+                  max={MISE_BAS_BOUNDS.maxNes}
+                  step={1}
+                  aria-label="Nombre de porcelets nés vivants"
+                  aria-required="true"
+                  aria-invalid={!!errors.nesVivants}
+                  invalid={!!errors.nesVivants}
+                  placeholder="0"
+                  value={nesVivants}
+                  onChange={e => setNesVivants(e.target.value)}
+                  disabled={saving}
+                  className="text-center font-mono tabular-nums text-[18px] font-bold"
+                />
+              </FormField>
+              <FormField label="Morts-nés" error={errors.mortsNes}>
+                <Input
+                  id="mb-mn"
+                  type="number"
+                  inputMode="numeric"
+                  min={MISE_BAS_BOUNDS.minNes}
+                  max={MISE_BAS_BOUNDS.maxNes}
+                  step={1}
+                  aria-label="Nombre de porcelets morts-nés"
+                  aria-invalid={!!errors.mortsNes}
+                  invalid={!!errors.mortsNes}
+                  placeholder="0"
+                  value={mortsNes}
+                  onChange={e => setMortsNes(e.target.value)}
+                  disabled={saving}
+                  className="text-center font-mono tabular-nums text-[18px] font-bold"
+                />
+              </FormField>
+              <FormField
+                label="Nés totaux"
+                hint="= vivants + morts-nés"
+                error={errors.nesTotaux}
+              >
+                <Input
+                  id="mb-nt"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={MISE_BAS_BOUNDS.maxNesTotaux}
+                  step={1}
+                  aria-label="Nombre total de porcelets nés (vivants + morts-nés)"
+                  aria-invalid={!!errors.nesTotaux}
+                  invalid={!!errors.nesTotaux}
+                  placeholder="0"
+                  value={nesTotaux}
+                  onChange={e => {
+                    setNesTotaux(e.target.value);
+                    setNesTotauxEditedManually(true);
+                  }}
+                  disabled={saving}
+                  className="text-center font-mono tabular-nums text-[18px] font-bold"
+                />
+              </FormField>
+            </div>
+
+            {errors.coherence ? (
+              <p role="alert" className="text-[11px]" style={{ color: 'var(--pt-danger)' }}>
+                {errors.coherence}
+              </p>
+            ) : null}
+
+            <FormField
+              label="Poids moyen porcelet (kg)"
+              hint={`${MISE_BAS_BOUNDS.minPoids} à ${MISE_BAS_BOUNDS.maxPoids} kg · optionnel`}
+              error={errors.poidsMoyen}
+            >
+              <Input
+                id="mb-poids"
+                type="number"
+                inputMode="decimal"
+                min={MISE_BAS_BOUNDS.minPoids}
+                max={MISE_BAS_BOUNDS.maxPoids}
+                step={0.1}
+                aria-label="Poids moyen d'un porcelet en kg (optionnel)"
+                aria-invalid={!!errors.poidsMoyen}
+                invalid={!!errors.poidsMoyen}
+                placeholder="1.4"
+                value={poidsMoyen}
+                onChange={e => setPoidsMoyen(e.target.value)}
+                disabled={saving}
+                className="font-mono tabular-nums"
+              />
+            </FormField>
+
+            <div className="grid grid-cols-2 gap-3">
+              <FormField
+                label="Mâles"
+                hint="optionnel"
+                error={errors.nbMales}
+              >
+                <Input
+                  id="mb-males"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={25}
+                  step={1}
+                  aria-label="Nombre de porcelets mâles"
+                  aria-invalid={!!errors.nbMales}
+                  invalid={!!errors.nbMales}
+                  placeholder="—"
+                  value={nbMales}
+                  onChange={e => setNbMales(e.target.value)}
+                  disabled={saving}
+                  className="font-mono tabular-nums"
+                />
+              </FormField>
+              <FormField
+                label="Femelles"
+                hint="auto = vivants − mâles"
+                error={errors.nbFemelles}
+              >
+                <Input
+                  id="mb-femelles"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={25}
+                  step={1}
+                  aria-label="Nombre de porcelets femelles"
+                  aria-invalid={!!errors.nbFemelles}
+                  invalid={!!errors.nbFemelles}
+                  placeholder="—"
+                  value={nbFemelles}
+                  onChange={e => {
+                    setNbFemelles(e.target.value);
+                    setNbFemellesEditedManually(true);
+                  }}
+                  disabled={saving}
+                  className="font-mono tabular-nums"
+                />
+              </FormField>
+            </div>
+
+            {errors.sexRatio ? (
+              <p role="alert" className="text-[11px]" style={{ color: 'var(--pt-danger)' }}>
+                {errors.sexRatio}
+              </p>
+            ) : null}
+
+            {/* ── NOTES ──────────────────────────────────────────────── */}
+            <Section label="NOTES" />
+
+            <FormField
+              label="Notes"
+              hint={`${notes.length}/${MISE_BAS_BOUNDS.maxNotes} · optionnel`}
+              error={errors.notes}
+            >
+              <Textarea
+                id="mb-notes"
+                aria-label="Notes de mise-bas (optionnel)"
+                aria-invalid={!!errors.notes}
+                placeholder="Ex: MB sans assistance, portée homogène"
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                disabled={saving}
+                maxLength={MISE_BAS_BOUNDS.maxNotes}
+                style={{
+                  minHeight: 88,
+                  borderColor: errors.notes ? 'var(--pt-danger)' : undefined,
+                }}
+              />
+            </FormField>
+
+            <div className="flex gap-3 justify-end pt-3 border-t border-border">
               <Button
                 variant="secondary"
                 onClick={handleClose}
                 disabled={saving}
-                aria-label="Annuler et fermer"
+                ariaLabel="Annuler et fermer"
               >
-                Annuler
+                ANNULER
               </Button>
               <Button
                 variant="primary"
                 type="submit"
                 disabled={saving || !truieId || truiesEligibles.length === 0}
-                aria-label="Enregistrer la mise-bas"
+                ariaLabel="Enregistrer la mise-bas"
                 aria-busy={saving}
               >
                 {saving ? (
@@ -624,7 +740,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
                 ) : (
                   <span className="inline-flex items-center gap-2">
                     <Check size={16} aria-hidden="true" />
-                    Enregistrer
+                    VALIDER
                   </span>
                 )}
               </Button>

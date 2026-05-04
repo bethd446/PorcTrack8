@@ -7,10 +7,9 @@ import { ChevronRight, Box, CheckCircle2, Shield } from 'lucide-react';
 import { CONTROLE_QUESTIONS } from './questions';
 import { insertNote } from '../../services/supabaseWrites';
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { Chip } from '../../components/agritech';
-import { Button } from '@/design-system';
+import { Button, PageHeader, Section } from '@/design-system';
 import { kvGet } from '../../services/kvStore';
 
 const ControleQuotidien: React.FC = () => {
@@ -68,31 +67,11 @@ const ControleQuotidien: React.FC = () => {
               onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
             />
             <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-              <header>
-                <Eyebrow dotColor="accent">Outils · Audit terrain</Eyebrow>
-                <h1
-                  style={{
-                    fontFamily: 'var(--font-heading)',
-                    fontSize: 34,
-                    fontWeight: 700,
-                    lineHeight: 1,
-                    letterSpacing: '-0.02em',
-                    color: 'var(--ink)',
-                    margin: '8px 0 4px',
-                  }}
-                >
-                  Contrôle terminé
-                </h1>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 13,
-                    color: 'var(--muted)',
-                  }}
-                >
-                  Questionnaire quotidien
-                </div>
-              </header>
+              <PageHeader
+                eyebrow="Outils · Audit"
+                title="Contrôle terminé"
+                subtitle="Questionnaire quotidien"
+              />
 
               <div className="flex flex-col items-center text-center">
               <div
@@ -139,39 +118,27 @@ const ControleQuotidien: React.FC = () => {
           />
 
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <header>
-              <Eyebrow dotColor="accent">Outils · Audit terrain</Eyebrow>
-              <h1
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '8px 0 4px',
-                }}
-              >
-                Audit terrain
-              </h1>
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--muted)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                }}
-              >
-                <span>Questionnaire quotidien</span>
-                <Chip
-                  label={`Q${currentStep + 1}/${CONTROLE_QUESTIONS.length}`}
-                  size="xs"
-                  tone="accent"
-                />
-              </div>
-            </header>
+            <PageHeader
+              eyebrow="Outils · Audit"
+              title="Audit terrain"
+              subtitle="Questionnaire quotidien"
+            />
+
+            <Section label="PROGRESSION" />
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                marginTop: -4,
+              }}
+            >
+              <Chip
+                label={`Q${currentStep + 1}/${CONTROLE_QUESTIONS.length}`}
+                size="xs"
+                tone="accent"
+              />
+            </div>
 
             {/* Progress bar */}
             <div
@@ -194,10 +161,13 @@ const ControleQuotidien: React.FC = () => {
               Étape {currentStep + 1} sur {CONTROLE_QUESTIONS.length}
             </p>
 
+            <Section label="QUESTION EN COURS" />
+
             {/* CTA / question card */}
             <section
-              className="card-dense mt-5"
+              className="card-dense"
               aria-label="Question en cours"
+              style={{ marginTop: -4 }}
             >
               <div className="flex items-start gap-3 mb-4">
                 <span

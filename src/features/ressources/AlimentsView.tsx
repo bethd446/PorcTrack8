@@ -7,20 +7,26 @@ import {
   Wheat,
   FlaskConical,
   Box,
-  Scale,
-  Plus,
   ExternalLink,
   Settings,
 } from 'lucide-react';
 import AgritechLayout from '../../components/AgritechLayout';
 import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
-import { AppToast, Chip, KpiCard, SectionDivider, useAppToast } from '../../components/agritech';
-import type { ChipTone } from '../../components/agritech';
+import { AppToast, useAppToast } from '../../components/agritech';
 import EmptyState from '../../components/design/EmptyState';
 import TopBarSync from '../../components/design/TopBarSync';
 import { useFarm, useMeta } from '../../context/FarmContext';
-import { Button, PageHeader } from '@/design-system';
+import {
+  Button,
+  Card,
+  Fab,
+  PageHeader,
+  Search,
+  Section,
+  Tabs,
+  Tag,
+} from '@/design-system';
 import { updateProduitAliment } from '../../services/supabaseWrites';
 import type { StockAliment, StockStatut, Truie, Verrat, BandePorcelets } from '../../types/farm';
 import QuickAddAlimentForm from '../../components/forms/QuickAddAlimentForm';
@@ -51,30 +57,17 @@ function needsOrder(item: StockAliment): boolean {
 /**
  * AlimentsView — stock aliments structuré par catégorie métier.
  *
- * Route : `/stock`, `/stock/aliments`, `/ressources/aliments`
+ * V44 archétype 3 — liste pure : Tabs catégorie + Search + Sections + Tag DS.
+ * Les KPI stock ont été déplacés dans le hub Ressources (anti-doublon).
  *
- * Remplace l'ancien `<TableView tableKey="STOCK_ALIMENTS" />` (écran blanc
- * intermittent + zéro structure).
- *
- * Sections :
- *   1. Matières premières  — céréales, tourteaux, sons (base des mélanges)
- *   2. Concentrés & compléments  — KPC, Mycofix, Romelko, AMV, additifs
- *   3. Autres  — tout ce qui ne tombe pas dans les 2 catégories ci-dessus
- *
- * Chaque section : DataRow triés RUPTURE → BAS → OK puis alphabétique FR.
- * Bannière rouge en tête si ≥1 produit en rupture.
- *
- * Lecture seule : aucune mutation du FarmContext. Tap = placeholder (futur
- * éditeur). La vue reste fonctionnelle même si `stockAliment` est vide
- * (empty state dédié). Aucun early return `null` sur chargement — on s'appuie
- * sur les données déjà hydratées par `FarmProvider` au démarrage.
+ * Sections : Matières premières / Concentrés / Autres — triées RUPTURE → BAS
+ * → OK puis alphabétique FR. Édition inline (stock, seuil, notes) préservée
+ * via AlimentEditableRow custom (le DS ListItem ne supporte pas les champs
+ * éditables multiples).
  */
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Catégorisation
-// ─────────────────────────────────────────────────────────────────────────────
-
 type AlimentCategorie = 'MATIERE_PREMIERE' | 'CONCENTRE' | 'AUTRE';
+type CategoryFilter = 'all' | AlimentCategorie;
 type ResourceTreatment = 'urgent' | 'normal' | 'resolu';
 
 function classifyTreatment(item: StockAliment): ResourceTreatment {
@@ -141,10 +134,6 @@ function categoriserAliment(libelle: string, id?: string): AlimentCategorie {
   return 'AUTRE';
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers tri / chip
-// ─────────────────────────────────────────────────────────────────────────────
-
 const STATUT_PRIORITY: Record<string, number> = {
   RUPTURE: 0,
   BAS: 1,
@@ -156,33 +145,18 @@ function priorityOf(statut: StockStatut | undefined): number {
   return STATUT_PRIORITY[statut] ?? 3;
 }
 
-function chipToneForStatut(statut: StockStatut | undefined): ChipTone {
-  if (statut === 'RUPTURE') return 'red';
-  if (statut === 'BAS') return 'amber';
-  if (statut === 'OK') return 'accent';
+type TagVariant = 'default' | 'primary' | 'accent' | 'soft' | 'danger' | 'warning' | 'success';
+
+function tagVariantForStatut(statut: StockStatut | undefined): TagVariant {
+  if (statut === 'RUPTURE') return 'danger';
+  if (statut === 'BAS') return 'warning';
+  if (statut === 'OK') return 'success';
   return 'default';
 }
 
 function labelForStatut(statut: StockStatut | undefined): string {
   if (!statut) return '—';
   return String(statut);
-}
-
-/** Poids estimé en kg si l'unité est kg ou sac (1 sac ≈ 50 kg standard). */
-function poidsEstimeKg(item: StockAliment): number {
-  const u = item.unite.toLowerCase();
-  if (u === 'kg') return item.stockActuel;
-  if (u === 'sac' || u === 'sacs') return item.stockActuel * 50;
-  if (u === 't' || u === 'tonne' || u === 'tonnes') return item.stockActuel * 1000;
-  return 0;
-}
-
-function formatKg(n: number): string {
-  if (n === 0) return '—';
-  if (n >= 1000) {
-    return `${(n / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} t`;
-  }
-  return `${Math.round(n).toLocaleString('fr-FR')} kg`;
 }
 
 function sortAliments(items: StockAliment[]): StockAliment[] {
@@ -194,12 +168,11 @@ function sortAliments(items: StockAliment[]): StockAliment[] {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Sous-sections
+// Sous-section liste (Section DS + Card DS contenant les rows éditables)
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface AlimentSectionProps {
   title: string;
-  icon: React.ReactNode;
   emptyIcon: React.ReactNode;
   emptyTitle: string;
   emptyDescription: string;
@@ -214,7 +187,6 @@ interface AlimentSectionProps {
 
 const AlimentSection: React.FC<AlimentSectionProps> = ({
   title,
-  icon,
   emptyIcon,
   emptyTitle,
   emptyDescription,
@@ -229,55 +201,49 @@ const AlimentSection: React.FC<AlimentSectionProps> = ({
   const isEmpty = items.length === 0;
   return (
     <section role="region" aria-label={title}>
-      <SectionDivider label={title} />
+      <Section label={`${title} · ${items.length}`} />
       {isEmpty ? (
-        <div
-          className="flex flex-col items-center justify-center py-10 px-6 text-center animate-fade-in-up"
-          role="status"
-          aria-label={`${title} — ${emptyTitle}`}
-        >
-          <div className="w-16 h-16 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-3 text-text-2">
-            {emptyIcon}
+        <Card compact>
+          <div
+            className="flex flex-col items-center justify-center py-8 px-6 text-center"
+            role="status"
+            aria-label={`${title} — ${emptyTitle}`}
+          >
+            <div className="w-14 h-14 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-3 text-text-2">
+              {emptyIcon}
+            </div>
+            <h4 className="ft-heading text-text-0 text-[15px] mb-1.5 uppercase tracking-wide">
+              {emptyTitle}
+            </h4>
+            <p className="text-text-2 text-[12px] max-w-xs leading-relaxed">
+              {emptyDescription}
+            </p>
+            {emptyAction ? (
+              <Button
+                variant="primary"
+                size="small"
+                onClick={emptyAction.onClick}
+                className="mt-4"
+              >
+                {emptyAction.label}
+              </Button>
+            ) : null}
           </div>
-          <h4 className="ft-heading text-text-0 text-[15px] mb-1.5 uppercase tracking-wide">
-            {emptyTitle}
-          </h4>
-          <p className="text-text-2 text-[12px] max-w-xs leading-relaxed">
-            {emptyDescription}
-          </p>
-          {emptyAction ? (
-            <Button
-              variant="primary"
-              size="small"
-              onClick={emptyAction.onClick}
-              className="pressable mt-4 h-10 px-4 rounded-md bg-accent text-bg-0 text-[12px] font-medium transition-colors"
-            >
-              {emptyAction.label}
-            </Button>
-          ) : null}
-          {/* Icon legacy (keeps hint for screen readers) */}
-          <span className="sr-only" aria-hidden="true">
-            {icon}
-          </span>
-        </div>
+        </Card>
       ) : (
-        <div className="card-dense !p-0 overflow-hidden">
-          {items.map(item => {
-            const tone = chipToneForStatut(item.statutStock);
-            return (
-              <AlimentEditableRow
-                key={item.id || item.libelle}
-                item={item}
-                tone={tone}
-                onRefresh={onRefresh}
-                onSelect={onSelect}
-                cheptel={cheptel}
-                fournisseurs={fournisseurs}
-                farmName={farmName}
-              />
-            );
-          })}
-        </div>
+        <Card compact className="!p-0 overflow-hidden">
+          {items.map(item => (
+            <AlimentEditableRow
+              key={item.id || item.libelle}
+              item={item}
+              onRefresh={onRefresh}
+              onSelect={onSelect}
+              cheptel={cheptel}
+              fournisseurs={fournisseurs}
+              farmName={farmName}
+            />
+          ))}
+        </Card>
       )}
     </section>
   );
@@ -289,7 +255,6 @@ const AlimentSection: React.FC<AlimentSectionProps> = ({
 
 interface AlimentEditableRowProps {
   item: StockAliment;
-  tone: ChipTone;
   onRefresh: () => Promise<void>;
   onSelect: (item: StockAliment) => void;
   cheptel: { truies: Truie[]; verrats: Verrat[]; bandes: BandePorcelets[] };
@@ -300,7 +265,6 @@ interface AlimentEditableRowProps {
 
 const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
   item,
-  tone,
   onRefresh,
   cheptel,
   fournisseurs,
@@ -395,7 +359,9 @@ const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
           <span className="text-text-2 ml-0.5">{item.unite}</span>
         </div>
         <div className="shrink-0">
-          <Chip tone={tone} label={labelForStatut(item.statutStock)} />
+          <Tag variant={tagVariantForStatut(item.statutStock)} dot>
+            {labelForStatut(item.statutStock)}
+          </Tag>
         </div>
       </div>
       <div className="text-[11px] text-text-2 pl-0.5">
@@ -479,6 +445,8 @@ const AlimentsView: React.FC = () => {
   const { toastProps } = useAppToast();
   const [addOpen, setAddOpen] = useState(false);
   const [fournisseurs, setFournisseurs] = useState<FournisseurRow[]>([]);
+  const [filter, setFilter] = useState<CategoryFilter>('all');
+  const [query, setQuery] = useState('');
   const whatsappReady = hasWhatsAppSupport();
 
   React.useEffect(() => {
@@ -508,15 +476,17 @@ const AlimentsView: React.FC = () => {
       stocksAOrdonner.length >= 2
         ? buildWhatsAppOrderURL(stocksAOrdonner, FARM_NAME)
         : null,
-    [stocksAOrdonner],
+    [stocksAOrdonner, FARM_NAME],
   );
 
   const grouped = useMemo(() => {
     const matieres: StockAliment[] = [];
     const concentres: StockAliment[] = [];
     const autres: StockAliment[] = [];
+    const q = query.trim().toLowerCase();
 
     for (const item of stockAliment) {
+      if (q && !(item.libelle || item.id).toLowerCase().includes(q)) continue;
       const cat = categoriserAliment(item.libelle, item.id);
       if (cat === 'MATIERE_PREMIERE') matieres.push(item);
       else if (cat === 'CONCENTRE') concentres.push(item);
@@ -528,44 +498,30 @@ const AlimentsView: React.FC = () => {
       concentres: sortAliments(concentres),
       autres: sortAliments(autres),
     };
-  }, [stockAliment]);
+  }, [stockAliment, query]);
 
-  const summary = useMemo(() => {
-    const total = stockAliment.length;
-    const rupture = stockAliment.filter(s => s.statutStock === 'RUPTURE').length;
-    const poidsKg = stockAliment.reduce((sum, item) => sum + poidsEstimeKg(item), 0);
-    return { total, rupture, poidsKg };
-  }, [stockAliment]);
+  const counts = useMemo(() => ({
+    all: grouped.matieres.length + grouped.concentres.length + grouped.autres.length,
+    MATIERE_PREMIERE: grouped.matieres.length,
+    CONCENTRE: grouped.concentres.length,
+    AUTRE: grouped.autres.length,
+  }), [grouped]);
 
-  const treatmentCounts = useMemo(() => {
-    const out = { urgent: 0, normal: 0, resolu: 0 };
-    for (const item of stockAliment) {
-      out[classifyTreatment(item)] += 1;
-    }
-    return out;
-  }, [stockAliment]);
-
-  const treatmentSummaryLine = useMemo(() => {
-    const parts: string[] = [];
-    if (treatmentCounts.urgent > 0) {
-      parts.push(`${treatmentCounts.urgent} rupture${treatmentCounts.urgent > 1 ? 's' : ''}`);
-    }
-    if (treatmentCounts.normal > 0) {
-      parts.push(`${treatmentCounts.normal} stock${treatmentCounts.normal > 1 ? 's' : ''} bas`);
-    }
-    if (treatmentCounts.resolu > 0) {
-      parts.push(`${treatmentCounts.resolu} OK`);
-    }
-    return parts.join(' · ');
-  }, [treatmentCounts]);
+  const ruptureCount = useMemo(
+    () => stockAliment.filter(s => s.statutStock === 'RUPTURE').length,
+    [stockAliment],
+  );
 
   const handleSelect = (_item: StockAliment) => {
     // Placeholder — édition stock arrivera dans un prochain sprint.
-    // Pour l'instant, on évite de rediriger vers TableView legacy pour ne
-    // pas ré-exposer le bug blank-screen.
   };
 
   const isEmpty = stockAliment.length === 0;
+  const totalFiltered = counts.all;
+  const showMatieres = (filter === 'all' || filter === 'MATIERE_PREMIERE') && grouped.matieres.length > 0;
+  const showConcentres = (filter === 'all' || filter === 'CONCENTRE') && grouped.concentres.length > 0;
+  const showAutres = (filter === 'all' || filter === 'AUTRE') && grouped.autres.length > 0;
+  const noMatch = !isEmpty && totalFiltered === 0;
 
   return (
     <IonPage>
@@ -582,51 +538,32 @@ const AlimentsView: React.FC = () => {
               title="Aliments"
               subtitle="Stocks et consommation"
             />
-            {treatmentSummaryLine && (
-              <div
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 10.5,
-                  letterSpacing: '0.10em',
-                  textTransform: 'uppercase',
-                  color: 'var(--muted)',
-                }}
-                aria-live="polite"
-              >
-                {summary.total} produit{summary.total > 1 ? 's' : ''} — {treatmentSummaryLine}
-              </div>
-            )}
-            <div className="flex justify-end">
-              <Button
-                variant="primary"
-                onClick={() => setAddOpen(true)}
-                ariaLabel="Ajouter un nouvel aliment"
-                className="shrink-0 inline-flex h-11 min-h-[44px] items-center gap-1.5 px-4 rounded-md bg-accent text-bg-0 text-[11px] font-bold uppercase tracking-wide transition-colors duration-150 hover:brightness-110 active:scale-[0.96] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-              >
-                <Plus size={14} aria-hidden="true" />
-                <span>Nouvel aliment</span>
-              </Button>
-            </div>
 
-            {/* ── Summary strip : 3 KpiCards ──────────────────────── */}
-            <div className="grid grid-cols-3 gap-2">
-              <KpiCard
-                label="Total produits"
-                value={summary.total}
-                icon={<Package size={14} />}
-              />
-              <KpiCard
-                label="En rupture"
-                value={summary.rupture}
-                icon={<AlertOctagon size={14} />}
-                tone={summary.rupture > 0 ? 'critical' : 'default'}
-              />
-              <KpiCard
-                label="Poids estimé"
-                value={formatKg(summary.poidsKg)}
-                icon={<Scale size={14} />}
-              />
-            </div>
+            {/* ── Filtres + recherche dans une Card DS ──────────────── */}
+            {!isEmpty && (
+              <Card compact>
+                <div className="flex flex-col gap-3">
+                  <Tabs
+                    value={filter}
+                    onChange={v => setFilter(v as CategoryFilter)}
+                    options={[
+                      { value: 'all', label: 'Tous', count: counts.all },
+                      { value: 'MATIERE_PREMIERE', label: 'Matières', count: counts.MATIERE_PREMIERE },
+                      { value: 'CONCENTRE', label: 'Concentrés', count: counts.CONCENTRE },
+                      { value: 'AUTRE', label: 'Autres', count: counts.AUTRE },
+                    ]}
+                    ariaLabel="Filtrer les aliments par catégorie"
+                  />
+                  <Search
+                    value={query}
+                    onChange={e => setQuery(e.target.value)}
+                    onClear={() => setQuery('')}
+                    placeholder="Rechercher un aliment…"
+                    aria-label="Rechercher un aliment"
+                  />
+                </div>
+              </Card>
+            )}
 
             {/* ── Action groupée Commander ──────────────────────── */}
             {whatsappReady && groupedOrderUrl ? (
@@ -666,46 +603,31 @@ const AlimentsView: React.FC = () => {
                 variant="ghost"
                 onClick={() => navigate('/more')}
                 ariaLabel="Configurer le numéro WhatsApp dans les Réglages"
-                className="pressable"
-                style={{
-                  gap: 8,
-                  padding: '10px 14px',
-                  borderRadius: 12,
-                  background: 'var(--bg-surface-2)',
-                  color: 'var(--muted)',
-                  border: '1px dashed var(--line)',
-                  fontFamily: 'var(--font-mono)',
-                  textAlign: 'left',
-                }}
               >
                 <Settings size={13} aria-hidden="true" />
-                <span>
-                  Numéro WhatsApp non configuré · Régler dans Réglages
-                </span>
+                <span>Numéro WhatsApp non configuré · Régler dans Réglages</span>
               </Button>
             ) : null}
 
             {/* ── Bannière alerte rupture ─────────────────────────── */}
-            {summary.rupture > 0 ? (
-              <div
-                className="card-dense flex items-start gap-3"
-                role="alert"
-                aria-label="Alerte rupture stock"
-              >
-                <AlertOctagon
-                  size={18}
-                  className="shrink-0 text-red mt-0.5"
-                  aria-hidden="true"
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="text-[13px] font-semibold text-text-0">
-                    {summary.rupture} matière{summary.rupture > 1 ? 's' : ''} en rupture
-                  </div>
-                  <div className="mt-0.5 text-[11px] text-text-2">
-                    Commander d'urgence — production à l'arrêt si non réapprovisionné.
+            {ruptureCount > 0 ? (
+              <Card compact danger>
+                <div className="flex items-start gap-3" role="alert" aria-label="Alerte rupture stock">
+                  <AlertOctagon
+                    size={18}
+                    className="shrink-0 text-red mt-0.5"
+                    aria-hidden="true"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[13px] font-semibold text-text-0">
+                      {ruptureCount} matière{ruptureCount > 1 ? 's' : ''} en rupture
+                    </div>
+                    <div className="mt-0.5 text-[11px] text-text-2">
+                      Commander d'urgence — production à l'arrêt si non réapprovisionné.
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Card>
             ) : null}
 
             {/* ── Empty state global ──────────────────────────────── */}
@@ -718,52 +640,57 @@ const AlimentsView: React.FC = () => {
                   <Button
                     variant="primary"
                     onClick={() => setAddOpen(true)}
-                    className="pressable h-11 px-5 rounded-md bg-accent text-bg-0 text-[13px] font-medium transition-colors inline-flex items-center gap-2"
                   >
-                    <Plus size={16} aria-hidden="true" />
                     Ajouter un aliment
                   </Button>
                 }
               />
+            ) : noMatch ? (
+              <EmptyState
+                icon={<Package size={32} aria-hidden="true" />}
+                title="Aucun aliment trouvé"
+                description={query ? `Aucun résultat pour « ${query} »` : 'Aucun aliment dans cette catégorie.'}
+              />
             ) : (
               <>
-                <AlimentSection
-                  title="Matières premières"
-                  icon={<Wheat size={14} />}
-                  emptyIcon={<Wheat size={40} />}
-                  emptyTitle="Aucune matière première"
-                  emptyDescription="Ajoute maïs, tourteau de soja ou son de blé"
-                  items={grouped.matieres}
-                  onSelect={handleSelect}
-                  onRefresh={refreshData}
-                  cheptel={cheptel}
-                  fournisseurs={fournisseurs}
-                  farmName={FARM_NAME}
-                />
+                {showMatieres ? (
+                  <AlimentSection
+                    title="Matières premières"
+                    emptyIcon={<Wheat size={32} />}
+                    emptyTitle="Aucune matière première"
+                    emptyDescription="Ajoute maïs, tourteau de soja ou son de blé"
+                    items={grouped.matieres}
+                    onSelect={handleSelect}
+                    onRefresh={refreshData}
+                    cheptel={cheptel}
+                    fournisseurs={fournisseurs}
+                    farmName={FARM_NAME}
+                  />
+                ) : null}
 
-                <AlimentSection
-                  title="Concentrés & compléments"
-                  icon={<FlaskConical size={14} />}
-                  emptyIcon={<FlaskConical size={40} />}
-                  emptyTitle="Aucun concentré"
-                  emptyDescription="Ajoute KPC, Mycofix, Lysine…"
-                  emptyAction={{
-                    label: 'Ajouter un aliment',
-                    onClick: () => setAddOpen(true),
-                  }}
-                  items={grouped.concentres}
-                  onSelect={handleSelect}
-                  onRefresh={refreshData}
-                  cheptel={cheptel}
-                  fournisseurs={fournisseurs}
-                  farmName={FARM_NAME}
-                />
+                {showConcentres ? (
+                  <AlimentSection
+                    title="Concentrés & compléments"
+                    emptyIcon={<FlaskConical size={32} />}
+                    emptyTitle="Aucun concentré"
+                    emptyDescription="Ajoute KPC, Mycofix, Lysine…"
+                    emptyAction={{
+                      label: 'Ajouter un aliment',
+                      onClick: () => setAddOpen(true),
+                    }}
+                    items={grouped.concentres}
+                    onSelect={handleSelect}
+                    onRefresh={refreshData}
+                    cheptel={cheptel}
+                    fournisseurs={fournisseurs}
+                    farmName={FARM_NAME}
+                  />
+                ) : null}
 
-                {grouped.autres.length > 0 ? (
+                {showAutres ? (
                   <AlimentSection
                     title="Autres aliments"
-                    icon={<Box size={14} />}
-                    emptyIcon={<Box size={40} />}
+                    emptyIcon={<Box size={32} />}
                     emptyTitle="Aucun autre aliment"
                     emptyDescription="Les aliments composés (TRUIE-GEST, PORCELET…) apparaîtront ici."
                     items={grouped.autres}
@@ -777,6 +704,13 @@ const AlimentsView: React.FC = () => {
             )}
           </div>
         </AgritechLayout>
+
+        {/* ── FAB DS — Ajouter un aliment ─────────────────────────── */}
+        <Fab
+          label="Aliment"
+          ariaLabel="Ajouter un nouvel aliment"
+          onClick={() => setAddOpen(true)}
+        />
 
         <QuickAddAlimentForm
           isOpen={addOpen}

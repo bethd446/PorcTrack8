@@ -1,7 +1,7 @@
 /**
  * QuickConsoAlimentForm — Saisie rapide d'une consommation aliment réelle
  * ════════════════════════════════════════════════════════════════════════
- * V21-3 (2026-05-01).
+ * V44 archétype 5 (polish) — 2026-05-04.
  *
  * Permet à l'éleveur de saisir la conso aliment réelle pour :
  *   • Une bande active (statut ≠ Vendu/RECAP)
@@ -23,11 +23,10 @@
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { IonToast } from '@ionic/react';
 import { Wheat, Send, AlertTriangle } from 'lucide-react';
 
-import { BottomSheet } from '../agritech';
-import { FormField, Input, Select, Textarea, Button } from '@/design-system';
+import { AppToast, BottomSheet, useAppToast } from '../agritech';
+import { Button, FormField, Input, Section, Select, Textarea } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import { updateProduitAliment } from '../../services/supabaseWrites';
 import { insertFeedConsumption } from '../../services/feedConsumptionAnalyzer';
@@ -58,6 +57,7 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
   onSuccess,
 }) => {
   const { bandes, truies, stockAliment, refreshData } = useFarm();
+  const { show: showToast, toastProps } = useAppToast();
 
   const initialDate = useMemo(() => toIsoDateInput(), []);
 
@@ -72,7 +72,6 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
   const [notes, setNotes] = useState<string>('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string>('');
 
   // Reset à l'ouverture (render-time sync)
   const [lastOpen, setLastOpen] = useState<boolean>(isOpen);
@@ -168,10 +167,9 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
 
       const online = typeof navigator !== 'undefined' && navigator.onLine;
       const baseMsg = online ? 'Conso enregistrée' : 'Conso en file · sync auto';
-      setToast(
-        ruptureImminente
-          ? `${baseMsg} · stock bas !`
-          : baseMsg,
+      showToast(
+        ruptureImminente ? `${baseMsg} · stock bas !` : baseMsg,
+        ruptureImminente ? 'warning' : 'success',
       );
       try {
         await refreshData(true);
@@ -181,8 +179,9 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
       if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
-      setToast(
+      showToast(
         err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement',
+        'error',
       );
     } finally {
       setSaving(false);
@@ -212,6 +211,9 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
               Saisie conso aliment réelle
             </p>
           </div>
+
+          {/* ═══ Section : Informations principales ═══════════════════════ */}
+          <Section label="INFORMATIONS PRINCIPALES" />
 
           {/* Sujet : Bande / Truie */}
           <fieldset className="space-y-2">
@@ -269,7 +271,6 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
                 aria-label="Bande"
                 aria-required="true"
                 aria-invalid={!!errors.bandeId}
-                aria-describedby={errors.bandeId ? 'conso-bande-error' : undefined}
                 value={bandeId}
                 onChange={e => setBandeId(e.target.value)}
                 disabled={saving}
@@ -289,7 +290,6 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
                 aria-label="Truie"
                 aria-required="true"
                 aria-invalid={!!errors.truieId}
-                aria-describedby={errors.truieId ? 'conso-truie-error' : undefined}
                 value={truieId}
                 onChange={e => setTruieId(e.target.value)}
                 disabled={saving}
@@ -304,6 +304,9 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
             </FormField>
           )}
 
+          {/* ═══ Section : Aliment & quantité ═══════════════════════════ */}
+          <Section label="ALIMENT & QUANTITÉ" />
+
           <FormField
             label="Aliment"
             required
@@ -315,9 +318,6 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
               aria-label="Aliment"
               aria-required="true"
               aria-invalid={!!errors.alimentId}
-              aria-describedby={
-                errors.alimentId ? 'conso-aliment-error' : 'conso-aliment-hint'
-              }
               value={alimentId}
               onChange={e => setAlimentId(e.target.value)}
               disabled={saving}
@@ -343,7 +343,6 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
                 step={0.5}
                 aria-required="true"
                 aria-invalid={!!errors.qtyKg}
-                aria-describedby={errors.qtyKg ? 'conso-qty-error' : undefined}
                 className="font-mono tabular-nums"
                 placeholder="0"
                 value={qtyKg}
@@ -359,9 +358,6 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
                 type="date"
                 aria-label="Date conso"
                 aria-invalid={!!errors.dateConso}
-                aria-describedby={
-                  errors.dateConso ? 'conso-date-error' : undefined
-                }
                 className="font-mono tabular-nums"
                 value={dateConso}
                 onChange={e => setDateConso(e.target.value)}
@@ -384,6 +380,9 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
             </div>
           ) : null}
 
+          {/* ═══ Section : Notes ════════════════════════════════════════ */}
+          <Section label="NOTES" />
+
           <FormField label="Notes" hint="optionnel" error={errors.notes}>
             <Textarea
               id="conso-notes"
@@ -391,7 +390,6 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
               maxLength={200}
               rows={3}
               aria-invalid={!!errors.notes}
-              aria-describedby={errors.notes ? 'conso-notes-error' : undefined}
               placeholder="Observation libre…"
               value={notes}
               onChange={e => setNotes(e.target.value)}
@@ -401,7 +399,7 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
 
           <div className="flex gap-3 justify-end pt-2 border-t border-border">
             <Button
-              variant="secondary"
+              variant="ghost"
               onClick={handleClose}
               disabled={saving}
               ariaLabel="Annuler et fermer"
@@ -426,13 +424,7 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
         </form>
       </BottomSheet>
 
-      <IonToast
-        isOpen={toast !== ''}
-        message={toast}
-        duration={1800}
-        onDidDismiss={() => setToast('')}
-        position="bottom"
-      />
+      <AppToast {...toastProps} />
     </>
   );
 };

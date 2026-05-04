@@ -15,9 +15,9 @@ import {
   Info,
 } from 'lucide-react';
 import AgritechLayout from '../../components/AgritechLayout';
-import { Chip, SectionDivider } from '../../components/agritech';
+import { Chip } from '../../components/agritech';
 import TopBarSync from '../../components/design/TopBarSync';
-import { Button, PageHeader } from '@/design-system';
+import { Button, PageHeader, Section, Tabs } from '@/design-system';
 
 type TabKey = 'cycle' | 'terrain' | 'biosecurite' | 'rations' | 'checklists';
 
@@ -272,46 +272,17 @@ const ProtocolsView: React.FC = () => {
               subtitle="Procédures et SOP"
             />
 
-            <div
-              className="flex gap-2 overflow-x-auto -mx-1 px-1"
-              role="tablist"
-              aria-label="Catégories"
-            >
-              {tabs.map(t => {
-                const active = tab === t.key;
-                return (
-                  <Button
-                    key={t.key}
-                    variant={active ? 'primary' : 'secondary'}
-                    size="small"
-                    role="tab"
-                    aria-selected={active}
-                    onClick={() => setTab(t.key)}
-                    className={
-                      'pressable shrink-0 inline-flex items-center gap-1.5 px-3 h-8 rounded-md border text-[11px] font-semibold uppercase tracking-wide transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 ' +
-                      (active
-                        ? 'bg-accent text-bg-0 border-accent'
-                        : 'bg-bg-1 text-text-1 border-border hover:border-accent/60 hover:text-text-0')
-                    }
-                  >
-                    <span>{t.label}</span>
-                    <span
-                      className={
-                        'tabular-nums text-[10px] ' +
-                        (active ? 'text-bg-0/80' : 'text-text-2')
-                      }
-                    >
-                      {t.count}
-                    </span>
-                  </Button>
-                );
-              })}
-            </div>
+            <Tabs
+              ariaLabel="Catégories de protocoles"
+              value={tab}
+              onChange={(v) => setTab(v as TabKey)}
+              items={tabs.map(t => ({ id: t.key, label: t.label, count: t.count }))}
+            />
 
           <div className="pt-2">
             {tab === 'cycle' && (
               <div className="space-y-6">
-                <SectionDivider label="Étapes de production" />
+                <Section label="ÉTAPES DE PRODUCTION" />
 
                 <div className="card-dense bg-bg-2 border-accent/20 p-4 mb-4 flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full bg-accent/10 flex items-center justify-center text-accent shrink-0">
@@ -420,7 +391,7 @@ const ProtocolsView: React.FC = () => {
 
             {tab === 'terrain' && (
               <>
-                <SectionDivider label="Fiches terrain" />
+                <Section label="FICHES TERRAIN" />
                 <ul className="space-y-3" aria-label="Protocoles terrain essentiels">
                   {protocols.terrain.map(p => (
                     <li key={p.id}>
@@ -463,7 +434,7 @@ const ProtocolsView: React.FC = () => {
 
             {tab === 'biosecurite' && (
               <>
-                <SectionDivider label="Biosécurité" />
+                <Section label="BIOSÉCURITÉ" />
                 <ul className="space-y-3" aria-label="Protocoles de biosécurité">
                   {protocols.biosecurite.map(p => (
                     <li key={p.id}>
@@ -498,7 +469,7 @@ const ProtocolsView: React.FC = () => {
 
             {tab === 'rations' && (
               <>
-                <SectionDivider label="Rations" />
+                <Section label="RATIONS" />
                 <ul className="space-y-3" aria-label="Protocoles de rationnement">
                   {protocols.rations.map(r => (
                     <li key={r.id}>
@@ -528,15 +499,7 @@ const ProtocolsView: React.FC = () => {
               <div className="space-y-5">
                 {protocols.checklists.map(c => (
                   <section key={c.id} aria-label={c.title}>
-                    <SectionDivider
-                      label={c.title}
-                      action={
-                        <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-text-2">
-                          <ClipboardCheck size={12} aria-hidden="true" />
-                          {c.tasks.length} tâches
-                        </span>
-                      }
-                    />
+                    <Section label={`${c.title.toUpperCase()} · ${c.tasks.length} TÂCHES`} />
                     <ul className="card-dense !p-0 overflow-hidden" aria-label={`Tâches ${c.title}`}>
                       {c.tasks.map((task, idx) => (
                         <li

@@ -14,8 +14,8 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { IonModal, IonToast } from '@ionic/react';
 
+import { AppToast, BottomSheet, useAppToast } from '../agritech';
 import { Wizard, type WizardStep } from '@/design-system';
 import PhotoUploader from './PhotoUploader';
 import { listLoges, updateSow } from '../../services/supabaseWrites';
@@ -179,7 +179,7 @@ const EditTruieWizard: React.FC<EditTruieWizardProps> = ({
   const [photoDirty, setPhotoDirty] = useState(false);
   const [errors, setErrors] = useState<TruieEditValidation['errors']>({});
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string>('');
+  const { show: showToast, toastProps } = useAppToast();
 
   // Champs spécifiques wizard (hors validation TruieEditDraft)
   const [verratId, setVerratId] = useState<string>(currentSaillie?.verratId ?? '');
@@ -308,7 +308,7 @@ const EditTruieWizard: React.FC<EditTruieWizardProps> = ({
       return;
     }
     if (selectedLogeIdDirty && logeConflict) {
-      setToast(
+      showToast(
         `Loge déjà occupée par ${
           logeConflict.kind === 'truie'
             ? `truie ${logeConflict.label}`
@@ -316,6 +316,8 @@ const EditTruieWizard: React.FC<EditTruieWizardProps> = ({
               ? `verrat ${logeConflict.label}`
               : `bande ${logeConflict.label}`
         }`,
+        'warning',
+        { duration: 1800 },
       );
       return;
     }
@@ -326,7 +328,7 @@ const EditTruieWizard: React.FC<EditTruieWizardProps> = ({
       !photoDirty &&
       !selectedLogeIdDirty
     ) {
-      setToast('Aucune modification');
+      showToast('Aucune modification', 'info', { duration: 1800 });
       onClose();
       return;
     }
@@ -360,14 +362,20 @@ const EditTruieWizard: React.FC<EditTruieWizardProps> = ({
 
       const writeResult = await updateSow(truie.id, supabasePatch);
       if (!writeResult.success) {
-        setToast(`Erreur : ${writeResult.error ?? 'Enregistrement échoué'}`);
+        showToast(
+          `Erreur : ${writeResult.error ?? 'Enregistrement échoué'}`,
+          'error',
+          { duration: 1800 },
+        );
         return;
       }
       const online = typeof navigator !== 'undefined' && navigator.onLine;
-      setToast(
+      showToast(
         online
           ? 'Modifications enregistrées'
           : 'Modifications en file · sync auto',
+        online ? 'success' : 'info',
+        { duration: 1800 },
       );
       try {
         await refreshData(true);
@@ -377,10 +385,12 @@ const EditTruieWizard: React.FC<EditTruieWizardProps> = ({
       if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
-      setToast(
+      showToast(
         err instanceof Error
           ? `Erreur : ${err.message}`
           : 'Erreur enregistrement local',
+        'error',
+        { duration: 1800 },
       );
     } finally {
       setSaving(false);
@@ -398,6 +408,7 @@ const EditTruieWizard: React.FC<EditTruieWizardProps> = ({
     refreshData,
     onClose,
     onSuccess,
+    showToast,
   ]);
 
   // ── Steps ────────────────────────────────────────────────────────────────
@@ -741,7 +752,7 @@ const EditTruieWizard: React.FC<EditTruieWizardProps> = ({
 
   return (
     <>
-      <IonModal isOpen={isOpen} onDidDismiss={onClose}>
+      <BottomSheet isOpen={isOpen} onClose={onClose} height="full">
         <Wizard
           id={`edit-truie-${truie.id}`}
           steps={steps}
@@ -751,15 +762,9 @@ const EditTruieWizard: React.FC<EditTruieWizardProps> = ({
           completeLabel="Enregistrer"
           busy={saving}
         />
-      </IonModal>
+      </BottomSheet>
 
-      <IonToast
-        isOpen={toast !== ''}
-        message={toast}
-        duration={1800}
-        onDidDismiss={() => setToast('')}
-        position="bottom"
-      />
+      <AppToast {...toastProps} />
     </>
   );
 };

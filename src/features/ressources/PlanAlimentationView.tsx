@@ -1,11 +1,17 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
 import { AlertTriangle } from 'lucide-react';
 import AgritechLayout from '../../components/AgritechLayout';
-import { default as KpiCardV6 } from '../../components/design/KpiCard';
-import { Chip, DataRow, SectionDivider } from '../../components/agritech';
 import TopBarSync from '../../components/design/TopBarSync';
-import { PageHeader } from '@/design-system';
+import {
+  Card,
+  ListItem,
+  PageHeader,
+  Search,
+  Section,
+  Tabs,
+  Tag,
+} from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   buildAlimentationPlan,
@@ -36,32 +42,35 @@ function formatCategoriesConsommatrices(cats: CategoryConsumption[]): string {
   return cats.map(c => c.label.toLowerCase()).join(' + ');
 }
 
-/** Tone Chip selon statut de couverture. */
-function coverageChipTone(statut: FeedCoverage['statutCouverture']): 'red' | 'amber' | 'default' | 'accent' {
+type TagVariant = 'default' | 'primary' | 'accent' | 'soft' | 'danger' | 'warning' | 'success';
+
+/** Variant Tag DS selon statut de couverture. */
+function coverageTagVariant(statut: FeedCoverage['statutCouverture']): TagVariant {
   switch (statut) {
     case 'CRITIQUE':
-      return 'red';
+      return 'danger';
     case 'HAUTE':
-      return 'amber';
+      return 'warning';
     case 'OK':
-      return 'accent';
+      return 'success';
     default:
       return 'default';
   }
 }
 
+type CoverageFilter = 'all' | 'critique' | 'haute' | 'ok';
+
 /**
  * PlanAlimentationView — Plan d'alimentation & couverture stocks.
  *
- * Calcule en live (useMemo) :
- *  - La consommation journalière par catégorie (truies/verrats/porcelets).
- *  - Les jours de couverture par aliment en stock.
- *  - Un résumé global + sections triées par urgence.
- *
- * Lecture seule — aucune mutation du FarmContext.
+ * V44 archétype 3 — liste pure : Tabs (filtre urgence) + Search + Sections DS
+ * + ListItem DS + Tag DS. Logique de calcul (`buildAlimentationPlan`,
+ * `sortCoveragesByUrgency`) intacte. Lecture seule.
  */
 const PlanAlimentationView: React.FC = () => {
   const { truies, verrats, bandes, stockAliment } = useFarm();
+  const [filter, setFilter] = useState<CoverageFilter>('all');
+  const [query, setQuery] = useState('');
 
   const plan = useMemo(
     () => buildAlimentationPlan({ truies, verrats, bandes, stockAliment }),
@@ -73,9 +82,27 @@ const PlanAlimentationView: React.FC = () => {
     [plan.coverages]
   );
 
-  // Regroupements par niveau d'urgence (une passe, pas N filter sur le tableau).
-  const critiques = sortedCoverages.filter(c => c.statutCouverture === 'CRITIQUE');
-  const hautes = sortedCoverages.filter(c => c.statutCouverture === 'HAUTE');
+  const filteredCoverages = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return sortedCoverages.filter(cov => {
+      if (q && !cov.stock.libelle.toLowerCase().includes(q)) return false;
+      if (filter === 'critique') return cov.statutCouverture === 'CRITIQUE';
+      if (filter === 'haute') return cov.statutCouverture === 'HAUTE';
+      if (filter === 'ok') return cov.statutCouverture === 'OK';
+      return true;
+    });
+  }, [sortedCoverages, filter, query]);
+
+  const counts = useMemo(() => {
+    const out = { all: sortedCoverages.length, critique: 0, haute: 0, ok: 0 };
+    for (const c of sortedCoverages) {
+      if (c.statutCouverture === 'CRITIQUE') out.critique += 1;
+      else if (c.statutCouverture === 'HAUTE') out.haute += 1;
+      else if (c.statutCouverture === 'OK') out.ok += 1;
+    }
+    return out;
+  }, [sortedCoverages]);
+
   const categoriesAvecConso = plan.categories.filter(c => c.consommationJournaliere > 0);
 
   return (
@@ -94,138 +121,107 @@ const PlanAlimentationView: React.FC = () => {
               subtitle="Programme nutritionnel"
             />
 
-            {/* ── Summary strip : 3 KPI ───────────────────────────── */}
-            <div className="grid grid-cols-3 gap-2">
-              <KpiCardV6
-                label="Conso/j"
-                value={formatKg(plan.consommationJournaliereTotale)}
-                unit="kg"
-              />
-              <KpiCardV6
-                label="Stock"
-                value={formatKg(plan.stockTotal)}
-                unit="kg"
-              />
-              <KpiCardV6
-                label="Couv. moy."
-                value={formatJours(plan.joursCouvertureMoyenne)}
-                unit="j"
-                accentColor={
-                  !isFinite(plan.joursCouvertureMoyenne)
-                    ? undefined
-                    : plan.joursCouvertureMoyenne < 7
-                    ? 'var(--color-danger)'
-                    : plan.joursCouvertureMoyenne < 14
-                    ? 'var(--amber-pork)'
-                    : undefined
-                }
-              />
-            </div>
-
-            {/* ── Stock critique (< 7j) ──────────────────────────── */}
-            {critiques.length > 0 && (
-              <section>
-                <SectionDivider label="Stock critique" />
-                <div className="card-dense !p-0 overflow-hidden">
-                  {critiques.map(cov => (
-                    <DataRow
-                      key={cov.stock.id}
-                      primary={cov.stock.libelle}
-                      secondary={`${formatJours(cov.joursCouverture)}j · ${formatCategoriesConsommatrices(
-                        cov.categoriesConsommatrices
-                      )}`}
-                      accessory={
-                        <Chip
-                          tone="red"
-                          label={`${formatJours(cov.joursCouverture)}j`}
-                        />
-                      }
-                    />
-                  ))}
+            {/* ── Filtres + recherche dans une Card DS ──────────────── */}
+            {sortedCoverages.length > 0 && (
+              <Card compact>
+                <div className="flex flex-col gap-3">
+                  <Tabs
+                    value={filter}
+                    onChange={v => setFilter(v as CoverageFilter)}
+                    options={[
+                      { value: 'all', label: 'Tous', count: counts.all },
+                      { value: 'critique', label: 'Critique', count: counts.critique },
+                      { value: 'haute', label: 'Faible', count: counts.haute },
+                      { value: 'ok', label: 'OK', count: counts.ok },
+                    ]}
+                    ariaLabel="Filtrer les stocks par couverture"
+                  />
+                  <Search
+                    value={query}
+                    onChange={e => setQuery(e.target.value)}
+                    onClear={() => setQuery('')}
+                    placeholder="Rechercher un aliment…"
+                    aria-label="Rechercher un aliment"
+                  />
                 </div>
-              </section>
+              </Card>
             )}
 
-            {/* ── Stock faible (< 14j) ───────────────────────────── */}
-            {hautes.length > 0 && (
+            {/* ── Section catégories consommatrices ──────────────── */}
+            {categoriesAvecConso.length > 0 && (
               <section>
-                <SectionDivider label="Stock faible" />
-                <div className="card-dense !p-0 overflow-hidden">
-                  {hautes.map(cov => (
-                    <DataRow
-                      key={cov.stock.id}
-                      primary={cov.stock.libelle}
-                      secondary={`${formatJours(cov.joursCouverture)}j · ${formatCategoriesConsommatrices(
-                        cov.categoriesConsommatrices
-                      )}`}
-                      accessory={
-                        <Chip
-                          tone="amber"
-                          label={`${formatJours(cov.joursCouverture)}j`}
-                        />
-                      }
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* ── Par catégorie ──────────────────────────────────── */}
-            <section>
-              <SectionDivider label="Par catégorie" />
-              {categoriesAvecConso.length === 0 ? (
-                <div className="card-dense text-[13px] text-text-2 text-center py-4">
-                  Aucune catégorie active sur le troupeau.
-                </div>
-              ) : (
-                <div className="card-dense !p-0 overflow-hidden">
+                <Section label={`Par catégorie · ${categoriesAvecConso.length}`} />
+                <Card compact className="!p-0 overflow-hidden">
                   {categoriesAvecConso.map(cat => (
-                    <DataRow
-                      key={cat.key}
-                      primary={cat.label}
-                      secondary={`${cat.effectif} animaux · ${formatKg(
-                        cat.rationMoyenne
-                      )} kg/j/tête`}
-                      accessory={
-                        <Chip
-                          tone="accent"
-                          label={`${formatKg(cat.consommationJournaliere)} kg/j`}
-                        />
-                      }
-                    />
+                    <div key={cat.key}>
+                      <ListItem
+                        title={cat.label}
+                        subtitle={`${cat.effectif} animaux · ${formatKg(cat.rationMoyenne)} kg/j/tête`}
+                        tag={
+                          <Tag variant="accent">
+                            {`${formatKg(cat.consommationJournaliere)} kg/j`}
+                          </Tag>
+                        }
+                      />
+                    </div>
                   ))}
-                </div>
+                </Card>
+              </section>
+            )}
+
+            {/* ── Section couverture stocks ──────────────────────── */}
+            <section>
+              <Section
+                label={`Couverture stocks · ${filteredCoverages.length}`}
+                tone={filter === 'critique' ? 'danger' : 'primary'}
+              />
+              {sortedCoverages.length === 0 ? (
+                <Card compact>
+                  <div className="text-[13px] text-text-2 text-center py-4 flex items-center justify-center gap-2">
+                    <AlertTriangle size={14} className="text-amber" />
+                    <span>Aucun aliment en stock.</span>
+                  </div>
+                </Card>
+              ) : filteredCoverages.length === 0 ? (
+                <Card compact>
+                  <div className="text-[13px] text-text-2 text-center py-4">
+                    {query ? `Aucun résultat pour « ${query} ».` : 'Aucun aliment dans ce filtre.'}
+                  </div>
+                </Card>
+              ) : (
+                <Card compact className="!p-0 overflow-hidden">
+                  {filteredCoverages.map(cov => (
+                    <div key={cov.stock.id}>
+                      <ListItem
+                        title={cov.stock.libelle}
+                        subtitle={`${formatKg(cov.stock.stockActuel)} ${cov.stock.unite} · ${formatCategoriesConsommatrices(cov.categoriesConsommatrices)}`}
+                        tag={
+                          <Tag variant={coverageTagVariant(cov.statutCouverture)} dot>
+                            {`${formatJours(cov.joursCouverture)}j`}
+                          </Tag>
+                        }
+                      />
+                    </div>
+                  ))}
+                </Card>
               )}
             </section>
 
-            {/* ── Tous les stocks ────────────────────────────────── */}
-            <section>
-              <SectionDivider label="Tous les stocks" />
-              {sortedCoverages.length === 0 ? (
-                <div className="card-dense text-[13px] text-text-2 text-center py-4 flex items-center justify-center gap-2">
-                  <AlertTriangle size={14} className="text-amber" />
-                  <span>Aucun aliment en stock.</span>
-                </div>
-              ) : (
-                <div className="card-dense !p-0 overflow-hidden">
-                  {sortedCoverages.map(cov => (
-                    <DataRow
-                      key={cov.stock.id}
-                      primary={cov.stock.libelle}
-                      secondary={`${formatKg(cov.stock.stockActuel)} ${cov.stock.unite} · ${formatCategoriesConsommatrices(
-                        cov.categoriesConsommatrices
-                      )}`}
-                      accessory={
-                        <Chip
-                          tone={coverageChipTone(cov.statutCouverture)}
-                          label={`${formatJours(cov.joursCouverture)}j`}
-                        />
-                      }
-                    />
-                  ))}
-                </div>
-              )}
-            </section>
+            {/* ── Footer synthèse globale (mono, sans StatsGrid) ────── */}
+            {plan.consommationJournaliereTotale > 0 && (
+              <div
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 10.5,
+                  letterSpacing: '0.10em',
+                  textTransform: 'uppercase',
+                  color: 'var(--muted)',
+                }}
+                aria-live="polite"
+              >
+                {`Conso ${formatKg(plan.consommationJournaliereTotale)} kg/j · Stock ${formatKg(plan.stockTotal)} kg · Couv. moy. ${formatJours(plan.joursCouvertureMoyenne)}j`}
+              </div>
+            )}
           </div>
         </AgritechLayout>
       </IonContent>

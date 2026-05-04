@@ -19,6 +19,31 @@
 
 ---
 
+## 2026-05-04 · [V43.7] Cohérence DS V2 + perf CLS/LCP · commit `fcd2373`
+
+**Contexte** : Audit prod V43.7 (chrome-devtools-mcp, 25 routes parcourues) après refactor BandeDetailView V43.6. 3 axes confirmés : vocabulaire résiduel ancienne structure, CLS élevé sur 3 pages clés, LCP bloquant `/pilotage`. Le user demande mode minutieux, zéro tolérance aux chevauchements ancienne/nouvelle structure.
+
+**Livré** :
+- **Vocabulaire DS V2** : TruieDetail breadcrumb `Troupeau`→`Élevage` + eyebrow `Fiche truie`→`Élevage · Truie` ; AlertsView eyebrow `Tables · Alertes`→`Outils · Alertes` ; SystemManagement swap eyebrow/title ; OnboardingWizard commentaires `Cheptel`→`Élevage`
+- **Breadcrumb cliquable** : VerratDetailView migré du format string nu au format `[{label, href}]` cliquable, alignant TruieDetail
+- **Tab nav** : `Perf` renommé `Pilotage` (alignement label/URL/h1) ; tab Élevage retire les match orphelins `/cheptel`+`/bandes` ; tab Repro ajoute `/cycles` au match (sous-vues post-sevrage/croissance/finition restent rattachées)
+- **Routing** : redirects `/plus→/more`, `/troupeau/porcelets→view=porcelets` ; PendingValidationsView `navigate('/bandes')`+`'/finances'` réparés vers routes réelles
+- **CLS** : TodayHub +80px reservés (confirmations + pesées async) ; CyclesHub +168px pipeline + 280px liste bandes ; TruieDetail +112px CTA mise-bas + 100px CycleTimeline
+- **LCP /pilotage** : `genererRapportGlobal`+`prepareAuditSnapshot` déplacés en `useEffect`+`startTransition` + lazy init `useState` (compute synchrone au mount si data présente, async sinon — préserve les tests vitest synchrones)
+- **Cleanup code mort** : suppression `CheptelView.tsx` (454L, @deprecated, 0 import) + `BandesView.tsx` (362L, @deprecated, 0 import) + commentaires App.tsx
+
+**Tests** : 1681 pass · delta +7 vs sub-agent intermédiaire (lazy init PilotageHub a re-validé les 7 tests timeout) | 6 skipped · 136/136 Test Files
+
+**Écarts/notes** :
+- 5 "404 routes" remontés par le sub-agent d'audit étaient en partie des erreurs dans la spec d'audit que j'avais fournie (URLs `/tables`, `/perf`, `/cycles/saillie` n'ont jamais existé). J'ai documenté ce faux positif dans la réponse user.
+- Le sub-agent CLS+LCP avait introduit une régression sur `PilotageHub.test.tsx` (timeout vitest worker) à cause du `startTransition` non-flushé en jsdom. Fix manuel via lazy init `useState` qui synchronise au mount quand `loading=false`.
+
+**Files touched** : 13 src files (11M, 2D), +326/-1088 lignes (cleanup massif grâce aux 2 vues @deprecated)
+
+**Liens** : [[decisions]] · [[learnings]] · `src/features/hubs/PilotageHub.tsx` · `src/components/AgritechNavV2.tsx`
+
+---
+
 ## 2026-05-03 · [V38] Migration DS V2 finale · commit en cours
 
 **Contexte** : PDF "PORCTRACK-MIGRATION-DS-V2-FINAL" reçu — plan de migration en 6 phases pour éliminer définitivement tout décalage visuel.

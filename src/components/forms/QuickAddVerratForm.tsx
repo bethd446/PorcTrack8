@@ -9,11 +9,10 @@
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { IonToast } from '@ionic/react';
 import { Plus, Save } from 'lucide-react';
 
-import { BottomSheet } from '../agritech';
-import { FormField, Input, Button } from '@/design-system';
+import { AppToast, BottomSheet, useAppToast } from '../agritech';
+import { FormField, Input, Button, Segment } from '@/design-system';
 import { insertBoar } from '../../services/supabaseWrites';
 import { enqueueInsert, isOnline } from '../../services/offlineQueue';
 import { useFarm } from '../../context/FarmContext';
@@ -55,7 +54,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
   const [ration, setRation] = useState<string>('3.0');
   const [errors, setErrors] = useState<AddVerratValidation['errors']>({});
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string>('');
+  const { show: showToast, toastProps } = useAppToast();
 
   // Reset à l'ouverture (render-time sync)
   const [lastKey, setLastKey] = useState<{ isOpen: boolean; suggestedId: string }>({
@@ -115,7 +114,11 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
       } else {
         await enqueueInsert('boars', result.values as Record<string, unknown>);
       }
-      setToast(online ? 'Verrat ajouté' : 'Verrat en file · sync auto');
+      showToast(
+        online ? 'Verrat ajouté' : 'Verrat en file · sync auto',
+        online ? 'success' : 'info',
+        { duration: 1800 },
+      );
       try {
         await refreshData(true);
       } catch {
@@ -124,8 +127,10 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
       if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
-      setToast(
+      showToast(
         err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement',
+        'error',
+        { duration: 1800 },
       );
     } finally {
       setSaving(false);
@@ -284,47 +289,14 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
             />
           </FormField>
 
-          {/* TODO V44: Radio DS missing — radiogroup custom conservé */}
-          <div className="space-y-1.5">
-            <span
-              id="add-verrat-statut-label"
-              className="block text-mono-label text-text-2"
-            >
-              Statut
-            </span>
-            <div
-              className="flex flex-wrap gap-2"
-              role="radiogroup"
-              aria-labelledby="add-verrat-statut-label"
-            >
-              {VERRAT_STATUTS.map(s => {
-                const selected = statut === s;
-                return (
-                  <button
-                    key={s}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    aria-label={`Statut ${s}`}
-                    onClick={() => setStatut(s)}
-                    disabled={saving}
-                    className={[
-                      'pressable inline-flex items-center justify-center',
-                      'h-10 px-3 rounded-md border',
-                      'text-[12px] uppercase tracking-wide',
-                      'transition-colors duration-[160ms]',
-                      'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                      selected
-                        ? 'bg-accent text-bg-0 border-accent font-semibold'
-                        : 'bg-bg-0 text-text-1 border-border hover:border-text-2',
-                    ].join(' ')}
-                  >
-                    {s}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <FormField label="Statut">
+            <Segment<VerratStatutChoice>
+              value={statut}
+              onChange={v => setStatut(v)}
+              options={VERRAT_STATUTS.map(s => ({ value: s, label: s }))}
+              ariaLabel="Statut du verrat"
+            />
+          </FormField>
 
           <FormField
             label="Ration (kg/j)"
@@ -353,7 +325,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
 
           <div className="flex gap-3 justify-end pt-2 border-t border-border">
             <Button
-              variant="secondary"
+              variant="ghost"
               onClick={handleClose}
               disabled={saving}
               ariaLabel="Annuler et fermer"
@@ -378,13 +350,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
         </form>
       </BottomSheet>
 
-      <IonToast
-        isOpen={toast !== ''}
-        message={toast}
-        duration={1800}
-        onDidDismiss={() => setToast('')}
-        position="bottom"
-      />
+      <AppToast {...toastProps} />
     </>
   );
 };

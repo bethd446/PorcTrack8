@@ -1,9 +1,9 @@
 import React, { useMemo, useRef, useState, useCallback } from 'react';
-import { IonToast, IonSelect, IonSelectOption, IonSegment, IonSegmentButton, IonLabel, useIonAlert } from '@ionic/react';
+import { useIonAlert } from '@ionic/react';
 import { CheckCircle2, Search, ChevronRight, ArrowLeft } from 'lucide-react';
 
-import { BottomSheet, DataRow } from '../agritech';
-import { Button, Input, Textarea } from '@/design-system';
+import { AppToast, BottomSheet, DataRow, useAppToast } from '../agritech';
+import { Button, FormField, Input, Section, Segment, Select, Textarea } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import { filterRealPortees } from '../../services/bandesAggregator';
 import {
@@ -38,7 +38,13 @@ const CAUSE_LABEL: Record<string, string> = Object.fromEntries(
 );
 
 /**
- * QuickMortalityForm — Déclaration rapide d'une mortalité (Porcelet, Truie ou Verrat).
+ * QuickMortalityForm — Déclaration rapide d'une mortalité (V44 archétype 5).
+ *
+ * Refonte V44 :
+ *  - 0 IonSelect / IonSegment / IonToast / IonLabel : Select + Segment + AppToast DS
+ *  - Sections UPPERCASE (INFORMATIONS PRINCIPALES / DÉCÈS / NOTES)
+ *  - useIonAlert conservé pour la confirmation (modal natif iOS/Android)
+ *  - Logique métier intacte : insertHealthLog + updateBatchByCode/updateSowByCode/updateBoarByCode
  */
 export interface QuickMortalityFormProps {
   isOpen: boolean;
@@ -168,7 +174,7 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
   const [saving, setSaving] = useState(false);
   const [, setSuccess] = useState(false);
   const [impactFCFA, setImpactFCFA] = useState<number>(0);
-  const [toast, setToast] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
+  const { toastProps } = useAppToast();
   const [error, setError] = useState<string>('');
 
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -177,7 +183,7 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
   const bandesDispo = useMemo(() => filterRealPortees(bandes), [bandes]);
 
   // Sync defaultBandeId (Required for source-grep) — pre-populate when opened with a bande context
-   
+
   React.useEffect(() => {
     if (isOpen && defaultBandeId) {
       setSelectedBandeId(defaultBandeId);
@@ -235,7 +241,7 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
   }, [onClose, defaultBandeId]);
 
   useEscapeKey(isOpen && !saving, handleClose);
-  const firstFieldRef = useFocusFirstInput<HTMLIonSelectElement>(isOpen && step === 1);
+  const firstFieldRef = useFocusFirstInput<HTMLInputElement>(isOpen && step === 1);
 
   const handleSave = async (): Promise<void> => {
     if (!selectedBandeId || !selectedSubject) return;
@@ -344,25 +350,36 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
     return (sr.displayId || sr.id) + (sr.nom ? ` · ${sr.nom}` : '');
   };
 
+  const vivants = subjectType === 'BANDE' ? (selectedSubject as BandePorcelets | undefined)?.vivants ?? 0 : 0;
+  const maxMorts = Math.max(MIN_DEATHS, Math.min(MAX_DEATHS, vivants > 0 ? vivants : MAX_DEATHS));
+
   return (
     <>
       <BottomSheet isOpen={isOpen} onClose={handleClose} title="Déclarer une mortalité" height="full">
         <div className="space-y-5">
           {step === 1 && (
             <div className="space-y-4">
-              <IonSegment value={subjectType} onIonChange={e => { setSubjectType(e.detail.value as SubjectType); setQuery(''); }} className="premium-segment bg-bg-1 border border-border rounded-md">
-                <IonSegmentButton value="BANDE"><IonLabel className="text-[11px]">Bandes</IonLabel></IonSegmentButton>
-                <IonSegmentButton value="TRUIE"><IonLabel className="text-[11px]">Truies</IonLabel></IonSegmentButton>
-                <IonSegmentButton value="VERRAT"><IonLabel className="text-[11px]">Verrats</IonLabel></IonSegmentButton>
-              </IonSegment>
+              <Segment<SubjectType>
+                value={subjectType}
+                onChange={v => { setSubjectType(v); setQuery(''); }}
+                options={[
+                  { value: 'BANDE', label: 'Bandes' },
+                  { value: 'TRUIE', label: 'Truies' },
+                  { value: 'VERRAT', label: 'Verrats' },
+                ]}
+                ariaLabel="Type de sujet"
+              />
+
               <div className="flex items-center gap-2">
                 <Search size={14} className="text-text-2 flex-shrink-0" aria-hidden="true" />
-                <Input type="search" placeholder="Rechercher sujet…" value={query} onChange={e => setQuery(e.target.value)} />
-              </div>
-
-              {/* Necessary for a11y tests */}
-              <div className="sr-only">
-                <IonSelect id="mortality-bande" ref={firstFieldRef} aria-label="Sélectionner la bande concernée" />
+                <Input
+                  ref={firstFieldRef}
+                  type="search"
+                  placeholder="Rechercher sujet…"
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                  aria-label="Rechercher un sujet"
+                />
               </div>
 
               <ul className="card-dense !p-0 overflow-hidden max-h-[50vh] overflow-y-auto">
@@ -386,60 +403,124 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
           {step === 2 && selectedSubject && (
             <div className="space-y-5">
               <div className="card-dense !p-3 flex items-center gap-3">
-                <Button type="button" variant="ghost" size="small" onClick={() => setStep(1)} className="pressable h-9 w-9 flex items-center justify-center rounded-md bg-bg-2 text-text-1"><ArrowLeft size={14} /></Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="small"
+                  onClick={() => setStep(1)}
+                  ariaLabel="Retour à la sélection"
+                  className="pressable h-9 w-9 flex items-center justify-center rounded-md bg-bg-2 text-text-1"
+                >
+                  <ArrowLeft size={14} />
+                </Button>
                 <div className="min-w-0 flex-1">
                   <div className="text-[10px] uppercase text-text-2">{subjectType}</div>
                   <div className="truncate ft-code text-[13px] text-text-0">{subjectDisplay(selectedSubject)}</div>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="block text-[11px] uppercase text-text-2">Cause suspectée</label>
-                <div className="rounded-md bg-bg-0 border border-border">
-                  <IonSelect value={cause} onIonChange={e => setCause(e.detail.value)} interface="popover" className="agritech-select" style={{'--padding-start': '12px'}}>
-                    {CAUSE_OPTIONS.map(opt => <IonSelectOption key={opt.value} value={opt.value}>{opt.label}</IonSelectOption>)}
-                  </IonSelect>
-                </div>
-              </div>
+              {/* ═══ Section : Décès ═══════════════════════════════════════ */}
+              <Section label="DÉCÈS" />
 
-              {subjectType === 'BANDE' && (() => {
-                const bande = selectedSubject as BandePorcelets;
-                const vivants = bande.vivants ?? 0;
-                const maxMorts = Math.max(MIN_DEATHS, Math.min(MAX_DEATHS, vivants > 0 ? vivants : MAX_DEATHS));
-                return (
-                  <div className="space-y-2">
-                    <label htmlFor="mortality-count" className="block text-[11px] uppercase text-text-2">Nombre de morts</label>
-                    <div className="flex items-center gap-2">
-                      <Button type="button" variant="secondary" aria-label="Diminuer le nombre de morts" onClick={() => setNbMorts(n => Math.max(1, n-1))} className="pressable h-12 w-12 rounded-md border bg-bg-0 text-text-1">−</Button>
-                      <Input
-                        id="mortality-count"
-                        aria-label="Nombre de porcelets morts"
-                        aria-describedby="mortality-count-hint"
-                        type="number"
-                        min={MIN_DEATHS}
-                        max={maxMorts}
-                        value={nbMorts}
-                        onChange={e => setNbMorts(Math.min(maxMorts, clampDeaths(Number(e.target.value))))}
-                      />
-                      <Button type="button" variant="secondary" aria-label="Augmenter le nombre de morts" onClick={() => setNbMorts(n => Math.min(maxMorts, n+1))} className="pressable h-12 w-12 rounded-md border bg-bg-0 text-text-1">+</Button>
-                    </div>
-                    <span id="mortality-count-hint" className="block text-[11px] text-text-2">
-                      Maximum : {vivants} porcelet{vivants > 1 ? 's' : ''} vivant{vivants > 1 ? 's' : ''} actuellement.
-                    </span>
+              <FormField label="Cause suspectée" required>
+                <Select
+                  id="mortality-cause"
+                  aria-label="Cause suspectée"
+                  value={cause}
+                  onChange={e => setCause(e.target.value)}
+                  disabled={saving}
+                >
+                  {CAUSE_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </Select>
+              </FormField>
+
+              {subjectType === 'BANDE' && (
+                <FormField
+                  label="Nombre de morts"
+                  required
+                  hint={`Maximum : ${vivants} porcelet${vivants > 1 ? 's' : ''} vivant${vivants > 1 ? 's' : ''} actuellement.`}
+                >
+                  <span id="mortality-count-hint" className="sr-only">
+                    Maximum {vivants} porcelet{vivants > 1 ? 's' : ''} vivant{vivants > 1 ? 's' : ''} actuellement.
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      ariaLabel="Diminuer le nombre de morts"
+                      onClick={() => setNbMorts(n => Math.max(1, n - 1))}
+                      className="pressable h-12 w-12 rounded-md border bg-bg-0 text-text-1"
+                    >
+                      −
+                    </Button>
+                    <Input
+                      id="mortality-count"
+                      aria-label="Nombre de porcelets morts"
+                      aria-describedby={error ? 'mortality-error mortality-count-hint' : 'mortality-count-hint'}
+                      type="number"
+                      min={MIN_DEATHS}
+                      max={maxMorts}
+                      value={nbMorts}
+                      onChange={e => setNbMorts(Math.min(maxMorts, clampDeaths(Number(e.target.value))))}
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      ariaLabel="Augmenter le nombre de morts"
+                      onClick={() => setNbMorts(n => Math.min(maxMorts, n + 1))}
+                      className="pressable h-12 w-12 rounded-md border bg-bg-0 text-text-1"
+                    >
+                      +
+                    </Button>
                   </div>
-                );
-              })()}
+                </FormField>
+              )}
 
-              <div className="space-y-2">
-                <label htmlFor="mortality-obs" className="block text-[11px] uppercase text-text-2">Observation (optionnel)</label>
-                <Textarea id="mortality-obs" aria-label="Observation sur la mortalité" aria-describedby="mortality-obs-hint" placeholder="Détails…" value={observation} onChange={e => setObservation(e.target.value)} maxLength={240} />
-                <span id="mortality-obs-hint" className="sr-only">Optionnel — description de la cause de mortalité</span>
+              {/* ═══ Section : Notes ═══════════════════════════════════════ */}
+              <Section label="NOTES" />
+
+              <FormField label="Observation" hint="optionnel">
+                <span id="mortality-obs-hint" className="sr-only">Champ optionnel</span>
+                <Textarea
+                  id="mortality-obs"
+                  aria-label="Observation sur la mortalité"
+                  aria-describedby="mortality-obs-hint"
+                  placeholder="Détails…"
+                  value={observation}
+                  onChange={e => setObservation(e.target.value)}
+                  maxLength={240}
+                />
+              </FormField>
+
+              {error && (
+                <p id="mortality-error" className="text-[11px] text-red" role="alert">
+                  {error}
+                </p>
+              )}
+
+              <div className="flex gap-3 justify-end pt-2 border-t border-border">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handleClose}
+                  disabled={saving}
+                  ariaLabel="Annuler la déclaration"
+                >
+                  Annuler
+                </Button>
+                <Button
+                  type="button"
+                  variant="danger"
+                  ariaLabel="Enregistrer la mortalité"
+                  aria-busy={saving}
+                  onClick={handleSave}
+                  disabled={saving || !selectedBandeId || bandesDispo.length === 0}
+                >
+                  {saving ? 'Enregistrement…' : 'Enregistrer'}
+                </Button>
               </div>
-
-              {error && <p id="mortality-error" className="text-[11px] text-red" role="alert">{error}</p>}
-              <Button type="button" variant="danger" fullWidth aria-label="Enregistrer la mortalité" aria-busy={saving} onClick={handleSave} disabled={saving || !selectedBandeId || bandesDispo.length === 0} className="pressable w-full h-14 rounded-md bg-coral text-bg-0 text-[12px] font-bold uppercase tracking-wide">
-                {saving ? 'Enregistrement…' : 'Enregistrer'}
-              </Button>
             </div>
           )}
 
@@ -457,13 +538,7 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
         </div>
       </BottomSheet>
 
-      <IonToast
-        isOpen={toast.show}
-        message={toast.message}
-        duration={2800}
-        onDidDismiss={() => setToast({ show: false, message: '' })}
-        position="bottom"
-      />
+      <AppToast {...toastProps} />
     </>
   );
 };

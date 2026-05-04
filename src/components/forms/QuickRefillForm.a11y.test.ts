@@ -62,10 +62,10 @@ describe('QuickRefillForm · accessibilité', () => {
     expect(SRC).toMatch(
       /id="refill-date"[^]*?aria-label="Date de réception"/,
     );
-    // annuler / valider
-    expect(SRC).toMatch(/aria-label="Annuler le réapprovisionnement"/);
+    // annuler / valider (Button DS expose ariaLabel prop, pas attribut HTML)
+    expect(SRC).toMatch(/ariaLabel="Annuler le réapprovisionnement"/);
     expect(SRC).toMatch(
-      /aria-label="Valider la réception du réapprovisionnement"/,
+      /ariaLabel="Valider la réception du réapprovisionnement"/,
     );
   });
 

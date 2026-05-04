@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Baby, Check, CheckCircle2 } from 'lucide-react';
 
 import { AppToast, BottomSheet, useAppToast } from '../agritech';
-import { Button, Input, Select } from '@/design-system';
+import { Button, Input, Section, Select } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   updateBatchByCode,
@@ -16,6 +16,18 @@ import {
   validateEffectif,
 } from '../../lib/validation/farmValidators';
 
+/**
+ * QuickSevrageForm — Saisie d'un sevrage (J+28).
+ *
+ * V44 archétype 5 : BottomSheet + Section DS + Input/Select DS.
+ * Workflow critique : transition phase bande (Sous mère → Sevré / post-sevrage)
+ * et libération de la truie (En attente saillie) déclenchant l'alerte
+ * R3 (retour chaleur J+5).
+ *
+ * Note : pas de FormField wrapper — labels htmlFor + aria-* explicites pour
+ * compat tests existants (getByLabelText) et a11y native.
+ */
+
 export interface QuickSevrageFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -28,6 +40,10 @@ function todayIsoLocal(): string {
   const tz = d.getTimezoneOffset() * 60_000;
   return new Date(d.getTime() - tz).toISOString().slice(0, 10);
 }
+
+const FIELD_LABEL_CLASS = 'block text-[11px] uppercase tracking-wide text-text-2 font-semibold';
+const FIELD_HINT_CLASS = 'text-[11px] text-text-2';
+const FIELD_ERROR_CLASS = 'text-[11px] text-red';
 
 const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
   isOpen,
@@ -77,6 +93,12 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
     () => bandes.find(b => b.idPortee === bandeId || b.id === bandeId) ?? null,
     [bandes, bandeId],
   );
+
+  const poidsHorsCible = useMemo(() => {
+    const p = parseFloat(poidsKg.replace(',', '.'));
+    if (!Number.isFinite(p) || poidsKg.trim() === '') return false;
+    return p < 4 || p > 10;
+  }, [poidsKg]);
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
@@ -173,28 +195,36 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
         ) : (
           <form
             onSubmit={handleSubmit}
-            className="space-y-5"
+            className="space-y-6"
             noValidate
             aria-label="Saisie d'un sevrage"
           >
+            {/* Header description */}
             <div className="flex items-center gap-3">
               <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
                 <Baby size={18} aria-hidden="true" />
               </div>
-              <p className="text-mono-label text-text-1">
-                Sélectionnez la bande à sevrer
-              </p>
+              <div>
+                <p className="text-mono-label text-text-1">
+                  Sevrage de la portée (J+28)
+                </p>
+                <p className="text-mono-micro text-text-2 mt-0.5">
+                  Libère la truie pour le retour chaleur
+                </p>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <label
-                htmlFor="sevrage-bande"
-                className="block text-mono-label text-text-2"
-              >
-                Bande
+            {/* ═══ Section : Informations principales ════════════════════ */}
+            <Section label="INFORMATIONS PRINCIPALES" />
+
+            <div className="space-y-1.5">
+              <label htmlFor="sevrage-bande" className={FIELD_LABEL_CLASS}>
+                Bande <span className="text-red normal-case font-normal">· requis</span>
               </label>
               <Select
                 id="sevrage-bande"
+                aria-label="Bande"
+                aria-required="true"
                 value={bandeId}
                 onChange={e => setBandeId(e.target.value)}
                 disabled={saving}
@@ -209,58 +239,55 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
                 ))}
               </Select>
               {bandesEligibles.length === 0 && (
-                <p className="text-mono-label text-text-2">
-                  Aucune bande éligible (sous mère)
-                </p>
+                <p className={FIELD_HINT_CLASS}>Aucune bande éligible (sous mère)</p>
               )}
             </div>
 
-            <div className="space-y-2">
-              <label
-                htmlFor="sevrage-date"
-                className="block text-mono-label text-text-2"
-              >
-                Date de sevrage
+            <div className="space-y-1.5">
+              <label htmlFor="sevrage-date" className={FIELD_LABEL_CLASS}>
+                Date de sevrage <span className="text-red normal-case font-normal">· requis</span>
               </label>
               <Input
                 id="sevrage-date"
                 type="date"
+                aria-label="Date de sevrage"
+                aria-required="true"
+                className="font-mono tabular-nums"
                 value={dateIso}
+                max={todayIsoLocal()}
                 onChange={e => setDateIso(e.target.value)}
                 disabled={saving}
               />
             </div>
 
-            <div className="space-y-2">
-              <label
-                htmlFor="sevrage-nb"
-                className="block text-mono-label text-text-2"
-              >
-                Nombre de porcelets sevrés
+            {/* ═══ Section : Effectifs ═══════════════════════════════════ */}
+            <Section label="EFFECTIFS" />
+
+            <div className="space-y-1.5">
+              <label htmlFor="sevrage-nb" className={FIELD_LABEL_CLASS}>
+                Nombre de porcelets sevrés <span className="text-red normal-case font-normal">· requis</span>
               </label>
               <Input
                 id="sevrage-nb"
                 type="text"
                 inputMode="numeric"
+                aria-label="Nombre de porcelets sevrés"
+                aria-required="true"
+                className="font-mono"
                 value={nbSevres}
                 onChange={e => setNbSevres(e.target.value.replace(/[^\d]/g, ''))}
                 disabled={saving}
                 placeholder="0"
               />
               {selected?.vivants !== undefined && (
-                <p className="text-mono-label text-text-2">
-                  Max disponible : {selected.vivants}
-                </p>
+                <p className={FIELD_HINT_CLASS}>Max disponible : {selected.vivants}</p>
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <div className="flex items-center justify-between gap-2">
-                <label
-                  htmlFor="sevrage-poids"
-                  className="block text-mono-label text-text-2"
-                >
-                  Poids moyen sevrage (kg) <span className="text-red normal-case">· obligatoire</span>
+                <label htmlFor="sevrage-poids" className={FIELD_LABEL_CLASS}>
+                  Poids moyen sevrage (kg) <span className="text-red normal-case font-normal">· requis</span>
                 </label>
                 <span className="inline-flex items-center px-2 h-6 rounded-full bg-bg-2 border border-border text-mono-micro text-text-1">
                   5-7 kg cible
@@ -273,43 +300,39 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
                 step={0.1}
                 min={0.5}
                 max={50}
+                aria-label="Poids moyen sevrage"
                 aria-required="true"
+                className="font-mono tabular-nums"
                 value={poidsKg}
                 onChange={e => setPoidsKg(e.target.value)}
                 disabled={saving}
                 placeholder="6.0"
               />
-              {(() => {
-                const p = parseFloat(poidsKg.replace(',', '.'));
-                if (!Number.isFinite(p) || poidsKg.trim() === '') return null;
-                if (p < 4 || p > 10) {
-                  return (
-                    <span
-                      role="status"
-                      className="inline-flex items-center px-2 h-6 rounded-full bg-amber-100 border border-amber-300 text-mono-micro text-amber-900"
-                    >
-                      Hors plage cible 5-7 kg
-                    </span>
-                  );
-                }
-                return null;
-              })()}
+              {poidsHorsCible && (
+                <span
+                  role="status"
+                  className="inline-flex items-center px-2 h-6 rounded-full bg-amber-100 border border-amber-300 text-mono-micro text-amber-900"
+                >
+                  Hors plage cible 5-7 kg
+                </span>
+              )}
             </div>
 
             {error && (
               <p
                 role="alert"
-                className="text-mono-label text-red"
+                className={FIELD_ERROR_CLASS}
               >
                 {error}
               </p>
             )}
 
-            <div className="flex gap-3 justify-end px-4 py-3 border-t border-border">
+            <div className="flex gap-3 justify-end pt-2 border-t border-border">
               <Button
-                variant="secondary"
+                variant="ghost"
                 onClick={onClose}
                 disabled={saving}
+                ariaLabel="Annuler et fermer"
               >
                 Annuler
               </Button>
@@ -318,6 +341,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
                 type="submit"
                 disabled={saving || !bandeId || !nbSevres || !poidsKg}
                 aria-busy={saving}
+                ariaLabel="Enregistrer le sevrage"
               >
                 {saving ? (
                   <span className="animate-pulse">Enregistrement…</span>

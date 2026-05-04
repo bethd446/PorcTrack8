@@ -4,7 +4,7 @@ import { IonToast } from '@ionic/react';
 import { Stethoscope, Check, CheckCircle2 } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { FormField, Input, Select, Textarea, Button } from '@/design-system';
+import { FormField, Input, Select, Textarea, Button, Section } from '@/design-system';
 import {
   listPendingEchographies,
   updateSaillie,
@@ -266,6 +266,8 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
               </div>
             </div>
 
+            <Section label="INFORMATIONS PRINCIPALES" />
+
             <FormField
               label="Truie (saillie ≥ 21 j)"
               hint={pending.length === 0 && !pendingLoading ? "Aucune saillie en attente d'écho." : undefined}
@@ -311,6 +313,8 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
                 invalid={!!errors.dateEchoIso}
               />
             </FormField>
+
+            <Section label="RÉSULTAT" />
 
             {/* TODO V44: Radio DS missing — radiogroup custom conservé */}
             <div className="space-y-2">
@@ -360,6 +364,8 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
               ) : null}
             </div>
 
+            <Section label="DÉTAILS" />
+
             <FormField
               label={`Note (${notes.length}/${ECHO_BOUNDS.maxNotes})`}
               error={errors.notes}
@@ -379,7 +385,7 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
 
             <div className="flex gap-3 justify-end pt-2 border-t border-border">
               <Button
-                variant="secondary"
+                variant="ghost"
                 onClick={handleClose}
                 disabled={saving}
                 ariaLabel="Annuler et fermer"

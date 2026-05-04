@@ -9,10 +9,9 @@ import {
 import { Home, ChevronLeft, Pencil, Archive, Users, ArrowLeftRight } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import EmptyState from '../../components/design/EmptyState';
 import TopBarSync from '../../components/design/TopBarSync';
-import { AnimalListItem, Chip } from '../../components/agritech';
+import { AnimalListItem, Chip, SectionDivider } from '../../components/agritech';
 import { Button, PageHeader } from '@/design-system';
 
 import {
@@ -238,9 +237,7 @@ const LogeDetailView: React.FC = () => {
 
             {/* ── Occupation actuelle ──────────────────────────────── */}
             <section aria-label="Occupation actuelle">
-              <Eyebrow dotColor="terre">
-                Occupation · {contents.totalAnimaux} animaux
-              </Eyebrow>
+              <SectionDivider label={`Occupation · ${contents.totalAnimaux} animaux`} />
               {contents.truies.length === 0 &&
               contents.verrats.length === 0 &&
               contents.bandes.length === 0 ? (
@@ -299,9 +296,7 @@ const LogeDetailView: React.FC = () => {
 
             {/* ── Historique mouvements ────────────────────────────── */}
             <section aria-label="Historique des mouvements">
-              <Eyebrow dotColor="muted">
-                Mouvements · {movements.length}
-              </Eyebrow>
+              <SectionDivider label={`Mouvements · ${movements.length}`} />
               {movements.length === 0 ? (
                 <div
                   className="card-dense p-4 mt-3 text-center"

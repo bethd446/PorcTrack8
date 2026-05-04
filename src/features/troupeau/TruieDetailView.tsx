@@ -32,10 +32,9 @@ import QuickMortalityForm from '../../components/forms/QuickMortalityForm';
 import QuickEchographieForm from '../../components/forms/QuickEchographieForm';
 import TruieEventActionSheet, { type TruieEventAction } from '../../components/forms/TruieEventActionSheet';
 
-import Eyebrow from '../../components/design/Eyebrow';
 import Chip from '../../components/design/Chip';
 import SowHero, { type SowHeroChip } from '../../components/design/SowHero';
-import { Tabs, Button, Card, IconBox, Tag, PageHeader, CycleTimeline, safeDisplay } from '@/design-system';
+import { Tabs, Button, Card, IconBox, Tag, PageHeader, CycleTimeline, Section, safeDisplay } from '@/design-system';
 import EditTruieWizard from '../../components/forms/EditTruieWizard';
 import { TruieIcon } from '../../components/icons';
 import ReproTracker, { type ReproStage } from '../../components/design/ReproTracker';
@@ -472,7 +471,7 @@ const TruieDetailView: React.FC = () => {
             {showMiseBasCTA && (
               <section aria-label="Mise-bas imminente" style={sectionStyle()}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <Eyebrow dotColor="amber">Mise-bas imminente</Eyebrow>
+                  <Section label="MISE-BAS IMMINENTE" tone="accent" />
                   <div
                     style={{
                       fontFamily: 'var(--font-heading)',
@@ -538,7 +537,7 @@ const TruieDetailView: React.FC = () => {
             {cycleData && (activeTab === 'apercu' || activeTab === 'repro') && (
               <section aria-label="Reproduction en cours" style={sectionStyle()}>
                 <div style={{ marginBottom: 12 }}>
-                  <Eyebrow dotColor="amber">Reproduction en cours</Eyebrow>
+                  <Section label="REPRODUCTION EN COURS" tone="accent" />
                 </div>
 
                 <ReproTracker stages={cycleData.stages} progressPct={cycleData.progressPct} />
@@ -563,7 +562,7 @@ const TruieDetailView: React.FC = () => {
             {activeTab === 'apercu' && (
             <section aria-label="Vitales">
               <div style={{ marginBottom: 12 }}>
-                <Eyebrow>Vitales</Eyebrow>
+                <Section label="VITALES" />
               </div>
               {showVitalesEmpty ? (
                 <div
@@ -683,7 +682,7 @@ const TruieDetailView: React.FC = () => {
                 {/* Identité (Aperçu uniquement) */}
                 {activeTab === 'apercu' && (
                 <section aria-label="Identité" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <Eyebrow>Identité</Eyebrow>
+                  <Section label="IDENTITÉ" />
                   <div
                     style={{
                       background: 'var(--bg-surface)',
@@ -706,7 +705,7 @@ const TruieDetailView: React.FC = () => {
                 {/* Repro & rations (Reproduction uniquement) */}
                 {activeTab === 'repro' && (
                 <section aria-label="Repro et rations" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <Eyebrow>Repro &amp; rations</Eyebrow>
+                  <Section label="REPRO & RATIONS" />
                   <div
                     style={{
                       background: 'var(--bg-surface)',
@@ -780,7 +779,7 @@ const TruieDetailView: React.FC = () => {
                 {/* Historique saillies — Reproduction uniquement */}
                 {activeTab === 'repro' && (
                 <section aria-label="Historique saillies" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <Eyebrow>Historique saillies</Eyebrow>
+                  <Section label="HISTORIQUE SAILLIES" />
                   {sowSaillies.length === 0 ? (
                     <div
                       style={{
@@ -816,7 +815,7 @@ const TruieDetailView: React.FC = () => {
                 {activeTab === 'sante' && (
                 <>
                 <section aria-label="Notes" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <Eyebrow>Notes terrain</Eyebrow>
+                  <Section label="NOTES TERRAIN" />
                   <div
                     style={{
                       background: 'var(--bg-surface)',
@@ -852,7 +851,7 @@ const TruieDetailView: React.FC = () => {
                 {/* Photos (V25 — documentation visuelle) — Onglet "Historique" */}
                 {activeTab === 'historique' && (
                 <section aria-label="Photos" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <Eyebrow>Photos</Eyebrow>
+                  <Section label="PHOTOS" />
                   <PhotoStrip subjectType="TRUIE" subjectId={truie.id} />
                 </section>
                 )}
@@ -866,7 +865,7 @@ const TruieDetailView: React.FC = () => {
                 {/* Marius — Aperçu */}
                 {activeTab === 'apercu' && (
                 <section aria-label="Lecture du dossier" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <Eyebrow dotColor="amber">Lecture du dossier · Marius</Eyebrow>
+                  <Section label="LECTURE DU DOSSIER · MARIUS" tone="accent" />
                   <MariusPanel title="Analyse automatique">{mariusAnalysis}</MariusPanel>
                 </section>
                 )}
@@ -874,7 +873,7 @@ const TruieDetailView: React.FC = () => {
                 {/* Journal — Historique */}
                 {activeTab === 'historique' && (
                 <section aria-label="Journal" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <Eyebrow>Journal · 30 derniers jours</Eyebrow>
+                  <Section label="JOURNAL · 30 DERNIERS JOURS" />
                   <TimelineVerticale items={timelineItems} />
                 </section>
                 )}
@@ -882,7 +881,7 @@ const TruieDetailView: React.FC = () => {
                 {/* Actions métier contextuelles — Aperçu */}
                 {activeTab === 'apercu' && (
                 <section aria-label="Actions métier" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <Eyebrow>Actions</Eyebrow>
+                  <Section label="ACTIONS" />
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {(truie.statut === 'À surveiller' || truie.statut === 'Réforme') && (
                       <Button variant="danger" size="sm" onClick={handleReformer}>
@@ -1177,7 +1176,7 @@ const RationRecoBlock: React.FC<{ truie: Truie }> = ({ truie }) => {
 
   return (
     <section aria-label="Plan ration recommandée" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <Eyebrow dotColor="amber">Plan ration recommandée</Eyebrow>
+      <Section label="PLAN RATION RECOMMANDÉE" tone="accent" />
       <div
         style={{
           background: 'var(--bg-surface)',

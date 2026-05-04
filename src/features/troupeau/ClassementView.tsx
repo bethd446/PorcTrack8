@@ -121,9 +121,9 @@ const ClassementView: React.FC = () => {
             style={{ maxWidth: 1100, margin: '0 auto' }}
           >
             <div className="flex flex-col gap-4">
-      {/* V41 Phase C3 — Header sobre via PageHeader (eyebrow + h1 + subtitle 1 ligne) */}
+      {/* V44 — eyebrow 1 mot pour archétype 3 liste */}
       <PageHeader
-        eyebrow="Pilotage · Classement"
+        eyebrow="Pilotage"
         title="Classement reproducteurs"
         subtitle="Top et flop par score composite"
       />

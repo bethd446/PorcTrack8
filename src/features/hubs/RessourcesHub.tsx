@@ -1,12 +1,8 @@
 /**
  * RessourcesHub — /ressources
  * ══════════════════════════════════════════════════════════════════════════
- * Refonte v6 « Terrain Vivant » (2026-04-30)
- *
- *   1. TopBarSync + Eyebrow + H1 Big Shoulders
- *   2. Sub-tabs Aliments / Pharmacie en pills
- *   3. KPI cards stocks (rupture / bas / ok)
- *   4. Search bar + grid de cards stock v6
+ * V44 H2 Phase 1 — Archétype 2 strict (PageHeader → Section/Card/StatsGrid →
+ * Section/Tabs → Section/contenu). Plus aucun Eyebrow legacy ni KpiCardV6.
  */
 
 import React, { useMemo, useState } from 'react';
@@ -19,21 +15,26 @@ import {
 } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
-import KpiCardV6 from '../../components/design/KpiCard';
 import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import QuickRefillForm from '../../components/forms/QuickRefillForm';
 import {
   toRefillItem,
   type RefillStockItem,
 } from '../../components/forms/quickRefillLogic';
-import { Button, PageHeader } from '@/design-system';
+import {
+  Button,
+  Card,
+  PageHeader,
+  Section,
+  Stat,
+  StatsGrid,
+  Tabs,
+} from '@/design-system';
 import QuickEditStockForm from '../../components/forms/QuickEditStockForm';
 import type { StockKind } from '../../components/forms/quickEditStockLogic';
 import { useFarm, useMeta } from '../../context/FarmContext';
 import type { StockAliment, StockVeto } from '../../types/farm';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs';
 import { projectStockDuration, formatJoursRestants } from '../../utils/stockProjection';
 import {
   buildSingleItemOrderURL,
@@ -102,8 +103,6 @@ function toOrderItem(item: StockItem): OrderItem {
   };
 }
 
-// AUDIT-V1 : FARM_NAME hardcodé "K13" → utiliser useMeta().nomFerme
-
 // ─── Composant ──────────────────────────────────────────────────────────────
 
 const RessourcesHub: React.FC = () => {
@@ -157,7 +156,7 @@ const RessourcesHub: React.FC = () => {
     return countByTreatment(source);
   }, [activeTab, filteredAliments, filteredVetos]);
 
-  const subEyebrowParts = useMemo(() => {
+  const subInfoParts = useMemo(() => {
     const parts: string[] = [];
     if (treatmentCounts.urgent > 0) {
       parts.push(`${treatmentCounts.urgent} rupture${treatmentCounts.urgent > 1 ? 's' : ''}`);
@@ -200,7 +199,7 @@ const RessourcesHub: React.FC = () => {
       stocksAOrdonner.length >= 2
         ? buildWhatsAppOrderURL(stocksAOrdonner, FARM_NAME)
         : null,
-    [stocksAOrdonner],
+    [stocksAOrdonner, FARM_NAME],
   );
 
   const handleOpenRefill = (item: StockItem, kind: StockKind) => {
@@ -217,10 +216,16 @@ const RessourcesHub: React.FC = () => {
     );
   };
 
-  const TABS: { id: ResourceTab; label: string; icon: React.ReactNode; count: number }[] = [
-    { id: 'aliments', label: 'Aliments', icon: <Droplets size={13} aria-hidden="true" />, count: stockAliment.length },
-    { id: 'pharmacie', label: 'Pharmacie', icon: <FlaskConical size={13} aria-hidden="true" />, count: stockVeto.length },
+  const tabOptions = [
+    { value: 'aliments', label: 'Aliments', count: stockAliment.length },
+    { value: 'pharmacie', label: 'Pharmacie', count: stockVeto.length },
   ];
+
+  const tabIcon = activeTab === 'aliments'
+    ? <Droplets size={13} aria-hidden="true" />
+    : <FlaskConical size={13} aria-hidden="true" />;
+
+  const visibleCount = activeTab === 'aliments' ? filteredAliments.length : filteredVetos.length;
 
   return (
     <IonPage>
@@ -295,238 +300,224 @@ const RessourcesHub: React.FC = () => {
               </div>
             )}
 
-            {/* ── 4 KPI cards ──────────────────────────────────────── */}
-            <section
-              aria-label="Indicateurs stock"
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                gap: 10,
-              }}
-            >
-              <KpiCardV6
-                label="Total"
-                value={stats.total}
-                trend={`${stockAliment.length} aliments`}
-                variant="accent"
-              />
-              <KpiCardV6
-                label="Stock OK"
-                value={stats.ok}
-                trend="Au-dessus du seuil"
-              />
-              <KpiCardV6
-                label="Stock bas"
-                value={stats.bas}
-                trend={stats.bas > 0 ? 'À surveiller' : 'Aucun'}
-                trendDir={stats.bas > 0 ? 'down' : 'up'}
-              />
-              <KpiCardV6
-                label="Rupture"
-                value={stats.rupture}
-                trend={stats.rupture > 0 ? 'Action requise' : 'Aucune'}
-                trendDir={stats.rupture > 0 ? 'down' : 'up'}
-              />
+            {/* ── VUE D'ENSEMBLE — 1 unique StatsGrid ──────────────── */}
+            <section aria-label="Vue d'ensemble">
+              <Section label="VUE D'ENSEMBLE" />
+              <Card>
+                <StatsGrid cols={4}>
+                  <Stat value={stats.total} label="Total" />
+                  <Stat value={stats.ok} label="Stock OK" />
+                  <Stat
+                    value={stats.bas}
+                    label="Stock bas"
+                    tone={stats.bas > 0 ? 'accent' : 'default'}
+                  />
+                  <Stat
+                    value={stats.rupture}
+                    label="Rupture"
+                    tone={stats.rupture > 0 ? 'danger' : 'default'}
+                  />
+                </StatsGrid>
+              </Card>
             </section>
 
-            {/* ── Sub-tabs (Radix) ──────────────────────────────────── */}
-            <Tabs
-              value={activeTab}
-              onValueChange={(v) => {
-                if (v === 'aliments' || v === 'pharmacie') setActiveTab(v);
-              }}
-            >
-              <TabsList aria-label="Type de ressource">
-                {TABS.map((t) => (
-                  <TabsTrigger key={t.id} value={t.id} style={{ minHeight: 36, gap: 8 }}>
-                    {t.icon}
-                    <span>{t.label}</span>
-                    <span style={{ opacity: 0.75, fontSize: 10 }}>{t.count}</span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
+            {/* ── STOCKS — Tabs DS + recherche + liste ─────────────── */}
+            <section aria-label="Stocks">
+              <Section label="STOCKS" />
 
-            {/* ── Search bar ────────────────────────────────────────── */}
-            <div style={{ position: 'relative' }}>
-              <Search
-                size={16}
-                aria-hidden="true"
-                style={{
-                  position: 'absolute',
-                  left: 14,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--muted)',
+              <Tabs
+                value={activeTab}
+                onChange={(v) => {
+                  if (v === 'aliments' || v === 'pharmacie') setActiveTab(v);
                 }}
+                options={tabOptions}
+                ariaLabel="Type de ressource"
               />
-              <input
-                type="search"
-                placeholder={`Rechercher ${activeTab === 'aliments' ? 'un aliment' : 'un produit'}…`}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  width: '100%',
-                  height: 44,
-                  background: 'var(--bg-surface)',
-                  border: '1px solid var(--line)',
-                  borderRadius: 'var(--radius-pill)',
-                  paddingLeft: 38,
-                  paddingRight: 16,
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--ink)',
-                  outline: 'none',
-                  transition: 'border-color 160ms var(--ease-emil)',
-                }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--color-accent-500)'; }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--line)'; }}
-              />
-            </div>
 
-            {/* ── Sub-eyebrow contextuel (counts par treatment) ─────── */}
-            {subEyebrowParts.length > 0 && (
-              <div
-                role="status"
-                aria-live="polite"
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 10.5,
-                  letterSpacing: '0.10em',
-                  textTransform: 'uppercase',
-                  color: 'var(--muted)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  flexWrap: 'wrap',
-                  marginTop: -6,
-                }}
-              >
-                <span style={{ color: 'var(--ink)', fontWeight: 600 }}>
-                  {activeTab === 'aliments' ? 'Aliments' : 'Pharmacie'}
-                </span>
-                <span aria-hidden="true">·</span>
-                <span>
-                  {activeTab === 'aliments' ? filteredAliments.length : filteredVetos.length} produit{(activeTab === 'aliments' ? filteredAliments.length : filteredVetos.length) > 1 ? 's' : ''}
-                </span>
-                <span aria-hidden="true">—</span>
-                <span>{subEyebrowParts.join(' · ')}</span>
+              {/* Search bar */}
+              <div style={{ position: 'relative', marginTop: 12 }}>
+                <Search
+                  size={16}
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute',
+                    left: 14,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'var(--muted)',
+                  }}
+                />
+                <input
+                  type="search"
+                  placeholder={`Rechercher ${activeTab === 'aliments' ? 'un aliment' : 'un produit'}…`}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    width: '100%',
+                    height: 44,
+                    background: 'var(--bg-surface)',
+                    border: '1px solid var(--line)',
+                    borderRadius: 'var(--radius-pill)',
+                    paddingLeft: 38,
+                    paddingRight: 16,
+                    fontFamily: 'var(--font-body)',
+                    fontSize: 13,
+                    color: 'var(--ink)',
+                    outline: 'none',
+                    transition: 'border-color 160ms var(--ease-emil)',
+                  }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--color-accent-500)'; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--line)'; }}
+                />
               </div>
-            )}
 
-            {/* ── Action groupée Commander ──────────────────────────── */}
-            {whatsappReady && groupedOrderUrl && stocksAOrdonner.length >= 2 && (
-              <a
-                href={groupedOrderUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`Commander ${stocksAOrdonner.length} produits via WhatsApp`}
-                className="pressable"
+              {/* Sub-info contextuel (counts par treatment) — pas un StatsGrid */}
+              {subInfoParts.length > 0 && (
+                <div
+                  role="status"
+                  aria-live="polite"
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 10.5,
+                    letterSpacing: '0.10em',
+                    textTransform: 'uppercase',
+                    color: 'var(--muted)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    flexWrap: 'wrap',
+                    marginTop: 12,
+                  }}
+                >
+                  <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                    {tabIcon}
+                  </span>
+                  <span style={{ color: 'var(--ink)', fontWeight: 600 }}>
+                    {activeTab === 'aliments' ? 'Aliments' : 'Pharmacie'}
+                  </span>
+                  <span aria-hidden="true">·</span>
+                  <span>{visibleCount} produit{visibleCount > 1 ? 's' : ''}</span>
+                  <span aria-hidden="true">—</span>
+                  <span>{subInfoParts.join(' · ')}</span>
+                </div>
+              )}
+
+              {/* Action groupée Commander */}
+              {whatsappReady && groupedOrderUrl && stocksAOrdonner.length >= 2 && (
+                <a
+                  href={groupedOrderUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Commander ${stocksAOrdonner.length} produits via WhatsApp`}
+                  className="pressable"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 10,
+                    padding: '12px 16px',
+                    borderRadius: 12,
+                    background: 'var(--color-accent-500)',
+                    color: 'var(--bg-surface)',
+                    textDecoration: 'none',
+                    fontFamily: 'var(--font-heading)',
+                    fontSize: 14,
+                    fontWeight: 700,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                    boxShadow: '0 2px 6px rgba(6,78,59,0.18)',
+                    marginTop: 12,
+                  }}
+                >
+                  <span>
+                    Commander {stocksAOrdonner.length} produits via WhatsApp
+                  </span>
+                  <ExternalLink size={14} aria-hidden="true" />
+                </a>
+              )}
+
+              {!whatsappReady && treatmentCounts.urgent + treatmentCounts.normal > 0 && (
+                <Button
+                  variant="ghost"
+                  onClick={() => navigate('/more')}
+                  ariaLabel="Configurer le numéro WhatsApp dans les Réglages"
+                  className="pressable"
+                  style={{
+                    gap: 8,
+                    padding: '10px 14px',
+                    borderRadius: 12,
+                    background: 'var(--bg-surface-2)',
+                    color: 'var(--muted)',
+                    border: '1px dashed var(--line)',
+                    fontFamily: 'var(--font-mono)',
+                    textAlign: 'left',
+                    marginTop: 12,
+                  }}
+                >
+                  <Settings size={13} aria-hidden="true" />
+                  <span>
+                    Numéro WhatsApp non configuré · Régler dans Réglages
+                  </span>
+                </Button>
+              )}
+
+              {/* Liste ressources */}
+              <div
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 10,
-                  padding: '12px 16px',
-                  borderRadius: 12,
-                  background: 'var(--color-accent-500)',
-                  color: 'var(--bg-surface)',
-                  textDecoration: 'none',
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 14,
-                  fontWeight: 700,
-                  letterSpacing: '0.04em',
-                  textTransform: 'uppercase',
-                  boxShadow: '0 2px 6px rgba(6,78,59,0.18)',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                  gap: 12,
+                  marginTop: 16,
                 }}
               >
-                <span>
-                  Commander {stocksAOrdonner.length} produits via WhatsApp
-                </span>
-                <ExternalLink size={14} aria-hidden="true" />
-              </a>
-            )}
+                {activeTab === 'aliments'
+                  ? filteredAliments.map(a => (
+                      <ResourceCard
+                        key={a.id}
+                        name={a.libelle}
+                        qty={a.stockActuel}
+                        unit={a.unite}
+                        seuil={a.seuilAlerte}
+                        statut={a.statutStock}
+                        notes={a.notes}
+                        joursRestants={projectStockDuration(a, cheptel).joursRestants}
+                        treatment={classifyResourceTreatment(a)}
+                        orderUrl={orderUrlFor(a)}
+                        onRefill={() => handleOpenRefill(a, 'ALIMENT')}
+                        onEdit={() => setEditTarget({ item: a, kind: 'ALIMENT' })}
+                        onCommander={() => navigate('/ressources/aliments')}
+                        onClick={() => navigate('/ressources/aliments')}
+                      />
+                    ))
+                  : filteredVetos.map(v => (
+                      <ResourceCard
+                        key={v.id}
+                        name={v.produit}
+                        qty={v.stockActuel}
+                        unit={v.unite}
+                        seuil={v.seuilAlerte}
+                        statut={v.statutStock || 'OK'}
+                        category={v.type}
+                        notes={v.usage}
+                        treatment={classifyResourceTreatment(v)}
+                        orderUrl={orderUrlFor(v)}
+                        onRefill={() => handleOpenRefill(v, 'VETO')}
+                        onEdit={() => setEditTarget({ item: v, kind: 'VETO' })}
+                        onCommander={() => navigate('/ressources/pharmacie')}
+                        onClick={() => navigate('/ressources/pharmacie')}
+                      />
+                    ))}
+              </div>
+            </section>
 
-            {!whatsappReady && treatmentCounts.urgent + treatmentCounts.normal > 0 && (
-              <Button
-                variant="ghost"
-                onClick={() => navigate('/more')}
-                ariaLabel="Configurer le numéro WhatsApp dans les Réglages"
-                className="pressable"
-                style={{
-                  gap: 8,
-                  padding: '10px 14px',
-                  borderRadius: 12,
-                  background: 'var(--bg-surface-2)',
-                  color: 'var(--muted)',
-                  border: '1px dashed var(--line)',
-                  fontFamily: 'var(--font-mono)',
-                  textAlign: 'left',
-                }}
-              >
-                <Settings size={13} aria-hidden="true" />
-                <span>
-                  Numéro WhatsApp non configuré · Régler dans Réglages
-                </span>
-              </Button>
-            )}
-
-            {/* ── Liste ressources ─────────────────────────────────── */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-                gap: 12,
-              }}
-            >
-              {activeTab === 'aliments'
-                ? filteredAliments.map(a => (
-                    <ResourceCard
-                      key={a.id}
-                      name={a.libelle}
-                      qty={a.stockActuel}
-                      unit={a.unite}
-                      seuil={a.seuilAlerte}
-                      statut={a.statutStock}
-                      notes={a.notes}
-                      joursRestants={projectStockDuration(a, cheptel).joursRestants}
-                      treatment={classifyResourceTreatment(a)}
-                      orderUrl={orderUrlFor(a)}
-                      onRefill={() => handleOpenRefill(a, 'ALIMENT')}
-                      onEdit={() => setEditTarget({ item: a, kind: 'ALIMENT' })}
-                      onCommander={() => navigate('/ressources/aliments')}
-                      onClick={() => navigate('/ressources/aliments')}
-                    />
-                  ))
-                : filteredVetos.map(v => (
-                    <ResourceCard
-                      key={v.id}
-                      name={v.produit}
-                      qty={v.stockActuel}
-                      unit={v.unite}
-                      seuil={v.seuilAlerte}
-                      statut={v.statutStock || 'OK'}
-                      category={v.type}
-                      notes={v.usage}
-                      treatment={classifyResourceTreatment(v)}
-                      orderUrl={orderUrlFor(v)}
-                      onRefill={() => handleOpenRefill(v, 'VETO')}
-                      onEdit={() => setEditTarget({ item: v, kind: 'VETO' })}
-                      onCommander={() => navigate('/ressources/pharmacie')}
-                      onClick={() => navigate('/ressources/pharmacie')}
-                    />
-                  ))}
-            </div>
-
-            {/* ── Accès rapides ─────────────────────────────────────── */}
+            {/* ── ACCÈS RAPIDES ──────────────────────────────────────── */}
             <section aria-label="Accès rapides">
-              <Eyebrow dotColor="muted">Accès rapides</Eyebrow>
+              <Section label="ACCÈS RAPIDES" />
               <div
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
                   gap: 10,
-                  marginTop: 12,
                 }}
               >
                 <QuickAccess
@@ -655,7 +646,7 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
         position: 'relative',
       }}
     >
-      {/* ── Eyebrow status ─────────────────────────────────── */}
+      {/* ── Status pill ────────────────────────────────────── */}
       <div
         style={{
           display: 'flex',

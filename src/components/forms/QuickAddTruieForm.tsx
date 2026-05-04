@@ -28,7 +28,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Plus, Save } from 'lucide-react';
 
 import { AppToast, BottomSheet, useAppToast } from '../agritech';
-import { FormField, Input, Button } from '@/design-system';
+import { FormField, Input, Button, Segment } from '@/design-system';
 import { insertSow } from '../../services/supabaseWrites';
 import { enqueueInsert, isOnline } from '../../services/offlineQueue';
 import { useFarm } from '../../context/FarmContext';
@@ -228,47 +228,14 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
             />
           </FormField>
 
-          {/* TODO V44: Radio DS missing — radiogroup custom conservé */}
-          <div className="space-y-1.5">
-            <span
-              id="add-truie-stade-label"
-              className="block text-mono-label text-text-2"
-            >
-              Stade
-            </span>
-            <div
-              className="flex flex-wrap gap-2"
-              role="radiogroup"
-              aria-labelledby="add-truie-stade-label"
-            >
-              {STADES.map(s => {
-                const selected = stade === s;
-                return (
-                  <button
-                    key={s}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    aria-label={`Stade ${s}`}
-                    onClick={() => setStade(s)}
-                    disabled={saving}
-                    className={[
-                      'pressable inline-flex items-center justify-center',
-                      'h-11 px-3 rounded-md border',
-                      'text-[12px] font-semibold uppercase tracking-wide',
-                      'transition-colors duration-[160ms]',
-                      'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                      selected
-                        ? 'bg-accent text-bg-0 border-accent'
-                        : 'bg-bg-0 text-text-1 border-border hover:border-text-2',
-                    ].join(' ')}
-                  >
-                    {s}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <FormField label="Stade">
+            <Segment<StadeChoice>
+              value={stade}
+              onChange={v => setStade(v)}
+              options={STADES.map(s => ({ value: s, label: s }))}
+              ariaLabel="Stade physiologique"
+            />
+          </FormField>
 
           <FormField
             label="Ration (kg/j)"
@@ -299,7 +266,7 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
 
           <div className="flex gap-3 justify-end pt-2 border-t border-border">
             <Button
-              variant="secondary"
+              variant="ghost"
               onClick={handleClose}
               disabled={saving}
               ariaLabel="Annuler et fermer"

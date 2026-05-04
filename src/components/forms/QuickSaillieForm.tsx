@@ -7,14 +7,16 @@ import {
   resolveBoarIdByCode,
 } from '../../services/supabaseWrites';
 import { BottomSheet } from '../agritech';
-import { Button } from '@/design-system';
+import { Button, FormField, Section } from '@/design-system';
 import { normaliseStatut } from '../../lib/truieStatut';
 
 /**
  * QuickSaillieForm — Modal rapide pour enregistrer une saillie
  *
- * Agritech Dark : utilise <BottomSheet> wrapper.
- * 2 taps au lieu de 5 clics. Accessible depuis le Cockpit "Aujourd'hui".
+ * V44 archétype 5 : BottomSheet + Section + FormField DS.
+ * Les radiogroups Truie/Verrat conservent l'API a11y native (role=radio,
+ * aria-checked, label "Sélectionner la truie X" / "le verrat X") car les
+ * tests s'y appuient et le DS ne fournit pas encore de RadioGroup.
  */
 
 interface QuickSaillieFormProps {
@@ -89,6 +91,17 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
     onClose();
   };
 
+  const radioBtnClasses = (isSelected: boolean): string => [
+    'pressable inline-flex items-center justify-center',
+    'h-9 px-3 rounded-md border',
+    'text-[12px] uppercase tracking-wide tabular-nums',
+    'transition-colors duration-[160ms]',
+    'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
+    isSelected
+      ? 'bg-accent text-bg-0 border-accent font-semibold'
+      : 'bg-bg-0 text-text-1 border-border hover:border-text-2',
+  ].join(' ');
+
   return (
     <BottomSheet
       isOpen={isOpen}
@@ -129,19 +142,16 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
             </p>
           </div>
 
+          {/* ═══ Section Couple ═════════════════════════════════════════ */}
+          <Section label="INFORMATIONS PRINCIPALES" />
+
           {/* ── Truie selection ───────────────────────────────────────── */}
-          <div className="space-y-2">
-            <span
-              id="saillie-truie-label"
-              className="block text-mono-label text-text-2"
-            >
-              Truie
-            </span>
+          <FormField label="Truie" required>
             {truiesDisponibles.length > 0 ? (
               <div
                 className="flex flex-wrap gap-2"
                 role="radiogroup"
-                aria-labelledby="saillie-truie-label"
+                aria-label="Truie"
               >
                 {truiesDisponibles.map(t => {
                   const isSelected = selectedTruie === t.displayId;
@@ -153,16 +163,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
                       aria-checked={isSelected}
                       aria-label={`Sélectionner la truie ${t.displayId}`}
                       onClick={() => setSelectedTruie(t.displayId)}
-                      className={[
-                        'pressable inline-flex items-center justify-center',
-                        'h-9 px-3 rounded-md border',
-                        'text-[12px] uppercase tracking-wide tabular-nums',
-                        'transition-colors duration-[160ms]',
-                        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                        isSelected
-                          ? 'bg-accent text-bg-0 border-accent font-semibold'
-                          : 'bg-bg-0 text-text-1 border-border hover:border-text-2',
-                      ].join(' ')}
+                      className={radioBtnClasses(isSelected)}
                     >
                       {t.displayId}
                     </button>
@@ -174,21 +175,15 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
                 Aucune truie disponible
               </p>
             )}
-          </div>
+          </FormField>
 
           {/* ── Verrat selection ──────────────────────────────────────── */}
-          <div className="space-y-2">
-            <span
-              id="saillie-verrat-label"
-              className="block text-mono-label text-text-2"
-            >
-              Verrat
-            </span>
+          <FormField label="Verrat" required>
             {verrats.length > 0 ? (
               <div
                 className="flex flex-wrap gap-2"
                 role="radiogroup"
-                aria-labelledby="saillie-verrat-label"
+                aria-label="Verrat"
               >
                 {verrats.map(v => {
                   const isSelected = selectedVerrat === v.displayId;
@@ -200,16 +195,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
                       aria-checked={isSelected}
                       aria-label={`Sélectionner le verrat ${v.displayId}`}
                       onClick={() => setSelectedVerrat(v.displayId)}
-                      className={[
-                        'pressable inline-flex items-center justify-center',
-                        'h-9 px-3 rounded-md border',
-                        'text-[12px] uppercase tracking-wide tabular-nums',
-                        'transition-colors duration-[160ms]',
-                        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                        isSelected
-                          ? 'bg-accent text-bg-0 border-accent font-semibold'
-                          : 'bg-bg-0 text-text-1 border-border hover:border-text-2',
-                      ].join(' ')}
+                      className={radioBtnClasses(isSelected)}
                     >
                       {v.displayId}
                     </button>
@@ -221,25 +207,35 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
                 Aucun verrat actif
               </p>
             )}
-          </div>
+          </FormField>
 
-          {/* ── Confirm button ────────────────────────────────────────── */}
-          <Button
-            variant="primary"
-            fullWidth
-            onClick={handleSave}
-            disabled={!selectedTruie || !selectedVerrat || saving}
-            ariaLabel="Confirmer la saillie"
-          >
-            {saving ? (
-              <span className="animate-pulse">Enregistrement…</span>
-            ) : (
-              <span className="inline-flex items-center gap-2">
-                <Check size={16} aria-hidden="true" />
-                Confirmer la saillie
-              </span>
-            )}
-          </Button>
+          {/* ── Actions ───────────────────────────────────────────────── */}
+          <div className="flex gap-3 justify-end pt-2 border-t border-border">
+            <Button
+              variant="ghost"
+              onClick={handleClose}
+              disabled={saving}
+              ariaLabel="Annuler et fermer"
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleSave}
+              disabled={!selectedTruie || !selectedVerrat || saving}
+              aria-busy={saving}
+              ariaLabel="Confirmer la saillie"
+            >
+              {saving ? (
+                <span className="animate-pulse">Enregistrement…</span>
+              ) : (
+                <span className="inline-flex items-center gap-2">
+                  <Check size={16} aria-hidden="true" />
+                  Confirmer la saillie
+                </span>
+              )}
+            </Button>
+          </div>
 
           {selectedTruie && selectedVerrat && (
             <p className="text-center text-mono-label text-text-2 tabular-nums">

@@ -152,8 +152,9 @@ describe('ReproductionLotsView', () => {
     // 3 cards titre "Vague du..."
     const titles = screen.getAllByText(/Vague du 15\/04\/2026/i);
     expect(titles.length).toBe(3);
-    // Badge Gestation présent
-    expect(screen.getByText(/^Gestation$/i)).toBeTruthy();
+    // V44 : "Gestation" présent plusieurs fois (badge card + Stat label +
+    // tab label) — on vérifie juste la présence ≥1.
+    expect(screen.getAllByText(/^Gestation$/i).length).toBeGreaterThan(0);
   });
 
   it('[3] filtre "Gestation" → 1 seul batch visible + compteur cohérent', () => {
@@ -168,11 +169,11 @@ describe('ReproductionLotsView', () => {
     mockTruies = [t1, t2, t3];
     renderView();
 
-    // Compteur dans chip filtre : "Gestation (1)"
-    const gestationChip = screen.getByRole('button', { name: /Gestation \(1\)/i });
+    // V44 : migration FilterChip custom → <Tabs> DS (role="tab"). Accessible
+    // name = label + count concaténés ("Gestation1", "Tous3").
+    const gestationChip = screen.getByRole('tab', { name: /Gestation.*1/i });
     expect(gestationChip).toBeTruthy();
-    // Compteur "Tous (3)"
-    expect(screen.getByRole('button', { name: /Tous \(3\)/i })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /Tous.*3/i })).toBeTruthy();
 
     // Activer filtre Gestation
     fireEvent.click(gestationChip);

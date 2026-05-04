@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { useIonAlert, IonSegment, IonSegmentButton, IonLabel } from '@ionic/react';
-import { Search, CheckCircle2, ChevronRight, ArrowLeft, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, ChevronRight, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -13,7 +13,7 @@ import {
 } from '../../services/supabaseWrites';
 import { safeDate } from '../../lib/truieHelpers';
 import { BottomSheet, DataRow } from '../agritech';
-import { Button, Input as DSInput } from '@/design-system';
+import { Button, Input as DSInput, Search as SearchInput, Section } from '@/design-system';
 import type { BandePorcelets, Truie, Verrat } from '../../types/farm';
 import { extractPeseesForBande } from '../../services/growthAnalyzer';
 import { markPeseeEffectuee } from '../../services/peseePlanifieesService';
@@ -487,13 +487,13 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
               <IonSegmentButton value="VERRAT"><IonLabel className="text-[11px]">Verrats</IonLabel></IonSegmentButton>
             </IonSegment>
 
-            <div className="space-y-1.5">
-              <label className="block text-mono-label text-text-2">Rechercher</label>
-              <div className="flex items-center gap-2 h-11 px-3 rounded-md bg-bg-0 border border-border focus-within:border-accent">
-                <Search size={14} className="text-text-2" />
-                <input type="search" className="flex-1 bg-transparent outline-none text-[13px] text-text-0" placeholder="ID, Nom, Boucle…" value={query} onChange={e => setQuery(e.target.value)} />
-              </div>
-            </div>
+            <SearchInput
+              aria-label="Rechercher un sujet à peser"
+              placeholder="ID, Nom, Boucle…"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              onClear={() => setQuery('')}
+            />
 
             <ul className="card-dense !p-0 overflow-hidden max-h-[40vh] overflow-y-auto">
               {filteredSubjects.map(s => (
@@ -522,6 +522,8 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
                   <div className="truncate ft-code text-[13px] text-text-0">{subjectDisplay(selectedSubject)}</div>
                 </div>
               </div>
+
+              <Section label="MESURES" />
 
               {subjectType === 'BANDE' && (
                 <FormField
@@ -601,6 +603,8 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
                   )}
                 />
               )}
+
+              <Section label="NOTES" />
 
               <FormField
                 control={form.control}
