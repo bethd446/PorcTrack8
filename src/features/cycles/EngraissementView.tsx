@@ -6,7 +6,6 @@ import {
   Scale, AlertTriangle
 } from 'lucide-react';
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
 import EmptyState from '../../components/design/EmptyState';
@@ -14,6 +13,7 @@ import {
   Chip,
   SectionDivider,
 } from '../../components/agritech';
+import { PageHeader } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   computeBandePhase,
@@ -131,21 +131,11 @@ const EngraissementView: React.FC = () => {
           />
 
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <header>
-              <Eyebrow dotColor="amber">Cycle · Engraissement</Eyebrow>
-              <h1
-                className="text-page-title"
-                style={{ margin: '8px 0 4px' }}
-              >
-                Engraissement
-              </h1>
-              <div
-                className="text-body"
-                style={{ color: 'var(--muted)' }}
-              >
-                J95 → J137 · {summary.nbPortees} bandes
-              </div>
-            </header>
+            <PageHeader
+              eyebrow="ENGRAISSEMENT"
+              title="Engraissement"
+              subtitle="Phase d'engraissement"
+            />
             {/* ── Summary Stats ────────────────────────────────────────── */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <KpiCardV6
