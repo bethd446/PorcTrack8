@@ -11,11 +11,10 @@
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { IonToast } from '@ionic/react';
 import { Plus, Save } from 'lucide-react';
 
-import { BottomSheet } from '../agritech';
-import { FormField, Input, Select, Textarea, Button } from '@/design-system';
+import { AppToast, BottomSheet, useAppToast } from '../agritech';
+import { FormField, Input, Select, Textarea, Button, Segment } from '@/design-system';
 import {
   insertBatch,
   resolveSowIdByCode,
@@ -65,7 +64,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
   const [notes, setNotes] = useState<string>('');
   const [errors, setErrors] = useState<AddBandeValidation['errors']>({});
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string>('');
+  const { show: showToast, toastProps } = useAppToast();
 
   // Auto-suggest ID portée dès qu'une truie est sélectionnée
   const suggestedId = useMemo(() => {
@@ -182,7 +181,11 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
       } as Parameters<typeof insertBatch>[0]);
       const online =
         typeof navigator !== 'undefined' && navigator.onLine;
-      setToast(online ? 'Bande ajoutée' : 'Bande en file · sync auto');
+      showToast(
+        online ? 'Bande ajoutée' : 'Bande en file · sync auto',
+        online ? 'success' : 'info',
+        { duration: 1800 },
+      );
       try {
         await refreshData(true);
       } catch {
@@ -191,8 +194,10 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
       if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
-      setToast(
+      showToast(
         err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement',
+        'error',
+        { duration: 1800 },
       );
     } finally {
       setSaving(false);
@@ -383,47 +388,14 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
           ) : null}
 
           {/* Statut */}
-          <div className="space-y-1.5">
-            <span
-              id="add-bande-statut-label"
-              className="block text-mono-label text-text-2"
-            >
-              Statut initial
-            </span>
-            {/* TODO V44: Radio DS missing — radiogroup natif conservé */}
-            <div
-              className="flex flex-wrap gap-2"
-              role="radiogroup"
-              aria-labelledby="add-bande-statut-label"
-            >
-              {BANDE_STATUTS_INITIAUX.map(s => {
-                const selected = statut === s;
-                return (
-                  <button
-                    key={s}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    aria-label={`Statut ${s}`}
-                    onClick={() => setStatut(s)}
-                    disabled={saving}
-                    className={[
-                      'pressable inline-flex items-center justify-center',
-                      'h-10 px-3 rounded-md border',
-                      'text-[12px] uppercase tracking-wide',
-                      'transition-colors duration-[160ms]',
-                      'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                      selected
-                        ? 'bg-accent text-bg-0 border-accent font-semibold'
-                        : 'bg-bg-0 text-text-1 border-border hover:border-text-2',
-                    ].join(' ')}
-                  >
-                    {s}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <FormField label="Statut initial">
+            <Segment<BandeStatutInitial>
+              value={statut}
+              onChange={v => setStatut(v)}
+              options={BANDE_STATUTS_INITIAUX.map(s => ({ value: s, label: s }))}
+              ariaLabel="Statut initial de la bande"
+            />
+          </FormField>
 
           {/* Poids moyen au sevrage / naissance */}
           <FormField
@@ -497,7 +469,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
           {/* Actions */}
           <div className="flex gap-3 justify-end pt-2 border-t border-border">
             <Button
-              variant="secondary"
+              variant="ghost"
               onClick={handleClose}
               disabled={saving}
               ariaLabel="Annuler et fermer"
@@ -522,13 +494,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
         </form>
       </BottomSheet>
 
-      <IonToast
-        isOpen={toast !== ''}
-        message={toast}
-        duration={1800}
-        onDidDismiss={() => setToast('')}
-        position="bottom"
-      />
+      <AppToast {...toastProps} />
     </>
   );
 };
