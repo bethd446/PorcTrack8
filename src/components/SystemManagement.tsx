@@ -15,6 +15,8 @@ import {
   FormField,
   Toggle,
   PageHeader,
+  StatsGrid,
+  Stat,
 } from '@/design-system';
 import { useAuth } from '../context/AuthContext';
 import { useMeta } from '../context/FarmContext';
@@ -501,12 +503,28 @@ export const SettingsPage: React.FC = () => {
             {/* V41 Phase D — Header canonique via PageHeader */}
             <PageHeader eyebrow="Plus" title="Réglages" subtitle="Ton profil, ta ferme, l'équipe" />
 
+            {/* V44 — VUE D'ENSEMBLE : 4 stats clés (archétype 2 Hub) */}
+            <section aria-label="Vue d'ensemble" style={{ marginBottom: 28 }}>
+              <Section label="VUE D'ENSEMBLE" />
+              <Card style={{ marginTop: 8 }}>
+                <StatsGrid cols={4}>
+                  <Stat value={isOwner ? 'Owner' : 'Porcher'} label="Rôle" />
+                  <Stat value={farm ? '1' : '0'} label="Ferme" />
+                  <Stat value={isOwner ? '1+' : '—'} label="Équipe" />
+                  <Stat
+                    value={(notifSignups ? 1 : 0) + (notifAlerts ? 1 : 0)}
+                    label="Notifs"
+                  />
+                </StatsGrid>
+              </Card>
+            </section>
+
             {/* V33 : Outils Terrain / Audit / Journal santé / Protocoles /
                 Stocks / Fournisseurs migrés vers /outils. La page Plus est
                 purement settings. */}
 
             {/* Profil */}
-            <SettingsSection title="Profil">
+            <SettingsSection title="PROFIL">
               <InfoRow label="Nom" value={userName} />
               <InfoRow
                 label="Email"
@@ -524,7 +542,7 @@ export const SettingsPage: React.FC = () => {
             </SettingsSection>
 
             {/* Ferme */}
-            <SettingsSection title="Ferme">
+            <SettingsSection title="FERME">
               <InfoRow
                 label="Code"
                 value={<span style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 12 }}>{farmShortId}</span>}
@@ -540,7 +558,7 @@ export const SettingsPage: React.FC = () => {
 
             {/* Utilisateurs (OWNER only) */}
             {isOwner ? (
-              <SettingsSection title="Utilisateurs">
+              <SettingsSection title="ÉQUIPE">
                 <InfoRow label="Membres" value={`${userName} (toi)`} />
                 <ActionRow
                   label="Ajouter un porcher"
@@ -556,7 +574,7 @@ export const SettingsPage: React.FC = () => {
             ) : null}
 
             {/* Synchronisation */}
-            <SettingsSection title="Synchronisation">
+            <SettingsSection title="SYNCHRONISATION">
               <InfoRow
                 label="Dernière sync"
                 value={formatRelativeTime(lastUpdate)}
@@ -578,7 +596,7 @@ export const SettingsPage: React.FC = () => {
             {/* V33 : Carnet fournisseurs migré vers /outils. */}
 
             {/* Notifications (V21 candidate) */}
-            <SettingsSection title="Notifications">
+            <SettingsSection title="NOTIFICATIONS">
               <ToggleRow
                 label="Confirmation des saisies"
                 description="Email après chaque saisie validée"
@@ -594,7 +612,7 @@ export const SettingsPage: React.FC = () => {
             </SettingsSection>
 
             {/* Aide & support */}
-            <SettingsSection title="Aide & support">
+            <SettingsSection title="AIDE & SUPPORT">
               <ActionRow
                 label="FAQ"
                 description="Réponses aux questions fréquentes"
@@ -625,16 +643,19 @@ export const SettingsPage: React.FC = () => {
             </SettingsSection>
 
             {/* Sécurité */}
-            <div style={{ marginTop: 16, marginBottom: 8, display: 'flex', justifyContent: 'center' }}>
-              <DsButton
-                variant="danger"
-                onClick={() => setConfirmSignOut(true)}
-                ariaLabel="Se déconnecter"
-              >
-                <LogOut size={16} aria-hidden="true" style={{ marginRight: 6 }} />
-                Se déconnecter
-              </DsButton>
-            </div>
+            <section aria-label="Sécurité" style={{ marginBottom: 8 }}>
+              <Section label="SÉCURITÉ" />
+              <div style={{ marginTop: 16, display: 'flex', justifyContent: 'center' }}>
+                <DsButton
+                  variant="danger"
+                  onClick={() => setConfirmSignOut(true)}
+                  ariaLabel="Se déconnecter"
+                >
+                  <LogOut size={16} aria-hidden="true" style={{ marginRight: 6 }} />
+                  Se déconnecter
+                </DsButton>
+              </div>
+            </section>
 
             {toast ? (
               <div
