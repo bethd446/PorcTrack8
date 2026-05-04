@@ -96,23 +96,20 @@ export function InsightCard({ title, children, className, style }: {
 type ButtonLegacyVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'destructive' | 'inverse';
 type ButtonLegacySize = 'small' | 'medium' | 'sm' | 'md' | 'lg';
 
-export function Button({
-  children, variant = 'primary', size = 'medium', fullWidth, onClick,
-  type = 'button', disabled, ariaLabel, className, style,
-  ...rest
-}: {
+type ButtonProps = Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'type'> & {
   children: React.ReactNode;
   variant?: ButtonLegacyVariant;
   size?: ButtonLegacySize;
   fullWidth?: boolean;
-  onClick?: () => void;
   type?: 'button' | 'submit';
-  disabled?: boolean;
   ariaLabel?: string;
-  className?: string;
-  style?: React.CSSProperties;
-  'aria-label'?: string;
-}) {
+};
+
+export function Button({
+  children, variant = 'primary', size = 'medium', fullWidth, onClick,
+  type = 'button', disabled, ariaLabel, className, style,
+  ...rest
+}: ButtonProps) {
   const v: 'primary' | 'secondary' | 'danger' =
     variant === 'ghost' ? 'secondary'
     : variant === 'destructive' ? 'danger'
@@ -136,7 +133,8 @@ export function Button({
     borderRadius: 'var(--ds-radius-pill)',
     textTransform: 'uppercase',
   };
-  const ariaLabelFinal = ariaLabel ?? rest['aria-label'];
+  const { 'aria-label': _restAriaLabel, ...passthrough } = rest;
+  const ariaLabelFinal = ariaLabel ?? _restAriaLabel;
   return (
     <button
       type={type}
@@ -146,6 +144,7 @@ export function Button({
       aria-label={ariaLabelFinal}
       data-pt="button"
       style={{ ...pillStyle, ...ghostStyle, ...style }}
+      {...passthrough}
     >
       {children}
     </button>
