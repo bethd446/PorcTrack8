@@ -15,6 +15,7 @@ import {
   Chip,
   SectionDivider,
 } from '../../components/agritech';
+import { Button } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   computeBandePhase,
@@ -434,27 +435,28 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
           </div>
         </div>
       ) : (
-        <button
+        <Button
+          variant="secondary"
+          fullWidth
+          size="small"
           disabled={isBloquant}
-          className="flex items-center justify-center gap-2 py-2 border border-dashed border-border rounded-lg text-[11px] text-text-2 hover:bg-bg-2 transition-colors disabled:opacity-30 disabled:grayscale"
           onClick={(e) => { e.stopPropagation(); setPeseeOpen(true); }}
         >
           {isBloquant ? <Lock size={12} /> : <Scale size={12} />}
           Saisir une pesée
-        </button>
+        </Button>
       )}
 
       {/* Footer / CTA */}
       {isTransitionRequired && (
-        <button
-          className={`w-full py-2.5 rounded-xl font-bold text-[12px] tracking-wider flex items-center justify-center gap-2 shadow-lg ${
-            isBloquant ? 'bg-red-500 text-white shadow-red-500/20' : 'bg-amber text-bg-0 shadow-amber/20'
-          }`}
+        <Button
+          variant={isBloquant ? 'danger' : 'primary'}
+          fullWidth
           onClick={(e) => { e.stopPropagation(); navigate('/troupeau/batiments'); }}
         >
           <ArrowUpRight size={16} />
           {isBloquant ? 'Transférer maintenant' : 'Préparer la loge croissance'}
-        </button>
+        </Button>
       )}
 
       <QuickPeseeForm isOpen={peseeOpen} onClose={() => setPeseeOpen(false)} />

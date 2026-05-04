@@ -32,6 +32,7 @@ import TopBarSync from '../../components/design/TopBarSync';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
 import EmptyState from '../../components/design/EmptyState';
 import { Chip, SectionDivider } from '../../components/agritech';
+import { Button } from '@/design-system';
 import type { Truie, BandePorcelets, Saillie } from '../../types/farm';
 import QuickEditSaillieForm from '../../components/forms/QuickEditSaillieForm';
 
@@ -300,13 +301,9 @@ const ReproCalendarView: React.FC = () => {
                 title="Aucune échéance dans les 14 prochains jours"
                 description="Profitez du calme — rien à faire cette quinzaine côté repro."
                 action={
-                  <button
-                    type="button"
-                    onClick={() => navigate('/cycles/repro')}
-                    className="pressable h-11 px-5 rounded-md bg-accent text-bg-0 text-[13px] font-medium transition-colors"
-                  >
+                  <Button variant="primary" onClick={() => navigate('/cycles/repro')}>
                     Voir historique
-                  </button>
+                  </Button>
                 }
               />
             ) : null}
@@ -369,6 +366,7 @@ const ReproCalendarView: React.FC = () => {
                         <div
                           className="flex items-stretch border-b border-border last:border-b-0"
                         >
+                          {/* TODO V44: refactor as <ListItem>/<AnimalListItem> — complex card-as-button layout */}
                           <button
                             type="button"
                             onClick={() => goTruie(item.truieId)}
@@ -394,15 +392,16 @@ const ReproCalendarView: React.FC = () => {
                               {formatDateFr(item.date)}
                             </div>
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => setEditTarget(item.source)}
-                            aria-label={`Corriger la saillie ${item.primary} du ${formatDateFr(item.date)}`}
+                          <Button
+                            variant="ghost"
+                            size="small"
+                            ariaLabel={`Corriger la saillie ${item.primary} du ${formatDateFr(item.date)}`}
                             title="Corriger la saillie"
-                            className="pressable shrink-0 w-11 flex items-center justify-center border-l border-border text-text-2 hover:text-accent hover:bg-bg-2 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-2px]"
+                            className="!shrink-0 !w-11 !rounded-none !border-l !border-border !px-0"
+                            onClick={() => setEditTarget(item.source)}
                           >
                             <Edit3 size={15} aria-hidden="true" />
-                          </button>
+                          </Button>
                         </div>
                       </li>
                     );

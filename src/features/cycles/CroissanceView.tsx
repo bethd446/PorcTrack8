@@ -15,6 +15,7 @@ import {
   Chip,
   SectionDivider,
 } from '../../components/agritech';
+import { Button } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   computeBandePhase,
@@ -344,13 +345,14 @@ const CroissanceCard: React.FC<{ data: CroissanceRowData; onOpen: () => void }> 
       </div>
 
       {isTransitionRequired && (
-        <button
-          className="w-full bg-amber text-bg-0 py-2.5 rounded-xl font-bold text-[12px] tracking-wider flex items-center justify-center gap-2"
+        <Button
+          variant="primary"
+          fullWidth
           onClick={(e) => { e.stopPropagation(); navigate('/troupeau/batiments'); }}
         >
           <ArrowUpRight size={16} />
           Passer en engraissement
-        </button>
+        </Button>
       )}
     </div>
   );

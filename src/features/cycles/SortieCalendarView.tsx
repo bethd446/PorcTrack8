@@ -8,6 +8,7 @@ import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
 import { DataRow, Chip, SectionDivider, type ChipTone } from '../../components/agritech';
+import { Button } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import { filterRealPortees } from '../../services/bandesAggregator';
 import type { BandePorcelets } from '../../types/farm';
@@ -145,17 +146,17 @@ const SortieCalendarView: React.FC = () => {
                           onClick={() => navigate(`/troupeau/bandes/${encodeURIComponent(bande.id)}`)}
                         />
                         <div className="px-4 pb-3 flex flex-wrap gap-2">
-                          <button
-                            type="button"
+                          <Button
+                            variant="primary"
+                            size="small"
                             onClick={(e) => {
                               e.stopPropagation();
                               setVenteBande(bande);
                             }}
-                            className="pressable inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-amber/10 text-amber border border-amber/30 text-[11px] font-bold uppercase tracking-wide transition-colors hover:bg-amber/20"
                           >
                             <TrendingUp size={12} aria-hidden="true" />
                             Saisir sortie abattoir
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     );
