@@ -4,7 +4,6 @@ import { ClipboardList, Calculator, AlertTriangle } from 'lucide-react';
 import AgritechLayout from '../../components/AgritechLayout';
 import { Chip, SectionDivider } from '../../components/agritech';
 import EmptyState from '../../components/design/EmptyState';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import {
   PHASE_LABELS,
@@ -14,7 +13,7 @@ import {
 import { calculerRation, type CalculResult } from '../../services/rationCalculator';
 import { useFarm } from '../../context/FarmContext';
 import { cn } from '../../lib/utils';
-import { Button } from '@/design-system';
+import { Button, PageHeader } from '@/design-system';
 
 /** Presets quantité — 100 kg (sac), 500 kg, 1 tonne, 2 tonnes. */
 const PRESETS_KG: ReadonlyArray<{ label: string; value: number }> = [
@@ -193,31 +192,11 @@ const FormulesView: React.FC = () => {
           />
 
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <header>
-              <Eyebrow dotColor="accent">Ressources · Formules</Eyebrow>
-              <h1
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '8px 0 4px',
-                }}
-              >
-                Formules
-              </h1>
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--muted)',
-                }}
-              >
-                Recettes d'aliment composé
-              </div>
-            </header>
+            <PageHeader
+              eyebrow="Ressources · Formules"
+              title="Formules"
+              subtitle="Compositions alimentaires"
+            />
 
             {/* ── Calculateur ──────────────────────────────────────── */}
             <section className="card-dense flex flex-col gap-3">

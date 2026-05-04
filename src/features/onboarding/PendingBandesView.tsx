@@ -21,7 +21,7 @@ import {
 import QuickAddBandeFromLogeForm from '../../components/forms/QuickAddBandeFromLogeForm';
 import AnimalListItem from '../../components/agritech/AnimalListItem';
 import type { ChipTone } from '../../components/agritech/Chip';
-import { Button } from '@/design-system';
+import { Button, PageHeader } from '@/design-system';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -267,26 +267,23 @@ const PendingBandesView: React.FC<PendingBandesViewProps> = ({ injectedState }) 
       data-testid="pending-bandes-view"
     >
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-bg-0 border-b border-border px-3 py-3 flex items-center gap-2">
+      <header className="sticky top-0 z-10 bg-bg-0 border-b border-border px-3 py-3 flex items-start gap-2">
         <Button
           variant="ghost"
           size="small"
           onClick={handleBack}
-          className="pressable inline-flex items-center justify-center h-10 w-10 rounded-md hover:bg-bg-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+          className="pressable inline-flex items-center justify-center h-10 w-10 rounded-md hover:bg-bg-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent mt-1"
           ariaLabel="Retour"
           data-testid="pending-bandes-back"
         >
           <ChevronLeft size={18} aria-hidden="true" />
         </Button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-[14px] font-bold uppercase tracking-wide text-text-0 truncate">
-            Bandes à valider
-          </h1>
-          <p className="text-[11px] text-text-2 truncate">
-            {loading
-              ? 'Chargement…'
-              : `${rows.length} bande${rows.length > 1 ? 's' : ''} en attente`}
-          </p>
+          <PageHeader
+            eyebrow="Admin · Bandes en attente"
+            title="Bandes en attente"
+            subtitle="Validation des inscriptions"
+          />
         </div>
       </header>
 

@@ -2,9 +2,8 @@ import React from 'react';
 import { IonContent, IonPage } from '@ionic/react';
 import { HelpCircle, Phone } from 'lucide-react';
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
-import { Button } from '@/design-system';
+import { Button, PageHeader } from '@/design-system';
 import { buildWhatsappUrl, getSupportWhatsapp } from '../../services/supportContact';
 
 const FONT_DISPLAY = 'var(--font-heading)';
@@ -101,31 +100,11 @@ const AideView: React.FC = () => {
               margin: '0 auto',
             }}
           >
-            <header>
-              <Eyebrow dotColor="accent">Plus · Aide</Eyebrow>
-              <h1
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '8px 0 4px',
-                }}
-              >
-                Aide
-              </h1>
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--muted)',
-                }}
-              >
-                FAQ et support
-              </div>
-            </header>
+            <PageHeader
+              eyebrow="Outils · Aide"
+              title="Aide"
+              subtitle="Documentation et tutoriels"
+            />
 
             <section aria-label="Introduction">
               <div

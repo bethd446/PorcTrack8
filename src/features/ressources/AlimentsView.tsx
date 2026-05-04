@@ -18,10 +18,9 @@ import EditableText from '../../components/EditableText';
 import { AppToast, Chip, KpiCard, SectionDivider, useAppToast } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
 import EmptyState from '../../components/design/EmptyState';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { useFarm, useMeta } from '../../context/FarmContext';
-import { Button } from '@/design-system';
+import { Button, PageHeader } from '@/design-system';
 import { updateProduitAliment } from '../../services/supabaseWrites';
 import type { StockAliment, StockStatut, Truie, Verrat, BandePorcelets } from '../../types/farm';
 import QuickAddAlimentForm from '../../components/forms/QuickAddAlimentForm';
@@ -538,17 +537,6 @@ const AlimentsView: React.FC = () => {
     return { total, rupture, poidsKg };
   }, [stockAliment]);
 
-  const counts = useMemo(() => {
-    let mp = 0;
-    let conc = 0;
-    for (const item of stockAliment) {
-      const cat = categoriserAliment(item.libelle, item.id);
-      if (cat === 'MATIERE_PREMIERE') mp += 1;
-      else if (cat === 'CONCENTRE') conc += 1;
-    }
-    return { mp, conc };
-  }, [stockAliment]);
-
   const treatmentCounts = useMemo(() => {
     const out = { urgent: 0, normal: 0, resolu: 0 };
     for (const item of stockAliment) {
@@ -589,47 +577,26 @@ const AlimentsView: React.FC = () => {
           />
 
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <header className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <Eyebrow dotColor="accent">Ressources · Aliments</Eyebrow>
-                <h1
-                  style={{
-                    fontFamily: 'var(--font-heading)',
-                    fontSize: 34,
-                    fontWeight: 700,
-                    lineHeight: 1,
-                    letterSpacing: '-0.02em',
-                    color: 'var(--ink)',
-                    margin: '8px 0 4px',
-                  }}
-                >
-                  Aliments
-                </h1>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 13,
-                    color: 'var(--muted)',
-                  }}
-                >
-                  {counts.mp} matière{counts.mp > 1 ? 's' : ''} première{counts.mp > 1 ? 's' : ''} · {counts.conc} concentré{counts.conc > 1 ? 's' : ''}
-                </div>
-                {treatmentSummaryLine && (
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 10.5,
-                      letterSpacing: '0.10em',
-                      textTransform: 'uppercase',
-                      color: 'var(--muted)',
-                      marginTop: 4,
-                    }}
-                    aria-live="polite"
-                  >
-                    {summary.total} produit{summary.total > 1 ? 's' : ''} — {treatmentSummaryLine}
-                  </div>
-                )}
+            <PageHeader
+              eyebrow="Ressources · Aliments"
+              title="Aliments"
+              subtitle="Stocks et consommation"
+            />
+            {treatmentSummaryLine && (
+              <div
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 10.5,
+                  letterSpacing: '0.10em',
+                  textTransform: 'uppercase',
+                  color: 'var(--muted)',
+                }}
+                aria-live="polite"
+              >
+                {summary.total} produit{summary.total > 1 ? 's' : ''} — {treatmentSummaryLine}
               </div>
+            )}
+            <div className="flex justify-end">
               <Button
                 variant="primary"
                 onClick={() => setAddOpen(true)}
@@ -639,7 +606,7 @@ const AlimentsView: React.FC = () => {
                 <Plus size={14} aria-hidden="true" />
                 <span>Nouvel aliment</span>
               </Button>
-            </header>
+            </div>
 
             {/* ── Summary strip : 3 KpiCards ──────────────────────── */}
             <div className="grid grid-cols-3 gap-2">

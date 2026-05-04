@@ -35,7 +35,7 @@ import Eyebrow from '../../components/design/Eyebrow';
 import EmptyState from '../../components/design/EmptyState';
 import TopBarSync from '../../components/design/TopBarSync';
 import AlertCard from '../../components/agritech/AlertCard';
-import { Button } from '@/design-system';
+import { Button, PageHeader } from '@/design-system';
 import { type FarmAlert, type AlertPriority, type AlertCategory } from '../../services/alertEngine';
 import { dismissAlert } from '../../services/alertDismissals';
 import { getPendingConfirmations, type PendingConfirmation } from '../../services/confirmationQueue';
@@ -656,32 +656,11 @@ const AlertsView: React.FC = () => {
 
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
             {/* ── En-tête ───────────────────────────────────────────── */}
-            <header>
-              <Eyebrow dotColor="amber">Suivi terrain · Actions à valider</Eyebrow>
-              <h1
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '8px 0 4px',
-                }}
-              >
-                Alertes
-              </h1>
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--muted)',
-                }}
-              >
-                {alerts.length} alerte{alerts.length > 1 ? 's' : ''} locale{alerts.length > 1 ? 's' : ''}
-                {alertesServeur.length > 0 && ` · ${alertesServeur.length} serveur`}
-              </div>
-            </header>
+            <PageHeader
+              eyebrow="Tables · Alertes"
+              title="Alertes"
+              subtitle="Suivi des alertes en cours"
+            />
 
             {/* ── 4 KPI cards ───────────────────────────────────────── */}
             <section
