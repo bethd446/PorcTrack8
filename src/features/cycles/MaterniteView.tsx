@@ -6,7 +6,6 @@ import {
   ArrowUpRight, AlertTriangle, Lock
 } from 'lucide-react';
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
 import EmptyState from '../../components/design/EmptyState';
@@ -14,7 +13,7 @@ import {
   Chip,
   SectionDivider,
 } from '../../components/agritech';
-import { Button } from '@/design-system';
+import { Button, PageHeader } from '@/design-system';
 import { TruieIcon } from '../../components/icons';
 import QuickMiseBasForm from '../../components/forms/QuickMiseBasForm';
 import { useFarm } from '../../context/FarmContext';
@@ -157,21 +156,11 @@ const MaterniteView: React.FC = () => {
           />
 
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <header>
-              <Eyebrow dotColor="accent">Cycle · Maternité</Eyebrow>
-              <h1
-                className="text-page-title"
-                style={{ margin: '8px 0 4px' }}
-              >
-                Maternité
-              </h1>
-              <div
-                className="text-body"
-                style={{ color: 'var(--muted)' }}
-              >
-                J0 → J28 · {summary.nbTruies} portées en cours
-              </div>
-            </header>
+            <PageHeader
+              eyebrow="MATERNITÉ"
+              title="Maternité"
+              subtitle="Suivi des portées en cours"
+            />
             {/* ── Primary Action ───────────────────────────────────────── */}
             <Button
               variant="primary"
