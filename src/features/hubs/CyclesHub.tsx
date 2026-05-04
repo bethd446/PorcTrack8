@@ -28,6 +28,7 @@ import { FARM_CONFIG } from '../../config/farm';
 import type { BandePorcelets, Saillie, Truie } from '../../types/farm';
 import { normaliseStatut } from '../../lib/truieStatut';
 import { normalizeTruieId, safeDate } from '../../lib/truieHelpers';
+import { Button } from '@/design-system';
 
 // ─── Phases ─────────────────────────────────────────────────────────────────
 
@@ -566,9 +567,9 @@ const BandesMarkers: React.FC<BandesMarkersProps> = ({ positions, onOpen }) => (
       const leftPct = (globalDay(pos) / TOTAL_DAYS) * 100;
       const row = i % 3;
       return (
-        <button
+        <Button
           key={pos.id}
-          type="button"
+          variant="ghost"
           onClick={() => onOpen(pos.id)}
           className="pressable"
           style={{
@@ -579,12 +580,9 @@ const BandesMarkers: React.FC<BandesMarkersProps> = ({ positions, onOpen }) => (
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
             padding: 0,
           }}
-          aria-label={`Bande ${pos.label}`}
+          ariaLabel={`Bande ${pos.label}`}
         >
           <span
             style={{
@@ -616,7 +614,7 @@ const BandesMarkers: React.FC<BandesMarkersProps> = ({ positions, onOpen }) => (
               boxShadow: '0 0 0 2px var(--bg-surface)',
             }}
           />
-        </button>
+        </Button>
       );
     })}
   </div>
@@ -753,8 +751,8 @@ const BandeRow: React.FC<BandeRowProps> = ({ pos, treatment, onOpen }) => {
 
   return (
     <li>
-      <button
-        type="button"
+      <Button
+        variant="ghost"
         onClick={onOpen}
         className="pressable"
         style={containerStyle}
@@ -885,7 +883,7 @@ const BandeRow: React.FC<BandeRowProps> = ({ pos, treatment, onOpen }) => {
           </div>
         </div>
         <ChevronRight size={18} color="var(--muted)" aria-hidden="true" />
-      </button>
+      </Button>
     </li>
   );
 };
