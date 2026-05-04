@@ -34,6 +34,19 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
+      - name: Test FTP path canary
+        run: |
+          echo "Deploy canary $(date -u +%Y-%m-%dT%H:%M:%SZ)" > /tmp/canary.txt
+          curl -fsT /tmp/canary.txt --user "$FTP_USER:$FTP_PASSWORD" \
+            "ftp://$FTP_HOST/domains/porctrack.tech/public_html/deploy-canary.txt"
+          sleep 2
+          curl -fsI https://porctrack.tech/deploy-canary.txt
+          echo "Canary path validated"
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
