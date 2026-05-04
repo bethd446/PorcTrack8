@@ -8,7 +8,7 @@ import {
   SectionDivider,
   type ChipTone,
 } from '../../components/agritech';
-import { Button } from '@/design-system';
+import { Button, PageHeader } from '@/design-system';
 import EmptyState from '../../components/design/EmptyState';
 import QuickAddVerratForm from '../../components/forms/QuickAddVerratForm';
 import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
@@ -122,6 +122,11 @@ const TroupeauVerratsView: React.FC<TroupeauVerratsViewProps> = ({ searchText, s
 
   return (
     <div className="flex flex-col gap-5">
+      <PageHeader
+        eyebrow="TROUPEAU · VERRATS"
+        title="Verrats"
+        subtitle="Reproducteurs mâles"
+      />
       {/* ── CTA primaire : ajouter un verrat ──────────────────── */}
       <div className="flex items-center justify-end">
         <Button
