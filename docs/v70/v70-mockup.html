@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PorcTrack V70 · Maquette interactive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #2D4A1F;
+  --primary-deep: #1f3414;
+  --primary-light: #4a7a2f;
+  --warm: #F5E9D8;
+  --warm-deep: #E8D5B5;
+  --accent: #B8703D;
+  --accent-light: #D89968;
+  --bg: #FAF7F0;
+  --bg-app: #F1ECE0;
+  --ink: #1a1a1a;
+  --muted: #6b6357;
+  --subtle: #a39888;
+  --success: #4a7a2f;
+  --warning: #c08a3d;
+  --danger: #a4453d;
+  --info: #4a6e8a;
+  --line: rgba(26,26,26,0.08);
+  --line-strong: rgba(26,26,26,0.16);
+  
+  /* Avatar species colors */
+  --truie-bg: #F4D4D4;
+  --truie-fg: #8B4744;
+  --verrat-bg: #C8D6E5;
+  --verrat-fg: #3B5266;
+  --porcelet-bg: #F5E9D8;
+  --porcelet-fg: #8B6E3D;
+  --bande-bg: #D4DFC8;
+  --bande-fg: #3D5C2C;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Instrument Sans', sans-serif;
+  background: linear-gradient(135deg, var(--bg) 0%, var(--bg-app) 100%);
+  color: var(--ink);
+  line-height: 1.5;
+  min-height: 100vh;
+  padding: 32px 16px 64px;
+}
+
+/* ===== HEADER GLOBAL ===== */
+.global-header {
+  max-width: 1400px;
+  margin: 0 auto 48px;
+  text-align: center;
+}
+
+.global-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.global-title {
+  font-family: 'Big Shoulders Display', sans-serif;
+  font-size: clamp(48px, 8vw, 96px);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  line-height: 0.9;
+  margin-bottom: 16px;
+}
+
+.global-title em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.global-subtitle {
+  font-size: 16px;
+  color: var(--muted);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ===== TAB SELECTOR (top) ===== */
+.tab-selector {
+  max-width: 1400px;
+  margin: 0 auto 32px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+}
+
+.tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover { background: var(--bg-app); color: var(--ink); }
+.tab-btn.active { background: var(--primary); color: white; }
+.tab-btn .tab-icon { font-size: 16px; }
+
+/* ===== STAGE LAYOUT ===== */
+.stage {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 48px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .stage { grid-template-columns: 1fr; }
+}
+
+/* ===== PHONE FRAME ===== */
+.phone {
+  position: sticky;
+  top: 32px;
+  width: 380px;
+  height: 760px;
+  background: #1a1a1a;
+  border-radius: 48px;
+  padding: 12px;
+  box-shadow: 
+    0 30px 60px rgba(0,0,0,0.2),
+    0 0 0 2px rgba(0,0,0,0.05);
+  margin: 0 auto;
+}
+
+.phone-screen {
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  border-radius: 36px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.phone-notch {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 28px;
+  background: #1a1a1a;
+  border-radius: 999px;
+  z-index: 100;
+}
+
+.phone-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 48px 20px 80px;
+  background: var(--bg);
+}
+
+.phone-content::-webkit-scrollbar { display: none; }
+
+/* ===== BOTTOM NAV ===== */
+.bottom-nav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  padding: 8px 4px 24px;
+  z-index: 50;
+}
+
+.bn-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 2px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bn-item:hover { background: var(--bg-app); }
+.bn-item.active { color: var(--primary); }
+
+.bn-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.bn-item.active .bn-icon {
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+}
+
+/* ===== PAGE COMMON ===== */
+.page-header {
+  margin-bottom: 16px;
+}
+
+.page-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.page-eyebrow::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.page-title {
+  font-family: 'Big Shoulders Display', sans-serif;
+  font-size: 36px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.page-subtitle {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+
+/* ===== SECTION ===== */
+.section { margin-bottom: 24px; }
+
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+}
+
+.section-label::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+/* ===== CARDS ===== */
+.card {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 8px;
+}
+
+.card-hero {
+  background: linear-gradient(135deg, white 0%, var(--warm) 100%);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.hero-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.hero-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--primary);
+  color: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.hero-info { flex: 1; }
+.hero-title-text {
+  font-family: 'Big Shoulders Display', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+.hero-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* ===== BUTTONS ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-deep); }
+.btn-secondary { background: transparent; color: var(--ink); border: 1.5px solid var(--ink); }
+.btn-accent { background: var(--accent); color: white; }
+.btn-ghost { background: transparent; color: var(--muted); }
+.btn-full { width: 100%; padding: 10px; font-size: 12px; }
+.btn-sm { padding: 6px 12px; font-size: 10px; }
+
+/* ===== PILLS ===== */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.pill-primary { background: var(--primary); color: white; }
+.pill-warm { background: var(--warm-deep); color: var(--primary-deep); }
+.pill-accent { background: var(--accent); color: white; }
+.pill-warning { background: #f4dcb6; color: #6b4910; }
+.pill-danger { background: #f0c4be; color: #6b1d18; }
+.pill-success { background: #cce0bf; color: #2d4a1f; }
+.pill-info { background: #cdd9e3; color: #2c4356; }
+.pill-soft { background: var(--warm); color: var(--ink); }
+.pill-ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+
+/* ===== STATS GRID ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 8px;
+  margin-bottom: 12px;
+}
+
+.stat {
+  text-align: center;
+  padding: 4px;
+}
+
+.stat-value {
+  font-family: 'Big Shoulders Display', sans-serif;
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+/* ===== ALERT ROW ===== */
+.alert-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.alert-row:last-child { border-bottom: none; }
+
+.alert-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+
+.alert-dot.danger { background: var(--danger); }
+.alert-dot.warning { background: var(--warning); }
+.alert-dot.info { background: var(--info); }
+
+.alert-info { flex: 1; min-width: 0; }
+.alert-title {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.alert-meta {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* ===== LIST ITEM ===== */
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.list-item:hover {
+  border-color: var(--line-strong);
+  transform: translateX(2px);
+}
+
+/* ===== ENTITY AVATAR ===== */
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 20px;
+}
+
+.avatar-truie { background: var(--truie-bg); color: var(--truie-fg); }
+.avatar-verrat { background: var(--verrat-bg); color: var(--verrat-fg); }
+.avatar-porcelet { background: var(--porcelet-bg); color: var(--porcelet-fg); }
+.avatar-bande { background: var(--bande-bg); color: var(--bande-fg); }
+
+.avatar-lg { width: 64px; height: 64px; border-radius: 16px; font-size: 32px; }
+
+.list-info { flex: 1; min-width: 0; }
+.list-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+}
+.list-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+.list-action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.list-arrow {
+  color: var(--muted);
+  font-size: 18px;
+  font-weight: 300;
+}
+
+/* ===== TABS ===== */
+.tabs-mini {
+  display: flex;
+  gap: 4px;
+  background: var(--warm);
+  padding: 4px;
+  border-radius: 999px;
+  margin-bottom: 16px;
+}
+
+.tab-mini {
+  flex: 1;
+  padding: 7px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.tab-mini.active {
+  background: var(--primary);
+  color: white;
+}
+
+/* ===== TIMELINE V2 (uniform, no overlap) ===== */
+.timeline-v2 {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px 12px;
+  margin-bottom: 12px;
+}
+
+.timeline-track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 0 8px;
+}
+
+.timeline-track::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: 22px;
+  right: 22px;
+  height: 2px;
+  background: var(--line-strong);
+}
+
+.tl-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  z-index: 2;
+}
+
+.tl-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid var(--line-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.tl-step.done .tl-circle {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+.tl-step.active .tl-circle {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+  box-shadow: 0 0 0 4px rgba(184,112,61,0.2);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(184,112,61,0.2); }
+  50% { box-shadow: 0 0 0 7px rgba(184,112,61,0.1); }
+}
+
+.tl-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.tl-step.done .tl-label, .tl-step.active .tl-label { color: var(--ink); }
+.tl-step:not(.done):not(.active) .tl-label { color: var(--muted); }
+
+.tl-date {
+  font-size: 9px;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ===== EDUCATIONAL TOOLTIP ===== */
+.term-tip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: help;
+  border-bottom: 1px dotted var(--accent);
+}
+
+.term-tip-icon {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  vertical-align: middle;
+  margin-left: 3px;
+}
+
+.edu-card {
+  background: linear-gradient(135deg, var(--warm) 0%, white 100%);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 12px;
+  margin: 12px 0;
+}
+
+.edu-card-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.edu-card-text {
+  font-size: 12px;
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+/* ===== KV ROW ===== */
+.kv-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+
+.kv-row:last-child { border-bottom: none; }
+
+.kv-key {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.kv-val {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* ===== FAB ===== */
+.fab {
+  position: absolute;
+  bottom: 88px;
+  right: 16px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 6px 16px rgba(45,74,31,0.3);
+  cursor: pointer;
+  z-index: 40;
+}
+
+/* ===== SIDE EXPLANATION ===== */
+.side-panel {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 32px;
+  position: relative;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+}
+
+.side-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: var(--warm);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 20px;
+}
+
+.side-title {
+  font-family: 'Big Shoulders Display', sans-serif;
+  font-size: 36px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+
+.side-title em { color: var(--accent); font-style: italic; }
+
+.side-desc {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+.improvement-item {
+  display: flex;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.improvement-item:last-child { border-bottom: none; }
+
+.imp-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+.imp-text { flex: 1; }
+.imp-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.imp-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.imp-compare {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.imp-tag {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.imp-tag-old { background: rgba(164,69,61,0.1); color: var(--danger); }
+.imp-tag-new { background: rgba(74,122,47,0.1); color: var(--success); }
+
+/* ===== HIDDEN CONTENT ===== */
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ===== BREADCRUMB ===== */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.breadcrumb a { color: var(--muted); text-decoration: none; }
+.breadcrumb-sep { font-size: 10px; opacity: 0.5; }
+
+/* ===== EMPTY STATE EDU ===== */
+.empty-edu {
+  background: linear-gradient(135deg, white 0%, var(--warm) 100%);
+  border: 1px dashed var(--accent);
+  border-radius: 14px;
+  padding: 24px 16px;
+  text-align: center;
+  margin: 12px 0;
+}
+
+.empty-edu-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.empty-edu-title {
+  font-family: 'Big Shoulders Display', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.empty-edu-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+/* ===== LEGEND ===== */
+.legend {
+  max-width: 1400px;
+  margin: 64px auto 0;
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  border: 1px solid var(--line);
+}
+
+.legend-title {
+  font-family: 'Big Shoulders Display', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.legend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.legend-card {
+  padding: 16px;
+  background: var(--bg);
+  border-radius: 10px;
+}
+
+.legend-num {
+  font-family: 'Big Shoulders Display', sans-serif;
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.legend-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 4px;
+  margin-bottom: 6px;
+}
+
+.legend-card-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+  .global-title { font-size: 40px; }
+  .phone {
+    width: 100%;
+    max-width: 380px;
+    position: static;
+  }
+  .side-title { font-size: 24px; }
+  .side-panel { padding: 20px; }
+  .legend { padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<div class="global-header">
+  <div class="global-eyebrow">PorcTrack · Vision V70 · Maquette interactive</div>
+  <h1 class="global-title">Le <em>nouveau</em> PorcTrack</h1>
+  <p class="global-subtitle">5 onglets repensés. Cycle de vie consolidé. App adaptive par profil. Couche éducative intégrée. Clique sur les onglets ci-dessous pour explorer.</p>
+</div>
+
+<!-- ============ TAB SELECTOR ============ -->
+<div class="tab-selector">
+  <button class="tab-btn active" data-tab="today">
+    <span class="tab-icon">⌂</span> Aujourd'hui
+  </button>
+  <button class="tab-btn" data-tab="animals">
+    <span class="tab-icon">🐖</span> Mes animaux
+  </button>
+  <button class="tab-btn" data-tab="repro">
+    <span class="tab-icon">❤</span> Repro
+  </button>
+  <button class="tab-btn" data-tab="perf">
+    <span class="tab-icon">📊</span> Performance
+  </button>
+  <button class="tab-btn" data-tab="settings">
+    <span class="tab-icon">⚙</span> Réglages
+  </button>
+</div>
+
+<!-- ============ STAGE ============ -->
+<div class="stage">
+  
+  <!-- ===== PHONE PREVIEW ===== -->
+  <div class="phone">
+    <div class="phone-screen">
+      <div class="phone-notch"></div>
+      
+      <div class="phone-content">
+        
+        <!-- TAB: AUJOURD'HUI -->
+        <div class="tab-content active" data-content="today">
+          <div class="page-header">
+            <div class="page-eyebrow">5 mai 2026 · Mardi</div>
+            <h1 class="page-title">Aujourd'hui</h1>
+            <p class="page-subtitle">Bonjour Christophe — 3 priorités</p>
+          </div>
+          
+          <!-- Hero priority -->
+          <div class="card-hero">
+            <div class="hero-row">
+              <div class="hero-icon">🐖</div>
+              <div class="hero-info">
+                <div class="hero-title-text">Mise-bas imminente</div>
+                <div class="hero-sub">T-018 · prévue demain</div>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-full">→ Voir T-018</button>
+          </div>
+          
+          <!-- Alerts -->
+          <div class="section">
+            <div class="section-label">À traiter (3)</div>
+            <div class="card">
+              <div class="alert-row">
+                <div class="alert-dot warning"></div>
+                <div class="alert-info">
+                  <div class="alert-title">Réforme suggérée — T-001</div>
+                  <div class="alert-meta">Aucune saillie depuis 90 jours</div>
+                </div>
+                <span class="pill pill-warning">Action</span>
+              </div>
+              <div class="alert-row">
+                <div class="alert-dot info"></div>
+                <div class="alert-info">
+                  <div class="alert-title">Sevrage à confirmer</div>
+                  <div class="alert-meta">Bande de mai · J+143</div>
+                </div>
+                <span class="pill pill-info">Auto</span>
+              </div>
+              <div class="alert-row">
+                <div class="alert-dot danger"></div>
+                <div class="alert-info">
+                  <div class="alert-title">Stock aliment critique</div>
+                  <div class="alert-meta">Truie gestante · 2 jours restants</div>
+                </div>
+                <span class="pill pill-danger">Urgent</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Stats -->
+          <div class="section">
+            <div class="section-label">Mon élevage</div>
+            <div class="stats-grid">
+              <div class="stat">
+                <div class="stat-value">50</div>
+                <div class="stat-label">Truies</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value">3</div>
+                <div class="stat-label">Verrats</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value">92</div>
+                <div class="stat-label">Porcelets</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value">6</div>
+                <div class="stat-label">Bandes</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Tournée -->
+          <div class="section">
+            <div class="section-label">Tournée du jour</div>
+            <div class="card">
+              <div style="text-align: center; padding: 8px 0 14px;">
+                <div style="font-size: 28px; margin-bottom: 4px;">📋</div>
+                <div style="font-size: 13px; font-weight: 600; margin-bottom: 4px;">Tournée terrain</div>
+                <div style="font-size: 11px; color: var(--muted);">12 points de contrôle aujourd'hui</div>
+              </div>
+              <button class="btn btn-primary btn-full">▶ Démarrer la tournée</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- TAB: MES ANIMAUX -->
+        <div class="tab-content" data-content="animals">
+          <div class="page-header">
+            <div class="page-eyebrow">Élevage · 145 animaux</div>
+            <h1 class="page-title">Mes animaux</h1>
+            <p class="page-subtitle">Truies, verrats, porcelets, bandes, loges</p>
+          </div>
+          
+          <!-- Tabs catégoriels -->
+          <div class="tabs-mini">
+            <div class="tab-mini active">Truies</div>
+            <div class="tab-mini">Verrats</div>
+            <div class="tab-mini">Porcelets</div>
+            <div class="tab-mini">Bandes</div>
+            <div class="tab-mini">Loges</div>
+          </div>
+          
+          <!-- Search/filter -->
+          <div class="card" style="margin-bottom: 12px; padding: 10px;">
+            <input type="text" placeholder="🔍 Rechercher T-001..." style="width: 100%; border: none; outline: none; font-size: 12px; background: transparent; font-family: inherit;">
+          </div>
+          
+          <!-- Filter chips -->
+          <div style="display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap;">
+            <span class="pill pill-primary">Toutes (50)</span>
+            <span class="pill pill-ghost">Pleines (28)</span>
+            <span class="pill pill-ghost">Maternité (11)</span>
+            <span class="pill pill-ghost">Vides (6)</span>
+          </div>
+          
+          <div class="section-label">50 truies</div>
+          
+          <!-- Liste truies avec EntityAvatar -->
+          <div class="list-item">
+            <div class="avatar avatar-truie">🐖</div>
+            <div class="list-info">
+              <div class="list-title">T-001</div>
+              <div class="list-sub">En attente saillie</div>
+            </div>
+            <div class="list-action">
+              <span class="pill pill-warning">Vide</span>
+              <span class="list-arrow">›</span>
+            </div>
+          </div>
+          
+          <div class="list-item">
+            <div class="avatar avatar-truie">🐖</div>
+            <div class="list-info">
+              <div class="list-title">T-002</div>
+              <div class="list-sub">Gestation J42</div>
+            </div>
+            <div class="list-action">
+              <span class="pill pill-success">Pleine</span>
+              <span class="list-arrow">›</span>
+            </div>
+          </div>
+          
+          <div class="list-item">
+            <div class="avatar avatar-truie">🐖</div>
+            <div class="list-info">
+              <div class="list-title">T-003</div>
+              <div class="list-sub">Allaitante J12</div>
+            </div>
+            <div class="list-action">
+              <span class="pill pill-warm">Maternité</span>
+              <span class="list-arrow">›</span>
+            </div>
+          </div>
+          
+          <div class="list-item">
+            <div class="avatar avatar-truie">🐖</div>
+            <div class="list-info">
+              <div class="list-title">T-018</div>
+              <div class="list-sub">Mise-bas imminente</div>
+            </div>
+            <div class="list-action">
+              <span class="pill pill-danger">Urgent</span>
+              <span class="list-arrow">›</span>
+            </div>
+          </div>
+          
+          <div class="list-item">
+            <div class="avatar avatar-truie">🐖</div>
+            <div class="list-info">
+              <div class="list-title">T-024</div>
+              <div class="list-sub">Sevrage J+2</div>
+            </div>
+            <div class="list-action">
+              <span class="pill pill-info">À sevrer</span>
+              <span class="list-arrow">›</span>
+            </div>
+          </div>
+          
+          <div class="fab">+</div>
+        </div>
+        
+        <!-- TAB: REPRO -->
+        <div class="tab-content" data-content="repro">
+          <div class="page-header">
+            <div class="page-eyebrow">Cycle vivant</div>
+            <h1 class="page-title">Reproduction</h1>
+            <p class="page-subtitle">Le cycle complet, en un seul écran</p>
+          </div>
+          
+          <!-- 4 sub-tabs -->
+          <div class="tabs-mini">
+            <div class="tab-mini active">Agenda</div>
+            <div class="tab-mini">En cours</div>
+            <div class="tab-mini">À venir</div>
+            <div class="tab-mini">Historique</div>
+          </div>
+          
+          <!-- KPIs Repro -->
+          <div class="stats-grid">
+            <div class="stat">
+              <div class="stat-value">28</div>
+              <div class="stat-label">Pleines</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value">11</div>
+              <div class="stat-label">Materni.</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value">6</div>
+              <div class="stat-label">Vides</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value">3</div>
+              <div class="stat-label">MB 7j</div>
+            </div>
+          </div>
+          
+          <!-- Educational tooltip example -->
+          <div class="edu-card">
+            <div class="edu-card-label">💡 Le saviez-vous ?</div>
+            <div class="edu-card-text">
+              Le cycle de gestation d'une truie dure <strong>114 jours</strong>. L'échographie à <strong>J28</strong> permet de confirmer la gestation et planifier la mise-bas.
+            </div>
+          </div>
+          
+          <!-- Timeline V2 -->
+          <div class="section">
+            <div class="section-label">Cycle bande mai 2026</div>
+            <div class="timeline-v2">
+              <div class="timeline-track">
+                <div class="tl-step done">
+                  <div class="tl-circle">✓</div>
+                  <div class="tl-label">Saillie</div>
+                  <div class="tl-date">J0</div>
+                </div>
+                <div class="tl-step done">
+                  <div class="tl-circle">✓</div>
+                  <div class="tl-label">Écho</div>
+                  <div class="tl-date">J28</div>
+                </div>
+                <div class="tl-step active">
+                  <div class="tl-circle">●</div>
+                  <div class="tl-label">Gestation</div>
+                  <div class="tl-date">J42</div>
+                </div>
+                <div class="tl-step">
+                  <div class="tl-circle"></div>
+                  <div class="tl-label">Mise-bas</div>
+                  <div class="tl-date">J115</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Agenda 7 jours -->
+          <div class="section">
+            <div class="section-label">7 prochains jours</div>
+            <div class="card">
+              <div class="alert-row">
+                <div style="background: var(--accent); color: white; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; min-width: 36px; text-align: center;">DEM</div>
+                <div class="alert-info">
+                  <div class="alert-title">Mise-bas T-018</div>
+                  <div class="alert-meta">Bande de février · J115</div>
+                </div>
+                <span class="list-arrow">›</span>
+              </div>
+              <div class="alert-row">
+                <div style="background: var(--primary); color: white; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; min-width: 36px; text-align: center;">+2J</div>
+                <div class="alert-info">
+                  <div class="alert-title">Sevrage bande mars</div>
+                  <div class="alert-meta">11 truies · J+143</div>
+                </div>
+                <span class="list-arrow">›</span>
+              </div>
+              <div class="alert-row">
+                <div style="background: var(--info); color: white; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; min-width: 36px; text-align: center;">+5J</div>
+                <div class="alert-info">
+                  <div class="alert-title">Échographie planifiée</div>
+                  <div class="alert-meta">7 truies saillies J+28</div>
+                </div>
+                <span class="list-arrow">›</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Empty state éducatif -->
+          <div class="empty-edu">
+            <div class="empty-edu-icon">📚</div>
+            <div class="empty-edu-title">Comprendre les cycles</div>
+            <div class="empty-edu-desc">
+              Apprends comment optimiser tes saillies et ton ISSE avec nos articles de l'encyclopédie.
+            </div>
+            <button class="btn btn-secondary btn-sm">→ Encyclopédie</button>
+          </div>
+          
+          <div class="fab">+</div>
+        </div>
+        
+        <!-- TAB: PERFORMANCE -->
+        <div class="tab-content" data-content="perf">
+          <div class="page-header">
+            <div class="page-eyebrow">Pilotage · Mai 2026</div>
+            <h1 class="page-title">Performance</h1>
+            <p class="page-subtitle">Comment se porte ton élevage</p>
+          </div>
+          
+          <!-- 4 sub-tabs -->
+          <div class="tabs-mini">
+            <div class="tab-mini active">Vue</div>
+            <div class="tab-mini">KPIs</div>
+            <div class="tab-mini">Finances</div>
+            <div class="tab-mini">Prévisions</div>
+          </div>
+          
+          <!-- ISSE hero -->
+          <div class="card-hero">
+            <div class="hero-row">
+              <div class="hero-icon" style="background: var(--success);">📈</div>
+              <div class="hero-info">
+                <div class="hero-title-text">ISSE moyen</div>
+                <div class="hero-sub">Indice Sevré-Saillie 
+                  <span class="term-tip-icon">?</span>
+                </div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-family: 'Big Shoulders Display'; font-size: 32px; font-weight: 900; color: var(--success); line-height: 1;">11.8</div>
+                <div style="font-size: 10px; color: var(--muted);">vs réf. 12.0</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Educational tooltip -->
+          <div class="edu-card">
+            <div class="edu-card-label">💡 Qu'est-ce que l'ISSE ?</div>
+            <div class="edu-card-text">
+              <strong>I</strong>ndice <strong>S</strong>evré-<strong>S</strong>aillie : nombre moyen de porcelets sevrés par truie par cycle. Référence métier : <strong>>12 = excellent, 10-12 = bon, &lt;10 = à améliorer</strong>.
+            </div>
+          </div>
+          
+          <!-- KPIs grid -->
+          <div class="section">
+            <div class="section-label">Indicateurs techniques</div>
+            <div class="card">
+              <div class="kv-row">
+                <span class="kv-key">Taux mise-bas</span>
+                <span class="kv-val">86 % <span style="color: var(--success); font-size: 10px;">↗ +2%</span></span>
+              </div>
+              <div class="kv-row">
+                <span class="kv-key">Nés vivants/portée</span>
+                <span class="kv-val">13.2</span>
+              </div>
+              <div class="kv-row">
+                <span class="kv-key">Mortalité allaitement</span>
+                <span class="kv-val">8.4 % <span style="color: var(--success); font-size: 10px;">↘ -1%</span></span>
+              </div>
+              <div class="kv-row">
+                <span class="kv-key">IEM moyen</span>
+                <span class="kv-val">5.1 j</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Finances (limité par rôle) -->
+          <div class="section">
+            <div class="section-label">Finances <span class="pill pill-soft" style="margin-left: 6px;">Owner</span></div>
+            <div class="card">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                <div>
+                  <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">Marge mensuelle</div>
+                  <div style="font-family: 'Big Shoulders Display'; font-size: 28px; font-weight: 900; color: var(--primary); line-height: 1;">+ 1 240 €</div>
+                </div>
+                <span class="pill pill-success">+12% vs avril</span>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary btn-sm">Détails</button>
+                <button class="btn btn-secondary btn-sm">📥 PDF</button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Top bandes -->
+          <div class="section">
+            <div class="section-label">Top performances</div>
+            <div class="list-item">
+              <div class="avatar avatar-bande">🏆</div>
+              <div class="list-info">
+                <div class="list-title">Bande de mars</div>
+                <div class="list-sub">ISSE 12.4 · marge +890€</div>
+              </div>
+              <span class="list-arrow">›</span>
+            </div>
+            <div class="list-item">
+              <div class="avatar avatar-bande">🥈</div>
+              <div class="list-info">
+                <div class="list-title">Bande de février</div>
+                <div class="list-sub">ISSE 11.9 · marge +650€</div>
+              </div>
+              <span class="list-arrow">›</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- TAB: RÉGLAGES -->
+        <div class="tab-content" data-content="settings">
+          <div class="page-header">
+            <div class="page-eyebrow">Configuration</div>
+            <h1 class="page-title">Réglages</h1>
+            <p class="page-subtitle">Profil, ferme, équipe, ressources</p>
+          </div>
+          
+          <!-- Profile card -->
+          <div class="card-hero">
+            <div class="hero-row">
+              <div class="avatar avatar-lg" style="background: var(--primary); color: white;">C</div>
+              <div class="hero-info">
+                <div class="hero-title-text">Christophe</div>
+                <div class="hero-sub">Owner · Ferme audit test</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Mode adaptive -->
+          <div class="section">
+            <div class="section-label">Mode d'affichage</div>
+            <div class="card">
+              <div style="display: flex; gap: 6px; padding: 4px; background: var(--warm); border-radius: 999px;">
+                <div class="tab-mini" style="flex: 1;">Essentiel</div>
+                <div class="tab-mini active" style="flex: 1;">Standard</div>
+                <div class="tab-mini" style="flex: 1;">Expert</div>
+              </div>
+              <div style="font-size: 11px; color: var(--muted); margin-top: 8px; line-height: 1.5;">
+                <strong>Standard</strong> recommandé pour ferme &lt;150 truies. Bascule auto si croissance.
+              </div>
+            </div>
+          </div>
+          
+          <!-- Sections list -->
+          <div class="section">
+            <div class="section-label">Configuration</div>
+            <div class="list-item">
+              <div class="avatar" style="background: var(--warm); color: var(--ink); font-size: 16px;">🏠</div>
+              <div class="list-info">
+                <div class="list-title" style="font-family: inherit; font-size: 13px;">Ma ferme</div>
+                <div class="list-sub">Identité, secteur, devise</div>
+              </div>
+              <span class="list-arrow">›</span>
+            </div>
+            <div class="list-item">
+              <div class="avatar" style="background: var(--warm); color: var(--ink); font-size: 16px;">👥</div>
+              <div class="list-info">
+                <div class="list-title" style="font-family: inherit; font-size: 13px;">Mon équipe</div>
+                <div class="list-sub">4 utilisateurs · Owner+Porcher+Admin</div>
+              </div>
+              <span class="list-arrow">›</span>
+            </div>
+            <div class="list-item">
+              <div class="avatar" style="background: var(--warm); color: var(--ink); font-size: 16px;">🌾</div>
+              <div class="list-info">
+                <div class="list-title" style="font-family: inherit; font-size: 13px;">Ressources & stocks</div>
+                <div class="list-sub">Aliments, vétérinaire, fournisseurs</div>
+              </div>
+              <span class="list-arrow">›</span>
+            </div>
+            <div class="list-item">
+              <div class="avatar" style="background: var(--warm); color: var(--ink); font-size: 16px;">📋</div>
+              <div class="list-info">
+                <div class="list-title" style="font-family: inherit; font-size: 13px;">Protocoles santé</div>
+                <div class="list-sub">SOPs, vaccins, traitements</div>
+              </div>
+              <span class="list-arrow">›</span>
+            </div>
+          </div>
+          
+          <!-- Aide & encyclopédie -->
+          <div class="section">
+            <div class="section-label">Apprendre</div>
+            <div class="list-item" style="background: linear-gradient(135deg, white 0%, var(--warm) 100%); border-color: var(--accent);">
+              <div class="avatar" style="background: var(--accent); color: white; font-size: 16px;">📚</div>
+              <div class="list-info">
+                <div class="list-title" style="font-family: inherit; font-size: 13px;">Encyclopédie porcine</div>
+                <div class="list-sub">60+ articles · cycles, santé, économie</div>
+              </div>
+              <span class="list-arrow">›</span>
+            </div>
+            <div class="list-item">
+              <div class="avatar" style="background: var(--warm); color: var(--ink); font-size: 16px;">🎓</div>
+              <div class="list-info">
+                <div class="list-title" style="font-family: inherit; font-size: 13px;">Refaire le tutoriel</div>
+                <div class="list-sub">15 min · découverte de l'app</div>
+              </div>
+              <span class="list-arrow">›</span>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+      
+      <!-- BOTTOM NAV -->
+      <div class="bottom-nav">
+        <div class="bn-item active" data-nav="today">
+          <div class="bn-icon">⌂</div>
+          <span>Aujourd'hui</span>
+        </div>
+        <div class="bn-item" data-nav="animals">
+          <div class="bn-icon">🐖</div>
+          <span>Animaux</span>
+        </div>
+        <div class="bn-item" data-nav="repro">
+          <div class="bn-icon">❤</div>
+          <span>Repro</span>
+        </div>
+        <div class="bn-item" data-nav="perf">
+          <div class="bn-icon">📊</div>
+          <span>Perf</span>
+        </div>
+        <div class="bn-item" data-nav="settings">
+          <div class="bn-icon">⚙</div>
+          <span>Réglages</span>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+  
+  <!-- ===== SIDE PANEL ===== -->
+  <div class="side-panel">
+    
+    <!-- TAB: AUJOURD'HUI -->
+    <div class="tab-content active" data-content="today">
+      <div class="side-eyebrow">⌂ Onglet 1 / 5</div>
+      <h2 class="side-title"><em>Aujourd'hui</em><br>ce que tu dois faire</h2>
+      <p class="side-desc">Le hub matinal de l'éleveur. Une seule question : quelles sont mes priorités du jour ? L'app répond avec hiérarchie : tâche prioritaire en hero, alertes consolidées, KPIs rapides, tournée terrain.</p>
+      
+      <div class="improvement-item">
+        <div class="imp-icon">1</div>
+        <div class="imp-text">
+          <div class="imp-title">Hero "tâche prioritaire" toujours rempli</div>
+          <div class="imp-desc">Plus jamais de hero vide. Si pas d'urgence, on suggère une action utile (pesée, contrôle, ajout données).</div>
+          <div class="imp-compare">
+            <span class="imp-tag imp-tag-old">Avant : zone vide tiret —</span>
+            <span class="imp-tag imp-tag-new">Après : action contextuelle</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="improvement-item">
+        <div class="imp-icon">2</div>
+        <div class="imp-text">
+          <div class="imp-title">Alertes fusionnées en 1 endroit</div>
+          <div class="imp-desc">Plus de tab "Outils" séparé pour /alerts et /audit. Tout est ici, hiérarchisé par sévérité (urgent/action/auto).</div>
+          <div class="imp-compare">
+            <span class="imp-tag imp-tag-old">Avant : 2 routes séparées</span>
+            <span class="imp-tag imp-tag-new">Après : 1 vue consolidée</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="improvement-item">
+        <div class="imp-icon">3</div>
+        <div class="imp-text">
+          <div class="imp-title">Tournée intégrée</div>
+          <div class="imp-desc">Plus besoin de chercher /controle dans Outils. Le contrôle quotidien est accessible directement depuis l'écran d'accueil.</div>
+          <div class="imp-compare">
+            <span class="imp-tag imp-tag-old">Avant : 3 clics</span>
+            <span class="imp-tag imp-tag-new">Après : 1 tap</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- TAB: MES ANIMAUX -->
+    <div class="tab-content" data-content="animals">
+      <div class="side-eyebrow">🐖 Onglet 2 / 5</div>
+      <h2 class="side-title">Mes <em>animaux</em><br>Qui ils sont</h2>
+      <p class="side-desc">L'inventaire vivant de ton élevage. 5 catégories accessibles via tabs : Truies, Verrats, Porcelets, Bandes, Loges. Chaque animal a son <strong>EntityAvatar coloré</strong> par espèce, son shortCode lisible, son statut en pill colorée.</p>
+      
+      <div class="improvement-item">
+        <div class="imp-icon">1</div>
+        <div class="imp-text">
+          <div class="imp-title">EntityAvatar par espèce</div>
+          <div class="imp-desc">Truies en rose, verrats en bleu, porcelets en crème, bandes en vert. Différenciation immédiate. Si photo réelle uploadée, elle remplace l'avatar.</div>
+          <div class="imp-compare">
+            <span class="imp-tag imp-tag-old">Avant : icône cochon outline identique partout</span>
+            <span class="imp-tag imp-tag-new">Après : avatar coloré distinctif</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="improvement-item">
+        <div class="imp-icon">2</div>
+        <div class="imp-text">
+          <div class="imp-title">Filter chips au lieu de tabs scroll horizontal</div>
+          <div class="imp-desc">Filtres rapides sous forme de pills : "Toutes", "Pleines", "Maternité", "Vides". 1 tap pour filtrer.</div>
+        </div>
+      </div>
+      
+      <div class="improvement-item">
+        <div class="imp-icon">3</div>
+        <div class="imp-text">
+          <div class="imp-title">Search persistant en haut</div>
+          <div class="imp-desc">Recherche "T-001" instantanée. Plus besoin de scroller dans 50 truies pour en trouver une.</div>
+        </div>
+      </div>
+      
+      <div class="improvement-item">
+        <div class="imp-icon">4</div>
+        <div class="imp-text">
+          <div class="imp-title">Status pills lisibles</div>
+          <div class="imp-desc">Au lieu de codes techniques (B-20260503-M-02), affichage humain : "Bande de mai 2026". Codes en tooltip si besoin.</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- TAB: REPRO -->
+    <div class="tab-content" data-content="repro">
+      <div class="side-eyebrow">❤ Onglet 3 / 5 · Cœur du métier</div>
+      <h2 class="side-title">Le <em>cycle</em><br>vivant</h2>
+      <p class="side-desc">L'innovation principale de V70 : <strong>fusion des 7 routes /cycles/* en un seul écran avec 4 tabs</strong>. Plus jamais besoin de jongler entre /cycles/repro, /cycles/maternite, /cycles/post-sevrage, etc. Tout dans Reproduction.</p>
+      
+      <div class="improvement-item">
+        <div class="imp-icon">1</div>
+        <div class="imp-text">
+          <div class="imp-title">Agenda 7 jours par défaut</div>
+          <div class="imp-desc">Vue calendrier des prochains événements : mises-bas prévues, sevrages dus, échographies planifiées. Hiérarchie temporelle claire.</div>
+        </div>
+      </div>
+      
+      <div class="improvement-item">
+        <div class="imp-icon">2</div>
+        <div class="imp-text">
+          <div class="imp-title">CycleTimeline V2 lisible</div>
+          <div class="imp-desc">Plus de superposition de texte. Labels en dessous des cercles, dates en mono, étape active animée pulse. Responsive mobile.</div>
+          <div class="imp-compare">
+            <span class="imp-tag imp-tag-old">Avant : SBVAEILEENCERVERECEHODGRACPAILEUR</span>
+            <span class="imp-tag imp-tag-new">Après : Saillie › Écho › Gestation › MB</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="improvement-item">
+        <div class="imp-icon">3</div>
+        <div class="imp-text">
+          <div class="imp-title">Tooltips éducatifs intégrés</div>
+          <div class="imp-desc">Chaque terme métier (saillie, écho, gestation, ISSE...) a son tooltip. Un débutant comprend immédiatement.</div>
+          <div class="imp-compare">
+            <span class="imp-tag imp-tag-new">Niveau A éducatif activé</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="improvement-item">
+        <div class="imp-icon">4</div>
+        <div class="imp-text">
+          <div class="imp-title">Empty states éducatifs</div>
+          <div class="imp-desc">Si pas de cycle en cours : illustration + invitation à apprendre via encyclopédie. Plus jamais d'écran vide qui démotive.</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- TAB: PERFORMANCE -->
+    <div class="tab-content" data-content="perf">
+      <div class="side-eyebrow">📊 Onglet 4 / 5</div>
+      <h2 class="side-title"><em>Performance</em><br>ouverte à tous</h2>
+      <p class="side-desc">Anciennement réservé OWNER, le tab Performance s'ouvre à tous les rôles avec des niveaux. PORCHER voit les KPIs techniques. ADMIN voit la structure financière. OWNER voit tout. Plus de silo, plus de démotivation des équipes terrain.</p>
+      
+      <div class="improvement-item">
+        <div class="imp-icon">1</div>
+        <div class="imp-text">
+          <div class="imp-title">Niveaux par rôle</div>
+          <div class="imp-desc">Chaque utilisateur voit ce qui le concerne. Le porcher voit son taux de mise-bas, sa mortalité allaitement. L'owner voit en plus les marges et prévisions.</div>
+        </div>
+      </div>
+      
+      <div class="improvement-item">
+        <div class="imp-icon">2</div>
+        <div class="imp-text">
+          <div class="imp-title">ISSE en hero</div>
+          <div class="imp-desc">L'indicateur le plus important du métier porcin (Indice Sevré-Saillie) en évidence avec comparaison au benchmark.</div>
+        </div>
+      </div>
+      
+      <div class="improvement-item">
+        <div class="imp-icon">3</div>
+        <div class="imp-text">
+          <div class="imp-title">Tooltips sur tous les KPIs</div>
+          <div class="imp-desc">"Qu'est-ce que l'ISSE ?", "C'est quoi l'IEM ?" — chaque acronyme a son explication accessible en tap.</div>
+        </div>
+      </div>
+      
+      <div class="improvement-item">
+        <div class="imp-icon">4</div>
+        <div class="imp-text">
+          <div class="imp-title">Top performances motivantes</div>
+          <div class="imp-desc">Classement des bandes les plus performantes avec icônes podium 🏆🥈🥉. Motivation visuelle pour les porchers responsables.</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- TAB: RÉGLAGES -->
+    <div class="tab-content" data-content="settings">
+      <div class="side-eyebrow">⚙ Onglet 5 / 5</div>
+      <h2 class="side-title"><em>Réglages</em><br>+ apprendre</h2>
+      <p class="side-desc">L'ancien onglet "Plus" devient "Réglages" — plus clair. Y sont fusionnés : profil, ferme, équipe, ressources, fournisseurs, protocoles. <strong>Et l'innovation V70 : la couche éducative complète</strong> (encyclopédie + tutoriel) est accessible ici.</p>
+      
+      <div class="improvement-item">
+        <div class="imp-icon">1</div>
+        <div class="imp-text">
+          <div class="imp-title">Mode d'affichage adaptatif</div>
+          <div class="imp-desc">Bascule entre Essentiel (petite ferme, UI simple), Standard (par défaut), Expert (grande ferme, UI dense). Auto-détecté selon taille.</div>
+        </div>
+      </div>
+      
+      <div class="improvement-item">
+        <div class="imp-icon">2</div>
+        <div class="imp-text">
+          <div class="imp-title">Encyclopédie porcine</div>
+          <div class="imp-desc">60+ articles sur la vie des cochons : cycles biologiques, santé, reproduction, économie, réglementation. Recherche full-text.</div>
+          <div class="imp-compare">
+            <span class="imp-tag imp-tag-new">Niveau B éducatif</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="improvement-item">
+        <div class="imp-icon">3</div>
+        <div class="imp-text">
+          <div class="imp-title">Tutoriel rejouable</div>
+          <div class="imp-desc">L'onboarding éducatif (15 min) est accessible à tout moment. Idéal pour former un nouveau salarié.</div>
+          <div class="imp-compare">
+            <span class="imp-tag imp-tag-new">Niveau C éducatif</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="improvement-item">
+        <div class="imp-icon">4</div>
+        <div class="imp-text">
+          <div class="imp-title">Ressources & fournisseurs unifiés</div>
+          <div class="imp-desc">Plus besoin de chercher /ressources, /fournisseurs séparément. Tout dans une section configuration ferme.</div>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+</div>
+
+<!-- ===== LEGEND CHIFFRES ===== -->
+<div class="legend">
+  <div class="legend-title">Synthèse V70 en chiffres</div>
+  <div class="legend-grid">
+    <div class="legend-card">
+      <div class="legend-num">5</div>
+      <div class="legend-card-title">Onglets</div>
+      <div class="legend-card-desc">Au lieu de 6. Suppression "Outils" fourre-tout, renommage "Plus" → "Réglages".</div>
+    </div>
+    <div class="legend-card">
+      <div class="legend-num">7→1</div>
+      <div class="legend-card-title">Routes /cycles fusionnées</div>
+      <div class="legend-card-desc">Repro / Maternité / Post-sevrage / Croissance / Finition / Engraissement / Sortie → 1 seul écran avec 4 tabs.</div>
+    </div>
+    <div class="legend-card">
+      <div class="legend-num">3</div>
+      <div class="legend-card-title">Modes adaptatifs</div>
+      <div class="legend-card-desc">Essentiel (petite ferme) · Standard (par défaut) · Expert (grand industriel).</div>
+    </div>
+    <div class="legend-card">
+      <div class="legend-num">3</div>
+      <div class="legend-card-title">Niveaux éducatifs</div>
+      <div class="legend-card-desc">Tooltips contextuels + Encyclopédie 60+ articles + Onboarding rejouable.</div>
+    </div>
+    <div class="legend-card">
+      <div class="legend-num">4</div>
+      <div class="legend-card-title">EntityAvatars</div>
+      <div class="legend-card-desc">Truie 🩷 / Verrat 💙 / Porcelet 🧡 / Bande 💚 — couleurs distinctives + photo réelle si dispo.</div>
+    </div>
+    <div class="legend-card">
+      <div class="legend-num">∞</div>
+      <div class="legend-card-title">Empty states éducatifs</div>
+      <div class="legend-card-desc">Plus jamais de zone vide. Chaque écran vide invite à apprendre ou à ajouter données.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Tab switching
+const tabBtns = document.querySelectorAll('.tab-btn');
+const navItems = document.querySelectorAll('.bn-item');
+const contents = document.querySelectorAll('.tab-content');
+
+function switchTab(tabName) {
+  // Top tabs
+  tabBtns.forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tabName);
+  });
+  // Bottom nav
+  navItems.forEach(b => {
+    b.classList.toggle('active', b.dataset.nav === tabName);
+  });
+  // Contents (both phone + side panel)
+  contents.forEach(c => {
+    c.classList.toggle('active', c.dataset.content === tabName);
+  });
+  // Scroll phone to top
+  document.querySelector('.phone-content').scrollTop = 0;
+}
+
+tabBtns.forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+navItems.forEach(item => {
+  item.addEventListener('click', () => switchTab(item.dataset.nav));
+});
+</script>
+
+</body>
+</html>

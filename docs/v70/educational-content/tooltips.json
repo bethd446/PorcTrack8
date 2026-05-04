@@ -1,0 +1,62 @@
+{
+  "saillie": {
+    "label": "Saillie",
+    "definition": "Accouplement entre une truie en chaleur et un verrat (ou insémination artificielle). Date de référence J0 du cycle gestation. À noter dans PorcTrack pour planifier l'échographie à J28 et la mise-bas à J114. Référence ITP : objectif de 90 % de saillies fécondantes."
+  },
+  "echographie": {
+    "label": "Échographie",
+    "definition": "Examen utilisé pour confirmer la gestation d'une truie. Réalisée entre J25 et J35 après la saillie (idéal J28). Permet de détecter les truies vides tôt et d'éviter de nourrir une gestation inexistante pendant 3 mois."
+  },
+  "mise-bas": {
+    "label": "Mise-bas",
+    "definition": "Accouchement de la truie. Survient à J114 ± 2 jours après la saillie. Préparer la maternité dès J110 : nettoyage, désinfection, lampe chauffante. Surveiller les 24 premières heures, période critique pour la mortalité néonatale."
+  },
+  "sevrage": {
+    "label": "Sevrage",
+    "definition": "Séparation des porcelets de la mère pour passer à une alimentation solide. Réalisé entre 21 et 28 jours après la mise-bas. Permet le retour en chaleur de la truie sous 5 à 7 jours et le démarrage d'un nouveau cycle de production."
+  },
+  "isse": {
+    "label": "ISSE",
+    "definition": "Indice Sevrés-Saillie : nombre moyen de porcelets sevrés par truie par cycle. Indicateur clé de productivité. Référence ITP : > 12 = excellent, 10 à 12 = bon, < 10 = à améliorer. Combine fécondité, prolificité et survie en allaitement."
+  },
+  "iem": {
+    "label": "IEM",
+    "definition": "Intervalle Entre Mises-bas : durée moyenne entre deux mises-bas successives d'une même truie. Cible technique : 145 à 150 jours. Un IEM > 160 jours signale des problèmes de retour en chaleur, de fécondité ou de pertes embryonnaires."
+  },
+  "gestation": {
+    "label": "Gestation",
+    "definition": "Période de développement des fœtus dans l'utérus de la truie. Dure 114 jours en moyenne (113 à 116). Trois phases : implantation (J0 à J35), croissance (J35 à J90), finition (J90 à mise-bas). Alimentation à adapter selon la phase."
+  },
+  "lactation": {
+    "label": "Lactation",
+    "definition": "Période d'allaitement des porcelets par la truie, de la mise-bas au sevrage. Dure 21 à 28 jours. Truie en pic de besoins nutritionnels (jusqu'à 8 kg/jour). Sous-alimentation pendant cette phase = maigreur, retour en chaleur retardé."
+  },
+  "reforme": {
+    "label": "Réforme",
+    "definition": "Sortie définitive d'une truie ou d'un verrat du troupeau. Décidée pour cause d'âge (> 6 portées), de baisse de performance, d'infertilité ou de problème sanitaire. Taux de renouvellement annuel cible : 35 à 45 % du cheptel reproducteur."
+  },
+  "parite": {
+    "label": "Parité",
+    "definition": "Numéro de portée d'une truie. Parité 1 = première mise-bas (primipare). Productivité maximale entre la parité 3 et la parité 5. Parité 1 et > 6 sont moins prolifiques. La pyramide des parités est un indicateur de santé du troupeau."
+  },
+  "lignee": {
+    "label": "Lignée",
+    "definition": "Origine génétique d'un animal reproducteur. Conditionne la prolificité, la croissance et la qualité de la viande. En Afrique de l'Ouest, choisir des lignées adaptées au climat tropical (résistance à la chaleur, rusticité) plutôt que des lignées européennes pures."
+  },
+  "tournee": {
+    "label": "Tournée",
+    "definition": "Passage quotidien dans les bâtiments par le porcher pour observer les animaux : posture, appétit, respiration, déjections, chaleurs. Deux tournées par jour minimum (matin et soir). Premier outil de détection précoce des problèmes sanitaires."
+  },
+  "pesee": {
+    "label": "Pesée",
+    "definition": "Mesure du poids d'un animal pour suivre sa croissance et ajuster l'alimentation. À réaliser à la mise-bas, au sevrage et tous les 21 jours en engraissement. Données indispensables pour calculer le GMQ (Gain Moyen Quotidien) et l'indice de consommation."
+  },
+  "mortalite": {
+    "label": "Mortalité",
+    "definition": "Nombre d'animaux morts sur une période. À noter par cause (écrasement, diarrhée, mort-né, sevrage) pour identifier les points faibles. Seuil d'alerte en allaitement : > 15 % de la portée. Référence ITP : 12 % de mortalité allaitement maximum."
+  },
+  "vaccin": {
+    "label": "Vaccin",
+    "definition": "Préparation administrée pour protéger contre une maladie infectieuse. Programme vaccinal type en Côte d'Ivoire : peste porcine classique, parvovirose, rouget, colibacillose. Respecter la chaîne du froid (2 à 8 °C) et les délais d'attente avant abattage."
+  }
+}
