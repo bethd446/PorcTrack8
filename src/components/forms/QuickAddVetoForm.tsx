@@ -35,6 +35,7 @@ import { IonToast } from '@ionic/react';
 import { Plus, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { FormField, Input, Textarea, Button } from '@/design-system';
 import { insertProduitVeto } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
@@ -205,15 +206,12 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
             ))}
           </datalist>
 
-          {/* ID */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-veto-id"
-              className="block text-mono-label text-text-2"
-            >
-              ID <span className="text-text-2 normal-case">· auto-suggéré</span>
-            </label>
-            <input
+          <FormField
+            label="ID"
+            hint={errors.id ? undefined : 'Format V suivi de chiffres (ex: V01)'}
+            error={errors.id}
+          >
+            <Input
               id="add-veto-id"
               ref={firstFieldRef}
               type="text"
@@ -223,40 +221,18 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
               aria-required="true"
               aria-invalid={!!errors.id}
               aria-describedby={errors.id ? 'add-veto-id-error' : 'add-veto-id-hint'}
-              className={[
-                'w-full h-12 rounded-md px-3',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'ft-code text-[14px] uppercase',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.id ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
+              className="ft-code uppercase"
               placeholder="V01"
               value={id}
               onChange={e => setId(e.target.value)}
               disabled={saving}
               autoComplete="off"
+              invalid={!!errors.id}
             />
-            {errors.id ? (
-              <p id="add-veto-id-error" role="alert" className="text-[11px] text-red">
-                {errors.id}
-              </p>
-            ) : (
-              <p id="add-veto-id-hint" className="text-[10px] text-text-2">
-                Format V suivi de chiffres (ex: V01)
-              </p>
-            )}
-          </div>
+          </FormField>
 
-          {/* Produit */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-veto-produit"
-              className="block text-mono-label text-text-2"
-            >
-              Produit <span className="text-red normal-case">· obligatoire</span>
-            </label>
-            <input
+          <FormField label="Produit" required error={errors.produit}>
+            <Input
               id="add-veto-produit"
               type="text"
               maxLength={80}
@@ -264,84 +240,49 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
               aria-required="true"
               aria-invalid={!!errors.produit}
               aria-describedby={errors.produit ? 'add-veto-produit-error' : undefined}
-              className={[
-                'w-full h-12 rounded-md px-3',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'text-[14px]',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.produit ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
               placeholder="Ex: Ivermectine 1%"
               value={produit}
               onChange={e => setProduit(e.target.value)}
               disabled={saving}
               autoComplete="off"
+              invalid={!!errors.produit}
             />
-            {errors.produit ? (
-              <p id="add-veto-produit-error" role="alert" className="text-[11px] text-red">
-                {errors.produit}
-              </p>
-            ) : null}
-          </div>
+          </FormField>
 
-          {/* Type + Usage (grid 2-col) */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label
-                htmlFor="add-veto-type"
-                className="block text-mono-label text-text-2"
-              >
-                Type
-              </label>
-              <input
+            <FormField label="Type">
+              <Input
                 id="add-veto-type"
                 type="text"
                 list="add-veto-types"
                 maxLength={40}
                 aria-label="Type de produit vétérinaire"
-                className="w-full h-11 rounded-md px-3 bg-bg-0 border border-border hover:border-text-2 text-text-0 placeholder:text-text-2 text-[13px] outline-none transition-colors duration-[160ms] focus:border-accent focus:ring-1 focus:ring-accent"
                 placeholder="Antiparasitaire"
                 value={type}
                 onChange={e => setType(e.target.value)}
                 disabled={saving}
                 autoComplete="off"
               />
-            </div>
-
-            <div className="space-y-1.5">
-              <label
-                htmlFor="add-veto-usage"
-                className="block text-mono-label text-text-2"
-              >
-                Usage
-              </label>
-              <input
+            </FormField>
+            <FormField label="Usage">
+              <Input
                 id="add-veto-usage"
                 type="text"
                 list="add-veto-usages"
                 maxLength={40}
                 aria-label="Usage du produit vétérinaire"
-                className="w-full h-11 rounded-md px-3 bg-bg-0 border border-border hover:border-text-2 text-text-0 placeholder:text-text-2 text-[13px] outline-none transition-colors duration-[160ms] focus:border-accent focus:ring-1 focus:ring-accent"
                 placeholder="Prévention"
                 value={usage}
                 onChange={e => setUsage(e.target.value)}
                 disabled={saving}
                 autoComplete="off"
               />
-            </div>
+            </FormField>
           </div>
 
-          {/* Stock initial + Unité (grid) */}
           <div className="grid grid-cols-[2fr_1fr] gap-3">
-            <div className="space-y-1.5">
-              <label
-                htmlFor="add-veto-stock"
-                className="block text-mono-label text-text-2"
-              >
-                Stock initial
-              </label>
-              <input
+            <FormField label="Stock initial" error={errors.stockActuel}>
+              <Input
                 id="add-veto-stock"
                 type="text"
                 inputMode="decimal"
@@ -349,34 +290,17 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
                 aria-required="true"
                 aria-invalid={!!errors.stockActuel}
                 aria-describedby={errors.stockActuel ? 'add-veto-stock-error' : undefined}
-                className={[
-                  'w-full h-14 rounded-md px-4',
-                  'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                  'font-mono text-[20px] tabular-nums text-center',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  errors.stockActuel ? 'border-red' : 'border-border hover:border-text-2',
-                ].join(' ')}
+                className="font-mono text-[20px] tabular-nums text-center"
                 placeholder="0"
                 value={stockActuel}
                 onChange={e => setStockActuel(e.target.value.replace(/[^\d.,]/g, ''))}
                 disabled={saving}
+                invalid={!!errors.stockActuel}
               />
-              {errors.stockActuel ? (
-                <p id="add-veto-stock-error" role="alert" className="text-[11px] text-red">
-                  {errors.stockActuel}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
 
-            <div className="space-y-1.5">
-              <label
-                htmlFor="add-veto-unite"
-                className="block text-mono-label text-text-2"
-              >
-                Unité
-              </label>
-              <input
+            <FormField label="Unité" error={errors.unite}>
+              <Input
                 id="add-veto-unite"
                 type="text"
                 list="add-veto-unites"
@@ -385,37 +309,29 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
                 aria-required="true"
                 aria-invalid={!!errors.unite}
                 aria-describedby={errors.unite ? 'add-veto-unite-error' : undefined}
-                className={[
-                  'w-full h-14 rounded-md px-3',
-                  'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                  'text-[14px] uppercase tracking-wide text-center',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  errors.unite ? 'border-red' : 'border-border hover:border-text-2',
-                ].join(' ')}
+                className="uppercase tracking-wide text-center"
                 placeholder="mL"
                 value={unite}
                 onChange={e => setUnite(e.target.value)}
                 disabled={saving}
                 autoComplete="off"
+                invalid={!!errors.unite}
               />
-              {errors.unite ? (
-                <p id="add-veto-unite-error" role="alert" className="text-[11px] text-red">
-                  {errors.unite}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
           </div>
 
-          {/* Seuil alerte */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-veto-seuil"
-              className="block text-mono-label text-text-2"
-            >
-              Seuil alerte <span className="text-text-2 normal-case">· défaut 5</span>
-            </label>
-            <input
+          <FormField
+            label="Seuil alerte"
+            hint={
+              errors.seuilAlerte
+                ? undefined
+                : previewStatut
+                ? undefined
+                : 'défaut 5 · Notification stock bas si stock ≤ seuil'
+            }
+            error={errors.seuilAlerte}
+          >
+            <Input
               id="add-veto-seuil"
               type="text"
               inputMode="decimal"
@@ -424,105 +340,60 @@ const QuickAddVetoForm: React.FC<QuickAddVetoFormProps> = ({
               aria-describedby={
                 errors.seuilAlerte ? 'add-veto-seuil-error' : 'add-veto-seuil-hint'
               }
-              className={[
-                'w-full h-12 rounded-md px-3',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'text-[14px] tabular-nums',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.seuilAlerte ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
+              className="tabular-nums"
               placeholder="5"
               value={seuilAlerte}
               onChange={e => setSeuilAlerte(e.target.value.replace(/[^\d.,]/g, ''))}
               disabled={saving}
+              invalid={!!errors.seuilAlerte}
             />
-            {errors.seuilAlerte ? (
-              <p id="add-veto-seuil-error" role="alert" className="text-[11px] text-red">
-                {errors.seuilAlerte}
-              </p>
-            ) : previewStatut ? (
+            {!errors.seuilAlerte && previewStatut ? (
               <p
                 id="add-veto-seuil-hint"
                 aria-live="polite"
-                className="text-[10px] text-text-2"
+                className="mt-1 text-[10px] text-text-2"
               >
                 Statut calculé · <span className={previewTone}>{previewStatut}</span>
               </p>
-            ) : (
-              <p id="add-veto-seuil-hint" className="text-[10px] text-text-2">
-                Notification stock bas si stock ≤ seuil
-              </p>
-            )}
-          </div>
+            ) : null}
+          </FormField>
 
-          {/* Notes */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-veto-notes"
-              className="block text-mono-label text-text-2"
-            >
-              Notes <span className="text-text-2 normal-case">· optionnel</span>
-            </label>
-            <textarea
+          <FormField label="Notes" hint={`optionnel · ${notes.length}/200`}>
+            <Textarea
               id="add-veto-notes"
               maxLength={200}
               rows={3}
               aria-label="Notes sur le produit"
-              className="w-full rounded-md px-3 py-2 bg-bg-0 border border-border hover:border-text-2 text-text-0 placeholder:text-text-2 text-[13px] outline-none transition-colors duration-[160ms] focus:border-accent focus:ring-1 focus:ring-accent resize-none"
               placeholder="Posologie, précautions, fournisseur…"
               value={notes}
               onChange={e => setNotes(e.target.value)}
               disabled={saving}
             />
-            <p className="text-[10px] text-text-2 tabular-nums text-right">
-              {notes.length}/200
-            </p>
-          </div>
+          </FormField>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2 pt-2">
-            <button
-              type="button"
+          <div className="flex gap-3 justify-end pt-2 border-t border-border">
+            <Button
+              variant="secondary"
               onClick={handleClose}
               disabled={saving}
-              aria-label="Annuler et fermer"
-              className={[
-                'pressable flex-1 h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-bg-1 border border-border text-text-1',
-                'text-[12px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms] hover:border-text-2',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : '',
-              ].join(' ')}
+              ariaLabel="Annuler et fermer"
             >
               Annuler
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={saving}
-              aria-label="Ajouter le produit à la pharmacie"
               aria-busy={saving}
-              className={[
-                'pressable flex-[2] h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-accent text-bg-0',
-                'text-[13px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms]',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
-              ].join(' ')}
+              ariaLabel="Ajouter le produit à la pharmacie"
             >
-              {saving ? (
-                <span className="animate-pulse">Enregistrement…</span>
-              ) : (
-                <>
-                  <span>Ajouter</span>
+              {saving ? 'Enregistrement…' : (
+                <span className="inline-flex items-center gap-2">
+                  Ajouter
                   <Save size={14} aria-hidden="true" />
-                </>
+                </span>
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </BottomSheet>

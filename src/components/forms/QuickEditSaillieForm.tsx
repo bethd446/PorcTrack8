@@ -3,6 +3,7 @@ import { IonToast } from '@ionic/react';
 import { Edit3, Save, Calendar, Heart } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { FormField, Input, Select, Textarea, Button } from '@/design-system';
 import { supabase } from '../../services/supabaseClient';
 import { resolveSowIdByCode } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
@@ -224,17 +225,6 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
     }
   };
 
-  // Classe réutilisable
-  const inputBaseClass = (invalid: boolean): string =>
-    [
-      'w-full h-12 rounded-md px-3',
-      'bg-bg-0 border text-text-0 placeholder:text-text-2',
-      'text-[14px]',
-      'outline-none transition-colors duration-[160ms]',
-      'focus:border-accent focus:ring-1 focus:ring-accent',
-      invalid ? 'border-red' : 'border-border hover:border-text-2',
-    ].join(' ');
-
   return (
     <>
       <BottomSheet
@@ -271,39 +261,20 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
               Couple
             </h3>
 
-            {/* Truie (readonly) */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="edit-saillie-truie"
-                className="block text-mono-label text-text-2"
-              >
-                Truie <span className="text-text-2 normal-case">· verrouillée</span>
-              </label>
-              <input
+            <FormField label="Truie" hint="verrouillée">
+              <Input
                 id="edit-saillie-truie"
                 type="text"
                 readOnly
                 aria-readonly="true"
                 aria-label={`Truie de la saillie ${truieLabel}`}
-                className={[
-                  'w-full h-12 rounded-md px-3',
-                  'bg-bg-2 border border-border text-text-1',
-                  'text-[14px]',
-                  'cursor-not-allowed',
-                ].join(' ')}
+                className="bg-bg-2 cursor-not-allowed"
                 value={truieLabel}
               />
-            </div>
+            </FormField>
 
-            {/* Verrat (select) */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="edit-saillie-verrat"
-                className="block text-mono-label text-text-2"
-              >
-                Verrat <span className="text-red normal-case">· requis</span>
-              </label>
-              <select
+            <FormField label="Verrat" required error={errors.verratId}>
+              <Select
                 id="edit-saillie-verrat"
                 ref={firstFieldRef}
                 aria-label="Choix du verrat"
@@ -312,7 +283,6 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
                 aria-describedby={
                   errors.verratId ? 'edit-saillie-verrat-error' : undefined
                 }
-                className={inputBaseClass(!!errors.verratId)}
                 value={verratId}
                 onChange={e => setVerratId(e.target.value)}
                 disabled={saving}
@@ -324,22 +294,12 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
                     {v.nom ? ` · ${v.nom}` : ''}
                   </option>
                 ))}
-                {/* Si verratId initial n'est dans aucune liste, on l'inclut */}
                 {initial.verratId &&
                 !verratsActifs.some(v => v.displayId === initial.verratId) ? (
                   <option value={initial.verratId}>{initial.verratId}</option>
                 ) : null}
-              </select>
-              {errors.verratId ? (
-                <p
-                  id="edit-saillie-verrat-error"
-                  role="alert"
-                  className="text-[11px] text-red"
-                >
-                  {errors.verratId}
-                </p>
-              ) : null}
-            </div>
+              </Select>
+            </FormField>
           </section>
 
           {/* ═══ Section Planning ════════════════════════════════════ */}
@@ -348,21 +308,19 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
               Planning
             </h3>
 
-            {/* Date saillie */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="edit-saillie-date"
-                className="block text-mono-label text-text-2"
-              >
-                Date saillie <span className="text-red normal-case">· requis</span>
-              </label>
+            <FormField
+              label="Date saillie"
+              required
+              hint={errors.dateSaillie ? undefined : `Détermine la date MB prévue (${GESTATION_DAYS}j gestation)`}
+              error={errors.dateSaillie}
+            >
               <div className="relative">
                 <Calendar
                   size={14}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-text-2 pointer-events-none"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-text-2 pointer-events-none z-10"
                   aria-hidden="true"
                 />
-                <input
+                <Input
                   id="edit-saillie-date"
                   type="date"
                   aria-label="Date de la saillie"
@@ -373,50 +331,26 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
                       ? 'edit-saillie-date-error'
                       : 'edit-saillie-date-hint'
                   }
-                  className={[
-                    inputBaseClass(!!errors.dateSaillie),
-                    'pl-9',
-                  ].join(' ')}
+                  className="pl-9"
                   value={dateSaillie}
                   onChange={e => setDateSaillie(e.target.value)}
                   disabled={saving}
+                  invalid={!!errors.dateSaillie}
                 />
               </div>
-              <p
-                id="edit-saillie-date-hint"
-                className="text-[10px] text-text-2"
-              >
-                Détermine la date MB prévue ({GESTATION_DAYS}j gestation)
-              </p>
-              {errors.dateSaillie ? (
-                <p
-                  id="edit-saillie-date-error"
-                  role="alert"
-                  className="text-[11px] text-red"
-                >
-                  {errors.dateSaillie}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
 
-            {/* Date MB prévue */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="edit-saillie-mb"
-                className="block text-mono-label text-text-2"
-              >
-                Date MB prévue{' '}
-                <span className="text-text-2 normal-case">
-                  {mbManuallyEdited ? '· édité manuellement' : `· auto +${GESTATION_DAYS}j`}
-                </span>
-              </label>
+            <FormField
+              label={`Date MB prévue · ${mbManuallyEdited ? 'édité manuellement' : `auto +${GESTATION_DAYS}j`}`}
+              error={errors.dateMBPrevue}
+            >
               <div className="relative">
                 <Calendar
                   size={14}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-text-2 pointer-events-none"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-text-2 pointer-events-none z-10"
                   aria-hidden="true"
                 />
-                <input
+                <Input
                   id="edit-saillie-mb"
                   type="date"
                   aria-label="Date de mise-bas prévue"
@@ -426,19 +360,17 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
                       ? 'edit-saillie-mb-error'
                       : 'edit-saillie-mb-hint'
                   }
-                  className={[
-                    inputBaseClass(!!errors.dateMBPrevue),
-                    'pl-9',
-                  ].join(' ')}
+                  className="pl-9"
                   value={dateMBPrevue}
                   onChange={e => {
                     setDateMBPrevue(e.target.value);
                     setMbManuallyEdited(true);
                   }}
                   disabled={saving}
+                  invalid={!!errors.dateMBPrevue}
                 />
               </div>
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center justify-between gap-2 mt-1">
                 <p
                   id="edit-saillie-mb-hint"
                   className="text-[10px] text-text-2"
@@ -462,16 +394,7 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
                   </button>
                 ) : null}
               </div>
-              {errors.dateMBPrevue ? (
-                <p
-                  id="edit-saillie-mb-error"
-                  role="alert"
-                  className="text-[11px] text-red"
-                >
-                  {errors.dateMBPrevue}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
           </section>
 
           {/* ═══ Section Statut ══════════════════════════════════════ */}
@@ -479,21 +402,14 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
             <h3 className="text-mono-micro text-text-2">
               Statut
             </h3>
-            <div className="space-y-1.5">
-              <label
-                htmlFor="edit-saillie-statut"
-                className="block text-mono-label text-text-2"
-              >
-                Statut de la saillie
-              </label>
-              <select
+            <FormField label="Statut de la saillie" error={errors.statut}>
+              <Select
                 id="edit-saillie-statut"
                 aria-label="Statut de la saillie"
                 aria-invalid={!!errors.statut}
                 aria-describedby={
                   errors.statut ? 'edit-saillie-statut-error' : undefined
                 }
-                className={inputBaseClass(!!errors.statut)}
                 value={statut}
                 onChange={e => setStatut(e.target.value)}
                 disabled={saving}
@@ -504,22 +420,12 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
                     {s}
                   </option>
                 ))}
-                {/* Tolérance : si statut initial hors liste, on l'affiche */}
                 {initial.statut &&
                 !(STATUT_OPTIONS as readonly string[]).includes(initial.statut) ? (
                   <option value={initial.statut}>{initial.statut} (legacy)</option>
                 ) : null}
-              </select>
-              {errors.statut ? (
-                <p
-                  id="edit-saillie-statut-error"
-                  role="alert"
-                  className="text-[11px] text-red"
-                >
-                  {errors.statut}
-                </p>
-              ) : null}
-            </div>
+              </Select>
+            </FormField>
           </section>
 
           {/* ═══ Section Notes ═══════════════════════════════════════ */}
@@ -527,14 +433,12 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
             <h3 className="text-mono-micro text-text-2">
               Notes
             </h3>
-            <div className="space-y-1.5">
-              <label
-                htmlFor="edit-saillie-notes"
-                className="block text-mono-label text-text-2"
-              >
-                Notes <span className="text-text-2 normal-case">· optionnel</span>
-              </label>
-              <textarea
+            <FormField
+              label="Notes"
+              hint={errors.notes ? undefined : `optionnel · ${notes.trim().length}/200`}
+              error={errors.notes}
+            >
+              <Textarea
                 id="edit-saillie-notes"
                 maxLength={200}
                 rows={3}
@@ -545,82 +449,38 @@ const QuickEditSaillieForm: React.FC<QuickEditSaillieFormProps> = ({
                     ? 'edit-saillie-notes-error'
                     : 'edit-saillie-notes-hint'
                 }
-                className={[
-                  'w-full rounded-md px-3 py-2',
-                  'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                  'text-[13px]',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  'resize-none',
-                  errors.notes ? 'border-red' : 'border-border hover:border-text-2',
-                ].join(' ')}
                 placeholder="Observations, conditions, etc."
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
                 disabled={saving}
               />
-              <p
-                id="edit-saillie-notes-hint"
-                className="text-[10px] text-text-2 tabular-nums"
-              >
-                {notes.trim().length}/200
-              </p>
-              {errors.notes ? (
-                <p
-                  id="edit-saillie-notes-error"
-                  role="alert"
-                  className="text-[11px] text-red"
-                >
-                  {errors.notes}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
           </section>
 
-          {/* ═══ Actions ═════════════════════════════════════════════ */}
-          <div className="flex items-center gap-2 pt-2">
-            <button
-              type="button"
+          <div className="flex gap-3 justify-end pt-2 border-t border-border">
+            <Button
+              variant="secondary"
               onClick={handleClose}
               disabled={saving}
-              aria-label="Annuler et fermer"
-              className={[
-                'pressable flex-1 h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-bg-1 border border-border text-text-1',
-                'text-[12px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms] hover:border-text-2',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : '',
-              ].join(' ')}
+              ariaLabel="Annuler et fermer"
             >
               Annuler
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={saving}
-              aria-label="Enregistrer les modifications de la saillie"
               aria-busy={saving}
-              className={[
-                'pressable flex-[2] h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-accent text-bg-0',
-                'text-[13px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms]',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
-              ].join(' ')}
+              ariaLabel="Enregistrer les modifications de la saillie"
             >
-              {saving ? (
-                <span className="animate-pulse">Enregistrement…</span>
-              ) : (
-                <>
+              {saving ? 'Enregistrement…' : (
+                <span className="inline-flex items-center gap-2">
                   <Heart size={14} aria-hidden="true" />
-                  <span>Enregistrer</span>
+                  Enregistrer
                   <Save size={14} aria-hidden="true" />
-                </>
+                </span>
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </BottomSheet>

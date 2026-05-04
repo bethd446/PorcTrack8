@@ -27,6 +27,7 @@ import { IonToast } from '@ionic/react';
 import { Wheat, Send, AlertTriangle } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { FormField, Input, Select, Textarea, Button } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import { updateProduitAliment } from '../../services/supabaseWrites';
 import { insertFeedConsumption } from '../../services/feedConsumptionAnalyzer';
@@ -261,27 +262,14 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
 
           {/* Combobox bande ou truie */}
           {subject === 'BANDE' ? (
-            <div className="space-y-1.5">
-              <label
-                htmlFor="conso-bande"
-                className="block text-mono-label text-text-2"
-              >
-                Bande <span className="text-red normal-case">· obligatoire</span>
-              </label>
-              <select
+            <FormField label="Bande" required error={errors.bandeId}>
+              <Select
                 id="conso-bande"
                 ref={firstFieldRef as unknown as React.RefObject<HTMLSelectElement>}
+                aria-label="Bande"
                 aria-required="true"
                 aria-invalid={!!errors.bandeId}
                 aria-describedby={errors.bandeId ? 'conso-bande-error' : undefined}
-                className={[
-                  'w-full h-12 rounded-md px-3',
-                  'bg-bg-0 border text-text-0',
-                  'text-[14px]',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  errors.bandeId ? 'border-red' : 'border-border hover:border-text-2',
-                ].join(' ')}
                 value={bandeId}
                 onChange={e => setBandeId(e.target.value)}
                 disabled={saving}
@@ -292,38 +280,16 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
                     {b.idPortee} {b.truie ? `· ${b.truie}` : ''}
                   </option>
                 ))}
-              </select>
-              {errors.bandeId ? (
-                <p
-                  id="conso-bande-error"
-                  role="alert"
-                  className="text-[11px] text-red"
-                >
-                  {errors.bandeId}
-                </p>
-              ) : null}
-            </div>
+              </Select>
+            </FormField>
           ) : (
-            <div className="space-y-1.5">
-              <label
-                htmlFor="conso-truie"
-                className="block text-mono-label text-text-2"
-              >
-                Truie <span className="text-red normal-case">· obligatoire</span>
-              </label>
-              <select
+            <FormField label="Truie" required error={errors.truieId}>
+              <Select
                 id="conso-truie"
+                aria-label="Truie"
                 aria-required="true"
                 aria-invalid={!!errors.truieId}
                 aria-describedby={errors.truieId ? 'conso-truie-error' : undefined}
-                className={[
-                  'w-full h-12 rounded-md px-3',
-                  'bg-bg-0 border text-text-0',
-                  'text-[14px]',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  errors.truieId ? 'border-red' : 'border-border hover:border-text-2',
-                ].join(' ')}
                 value={truieId}
                 onChange={e => setTruieId(e.target.value)}
                 disabled={saving}
@@ -334,42 +300,24 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
                     {t.displayId} {t.boucle ? `· ${t.boucle}` : ''}
                   </option>
                 ))}
-              </select>
-              {errors.truieId ? (
-                <p
-                  id="conso-truie-error"
-                  role="alert"
-                  className="text-[11px] text-red"
-                >
-                  {errors.truieId}
-                </p>
-              ) : null}
-            </div>
+              </Select>
+            </FormField>
           )}
 
-          {/* Aliment utilisé */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="conso-aliment"
-              className="block text-mono-label text-text-2"
-            >
-              Aliment <span className="text-red normal-case">· obligatoire</span>
-            </label>
-            <select
+          <FormField
+            label="Aliment"
+            required
+            hint={errors.alimentId ? undefined : 'Seuls les aliments avec stock > 0 sont listés.'}
+            error={errors.alimentId}
+          >
+            <Select
               id="conso-aliment"
+              aria-label="Aliment"
               aria-required="true"
               aria-invalid={!!errors.alimentId}
               aria-describedby={
                 errors.alimentId ? 'conso-aliment-error' : 'conso-aliment-hint'
               }
-              className={[
-                'w-full h-12 rounded-md px-3',
-                'bg-bg-0 border text-text-0',
-                'text-[14px]',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.alimentId ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
               value={alimentId}
               onChange={e => setAlimentId(e.target.value)}
               disabled={saving}
@@ -380,37 +328,15 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
                   {a.libelle} ({a.stockActuel} {a.unite})
                 </option>
               ))}
-            </select>
-            {errors.alimentId ? (
-              <p
-                id="conso-aliment-error"
-                role="alert"
-                className="text-[11px] text-red"
-              >
-                {errors.alimentId}
-              </p>
-            ) : (
-              <p
-                id="conso-aliment-hint"
-                className="text-[10px] text-text-2"
-              >
-                Seuls les aliments avec stock &gt; 0 sont listés.
-              </p>
-            )}
-          </div>
+            </Select>
+          </FormField>
 
-          {/* Quantité + Date */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label
-                htmlFor="conso-qty"
-                className="block text-mono-label text-text-2"
-              >
-                Quantité (kg) <span className="text-red normal-case">·</span>
-              </label>
-              <input
+            <FormField label="Quantité (kg)" required error={errors.qtyKg}>
+              <Input
                 id="conso-qty"
                 type="number"
+                aria-label="Quantité en kilogrammes"
                 inputMode="decimal"
                 min={0}
                 max={500}
@@ -418,68 +344,31 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
                 aria-required="true"
                 aria-invalid={!!errors.qtyKg}
                 aria-describedby={errors.qtyKg ? 'conso-qty-error' : undefined}
-                className={[
-                  'w-full h-12 rounded-md px-3',
-                  'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                  'font-mono text-[16px] tabular-nums',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  errors.qtyKg ? 'border-red' : 'border-border hover:border-text-2',
-                ].join(' ')}
+                className="font-mono tabular-nums"
                 placeholder="0"
                 value={qtyKg}
                 onChange={e => setQtyKg(e.target.value)}
                 disabled={saving}
+                invalid={!!errors.qtyKg}
               />
-              {errors.qtyKg ? (
-                <p
-                  id="conso-qty-error"
-                  role="alert"
-                  className="text-[11px] text-red"
-                >
-                  {errors.qtyKg}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
 
-            <div className="space-y-1.5">
-              <label
-                htmlFor="conso-date"
-                className="block text-mono-label text-text-2"
-              >
-                Date
-              </label>
-              <input
+            <FormField label="Date" error={errors.dateConso}>
+              <Input
                 id="conso-date"
                 type="date"
+                aria-label="Date conso"
                 aria-invalid={!!errors.dateConso}
                 aria-describedby={
                   errors.dateConso ? 'conso-date-error' : undefined
                 }
-                className={[
-                  'w-full h-12 rounded-md px-3',
-                  'bg-bg-0 border text-text-0',
-                  'font-mono text-[14px] tabular-nums',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  errors.dateConso
-                    ? 'border-red'
-                    : 'border-border hover:border-text-2',
-                ].join(' ')}
+                className="font-mono tabular-nums"
                 value={dateConso}
                 onChange={e => setDateConso(e.target.value)}
                 disabled={saving}
+                invalid={!!errors.dateConso}
               />
-              {errors.dateConso ? (
-                <p
-                  id="conso-date-error"
-                  role="alert"
-                  className="text-[11px] text-red"
-                >
-                  {errors.dateConso}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
           </div>
 
           {/* Alerte rupture imminente */}
@@ -495,87 +384,44 @@ const QuickConsoAlimentForm: React.FC<QuickConsoAlimentFormProps> = ({
             </div>
           ) : null}
 
-          {/* Notes */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="conso-notes"
-              className="block text-mono-label text-text-2"
-            >
-              Notes <span className="text-text-2 normal-case">· optionnel</span>
-            </label>
-            <textarea
+          <FormField label="Notes" hint="optionnel" error={errors.notes}>
+            <Textarea
               id="conso-notes"
+              aria-label="Notes"
               maxLength={200}
               rows={3}
               aria-invalid={!!errors.notes}
               aria-describedby={errors.notes ? 'conso-notes-error' : undefined}
-              className={[
-                'w-full rounded-md px-3 py-2',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-sans text-[13px]',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.notes ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
               placeholder="Observation libre…"
               value={notes}
               onChange={e => setNotes(e.target.value)}
               disabled={saving}
             />
-            {errors.notes ? (
-              <p
-                id="conso-notes-error"
-                role="alert"
-                className="text-[11px] text-red"
-              >
-                {errors.notes}
-              </p>
-            ) : null}
-          </div>
+          </FormField>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2 pt-2">
-            <button
-              type="button"
+          <div className="flex gap-3 justify-end pt-2 border-t border-border">
+            <Button
+              variant="secondary"
               onClick={handleClose}
               disabled={saving}
-              aria-label="Annuler et fermer"
-              className={[
-                'pressable flex-1 h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-bg-1 border border-border text-text-1',
-                'text-[12px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms] hover:border-text-2',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : '',
-              ].join(' ')}
+              ariaLabel="Annuler et fermer"
             >
               Annuler
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={saving}
-              aria-label="Enregistrer la conso aliment"
               aria-busy={saving}
-              className={[
-                'pressable flex-[2] h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-accent text-bg-0',
-                'text-[13px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms]',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
-              ].join(' ')}
+              ariaLabel="Enregistrer la conso aliment"
             >
-              {saving ? (
-                <span className="animate-pulse">Enregistrement…</span>
-              ) : (
-                <>
-                  <span>Enregistrer</span>
+              {saving ? 'Enregistrement…' : (
+                <span className="inline-flex items-center gap-2">
+                  Enregistrer
                   <Send size={14} aria-hidden="true" />
-                </>
+                </span>
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </BottomSheet>
