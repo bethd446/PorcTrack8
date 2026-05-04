@@ -338,7 +338,6 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
       <div
         role="tablist"
         aria-label="Filtrer par statut"
-        style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}
         className="pt-chips"
       >
         {visibleFilters.map((f) => (

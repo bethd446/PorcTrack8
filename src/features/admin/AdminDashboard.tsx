@@ -299,7 +299,7 @@ function UsersPanel({ users, loading, error, onUsersChange, onError, onInvite }:
           </Button>
         </div>
       </div>
-      <div style={{ overflowX: 'auto' }}>
+      <div className="pt-data-table">
         {loading && (
           <p style={{ padding: '32px 24px', textAlign: 'center', fontSize: 13, color: 'var(--muted)' }}>
             Chargement…
