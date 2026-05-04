@@ -14,6 +14,7 @@ import {
 import { calculerRation, type CalculResult } from '../../services/rationCalculator';
 import { useFarm } from '../../context/FarmContext';
 import { cn } from '../../lib/utils';
+import { Button } from '@/design-system';
 
 /** Presets quantité — 100 kg (sac), 500 kg, 1 tonne, 2 tonnes. */
 const PRESETS_KG: ReadonlyArray<{ label: string; value: number }> = [
@@ -261,9 +262,10 @@ const FormulesView: React.FC = () => {
                 {PRESETS_KG.map((p) => {
                   const active = masseKg === p.value;
                   return (
-                    <button
+                    <Button
                       key={p.value}
-                      type="button"
+                      variant={active ? 'primary' : 'secondary'}
+                      size="small"
                       onClick={() => setMasseKg(p.value)}
                       aria-pressed={active}
                       className={cn(
@@ -274,7 +276,7 @@ const FormulesView: React.FC = () => {
                       )}
                     >
                       {p.label}
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
