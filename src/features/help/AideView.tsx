@@ -29,7 +29,7 @@ const FAQ: ReadonlyArray<FaqEntry> = [
   {
     question: 'Comment ajouter une truie ?',
     answer:
-      "Ouvre Cheptel → onglet Truies → bouton +. Renseigne la boucle, le numéro et le statut, puis valide.",
+      "Ouvre Élevage → onglet Truies → bouton +. Renseigne la boucle, le numéro et le statut, puis valide.",
   },
   {
     question: 'Comment fonctionnent les alertes ?',

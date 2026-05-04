@@ -48,18 +48,11 @@ const FINITION_PHASE_DAYS = Math.round(
 
 // ─── Constantes métier ──────────────────────────────────────────────────────
 /**
- * Prix de vente moyen par kg vif, calibré par devise. Approximation indicative
- * tant qu'un réglage ferme dans les Settings n'a pas remplacé ces constantes.
- *  - FCFA / XOF : 2 100 (cible Afrique de l'Ouest)
- *  - EUR        : 3,2 (cible France / Belgique, prix carcasse vif courant)
- *  - USD        : 3,5
+ * Prix de vente moyen par kg vif (FCFA, plateforme Afrique de l'Ouest).
+ * Approximation indicative tant qu'un réglage ferme dans les Settings n'a
+ * pas remplacé cette constante.
  */
-const PRIX_KG_VIF_BY_CURRENCY: Record<Currency, number> = {
-  FCFA: 2100,
-  XOF: 2100,
-  EUR: 3.2,
-  USD: 3.5,
-};
+const PRIX_KG_VIF_FCFA = 2100;
 const FINITION_SEUIL_KG = 100;
 
 const FinitionView: React.FC = () => {
@@ -67,7 +60,7 @@ const FinitionView: React.FC = () => {
   const { bandes, currency } = useFarm();
   const [venteBande, setVenteBande] = useState<BandePorcelets | null>(null);
 
-  const prixKgVif = PRIX_KG_VIF_BY_CURRENCY[currency] ?? PRIX_KG_VIF_BY_CURRENCY.FCFA;
+  const prixKgVif = PRIX_KG_VIF_FCFA;
 
   const { portees, summary, projection } = useMemo(() => {
     const today = new Date();

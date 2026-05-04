@@ -481,7 +481,7 @@ const OnboardingWizard: React.FC = () => {
           : '';
       const toastMessage =
         totalFailed > 0
-          ? `Compte configuré · ${baseSummary}${bandesSuffix}. Quelques éléments n'ont pas pu être créés (vérifie via Cheptel / Bandes).`
+          ? `Compte configuré · ${baseSummary}${bandesSuffix}. Quelques éléments n'ont pas pu être créés (vérifie via Élevage / Bandes).`
           : `Compte configuré · ${baseSummary}${bandesSuffix}`;
       await kvSet(
         'onboarding_toast',
@@ -760,7 +760,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, setState, onStart, e
       return (
         <StepCard
           icon={<Users size={20} aria-hidden="true" />}
-          title="Cheptel initial — Truies"
+          title="Élevage initial — Truies"
           subtitle="Combien de truies as-tu déjà sur la ferme ?"
         >
           <NumberInput
@@ -779,7 +779,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, setState, onStart, e
       return (
         <StepCard
           icon={<Users size={20} aria-hidden="true" />}
-          title="Cheptel initial — Verrats"
+          title="Élevage initial — Verrats"
           subtitle="Combien de verrats actifs ?"
         >
           <NumberInput

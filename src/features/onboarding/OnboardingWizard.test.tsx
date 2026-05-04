@@ -150,7 +150,7 @@ describe('OnboardingWizard', () => {
     fireEvent.click(screen.getByRole('button', { name: /Suivant/i }));
     // → doit sauter à l'étape 7 (Verrats), pas 5 (Races) ni 6 (Truies)
     expect(screen.getByText('Étape 7 / 12')).toBeTruthy();
-    expect(screen.getByText(/Cheptel initial — Verrats/i)).toBeTruthy();
+    expect(screen.getByText(/Élevage initial — Verrats/i)).toBeTruthy();
   });
 
   it('à l\'étape 10, Terminer appelle supabase.update avec onboarding_completed_at', async () => {

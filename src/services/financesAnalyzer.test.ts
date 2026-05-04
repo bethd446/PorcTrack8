@@ -167,8 +167,8 @@ describe('formatMontant', () => {
     // Le séparateur est un NBSP (\u00A0), pas un espace simple.
     expect(formatMontant(12000)).toBe('12\u00A0000 FCFA');
   });
-  it('formate en EUR avec 2 décimales', () => {
-    expect(formatMontant(1250.5, 'EUR')).toBe('1\u00A0250,50 €');
+  it('arrondit les décimales en FCFA (V43.3)', () => {
+    expect(formatMontant(1250.5, 'FCFA')).toBe('1\u00A0251 FCFA');
   });
   it('formate un montant négatif', () => {
     expect(formatMontant(-4500)).toBe('-4\u00A0500 FCFA');

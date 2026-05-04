@@ -112,7 +112,7 @@ interface FarmIdentity {
 const DEFAULT_FARM_IDENTITY: FarmIdentity = {
   nomFerme: 'Ma ferme',
   pays: null,
-  currency: 'EUR',
+  currency: 'FCFA',
   loaded: false,
 };
 

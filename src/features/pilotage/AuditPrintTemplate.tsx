@@ -111,14 +111,14 @@ const AuditPrintTemplate: React.FC<AuditPrintTemplateProps> = ({ data }) => {
       </div>
 
       <section style={{ marginBottom: 40, breakInside: 'avoid' }}>
-        <h2 style={headingStyle}>1. Santé financière (cheptel actif)</h2>
+        <h2 style={headingStyle}>1. Santé financière (élevage actif)</h2>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
           <div style={{ border: `1px solid ${PRINT_INK}`, padding: 16 }}>
             <p style={labelStyle}>Marge nette projetée</p>
             <p style={valueStyle}>{formatFCFA(data.finance.margeGlobale)} FCFA</p>
           </div>
           <div style={{ border: `1px solid ${PRINT_INK}`, padding: 16 }}>
-            <p style={labelStyle}>Valeur totale du cheptel</p>
+            <p style={labelStyle}>Valeur totale de l'élevage</p>
             <p style={valueStyle}>{formatFCFA(data.finance.revenuProjete)} FCFA</p>
           </div>
         </div>
