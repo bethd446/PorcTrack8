@@ -34,7 +34,7 @@ interface Props {
 }
 
 const LineageBreadcrumb: React.FC<Props> = ({ nodes, treeHref, onTreeClick }) => {
-  const treeLabel = 'Arbre genetique ›';
+  const treeLabel = 'Arbre génétique ›';
   const treeStyle: React.CSSProperties = {
     marginLeft: 'auto',
     fontSize: 11,
@@ -50,7 +50,7 @@ const LineageBreadcrumb: React.FC<Props> = ({ nodes, treeHref, onTreeClick }) =>
   };
   return (
     <section
-      aria-label="Lignee"
+      aria-label="Lignée"
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -71,7 +71,7 @@ const LineageBreadcrumb: React.FC<Props> = ({ nodes, treeHref, onTreeClick }) =>
           fontWeight: 600,
         }}
       >
-        Lignee
+        Lignée
       </span>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         {nodes.map((node, i) => {

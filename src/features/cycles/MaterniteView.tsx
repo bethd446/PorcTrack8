@@ -353,14 +353,29 @@ const MaterniteCard: React.FC<{
         )}
       </div>
 
+      {/* B2 — Truie en maternité sans portée saisie : CTA dédié */}
+      {!portee && (
+        <Button
+          variant="primary"
+          fullWidth
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/troupeau/truies/${truie.displayId}?action=mise-bas`);
+          }}
+        >
+          <Plus size={16} aria-hidden="true" />
+          Saisir la mise-bas pour {truie.displayId}
+        </Button>
+      )}
+
       {/* Message d'action unique en cas d'urgence */}
-      {(isBloquant || isUrgent) && (
+      {portee && (isBloquant || isUrgent) && (
         <p className="text-[12px] leading-snug text-text-1">
           Sevre la portée pour débloquer.
         </p>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      {portee && <div className="grid grid-cols-2 gap-4">
         {/* Portée Stats */}
         <div className="bg-bg-1 rounded-xl p-3 border border-border/50">
           <div className="flex justify-between items-center mb-2">
@@ -391,10 +406,10 @@ const MaterniteCard: React.FC<{
             Plan: {feedConfig.label}
           </div>
         </div>
-      </div>
+      </div>}
 
-      {/* Milestones de pesées */}
-      <div className="flex items-center justify-between px-1">
+      {/* Milestones de pesées (si portée) */}
+      {portee && <div className="flex items-center justify-between px-1">
         <div className="flex gap-1.5">
           {PESEE_MILESTONES.map(m => {
             const isPast = jSinceMB !== null && jSinceMB > m;
@@ -421,9 +436,9 @@ const MaterniteCard: React.FC<{
         >
           {isBloquant ? <Lock size={14} /> : <Scale size={14} />}
         </Button>
-      </div>
+      </div>}
 
-      {isTransitionRequired && (
+      {portee && isTransitionRequired && (
         <Button
           variant={isBloquant ? 'danger' : 'primary'}
           fullWidth

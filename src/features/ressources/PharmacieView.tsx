@@ -300,12 +300,11 @@ const PharmacieView: React.FC = () => {
                   summary.valeurStock > 0
                     ? formatCurrency(summary.valeurStock)
                     : summary.total === 0
-                      ? '—'
+                      ? '0 FCFA'
                       : 'Définir prix'
                 }
-                unit={summary.valeurStock > 0 ? 'XOF' : undefined}
                 icon={<Box size={14} />}
-                tone={summary.valeurStock === 0 && summary.total > 0 ? 'default' : 'default'}
+                tone="default"
               />
             </div>
 

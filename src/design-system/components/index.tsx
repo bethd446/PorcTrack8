@@ -67,7 +67,31 @@ export function Card({
     ...(isAlt ? { background: 'var(--pt-surface-alt)' } : {}),
     ...style,
   };
-  return <div className={classes} style={Object.keys(inlineStyle).length ? inlineStyle : undefined} onClick={onClick} role={role} aria-label={ariaLabel}>{children}</div>;
+  // V43.4 — Card interactive : a11y semantic = button (role + tabIndex + keyboard)
+  const isInteractive = Boolean(interactive && onClick);
+  const a11yProps = isInteractive
+    ? {
+        role: role ?? 'button',
+        tabIndex: 0,
+        onKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick?.();
+          }
+        },
+      }
+    : { role };
+  return (
+    <div
+      className={classes}
+      style={Object.keys(inlineStyle).length ? inlineStyle : undefined}
+      onClick={onClick}
+      aria-label={ariaLabel}
+      {...a11yProps}
+    >
+      {children}
+    </div>
+  );
 }
 
 // ============================================================

@@ -104,13 +104,14 @@ describe('SaisirSheet — accessibilité (Esc, backdrop, focus)', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('click sur backdrop (aria-label="Fermer le panneau de saisie") → onClose', async () => {
+  it('click sur backdrop (overlay aria-hidden) → onClose', async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<SaisirSheet isOpen={true} onClose={onClose} />);
-    const backdrop = screen.getByRole('button', {
-      name: 'Fermer le panneau de saisie',
-    });
+    const { container } = render(<SaisirSheet isOpen={true} onClose={onClose} />);
+    // V43.4 — backdrop = div aria-hidden (pas un button) ; on le retrouve
+    // via la classe distinctive `bg-black/40`.
+    const backdrop = container.querySelector('div.bg-black\\/40') as HTMLElement;
+    expect(backdrop).toBeTruthy();
     await user.click(backdrop);
     expect(onClose).toHaveBeenCalledTimes(1);
   });

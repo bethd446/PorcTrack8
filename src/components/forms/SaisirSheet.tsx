@@ -205,16 +205,14 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
       aria-labelledby="saisir-sheet-title"
       className="fixed inset-0 z-[1100] flex items-end justify-center"
     >
-      <Button
-        type="button"
-        variant="ghost"
-        aria-label="Fermer le panneau de saisie"
+      {/* V43.4 — Overlay = div avec onClick (pas un bouton). Le seul vrai
+          bouton "Fermer" est le X dans la sheet ci-dessous (uid 245). */}
+      <div
+        aria-hidden="true"
         onClick={onClose}
         className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
-        style={{ borderRadius: 0, padding: 0, height: '100%', width: '100%' }}
-      >
-        {''}
-      </Button>
+      />
+
 
       <div
         ref={sheetRef}

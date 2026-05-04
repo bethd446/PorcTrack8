@@ -331,7 +331,7 @@ const TruieDetailView: React.FC = () => {
     },
     {
       label: 'Verrat',
-      trend: `${sowSaillies.length} IA`,
+      trend: `${sowSaillies.length} insémination${sowSaillies.length > 1 ? 's' : ''}`,
       value: lastSaillie?.verratId ?? '—',
       valColor: 'var(--ink)',
       sub: undefined as string | undefined,
@@ -344,10 +344,10 @@ const TruieDetailView: React.FC = () => {
       valColor: 'var(--ink)',
     },
     {
-      label: 'Carrière',
+      label: 'Portées',
       trend: '',
       value: truie.nbPortees !== undefined ? `${truie.nbPortees}` : '—',
-      unit: truie.nbPortees ? 'portées' : '',
+      unit: truie.nbPortees ? `portée${truie.nbPortees > 1 ? 's' : ''}` : '',
       valColor: 'var(--ink)',
     },
   ];
@@ -531,28 +531,8 @@ const TruieDetailView: React.FC = () => {
             {/* Reproduction en cours (visible dans Aperçu et Reproduction) */}
             {cycleData && (activeTab === 'apercu' || activeTab === 'repro') && (
               <section aria-label="Reproduction en cours" style={sectionStyle()}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
+                <div style={{ marginBottom: 12 }}>
                   <Eyebrow dotColor="amber">Reproduction en cours</Eyebrow>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-body)',
-                      fontSize: 14,
-                      color: 'var(--ink)',
-                    }}
-                  >
-                    Saillie · jour{' '}
-                    <strong
-                      style={{
-                        fontFamily: 'var(--font-heading)',
-                        fontWeight: 600,
-                        color: 'var(--amber-pork-deep)',
-                        fontSize: 16,
-                      }}
-                    >
-                      {cycleData.dayPost}
-                    </strong>{' '}
-                    / 115
-                  </div>
                 </div>
 
                 <ReproTracker stages={cycleData.stages} progressPct={cycleData.progressPct} />

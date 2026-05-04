@@ -116,12 +116,6 @@ const TroupeauHub: React.FC = () => {
     [realBandes],
   );
 
-  const totalLogesCapacity = useMemo(() =>
-    FARM_CONFIG.MATERNITE_LOGES_CAPACITY +
-    FARM_CONFIG.POST_SEVRAGE_LOGES_CAPACITY +
-    FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY,
-  []);
-
   const tabCounts: Record<SubTab, number> = {
     truies: activeTruies.length,
     verrats: verrats.length,
@@ -167,10 +161,7 @@ const TroupeauHub: React.FC = () => {
                 <StatsGrid cols={4}>
                   <Stat value={activeTruies.length} label="Truies" />
                   <Stat value={verrats.length} label="Verrats" />
-                  <Stat
-                    value={`${summary.mat.occupees + summary.post.occupees + summary.eng.occupees}/${totalLogesCapacity}`}
-                    label="Loges"
-                  />
+                  <Stat value={porceletCount} label="Porcelets" />
                   <Stat value={realBandes.length} label="Bandes" />
                 </StatsGrid>
               </Card>
