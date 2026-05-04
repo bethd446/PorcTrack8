@@ -45,7 +45,16 @@ import { useTroupeauPipeline } from '../../hooks/useTroupeauStats';
 
 // ─── Types & Helpers ─────────────────────────────────────────────────────────
 
-type FilterKey = 'tout' | 'pleines' | 'maternite' | 'chaleur' | 'vides' | 'reforme';
+type FilterKey =
+  | 'tout'
+  | 'pleines'
+  | 'maternite'
+  | 'chaleur'
+  | 'vides'
+  | 'reforme'
+  | 'surveillance'
+  | 'flushing'
+  | 'autres';
 
 interface StatutVisu {
   label: string;
@@ -67,12 +76,12 @@ function statutVisu(statut: string | undefined): StatutVisu {
     case 'REFORME':
       return { label: 'Réforme', tone: 'red', filter: 'reforme' };
     case 'SURVEILLANCE':
-      return { label: 'Surveillance', tone: 'amber', filter: 'tout' };
+      return { label: 'Surveillance', tone: 'amber', filter: 'surveillance' };
     case 'FLUSHING':
-      return { label: 'Flushing', tone: 'amber', filter: 'tout' };
+      return { label: 'Flushing', tone: 'amber', filter: 'flushing' };
     case 'INCONNU':
     default:
-      return { label: statut || '—', tone: 'default', filter: 'tout' };
+      return { label: statut || '—', tone: 'default', filter: 'autres' };
   }
 }
 
@@ -239,6 +248,9 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
       chaleur: 0,
       vides: 0,
       reforme: 0,
+      surveillance: 0,
+      flushing: 0,
+      autres: 0,
     };
     for (const t of activeTruies) {
       const v = statutVisu(t.statut);
@@ -254,6 +266,9 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
     { id: 'chaleur', label: 'Chaleur' },
     { id: 'vides', label: 'Vides' },
     { id: 'reforme', label: 'Réforme' },
+    { id: 'surveillance', label: 'À surveiller' },
+    { id: 'flushing', label: 'Flushing' },
+    { id: 'autres', label: 'Autres' },
   ];
   const visibleFilters = ALL_FILTERS.filter(
     (f) => f.id === 'tout' || counts[f.id] > 0,
