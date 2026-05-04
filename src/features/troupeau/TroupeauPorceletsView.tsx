@@ -289,7 +289,7 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({
                   <LogeBandeRow
                     key={o.loge.id}
                     occupied={o}
-                    onClick={() => navigate(`/troupeau/bandes/${o.bande.id}`)}
+                    onClick={() => navigate(`/troupeau/bandes/${o.bande.idPortee ?? o.bande.id}`)}
                     pendingTransition={pending.find(p => p.bandeId === o.bande.id)}
                     onTransition={setManualTarget}
                   />

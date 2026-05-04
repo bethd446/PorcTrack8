@@ -442,7 +442,7 @@ const MaterniteCard: React.FC<{
         <Button
           variant={isBloquant ? 'danger' : 'primary'}
           fullWidth
-          onClick={(e) => { e.stopPropagation(); navigate(`/troupeau/bandes/${portee?.id}?action=sevrage`); }}
+          onClick={(e) => { e.stopPropagation(); navigate(`/troupeau/bandes/${portee?.idPortee ?? portee?.id}?action=sevrage`); }}
         >
           <ArrowUpRight size={16} />
           {isBloquant ? 'Sevrer maintenant' : 'Confirmer le sevrage'}

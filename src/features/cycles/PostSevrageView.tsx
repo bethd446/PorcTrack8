@@ -217,7 +217,7 @@ const PostSevrageView: React.FC = () => {
                     <PostSevrageCard
                       key={p.id}
                       data={p}
-                      onOpen={() => navigate(`/troupeau/bandes/${encodeURIComponent(p.id)}`)}
+                      onOpen={() => navigate(`/troupeau/bandes/${encodeURIComponent(p.idPortee ?? p.id)}`)}
                     />
                   ))}
                 </div>

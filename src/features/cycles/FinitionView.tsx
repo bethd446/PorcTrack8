@@ -192,7 +192,7 @@ const FinitionView: React.FC = () => {
                   <FinitionCard
                     key={p.id}
                     data={p}
-                    onOpen={() => navigate(`/troupeau/bandes/${encodeURIComponent(p.id)}`)}
+                    onOpen={() => navigate(`/troupeau/bandes/${encodeURIComponent(p.idPortee ?? p.id)}`)}
                     onSell={() => setVenteBande(p.bande)}
                   />
                 ))}

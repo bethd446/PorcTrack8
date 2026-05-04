@@ -132,7 +132,7 @@ const SortieCalendarView: React.FC = () => {
                           secondary={`~${Math.round(poidsActuel)} kg · ${bande.vivants} porc${bande.vivants > 1 ? 's' : ''} · MB ${bande.dateMB || '?'}`}
                           meta={formatDate(dateSortiePrevue)}
                           accessory={<Chip label={label} tone={tone} size="xs" />}
-                          onClick={() => navigate(`/troupeau/bandes/${encodeURIComponent(bande.id)}`)}
+                          onClick={() => navigate(`/troupeau/bandes/${encodeURIComponent(bande.idPortee ?? bande.id)}`)}
                         />
                         <div className="px-4 pb-3 flex flex-wrap gap-2">
                           <Button

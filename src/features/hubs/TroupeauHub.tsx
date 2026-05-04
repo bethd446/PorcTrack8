@@ -267,7 +267,7 @@ const BandesInline: React.FC<BandesInlineProps> = ({ bandes, onOpen, onSeeAll })
             <Card
               compact
               interactive
-              onClick={() => onOpen(b.id)}
+              onClick={() => onOpen(b.idPortee ?? b.id)}
               ariaLabel={`Ouvrir bande ${code}`}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, minHeight: 44 }}>
