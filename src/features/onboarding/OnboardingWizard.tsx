@@ -21,6 +21,7 @@ import { supabase } from '../../services/supabaseClient';
 import { kvGet, kvSet } from '../../services/kvStore';
 import { createLoge, insertSow, insertBoar, insertBatch } from '../../services/supabaseWrites';
 import type { LogeType } from '../../types/farm';
+import { Button } from '@/design-system';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    OnboardingWizard — 12 étapes pour configurer une nouvelle ferme
@@ -517,13 +518,14 @@ const OnboardingWizard: React.FC = () => {
             Étape {state.step} / {TOTAL_STEPS}
           </span>
           {state.step > 1 && state.step < TOTAL_STEPS && (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="small"
               onClick={handleSkipForLater}
               className="ft-code text-[11px] uppercase tracking-wide text-text-2 underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
             >
               Plus tard
-            </button>
+            </Button>
           )}
         </div>
         <div
@@ -556,28 +558,28 @@ const OnboardingWizard: React.FC = () => {
       {state.step > 1 && (
         <div className="px-5 pb-5 max-w-[560px] mx-auto w-full">
           <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={goPrev}
               disabled={saving}
               className="h-12 rounded-md bg-bg-1 border border-border text-text-1 text-[13px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
             >
               <ChevronLeft size={16} aria-hidden="true" />
               Précédent
-            </button>
+            </Button>
             {state.step < TOTAL_STEPS ? (
-              <button
-                type="button"
+              <Button
+                variant="primary"
                 onClick={goNext}
                 disabled={!canContinue}
                 className="h-12 rounded-md bg-accent text-bg-0 text-[13px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
               >
                 Suivant
                 <ChevronRight size={16} aria-hidden="true" />
-              </button>
+              </Button>
             ) : (
-              <button
-                type="button"
+              <Button
+                variant="primary"
                 onClick={() => void handleFinish()}
                 disabled={saving}
                 className="h-12 rounded-md bg-accent text-bg-0 text-[13px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
@@ -593,7 +595,7 @@ const OnboardingWizard: React.FC = () => {
                     <Check size={16} aria-hidden="true" />
                   </>
                 )}
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -692,9 +694,9 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, setState, onStart, e
             ).map(({ key, label }) => {
               const active = state.typeProd === key;
               return (
-                <button
+                <Button
                   key={key}
-                  type="button"
+                  variant={active ? 'primary' : 'secondary'}
                   role="radio"
                   aria-checked={active}
                   onClick={() => setState((s) => ({ ...s, typeProd: key }))}
@@ -706,7 +708,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, setState, onStart, e
                   }
                 >
                   {label}
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -724,9 +726,10 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, setState, onStart, e
               const active = state.races.includes(r);
               const disabled = !active && state.races.length >= 5;
               return (
-                <button
+                <Button
                   key={r}
-                  type="button"
+                  variant={active ? 'primary' : 'secondary'}
+                  size="small"
                   aria-pressed={active}
                   disabled={disabled}
                   onClick={() =>
@@ -743,7 +746,7 @@ const StepRenderer: React.FC<StepRendererProps> = ({ state, setState, onStart, e
                   }
                 >
                   {r}
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -860,14 +863,14 @@ const StepWelcome: React.FC<{ onStart: () => void }> = ({ onStart }) => (
       Quelques questions rapides pour configurer ton interface. Tu peux interrompre à tout moment et
       reprendre plus tard.
     </p>
-    <button
-      type="button"
+    <Button
+      variant="primary"
       onClick={onStart}
       className="h-12 px-8 rounded-md bg-accent text-bg-0 text-[13px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
     >
       Commencer
       <ChevronRight size={16} aria-hidden="true" />
-    </button>
+    </Button>
   </div>
 );
 
@@ -979,13 +982,14 @@ const StepLoges: React.FC<StepLogesProps> = ({ state, setState }) => {
         <span className="ft-code text-[11px] uppercase tracking-wide text-text-2">
           Total : {totalLoges} loge{totalLoges > 1 ? 's' : ''}
         </span>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="small"
           onClick={handleSkip}
           className="ft-code text-[11px] uppercase tracking-wide text-text-2 underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded"
         >
           Skip cette étape
-        </button>
+        </Button>
       </div>
 
       {/* Sub-step B : numérotation (affiché uniquement si totalLoges > 0) */}
@@ -1103,14 +1107,15 @@ const StepBandes: React.FC<StepBandesProps> = ({ state, setState }) => {
                 <span className="ft-code text-[11px] uppercase tracking-wide text-text-2">
                   Bande {idx + 1}
                 </span>
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="small"
                   onClick={() => removeBande(b.uid)}
-                  aria-label={`Supprimer la bande ${idx + 1}`}
+                  ariaLabel={`Supprimer la bande ${idx + 1}`}
                   className="text-text-2 hover:text-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent rounded p-1"
                 >
                   <Trash2 size={16} aria-hidden="true" />
-                </button>
+                </Button>
               </div>
 
               <label className="block ft-code text-[10px] uppercase tracking-wide text-text-2">
@@ -1198,15 +1203,15 @@ const StepBandes: React.FC<StepBandesProps> = ({ state, setState }) => {
         })}
       </div>
 
-      <button
-        type="button"
+      <Button
+        variant="secondary"
         onClick={addBande}
         disabled={noLoges}
         className="mt-4 h-10 px-4 rounded-md bg-bg-0 border border-border text-text-1 text-[12px] font-semibold uppercase tracking-wide flex items-center gap-2 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
       >
         <Plus size={14} aria-hidden="true" />
         Ajouter une bande
-      </button>
+      </Button>
 
       <p className="text-[11px] text-text-2 mt-3">
         {state.bandes.length === 0

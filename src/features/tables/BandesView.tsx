@@ -135,16 +135,18 @@ const BandesView: React.FC = () => {
             subtitle={selectionMode ? `${selectedIds.length} sélectionné(s)` : 'Suivi porcelets'}
             action={
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="small"
                   onClick={() => setShowSexSeparation(true)}
                   className="pressable inline-flex h-9 px-3 items-center justify-center rounded-md transition-colors bg-bg-2 text-text-1 hover:bg-bg-1 text-[11px] uppercase tracking-wide"
-                  aria-label="Séparation par sexe"
+                  ariaLabel="Séparation par sexe"
                 >
                   ♂ / ♀
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant={selectionMode ? 'danger' : 'ghost'}
+                  size="small"
                   onClick={() => {
                     setSelectionMode(!selectionMode);
                     setSelectedIds([]);
@@ -154,10 +156,10 @@ const BandesView: React.FC = () => {
                       ? 'bg-red text-bg-0'
                       : 'bg-bg-2 text-text-1 hover:bg-bg-1'
                   }`}
-                  aria-label={selectionMode ? 'Annuler la sélection' : 'Mode sélection'}
+                  ariaLabel={selectionMode ? 'Annuler la sélection' : 'Mode sélection'}
                 >
                   {selectionMode ? <X size={18} /> : <CheckSquare size={18} />}
-                </button>
+                </Button>
               </div>
             }
           >
@@ -171,14 +173,15 @@ const BandesView: React.FC = () => {
                 aria-label="Rechercher une portée"
               />
               {searchText && (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="small"
                   onClick={() => setSearchText('')}
                   className="pressable text-text-2 hover:text-text-1 transition-colors"
-                  aria-label="Effacer la recherche"
+                  ariaLabel="Effacer la recherche"
                 >
                   <X size={14} />
-                </button>
+                </Button>
               )}
             </div>
 
@@ -279,8 +282,9 @@ const BandesView: React.FC = () => {
 
           {selectionMode && selectedIds.length > 0 && (
             <div className="fixed bottom-6 left-4 right-4 z-[100] animate-in slide-in-from-bottom-10 duration-[160ms]">
-              <button
-                type="button"
+              <Button
+                variant="primary"
+                fullWidth
                 onClick={() => setShowBatchModal(true)}
                 className="pressable w-full h-14 rounded-md bg-accent text-bg-0 flex items-center justify-center gap-3 shadow-2xl shadow-black/40 transition-transform active:scale-[0.98]"
               >
@@ -288,7 +292,7 @@ const BandesView: React.FC = () => {
                 <span className="text-[12px] uppercase tracking-wide font-semibold">
                   Clôturer sevrage ({selectedIds.length})
                 </span>
-              </button>
+              </Button>
             </div>
           )}
 
@@ -331,12 +335,13 @@ const BandesView: React.FC = () => {
                 <div className="agritech-root p-10 text-center flex flex-col items-center justify-center min-h-[60vh] gap-4">
                   <AlertTriangle size={32} className="text-red" />
                   <p className="text-[12px] uppercase text-text-1">Portée introuvable</p>
-                  <button
+                  <Button
+                    variant="primary"
                     onClick={handleCloseBande}
                     className="pressable h-11 px-6 rounded-md bg-accent text-bg-0 text-[12px] uppercase tracking-wide"
                   >
                     Fermer
-                  </button>
+                  </Button>
                 </div>
               )}
             </BandesErrorBoundary>

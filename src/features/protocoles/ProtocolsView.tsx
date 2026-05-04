@@ -18,6 +18,7 @@ import AgritechLayout from '../../components/AgritechLayout';
 import { Chip, SectionDivider } from '../../components/agritech';
 import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
+import { Button } from '@/design-system';
 
 type TabKey = 'cycle' | 'terrain' | 'biosecurite' | 'rations' | 'checklists';
 
@@ -300,9 +301,10 @@ const ProtocolsView: React.FC = () => {
               {tabs.map(t => {
                 const active = tab === t.key;
                 return (
-                  <button
+                  <Button
                     key={t.key}
-                    type="button"
+                    variant={active ? 'primary' : 'secondary'}
+                    size="small"
                     role="tab"
                     aria-selected={active}
                     onClick={() => setTab(t.key)}
@@ -322,7 +324,7 @@ const ProtocolsView: React.FC = () => {
                     >
                       {t.count}
                     </span>
-                  </button>
+                  </Button>
                 );
               })}
             </div>

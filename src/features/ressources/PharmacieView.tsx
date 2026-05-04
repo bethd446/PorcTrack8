@@ -23,6 +23,7 @@ import {
   hasWhatsAppSupport,
   type OrderItem,
 } from '../../utils/whatsappOrder';
+import { Button } from '@/design-system';
 
 function manqueKgVeto(item: StockVeto): number {
   const stock = item.stockActuel ?? 0;
@@ -290,15 +291,16 @@ const PharmacieView: React.FC = () => {
                   </div>
                 )}
               </div>
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="small"
                 onClick={() => setAddOpen(true)}
-                aria-label="Ajouter un nouveau produit vétérinaire"
+                ariaLabel="Ajouter un nouveau produit vétérinaire"
                 className="pressable shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-accent/40 text-accent text-[11px] uppercase tracking-wide hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-colors"
               >
                 <Plus size={14} aria-hidden="true" />
                 Nouveau produit
-              </button>
+              </Button>
             </header>
 
             {/* ── Summary strip : 3 KpiCards ──────────────────────── */}
@@ -363,14 +365,12 @@ const PharmacieView: React.FC = () => {
             ) : null}
 
             {!whatsappReady && stocksAOrdonner.length > 0 ? (
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 onClick={() => navigate('/more')}
-                aria-label="Configurer le numéro WhatsApp dans les Réglages"
+                ariaLabel="Configurer le numéro WhatsApp dans les Réglages"
                 className="pressable"
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
                   gap: 8,
                   padding: '10px 14px',
                   borderRadius: 12,
@@ -378,10 +378,6 @@ const PharmacieView: React.FC = () => {
                   color: 'var(--muted)',
                   border: '1px dashed var(--line)',
                   fontFamily: 'var(--font-mono)',
-                  fontSize: 11,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
                   textAlign: 'left',
                 }}
               >
@@ -389,7 +385,7 @@ const PharmacieView: React.FC = () => {
                 <span>
                   Numéro WhatsApp non configuré · Régler dans Réglages
                 </span>
-              </button>
+              </Button>
             ) : null}
 
             {/* ── Empty state ─────────────────────────────────────── */}

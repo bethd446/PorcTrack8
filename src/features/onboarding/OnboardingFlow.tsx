@@ -3,6 +3,7 @@ import { CheckCircle2, ChevronRight, User, Briefcase, Phone } from 'lucide-react
 import { kvSet } from '../../services/kvStore';
 import { setSupportWhatsapp } from '../../services/supportContact';
 import { FARM_CONFIG } from '../../config/farm';
+import { Button } from '@/design-system';
 
 /* ═════════════════════════════════════════════════════════════════════════
    OnboardingFlow — premier lancement (5 étapes plein-écran skippables)
@@ -210,9 +211,9 @@ const StepRole: React.FC<StepRoleProps> = ({ value, onChange, onSkip, onContinue
       {ROLES.map(({ key, label }) => {
         const active = value === key;
         return (
-          <button
+          <Button
             key={key}
-            type="button"
+            variant={active ? 'primary' : 'secondary'}
             role="radio"
             aria-checked={active}
             onClick={() => onChange(key)}
@@ -224,7 +225,7 @@ const StepRole: React.FC<StepRoleProps> = ({ value, onChange, onSkip, onContinue
             }
           >
             {label}
-          </button>
+          </Button>
         );
       })}
     </div>
@@ -319,22 +320,22 @@ interface StepActionsProps {
 
 const StepActions: React.FC<StepActionsProps> = ({ onSkip, onContinue, canContinue }) => (
   <div className="pt-6 grid grid-cols-[auto_1fr] gap-3">
-    <button
-      type="button"
+    <Button
+      variant="secondary"
       onClick={onSkip}
       className="pressable h-12 px-5 rounded-md bg-bg-1 border border-border text-text-1 text-[12px] font-semibold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
     >
       Passer
-    </button>
-    <button
-      type="button"
+    </Button>
+    <Button
+      variant="primary"
       onClick={onContinue}
       disabled={!canContinue}
       className="pressable h-12 px-5 rounded-md bg-accent text-bg-0 text-[13px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
     >
       Continuer
       <ChevronRight size={16} aria-hidden="true" />
-    </button>
+    </Button>
   </div>
 );
 
@@ -345,15 +346,16 @@ interface PrimaryButtonProps {
 }
 
 const PrimaryButton: React.FC<PrimaryButtonProps> = ({ onClick, label, icon }) => (
-  <button
-    type="button"
+  <Button
+    variant="primary"
+    fullWidth
     onClick={onClick}
     className="pressable w-full h-13 px-5 rounded-md bg-accent text-bg-0 text-[13px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
     style={{ height: 52 }}
   >
     {label}
     {icon}
-  </button>
+  </Button>
 );
 
 export default OnboardingFlow;

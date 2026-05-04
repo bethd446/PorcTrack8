@@ -21,6 +21,7 @@ import EmptyState from '../../components/design/EmptyState';
 import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { useFarm, useMeta } from '../../context/FarmContext';
+import { Button } from '@/design-system';
 import { updateProduitAliment } from '../../services/supabaseWrites';
 import type { StockAliment, StockStatut, Truie, Verrat, BandePorcelets } from '../../types/farm';
 import QuickAddAlimentForm from '../../components/forms/QuickAddAlimentForm';
@@ -246,13 +247,14 @@ const AlimentSection: React.FC<AlimentSectionProps> = ({
             {emptyDescription}
           </p>
           {emptyAction ? (
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              size="small"
               onClick={emptyAction.onClick}
               className="pressable mt-4 h-10 px-4 rounded-md bg-accent text-bg-0 text-[12px] font-medium transition-colors"
             >
               {emptyAction.label}
-            </button>
+            </Button>
           ) : null}
           {/* Icon legacy (keeps hint for screen readers) */}
           <span className="sr-only" aria-hidden="true">
@@ -628,15 +630,15 @@ const AlimentsView: React.FC = () => {
                   </div>
                 )}
               </div>
-              <button
-                type="button"
+              <Button
+                variant="primary"
                 onClick={() => setAddOpen(true)}
-                aria-label="Ajouter un nouvel aliment"
+                ariaLabel="Ajouter un nouvel aliment"
                 className="shrink-0 inline-flex h-11 min-h-[44px] items-center gap-1.5 px-4 rounded-md bg-accent text-bg-0 text-[11px] font-bold uppercase tracking-wide transition-colors duration-150 hover:brightness-110 active:scale-[0.96] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
               >
                 <Plus size={14} aria-hidden="true" />
                 <span>Nouvel aliment</span>
-              </button>
+              </Button>
             </header>
 
             {/* ── Summary strip : 3 KpiCards ──────────────────────── */}
@@ -693,14 +695,12 @@ const AlimentsView: React.FC = () => {
             ) : null}
 
             {!whatsappReady && stocksAOrdonner.length > 0 ? (
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 onClick={() => navigate('/more')}
-                aria-label="Configurer le numéro WhatsApp dans les Réglages"
+                ariaLabel="Configurer le numéro WhatsApp dans les Réglages"
                 className="pressable"
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
                   gap: 8,
                   padding: '10px 14px',
                   borderRadius: 12,
@@ -708,10 +708,6 @@ const AlimentsView: React.FC = () => {
                   color: 'var(--muted)',
                   border: '1px dashed var(--line)',
                   fontFamily: 'var(--font-mono)',
-                  fontSize: 11,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
                   textAlign: 'left',
                 }}
               >
@@ -719,7 +715,7 @@ const AlimentsView: React.FC = () => {
                 <span>
                   Numéro WhatsApp non configuré · Régler dans Réglages
                 </span>
-              </button>
+              </Button>
             ) : null}
 
             {/* ── Bannière alerte rupture ─────────────────────────── */}
@@ -752,14 +748,14 @@ const AlimentsView: React.FC = () => {
                 title="Stock aliments vide"
                 description="Aucun aliment enregistré. Ajoute ton 1er aliment via le bouton +."
                 action={
-                  <button
-                    type="button"
+                  <Button
+                    variant="primary"
                     onClick={() => setAddOpen(true)}
                     className="pressable h-11 px-5 rounded-md bg-accent text-bg-0 text-[13px] font-medium transition-colors inline-flex items-center gap-2"
                   >
                     <Plus size={16} aria-hidden="true" />
                     Ajouter un aliment
-                  </button>
+                  </Button>
                 }
               />
             ) : (
