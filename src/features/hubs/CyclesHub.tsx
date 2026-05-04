@@ -28,7 +28,7 @@ import { FARM_CONFIG } from '../../config/farm';
 import type { BandePorcelets, Saillie, Truie } from '../../types/farm';
 import { normaliseStatut } from '../../lib/truieStatut';
 import { normalizeTruieId, safeDate } from '../../lib/truieHelpers';
-import { Button } from '@/design-system';
+import { Button, PageHeader } from '@/design-system';
 
 // ─── Phases ─────────────────────────────────────────────────────────────────
 
@@ -358,22 +358,11 @@ const CyclesHub: React.FC = () => {
           />
 
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            {/* ── En-tête ───────────────────────────────────────────── */}
-            <header>
-              <Eyebrow dotColor="accent">Pipeline · {TOTAL_DAYS} jours</Eyebrow>
-              <h1
-                className="text-page-title"
-                style={{ margin: '8px 0 4px' }}
-              >
-                Cycles
-              </h1>
-              <div
-                className="text-body"
-                style={{ color: 'var(--muted)' }}
-              >
-                {positions.length} bande{positions.length > 1 ? 's' : ''} active{positions.length > 1 ? 's' : ''} · 7 phases
-              </div>
-            </header>
+            <PageHeader
+              eyebrow="CYCLES"
+              title="Cycles biologiques"
+              subtitle="Suivi des étapes de production"
+            />
 
             {/* ── Sub-tabs phases (pills) ───────────────────────────── */}
             <div
