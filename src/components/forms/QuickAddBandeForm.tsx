@@ -390,6 +390,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
             >
               Statut initial
             </span>
+            {/* TODO V44: Radio DS missing — radiogroup natif conservé */}
             <div
               className="flex flex-wrap gap-2"
               role="radiogroup"
