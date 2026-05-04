@@ -1,10 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { IonContent, IonModal, IonSpinner } from '@ionic/react';
 import {
-  IonContent, IonModal, IonSegment, IonSegmentButton, IonLabel, IonSpinner,
-} from '@ionic/react';
-import {
-  AlertCircle, Activity, ClipboardList, ChevronLeft, ChevronRight,
+  AlertCircle, Activity, ClipboardList, ChevronRight,
   Stethoscope, TrendingUp, CalendarClock, CheckCircle2,
   Edit3, Home, MapPin, Move, Tag, Plus, ClipboardCheck, Split,
 } from 'lucide-react';
@@ -20,6 +18,7 @@ import QuickEditPorceletForm from '../../../components/forms/QuickEditPorceletFo
 import QuickHealthLogPorceletForm from '../../../components/forms/QuickHealthLogPorceletForm';
 import QuickSplitBandeForm from '../../../components/forms/QuickSplitBandeForm';
 import NotesTimeline from '../../../components/design/NotesTimeline';
+import TopBarSync from '../../../components/design/TopBarSync';
 import BandeCroissanceCard from '../../../components/bande/BandeCroissanceCard';
 import TruieIcon from '../../../components/icons/TruieIcon';
 import { useFarm } from '../../../context/FarmContext';
@@ -30,7 +29,7 @@ import {
   listLoges,
   listPorceletsByBatch,
 } from '../../../services/supabaseWrites';
-import { useNoUUID, Button, PageHeader } from '@/design-system';
+import { useNoUUID, Button, PageHeader, Tabs } from '@/design-system';
 import {
   getRecommendedHealthLogs,
   HEALTH_LOG_TEMPLATES,
@@ -54,9 +53,11 @@ interface BandeDetailViewProps {
   onRefresh: () => void;
 }
 
+type BandeTabId = 'apercu' | 'details' | 'sante' | 'notes';
+
 const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, onClose, onRefresh }) => {
   const navigate = useNavigate();
-  const [tab, setTab] = useState('resumé');
+  const [activeTab, setActiveTab] = useState<BandeTabId>('apercu');
   const [editRow, setEditRow] = useState<SheetRawRow | null>(null);
   const [loading, setLoading] = useState(false);
   const [healthData, setHealthData] = useState<SheetRawRow[]>([]);
@@ -322,42 +323,37 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
 
   return (
     <div className="agritech-root h-full flex flex-col">
-      <header className="bg-bg-0 border-b border-border px-4 pt-4 pb-3">
-        <div className="flex items-start gap-3">
-          <Button
-            variant="ghost"
-            size="small"
-            onClick={onClose}
-            className="pressable inline-flex h-9 w-9 items-center justify-center rounded-md bg-bg-2 text-text-1 transition-colors mt-1"
-            ariaLabel="Retour"
-          >
-            <ChevronLeft size={20} />
-          </Button>
-          <div className="min-w-0 flex-1">
-            <PageHeader
-              eyebrow="Tables · Bande"
-              title={portéeLabel}
-              subtitle="Suivi de la bande"
-            />
-          </div>
-        </div>
-
-        <IonSegment
-          value={tab}
-          onIonChange={e => setTab(e.detail.value as string)}
-          className="premium-segment bg-bg-1 border border-border rounded-md overflow-hidden mt-3"
-        >
-          <IonSegmentButton value="resumé"><IonLabel className="text-[11px] uppercase tracking-wide">Résumé</IonLabel></IonSegmentButton>
-          <IonSegmentButton value="details"><IonLabel className="text-[11px] uppercase tracking-wide">Détails</IonLabel></IonSegmentButton>
-          <IonSegmentButton value="sante"><IonLabel className="text-[11px] uppercase tracking-wide">Santé</IonLabel></IonSegmentButton>
-          <IonSegmentButton value="notes"><IonLabel className="text-[11px] uppercase tracking-wide">Notes</IonLabel></IonSegmentButton>
-        </IonSegment>
-      </header>
+      <TopBarSync
+        crumbs={['Élevage', 'Bandes', portéeLabel]}
+        onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
+      />
 
       <IonContent className="ion-no-padding">
-        <div className="agritech-root px-4 py-5">
-          {tab === 'resumé' && (
-            <div className="space-y-4 pb-32">
+        <div
+          className="px-4 pt-5 pb-32 flex flex-col gap-5"
+          style={{ maxWidth: 1100, margin: '0 auto' }}
+          data-testid="bande-detail-view"
+        >
+          <PageHeader
+            eyebrow="Élevage · Bande"
+            title={portéeLabel}
+            subtitle="Suivi de la bande"
+          />
+
+          <Tabs
+            ariaLabel="Sections de la fiche bande"
+            value={activeTab}
+            onChange={(id) => setActiveTab(id as BandeTabId)}
+            options={[
+              { value: 'apercu', label: "Vue d'ensemble" },
+              { value: 'details', label: 'Détails' },
+              { value: 'sante', label: 'Santé', count: filteredHealth.length || undefined },
+              { value: 'notes', label: 'Notes' },
+            ]}
+          />
+
+          {activeTab === 'apercu' && (
+            <div className="flex flex-col gap-4">
               <PhotoStrip subjectType="BANDE" subjectId={bande.id} />
 
               <CycleTimeline age={bande.age} status={(bande.status as string) || ''} />
@@ -404,6 +400,11 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                 </div>
               </div>
 
+            </div>
+          )}
+
+          {activeTab === 'details' && (
+            <div className="flex flex-col gap-4">
               <div className="card-dense space-y-3">
                 <div className="flex items-center gap-2 mb-1">
                   <Activity size={14} className="text-accent" />
@@ -709,13 +710,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                 )}
               </section>
 
-              <QuickHealthForm subjectType="BANDE" subjectId={bande.id} onSuccess={() => { onRefresh(); loadRelatedData(); }} />
-            </div>
-          )}
-
-          {tab === 'details' && (
-            <div className="space-y-3 pb-32">
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-1 mt-2">
                 <h3 className="kpi-label">Registre complet</h3>
                 <Chip label={`${bande.rows.length} lignes`} tone="accent" size="xs" />
               </div>
@@ -756,8 +751,8 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
             </div>
           )}
 
-          {tab === 'sante' && (
-            <div className="space-y-4 pb-32">
+          {activeTab === 'sante' && (
+            <div className="flex flex-col gap-4">
               {/* ── Protocole sanitaire recommandé (selon phase) ─────────── */}
               {recommendedHealth.length > 0 && (
                 <div className="card-dense space-y-3">
@@ -860,8 +855,8 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
             </div>
           )}
 
-          {tab === 'notes' && (
-            <div className="space-y-4 pb-32">
+          {activeTab === 'notes' && (
+            <div className="flex flex-col gap-4">
               <QuickNoteForm subjectType="BANDE" subjectId={bande.id} onSuccess={() => { onRefresh(); loadRelatedData(); }} />
 
               {/* Historique notes V21-6 C2 */}
