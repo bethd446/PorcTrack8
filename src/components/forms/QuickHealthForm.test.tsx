@@ -125,10 +125,12 @@ describe('QuickHealthForm · contrats UI (source-grep)', () => {
     );
   })();
 
-  it('utilise IonSelect avec interface="popover" (pattern Android Capacitor)', () => {
-    expect(SRC).toMatch(/<IonSelect\b/);
-    expect(SRC).toMatch(/interface="popover"/);
-    expect(SRC).not.toMatch(/<select\s/);
+  it('V44 archétype 5 : utilise Select DS (pas IonSelect) + FormField wrapper', () => {
+    // Migration V44 : 0 IonSelect, Select DS uniquement (Android-safe via shadcn/native)
+    expect(SRC).not.toMatch(/<IonSelect\b/);
+    expect(SRC).not.toMatch(/from\s+'@ionic\/react'/);
+    expect(SRC).toMatch(/<Select\b/);
+    expect(SRC).toMatch(/<FormField\b/);
   });
 
   it('expose un picker de produit véto à côté du champ dose', () => {
