@@ -176,7 +176,6 @@ const MaterniteView: React.FC = () => {
             <Button
               variant="primary"
               fullWidth
-              size="large"
               onClick={() => openMiseBas()}
             >
               <Plus size={20} />
