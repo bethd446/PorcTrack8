@@ -494,19 +494,17 @@ const TruieDetailView: React.FC = () => {
             {/* V41 Phase C1 — Lignée déplacée dans onglet "Vue d'ensemble" */}
 
             {/* V32 PHASE 4 — Onglets (Vue d'ensemble · Reproduction · Santé · Historique) */}
-            <div style={{ display: 'flex', justifyContent: 'flex-start', overflowX: 'auto' }}>
-              <Tabs
-                ariaLabel="Sections de la fiche truie"
-                value={activeTab}
-                onChange={(id) => setActiveTab(id as typeof activeTab)}
-                items={[
-                  { id: 'apercu', label: 'Vue d’ensemble' },
-                  { id: 'repro', label: 'Reproduction', count: sowSaillies.length || undefined },
-                  { id: 'sante', label: 'Santé', count: healthLogs.length || undefined },
-                  { id: 'historique', label: 'Historique' },
-                ]}
-              />
-            </div>
+            <Tabs
+              ariaLabel="Sections de la fiche truie"
+              value={activeTab}
+              onChange={(id) => setActiveTab(id as typeof activeTab)}
+              items={[
+                { id: 'apercu', label: 'Vue d’ensemble' },
+                { id: 'repro', label: 'Reproduction', count: sowSaillies.length || undefined },
+                { id: 'sante', label: 'Santé', count: healthLogs.length || undefined },
+                { id: 'historique', label: 'Historique' },
+              ]}
+            />
 
             {/* V40 F5/F6 — Cycle timeline horizontal (Saillie/Surveillance/Écho/MB) */}
             {cycleData && activeTab === 'apercu' && (
