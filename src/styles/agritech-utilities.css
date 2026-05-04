@@ -143,11 +143,6 @@
     border-left-color: var(--color-accent);
   }
 
-  /* ── Surface helpers (useful as raw utilities) ───────────────────────── */
-  .surface-0 { background: var(--color-bg-0); color: var(--color-text-0); }
-  .surface-1 { background: var(--color-bg-1); color: var(--color-text-0); }
-  .surface-2 { background: var(--color-bg-2); color: var(--color-text-0); }
-
   /* ── Display heading (Big Shoulders) ─────────────────────────────────── */
   .agritech-heading {
     font-family: var(--font-heading);
@@ -155,12 +150,5 @@
     letter-spacing: -0.01em;
     color: var(--color-text-0);
     text-transform: none;
-  }
-
-  /* ── Hairline divider ────────────────────────────────────────────────── */
-  .agritech-hairline {
-    height: 1px;
-    background: var(--color-border);
-    border: 0;
   }
 }

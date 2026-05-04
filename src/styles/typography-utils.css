@@ -19,16 +19,6 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @layer utilities {
-  .text-eyebrow {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    line-height: 1;
-    letter-spacing: 0.20em;
-    text-transform: uppercase;
-    font-weight: 600;
-    color: var(--muted);
-  }
-
   .text-mono-micro {
     font-family: var(--font-mono);
     font-size: 10px;
@@ -37,13 +27,6 @@
     text-transform: uppercase;
     font-weight: 500;
     font-feature-settings: "tnum" 1;
-  }
-
-  .text-caption {
-    font-family: var(--font-body);
-    font-size: 11px;
-    line-height: 1.45;
-    color: var(--muted);
   }
 
   .text-mono-label {
@@ -58,12 +41,6 @@
   .text-body {
     font-family: var(--font-body);
     font-size: 13px;
-    line-height: 1.5;
-  }
-
-  .text-body-lg {
-    font-family: var(--font-body);
-    font-size: 14px;
     line-height: 1.5;
   }
 
@@ -84,23 +61,6 @@
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum" 1;
     letter-spacing: -0.005em;
-  }
-
-  .text-kpi-value-lg {
-    font-family: var(--font-mono);
-    font-size: 20px;
-    line-height: 1;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1;
-  }
-
-  .text-section-title {
-    font-family: var(--font-heading);
-    font-size: 22px;
-    line-height: 1.15;
-    font-weight: 700;
-    letter-spacing: -0.01em;
   }
 
   .text-page-title {
