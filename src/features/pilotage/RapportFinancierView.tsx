@@ -17,9 +17,9 @@ import { IonContent, IonPage } from '@ionic/react';
 import { Download, TrendingUp, Trophy, BarChart3 } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { KpiCard, SectionDivider, Chip } from '../../components/agritech';
+import { Button, PageHeader } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   formatMontant,
@@ -140,31 +140,11 @@ const RapportFinancierView: React.FC = () => {
             className="px-4 pt-5 pb-32 flex flex-col gap-5"
             style={{ maxWidth: 1100, margin: '0 auto' }}
           >
-            <header>
-              <Eyebrow dotColor="accent">Pilotage · Rapport</Eyebrow>
-              <h1
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '8px 0 4px',
-                }}
-              >
-                Rapport financier
-              </h1>
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--muted)',
-                }}
-              >
-                Synthèse 6 mois · top {topBandes.length} bande{topBandes.length > 1 ? 's' : ''}
-              </div>
-            </header>
+            <PageHeader
+              eyebrow="Pilotage · Rapport"
+              title="Rapport financier"
+              subtitle="Synthèse économique"
+            />
 
             {/* ── KPI synthèse ────────────────────────────────────────── */}
             <div className="grid grid-cols-3 gap-2.5">
@@ -235,17 +215,19 @@ const RapportFinancierView: React.FC = () => {
             ) : null}
 
             {/* ── Export PDF (placeholder) ────────────────────────────── */}
-            <button
+            <Button
               type="button"
+              variant="secondary"
               disabled
               className="card-dense pressable flex items-center justify-center gap-2 !py-3 opacity-60 cursor-not-allowed"
               aria-label="Export PDF · bientôt disponible"
+              style={{ borderRadius: 'var(--ds-radius-card, 16px)', textTransform: 'none', height: 'auto' }}
             >
               <Download size={16} aria-hidden="true" />
               <span className="ft-heading text-[13px] uppercase tracking-wide">
                 Export PDF · bientôt
               </span>
-            </button>
+            </Button>
           </div>
         </AgritechLayout>
       </IonContent>

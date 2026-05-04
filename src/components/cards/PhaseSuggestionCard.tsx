@@ -7,6 +7,7 @@
 import React from 'react';
 import { TrendingUp, Award, Truck, Clock, Check } from 'lucide-react';
 import type { PendingTransition, PhaseAvecSortie } from '../../services/phaseEngine';
+import { Button } from '@/design-system';
 
 const PHASE_LABEL: Record<string, string> = {
   CROISSANCE: 'Croissance',
@@ -83,27 +84,31 @@ const PhaseSuggestionCard: React.FC<PhaseSuggestionCardProps> = ({
       {/* Actions */}
       <div className="flex gap-2">
         {onDismiss && (
-          <button
+          <Button
             type="button"
+            variant="secondary"
             aria-label="Plus tard"
             onClick={onDismiss}
-            className="pressable flex-1 h-12 rounded-xl border border-border text-[13px] text-text-2 hover:text-text-0 transition-colors flex items-center justify-center gap-2"
+            className="pressable flex-1 h-12 border border-border text-[13px] text-text-2 hover:text-text-0 transition-colors flex items-center justify-center gap-2"
+            style={{ borderRadius: '0.75rem', height: '3rem' }}
           >
             <Clock size={14} />
             Plus tard
-          </button>
+          </Button>
         )}
-        <button
+        <Button
           type="button"
+          variant={critical ? 'danger' : 'primary'}
           aria-label="Confirmer"
           onClick={onConfirm}
-          className={`pressable flex-[2] h-12 rounded-xl font-bold text-[13px] text-white flex items-center justify-center gap-2 transition-colors ${
+          className={`pressable flex-[2] h-12 font-bold text-[13px] text-white flex items-center justify-center gap-2 transition-colors ${
             critical ? 'bg-red' : 'bg-accent'
           }`}
+          style={{ borderRadius: '0.75rem', height: '3rem' }}
         >
           <Check size={16} />
           Confirmer
-        </button>
+        </Button>
       </div>
     </div>
   );

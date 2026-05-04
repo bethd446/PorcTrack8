@@ -2,6 +2,7 @@ import React from 'react';
 import { IonModal } from '@ionic/react';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { Button } from '@/design-system';
 
 export interface BottomSheetProps {
   isOpen: boolean;
@@ -50,14 +51,17 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
         {title ? (
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <h2 className="agritech-heading text-[18px] uppercase tracking-wide">{title}</h2>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="small"
               onClick={onClose}
               aria-label="Fermer"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-text-1 pressable focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+              className="inline-flex h-9 w-9 items-center justify-center text-text-1 pressable focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+              style={{ borderRadius: '0.375rem', height: '2.25rem', width: '2.25rem', padding: 0 }}
             >
               <X size={18} aria-hidden="true" />
-            </button>
+            </Button>
           </div>
         ) : null}
 

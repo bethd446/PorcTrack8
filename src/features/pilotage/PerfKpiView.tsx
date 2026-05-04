@@ -17,8 +17,6 @@ import {
   Card,
   Button,
   Tag,
-  StatsGrid,
-  Stat,
   ListItem,
   Empty,
   PageHeader,
@@ -30,14 +28,16 @@ import {
   rankTruiesByPerformance,
   detectTruiesAReformer,
   computeZootechniqueKpis,
-  GMQ_CIBLES,
   type TruieRanking,
   type TruiesAReformer,
   type MotifReforme,
-  type TrancheAge,
 } from '../../services/perfKpiAnalyzer';
 import { genererRapportGlobal } from '../../services/financialAnalyzer';
 import type { PerformanceTier } from '../../types/farm';
+import PerfKpiOverview from './PerfKpiOverview';
+import PerfKpiPerformance from './PerfKpiPerformance';
+import PerfKpiProduction from './PerfKpiProduction';
+import PerfKpiEconomie from './PerfKpiEconomie';
 
 type TagVariant = 'default' | 'primary' | 'accent' | 'soft' | 'danger' | 'warning' | 'success';
 
@@ -281,13 +281,6 @@ const PerfKpiView: React.FC = () => {
 
   const topLimited = top.slice(0, 5);
 
-  const trancheLabel: Record<TrancheAge, string> = {
-    POST_SEVRAGE: 'GMQ post-sev',
-    CROISSANCE: 'GMQ croissance',
-    ENGRAISSEMENT: 'GMQ engr.',
-    FINITION: 'GMQ finition',
-  };
-
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
@@ -302,33 +295,16 @@ const PerfKpiView: React.FC = () => {
             <PageHeader eyebrow="Pilotage" title="Performance" subtitle="KPIs clés de ta ferme" />
 
             <Section label="TON TROUPEAU EN UN COUP D'ŒIL" />
-            <Card>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
-                <Tag variant={statutTag.variant}>{statutTag.label}</Tag>
-              </div>
-              {hasData ? (
-                <StatsGrid cols={3}>
-                  <Stat
-                    value={`${nbTruiesEnCycle}/${kpis.nbTruiesTotal}`}
-                    label={`Truies en cycle (${truiesEnCyclePct} %)`}
-                  />
-                  <Stat
-                    value={roiMoyen !== null ? `${roiMoyen} %` : '—'}
-                    label="ROI moyen estimé"
-                    tone={roiMoyen !== null && roiMoyen < 0 ? 'danger' : 'default'}
-                  />
-                  <Stat value={kpis.nbMbAVenir30j} label="Mises-bas 30 j" />
-                </StatsGrid>
-              ) : (
-                <Empty>
-                  <TrendingUp size={32} aria-hidden="true" style={{ marginBottom: 8, color: 'var(--pt-text-subtle)' }} />
-                  <div>Saisie en cours.</div>
-                  <div style={{ fontSize: 12, color: 'var(--pt-text-subtle)', marginTop: 4 }}>
-                    Reviens dans 2-3 mois pour voir tes premières moyennes.
-                  </div>
-                </Empty>
-              )}
-            </Card>
+            <PerfKpiOverview
+              hasData={hasData}
+              statutLabel={statutTag.label}
+              statutVariant={statutTag.variant}
+              nbTruiesEnCycle={nbTruiesEnCycle}
+              nbTruiesTotal={kpis.nbTruiesTotal}
+              truiesEnCyclePct={truiesEnCyclePct}
+              roiMoyen={roiMoyen}
+              nbMbAVenir30j={kpis.nbMbAVenir30j}
+            />
 
             <Section label="TES MEILLEURES TRUIES" />
             {topLimited.length === 0 ? (
@@ -399,150 +375,42 @@ const PerfKpiView: React.FC = () => {
               </Card>
             ) : (
               <>
-                <Card>
-                  <StatsGrid cols={2}>
-                    <Stat
-                      value={formatNum(kpis.sevresParTruieAn)}
-                      label="Sevrés/truie/an"
-                      tone={kpis.sevresParTruieAn > 0 && kpis.sevresParTruieAn < 18 ? 'danger' : 'default'}
-                    />
-                    <Stat value={formatNum(kpis.porteesParTruieAn)} label="Portées/truie/an" />
-                    <Stat value={formatNum(kpis.moyNV)} label="NV moyen" />
-                    <Stat
-                      value={`${formatNum(kpis.tauxMortaliteNaissanceSevrage)} %`}
-                      label="Mort. naiss → sevrage"
-                      tone={kpis.tauxMortaliteNaissanceSevrage > 15 ? 'danger' : 'default'}
-                    />
-                  </StatsGrid>
-                  {(kpis.sevresParTruieAn === 0 || kpis.porteesParTruieAn === 0 || kpis.moyNV === 0) && (
-                    <p style={{ marginTop: 12, fontSize: 11, color: 'var(--pt-text-subtle)' }}>
-                      {emptyHint(nbBandes)}
-                    </p>
-                  )}
-                </Card>
+                <Section label="PERFORMANCE GLOBALE" tone="accent" />
+                <PerfKpiPerformance
+                  isseMoyJours={kpis.isseMoyJours}
+                  iemMoyJours={kpis.iemMoyJours}
+                  tauxMBPct={kpis.tauxMBPct}
+                  tauxRenouvellementPct={kpis.tauxRenouvellementPct}
+                  intervalSevrageSaillieMoyJours={kpis.intervalSevrageSaillieMoyJours}
+                  nbMbAVenir30j={kpis.nbMbAVenir30j}
+                  isseTone={isseToTone(kpis.isseMoyJours)}
+                  iemTone={iemToTone(kpis.iemMoyJours)}
+                  tauxMBTone={tauxMBToTone(kpis.tauxMBPct)}
+                  renouvTone={renouvToTone(kpis.tauxRenouvellementPct)}
+                  formatNum={formatNum}
+                />
 
-                <Card>
-                  <StatsGrid cols={2}>
-                    <Stat
-                      value={kpis.intervalSevrageSaillieMoyJours !== null
-                        ? `${formatNum(kpis.intervalSevrageSaillieMoyJours)} j`
-                        : '—'}
-                      label="Interv. sev-sail."
-                    />
-                    <Stat value={kpis.nbMbAVenir30j} label="MB à venir 30 j" />
-                  </StatsGrid>
-                </Card>
+                <Section label="PRODUCTION" />
+                <PerfKpiProduction
+                  sevresParTruieAn={kpis.sevresParTruieAn}
+                  porteesParTruieAn={kpis.porteesParTruieAn}
+                  moyNV={kpis.moyNV}
+                  tauxMortaliteNaissanceSevrage={kpis.tauxMortaliteNaissanceSevrage}
+                  icrKg={zooKpis.icrKg}
+                  icGlobal={zooKpis.icGlobal}
+                  gmqParTranche={zooKpis.gmqParTranche}
+                  mortalite={zooKpis.mortalite}
+                  nbBandes={nbBandes}
+                  nbPorteesSevrees12m={zooKpis.nbPorteesSevrees12m}
+                  formatNum={formatNum}
+                  emptyHint={emptyHint}
+                />
 
-                <Section label="REPRODUCTION AVANCÉE" tone="accent" />
-                <Card>
-                  <StatsGrid cols={2}>
-                    <Stat
-                      value={kpis.isseMoyJours !== null ? `${formatNum(kpis.isseMoyJours)} j` : '—'}
-                      label="Sevrage → saillie"
-                      tone={isseToTone(kpis.isseMoyJours)}
-                    />
-                    <Stat
-                      value={kpis.iemMoyJours !== null ? `${formatNum(kpis.iemMoyJours)} j` : '—'}
-                      label="Entre mises-bas"
-                      tone={iemToTone(kpis.iemMoyJours)}
-                    />
-                    <Stat
-                      value={kpis.tauxMBPct !== null ? `${formatNum(kpis.tauxMBPct)} %` : '—'}
-                      label="% saillies réussies"
-                      tone={tauxMBToTone(kpis.tauxMBPct)}
-                    />
-                    <Stat
-                      value={kpis.tauxRenouvellementPct !== null ? `${formatNum(kpis.tauxRenouvellementPct)} %` : '—'}
-                      label="Renouv. annuel"
-                      tone={renouvToTone(kpis.tauxRenouvellementPct)}
-                    />
-                  </StatsGrid>
-                  <p style={{ marginTop: 12, fontSize: 11, color: 'var(--pt-text-subtle)' }}>
-                    Cibles : ISSE 3-7 j · IEM 140-150 j · Taux MB ≥ 88 % · Renouv. 30-40 %/an
-                  </p>
-                </Card>
-
-                <Section label="TECHNIQUE" />
-                <Card>
-                  <StatsGrid cols={2}>
-                    <Stat
-                      value={zooKpis.icrKg !== null ? `${formatNum(zooKpis.icrKg)} kg/kg` : '—'}
-                      label="ICR (cible 2.6-2.9)"
-                    />
-                    <Stat
-                      value={zooKpis.icGlobal !== null ? `${formatNum(zooKpis.icGlobal)} kg/kg` : '—'}
-                      label="IC global"
-                    />
-                  </StatsGrid>
-                  {zooKpis.icrKg === null && (
-                    <p style={{ marginTop: 12, fontSize: 11, color: 'var(--pt-text-subtle)' }}>
-                      Saisie aliment manquante ({zooKpis.nbPorteesSevrees12m} portée{zooKpis.nbPorteesSevrees12m > 1 ? 's' : ''} sevrée{zooKpis.nbPorteesSevrees12m > 1 ? 's' : ''}).
-                    </p>
-                  )}
-                </Card>
-
-                <Card>
-                  <StatsGrid cols={2}>
-                    {(['POST_SEVRAGE', 'CROISSANCE', 'ENGRAISSEMENT', 'FINITION'] as TrancheAge[]).map((tr) => {
-                      const v = zooKpis.gmqParTranche[tr];
-                      return (
-                        <div key={tr}>
-                          <Stat
-                            value={v !== null ? `${v} g/j` : '—'}
-                            label={`${trancheLabel[tr]} (cible ${GMQ_CIBLES[tr]})`}
-                          />
-                        </div>
-                      );
-                    })}
-                  </StatsGrid>
-                </Card>
-
-                <Card>
-                  <StatsGrid cols={2}>
-                    <Stat
-                      value={zooKpis.mortalite.maternitePct !== null
-                        ? `${formatNum(zooKpis.mortalite.maternitePct)} %`
-                        : '—'}
-                      label="Mort. maternité (< 12 %)"
-                      tone={zooKpis.mortalite.maternitePct !== null && zooKpis.mortalite.maternitePct > 15 ? 'danger' : 'default'}
-                    />
-                    <Stat
-                      value={zooKpis.mortalite.postSevragePct !== null
-                        ? `${formatNum(zooKpis.mortalite.postSevragePct)} %`
-                        : '—'}
-                      label="Mort. post-sev (< 3 %)"
-                    />
-                    <Stat
-                      value={zooKpis.mortalite.engraissementPct !== null
-                        ? `${formatNum(zooKpis.mortalite.engraissementPct)} %`
-                        : '—'}
-                      label="Mort. engr. (< 2 %)"
-                    />
-                    <Stat
-                      value={zooKpis.mortalite.finitionPct !== null
-                        ? `${formatNum(zooKpis.mortalite.finitionPct)} %`
-                        : '—'}
-                      label="Mort. finition (< 1.5 %)"
-                    />
-                  </StatsGrid>
-                </Card>
-
-                <Section label="FINANCES" />
-                <Card>
-                  <StatsGrid cols={2}>
-                    <Stat
-                      value={zooKpis.margeBruteParTruie !== null
-                        ? `${zooKpis.margeBruteParTruie} €/an`
-                        : '—'}
-                      label="Marge brute / truie"
-                    />
-                    <Stat
-                      value={roiMoyen !== null ? `${roiMoyen} %` : '—'}
-                      label="ROI moyen"
-                      tone={roiMoyen !== null && roiMoyen < 0 ? 'danger' : 'default'}
-                    />
-                  </StatsGrid>
-                </Card>
+                <Section label="ÉCONOMIE" />
+                <PerfKpiEconomie
+                  margeBruteParTruie={zooKpis.margeBruteParTruie}
+                  roiMoyen={roiMoyen}
+                />
 
                 <Section label="TRUIES EN SOUS-PERFORMANCE" />
                 {flop.length === 0 ? (

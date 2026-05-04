@@ -14,6 +14,7 @@ import { ClipboardList, Mic, Plus } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
 import type { Note } from '../../types';
 import Eyebrow from './Eyebrow';
+import { Button } from '@/design-system';
 
 export interface NotesTimelineProps {
   subjectType: 'BANDE' | 'TRUIE' | 'VERRAT';
@@ -106,15 +107,18 @@ const NotesTimeline: React.FC<NotesTimelineProps> = ({
             {subjectLabel ? ` ${subjectLabel}` : ''}.
           </p>
           {onAddNote && (
-            <button
+            <Button
               type="button"
+              variant="primary"
+              size="small"
               onClick={onAddNote}
-              className="pressable inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-accent text-bg-0 text-[11px] font-bold uppercase tracking-wide"
+              className="pressable inline-flex items-center gap-1.5 px-3 py-2 bg-accent text-bg-0 text-[11px] font-bold uppercase tracking-wide"
               aria-label="Ajouter une note"
+              style={{ borderRadius: '0.375rem' }}
             >
               <Plus size={13} aria-hidden="true" />
               Ajouter une note
-            </button>
+            </Button>
           )}
         </div>
       </section>
@@ -129,15 +133,18 @@ const NotesTimeline: React.FC<NotesTimelineProps> = ({
           <Eyebrow>Historique notes · {filtered.length}</Eyebrow>
         </div>
         {onAddNote && (
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="small"
             onClick={onAddNote}
             className="pressable inline-flex items-center gap-1 text-accent text-[11px] font-bold uppercase tracking-wide"
             aria-label="Ajouter une note"
+            style={{ borderRadius: 0, padding: 0, height: 'auto' }}
           >
             <Plus size={12} aria-hidden="true" />
             Ajouter
-          </button>
+          </Button>
         )}
       </div>
 
@@ -209,14 +216,17 @@ const NotesTimeline: React.FC<NotesTimelineProps> = ({
                 <p className="text-[13px] text-text-0 leading-relaxed" style={{ margin: 0 }}>
                   {display}
                   {truncated && (
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="small"
                       onClick={() => setExpanded(prev => ({ ...prev, [n.id]: true }))}
                       className="ml-1 text-accent text-[11px] font-bold uppercase"
                       aria-label="Voir la note complète"
+                      style={{ borderRadius: 0, padding: 0, height: 'auto' }}
                     >
                       voir +
-                    </button>
+                    </Button>
                   )}
                 </p>
 

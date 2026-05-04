@@ -8,6 +8,7 @@ import {
 } from '../../services/supabaseWrites';
 import { safeDate } from '../../lib/truieHelpers';
 import { BottomSheet, DataRow } from '../agritech';
+import { Button, Input, Textarea } from '@/design-system';
 import { bandesAEligibleSeparation } from '../../services/bandesAggregator';
 import type { BandePorcelets } from '../../types/farm';
 import { kvGet } from '../../services/kvStore';
@@ -297,20 +298,12 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
               >
                 Rechercher
               </label>
-              <div
-                className={[
-                  'flex items-center gap-2 h-11 px-3 rounded-md',
-                  'bg-bg-0 border border-border',
-                  'focus-within:border-accent focus-within:ring-1 focus-within:ring-accent',
-                  'transition-colors duration-[160ms]',
-                ].join(' ')}
-              >
+              <div className="flex items-center gap-2">
                 <Search size={14} className="text-text-2 shrink-0" aria-hidden="true" />
-                <input
+                <Input
                   id="sep-search"
                   type="search"
                   aria-label="Rechercher par ID portée, truie ou boucle mère"
-                  className="flex-1 bg-transparent outline-none text-[13px] text-text-0 placeholder:text-text-2"
                   placeholder="ID portée, truie, boucle mère…"
                   value={query}
                   onChange={e => setQuery(e.target.value)}
@@ -373,14 +366,14 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
           <form onSubmit={handleSubmit} className="space-y-5" noValidate>
             {/* Bande sélectionnée */}
             <div className="card-dense !p-3 flex items-center gap-3">
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="small"
                 onClick={() => setStep(1)}
                 aria-label="Changer de bande"
-                className="pressable inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-bg-2 text-text-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
               >
                 <ArrowLeft size={14} aria-hidden="true" />
-              </button>
+              </Button>
               <div className="min-w-0 flex-1">
                 <div className="text-mono-micro text-text-2">
                   Bande
@@ -406,7 +399,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
                 >
                   Mâles
                 </label>
-                <input
+                <Input
                   id="sep-males"
                   type="text"
                   inputMode="numeric"
@@ -414,14 +407,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
                   aria-label="Nombre de mâles"
                   aria-invalid={!!errors.nbMales}
                   aria-describedby={errors.nbMales ? 'sep-males-error' : undefined}
-                  className={[
-                    'w-full h-16 rounded-md px-3',
-                    'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                    'font-mono text-[28px] tabular-nums text-center',
-                    'outline-none transition-colors duration-[160ms]',
-                    'focus:border-accent focus:ring-1 focus:ring-accent',
-                    errors.nbMales ? 'border-red' : 'border-border hover:border-text-2',
-                  ].join(' ')}
+                  invalid={!!errors.nbMales}
                   placeholder="0"
                   value={form.nbMales}
                   onChange={e =>
@@ -438,7 +424,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
                 >
                   Femelles
                 </label>
-                <input
+                <Input
                   id="sep-femelles"
                   type="text"
                   inputMode="numeric"
@@ -446,14 +432,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
                   aria-label="Nombre de femelles"
                   aria-invalid={!!errors.nbFemelles}
                   aria-describedby={errors.nbFemelles ? 'sep-femelles-error' : undefined}
-                  className={[
-                    'w-full h-16 rounded-md px-3',
-                    'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                    'font-mono text-[28px] tabular-nums text-center',
-                    'outline-none transition-colors duration-[160ms]',
-                    'focus:border-accent focus:ring-1 focus:ring-accent',
-                    errors.nbFemelles ? 'border-red' : 'border-border hover:border-text-2',
-                  ].join(' ')}
+                  invalid={!!errors.nbFemelles}
                   placeholder="0"
                   value={form.nbFemelles}
                   onChange={e =>
@@ -499,20 +478,13 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
               >
                 Date séparation
               </label>
-              <input
+              <Input
                 id="sep-date"
                 type="date"
                 aria-label="Date de séparation"
                 aria-invalid={!!errors.dateSeparation}
                 aria-describedby={errors.dateSeparation ? 'sep-date-error' : undefined}
-                className={[
-                  'w-full h-12 rounded-md px-3',
-                  'bg-bg-0 border text-text-0',
-                  'font-mono text-[14px] tabular-nums',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  errors.dateSeparation ? 'border-red' : 'border-border hover:border-text-2',
-                ].join(' ')}
+                invalid={!!errors.dateSeparation}
                 value={form.dateSeparation}
                 onChange={e => setForm(f => ({ ...f, dateSeparation: e.target.value }))}
                 disabled={saving}
@@ -536,18 +508,9 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
               >
                 Observation <span className="text-text-2 normal-case">· optionnel</span>
               </label>
-              <textarea
+              <Textarea
                 id="sep-obs"
                 aria-label="Observation de la séparation"
-                className={[
-                  'w-full rounded-md px-3 py-3',
-                  'bg-bg-0 border border-border text-text-0 placeholder:text-text-2',
-                  'text-[13px]',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  'min-h-[80px] resize-y',
-                  'hover:border-text-2',
-                ].join(' ')}
                 placeholder="Note terrain…"
                 value={form.observation}
                 onChange={e => setForm(f => ({ ...f, observation: e.target.value }))}
@@ -562,44 +525,26 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
             ) : null}
 
             {/* Actions */}
-            <div className="flex items-center gap-2 pt-2">
-              <button
-                type="button"
+            <div className="flex gap-3 justify-end px-4 py-3 border-t border-border">
+              <Button
+                variant="secondary"
                 onClick={handleClose}
                 disabled={saving}
-                className={[
-                  'pressable flex-1 h-14 rounded-md',
-                  'inline-flex items-center justify-center gap-2',
-                  'bg-bg-1 border border-border text-text-1',
-                  'text-[12px] font-bold uppercase tracking-wide',
-                  'transition-colors duration-[160ms]',
-                  'hover:border-text-2',
-                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                  saving ? 'opacity-40 cursor-not-allowed' : '',
-                ].join(' ')}
               >
                 Annuler
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="primary"
                 type="submit"
                 disabled={saving || !isValid}
                 aria-label="Enregistrer la séparation"
-                className={[
-                  'pressable flex-[2] h-14 rounded-md',
-                  'inline-flex items-center justify-center gap-2',
-                  'bg-accent text-bg-0',
-                  'text-[13px] font-bold uppercase tracking-wide',
-                  'transition-colors duration-[160ms]',
-                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                  saving || !isValid ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
-                ].join(' ')}
               >
                 {saving ? (
                   <span className="animate-pulse">Enregistrement…</span>
                 ) : (
                   'Enregistrer'
                 )}
-              </button>
+              </Button>
             </div>
           </form>
         ) : null}
@@ -626,13 +571,14 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
               </p>
             ) : null}
 
-            <button
-              type="button"
-              onClick={handleClose}
-              className="pressable mt-8 h-12 px-8 rounded-md bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-            >
-              OK
-            </button>
+            <div className="mt-8">
+              <Button
+                variant="primary"
+                onClick={handleClose}
+              >
+                OK
+              </Button>
+            </div>
           </div>
         ) : null}
       </div>

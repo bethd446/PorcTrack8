@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 
 import { useQuickActions, type QuickActionKind } from '../AgritechNavV2';
+import { Button } from '@/design-system';
 
 export interface SaisirSheetProps {
   isOpen: boolean;
@@ -138,13 +139,15 @@ const TONE_FG: Record<ActionDef['tone'], string> = {
 const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
   const { openAction } = useQuickActions();
   const sheetRef = useRef<HTMLDivElement>(null);
-  const closeBtnRef = useRef<HTMLButtonElement>(null);
   const previousActiveRef = useRef<Element | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
     previousActiveRef.current = document.activeElement;
-    const t = setTimeout(() => closeBtnRef.current?.focus(), 30);
+    const t = setTimeout(() => {
+      const closeBtn = sheetRef.current?.querySelector<HTMLButtonElement>('[data-saisir-close]');
+      closeBtn?.focus();
+    }, 30);
 
     const onKeyDown = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
@@ -202,12 +205,16 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
       aria-labelledby="saisir-sheet-title"
       className="fixed inset-0 z-[1100] flex items-end justify-center"
     >
-      <button
+      <Button
         type="button"
+        variant="ghost"
         aria-label="Fermer le panneau de saisie"
         onClick={onClose}
         className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
-      />
+        style={{ borderRadius: 0, padding: 0, height: '100%', width: '100%' }}
+      >
+        {''}
+      </Button>
 
       <div
         ref={sheetRef}
@@ -230,21 +237,26 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
           >
             Que veux-tu saisir ?
           </h2>
-          <button
-            ref={closeBtnRef}
+          <Button
             type="button"
+            variant="ghost"
+            data-saisir-close
             onClick={onClose}
             aria-label="Fermer"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full active:scale-[0.94] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            className="inline-flex h-10 w-10 items-center justify-center active:scale-[0.94] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
             style={{
               background: 'var(--pt-surface-alt)',
               color: 'var(--pt-text)',
               outlineColor: 'var(--color-accent-500)',
               transition: 'transform var(--duration-press) var(--ease-emil)',
+              borderRadius: '9999px',
+              height: '2.5rem',
+              width: '2.5rem',
+              padding: 0,
             }}
           >
             <X size={18} aria-hidden="true" />
-          </button>
+          </Button>
         </div>
 
         <div className="px-4 pt-2 pb-2 space-y-2">
@@ -257,15 +269,20 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
                   style={{ background: 'var(--pt-divider)' }}
                 />
               ) : null}
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={() => handlePick(kind)}
-                className="flex w-full items-center gap-3 rounded-2xl px-4 py-4 text-left active:scale-[0.985] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                className="flex w-full items-center gap-3 px-4 py-4 text-left active:scale-[0.985] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
                 style={{
                   background: 'var(--pt-surface)',
                   border: '1px solid var(--pt-divider)',
                   outlineColor: 'var(--color-accent-500)',
                   transition: 'transform var(--duration-press) var(--ease-emil)',
+                  borderRadius: '1rem',
+                  textTransform: 'none',
+                  height: 'auto',
+                  justifyContent: 'flex-start',
                 }}
               >
                 <span
@@ -295,7 +312,7 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
                     {description}
                   </span>
                 </span>
-              </button>
+              </Button>
             </React.Fragment>
           ))}
         </div>

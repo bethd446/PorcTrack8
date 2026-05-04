@@ -26,6 +26,7 @@ import {
   StatsGrid,
   Stat,
   ActionRow,
+  PageHeader,
   safeDisplay,
 } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
@@ -179,11 +180,11 @@ const ReproductionHub: React.FC = () => {
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
           <div className="pt-page" style={{ padding: '8px 18px 24px', maxWidth: 1100, margin: '0 auto' }}>
-            <Section label="REPRODUCTION" tone="accent" />
-            <h1 style={{ fontSize: 'var(--pt-text-display)', marginBottom: 4 }}>Reproduction</h1>
-            <p style={{ color: 'var(--pt-text-muted)', margin: '0 0 20px', fontSize: 13 }}>
-              Le cycle truie de ta ferme
-            </p>
+            <PageHeader
+              eyebrow="REPRODUCTION"
+              title="Reproduction"
+              subtitle="Saillies, gestation, maternité"
+            />
 
             <Section label="KPIs REPRO" />
             <Card>

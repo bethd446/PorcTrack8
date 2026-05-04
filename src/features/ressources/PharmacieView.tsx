@@ -8,7 +8,6 @@ import EditableText from '../../components/EditableText';
 import { Chip, DataRow, SectionDivider, KpiCard } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
 import EmptyState from '../../components/design/EmptyState';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { SeringueIcon } from '../../components/icons';
 import { useFarm, useMeta } from '../../context/FarmContext';
@@ -23,6 +22,7 @@ import {
   hasWhatsAppSupport,
   type OrderItem,
 } from '../../utils/whatsappOrder';
+import { Button, PageHeader } from '@/design-system';
 
 function manqueKgVeto(item: StockVeto): number {
   const stock = item.stockActuel ?? 0;
@@ -249,57 +249,37 @@ const PharmacieView: React.FC = () => {
           />
 
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <header className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <Eyebrow dotColor="accent">Ressources · Pharmacie</Eyebrow>
-                <h1
-                  style={{
-                    fontFamily: 'var(--font-heading)',
-                    fontSize: 34,
-                    fontWeight: 700,
-                    lineHeight: 1,
-                    letterSpacing: '-0.02em',
-                    color: 'var(--ink)',
-                    margin: '8px 0 4px',
-                  }}
-                >
-                  Pharmacie
-                </h1>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 13,
-                    color: 'var(--muted)',
-                  }}
-                >
-                  {summary.total} produit{summary.total > 1 ? 's' : ''} vétérinaire{summary.total > 1 ? 's' : ''}
-                </div>
-                {treatmentSummaryLine && (
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 10.5,
-                      letterSpacing: '0.10em',
-                      textTransform: 'uppercase',
-                      color: 'var(--muted)',
-                      marginTop: 4,
-                    }}
-                    aria-live="polite"
-                  >
-                    {treatmentSummaryLine}
-                  </div>
-                )}
+            <PageHeader
+              eyebrow="Ressources · Pharmacie"
+              title="Pharmacie"
+              subtitle="Stocks véto et sanitaire"
+            />
+            {treatmentSummaryLine && (
+              <div
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 10.5,
+                  letterSpacing: '0.10em',
+                  textTransform: 'uppercase',
+                  color: 'var(--muted)',
+                }}
+                aria-live="polite"
+              >
+                {treatmentSummaryLine}
               </div>
-              <button
-                type="button"
+            )}
+            <div className="flex justify-end">
+              <Button
+                variant="secondary"
+                size="small"
                 onClick={() => setAddOpen(true)}
-                aria-label="Ajouter un nouveau produit vétérinaire"
+                ariaLabel="Ajouter un nouveau produit vétérinaire"
                 className="pressable shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-accent/40 text-accent text-[11px] uppercase tracking-wide hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-colors"
               >
                 <Plus size={14} aria-hidden="true" />
                 Nouveau produit
-              </button>
-            </header>
+              </Button>
+            </div>
 
             {/* ── Summary strip : 3 KpiCards ──────────────────────── */}
             <div className="grid grid-cols-3 gap-2">
@@ -363,14 +343,12 @@ const PharmacieView: React.FC = () => {
             ) : null}
 
             {!whatsappReady && stocksAOrdonner.length > 0 ? (
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 onClick={() => navigate('/more')}
-                aria-label="Configurer le numéro WhatsApp dans les Réglages"
+                ariaLabel="Configurer le numéro WhatsApp dans les Réglages"
                 className="pressable"
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
                   gap: 8,
                   padding: '10px 14px',
                   borderRadius: 12,
@@ -378,10 +356,6 @@ const PharmacieView: React.FC = () => {
                   color: 'var(--muted)',
                   border: '1px dashed var(--line)',
                   fontFamily: 'var(--font-mono)',
-                  fontSize: 11,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
                   textAlign: 'left',
                 }}
               >
@@ -389,7 +363,7 @@ const PharmacieView: React.FC = () => {
                 <span>
                   Numéro WhatsApp non configuré · Régler dans Réglages
                 </span>
-              </button>
+              </Button>
             ) : null}
 
             {/* ── Empty state ─────────────────────────────────────── */}

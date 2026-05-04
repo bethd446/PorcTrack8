@@ -2,8 +2,8 @@ import React from 'react';
 import { IonContent, IonPage } from '@ionic/react';
 import { HelpCircle, Phone } from 'lucide-react';
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
+import { Button, PageHeader } from '@/design-system';
 import { buildWhatsappUrl, getSupportWhatsapp } from '../../services/supportContact';
 
 const FONT_DISPLAY = 'var(--font-heading)';
@@ -100,31 +100,11 @@ const AideView: React.FC = () => {
               margin: '0 auto',
             }}
           >
-            <header>
-              <Eyebrow dotColor="accent">Plus · Aide</Eyebrow>
-              <h1
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '8px 0 4px',
-                }}
-              >
-                Aide
-              </h1>
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--muted)',
-                }}
-              >
-                FAQ et support
-              </div>
-            </header>
+            <PageHeader
+              eyebrow="Outils · Aide"
+              title="Aide"
+              subtitle="Documentation et tutoriels"
+            />
 
             <section aria-label="Introduction">
               <div
@@ -240,36 +220,20 @@ const AideView: React.FC = () => {
                 <span aria-hidden style={sectionRule} />
               </div>
               {supportUrl ? (
-                <button
-                  type="button"
+                <Button
+                  fullWidth
                   onClick={openWhatsapp}
-                  aria-label={`Contacter le support via WhatsApp au ${supportNumber}`}
+                  ariaLabel={`Contacter le support via WhatsApp au ${supportNumber}`}
                   style={{
-                    width: '100%',
-                    minHeight: 52,
-                    padding: '14px 22px',
                     background: WHATSAPP_BRAND,
                     color: 'var(--bg-surface)',
                     border: `1.5px solid ${WHATSAPP_BRAND}`,
-                    borderRadius: 'var(--radius-pill)',
-                    fontSize: 13,
-                    letterSpacing: '0.10em',
-                    textTransform: 'uppercase',
-                    fontWeight: 500,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
                     gap: 10,
-                    cursor: 'pointer',
-                    transition: 'transform 160ms var(--ease-emil), filter 200ms var(--ease-emil)',
                   }}
-                  onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.97)')}
-                  onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                 >
                   <Phone size={15} aria-hidden="true" />
                   Contacter via WhatsApp
-                </button>
+                </Button>
               ) : (
                 <div style={cardStyle}>
                   <p

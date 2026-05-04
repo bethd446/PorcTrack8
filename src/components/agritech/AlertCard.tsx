@@ -20,6 +20,7 @@ import { AlertTriangle, Bell, Info, Check } from 'lucide-react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { FarmAlert, AlertPriority } from '../../services/alertEngine';
+import { Button } from '@/design-system';
 
 export interface AlertCardProps {
   alert: FarmAlert;
@@ -168,8 +169,9 @@ const AlertCard: React.FC<AlertCardProps> = ({
       )}
 
       <footer style={{ display: 'flex', gap: 8 }}>
-        <button
+        <Button
           type="button"
+          variant="primary"
           aria-label="Acquitter cette alerte"
           data-testid="alert-card-ack"
           onClick={() => onAcknowledge(alert.id)}
@@ -192,14 +194,16 @@ const AlertCard: React.FC<AlertCardProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             gap: 6,
+            height: 'auto',
           }}
         >
           <Check size={14} aria-hidden="true" />
           OK
-        </button>
+        </Button>
         {hasAction && (
-          <button
+          <Button
             type="button"
+            variant="secondary"
             data-testid="alert-card-action"
             onClick={onAction}
             className="pressable"
@@ -217,10 +221,11 @@ const AlertCard: React.FC<AlertCardProps> = ({
               textTransform: 'uppercase',
               fontWeight: 600,
               cursor: 'pointer',
+              height: 'auto',
             }}
           >
             {actionLabel}
-          </button>
+          </Button>
         )}
       </footer>
     </article>

@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import { PorceletIcon } from '../../components/icons';
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
 import EmptyState from '../../components/design/EmptyState';
@@ -15,6 +14,7 @@ import {
   Chip,
   SectionDivider,
 } from '../../components/agritech';
+import { Button, PageHeader } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   computeBandePhase,
@@ -144,21 +144,11 @@ const PostSevrageView: React.FC = () => {
           />
 
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <header>
-              <Eyebrow dotColor="amber">Cycle · Post-sevrage</Eyebrow>
-              <h1
-                className="text-page-title"
-                style={{ margin: '8px 0 4px' }}
-              >
-                Post-sevrage
-              </h1>
-              <div
-                className="text-body"
-                style={{ color: 'var(--muted)' }}
-              >
-                J28 → J60 · {summary.nbPortees} portées
-              </div>
-            </header>
+            <PageHeader
+              eyebrow="POST-SEVRAGE"
+              title="Post-sevrage"
+              subtitle="Phase post-sevrage"
+            />
             {/* ── Summary Stats ────────────────────────────────────────── */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <KpiCardV6
@@ -434,27 +424,28 @@ const PostSevrageCard: React.FC<{ data: PostSevrageRowData; onOpen: () => void }
           </div>
         </div>
       ) : (
-        <button
+        <Button
+          variant="secondary"
+          fullWidth
+          size="small"
           disabled={isBloquant}
-          className="flex items-center justify-center gap-2 py-2 border border-dashed border-border rounded-lg text-[11px] text-text-2 hover:bg-bg-2 transition-colors disabled:opacity-30 disabled:grayscale"
           onClick={(e) => { e.stopPropagation(); setPeseeOpen(true); }}
         >
           {isBloquant ? <Lock size={12} /> : <Scale size={12} />}
           Saisir une pesée
-        </button>
+        </Button>
       )}
 
       {/* Footer / CTA */}
       {isTransitionRequired && (
-        <button
-          className={`w-full py-2.5 rounded-xl font-bold text-[12px] tracking-wider flex items-center justify-center gap-2 shadow-lg ${
-            isBloquant ? 'bg-red-500 text-white shadow-red-500/20' : 'bg-amber text-bg-0 shadow-amber/20'
-          }`}
+        <Button
+          variant={isBloquant ? 'danger' : 'primary'}
+          fullWidth
           onClick={(e) => { e.stopPropagation(); navigate('/troupeau/batiments'); }}
         >
           <ArrowUpRight size={16} />
           {isBloquant ? 'Transférer maintenant' : 'Préparer la loge croissance'}
-        </button>
+        </Button>
       )}
 
       <QuickPeseeForm isOpen={peseeOpen} onClose={() => setPeseeOpen(false)} />

@@ -28,6 +28,7 @@ import {
   toRefillItem,
   type RefillStockItem,
 } from '../../components/forms/quickRefillLogic';
+import { Button, PageHeader } from '@/design-system';
 import QuickEditStockForm from '../../components/forms/QuickEditStockForm';
 import type { StockKind } from '../../components/forms/quickEditStockLogic';
 import { useFarm, useMeta } from '../../context/FarmContext';
@@ -238,24 +239,11 @@ const RessourcesHub: React.FC = () => {
           />
 
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            {/* ── En-tête ───────────────────────────────────────────── */}
-            <header>
-              <Eyebrow dotColor="amber">Inventaire · Approvisionnement</Eyebrow>
-              <h1
-                className="text-page-title"
-                style={{ margin: '8px 0 4px' }}
-              >
-                Ressources
-              </h1>
-              <div
-                className="text-body"
-                style={{ color: 'var(--muted)' }}
-              >
-                {stats.total === 0
-                  ? 'Aucune référence suivie'
-                  : `${stats.total} référence${stats.total > 1 ? 's' : ''} suivie${stats.total > 1 ? 's' : ''}`} · {stockAliment.length} aliments · {stockVeto.length} produits véto
-              </div>
-            </header>
+            <PageHeader
+              eyebrow="RESSOURCES"
+              title="Ressources"
+              subtitle="Aliments, pharmacie, fournisseurs"
+            />
 
             {isStockBasFilter && (
               <div
@@ -289,30 +277,21 @@ const RessourcesHub: React.FC = () => {
                   <AlertTriangle size={12} aria-hidden="true" />
                   Stock bas · {stockBasCount} produit{stockBasCount > 1 ? 's' : ''}
                 </span>
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="small"
                   onClick={clearStockBasFilter}
                   className="pressable"
-                  aria-label="Réinitialiser le filtre stock bas"
+                  ariaLabel="Réinitialiser le filtre stock bas"
                   style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
                     gap: 6,
-                    padding: '6px 12px',
-                    borderRadius: 'var(--radius-pill)',
-                    background: 'transparent',
                     color: 'var(--muted)',
-                    border: '1px solid var(--line)',
                     fontFamily: 'var(--font-mono)',
-                    fontSize: 11,
-                    letterSpacing: '0.06em',
-                    textTransform: 'uppercase',
-                    cursor: 'pointer',
                   }}
                 >
                   <X size={12} aria-hidden="true" />
                   Réinitialiser
-                </button>
+                </Button>
               </div>
             )}
 
@@ -469,14 +448,12 @@ const RessourcesHub: React.FC = () => {
             )}
 
             {!whatsappReady && treatmentCounts.urgent + treatmentCounts.normal > 0 && (
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 onClick={() => navigate('/more')}
-                aria-label="Configurer le numéro WhatsApp dans les Réglages"
+                ariaLabel="Configurer le numéro WhatsApp dans les Réglages"
                 className="pressable"
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
                   gap: 8,
                   padding: '10px 14px',
                   borderRadius: 12,
@@ -484,10 +461,6 @@ const RessourcesHub: React.FC = () => {
                   color: 'var(--muted)',
                   border: '1px dashed var(--line)',
                   fontFamily: 'var(--font-mono)',
-                  fontSize: 11,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
                   textAlign: 'left',
                 }}
               >
@@ -495,7 +468,7 @@ const RessourcesHub: React.FC = () => {
                 <span>
                   Numéro WhatsApp non configuré · Régler dans Réglages
                 </span>
-              </button>
+              </Button>
             )}
 
             {/* ── Liste ressources ─────────────────────────────────── */}
@@ -756,49 +729,45 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
           )}
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="small"
             onClick={(e) => { e.stopPropagation(); onEdit(); }}
-            aria-label={`Éditer ${name}`}
+            ariaLabel={`Éditer ${name}`}
             className="pressable"
             style={{
               width: 32,
               height: 32,
+              minHeight: 32,
               borderRadius: 8,
+              padding: 0,
               background: 'var(--bg-surface-2)',
               color: 'var(--muted)',
               border: '1px solid var(--line)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'transform 160ms var(--ease-emil)',
             }}
           >
             <Edit3 size={13} aria-hidden="true" />
-          </button>
+          </Button>
           {!isUrgent && (
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              size="small"
               onClick={(e) => { e.stopPropagation(); onRefill(); }}
-              aria-label={`Réapprovisionner ${name}`}
+              ariaLabel={`Réapprovisionner ${name}`}
               className="pressable"
               style={{
                 width: 32,
                 height: 32,
+                minHeight: 32,
                 borderRadius: 8,
+                padding: 0,
                 background: 'var(--color-accent-100)',
                 color: 'var(--color-accent-600)',
                 border: '1px solid var(--color-accent-100)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'transform 160ms var(--ease-emil)',
               }}
             >
               <Plus size={15} aria-hidden="true" />
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -914,35 +883,26 @@ const ResourceCard: React.FC<ResourceCardProps> = ({
           <ExternalLink size={13} aria-hidden="true" />
         </a>
       ) : isUrgent && onCommander ? (
-        <button
-          type="button"
+        <Button
+          variant="danger"
+          fullWidth
           onClick={(e) => { e.stopPropagation(); onCommander(); }}
-          aria-label={`Commander ${name}`}
+          ariaLabel={`Commander ${name}`}
           className="pressable"
           style={{
             marginTop: 2,
-            width: '100%',
             minHeight: 38,
             borderRadius: 8,
             background: 'var(--color-pig)',
             color: 'var(--bg-surface)',
             border: 'none',
             fontFamily: 'var(--font-heading)',
-            fontSize: 13,
-            fontWeight: 700,
-            letterSpacing: '0.04em',
-            textTransform: 'uppercase',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
             gap: 6,
-            cursor: 'pointer',
-            transition: 'transform 160ms var(--ease-emil)',
           }}
         >
           Commander
           <ArrowRight size={14} aria-hidden="true" />
-        </button>
+        </Button>
       ) : null}
 
       {/* ── Notes (caché si CTA Commander affiché) ─────────── */}
@@ -976,24 +936,22 @@ interface QuickAccessProps {
 }
 
 const QuickAccess: React.FC<QuickAccessProps> = ({ icon, title, subtitle, onClick }) => (
-  <button
-    type="button"
+  <Button
+    variant="ghost"
     onClick={onClick}
-    aria-label={title}
+    ariaLabel={title}
     className="pressable"
     style={{
       background: 'var(--bg-surface)',
       borderRadius: 12,
       padding: '14px 16px',
       boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-      border: 'none',
-      cursor: 'pointer',
       textAlign: 'left',
       display: 'flex',
       alignItems: 'center',
       gap: 12,
       minHeight: 44,
-      transition: 'transform 160ms var(--ease-emil)',
+      textTransform: 'none',
     }}
   >
     <span
@@ -1036,7 +994,7 @@ const QuickAccess: React.FC<QuickAccessProps> = ({ icon, title, subtitle, onClic
         {subtitle}
       </div>
     </div>
-  </button>
+  </Button>
 );
 
 export default RessourcesHub;

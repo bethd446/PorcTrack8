@@ -18,9 +18,9 @@ import EditableText from '../../components/EditableText';
 import { AppToast, Chip, KpiCard, SectionDivider, useAppToast } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
 import EmptyState from '../../components/design/EmptyState';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { useFarm, useMeta } from '../../context/FarmContext';
+import { Button, PageHeader } from '@/design-system';
 import { updateProduitAliment } from '../../services/supabaseWrites';
 import type { StockAliment, StockStatut, Truie, Verrat, BandePorcelets } from '../../types/farm';
 import QuickAddAlimentForm from '../../components/forms/QuickAddAlimentForm';
@@ -246,13 +246,14 @@ const AlimentSection: React.FC<AlimentSectionProps> = ({
             {emptyDescription}
           </p>
           {emptyAction ? (
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              size="small"
               onClick={emptyAction.onClick}
               className="pressable mt-4 h-10 px-4 rounded-md bg-accent text-bg-0 text-[12px] font-medium transition-colors"
             >
               {emptyAction.label}
-            </button>
+            </Button>
           ) : null}
           {/* Icon legacy (keeps hint for screen readers) */}
           <span className="sr-only" aria-hidden="true">
@@ -536,17 +537,6 @@ const AlimentsView: React.FC = () => {
     return { total, rupture, poidsKg };
   }, [stockAliment]);
 
-  const counts = useMemo(() => {
-    let mp = 0;
-    let conc = 0;
-    for (const item of stockAliment) {
-      const cat = categoriserAliment(item.libelle, item.id);
-      if (cat === 'MATIERE_PREMIERE') mp += 1;
-      else if (cat === 'CONCENTRE') conc += 1;
-    }
-    return { mp, conc };
-  }, [stockAliment]);
-
   const treatmentCounts = useMemo(() => {
     const out = { urgent: 0, normal: 0, resolu: 0 };
     for (const item of stockAliment) {
@@ -587,57 +577,36 @@ const AlimentsView: React.FC = () => {
           />
 
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <header className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <Eyebrow dotColor="accent">Ressources · Aliments</Eyebrow>
-                <h1
-                  style={{
-                    fontFamily: 'var(--font-heading)',
-                    fontSize: 34,
-                    fontWeight: 700,
-                    lineHeight: 1,
-                    letterSpacing: '-0.02em',
-                    color: 'var(--ink)',
-                    margin: '8px 0 4px',
-                  }}
-                >
-                  Aliments
-                </h1>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 13,
-                    color: 'var(--muted)',
-                  }}
-                >
-                  {counts.mp} matière{counts.mp > 1 ? 's' : ''} première{counts.mp > 1 ? 's' : ''} · {counts.conc} concentré{counts.conc > 1 ? 's' : ''}
-                </div>
-                {treatmentSummaryLine && (
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 10.5,
-                      letterSpacing: '0.10em',
-                      textTransform: 'uppercase',
-                      color: 'var(--muted)',
-                      marginTop: 4,
-                    }}
-                    aria-live="polite"
-                  >
-                    {summary.total} produit{summary.total > 1 ? 's' : ''} — {treatmentSummaryLine}
-                  </div>
-                )}
+            <PageHeader
+              eyebrow="Ressources · Aliments"
+              title="Aliments"
+              subtitle="Stocks et consommation"
+            />
+            {treatmentSummaryLine && (
+              <div
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 10.5,
+                  letterSpacing: '0.10em',
+                  textTransform: 'uppercase',
+                  color: 'var(--muted)',
+                }}
+                aria-live="polite"
+              >
+                {summary.total} produit{summary.total > 1 ? 's' : ''} — {treatmentSummaryLine}
               </div>
-              <button
-                type="button"
+            )}
+            <div className="flex justify-end">
+              <Button
+                variant="primary"
                 onClick={() => setAddOpen(true)}
-                aria-label="Ajouter un nouvel aliment"
+                ariaLabel="Ajouter un nouvel aliment"
                 className="shrink-0 inline-flex h-11 min-h-[44px] items-center gap-1.5 px-4 rounded-md bg-accent text-bg-0 text-[11px] font-bold uppercase tracking-wide transition-colors duration-150 hover:brightness-110 active:scale-[0.96] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
               >
                 <Plus size={14} aria-hidden="true" />
                 <span>Nouvel aliment</span>
-              </button>
-            </header>
+              </Button>
+            </div>
 
             {/* ── Summary strip : 3 KpiCards ──────────────────────── */}
             <div className="grid grid-cols-3 gap-2">
@@ -693,14 +662,12 @@ const AlimentsView: React.FC = () => {
             ) : null}
 
             {!whatsappReady && stocksAOrdonner.length > 0 ? (
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 onClick={() => navigate('/more')}
-                aria-label="Configurer le numéro WhatsApp dans les Réglages"
+                ariaLabel="Configurer le numéro WhatsApp dans les Réglages"
                 className="pressable"
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
                   gap: 8,
                   padding: '10px 14px',
                   borderRadius: 12,
@@ -708,10 +675,6 @@ const AlimentsView: React.FC = () => {
                   color: 'var(--muted)',
                   border: '1px dashed var(--line)',
                   fontFamily: 'var(--font-mono)',
-                  fontSize: 11,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
                   textAlign: 'left',
                 }}
               >
@@ -719,7 +682,7 @@ const AlimentsView: React.FC = () => {
                 <span>
                   Numéro WhatsApp non configuré · Régler dans Réglages
                 </span>
-              </button>
+              </Button>
             ) : null}
 
             {/* ── Bannière alerte rupture ─────────────────────────── */}
@@ -752,14 +715,14 @@ const AlimentsView: React.FC = () => {
                 title="Stock aliments vide"
                 description="Aucun aliment enregistré. Ajoute ton 1er aliment via le bouton +."
                 action={
-                  <button
-                    type="button"
+                  <Button
+                    variant="primary"
                     onClick={() => setAddOpen(true)}
                     className="pressable h-11 px-5 rounded-md bg-accent text-bg-0 text-[13px] font-medium transition-colors inline-flex items-center gap-2"
                   >
                     <Plus size={16} aria-hidden="true" />
                     Ajouter un aliment
-                  </button>
+                  </Button>
                 }
               />
             ) : (

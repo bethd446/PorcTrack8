@@ -22,7 +22,7 @@ import {
   type ChipTone,
 } from '../../components/agritech';
 import EmptyStateShared from '../../components/design/EmptyState';
-import { Tag, Segment, Chip as DsChip } from '../../design-system';
+import { Tag, Segment, Chip as DsChip, Button } from '../../design-system';
 
 type TagVariantKind = 'default' | 'primary' | 'accent' | 'soft' | 'danger' | 'warning';
 function chipToneToTagVariant(tone: ChipTone): TagVariantKind {
@@ -280,16 +280,15 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
             { value: 'grid', label: <LayoutGrid size={14} aria-label="Grille" /> },
           ]}
         />
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          size="small"
           onClick={() => setAddOpen(true)}
-          aria-label="Ajouter une truie"
-          className="pt-btn pt-btn--primary pt-btn--small"
-          data-pt="button"
+          ariaLabel="Ajouter une truie"
         >
           <Plus size={14} aria-hidden="true" />
           Ajouter une truie
-        </button>
+        </Button>
       </div>
 
       {/* ── Recherche ───────────────────────────────────────────── */}
@@ -339,7 +338,6 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
       <div
         role="tablist"
         aria-label="Filtrer par statut"
-        style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}
         className="pt-chips"
       >
         {visibleFilters.map((f) => (
@@ -386,11 +384,13 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
             const boucleClass = highlightBoucle ? 'text-accent' : 'text-text-1';
             return (
               <li key={t.id} role="listitem">
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  fullWidth
                   onClick={() => navigate(`/troupeau/truies/${encodeURIComponent(t.id)}`)}
-                  aria-label={`Truie ${t.displayId || t.id}${t.boucle ? ` boucle ${t.boucle}` : ''} · ${v.label}`}
-                  className="pressable w-full flex flex-col items-center gap-1.5 rounded-xl bg-bg-1 border border-border p-3 aspect-square justify-between focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                  ariaLabel={`Truie ${t.displayId || t.id}${t.boucle ? ` boucle ${t.boucle}` : ''} · ${v.label}`}
+                  className="!flex !flex-col !items-center !gap-1.5 !rounded-xl !bg-bg-1 !border !border-border !p-3 !aspect-square !justify-between !h-auto"
+                  style={{ textTransform: 'none' }}
                 >
                   <TruieIcon size={30} aria-hidden="true" />
                   <div className="text-[14px] font-semibold text-text-0 tabular-nums">
@@ -412,7 +412,7 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
                   <div className="text-[10px] text-text-2 truncate w-full text-center">
                     {meta}
                   </div>
-                </button>
+                </Button>
               </li>
             );
           })}

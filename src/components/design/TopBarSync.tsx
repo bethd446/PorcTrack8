@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import SyncIndicator from './SyncIndicator';
 import { useSyncState } from '../../hooks/useSyncState';
+import { Button } from '@/design-system';
 
 export type Crumb = string | { label: string; href?: string };
 
@@ -116,8 +117,10 @@ export default function TopBarSync({
       <div style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 14 }}>
         <SyncIndicator state={syncState} />
         {onMariusClick && mariusActive ? (
-          <button
+          <Button
             type="button"
+            variant="primary"
+            size="small"
             onClick={onMariusClick}
             aria-label="Ouvrir Marius"
             style={{
@@ -135,12 +138,14 @@ export default function TopBarSync({
               cursor: 'pointer',
               border: 'none',
               transition: 'transform 160ms var(--ease-emil)',
+              textTransform: 'none',
+              height: 'auto',
             }}
             className="pressable"
           >
             <Sparkles size={13} aria-hidden="true" />
             Marius
-          </button>
+          </Button>
         ) : null}
       </div>
     </div>

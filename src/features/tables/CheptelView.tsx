@@ -17,7 +17,6 @@ import { Search, ChevronRight, Tag, Edit3 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFarm } from '../../context/FarmContext';
 import AgritechLayout from '../../components/AgritechLayout';
-import AgritechHeader from '../../components/AgritechHeader';
 import { Chip, SectionDivider } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
 import EmptyState from '../../components/design/EmptyState';
@@ -26,6 +25,7 @@ import { getStatusConfig } from '../../utils/statusConfig';
 import { normaliseStatut } from '../../lib/truieStatut';
 import QuickEditTruieForm from '../../components/forms/QuickEditTruieForm';
 import QuickEditVerratForm from '../../components/forms/QuickEditVerratForm';
+import { Button, PageHeader } from '@/design-system';
 import type { Truie, Verrat } from '../../types/farm';
 
 interface CheptelViewProps {
@@ -80,7 +80,7 @@ const SkeletonRow: React.FC = () => (
 const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { truies, verrats, loading, refreshData, nomFerme } = useFarm();
+  const { truies, verrats, loading, refreshData } = useFarm();
 
   // Derive initial tab from explicit prop → URL query (?tab=verrat) → default TRUIE.
   const queryTab = new URLSearchParams(location.search).get('tab');
@@ -137,11 +137,6 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
   const groupsEntries: Array<[string, { count: number; tone: ChipTone }]> =
     Object.entries(currentGroups);
 
-  const subtitle =
-    tab === 'TRUIE'
-      ? `${truies.length} truie${truies.length > 1 ? 's' : ''} · ${nomFerme}`
-      : `${verrats.length} verrat${verrats.length > 1 ? 's' : ''} · ${nomFerme}`;
-
   const EmptyIcon = tab === 'TRUIE' ? TruieIcon : VerratIcon;
 
   return (
@@ -152,10 +147,16 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
         </IonRefresher>
 
         <AgritechLayout>
-          <AgritechHeader title="Cheptel" subtitle={subtitle}>
+          <div className="px-4 pt-5 pb-3">
+            <PageHeader
+              eyebrow="Tables · Cheptel"
+              title="Cheptel"
+              subtitle="Vue d'ensemble du troupeau"
+            />
+
             {/* Search (dark) */}
             <label
-              className="flex items-center gap-2 rounded-md border border-border bg-bg-1 px-3 py-2 focus-within:border-accent transition-colors"
+              className="mt-4 flex items-center gap-2 rounded-md border border-border bg-bg-1 px-3 py-2 focus-within:border-accent transition-colors"
             >
               <Search size={14} className="text-text-2 shrink-0" aria-hidden="true" />
               <input
@@ -178,9 +179,9 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                 const isActive = tab === key;
                 const Icon = key === 'TRUIE' ? TruieIcon : VerratIcon;
                 return (
-                  <button
+                  <Button
                     key={key}
-                    type="button"
+                    variant={isActive ? 'primary' : 'ghost'}
                     role="tab"
                     aria-selected={isActive}
                     onClick={() => setTab(key)}
@@ -197,11 +198,11 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                     <span className="text-[11px] font-semibold uppercase tracking-wide">
                       {key === 'TRUIE' ? 'Truies' : 'Verrats'}
                     </span>
-                  </button>
+                  </Button>
                 );
               })}
             </div>
-          </AgritechHeader>
+          </div>
 
           <div className="px-4 pt-4 pb-32 flex flex-col gap-4">
             {/* Statuts troupeau */}
@@ -329,10 +330,10 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                       data-testid="cheptel-row"
                       className="relative border-b border-border last:border-b-0"
                     >
-                      <button
-                        type="button"
+                      <Button
+                        variant="ghost"
                         onClick={() => navigate(destination)}
-                        aria-label={`Ouvrir la fiche de ${item.nom || item.displayId}`}
+                        ariaLabel={`Ouvrir la fiche de ${item.nom || item.displayId}`}
                         className={[
                           'data-row pressable flex w-full items-center gap-3 px-3 py-3 text-left',
                           // Laisse de la place au CTA Edit3 absolu à droite (avant le chevron).
@@ -398,13 +399,14 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                             aria-hidden="true"
                           />
                         </div>
-                      </button>
+                      </Button>
 
                       {/* CTA Edit3 inline — ouvre QuickEditTruieForm / QuickEditVerratForm sans navigation. */}
-                      <button
-                        type="button"
+                      <Button
+                        variant="ghost"
+                        size="small"
                         onClick={handleEditClick}
-                        aria-label={editAriaLabel}
+                        ariaLabel={editAriaLabel}
                         className={[
                           'pressable absolute top-1/2 -translate-y-1/2 right-8',
                           'h-8 w-8 rounded-md border border-border bg-bg-1',
@@ -414,7 +416,7 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                         ].join(' ')}
                       >
                         <Edit3 size={14} aria-hidden="true" />
-                      </button>
+                      </Button>
                     </div>
                   );
                 })}

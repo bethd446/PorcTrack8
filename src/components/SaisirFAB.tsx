@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
 
 import SaisirSheet from './forms/SaisirSheet';
+import { Button } from '@/design-system';
 
 interface SaisirFABProps {
   className?: string;
@@ -32,8 +33,9 @@ const SaisirFAB: React.FC<SaisirFABProps> = ({ className = '', hidden = false })
 
   return (
     <>
-      <button
+      <Button
         type="button"
+        variant="primary"
         onClick={() => setOpen(true)}
         aria-label="Saisir un évènement métier"
         aria-haspopup="dialog"
@@ -60,7 +62,7 @@ const SaisirFAB: React.FC<SaisirFABProps> = ({ className = '', hidden = false })
         }}
       >
         <Plus size={24} strokeWidth={2.4} aria-hidden="true" />
-      </button>
+      </Button>
 
       <SaisirSheet isOpen={open} onClose={() => setOpen(false)} />
     </>

@@ -18,6 +18,7 @@ import {
   deleteSow, deleteBoar, deleteBatch,
   resolveSowIdByCode, resolveBoarIdByCode, resolveBatchIdByCode,
 } from '../services/supabaseWrites';
+import { Button } from '@/design-system';
 
 export interface DeleteTarget {
   sheet: string; // ex: 'SUIVI_TRUIES_REPRODUCTION'
@@ -146,19 +147,22 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ target, isOpen, onClose, onDe
                 </p>
               </div>
             </div>
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="small"
               onClick={handleClose}
               aria-label="Fermer"
               className={[
-                'pressable inline-flex h-9 w-9 items-center justify-center rounded-md flex-shrink-0',
+                'pressable inline-flex h-9 w-9 items-center justify-center flex-shrink-0',
                 'bg-bg-1 border border-border text-text-1',
                 'hover:bg-bg-2 transition-colors duration-[160ms]',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
               ].join(' ')}
+              style={{ borderRadius: '0.375rem', height: '2.25rem', width: '2.25rem', padding: 0 }}
             >
               <X size={16} aria-hidden="true" />
-            </button>
+            </Button>
           </div>
 
           {/* ── Body ──────────────────────────────────────────────────── */}
@@ -193,14 +197,16 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ target, isOpen, onClose, onDe
                 {presets.map(p => {
                   const isSelected = reason === p;
                   return (
-                    <button
+                    <Button
                       key={p}
                       type="button"
+                      variant={isSelected ? 'danger' : 'secondary'}
+                      size="small"
                       role="radio"
                       aria-checked={isSelected}
                       onClick={() => setReason(p)}
                       className={[
-                        'pressable inline-flex items-center h-8 px-3 rounded-md border',
+                        'pressable inline-flex items-center h-8 px-3 border',
                         'text-[11px] uppercase tracking-wide',
                         'transition-colors duration-[160ms]',
                         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
@@ -208,9 +214,10 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ target, isOpen, onClose, onDe
                           ? 'bg-red text-text-0 border-red'
                           : 'bg-bg-0 text-text-1 border-border hover:border-text-2',
                       ].join(' ')}
+                      style={{ borderRadius: '0.375rem', height: '2rem' }}
                     >
                       {p}
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -238,13 +245,14 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ target, isOpen, onClose, onDe
 
           {/* ── Footer actions ────────────────────────────────────────── */}
           <div className="flex-shrink-0 border-t border-border bg-bg-2 px-5 py-4 space-y-2">
-            <button
+            <Button
               type="button"
+              variant="danger"
               onClick={handleDelete}
               disabled={loading || !reason.trim()}
               aria-label="Confirmer la suppression"
               className={[
-                'pressable w-full h-[48px] rounded-md',
+                'pressable w-full h-[48px]',
                 'inline-flex items-center justify-center gap-2',
                 'bg-red text-text-0 text-[12px] font-bold uppercase tracking-wide',
                 'transition-colors duration-[160ms]',
@@ -253,6 +261,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ target, isOpen, onClose, onDe
                   ? 'opacity-40 cursor-not-allowed'
                   : 'hover:brightness-110',
               ].join(' ')}
+              style={{ borderRadius: '0.375rem', height: '48px', width: '100%' }}
             >
               {loading ? (
                 <IonSpinner name="bubbles" className="w-5 h-5" aria-hidden="true" />
@@ -262,22 +271,24 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ target, isOpen, onClose, onDe
                   Confirmer la suppression
                 </>
               )}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="secondary"
               onClick={handleClose}
               aria-label="Annuler la suppression"
               className={[
-                'pressable w-full h-[44px] rounded-md',
+                'pressable w-full h-[44px]',
                 'inline-flex items-center justify-center',
                 'bg-bg-1 border border-border text-text-1',
                 'text-[12px] uppercase tracking-wide',
                 'hover:bg-bg-2 hover:text-text-0 transition-colors duration-[160ms]',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
               ].join(' ')}
+              style={{ borderRadius: '0.375rem', height: '44px', width: '100%' }}
             >
               Annuler
-            </button>
+            </Button>
           </div>
         </div>
       </div>

@@ -30,7 +30,7 @@ import {
   listLoges,
   listPorceletsByBatch,
 } from '../../../services/supabaseWrites';
-import { useNoUUID } from '@/design-system';
+import { useNoUUID, Button, PageHeader } from '@/design-system';
 import {
   getRecommendedHealthLogs,
   HEALTH_LOG_TEMPLATES,
@@ -309,13 +309,13 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
     return (
       <div className="agritech-root p-10 text-center flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <p className="text-[14px] uppercase text-text-1">Bande introuvable</p>
-        <button
-          type="button"
+        <Button
+          variant="primary"
           onClick={onClose ?? (() => navigate(-1))}
           className="pressable h-11 px-6 rounded-md bg-accent text-bg-0 text-[12px] uppercase tracking-wide"
         >
           Retour
-        </button>
+        </Button>
       </div>
     );
   }
@@ -323,28 +323,29 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
   return (
     <div className="agritech-root h-full flex flex-col">
       <header className="bg-bg-0 border-b border-border px-4 pt-4 pb-3">
-        <div className="flex items-center gap-3 mb-3">
-          <button
+        <div className="flex items-start gap-3">
+          <Button
+            variant="ghost"
+            size="small"
             onClick={onClose}
-            className="pressable inline-flex h-9 w-9 items-center justify-center rounded-md bg-bg-2 text-text-1 transition-colors"
-            aria-label="Retour"
+            className="pressable inline-flex h-9 w-9 items-center justify-center rounded-md bg-bg-2 text-text-1 transition-colors mt-1"
+            ariaLabel="Retour"
           >
             <ChevronLeft size={20} />
-          </button>
+          </Button>
           <div className="min-w-0 flex-1">
-            <h1 className="agritech-heading uppercase leading-none truncate" style={{ fontSize: 'clamp(20px, 5vw, 24px)' }}>
-              Portée {portéeLabel}
-            </h1>
-            <p className="mt-1 text-[11px] text-text-2 leading-none truncate">
-              {(bande.status as string) || 'Détails'} {bande.truie ? `· ${bande.truie}` : ''}
-            </p>
+            <PageHeader
+              eyebrow="Tables · Bande"
+              title={portéeLabel}
+              subtitle="Suivi de la bande"
+            />
           </div>
         </div>
 
         <IonSegment
           value={tab}
           onIonChange={e => setTab(e.detail.value as string)}
-          className="premium-segment bg-bg-1 border border-border rounded-md overflow-hidden"
+          className="premium-segment bg-bg-1 border border-border rounded-md overflow-hidden mt-3"
         >
           <IonSegmentButton value="resumé"><IonLabel className="text-[11px] uppercase tracking-wide">Résumé</IonLabel></IonSegmentButton>
           <IonSegmentButton value="details"><IonLabel className="text-[11px] uppercase tracking-wide">Détails</IonLabel></IonSegmentButton>
@@ -363,17 +364,18 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
 
               {/* V28-CTA — Daily Check du jour (bandes Sous mère uniquement) */}
               {isSousMere && (
-                <button
-                  type="button"
+                <Button
+                  variant="primary"
+                  fullWidth
                   data-testid="bande-daily-check-cta"
                   onClick={() => navigate(`/troupeau/daily-check/${bande.id}`)}
                   className="pressable w-full inline-flex items-center justify-center gap-2 rounded-md bg-accent text-bg-0 text-[12px] uppercase tracking-wide hover:brightness-110"
                   style={{ minHeight: 44, padding: '10px 16px' }}
-                  aria-label="Démarrer le daily check du jour"
+                  ariaLabel="Démarrer le daily check du jour"
                 >
                   <ClipboardCheck size={16} aria-hidden="true" />
                   Daily Check du jour
-                </button>
+                </Button>
               )}
 
               {bandeTyped ? (
@@ -436,17 +438,18 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                     <TruieIcon size={14} className="text-accent" />
                     <h4 className="kpi-label">Origine — Truies sources</h4>
                   </div>
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="small"
                     onClick={() => setEditBandeOpen(true)}
                     className="pressable inline-flex h-7 items-center gap-1 rounded-md bg-bg-2 px-2 text-text-1 hover:text-accent"
-                    aria-label="Modifier les truies sources"
+                    ariaLabel="Modifier les truies sources"
                   >
                     <Edit3 size={12} aria-hidden="true" />
                     <span className="text-[10px] uppercase tracking-wide">
                       Modifier
                     </span>
-                  </button>
+                  </Button>
                 </div>
 
                 {sources.length === 0 ? (
@@ -517,23 +520,24 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                     <Home size={14} className="text-accent" />
                     <h4 className="kpi-label">Localisation — Loge</h4>
                   </div>
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="small"
                     onClick={() => setMoveOpen(true)}
                     className="pressable inline-flex h-7 items-center gap-1 rounded-md bg-bg-2 px-2 text-text-1 hover:text-accent"
-                    aria-label="Déplacer cette bande"
+                    ariaLabel="Déplacer cette bande"
                   >
                     <Move size={12} aria-hidden="true" />
                     <span className="text-[10px] uppercase tracking-wide">
                       Déplacer
                     </span>
-                  </button>
+                  </Button>
                 </div>
 
                 {bandeTyped?.logeNumero || currentLoge ? (
                   <div className="space-y-2">
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
                       onClick={() => {
                         if (bandeTyped?.logeId) {
                           navigate(`/troupeau/loges/${bandeTyped.logeId}`);
@@ -541,7 +545,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                       }}
                       disabled={!bandeTyped?.logeId}
                       className="pressable flex w-full items-center justify-between rounded-md border border-border bg-bg-0 px-3 py-2 text-left disabled:cursor-default"
-                      aria-label="Voir fiche loge"
+                      ariaLabel="Voir fiche loge"
                     >
                       <span className="flex items-center gap-2">
                         <MapPin size={14} className="text-accent" aria-hidden="true" />
@@ -555,7 +559,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                         ) : null}
                       </span>
                       <ChevronRight size={14} className="text-text-2" aria-hidden="true" />
-                    </button>
+                    </Button>
 
                     {currentLoge ? (
                       <div className="grid grid-cols-2 gap-2">
@@ -607,43 +611,46 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                   </div>
                   <div className="flex items-center gap-2">
                     {canSplit && (
-                      <button
-                        type="button"
+                      <Button
+                        variant="ghost"
+                        size="small"
                         onClick={() => setSplitOpen(true)}
                         data-testid="bande-split-cta"
                         className="pressable inline-flex h-7 items-center gap-1 rounded-md bg-bg-2 px-2 text-text-1 hover:text-accent"
-                        aria-label="Splitter cette bande"
+                        ariaLabel="Splitter cette bande"
                       >
                         <Split size={12} aria-hidden="true" />
                         <span className="text-[10px] uppercase tracking-wide">
                           Splitter
                         </span>
-                      </button>
+                      </Button>
                     )}
                     {porcelets.length > 0 && (
-                      <button
-                        type="button"
+                      <Button
+                        variant="ghost"
+                        size="small"
                         onClick={() => setHealthLogPorceletOpen(true)}
                         className="pressable inline-flex h-7 items-center gap-1 rounded-md bg-bg-2 px-2 text-text-1 hover:text-red"
-                        aria-label="Signaler maladie porcelet"
+                        ariaLabel="Signaler maladie porcelet"
                       >
                         <Stethoscope size={12} aria-hidden="true" />
                         <span className="text-[10px] uppercase tracking-wide">
                           Signaler maladie
                         </span>
-                      </button>
+                      </Button>
                     )}
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
+                      size="small"
                       onClick={() => setAddPorceletOpen(true)}
                       className="pressable inline-flex h-7 items-center gap-1 rounded-md bg-bg-2 px-2 text-text-1 hover:text-accent"
-                      aria-label="Ajouter un porcelet"
+                      ariaLabel="Ajouter un porcelet"
                     >
                       <Plus size={12} aria-hidden="true" />
                       <span className="text-[10px] uppercase tracking-wide">
                         Ajouter porcelet
                       </span>
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
@@ -655,25 +662,26 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                     <p className="text-[10px] text-text-2 leading-relaxed">
                       Boucles individuelles permettent le suivi sanitaire détaillé
                     </p>
-                    <button
-                      type="button"
+                    <Button
+                      variant="primary"
+                      size="small"
                       onClick={() => setAddPorceletOpen(true)}
                       className="pressable inline-flex h-9 items-center gap-2 rounded-md bg-accent px-3 text-bg-0 text-[11px] uppercase tracking-wide hover:brightness-110"
-                      aria-label="Numéroter les porcelets"
+                      ariaLabel="Numéroter les porcelets"
                     >
                       <Tag size={12} aria-hidden="true" />
                       Numéroter les porcelets
-                    </button>
+                    </Button>
                   </div>
                 ) : (
                   <ul className="divide-y divide-border" aria-label="Liste porcelets">
                     {porcelets.map(p => (
                       <li key={p.id}>
-                        <button
-                          type="button"
+                        <Button
+                          variant="ghost"
                           onClick={() => setEditPorcelet(p)}
                           className="pressable flex w-full items-center justify-between py-2 px-1 text-left"
-                          aria-label={`Modifier porcelet ${p.boucle}`}
+                          ariaLabel={`Modifier porcelet ${p.boucle}`}
                         >
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
@@ -694,7 +702,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                             <Chip label={p.statut} tone={STATUT_TONE[p.statut]} size="xs" />
                             <ChevronRight size={14} className="text-text-2" />
                           </div>
-                        </button>
+                        </Button>
                       </li>
                     ))}
                   </ul>
@@ -713,8 +721,8 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
               </div>
               {bande.rows && bande.rows.length > 0 ? (
                 bande.rows.map((row: SheetRawRow, i: number) => (
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
                     key={i}
                     onClick={() => setEditRow(row)}
                     className="card-dense pressable w-full text-left flex items-center justify-between transition-colors"
@@ -737,7 +745,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                       </div>
                       <ChevronRight size={14} className="text-text-2" />
                     </div>
-                  </button>
+                  </Button>
                 ))
               ) : (
                 <div className="card-dense text-center py-10">
@@ -789,13 +797,14 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                             </span>
                           </div>
                           {!reco.done && (
-                            <button
-                              type="button"
+                            <Button
+                              variant="primary"
+                              size="small"
                               onClick={() => setPresetType(reco.type)}
                               className="pressable shrink-0 inline-flex items-center justify-center h-7 px-2.5 rounded-md bg-accent text-bg-0 text-[10px] uppercase tracking-wide hover:brightness-110"
                             >
                               Saisir
-                            </button>
+                            </Button>
                           )}
                         </div>
                       );

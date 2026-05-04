@@ -13,6 +13,7 @@ import OnboardingFlow from './features/onboarding/OnboardingFlow';
 import AgritechLayout from './components/AgritechLayout';
 import { supabase } from './services/supabaseClient';
 import { useAuth } from './context/AuthContext';
+import { Button } from '@/design-system';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -300,13 +301,15 @@ const BandeDetailRoute: React.FC = () => {
     return (
       <div className="agritech-root p-10 text-center flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <p className="text-[14px] uppercase text-text-1">Bande introuvable</p>
-        <button
+        <Button
           type="button"
+          variant="primary"
           onClick={handleClose}
-          className="pressable h-11 px-6 rounded-md bg-accent text-bg-0 text-[12px] uppercase tracking-wide"
+          className="pressable h-11 px-6 bg-accent text-bg-0 text-[12px] uppercase tracking-wide"
+          style={{ borderRadius: '0.375rem', height: '2.75rem' }}
         >
           Retour
-        </button>
+        </Button>
       </div>
     );
   }

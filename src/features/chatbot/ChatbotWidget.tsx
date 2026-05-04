@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { X, Send, Loader2 } from 'lucide-react';
+import { Button } from '@/design-system';
 
 type Role = 'user' | 'assistant' | 'system';
 
@@ -223,9 +224,9 @@ export const ChatbotWidget: React.FC = () => {
           <img src="/images/porc-mark.svg" alt="" className="w-6 h-6" />
           <span className="ft-heading text-sm uppercase tracking-wide">Marius</span>
         </div>
-        <button onClick={handleClose} aria-label="Fermer la conversation">
+        <Button variant="ghost" size="small" onClick={handleClose} aria-label="Fermer la conversation">
           <X size={18} />
-        </button>
+        </Button>
       </div>
 
       <div
@@ -300,8 +301,10 @@ export const ChatbotWidget: React.FC = () => {
                      focus:border-[var(--color-accent-500)]"
           style={{ background: 'var(--bg-surface-2)', borderColor: 'var(--line)' }}
         />
-        <button
+        <Button
           type="submit"
+          variant="primary"
+          size="small"
           disabled={loading || !input.trim()}
           aria-label="Envoyer"
           className="w-9 h-9 rounded-full bg-[var(--color-accent-500)] text-white
@@ -310,7 +313,7 @@ export const ChatbotWidget: React.FC = () => {
                      transition-colors"
         >
           <Send size={15} />
-        </button>
+        </Button>
       </form>
     </div>
   );

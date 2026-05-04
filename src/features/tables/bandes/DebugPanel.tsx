@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Bug, ChevronDown, ChevronUp } from 'lucide-react';
+import { Button } from '@/design-system';
 import { isDebugEnabled } from '../../../config';
 import type { DebugMeta } from './types';
 
@@ -16,7 +17,8 @@ const DebugPanel: React.FC<DebugPanelProps> = ({ meta, header, rowsCount, error,
   if (!isDebugEnabled()) return null;
   return (
     <div className="mx-4 mb-4">
-      <button
+      <Button
+        variant="ghost"
         onClick={() => setOpen(!open)}
         className="pressable w-full flex items-center justify-between bg-bg-1 text-accent border border-border px-3 py-2 rounded-md text-[11px] uppercase tracking-wide transition-colors"
       >
@@ -25,7 +27,7 @@ const DebugPanel: React.FC<DebugPanelProps> = ({ meta, header, rowsCount, error,
           <span>Debug Panel</span>
         </div>
         {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-      </button>
+      </Button>
       {open && (
         <div className="bg-bg-1 border border-t-0 border-border text-text-0 p-3 rounded-b-md font-mono text-[11px] space-y-1 overflow-x-auto">
           <p><span className="text-accent">SHEET:</span> {meta?.sheetName || 'N/A'}</p>

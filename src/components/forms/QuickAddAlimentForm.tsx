@@ -35,6 +35,7 @@ import { IonToast } from '@ionic/react';
 import { Plus, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { FormField, Input, Textarea, Button } from '@/design-system';
 import { insertProduitAliment } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import type { StockStatut } from '../../types/farm';
@@ -195,15 +196,12 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
             </p>
           </div>
 
-          {/* ID */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-aliment-id"
-              className="block text-mono-label text-text-2"
-            >
-              ID <span className="text-text-2 normal-case">· auto-suggéré</span>
-            </label>
-            <input
+          <FormField
+            label="ID"
+            hint={errors.id ? undefined : 'Format A suivi de chiffres (ex: A01)'}
+            error={errors.id}
+          >
+            <Input
               id="add-aliment-id"
               ref={firstFieldRef}
               type="text"
@@ -215,47 +213,18 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
               aria-describedby={
                 errors.id ? 'add-aliment-id-error' : 'add-aliment-id-hint'
               }
-              className={[
-                'w-full h-12 rounded-md px-3',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'ft-code text-[14px] uppercase',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.id ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
+              className="ft-code uppercase"
               placeholder="A01"
               value={id}
               onChange={e => setId(e.target.value)}
               disabled={saving}
               autoComplete="off"
+              invalid={!!errors.id}
             />
-            {errors.id ? (
-              <p
-                id="add-aliment-id-error"
-                role="alert"
-                className="text-[11px] text-red"
-              >
-                {errors.id}
-              </p>
-            ) : (
-              <p
-                id="add-aliment-id-hint"
-                className="text-[10px] text-text-2"
-              >
-                Format A suivi de chiffres (ex: A01)
-              </p>
-            )}
-          </div>
+          </FormField>
 
-          {/* Libellé */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-aliment-libelle"
-              className="block text-mono-label text-text-2"
-            >
-              Libellé <span className="text-red normal-case">· obligatoire</span>
-            </label>
-            <input
+          <FormField label="Libellé" required error={errors.libelle}>
+            <Input
               id="add-aliment-libelle"
               type="text"
               maxLength={60}
@@ -265,43 +234,18 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
               aria-describedby={
                 errors.libelle ? 'add-aliment-libelle-error' : undefined
               }
-              className={[
-                'w-full h-12 rounded-md px-3',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-sans text-[14px]',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.libelle
-                  ? 'border-red'
-                  : 'border-border hover:border-text-2',
-              ].join(' ')}
               placeholder="Ex: Maïs grain"
               value={libelle}
               onChange={e => setLibelle(e.target.value)}
               disabled={saving}
               autoComplete="off"
+              invalid={!!errors.libelle}
             />
-            {errors.libelle ? (
-              <p
-                id="add-aliment-libelle-error"
-                role="alert"
-                className="text-[11px] text-red"
-              >
-                {errors.libelle}
-              </p>
-            ) : null}
-          </div>
+          </FormField>
 
-          {/* Stock initial + Unité (2 colonnes) */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label
-                htmlFor="add-aliment-stock"
-                className="block text-mono-label text-text-2"
-              >
-                Stock initial
-              </label>
-              <input
+            <FormField label="Stock initial" error={errors.stockActuel}>
+              <Input
                 id="add-aliment-stock"
                 type="number"
                 inputMode="decimal"
@@ -313,40 +257,17 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
                 aria-describedby={
                   errors.stockActuel ? 'add-aliment-stock-error' : undefined
                 }
-                className={[
-                  'w-full h-12 rounded-md px-3',
-                  'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                  'font-mono text-[16px] tabular-nums',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  errors.stockActuel
-                    ? 'border-red'
-                    : 'border-border hover:border-text-2',
-                ].join(' ')}
+                className="font-mono tabular-nums"
                 placeholder="0"
                 value={stockActuel}
                 onChange={e => setStockActuel(e.target.value)}
                 disabled={saving}
+                invalid={!!errors.stockActuel}
               />
-              {errors.stockActuel ? (
-                <p
-                  id="add-aliment-stock-error"
-                  role="alert"
-                  className="text-[11px] text-red"
-                >
-                  {errors.stockActuel}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
 
-            <div className="space-y-1.5">
-              <label
-                htmlFor="add-aliment-unite"
-                className="block text-mono-label text-text-2"
-              >
-                Unité
-              </label>
-              <input
+            <FormField label="Unité" error={errors.unite}>
+              <Input
                 id="add-aliment-unite"
                 type="text"
                 list="add-aliment-unite-list"
@@ -357,48 +278,31 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
                 aria-describedby={
                   errors.unite ? 'add-aliment-unite-error' : undefined
                 }
-                className={[
-                  'w-full h-12 rounded-md px-3',
-                  'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                  'text-[14px]',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  errors.unite
-                    ? 'border-red'
-                    : 'border-border hover:border-text-2',
-                ].join(' ')}
                 placeholder="kg"
                 value={unite}
                 onChange={e => setUnite(e.target.value)}
                 disabled={saving}
                 autoComplete="off"
+                invalid={!!errors.unite}
               />
               <datalist id="add-aliment-unite-list">
                 {UNITE_SUGGESTIONS.map(u => (
                   <option key={u} value={u} />
                 ))}
               </datalist>
-              {errors.unite ? (
-                <p
-                  id="add-aliment-unite-error"
-                  role="alert"
-                  className="text-[11px] text-red"
-                >
-                  {errors.unite}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
           </div>
 
-          {/* Seuil alerte */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-aliment-seuil"
-              className="block text-mono-label text-text-2"
-            >
-              Seuil alerte
-            </label>
-            <input
+          <FormField
+            label="Seuil alerte"
+            hint={
+              errors.seuilAlerte
+                ? undefined
+                : `Statut auto-calculé : ${previewStatut ?? '—'}`
+            }
+            error={errors.seuilAlerte}
+          >
+            <Input
               id="add-aliment-seuil"
               type="number"
               inputMode="decimal"
@@ -412,55 +316,17 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
                   ? 'add-aliment-seuil-error'
                   : 'add-aliment-seuil-hint'
               }
-              className={[
-                'w-full h-12 rounded-md px-3',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[16px] tabular-nums',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.seuilAlerte
-                  ? 'border-red'
-                  : 'border-border hover:border-text-2',
-              ].join(' ')}
+              className="font-mono tabular-nums"
               placeholder="50"
               value={seuilAlerte}
               onChange={e => setSeuilAlerte(e.target.value)}
               disabled={saving}
+              invalid={!!errors.seuilAlerte}
             />
-            {errors.seuilAlerte ? (
-              <p
-                id="add-aliment-seuil-error"
-                role="alert"
-                className="text-[11px] text-red"
-              >
-                {errors.seuilAlerte}
-              </p>
-            ) : (
-              <p
-                id="add-aliment-seuil-hint"
-                className="text-[10px] text-text-2"
-              >
-                Statut auto-calculé :{' '}
-                {previewStatut ? (
-                  <span className="uppercase tracking-wide">
-                    {previewStatut}
-                  </span>
-                ) : (
-                  <span>—</span>
-                )}
-              </p>
-            )}
-          </div>
+          </FormField>
 
-          {/* Notes */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-aliment-notes"
-              className="block text-mono-label text-text-2"
-            >
-              Notes <span className="text-text-2 normal-case">· optionnel</span>
-            </label>
-            <textarea
+          <FormField label="Notes" hint="optionnel" error={errors.notes}>
+            <Textarea
               id="add-aliment-notes"
               maxLength={200}
               rows={3}
@@ -469,75 +335,36 @@ const QuickAddAlimentForm: React.FC<QuickAddAlimentFormProps> = ({
               aria-describedby={
                 errors.notes ? 'add-aliment-notes-error' : undefined
               }
-              className={[
-                'w-full rounded-md px-3 py-2',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-sans text-[13px]',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.notes
-                  ? 'border-red'
-                  : 'border-border hover:border-text-2',
-              ].join(' ')}
               placeholder="Fournisseur, calibre, observations…"
               value={notes}
               onChange={e => setNotes(e.target.value)}
               disabled={saving}
             />
-            {errors.notes ? (
-              <p
-                id="add-aliment-notes-error"
-                role="alert"
-                className="text-[11px] text-red"
-              >
-                {errors.notes}
-              </p>
-            ) : null}
-          </div>
+          </FormField>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2 pt-2">
-            <button
-              type="button"
+          <div className="flex gap-3 justify-end pt-2 border-t border-border">
+            <Button
+              variant="secondary"
               onClick={handleClose}
               disabled={saving}
-              aria-label="Annuler et fermer"
-              className={[
-                'pressable flex-1 h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-bg-1 border border-border text-text-1',
-                'text-[12px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms] hover:border-text-2',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : '',
-              ].join(' ')}
+              ariaLabel="Annuler et fermer"
             >
               Annuler
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={saving}
-              aria-label="Ajouter l'aliment au catalogue"
               aria-busy={saving}
-              className={[
-                'pressable flex-[2] h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-accent text-bg-0',
-                'text-[13px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms]',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
-              ].join(' ')}
+              ariaLabel="Ajouter l'aliment au catalogue"
             >
-              {saving ? (
-                <span className="animate-pulse">Enregistrement…</span>
-              ) : (
-                <>
-                  <span>Ajouter</span>
+              {saving ? 'Enregistrement…' : (
+                <span className="inline-flex items-center gap-2">
+                  Ajouter
                   <Save size={14} aria-hidden="true" />
-                </>
+                </span>
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </BottomSheet>

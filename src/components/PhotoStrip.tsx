@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useId, useState } from 'react';
 import { IonSpinner, IonModal, IonContent } from '@ionic/react';
 import { Camera, Trash2, X, Maximize2 } from 'lucide-react';
 import { PhotoEntry, takePhoto, getPhotosForSubject, deletePhoto } from '../services/photos';
+import { Button } from '@/design-system';
 
 /**
  * PhotoStrip — Documentation visuelle (Agritech Dark)
@@ -64,23 +65,25 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ subjectType, subjectId }) => {
       {/* ── Strip ───────────────────────────────────────────────────────── */}
       <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
         {/* Add button */}
-        <button
+        <Button
           type="button"
+          variant="secondary"
           onClick={handleAddPhoto}
           aria-label="Ajouter une photo"
           className={[
-            'pressable flex-shrink-0 w-20 h-20 rounded-md',
+            'pressable flex-shrink-0 w-20 h-20',
             'bg-bg-1 border-2 border-dashed border-border',
             'flex flex-col items-center justify-center gap-1',
             'hover:border-accent hover:bg-bg-2 transition-colors duration-[160ms]',
             'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
           ].join(' ')}
+          style={{ borderRadius: '0.375rem', height: '5rem', width: '5rem', textTransform: 'none', padding: 0 }}
         >
           <Camera size={20} className="text-text-2" aria-hidden="true" />
           <span className="text-[10px] font-bold uppercase tracking-wide text-text-2">
             Ajouter
           </span>
-        </button>
+        </Button>
 
         {loading ? (
           <div className="w-20 h-20 flex items-center justify-center">
@@ -92,11 +95,13 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ subjectType, subjectId }) => {
               key={photo.photoId}
               className="relative flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border border-border bg-bg-1 group"
             >
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={() => setSelectedPhoto(photo)}
                 aria-label="Voir la photo en grand"
                 className="pressable w-full h-full relative focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-2px]"
+                style={{ borderRadius: 0, padding: 0, height: '100%', width: '100%', textTransform: 'none' }}
               >
                 <img
                   src={photo.webviewPath}
@@ -106,21 +111,24 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ subjectType, subjectId }) => {
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-active:opacity-100 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-[160ms]">
                   <Maximize2 size={18} className="text-text-0" aria-hidden="true" />
                 </div>
-              </button>
+              </Button>
               {/* Delete X */}
-              <button
+              <Button
                 type="button"
-                onClick={e => handleDelete(e, photo.photoId)}
+                variant="danger"
+                size="small"
+                onClick={(e) => handleDelete(e as React.MouseEvent, photo.photoId)}
                 aria-label="Supprimer la photo"
                 className={[
-                  'pressable absolute top-1 right-1 inline-flex h-5 w-5 items-center justify-center rounded-full',
+                  'pressable absolute top-1 right-1 inline-flex h-5 w-5 items-center justify-center',
                   'bg-bg-0/80 text-red backdrop-blur-sm',
                   'hover:bg-red hover:text-text-0 transition-colors duration-[160ms]',
                   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-red focus-visible:outline-offset-1',
                 ].join(' ')}
+                style={{ borderRadius: '9999px', height: '1.25rem', width: '1.25rem', padding: 0 }}
               >
                 <X size={10} aria-hidden="true" />
-              </button>
+              </Button>
             </div>
           ))
         )}
@@ -140,32 +148,36 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ subjectType, subjectId }) => {
             aria-describedby={captionId}
           >
             <div className="flex justify-between items-center p-4">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={() => setSelectedPhoto(null)}
                 aria-label="Fermer la photo"
                 className={[
-                  'pressable inline-flex h-10 w-10 items-center justify-center rounded-md',
+                  'pressable inline-flex h-10 w-10 items-center justify-center',
                   'bg-bg-1/60 border border-border text-text-0 backdrop-blur-md',
                   'hover:bg-bg-2/80 transition-colors duration-[160ms]',
                   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 ].join(' ')}
+                style={{ borderRadius: '0.375rem', height: '2.5rem', width: '2.5rem', padding: 0 }}
               >
                 <X size={18} aria-hidden="true" />
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                onClick={e => selectedPhoto && handleDelete(e, selectedPhoto.photoId)}
+                variant="danger"
+                onClick={(e) => selectedPhoto && handleDelete(e as React.MouseEvent, selectedPhoto.photoId)}
                 aria-label="Supprimer la photo"
                 className={[
-                  'pressable inline-flex h-10 w-10 items-center justify-center rounded-md',
+                  'pressable inline-flex h-10 w-10 items-center justify-center',
                   'bg-red/20 border border-red/40 text-red backdrop-blur-md',
                   'hover:bg-red hover:text-text-0 transition-colors duration-[160ms]',
                   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-red focus-visible:outline-offset-2',
                 ].join(' ')}
+                style={{ borderRadius: '0.375rem', height: '2.5rem', width: '2.5rem', padding: 0 }}
               >
                 <Trash2 size={18} aria-hidden="true" />
-              </button>
+              </Button>
             </div>
 
             <div className="flex-1 flex items-center justify-center p-4">

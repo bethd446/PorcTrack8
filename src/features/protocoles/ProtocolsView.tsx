@@ -16,8 +16,8 @@ import {
 } from 'lucide-react';
 import AgritechLayout from '../../components/AgritechLayout';
 import { Chip, SectionDivider } from '../../components/agritech';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
+import { Button, PageHeader } from '@/design-system';
 
 type TabKey = 'cycle' | 'terrain' | 'biosecurite' | 'rations' | 'checklists';
 
@@ -266,31 +266,11 @@ const ProtocolsView: React.FC = () => {
           />
 
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <header>
-              <Eyebrow dotColor="accent">Outils · Guide métier</Eyebrow>
-              <h1
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '8px 0 4px',
-                }}
-              >
-                Protocoles
-              </h1>
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--muted)',
-                }}
-              >
-                Référence biosécurité &amp; rationnement
-              </div>
-            </header>
+            <PageHeader
+              eyebrow="Outils · Protocoles"
+              title="Protocoles"
+              subtitle="Procédures et SOP"
+            />
 
             <div
               className="flex gap-2 overflow-x-auto -mx-1 px-1"
@@ -300,9 +280,10 @@ const ProtocolsView: React.FC = () => {
               {tabs.map(t => {
                 const active = tab === t.key;
                 return (
-                  <button
+                  <Button
                     key={t.key}
-                    type="button"
+                    variant={active ? 'primary' : 'secondary'}
+                    size="small"
                     role="tab"
                     aria-selected={active}
                     onClick={() => setTab(t.key)}
@@ -322,7 +303,7 @@ const ProtocolsView: React.FC = () => {
                     >
                       {t.count}
                     </span>
-                  </button>
+                  </Button>
                 );
               })}
             </div>

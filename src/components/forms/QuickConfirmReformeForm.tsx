@@ -9,6 +9,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
 
 import { BottomSheet } from '../agritech';
+import { FormField, Input, Select, Button } from '@/design-system';
 import type { PendingConfirmation } from '../../services/confirmationQueue';
 import { useConfirmFlow } from './useConfirmFlow';
 
@@ -93,52 +94,43 @@ const QuickConfirmReformeForm: React.FC<QuickConfirmReformeFormProps> = ({
             </p>
           </div>
 
-          <div className="space-y-2">
-            <label htmlFor="reforme-motif" className="block text-[11px] uppercase text-text-2">
-              Motif retenu
-            </label>
-            <select
+          <FormField label="Motif retenu">
+            <Select
               id="reforme-motif"
-              className="w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 text-[13px]"
+              aria-label="Motif retenu"
               value={motif}
               onChange={e => setMotif(e.target.value)}
             >
               {REFORME_MOTIFS.map(m => (
                 <option key={m.value} value={m.value}>{m.label}</option>
               ))}
-            </select>
-          </div>
+            </Select>
+          </FormField>
 
           {motif === 'AUTRE' && (
-            <div className="space-y-2">
-              <label htmlFor="reforme-motif-autre" className="block text-[11px] uppercase text-text-2">
-                Préciser le motif
-              </label>
-              <input
+            <FormField label="Préciser le motif">
+              <Input
                 id="reforme-motif-autre"
                 type="text"
+                aria-label="Préciser le motif"
                 maxLength={120}
-                className="w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 text-[13px]"
                 value={motifAutre}
                 onChange={e => setMotifAutre(e.target.value)}
                 placeholder="Ex. comportement agressif"
               />
-            </div>
+            </FormField>
           )}
 
-          <div className="space-y-2">
-            <label htmlFor="reforme-date" className="block text-[11px] uppercase text-text-2">
-              Date de sortie
-            </label>
-            <input
+          <FormField label="Date de sortie">
+            <Input
               id="reforme-date"
               type="date"
-              className="w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 font-mono text-[13px]"
+              aria-label="Date de sortie"
               value={dateSortie}
               onChange={e => setDateSortie(e.target.value)}
               max={todayIso()}
             />
-          </div>
+          </FormField>
 
           {error && (
             <p role="alert" className="text-[11px] text-red">
@@ -146,16 +138,16 @@ const QuickConfirmReformeForm: React.FC<QuickConfirmReformeFormProps> = ({
             </p>
           )}
 
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            fullWidth
             onClick={handleConfirm}
             disabled={saving}
             aria-busy={saving}
-            aria-label="Confirmer la réforme"
-            className="pressable w-full h-14 rounded-md bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide"
+            ariaLabel="Confirmer la réforme"
           >
             {saving ? 'Enregistrement…' : 'Confirmer la réforme'}
-          </button>
+          </Button>
         </div>
       </BottomSheet>
 

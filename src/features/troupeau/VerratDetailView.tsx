@@ -28,6 +28,7 @@ import NotesTimeline from '../../components/design/NotesTimeline';
 import PhotoStrip from '../../components/PhotoStrip';
 import { VerratIcon } from '../../components/icons';
 import { SectionDivider, BottomSheet, type ChipTone } from '../../components/agritech';
+import { Button, PageHeader } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import { updateBoar } from '../../services/supabaseWrites';
 import QuickHealthForm from '../../components/forms/QuickHealthForm';
@@ -122,31 +123,11 @@ const VerratDetailView: React.FC = () => {
               className="px-4 pt-5 pb-32 flex flex-col gap-5"
               style={{ maxWidth: 1100, margin: '0 auto' }}
             >
-              <header>
-                <Eyebrow dotColor="accent">Cheptel · Verrat {decodedId}</Eyebrow>
-                <h1
-                  style={{
-                    fontFamily: 'var(--font-heading)',
-                    fontSize: 34,
-                    fontWeight: 700,
-                    lineHeight: 1,
-                    letterSpacing: '-0.02em',
-                    color: 'var(--ink)',
-                    margin: '8px 0 4px',
-                  }}
-                >
-                  Verrat introuvable
-                </h1>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 13,
-                    color: 'var(--muted)',
-                  }}
-                >
-                  ID "{decodedId}"
-                </div>
-              </header>
+              <PageHeader
+                eyebrow="TROUPEAU · VERRAT"
+                title="Verrat introuvable"
+                subtitle="Fiche reproducteur"
+              />
               <div className="flex flex-col items-center gap-3">
                 <AlertCircle size={40} className="text-coral" aria-hidden="true" />
                 <p className="text-[12px] text-text-2 text-center max-w-xs">
@@ -193,6 +174,9 @@ const VerratDetailView: React.FC = () => {
             className="px-4 pt-5 pb-32 flex flex-col gap-5"
             style={{ maxWidth: 1100, margin: '0 auto' }}
           >
+            {/* V43 C3 — AnimalHero fait office de header complet (eyebrow + h1
+                + chips + photo + actions) ; on skip PageHeader pour éviter le
+                doublon visuel + double h1 cassant les tests a11y. */}
             {/* ── Hero unifié (AnimalHero) ────────────────────────────── */}
             <AnimalHero
               eyebrow={`Cheptel · Verrat ${displayId}`}
@@ -312,13 +296,9 @@ const VerratDetailView: React.FC = () => {
                   <p className="text-[12px] text-text-2 max-w-xs">
                     Lance la première saillie pour activer le suivi.
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => setSheet('saillie')}
-                    className="pressable mt-2 px-4 py-2.5 rounded-full bg-accent text-bg-0 text-[11px] font-bold uppercase tracking-wider"
-                  >
+                  <Button variant="primary" size="small" onClick={() => setSheet('saillie')} className="!mt-2">
                     + Saisir une saillie
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <>
@@ -547,11 +527,12 @@ interface ActionButtonProps {
 }
 
 const ActionButton: React.FC<ActionButtonProps> = ({ icon, label, onClick }) => (
-  <button
-    type="button"
+  <Button
+    variant="ghost"
     onClick={onClick}
-    className="pressable card-dense flex flex-col items-center gap-2 !py-3.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-    aria-label={label}
+    ariaLabel={label}
+    className="card-dense !flex !flex-col !items-center !gap-2 !py-3.5 !rounded-md !h-auto"
+    style={{ textTransform: 'none' }}
   >
     <span className="inline-flex w-8 h-8 rounded-lg bg-bg-1 border border-border items-center justify-center text-accent">
       {icon}
@@ -559,7 +540,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({ icon, label, onClick }) => 
     <span className="text-[11px] font-semibold uppercase tracking-wide text-text-1">
       {label}
     </span>
-  </button>
+  </Button>
 );
 
 export default VerratDetailView;

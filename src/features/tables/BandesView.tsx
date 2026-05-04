@@ -16,10 +16,9 @@ import {
   AlertCircle, AlertTriangle, Search, X, CheckSquare, CheckCheck,
 } from 'lucide-react';
 import { getTableByKey } from '../../services/tableLoader';
-import AgritechHeader from '../../components/AgritechHeader';
 import AgritechLayout from '../../components/AgritechLayout';
 import { SectionDivider } from '../../components/agritech';
-import { Button } from '@/design-system';
+import { Button, PageHeader } from '@/design-system';
 import EmptyState from '../../components/design/EmptyState';
 import { BandeIcon } from '../../components/icons';
 import QuickSexSeparationForm from '../../components/forms/QuickSexSeparationForm';
@@ -130,38 +129,42 @@ const BandesView: React.FC = () => {
             <IonRefresherContent />
           </IonRefresher>
 
-          <AgritechHeader
-            title="Portées"
-            subtitle={selectionMode ? `${selectedIds.length} sélectionné(s)` : 'Suivi porcelets'}
-            action={
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowSexSeparation(true)}
-                  className="pressable inline-flex h-9 px-3 items-center justify-center rounded-md transition-colors bg-bg-2 text-text-1 hover:bg-bg-1 text-[11px] uppercase tracking-wide"
-                  aria-label="Séparation par sexe"
-                >
-                  ♂ / ♀
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectionMode(!selectionMode);
-                    setSelectedIds([]);
-                  }}
-                  className={`pressable inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
-                    selectionMode
-                      ? 'bg-red text-bg-0'
-                      : 'bg-bg-2 text-text-1 hover:bg-bg-1'
-                  }`}
-                  aria-label={selectionMode ? 'Annuler la sélection' : 'Mode sélection'}
-                >
-                  {selectionMode ? <X size={18} /> : <CheckSquare size={18} />}
-                </button>
-              </div>
-            }
-          >
-            <div className="flex items-center gap-2 bg-bg-1 border border-border rounded-md px-3 h-10">
+          <div className="px-4 pt-5 pb-3">
+            <PageHeader
+              eyebrow="Tables · Bandes"
+              title="Bandes"
+              subtitle="Liste des lots porcelets"
+            />
+
+            <div className="flex items-center gap-2 mt-4">
+              <Button
+                variant="ghost"
+                size="small"
+                onClick={() => setShowSexSeparation(true)}
+                className="pressable inline-flex h-9 px-3 items-center justify-center rounded-md transition-colors bg-bg-2 text-text-1 hover:bg-bg-1 text-[11px] uppercase tracking-wide"
+                ariaLabel="Séparation par sexe"
+              >
+                ♂ / ♀
+              </Button>
+              <Button
+                variant={selectionMode ? 'danger' : 'ghost'}
+                size="small"
+                onClick={() => {
+                  setSelectionMode(!selectionMode);
+                  setSelectedIds([]);
+                }}
+                className={`pressable inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
+                  selectionMode
+                    ? 'bg-red text-bg-0'
+                    : 'bg-bg-2 text-text-1 hover:bg-bg-1'
+                }`}
+                ariaLabel={selectionMode ? 'Annuler la sélection' : 'Mode sélection'}
+              >
+                {selectionMode ? <X size={18} /> : <CheckSquare size={18} />}
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-2 bg-bg-1 border border-border rounded-md px-3 h-10 mt-3">
               <Search size={16} className="text-text-2 shrink-0" />
               <input
                 className="bg-transparent border-none text-text-0 placeholder-text-2 text-sm w-full outline-none"
@@ -171,14 +174,15 @@ const BandesView: React.FC = () => {
                 aria-label="Rechercher une portée"
               />
               {searchText && (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="small"
                   onClick={() => setSearchText('')}
                   className="pressable text-text-2 hover:text-text-1 transition-colors"
-                  aria-label="Effacer la recherche"
+                  ariaLabel="Effacer la recherche"
                 >
                   <X size={14} />
-                </button>
+                </Button>
               )}
             </div>
 
@@ -187,7 +191,7 @@ const BandesView: React.FC = () => {
               <FilterChip active={statusFilter === 'SOUS'} label="Sous mère" onClick={() => setStatusFilter('SOUS')} />
               <FilterChip active={statusFilter === 'SEVRES'} label="Sevrés" onClick={() => setStatusFilter('SEVRES')} />
             </div>
-          </AgritechHeader>
+          </div>
 
           <BandesErrorBoundary onReset={loadData}>
             <div className="pt-4 pb-32">
@@ -279,8 +283,9 @@ const BandesView: React.FC = () => {
 
           {selectionMode && selectedIds.length > 0 && (
             <div className="fixed bottom-6 left-4 right-4 z-[100] animate-in slide-in-from-bottom-10 duration-[160ms]">
-              <button
-                type="button"
+              <Button
+                variant="primary"
+                fullWidth
                 onClick={() => setShowBatchModal(true)}
                 className="pressable w-full h-14 rounded-md bg-accent text-bg-0 flex items-center justify-center gap-3 shadow-2xl shadow-black/40 transition-transform active:scale-[0.98]"
               >
@@ -288,7 +293,7 @@ const BandesView: React.FC = () => {
                 <span className="text-[12px] uppercase tracking-wide font-semibold">
                   Clôturer sevrage ({selectedIds.length})
                 </span>
-              </button>
+              </Button>
             </div>
           )}
 
@@ -331,12 +336,13 @@ const BandesView: React.FC = () => {
                 <div className="agritech-root p-10 text-center flex flex-col items-center justify-center min-h-[60vh] gap-4">
                   <AlertTriangle size={32} className="text-red" />
                   <p className="text-[12px] uppercase text-text-1">Portée introuvable</p>
-                  <button
+                  <Button
+                    variant="primary"
                     onClick={handleCloseBande}
                     className="pressable h-11 px-6 rounded-md bg-accent text-bg-0 text-[12px] uppercase tracking-wide"
                   >
                     Fermer
-                  </button>
+                  </Button>
                 </div>
               )}
             </BandesErrorBoundary>

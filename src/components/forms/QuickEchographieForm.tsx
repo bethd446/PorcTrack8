@@ -4,6 +4,7 @@ import { IonToast } from '@ionic/react';
 import { Stethoscope, Check, CheckCircle2 } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { FormField, Input, Select, Textarea, Button } from '@/design-system';
 import {
   listPendingEchographies,
   updateSaillie,
@@ -265,29 +266,18 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
               </div>
             </div>
 
-            {/* ── Sélection truie / saillie ─────────────────────────────── */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="echo-saillie"
-                className="block text-mono-label text-text-2"
-              >
-                Truie (saillie ≥ 21 j)
-              </label>
-              <select
+            <FormField
+              label="Truie (saillie ≥ 21 j)"
+              hint={pending.length === 0 && !pendingLoading ? "Aucune saillie en attente d'écho." : undefined}
+              error={errors.saillieId}
+            >
+              <Select
                 id="echo-saillie"
                 ref={firstFieldRef}
                 aria-label="Sélectionner la truie à confirmer"
                 aria-required="true"
                 aria-invalid={!!errors.saillieId}
                 aria-describedby={errors.saillieId ? 'echo-saillie-error' : undefined}
-                className={[
-                  'w-full h-12 rounded-md px-3',
-                  'bg-bg-0 border text-text-0',
-                  'text-[13px]',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  errors.saillieId ? 'border-red' : 'border-border',
-                ].join(' ')}
                 value={saillieId}
                 onChange={e => setSaillieId(e.target.value)}
                 disabled={saving || pendingLoading}
@@ -302,62 +292,27 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
                     </option>
                   );
                 })}
-              </select>
-              {errors.saillieId ? (
-                <p
-                  id="echo-saillie-error"
-                  role="alert"
-                  className="text-[10px] text-red"
-                >
-                  {errors.saillieId}
-                </p>
-              ) : pending.length === 0 && !pendingLoading ? (
-                <p className="text-[10px] text-text-2">
-                  Aucune saillie en attente d'écho.
-                </p>
-              ) : null}
-            </div>
+              </Select>
+            </FormField>
 
-            {/* ── Date écho ─────────────────────────────────────────────── */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="echo-date"
-                className="block text-mono-label text-text-2"
-              >
-                Date écho
-              </label>
-              <input
+            <FormField label="Date écho" error={errors.dateEchoIso}>
+              <Input
                 id="echo-date"
                 type="date"
                 aria-label="Date de l'échographie"
                 aria-required="true"
                 aria-invalid={!!errors.dateEchoIso}
                 aria-describedby={errors.dateEchoIso ? 'echo-date-error' : undefined}
-                className={[
-                  'w-full h-12 rounded-md px-3',
-                  'bg-bg-0 border text-text-0',
-                  'font-mono text-[13px] tabular-nums',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  errors.dateEchoIso ? 'border-red' : 'border-border',
-                ].join(' ')}
+                className="font-mono tabular-nums"
                 value={dateEchoIso}
                 max={todayIsoLocal()}
                 onChange={e => setDateEchoIso(e.target.value)}
                 disabled={saving}
+                invalid={!!errors.dateEchoIso}
               />
-              {errors.dateEchoIso ? (
-                <p
-                  id="echo-date-error"
-                  role="alert"
-                  className="text-[10px] text-red"
-                >
-                  {errors.dateEchoIso}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
 
-            {/* ── Résultat ──────────────────────────────────────────────── */}
+            {/* TODO V44: Radio DS missing — radiogroup custom conservé */}
             <div className="space-y-2">
               <span
                 id="echo-statut-label"
@@ -405,88 +360,46 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
               ) : null}
             </div>
 
-            {/* ── Notes ─────────────────────────────────────────────────── */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="echo-notes"
-                className="block text-mono-label text-text-2"
-              >
-                Note ({notes.length}/{ECHO_BOUNDS.maxNotes})
-              </label>
-              <textarea
+            <FormField
+              label={`Note (${notes.length}/${ECHO_BOUNDS.maxNotes})`}
+              error={errors.notes}
+            >
+              <Textarea
                 id="echo-notes"
                 aria-label="Note libre sur l'échographie"
                 aria-invalid={!!errors.notes}
                 aria-describedby={errors.notes ? 'echo-notes-error' : undefined}
                 rows={2}
                 maxLength={ECHO_BOUNDS.maxNotes}
-                className={[
-                  'w-full rounded-md px-3 py-2',
-                  'bg-bg-0 border text-text-0',
-                  'text-[13px]',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  errors.notes ? 'border-red' : 'border-border',
-                ].join(' ')}
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
                 disabled={saving}
               />
-              {errors.notes ? (
-                <p
-                  id="echo-notes-error"
-                  role="alert"
-                  className="text-[10px] text-red"
-                >
-                  {errors.notes}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
 
-            <div className="flex items-center gap-2 pt-2">
-              <button
-                type="button"
+            <div className="flex gap-3 justify-end pt-2 border-t border-border">
+              <Button
+                variant="secondary"
                 onClick={handleClose}
                 disabled={saving}
-                aria-label="Annuler et fermer"
-                className={[
-                  'pressable flex-1 h-14 rounded-md',
-                  'inline-flex items-center justify-center gap-2',
-                  'bg-bg-1 border border-border text-text-1',
-                  'text-[12px] font-bold uppercase tracking-wide',
-                  'transition-colors duration-[160ms] hover:border-text-2',
-                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                  saving ? 'opacity-40 cursor-not-allowed' : '',
-                ].join(' ')}
+                ariaLabel="Annuler et fermer"
               >
                 Annuler
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
+                variant="primary"
                 disabled={saving || !saillieId || !statut}
-                aria-label="Enregistrer l'échographie"
                 aria-busy={saving}
-                className={[
-                  'pressable flex-[2] h-14 rounded-md',
-                  'inline-flex items-center justify-center gap-2',
-                  'bg-accent text-bg-0',
-                  'text-[13px] font-bold uppercase tracking-wide',
-                  'transition-colors duration-[160ms]',
-                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                  (saving || !saillieId || !statut)
-                    ? 'opacity-40 cursor-not-allowed'
-                    : 'hover:brightness-110',
-                ].join(' ')}
+                ariaLabel="Enregistrer l'échographie"
               >
-                {saving ? (
-                  <span className="animate-pulse">Enregistrement…</span>
-                ) : (
-                  <>
+                {saving ? 'Enregistrement…' : (
+                  <span className="inline-flex items-center gap-2">
                     <Check size={16} aria-hidden="true" />
                     Enregistrer
-                  </>
+                  </span>
                 )}
-              </button>
+              </Button>
             </div>
           </form>
         )}

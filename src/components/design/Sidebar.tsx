@@ -1,6 +1,7 @@
 import React from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@/design-system';
 
 export interface SidebarItem {
   label: string;
@@ -65,9 +66,10 @@ export default function Sidebar({
             const Icon = item.icon;
             const isActive = !!item.active;
             return (
-              <button
+              <Button
                 key={`${section.title}-${item.label}`}
                 type="button"
+                variant="ghost"
                 onClick={() => navigate(item.href)}
                 aria-current={isActive ? 'page' : undefined}
                 style={{
@@ -92,6 +94,10 @@ export default function Sidebar({
                   transition:
                     'background 200ms var(--ease-emil), color 200ms var(--ease-emil)',
                   minHeight: 36,
+                  borderRadius: 0,
+                  textTransform: 'none',
+                  height: 'auto',
+                  justifyContent: 'flex-start',
                 }}
               >
                 <span
@@ -122,7 +128,7 @@ export default function Sidebar({
                     {item.count}
                   </span>
                 ) : null}
-              </button>
+              </Button>
             );
           })}
         </div>

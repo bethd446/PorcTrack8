@@ -28,6 +28,7 @@ import { IonToast } from '@ionic/react';
 import { Plus, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { FormField, Input, Select, Textarea, Button } from '@/design-system';
 import { insertFinance } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import type { FinanceType } from '../../types/farm';
@@ -145,16 +146,6 @@ const QuickAddTransactionForm: React.FC<QuickAddTransactionFormProps> = ({
     }
   };
 
-  // ─── Classes réutilisables ────────────────────────────────────────────
-  const inputBase =
-    'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2 text-[14px] outline-none transition-colors duration-[160ms] focus:border-accent focus:ring-1 focus:ring-accent';
-  const inputOk = 'border-border hover:border-text-2';
-  const inputErr = 'border-red';
-  const labelCls =
-    'block text-mono-label text-text-2';
-  const hintCls = 'text-[10px] text-text-2 tabular-nums';
-  const errCls = 'text-[11px] text-red';
-
   return (
     <>
       <BottomSheet
@@ -179,12 +170,8 @@ const QuickAddTransactionForm: React.FC<QuickAddTransactionFormProps> = ({
             </p>
           </div>
 
-          {/* Date */}
-          <div className="space-y-1.5">
-            <label htmlFor="add-tx-date" className={labelCls}>
-              Date <span className="text-red normal-case">· requis</span>
-            </label>
-            <input
+          <FormField label="Date" required error={errors.date}>
+            <Input
               id="add-tx-date"
               ref={firstFieldRef}
               type="date"
@@ -192,19 +179,14 @@ const QuickAddTransactionForm: React.FC<QuickAddTransactionFormProps> = ({
               aria-required="true"
               aria-invalid={!!errors.date}
               aria-describedby={errors.date ? 'add-tx-date-error' : undefined}
-              className={[inputBase, errors.date ? inputErr : inputOk].join(' ')}
               value={date}
               onChange={e => setDate(e.target.value)}
               disabled={saving}
+              invalid={!!errors.date}
             />
-            {errors.date ? (
-              <p id="add-tx-date-error" role="alert" className={errCls}>
-                {errors.date}
-              </p>
-            ) : null}
-          </div>
+          </FormField>
 
-          {/* Type (radio group REVENU / DEPENSE) */}
+          {/* TODO V44: Radio DS missing — radiogroup custom conservé */}
           <div className="space-y-1.5">
             <span
               id="add-tx-type-label"
@@ -246,15 +228,10 @@ const QuickAddTransactionForm: React.FC<QuickAddTransactionFormProps> = ({
             </div>
           </div>
 
-          {/* Catégorie (select) */}
-          <div className="space-y-1.5">
-            <label htmlFor="add-tx-cat" className={labelCls}>
-              Catégorie
-            </label>
-            <select
+          <FormField label="Catégorie">
+            <Select
               id="add-tx-cat"
               aria-label="Catégorie de la transaction"
-              className={[inputBase, inputOk].join(' ')}
               value={categorie}
               onChange={e => setCategorie(e.target.value as TransactionCategorie)}
               disabled={saving}
@@ -264,15 +241,16 @@ const QuickAddTransactionForm: React.FC<QuickAddTransactionFormProps> = ({
                   {c}
                 </option>
               ))}
-            </select>
-          </div>
+            </Select>
+          </FormField>
 
-          {/* Libellé */}
-          <div className="space-y-1.5">
-            <label htmlFor="add-tx-libelle" className={labelCls}>
-              Libellé <span className="text-red normal-case">· requis</span>
-            </label>
-            <input
+          <FormField
+            label="Libellé"
+            required
+            hint={`${libelle.trim().length}/80`}
+            error={errors.libelle}
+          >
+            <Input
               id="add-tx-libelle"
               type="text"
               maxLength={80}
@@ -282,29 +260,22 @@ const QuickAddTransactionForm: React.FC<QuickAddTransactionFormProps> = ({
               aria-describedby={
                 errors.libelle ? 'add-tx-libelle-error' : 'add-tx-libelle-hint'
               }
-              className={[inputBase, errors.libelle ? inputErr : inputOk].join(' ')}
               placeholder="Ex: Sac aliment croissance"
               value={libelle}
               onChange={e => setLibelle(e.target.value)}
               disabled={saving}
               autoComplete="off"
+              invalid={!!errors.libelle}
             />
-            <p id="add-tx-libelle-hint" className={hintCls}>
-              {libelle.trim().length}/80
-            </p>
-            {errors.libelle ? (
-              <p id="add-tx-libelle-error" role="alert" className={errCls}>
-                {errors.libelle}
-              </p>
-            ) : null}
-          </div>
+          </FormField>
 
-          {/* Montant */}
-          <div className="space-y-1.5">
-            <label htmlFor="add-tx-montant" className={labelCls}>
-              Montant FCFA <span className="text-red normal-case">· requis</span>
-            </label>
-            <input
+          <FormField
+            label="Montant FCFA"
+            required
+            hint="Valeur strictement positive"
+            error={errors.montant}
+          >
+            <Input
               id="add-tx-montant"
               type="number"
               inputMode="decimal"
@@ -316,38 +287,19 @@ const QuickAddTransactionForm: React.FC<QuickAddTransactionFormProps> = ({
               aria-describedby={
                 errors.montant ? 'add-tx-montant-error' : 'add-tx-montant-hint'
               }
-              className={[
-                'w-full h-14 rounded-md px-4',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[22px] tabular-nums text-right',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.montant ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
+              className="font-mono text-[22px] tabular-nums text-right"
               placeholder="0"
               value={montant}
               onChange={e => setMontant(e.target.value)}
               disabled={saving}
+              invalid={!!errors.montant}
             />
-            <p id="add-tx-montant-hint" className={hintCls}>
-              Valeur strictement positive
-            </p>
-            {errors.montant ? (
-              <p id="add-tx-montant-error" role="alert" className={errCls}>
-                {errors.montant}
-              </p>
-            ) : null}
-          </div>
+          </FormField>
 
-          {/* Bande liée (optionnel) */}
-          <div className="space-y-1.5">
-            <label htmlFor="add-tx-bande" className={labelCls}>
-              Bande liée <span className="text-text-2 normal-case">· optionnel</span>
-            </label>
-            <select
+          <FormField label="Bande liée" hint="optionnel">
+            <Select
               id="add-tx-bande"
               aria-label="Bande liée à la transaction"
-              className={[inputBase, inputOk].join(' ')}
               value={bandeId}
               onChange={e => setBandeId(e.target.value)}
               disabled={saving}
@@ -359,15 +311,15 @@ const QuickAddTransactionForm: React.FC<QuickAddTransactionFormProps> = ({
                   {b.truie ? ` · ${b.truie}` : ''}
                 </option>
               ))}
-            </select>
-          </div>
+            </Select>
+          </FormField>
 
-          {/* Notes */}
-          <div className="space-y-1.5">
-            <label htmlFor="add-tx-notes" className={labelCls}>
-              Notes <span className="text-text-2 normal-case">· optionnel</span>
-            </label>
-            <textarea
+          <FormField
+            label="Notes"
+            hint={errors.notes ? undefined : `${notes.trim().length}/200`}
+            error={errors.notes}
+          >
+            <Textarea
               id="add-tx-notes"
               maxLength={200}
               rows={3}
@@ -376,72 +328,36 @@ const QuickAddTransactionForm: React.FC<QuickAddTransactionFormProps> = ({
               aria-describedby={
                 errors.notes ? 'add-tx-notes-error' : 'add-tx-notes-hint'
               }
-              className={[
-                'w-full rounded-md px-3 py-2',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'text-[13px]',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.notes ? inputErr : inputOk,
-              ].join(' ')}
               placeholder="Observations, référence facture…"
               value={notes}
               onChange={e => setNotes(e.target.value)}
               disabled={saving}
             />
-            <p id="add-tx-notes-hint" className={hintCls}>
-              {notes.trim().length}/200
-            </p>
-            {errors.notes ? (
-              <p id="add-tx-notes-error" role="alert" className={errCls}>
-                {errors.notes}
-              </p>
-            ) : null}
-          </div>
+          </FormField>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2 pt-2 sticky bottom-0 bg-bg-1 -mx-4 px-4 pb-2 border-t border-border">
-            <button
-              type="button"
+          <div className="flex gap-3 justify-end pt-2 sticky bottom-0 bg-bg-1 -mx-4 px-4 pb-2 border-t border-border">
+            <Button
+              variant="secondary"
               onClick={handleClose}
               disabled={saving}
-              aria-label="Annuler et fermer"
-              className={[
-                'pressable flex-1 h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-bg-1 border border-border text-text-1',
-                'text-[12px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms] hover:border-text-2',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : '',
-              ].join(' ')}
+              ariaLabel="Annuler et fermer"
             >
               Annuler
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={saving}
-              aria-label="Ajouter la transaction"
               aria-busy={saving}
-              className={[
-                'pressable flex-[2] h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-accent text-bg-0',
-                'text-[13px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms]',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
-              ].join(' ')}
+              ariaLabel="Ajouter la transaction"
             >
-              {saving ? (
-                <span className="animate-pulse">Enregistrement…</span>
-              ) : (
-                <>
-                  <span>Ajouter</span>
+              {saving ? 'Enregistrement…' : (
+                <span className="inline-flex items-center gap-2">
+                  Ajouter
                   <Save size={14} aria-hidden="true" />
-                </>
+                </span>
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </BottomSheet>

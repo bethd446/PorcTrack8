@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Baby, Check, CheckCircle2 } from 'lucide-react';
 
 import { AppToast, BottomSheet, useAppToast } from '../agritech';
+import { Button, Input, Select } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   updateBatchByCode,
@@ -192,12 +193,11 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
               >
                 Bande
               </label>
-              <select
+              <Select
                 id="sevrage-bande"
                 value={bandeId}
                 onChange={e => setBandeId(e.target.value)}
                 disabled={saving}
-                className="w-full h-12 rounded-md px-3 bg-bg-0 border border-border text-text-0 text-[13px] outline-none focus:border-accent"
               >
                 <option value="">— Sélectionner une bande —</option>
                 {bandesEligibles.map(b => (
@@ -207,7 +207,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
                     {b.vivants !== undefined ? ` · ${b.vivants} vivants` : ''}
                   </option>
                 ))}
-              </select>
+              </Select>
               {bandesEligibles.length === 0 && (
                 <p className="text-mono-label text-text-2">
                   Aucune bande éligible (sous mère)
@@ -222,13 +222,12 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
               >
                 Date de sevrage
               </label>
-              <input
+              <Input
                 id="sevrage-date"
                 type="date"
                 value={dateIso}
                 onChange={e => setDateIso(e.target.value)}
                 disabled={saving}
-                className="w-full h-12 rounded-md px-3 bg-bg-0 border border-border text-text-0 font-mono text-[13px] outline-none focus:border-accent"
               />
             </div>
 
@@ -239,7 +238,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
               >
                 Nombre de porcelets sevrés
               </label>
-              <input
+              <Input
                 id="sevrage-nb"
                 type="text"
                 inputMode="numeric"
@@ -247,7 +246,6 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
                 onChange={e => setNbSevres(e.target.value.replace(/[^\d]/g, ''))}
                 disabled={saving}
                 placeholder="0"
-                className="w-full h-14 rounded-md px-4 bg-bg-0 border border-border text-text-0 font-mono text-[24px] text-center outline-none focus:border-accent tabular-nums"
               />
               {selected?.vivants !== undefined && (
                 <p className="text-mono-label text-text-2">
@@ -268,7 +266,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
                   5-7 kg cible
                 </span>
               </div>
-              <input
+              <Input
                 id="sevrage-poids"
                 type="number"
                 inputMode="decimal"
@@ -280,7 +278,6 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
                 onChange={e => setPoidsKg(e.target.value)}
                 disabled={saving}
                 placeholder="6.0"
-                className="w-full h-14 rounded-md px-4 bg-bg-0 border border-border text-text-0 font-mono text-[24px] text-center outline-none focus:border-accent tabular-nums"
               />
               {(() => {
                 const p = parseFloat(poidsKg.replace(',', '.'));
@@ -308,30 +305,29 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
               </p>
             )}
 
-            <div className="flex items-center gap-2 pt-2">
-              <button
-                type="button"
+            <div className="flex gap-3 justify-end px-4 py-3 border-t border-border">
+              <Button
+                variant="secondary"
                 onClick={onClose}
                 disabled={saving}
-                className="pressable flex-1 h-14 rounded-md bg-bg-1 border border-border text-text-1 text-[12px] font-bold uppercase tracking-wide"
               >
                 Annuler
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="primary"
                 type="submit"
                 disabled={saving || !bandeId || !nbSevres || !poidsKg}
                 aria-busy={saving}
-                className="pressable flex-[2] h-14 rounded-md bg-accent text-bg-0 text-[13px] font-bold uppercase tracking-wide inline-flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {saving ? (
                   <span className="animate-pulse">Enregistrement…</span>
                 ) : (
-                  <>
+                  <span className="inline-flex items-center gap-2">
                     <Check size={16} aria-hidden="true" />
                     Enregistrer
-                  </>
+                  </span>
                 )}
-              </button>
+              </Button>
             </div>
           </form>
         )}

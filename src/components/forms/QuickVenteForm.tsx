@@ -3,6 +3,7 @@ import { IonToast } from '@ionic/react';
 import { TrendingUp, Check, CheckCircle2 } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { FormField, Input, Select, Textarea, Button } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   insertFinance,
@@ -354,14 +355,12 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
             </div>
 
             {/* ── Nombre de porcs vendus ───────────────────────────────── */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="vente-nb"
-                className="block text-mono-label text-text-2"
-              >
-                Nombre de porcs vendus (max {vivantsActuels})
-              </label>
-              <input
+            <FormField
+              label={`Nombre de porcs vendus (max ${vivantsActuels})`}
+              required
+              error={errors.nbVendus}
+            >
+              <Input
                 id="vente-nb"
                 ref={firstFieldRef}
                 type="number"
@@ -373,40 +372,18 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                 aria-required="true"
                 aria-invalid={!!errors.nbVendus}
                 aria-describedby={errors.nbVendus ? 'vente-nb-error' : undefined}
-                className={[
-                  'w-full h-14 rounded-md px-4',
-                  'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                  'font-mono text-[24px] tabular-nums text-center',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-amber focus:ring-1 focus:ring-amber',
-                  errors.nbVendus ? 'border-red' : 'border-border hover:border-text-2',
-                ].join(' ')}
+                className="font-mono text-[24px] tabular-nums text-center"
                 placeholder="0"
                 value={nbVendus}
                 onChange={e => setNbVendus(e.target.value.replace(/[^\d]/g, ''))}
                 disabled={saving}
               />
-              {errors.nbVendus ? (
-                <p
-                  id="vente-nb-error"
-                  role="alert"
-                  className="text-[11px] text-red"
-                >
-                  {errors.nbVendus}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
 
             {/* ── Poids + Prix (grid 2-col) ────────────────────────────── */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="vente-poids"
-                  className="block text-mono-label text-text-2"
-                >
-                  Poids moyen (kg)
-                </label>
-                <input
+              <FormField label="Poids moyen (kg)" required error={errors.poids}>
+                <Input
                   id="vente-poids"
                   type="text"
                   inputMode="decimal"
@@ -414,40 +391,16 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                   aria-required="true"
                   aria-invalid={!!errors.poids}
                   aria-describedby={errors.poids ? 'vente-poids-error' : undefined}
-                  className={[
-                    'w-full h-11 rounded-md px-3',
-                    'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                    'text-[13px] tabular-nums',
-                    'outline-none transition-colors duration-[160ms]',
-                    'focus:border-amber focus:ring-1 focus:ring-amber',
-                    errors.poids ? 'border-red' : 'border-border hover:border-text-2',
-                  ].join(' ')}
+                  className="tabular-nums"
                   placeholder="90"
                   value={poidsMoyen}
-                  onChange={e =>
-                    setPoidsMoyen(e.target.value.replace(/[^\d.,]/g, ''))
-                  }
+                  onChange={e => setPoidsMoyen(e.target.value.replace(/[^\d.,]/g, ''))}
                   disabled={saving}
                 />
-                {errors.poids ? (
-                  <p
-                    id="vente-poids-error"
-                    role="alert"
-                    className="text-[11px] text-red"
-                  >
-                    {errors.poids}
-                  </p>
-                ) : null}
-              </div>
+              </FormField>
 
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="vente-prix"
-                  className="block text-mono-label text-text-2"
-                >
-                  Prix unit. FCFA / kg
-                </label>
-                <input
+              <FormField label="Prix unit. FCFA / kg" required error={errors.prix}>
+                <Input
                   id="vente-prix"
                   type="text"
                   inputMode="decimal"
@@ -455,31 +408,13 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                   aria-required="true"
                   aria-invalid={!!errors.prix}
                   aria-describedby={errors.prix ? 'vente-prix-error' : undefined}
-                  className={[
-                    'w-full h-11 rounded-md px-3',
-                    'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                    'text-[13px] tabular-nums',
-                    'outline-none transition-colors duration-[160ms]',
-                    'focus:border-amber focus:ring-1 focus:ring-amber',
-                    errors.prix ? 'border-red' : 'border-border hover:border-text-2',
-                  ].join(' ')}
+                  className="tabular-nums"
                   placeholder="2100"
                   value={prixUnitaire}
-                  onChange={e =>
-                    setPrixUnitaire(e.target.value.replace(/[^\d.,]/g, ''))
-                  }
+                  onChange={e => setPrixUnitaire(e.target.value.replace(/[^\d.,]/g, ''))}
                   disabled={saving}
                 />
-                {errors.prix ? (
-                  <p
-                    id="vente-prix-error"
-                    role="alert"
-                    className="text-[11px] text-red"
-                  >
-                    {errors.prix}
-                  </p>
-                ) : null}
-              </div>
+              </FormField>
             </div>
 
             {/* ── Montant total (auto-calculé) ─────────────────────────── */}
@@ -497,104 +432,45 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
             </div>
 
             {/* ── Acheteur ─────────────────────────────────────────────── */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="vente-acheteur"
-                className="block text-mono-label text-text-2"
-              >
-                Acheteur
-              </label>
-              <input
+            <FormField label="Acheteur" required error={errors.acheteur}>
+              <Input
                 id="vente-acheteur"
                 type="text"
                 aria-label="Nom de l'acheteur"
                 aria-required="true"
                 aria-invalid={!!errors.acheteur}
                 aria-describedby={errors.acheteur ? 'vente-acheteur-error' : undefined}
-                className={[
-                  'w-full h-11 rounded-md px-3',
-                  'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                  'text-[13px]',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-amber focus:ring-1 focus:ring-amber',
-                  errors.acheteur ? 'border-red' : 'border-border hover:border-text-2',
-                ].join(' ')}
                 placeholder="Ex : Abattoir Abidjan"
                 value={acheteur}
                 onChange={e => setAcheteur(e.target.value)}
                 disabled={saving}
                 maxLength={VENTE_ACHETEUR_MAX}
               />
-              {errors.acheteur ? (
-                <p
-                  id="vente-acheteur-error"
-                  role="alert"
-                  className="text-[11px] text-red"
-                >
-                  {errors.acheteur}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
 
             {/* ── Date vente ───────────────────────────────────────────── */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="vente-date"
-                className="block text-mono-label text-text-2"
-              >
-                Date vente
-              </label>
-              <input
+            <FormField label="Date vente" required error={errors.date}>
+              <Input
                 id="vente-date"
                 type="date"
                 aria-label="Date de la vente"
                 aria-required="true"
                 aria-invalid={!!errors.date}
                 aria-describedby={errors.date ? 'vente-date-error' : undefined}
-                className={[
-                  'w-full h-11 rounded-md px-3',
-                  'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                  'font-mono text-[13px] tabular-nums',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-amber focus:ring-1 focus:ring-amber',
-                  errors.date ? 'border-red' : 'border-border hover:border-text-2',
-                ].join(' ')}
+                className="font-mono tabular-nums"
                 value={dateIso}
                 onChange={e => setDateIso(e.target.value)}
                 disabled={saving}
               />
-              {errors.date ? (
-                <p
-                  id="vente-date-error"
-                  role="alert"
-                  className="text-[11px] text-red"
-                >
-                  {errors.date}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
 
             {/* ── Canal de vente ──────────────────────────────────────── */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="vente-canal"
-                className="block text-mono-label text-text-2"
-              >
-                Canal de vente
-              </label>
-              <select
+            <FormField label="Canal de vente" error={errors.canal}>
+              <Select
                 id="vente-canal"
                 aria-label="Canal de vente"
                 aria-invalid={!!errors.canal}
                 aria-describedby={errors.canal ? 'vente-canal-error' : undefined}
-                className={[
-                  'w-full h-11 rounded-md px-3',
-                  'bg-bg-0 border text-text-0',
-                  'text-[13px]',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-amber focus:ring-1 focus:ring-amber',
-                  errors.canal ? 'border-red' : 'border-border hover:border-text-2',
-                ].join(' ')}
                 value={canal}
                 onChange={e => setCanal(e.target.value as VenteCanal)}
                 disabled={saving}
@@ -602,17 +478,8 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                 {VENTE_CANAUX.map(c => (
                   <option key={c} value={c}>{CANAL_LABELS[c]}</option>
                 ))}
-              </select>
-              {errors.canal ? (
-                <p
-                  id="vente-canal-error"
-                  role="alert"
-                  className="text-[11px] text-red"
-                >
-                  {errors.canal}
-                </p>
-              ) : null}
-            </div>
+              </Select>
+            </FormField>
 
             {/* ── Champs ABATTOIR (conditionnels) ─────────────────────── */}
             {showAbattoirFields ? (
@@ -620,54 +487,25 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                 className="space-y-3 rounded-md border border-border bg-bg-1 p-3"
                 aria-label="Informations abattoir et carcasse"
               >
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="vente-abattoir"
-                    className="block text-mono-label text-text-2"
-                  >
-                    Nom abattoir
-                  </label>
-                  <input
+                <FormField label="Nom abattoir" required error={errors.abattoirNom}>
+                  <Input
                     id="vente-abattoir"
                     type="text"
                     aria-label="Nom de l'abattoir"
                     aria-required="true"
                     aria-invalid={!!errors.abattoirNom}
                     aria-describedby={errors.abattoirNom ? 'vente-abattoir-error' : undefined}
-                    className={[
-                      'w-full h-11 rounded-md px-3',
-                      'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                      'text-[13px]',
-                      'outline-none transition-colors duration-[160ms]',
-                      'focus:border-amber focus:ring-1 focus:ring-amber',
-                      errors.abattoirNom ? 'border-red' : 'border-border hover:border-text-2',
-                    ].join(' ')}
                     placeholder="Ex : Abattoir Abidjan"
                     value={abattoirNom}
                     onChange={e => setAbattoirNom(e.target.value)}
                     disabled={saving}
                     maxLength={VENTE_ABATTOIR_NOM_MAX}
                   />
-                  {errors.abattoirNom ? (
-                    <p
-                      id="vente-abattoir-error"
-                      role="alert"
-                      className="text-[11px] text-red"
-                    >
-                      {errors.abattoirNom}
-                    </p>
-                  ) : null}
-                </div>
+                </FormField>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor="vente-carcasse"
-                      className="block text-mono-label text-text-2"
-                    >
-                      Poids carcasse total (kg)
-                    </label>
-                    <input
+                  <FormField label="Poids carcasse total (kg)" required error={errors.poidsCarcasse}>
+                    <Input
                       id="vente-carcasse"
                       type="text"
                       inputMode="decimal"
@@ -675,40 +513,16 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                       aria-required="true"
                       aria-invalid={!!errors.poidsCarcasse}
                       aria-describedby={errors.poidsCarcasse ? 'vente-carcasse-error' : undefined}
-                      className={[
-                        'w-full h-11 rounded-md px-3',
-                        'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                        'text-[13px] tabular-nums',
-                        'outline-none transition-colors duration-[160ms]',
-                        'focus:border-amber focus:ring-1 focus:ring-amber',
-                        errors.poidsCarcasse ? 'border-red' : 'border-border hover:border-text-2',
-                      ].join(' ')}
+                      className="tabular-nums"
                       placeholder="0"
                       value={poidsCarcasse}
-                      onChange={e =>
-                        setPoidsCarcasse(e.target.value.replace(/[^\d.,]/g, ''))
-                      }
+                      onChange={e => setPoidsCarcasse(e.target.value.replace(/[^\d.,]/g, ''))}
                       disabled={saving}
                     />
-                    {errors.poidsCarcasse ? (
-                      <p
-                        id="vente-carcasse-error"
-                        role="alert"
-                        className="text-[11px] text-red"
-                      >
-                        {errors.poidsCarcasse}
-                      </p>
-                    ) : null}
-                  </div>
+                  </FormField>
 
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor="vente-prix-carcasse"
-                      className="block text-mono-label text-text-2"
-                    >
-                      Prix carcasse (FCFA / kg)
-                    </label>
-                    <input
+                  <FormField label="Prix carcasse (FCFA / kg)" required error={errors.prixCarcasse}>
+                    <Input
                       id="vente-prix-carcasse"
                       type="text"
                       inputMode="decimal"
@@ -716,31 +530,13 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
                       aria-required="true"
                       aria-invalid={!!errors.prixCarcasse}
                       aria-describedby={errors.prixCarcasse ? 'vente-prix-carcasse-error' : undefined}
-                      className={[
-                        'w-full h-11 rounded-md px-3',
-                        'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                        'text-[13px] tabular-nums',
-                        'outline-none transition-colors duration-[160ms]',
-                        'focus:border-amber focus:ring-1 focus:ring-amber',
-                        errors.prixCarcasse ? 'border-red' : 'border-border hover:border-text-2',
-                      ].join(' ')}
+                      className="tabular-nums"
                       placeholder="0"
                       value={prixCarcasse}
-                      onChange={e =>
-                        setPrixCarcasse(e.target.value.replace(/[^\d.,]/g, ''))
-                      }
+                      onChange={e => setPrixCarcasse(e.target.value.replace(/[^\d.,]/g, ''))}
                       disabled={saving}
                     />
-                    {errors.prixCarcasse ? (
-                      <p
-                        id="vente-prix-carcasse-error"
-                        role="alert"
-                        className="text-[11px] text-red"
-                      >
-                        {errors.prixCarcasse}
-                      </p>
-                    ) : null}
-                  </div>
+                  </FormField>
                 </div>
 
                 {/* Badge rendement carcasse auto-calculé */}
@@ -769,83 +565,43 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
             ) : null}
 
             {/* ── Notes (optionnel) ────────────────────────────────────── */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="vente-notes"
-                className="block text-mono-label text-text-2"
-              >
-                Notes <span className="text-text-2 normal-case">· optionnel</span>
-              </label>
-              <textarea
+            <FormField label="Notes" hint={`optionnel · ${notes.length}/${VENTE_NOTES_MAX}`}>
+              <Textarea
                 id="vente-notes"
                 aria-label="Notes complémentaires sur la vente"
                 aria-describedby="vente-notes-hint"
-                className={[
-                  'w-full rounded-md px-3 py-3',
-                  'bg-bg-0 border border-border text-text-0 placeholder:text-text-2',
-                  'text-[12px]',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-amber focus:ring-1 focus:ring-amber',
-                  'min-h-[72px] resize-y',
-                ].join(' ')}
                 placeholder="Ex : livraison matin, camion 1"
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
                 disabled={saving}
                 maxLength={VENTE_NOTES_MAX}
               />
-              <p
-                id="vente-notes-hint"
-                className="text-[10px] text-text-2 tabular-nums"
-              >
-                {notes.length}/{VENTE_NOTES_MAX}
-              </p>
-            </div>
+            </FormField>
 
             {/* ── Actions ─────────────────────────────────────────────── */}
-            <div className="flex items-center gap-2 pt-2">
-              <button
-                type="button"
+            <div className="flex gap-3 justify-end pt-2 border-t border-border">
+              <Button
+                variant="secondary"
                 onClick={resetAndClose}
                 disabled={saving}
-                aria-label="Annuler la vente"
-                className={[
-                  'pressable flex-1 h-14 rounded-md',
-                  'inline-flex items-center justify-center gap-2',
-                  'bg-bg-1 border border-border text-text-1',
-                  'text-[12px] font-bold uppercase tracking-wide',
-                  'transition-colors duration-[160ms]',
-                  'hover:border-text-2',
-                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber focus-visible:outline-offset-2',
-                  saving ? 'opacity-40 cursor-not-allowed' : '',
-                ].join(' ')}
+                ariaLabel="Annuler la vente"
               >
                 Annuler
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
+                variant="primary"
                 disabled={saving || !isValid}
-                aria-label="Valider la vente"
+                ariaLabel="Valider la vente"
                 aria-busy={saving}
-                className={[
-                  'pressable flex-[2] h-14 rounded-md',
-                  'inline-flex items-center justify-center gap-2',
-                  'bg-amber text-bg-0',
-                  'text-[13px] font-bold uppercase tracking-wide',
-                  'transition-colors duration-[160ms]',
-                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber focus-visible:outline-offset-2',
-                  saving || !isValid ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
-                ].join(' ')}
               >
-                {saving ? (
-                  <span className="animate-pulse">Enregistrement…</span>
-                ) : (
-                  <>
+                {saving ? 'Enregistrement…' : (
+                  <span className="inline-flex items-center gap-2">
                     <Check size={14} aria-hidden="true" />
-                    <span>Valider vente</span>
-                  </>
+                    Valider vente
+                  </span>
                 )}
-              </button>
+              </Button>
             </div>
           </form>
         )}

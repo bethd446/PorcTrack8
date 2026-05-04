@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import { PorceletIcon } from '../../components/icons';
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
 import EmptyState from '../../components/design/EmptyState';
@@ -15,6 +14,7 @@ import {
   Chip,
   SectionDivider,
 } from '../../components/agritech';
+import { Button, PageHeader } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   computeBandePhase,
@@ -131,21 +131,11 @@ const CroissanceView: React.FC = () => {
           />
 
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <header>
-              <Eyebrow dotColor="accent">Cycle · Croissance</Eyebrow>
-              <h1
-                className="text-page-title"
-                style={{ margin: '8px 0 4px' }}
-              >
-                Croissance
-              </h1>
-              <div
-                className="text-body"
-                style={{ color: 'var(--muted)' }}
-              >
-                J60 → J95 · {summary.nbPortees} bandes
-              </div>
-            </header>
+            <PageHeader
+              eyebrow="CROISSANCE"
+              title="Croissance"
+              subtitle="Phase de croissance"
+            />
             {/* ── Summary Stats ────────────────────────────────────────── */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <KpiCardV6
@@ -344,13 +334,14 @@ const CroissanceCard: React.FC<{ data: CroissanceRowData; onOpen: () => void }> 
       </div>
 
       {isTransitionRequired && (
-        <button
-          className="w-full bg-amber text-bg-0 py-2.5 rounded-xl font-bold text-[12px] tracking-wider flex items-center justify-center gap-2"
+        <Button
+          variant="primary"
+          fullWidth
           onClick={(e) => { e.stopPropagation(); navigate('/troupeau/batiments'); }}
         >
           <ArrowUpRight size={16} />
           Passer en engraissement
-        </button>
+        </Button>
       )}
     </div>
   );

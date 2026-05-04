@@ -14,6 +14,7 @@ import { IonToast } from '@ionic/react';
 import { ArrowRight, Baby, CheckCircle2, Plus, Scale, X } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { Button } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   addBatchSource,
@@ -481,14 +482,17 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
                     Destination {idx + 1}
                   </p>
                   {destinations.length > 1 && (
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="small"
                       onClick={() => removeDestination(d.uid)}
                       aria-label={`Retirer destination ${idx + 1}`}
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-text-2 hover:text-red"
+                      className="inline-flex h-7 w-7 items-center justify-center text-text-2 hover:text-red"
+                      style={{ borderRadius: '0.375rem', height: '1.75rem', width: '1.75rem', padding: 0 }}
                     >
                       <X size={14} aria-hidden="true" />
-                    </button>
+                    </Button>
                   )}
                 </div>
 
@@ -559,14 +563,16 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
           })}
         </div>
 
-        <button
+        <Button
           type="button"
+          variant="secondary"
           onClick={addDestination}
-          className="pressable inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-dashed border-border text-[12px] uppercase tracking-wide text-text-1"
+          className="pressable inline-flex h-11 w-full items-center justify-center gap-2 border border-dashed border-border text-[12px] uppercase tracking-wide text-text-1"
+          style={{ borderRadius: '0.375rem' }}
         >
           <Plus size={14} aria-hidden="true" />
           Ajouter destination
-        </button>
+        </Button>
       </div>
     );
   };
@@ -690,45 +696,53 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
 
             <div className="flex items-center gap-2 pt-2">
               {step > 1 ? (
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={goPrev}
                   disabled={saving}
-                  className="pressable h-14 flex-1 rounded-md border border-border bg-bg-1 text-[12px] font-bold uppercase tracking-wide text-text-1"
+                  className="pressable h-14 flex-1 border border-border bg-bg-1 text-[12px] font-bold uppercase tracking-wide text-text-1"
+                  style={{ borderRadius: '0.375rem', height: '3.5rem' }}
                 >
                   Retour
-                </button>
+                </Button>
               ) : (
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={onClose}
                   disabled={saving}
-                  className="pressable h-14 flex-1 rounded-md border border-border bg-bg-1 text-[12px] font-bold uppercase tracking-wide text-text-1"
+                  className="pressable h-14 flex-1 border border-border bg-bg-1 text-[12px] font-bold uppercase tracking-wide text-text-1"
+                  style={{ borderRadius: '0.375rem', height: '3.5rem' }}
                 >
                   Annuler
-                </button>
+                </Button>
               )}
 
               {step < 3 ? (
-                <button
+                <Button
                   type="button"
+                  variant="primary"
                   onClick={goNext}
                   disabled={
                     saving ||
                     (step === 1 && selectedSourceIds.length === 0)
                   }
-                  className="pressable inline-flex h-14 flex-[2] items-center justify-center gap-2 rounded-md bg-accent text-[13px] font-bold uppercase tracking-wide text-bg-0 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="pressable inline-flex h-14 flex-[2] items-center justify-center gap-2 bg-accent text-[13px] font-bold uppercase tracking-wide text-bg-0 disabled:cursor-not-allowed disabled:opacity-40"
+                  style={{ borderRadius: '0.375rem', height: '3.5rem' }}
                 >
                   Suivant
                   <ArrowRight size={16} aria-hidden="true" />
-                </button>
+                </Button>
               ) : (
-                <button
+                <Button
                   type="button"
+                  variant="primary"
                   onClick={handleConfirm}
                   disabled={saving}
                   aria-busy={saving}
-                  className="pressable inline-flex h-14 flex-[2] items-center justify-center gap-2 rounded-md bg-accent text-[13px] font-bold uppercase tracking-wide text-bg-0 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="pressable inline-flex h-14 flex-[2] items-center justify-center gap-2 bg-accent text-[13px] font-bold uppercase tracking-wide text-bg-0 disabled:cursor-not-allowed disabled:opacity-40"
+                  style={{ borderRadius: '0.375rem', height: '3.5rem' }}
                 >
                   {saving ? (
                     <span className="animate-pulse">Enregistrement…</span>
@@ -738,7 +752,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
                       Valider sevrage
                     </>
                   )}
-                </button>
+                </Button>
               )}
             </div>
           </div>

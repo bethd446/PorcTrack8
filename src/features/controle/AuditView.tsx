@@ -280,14 +280,12 @@ const AuditView: React.FC = () => {
 
             {/* TABS FILTRES ──────────────────────────────────────────── */}
             {!loading && counts.total > 0 ? (
-              <div style={{ overflowX: 'auto', margin: '0 -4px', padding: '0 4px' }}>
-                <Tabs
-                  items={tabItems}
-                  value={filter}
-                  onChange={(id: string) => setFilter(id as CategoryKey)}
-                  ariaLabel="Filtres audit"
-                />
-              </div>
+              <Tabs
+                items={tabItems}
+                value={filter}
+                onChange={(id: string) => setFilter(id as CategoryKey)}
+                ariaLabel="Filtres audit"
+              />
             ) : null}
 
             {/* LOADING ───────────────────────────────────────────────── */}

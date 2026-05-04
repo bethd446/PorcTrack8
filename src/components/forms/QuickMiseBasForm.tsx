@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Baby, Check, CheckCircle2 } from 'lucide-react';
 
 import { AppToast, BottomSheet, useAppToast } from '../agritech';
+import { Button, Input } from '@/design-system';
 import {
   insertBatch,
   updateSowByCode,
@@ -532,7 +533,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
                   >
                     Mâles
                   </label>
-                  <input
+                  <Input
                     id="mb-males"
                     type="number"
                     inputMode="numeric"
@@ -542,14 +543,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
                     aria-label="Nombre de porcelets mâles"
                     aria-invalid={!!errors.nbMales}
                     aria-describedby={errors.nbMales ? 'mb-males-error' : undefined}
-                    className={[
-                      'w-full h-12 rounded-md px-3 text-center',
-                      'bg-bg-0 border text-text-0',
-                      'font-mono text-[16px] font-bold tabular-nums',
-                      'outline-none transition-colors duration-[160ms]',
-                      'focus:border-accent focus:ring-1 focus:ring-accent',
-                      errors.nbMales ? 'border-red' : 'border-border',
-                    ].join(' ')}
+                    invalid={!!errors.nbMales}
                     placeholder="—"
                     value={nbMales}
                     onChange={e => setNbMales(e.target.value)}
@@ -572,7 +566,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
                   >
                     Femelles
                   </label>
-                  <input
+                  <Input
                     id="mb-femelles"
                     type="number"
                     inputMode="numeric"
@@ -582,14 +576,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
                     aria-label="Nombre de porcelets femelles"
                     aria-invalid={!!errors.nbFemelles}
                     aria-describedby={errors.nbFemelles ? 'mb-femelles-error' : undefined}
-                    className={[
-                      'w-full h-12 rounded-md px-3 text-center',
-                      'bg-bg-0 border text-text-0',
-                      'font-mono text-[16px] font-bold tabular-nums',
-                      'outline-none transition-colors duration-[160ms]',
-                      'focus:border-accent focus:ring-1 focus:ring-accent',
-                      errors.nbFemelles ? 'border-red' : 'border-border',
-                    ].join(' ')}
+                    invalid={!!errors.nbFemelles}
                     placeholder="—"
                     value={nbFemelles}
                     onChange={e => {
@@ -616,50 +603,31 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
               ) : null}
             </div>
 
-            <div className="flex items-center gap-2 pt-2">
-              <button
-                type="button"
+            <div className="flex gap-3 justify-end px-4 py-3 border-t border-border">
+              <Button
+                variant="secondary"
                 onClick={handleClose}
                 disabled={saving}
                 aria-label="Annuler et fermer"
-                className={[
-                  'pressable flex-1 h-14 rounded-md',
-                  'inline-flex items-center justify-center gap-2',
-                  'bg-bg-1 border border-border text-text-1',
-                  'text-[12px] font-bold uppercase tracking-wide',
-                  'transition-colors duration-[160ms] hover:border-text-2',
-                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                  saving ? 'opacity-40 cursor-not-allowed' : '',
-                ].join(' ')}
               >
                 Annuler
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="primary"
                 type="submit"
                 disabled={saving || !truieId || truiesEligibles.length === 0}
                 aria-label="Enregistrer la mise-bas"
                 aria-busy={saving}
-                className={[
-                  'pressable flex-[2] h-14 rounded-md',
-                  'inline-flex items-center justify-center gap-2',
-                  'bg-accent text-bg-0',
-                  'text-[13px] font-bold uppercase tracking-wide',
-                  'transition-colors duration-[160ms]',
-                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                  (saving || !truieId || truiesEligibles.length === 0)
-                    ? 'opacity-40 cursor-not-allowed'
-                    : 'hover:brightness-110',
-                ].join(' ')}
               >
                 {saving ? (
                   <span className="animate-pulse">Enregistrement…</span>
                 ) : (
-                  <>
+                  <span className="inline-flex items-center gap-2">
                     <Check size={16} aria-hidden="true" />
                     Enregistrer
-                  </>
+                  </span>
                 )}
-              </button>
+              </Button>
             </div>
           </form>
         )}

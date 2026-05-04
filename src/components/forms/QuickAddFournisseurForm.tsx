@@ -14,6 +14,7 @@ import { IonToast } from '@ionic/react';
 import { Plus, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { FormField, Input, Select, Textarea, Button } from '@/design-system';
 import { insertFournisseur } from '../../services/supabaseWrites';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import {
@@ -119,62 +120,30 @@ const QuickAddFournisseurForm: React.FC<QuickAddFournisseurFormProps> = ({
             </p>
           </div>
 
-          {/* Nom */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-fourn-nom"
-              className="block text-mono-label text-text-2"
-            >
-              Nom <span className="text-red normal-case">· obligatoire</span>
-            </label>
-            <input
+          <FormField label="Nom" required error={errors.nom}>
+            <Input
               id="add-fourn-nom"
               ref={firstFieldRef}
               type="text"
+              aria-label="Nom du fournisseur"
               maxLength={80}
               aria-required="true"
               aria-invalid={!!errors.nom}
               aria-describedby={errors.nom ? 'add-fourn-nom-error' : undefined}
-              className={[
-                'w-full h-12 rounded-md px-3',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-sans text-[14px]',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.nom ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
               placeholder="Ex: ProvAlim Côte d'Ivoire"
               value={nom}
               onChange={e => setNom(e.target.value)}
               disabled={saving}
               autoComplete="off"
+              invalid={!!errors.nom}
             />
-            {errors.nom ? (
-              <p id="add-fourn-nom-error" role="alert" className="text-[11px] text-red">
-                {errors.nom}
-              </p>
-            ) : null}
-          </div>
+          </FormField>
 
-          {/* Type */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-fourn-type"
-              className="block text-mono-label text-text-2"
-            >
-              Type
-            </label>
-            <select
+          <FormField label="Type">
+            <Select
               id="add-fourn-type"
+              aria-label="Type"
               aria-invalid={!!errors.type}
-              className={[
-                'w-full h-12 rounded-md px-3',
-                'bg-bg-0 border text-text-0',
-                'text-[13px] uppercase',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.type ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
               value={type}
               onChange={e => setType(e.target.value)}
               disabled={saving}
@@ -184,122 +153,68 @@ const QuickAddFournisseurForm: React.FC<QuickAddFournisseurFormProps> = ({
                   {t}
                 </option>
               ))}
-            </select>
-          </div>
+            </Select>
+          </FormField>
 
-          {/* WhatsApp */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-fourn-wa"
-              className="block text-mono-label text-text-2"
-            >
-              WhatsApp <span className="text-text-2 normal-case">· format international</span>
-            </label>
-            <input
+          <FormField
+            label="WhatsApp"
+            hint={errors.whatsappNumber ? undefined : 'Min 8 chiffres. Préfixe pays inclus si possible.'}
+            error={errors.whatsappNumber}
+          >
+            <Input
               id="add-fourn-wa"
               type="tel"
+              aria-label="WhatsApp"
               inputMode="tel"
               maxLength={20}
               aria-invalid={!!errors.whatsappNumber}
               aria-describedby={
                 errors.whatsappNumber ? 'add-fourn-wa-error' : 'add-fourn-wa-hint'
               }
-              className={[
-                'w-full h-12 rounded-md px-3',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'text-[14px] tabular-nums',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.whatsappNumber ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
+              className="tabular-nums"
               placeholder="+225 07 00 00 00"
               value={whatsappNumber}
               onChange={e => setWhatsappNumber(e.target.value)}
               disabled={saving}
               autoComplete="off"
+              invalid={!!errors.whatsappNumber}
             />
-            {errors.whatsappNumber ? (
-              <p id="add-fourn-wa-error" role="alert" className="text-[11px] text-red">
-                {errors.whatsappNumber}
-              </p>
-            ) : (
-              <p id="add-fourn-wa-hint" className="text-[10px] text-text-2">
-                Min 8 chiffres. Préfixe pays inclus si possible.
-              </p>
-            )}
-          </div>
+          </FormField>
 
-          {/* Email */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-fourn-email"
-              className="block text-mono-label text-text-2"
-            >
-              Email <span className="text-text-2 normal-case">· optionnel</span>
-            </label>
-            <input
+          <FormField label="Email" hint="optionnel" error={errors.email}>
+            <Input
               id="add-fourn-email"
               type="email"
+              aria-label="Email"
               inputMode="email"
               maxLength={120}
               aria-invalid={!!errors.email}
               aria-describedby={errors.email ? 'add-fourn-email-error' : undefined}
-              className={[
-                'w-full h-12 rounded-md px-3',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-sans text-[14px]',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.email ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
               placeholder="contact@fournisseur.ci"
               value={email}
               onChange={e => setEmail(e.target.value)}
               disabled={saving}
               autoComplete="off"
+              invalid={!!errors.email}
             />
-            {errors.email ? (
-              <p id="add-fourn-email-error" role="alert" className="text-[11px] text-red">
-                {errors.email}
-              </p>
-            ) : null}
-          </div>
+          </FormField>
 
-          {/* Notes */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-fourn-notes"
-              className="block text-mono-label text-text-2"
-            >
-              Notes <span className="text-text-2 normal-case">· optionnel</span>
-            </label>
-            <textarea
+          <FormField label="Notes" hint="optionnel" error={errors.notes}>
+            <Textarea
               id="add-fourn-notes"
+              aria-label="Notes"
               maxLength={500}
               rows={3}
               aria-invalid={!!errors.notes}
               aria-describedby={errors.notes ? 'add-fourn-notes-error' : undefined}
-              className={[
-                'w-full rounded-md px-3 py-2',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-sans text-[13px]',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.notes ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
               placeholder="Délais de livraison, conditions, contact terrain…"
               value={notes}
               onChange={e => setNotes(e.target.value)}
               disabled={saving}
             />
-            {errors.notes ? (
-              <p id="add-fourn-notes-error" role="alert" className="text-[11px] text-red">
-                {errors.notes}
-              </p>
-            ) : null}
-          </div>
+          </FormField>
 
-          {/* Default */}
+          {/* TODO V44: Checkbox DS missing */}
           <div className="flex items-center gap-3">
             <input
               id="add-fourn-default"
@@ -317,49 +232,29 @@ const QuickAddFournisseurForm: React.FC<QuickAddFournisseurFormProps> = ({
             </label>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2 pt-2">
-            <button
-              type="button"
+          <div className="flex gap-3 justify-end pt-2 border-t border-border">
+            <Button
+              variant="secondary"
               onClick={handleClose}
               disabled={saving}
-              aria-label="Annuler et fermer"
-              className={[
-                'pressable flex-1 h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-bg-1 border border-border text-text-1',
-                'text-[12px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms] hover:border-text-2',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : '',
-              ].join(' ')}
+              ariaLabel="Annuler et fermer"
             >
               Annuler
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={saving}
-              aria-label="Ajouter le fournisseur"
               aria-busy={saving}
-              className={[
-                'pressable flex-[2] h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-accent text-bg-0',
-                'text-[13px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms]',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
-              ].join(' ')}
+              ariaLabel="Ajouter le fournisseur"
             >
-              {saving ? (
-                <span className="animate-pulse">Enregistrement…</span>
-              ) : (
-                <>
-                  <span>Ajouter</span>
+              {saving ? 'Enregistrement…' : (
+                <span className="inline-flex items-center gap-2">
+                  Ajouter
                   <Save size={14} aria-hidden="true" />
-                </>
+                </span>
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </BottomSheet>

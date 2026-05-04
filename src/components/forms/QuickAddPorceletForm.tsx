@@ -8,6 +8,7 @@ import { IonToast } from '@ionic/react';
 import { AlertTriangle, Plus, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { FormField, Input, Textarea, Button } from '@/design-system';
 import { addPorcelet } from '../../services/supabaseWrites';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import {
@@ -166,46 +167,32 @@ const QuickAddPorceletForm: React.FC<QuickAddPorceletFormProps> = ({
             </div>
           </div>
 
-          {/* Boucle */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-porcelet-boucle"
-              className="block text-mono-label text-text-2"
-            >
-              Boucle <span className="text-red normal-case">· obligatoire</span>
-            </label>
-            <input
+          <FormField
+            label="Boucle"
+            required
+            hint={errors.boucle ? undefined : '2–15 car. (lettres, chiffres, tirets) · doublons autorisés (signalés)'}
+            error={errors.boucle}
+          >
+            <Input
               id="add-porcelet-boucle"
               ref={firstFieldRef}
               type="text"
+              aria-label="Boucle"
               maxLength={15}
               autoCapitalize="characters"
               autoComplete="off"
               aria-required="true"
               aria-invalid={!!errors.boucle}
               aria-describedby={errors.boucle ? 'add-porcelet-boucle-error' : 'add-porcelet-boucle-hint'}
-              className={[
-                'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'ft-code text-[14px] uppercase outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.boucle ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
+              className="ft-code uppercase"
               placeholder="P-001"
               value={boucle}
               onChange={e => setBoucle(e.target.value)}
               disabled={saving}
+              invalid={!!errors.boucle}
             />
-            {errors.boucle ? (
-              <p id="add-porcelet-boucle-error" role="alert" className="text-[12px] text-red">
-                {errors.boucle}
-              </p>
-            ) : (
-              <p id="add-porcelet-boucle-hint" className="text-[12px] text-text-2">
-                2–15 car. (lettres, chiffres, tirets) · doublons autorisés (signalés)
-              </p>
-            )}
 
-            {/* V36-E P3 — Warning doublon non-bloquant (Tag pill amber) */}
+            {/* V36-E P3 — Warning doublon non-bloquant */}
             {duplicate ? (
               <div
                 role="status"
@@ -231,9 +218,9 @@ const QuickAddPorceletForm: React.FC<QuickAddPorceletFormProps> = ({
                 </span>
               </div>
             ) : null}
-          </div>
+          </FormField>
 
-          {/* Sexe */}
+          {/* TODO V44: Radio DS missing — radiogroup custom conservé */}
           <div className="space-y-1.5">
             <span
               id="add-porcelet-sexe-label"
@@ -276,115 +263,63 @@ const QuickAddPorceletForm: React.FC<QuickAddPorceletFormProps> = ({
             </div>
           </div>
 
-          {/* Poids courant */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-porcelet-poids"
-              className="block text-mono-label text-text-2"
-            >
-              Poids courant (kg) <span className="text-text-2 normal-case">· optionnel</span>
-            </label>
-            <input
+          <FormField label="Poids courant (kg)" hint="optionnel" error={errors.poidsCourantKg}>
+            <Input
               id="add-porcelet-poids"
               type="number"
+              aria-label="Poids courant en kilogrammes"
               inputMode="decimal"
               step={0.1}
               min={0.5}
               max={200}
               aria-invalid={!!errors.poidsCourantKg}
               aria-describedby={errors.poidsCourantKg ? 'add-porcelet-poids-error' : undefined}
-              className={[
-                'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'text-[16px] tabular-nums text-center font-semibold outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.poidsCourantKg ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
+              className="text-[16px] tabular-nums text-center font-semibold"
               placeholder="—"
               value={poidsCourantKg}
               onChange={e => setPoidsCourantKg(e.target.value)}
               disabled={saving}
+              invalid={!!errors.poidsCourantKg}
             />
-            {errors.poidsCourantKg ? (
-              <p id="add-porcelet-poids-error" role="alert" className="text-[12px] text-red">
-                {errors.poidsCourantKg}
-              </p>
-            ) : null}
-          </div>
+          </FormField>
 
-          {/* Notes */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-porcelet-notes"
-              className="block text-mono-label text-text-2"
-            >
-              Notes
-            </label>
-            <textarea
+          <FormField label="Notes" error={errors.notes}>
+            <Textarea
               id="add-porcelet-notes"
+              aria-label="Notes"
               rows={2}
               maxLength={300}
               aria-invalid={!!errors.notes}
-              className={[
-                'w-full rounded-md px-3 py-2 bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'text-[13px] outline-none transition-colors duration-[160ms] resize-none',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.notes ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
               placeholder="Observation optionnelle…"
               value={notes}
               onChange={e => setNotes(e.target.value)}
               disabled={saving}
             />
-            {errors.notes ? (
-              <p role="alert" className="text-[12px] text-red">
-                {errors.notes}
-              </p>
-            ) : null}
-          </div>
+          </FormField>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2 pt-2">
-            <button
-              type="button"
+          <div className="flex gap-3 justify-end pt-2 border-t border-border">
+            <Button
+              variant="secondary"
               onClick={handleClose}
               disabled={saving}
-              aria-label="Annuler"
-              className={[
-                'pressable flex-1 h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-bg-1 border border-border text-text-1',
-                'text-[12px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms] hover:border-text-2',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : '',
-              ].join(' ')}
+              ariaLabel="Annuler"
             >
               Annuler
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={saving}
-              aria-label="Ajouter le porcelet"
               aria-busy={saving}
-              className={[
-                'pressable flex-[2] h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-accent text-bg-0',
-                'text-[13px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms]',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
-              ].join(' ')}
+              ariaLabel="Ajouter le porcelet"
             >
-              {saving ? (
-                <span className="animate-pulse">Enregistrement…</span>
-              ) : (
-                <>
-                  <span>Ajouter</span>
+              {saving ? 'Enregistrement…' : (
+                <span className="inline-flex items-center gap-2">
+                  Ajouter
                   <Save size={14} aria-hidden="true" />
-                </>
+                </span>
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </BottomSheet>

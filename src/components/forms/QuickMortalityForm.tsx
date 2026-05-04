@@ -3,6 +3,7 @@ import { IonToast, IonSelect, IonSelectOption, IonSegment, IonSegmentButton, Ion
 import { CheckCircle2, Search, ChevronRight, ArrowLeft } from 'lucide-react';
 
 import { BottomSheet, DataRow } from '../agritech';
+import { Button, Input, Textarea } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import { filterRealPortees } from '../../services/bandesAggregator';
 import {
@@ -354,9 +355,9 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
                 <IonSegmentButton value="TRUIE"><IonLabel className="text-[11px]">Truies</IonLabel></IonSegmentButton>
                 <IonSegmentButton value="VERRAT"><IonLabel className="text-[11px]">Verrats</IonLabel></IonSegmentButton>
               </IonSegment>
-              <div className="flex items-center gap-2 h-11 px-3 rounded-md bg-bg-0 border border-border focus-within:border-accent">
-                <Search size={14} className="text-text-2" />
-                <input type="search" className="flex-1 bg-transparent outline-none text-[13px] text-text-0" placeholder="Rechercher sujet…" value={query} onChange={e => setQuery(e.target.value)} />
+              <div className="flex items-center gap-2">
+                <Search size={14} className="text-text-2 flex-shrink-0" aria-hidden="true" />
+                <Input type="search" placeholder="Rechercher sujet…" value={query} onChange={e => setQuery(e.target.value)} />
               </div>
 
               {/* Necessary for a11y tests */}
@@ -385,7 +386,7 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
           {step === 2 && selectedSubject && (
             <div className="space-y-5">
               <div className="card-dense !p-3 flex items-center gap-3">
-                <button type="button" onClick={() => setStep(1)} className="pressable h-9 w-9 flex items-center justify-center rounded-md bg-bg-2 text-text-1"><ArrowLeft size={14} /></button>
+                <Button type="button" variant="ghost" size="small" onClick={() => setStep(1)} className="pressable h-9 w-9 flex items-center justify-center rounded-md bg-bg-2 text-text-1"><ArrowLeft size={14} /></Button>
                 <div className="min-w-0 flex-1">
                   <div className="text-[10px] uppercase text-text-2">{subjectType}</div>
                   <div className="truncate ft-code text-[13px] text-text-0">{subjectDisplay(selectedSubject)}</div>
@@ -409,19 +410,18 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
                   <div className="space-y-2">
                     <label htmlFor="mortality-count" className="block text-[11px] uppercase text-text-2">Nombre de morts</label>
                     <div className="flex items-center gap-2">
-                      <button type="button" aria-label="Diminuer le nombre de morts" onClick={() => setNbMorts(n => Math.max(1, n-1))} className="pressable h-12 w-12 rounded-md border bg-bg-0 text-text-1">−</button>
-                      <input
+                      <Button type="button" variant="secondary" aria-label="Diminuer le nombre de morts" onClick={() => setNbMorts(n => Math.max(1, n-1))} className="pressable h-12 w-12 rounded-md border bg-bg-0 text-text-1">−</Button>
+                      <Input
                         id="mortality-count"
                         aria-label="Nombre de porcelets morts"
                         aria-describedby="mortality-count-hint"
                         type="number"
                         min={MIN_DEATHS}
                         max={maxMorts}
-                        className="flex-1 h-12 rounded-md px-3 text-center bg-bg-0 border text-text-0 text-xl font-bold"
                         value={nbMorts}
                         onChange={e => setNbMorts(Math.min(maxMorts, clampDeaths(Number(e.target.value))))}
                       />
-                      <button type="button" aria-label="Augmenter le nombre de morts" onClick={() => setNbMorts(n => Math.min(maxMorts, n+1))} className="pressable h-12 w-12 rounded-md border bg-bg-0 text-text-1">+</button>
+                      <Button type="button" variant="secondary" aria-label="Augmenter le nombre de morts" onClick={() => setNbMorts(n => Math.min(maxMorts, n+1))} className="pressable h-12 w-12 rounded-md border bg-bg-0 text-text-1">+</Button>
                     </div>
                     <span id="mortality-count-hint" className="block text-[11px] text-text-2">
                       Maximum : {vivants} porcelet{vivants > 1 ? 's' : ''} vivant{vivants > 1 ? 's' : ''} actuellement.
@@ -432,14 +432,14 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
 
               <div className="space-y-2">
                 <label htmlFor="mortality-obs" className="block text-[11px] uppercase text-text-2">Observation (optionnel)</label>
-                <textarea id="mortality-obs" aria-label="Observation sur la mortalité" aria-describedby="mortality-obs-hint" className="w-full rounded-md px-3 py-3 bg-bg-0 border text-text-0 text-[12px] min-h-[88px] resize-y" placeholder="Détails…" value={observation} onChange={e => setObservation(e.target.value)} maxLength={240} />
+                <Textarea id="mortality-obs" aria-label="Observation sur la mortalité" aria-describedby="mortality-obs-hint" placeholder="Détails…" value={observation} onChange={e => setObservation(e.target.value)} maxLength={240} />
                 <span id="mortality-obs-hint" className="sr-only">Optionnel — description de la cause de mortalité</span>
               </div>
 
               {error && <p id="mortality-error" className="text-[11px] text-red" role="alert">{error}</p>}
-              <button type="button" aria-label="Enregistrer la mortalité" aria-busy={saving} onClick={handleSave} disabled={saving || !selectedBandeId || bandesDispo.length === 0} className="pressable w-full h-14 rounded-md bg-coral text-bg-0 text-[12px] font-bold uppercase tracking-wide">
+              <Button type="button" variant="danger" fullWidth aria-label="Enregistrer la mortalité" aria-busy={saving} onClick={handleSave} disabled={saving || !selectedBandeId || bandesDispo.length === 0} className="pressable w-full h-14 rounded-md bg-coral text-bg-0 text-[12px] font-bold uppercase tracking-wide">
                 {saving ? 'Enregistrement…' : 'Enregistrer'}
-              </button>
+              </Button>
             </div>
           )}
 

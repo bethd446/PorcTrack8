@@ -10,6 +10,7 @@ import {
   resolveProduitVetoByCode,
 } from '../../services/supabaseWrites';
 import { BottomSheet } from '../agritech';
+import { Button, Input } from '@/design-system';
 import type { StockStatut } from '../../types/farm';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import {
@@ -301,7 +302,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                 Quantité reçue ({unite})
               </label>
               <div className="flex items-center gap-2">
-                <input
+                <Input
                   id="refill-qty"
                   ref={firstFieldRef}
                   type="text"
@@ -312,14 +313,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                   aria-describedby={
                     errors.quantite ? 'refill-qty-error' : 'refill-qty-hint'
                   }
-                  className={[
-                    'flex-1 h-16 rounded-md px-4',
-                    'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                    'font-mono text-[28px] tabular-nums text-center',
-                    'outline-none transition-colors duration-[160ms]',
-                    'focus:border-accent focus:ring-1 focus:ring-accent',
-                    errors.quantite ? 'border-red' : 'border-border hover:border-text-2',
-                  ].join(' ')}
+                  invalid={!!errors.quantite}
                   placeholder="0.0"
                   min={0.1}
                   step={0.5}
@@ -372,18 +366,10 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
               >
                 Fournisseur <span className="text-text-2 normal-case">· optionnel</span>
               </label>
-              <input
+              <Input
                 id="refill-supplier"
                 type="text"
                 aria-label="Fournisseur (optionnel)"
-                className={[
-                  'w-full h-11 rounded-md px-3',
-                  'bg-bg-0 border border-border text-text-0 placeholder:text-text-2',
-                  'text-[13px]',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  'hover:border-text-2',
-                ].join(' ')}
                 placeholder="Ex: SENAC Feed"
                 value={fournisseur}
                 onChange={e => setFournisseur(e.target.value)}
@@ -401,21 +387,14 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                 >
                   Prix unit. FCFA <span className="text-text-2 normal-case">· opt.</span>
                 </label>
-                <input
+                <Input
                   id="refill-price"
                   type="text"
                   inputMode="decimal"
                   aria-label="Prix unitaire en FCFA (optionnel)"
                   aria-invalid={!!errors.prix}
                   aria-describedby={errors.prix ? 'refill-price-error' : undefined}
-                  className={[
-                    'w-full h-11 rounded-md px-3',
-                    'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                    'text-[13px] tabular-nums',
-                    'outline-none transition-colors duration-[160ms]',
-                    'focus:border-accent focus:ring-1 focus:ring-accent',
-                    errors.prix ? 'border-red' : 'border-border hover:border-text-2',
-                  ].join(' ')}
+                  invalid={!!errors.prix}
                   placeholder="0"
                   value={prixUnitaire}
                   onChange={e =>
@@ -441,21 +420,14 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                 >
                   Date
                 </label>
-                <input
+                <Input
                   id="refill-date"
                   type="date"
                   aria-label="Date de réception"
                   aria-required="true"
                   aria-invalid={!!errors.date}
                   aria-describedby={errors.date ? 'refill-date-error' : undefined}
-                  className={[
-                    'w-full h-11 rounded-md px-3',
-                    'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                    'font-mono text-[13px] tabular-nums',
-                    'outline-none transition-colors duration-[160ms]',
-                    'focus:border-accent focus:ring-1 focus:ring-accent',
-                    errors.date ? 'border-red' : 'border-border hover:border-text-2',
-                  ].join(' ')}
+                  invalid={!!errors.date}
                   value={dateIso}
                   onChange={e => setDateIso(e.target.value)}
                   disabled={saving}
@@ -485,49 +457,31 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
             ) : null}
 
             {/* ── Actions ─────────────────────────────────────────── */}
-            <div className="flex items-center gap-2 pt-2">
-              <button
-                type="button"
+            <div className="flex gap-3 justify-end px-4 py-3 border-t border-border">
+              <Button
+                variant="secondary"
                 onClick={resetAndClose}
                 disabled={saving}
                 aria-label="Annuler le réapprovisionnement"
-                className={[
-                  'pressable flex-1 h-14 rounded-md',
-                  'inline-flex items-center justify-center gap-2',
-                  'bg-bg-1 border border-border text-text-1',
-                  'text-[12px] font-bold uppercase tracking-wide',
-                  'transition-colors duration-[160ms]',
-                  'hover:border-text-2',
-                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                  saving ? 'opacity-40 cursor-not-allowed' : '',
-                ].join(' ')}
               >
                 Annuler
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="primary"
                 type="submit"
                 disabled={saving || !isValid}
                 aria-label="Valider la réception du réapprovisionnement"
                 aria-busy={saving}
-                className={[
-                  'pressable flex-[2] h-14 rounded-md',
-                  'inline-flex items-center justify-center gap-2',
-                  'bg-accent text-bg-0',
-                  'text-[13px] font-bold uppercase tracking-wide',
-                  'transition-colors duration-[160ms]',
-                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                  saving || !isValid ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
-                ].join(' ')}
               >
                 {saving ? (
                   <span className="animate-pulse">Enregistrement…</span>
                 ) : (
-                  <>
-                    <span>Valider réception</span>
+                  <span className="inline-flex items-center gap-2">
+                    Valider réception
                     <Send size={14} className="flex-shrink-0" aria-hidden="true" />
-                  </>
+                  </span>
                 )}
-              </button>
+              </Button>
             </div>
           </form>
         ) : (

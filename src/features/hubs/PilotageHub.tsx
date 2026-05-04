@@ -484,19 +484,17 @@ export const PerfBandeCard: React.FC<PerfBandeCardProps> = ({ tone, label, bande
   const isWarning = tone === 'pig';
   const labelColor = isWarning ? 'var(--pt-danger)' : 'var(--pt-accent-deep)';
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
       onClick={() => navigate(`/troupeau/bandes/${bandeId}`)}
-      aria-label={`Ouvrir fiche bande ${bandeId}`}
+      ariaLabel={`Ouvrir fiche bande ${bandeId}`}
       data-pt="perf-bande-card"
+      fullWidth
       style={{
-        background: 'transparent',
-        border: 'none',
         padding: 0,
-        cursor: 'pointer',
         textAlign: 'left',
-        width: '100%',
         minHeight: '44px',
+        textTransform: 'none',
       }}
     >
       <Card compact warning={isWarning} interactive>
@@ -536,7 +534,7 @@ export const PerfBandeCard: React.FC<PerfBandeCardProps> = ({ tone, label, bande
           <span style={{ color: 'var(--pt-text-subtle)', fontSize: 18, lineHeight: 1 }} aria-hidden="true">›</span>
         </div>
       </Card>
-    </button>
+    </Button>
   );
 };
 
@@ -548,18 +546,16 @@ interface ModuleTileProps {
 }
 
 const ModuleTile: React.FC<ModuleTileProps> = ({ icon, title, miniStat, onClick }) => (
-  <button
-    type="button"
+  <Button
+    variant="ghost"
     onClick={onClick}
-    aria-label={title}
+    ariaLabel={title}
     className="pressable"
     style={{
       background: 'var(--bg-surface)',
       borderRadius: 12,
       padding: '16px 14px',
       boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-      border: 'none',
-      cursor: 'pointer',
       textAlign: 'left',
       display: 'flex',
       flexDirection: 'column',
@@ -567,6 +563,7 @@ const ModuleTile: React.FC<ModuleTileProps> = ({ icon, title, miniStat, onClick 
       gap: 10,
       minHeight: 96,
       transition: 'transform 160ms var(--ease-emil)',
+      textTransform: 'none',
     }}
   >
     <span
@@ -601,7 +598,7 @@ const ModuleTile: React.FC<ModuleTileProps> = ({ icon, title, miniStat, onClick 
         {miniStat}
       </div>
     </div>
-  </button>
+  </Button>
 );
 
 /**

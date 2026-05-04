@@ -9,6 +9,7 @@ import { IonModal } from '@ionic/react';
 import { ArrowRight, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import PhaseBadge, { type Phase } from '../design/PhaseBadge';
 import type { PendingTransition, PhaseAvecSortie } from '../../services/phaseEngine';
+import { Button } from '@/design-system';
 
 // ─── Labels FR pour chaque phase ─────────────────────────────────────────────
 
@@ -133,25 +134,29 @@ const PhaseTransitionModal: React.FC<PhaseTransitionModalProps> = ({
 
         {/* Actions */}
         <div className="flex gap-3 mt-auto">
-          <button
+          <Button
             type="button"
+            variant="secondary"
             aria-label="Plus tard"
             onClick={onDismiss}
-            className="pressable flex-1 h-12 rounded-xl border border-border text-[13px] text-text-2 hover:text-text-0 transition-colors"
+            className="pressable flex-1 h-12 border border-border text-[13px] text-text-2 hover:text-text-0 transition-colors"
+            style={{ borderRadius: '0.75rem', height: '3rem' }}
           >
             Plus tard
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant={critical ? 'danger' : 'primary'}
             aria-label="Confirmer"
             onClick={handleConfirm}
-            className={`pressable flex-[2] h-12 rounded-xl font-bold text-[13px] text-white flex items-center justify-center gap-2 transition-colors ${
+            className={`pressable flex-[2] h-12 font-bold text-[13px] text-white flex items-center justify-center gap-2 transition-colors ${
               critical ? 'bg-red' : 'bg-accent'
             }`}
+            style={{ borderRadius: '0.75rem', height: '3rem' }}
           >
             <CheckCircle size={16} />
             {critical ? 'Confirmer sortie' : 'Confirmer'}
-          </button>
+          </Button>
         </div>
       </div>
     </IonModal>

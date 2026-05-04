@@ -7,6 +7,7 @@ import {
   resolveBoarIdByCode,
 } from '../../services/supabaseWrites';
 import { BottomSheet } from '../agritech';
+import { Button } from '@/design-system';
 import { normaliseStatut } from '../../lib/truieStatut';
 
 /**
@@ -223,31 +224,22 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
           </div>
 
           {/* ── Confirm button ────────────────────────────────────────── */}
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            fullWidth
             onClick={handleSave}
             disabled={!selectedTruie || !selectedVerrat || saving}
-            aria-label="Confirmer la saillie"
-            className={[
-              'pressable w-full h-[52px] rounded-md',
-              'inline-flex items-center justify-center gap-2',
-              'bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide',
-              'transition-colors duration-[160ms]',
-              'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-              (!selectedTruie || !selectedVerrat || saving)
-                ? 'opacity-40 cursor-not-allowed'
-                : '',
-            ].join(' ')}
+            ariaLabel="Confirmer la saillie"
           >
             {saving ? (
               <span className="animate-pulse">Enregistrement…</span>
             ) : (
-              <>
+              <span className="inline-flex items-center gap-2">
                 <Check size={16} aria-hidden="true" />
                 Confirmer la saillie
-              </>
+              </span>
             )}
-          </button>
+          </Button>
 
           {selectedTruie && selectedVerrat && (
             <p className="text-center text-mono-label text-text-2 tabular-nums">

@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
+import { Button } from '@/design-system';
 
 interface BandesEBProps { children: React.ReactNode; onReset: () => void; }
 interface BandesEBState { hasError: boolean; error: Error | null; }
@@ -33,18 +34,22 @@ class BandesErrorBoundary extends React.Component<BandesEBProps, BandesEBState> 
             {this.state.error?.message || 'Une erreur critique est survenue dans le module Portées.'}
           </p>
           <div className="flex flex-col gap-3 w-full max-w-xs">
-            <button
+            <Button
+              variant="primary"
+              fullWidth
               onClick={this.handleReset}
               className="pressable w-full h-11 rounded-md bg-accent text-bg-0 text-[12px] uppercase tracking-wide transition-colors"
             >
               Rafraîchir
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="secondary"
+              fullWidth
               onClick={() => { window.location.href = '/'; }}
               className="pressable w-full h-11 rounded-md bg-bg-1 border border-border text-text-1 text-[12px] uppercase tracking-wide transition-colors"
             >
               Retour Accueil
-            </button>
+            </Button>
           </div>
         </div>
       );

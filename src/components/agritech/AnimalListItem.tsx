@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
 import { type ChipTone } from './Chip';
-import { Tag, IconBox } from '../../design-system';
+import { Tag, IconBox, Button } from '../../design-system';
 
 export interface AnimalListItemBadge {
   label: string;
@@ -153,15 +153,16 @@ const AnimalListItem: React.FC<AnimalListItemProps> = ({
 
   if (interactive) {
     return (
-      <button
+      <Button
         type="button"
+        variant="ghost"
         onClick={onClick}
         aria-label={ariaLabel}
         className={cn(baseClass, 'pressable', className)}
-        style={{ ...rowStyle, border: 'none', borderBottom: rowStyle.borderBottom, cursor: 'pointer' }}
+        style={{ ...rowStyle, border: 'none', borderBottom: rowStyle.borderBottom, cursor: 'pointer', borderRadius: 0, textTransform: 'none', height: 'auto', justifyContent: 'flex-start' }}
       >
         {inner}
-      </button>
+      </Button>
     );
   }
 

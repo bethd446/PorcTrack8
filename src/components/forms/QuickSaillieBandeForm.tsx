@@ -17,12 +17,12 @@ import React, { useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
 import {
   ArrowRight,
-  CalendarDays,
   CheckCircle2,
   Heart,
 } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { Button, Input, Textarea } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   insertSaillie,
@@ -354,21 +354,13 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
         >
           Date de saillie
         </label>
-        <div className="relative">
-          <CalendarDays
-            size={14}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-text-2"
-            aria-hidden="true"
-          />
-          <input
-            id="saillie-bande-date"
-            type="date"
-            value={dateIso}
-            onChange={e => setDateIso(e.target.value)}
-            disabled={saving}
-            className="h-12 w-full rounded-md border border-border bg-bg-0 pl-9 pr-3 font-mono text-[13px] tabular-nums outline-none focus:border-accent"
-          />
-        </div>
+        <Input
+          id="saillie-bande-date"
+          type="date"
+          value={dateIso}
+          onChange={e => setDateIso(e.target.value)}
+          disabled={saving}
+        />
       </div>
 
       <div className="space-y-1.5">
@@ -378,17 +370,9 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
         >
           Notes <span className="text-text-2 normal-case">· optionnel</span>
         </label>
-        <textarea
+        <Textarea
           id="saillie-bande-notes"
           maxLength={200}
-          className={[
-            'w-full rounded-md px-3 py-3',
-            'bg-bg-0 border border-border text-text-0',
-            'text-[13px]',
-            'outline-none transition-colors duration-[160ms]',
-            'focus:border-accent focus:ring-1 focus:ring-accent',
-            'min-h-[64px] resize-y',
-          ].join(' ')}
           placeholder="Ex: lot saillie semaine 18…"
           value={notes}
           onChange={e => setNotes(e.target.value)}
@@ -464,58 +448,56 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
               </p>
             )}
 
-            <div className="flex items-center gap-2 pt-2">
+            <div className="flex gap-3 justify-end px-4 py-3 border-t border-border">
               {step > 1 ? (
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
                   onClick={goPrev}
                   disabled={saving}
-                  className="pressable h-14 flex-1 rounded-md border border-border bg-bg-1 text-[12px] font-bold uppercase tracking-wide text-text-1"
                 >
                   Retour
-                </button>
+                </Button>
               ) : (
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
                   onClick={onClose}
                   disabled={saving}
-                  className="pressable h-14 flex-1 rounded-md border border-border bg-bg-1 text-[12px] font-bold uppercase tracking-wide text-text-1"
                 >
                   Annuler
-                </button>
+                </Button>
               )}
 
               {step < 3 ? (
-                <button
-                  type="button"
+                <Button
+                  variant="primary"
                   onClick={goNext}
                   disabled={
                     saving ||
                     (step === 1 && selectedTruieIds.length < 2) ||
                     (step === 2 && !selectedVerratId)
                   }
-                  className="pressable inline-flex h-14 flex-[2] items-center justify-center gap-2 rounded-md bg-accent text-[13px] font-bold uppercase tracking-wide text-bg-0 disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  Suivant
-                  <ArrowRight size={16} aria-hidden="true" />
-                </button>
+                  <span className="inline-flex items-center gap-2">
+                    Suivant
+                    <ArrowRight size={16} aria-hidden="true" />
+                  </span>
+                </Button>
               ) : (
-                <button
-                  type="button"
+                <Button
+                  variant="primary"
                   onClick={handleSubmit}
                   disabled={saving}
                   aria-busy={saving}
-                  className="pressable inline-flex h-14 flex-[2] items-center justify-center gap-2 rounded-md bg-accent text-[13px] font-bold uppercase tracking-wide text-bg-0 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {saving ? (
                     <span className="animate-pulse">Enregistrement…</span>
                   ) : (
-                    <>
+                    <span className="inline-flex items-center gap-2">
                       <CheckCircle2 size={16} aria-hidden="true" />
                       Enregistrer {selectedTruieIds.length} saillies
-                    </>
+                    </span>
                   )}
-                </button>
+                </Button>
               )}
             </div>
           </div>

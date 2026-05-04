@@ -25,35 +25,17 @@
   --ease-snappy: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out-expo: cubic-bezier(0.23, 1, 0.32, 1);
 
-  /* Couleurs accent PAR ONGLET — aligné Claude Design (chaque tab = signal distinct) */
-  --accent-cockpit:    var(--accent); /* emerald */
-  --accent-troupeau:   var(--teal);
-  --accent-cycles:     var(--cyan);
-  --accent-ressources: var(--amber);
-  --accent-pilotage:   var(--coral);
-
-  /* Typographie étendue (v2 plus hiérarchique) */
-  --text-display-xl: 44px;
+  /* Typographie étendue (v2 plus hiérarchique) — vars orphelines purgées V43 */
   --text-display-lg: 36px;
-  --text-display-md: 28px;
   --text-body-lg: 15px;
-  --text-body-md: 13px;
-  --text-body-sm: 12px;
-  --text-label-xs: 11px;
 }
 
 :root.theme-day {
   /* Les accent-* restent les mêmes en jour (cohérence signalétique) */
 }
 
-/* Utilitaires v2 */
-.rounded-lg-v2 { border-radius: var(--radius-lg); }
-.rounded-xl-v2 { border-radius: var(--radius-xl); }
+/* Utilitaires v2 conservés (consumers actifs) */
 .rounded-2xl-v2 { border-radius: var(--radius-2xl); }
-
-.transition-spring { transition-timing-function: var(--ease-spring); }
-.transition-gentle { transition-timing-function: var(--ease-gentle); }
-.transition-snappy { transition-timing-function: var(--ease-snappy); }
 
 /* Card v2 — glass subtil + rounded plus doux */
 .card-v2 {
@@ -65,23 +47,3 @@
     border-color 200ms var(--ease-gentle);
 }
 .card-v2:active { transform: scale(0.98); }
-
-/* KPI v2 — chiffres plus grands */
-.kpi-v2-value {
-  font-family: var(--font-mono), 'DM Mono', monospace;
-  font-feature-settings: "tnum" 1;
-  font-weight: 700;
-  font-size: var(--text-display-lg);
-  line-height: 1;
-  letter-spacing: -0.02em;
-  color: var(--color-text-0);
-}
-
-.kpi-v2-label {
-  font-family: var(--font-mono), monospace;
-  font-size: var(--text-label-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-text-2);
-  font-weight: 500;
-}

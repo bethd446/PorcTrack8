@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
 
 import { supabase } from '../../services/supabaseClient';
+import { Button } from '@/design-system';
 
 // ─── Hook : count des bandes PENDING ─────────────────────────────────────────
 
@@ -130,12 +131,14 @@ const PendingBandesBanner: React.FC<PendingBandesBannerProps> = ({ injectedState
       data-testid="pending-bandes-banner"
       className="px-4 pt-3"
     >
-      <button
+      <Button
         type="button"
+        variant="ghost"
         onClick={handleOpen}
-        className="pressable w-full flex items-center justify-between gap-3 px-3 py-3 rounded-md border border-amber bg-amber/10 hover:bg-amber/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber focus-visible:outline-offset-2"
+        className="pressable w-full flex items-center justify-between gap-3 px-3 py-3 border border-amber bg-amber/10 hover:bg-amber/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber focus-visible:outline-offset-2"
         aria-label={`${label} — clique pour compléter`}
         data-testid="pending-bandes-banner-cta"
+        style={{ borderRadius: '0.375rem', textTransform: 'none', height: 'auto' }}
       >
         <div className="flex items-center gap-3 min-w-0">
           <AlertTriangle size={18} className="text-amber shrink-0" aria-hidden="true" />
@@ -154,7 +157,7 @@ const PendingBandesBanner: React.FC<PendingBandesBannerProps> = ({ injectedState
         >
           Compléter ›
         </span>
-      </button>
+      </Button>
     </div>
   );
 };

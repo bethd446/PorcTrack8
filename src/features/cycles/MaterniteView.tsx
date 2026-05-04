@@ -6,7 +6,6 @@ import {
   ArrowUpRight, AlertTriangle, Lock
 } from 'lucide-react';
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
 import EmptyState from '../../components/design/EmptyState';
@@ -14,6 +13,7 @@ import {
   Chip,
   SectionDivider,
 } from '../../components/agritech';
+import { Button, PageHeader } from '@/design-system';
 import { TruieIcon } from '../../components/icons';
 import QuickMiseBasForm from '../../components/forms/QuickMiseBasForm';
 import { useFarm } from '../../context/FarmContext';
@@ -156,30 +156,20 @@ const MaterniteView: React.FC = () => {
           />
 
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <header>
-              <Eyebrow dotColor="accent">Cycle · Maternité</Eyebrow>
-              <h1
-                className="text-page-title"
-                style={{ margin: '8px 0 4px' }}
-              >
-                Maternité
-              </h1>
-              <div
-                className="text-body"
-                style={{ color: 'var(--muted)' }}
-              >
-                J0 → J28 · {summary.nbTruies} portées en cours
-              </div>
-            </header>
+            <PageHeader
+              eyebrow="MATERNITÉ"
+              title="Maternité"
+              subtitle="Suivi des portées en cours"
+            />
             {/* ── Primary Action ───────────────────────────────────────── */}
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              fullWidth
               onClick={() => openMiseBas()}
-              className="pressable w-full h-[58px] rounded-xl bg-accent text-bg-0 text-[13px] font-bold tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-accent/20"
             >
               <Plus size={20} />
               <span>Saisir une mise-bas</span>
-            </button>
+            </Button>
 
             {/* ── Summary KPI ─────────────────────────────────────────── */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -423,25 +413,25 @@ const MaterniteCard: React.FC<{
             );
           })}
         </div>
-        <button
+        <Button
+          variant="ghost"
+          size="small"
           disabled={isBloquant}
           onClick={(e) => { e.stopPropagation(); navigate(`/troupeau/truies/${truie.displayId}?tab=sante`); }}
-          className="w-8 h-8 rounded-lg bg-bg-2 flex items-center justify-center text-text-2 hover:text-accent transition-colors disabled:opacity-30 disabled:grayscale"
         >
           {isBloquant ? <Lock size={14} /> : <Scale size={14} />}
-        </button>
+        </Button>
       </div>
 
       {isTransitionRequired && (
-        <button
-          className={`w-full py-2.5 rounded-xl font-bold text-[12px] tracking-wider flex items-center justify-center gap-2 shadow-lg ${
-            isBloquant ? 'bg-red-500 text-white shadow-red-500/20' : 'bg-gold text-bg-0 shadow-gold/20'
-          }`}
+        <Button
+          variant={isBloquant ? 'danger' : 'primary'}
+          fullWidth
           onClick={(e) => { e.stopPropagation(); navigate(`/troupeau/bandes/${portee?.id}?action=sevrage`); }}
         >
           <ArrowUpRight size={16} />
           {isBloquant ? 'Sevrer maintenant' : 'Confirmer le sevrage'}
-        </button>
+        </Button>
       )}
     </div>
   );

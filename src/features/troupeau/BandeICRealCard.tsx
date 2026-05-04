@@ -14,6 +14,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Wheat } from 'lucide-react';
+import { Button } from '@/design-system';
 import {
   IC_THEORIQUE_DEFAUT,
   computeICReel,
@@ -93,14 +94,10 @@ const BandeICRealCard: React.FC<BandeICRealCardProps> = ({
                 : 'Pas de poids moyen ou de saisie disponible.'}
             </p>
             {onSaisirConso ? (
-              <button
-                type="button"
-                onClick={onSaisirConso}
-                className="pressable inline-flex h-10 items-center gap-2 rounded-md bg-accent px-4 text-[12px] font-bold uppercase tracking-wide text-bg-0 hover:brightness-110"
-              >
+              <Button variant="primary" size="small" onClick={onSaisirConso}>
                 <Wheat size={14} aria-hidden="true" />
                 Saisir ma conso
-              </button>
+              </Button>
             ) : null}
           </div>
         </div>

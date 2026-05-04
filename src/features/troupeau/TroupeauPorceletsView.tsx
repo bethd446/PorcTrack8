@@ -3,6 +3,7 @@ import { Search, ChevronRight, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useFarm } from '../../context/FarmContext';
 import { AnimalListItem, SectionDivider, type ChipTone } from '../../components/agritech';
+import { Button } from '@/design-system';
 import { BandeIcon } from '../../components/icons';
 import { listLoges } from '../../services/supabaseWrites';
 import { Bandes } from '../../services/bandAnalysisEngine';
@@ -213,16 +214,17 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({
   return (
     <div className="flex flex-col gap-4">
       {/* CTA primaire — Nouvelle bande */}
-      <button
-        type="button"
+      <Button
+        variant="primary"
+        fullWidth
         onClick={() => openAddBande()}
-        aria-label="Créer une nouvelle bande dans une loge"
+        ariaLabel="Créer une nouvelle bande dans une loge"
         data-testid="new-bande-cta"
-        className="pressable inline-flex items-center justify-center gap-2 h-12 rounded-md bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+        className="!rounded-md"
       >
         <Plus size={14} aria-hidden="true" />
         Nouvelle bande
-      </button>
+      </Button>
 
       {/* Summary strip */}
       <div
@@ -313,19 +315,20 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({
                       secondary={loge.batiment ?? loge.type.replace('_', '-').toLowerCase()}
                       meta="vide"
                       accessory={
-                        <button
-                          type="button"
-                          aria-label={`Créer une bande dans ${loge.numero}`}
+                        <Button
+                          variant="ghost"
+                          size="small"
+                          ariaLabel={`Créer une bande dans ${loge.numero}`}
                           data-testid={`empty-loge-cta-${loge.id}`}
                           onClick={e => {
                             e.stopPropagation();
                             openAddBande(loge.id);
                           }}
-                          className="pressable inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 py-1 text-[10px] uppercase tracking-wide text-text-1 hover:border-accent hover:text-accent"
+                          className="!rounded-md !border !border-dashed !border-border !text-text-1"
                         >
                           <Plus size={11} aria-hidden="true" />
                           Nouvelle bande
-                        </button>
+                        </Button>
                       }
                       onClick={() => openAddBande(loge.id)}
                       ariaLabel={`Loge vide ${logeNumeroPrefixed(loge)}`}
@@ -386,17 +389,18 @@ const LogeBandeRow: React.FC<LogeBandeRowProps> = ({
   }
 
   const transferAccessory = pendingTransition && onTransition ? (
-    <button
-      type="button"
-      aria-label={`Confirmer transfert ${pendingTransition.label}`}
+    <Button
+      variant="primary"
+      size="small"
+      ariaLabel={`Confirmer transfert ${pendingTransition.label}`}
       onClick={e => {
         e.stopPropagation();
         onTransition(pendingTransition);
       }}
-      className="pressable px-2 py-2 rounded-md bg-amber/15 text-amber text-[10px] font-bold uppercase tracking-wide border border-amber/20"
+      className="!rounded-md"
     >
       Transfert ›
-    </button>
+    </Button>
   ) : (
     <ChevronRight size={14} className="text-text-2" />
   );

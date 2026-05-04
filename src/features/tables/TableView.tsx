@@ -180,10 +180,10 @@ const TableDenseRow: React.FC<TableDenseRowProps> = ({
   ariaLabel,
 }) => {
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
       onClick={onClick}
-      aria-label={ariaLabel}
+      ariaLabel={ariaLabel}
       className={[
         'w-full text-left',
         'card-dense',
@@ -228,7 +228,7 @@ const TableDenseRow: React.FC<TableDenseRowProps> = ({
           ))}
         </div>
       )}
-    </button>
+    </Button>
   );
 };
 

@@ -24,6 +24,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { Scale, ShoppingCart, AlertTriangle } from 'lucide-react';
+import { Button } from '@/design-system';
 
 import {
   listWeightDistributions,
@@ -191,27 +192,27 @@ const PoidsTriView: React.FC<PoidsTriViewProps> = ({
       )}
 
       <div className="flex items-center gap-2 pt-1">
-        <button
-          type="button"
+        <Button
+          variant="secondary"
           onClick={onSaisirTri}
-          aria-label="Saisir un nouveau tri par poids"
-          className="pressable flex-1 h-11 rounded-md bg-bg-1 border border-border text-text-1 text-[11px] font-bold uppercase tracking-wide inline-flex items-center justify-center gap-2"
+          ariaLabel="Saisir un nouveau tri par poids"
+          className="!flex-1"
         >
           <Scale size={14} aria-hidden="true" />
           <span>Saisir tri</span>
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="primary"
           onClick={() => onVendrePrets(summary?.above110 ?? 0)}
           disabled={!summary || summary.above110 <= 0}
-          aria-label="Vendre les porcs prêts à la vente"
-          className="pressable flex-1 h-11 rounded-md bg-amber text-bg-0 text-[11px] font-bold uppercase tracking-wide inline-flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+          ariaLabel="Vendre les porcs prêts à la vente"
+          className="!flex-1"
         >
           <ShoppingCart size={14} aria-hidden="true" />
           <span>
             Vendre ≥110 {summary?.above110 ? `(${summary.above110})` : ''}
           </span>
-        </button>
+        </Button>
       </div>
     </section>
   );

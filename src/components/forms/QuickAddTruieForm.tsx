@@ -28,6 +28,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Plus, Save } from 'lucide-react';
 
 import { AppToast, BottomSheet, useAppToast } from '../agritech';
+import { FormField, Input, Button } from '@/design-system';
 import { insertSow } from '../../services/supabaseWrites';
 import { enqueueInsert, isOnline } from '../../services/offlineQueue';
 import { useFarm } from '../../context/FarmContext';
@@ -167,15 +168,12 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
             </p>
           </div>
 
-          {/* ID */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-truie-id"
-              className="block text-mono-label text-text-2"
-            >
-              ID <span className="text-text-2 normal-case">· auto-suggéré</span>
-            </label>
-            <input
+          <FormField
+            label="ID"
+            hint={errors.id ? undefined : 'Format T suivi de chiffres (ex: T20)'}
+            error={errors.id}
+          >
+            <Input
               id="add-truie-id"
               ref={firstFieldRef}
               type="text"
@@ -187,47 +185,18 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
               aria-describedby={
                 errors.id ? 'add-truie-id-error' : 'add-truie-id-hint'
               }
-              className={[
-                'w-full h-12 rounded-md px-3',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'ft-code text-[14px] uppercase tabular-nums',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.id ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
+              className="ft-code uppercase tabular-nums"
               placeholder="T20"
               value={id}
               onChange={e => setId(e.target.value)}
               disabled={saving}
               autoComplete="off"
+              invalid={!!errors.id}
             />
-            {errors.id ? (
-              <p
-                id="add-truie-id-error"
-                role="alert"
-                className="text-[12px] text-red"
-              >
-                {errors.id}
-              </p>
-            ) : (
-              <p
-                id="add-truie-id-hint"
-                className="text-[12px] text-text-2"
-              >
-                Format T suivi de chiffres (ex: T20)
-              </p>
-            )}
-          </div>
+          </FormField>
 
-          {/* Boucle */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-truie-boucle"
-              className="block text-mono-label text-text-2"
-            >
-              Boucle <span className="text-red normal-case">· obligatoire</span>
-            </label>
-            <input
+          <FormField label="Boucle" required error={errors.boucle}>
+            <Input
               id="add-truie-boucle"
               type="text"
               maxLength={20}
@@ -235,54 +204,31 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
               aria-required="true"
               aria-invalid={!!errors.boucle}
               aria-describedby={errors.boucle ? 'add-truie-boucle-error' : undefined}
-              className={[
-                'w-full h-12 rounded-md px-3',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'ft-code text-[14px] tabular-nums',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.boucle ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
+              className="ft-code tabular-nums"
               placeholder="FR-12345"
               value={boucle}
               onChange={e => setBoucle(e.target.value)}
               disabled={saving}
               autoComplete="off"
+              invalid={!!errors.boucle}
             />
-            {errors.boucle ? (
-              <p
-                id="add-truie-boucle-error"
-                role="alert"
-                className="text-[12px] text-red"
-              >
-                {errors.boucle}
-              </p>
-            ) : null}
-          </div>
+          </FormField>
 
-          {/* Nom */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-truie-nom"
-              className="block text-mono-label text-text-2"
-            >
-              Nom <span className="text-text-2 normal-case">· optionnel</span>
-            </label>
-            <input
+          <FormField label="Nom" hint="optionnel">
+            <Input
               id="add-truie-nom"
               type="text"
               maxLength={30}
               aria-label="Nom de la truie"
-              className="w-full h-12 rounded-md px-3 bg-bg-0 border border-border hover:border-text-2 text-text-0 placeholder:text-text-2 text-[14px] outline-none transition-colors duration-[160ms] focus:border-accent focus:ring-1 focus:ring-accent"
               placeholder="Ex: Berthe"
               value={nom}
               onChange={e => setNom(e.target.value)}
               disabled={saving}
               autoComplete="off"
             />
-          </div>
+          </FormField>
 
-          {/* Stade */}
+          {/* TODO V44: Radio DS missing — radiogroup custom conservé */}
           <div className="space-y-1.5">
             <span
               id="add-truie-stade-label"
@@ -324,15 +270,12 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
             </div>
           </div>
 
-          {/* Ration */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-truie-ration"
-              className="block text-mono-label text-text-2"
-            >
-              Ration (kg/j)
-            </label>
-            <input
+          <FormField
+            label="Ration (kg/j)"
+            hint={errors.ration ? undefined : '0 à 10 kg/j · défaut 3.0'}
+            error={errors.ration}
+          >
+            <Input
               id="add-truie-ration"
               type="number"
               inputMode="decimal"
@@ -345,80 +288,38 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
               aria-describedby={
                 errors.ration ? 'add-truie-ration-error' : 'add-truie-ration-hint'
               }
-              className={[
-                'w-full h-14 rounded-md px-4',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'text-[22px] tabular-nums text-center font-semibold',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.ration ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
+              className="text-[22px] tabular-nums text-center font-semibold"
               placeholder="3.0"
               value={ration}
               onChange={e => setRation(e.target.value)}
               disabled={saving}
+              invalid={!!errors.ration}
             />
-            {errors.ration ? (
-              <p
-                id="add-truie-ration-error"
-                role="alert"
-                className="text-[12px] text-red"
-              >
-                {errors.ration}
-              </p>
-            ) : (
-              <p
-                id="add-truie-ration-hint"
-                className="text-[12px] text-text-2 tabular-nums"
-              >
-                0 à 10 kg/j · défaut 3.0
-              </p>
-            )}
-          </div>
+          </FormField>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2 pt-2">
-            <button
-              type="button"
+          <div className="flex gap-3 justify-end pt-2 border-t border-border">
+            <Button
+              variant="secondary"
               onClick={handleClose}
               disabled={saving}
-              aria-label="Annuler et fermer"
-              className={[
-                'pressable flex-1 h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-bg-1 border border-border text-text-1',
-                'text-[12px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms] hover:border-text-2',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : '',
-              ].join(' ')}
+              ariaLabel="Annuler et fermer"
             >
               Annuler
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={saving}
-              aria-label="Ajouter la truie au troupeau"
               aria-busy={saving}
-              className={[
-                'pressable flex-[2] h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-accent text-bg-0',
-                'text-[13px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms]',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
-              ].join(' ')}
+              ariaLabel="Ajouter la truie au troupeau"
             >
-              {saving ? (
-                <span className="animate-pulse">Enregistrement…</span>
-              ) : (
-                <>
-                  <span>Ajouter</span>
+              {saving ? 'Enregistrement…' : (
+                <span className="inline-flex items-center gap-2">
+                  Ajouter
                   <Save size={14} aria-hidden="true" />
-                </>
+                </span>
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </BottomSheet>

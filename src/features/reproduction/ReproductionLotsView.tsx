@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import { ChevronLeft, Heart, Stethoscope, Baby, Home, Filter } from 'lucide-react';
 
+import { Button } from '@/design-system';
 import AgritechLayout from '../../components/AgritechLayout';
 import Eyebrow from '../../components/design/Eyebrow';
 import EmptyState from '../../components/design/EmptyState';
@@ -124,29 +125,15 @@ const FilterChip: React.FC<{
   count: number;
   onSelect: (v: FilterValue) => void;
 }> = ({ value, active, count, onSelect }) => (
-  <button
-    type="button"
+  <Button
+    variant={active ? 'primary' : 'secondary'}
+    size="small"
     onClick={() => onSelect(value)}
-    className="pressable"
     aria-pressed={active}
-    style={{
-      minHeight: 36,
-      padding: '6px 12px',
-      borderRadius: 'var(--radius-pill, 999px)',
-      border: '1px solid var(--line)',
-      background: active ? 'var(--color-accent-500)' : 'var(--bg-surface)',
-      color: active ? 'var(--bg-surface)' : 'var(--ink)',
-      fontFamily: 'var(--font-mono)',
-      fontSize: 11,
-      letterSpacing: '0.08em',
-      textTransform: 'uppercase',
-      fontWeight: 600,
-      cursor: 'pointer',
-      whiteSpace: 'nowrap',
-    }}
+    style={{ whiteSpace: 'nowrap' }}
   >
     {FILTER_LABEL[value]} ({count})
-  </button>
+  </Button>
 );
 
 const ProgressSegment: React.FC<{
@@ -202,26 +189,14 @@ const TruieChip: React.FC<{
   label: string;
   onClick: () => void;
 }> = ({ label, onClick }) => (
-  <button
-    type="button"
+  <Button
+    variant="secondary"
+    size="small"
     onClick={onClick}
-    className="pressable"
-    style={{
-      minHeight: 32,
-      padding: '4px 10px',
-      borderRadius: 'var(--radius-pill, 999px)',
-      border: '1px solid var(--line)',
-      background: 'var(--bg-surface)',
-      color: 'var(--ink)',
-      fontFamily: 'var(--font-mono)',
-      fontSize: 11,
-      letterSpacing: '0.04em',
-      cursor: 'pointer',
-      whiteSpace: 'nowrap',
-    }}
+    style={{ whiteSpace: 'nowrap' }}
   >
     {label}
-  </button>
+  </Button>
 );
 
 const BatchCard: React.FC<{
@@ -381,31 +356,10 @@ const ReproductionLotsView: React.FC = () => {
 
             {/* ── Bouton retour ────────────────────────────────────── */}
             <div>
-              <button
-                type="button"
-                onClick={() => navigate('/reproduction')}
-                className="pressable"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  minHeight: 36,
-                  padding: '6px 12px',
-                  background: 'transparent',
-                  border: '1px solid var(--line)',
-                  borderRadius: 'var(--radius-pill, 999px)',
-                  color: 'var(--ink)',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 11,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
+              <Button variant="secondary" size="small" onClick={() => navigate('/reproduction')}>
                 <ChevronLeft size={14} aria-hidden="true" />
                 Reproduction
-              </button>
+              </Button>
             </div>
 
             {/* ── Filtre statut ────────────────────────────────────── */}
@@ -437,27 +391,9 @@ const ReproductionLotsView: React.FC = () => {
                 title="Aucun lot"
                 description="Aucune saillie enregistrée. Ajoutez une saillie depuis la page Reproduction."
                 action={
-                  <button
-                    type="button"
-                    onClick={() => navigate('/reproduction')}
-                    className="pressable"
-                    style={{
-                      minHeight: 44,
-                      padding: '10px 18px',
-                      borderRadius: 'var(--radius-pill, 999px)',
-                      background: 'var(--bg-surface)',
-                      color: 'var(--ink)',
-                      border: '1px solid var(--line)',
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 11,
-                      letterSpacing: '0.10em',
-                      textTransform: 'uppercase',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
+                  <Button variant="secondary" onClick={() => navigate('/reproduction')}>
                     Aller à Reproduction
-                  </button>
+                  </Button>
                 }
               />
             ) : filteredBatches.length === 0 ? (

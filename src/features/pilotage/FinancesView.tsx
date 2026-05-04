@@ -26,10 +26,10 @@ import {
 } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
 import { Chip, SectionDivider } from '../../components/agritech';
+import { Button, PageHeader } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   summarizeByPeriode,
@@ -255,31 +255,11 @@ const FinancesView: React.FC = () => {
             className="px-4 pt-5 pb-32 flex flex-col gap-5"
             style={{ maxWidth: 1100, margin: '0 auto' }}
           >
-            <header>
-              <Eyebrow dotColor="accent">Pilotage · Trésorerie</Eyebrow>
-              <h1
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '8px 0 4px',
-                }}
-              >
-                Finances
-              </h1>
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--muted)',
-                }}
-              >
-                Vue mensuelle · {entries.length} transaction{entries.length > 1 ? 's' : ''}
-              </div>
-            </header>
+            <PageHeader
+              eyebrow="Pilotage · Finances"
+              title="Finances"
+              subtitle="Suivi des dépenses et marges"
+            />
 
             {/* ── Period toggle (3 chips) ─────────────────────────────── */}
             <div role="tablist" aria-label="Période" className="flex gap-1.5">
@@ -290,19 +270,23 @@ const FinancesView: React.FC = () => {
               ].map((p) => {
                 const on = periode === p.k;
                 return (
-                  <button
+                  <Button
                     key={p.k}
+                    type="button"
+                    variant={on ? 'primary' : 'secondary'}
+                    size="small"
                     role="tab"
                     aria-selected={on}
                     onClick={() => setPeriode(p.k)}
-                    className={`pressable flex-1 py-2.5 rounded-md font-mono text-[10px] font-semibold uppercase tracking-wide border transition-colors ${
+                    className={`pressable flex-1 py-2.5 font-mono text-[10px] font-semibold uppercase tracking-wide border transition-colors ${
                       on
                         ? 'bg-bg-2 border-accent text-accent'
                         : 'bg-transparent border-border text-text-1 hover:text-text-0'
                     }`}
+                    style={{ borderRadius: '0.375rem' }}
                   >
                     {p.l}
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -375,21 +359,27 @@ const FinancesView: React.FC = () => {
                     </div>
                     <div className="font-mono text-[11px] text-text-2 mt-1">
                       {entries.length} transaction{entries.length > 1 ? 's' : ''} dans l'historique. Voir
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="small"
                         onClick={() => setPeriode('prec')}
                         className="font-semibold text-accent ml-1 underline-offset-2 hover:underline"
+                        style={{ padding: 0, textTransform: 'none', borderRadius: 0, height: 'auto' }}
                       >
                         Mois préc.
-                      </button>
+                      </Button>
                       <span className="text-text-2 mx-1">ou</span>
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="small"
                         onClick={() => setPeriode('annee')}
                         className="font-semibold text-accent underline-offset-2 hover:underline"
+                        style={{ padding: 0, textTransform: 'none', borderRadius: 0, height: 'auto' }}
                       >
                         Année
-                      </button>
+                      </Button>
                       .
                     </div>
                   </div>
@@ -445,13 +435,17 @@ const FinancesView: React.FC = () => {
                 ) : null}
 
                 {/* ── HubTile → Rapport financier ─────────────────────── */}
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={() => navigate('/pilotage/finances/rapport')}
                   className="pressable card-dense flex items-center gap-3.5 !p-4 border-gold/40 bg-bg-2"
                   style={{
                     borderColor: 'color-mix(in srgb, var(--gold) 40%, var(--border))',
                     background: 'color-mix(in srgb, var(--gold) 5%, var(--bg-2))',
+                    borderRadius: 'var(--ds-radius-card, 16px)',
+                    textTransform: 'none',
+                    height: 'auto',
                   }}
                 >
                   <div
@@ -472,22 +466,23 @@ const FinancesView: React.FC = () => {
                     </div>
                   </div>
                   <ChevronRight size={18} style={{ color: 'var(--gold)' }} aria-hidden="true" />
-                </button>
+                </Button>
               </>
             )}
           </div>
         </AgritechLayout>
 
         {/* ── FAB Nouvelle transaction ──────────────────────────────── */}
-        <button
+        <Button
           type="button"
+          variant="primary"
           onClick={() => setAddOpen(true)}
           aria-label="Nouvelle transaction"
-          className="pressable fixed z-40 right-4 bottom-24 inline-flex h-14 w-14 items-center justify-center rounded-full bg-accent text-bg-0 shadow-lg hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)' }}
+          className="pressable fixed z-40 right-4 bottom-24 inline-flex h-14 w-14 items-center justify-center bg-accent text-bg-0 shadow-lg hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)', borderRadius: '9999px', height: '3.5rem', width: '3.5rem' }}
         >
           <Plus size={24} strokeWidth={2.4} aria-hidden="true" />
-        </button>
+        </Button>
       </IonContent>
 
       {/* ── Forms ─────────────────────────────────────────────────── */}
@@ -861,41 +856,50 @@ const TransactionRow: React.FC<TransactionRowProps> = ({ entry, currency, onEdit
       {/* Menu kebab — visible uniquement si on a un ID exploitable */}
       {onEdit ? (
         <div ref={menuRef} className="relative shrink-0">
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="small"
             onClick={() => setMenuOpen(v => !v)}
             aria-haspopup="menu"
             aria-expanded={menuOpen}
             aria-label="Actions sur la transaction"
-            className="pressable inline-flex h-8 w-8 items-center justify-center rounded-md text-text-2 hover:text-text-0 hover:bg-bg-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+            className="pressable inline-flex h-8 w-8 items-center justify-center text-text-2 hover:text-text-0 hover:bg-bg-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+            style={{ borderRadius: '0.375rem', height: '2rem', width: '2rem', padding: 0 }}
           >
             <MoreVertical size={16} aria-hidden="true" />
-          </button>
+          </Button>
           {menuOpen ? (
             <div
               role="menu"
               className="absolute right-0 top-9 z-20 min-w-[160px] rounded-md border border-border bg-bg-2 shadow-lg overflow-hidden"
             >
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="small"
                 role="menuitem"
                 onClick={handleEdit}
                 className="pressable flex w-full items-center gap-2 px-3 py-2.5 text-left font-mono text-[12px] uppercase tracking-wide text-text-0 hover:bg-bg-1"
+                style={{ borderRadius: 0, justifyContent: 'flex-start', height: 'auto' }}
               >
                 <Pencil size={14} aria-hidden="true" />
                 Modifier
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="ghost"
+                size="small"
                 role="menuitem"
                 disabled
                 aria-disabled="true"
                 title="Suppression serveur non implémentée (GAS delete_row_by_id)"
                 className="flex w-full items-center gap-2 px-3 py-2.5 text-left font-mono text-[12px] uppercase tracking-wide text-text-2 opacity-50 cursor-not-allowed border-t border-border"
+                style={{ borderRadius: 0, justifyContent: 'flex-start', height: 'auto' }}
               >
                 <Trash2 size={14} aria-hidden="true" />
                 Supprimer
-              </button>
+              </Button>
             </div>
           ) : null}
         </div>

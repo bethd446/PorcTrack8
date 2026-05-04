@@ -8,6 +8,7 @@ import {
   type PendingValidation,
 } from '../../services/validationWorkflow';
 import { useAuth } from '../../context/AuthContext';
+import { Button } from '@/design-system';
 
 const CARD_STYLE: React.CSSProperties = {
   background: 'var(--bg-surface)',
@@ -269,84 +270,54 @@ export default function PendingValidationsView({ embedded, onChange }: PendingVa
               </div>
 
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
-                <button
-                  type="button"
-                  aria-label={`Valider ${TYPE_LABEL[item.type]}`}
+                <Button
+                  variant="primary"
+                  size="small"
+                  ariaLabel={`Valider ${TYPE_LABEL[item.type]}`}
                   disabled={actingId === item.id}
                   onClick={() => handleValidate(item)}
                   style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
                     gap: 6,
-                    padding: '8px 14px',
-                    borderRadius: 'var(--radius-pill)',
-                    border: 'none',
                     fontFamily: 'var(--font-mono)',
-                    fontSize: 11,
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    cursor: actingId === item.id ? 'not-allowed' : 'pointer',
                     background: 'var(--color-accent-500)',
                     color: 'var(--bg-surface)',
-                    opacity: actingId === item.id ? 0.5 : 1,
                   }}
                 >
                   <Check size={12} strokeWidth={2} />
                   Valider
-                </button>
+                </Button>
 
-                <button
-                  type="button"
-                  aria-label={`Rejeter ${TYPE_LABEL[item.type]}`}
+                <Button
+                  variant="danger"
+                  size="small"
+                  ariaLabel={`Rejeter ${TYPE_LABEL[item.type]}`}
                   disabled={actingId === item.id}
                   onClick={() => handleReject(item)}
                   style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
                     gap: 6,
-                    padding: '8px 14px',
-                    borderRadius: 'var(--radius-pill)',
-                    border: '1px solid var(--color-pig)',
                     fontFamily: 'var(--font-mono)',
-                    fontSize: 11,
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    cursor: actingId === item.id ? 'not-allowed' : 'pointer',
+                    border: '1px solid var(--color-pig)',
                     background: 'var(--color-pig-soft)',
                     color: 'var(--color-pig-deep)',
-                    opacity: actingId === item.id ? 0.5 : 1,
                   }}
                 >
                   <X size={12} strokeWidth={2} />
                   Rejeter
-                </button>
+                </Button>
 
-                <button
-                  type="button"
-                  aria-label="Voir détails"
+                <Button
+                  variant="secondary"
+                  size="small"
+                  ariaLabel="Voir détails"
                   onClick={() => navigateToTarget(navigate, item)}
                   style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
                     gap: 6,
-                    padding: '8px 14px',
-                    borderRadius: 'var(--radius-pill)',
-                    border: '1px solid var(--line)',
                     fontFamily: 'var(--font-mono)',
-                    fontSize: 11,
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    cursor: 'pointer',
-                    background: 'transparent',
-                    color: 'var(--ink-soft)',
                   }}
                 >
                   <Eye size={12} strokeWidth={1.75} />
                   Détails
-                </button>
+                </Button>
               </div>
             </li>
           ))}

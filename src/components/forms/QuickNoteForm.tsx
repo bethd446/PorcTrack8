@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { IonSpinner, IonToast } from '@ionic/react';
 import { Send, ClipboardList, Mic, MicOff, X, Camera, Loader2 } from 'lucide-react';
 import { insertNote } from '../../services/supabaseWrites';
+import { Button, Textarea } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
 import { kvGet } from '../../services/kvStore';
@@ -406,22 +407,12 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
               )}
             </button>
           </div>
-          <textarea
+          <Textarea
             id="quick-note-text"
             aria-label="Note terrain"
             aria-invalid={!!errors.note}
             aria-describedby={errors.note ? 'quick-note-error' : undefined}
             maxLength={MAX_NOTE_LEN}
-            className={[
-              'w-full rounded-md px-3 py-3',
-              'bg-bg-0 border text-text-0 placeholder:text-text-2',
-              'text-[13px]',
-              'outline-none transition-colors duration-[160ms]',
-              'focus:border-accent focus:ring-1 focus:ring-accent',
-              'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-1px]',
-              'min-h-[120px] resize-y',
-              errors.note ? 'border-red' : 'border-border hover:border-text-2',
-            ].join(' ')}
             placeholder="Écris ton observation ici…"
             value={note}
             onChange={e => setNote(e.target.value)}
@@ -441,28 +432,22 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
           </div>
         </div>
 
-        <button
+        <Button
+          variant="primary"
+          fullWidth
           type="submit"
           disabled={submitDisabled}
-          aria-label="Enregistrer la note"
-          className={[
-            'pressable w-full h-[48px] rounded-md',
-            'inline-flex items-center justify-center gap-2',
-            'bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide',
-            'transition-colors duration-[160ms]',
-            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-            submitDisabled ? 'opacity-40 cursor-not-allowed' : '',
-          ].join(' ')}
+          ariaLabel="Enregistrer la note"
         >
           {loading ? (
             <IonSpinner name="bubbles" className="w-5 h-5" aria-hidden="true" />
           ) : (
-            <>
-              <span>Enregistrer note</span>
+            <span className="inline-flex items-center gap-2">
+              Enregistrer note
               <Send size={14} className="flex-shrink-0" aria-hidden="true" />
-            </>
+            </span>
           )}
-        </button>
+        </Button>
       </form>
 
       <IonToast

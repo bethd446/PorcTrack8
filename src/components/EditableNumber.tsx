@@ -12,6 +12,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Check, Loader2 } from 'lucide-react';
 
 import type { WriteResult } from '../services/supabaseWrites';
+import { Button } from '@/design-system';
 
 interface Props {
   value: number | null;
@@ -167,14 +168,19 @@ const EditableNumber: React.FC<Props> = ({
           }}
         />
       ) : (
-        <button
+        <Button
           type="button"
+          variant="ghost"
           onClick={handleEnter}
           aria-label={ariaLabel}
-          className="min-h-[44px] inline-flex items-center justify-end gap-1 px-2 py-1 -mx-2 rounded-md hover:bg-bg-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="min-h-[44px] inline-flex items-center justify-end gap-1 px-2 py-1 -mx-2 hover:bg-bg-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
           style={{
             backgroundColor: flashBg,
             transition: `background-color 200ms ${EASE}`,
+            borderRadius: '0.375rem',
+            textTransform: 'none',
+            height: 'auto',
+            justifyContent: 'flex-end',
           }}
         >
           <span className="tabular-nums text-text-0">
@@ -185,7 +191,7 @@ const EditableNumber: React.FC<Props> = ({
           {unit && (
             <span className="text-xs text-text-2">{unit}</span>
           )}
-        </button>
+        </Button>
       )}
 
       {status === 'saving' && (

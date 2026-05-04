@@ -13,6 +13,7 @@ import { Plus, Phone, Mail, Trash2 } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
 import QuickAddFournisseurForm from '../../components/forms/QuickAddFournisseurForm';
+import { Button, PageHeader } from '@/design-system';
 import {
   listFournisseurs,
   deleteFournisseur,
@@ -75,34 +76,15 @@ const FournisseursView: React.FC = () => {
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout withNav={true}>
           <div className="px-4 pt-5 pb-32 max-w-md mx-auto">
-            <header className="mb-6">
-              <h1
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '0 0 4px',
-                }}
-              >
-                Fournisseurs
-              </h1>
-              <p
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--muted)',
-                  margin: 0,
-                }}
-              >
-                Carnet pour commande WhatsApp pré-remplie.
-              </p>
-            </header>
+            <PageHeader
+              eyebrow="Ressources · Fournisseurs"
+              title="Fournisseurs"
+              subtitle="Contacts et achats"
+            />
 
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              fullWidth
               onClick={() => setAddOpen(true)}
               className="w-full mb-5 inline-flex items-center justify-center gap-2 h-12 rounded-md text-[12px] uppercase tracking-wide font-bold"
               style={{
@@ -113,7 +95,7 @@ const FournisseursView: React.FC = () => {
             >
               <Plus size={14} aria-hidden="true" />
               Ajouter un fournisseur
-            </button>
+            </Button>
 
             {loading ? (
               <p className="text-[12px] text-text-2 uppercase">Chargement…</p>
@@ -186,15 +168,16 @@ const FournisseursView: React.FC = () => {
                         ) : null}
                       </div>
                     </div>
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
+                      size="small"
                       onClick={() => handleDelete(row)}
-                      aria-label={`Supprimer ${row.nom}`}
+                      ariaLabel={`Supprimer ${row.nom}`}
                       className="p-2 rounded-full hover:bg-bg-2"
                       style={{ color: 'var(--red)' }}
                     >
                       <Trash2 size={14} aria-hidden="true" />
-                    </button>
+                    </Button>
                   </li>
                 ))}
               </ul>

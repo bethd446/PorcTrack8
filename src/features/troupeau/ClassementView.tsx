@@ -7,7 +7,7 @@ import AgritechLayout from '../../components/AgritechLayout';
 import TopBarSync from '../../components/design/TopBarSync';
 import { SectionDivider } from '../../components/agritech';
 import EmptyStateShared from '../../components/design/EmptyState';
-import { Tag, DataTable, PageHeader } from '../../design-system';
+import { Tag, DataTable, PageHeader, Button } from '../../design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   buildClassementRows,
@@ -145,26 +145,23 @@ const ClassementView: React.FC = () => {
             const active = filter === f.id;
             const count = counts[f.id];
             return (
-              <button
+              <Button
                 key={f.id}
-                type="button"
+                variant={active ? 'primary' : 'secondary'}
+                size="small"
                 role="radio"
                 aria-checked={active}
-                aria-label={`Filtrer par ${f.label}`}
+                ariaLabel={`Filtrer par ${f.label}`}
                 onClick={() => setFilter(f.id)}
-                className={`pressable shrink-0 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-wide border transition-colors flex items-center gap-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 ${
-                  active
-                    ? 'bg-accent/10 border-accent text-accent'
-                    : 'bg-transparent border-border text-text-1 hover:text-text-0'
-                }`}
+                className="!shrink-0"
               >
                 {f.label}
                 <span
-                  className={`text-[10px] tabular-nums ${active ? 'text-accent/70' : 'text-text-2'}`}
+                  className={`text-[10px] tabular-nums ${active ? 'opacity-70' : 'text-text-2'}`}
                 >
                   {count}
                 </span>
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -186,21 +183,18 @@ const ClassementView: React.FC = () => {
           {SORTS.map((s) => {
             const active = sortBy === s.id;
             return (
-              <button
+              <Button
                 key={s.id}
-                type="button"
+                variant={active ? 'primary' : 'secondary'}
+                size="small"
                 role="radio"
                 aria-checked={active}
-                aria-label={`Trier par ${s.label}`}
+                ariaLabel={`Trier par ${s.label}`}
                 onClick={() => setSortBy(s.id)}
-                className={`pressable shrink-0 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-wide border transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 ${
-                  active
-                    ? 'bg-accent/10 border-accent text-accent'
-                    : 'bg-transparent border-border text-text-1 hover:text-text-0'
-                }`}
+                className="!shrink-0"
               >
                 {s.label}
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -220,13 +214,9 @@ const ClassementView: React.FC = () => {
             title="Aucun reproducteur"
             description="Aucun reproducteur correspondant au filtre."
           />
-          <button
-            type="button"
-            onClick={handleResetFilters}
-            className="pressable inline-flex items-center gap-2 h-9 px-4 rounded-full bg-accent text-bg-0 text-[11px] font-medium uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-          >
+          <Button variant="primary" size="small" onClick={handleResetFilters}>
             Réinitialiser filtres
-          </button>
+          </Button>
         </div>
       ) : (
         <>
@@ -299,11 +289,13 @@ const TypeBadge: React.FC<{ type: ClassementRow['type'] }> = ({ type }) => (
 );
 
 const RowCardMobile: React.FC<RowProps> = ({ row, rank, onClick }) => (
-  <button
-    type="button"
+  <Button
+    variant="ghost"
+    fullWidth
     onClick={onClick}
-    aria-label={`Rang ${rank} ${row.type === 'TRUIE' ? 'Truie' : 'Verrat'} ${row.displayId} score ${formatScore(row.score)}`}
-    className="pressable w-full text-left flex flex-col gap-1.5 rounded-xl bg-bg-1 border border-border p-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+    ariaLabel={`Rang ${rank} ${row.type === 'TRUIE' ? 'Truie' : 'Verrat'} ${row.displayId} score ${formatScore(row.score)}`}
+    className="!flex-col !text-left !rounded-xl !bg-bg-1 !border !border-border !p-3 !h-auto !items-stretch !gap-1.5"
+    style={{ textTransform: 'none' }}
   >
     <div className="flex items-center gap-2 min-w-0">
       <span className="text-[11px] tabular-nums text-text-2 shrink-0">
@@ -322,7 +314,7 @@ const RowCardMobile: React.FC<RowProps> = ({ row, rank, onClick }) => (
       {formatPorcelets(row.porceletsMoyens)} porcelets ·{' '}
       {formatTaux(row.tauxReussite)} réussite
     </div>
-  </button>
+  </Button>
 );
 
 // V41 Phase C3 : RowDesktop supprimé (DataTable du DS V2 prend le relais).

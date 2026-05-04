@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import { BalanceIcon } from '../../components/icons';
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
 import EmptyState from '../../components/design/EmptyState';
@@ -15,6 +14,7 @@ import {
   Chip,
   SectionDivider,
 } from '../../components/agritech';
+import { Button, PageHeader } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import { filterRealPortees } from '../../services/bandesAggregator';
 import {
@@ -146,30 +146,21 @@ const FinitionView: React.FC = () => {
           />
 
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <header className="flex items-start justify-between gap-3">
-              <div>
-                <Eyebrow dotColor="accent">Cycle · Finition</Eyebrow>
-                <h1
-                  className="text-page-title"
-                  style={{ margin: '8px 0 4px' }}
-                >
-                  Finition
-                </h1>
-                <div
-                  className="text-body"
-                  style={{ color: 'var(--muted)' }}
-                >
-                  J137 → J165 · {summary.nbBandes} bandes
-                </div>
-              </div>
-              <button
+            <PageHeader
+              eyebrow="FINITION"
+              title="Finition"
+              subtitle="Phase de finition"
+            />
+            <div className="flex justify-end">
+              <Button
+                variant="secondary"
+                size="small"
                 onClick={() => navigate('/cycles/sortie')}
-                className="pressable inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-accent/40 text-accent text-[11px] uppercase tracking-wide transition-colors shrink-0"
               >
                 <Calendar size={14} />
                 Calendrier
-              </button>
-            </header>
+              </Button>
+            </div>
             {/* ── Summary Stats ────────────────────────────────────────── */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <KpiCardV6
@@ -395,13 +386,14 @@ const FinitionCard: React.FC<{ data: FinitionRowData; onOpen: () => void; onSell
       </div>
 
       {data.isReadyForExit && (
-        <button
-          className="w-full bg-success text-bg-0 py-2.5 rounded-xl font-bold text-[12px] tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-success/20"
+        <Button
+          variant="primary"
+          fullWidth
           onClick={(e) => { e.stopPropagation(); onSell(); }}
         >
           <ShoppingCart size={16} />
           Déclarer la vente
-        </button>
+        </Button>
       )}
     </div>
   );

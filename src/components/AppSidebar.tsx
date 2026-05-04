@@ -34,6 +34,7 @@ import { useRecentNavigation, type RecentItem } from '../hooks/useRecentNavigati
 import { kvGet, kvSet } from '../services/kvStore';
 import { inferModuleFromPath, getModuleTone } from '../lib/moduleColor';
 import CommandPalette from './design/CommandPalette';
+import { Button } from '@/design-system';
 
 /**
  * AppSidebar — sidebar desktop ≥1024px (V22-B1).
@@ -198,8 +199,10 @@ const AppSidebar: React.FC = () => {
 
         {/* Cmd+K trigger */}
         <div style={{ padding: '0 14px 14px' }}>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="small"
             onClick={() => setPaletteOpen(true)}
             aria-label="Ouvrir la recherche globale"
             style={{
@@ -216,6 +219,9 @@ const AppSidebar: React.FC = () => {
               fontSize: 13,
               cursor: 'pointer',
               transition: 'background 200ms var(--ease-emil)',
+              textTransform: 'none',
+              height: 'auto',
+              justifyContent: 'flex-start',
             }}
           >
             <Search size={14} style={{ flexShrink: 0 }} />
@@ -233,7 +239,7 @@ const AppSidebar: React.FC = () => {
             >
               {isMac() ? '⌘K' : 'Ctrl K'}
             </kbd>
-          </button>
+          </Button>
         </div>
 
         {/* Section Épinglé (dynamique) */}
@@ -529,8 +535,9 @@ const SidebarRow: React.FC<SidebarRowProps> = ({
     : 'transparent';
 
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
       onClick={onClick}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
@@ -556,6 +563,10 @@ const SidebarRow: React.FC<SidebarRowProps> = ({
         transition:
           'background 240ms var(--ease-emil), color 240ms var(--ease-emil)',
         minHeight: 32,
+        borderRadius: 0,
+        textTransform: 'none',
+        height: 'auto',
+        justifyContent: 'flex-start',
       }}
     >
       <span
@@ -611,7 +622,7 @@ const SidebarRow: React.FC<SidebarRowProps> = ({
           <ChevronDown size={14} />
         </span>
       ) : null}
-    </button>
+    </Button>
   );
 };
 
