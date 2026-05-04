@@ -12,11 +12,10 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { IonToast } from '@ionic/react';
 import { Save } from 'lucide-react';
 
-import { BottomSheet } from '../agritech';
-import { FormField, Input, Select, Button } from '@/design-system';
+import { AppToast, BottomSheet, useAppToast } from '../agritech';
+import { Button, FormField, Input, Section, Select } from '@/design-system';
 import { listLoges } from '../../services/supabaseWrites';
 import { supabase } from '../../services/supabaseClient';
 import { confirmMiseBas } from '../../services/mbWorkflowService';
@@ -69,7 +68,7 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
 
   const [errors, setErrors] = useState<MiseBasValidation['errors']>({});
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState('');
+  const { show: showToast, toastProps } = useAppToast();
 
   // Reset à l'ouverture
   const [lastKey, setLastKey] = useState({ isOpen, saillieId });
@@ -102,18 +101,18 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
           .maybeSingle();
         if (cancelled) return;
         if (error || !data) {
-          setToast('Saillie introuvable');
+          showToast('Saillie introuvable', 'error');
           return;
         }
         setSaillie(data as SailliePreload);
       } catch {
-        if (!cancelled) setToast('Erreur précharge saillie');
+        if (!cancelled) showToast('Erreur précharge saillie', 'error');
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [isOpen, saillieId]);
+  }, [isOpen, saillieId, showToast]);
 
   // Précharge loges
   useEffect(() => {
@@ -198,7 +197,7 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
         code_id: codeId,
       });
 
-      setToast(`Mise bas confirmée — bande ${codeId}`);
+      showToast(`Mise bas confirmée — bande ${codeId}`, 'success');
       try {
         await refreshData(true);
       } catch {
@@ -207,7 +206,10 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
       onSuccess?.(newBatchId);
       onClose();
     } catch (err) {
-      setToast(err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement');
+      showToast(
+        err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement',
+        'error',
+      );
     } finally {
       setSaving(false);
     }
@@ -225,12 +227,14 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
       >
         <form
           onSubmit={handleSubmit}
-          className="space-y-4"
+          className="space-y-5"
           noValidate
           aria-label="Confirmation rigoureuse d'une mise bas"
           data-testid="quick-confirm-mise-bas-form"
         >
-          {/* Récap saillie */}
+          {/* ── RÉCAP SAILLIE ──────────────────────────────────────── */}
+          <Section label="SAILLIE SOURCE" />
+
           {saillie ? (
             <div
               className="card-dense space-y-1 py-3"
@@ -268,6 +272,9 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
             </p>
           )}
 
+          {/* ── INFORMATIONS PRINCIPALES ───────────────────────────── */}
+          <Section label="INFORMATIONS PRINCIPALES" />
+
           <FormField label="Date de mise bas" required error={errors.dateMiseBas}>
             <Input
               id="qcmb-date"
@@ -279,6 +286,9 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
               invalid={!!errors.dateMiseBas}
             />
           </FormField>
+
+          {/* ── PORTÉE ─────────────────────────────────────────────── */}
+          <Section label="PORTÉE" />
 
           <div className="grid grid-cols-2 gap-3">
             <FormField label="Nés total" required error={errors.nbTotal}>
@@ -330,55 +340,57 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
             </span>
           </div>
 
+          <FormField label="Poids portée kg" hint="optionnel" error={errors.poidsPorteeKg}>
+            <Input
+              id="qcmb-poids"
+              type="number"
+              aria-label="Poids portée"
+              inputMode="decimal"
+              min={0.5}
+              max={50}
+              step={0.1}
+              placeholder="Ex: 16.5"
+              value={poidsPorteeKg}
+              onChange={e => setPoidsPorteeKg(e.target.value)}
+              invalid={!!errors.poidsPorteeKg}
+            />
+          </FormField>
+
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Poids portée kg" error={errors.poidsPorteeKg}>
+            <FormField label="Mâles" hint="optionnel" error={errors.nbMales}>
               <Input
-                id="qcmb-poids"
+                id="qcmb-males"
                 type="number"
-                aria-label="Poids portée"
-                inputMode="decimal"
-                min={0.5}
-                max={50}
-                step={0.1}
-                placeholder="Ex: 16.5"
-                value={poidsPorteeKg}
-                onChange={e => setPoidsPorteeKg(e.target.value)}
-                invalid={!!errors.poidsPorteeKg}
+                aria-label="Mâles"
+                inputMode="numeric"
+                min={0}
+                max={25}
+                step={1}
+                placeholder="—"
+                value={nbMales}
+                onChange={e => setNbMales(e.target.value)}
+                invalid={!!errors.nbMales}
               />
             </FormField>
-            <div className="grid grid-cols-2 gap-2">
-              <FormField label="Mâles" error={errors.nbMales}>
-                <Input
-                  id="qcmb-males"
-                  type="number"
-                  aria-label="Mâles"
-                  inputMode="numeric"
-                  min={0}
-                  max={25}
-                  step={1}
-                  placeholder="—"
-                  value={nbMales}
-                  onChange={e => setNbMales(e.target.value)}
-                  invalid={!!errors.nbMales}
-                />
-              </FormField>
-              <FormField label="Femelles" error={errors.nbFemelles}>
-                <Input
-                  id="qcmb-femelles"
-                  type="number"
-                  aria-label="Femelles"
-                  inputMode="numeric"
-                  min={0}
-                  max={25}
-                  step={1}
-                  placeholder="—"
-                  value={nbFemelles}
-                  onChange={e => setNbFemelles(e.target.value)}
-                  invalid={!!errors.nbFemelles}
-                />
-              </FormField>
-            </div>
+            <FormField label="Femelles" hint="optionnel" error={errors.nbFemelles}>
+              <Input
+                id="qcmb-femelles"
+                type="number"
+                aria-label="Femelles"
+                inputMode="numeric"
+                min={0}
+                max={25}
+                step={1}
+                placeholder="—"
+                value={nbFemelles}
+                onChange={e => setNbFemelles(e.target.value)}
+                invalid={!!errors.nbFemelles}
+              />
+            </FormField>
           </div>
+
+          {/* ── LOGE ───────────────────────────────────────────────── */}
+          <Section label="LOGE MATERNITÉ" />
 
           <FormField label="Loge maternité" required error={errors.logeId}>
             <Select
@@ -399,25 +411,27 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
             </Select>
           </FormField>
 
-          <div className="flex gap-3 justify-end pt-2 border-t border-border">
+          <div className="flex gap-3 justify-end pt-3 border-t border-border">
             <Button
               variant="secondary"
               onClick={handleClose}
               disabled={saving}
+              ariaLabel="Annuler"
             >
-              Annuler
+              ANNULER
             </Button>
             <Button
               type="submit"
               variant="primary"
               disabled={saving || !saillie}
               aria-busy={saving}
+              ariaLabel="Confirmer la mise bas"
               data-testid="qcmb-submit"
             >
               {saving ? 'Confirmation…' : (
                 <span className="inline-flex items-center gap-2">
                   <Save size={14} aria-hidden="true" />
-                  Confirmer mise bas
+                  VALIDER
                 </span>
               )}
             </Button>
@@ -425,13 +439,7 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
         </form>
       </BottomSheet>
 
-      <IonToast
-        isOpen={toast !== ''}
-        message={toast}
-        duration={2400}
-        onDidDismiss={() => setToast('')}
-        position="bottom"
-      />
+      <AppToast {...toastProps} />
     </>
   );
 };
