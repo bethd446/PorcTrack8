@@ -15,6 +15,7 @@ import { IonToast } from '@ionic/react';
 import { Plus, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { FormField, Input, Select, Textarea, Button } from '@/design-system';
 import {
   insertBatch,
   resolveSowIdByCode,
@@ -228,25 +229,13 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
           </div>
 
           {/* Truie mère */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-bande-truie"
-              className="block text-mono-label text-text-2"
-            >
-              Truie mère <span className="text-red normal-case">· obligatoire</span>
-            </label>
-            <select
+          <FormField label="Truie mère" required error={errors.truieId}>
+            <Select
               id="add-bande-truie"
               ref={firstFieldRef}
               aria-required="true"
               aria-invalid={!!errors.truieId}
               aria-describedby={errors.truieId ? 'add-bande-truie-error' : undefined}
-              className={[
-                'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0',
-                'text-[14px] outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.truieId ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
               value={truieId}
               onChange={e => setTruieId(e.target.value)}
               disabled={saving}
@@ -257,31 +246,14 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
                   {t.displayId || t.id}{t.nom ? ` · ${t.nom}` : ''}{t.boucle ? ` (${t.boucle})` : ''}
                 </option>
               ))}
-            </select>
-            {errors.truieId ? (
-              <p id="add-bande-truie-error" role="alert" className="text-[11px] text-red">
-                {errors.truieId}
-              </p>
-            ) : null}
-          </div>
+            </Select>
+          </FormField>
 
           {/* Verrat père */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-bande-verrat"
-              className="block text-mono-label text-text-2"
-            >
-              Verrat père <span className="text-text-2 normal-case">· optionnel</span>
-            </label>
-            <select
+          <FormField label="Verrat père" hint="optionnel" error={errors.verratId}>
+            <Select
               id="add-bande-verrat"
               aria-invalid={!!errors.verratId}
-              className={[
-                'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0',
-                'text-[14px] outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.verratId ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
               value={verratId}
               onChange={e => setVerratId(e.target.value)}
               disabled={saving}
@@ -292,18 +264,17 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
                   {v.displayId || v.id}{v.nom ? ` · ${v.nom}` : ''}
                 </option>
               ))}
-            </select>
-          </div>
+            </Select>
+          </FormField>
 
           {/* ID portée */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-bande-id"
-              className="block text-mono-label text-text-2"
-            >
-              ID portée <span className="text-text-2 normal-case">· auto-suggéré</span>
-            </label>
-            <input
+          <FormField
+            label="ID portée"
+            required
+            hint={`auto-suggéré · Format YY-T<n>-NN (ex: 26-T1-01)`}
+            error={errors.idPortee}
+          >
+            <Input
               id="add-bande-id"
               type="text"
               maxLength={30}
@@ -311,66 +282,31 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
               aria-required="true"
               aria-invalid={!!errors.idPortee}
               aria-describedby={errors.idPortee ? 'add-bande-id-error' : 'add-bande-id-hint'}
-              className={[
-                'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'ft-code text-[14px] uppercase outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.idPortee ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
+              className="ft-code uppercase"
               placeholder="26-T1-01"
               value={idPortee}
               onChange={e => setIdPortee(e.target.value)}
               disabled={saving}
               autoComplete="off"
             />
-            {errors.idPortee ? (
-              <p id="add-bande-id-error" role="alert" className="text-[11px] text-red">
-                {errors.idPortee}
-              </p>
-            ) : (
-              <p id="add-bande-id-hint" className="text-[10px] text-text-2">
-                Format YY-T{'<n>'}-NN (ex: 26-T1-01)
-              </p>
-            )}
-          </div>
+          </FormField>
 
           {/* Date mise-bas */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-bande-date-mb"
-              className="block text-mono-label text-text-2"
-            >
-              Date de mise-bas
-            </label>
-            <input
+          <FormField label="Date de mise-bas" error={errors.dateMb}>
+            <Input
               id="add-bande-date-mb"
               type="date"
               aria-invalid={!!errors.dateMb}
-              className={[
-                'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0',
-                'text-[14px] tabular-nums outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.dateMb ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
               value={dateMb}
               onChange={e => setDateMb(e.target.value)}
               disabled={saving}
             />
-            {errors.dateMb ? (
-              <p role="alert" className="text-[11px] text-red">{errors.dateMb}</p>
-            ) : null}
-          </div>
+          </FormField>
 
           {/* Nés vivants + morts-nés */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label
-                htmlFor="add-bande-nv"
-                className="block text-mono-label text-text-2"
-              >
-                Nés vivants <span className="text-red normal-case">·</span>
-              </label>
-              <input
+            <FormField label="Nés vivants" required error={errors.nesVivants}>
+              <Input
                 id="add-bande-nv"
                 type="number"
                 inputMode="numeric"
@@ -380,30 +316,14 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
                 aria-required="true"
                 aria-invalid={!!errors.nesVivants}
                 aria-describedby={errors.nesVivants ? 'add-bande-nv-error' : undefined}
-                className={[
-                  'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0',
-                  'font-mono text-[16px] tabular-nums text-center outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  errors.nesVivants ? 'border-red' : 'border-border hover:border-text-2',
-                ].join(' ')}
+                className="font-mono tabular-nums text-center"
                 value={nesVivants}
                 onChange={e => setNesVivants(e.target.value)}
                 disabled={saving}
               />
-              {errors.nesVivants ? (
-                <p id="add-bande-nv-error" role="alert" className="text-[11px] text-red">
-                  {errors.nesVivants}
-                </p>
-              ) : null}
-            </div>
-            <div className="space-y-1.5">
-              <label
-                htmlFor="add-bande-mn"
-                className="block text-mono-label text-text-2"
-              >
-                Morts-nés
-              </label>
-              <input
+            </FormField>
+            <FormField label="Morts-nés" error={errors.mortsNes}>
+              <Input
                 id="add-bande-mn"
                 type="number"
                 inputMode="numeric"
@@ -411,33 +331,19 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
                 max={25}
                 step={1}
                 aria-invalid={!!errors.mortsNes}
-                className={[
-                  'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0',
-                  'font-mono text-[16px] tabular-nums text-center outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  errors.mortsNes ? 'border-red' : 'border-border hover:border-text-2',
-                ].join(' ')}
+                className="font-mono tabular-nums text-center"
                 placeholder="0"
                 value={mortsNes}
                 onChange={e => setMortsNes(e.target.value)}
                 disabled={saving}
               />
-              {errors.mortsNes ? (
-                <p role="alert" className="text-[11px] text-red">{errors.mortsNes}</p>
-              ) : null}
-            </div>
+            </FormField>
           </div>
 
           {/* Mort-nés mâles / femelles */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label
-                htmlFor="add-bande-mn-m"
-                className="block text-mono-label text-text-2"
-              >
-                Mort-nés ♂ <span className="text-text-2 normal-case">· opt.</span>
-              </label>
-              <input
+            <FormField label="Mort-nés ♂" hint="optionnel" error={errors.mortsNesMales}>
+              <Input
                 id="add-bande-mn-m"
                 type="number"
                 inputMode="numeric"
@@ -445,29 +351,15 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
                 max={25}
                 step={1}
                 aria-invalid={!!errors.mortsNesMales}
-                className={[
-                  'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0',
-                  'font-mono text-[16px] tabular-nums text-center outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  errors.mortsNesMales ? 'border-red' : 'border-border hover:border-text-2',
-                ].join(' ')}
+                className="font-mono tabular-nums text-center"
                 placeholder="0"
                 value={mortsNesMales}
                 onChange={e => setMortsNesMales(e.target.value)}
                 disabled={saving}
               />
-              {errors.mortsNesMales ? (
-                <p role="alert" className="text-[11px] text-red">{errors.mortsNesMales}</p>
-              ) : null}
-            </div>
-            <div className="space-y-1.5">
-              <label
-                htmlFor="add-bande-mn-f"
-                className="block text-mono-label text-text-2"
-              >
-                Mort-nés ♀ <span className="text-text-2 normal-case">· opt.</span>
-              </label>
-              <input
+            </FormField>
+            <FormField label="Mort-nés ♀" hint="optionnel" error={errors.mortsNesFemelles}>
+              <Input
                 id="add-bande-mn-f"
                 type="number"
                 inputMode="numeric"
@@ -475,21 +367,13 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
                 max={25}
                 step={1}
                 aria-invalid={!!errors.mortsNesFemelles}
-                className={[
-                  'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0',
-                  'font-mono text-[16px] tabular-nums text-center outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  errors.mortsNesFemelles ? 'border-red' : 'border-border hover:border-text-2',
-                ].join(' ')}
+                className="font-mono tabular-nums text-center"
                 placeholder="0"
                 value={mortsNesFemelles}
                 onChange={e => setMortsNesFemelles(e.target.value)}
                 disabled={saving}
               />
-              {errors.mortsNesFemelles ? (
-                <p role="alert" className="text-[11px] text-red">{errors.mortsNesFemelles}</p>
-              ) : null}
-            </div>
+            </FormField>
           </div>
 
           {errors.coherence ? (
@@ -506,6 +390,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
             >
               Statut initial
             </span>
+            {/* TODO V44: Radio DS missing — radiogroup natif conservé */}
             <div
               className="flex flex-wrap gap-2"
               role="radiogroup"
@@ -541,24 +426,13 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
           </div>
 
           {/* Poids moyen au sevrage / naissance */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between gap-2">
-              <label
-                htmlFor="add-bande-poids"
-                className="block text-mono-label text-text-2"
-              >
-                Poids moyen sevrage (kg){' '}
-                {statut === 'Sevrés' ? (
-                  <span className="text-red normal-case">· obligatoire</span>
-                ) : (
-                  <span className="text-text-2 normal-case">· défaut naissance 1.4 kg</span>
-                )}
-              </label>
-              <span className="inline-flex items-center px-2 h-6 rounded-full bg-bg-2 border border-border text-mono-micro text-text-1">
-                5-7 kg cible
-              </span>
-            </div>
-            <input
+          <FormField
+            label="Poids moyen sevrage (kg)"
+            required={statut === 'Sevrés'}
+            hint={statut === 'Sevrés' ? '5-7 kg cible' : 'défaut naissance 1.4 kg · 5-7 kg cible'}
+            error={errors.poidsKg}
+          >
+            <Input
               id="add-bande-poids"
               type="number"
               inputMode="decimal"
@@ -568,29 +442,20 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
               aria-required={statut === 'Sevrés'}
               aria-invalid={!!errors.poidsKg}
               aria-describedby={errors.poidsKg ? 'add-bande-poids-error' : undefined}
-              className={[
-                'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[16px] tabular-nums text-center outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.poidsKg ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
+              className="font-mono tabular-nums text-center"
               placeholder={statut === 'Sevrés' ? '6.0' : '1.4'}
               value={poidsKg}
               onChange={e => setPoidsKg(e.target.value)}
               disabled={saving}
             />
-            {errors.poidsKg ? (
-              <p id="add-bande-poids-error" role="alert" className="text-[11px] text-red">
-                {errors.poidsKg}
-              </p>
-            ) : (() => {
+            {!errors.poidsKg && (() => {
               const p = parseFloat(poidsKg.replace(',', '.'));
               if (!Number.isFinite(p) || poidsKg.trim() === '') return null;
               if (statut === 'Sevrés' && (p < 4 || p > 10)) {
                 return (
                   <span
                     role="status"
-                    className="inline-flex items-center px-2 h-6 rounded-full bg-amber-100 border border-amber-300 text-mono-micro text-amber-900"
+                    className="inline-flex items-center mt-1 px-2 h-6 rounded-full bg-amber-100 border border-amber-300 text-mono-micro text-amber-900"
                   >
                     Hors plage cible 5-7 kg
                   </span>
@@ -598,110 +463,61 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
               }
               return null;
             })()}
-          </div>
+          </FormField>
 
           {/* Loge actuelle */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-bande-loge"
-              className="block text-mono-label text-text-2"
-            >
-              Loge actuelle
-            </label>
-            <input
+          <FormField label="Loge actuelle" error={errors.loge}>
+            <Input
               id="add-bande-loge"
               type="text"
               maxLength={30}
               aria-invalid={!!errors.loge}
-              className={[
-                'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'text-[14px] outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.loge ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
               placeholder="Ex: M1, P-Sev 2"
               value={loge}
               onChange={e => setLoge(e.target.value)}
               disabled={saving}
               autoComplete="off"
             />
-            {errors.loge ? (
-              <p role="alert" className="text-[11px] text-red">{errors.loge}</p>
-            ) : null}
-          </div>
+          </FormField>
 
           {/* Notes */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-bande-notes"
-              className="block text-mono-label text-text-2"
-            >
-              Notes
-            </label>
-            <textarea
+          <FormField label="Notes" error={errors.notes}>
+            <Textarea
               id="add-bande-notes"
               rows={3}
               maxLength={300}
               aria-invalid={!!errors.notes}
-              className={[
-                'w-full rounded-md px-3 py-2 bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'text-[13px] outline-none transition-colors duration-[160ms] resize-none',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.notes ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
               placeholder="Origine, contexte, observations…"
               value={notes}
               onChange={e => setNotes(e.target.value)}
               disabled={saving}
             />
-            {errors.notes ? (
-              <p role="alert" className="text-[11px] text-red">{errors.notes}</p>
-            ) : null}
-          </div>
+          </FormField>
 
           {/* Actions */}
-          <div className="flex items-center gap-2 pt-2">
-            <button
-              type="button"
+          <div className="flex gap-3 justify-end pt-2 border-t border-border">
+            <Button
+              variant="secondary"
               onClick={handleClose}
               disabled={saving}
-              aria-label="Annuler et fermer"
-              className={[
-                'pressable flex-1 h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-bg-1 border border-border text-text-1',
-                'text-[12px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms] hover:border-text-2',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : '',
-              ].join(' ')}
+              ariaLabel="Annuler et fermer"
             >
               Annuler
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={saving}
-              aria-label="Ajouter la bande historique"
+              ariaLabel="Ajouter la bande historique"
               aria-busy={saving}
-              className={[
-                'pressable flex-[2] h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-accent text-bg-0',
-                'text-[13px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms]',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
-              ].join(' ')}
             >
-              {saving ? (
-                <span className="animate-pulse">Enregistrement…</span>
-              ) : (
-                <>
-                  <span>Ajouter</span>
+              {saving ? 'Enregistrement…' : (
+                <span className="inline-flex items-center gap-2">
+                  Ajouter
                   <Save size={14} aria-hidden="true" />
-                </>
+                </span>
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </BottomSheet>

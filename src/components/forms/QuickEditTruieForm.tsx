@@ -3,6 +3,7 @@ import { IonToast } from '@ionic/react';
 import { Edit3, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { FormField, Input, Select, Textarea, Button } from '@/design-system';
 import { listLoges, updateSow } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
@@ -301,14 +302,6 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
   const displayId = truie.displayId || truie.id;
 
   // ─── Classes réutilisables ────────────────────────────────────────────
-  const inputBase =
-    'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2 text-[14px] outline-none transition-colors duration-[160ms] focus:border-accent focus:ring-1 focus:ring-accent';
-  const inputOk = 'border-border hover:border-text-2';
-  const inputErr = 'border-red';
-  const labelCls =
-    'block text-mono-label text-text-2';
-  const hintCls = 'text-[10px] text-text-2 tabular-nums';
-  const errCls = 'text-[11px] text-red';
   const sectionTitleCls =
     'text-mono-micror text-text-2 pb-1 border-b border-border';
 
@@ -370,26 +363,20 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
             </h3>
 
             {/* Code interne (displayId — éditable) */}
-            <div className="space-y-1.5">
-              <label htmlFor="edit-truie-codeid" className={labelCls}>
-                Code interne <span className="text-red normal-case">· requis</span>
-              </label>
-              <input
+            <FormField
+              label="Code interne"
+              required
+              hint="Tu peux changer le préfixe (T → K, etc.) — code interne unique pour ta ferme · 3-15 lettres/chiffres/tirets"
+              error={errors.codeId}
+            >
+              <Input
                 id="edit-truie-codeid"
                 type="text"
                 maxLength={15}
                 aria-label="Code interne de la truie"
                 aria-required="true"
                 aria-invalid={!!errors.codeId}
-                aria-describedby={
-                  errors.codeId
-                    ? 'edit-truie-codeid-error'
-                    : 'edit-truie-codeid-hint'
-                }
-                className={[
-                  inputBase,
-                  errors.codeId ? inputErr : inputOk,
-                ].join(' ')}
+                aria-describedby={errors.codeId ? 'edit-truie-codeid-error' : 'edit-truie-codeid-hint'}
                 placeholder="Ex: K13-T-001"
                 value={draft.codeId}
                 onChange={e => update('codeId', e.target.value)}
@@ -397,102 +384,69 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
                 autoComplete="off"
                 spellCheck={false}
               />
-              <p id="edit-truie-codeid-hint" className={hintCls}>
-                Tu peux changer le préfixe (T → K, etc.) — code interne unique
-                pour ta ferme · 3-15 lettres/chiffres/tirets
-              </p>
-              {errors.codeId ? (
-                <p id="edit-truie-codeid-error" role="alert" className={errCls}>
-                  {errors.codeId}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
 
             {/* Nom */}
-            <div className="space-y-1.5">
-              <label htmlFor="edit-truie-nom" className={labelCls}>
-                Nom <span className="text-text-2 normal-case">· optionnel</span>
-              </label>
-              <input
+            <FormField label="Nom" error={errors.nom}>
+              <Input
                 id="edit-truie-nom"
                 ref={firstFieldRef}
                 type="text"
                 maxLength={30}
                 aria-label={`Nom de la truie ${displayId}`}
                 aria-invalid={!!errors.nom}
-                aria-describedby={
-                  errors.nom ? 'edit-truie-nom-error' : 'edit-truie-nom-hint'
-                }
-                className={[inputBase, errors.nom ? inputErr : inputOk].join(' ')}
+                aria-describedby={errors.nom ? 'edit-truie-nom-error' : 'edit-truie-nom-hint'}
                 placeholder="Ex: Berthe"
                 value={draft.nom}
                 onChange={e => update('nom', e.target.value)}
                 disabled={saving}
                 autoComplete="off"
               />
-              <p id="edit-truie-nom-hint" className={hintCls}>
+              <p id="edit-truie-nom-hint" className="text-[10px] text-text-2 tabular-nums mt-1">
                 {draft.nom.trim().length}/30 · laisser vide pour retirer
               </p>
               {errors.nom ? (
-                <p id="edit-truie-nom-error" role="alert" className={errCls}>
-                  {errors.nom}
-                </p>
+                <p id="edit-truie-nom-error" className="sr-only">{errors.nom}</p>
               ) : null}
-            </div>
+            </FormField>
 
             {/* Boucle (obligatoire) */}
-            <div className="space-y-1.5">
-              <label htmlFor="edit-truie-boucle" className={labelCls}>
-                Boucle <span className="text-red normal-case">· requis</span>
-              </label>
-              <input
+            <FormField
+              label="Boucle"
+              required
+              hint="Identifiant physique (obligatoire)"
+              error={errors.boucle}
+            >
+              <Input
                 id="edit-truie-boucle"
                 type="text"
                 maxLength={30}
                 aria-label="Boucle de la truie"
                 aria-required="true"
                 aria-invalid={!!errors.boucle}
-                aria-describedby={
-                  errors.boucle
-                    ? 'edit-truie-boucle-error'
-                    : 'edit-truie-boucle-hint'
-                }
-                className={[
-                  inputBase,
-                  errors.boucle ? inputErr : inputOk,
-                ].join(' ')}
+                aria-describedby={errors.boucle ? 'edit-truie-boucle-error' : 'edit-truie-boucle-hint'}
                 placeholder="Ex: FR-001-1234"
                 value={draft.boucle}
                 onChange={e => update('boucle', e.target.value)}
                 disabled={saving}
                 autoComplete="off"
               />
-              <p id="edit-truie-boucle-hint" className={hintCls}>
-                Identifiant physique (obligatoire)
-              </p>
-              {errors.boucle ? (
-                <p id="edit-truie-boucle-error" role="alert" className={errCls}>
-                  {errors.boucle}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
 
             {/* Race */}
-            <div className="space-y-1.5">
-              <label htmlFor="edit-truie-race" className={labelCls}>
-                Race <span className="text-text-2 normal-case">· optionnel</span>
-              </label>
-              <input
+            <FormField
+              label="Race"
+              hint={`optionnel · ${draft.race.trim().length}/40 · suggestions dans la liste`}
+              error={errors.race}
+            >
+              <Input
                 id="edit-truie-race"
                 type="text"
                 list="edit-truie-race-list"
                 maxLength={40}
                 aria-label="Race de la truie"
                 aria-invalid={!!errors.race}
-                aria-describedby={
-                  errors.race ? 'edit-truie-race-error' : 'edit-truie-race-hint'
-                }
-                className={[inputBase, errors.race ? inputErr : inputOk].join(' ')}
+                aria-describedby={errors.race ? 'edit-truie-race-error' : 'edit-truie-race-hint'}
                 placeholder="Ex: Large White"
                 value={draft.race}
                 onChange={e => update('race', e.target.value)}
@@ -504,23 +458,11 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
                   <option key={r} value={r} />
                 ))}
               </datalist>
-              <p id="edit-truie-race-hint" className={hintCls}>
-                {draft.race.trim().length}/40 · suggestions dans la liste
-              </p>
-              {errors.race ? (
-                <p id="edit-truie-race-error" role="alert" className={errCls}>
-                  {errors.race}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
 
             {/* Poids */}
-            <div className="space-y-1.5">
-              <label htmlFor="edit-truie-poids" className={labelCls}>
-                Poids (kg)
-                <span className="text-text-2 normal-case"> · optionnel</span>
-              </label>
-              <input
+            <FormField label="Poids (kg)" hint="optionnel · 0 à 350 kg · pas 0.5" error={errors.poids}>
+              <Input
                 id="edit-truie-poids"
                 type="number"
                 inputMode="decimal"
@@ -529,132 +471,71 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
                 step={0.5}
                 aria-label="Poids de la truie en kilogrammes"
                 aria-invalid={!!errors.poids}
-                aria-describedby={
-                  errors.poids
-                    ? 'edit-truie-poids-error'
-                    : 'edit-truie-poids-hint'
-                }
-                className={[inputBase, errors.poids ? inputErr : inputOk].join(' ')}
+                aria-describedby={errors.poids ? 'edit-truie-poids-error' : 'edit-truie-poids-hint'}
                 placeholder="0"
                 value={draft.poids}
                 onChange={e => update('poids', e.target.value)}
                 disabled={saving}
               />
-              <p id="edit-truie-poids-hint" className={hintCls}>
-                0 à 350 kg · pas 0.5
-              </p>
-              {errors.poids ? (
-                <p id="edit-truie-poids-error" role="alert" className={errCls}>
-                  {errors.poids}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
 
             {/* Date de naissance */}
-            <div className="space-y-1.5">
-              <label htmlFor="edit-truie-naissance" className={labelCls}>
-                Date de naissance{' '}
-                <span className="text-text-2 normal-case">· optionnel</span>
-              </label>
-              <input
+            <FormField label="Date de naissance" hint="optionnel" error={errors.dateNaissance}>
+              <Input
                 id="edit-truie-naissance"
                 type="date"
                 aria-invalid={!!errors.dateNaissance}
-                aria-describedby={
-                  errors.dateNaissance
-                    ? 'edit-truie-naissance-error'
-                    : undefined
-                }
-                className={[
-                  inputBase,
-                  errors.dateNaissance ? inputErr : inputOk,
-                ].join(' ')}
+                aria-describedby={errors.dateNaissance ? 'edit-truie-naissance-error' : undefined}
                 value={draft.dateNaissance}
                 onChange={e => update('dateNaissance', e.target.value)}
                 disabled={saving}
               />
-              {errors.dateNaissance ? (
-                <p
-                  id="edit-truie-naissance-error"
-                  role="alert"
-                  className={errCls}
-                >
-                  {errors.dateNaissance}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
 
             {/* Origine */}
-            <div className="space-y-1.5">
-              <label htmlFor="edit-truie-origine" className={labelCls}>
-                Origine{' '}
-                <span className="text-text-2 normal-case">· optionnel</span>
-              </label>
-              <input
+            <FormField
+              label="Origine"
+              hint={`optionnel · ${draft.origine.trim().length}/50`}
+              error={errors.origine}
+            >
+              <Input
                 id="edit-truie-origine"
                 type="text"
                 maxLength={50}
                 aria-invalid={!!errors.origine}
-                aria-describedby={
-                  errors.origine ? 'edit-truie-origine-error' : 'edit-truie-origine-hint'
-                }
-                className={[inputBase, errors.origine ? inputErr : inputOk].join(' ')}
+                aria-describedby={errors.origine ? 'edit-truie-origine-error' : 'edit-truie-origine-hint'}
                 placeholder="Ex: Élevage Thomasset"
                 value={draft.origine}
                 onChange={e => update('origine', e.target.value)}
                 disabled={saving}
                 autoComplete="off"
               />
-              <p id="edit-truie-origine-hint" className={hintCls}>
-                {draft.origine.trim().length}/50
-              </p>
-              {errors.origine ? (
-                <p id="edit-truie-origine-error" role="alert" className={errCls}>
-                  {errors.origine}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
 
             {/* Emplacement loge */}
-            <div className="space-y-1.5">
-              <label htmlFor="edit-truie-loge" className={labelCls}>
-                Emplacement loge{' '}
-                <span className="text-text-2 normal-case">· optionnel</span>
-              </label>
-              <input
+            <FormField
+              label="Emplacement loge"
+              hint={`optionnel · ${draft.loge.trim().length}/30`}
+              error={errors.loge}
+            >
+              <Input
                 id="edit-truie-loge"
                 type="text"
                 maxLength={30}
                 aria-invalid={!!errors.loge}
-                aria-describedby={
-                  errors.loge ? 'edit-truie-loge-error' : 'edit-truie-loge-hint'
-                }
-                className={[inputBase, errors.loge ? inputErr : inputOk].join(' ')}
+                aria-describedby={errors.loge ? 'edit-truie-loge-error' : 'edit-truie-loge-hint'}
                 placeholder="Ex: Maternité L3"
                 value={draft.loge}
                 onChange={e => update('loge', e.target.value)}
                 disabled={saving}
                 autoComplete="off"
               />
-              <p id="edit-truie-loge-hint" className={hintCls}>
-                {draft.loge.trim().length}/30
-              </p>
-              {errors.loge ? (
-                <p id="edit-truie-loge-error" role="alert" className={errCls}>
-                  {errors.loge}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
 
             {/* V25 — Loge structurée (référentiel) */}
-            <div className="space-y-1.5">
-              <label htmlFor="edit-truie-loge-ref" className={labelCls}>
-                Loge (référentiel){' '}
-                <span className="text-text-2 normal-case">· optionnel</span>
-              </label>
-              <select
+            <FormField label="Loge (référentiel)" hint="optionnel · 1 truie = 1 loge dédiée (spec).">
+              <Select
                 id="edit-truie-loge-ref"
-                className={[inputBase, inputOk].join(' ')}
                 value={selectedLogeId}
                 onChange={e => {
                   setSelectedLogeId(e.target.value);
@@ -669,12 +550,12 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
                     {l.batiment ? ` · ${l.batiment}` : ''}
                   </option>
                 ))}
-              </select>
+              </Select>
               {logeConflict ? (
                 <p
                   role="alert"
                   data-testid="loge-conflict-warning"
-                  className="rounded-md border border-red/40 bg-red/10 px-3 py-2 text-[11px] text-red"
+                  className="mt-1 rounded-md border border-red/40 bg-red/10 px-3 py-2 text-[11px] text-red"
                 >
                   Loge {loges.find(l => l.id === selectedLogeId)?.numero ?? ''}{' '}
                   occupée par{' '}
@@ -685,8 +566,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
                       : `bande ${logeConflict.label}`}
                 </p>
               ) : null}
-              <p className={hintCls}>1 truie = 1 loge dédiée (spec).</p>
-            </div>
+            </FormField>
           </section>
 
           {/* ── Section 2 : Reproduction ─────────────────────────────── */}
@@ -696,14 +576,10 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
             </h3>
 
             {/* Stade */}
-            <div className="space-y-1.5">
-              <label htmlFor="edit-truie-stade" className={labelCls}>
-                Stade
-              </label>
-              <select
+            <FormField label="Stade">
+              <Select
                 id="edit-truie-stade"
                 aria-label="Stade physiologique"
-                className={[inputBase, inputOk].join(' ')}
                 value={draft.stade}
                 onChange={e => update('stade', e.target.value)}
                 disabled={saving}
@@ -713,18 +589,14 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
                     {opt === '' ? '—' : opt}
                   </option>
                 ))}
-              </select>
-            </div>
+              </Select>
+            </FormField>
 
             {/* Statut */}
-            <div className="space-y-1.5">
-              <label htmlFor="edit-truie-statut" className={labelCls}>
-                Statut
-              </label>
-              <select
+            <FormField label="Statut">
+              <Select
                 id="edit-truie-statut"
                 aria-label="Statut reproducteur"
-                className={[inputBase, inputOk].join(' ')}
                 value={draft.statut}
                 onChange={e => update('statut', e.target.value)}
                 disabled={saving}
@@ -734,15 +606,12 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
                     {opt === '' ? '—' : opt}
                   </option>
                 ))}
-              </select>
-            </div>
+              </Select>
+            </FormField>
 
             {/* Ration */}
-            <div className="space-y-1.5">
-              <label htmlFor="edit-truie-ration" className={labelCls}>
-                Ration (kg/j)
-              </label>
-              <input
+            <FormField label="Ration (kg/j)" error={errors.ration}>
+              <Input
                 id="edit-truie-ration"
                 type="number"
                 inputMode="decimal"
@@ -752,37 +621,23 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
                 aria-label="Ration alimentaire en kilogrammes par jour"
                 aria-required="true"
                 aria-invalid={!!errors.ration}
-                aria-describedby={
-                  errors.ration
-                    ? 'edit-truie-ration-error'
-                    : 'edit-truie-ration-hint'
-                }
-                className={[
-                  inputBase,
-                  errors.ration ? inputErr : inputOk,
-                ].join(' ')}
+                aria-describedby={errors.ration ? 'edit-truie-ration-error' : 'edit-truie-ration-hint'}
                 placeholder="0.0"
                 value={draft.ration}
                 onChange={e => update('ration', e.target.value)}
                 disabled={saving}
               />
-              <p id="edit-truie-ration-hint" className={hintCls}>
+              <p id="edit-truie-ration-hint" className="text-[10px] text-text-2 tabular-nums mt-1">
                 0 à 10 kg/j · pas 0.1
               </p>
               {errors.ration ? (
-                <p id="edit-truie-ration-error" role="alert" className={errCls}>
-                  {errors.ration}
-                </p>
+                <p id="edit-truie-ration-error" className="sr-only">{errors.ration}</p>
               ) : null}
-            </div>
+            </FormField>
 
             <div className="grid grid-cols-2 gap-3">
-              {/* Nb portées */}
-              <div className="space-y-1.5">
-                <label htmlFor="edit-truie-nbportees" className={labelCls}>
-                  Nb portées
-                </label>
-                <input
+              <FormField label="Nb portées" hint="0 à 20" error={errors.nbPortees}>
+                <Input
                   id="edit-truie-nbportees"
                   type="number"
                   inputMode="numeric"
@@ -791,40 +646,16 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
                   step={1}
                   aria-label="Nombre total de portées"
                   aria-invalid={!!errors.nbPortees}
-                  aria-describedby={
-                    errors.nbPortees
-                      ? 'edit-truie-nbportees-error'
-                      : 'edit-truie-nbportees-hint'
-                  }
-                  className={[
-                    inputBase,
-                    errors.nbPortees ? inputErr : inputOk,
-                  ].join(' ')}
+                  aria-describedby={errors.nbPortees ? 'edit-truie-nbportees-error' : 'edit-truie-nbportees-hint'}
                   placeholder="0"
                   value={draft.nbPortees}
                   onChange={e => update('nbPortees', e.target.value)}
                   disabled={saving}
                 />
-                <p id="edit-truie-nbportees-hint" className={hintCls}>
-                  0 à 20
-                </p>
-                {errors.nbPortees ? (
-                  <p
-                    id="edit-truie-nbportees-error"
-                    role="alert"
-                    className={errCls}
-                  >
-                    {errors.nbPortees}
-                  </p>
-                ) : null}
-              </div>
+              </FormField>
 
-              {/* Dernière NV */}
-              <div className="space-y-1.5">
-                <label htmlFor="edit-truie-nv" className={labelCls}>
-                  Dernière NV
-                </label>
-                <input
+              <FormField label="Dernière NV" hint="0 à 25" error={errors.derniereNV}>
+                <Input
                   id="edit-truie-nv"
                   type="number"
                   inputMode="numeric"
@@ -833,63 +664,28 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
                   step={1}
                   aria-label="Nés vivants de la dernière portée"
                   aria-invalid={!!errors.derniereNV}
-                  aria-describedby={
-                    errors.derniereNV
-                      ? 'edit-truie-nv-error'
-                      : 'edit-truie-nv-hint'
-                  }
-                  className={[
-                    inputBase,
-                    errors.derniereNV ? inputErr : inputOk,
-                  ].join(' ')}
+                  aria-describedby={errors.derniereNV ? 'edit-truie-nv-error' : 'edit-truie-nv-hint'}
                   placeholder="0"
                   value={draft.derniereNV}
                   onChange={e => update('derniereNV', e.target.value)}
                   disabled={saving}
                 />
-                <p id="edit-truie-nv-hint" className={hintCls}>
-                  0 à 25
-                </p>
-                {errors.derniereNV ? (
-                  <p id="edit-truie-nv-error" role="alert" className={errCls}>
-                    {errors.derniereNV}
-                  </p>
-                ) : null}
-              </div>
+              </FormField>
             </div>
 
             {/* Date MB prévue */}
-            <div className="space-y-1.5">
-              <label htmlFor="edit-truie-datemb" className={labelCls}>
-                Date MB prévue
-              </label>
-              <input
+            <FormField label="Date MB prévue" hint="Laisser vide si inconnu" error={errors.dateMBPrevue}>
+              <Input
                 id="edit-truie-datemb"
                 type="date"
                 aria-label="Date de mise-bas prévue"
                 aria-invalid={!!errors.dateMBPrevue}
-                aria-describedby={
-                  errors.dateMBPrevue
-                    ? 'edit-truie-datemb-error'
-                    : 'edit-truie-datemb-hint'
-                }
-                className={[
-                  inputBase,
-                  errors.dateMBPrevue ? inputErr : inputOk,
-                ].join(' ')}
+                aria-describedby={errors.dateMBPrevue ? 'edit-truie-datemb-error' : 'edit-truie-datemb-hint'}
                 value={draft.dateMBPrevue}
                 onChange={e => update('dateMBPrevue', e.target.value)}
                 disabled={saving}
               />
-              <p id="edit-truie-datemb-hint" className={hintCls}>
-                Laisser vide si inconnu
-              </p>
-              {errors.dateMBPrevue ? (
-                <p id="edit-truie-datemb-error" role="alert" className={errCls}>
-                  {errors.dateMBPrevue}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
           </section>
 
           {/* ── Section 3 : Notes ────────────────────────────────────── */}
@@ -898,88 +694,50 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
               Notes
             </h3>
 
-            <div className="space-y-1.5">
-              <label htmlFor="edit-truie-notes" className={labelCls}>
-                Notes <span className="text-text-2 normal-case">· optionnel</span>
-              </label>
-              <textarea
+            <FormField
+              label="Notes"
+              hint={`optionnel · ${draft.notes.trim().length}/200`}
+              error={errors.notes}
+            >
+              <Textarea
                 id="edit-truie-notes"
                 maxLength={200}
                 rows={3}
                 aria-label="Notes libres sur la truie"
                 aria-invalid={!!errors.notes}
-                aria-describedby={
-                  errors.notes
-                    ? 'edit-truie-notes-error'
-                    : 'edit-truie-notes-hint'
-                }
-                className={[
-                  'w-full rounded-md px-3 py-2',
-                  'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                  'text-[13px]',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  errors.notes ? inputErr : inputOk,
-                ].join(' ')}
+                aria-describedby={errors.notes ? 'edit-truie-notes-error' : 'edit-truie-notes-hint'}
                 placeholder="Observations, remarques…"
                 value={draft.notes}
                 onChange={e => update('notes', e.target.value)}
                 disabled={saving}
               />
-              <p id="edit-truie-notes-hint" className={hintCls}>
-                {draft.notes.trim().length}/200
-              </p>
-              {errors.notes ? (
-                <p id="edit-truie-notes-error" role="alert" className={errCls}>
-                  {errors.notes}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
           </section>
 
           {/* Actions */}
-          <div className="flex items-center gap-2 pt-2 sticky bottom-0 bg-bg-1 -mx-4 px-4 pb-2 border-t border-border">
-            <button
-              type="button"
+          <div className="flex gap-3 justify-end pt-2 sticky bottom-0 bg-bg-1 -mx-4 px-4 pb-2 border-t border-border">
+            <Button
+              variant="secondary"
               onClick={handleClose}
               disabled={saving}
               aria-label="Annuler et fermer"
-              className={[
-                'pressable flex-1 h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-bg-1 border border-border text-text-1',
-                'text-[12px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms] hover:border-text-2',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : '',
-              ].join(' ')}
             >
               Annuler
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={saving}
               aria-label="Enregistrer les modifications de la truie"
               aria-busy={saving}
-              className={[
-                'pressable flex-[2] h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-accent text-bg-0',
-                'text-[13px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms]',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
-              ].join(' ')}
             >
-              {saving ? (
-                <span className="animate-pulse">Enregistrement…</span>
-              ) : (
-                <>
-                  <span>Enregistrer</span>
+              {saving ? 'Enregistrement…' : (
+                <span className="inline-flex items-center gap-2">
+                  Enregistrer
                   <Save size={14} aria-hidden="true" />
-                </>
+                </span>
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </BottomSheet>
