@@ -1,5 +1,5 @@
 /**
- * PendingBandesView — Écran V27-VALIDATION.
+ * PendingBandesView — Écran V27-VALIDATION (V44 archétype 3 LISTE).
  * ════════════════════════════════════════════════════════════════════════
  * Liste TOUTES les bandes `validation_status='PENDING'` de la ferme courante,
  * triées MÂLES d'abord puis FEMELLES (demande métier christophe — ordre
@@ -21,7 +21,7 @@ import {
 import QuickAddBandeFromLogeForm from '../../components/forms/QuickAddBandeFromLogeForm';
 import AnimalListItem from '../../components/agritech/AnimalListItem';
 import type { ChipTone } from '../../components/agritech/Chip';
-import { Button, PageHeader } from '@/design-system';
+import { Button, Card, PageHeader, Section } from '@/design-system';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -169,55 +169,55 @@ const PendingBandesSection: React.FC<PendingBandesSectionProps> = ({
   return (
     <section
       aria-label={title}
-      className="space-y-2"
+      className="flex flex-col gap-2"
       data-testid={`pending-section-${badge}`}
     >
-      <h2 className="text-[11px] uppercase tracking-wide text-text-2 px-3 pt-2">
-        {title} ({rows.length})
-      </h2>
-      <ul className="card-dense !p-0 overflow-hidden divide-y divide-border">
-        {rows.map(r => {
-          const code = r.code_id ?? '—';
-          const eff = r.porcelets_nes_vivants ?? null;
-          const poids = r.poids_moyen_kg ?? null;
-          const loge = r.loge_numero ?? null;
-          const meta = [
-            eff != null ? `${eff} porc.` : null,
-            poids != null ? `${poids} kg` : null,
-          ]
-            .filter(Boolean)
-            .join(' · ');
-          return (
-            <li key={r.id} data-testid={`pending-row-${r.id}`}>
-              <AnimalListItem
-                avatar={
-                  <span
-                    className={[
-                      'text-[12px] font-bold',
-                      badge === 'M' ? 'text-blue' : 'text-coral',
-                    ].join(' ')}
-                    aria-label={badge === 'M' ? 'Mâles' : 'Femelles'}
-                  >
-                    {badge}
-                  </span>
-                }
-                primary={code}
-                secondary={loge ? `Loge ${loge}` : 'Loge à choisir'}
-                meta={meta || undefined}
-                chip={{
-                  label: phaseLabel(r.phase),
-                  tone: phaseTone(r.phase),
-                }}
-                accessory={
-                  <ChevronRight size={16} className="text-text-2" aria-hidden="true" />
-                }
-                onClick={() => onTap(r.id)}
-                ariaLabel={`Compléter la bande ${code}`}
-              />
-            </li>
-          );
-        })}
-      </ul>
+      <Section label={`${title} (${rows.length})`} />
+      <Card>
+        <ul className="flex flex-col">
+          {rows.map(r => {
+            const code = r.code_id ?? '—';
+            const eff = r.porcelets_nes_vivants ?? null;
+            const poids = r.poids_moyen_kg ?? null;
+            const loge = r.loge_numero ?? null;
+            const meta = [
+              eff != null ? `${eff} porc.` : null,
+              poids != null ? `${poids} kg` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ');
+            return (
+              <li key={r.id} data-testid={`pending-row-${r.id}`}>
+                <AnimalListItem
+                  avatar={
+                    <span
+                      className={[
+                        'text-[12px] font-bold',
+                        badge === 'M' ? 'text-blue' : 'text-coral',
+                      ].join(' ')}
+                      aria-label={badge === 'M' ? 'Mâles' : 'Femelles'}
+                    >
+                      {badge}
+                    </span>
+                  }
+                  primary={code}
+                  secondary={loge ? `Loge ${loge}` : 'Loge à choisir'}
+                  meta={meta || undefined}
+                  chip={{
+                    label: phaseLabel(r.phase),
+                    tone: phaseTone(r.phase),
+                  }}
+                  accessory={
+                    <ChevronRight size={16} className="text-text-2" aria-hidden="true" />
+                  }
+                  onClick={() => onTap(r.id)}
+                  ariaLabel={`Compléter la bande ${code}`}
+                />
+              </li>
+            );
+          })}
+        </ul>
+      </Card>
     </section>
   );
 };
@@ -266,30 +266,29 @@ const PendingBandesView: React.FC<PendingBandesViewProps> = ({ injectedState }) 
       className="min-h-screen bg-bg-0 pb-24"
       data-testid="pending-bandes-view"
     >
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-bg-0 border-b border-border px-3 py-3 flex items-start gap-2">
-        <Button
-          variant="ghost"
-          size="small"
-          onClick={handleBack}
-          className="pressable inline-flex items-center justify-center h-10 w-10 rounded-md hover:bg-bg-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent mt-1"
-          ariaLabel="Retour"
-          data-testid="pending-bandes-back"
-        >
-          <ChevronLeft size={18} aria-hidden="true" />
-        </Button>
-        <div className="flex-1 min-w-0">
-          <PageHeader
-            eyebrow="Admin · Bandes en attente"
-            title="Bandes en attente"
-            subtitle="Validation des inscriptions"
-          />
+      <div className="px-4 pt-5 pb-32 max-w-md mx-auto flex flex-col gap-5">
+        {/* Back + PageHeader (archétype 3) */}
+        <div className="flex items-start gap-2">
+          <Button
+            variant="ghost"
+            size="small"
+            onClick={handleBack}
+            ariaLabel="Retour"
+            data-testid="pending-bandes-back"
+          >
+            <ChevronLeft size={18} aria-hidden="true" />
+          </Button>
+          <div className="flex-1 min-w-0">
+            <PageHeader
+              eyebrow="Admin"
+              title="Bandes en attente"
+              subtitle="Validation des inscriptions"
+            />
+          </div>
         </div>
-      </header>
 
-      <main className="px-3 py-4 space-y-5">
         {loading ? (
-          <div data-testid="pending-bandes-skeleton" className="space-y-2">
+          <div data-testid="pending-bandes-skeleton" className="flex flex-col gap-2">
             {[0, 1, 2].map(i => (
               <div
                 key={i}
@@ -299,41 +298,39 @@ const PendingBandesView: React.FC<PendingBandesViewProps> = ({ injectedState }) 
             ))}
           </div>
         ) : error ? (
-          <div
-            role="alert"
-            className="card-dense text-center py-8"
-            data-testid="pending-bandes-error"
-          >
-            <p className="text-[12px] text-red">Erreur : {error}</p>
-            <Button
-              variant="secondary"
-              size="small"
-              onClick={refresh}
-              className="pressable mt-3 inline-flex h-10 px-4 rounded-md bg-bg-2 border border-border text-[11px] uppercase tracking-wide hover:border-text-2"
-            >
-              Réessayer
-            </Button>
-          </div>
+          <Card>
+            <div role="alert" className="text-center py-4" data-testid="pending-bandes-error">
+              <p className="text-[12px]" style={{ color: 'var(--pt-danger)' }}>
+                Erreur : {error}
+              </p>
+              <div className="mt-3">
+                <Button variant="secondary" size="small" onClick={refresh}>
+                  Réessayer
+                </Button>
+              </div>
+            </div>
+          </Card>
         ) : rows.length === 0 ? (
-          <div
-            className="card-dense text-center py-12 space-y-3"
-            data-testid="pending-bandes-empty"
-          >
-            <p className="text-[15px] font-semibold text-text-0">
-              Aucune bande à valider
-            </p>
-            <p className="text-[11px] text-text-2">
-              Toutes les bandes ont été validées.
-            </p>
-            <Button
-              variant="primary"
-              onClick={handleBack}
-              className="pressable inline-flex h-11 px-5 rounded-md bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide hover:brightness-110"
-              data-testid="pending-bandes-empty-back"
+          <Card>
+            <div
+              className="text-center py-8 flex flex-col items-center gap-3"
+              data-testid="pending-bandes-empty"
             >
-              Retour
-            </Button>
-          </div>
+              <p className="text-[15px] font-semibold text-text-0">
+                Aucune bande à valider
+              </p>
+              <p className="text-[11px] text-text-2">
+                Toutes les bandes ont été validées.
+              </p>
+              <Button
+                variant="primary"
+                onClick={handleBack}
+                data-testid="pending-bandes-empty-back"
+              >
+                Retour
+              </Button>
+            </div>
+          </Card>
         ) : (
           <>
             <PendingBandesSection
@@ -350,16 +347,15 @@ const PendingBandesView: React.FC<PendingBandesViewProps> = ({ injectedState }) 
             />
 
             {/* Bulk validate CTA */}
-            <div className="pt-2">
+            <div>
               <Button
                 variant="secondary"
                 fullWidth
                 onClick={() => setBulkOpen(true)}
-                className="pressable w-full h-12 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
                 data-testid="pending-bandes-bulk-cta"
               >
                 <CheckCheck size={14} aria-hidden="true" />
-                Valider toutes (avec valeurs actuelles)
+                <span>Valider toutes (avec valeurs actuelles)</span>
               </Button>
               <p className="text-[10px] text-text-2 mt-2 text-center">
                 Garde les estimations en l'état pour les {rows.length} bandes.
@@ -367,7 +363,7 @@ const PendingBandesView: React.FC<PendingBandesViewProps> = ({ injectedState }) 
             </div>
           </>
         )}
-      </main>
+      </div>
 
       {/* Edit form */}
       {editingId ? (
@@ -391,45 +387,48 @@ const PendingBandesView: React.FC<PendingBandesViewProps> = ({ injectedState }) 
           data-testid="pending-bandes-bulk-confirm"
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-3 pb-3 sm:p-4"
         >
-          <div className="w-full max-w-md card-dense space-y-3 py-5">
-            <h3 className="text-[13px] font-bold uppercase tracking-wide text-text-0">
-              Valider {rows.length} bande{rows.length > 1 ? 's' : ''} ?
-            </h3>
-            <p className="text-[11px] text-text-2">
-              Toutes les estimations actuelles (effectif, poids, phase) seront
-              acceptées telles quelles. Tu pourras modifier les détails plus
-              tard depuis la fiche bande.
-            </p>
-            {bulkError ? (
-              <p
-                role="alert"
-                className="text-[11px] text-red"
-                data-testid="pending-bandes-bulk-error"
-              >
-                Erreur : {bulkError}
+          <Card className="w-full max-w-md">
+            <div className="flex flex-col gap-3">
+              <h3 className="text-[13px] font-bold uppercase tracking-wide text-text-0">
+                Valider {rows.length} bande{rows.length > 1 ? 's' : ''} ?
+              </h3>
+              <p className="text-[11px] text-text-2">
+                Toutes les estimations actuelles (effectif, poids, phase) seront
+                acceptées telles quelles. Tu pourras modifier les détails plus
+                tard depuis la fiche bande.
               </p>
-            ) : null}
-            <div className="flex items-center gap-2 pt-1">
-              <Button
-                variant="secondary"
-                onClick={() => setBulkOpen(false)}
-                disabled={bulkSaving}
-                className="pressable flex-1 h-11 rounded-md bg-bg-1 border border-border text-text-1 text-[11px] font-bold uppercase tracking-wide hover:border-text-2"
-              >
-                Annuler
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleBulkValidate}
-                disabled={bulkSaving}
-                aria-busy={bulkSaving}
-                className="pressable flex-[2] h-11 rounded-md bg-accent text-bg-0 text-[11px] font-bold uppercase tracking-wide hover:brightness-110 disabled:opacity-40"
-                data-testid="pending-bandes-bulk-confirm-btn"
-              >
-                {bulkSaving ? 'Validation…' : 'Valider toutes'}
-              </Button>
+              {bulkError ? (
+                <p
+                  role="alert"
+                  className="text-[11px]"
+                  style={{ color: 'var(--pt-danger)' }}
+                  data-testid="pending-bandes-bulk-error"
+                >
+                  Erreur : {bulkError}
+                </p>
+              ) : null}
+              <div className="flex items-center gap-2 pt-1">
+                <Button
+                  variant="secondary"
+                  onClick={() => setBulkOpen(false)}
+                  disabled={bulkSaving}
+                  className="flex-1"
+                >
+                  Annuler
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleBulkValidate}
+                  disabled={bulkSaving}
+                  aria-busy={bulkSaving}
+                  className="flex-[2]"
+                  data-testid="pending-bandes-bulk-confirm-btn"
+                >
+                  {bulkSaving ? 'Validation…' : 'Valider toutes'}
+                </Button>
+              </div>
             </div>
-          </div>
+          </Card>
         </div>
       ) : null}
     </div>
