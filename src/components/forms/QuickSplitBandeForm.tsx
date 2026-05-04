@@ -11,8 +11,8 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { IonModal, IonToast } from '@ionic/react';
 
+import { AppToast, BottomSheet, useAppToast } from '../agritech';
 import { Button, Select, Wizard, type WizardStep } from '@/design-system';
 import {
   getLogeContents,
@@ -83,7 +83,7 @@ const QuickSplitBandeForm: React.FC<QuickSplitBandeFormProps> = ({
   const [step1Error, setStep1Error] = useState<string>('');
   const [step2Error, setStep2Error] = useState<string>('');
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string>('');
+  const { show: showToast, toastProps } = useAppToast();
 
   // Reset à l'ouverture / changement bande
   const [lastKey, setLastKey] = useState<{ open: boolean; bid: string }>({
@@ -213,15 +213,19 @@ const QuickSplitBandeForm: React.FC<QuickSplitBandeFormProps> = ({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         newBatchPayload: draft as any,
       });
-      setToast(
+      showToast(
         `Split OK · ${res.movedCount} porcelets → ${res.newCodeId}` +
           (res.sourceArchivedAsRecap ? ' · source archivée' : ''),
+        'success',
+        { duration: 2400 },
       );
       onSuccess();
       onClose();
     } catch (err) {
-      setToast(
+      showToast(
         err instanceof Error ? `Erreur : ${err.message}` : 'Erreur split',
+        'error',
+        { duration: 2400 },
       );
     } finally {
       setSaving(false);
@@ -234,6 +238,7 @@ const QuickSplitBandeForm: React.FC<QuickSplitBandeFormProps> = ({
     bandeCodeId,
     onClose,
     onSuccess,
+    showToast,
   ]);
 
   // ── Steps ────────────────────────────────────────────────────────────────
@@ -496,7 +501,7 @@ const QuickSplitBandeForm: React.FC<QuickSplitBandeFormProps> = ({
 
   return (
     <>
-      <IonModal isOpen={isOpen} onDidDismiss={onClose}>
+      <BottomSheet isOpen={isOpen} onClose={onClose} height="full">
         <Wizard
           id={`split-bande-${bandeId}`}
           steps={steps}
@@ -506,15 +511,9 @@ const QuickSplitBandeForm: React.FC<QuickSplitBandeFormProps> = ({
           completeLabel="Splitter"
           busy={saving}
         />
-      </IonModal>
+      </BottomSheet>
 
-      <IonToast
-        isOpen={toast !== ''}
-        message={toast}
-        duration={2400}
-        onDidDismiss={() => setToast('')}
-        position="bottom"
-      />
+      <AppToast {...toastProps} />
     </>
   );
 };
