@@ -1,7 +1,7 @@
 {
   "saillie": {
     "label": "Saillie",
-    "definition": "Accouplement entre une truie en chaleur et un verrat (ou insémination artificielle). Date de référence J0 du cycle gestation. À noter dans PorcTrack pour planifier l'échographie à J28 et la mise-bas à J114. Référence ITP : objectif de 90 % de saillies fécondantes."
+    "definition": "Accouplement entre une truie en chaleur et un verrat (ou insémination artificielle). Date de référence J0 du cycle gestation. À noter dans PorcTrack pour planifier l'échographie à J28 et la mise-bas à J115. Référence ITP : objectif de 90 % de saillies fécondantes."
   },
   "echographie": {
     "label": "Échographie",
@@ -9,11 +9,11 @@
   },
   "mise-bas": {
     "label": "Mise-bas",
-    "definition": "Accouchement de la truie. Survient à J114 ± 2 jours après la saillie. Préparer la maternité dès J110 : nettoyage, désinfection, lampe chauffante. Surveiller les 24 premières heures, période critique pour la mortalité néonatale."
+    "definition": "Accouchement de la truie. Survient à J115 ± 2 jours après la saillie. Préparer la maternité dès J111 : nettoyage, désinfection, lampe chauffante. Surveiller les 24 premières heures, période critique pour la mortalité néonatale."
   },
   "sevrage": {
     "label": "Sevrage",
-    "definition": "Séparation des porcelets de la mère pour passer à une alimentation solide. Réalisé entre 21 et 28 jours après la mise-bas. Permet le retour en chaleur de la truie sous 5 à 7 jours et le démarrage d'un nouveau cycle de production."
+    "definition": "Retour en chaleur après sevrage : généralement 3 à 7 jours. Référence ITP : médiane 5-7 jours. PorcTrack alerte si pas de saillie observée à J+7 (règle R3). Cible technique : retour rapide pour minimiser l'IEM."
   },
   "isse": {
     "label": "ISSE",
@@ -25,7 +25,7 @@
   },
   "gestation": {
     "label": "Gestation",
-    "definition": "Période de développement des fœtus dans l'utérus de la truie. Dure 114 jours en moyenne (113 à 116). Trois phases : implantation (J0 à J35), croissance (J35 à J90), finition (J90 à mise-bas). Alimentation à adapter selon la phase."
+    "definition": "Période de développement des fœtus dans l'utérus de la truie. PorcTrack utilise 115 jours comme repère (référence ITP : 114 j, plage 113 à 117 j selon lignée). Trois phases : implantation (J0-J35), croissance (J35-J90), finition (J90-mise-bas)."
   },
   "lactation": {
     "label": "Lactation",
@@ -52,8 +52,8 @@
     "definition": "Mesure du poids d'un animal pour suivre sa croissance et ajuster l'alimentation. À réaliser à la mise-bas, au sevrage et tous les 21 jours en engraissement. Données indispensables pour calculer le GMQ (Gain Moyen Quotidien) et l'indice de consommation."
   },
   "mortalite": {
-    "label": "Mortalité",
-    "definition": "Nombre d'animaux morts sur une période. À noter par cause (écrasement, diarrhée, mort-né, sevrage) pour identifier les points faibles. Seuil d'alerte en allaitement : > 15 % de la portée. Référence ITP : 12 % de mortalité allaitement maximum."
+    "label": "Mortalité allaitement",
+    "definition": "Pourcentage de porcelets décédés entre la naissance et le sevrage. Cible ITP : moins de 12%. PorcTrack déclenche une alerte automatique si la mortalité dépasse 15% (règle R4)."
   },
   "vaccin": {
     "label": "Vaccin",

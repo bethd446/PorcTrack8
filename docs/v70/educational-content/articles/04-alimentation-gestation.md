@@ -34,6 +34,7 @@ Le suivi de l'état corporel (note d'état 1 à 5) permet d'ajuster individuelle
 - Eau propre : **15 à 25 litres/jour** par truie (plus en climat tropical chaud)
 - Note d'état corporel cible à la mise-bas : **3 à 3,5 sur 5**
 - Protéines aliment gestation : **13 à 14 %**
+- Durée gestation référence PorcTrack : **115 jours** (ITP : 114 j, plage 113-117 j selon lignée et parité)
 
 ## Bonnes pratiques
 

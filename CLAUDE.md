@@ -84,14 +84,14 @@ npx cap open android   # ou: npx cap run android
 │   └── PilotageContext.tsx   # State pilotage (KPIs, finances, alertes)
 │
 ├── services/
-│   ├── alertEngine.ts       # 14 règles GTTT biologiques
+│   ├── alertEngine.ts       # 16 règles GTTT biologiques
 │   ├── googleSheets.ts      # Backend Google Sheets
 │   ├── offlineQueue.ts      # File d'attente offline
 │   ├── offlineCache.ts      # Cache local
 │   └── kvStore.ts           # Persistance clé-valeur (Preferences)
 │
 ├── index.css                # Design system CSS + Tailwind v4
-├── App.tsx                  # Router (17 routes)
+├── App.tsx                  # Router (54 routes — V45 ; sera réorganisé en V70 : 5 onglets + sous-routes)
 └── main.tsx                 # Entry point
 ```
 
@@ -154,14 +154,15 @@ Le header accepte un slot `children` pour intégrer des éléments (tabs, barre 
 - Retour chaleur post-sevrage : **3-7 jours**
 - Seuil mortalité anormale : **>15%** du lot
 
-### 14 règles d'alerte (`alertEngine.ts`)
+### 16 règles d'alerte (`alertEngine.ts`)
 | # | Règle | Déclencheur | Priorité |
 |---|-------|-------------|----------|
 | R1 | Mise-Bas | J-3 à J+2 de date prévue | HAUTE→CRITIQUE |
 | R2 | Sevrage | J+28 post naissance | HAUTE→NORMALE |
-| R3 | Retour Chaleur | J+5 post sevrage | HAUTE→NORMALE |
+| R3 | Retour Chaleur | Fenêtre J+3 à J+7 post sevrage (médian J+5) | HAUTE→NORMALE |
 | R4 | Mortalité | >15% morts dans lot | HAUTE→CRITIQUE |
-| R5 | Stock Critique | Rupture ou seuil bas atteint | HAUTE→CRITIQUE |
+| R5 | Stock Aliment | Rupture ou seuil bas atteint | HAUTE→CRITIQUE |
+| R5b | Stock Véto | Rupture ou seuil bas (vaccins, antibio) | HAUTE→CRITIQUE |
 | R6 | Regroupement | 2+ bandes sevrables ±3j | INFO |
 | R7 | Échographie | J25 à J35 post-saillie | INFO |
 | R8 | Re-Saillie | Retour chaleur détecté | HAUTE |
@@ -169,17 +170,41 @@ Le header accepte un slot `children` pour intégrer des éléments (tabs, barre 
 | R10 | Surdensité | >6 bandes en engraissement | HAUTE |
 | R11 | Réforme (Perf) | Productivité insuffisante | HAUTE |
 | R12 | Réforme (Inact.) | Longue inactivité (90j+) | NORMALE |
-| R13 | Manque Pesée | Aucun poids depuis 21j | NORMALE |
+| R13 | Manque Pesée | Aucun poids depuis >21j | NORMALE→HAUTE (>35j) |
 | R14 | Portée Orpheline| Truie morte avec porcelets | CRITIQUE |
+| R15 | Passage Phase | Poids ≥ seuil (CROISSANCE / ENGRAISSEMENT / FINITION) | NORMALE |
+| R16 | Sortie Abattoir | Poids ≥ 110 kg, prêt enlèvement | HAUTE |
 
 ### Statuts animaux
-- **Truies** : Gestation, Allaitante/Lactation, Flushing, Vide, Réforme, Morte
-- **Verrats** : Actif, Réforme, Mort
+
+Statuts truies (type `TruieStatut`, cf. `src/types/farm.ts:16`) :
+- `'En attente saillie'` (vide post-sevrage)
+- `'En maternité'` (lactation)
+- `'Pleine'` (gestation)
+- `'À surveiller'`
+- `'Réforme'`, `'Morte'` (gérés via fallback `string`)
+
+Statuts verrats (type `VerratStatut`, cf. `src/types/farm.ts:23`) :
+- `'Actif'` (seul libellé contraint)
+- `'Réforme'`, `'Mort'` (fallback `string`)
 
 ### Données de référence
-- Ferme : **A130**, Secteur : **Nord**
+- Ferme : **K13**, Contexte : Côte d'Ivoire (compte test V70)
 - Troupeau type : 17 truies + 2 verrats, 12 bandes actives
-- Rôles : PORCHER (terrain), ADMIN (gestion)
+- Rôles canoniques : `WORKER` (terrain, alias `PORCHER`), `OWNER` (gestion, alias `ADMIN`) — cf. `AuthContext.tsx`
+
+### Cycle de vie GTTT — phases post-sevrage (`config/farm.ts`)
+- Post-sevrage : J28 → J63 (~35 jours, `POST_SEVRAGE_DUREE_JOURS=35`)
+- Croissance : J63 → J100 (~37 jours, `CROISSANCE_DUREE_JOURS=37`)
+- Engraissement : J100 → J180 (~80 jours, `ENGRAISSEMENT_DUREE_JOURS=80`)
+- Finition : J180 ou poids ≥ 100 kg (seuil sortie abattoir 110 kg, cf. `FINITION_POIDS_MIN_KG=100`, `FINITION_POIDS_MAX_KG=110`)
+
+### Configuration ferme par défaut
+
+- Capacités loges : 9 (maternité), 6 (post-sevrage), 6 (croissance-finition / engraissement) — cf. `MATERNITE_LOGES_CAPACITY`, `POST_SEVRAGE_LOGES_CAPACITY`, `ENGRAISSEMENT_LOGES_CAPACITY` dans `src/config/farm.ts`
+- Timezone : `Europe/Paris` (compte test pré-V70 utilisait FR ; cf. `alertEngine.ts:34`)
+- Devise : FCFA (V43.3 plateforme uniformisée)
+- Prix vente porcs : `PRIX_VENTE_PORC_KG=2100` FCFA/kg, coûts fixes `5000` FCFA/porc — cf. `FINANCE_CONFIG` dans `src/config/farm.ts:129`
 
 ## Conventions de code
 

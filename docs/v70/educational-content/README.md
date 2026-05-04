@@ -38,9 +38,9 @@ Premier draft du contenu éducatif PorcTrack V70 destiné à Aïssata (éleveuse
 
 ## Statut de validation
 
-**Niveau** : draft initial — non validé.
-**Validateur** : Christophe (validation en bloc avec commentaires).
-**Action attendue** : revue, annotations, retour à l'agent rédacteur pour V2.
+**Niveau** : draft V2 (post-tranches Christophe Q1/Q3/Q5) — 2026-05-04.
+**Validateur** : Christophe (tranches en bloc, voir section Questions remontées).
+**Action attendue** : intégration UI Phase 6A (V70Router lit `tooltips.json` + `articles/*.md`).
 
 ## Sources utilisées
 
@@ -49,44 +49,36 @@ Premier draft du contenu éducatif PorcTrack V70 destiné à Aïssata (éleveuse
 - **INRAE** (Institut National de Recherche pour l'Agriculture) — physiologie reproduction, adaptations climat tropical
 - **FAO** (article 03 biosécurité) — guide PPA Afrique de l'Ouest
 
-## Questions remontées à Christophe (à trancher)
+## Questions remontées à Christophe (statut post-validation)
 
-Liste des points d'ambiguïté métier qui n'ont pas été tranchés par l'agent rédacteur, conformément à la consigne "ne pas trancher seul sur les ambiguïtés métier".
+Statut des 7 questions remontées sur le draft V1, après tranches Christophe du 2026-05-04.
 
-### Q1 — Durée de gestation : 114 ou 115 jours ?
-- **Constat** : `CLAUDE.md` (constantes biologiques projet) indique **115 jours ± 2**. Sources ITP/IFIP grand public utilisent **114 jours ± 2** (3 mois, 3 semaines, 3 jours = 114).
-- **Choix actuel du draft** : 114 jours (aligné sources externes).
-- **Question** : faut-il aligner les contenus éducatifs sur la constante interne (115j) pour cohérence avec l'app, ou sur la référence ITP (114j) ?
+### Q1 — Durée de gestation : 114 ou 115 jours ? — **TRANCHÉE**
+- **Décision Christophe** : **115 jours partout** dans tooltips et articles, avec note explicative mentionnant la référence ITP (114 j, plage 113-117 j). L'app est la source de vérité, le contenu s'aligne sur `CLAUDE.md`.
+- **Application V2** : tooltips `saillie`, `mise-bas`, `gestation` mis à jour ; articles 01 et 04 mis à jour ; note explicative ajoutée dans 01.
 
-### Q2 — Lactation 21 ou 28 jours par défaut ?
-- **Constat** : `CLAUDE.md` indique **28 jours** comme constante. Pratique ITP varie 21 à 28j selon le type d'élevage. En climat tropical, 21 à 24j est souvent préférable (truie qui maigrit moins).
-- **Choix actuel du draft** : fourchette 21 à 28 jours partout.
-- **Question** : Aïssata sèvre-t-elle à un âge précis ? Si oui, ajuster le ton.
+### Q2 — Lactation 21 ou 28 jours par défaut ? — **VALIDÉE**
+- **Décision Christophe** : la fourchette 21 à 28 jours du draft V1 est conservée. Tooltip `lactation` et article 01 inchangés.
 
-### Q3 — Retour chaleur post-sevrage : 3-7 ou 5-7 jours ?
-- **Constat** : `CLAUDE.md` indique **3-7 jours**. Sources ITP/IFIP : **5-7 jours** (médiane 5j). 3 jours est rare et signale souvent une saillie chevauchée non détectée.
-- **Choix actuel du draft** : 5 à 7 jours (référence ITP).
-- **Question** : si la constante interne reste 3-7, faut-il l'aligner ?
+### Q3 — Retour chaleur post-sevrage : 3-7 ou 5-7 jours ? — **TRANCHÉE (rétractation 2026-05-05)**
+- **Tranche initiale** : 5-7j (V2)
+- **Tranche finale** : **3-7j** — rétractation après audit code par sub-agent CLEANUP-CLAUDE-MD
+- **Justification** : code actuel utilise 3-7j en 3 fichiers (`alertEngine.ts`, `ProtocolsView.tsx`, `SaillieSuiviPanel.tsx`). Cohérent CLAUDE.md. Plus inclusif terrain (capture cas J3-J4 post-sevrage abrupt).
+- **Tooltip final** : "Retour en chaleur après sevrage : généralement 3 à 7 jours. Référence ITP : médiane 5-7 jours. PorcTrack alerte si pas de saillie observée à J+7 (règle R3)."
+- **Statut** : V3 contenu éducatif aligné sur code (3-7j)
 
-### Q4 — Réforme zootechnique vs économique
-- **Constat** : le terme "réforme" peut désigner la décision technique (truie infertile, ISSE faible) ou la décision économique (cours du marché, renouvellement programmé). Le tooltip actuel mélange les deux causes (âge, perf, infertilité, sanitaire).
-- **Choix actuel du draft** : approche zootechnique large, sans distinction explicite.
-- **Question** : faut-il dédoubler en deux tooltips (`reforme-technique` / `reforme-economique`) ou garder une définition unique ?
+### Q4 — Réforme zootechnique vs économique — **VALIDÉE**
+- **Décision Christophe** : définition unique simple conservée. Pas de dédoublement `reforme-technique` / `reforme-economique`.
 
-### Q5 — Mortalité allaitement : seuil 12 ou 15 % ?
-- **Constat** : `CLAUDE.md` parle de **> 15 %** comme seuil d'alerte. ITP cite **12 %** comme cible technique. Le tooltip mortalité mentionne les deux (alerte 15 %, cible 12 %), ce qui peut être ambigu.
-- **Choix actuel du draft** : alerte > 15 %, cible 12 %.
-- **Question** : à clarifier — sont-ce deux concepts distincts ou doit-on en supprimer un ?
+### Q5 — Mortalité allaitement : seuil 12 ou 15 % ? — **TRANCHÉE**
+- **Décision Christophe** : reformulation tooltip selon pattern **cible métier vs alerte PorcTrack**. Texte final imposé : "Pourcentage de porcelets décédés entre la naissance et le sevrage. Cible ITP : moins de 12%. PorcTrack déclenche une alerte automatique si la mortalité dépasse 15% (règle R4)."
+- **Application V2** : tooltip `mortalite` reformulé. Pattern à appliquer pour tout futur tooltip mentionnant un seuil chiffré (voir Annexe D du brief technique, règle 2).
 
-### Q6 — Lignées en Côte d'Ivoire
-- **Constat** : la mention "lignées européennes pures" vs "lignées adaptées tropical" dans le tooltip `lignee` est une simplification. Beaucoup d'élevages ivoiriens utilisent des Large White × Landrace en bâtiments climatisés.
-- **Choix actuel du draft** : conseil général pro-rusticité, sans nommer de lignée.
-- **Question** : faut-il citer des lignées précises (Pic, Hypor, Topigs) ou rester générique ?
+### Q6 — Lignées en Côte d'Ivoire — **VALIDÉE**
+- **Décision Christophe** : approche générique pro-rusticité conservée. Pas de citation de lignées commerciales (Pic, Hypor, Topigs).
 
-### Q7 — Référence "PorcTrack" dans les définitions
-- **Constat** : 3 tooltips citent "PorcTrack" (saillie, mise-bas — implicitement). Risque de couplage fort contenu/produit.
-- **Choix actuel du draft** : citation maintenue car cohérente avec l'usage in-app.
-- **Question** : OK pour Christophe ou neutraliser pour une encyclopédie réutilisable hors app ?
+### Q7 — Référence "PorcTrack" dans les définitions — **VALIDÉE**
+- **Décision Christophe** : mention "PorcTrack" gardée dans les tooltips quand c'est pertinent (alertes automatiques, paramétrage). Voir Annexe D, règle 3.
 
 ### Q8 — Aucun cas où un article dépasse 500 mots
 Tous les articles tiennent dans la fourchette. Pas de cas STOP à remonter.

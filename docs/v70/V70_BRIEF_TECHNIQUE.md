@@ -24,6 +24,7 @@
 - [Annexe A — Composants nouveaux V70 (justification)](#annexe-a--composants-nouveaux-v70-justification)
 - [Annexe B — Risques & mitigations](#annexe-b--risques--mitigations)
 - [Annexe C — Cas edge non couverts (questions ouvertes)](#annexe-c--cas-edge-non-couverts-questions-ouvertes)
+- [Annexe D — Règles éditoriales contenu (V70 stable)](#annexe-d--règles-éditoriales-contenu-v70-stable)
 
 ---
 
@@ -1523,6 +1524,47 @@ Tout sub-agent dispatché Phase 0-7 qui identifie un cas edge :
 - Continue avec hypothèse documentée si non-bloquant.
 
 (Aucun cas additionnel à la rédaction — section reste ouverte pour itération J+0 → J+14.)
+
+---
+
+## Annexe D — Règles éditoriales contenu (V70 stable)
+
+> Règles posées par Christophe le 2026-05-05 lors de la validation du draft V1 du contenu éducatif. À respecter pour toute future rédaction de tooltips/articles.
+
+### Règle 1 — L'app est la source de vérité
+Avant de figer un chiffre dans un tooltip ou article (durée, seuil, pourcentage), vérifier dans le code source :
+- `src/lib/constants.ts` (ou équivalent — constantes biologiques)
+- `src/services/alertEngine.ts` (seuils de déclenchement R1-R14)
+- `src/types/farm.ts` (statuts, énumérations)
+
+Si conflit irréductible entre code et source scientifique externe (ITP/IFIP) → **remontée à Christophe**, ne pas trancher seul.
+
+Exemple V1 : Q1 gestation 114j (ITP) vs 115j (CLAUDE.md). Tranche Christophe : 115j gagne, contenu mentionne 114 ITP en note.
+
+### Règle 2 — Distinguer cible métier vs alerte PorcTrack
+Tout seuil chiffré dans un tooltip ou article DOIT distinguer deux notions :
+- **Cible métier** : objectif zootechnique recommandé par ITP/IFIP/INRAE
+- **Seuil d'alerte PorcTrack** : déclenchement automatique d'une règle R1-R14
+
+Format type : "Cible : X. Alerte automatique : Y (règle Rn)."
+
+Exemple V1 : Mortalité allaitement → "Cible ITP : <12%. PorcTrack déclenche une alerte si mortalité >15% (règle R4)."
+
+### Règle 3 — Mention "PorcTrack" autorisée
+Le contenu éducatif est intégré dans l'app PorcTrack. Les tooltips peuvent et doivent référencer "PorcTrack" quand c'est pertinent (alertes automatiques, calculs, paramétrage). Pas de neutralisation forcée.
+
+### Règle 4 — Localisation Côte d'Ivoire prioritaire
+Le contenu V70 cible Aïssata (éleveuse CI, 120 truies). Adaptations climat tropical, PPA Afrique de l'Ouest, programmes vaccinaux locaux à privilégier. Pas de "comme en France" sans justification.
+
+### Règle 5 — Format strict
+- **Tooltips** : 30-50 mots maximum, 1 référence métier minimum
+- **Articles** : 200-500 mots, structure Introduction → Mécanisme → Repères pratiques → Bonnes pratiques
+- **Frontmatter articles** : title, slug, category, level (débutant/intermédiaire/avancé), reading_time_min, sources
+
+Si un article ne tient pas en 500 mots → remontée à Christophe.
+
+### Règle 6 — Validation finale Christophe
+Aucun contenu (tooltip ou article) ne va en prod sans validation explicite Christophe. Le sub-agent rédacteur livre des drafts dans `docs/v70/educational-content/`, Christophe valide en bloc avec annotations, V2 corrigée si besoin.
 
 ---
 
