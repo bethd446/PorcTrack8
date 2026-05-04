@@ -3,6 +3,7 @@ import { IonToast } from '@ionic/react';
 import { Scale, Check, CheckCircle2 } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { Button, Input, Select, Textarea } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
 import { insertWeightDistribution } from '../../services/supabaseWrites';
@@ -222,17 +223,12 @@ const QuickWeightDistForm: React.FC<QuickWeightDistFormProps> = ({
               >
                 Bande à peser
               </label>
-              <select
+              <Select
                 id="wdist-bande"
                 value={bandeId}
                 onChange={e => setBandeId(e.target.value)}
                 disabled={saving || !!defaultBandeId}
                 aria-invalid={!!errors.bandeId}
-                className={[
-                  'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0',
-                  'text-[13px] outline-none focus:border-accent',
-                  errors.bandeId ? 'border-red' : 'border-border',
-                ].join(' ')}
               >
                 <option value="">— Sélectionner une bande —</option>
                 {bandesEligibles.map(b => (
@@ -241,7 +237,7 @@ const QuickWeightDistForm: React.FC<QuickWeightDistFormProps> = ({
                     {b.vivants !== undefined ? ` · ${b.vivants} vivants` : ''}
                   </option>
                 ))}
-              </select>
+              </Select>
               {bandesEligibles.length === 0 && (
                 <p className="text-mono-label text-text-2">
                   Aucune bande en engraissement / finition
@@ -256,18 +252,14 @@ const QuickWeightDistForm: React.FC<QuickWeightDistFormProps> = ({
               >
                 Date pesée
               </label>
-              <input
+              <Input
                 id="wdist-date"
                 type="date"
                 value={dateIso}
                 onChange={e => setDateIso(e.target.value)}
                 disabled={saving}
                 aria-invalid={!!errors.dateIso}
-                className={[
-                  'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0',
-                  'font-mono text-[13px] tabular-nums outline-none focus:border-accent',
-                  errors.dateIso ? 'border-red' : 'border-border',
-                ].join(' ')}
+                invalid={!!errors.dateIso}
               />
             </div>
 
@@ -344,14 +336,13 @@ const QuickWeightDistForm: React.FC<QuickWeightDistFormProps> = ({
               >
                 Notes <span className="text-text-2 normal-case">· optionnel</span>
               </label>
-              <textarea
+              <Textarea
                 id="wdist-notes"
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
                 disabled={saving}
                 maxLength={WEIGHT_DIST_NOTES_MAX}
                 placeholder="Ex : pesée pré-départ, lot 1"
-                className="w-full rounded-md px-3 py-3 bg-bg-0 border border-border text-text-0 placeholder:text-text-2 text-[12px] outline-none focus:border-accent min-h-[60px] resize-y"
               />
               <p className="text-[10px] text-text-2 tabular-nums">
                 {notes.length}/{WEIGHT_DIST_NOTES_MAX}
@@ -367,30 +358,29 @@ const QuickWeightDistForm: React.FC<QuickWeightDistFormProps> = ({
               </p>
             ) : null}
 
-            <div className="flex items-center gap-2 pt-2">
-              <button
-                type="button"
+            <div className="flex gap-3 justify-end px-4 py-3 border-t border-border">
+              <Button
+                variant="secondary"
                 onClick={onClose}
                 disabled={saving}
-                className="pressable flex-1 h-14 rounded-md bg-bg-1 border border-border text-text-1 text-[12px] font-bold uppercase tracking-wide"
               >
                 Annuler
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="primary"
                 type="submit"
                 disabled={saving || !isValid}
                 aria-busy={saving}
-                className="pressable flex-[2] h-14 rounded-md bg-accent text-bg-0 text-[13px] font-bold uppercase tracking-wide inline-flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {saving ? (
                   <span className="animate-pulse">Enregistrement…</span>
                 ) : (
-                  <>
+                  <span className="inline-flex items-center gap-2">
                     <Check size={16} aria-hidden="true" />
                     Enregistrer tri
-                  </>
+                  </span>
                 )}
-              </button>
+              </Button>
             </div>
           </form>
         )}
@@ -431,7 +421,7 @@ const DistField: React.FC<DistFieldProps> = ({
     >
       {label}
     </label>
-    <input
+    <Input
       id={id}
       type="text"
       inputMode="numeric"
@@ -441,12 +431,7 @@ const DistField: React.FC<DistFieldProps> = ({
       disabled={disabled}
       aria-invalid={!!error}
       aria-describedby={error ? `${id}-error` : undefined}
-      className={[
-        'w-full h-14 rounded-md px-3 bg-bg-0 border text-text-0',
-        'font-mono text-[20px] tabular-nums text-center',
-        'outline-none focus:border-accent focus:ring-1 focus:ring-accent',
-        error ? 'border-red' : 'border-border hover:border-text-2',
-      ].join(' ')}
+      invalid={!!error}
     />
     {error ? (
       <p
