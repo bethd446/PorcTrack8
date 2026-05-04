@@ -109,8 +109,8 @@ const TruieDetailView: React.FC = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [editWizardOpen, setEditWizardOpen] = useState(false);
   const [toast, setToast] = useState('');
-  // V32 PHASE 4 — Refonte 4 onglets (apercu | repro | sante | historique).
-  const [activeTab, setActiveTab] = useState<'apercu' | 'repro' | 'sante' | 'historique'>('apercu');
+  // V45 PHASE 4 — Tabs uniformisés 4 onglets (overview | reproduction | sante | historique).
+  const [activeTab, setActiveTab] = useState<'overview' | 'reproduction' | 'sante' | 'historique'>('overview');
   const [treeOpen, setTreeOpen] = useState(false);
   const [eventSheetOpen, setEventSheetOpen] = useState(false);
   const [saillieOpen, setSaillieOpen] = useState(false);
@@ -498,16 +498,16 @@ const TruieDetailView: React.FC = () => {
 
             {/* V41 Phase C1 — Lignée déplacée dans onglet "Vue d'ensemble" */}
 
-            {/* V32 PHASE 4 — Onglets (Vue d'ensemble · Reproduction · Santé · Historique) */}
+            {/* V45 PHASE 4 — Onglets uniformisés (VUE D'ENSEMBLE · REPRODUCTION · SANTÉ · HISTORIQUE) */}
             <Tabs
               ariaLabel="Sections de la fiche truie"
               value={activeTab}
-              onChange={(id) => setActiveTab(id as typeof activeTab)}
-              items={[
-                { id: 'apercu', label: 'Vue d’ensemble' },
-                { id: 'repro', label: 'Reproduction', count: sowSaillies.length || undefined },
-                { id: 'sante', label: 'Santé', count: healthLogs.length || undefined },
-                { id: 'historique', label: 'Historique' },
+              onChange={(v) => setActiveTab(v as typeof activeTab)}
+              options={[
+                { value: 'overview', label: "VUE D'ENSEMBLE" },
+                { value: 'reproduction', label: 'REPRODUCTION', count: sowSaillies.length || undefined },
+                { value: 'sante', label: 'SANTÉ', count: healthLogs.length || undefined },
+                { value: 'historique', label: 'HISTORIQUE' },
               ]}
             />
 
@@ -515,12 +515,12 @@ const TruieDetailView: React.FC = () => {
             {/*           Timeline complète conservée plus bas dans la section REPRODUCTION EN COURS. */}
 
             {/* V41 Phase C1 — Lignée déplacée dans onglet "Vue d'ensemble" */}
-            {activeTab === 'apercu' && (
+            {activeTab === 'overview' && (
               <LineageBreadcrumb nodes={lineageNodes} onTreeClick={() => setTreeOpen(true)} />
             )}
 
             {/* Reproduction en cours (visible dans Aperçu et Reproduction) */}
-            {cycleData && (activeTab === 'apercu' || activeTab === 'repro') && (
+            {cycleData && (activeTab === 'overview' || activeTab === 'reproduction') && (
               <section aria-label="Reproduction en cours" style={sectionStyle()}>
                 <div style={{ marginBottom: 12 }}>
                   <Section label="REPRODUCTION EN COURS" tone="accent" />
@@ -545,7 +545,7 @@ const TruieDetailView: React.FC = () => {
             )}
 
             {/* Vitales · 5 KPI (Aperçu uniquement) */}
-            {activeTab === 'apercu' && (
+            {activeTab === 'overview' && (
             <section aria-label="Vitales">
               <div style={{ marginBottom: 12 }}>
                 <Section label="VITALES" />
@@ -666,7 +666,7 @@ const TruieDetailView: React.FC = () => {
               {/* Colonne gauche */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 24, minWidth: 0 }}>
                 {/* Identité (Aperçu uniquement) */}
-                {activeTab === 'apercu' && (
+                {activeTab === 'overview' && (
                 <section aria-label="Identité" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <Section label="IDENTITÉ" />
                   <div
@@ -689,7 +689,7 @@ const TruieDetailView: React.FC = () => {
                 )}
 
                 {/* Repro & rations (Reproduction uniquement) */}
-                {activeTab === 'repro' && (
+                {activeTab === 'reproduction' && (
                 <section aria-label="Repro et rations" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <Section label="REPRO & RATIONS" />
                   <div
@@ -760,10 +760,10 @@ const TruieDetailView: React.FC = () => {
                 )}
 
                 {/* Plan ration recommandée (V21-D3) — Reproduction uniquement */}
-                {activeTab === 'repro' && <RationRecoBlock truie={truie} />}
+                {activeTab === 'reproduction' && <RationRecoBlock truie={truie} />}
 
                 {/* Historique saillies — Reproduction uniquement */}
-                {activeTab === 'repro' && (
+                {activeTab === 'reproduction' && (
                 <section aria-label="Historique saillies" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <Section label="HISTORIQUE SAILLIES" />
                   {sowSaillies.length === 0 ? (
@@ -849,7 +849,7 @@ const TruieDetailView: React.FC = () => {
               {/* Colonne droite */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 24, minWidth: 0 }}>
                 {/* Marius — Aperçu */}
-                {activeTab === 'apercu' && (
+                {activeTab === 'overview' && (
                 <section aria-label="Lecture du dossier" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <Section label="LECTURE DU DOSSIER · MARIUS" tone="accent" />
                   <MariusPanel title="Analyse automatique">{mariusAnalysis}</MariusPanel>
@@ -865,7 +865,7 @@ const TruieDetailView: React.FC = () => {
                 )}
 
                 {/* Actions métier contextuelles — Aperçu */}
-                {activeTab === 'apercu' && (
+                {activeTab === 'overview' && (
                 <section aria-label="Actions métier" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <Section label="ACTIONS" />
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

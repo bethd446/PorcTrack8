@@ -53,11 +53,11 @@ interface BandeDetailViewProps {
   onRefresh: () => void;
 }
 
-type BandeTabId = 'apercu' | 'details' | 'sante' | 'notes';
+type BandeTabId = 'overview' | 'details' | 'sante' | 'notes';
 
 const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, onClose, onRefresh }) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<BandeTabId>('apercu');
+  const [activeTab, setActiveTab] = useState<BandeTabId>('overview');
   const [editRow, setEditRow] = useState<SheetRawRow | null>(null);
   const [loading, setLoading] = useState(false);
   const [healthData, setHealthData] = useState<SheetRawRow[]>([]);
@@ -401,19 +401,20 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
             </div>
           </Card>
 
+          {/* V45 PHASE 4 — Onglets uniformisés UPPERCASE (sémantique préservée) */}
           <Tabs
             ariaLabel="Sections de la fiche bande"
             value={activeTab}
             onChange={(id) => setActiveTab(id as BandeTabId)}
             options={[
-              { value: 'apercu', label: "Vue d'ensemble" },
-              { value: 'details', label: 'Détails' },
-              { value: 'sante', label: 'Santé', count: filteredHealth.length || undefined },
-              { value: 'notes', label: 'Notes' },
+              { value: 'overview', label: "VUE D'ENSEMBLE" },
+              { value: 'details', label: 'DÉTAILS' },
+              { value: 'sante', label: 'SANTÉ', count: filteredHealth.length || undefined },
+              { value: 'notes', label: 'NOTES' },
             ]}
           />
 
-          {activeTab === 'apercu' && (
+          {activeTab === 'overview' && (
             <div className="flex flex-col gap-4">
               <PhotoStrip subjectType="BANDE" subjectId={bande.id} />
 

@@ -17,7 +17,7 @@
 
 import React from 'react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, within, cleanup } from '@testing-library/react';
+import { render, screen, within, cleanup, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import type { Verrat } from '../../types/farm';
 
@@ -188,6 +188,10 @@ describe('VerratDetailView', () => {
 
   it('historique soins : empty state si aucun soin enregistré', () => {
     renderAt('/troupeau/verrats/V01');
+    // V45 P4 — La section "Historique soins" est désormais dans l'onglet SANTÉ.
+    // On clique d'abord sur le tab SANTÉ avant d'inspecter.
+    const tabSante = screen.getByRole('tab', { name: /santé/i });
+    fireEvent.click(tabSante);
     const soinsSection = screen.getByRole('region', { name: /historique soins/i });
     expect(
       within(soinsSection).getByText(/aucun soin enregistré pour ce verrat/i),

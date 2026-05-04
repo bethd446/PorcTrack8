@@ -26,7 +26,7 @@ import EditableText from '../../components/EditableText';
 import NotesTimeline from '../../components/design/NotesTimeline';
 import PhotoStrip from '../../components/PhotoStrip';
 import { SectionDivider, BottomSheet, type ChipTone } from '../../components/agritech';
-import { Button, Card, PageHeader, Tag } from '@/design-system';
+import { Button, Card, PageHeader, Tabs, Tag } from '@/design-system';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { useFarm } from '../../context/FarmContext';
 import { updateBoar } from '../../services/supabaseWrites';
@@ -84,6 +84,7 @@ function sortByDateDesc<T extends { dateSaillie?: string }>(list: T[]): T[] {
 // ─── Composant ──────────────────────────────────────────────────────────────
 
 type QuickSheet = null | 'soin' | 'pesee' | 'saillie' | 'note';
+type VerratTabId = 'overview' | 'saillies' | 'sante' | 'lignee';
 
 const VerratDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -91,6 +92,8 @@ const VerratDetailView: React.FC = () => {
   const [sheet, setSheet] = useState<QuickSheet>(null);
   const [editOpen, setEditOpen] = useState<boolean>(false);
   const [toast, setToast] = useState<string>('');
+  // V45 PHASE 4 — Tabs uniformisés 4 onglets
+  const [activeTab, setActiveTab] = useState<VerratTabId>('overview');
 
   const decodedId = id ? decodeURIComponent(id) : '';
 
@@ -223,6 +226,21 @@ const VerratDetailView: React.FC = () => {
               </div>
             </Card>
 
+            {/* V45 PHASE 4 — Onglets uniformisés (VUE D'ENSEMBLE · SAILLIES · SANTÉ · LIGNÉE) */}
+            <Tabs
+              ariaLabel="Sections de la fiche verrat"
+              value={activeTab}
+              onChange={(v) => setActiveTab(v as VerratTabId)}
+              options={[
+                { value: 'overview', label: "VUE D'ENSEMBLE" },
+                { value: 'saillies', label: 'SAILLIES', count: saillesVerrat.length || undefined },
+                { value: 'sante', label: 'SANTÉ', count: soins.length || undefined },
+                { value: 'lignee', label: 'LIGNÉE' },
+              ]}
+            />
+
+            {activeTab === 'overview' && (
+            <>
             {/* ── Identité ───────────────────────────────────────────── */}
             <section aria-label="Identité">
               <SectionDivider label="Identité" />
@@ -304,7 +322,36 @@ const VerratDetailView: React.FC = () => {
               </div>
             </section>
 
+            {/* ── Actions 2×2 (overview) ─────────────────────────────── */}
+            <section aria-label="Actions">
+              <div className="grid grid-cols-2 gap-2.5">
+                <ActionButton
+                  icon={<Heart size={16} aria-hidden="true" />}
+                  label="Saillir"
+                  onClick={() => setSheet('saillie')}
+                />
+                <ActionButton
+                  icon={<Syringe size={16} aria-hidden="true" />}
+                  label="Soigner"
+                  onClick={() => setSheet('soin')}
+                />
+                <ActionButton
+                  icon={<FileText size={16} aria-hidden="true" />}
+                  label="Ajouter une note"
+                  onClick={() => setSheet('note')}
+                />
+                <ActionButton
+                  icon={<Scale size={16} aria-hidden="true" />}
+                  label="Peser ce verrat"
+                  onClick={() => setSheet('pesee')}
+                />
+              </div>
+            </section>
+            </>
+            )}
+
             {/* ── Saillies ───────────────────────────────────────────── */}
+            {activeTab === 'saillies' && (
             <section aria-label="Saillies">
               <SectionDivider label={`Saillies · ${saillesVerrat.length}`} />
               {saillesVerrat.length === 0 ? (
@@ -369,8 +416,10 @@ const VerratDetailView: React.FC = () => {
                 </>
               )}
             </section>
+            )}
 
             {/* ── Historique soins ───────────────────────────────────── */}
+            {activeTab === 'sante' && (
             <section aria-label="Historique soins">
               <SectionDivider label={`Historique soins · ${soins.length}`} />
               {soins.length === 0 ? (
@@ -422,32 +471,19 @@ const VerratDetailView: React.FC = () => {
                 </ul>
               )}
             </section>
+            )}
 
-            {/* ── Actions 2×2 ────────────────────────────────────────── */}
-            <section aria-label="Actions">
-              <div className="grid grid-cols-2 gap-2.5">
-                <ActionButton
-                  icon={<Heart size={16} aria-hidden="true" />}
-                  label="Saillir"
-                  onClick={() => setSheet('saillie')}
-                />
-                <ActionButton
-                  icon={<Syringe size={16} aria-hidden="true" />}
-                  label="Soigner"
-                  onClick={() => setSheet('soin')}
-                />
-                <ActionButton
-                  icon={<FileText size={16} aria-hidden="true" />}
-                  label="Ajouter une note"
-                  onClick={() => setSheet('note')}
-                />
-                <ActionButton
-                  icon={<Scale size={16} aria-hidden="true" />}
-                  label="Peser ce verrat"
-                  onClick={() => setSheet('pesee')}
-                />
+            {/* ── Lignée (placeholder V45 P4) ────────────────────────── */}
+            {activeTab === 'lignee' && (
+            <section aria-label="Lignée">
+              <SectionDivider label="Lignée" />
+              <div className="card-dense text-center py-6 mt-3">
+                <p className="text-[12px] text-text-2 max-w-xs mx-auto">
+                  Données de lignée à venir. L'origine et la boucle sont visibles dans l'onglet « Vue d'ensemble ».
+                </p>
               </div>
             </section>
+            )}
           </div>
         </AgritechLayout>
       </IonContent>
