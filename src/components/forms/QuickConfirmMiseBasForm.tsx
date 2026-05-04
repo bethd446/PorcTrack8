@@ -16,6 +16,7 @@ import { IonToast } from '@ionic/react';
 import { Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { FormField, Input, Select, Button } from '@/design-system';
 import { listLoges } from '../../services/supabaseWrites';
 import { supabase } from '../../services/supabaseClient';
 import { confirmMiseBas } from '../../services/mbWorkflowService';
@@ -212,20 +213,6 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
     }
   };
 
-  // ─── UI helpers ──────────────────────────────────────────────────────────
-
-  const inputBase = (hasError: boolean): string =>
-    [
-      'w-full h-12 rounded-md px-3',
-      'bg-bg-0 border text-text-0 placeholder:text-text-2',
-      'text-[14px]',
-      'outline-none transition-colors duration-[160ms]',
-      'focus:border-accent focus:ring-1 focus:ring-accent',
-      hasError ? 'border-red' : 'border-border hover:border-text-2',
-    ].join(' ');
-
-  const labelCls = 'block text-mono-label text-text-2';
-
   // ─── Render ──────────────────────────────────────────────────────────────
 
   return (
@@ -281,76 +268,53 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
             </p>
           )}
 
-          {/* Date MB */}
-          <div className="space-y-1.5">
-            <label htmlFor="qcmb-date" className={labelCls}>
-              Date de mise bas <span className="text-red normal-case">·</span>
-            </label>
-            <input
+          <FormField label="Date de mise bas" required error={errors.dateMiseBas}>
+            <Input
               id="qcmb-date"
               type="date"
-              className={inputBase(!!errors.dateMiseBas)}
+              aria-label="Date de mise bas"
               value={dateMiseBas}
               onChange={e => setDateMiseBas(e.target.value)}
               aria-invalid={!!errors.dateMiseBas}
+              invalid={!!errors.dateMiseBas}
             />
-            {errors.dateMiseBas ? (
-              <p role="alert" className="text-[11px] text-red">
-                {errors.dateMiseBas}
-              </p>
-            ) : null}
-          </div>
+          </FormField>
 
-          {/* nbTotal + nbVivants */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label htmlFor="qcmb-total" className={labelCls}>
-                Nés total <span className="text-red normal-case">·</span>
-              </label>
-              <input
+            <FormField label="Nés total" required error={errors.nbTotal}>
+              <Input
                 id="qcmb-total"
                 type="number"
+                aria-label="Nés total"
                 inputMode="numeric"
                 min={1}
                 max={25}
                 step={1}
-                className={inputBase(!!errors.nbTotal)}
                 placeholder="Ex: 12"
                 value={nbTotal}
                 onChange={e => setNbTotal(e.target.value)}
                 aria-invalid={!!errors.nbTotal}
                 data-testid="qcmb-total"
+                invalid={!!errors.nbTotal}
               />
-              {errors.nbTotal ? (
-                <p role="alert" className="text-[11px] text-red">
-                  {errors.nbTotal}
-                </p>
-              ) : null}
-            </div>
-            <div className="space-y-1.5">
-              <label htmlFor="qcmb-vivants" className={labelCls}>
-                Nés vivants <span className="text-red normal-case">·</span>
-              </label>
-              <input
+            </FormField>
+            <FormField label="Nés vivants" required error={errors.nbVivants}>
+              <Input
                 id="qcmb-vivants"
                 type="number"
+                aria-label="Nés vivants"
                 inputMode="numeric"
                 min={0}
                 max={25}
                 step={1}
-                className={inputBase(!!errors.nbVivants)}
                 placeholder="Ex: 11"
                 value={nbVivants}
                 onChange={e => setNbVivants(e.target.value)}
                 aria-invalid={!!errors.nbVivants}
                 data-testid="qcmb-vivants"
+                invalid={!!errors.nbVivants}
               />
-              {errors.nbVivants ? (
-                <p role="alert" className="text-[11px] text-red">
-                  {errors.nbVivants}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
           </div>
 
           {/* Mort-nés (auto, lecture seule) */}
@@ -366,81 +330,60 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
             </span>
           </div>
 
-          {/* Poids portée + sexes */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label htmlFor="qcmb-poids" className={labelCls}>
-                Poids portée kg
-              </label>
-              <input
+            <FormField label="Poids portée kg" error={errors.poidsPorteeKg}>
+              <Input
                 id="qcmb-poids"
                 type="number"
+                aria-label="Poids portée"
                 inputMode="decimal"
                 min={0.5}
                 max={50}
                 step={0.1}
-                className={inputBase(!!errors.poidsPorteeKg)}
                 placeholder="Ex: 16.5"
                 value={poidsPorteeKg}
                 onChange={e => setPoidsPorteeKg(e.target.value)}
+                invalid={!!errors.poidsPorteeKg}
               />
-              {errors.poidsPorteeKg ? (
-                <p role="alert" className="text-[11px] text-red">
-                  {errors.poidsPorteeKg}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
             <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1.5">
-                <label htmlFor="qcmb-males" className={labelCls}>
-                  Mâles
-                </label>
-                <input
+              <FormField label="Mâles" error={errors.nbMales}>
+                <Input
                   id="qcmb-males"
                   type="number"
+                  aria-label="Mâles"
                   inputMode="numeric"
                   min={0}
                   max={25}
                   step={1}
-                  className={inputBase(!!errors.nbMales)}
                   placeholder="—"
                   value={nbMales}
                   onChange={e => setNbMales(e.target.value)}
+                  invalid={!!errors.nbMales}
                 />
-              </div>
-              <div className="space-y-1.5">
-                <label htmlFor="qcmb-femelles" className={labelCls}>
-                  Femelles
-                </label>
-                <input
+              </FormField>
+              <FormField label="Femelles" error={errors.nbFemelles}>
+                <Input
                   id="qcmb-femelles"
                   type="number"
+                  aria-label="Femelles"
                   inputMode="numeric"
                   min={0}
                   max={25}
                   step={1}
-                  className={inputBase(!!errors.nbFemelles)}
                   placeholder="—"
                   value={nbFemelles}
                   onChange={e => setNbFemelles(e.target.value)}
+                  invalid={!!errors.nbFemelles}
                 />
-              </div>
+              </FormField>
             </div>
           </div>
-          {errors.nbMales ? (
-            <p role="alert" className="text-[11px] text-red">
-              {errors.nbMales}
-            </p>
-          ) : null}
 
-          {/* Loge */}
-          <div className="space-y-1.5">
-            <label htmlFor="qcmb-loge" className={labelCls}>
-              Loge maternité <span className="text-red normal-case">·</span>
-            </label>
-            <select
+          <FormField label="Loge maternité" required error={errors.logeId}>
+            <Select
               id="qcmb-loge"
-              className={inputBase(!!errors.logeId)}
+              aria-label="Loge maternité"
               value={logeId}
               onChange={e => setLogeId(e.target.value)}
               aria-invalid={!!errors.logeId}
@@ -453,40 +396,31 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
                   {l.batiment ? ` · ${l.batiment}` : ''}
                 </option>
               ))}
-            </select>
-            {errors.logeId ? (
-              <p role="alert" className="text-[11px] text-red">
-                {errors.logeId}
-              </p>
-            ) : null}
-          </div>
+            </Select>
+          </FormField>
 
-          {/* Submit */}
-          <div className="flex items-center gap-2 pt-2">
-            <button
-              type="button"
+          <div className="flex gap-3 justify-end pt-2 border-t border-border">
+            <Button
+              variant="secondary"
               onClick={handleClose}
               disabled={saving}
-              className="pressable flex-1 h-14 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
             >
               Annuler
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={saving || !saillie}
               aria-busy={saving}
-              className="pressable flex-[2] h-14 rounded-md inline-flex items-center justify-center gap-2 bg-accent text-bg-0 text-[13px] font-bold uppercase tracking-wide hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
               data-testid="qcmb-submit"
             >
-              {saving ? (
-                <span className="animate-pulse">Confirmation…</span>
-              ) : (
-                <>
+              {saving ? 'Confirmation…' : (
+                <span className="inline-flex items-center gap-2">
                   <Save size={14} aria-hidden="true" />
                   Confirmer mise bas
-                </>
+                </span>
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </BottomSheet>
