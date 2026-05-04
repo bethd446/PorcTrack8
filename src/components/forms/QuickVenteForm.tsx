@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { IonToast } from '@ionic/react';
 import { TrendingUp, Check, CheckCircle2 } from 'lucide-react';
 
-import { BottomSheet } from '../agritech';
+import { AppToast, BottomSheet, useAppToast } from '../agritech';
 import { FormField, Input, Select, Textarea, Button } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
@@ -82,9 +81,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [toast, setToast] = useState<{ show: boolean; message: string }>({
-    show: false, message: '',
-  });
+  const { show: showToast, toastProps } = useAppToast();
 
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -256,7 +253,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
         ? `Vente enregistrée · ${formatted} FCFA`
         : `Vente en file · ${formatted} FCFA · sync auto`;
 
-      setToast({ show: true, message: baseMsg });
+      showToast(baseMsg, online ? 'success' : 'info', { duration: 2800 });
       setSuccess(true);
 
       // Refresh parent (non-bloquant)
@@ -276,7 +273,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
     } catch (err) {
       console.error('[QuickVenteForm] enregistrement local échoué:', err);
       const msg = err instanceof Error ? err.message : 'Erreur enregistrement';
-      setToast({ show: true, message: msg });
+      showToast(msg, 'error', { duration: 2800 });
       setSaving(false);
     }
   };
@@ -581,7 +578,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
             {/* ── Actions ─────────────────────────────────────────────── */}
             <div className="flex gap-3 justify-end pt-2 border-t border-border">
               <Button
-                variant="secondary"
+                variant="ghost"
                 onClick={resetAndClose}
                 disabled={saving}
                 ariaLabel="Annuler la vente"
@@ -607,13 +604,7 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
         )}
       </div>
 
-      <IonToast
-        isOpen={toast.show}
-        message={toast.message}
-        duration={2800}
-        onDidDismiss={() => setToast({ show: false, message: '' })}
-        position="bottom"
-      />
+      <AppToast {...toastProps} />
     </BottomSheet>
   );
 };

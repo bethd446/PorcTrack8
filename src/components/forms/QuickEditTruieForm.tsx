@@ -1,9 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { IonToast } from '@ionic/react';
 import { Edit3, Save } from 'lucide-react';
 
-import { BottomSheet } from '../agritech';
-import { FormField, Input, Select, Textarea, Button } from '@/design-system';
+import { AppToast, BottomSheet, useAppToast } from '../agritech';
+import { FormField, Input, Section, Select, Textarea, Button } from '@/design-system';
 import { listLoges, updateSow } from '../../services/supabaseWrites';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
@@ -133,7 +132,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
   const [photoDirty, setPhotoDirty] = useState(false);
   const [errors, setErrors] = useState<TruieEditValidation['errors']>({});
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string>('');
+  const { show: showToast, toastProps } = useAppToast();
 
   // V25 — Loge structurée (référentiel)
   const [loges, setLoges] = useState<Loge[]>([]);
@@ -220,7 +219,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
     }
     // V25 — Bloque si la loge sélectionnée est occupée par un autre sujet.
     if (selectedLogeIdDirty && logeConflict) {
-      setToast(
+      showToast(
         `Loge déjà occupée par ${
           logeConflict.kind === 'truie'
             ? `truie ${logeConflict.label}`
@@ -228,6 +227,8 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
               ? `verrat ${logeConflict.label}`
               : `bande ${logeConflict.label}`
         }`,
+        'warning',
+        { duration: 1800 },
       );
       return;
     }
@@ -239,7 +240,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
       !photoDirty &&
       !selectedLogeIdDirty
     ) {
-      setToast('Aucune modification');
+      showToast('Aucune modification', 'info', { duration: 1800 });
       onClose();
       return;
     }
@@ -272,14 +273,20 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
       if (selectedLogeIdDirty) supabasePatch.loge_id = selectedLogeId || null;
       const writeResult = await updateSow(truie.id, supabasePatch);
       if (!writeResult.success) {
-        setToast(`Erreur : ${writeResult.error ?? 'Enregistrement échoué'}`);
+        showToast(
+          `Erreur : ${writeResult.error ?? 'Enregistrement échoué'}`,
+          'error',
+          { duration: 1800 },
+        );
         return;
       }
       const online = typeof navigator !== 'undefined' && navigator.onLine;
-      setToast(
+      showToast(
         online
           ? 'Modifications enregistrées'
           : 'Modifications en file · sync auto',
+        online ? 'success' : 'info',
+        { duration: 1800 },
       );
       try {
         await refreshData(true);
@@ -289,10 +296,12 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
       if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
-      setToast(
+      showToast(
         err instanceof Error
           ? `Erreur : ${err.message}`
           : 'Erreur enregistrement local',
+        'error',
+        { duration: 1800 },
       );
     } finally {
       setSaving(false);
@@ -300,10 +309,6 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
   };
 
   const displayId = truie.displayId || truie.id;
-
-  // ─── Classes réutilisables ────────────────────────────────────────────
-  const sectionTitleCls =
-    'text-mono-micror text-text-2 pb-1 border-b border-border';
 
   return (
     <>
@@ -336,10 +341,8 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
           </div>
 
           {/* ── Section 0 : Photo ────────────────────────────────────── */}
-          <section className="space-y-4" aria-labelledby="sect-photo">
-            <h3 id="sect-photo" className={sectionTitleCls}>
-              Photo
-            </h3>
+          <section className="space-y-4" aria-label="Photo">
+            <Section label="PHOTO" />
             <PhotoUploader
               photoUrl={photoUrl}
               farmId={farmId}
@@ -357,10 +360,8 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
           </section>
 
           {/* ── Section 1 : Identité ─────────────────────────────────── */}
-          <section className="space-y-4" aria-labelledby="sect-identite">
-            <h3 id="sect-identite" className={sectionTitleCls}>
-              Identité
-            </h3>
+          <section className="space-y-4" aria-label="Identité">
+            <Section label="IDENTITÉ" />
 
             {/* Code interne (displayId — éditable) */}
             <FormField
@@ -570,10 +571,8 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
           </section>
 
           {/* ── Section 2 : Reproduction ─────────────────────────────── */}
-          <section className="space-y-4" aria-labelledby="sect-repro">
-            <h3 id="sect-repro" className={sectionTitleCls}>
-              Reproduction
-            </h3>
+          <section className="space-y-4" aria-label="Reproduction">
+            <Section label="REPRODUCTION" />
 
             {/* Stade */}
             <FormField label="Stade">
@@ -689,10 +688,8 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
           </section>
 
           {/* ── Section 3 : Notes ────────────────────────────────────── */}
-          <section className="space-y-4" aria-labelledby="sect-notes">
-            <h3 id="sect-notes" className={sectionTitleCls}>
-              Notes
-            </h3>
+          <section className="space-y-4" aria-label="Notes">
+            <Section label="NOTES" />
 
             <FormField
               label="Notes"
@@ -717,7 +714,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
           {/* Actions */}
           <div className="flex gap-3 justify-end pt-2 sticky bottom-0 bg-bg-1 -mx-4 px-4 pb-2 border-t border-border">
             <Button
-              variant="secondary"
+              variant="ghost"
               onClick={handleClose}
               disabled={saving}
               aria-label="Annuler et fermer"
@@ -742,13 +739,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
         </form>
       </BottomSheet>
 
-      <IonToast
-        isOpen={toast !== ''}
-        message={toast}
-        duration={1800}
-        onDidDismiss={() => setToast('')}
-        position="bottom"
-      />
+      <AppToast {...toastProps} />
     </>
   );
 };
