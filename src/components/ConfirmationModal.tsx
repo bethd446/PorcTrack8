@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { Chip } from './agritech';
 import type { ChipTone } from './agritech';
+import { Button } from '@/design-system';
 import { confirmAction, dismissAction } from '../services/confirmationQueue';
 import type { FarmAlert, AlertPriority } from '../services/alertEngine';
 import { useTroupeau } from '../context/TroupeauContext';
@@ -171,19 +172,22 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                 </p>
               </div>
             </div>
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="small"
               onClick={onClose}
               aria-label="Fermer"
               className={[
-                'pressable inline-flex h-9 w-9 items-center justify-center rounded-md flex-shrink-0',
+                'pressable inline-flex h-9 w-9 items-center justify-center flex-shrink-0',
                 'bg-bg-1 border border-border text-text-1',
                 'hover:bg-bg-2 transition-colors duration-[160ms]',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
               ].join(' ')}
+              style={{ borderRadius: '0.375rem', height: '2.25rem', width: '2.25rem', padding: 0 }}
             >
               <X size={16} aria-hidden="true" />
-            </button>
+            </Button>
           </div>
 
           {/* ── Body ──────────────────────────────────────────────────── */}
@@ -283,19 +287,21 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           {/* ── Footer actions ────────────────────────────────────────── */}
           <div className="flex-shrink-0 border-t border-border bg-bg-2 px-5 py-4 space-y-2">
             {primaryAction && primaryAction.type !== 'DISMISS' && (
-              <button
+              <Button
                 type="button"
+                variant="primary"
                 onClick={handleConfirm}
                 disabled={loading}
                 aria-label={primaryAction.label}
                 className={[
-                  'pressable w-full h-[48px] rounded-md',
+                  'pressable w-full h-[48px]',
                   'inline-flex items-center justify-center gap-2',
                   'bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide',
                   'transition-colors duration-[160ms]',
                   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                   loading ? 'opacity-40 cursor-not-allowed' : '',
                 ].join(' ')}
+                style={{ borderRadius: '0.375rem', height: '48px', width: '100%' }}
               >
                 {loading ? (
                   <span className="animate-pulse">Enregistrement…</span>
@@ -305,25 +311,27 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                     {primaryAction.label}
                   </>
                 )}
-              </button>
+              </Button>
             )}
             {secondaryActions.map(action => (
-              <button
+              <Button
                 key={action.type}
                 type="button"
+                variant="secondary"
                 onClick={handleDismiss}
                 aria-label={action.label}
                 className={[
-                  'pressable w-full h-[44px] rounded-md',
+                  'pressable w-full h-[44px]',
                   'inline-flex items-center justify-center',
                   'bg-bg-1 border border-border text-text-1',
                   'text-[12px] uppercase tracking-wide',
                   'hover:bg-bg-2 hover:text-text-0 transition-colors duration-[160ms]',
                   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                 ].join(' ')}
+                style={{ borderRadius: '0.375rem', height: '44px', width: '100%' }}
               >
                 {action.label}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -353,16 +361,19 @@ interface AlertBadgeProps {
 export const AlertBadge: React.FC<AlertBadgeProps> = ({ count, onClick }) => {
   if (count === 0) return null;
   return (
-    <button
+    <Button
       type="button"
+      variant="secondary"
+      size="small"
       onClick={onClick}
       aria-label={`Voir ${count} alerte${count > 1 ? 's' : ''}`}
       className={[
-        'pressable relative inline-flex items-center justify-center h-9 w-9 rounded-md',
+        'pressable relative inline-flex items-center justify-center h-9 w-9',
         'bg-bg-2 border border-border text-text-1',
         'hover:bg-bg-1 hover:text-text-0 transition-colors duration-[160ms]',
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
       ].join(' ')}
+      style={{ borderRadius: '0.375rem', height: '2.25rem', width: '2.25rem', padding: 0 }}
     >
       <AlertTriangle size={16} aria-hidden="true" />
       <span
@@ -374,7 +385,7 @@ export const AlertBadge: React.FC<AlertBadgeProps> = ({ count, onClick }) => {
       >
         {count > 9 ? '9+' : count}
       </span>
-    </button>
+    </Button>
   );
 };
 

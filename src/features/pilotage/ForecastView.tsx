@@ -37,6 +37,7 @@ import TopBarSync from '../../components/design/TopBarSync';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
 import { Chip, SectionDivider } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
+import { Button } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   buildForecast,
@@ -252,25 +253,28 @@ const ForecastView: React.FC = () => {
               {([14, 30, 60, 90] as const).map(h => {
                 const isActive = h === horizon;
                 return (
-                  <button
+                  <Button
                     key={h}
                     type="button"
+                    variant={isActive ? 'primary' : 'secondary'}
+                    size="small"
                     role="tab"
                     aria-selected={isActive}
                     onClick={() => setHorizon(h)}
                     className={[
-                      'pressable shrink-0 inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5',
+                      'pressable shrink-0 inline-flex items-center gap-1.5 border px-3 py-1.5',
                       'transition-colors duration-150',
                       'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
                       isActive
                         ? 'bg-accent-dim/30 border-accent text-accent'
                         : 'bg-bg-1 border-border text-text-1 hover:bg-bg-2',
                     ].join(' ')}
+                    style={{ borderRadius: '0.375rem' }}
                   >
                     <span className="font-mono text-[11px] font-semibold uppercase tracking-wide">
                       {h} j
                     </span>
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -312,14 +316,16 @@ const ForecastView: React.FC = () => {
             {/* ── Top critique ─────────────────────────────────────────── */}
             {report.topCritical ? (
               <section aria-label="Événement le plus urgent">
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={() => {
                     const ev = report.topCritical;
                     if (!ev || ev.type === 'SATURATION') return;
                     navigate(navByType(ev.type, ev.sujetId, ev.sujetNav));
                   }}
                   className="card-dense pressable w-full text-left flex items-start gap-3"
+                  style={{ borderRadius: 'var(--ds-radius-card, 16px)', textTransform: 'none', height: 'auto', justifyContent: 'flex-start' }}
                 >
                   <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red/10 text-red">
                     {eventIcon(report.topCritical.type)}
@@ -343,7 +349,7 @@ const ForecastView: React.FC = () => {
                       </div>
                     ) : null}
                   </div>
-                </button>
+                </Button>
               </section>
             ) : null}
 
@@ -488,10 +494,12 @@ const ForecastView: React.FC = () => {
                             role="listitem"
                             className={`border-b border-border last:border-b-0 ${idx === 0 ? '' : ''}`}
                           >
-                            <button
+                            <Button
                               type="button"
+                              variant="ghost"
                               onClick={() => navigate(navByPrevisionnel(ev))}
                               className="pressable flex w-full items-center gap-3 px-3 py-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-2px]"
+                              style={{ borderRadius: 0, textTransform: 'none', height: 'auto', justifyContent: 'flex-start' }}
                             >
                               <span
                                 className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
@@ -523,7 +531,7 @@ const ForecastView: React.FC = () => {
                                   {formatDayShort(ev.date)}
                                 </span>
                               </div>
-                            </button>
+                            </Button>
                           </li>
                         ))}
                       </ul>
@@ -587,13 +595,15 @@ const ForecastRow: React.FC<ForecastRowProps> = ({ event, dayLabel, onClick }) =
 
   if (onClick) {
     return (
-      <button
+      <Button
         type="button"
+        variant="ghost"
         onClick={onClick}
         className="pressable flex w-full items-center gap-3 px-3 py-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-2px]"
+        style={{ borderRadius: 0, textTransform: 'none', height: 'auto', justifyContent: 'flex-start' }}
       >
         {content}
-      </button>
+      </Button>
     );
   }
   return (

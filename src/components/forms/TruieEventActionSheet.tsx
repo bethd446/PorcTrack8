@@ -7,6 +7,7 @@ import React from 'react';
 import { Heart, Stethoscope, Baby, Skull, ChevronRight } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { Button } from '@/design-system';
 import { normaliseStatut, type TruieStatutCanonique } from '../../lib/truieStatut';
 
 export type TruieEventAction = 'SAILLIE' | 'ECHOGRAPHIE' | 'MISE_BAS' | 'MORTALITE';
@@ -106,8 +107,9 @@ const TruieEventActionSheet: React.FC<TruieEventActionSheetProps> = ({
                 : 'var(--pt-primary)';
             return (
               <li key={a.key}>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={() => {
                     onSelect(a.key);
                   }}
@@ -115,6 +117,10 @@ const TruieEventActionSheet: React.FC<TruieEventActionSheetProps> = ({
                   className="pressable flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-bg-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
                   style={{
                     borderTop: i === 0 ? 'none' : '1px solid var(--border, var(--line))',
+                    borderRadius: 0,
+                    textTransform: 'none',
+                    height: 'auto',
+                    justifyContent: 'flex-start',
                   }}
                 >
                   <span
@@ -135,19 +141,21 @@ const TruieEventActionSheet: React.FC<TruieEventActionSheetProps> = ({
                     </span>
                   </span>
                   <ChevronRight size={14} className="text-text-2" aria-hidden="true" />
-                </button>
+                </Button>
               </li>
             );
           })}
         </ul>
 
-        <button
+        <Button
           type="button"
+          variant="secondary"
           onClick={onClose}
-          className="pressable mt-3 w-full h-12 rounded-md bg-bg-1 border border-border text-text-1 text-[12px] font-bold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+          className="pressable mt-3 w-full h-12 bg-bg-1 border border-border text-text-1 text-[12px] font-bold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+          style={{ borderRadius: '0.375rem', height: '3rem', width: '100%' }}
         >
           Annuler
-        </button>
+        </Button>
       </div>
     </BottomSheet>
   );

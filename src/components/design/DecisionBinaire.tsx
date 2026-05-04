@@ -1,5 +1,6 @@
 import React from 'react';
 import { Check, RotateCcw } from 'lucide-react';
+import { Button } from '@/design-system';
 
 interface DecisionBinaireProps {
   title: string;
@@ -53,8 +54,10 @@ export default function DecisionBinaire({
         {subtitle}
       </div>
 
-      <button
+      <Button
         type="button"
+        variant="secondary"
+        size="small"
         onClick={onReturn}
         aria-label={returnLabel}
         style={pillStyle({
@@ -65,10 +68,12 @@ export default function DecisionBinaire({
       >
         <RotateCcw size={12} strokeWidth={2} />
         {returnLabel}
-      </button>
+      </Button>
 
-      <button
+      <Button
         type="button"
+        variant="primary"
+        size="small"
         onClick={onConfirm}
         aria-label={confirmLabel}
         style={pillStyle({
@@ -79,7 +84,7 @@ export default function DecisionBinaire({
       >
         <Check size={12} strokeWidth={2} />
         {confirmLabel}
-      </button>
+      </Button>
 
       <div
         style={{

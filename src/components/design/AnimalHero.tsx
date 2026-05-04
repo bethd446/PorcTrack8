@@ -127,23 +127,26 @@ export default function AnimalHero({
               />
             )}
             {onUploadClick && (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="small"
                 onClick={onUploadClick}
                 style={{
                   fontSize: 11,
                   letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
                   color: 'var(--color-accent-600, var(--amber-pork-deep))',
                   background: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
                   padding: '6px 10px',
                   fontWeight: 500,
+                  borderRadius: 0,
+                  height: 'auto',
                 }}
               >
                 + Ajouter une photo
-              </button>
+              </Button>
             )}
           </div>
         )}

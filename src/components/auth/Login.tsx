@@ -232,28 +232,32 @@ export default function Login() {
                     (y compris les spams).
                   </p>
                   <div style={{ marginTop: 14 }}>
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="small"
                       onClick={switchToLogin}
                       style={{
                         background: 'transparent',
                         border: 'none',
                         cursor: 'pointer',
-                                  fontSize: 11,
+                        fontSize: 11,
                         letterSpacing: '0.10em',
                         textTransform: 'uppercase',
                         color: 'var(--color-accent-600)',
                         minHeight: 36,
+                        height: 'auto',
                         padding: '0 0',
                         fontWeight: 500,
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: 6,
+                        borderRadius: 0,
                       }}
                     >
                       <ArrowLeft size={14} strokeWidth={2} />
                       Retour à la connexion
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -321,35 +325,41 @@ export default function Login() {
 
               <div style={{ textAlign: 'center', marginTop: 6 }}>
                 {mode === 'login' ? (
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="small"
                     onClick={switchToReset}
                     style={{
                       background: 'transparent',
                       border: 'none',
                       cursor: 'pointer',
-                              fontSize: 11,
+                      fontSize: 11,
                       letterSpacing: '0.10em',
                       textTransform: 'uppercase',
                       color: 'var(--muted)',
                       display: 'inline-flex',
                       alignItems: 'center',
                       minHeight: 44,
+                      height: 'auto',
                       padding: '0 8px',
                       fontWeight: 500,
+                      borderRadius: 0,
                     }}
                   >
                     Mot de passe oublié ?
-                  </button>
+                  </Button>
                 ) : (
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="small"
                     onClick={switchToLogin}
                     style={{
                       background: 'transparent',
                       border: 'none',
                       cursor: 'pointer',
-                              fontSize: 11,
+                      fontSize: 11,
                       letterSpacing: '0.10em',
                       textTransform: 'uppercase',
                       color: 'var(--color-accent-600)',
@@ -357,13 +367,15 @@ export default function Login() {
                       alignItems: 'center',
                       gap: 6,
                       minHeight: 44,
+                      height: 'auto',
                       padding: '0 8px',
                       fontWeight: 500,
+                      borderRadius: 0,
                     }}
                   >
                     <ArrowLeft size={14} strokeWidth={2} />
                     Retour à la connexion
-                  </button>
+                  </Button>
                 )}
               </div>
             </form>

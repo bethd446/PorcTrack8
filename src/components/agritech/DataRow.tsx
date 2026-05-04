@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
+import { Button } from '@/design-system';
 
 export interface DataRowProps {
   /** Primary text (first line). */
@@ -61,8 +62,9 @@ const DataRow: React.FC<DataRowProps> = ({
 
   if (interactive) {
     return (
-      <button
+      <Button
         type="button"
+        variant="ghost"
         onClick={onClick}
         className={cn(
           'data-row pressable flex w-full items-center gap-3 px-3 py-3 text-left',
@@ -70,9 +72,10 @@ const DataRow: React.FC<DataRowProps> = ({
           'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-2px]',
           className
         )}
+        style={{ borderRadius: 0, textTransform: 'none', height: 'auto', justifyContent: 'flex-start' }}
       >
         {inner}
-      </button>
+      </Button>
     );
   }
 

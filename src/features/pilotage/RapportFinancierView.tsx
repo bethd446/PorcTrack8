@@ -20,6 +20,7 @@ import AgritechLayout from '../../components/AgritechLayout';
 import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { KpiCard, SectionDivider, Chip } from '../../components/agritech';
+import { Button } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   formatMontant,
@@ -235,17 +236,19 @@ const RapportFinancierView: React.FC = () => {
             ) : null}
 
             {/* ── Export PDF (placeholder) ────────────────────────────── */}
-            <button
+            <Button
               type="button"
+              variant="secondary"
               disabled
               className="card-dense pressable flex items-center justify-center gap-2 !py-3 opacity-60 cursor-not-allowed"
               aria-label="Export PDF · bientôt disponible"
+              style={{ borderRadius: 'var(--ds-radius-card, 16px)', textTransform: 'none', height: 'auto' }}
             >
               <Download size={16} aria-hidden="true" />
               <span className="ft-heading text-[13px] uppercase tracking-wide">
                 Export PDF · bientôt
               </span>
-            </button>
+            </Button>
           </div>
         </AgritechLayout>
       </IonContent>

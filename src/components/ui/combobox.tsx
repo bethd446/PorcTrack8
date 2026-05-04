@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/src/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/src/components/ui/popover';
+import { Button } from '@/design-system';
 
 export interface ComboboxOption {
   value: string;
@@ -35,8 +36,10 @@ export function Combobox({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
+        <Button
           type="button"
+          variant="secondary"
+          size="small"
           role="combobox"
           aria-expanded={open}
           disabled={disabled}
@@ -53,11 +56,13 @@ export function Combobox({
             fontSize: 14,
             fontFamily: 'var(--font-body)',
             cursor: 'pointer',
+            textTransform: 'none',
+            height: 'auto',
           }}
         >
           {selected ? selected.label : placeholder}
           <ChevronsUpDown size={14} style={{ marginLeft: 8, color: 'var(--muted)' }} />
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
         <Command>

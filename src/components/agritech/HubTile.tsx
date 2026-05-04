@@ -2,6 +2,7 @@ import React from 'react';
 import { ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/utils';
+import { Button } from '@/design-system';
 
 export type HubTileTone = 'default' | 'accent' | 'amber' | 'coral' | 'teal' | 'gold' | 'sage' | 'ochre';
 export type HubTileVariant = 'row' | 'compact';
@@ -70,8 +71,9 @@ const HubTile: React.FC<HubTileProps> = ({
 
   if (variant === 'compact') {
     return (
-      <button
+      <Button
         type="button"
+        variant="ghost"
         onClick={() => navigate(to)}
         aria-label={title}
         className={cn(
@@ -80,6 +82,7 @@ const HubTile: React.FC<HubTileProps> = ({
           'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
           className,
         )}
+        style={{ borderRadius: 'var(--ds-radius-card, 12px)', textTransform: 'none', height: 'auto', justifyContent: 'flex-start' }}
       >
         <div className="flex items-center justify-between gap-2">
           <span
@@ -112,13 +115,14 @@ const HubTile: React.FC<HubTileProps> = ({
             </div>
           ) : null}
         </div>
-      </button>
+      </Button>
     );
   }
 
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
       onClick={() => navigate(to)}
       aria-label={title}
       className={cn(
@@ -127,6 +131,7 @@ const HubTile: React.FC<HubTileProps> = ({
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
         className,
       )}
+      style={{ borderRadius: 'var(--ds-radius-card, 12px)', textTransform: 'none', height: 'auto', justifyContent: 'flex-start' }}
     >
       <span
         className={cn(
@@ -154,7 +159,7 @@ const HubTile: React.FC<HubTileProps> = ({
       ) : null}
 
       <ChevronRight size={18} className="shrink-0 text-text-2" aria-hidden="true" />
-    </button>
+    </Button>
   );
 };
 

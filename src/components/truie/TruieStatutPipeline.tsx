@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, Baby, Home, AlertTriangle } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { Button } from '@/design-system';
 
 /**
  * TruieStatutPipeline — Vue "funnel" du cycle reproductif d'une truie.
@@ -86,12 +87,13 @@ const TruieStatutPipeline: React.FC<TruieStatutPipelineProps> = ({
           const barWidth = etape.count > 0 ? Math.max(pct, 6) : 0;
 
           return (
-            <button
+            <Button
               key={etape.key}
               type="button"
+              variant="ghost"
               onClick={() => navigate(`${basePath}?statut=${etape.key}`)}
               aria-label={`${etape.label} · ${etape.count} ${etape.count === 1 ? 'truie' : 'truies'} — ouvrir la liste filtrée`}
-              style={{ transitionDelay: `${idx * 50}ms` }}
+              style={{ transitionDelay: `${idx * 50}ms`, borderRadius: 'var(--ds-radius-card, 12px)', textTransform: 'none', height: 'auto', justifyContent: 'flex-start' }}
               className={cn(
                 'pressable card-dense text-left flex flex-col gap-2',
                 'transition-colors duration-[220ms]',
@@ -132,7 +134,7 @@ const TruieStatutPipeline: React.FC<TruieStatutPipelineProps> = ({
                   style={{ transform: `scaleX(${barWidth / 100})`, transformOrigin: 'left' }}
                 />
               </div>
-            </button>
+            </Button>
           );
         })}
       </div>

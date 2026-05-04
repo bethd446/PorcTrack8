@@ -283,8 +283,10 @@ export default function Signup() {
                     Vérifiez votre boîte mail à <strong style={{ color: 'var(--ink)' }}>{email}</strong> (et le dossier spam si besoin).
                   </p>
                   <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
+                      size="small"
                       onClick={handleResend}
                       disabled={resendCooldown > 0 || resendLoading}
                       aria-busy={resendLoading}
@@ -293,9 +295,8 @@ export default function Signup() {
                         border: '1px solid var(--color-accent-500)',
                         cursor: resendCooldown > 0 || resendLoading ? 'not-allowed' : 'pointer',
                         opacity: resendCooldown > 0 || resendLoading ? 0.6 : 1,
-                                  fontSize: 11,
+                        fontSize: 11,
                         letterSpacing: '0.10em',
-                        textTransform: 'uppercase',
                         color: 'var(--color-accent-600)',
                         minHeight: 36,
                         padding: '6px 12px',
@@ -304,6 +305,7 @@ export default function Signup() {
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: 8,
+                        height: 'auto',
                       }}
                     >
                       {resendLoading && (
@@ -314,7 +316,7 @@ export default function Signup() {
                         : resendCooldown > 0
                           ? `Renvoyer le lien (${resendCooldown}s)`
                           : 'Renvoyer le lien'}
-                    </button>
+                    </Button>
                     {resendNotice && (
                       <span
                         style={{
@@ -398,26 +400,29 @@ export default function Signup() {
                 </form>
 
                 <div style={{ textAlign: 'center', marginTop: 14 }}>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="small"
                     onClick={() => setMode(mode === 'magic' ? 'password' : 'magic')}
                     style={{
                       background: 'transparent',
                       border: 'none',
                       cursor: 'pointer',
-                              fontSize: 11,
+                      fontSize: 11,
                       letterSpacing: '0.10em',
-                      textTransform: 'uppercase',
                       color: 'var(--color-accent-600)',
                       minHeight: 44,
                       padding: '0 8px',
                       fontWeight: 500,
+                      height: 'auto',
+                      borderRadius: 0,
                     }}
                   >
                     {mode === 'magic'
                       ? '› Utiliser un mot de passe'
                       : '› Utiliser un lien magique'}
-                  </button>
+                  </Button>
                 </div>
               </>
             )}

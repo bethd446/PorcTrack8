@@ -21,6 +21,7 @@ import { usePilotage } from '../context/PilotageContext';
 import { cn } from '../lib/utils';
 import { inferModuleFromPath, getModuleTone } from '../lib/moduleColor';
 import { BottomSheet } from './agritech';
+import { Button } from '@/design-system';
 import QuickSaillieForm from './forms/QuickSaillieForm';
 import QuickPeseeForm from './forms/QuickPeseeForm';
 import QuickHealthForm from './forms/QuickHealthForm';
@@ -297,8 +298,9 @@ const NavTab: React.FC<NavTabProps> = ({ tab, isActive, onSelect, badgeCount, mo
           }}
         />
       )}
-      <button
+      <Button
         type="button"
+        variant="ghost"
         role="tab"
         aria-selected={isActive}
         aria-current={isActive ? 'page' : undefined}
@@ -313,6 +315,10 @@ const NavTab: React.FC<NavTabProps> = ({ tab, isActive, onSelect, badgeCount, mo
           transitionDuration: '160ms',
           transitionTimingFunction: 'var(--ease-emil)',
           outlineColor: isActive ? ACCENT : undefined,
+          borderRadius: 0,
+          textTransform: 'none',
+          height: '100%',
+          width: '100%',
         }}
       >
         <span className="relative inline-flex">
@@ -345,7 +351,7 @@ const NavTab: React.FC<NavTabProps> = ({ tab, isActive, onSelect, badgeCount, mo
         >
           {label}
         </span>
-      </button>
+      </Button>
     </li>
   );
 };
