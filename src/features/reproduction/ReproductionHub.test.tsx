@@ -181,7 +181,7 @@ describe('ReproductionHub', () => {
   it('[1] render baseline : titre, sous-titre et KPIs', () => {
     renderHub();
     expect(screen.getByRole('heading', { level: 1 }).textContent).toMatch(/Reproduction/i);
-    expect(screen.getByText(/Le cycle truie de ta ferme/i)).toBeTruthy();
+    expect(screen.getByText(/Saillies, gestation, maternité/i)).toBeTruthy();
     // 4 KPIs (ISSE / IEM / Taux MB / Renouv.)
     expect(screen.getByText(/^ISSE$/i)).toBeTruthy();
     expect(screen.getByText(/^IEM$/i)).toBeTruthy();
