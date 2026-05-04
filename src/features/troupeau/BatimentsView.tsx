@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { IsoBarn, SectionDivider } from '../../components/agritech';
 import type { Building, Arrow } from '../../components/agritech';
+import { PageHeader } from '@/design-system';
 import { FARM_CONFIG } from '../../config/farm';
 
 /**
@@ -136,31 +136,11 @@ const BatimentsView: React.FC = () => {
           />
 
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <header>
-              <Eyebrow dotColor="accent">Cheptel · Bâtiments</Eyebrow>
-              <h1
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '8px 0 4px',
-                }}
-              >
-                Bâtiments
-              </h1>
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--muted)',
-                }}
-              >
-                Plan isométrique 3 phases
-              </div>
-            </header>
+            <PageHeader
+              eyebrow="TROUPEAU · BÂTIMENTS"
+              title="Bâtiments"
+              subtitle="Vue d'ensemble par bâtiment"
+            />
 
             <SectionDivider label="Plan · 3 phases" />
 
