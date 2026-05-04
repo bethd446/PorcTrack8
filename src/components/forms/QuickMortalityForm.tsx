@@ -442,6 +442,9 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
                   required
                   hint={`Maximum : ${vivants} porcelet${vivants > 1 ? 's' : ''} vivant${vivants > 1 ? 's' : ''} actuellement.`}
                 >
+                  <span id="mortality-count-hint" className="sr-only">
+                    Maximum {vivants} porcelet{vivants > 1 ? 's' : ''} vivant{vivants > 1 ? 's' : ''} actuellement.
+                  </span>
                   <div className="flex items-center gap-2">
                     <Button
                       type="button"
@@ -455,6 +458,7 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
                     <Input
                       id="mortality-count"
                       aria-label="Nombre de porcelets morts"
+                      aria-describedby={error ? 'mortality-error mortality-count-hint' : 'mortality-count-hint'}
                       type="number"
                       min={MIN_DEATHS}
                       max={maxMorts}
@@ -478,9 +482,11 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
               <Section label="NOTES" />
 
               <FormField label="Observation" hint="optionnel">
+                <span id="mortality-obs-hint" className="sr-only">Champ optionnel</span>
                 <Textarea
                   id="mortality-obs"
                   aria-label="Observation sur la mortalité"
+                  aria-describedby="mortality-obs-hint"
                   placeholder="Détails…"
                   value={observation}
                   onChange={e => setObservation(e.target.value)}

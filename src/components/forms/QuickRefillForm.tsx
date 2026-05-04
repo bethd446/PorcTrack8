@@ -311,6 +311,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                   aria-label={`Quantité reçue en ${unite}`}
                   aria-required="true"
                   aria-invalid={!!errors.quantite}
+                  aria-describedby={errors.quantite ? 'refill-qty-error' : 'refill-qty-hint'}
                   invalid={!!errors.quantite}
                   placeholder="0.0"
                   min={0.1}
@@ -321,6 +322,10 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                   }
                   disabled={saving}
                 />
+                <span id="refill-qty-hint" className="sr-only">{qtyHint}</span>
+                {errors.quantite && (
+                  <span id="refill-qty-error" className="sr-only">{errors.quantite}</span>
+                )}
                 <span className="text-[14px] text-text-2 uppercase tracking-wide shrink-0 w-14 text-center">
                   {unite}
                 </span>
@@ -351,6 +356,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                   inputMode="decimal"
                   aria-label="Prix unitaire en FCFA (optionnel)"
                   aria-invalid={!!errors.prix}
+                  aria-describedby={errors.prix ? 'refill-price-error' : undefined}
                   invalid={!!errors.prix}
                   placeholder="0"
                   value={prixUnitaire}
@@ -359,6 +365,9 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                   }
                   disabled={saving}
                 />
+                {errors.prix && (
+                  <span id="refill-price-error" className="sr-only">{errors.prix}</span>
+                )}
               </FormField>
 
               <FormField label="Date" required error={errors.date}>
@@ -368,11 +377,15 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                   aria-label="Date de réception"
                   aria-required="true"
                   aria-invalid={!!errors.date}
+                  aria-describedby={errors.date ? 'refill-date-error' : undefined}
                   invalid={!!errors.date}
                   value={dateIso}
                   onChange={e => setDateIso(e.target.value)}
                   disabled={saving}
                 />
+                {errors.date && (
+                  <span id="refill-date-error" className="sr-only">{errors.date}</span>
+                )}
               </FormField>
             </div>
 
