@@ -13,7 +13,10 @@ import {
 } from '../../services/supabaseService';
 import AgritechLayout from '../../components/AgritechLayout';
 import TopBarSync from '../../components/design/TopBarSync';
-import { AlertGroup, AlertRow, Section, Tabs, PageHeader, safeDisplay } from '@/design-system';
+import {
+  AlertGroup, AlertRow, Section, Tabs, PageHeader,
+  Card, StatsGrid, Stat, safeDisplay,
+} from '@/design-system';
 
 /**
  * AuditView — V31-FIX-PACK-01
@@ -278,14 +281,32 @@ const AuditView: React.FC = () => {
             {/* V41 Phase D — Header sobre via PageHeader (subtitle non-numérique) */}
             <PageHeader eyebrow="Audit" title="Alertes & contrôles" subtitle="Suivi qualité de ta ferme" />
 
+            {/* V44 — VUE D'ENSEMBLE : 4 stats clés (archétype 2 Hub) */}
+            {!loading ? (
+              <section aria-label="Vue d'ensemble">
+                <Section label="VUE D'ENSEMBLE" />
+                <Card>
+                  <StatsGrid cols={4}>
+                    <Stat value={counts.total} label="Total" />
+                    <Stat value={counts.critiques} label="Critiques" tone={counts.critiques > 0 ? 'danger' : 'default'} />
+                    <Stat value={counts.stocks} label="Stocks" tone={counts.stocks > 0 ? 'accent' : 'default'} />
+                    <Stat value={counts.sante} label="Santé" tone={counts.sante > 0 ? 'accent' : 'default'} />
+                  </StatsGrid>
+                </Card>
+              </section>
+            ) : null}
+
             {/* TABS FILTRES ──────────────────────────────────────────── */}
             {!loading && counts.total > 0 ? (
-              <Tabs
-                items={tabItems}
-                value={filter}
-                onChange={(id: string) => setFilter(id as CategoryKey)}
-                ariaLabel="Filtres audit"
-              />
+              <>
+                <Section label="ALERTES" />
+                <Tabs
+                  items={tabItems}
+                  value={filter}
+                  onChange={(id: string) => setFilter(id as CategoryKey)}
+                  ariaLabel="Filtres audit"
+                />
+              </>
             ) : null}
 
             {/* LOADING ───────────────────────────────────────────────── */}
