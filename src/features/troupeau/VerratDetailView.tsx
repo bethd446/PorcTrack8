@@ -174,12 +174,9 @@ const VerratDetailView: React.FC = () => {
             className="px-4 pt-5 pb-32 flex flex-col gap-5"
             style={{ maxWidth: 1100, margin: '0 auto' }}
           >
-            {/* V43 C3 — PageHeader DS V2 (LA 11e RÈGLE D'OR V41) */}
-            <PageHeader
-              eyebrow="TROUPEAU · VERRAT"
-              title={displayId}
-              subtitle="Fiche reproducteur"
-            />
+            {/* V43 C3 — AnimalHero fait office de header complet (eyebrow + h1
+                + chips + photo + actions) ; on skip PageHeader pour éviter le
+                doublon visuel + double h1 cassant les tests a11y. */}
             {/* ── Hero unifié (AnimalHero) ────────────────────────────── */}
             <AnimalHero
               eyebrow={`Cheptel · Verrat ${displayId}`}
