@@ -1,5 +1,4 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import { IonToast } from '@ionic/react';
 import { Package, Send, CheckCircle2 } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
 import {
@@ -9,8 +8,8 @@ import {
   resolveProduitAlimentByCode,
   resolveProduitVetoByCode,
 } from '../../services/supabaseWrites';
-import { BottomSheet } from '../agritech';
-import { Button, Input } from '@/design-system';
+import { AppToast, BottomSheet, useAppToast } from '../agritech';
+import { Button, FormField, Input, Section } from '@/design-system';
 import type { StockStatut } from '../../types/farm';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import {
@@ -24,6 +23,7 @@ import {
 /* ═════════════════════════════════════════════════════════════════════════
    QuickRefillForm · Réapprovisionnement rapide d'un aliment ou véto
    ─────────────────────────────────────────────────────────────────────────
+   V44 archétype 5 : Section UPPERCASE + FormField wrapper + AppToast DS
    Flow (BottomSheet) :
      1. En-tête "Réapprovisionner : <produit>" + rappel stock / seuil / unité
      2. Quantité à ajouter (kg pour aliments, doses/mL pour véto)
@@ -35,8 +35,6 @@ import {
      - APPEND FINANCES : [DATE, CATEGORIE, LIBELLE, MONTANT, TYPE, NOTES]
        (uniquement si prix unitaire fourni → montant > 0)
    ═════════════════════════════════════════════════════════════════════════ */
-
-// ─── Composant ──────────────────────────────────────────────────────────────
 
 interface QuickRefillFormProps {
   isOpen: boolean;
@@ -52,6 +50,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
   onSuccess,
 }) => {
   const { refreshData } = useFarm();
+  const { show: showToast, toastProps } = useAppToast();
 
   const [quantite, setQuantite] = useState<string>('');
   const [fournisseur, setFournisseur] = useState<string>('');
@@ -60,10 +59,6 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [toast, setToast] = useState<{ show: boolean; message: string }>({
-    show: false,
-    message: '',
-  });
 
   // Reset quand la sheet s'ouvre / l'item change — render-time sync
   const currentItemId = stockItem?.id ?? '';
@@ -184,7 +179,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
       const baseMsg = online
         ? `${name} · ${qtyNum} ${stockItem.unite} ajoutés`
         : `${name} · ${qtyNum} ${stockItem.unite} · file sync`;
-      setToast({ show: true, message: baseMsg });
+      showToast(baseMsg, 'success');
       setSuccess(true);
 
       // Refresh data pour que l'UI reflète le nouveau stock / statut
@@ -202,7 +197,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
       }, 1400);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Erreur enregistrement';
-      setToast({ show: true, message: msg });
+      showToast(msg, 'error');
       setSaving(false);
     }
   };
@@ -228,6 +223,11 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
     !!stockItem &&
     Number.isFinite(qtyNum) && qtyNum > 0 &&
     !!dateIso;
+
+  const qtyHint =
+    Number.isFinite(qtyNum) && qtyNum > 0
+      ? undefined
+      : `Saisis la quantité reçue en ${unite}.`;
 
   return (
     <BottomSheet
@@ -293,14 +293,15 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
               </div>
             </div>
 
-            {/* ── Quantité à ajouter ──────────────────────────────── */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="refill-qty"
-                className="block text-mono-label text-text-2"
-              >
-                Quantité reçue ({unite})
-              </label>
+            {/* ═══ Section : Quantités ═══════════════════════════════════ */}
+            <Section label="QUANTITÉS" />
+
+            <FormField
+              label={`Quantité reçue (${unite})`}
+              required
+              hint={qtyHint}
+              error={errors.quantite}
+            >
               <div className="flex items-center gap-2">
                 <Input
                   id="refill-qty"
@@ -310,9 +311,6 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                   aria-label={`Quantité reçue en ${unite}`}
                   aria-required="true"
                   aria-invalid={!!errors.quantite}
-                  aria-describedby={
-                    errors.quantite ? 'refill-qty-error' : 'refill-qty-hint'
-                  }
                   invalid={!!errors.quantite}
                   placeholder="0.0"
                   min={0.1}
@@ -327,73 +325,32 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                   {unite}
                 </span>
               </div>
-              {errors.quantite ? (
-                <p
-                  id="refill-qty-error"
-                  role="alert"
-                  className="text-[11px] text-red"
-                >
-                  {errors.quantite}
-                </p>
-              ) : null}
 
               {/* Preview nouveau stock / statut */}
               {Number.isFinite(qtyNum) && qtyNum > 0 ? (
                 <p
-                  id="refill-qty-hint"
                   aria-live="polite"
-                  className="text-[11px] tabular-nums text-text-2"
+                  className="text-[11px] tabular-nums text-text-2 mt-1"
                 >
                   Nouveau stock · <span className="text-text-0">{previewStock} {unite}</span>
                   {' · '}
                   Statut · <span className={statutTone}>{previewStatut}</span>
                 </p>
-              ) : (
-                <p
-                  id="refill-qty-hint"
-                  className="text-[10px] text-text-2"
-                >
-                  Saisis la quantité reçue en {unite}.
-                </p>
-              )}
-            </div>
+              ) : null}
+            </FormField>
 
-            {/* ── Fournisseur ────────────────────────────────────── */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="refill-supplier"
-                className="block text-mono-label text-text-2"
-              >
-                Fournisseur <span className="text-text-2 normal-case">· optionnel</span>
-              </label>
-              <Input
-                id="refill-supplier"
-                type="text"
-                aria-label="Fournisseur (optionnel)"
-                placeholder="Ex: SENAC Feed"
-                value={fournisseur}
-                onChange={e => setFournisseur(e.target.value)}
-                disabled={saving}
-                maxLength={80}
-              />
-            </div>
-
-            {/* ── Prix unitaire + Date (grid 2-col) ───────────────── */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="refill-price"
-                  className="block text-mono-label text-text-2"
-                >
-                  Prix unit. FCFA <span className="text-text-2 normal-case">· opt.</span>
-                </label>
+              <FormField
+                label="Prix unit. FCFA"
+                hint="optionnel"
+                error={errors.prix}
+              >
                 <Input
                   id="refill-price"
                   type="text"
                   inputMode="decimal"
                   aria-label="Prix unitaire en FCFA (optionnel)"
                   aria-invalid={!!errors.prix}
-                  aria-describedby={errors.prix ? 'refill-price-error' : undefined}
                   invalid={!!errors.prix}
                   placeholder="0"
                   value={prixUnitaire}
@@ -402,46 +359,21 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                   }
                   disabled={saving}
                 />
-                {errors.prix ? (
-                  <p
-                    id="refill-price-error"
-                    role="alert"
-                    className="text-[11px] text-red"
-                  >
-                    {errors.prix}
-                  </p>
-                ) : null}
-              </div>
+              </FormField>
 
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="refill-date"
-                  className="block text-mono-label text-text-2"
-                >
-                  Date
-                </label>
+              <FormField label="Date" required error={errors.date}>
                 <Input
                   id="refill-date"
                   type="date"
                   aria-label="Date de réception"
                   aria-required="true"
                   aria-invalid={!!errors.date}
-                  aria-describedby={errors.date ? 'refill-date-error' : undefined}
                   invalid={!!errors.date}
                   value={dateIso}
                   onChange={e => setDateIso(e.target.value)}
                   disabled={saving}
                 />
-                {errors.date ? (
-                  <p
-                    id="refill-date-error"
-                    role="alert"
-                    className="text-[11px] text-red"
-                  >
-                    {errors.date}
-                  </p>
-                ) : null}
-              </div>
+              </FormField>
             </div>
 
             {/* Total si prix fourni */}
@@ -456,13 +388,29 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
               </div>
             ) : null}
 
+            {/* ═══ Section : Notes ═══════════════════════════════════════ */}
+            <Section label="NOTES" />
+
+            <FormField label="Fournisseur" hint="optionnel">
+              <Input
+                id="refill-supplier"
+                type="text"
+                aria-label="Fournisseur (optionnel)"
+                placeholder="Ex: SENAC Feed"
+                value={fournisseur}
+                onChange={e => setFournisseur(e.target.value)}
+                disabled={saving}
+                maxLength={80}
+              />
+            </FormField>
+
             {/* ── Actions ─────────────────────────────────────────── */}
-            <div className="flex gap-3 justify-end px-4 py-3 border-t border-border">
+            <div className="flex gap-3 justify-end pt-2 border-t border-border">
               <Button
-                variant="secondary"
+                variant="ghost"
                 onClick={resetAndClose}
                 disabled={saving}
-                aria-label="Annuler le réapprovisionnement"
+                ariaLabel="Annuler le réapprovisionnement"
               >
                 Annuler
               </Button>
@@ -470,7 +418,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
                 variant="primary"
                 type="submit"
                 disabled={saving || !isValid}
-                aria-label="Valider la réception du réapprovisionnement"
+                ariaLabel="Valider la réception du réapprovisionnement"
                 aria-busy={saving}
               >
                 {saving ? (
@@ -491,13 +439,7 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
         )}
       </div>
 
-      <IonToast
-        isOpen={toast.show}
-        message={toast.message}
-        duration={2600}
-        onDidDismiss={() => setToast({ show: false, message: '' })}
-        position="bottom"
-      />
+      <AppToast {...toastProps} />
     </BottomSheet>
   );
 };
