@@ -571,19 +571,16 @@ function InviteOperatorModal({ isOpen, onClose, currentUserId, onInvited }: Invi
         <IonToolbar>
           <IonTitle>Inviter un opérateur</IonTitle>
           <IonButtons slot="end">
-            <button
+            <Button
+              variant="ghost"
+              size="small"
               onClick={onClose}
               style={{
-                background: 'transparent',
-                border: 'none',
                 color: 'var(--ink-soft)',
-                fontSize: 14,
-                padding: '8px 16px',
-                cursor: 'pointer',
               }}
             >
               Annuler
-            </button>
+            </Button>
           </IonButtons>
         </IonToolbar>
       </IonHeader>
