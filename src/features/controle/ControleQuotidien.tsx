@@ -10,6 +10,7 @@ import AgritechLayout from '../../components/AgritechLayout';
 import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { Chip } from '../../components/agritech';
+import { Button } from '@/design-system';
 import { kvGet } from '../../services/kvStore';
 
 const ControleQuotidien: React.FC = () => {
@@ -109,23 +110,15 @@ const ControleQuotidien: React.FC = () => {
 
               <div className="w-full space-y-3">
                 {lastAnswer === 'Oui' && (
-                  <button
-                    type="button"
-                    onClick={() => navigate('/ressources/aliments')}
-                    className="pressable w-full h-12 rounded-md bg-accent text-bg-0 text-[13px] font-semibold flex items-center justify-center gap-2 active:scale-[0.97] transition-transform duration-150 hover:bg-[color:var(--color-accent-dim)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-                  >
+                  <Button variant="primary" fullWidth onClick={() => navigate('/ressources/aliments')}>
                     <Box size={16} aria-hidden="true" />
                     Ouvrir les stocks
-                  </button>
+                  </Button>
                 )}
 
-                <button
-                  type="button"
-                  onClick={() => navigate('/')}
-                  className="pressable w-full h-11 rounded-md border border-border bg-bg-1 text-text-0 text-[12px] font-semibold active:scale-[0.97] transition-transform duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-                >
+                <Button variant="secondary" fullWidth onClick={() => navigate('/')}>
                   Retour au cockpit
-                </button>
+                </Button>
               </div>
               </div>
             </div>
@@ -240,15 +233,16 @@ const ControleQuotidien: React.FC = () => {
               {/* Response options */}
               <div className="space-y-2" role="group" aria-label="Réponses possibles">
                 {question.options.map(opt => (
-                  <button
+                  <Button
                     key={opt}
-                    type="button"
+                    variant="secondary"
+                    fullWidth
                     onClick={() => handleAnswer(opt)}
-                    className="pressable w-full flex items-center justify-between gap-3 px-4 py-3 rounded-md bg-bg-0 border border-border text-text-0 text-[14px] font-semibold text-left transition-colors duration-150 hover:border-accent/60 hover:bg-bg-2 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                    className="!justify-between !text-left !rounded-md !px-4 !py-3"
                   >
                     <span>{opt}</span>
                     <ChevronRight size={16} className="text-text-2" aria-hidden="true" />
-                  </button>
+                  </Button>
                 ))}
               </div>
             </section>

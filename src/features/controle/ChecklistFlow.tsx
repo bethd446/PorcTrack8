@@ -33,6 +33,7 @@ import {
 import AgritechLayout from '../../components/AgritechLayout';
 import AgritechHeader from '../../components/AgritechHeader';
 import { Chip } from '../../components/agritech';
+import { Button } from '@/design-system';
 import { kvGet } from '../../services/kvStore';
 
 // Consumed shape: the service-provided ChecklistItem + legacy UPPERCASE aliases
@@ -374,14 +375,15 @@ const ChecklistFlow: React.FC = () => {
               </h2>
               <div className="space-y-2.5" role="list">
                 {CHECKLIST_TEMPLATES_META.map(meta => (
-                  <button
+                  <Button
                     key={meta.key}
-                    type="button"
+                    variant="secondary"
+                    fullWidth
                     role="listitem"
                     onClick={() => handleSelectTemplate(meta.key)}
-                    aria-label={`Démarrer la tournée ${meta.label}`}
+                    ariaLabel={`Démarrer la tournée ${meta.label}`}
                     data-testid={`tpl-${meta.key}`}
-                    className="pressable w-full flex items-center gap-3 px-4 py-4 rounded-md border border-border bg-bg-1 hover:border-accent/60 active:scale-[0.98] transition-colors text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                    className="!justify-start !text-left !px-4 !py-4 !rounded-md"
                   >
                     <span className="text-[24px]" aria-hidden="true">{meta.emoji}</span>
                     <span className="flex-1 min-w-0">
@@ -392,21 +394,22 @@ const ChecklistFlow: React.FC = () => {
                         {meta.description}
                       </span>
                     </span>
-                  </button>
+                  </Button>
                 ))}
 
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  fullWidth
                   role="listitem"
                   onClick={() => handleSelectTemplate('COMBINED')}
-                  aria-label="Démarrer toutes les tournées combinées"
+                  ariaLabel="Démarrer toutes les tournées combinées"
                   data-testid="tpl-COMBINED"
-                  className="pressable w-full flex items-center justify-center gap-2 px-4 py-3 mt-3 rounded-md border-2 border-dashed border-accent/60 bg-bg-1 hover:bg-bg-2 active:scale-[0.98] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                  className="!mt-3 !border-2 !border-dashed !border-accent/60"
                 >
                   <span className="text-[12px] font-bold uppercase tracking-wide text-accent">
                     Tout combiné · les 4 enchaînés
                   </span>
-                </button>
+                </Button>
               </div>
             </div>
           </AgritechLayout>
@@ -467,20 +470,12 @@ const ChecklistFlow: React.FC = () => {
               )}
 
               <div className="w-full space-y-3">
-                <button
-                  type="button"
-                  onClick={() => navigate('/')}
-                  className="pressable w-full h-12 rounded-md bg-accent text-bg-0 text-[13px] font-semibold flex items-center justify-center gap-2 active:scale-[0.97] transition-transform duration-150 hover:bg-[color:var(--color-accent-dim)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-                >
+                <Button variant="primary" fullWidth onClick={() => navigate('/')}>
                   Retour au cockpit
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate('/audit')}
-                  className="pressable w-full h-11 rounded-md border border-border bg-bg-1 text-text-0 text-[12px] font-semibold active:scale-[0.97] transition-transform duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-                >
+                </Button>
+                <Button variant="secondary" fullWidth onClick={() => navigate('/audit')}>
                   Voir les alertes d'audit
-                </button>
+                </Button>
               </div>
             </div>
           </AgritechLayout>
@@ -509,13 +504,9 @@ const ChecklistFlow: React.FC = () => {
               <p className="text-[11px] text-text-2 mb-8 max-w-xs">
                 Impossible de trouver les questions pour cette checklist.
               </p>
-              <button
-                type="button"
-                onClick={() => navigate('/')}
-                className="pressable h-11 px-6 rounded-md bg-accent text-bg-0 text-[12px] font-semibold flex items-center justify-center active:scale-[0.97] transition-transform duration-150 hover:bg-[color:var(--color-accent-dim)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-              >
+              <Button variant="primary" onClick={() => navigate('/')}>
                 Retour
-              </button>
+              </Button>
             </div>
           </AgritechLayout>
         </IonContent>
@@ -621,17 +612,16 @@ const ChecklistFlow: React.FC = () => {
                     {(typeRep === 'bool' ? ['OUI', 'NON'] : options).map(opt => {
                       const selected = answer === opt;
                       return (
-                        <button
+                        <Button
                           key={opt}
-                          type="button"
+                          variant="secondary"
+                          fullWidth
                           role="radio"
                           aria-checked={selected}
                           onClick={() => setAnswer(opt)}
                           className={
-                            'pressable w-full flex items-center justify-between gap-3 px-4 py-3 rounded-md border text-[14px] font-semibold text-left transition-colors duration-150 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 ' +
-                            (selected
-                              ? 'bg-bg-2 border-accent text-text-0'
-                              : 'bg-bg-0 border-border text-text-1 hover:border-accent/60 hover:text-text-0')
+                            '!justify-between !text-left !px-4 !py-3 !rounded-md ' +
+                            (selected ? '!bg-bg-2 !border-accent !text-text-0' : '')
                           }
                         >
                           <span>{opt}</span>
@@ -642,7 +632,7 @@ const ChecklistFlow: React.FC = () => {
                               aria-hidden="true"
                             />
                           ) : null}
-                        </button>
+                        </Button>
                       );
                     })}
                   </div>
@@ -725,20 +715,20 @@ const ChecklistFlow: React.FC = () => {
 
             {/* Footer actions */}
             <div className="mt-6 flex gap-3">
-              <button
-                type="button"
+              <Button
+                variant="secondary"
                 onClick={() => currentStep > 0 && setCurrentStep(currentStep - 1)}
                 disabled={currentStep === 0}
-                aria-label="Étape précédente"
-                className="pressable inline-flex h-12 w-12 items-center justify-center rounded-md border border-border bg-bg-1 text-text-1 active:scale-[0.96] transition-transform duration-150 disabled:opacity-30 disabled:pointer-events-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                ariaLabel="Étape précédente"
+                className="!w-12 !px-0 !rounded-md"
               >
                 <ChevronLeft size={18} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="primary"
                 onClick={handleNext}
                 disabled={loading}
-                className="pressable flex-1 h-12 rounded-md bg-accent text-bg-0 text-[13px] font-semibold flex items-center justify-center gap-2 active:scale-[0.97] disabled:opacity-40 transition-[transform,opacity] duration-150 hover:bg-[color:var(--color-accent-dim)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+                className="!flex-1 !rounded-md"
               >
                 {loading ? (
                   <IonSpinner name="crescent" />
@@ -750,7 +740,7 @@ const ChecklistFlow: React.FC = () => {
                     <Send size={14} aria-hidden="true" />
                   </>
                 )}
-              </button>
+              </Button>
             </div>
           </div>
         </AgritechLayout>
