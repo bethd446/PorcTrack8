@@ -13,7 +13,7 @@ import Eyebrow from '../../components/design/Eyebrow';
 import EmptyState from '../../components/design/EmptyState';
 import TopBarSync from '../../components/design/TopBarSync';
 import { AnimalListItem, Chip } from '../../components/agritech';
-import { Button } from '@/design-system';
+import { Button, PageHeader } from '@/design-system';
 
 import {
   listLoges,
@@ -206,67 +206,35 @@ const LogeDetailView: React.FC = () => {
             data-testid="loge-detail-view"
           >
             {/* ── Hero ──────────────────────────────────────────────── */}
-            <header
-              className="card-dense"
-              style={{
-                background: 'var(--bg-surface)',
-                borderRadius: 12,
-                padding: '20px 22px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 12,
-              }}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <Eyebrow dotColor="accent">
-                    Loge · {LOGE_TYPE_LABELS[loge.type]}
-                  </Eyebrow>
-                  <h1
-                    className="ft-heading"
-                    style={{
-                      fontFamily: 'var(--font-heading)',
-                      fontSize: 38,
-                      fontWeight: 700,
-                      lineHeight: 1,
-                      letterSpacing: '-0.02em',
-                      color: 'var(--ink)',
-                      margin: '10px 0 6px',
-                    }}
-                  >
-                    {loge.numero}
-                  </h1>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-body)',
-                      fontSize: 13,
-                      color: 'var(--muted)',
-                    }}
-                  >
-                    {loge.batiment ? `Bâtiment ${loge.batiment} · ` : ''}
-                    Capacité {loge.capaciteMax ?? '—'} · Occupation {occupationLabel}
-                  </div>
-                  {loge.notes ? (
-                    <p
-                      className="mt-2 text-[12px]"
-                      style={{ color: 'var(--text-1)' }}
-                    >
-                      {loge.notes}
-                    </p>
-                  ) : null}
-                </div>
-                <div className="flex flex-col gap-2 shrink-0">
-                  <Button variant="secondary" size="small" onClick={() => navigate('/troupeau?view=loges')}>
-                    <Pencil size={13} aria-hidden="true" />
-                    Modifier
-                  </Button>
-                  <Button variant="danger" size="small" onClick={handleDeactivate} data-testid="deactivate-button">
-                    <Archive size={13} aria-hidden="true" />
-                    Désactiver
-                  </Button>
-                </div>
+            <PageHeader
+              eyebrow="TROUPEAU · LOGE"
+              title={loge.numero}
+              subtitle="Détail occupation et historique"
+            />
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div className="flex flex-col gap-1 min-w-0">
+                <span className="text-[11px] uppercase tracking-wide text-text-2">
+                  {LOGE_TYPE_LABELS[loge.type]}
+                  {loge.batiment ? ` · Bâtiment ${loge.batiment}` : ''}
+                </span>
+                <span className="text-[12px] text-text-1 tabular-nums">
+                  Capacité {loge.capaciteMax ?? '—'} · Occupation {occupationLabel}
+                </span>
+                {loge.notes ? (
+                  <p className="mt-1 text-[12px] text-text-1">{loge.notes}</p>
+                ) : null}
               </div>
-            </header>
+              <div className="flex gap-2 shrink-0">
+                <Button variant="secondary" size="small" onClick={() => navigate('/troupeau?view=loges')}>
+                  <Pencil size={13} aria-hidden="true" />
+                  Modifier
+                </Button>
+                <Button variant="danger" size="small" onClick={handleDeactivate} data-testid="deactivate-button">
+                  <Archive size={13} aria-hidden="true" />
+                  Désactiver
+                </Button>
+              </div>
+            </div>
 
             {/* ── Occupation actuelle ──────────────────────────────── */}
             <section aria-label="Occupation actuelle">
