@@ -7,7 +7,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, cleanup, waitFor } from '@testing-library/react';
+import { render, screen, cleanup, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import type { BandePorcelets, PorceletIndividuel } from '../../../types/farm';
 import type { AggregatedBande } from './types';
@@ -143,7 +143,7 @@ afterEach(() => {
 });
 
 function renderView() {
-  return render(
+  const result = render(
     <MemoryRouter>
       <BandeDetailView
         bande={baseAggregated}
@@ -154,6 +154,11 @@ function renderView() {
       />
     </MemoryRouter>,
   );
+  // V43.6 — La section Porcelets vit désormais dans l'onglet "Détails".
+  // On bascule l'onglet pour rester compatible avec les tests historiques.
+  const detailsTab = screen.getByRole('tab', { name: /détails/i });
+  fireEvent.click(detailsTab);
+  return result;
 }
 
 describe('BandeDetailView — section Porcelets', () => {
