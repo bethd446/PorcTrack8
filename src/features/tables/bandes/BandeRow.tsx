@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertCircle, ChevronRight, CheckCheck } from 'lucide-react';
 import { Chip } from '../../../components/agritech';
+import { Button } from '@/design-system';
 import { statusTone, type AggregatedBande } from './types';
 
 interface BandeRowProps {
@@ -13,8 +14,8 @@ interface BandeRowProps {
 const BandeRow: React.FC<BandeRowProps> = ({ bande, isSelected, selectionMode, onClick }) => {
   const tone = statusTone(bande.status as string | null | undefined);
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
       onClick={onClick}
       className={`card-dense pressable w-full text-left transition-colors ${
         isSelected ? 'bg-bg-2 outline outline-2 outline-accent outline-offset-[-2px]' : ''
@@ -96,7 +97,7 @@ const BandeRow: React.FC<BandeRowProps> = ({ bande, isSelected, selectionMode, o
           <ChevronRight size={16} className="shrink-0 text-text-2 mt-1" aria-hidden="true" />
         )}
       </div>
-    </button>
+    </Button>
   );
 };
 

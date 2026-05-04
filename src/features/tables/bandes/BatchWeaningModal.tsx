@@ -8,6 +8,7 @@ import {
   resolveBatchIdByCode,
 } from '../../../services/supabaseWrites';
 import { kvGet } from '../../../services/kvStore';
+import { Button } from '@/design-system';
 import type { AggregatedBande, DebugMeta } from './types';
 
 interface BatchWeaningModalProps {
@@ -138,13 +139,15 @@ const BatchWeaningModal: React.FC<BatchWeaningModalProps> = ({
               {selectedBandes.length} portée{selectedBandes.length > 1 ? 's' : ''} sélectionnée{selectedBandes.length > 1 ? 's' : ''}
             </p>
           </div>
-          <button
+          <Button
+            variant="ghost"
+            size="small"
             onClick={onClose}
             className="pressable inline-flex h-9 w-9 items-center justify-center rounded-md bg-bg-2 text-text-1 transition-colors"
-            aria-label="Fermer"
+            ariaLabel="Fermer"
           >
             <X size={18} />
-          </button>
+          </Button>
         </div>
         <div className="card-dense flex items-center gap-3 !py-3">
           <div className="w-10 h-10 rounded-md bg-accent text-bg-0 flex items-center justify-center text-[16px] font-semibold tabular-nums">
@@ -215,8 +218,8 @@ const BatchWeaningModal: React.FC<BatchWeaningModalProps> = ({
             </div>
           </div>
 
-          <button
-            type="button"
+          <Button
+            variant="ghost"
             onClick={() => setPointHebdo(!pointHebdo)}
             className={`pressable card-dense w-full flex items-center justify-between transition-colors text-left ${
               pointHebdo ? 'border-accent-dim' : ''
@@ -242,12 +245,14 @@ const BatchWeaningModal: React.FC<BatchWeaningModalProps> = ({
             }`}>
               {pointHebdo && <CheckCheck size={12} />}
             </div>
-          </button>
+          </Button>
         </div>
       </IonContent>
 
       <div className="agritech-root px-4 py-4 bg-bg-0 border-t border-border space-y-2">
-        <button
+        <Button
+          variant="primary"
+          fullWidth
           disabled={loading}
           onClick={handleConfirm}
           className="pressable w-full h-14 rounded-md bg-accent text-bg-0 flex items-center justify-center gap-3 transition-transform active:scale-[0.98]"
@@ -256,13 +261,15 @@ const BatchWeaningModal: React.FC<BatchWeaningModalProps> = ({
           <span className="text-[12px] uppercase tracking-wide font-semibold">
             Lancer le sevrage
           </span>
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="secondary"
+          fullWidth
           onClick={onClose}
           className="pressable w-full h-11 rounded-md bg-bg-1 border border-border text-text-1 text-[11px] uppercase tracking-wide transition-colors"
         >
           Annuler
-        </button>
+        </Button>
       </div>
     </div>
   );

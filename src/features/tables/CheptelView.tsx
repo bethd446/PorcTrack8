@@ -26,6 +26,7 @@ import { getStatusConfig } from '../../utils/statusConfig';
 import { normaliseStatut } from '../../lib/truieStatut';
 import QuickEditTruieForm from '../../components/forms/QuickEditTruieForm';
 import QuickEditVerratForm from '../../components/forms/QuickEditVerratForm';
+import { Button } from '@/design-system';
 import type { Truie, Verrat } from '../../types/farm';
 
 interface CheptelViewProps {
@@ -178,9 +179,9 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                 const isActive = tab === key;
                 const Icon = key === 'TRUIE' ? TruieIcon : VerratIcon;
                 return (
-                  <button
+                  <Button
                     key={key}
-                    type="button"
+                    variant={isActive ? 'primary' : 'ghost'}
                     role="tab"
                     aria-selected={isActive}
                     onClick={() => setTab(key)}
@@ -197,7 +198,7 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                     <span className="text-[11px] font-semibold uppercase tracking-wide">
                       {key === 'TRUIE' ? 'Truies' : 'Verrats'}
                     </span>
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -329,10 +330,10 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                       data-testid="cheptel-row"
                       className="relative border-b border-border last:border-b-0"
                     >
-                      <button
-                        type="button"
+                      <Button
+                        variant="ghost"
                         onClick={() => navigate(destination)}
-                        aria-label={`Ouvrir la fiche de ${item.nom || item.displayId}`}
+                        ariaLabel={`Ouvrir la fiche de ${item.nom || item.displayId}`}
                         className={[
                           'data-row pressable flex w-full items-center gap-3 px-3 py-3 text-left',
                           // Laisse de la place au CTA Edit3 absolu à droite (avant le chevron).
@@ -398,13 +399,14 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                             aria-hidden="true"
                           />
                         </div>
-                      </button>
+                      </Button>
 
                       {/* CTA Edit3 inline — ouvre QuickEditTruieForm / QuickEditVerratForm sans navigation. */}
-                      <button
-                        type="button"
+                      <Button
+                        variant="ghost"
+                        size="small"
                         onClick={handleEditClick}
-                        aria-label={editAriaLabel}
+                        ariaLabel={editAriaLabel}
                         className={[
                           'pressable absolute top-1/2 -translate-y-1/2 right-8',
                           'h-8 w-8 rounded-md border border-border bg-bg-1',
@@ -414,7 +416,7 @@ const CheptelView: React.FC<CheptelViewProps> = ({ initialTab }) => {
                         ].join(' ')}
                       >
                         <Edit3 size={14} aria-hidden="true" />
-                      </button>
+                      </Button>
                     </div>
                   );
                 })}

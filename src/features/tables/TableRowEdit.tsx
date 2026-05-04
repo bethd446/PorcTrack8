@@ -25,6 +25,7 @@ import {
   resolveProduitVetoByCode,
 } from '../../services/supabaseWrites';
 import PhotoStrip from '../../components/PhotoStrip';
+import { Button } from '@/design-system';
 import { PhotoEntry } from '../../services/photos';
 
 interface TableRowEditMeta {
@@ -267,10 +268,11 @@ const TableRowEdit: React.FC<TableRowEditProps> = ({ meta, header, rowData, onCl
         className="flex items-center justify-between border-b border-border bg-bg-2 px-4 py-3"
         style={{ minHeight: 56 }}
       >
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="small"
           onClick={onClose}
-          aria-label="Fermer"
+          ariaLabel="Fermer"
           className={[
             'pressable inline-flex h-9 w-9 items-center justify-center rounded-md',
             'bg-bg-1 border border-border text-text-1',
@@ -278,7 +280,7 @@ const TableRowEdit: React.FC<TableRowEditProps> = ({ meta, header, rowData, onCl
           ].join(' ')}
         >
           <X size={18} aria-hidden="true" />
-        </button>
+        </Button>
 
         <div className="min-w-0 text-center px-3">
           <h2
@@ -294,11 +296,12 @@ const TableRowEdit: React.FC<TableRowEditProps> = ({ meta, header, rowData, onCl
           )}
         </div>
 
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          size="small"
           onClick={handleSave}
           disabled={!headerReady || loading}
-          aria-label="Valider les modifications"
+          ariaLabel="Valider les modifications"
           className={[
             'pressable inline-flex items-center gap-1.5 h-9 px-3 rounded-md',
             'bg-accent text-bg-0 text-[12px] font-semibold uppercase tracking-wide',
@@ -308,7 +311,7 @@ const TableRowEdit: React.FC<TableRowEditProps> = ({ meta, header, rowData, onCl
         >
           <Save size={14} aria-hidden="true" />
           Valider
-        </button>
+        </Button>
       </div>
 
       {/* ── Body ────────────────────────────────────────────────────────── */}
