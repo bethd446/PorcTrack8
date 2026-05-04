@@ -27,12 +27,11 @@ import { Heart, Info, Edit3, ChevronRight } from 'lucide-react';
 
 import { useFarm } from '../../context/FarmContext';
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import { default as KpiCardV6 } from '../../components/design/KpiCard';
 import EmptyState from '../../components/design/EmptyState';
 import { Chip, SectionDivider } from '../../components/agritech';
-import { Button } from '@/design-system';
+import { Button, PageHeader } from '@/design-system';
 import type { Truie, BandePorcelets, Saillie } from '../../types/farm';
 import QuickEditSaillieForm from '../../components/forms/QuickEditSaillieForm';
 
@@ -214,31 +213,11 @@ const ReproCalendarView: React.FC = () => {
           />
 
           <div className="px-4 pt-5 pb-32 space-y-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <header>
-              <Eyebrow dotColor="pig">Cycle · Reproduction</Eyebrow>
-              <h1
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '8px 0 4px',
-                }}
-              >
-                Reproduction
-              </h1>
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--muted)',
-                }}
-              >
-                Calendrier saillies & retours chaleur
-              </div>
-            </header>
+            <PageHeader
+              eyebrow="REPRO · CALENDRIER"
+              title="Calendrier reproduction"
+              subtitle="Échéances saillies & échographies"
+            />
             {/* ── Summary strip (4 KPI) ─────────────────────────────────── */}
             <section
               aria-label="Synthèse repro"
