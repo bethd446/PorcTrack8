@@ -18,6 +18,7 @@ import { IonToast } from '@ionic/react';
 import { ArrowRight, Move } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { Button, Textarea } from '@/design-system';
 import { listLoges, moveSubject } from '../../services/supabaseWrites';
 import { useEscapeKey } from './useFormA11y';
 import type { Loge, LogeType } from '../../types/farm';
@@ -266,17 +267,9 @@ const QuickMoveSubjectForm: React.FC<QuickMoveSubjectFormProps> = ({
               Raison du déplacement{' '}
               <span className="text-text-2 normal-case">· optionnel</span>
             </label>
-            <textarea
+            <Textarea
               id="move-reason"
               maxLength={200}
-              className={[
-                'w-full rounded-md px-3 py-3',
-                'bg-bg-0 border border-border text-text-0',
-                'text-[13px]',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                'min-h-[64px] resize-y',
-              ].join(' ')}
               placeholder="Ex: rotation maternité, regroupement, soin…"
               value={reason}
               onChange={e => setReason(e.target.value)}
@@ -292,44 +285,29 @@ const QuickMoveSubjectForm: React.FC<QuickMoveSubjectFormProps> = ({
             </p>
           ) : null}
 
-          <div className="flex items-center gap-2 pt-2">
-            <button
-              type="button"
+          <div className="flex gap-3 justify-end px-4 py-3 border-t border-border">
+            <Button
+              variant="secondary"
               onClick={handleClose}
               disabled={saving}
-              className={[
-                'pressable flex-1 h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-bg-1 border border-border text-text-1',
-                'text-[12px] font-bold uppercase tracking-wide',
-                saving ? 'opacity-40 cursor-not-allowed' : '',
-              ].join(' ')}
             >
               Annuler
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
               type="submit"
               disabled={saving || !selectedLogeId}
               aria-busy={saving}
-              className={[
-                'pressable flex-[2] h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-accent text-bg-0',
-                'text-[13px] font-bold uppercase tracking-wide',
-                saving || !selectedLogeId
-                  ? 'opacity-40 cursor-not-allowed'
-                  : 'hover:brightness-110',
-              ].join(' ')}
             >
               {saving ? (
                 <span className="animate-pulse">Déplacement…</span>
               ) : (
-                <>
-                  <span>Déplacer</span>
+                <span className="inline-flex items-center gap-2">
+                  Déplacer
                   <ArrowRight size={14} aria-hidden="true" />
-                </>
+                </span>
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </BottomSheet>
