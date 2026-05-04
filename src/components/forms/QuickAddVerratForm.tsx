@@ -13,6 +13,7 @@ import { IonToast } from '@ionic/react';
 import { Plus, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { FormField, Input, Button } from '@/design-system';
 import { insertBoar } from '../../services/supabaseWrites';
 import { enqueueInsert, isOnline } from '../../services/offlineQueue';
 import { useFarm } from '../../context/FarmContext';
@@ -155,236 +156,135 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
             </p>
           </div>
 
-          {/* ID */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-verrat-id"
-              className="block text-mono-label text-text-2"
-            >
-              ID <span className="text-text-2 normal-case">· auto-suggéré</span>
-            </label>
-            <input
+          <FormField
+            label="ID"
+            hint={errors.id ? undefined : 'Format V suivi de chiffres (ex: V01)'}
+            error={errors.id}
+          >
+            <Input
               id="add-verrat-id"
               ref={firstFieldRef}
               type="text"
+              aria-label="Identifiant du verrat"
               maxLength={10}
               autoCapitalize="characters"
               aria-required="true"
               aria-invalid={!!errors.id}
               aria-describedby={errors.id ? 'add-verrat-id-error' : 'add-verrat-id-hint'}
-              className={[
-                'w-full h-12 rounded-md px-3',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'ft-code text-[14px] uppercase',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.id ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
+              className="ft-code uppercase"
               placeholder="V01"
               value={id}
               onChange={e => setId(e.target.value)}
               disabled={saving}
               autoComplete="off"
+              invalid={!!errors.id}
             />
-            {errors.id ? (
-              <p id="add-verrat-id-error" role="alert" className="text-[11px] text-red">
-                {errors.id}
-              </p>
-            ) : (
-              <p id="add-verrat-id-hint" className="text-[10px] text-text-2">
-                Format V suivi de chiffres (ex: V01)
-              </p>
-            )}
-          </div>
+          </FormField>
 
-          {/* Nom */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-verrat-nom"
-              className="block text-mono-label text-text-2"
-            >
-              Nom <span className="text-text-2 normal-case">· optionnel</span>
-            </label>
-            <input
+          <FormField label="Nom" hint="optionnel" error={errors.nom}>
+            <Input
               id="add-verrat-nom"
               type="text"
+              aria-label="Nom du verrat"
               maxLength={30}
               aria-invalid={!!errors.nom}
-              className={[
-                'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'text-[14px] outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.nom ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
               placeholder="Ex: Bobi"
               value={nom}
               onChange={e => setNom(e.target.value)}
               disabled={saving}
               autoComplete="off"
+              invalid={!!errors.nom}
             />
-            {errors.nom ? (
-              <p role="alert" className="text-[11px] text-red">{errors.nom}</p>
-            ) : null}
-          </div>
+          </FormField>
 
-          {/* Boucle */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-verrat-boucle"
-              className="block text-mono-label text-text-2"
-            >
-              Boucle <span className="text-red normal-case">· obligatoire</span>
-            </label>
-            <input
+          <FormField label="Boucle" required error={errors.boucle}>
+            <Input
               id="add-verrat-boucle"
               type="text"
+              aria-label="Boucle du verrat"
               maxLength={30}
               aria-required="true"
               aria-invalid={!!errors.boucle}
               aria-describedby={errors.boucle ? 'add-verrat-boucle-error' : undefined}
-              className={[
-                'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'ft-code text-[14px] outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.boucle ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
+              className="ft-code"
               placeholder="FR-V01-001"
               value={boucle}
               onChange={e => setBoucle(e.target.value)}
               disabled={saving}
               autoComplete="off"
+              invalid={!!errors.boucle}
             />
-            {errors.boucle ? (
-              <p id="add-verrat-boucle-error" role="alert" className="text-[11px] text-red">
-                {errors.boucle}
-              </p>
-            ) : null}
-          </div>
+          </FormField>
 
-          {/* Race */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-verrat-race"
-              className="block text-mono-label text-text-2"
-            >
-              Race
-            </label>
-            <input
+          <FormField label="Race" error={errors.race}>
+            <Input
               id="add-verrat-race"
               type="text"
+              aria-label="Race"
               list="add-verrat-race-list"
               maxLength={40}
               aria-invalid={!!errors.race}
-              className={[
-                'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'text-[14px] outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.race ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
               placeholder="Ex: Large White"
               value={race}
               onChange={e => setRace(e.target.value)}
               disabled={saving}
               autoComplete="off"
+              invalid={!!errors.race}
             />
             <datalist id="add-verrat-race-list">
               {VERRAT_RACE_SUGGESTIONS.map(r => (
                 <option key={r} value={r} />
               ))}
             </datalist>
-            {errors.race ? (
-              <p role="alert" className="text-[11px] text-red">{errors.race}</p>
-            ) : null}
-          </div>
+          </FormField>
 
-          {/* Date naissance */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-verrat-date-naissance"
-              className="block text-mono-label text-text-2"
-            >
-              Date de naissance <span className="text-text-2 normal-case">· optionnel</span>
-            </label>
-            <input
+          <FormField label="Date de naissance" hint="optionnel" error={errors.dateNaissance}>
+            <Input
               id="add-verrat-date-naissance"
               type="date"
+              aria-label="Date de naissance"
               aria-invalid={!!errors.dateNaissance}
-              className={[
-                'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0',
-                'text-[14px] tabular-nums outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.dateNaissance ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
+              className="tabular-nums"
               value={dateNaissance}
               onChange={e => setDateNaissance(e.target.value)}
               disabled={saving}
+              invalid={!!errors.dateNaissance}
             />
-            {errors.dateNaissance ? (
-              <p role="alert" className="text-[11px] text-red">{errors.dateNaissance}</p>
-            ) : null}
-          </div>
+          </FormField>
 
-          {/* Origine */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-verrat-origine"
-              className="block text-mono-label text-text-2"
-            >
-              Origine
-            </label>
-            <input
+          <FormField label="Origine" error={errors.origine}>
+            <Input
               id="add-verrat-origine"
               type="text"
+              aria-label="Origine"
               maxLength={50}
               aria-invalid={!!errors.origine}
-              className={[
-                'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'text-[14px] outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.origine ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
               placeholder="Ex: Élevage Thomasset"
               value={origine}
               onChange={e => setOrigine(e.target.value)}
               disabled={saving}
               autoComplete="off"
+              invalid={!!errors.origine}
             />
-            {errors.origine ? (
-              <p role="alert" className="text-[11px] text-red">{errors.origine}</p>
-            ) : null}
-          </div>
+          </FormField>
 
-          {/* Loge */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-verrat-loge"
-              className="block text-mono-label text-text-2"
-            >
-              Localisation (loge)
-            </label>
-            <input
+          <FormField label="Localisation (loge)" error={errors.loge}>
+            <Input
               id="add-verrat-loge"
               type="text"
+              aria-label="Localisation (loge)"
               maxLength={30}
               aria-invalid={!!errors.loge}
-              className={[
-                'w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'text-[14px] outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.loge ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
               placeholder="Ex: V1, Bât A"
               value={loge}
               onChange={e => setLoge(e.target.value)}
               disabled={saving}
               autoComplete="off"
+              invalid={!!errors.loge}
             />
-            {errors.loge ? (
-              <p role="alert" className="text-[11px] text-red">{errors.loge}</p>
-            ) : null}
-          </div>
+          </FormField>
 
-          {/* Statut */}
+          {/* TODO V44: Radio DS missing — radiogroup custom conservé */}
           <div className="space-y-1.5">
             <span
               id="add-verrat-statut-label"
@@ -426,17 +326,15 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
             </div>
           </div>
 
-          {/* Ration */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="add-verrat-ration"
-              className="block text-mono-label text-text-2"
-            >
-              Ration (kg/j)
-            </label>
-            <input
+          <FormField
+            label="Ration (kg/j)"
+            hint={errors.ration ? undefined : '0 à 10 kg/j · défaut 3.0'}
+            error={errors.ration}
+          >
+            <Input
               id="add-verrat-ration"
               type="number"
+              aria-label="Ration en kilogrammes par jour"
               inputMode="decimal"
               min={0}
               max={10}
@@ -444,73 +342,38 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({
               aria-required="true"
               aria-invalid={!!errors.ration}
               aria-describedby={errors.ration ? 'add-verrat-ration-error' : 'add-verrat-ration-hint'}
-              className={[
-                'w-full h-14 rounded-md px-4',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'font-mono text-[22px] tabular-nums text-center',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.ration ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
+              className="font-mono text-[22px] tabular-nums text-center"
               placeholder="3.0"
               value={ration}
               onChange={e => setRation(e.target.value)}
               disabled={saving}
+              invalid={!!errors.ration}
             />
-            {errors.ration ? (
-              <p id="add-verrat-ration-error" role="alert" className="text-[11px] text-red">
-                {errors.ration}
-              </p>
-            ) : (
-              <p id="add-verrat-ration-hint" className="text-[10px] text-text-2 tabular-nums">
-                0 à 10 kg/j · défaut 3.0
-              </p>
-            )}
-          </div>
+          </FormField>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2 pt-2">
-            <button
-              type="button"
+          <div className="flex gap-3 justify-end pt-2 border-t border-border">
+            <Button
+              variant="secondary"
               onClick={handleClose}
               disabled={saving}
-              aria-label="Annuler et fermer"
-              className={[
-                'pressable flex-1 h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-bg-1 border border-border text-text-1',
-                'text-[12px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms] hover:border-text-2',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : '',
-              ].join(' ')}
+              ariaLabel="Annuler et fermer"
             >
               Annuler
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={saving}
-              aria-label="Ajouter le verrat au troupeau"
               aria-busy={saving}
-              className={[
-                'pressable flex-[2] h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-accent text-bg-0',
-                'text-[13px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms]',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
-              ].join(' ')}
+              ariaLabel="Ajouter le verrat au troupeau"
             >
-              {saving ? (
-                <span className="animate-pulse">Enregistrement…</span>
-              ) : (
-                <>
-                  <span>Ajouter</span>
+              {saving ? 'Enregistrement…' : (
+                <span className="inline-flex items-center gap-2">
+                  Ajouter
                   <Save size={14} aria-hidden="true" />
-                </>
+                </span>
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </BottomSheet>
