@@ -5,8 +5,7 @@ import { Package, Box, AlertOctagon, Plus, ExternalLink, Settings } from 'lucide
 import AgritechLayout from '../../components/AgritechLayout';
 import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
-import { Chip, DataRow, SectionDivider, KpiCard } from '../../components/agritech';
-import type { ChipTone } from '../../components/agritech';
+import { DataRow, KpiCard } from '../../components/agritech';
 import EmptyState from '../../components/design/EmptyState';
 import TopBarSync from '../../components/design/TopBarSync';
 import { SeringueIcon } from '../../components/icons';
@@ -22,7 +21,9 @@ import {
   hasWhatsAppSupport,
   type OrderItem,
 } from '../../utils/whatsappOrder';
-import { Button, PageHeader } from '@/design-system';
+import { Button, PageHeader, Section, Tag } from '@/design-system';
+
+type TagVariant = 'default' | 'primary' | 'accent' | 'soft' | 'danger' | 'warning';
 
 function manqueKgVeto(item: StockVeto): number {
   const stock = item.stockActuel ?? 0;
@@ -93,11 +94,11 @@ function priorityOf(statut: StockStatut | undefined): number {
   return STATUT_PRIORITY[statut] ?? 3;
 }
 
-/** Mappe un statut stock → tone Chip (red | amber | accent | default). */
-function chipToneForStatut(statut: StockStatut | undefined): ChipTone {
-  if (statut === 'RUPTURE') return 'red';
-  if (statut === 'BAS') return 'amber';
-  if (statut === 'OK') return 'accent';
+/** Mappe un statut stock → variant Tag DS. */
+function tagVariantForStatut(statut: StockStatut | undefined): TagVariant {
+  if (statut === 'RUPTURE') return 'danger';
+  if (statut === 'BAS') return 'warning';
+  if (statut === 'OK') return 'primary';
   return 'default';
 }
 
@@ -376,10 +377,10 @@ const PharmacieView: React.FC = () => {
               <>
                 {/* ── Produits actifs (triés par urgence) ────────── */}
                 <section>
-                  <SectionDivider label="Produits actifs" />
+                  <Section label={`PRODUITS ACTIFS · ${sorted.length}`} />
                   <div className="card-dense !p-0 overflow-hidden">
                     {sorted.map(item => {
-                      const tone = chipToneForStatut(item.statutStock);
+                      const variant = tagVariantForStatut(item.statutStock);
                       const secondaryParts: string[] = [];
                       if (item.type) secondaryParts.push(item.type);
                       if (item.usage) secondaryParts.push(item.usage);
@@ -387,7 +388,7 @@ const PharmacieView: React.FC = () => {
                         <VetoEditableRow
                           key={item.id || item.produit}
                           item={item}
-                          tone={tone}
+                          tagVariant={variant}
                           secondary={
                             secondaryParts.length > 0
                               ? secondaryParts.join(' · ')
@@ -404,7 +405,7 @@ const PharmacieView: React.FC = () => {
 
                 {/* ── Par usage / type ────────────────────────────── */}
                 <section>
-                  <SectionDivider label="Par usage" />
+                  <Section label={`PAR USAGE · ${byType.length}`} />
                   <div className="card-dense !p-0 overflow-hidden">
                     {byType.map(group => (
                       <DataRow
@@ -415,12 +416,9 @@ const PharmacieView: React.FC = () => {
                         }`}
                         accessory={
                           group.rupture > 0 ? (
-                            <Chip
-                              tone="red"
-                              label={`${group.rupture} rupture`}
-                            />
+                            <Tag variant="danger">{group.rupture} rupture</Tag>
                           ) : (
-                            <Chip tone="default" label="OK" />
+                            <Tag variant="default">OK</Tag>
                           )
                         }
                       />
@@ -453,7 +451,7 @@ const PharmacieView: React.FC = () => {
 
 interface VetoEditableRowProps {
   item: StockVeto;
-  tone: ChipTone;
+  tagVariant: TagVariant;
   secondary?: string;
   onRefresh: () => Promise<void>;
   onRefill: () => void;
@@ -463,7 +461,7 @@ interface VetoEditableRowProps {
 
 const VetoEditableRow: React.FC<VetoEditableRowProps> = ({
   item,
-  tone,
+  tagVariant,
   secondary,
   onRefresh,
   farmName,
@@ -548,7 +546,7 @@ const VetoEditableRow: React.FC<VetoEditableRowProps> = ({
           <span className="text-text-2 ml-0.5">{item.unite}</span>
         </div>
         <div className="shrink-0">
-          <Chip tone={tone} label={labelForStatut(item.statutStock)} />
+          <Tag variant={tagVariant}>{labelForStatut(item.statutStock)}</Tag>
         </div>
       </div>
       <div className="text-[11px] text-text-2 pl-0.5">
