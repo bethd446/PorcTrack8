@@ -13,7 +13,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { IonModal, IonToast } from '@ionic/react';
 
-import { Wizard, type WizardStep } from '@/design-system';
+import { Button, Select, Wizard, type WizardStep } from '@/design-system';
 import {
   getLogeContents,
   listLoges,
@@ -64,20 +64,6 @@ const errStyle: React.CSSProperties = {
   fontSize: 11,
   color: 'var(--pt-danger)',
   marginTop: 4,
-};
-
-const selectStyle: React.CSSProperties = {
-  width: '100%',
-  minHeight: 44,
-  padding: '10px 14px',
-  background: 'var(--pt-surface)',
-  color: 'var(--pt-text)',
-  border: `1px solid var(--pt-divider)`,
-  borderRadius: 'var(--pt-radius-pill)',
-  fontFamily: 'var(--pt-font-body)',
-  fontSize: 14,
-  outline: 'none',
-  boxSizing: 'border-box',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -276,46 +262,22 @@ const QuickSplitBandeForm: React.FC<QuickSplitBandeFormProps> = ({
               {selectedIds.size}/{porcelets.length} sélectionnés
             </span>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="small"
                 onClick={selectAll}
                 disabled={porcelets.length === 0}
-                style={{
-                  minHeight: 32,
-                  padding: '4px 10px',
-                  fontSize: 11,
-                  fontFamily: 'var(--pt-font-body)',
-                  textTransform: 'uppercase',
-                  letterSpacing: 'var(--pt-tracking-button)',
-                  background: 'transparent',
-                  border: '1px solid var(--pt-divider)',
-                  borderRadius: 'var(--pt-radius-pill)',
-                  color: 'var(--pt-text)',
-                  cursor: porcelets.length === 0 ? 'not-allowed' : 'pointer',
-                }}
               >
                 Tout
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="secondary"
+                size="small"
                 onClick={clearAll}
                 disabled={selectedIds.size === 0}
-                style={{
-                  minHeight: 32,
-                  padding: '4px 10px',
-                  fontSize: 11,
-                  fontFamily: 'var(--pt-font-body)',
-                  textTransform: 'uppercase',
-                  letterSpacing: 'var(--pt-tracking-button)',
-                  background: 'transparent',
-                  border: '1px solid var(--pt-divider)',
-                  borderRadius: 'var(--pt-radius-pill)',
-                  color: 'var(--pt-text)',
-                  cursor: selectedIds.size === 0 ? 'not-allowed' : 'pointer',
-                }}
               >
                 Aucun
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -412,10 +374,9 @@ const QuickSplitBandeForm: React.FC<QuickSplitBandeFormProps> = ({
             <label htmlFor="split-loge" style={labelStyle}>
               Loge destination · requise
             </label>
-            <select
+            <Select
               id="split-loge"
               data-testid="split-loge-select"
-              style={selectStyle}
               value={destLogeId}
               onChange={e => setDestLogeId(e.target.value)}
               disabled={saving}
@@ -428,7 +389,7 @@ const QuickSplitBandeForm: React.FC<QuickSplitBandeFormProps> = ({
                   {l.capaciteMax != null ? ` (max ${l.capaciteMax})` : ''}
                 </option>
               ))}
-            </select>
+            </Select>
             <p style={hintStyle}>
               {destLoge
                 ? destLoge.capaciteMax != null
