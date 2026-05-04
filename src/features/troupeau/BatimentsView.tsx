@@ -131,13 +131,13 @@ const BatimentsView: React.FC = () => {
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
           <TopBarSync
-            crumbs={['Cheptel', 'Bâtiments']}
+            crumbs={['Élevage', 'Bâtiments']}
             onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
           />
 
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
             <PageHeader
-              eyebrow="TROUPEAU · BÂTIMENTS"
+              eyebrow="ÉLEVAGE · BÂTIMENTS"
               title="Bâtiments"
               subtitle="Vue d'ensemble par bâtiment"
             />

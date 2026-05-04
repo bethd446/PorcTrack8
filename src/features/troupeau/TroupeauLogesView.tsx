@@ -111,7 +111,7 @@ const TroupeauLogesView: React.FC = () => {
       className="flex flex-col gap-4"
     >
       <PageHeader
-        eyebrow="TROUPEAU · OCCUPATION"
+        eyebrow="ÉLEVAGE · OCCUPATION"
         title="Occupation des loges"
         subtitle="Vue 3D du bâtiment"
       />

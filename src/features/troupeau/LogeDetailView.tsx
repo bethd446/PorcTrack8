@@ -207,7 +207,7 @@ const LogeDetailView: React.FC = () => {
           >
             {/* ── Hero ──────────────────────────────────────────────── */}
             <PageHeader
-              eyebrow="TROUPEAU · LOGE"
+              eyebrow="ÉLEVAGE · LOGE"
               title={loge.numero}
               subtitle="Détail occupation et historique"
             />

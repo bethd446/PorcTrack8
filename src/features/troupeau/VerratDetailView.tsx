@@ -114,7 +114,7 @@ const VerratDetailView: React.FC = () => {
         <IonContent fullscreen className="ion-no-padding">
           <AgritechLayout>
             <TopBarSync
-              crumbs={['Cheptel', 'Verrats', decodedId]}
+              crumbs={['Élevage', 'Verrats', decodedId]}
               onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
             />
             <div
@@ -124,7 +124,7 @@ const VerratDetailView: React.FC = () => {
               style={{ maxWidth: 1100, margin: '0 auto' }}
             >
               <PageHeader
-                eyebrow="TROUPEAU · VERRAT"
+                eyebrow="ÉLEVAGE · VERRAT"
                 title="Verrat introuvable"
                 subtitle="Fiche reproducteur"
               />
@@ -164,7 +164,7 @@ const VerratDetailView: React.FC = () => {
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
           <TopBarSync
-            crumbs={['Cheptel', 'Verrats', displayId]}
+            crumbs={['Élevage', 'Verrats', displayId]}
             onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
           />
 
@@ -179,7 +179,7 @@ const VerratDetailView: React.FC = () => {
                 doublon visuel + double h1 cassant les tests a11y. */}
             {/* ── Hero unifié (AnimalHero) ────────────────────────────── */}
             <AnimalHero
-              eyebrow={`Cheptel · Verrat ${displayId}`}
+              eyebrow={`ÉLEVAGE · VERRAT ${displayId}`}
               chips={[{ label: verrat.statut || '—', tone: heroTone }]}
               name={displayId}
               subtitle={verrat.nom || undefined}
@@ -257,7 +257,6 @@ const VerratDetailView: React.FC = () => {
 
             {/* ── Historique notes terrain (V21-6 C2) ───────────────── */}
             <section aria-label="Historique notes">
-              <SectionDivider label="Historique notes" />
               <div className="mt-3">
                 <NotesTimeline
                   subjectType="VERRAT"
