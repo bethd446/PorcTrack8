@@ -28,6 +28,7 @@ import NotesTimeline from '../../components/design/NotesTimeline';
 import PhotoStrip from '../../components/PhotoStrip';
 import { VerratIcon } from '../../components/icons';
 import { SectionDivider, BottomSheet, type ChipTone } from '../../components/agritech';
+import { Button } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import { updateBoar } from '../../services/supabaseWrites';
 import QuickHealthForm from '../../components/forms/QuickHealthForm';
@@ -312,13 +313,9 @@ const VerratDetailView: React.FC = () => {
                   <p className="text-[12px] text-text-2 max-w-xs">
                     Lance la première saillie pour activer le suivi.
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => setSheet('saillie')}
-                    className="pressable mt-2 px-4 py-2.5 rounded-full bg-accent text-bg-0 text-[11px] font-bold uppercase tracking-wider"
-                  >
+                  <Button variant="primary" size="small" onClick={() => setSheet('saillie')} className="!mt-2">
                     + Saisir une saillie
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <>
@@ -547,11 +544,12 @@ interface ActionButtonProps {
 }
 
 const ActionButton: React.FC<ActionButtonProps> = ({ icon, label, onClick }) => (
-  <button
-    type="button"
+  <Button
+    variant="ghost"
     onClick={onClick}
-    className="pressable card-dense flex flex-col items-center gap-2 !py-3.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-    aria-label={label}
+    ariaLabel={label}
+    className="card-dense !flex !flex-col !items-center !gap-2 !py-3.5 !rounded-md !h-auto"
+    style={{ textTransform: 'none' }}
   >
     <span className="inline-flex w-8 h-8 rounded-lg bg-bg-1 border border-border items-center justify-center text-accent">
       {icon}
@@ -559,7 +557,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({ icon, label, onClick }) => 
     <span className="text-[11px] font-semibold uppercase tracking-wide text-text-1">
       {label}
     </span>
-  </button>
+  </Button>
 );
 
 export default VerratDetailView;

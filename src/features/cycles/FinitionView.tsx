@@ -15,6 +15,7 @@ import {
   Chip,
   SectionDivider,
 } from '../../components/agritech';
+import { Button } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import { filterRealPortees } from '../../services/bandesAggregator';
 import {
@@ -162,13 +163,14 @@ const FinitionView: React.FC = () => {
                   J137 → J165 · {summary.nbBandes} bandes
                 </div>
               </div>
-              <button
+              <Button
+                variant="secondary"
+                size="small"
                 onClick={() => navigate('/cycles/sortie')}
-                className="pressable inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-accent/40 text-accent text-[11px] uppercase tracking-wide transition-colors shrink-0"
               >
                 <Calendar size={14} />
                 Calendrier
-              </button>
+              </Button>
             </header>
             {/* ── Summary Stats ────────────────────────────────────────── */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -395,13 +397,14 @@ const FinitionCard: React.FC<{ data: FinitionRowData; onOpen: () => void; onSell
       </div>
 
       {data.isReadyForExit && (
-        <button
-          className="w-full bg-success text-bg-0 py-2.5 rounded-xl font-bold text-[12px] tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-success/20"
+        <Button
+          variant="primary"
+          fullWidth
           onClick={(e) => { e.stopPropagation(); onSell(); }}
         >
           <ShoppingCart size={16} />
           Déclarer la vente
-        </button>
+        </Button>
       )}
     </div>
   );

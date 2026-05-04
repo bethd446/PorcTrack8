@@ -13,6 +13,7 @@ import Eyebrow from '../../components/design/Eyebrow';
 import EmptyState from '../../components/design/EmptyState';
 import TopBarSync from '../../components/design/TopBarSync';
 import { AnimalListItem, Chip } from '../../components/agritech';
+import { Button } from '@/design-system';
 
 import {
   listLoges,
@@ -174,14 +175,10 @@ const LogeDetailView: React.FC = () => {
                 title="Loge introuvable"
                 description="Cette loge n'existe pas ou a été désactivée."
                 action={
-                  <button
-                    type="button"
-                    onClick={() => navigate('/troupeau?view=loges', { replace: true })}
-                    className="pressable inline-flex items-center gap-2 h-11 px-5 rounded-full bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide"
-                  >
+                  <Button variant="primary" onClick={() => navigate('/troupeau?view=loges', { replace: true })}>
                     <ChevronLeft size={14} aria-hidden="true" />
                     Retour aux loges
-                  </button>
+                  </Button>
                 }
               />
             </div>
@@ -259,23 +256,14 @@ const LogeDetailView: React.FC = () => {
                   ) : null}
                 </div>
                 <div className="flex flex-col gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => navigate('/troupeau?view=loges')}
-                    className="pressable inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-bg-1 border border-border text-text-1 text-[11px] font-semibold uppercase tracking-wide"
-                  >
+                  <Button variant="secondary" size="small" onClick={() => navigate('/troupeau?view=loges')}>
                     <Pencil size={13} aria-hidden="true" />
                     Modifier
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDeactivate}
-                    className="pressable inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-red/10 border border-red/30 text-red text-[11px] font-semibold uppercase tracking-wide"
-                    data-testid="deactivate-button"
-                  >
+                  </Button>
+                  <Button variant="danger" size="small" onClick={handleDeactivate} data-testid="deactivate-button">
                     <Archive size={13} aria-hidden="true" />
                     Désactiver
-                  </button>
+                  </Button>
                 </div>
               </div>
             </header>
