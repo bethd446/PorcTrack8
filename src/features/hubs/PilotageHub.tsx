@@ -3,7 +3,7 @@
  * ══════════════════════════════════════════════════════════════════════════
  * Refonte v6 « Terrain Vivant » (2026-04-30)
  *
- *   1. TopBarSync + Eyebrow + H1 Big Shoulders
+ *   1. TopBarSync + PageHeader + Section labels (archétype 2 V44)
  *   2. KPI cards principaux (4) — Marge globale / Valeur cheptel / Mortalité / Frais
  *   3. Section "Performance bandes" : top / flop par marge
  *   4. Carte synthétique "Alertes" → /alerts (canonique)
@@ -20,7 +20,6 @@ import {
 } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import KpiCardV6 from '../../components/design/KpiCard';
 import { Card, IconBox, PageHeader, Section, Button } from '../../design-system';
@@ -153,7 +152,7 @@ const PilotageHub: React.FC = () => {
             </IonRefresher>
             <TopBarSync crumbs={['Pilotage', 'Vue globale']} />
             <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-              <Eyebrow dotColor="accent">Pilotage · Vue globale</Eyebrow>
+              <Section label="VUE D'ENSEMBLE" tone="accent" />
               <h1
                 className="text-page-title"
                 style={{ margin: '4px 0 12px' }}
@@ -245,7 +244,7 @@ const PilotageHub: React.FC = () => {
 
             {/* ── 2. Modules en navigation primaire (4 tuiles) ──────── */}
             <section aria-label="Modules de gestion">
-              <Eyebrow dotColor="accent">Modules de gestion</Eyebrow>
+              <Section label="MODULES DE GESTION" tone="accent" />
               <div className="grid grid-cols-2 gap-[10px] sm:grid-cols-4" style={{ marginTop: 12 }}>
                 <ModuleTile
                   icon={<BarChart3 size={24} aria-hidden="true" />}
@@ -275,22 +274,24 @@ const PilotageHub: React.FC = () => {
             </section>
 
             {/* ── 3. Marge globale (hero) ──────────────────────────── */}
-            <section
-              aria-label="Marge globale estimée"
-              style={{
-                background: 'var(--bg-surface)',
-                borderRadius: 12,
-                padding: '20px 22px',
-                boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 8,
-                alignItems: 'flex-start',
-              }}
-            >
-              <Eyebrow dotColor={margeNegative ? 'pig' : 'accent'} withRule={false}>
-                Marge globale estimée · élevage actif
-              </Eyebrow>
+            <section aria-label="Marge globale estimée">
+              <Section
+                label="MARGE GLOBALE ESTIMÉE"
+                tone={margeNegative ? 'danger' : 'accent'}
+              />
+              <div
+                style={{
+                  background: 'var(--bg-surface)',
+                  borderRadius: 12,
+                  padding: '20px 22px',
+                  boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                  alignItems: 'flex-start',
+                  marginTop: 12,
+                }}
+              >
               <div
                 className="text-display-lg"
                 style={{
@@ -333,6 +334,7 @@ const PilotageHub: React.FC = () => {
                 }}
               >
                 Calcul théorique basé sur J+X et les pesées en stock.
+              </div>
               </div>
             </section>
 
@@ -385,7 +387,7 @@ const PilotageHub: React.FC = () => {
 
             {/* ── 5. Top/Flop bandes (cliquables) ──────────────────── */}
             <section aria-label="Performance bandes">
-              <Eyebrow dotColor="accent">Performance bandes</Eyebrow>
+              <Section label="PERFORMANCE BANDES" tone="accent" />
               <div
                 style={{
                   display: 'grid',
@@ -430,7 +432,7 @@ const PilotageHub: React.FC = () => {
 
             {/* ── 6. Alertes (carte sommaire) ──────────────────────── */}
             <section aria-label="Alertes en cours">
-              <Eyebrow dotColor="pig">Alertes</Eyebrow>
+              <Section label="ALERTES" tone="danger" />
               <Link
                 to="/alerts"
                 style={{

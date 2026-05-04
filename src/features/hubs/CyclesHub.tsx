@@ -15,7 +15,6 @@ import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/r
 import { ChevronRight, AlertTriangle } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import PhaseBadge, { type Phase as DesignPhase } from '../../components/design/PhaseBadge';
 import TopBarSync from '../../components/design/TopBarSync';
 import { useFarm } from '../../context/FarmContext';
@@ -28,7 +27,7 @@ import { FARM_CONFIG } from '../../config/farm';
 import type { BandePorcelets, Saillie, Truie } from '../../types/farm';
 import { normaliseStatut } from '../../lib/truieStatut';
 import { normalizeTruieId, safeDate } from '../../lib/truieHelpers';
-import { Button, PageHeader } from '@/design-system';
+import { Button, PageHeader, Section } from '@/design-system';
 
 // ─── Phases ─────────────────────────────────────────────────────────────────
 
@@ -419,6 +418,7 @@ const CyclesHub: React.FC = () => {
 
             {/* ── Pipeline horizontal ──────────────────────────────── */}
             {/* min-height réservé pendant le chargement du contexte pour éviter CLS */}
+            <Section label={`PIPELINE · ${TOTAL_DAYS} JOURS`} tone="accent" />
             <section
               aria-label={`Pipeline ${TOTAL_DAYS} jours`}
               style={{
@@ -429,17 +429,12 @@ const CyclesHub: React.FC = () => {
                 minHeight: loading ? 168 : undefined,
               }}
             >
-              <Eyebrow dotColor="accent" withRule={false}>
-                Pipeline · {TOTAL_DAYS} jours
-              </Eyebrow>
-              <div style={{ marginTop: 14 }}>
-                <PhaseBand />
-                <PhaseLabels />
-                <BandesMarkers
-                  positions={positions}
-                  onOpen={(id) => navigate(`/troupeau/bandes/${encodeURIComponent(id)}`)}
-                />
-              </div>
+              <PhaseBand />
+              <PhaseLabels />
+              <BandesMarkers
+                positions={positions}
+                onOpen={(id) => navigate(`/troupeau/bandes/${encodeURIComponent(id)}`)}
+              />
             </section>
 
             {/* ── Liste bandes actives ─────────────────────────────── */}
@@ -641,23 +636,16 @@ const BandesList: React.FC<BandesListProps> = ({ positions, onOpen }) => {
   }, [positions]);
 
   const urgentCount = enriched.filter((e) => e.treatment === 'urgent').length;
+  const sectionLabel = urgentCount > 0
+    ? `BANDES ACTIVES · ${positions.length} · ${urgentCount} URGENT${urgentCount > 1 ? 'S' : ''}`
+    : `BANDES ACTIVES · ${positions.length}`;
 
   return (
     <section aria-label={`Bandes actives · ${positions.length}`}>
-      <Eyebrow dotColor="accent">
-        Bandes actives · {positions.length}
-        {urgentCount > 0 && (
-          <span
-            style={{
-              marginLeft: 8,
-              color: 'var(--color-pig-deep, var(--color-pig))',
-              fontWeight: 600,
-            }}
-          >
-            · {urgentCount} urgent{urgentCount > 1 ? 's' : ''}
-          </span>
-        )}
-      </Eyebrow>
+      <Section
+        label={sectionLabel}
+        tone={urgentCount > 0 ? 'danger' : 'accent'}
+      />
       <ul
         style={{
           listStyle: 'none',

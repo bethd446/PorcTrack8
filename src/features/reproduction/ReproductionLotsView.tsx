@@ -1,6 +1,7 @@
 /**
  * ReproductionLotsView — /reproduction/lots
  * ══════════════════════════════════════════════════════════════════════════
+ * Sous-hub catégoriel V44 — Archétype 2 (PageHeader + Section/StatsGrid + Tabs).
  * Vagues de saillies regroupées par fenêtre temporelle. Chaque batch agrège
  * les truies saillies dans une fenêtre de 5 jours (windowDays par défaut),
  * affiche son statut courant (EN_SAILLIE → TERMINE) et la progression dans
@@ -12,11 +13,18 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
-import { ChevronLeft, Heart, Stethoscope, Baby, Home, Filter } from 'lucide-react';
+import { Heart, Stethoscope, Baby, Home } from 'lucide-react';
 
-import { Button } from '@/design-system';
+import {
+  Button,
+  Card,
+  PageHeader,
+  Section,
+  Stat,
+  StatsGrid,
+  Tabs,
+} from '@/design-system';
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import EmptyState from '../../components/design/EmptyState';
 import { useFarm } from '../../context/FarmContext';
 import {
@@ -118,23 +126,6 @@ function countByStatut(batches: ReproBatch[]): Record<FilterValue, number> {
 }
 
 // ─── Sous-composants ─────────────────────────────────────────────────────────
-
-const FilterChip: React.FC<{
-  value: FilterValue;
-  active: boolean;
-  count: number;
-  onSelect: (v: FilterValue) => void;
-}> = ({ value, active, count, onSelect }) => (
-  <Button
-    variant={active ? 'primary' : 'secondary'}
-    size="small"
-    onClick={() => onSelect(value)}
-    aria-pressed={active}
-    style={{ whiteSpace: 'nowrap' }}
-  >
-    {FILTER_LABEL[value]} ({count})
-  </Button>
-);
 
 const ProgressSegment: React.FC<{
   stepKey: keyof ReproBatch['progression'];
@@ -318,73 +309,49 @@ const ReproductionLotsView: React.FC = () => {
     [batches, statutFilter],
   );
 
+  const tabOptions = useMemo(
+    () =>
+      FILTER_ORDER.map(value => ({
+        value,
+        label: FILTER_LABEL[value],
+        count: counts[value],
+      })),
+    [counts],
+  );
+
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
           <div
-            className="px-4 pt-5 pb-32 flex flex-col gap-5"
-            style={{ maxWidth: 1100, margin: '0 auto' }}
+            className="pt-page"
+            style={{ padding: '8px 18px 24px', maxWidth: 1100, margin: '0 auto' }}
           >
-            {/* ── Header ───────────────────────────────────────────── */}
-            <header>
-              <Eyebrow dotColor="accent">Reproduction · Lots</Eyebrow>
-              <h1
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '8px 0 4px',
-                }}
-              >
-                Lots de saillies
-              </h1>
-              <p
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--muted)',
-                  margin: 0,
-                }}
-              >
-                Vagues de saillies regroupées par fenêtre de 5 jours
-              </p>
-            </header>
+            <PageHeader
+              eyebrow="Reproduction"
+              title="Lots de saillies"
+              subtitle="Vagues regroupées par fenêtre de 5 jours"
+            />
 
-            {/* ── Bouton retour ────────────────────────────────────── */}
-            <div>
-              <Button variant="secondary" size="small" onClick={() => navigate('/reproduction')}>
-                <ChevronLeft size={14} aria-hidden="true" />
-                Reproduction
-              </Button>
-            </div>
+            <Section label="VUE D'ENSEMBLE" />
+            <Card>
+              <StatsGrid cols={4}>
+                <Stat value={counts.TOUS} label="Lots" />
+                <Stat value={counts.EN_SAILLIE} label="En saillie" />
+                <Stat value={counts.GESTATION} label="Gestation" tone="accent" />
+                <Stat value={counts.SEVRE} label="Sevrés" />
+              </StatsGrid>
+            </Card>
 
-            {/* ── Filtre statut ────────────────────────────────────── */}
-            <section aria-label="Filtre statut">
-              <div
-                className="flex items-center gap-2"
-                style={{ marginBottom: 8, color: 'var(--muted)' }}
-              >
-                <Filter size={14} aria-hidden="true" />
-                <Eyebrow dotColor="muted">Filtre</Eyebrow>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {FILTER_ORDER.map(value => (
-                  <FilterChip
-                    key={value}
-                    value={value}
-                    active={statutFilter === value}
-                    count={counts[value]}
-                    onSelect={setStatutFilter}
-                  />
-                ))}
-              </div>
-            </section>
+            <Section label="FILTRE STATUT" />
+            <Tabs
+              value={statutFilter}
+              onChange={(v) => setStatutFilter(v as FilterValue)}
+              options={tabOptions}
+              ariaLabel="Filtre statut"
+            />
 
-            {/* ── Liste / Empty state ──────────────────────────────── */}
+            <Section label="LOTS" />
             {batches.length === 0 ? (
               <EmptyState
                 icon={<Heart size={28} aria-hidden="true" />}
