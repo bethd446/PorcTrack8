@@ -800,7 +800,10 @@ export const Wizard: React.FC<WizardProps> = ({
 };
 
 // ============================================================
-// CYCLE TIMELINE
+// CYCLE TIMELINE — V45 refonte
+// Layout vertical : cercle au centre, label dessous (UPPERCASE 11px),
+// date dessous (10px muted). Connexion segmentée entre cercles.
+// API rétrocompatible : currentDay/totalDays/steps/eyebrow.
 // ============================================================
 export type CycleStep = {
   label: string;
@@ -808,6 +811,23 @@ export type CycleStep = {
   done?: boolean;
   target?: boolean;
 };
+
+const SHORT_LABELS: Record<string, string> = {
+  'SURVEILLANCE': 'SURV.',
+  'ÉCHOGRAPHIE': 'ÉCHO.',
+  'ECHOGRAPHIE': 'ECHO.',
+  'MISE-BAS': 'M.-BAS',
+  'POST-SEVRAGE': 'P-SEV.',
+  'ENGRAISSEMENT': 'ENGR.',
+  'MATERNITÉ': 'MATER.',
+  'MATERNITE': 'MATER.',
+};
+
+function shortenLabel(label: string): string {
+  const upper = label.toUpperCase();
+  if (upper.length <= 12) return upper;
+  return SHORT_LABELS[upper] ?? upper.slice(0, 5) + '.';
+}
 
 export function CycleTimeline({ currentDay, totalDays, steps, eyebrow }: {
   currentDay: number;
@@ -818,18 +838,9 @@ export function CycleTimeline({ currentDay, totalDays, steps, eyebrow }: {
   const safeTotal = Math.max(totalDays, 1);
   const progressPct = Math.min(100, Math.max(0, (currentDay / safeTotal) * 100));
   const sorted = [...steps].sort((a, b) => a.day - b.day);
-  // Si deux steps consécutifs sont espacés de moins de 18% du total, on alterne
-  // les labels haut/bas pour éviter la superposition (corrige bug F6 du PDF V40).
-  const positions = sorted.map((s) => Math.min(100, Math.max(0, (s.day / safeTotal) * 100)));
-  const placements: ('below' | 'above')[] = [];
-  positions.forEach((p, i) => {
-    if (i === 0) {
-      placements.push('below');
-      return;
-    }
-    const tooClose = p - positions[i - 1] < 18;
-    placements.push(tooClose && placements[i - 1] === 'below' ? 'above' : 'below');
-  });
+  // V45 : "active" = premier step non-done (ou target). Pulse animé sur active.
+  const firstUndoneIdx = sorted.findIndex((s) => !s.done);
+  const activeIdx = firstUndoneIdx === -1 ? sorted.length - 1 : firstUndoneIdx;
   return (
     <div className="pt-cycle">
       {eyebrow && (
@@ -837,29 +848,41 @@ export function CycleTimeline({ currentDay, totalDays, steps, eyebrow }: {
           {eyebrow} · jour {currentDay}/{totalDays}
         </div>
       )}
-      <div className="pt-cycle__track" aria-hidden="true">
-        <div className="pt-cycle__progress" style={{ width: `${progressPct}%` }} />
+      <div className="pt-cycle__track" role="list" aria-label="Étapes du cycle">
+        <div className="pt-cycle__progress-bar" aria-hidden="true">
+          <div className="pt-cycle__progress-fill" style={{ width: `${progressPct}%` }} />
+        </div>
         {sorted.map((step, i) => {
-          const left = positions[i];
+          const isActive = i === activeIdx && !step.done;
           const stateClass = step.done
             ? 'pt-cycle__node--done'
-            : step.target
+            : isActive || step.target
               ? 'pt-cycle__node--target'
               : 'pt-cycle__node--idle';
+          const stepStateClass = step.done
+            ? 'pt-cycle__step--done'
+            : isActive
+              ? 'pt-cycle__step--active'
+              : 'pt-cycle__step--upcoming';
           return (
             <div
               key={`${step.label}-${step.day}`}
-              className={`pt-cycle__step pt-cycle__step--${placements[i]}`}
-              style={{ left: `${left}%` }}
+              className={`pt-cycle__step pt-cycle__step--below ${stepStateClass}`}
+              role="listitem"
+              aria-current={isActive ? 'step' : undefined}
             >
-              <span className={`pt-cycle__node ${stateClass}`}>
+              <span className={`pt-cycle__node ${stateClass}`} aria-hidden="true">
                 {step.done && (
-                  <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+                  <svg width="10" height="10" viewBox="0 0 10 10">
                     <path d="M2 5l2 2 4-4" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}
+                {isActive && <span className="pt-cycle__pulse" />}
               </span>
-              <span className="pt-cycle__label">{step.label}</span>
+              <span className="pt-cycle__label" title={step.label}>
+                <span className="pt-cycle__label-full">{step.label}</span>
+                <span className="pt-cycle__label-short">{shortenLabel(step.label)}</span>
+              </span>
               <span className="pt-cycle__day">J{step.day}</span>
             </div>
           );

@@ -3,12 +3,13 @@
  * ══════════════════════════════════════════════════════════════════════════
  * Fiche détail d'un verrat — inspirée de `TruieDetailView`.
  *
- * Structure :
- *   1. Hero card       : VerratIcon + displayId + chip statut
- *   2. IDENTITÉ        : Boucle / Nom / Origine / Alimentation / Ration kg/j
- *   3. SAILLIES        : total + dernière + 5 dernières
- *   4. HISTORIQUE SOINS: DataRow list (type · traitement · date · obs)
- *   5. Grille actions  : Saillir · Soigner · Note · Pesée
+ * Structure (V45 archétype 4) :
+ *   1. PageHeader       : eyebrow "Élevage · Verrat" + h1 displayId · nom + statut
+ *   2. Hero compact Card: EntityAvatar xl + nom/origine + Tag statut + actions
+ *   3. IDENTITÉ         : Boucle / Nom / Origine / Alimentation / Ration kg/j
+ *   4. SAILLIES         : total + dernière + 5 dernières
+ *   5. HISTORIQUE SOINS : DataRow list (type · traitement · date · obs)
+ *   6. Grille actions   : Saillir · Soigner · Note · Pesée
  */
 
 import React, { useMemo, useState } from 'react';
@@ -20,14 +21,13 @@ import {
 
 import AgritechLayout from '../../components/AgritechLayout';
 import TopBarSync from '../../components/design/TopBarSync';
-import AnimalHero, { type AnimalHeroChip } from '../../components/design/AnimalHero';
 import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
 import NotesTimeline from '../../components/design/NotesTimeline';
 import PhotoStrip from '../../components/PhotoStrip';
-import { VerratIcon } from '../../components/icons';
 import { SectionDivider, BottomSheet, type ChipTone } from '../../components/agritech';
-import { Button, PageHeader } from '@/design-system';
+import { Button, Card, PageHeader, Tabs, Tag } from '@/design-system';
+import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { useFarm } from '../../context/FarmContext';
 import { updateBoar } from '../../services/supabaseWrites';
 import QuickHealthForm from '../../components/forms/QuickHealthForm';
@@ -54,11 +54,13 @@ function formatDate(s?: string): string {
   return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
 }
 
-function statutHeroTone(statut: string | undefined): AnimalHeroChip['tone'] {
+type StatutTagVariant = 'primary' | 'accent' | 'soft' | 'warning';
+
+function statutTagVariant(statut: string | undefined): StatutTagVariant {
   const s = (statut || '').toLowerCase();
-  if (/réform|reform/.test(s)) return 'pig';
-  if (/mort/.test(s)) return 'pig';
-  return 'green';
+  if (/réform|reform/.test(s)) return 'accent';
+  if (/mort/.test(s)) return 'accent';
+  return 'primary';
 }
 
 function toneFromSoin(type: string): ChipTone {
@@ -82,6 +84,7 @@ function sortByDateDesc<T extends { dateSaillie?: string }>(list: T[]): T[] {
 // ─── Composant ──────────────────────────────────────────────────────────────
 
 type QuickSheet = null | 'soin' | 'pesee' | 'saillie' | 'note';
+type VerratTabId = 'overview' | 'saillies' | 'sante' | 'lignee';
 
 const VerratDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -89,6 +92,8 @@ const VerratDetailView: React.FC = () => {
   const [sheet, setSheet] = useState<QuickSheet>(null);
   const [editOpen, setEditOpen] = useState<boolean>(false);
   const [toast, setToast] = useState<string>('');
+  // V45 PHASE 4 — Tabs uniformisés 4 onglets
+  const [activeTab, setActiveTab] = useState<VerratTabId>('overview');
 
   const decodedId = id ? decodeURIComponent(id) : '';
 
@@ -144,9 +149,9 @@ const VerratDetailView: React.FC = () => {
     );
   }
 
-  const heroTone = statutHeroTone(verrat.statut);
   const displayId = verrat.displayId || verrat.id;
   const title = verrat.nom ? `${displayId} · ${verrat.nom}` : displayId;
+  const tagVariant = statutTagVariant(verrat.statut);
 
   // Dernière saillie : nom truie si dispo via snapshot ou lookup
   const lastSaillie = saillesVerrat[0];
@@ -181,26 +186,61 @@ const VerratDetailView: React.FC = () => {
             className="px-4 pt-5 pb-32 flex flex-col gap-5"
             style={{ maxWidth: 1100, margin: '0 auto' }}
           >
-            {/* V43 C3 — AnimalHero fait office de header complet (eyebrow + h1
-                + chips + photo + actions) ; on skip PageHeader pour éviter le
-                doublon visuel + double h1 cassant les tests a11y. */}
-            {/* ── Hero unifié (AnimalHero) ────────────────────────────── */}
-            <AnimalHero
-              eyebrow={`ÉLEVAGE · VERRAT ${displayId}`}
-              chips={[{ label: verrat.statut || '—', tone: heroTone }]}
-              name={displayId}
-              subtitle={verrat.nom || undefined}
-              tagline={verrat.origine ? `Origine ${verrat.origine}` : undefined}
-              photoUrl={verrat.photoUrl}
-              fallbackIcon={<VerratIcon size={84} />}
-              onPrimaryAction={() => setSheet('saillie')}
-              primaryLabel="Saisir évènement"
-              onSecondaryAction={() => setEditOpen(true)}
-              secondaryLabel="Modifier"
-              secondaryIcon={<Pencil size={13} strokeWidth={2} aria-hidden />}
-              onUploadClick={() => setEditOpen(true)}
+            {/* V45 P3B — Pattern archétype 4 : PageHeader + Card hero compact
+                (EntityAvatar xl + tag statut + actions inline). Remplace
+                AnimalHero custom V43 C3 pour uniformiser avec TruieDetail. */}
+            <PageHeader
+              eyebrow="Élevage · Verrat"
+              title={title}
             />
 
+            <Card>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                <EntityAvatar
+                  species="verrat"
+                  photoUrl={verrat.photoUrl}
+                  size="xl"
+                  shortCode={displayId}
+                />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 160 }}>
+                  <div style={{ fontFamily: 'var(--pt-font-display)', fontSize: 18, fontWeight: 700, color: 'var(--pt-text)' }}>
+                    {verrat.nom ?? displayId}
+                    {verrat.origine ? (
+                      <span style={{ fontFamily: 'var(--pt-font-body)', fontSize: 13, fontWeight: 400, color: 'var(--pt-text-muted)', marginLeft: 8 }}>
+                        — Origine {verrat.origine}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <Tag variant={tagVariant}>{verrat.statut || '—'}</Tag>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginLeft: 'auto', flexShrink: 0, flexWrap: 'wrap' }}>
+                  <Button variant="primary" size="sm" onClick={() => setSheet('saillie')}>
+                    + Saisir évènement
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)}>
+                    <Pencil size={14} strokeWidth={2} aria-hidden /> Modifier
+                  </Button>
+                </div>
+              </div>
+            </Card>
+
+            {/* V45 PHASE 4 — Onglets uniformisés (VUE D'ENSEMBLE · SAILLIES · SANTÉ · LIGNÉE) */}
+            <Tabs
+              ariaLabel="Sections de la fiche verrat"
+              value={activeTab}
+              onChange={(v) => setActiveTab(v as VerratTabId)}
+              options={[
+                { value: 'overview', label: "VUE D'ENSEMBLE" },
+                { value: 'saillies', label: 'SAILLIES', count: saillesVerrat.length || undefined },
+                { value: 'sante', label: 'SANTÉ', count: soins.length || undefined },
+                { value: 'lignee', label: 'LIGNÉE' },
+              ]}
+            />
+
+            {activeTab === 'overview' && (
+            <>
             {/* ── Identité ───────────────────────────────────────────── */}
             <section aria-label="Identité">
               <SectionDivider label="Identité" />
@@ -282,7 +322,36 @@ const VerratDetailView: React.FC = () => {
               </div>
             </section>
 
+            {/* ── Actions 2×2 (overview) ─────────────────────────────── */}
+            <section aria-label="Actions">
+              <div className="grid grid-cols-2 gap-2.5">
+                <ActionButton
+                  icon={<Heart size={16} aria-hidden="true" />}
+                  label="Saillir"
+                  onClick={() => setSheet('saillie')}
+                />
+                <ActionButton
+                  icon={<Syringe size={16} aria-hidden="true" />}
+                  label="Soigner"
+                  onClick={() => setSheet('soin')}
+                />
+                <ActionButton
+                  icon={<FileText size={16} aria-hidden="true" />}
+                  label="Ajouter une note"
+                  onClick={() => setSheet('note')}
+                />
+                <ActionButton
+                  icon={<Scale size={16} aria-hidden="true" />}
+                  label="Peser ce verrat"
+                  onClick={() => setSheet('pesee')}
+                />
+              </div>
+            </section>
+            </>
+            )}
+
             {/* ── Saillies ───────────────────────────────────────────── */}
+            {activeTab === 'saillies' && (
             <section aria-label="Saillies">
               <SectionDivider label={`Saillies · ${saillesVerrat.length}`} />
               {saillesVerrat.length === 0 ? (
@@ -347,8 +416,10 @@ const VerratDetailView: React.FC = () => {
                 </>
               )}
             </section>
+            )}
 
             {/* ── Historique soins ───────────────────────────────────── */}
+            {activeTab === 'sante' && (
             <section aria-label="Historique soins">
               <SectionDivider label={`Historique soins · ${soins.length}`} />
               {soins.length === 0 ? (
@@ -400,32 +471,19 @@ const VerratDetailView: React.FC = () => {
                 </ul>
               )}
             </section>
+            )}
 
-            {/* ── Actions 2×2 ────────────────────────────────────────── */}
-            <section aria-label="Actions">
-              <div className="grid grid-cols-2 gap-2.5">
-                <ActionButton
-                  icon={<Heart size={16} aria-hidden="true" />}
-                  label="Saillir"
-                  onClick={() => setSheet('saillie')}
-                />
-                <ActionButton
-                  icon={<Syringe size={16} aria-hidden="true" />}
-                  label="Soigner"
-                  onClick={() => setSheet('soin')}
-                />
-                <ActionButton
-                  icon={<FileText size={16} aria-hidden="true" />}
-                  label="Ajouter une note"
-                  onClick={() => setSheet('note')}
-                />
-                <ActionButton
-                  icon={<Scale size={16} aria-hidden="true" />}
-                  label="Peser ce verrat"
-                  onClick={() => setSheet('pesee')}
-                />
+            {/* ── Lignée (placeholder V45 P4) ────────────────────────── */}
+            {activeTab === 'lignee' && (
+            <section aria-label="Lignée">
+              <SectionDivider label="Lignée" />
+              <div className="card-dense text-center py-6 mt-3">
+                <p className="text-[12px] text-text-2 max-w-xs mx-auto">
+                  Données de lignée à venir. L'origine et la boucle sont visibles dans l'onglet « Vue d'ensemble ».
+                </p>
               </div>
             </section>
+            )}
           </div>
         </AgritechLayout>
       </IonContent>

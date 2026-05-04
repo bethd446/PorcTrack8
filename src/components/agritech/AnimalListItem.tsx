@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
 import { type ChipTone } from './Chip';
-import { Tag, IconBox, Button } from '../../design-system';
+import { Tag, Button } from '../../design-system';
 
 export interface AnimalListItemBadge {
   label: string;
@@ -68,16 +68,11 @@ const AnimalListItem: React.FC<AnimalListItemProps> = ({
 }) => {
   const interactive = typeof onClick === 'function';
 
-  // V40 align : IconBox carrée beige (variant="warm") + tokens DS V2
-  // Pattern aligné sur StepRow /reproduction (carré beige avec icône foncée).
+  // V45 P1B : avatar passé tel quel (EntityAvatar gère sa propre forme/taille).
   const inner = (
     <>
       {avatar ? (
-        <span style={{ flexShrink: 0 }}>
-          <IconBox variant="warm" size="medium">
-            {avatar}
-          </IconBox>
-        </span>
+        <span style={{ flexShrink: 0, display: 'inline-flex' }}>{avatar}</span>
       ) : null}
 
       <div className="flex-1 min-w-0">

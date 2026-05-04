@@ -29,14 +29,14 @@ import {
   listLoges,
   listPorceletsByBatch,
 } from '../../../services/supabaseWrites';
-import { useNoUUID, Button, PageHeader, Tabs } from '@/design-system';
+import { useNoUUID, Button, Card, PageHeader, Tabs, Tag as DsTag, CycleTimeline } from '@/design-system';
+import { EntityAvatar } from '../../../components/ds/EntityAvatar';
 import {
   getRecommendedHealthLogs,
   HEALTH_LOG_TEMPLATES,
   type HealthLogType,
 } from '../../../services/healthProtocolPlanner';
 import TableRowEdit from '../TableRowEdit';
-import CycleTimeline from './CycleTimeline';
 import type { AggregatedBande, DebugMeta, SheetRawRow } from './types';
 import type {
   BatchSource,
@@ -53,11 +53,11 @@ interface BandeDetailViewProps {
   onRefresh: () => void;
 }
 
-type BandeTabId = 'apercu' | 'details' | 'sante' | 'notes';
+type BandeTabId = 'overview' | 'details' | 'sante' | 'notes';
 
 const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, onClose, onRefresh }) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<BandeTabId>('apercu');
+  const [activeTab, setActiveTab] = useState<BandeTabId>('overview');
   const [editRow, setEditRow] = useState<SheetRawRow | null>(null);
   const [loading, setLoading] = useState(false);
   const [healthData, setHealthData] = useState<SheetRawRow[]>([]);
@@ -340,23 +340,105 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
             subtitle="Suivi de la bande"
           />
 
+          {/* V45 P3C — Hero compact archétype 4 : EntityAvatar + tags + actions */}
+          <Card>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+              <EntityAvatar
+                species="bande"
+                photoUrl={bandeTyped?.photoUrl}
+                size="xl"
+                shortCode={bandeTyped?.idPortee ?? portéeLabel}
+              />
+              <div style={{ flex: 1, minWidth: 200, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ fontFamily: 'var(--pt-font-display)', fontSize: 18, fontWeight: 700, color: 'var(--pt-text)' }}>
+                  Bande {portéeLabel}
+                  {bandeTyped?.dateMB ? (
+                    <span style={{ fontFamily: 'var(--pt-font-body)', fontSize: 13, fontWeight: 400, color: 'var(--pt-text-muted)', marginLeft: 8 }}>
+                      — MB {String(bandeTyped.dateMB)}
+                    </span>
+                  ) : null}
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {bandeTyped?.statut ? (
+                    <DsTag variant={(() => {
+                      const s = String(bandeTyped.statut).toUpperCase();
+                      if (s.includes('SEVR')) return 'accent';
+                      if (s.includes('SOUS')) return 'primary';
+                      if (s.includes('CROIS') || s.includes('FINIT') || s.includes('ENGRA')) return 'soft';
+                      return 'default';
+                    })() as 'default' | 'primary' | 'accent' | 'soft'}>
+                      {bandeTyped.statut}
+                    </DsTag>
+                  ) : null}
+                  {(() => {
+                    const v = bandeTyped?.vivants ?? Number(bande.vivants ?? 0);
+                    return v > 0 ? <DsTag variant="soft">{v} vivants</DsTag> : null;
+                  })()}
+                  {bande.age != null ? (
+                    <DsTag variant="default">{bande.age} j</DsTag>
+                  ) : null}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginLeft: 'auto', flexShrink: 0, flexWrap: 'wrap' }}>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => setActiveTab('sante')}
+                  ariaLabel="Saisir un évènement"
+                >
+                  + Saisir évènement
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setEditBandeOpen(true)}
+                  ariaLabel="Modifier la bande"
+                  disabled={!bandeTyped}
+                >
+                  Modifier
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          {/* V45 PHASE 4 — Onglets uniformisés UPPERCASE (sémantique préservée) */}
           <Tabs
             ariaLabel="Sections de la fiche bande"
             value={activeTab}
             onChange={(id) => setActiveTab(id as BandeTabId)}
             options={[
-              { value: 'apercu', label: "Vue d'ensemble" },
-              { value: 'details', label: 'Détails' },
-              { value: 'sante', label: 'Santé', count: filteredHealth.length || undefined },
-              { value: 'notes', label: 'Notes' },
+              { value: 'overview', label: "VUE D'ENSEMBLE" },
+              { value: 'details', label: 'DÉTAILS' },
+              { value: 'sante', label: 'SANTÉ', count: filteredHealth.length || undefined },
+              { value: 'notes', label: 'NOTES' },
             ]}
           />
 
-          {activeTab === 'apercu' && (
+          {activeTab === 'overview' && (
             <div className="flex flex-col gap-4">
               <PhotoStrip subjectType="BANDE" subjectId={bande.id} />
 
-              <CycleTimeline age={bande.age} status={(bande.status as string) || ''} />
+              {(() => {
+                const age = bande.age ?? 0;
+                const status = (bande.status as string) || '';
+                const isSevre = status.toUpperCase().includes('SEVRÉ');
+                // Phases bande : Maternité (0-21j), Sevrage (J21), Post-sevrage (J28), Engraissement (J70)
+                const PHASE_DAYS = { maternite: 0, sevrage: 21, postSevrage: 28, engraissement: 70 } as const;
+                const reached = (d: number) => age >= d || (isSevre && d <= PHASE_DAYS.postSevrage);
+                return (
+                  <CycleTimeline
+                    eyebrow="Cycle bande"
+                    currentDay={Math.min(Math.max(age, 0), 180)}
+                    totalDays={180}
+                    steps={[
+                      { label: 'Maternité', day: PHASE_DAYS.maternite, done: reached(PHASE_DAYS.sevrage) },
+                      { label: 'Sevrage', day: PHASE_DAYS.sevrage, done: reached(PHASE_DAYS.postSevrage) },
+                      { label: 'Post-sevrage', day: PHASE_DAYS.postSevrage, done: reached(PHASE_DAYS.engraissement) },
+                      { label: 'Engraissement', day: PHASE_DAYS.engraissement, done: false, target: true },
+                    ]}
+                  />
+                );
+              })()}
 
               {/* V28-CTA — Daily Check du jour (bandes Sous mère uniquement) */}
               {isSousMere && (

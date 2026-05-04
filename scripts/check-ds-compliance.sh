@@ -72,6 +72,8 @@ echo ""
 #     où les CSS vars peuvent ne pas s'appliquer)
 #   - WHATSAPP_BRAND : couleur officielle WhatsApp (#25D366), constante de
 #     service externe non négociable
+# V45 — whitelist EntityAvatar : palette espèces (truie/verrat/porcelet/bande)
+#   dictée par la spec V45 PDF, palette stricte non-tokenisable.
 echo "CHECK 4 : Couleurs hex en dur"
 MATCHES=$(grep -rn '#[0-9a-fA-F]\{3,8\}' "$SRC" --include="*.tsx" --include="*.css" \
   | grep -v 'tokens\.css' \
@@ -86,6 +88,8 @@ MATCHES=$(grep -rn '#[0-9a-fA-F]\{3,8\}' "$SRC" --include="*.tsx" --include="*.c
   | grep -v '\.css:' \
   | grep -v 'AuditPrintTemplate\.tsx' \
   | grep -v 'WHATSAPP_BRAND' \
+  | grep -v 'EntityAvatar\.tsx' \
+  | grep -v 'EntityAvatar\.test\.tsx' \
   || true)
 if [ -n "$MATCHES" ]; then
   echo "✗  Couleur(s) hex en dur trouvée(s) — utiliser var(--pt-*) :"
