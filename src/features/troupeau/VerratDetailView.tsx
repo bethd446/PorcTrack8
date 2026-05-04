@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
-import Eyebrow from '../../components/design/Eyebrow';
 import TopBarSync from '../../components/design/TopBarSync';
 import AnimalHero, { type AnimalHeroChip } from '../../components/design/AnimalHero';
 import EditableNumber from '../../components/EditableNumber';
