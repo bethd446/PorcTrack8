@@ -76,7 +76,7 @@ export const TroupeauProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const getVerratById = (id: string) =>
     snap.verrats.find(v => v.id === id || v.displayId === id);
   const getBandeById = (id: string) =>
-    snap.bandes.find(b => b.id === id);
+    snap.bandes.find(b => b.id === id || b.idPortee === id);
 
   const getAnimalById = (id: string, type: 'TRUIE' | 'VERRAT'): Animal | undefined => {
     if (type === 'TRUIE') {
