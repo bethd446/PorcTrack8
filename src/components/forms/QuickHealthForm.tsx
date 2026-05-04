@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { IonSpinner, IonToast, IonSelect, IonSelectOption } from '@ionic/react';
 import { Stethoscope, Send, Bandage, Scissors, AlertTriangle, FileText } from 'lucide-react';
 import { insertHealthLog } from '../../services/supabaseWrites';
+import { Button, Input, Textarea } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import { kvGet } from '../../services/kvStore';
 import { useAuth } from '../../context/AuthContext';
@@ -274,20 +275,12 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
           >
             Description / molécule
           </label>
-          <input
+          <Input
             id="health-treatment"
             aria-label="Description du soin ou molécule administrée"
             aria-invalid={!!errors.treatmentName}
             aria-describedby={errors.treatmentName ? 'health-treatment-error' : undefined}
-            className={[
-              'w-full h-9 rounded-md px-3',
-              'bg-bg-0 border text-text-0 placeholder:text-text-2',
-              'text-[12px]',
-              'outline-none transition-colors duration-[160ms]',
-              'focus:border-accent focus:ring-1 focus:ring-accent',
-              'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-1px]',
-              errors.treatmentName ? 'border-red' : 'border-border hover:border-text-2',
-            ].join(' ')}
+            invalid={!!errors.treatmentName}
             placeholder="Ex: Fer dextran, Ivermectine…"
             value={formData.treatmentName}
             onChange={e => setFormData({ ...formData, treatmentName: e.target.value })}
@@ -313,17 +306,9 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
             >
               Dose / quantité
             </label>
-            <input
+            <Input
               id="health-dose"
               aria-label="Dose ou quantité administrée"
-              className={[
-                'w-full h-9 rounded-md px-3',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'text-[12px]',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                'border-border hover:border-text-2',
-              ].join(' ')}
               placeholder="Ex: 1 ml, 0.3 ml/kg"
               value={formData.dose}
               onChange={e => setFormData({ ...formData, dose: e.target.value })}
@@ -392,19 +377,9 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
           >
             Observation
           </label>
-          <textarea
+          <Textarea
             id="health-obs"
             aria-label="Observation du traitement"
-            className={[
-              'w-full rounded-md px-3 py-3',
-              'bg-bg-0 border text-text-0 placeholder:text-text-2',
-              'text-[12px]',
-              'outline-none transition-colors duration-[160ms]',
-              'focus:border-accent focus:ring-1 focus:ring-accent',
-              'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-1px]',
-              'min-h-[80px] resize-y',
-              'border-border hover:border-text-2',
-            ].join(' ')}
             placeholder="Symptômes observés, gravité 1-3, contexte…"
             value={formData.notes}
             onChange={e => setFormData({ ...formData, notes: e.target.value })}
@@ -412,30 +387,22 @@ const QuickHealthForm: React.FC<QuickHealthFormProps> = ({
           />
         </div>
 
-        <button
+        <Button
+          variant="danger"
+          fullWidth
           type="submit"
           disabled={loading || !formData.treatmentName.trim()}
-          aria-label="Valider l'intervention"
-          className={[
-            'pressable w-full h-[48px] rounded-md',
-            'inline-flex items-center justify-center gap-2',
-            'bg-red text-text-0 text-[12px] font-bold uppercase tracking-wide',
-            'transition-colors duration-[160ms]',
-            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-red focus-visible:outline-offset-2',
-            (loading || !formData.treatmentName.trim())
-              ? 'opacity-40 cursor-not-allowed'
-              : 'hover:brightness-110',
-          ].join(' ')}
+          ariaLabel="Valider l'intervention"
         >
           {loading ? (
             <IonSpinner name="bubbles" className="w-5 h-5" aria-hidden="true" />
           ) : (
-            <>
-              <span>Valider intervention</span>
+            <span className="inline-flex items-center gap-2">
+              Valider intervention
               <Send size={14} className="flex-shrink-0" aria-hidden="true" />
-            </>
+            </span>
           )}
-        </button>
+        </Button>
       </form>
 
       <IonToast

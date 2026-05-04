@@ -17,6 +17,7 @@ import { IonToast } from '@ionic/react';
 import { Stethoscope, ChevronRight, Send } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { Button, Input, Select, Textarea } from '@/design-system';
 import {
   insertHealthLogForPorcelet,
   listPorceletsByBatch,
@@ -270,10 +271,9 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
               >
                 Type
               </label>
-              <select
+              <Select
                 id="hl-porc-type"
                 aria-label="Type d'intervention santé"
-                className="w-full h-10 rounded-md px-3 bg-bg-0 border border-border text-text-0 text-[12px] outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 value={logType}
                 onChange={e =>
                   setLogType(e.target.value as PorceletHealthLogType)
@@ -285,7 +285,7 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
                     {t.label}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             {/* Symptômes (required) */}
@@ -296,19 +296,12 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
               >
                 Symptômes <span className="text-red normal-case">· obligatoire</span>
               </label>
-              <textarea
+              <Textarea
                 id="hl-porc-sympt"
                 aria-label="Symptômes observés"
                 aria-required="true"
                 aria-invalid={!!errors.symptome}
                 aria-describedby={errors.symptome ? 'hl-porc-sympt-err' : undefined}
-                className={[
-                  'w-full rounded-md px-3 py-2 bg-bg-0 border text-text-0',
-                  'text-[12px] outline-none min-h-[60px] resize-y',
-                  errors.symptome
-                    ? 'border-red'
-                    : 'border-border focus:border-accent focus:ring-1 focus:ring-accent',
-                ].join(' ')}
                 value={symptome}
                 onChange={e => setSymptome(e.target.value)}
                 disabled={saving}
@@ -333,10 +326,9 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
               >
                 Diagnostic
               </label>
-              <textarea
+              <Textarea
                 id="hl-porc-diag"
                 aria-label="Diagnostic"
-                className="w-full rounded-md px-3 py-2 bg-bg-0 border border-border text-text-0 text-[12px] outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[50px] resize-y"
                 value={diagnostic}
                 onChange={e => setDiagnostic(e.target.value)}
                 disabled={saving}
@@ -352,10 +344,9 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
               >
                 Traitement
               </label>
-              <input
+              <Input
                 id="hl-porc-trt"
                 aria-label="Traitement administré"
-                className="w-full h-10 rounded-md px-3 bg-bg-0 border border-border text-text-0 text-[12px] outline-none focus:border-accent focus:ring-1 focus:ring-accent"
                 value={treatment}
                 onChange={e => setTreatment(e.target.value)}
                 disabled={saving}
@@ -372,7 +363,7 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
                 >
                   Dose (nb)
                 </label>
-                <input
+                <Input
                   id="hl-porc-dose"
                   type="number"
                   inputMode="numeric"
@@ -380,13 +371,7 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
                   max={50}
                   aria-label="Nombre de doses"
                   aria-invalid={!!errors.doseCount}
-                  className={[
-                    'w-full h-10 rounded-md px-3 bg-bg-0 border text-text-0',
-                    'text-[12px] outline-none',
-                    errors.doseCount
-                      ? 'border-red'
-                      : 'border-border focus:border-accent focus:ring-1 focus:ring-accent',
-                  ].join(' ')}
+                  invalid={!!errors.doseCount}
                   value={doseCount}
                   onChange={e => setDoseCount(e.target.value)}
                   disabled={saving}
@@ -404,7 +389,7 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
                 >
                   Poids (kg)
                 </label>
-                <input
+                <Input
                   id="hl-porc-poids"
                   type="number"
                   inputMode="decimal"
@@ -413,13 +398,7 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
                   step="0.1"
                   aria-label="Poids actuel en kg"
                   aria-invalid={!!errors.weightKg}
-                  className={[
-                    'w-full h-10 rounded-md px-3 bg-bg-0 border text-text-0',
-                    'text-[12px] outline-none',
-                    errors.weightKg
-                      ? 'border-red'
-                      : 'border-border focus:border-accent focus:ring-1 focus:ring-accent',
-                  ].join(' ')}
+                  invalid={!!errors.weightKg}
                   value={weightKg}
                   onChange={e => setWeightKg(e.target.value)}
                   disabled={saving}
@@ -440,10 +419,9 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
               >
                 Notes
               </label>
-              <textarea
+              <Textarea
                 id="hl-porc-notes"
                 aria-label="Notes additionnelles"
-                className="w-full rounded-md px-3 py-2 bg-bg-0 border border-border text-text-0 text-[12px] outline-none focus:border-accent focus:ring-1 focus:ring-accent min-h-[50px] resize-y"
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
                 disabled={saving}
@@ -451,21 +429,18 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
               />
             </div>
 
-            <button
+            <Button
+              variant="danger"
+              fullWidth
               type="submit"
               disabled={saving || !symptome.trim()}
-              aria-label="Enregistrer le signalement"
-              className={[
-                'pressable w-full h-12 rounded-md inline-flex items-center justify-center gap-2',
-                'bg-red text-text-0 text-[12px] font-bold uppercase tracking-wide',
-                saving || !symptome.trim()
-                  ? 'opacity-40 cursor-not-allowed'
-                  : 'hover:brightness-110',
-              ].join(' ')}
+              ariaLabel="Enregistrer le signalement"
             >
-              <Send size={14} aria-hidden="true" />
-              <span>{saving ? 'Enregistrement…' : 'Enregistrer'}</span>
-            </button>
+              <span className="inline-flex items-center gap-2">
+                <Send size={14} aria-hidden="true" />
+                {saving ? 'Enregistrement…' : 'Enregistrer'}
+              </span>
+            </Button>
           </form>
         )}
       </BottomSheet>
