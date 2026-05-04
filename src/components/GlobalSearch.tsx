@@ -5,6 +5,7 @@ import { Hash, Heart, Layers, Search, X } from 'lucide-react';
 import { useFarm } from '../context/FarmContext';
 import { searchAll, type SearchResult, type SearchResultType } from '../services/searchEntities';
 import { cn } from '../lib/utils';
+import { Button } from '@/design-system';
 
 export interface GlobalSearchProps {
   open: boolean;
@@ -95,12 +96,16 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ open, onClose }) => {
       style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}
     >
       {/* Backdrop */}
-      <button
+      <Button
         type="button"
+        variant="ghost"
         aria-label="Fermer la recherche"
         onClick={close}
         className="absolute inset-0 cursor-default bg-black/55 backdrop-blur-sm"
-      />
+        style={{ borderRadius: 0, padding: 0, height: '100%', width: '100%' }}
+      >
+        {''}
+      </Button>
 
       {/* Panel */}
       <div
@@ -133,14 +138,17 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ open, onClose }) => {
             className="flex-1 bg-transparent text-[15px] outline-none placeholder:text-[color:var(--pt-text-subtle)]"
             style={{ color: 'var(--pt-text)' }}
           />
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="small"
             onClick={close}
             aria-label="Fermer la recherche"
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md hover:bg-[color:var(--pt-surface-alt)]"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center hover:bg-[color:var(--pt-surface-alt)]"
+            style={{ borderRadius: '0.375rem', height: '2rem', width: '2rem', padding: 0 }}
           >
             <X size={16} aria-hidden="true" />
-          </button>
+          </Button>
         </div>
 
         {/* Results */}
@@ -160,8 +168,9 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ open, onClose }) => {
                 const active = i === activeIndex;
                 return (
                   <li key={`${r.type}-${r.id}`}>
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
                       role="option"
                       aria-selected={active}
                       onMouseEnter={() => setActiveIndex(i)}
@@ -172,6 +181,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ open, onClose }) => {
                           ? 'bg-[color:var(--pt-surface-alt)]'
                           : 'hover:bg-[color:var(--pt-surface-alt)]',
                       )}
+                      style={{ borderRadius: 0, textTransform: 'none', height: 'auto', justifyContent: 'flex-start' }}
                     >
                       <span
                         className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
@@ -207,7 +217,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ open, onClose }) => {
                           </div>
                         ) : null}
                       </div>
-                    </button>
+                    </Button>
                   </li>
                 );
               })}

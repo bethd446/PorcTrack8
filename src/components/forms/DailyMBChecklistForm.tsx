@@ -11,6 +11,7 @@ import { IonToast } from '@ionic/react';
 import { Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { Button } from '@/design-system';
 import {
   getDailyCheckForBatch,
   submitDailyCheck,
@@ -168,19 +169,22 @@ const DailyMBChecklistForm: React.FC<DailyMBChecklistFormProps> = ({
   ): React.ReactNode => (
     <div className="flex gap-2" data-testid={testId}>
       {options.map(o => (
-        <button
+        <Button
           key={o.v}
           type="button"
+          variant={value === o.v ? 'primary' : 'secondary'}
+          size="small"
           onClick={() => onChange(value === o.v ? '' : o.v)}
           className={[
-            'pressable flex-1 h-10 rounded-md text-[12px] uppercase tracking-wide border',
+            'pressable flex-1 h-10 text-[12px] uppercase tracking-wide border',
             value === o.v
               ? 'bg-accent text-bg-0 border-accent'
               : 'bg-bg-1 text-text-1 border-border hover:border-text-2',
           ].join(' ')}
+          style={{ borderRadius: '0.375rem', height: '2.5rem' }}
         >
           {o.l}
-        </button>
+        </Button>
       ))}
     </div>
   );
@@ -191,30 +195,36 @@ const DailyMBChecklistForm: React.FC<DailyMBChecklistFormProps> = ({
     testId?: string,
   ): React.ReactNode => (
     <div className="flex gap-2" data-testid={testId}>
-      <button
+      <Button
         type="button"
+        variant={value === true ? 'primary' : 'secondary'}
+        size="small"
         onClick={() => onChange(value === true ? null : true)}
         className={[
-          'pressable flex-1 h-10 rounded-md text-[12px] uppercase tracking-wide border',
+          'pressable flex-1 h-10 text-[12px] uppercase tracking-wide border',
           value === true
             ? 'bg-accent text-bg-0 border-accent'
             : 'bg-bg-1 text-text-1 border-border hover:border-text-2',
         ].join(' ')}
+        style={{ borderRadius: '0.375rem', height: '2.5rem' }}
       >
         Oui
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
+        variant={value === false ? 'danger' : 'secondary'}
+        size="small"
         onClick={() => onChange(value === false ? null : false)}
         className={[
-          'pressable flex-1 h-10 rounded-md text-[12px] uppercase tracking-wide border',
+          'pressable flex-1 h-10 text-[12px] uppercase tracking-wide border',
           value === false
             ? 'bg-red text-bg-0 border-red'
             : 'bg-bg-1 text-text-1 border-border hover:border-text-2',
         ].join(' ')}
+        style={{ borderRadius: '0.375rem', height: '2.5rem' }}
       >
         Non
-      </button>
+      </Button>
     </div>
   );
 
@@ -368,20 +378,24 @@ const DailyMBChecklistForm: React.FC<DailyMBChecklistFormProps> = ({
 
           {/* Submit */}
           <div className="flex items-center gap-2 pt-2">
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={handleClose}
               disabled={saving}
-              className="pressable flex-1 h-14 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
+              className="pressable flex-1 h-14 inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
+              style={{ borderRadius: '0.375rem', height: '3.5rem' }}
             >
               Annuler
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={saving}
               aria-busy={saving}
-              className="pressable flex-[2] h-14 rounded-md inline-flex items-center justify-center gap-2 bg-accent text-bg-0 text-[13px] font-bold uppercase tracking-wide hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="pressable flex-[2] h-14 inline-flex items-center justify-center gap-2 bg-accent text-bg-0 text-[13px] font-bold uppercase tracking-wide hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
               data-testid="dmb-submit"
+              style={{ borderRadius: '0.375rem', height: '3.5rem' }}
             >
               {saving ? (
                 <span className="animate-pulse">Enregistrement…</span>
@@ -391,7 +405,7 @@ const DailyMBChecklistForm: React.FC<DailyMBChecklistFormProps> = ({
                   {editMode ? 'Mettre à jour' : 'Valider check'}
                 </>
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </BottomSheet>

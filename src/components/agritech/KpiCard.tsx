@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
+import { Button } from '@/design-system';
 
 export type KpiTone = 'default' | 'warning' | 'critical' | 'success';
 
@@ -96,8 +97,9 @@ const KpiCard: React.FC<KpiCardProps> = ({
 
   if (interactive) {
     return (
-      <button
+      <Button
         type="button"
+        variant="ghost"
         onClick={onClick}
         aria-label={typeof value === 'string' || typeof value === 'number' ? `${label} ${value}` : label}
         data-testid="kpi-card"
@@ -107,9 +109,10 @@ const KpiCard: React.FC<KpiCardProps> = ({
           'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
           className
         )}
+        style={{ borderRadius: 'var(--ds-radius-card, 12px)', textTransform: 'none', height: 'auto', justifyContent: 'flex-start' }}
       >
         {content}
-      </button>
+      </Button>
     );
   }
 

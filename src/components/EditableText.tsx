@@ -9,6 +9,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Check, Loader2 } from 'lucide-react';
 
 import type { WriteResult } from '../services/supabaseWrites';
+import { Button } from '@/design-system';
 
 interface Props {
   value: string | null;
@@ -165,16 +166,21 @@ const EditableText: React.FC<Props> = ({
           />
         )
       ) : (
-        <button
+        <Button
           type="button"
+          variant="ghost"
           onClick={handleEnter}
           aria-label={ariaLabel}
-          className={`min-h-[44px] inline-flex items-center gap-1 px-2 py-1 -mx-2 rounded-md hover:bg-bg-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 text-sm text-text-0 ${
+          className={`min-h-[44px] inline-flex items-center gap-1 px-2 py-1 -mx-2 hover:bg-bg-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 text-sm text-text-0 ${
             multiline ? 'w-full text-left items-start whitespace-pre-wrap' : ''
           }`}
           style={{
             backgroundColor: flashBg,
             transition: `background-color 200ms ${EASE}`,
+            borderRadius: '0.375rem',
+            textTransform: 'none',
+            height: 'auto',
+            justifyContent: multiline ? 'flex-start' : 'flex-start',
           }}
         >
           {displayValue && displayValue.length > 0 ? (
@@ -184,7 +190,7 @@ const EditableText: React.FC<Props> = ({
           ) : (
             <span className="text-text-2 italic">{placeholder}</span>
           )}
-        </button>
+        </Button>
       )}
 
       {status === 'saving' && (

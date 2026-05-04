@@ -3,6 +3,7 @@ import { Scale, HelpCircle } from 'lucide-react';
 import { default as KpiCardV6 } from '../design/KpiCard';
 import { Chip, SectionDivider, DataRow } from '../agritech';
 import type { ChipTone } from '../agritech';
+import { Button } from '@/design-system';
 import {
   computeBandeGrowthStats,
   type GrowthAlerte,
@@ -127,15 +128,18 @@ const BandeCroissanceCard: React.FC<BandeCroissanceCardProps> = ({ bande, notes 
       <SectionDivider
         label="Croissance"
         action={
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="small"
             onClick={() => setShowHelp((v) => !v)}
             aria-label="Aide croissance"
             aria-expanded={showHelp}
-            className="pressable inline-flex h-7 w-7 items-center justify-center rounded-md bg-bg-2 text-text-2 hover:text-text-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+            className="pressable inline-flex h-7 w-7 items-center justify-center bg-bg-2 text-text-2 hover:text-text-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+            style={{ borderRadius: '0.375rem', height: '1.75rem', width: '1.75rem', padding: 0 }}
           >
             <HelpCircle size={14} aria-hidden="true" />
-          </button>
+          </Button>
         }
       />
 

@@ -18,6 +18,7 @@ import {
   deleteAnimalPhoto,
   PhotoUploadError,
 } from '../../services/photoUpload';
+import { Button } from '@/design-system';
 
 export interface PhotoUploaderProps {
   photoUrl?: string;
@@ -96,19 +97,21 @@ const PhotoUploader: React.FC<PhotoUploaderProps> = ({
       </label>
 
       <div className="flex items-start gap-3">
-        <button
+        <Button
           type="button"
+          variant="ghost"
           onClick={handlePick}
           disabled={disabled || busy !== null}
           aria-label={photoUrl ? 'Changer la photo' : 'Ajouter une photo'}
           className={[
-            'pressable relative w-[120px] h-[120px] rounded-2xl overflow-hidden',
+            'pressable relative w-[120px] h-[120px] overflow-hidden',
             'bg-bg-app border border-border-default',
             'flex items-center justify-center',
             'focus-visible:outline focus-visible:outline-2 focus-visible:outline-color-accent-500 focus-visible:outline-offset-2',
             disabled || busy !== null ? 'opacity-60 cursor-not-allowed' : 'hover:border-color-accent-500',
             'transition-colors duration-[160ms]',
           ].join(' ')}
+          style={{ borderRadius: '1rem', height: '120px', width: '120px', padding: 0, textTransform: 'none' }}
         >
           {photoUrl ? (
             <img
@@ -128,36 +131,42 @@ const PhotoUploader: React.FC<PhotoUploaderProps> = ({
               <Loader2 size={22} className="animate-spin text-white" aria-hidden="true" />
             </div>
           ) : null}
-        </button>
+        </Button>
 
         <div className="flex flex-col gap-2 pt-1">
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="small"
             onClick={handlePick}
             disabled={disabled || busy !== null}
             className={[
-              'pressable inline-flex items-center gap-2 px-3 h-9 rounded-md',
+              'pressable inline-flex items-center gap-2 px-3 h-9',
               'bg-bg-app border border-border-default text-text-1',
               'text-[11px] uppercase tracking-wide',
               'hover:border-text-2 transition-colors duration-[160ms]',
               disabled || busy !== null ? 'opacity-50 cursor-not-allowed' : '',
             ].join(' ')}
+            style={{ borderRadius: '0.375rem', height: '2.25rem' }}
           >
             <Camera size={13} aria-hidden="true" />
             {photoUrl ? 'Changer' : 'Ajouter'}
-          </button>
+          </Button>
           {photoUrl ? (
-            <button
+            <Button
               type="button"
+              variant="danger"
+              size="small"
               onClick={handleDelete}
               disabled={disabled || busy !== null}
               className={[
-                'pressable inline-flex items-center gap-2 px-3 h-9 rounded-md',
+                'pressable inline-flex items-center gap-2 px-3 h-9',
                 'bg-bg-app border border-red text-red',
                 'text-[11px] uppercase tracking-wide',
                 'hover:bg-red hover:text-bg-0 transition-colors duration-[160ms]',
                 disabled || busy !== null ? 'opacity-50 cursor-not-allowed' : '',
               ].join(' ')}
+              style={{ borderRadius: '0.375rem', height: '2.25rem' }}
             >
               {busy === 'delete' ? (
                 <Loader2 size={13} className="animate-spin" aria-hidden="true" />
@@ -165,7 +174,7 @@ const PhotoUploader: React.FC<PhotoUploaderProps> = ({
                 <Trash2 size={13} aria-hidden="true" />
               )}
               Supprimer
-            </button>
+            </Button>
           ) : null}
           {error ? (
             <p role="alert" className="text-[10px] text-red max-w-[180px]">

@@ -29,6 +29,7 @@ import {
   NUTRITION_TARGETS,
   type NutritionPhase,
 } from '../../services/nutritionGuidelines';
+import { Button } from '@/design-system';
 import {
   getNutritionPhase,
   getDynamicAdvice,
@@ -184,13 +185,16 @@ export const NutritionAdvicePanel: React.FC<NutritionAdvicePanelProps> = ({
           <p className="text-[13px] text-text-1 leading-snug max-w-[280px]">
             Pesée manquante — pèse la bande pour activer les conseils nutritionnels.
           </p>
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="small"
             disabled
-            className="text-[11px] uppercase tracking-wider px-3 py-2 rounded-lg border border-border text-text-2 opacity-60 cursor-not-allowed"
+            className="text-[11px] uppercase tracking-wider px-3 py-2 border border-border text-text-2 opacity-60 cursor-not-allowed"
+            style={{ borderRadius: '0.5rem' }}
           >
             Voir comment peser
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -308,16 +312,19 @@ export const NutritionAdvicePanel: React.FC<NutritionAdvicePanelProps> = ({
       {/* ─── Breakdown sous-scores ────────────────────────────────────────── */}
       {score && (
         <div className="border-t border-border/50 pt-3">
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="small"
             className="w-full flex items-center justify-between text-[11px] uppercase text-text-2 tracking-wider"
             onClick={() => setBreakdownOpen((v) => !v)}
             aria-expanded={breakdownOpen}
             data-testid="nutrition-breakdown-toggle"
+            style={{ borderRadius: 0, padding: 0, height: 'auto' }}
           >
             <span>Détail score</span>
             {breakdownOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </button>
+          </Button>
           {breakdownOpen && (
             <div
               className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3"

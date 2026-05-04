@@ -1,5 +1,6 @@
 import React from 'react';
 import { Sparkles } from 'lucide-react';
+import { Button } from '@/design-system';
 
 interface MariusFABProps {
   online?: boolean;
@@ -9,8 +10,9 @@ interface MariusFABProps {
 
 export default function MariusFAB({ online = true, onClick, className = '' }: MariusFABProps) {
   return (
-    <button
+    <Button
       type="button"
+      variant="primary"
       onClick={onClick}
       aria-label="Ouvrir Marius, l'assistant de l'élevage"
       className={`pressable ${className}`}
@@ -32,6 +34,7 @@ export default function MariusFAB({ online = true, onClick, className = '' }: Ma
         border: 0,
         cursor: 'pointer',
         transition: 'transform var(--duration-press, 160ms) var(--ease-emil, cubic-bezier(0.23,1,0.32,1))',
+        textTransform: 'none',
       }}
     >
       <Sparkles size={24} strokeWidth={2} aria-hidden="true" />
@@ -50,6 +53,6 @@ export default function MariusFAB({ online = true, onClick, className = '' }: Ma
           }}
         />
       )}
-    </button>
+    </Button>
   );
 }

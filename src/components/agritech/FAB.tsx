@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { Button } from '@/design-system';
 
 export type FABActionTone = 'default' | 'accent' | 'red' | 'amber';
 
@@ -63,8 +64,13 @@ const FAB: React.FC<FABProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const mainBtnRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const mainBtnContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const focusMainBtn = useCallback(() => {
+    const btn = mainBtnContainerRef.current?.querySelector<HTMLButtonElement>('button');
+    btn?.focus();
+  }, []);
 
   // On limite à 5 actions max pour garder la lisibilité.
   const visibleActions = actions.slice(0, 5);
@@ -85,7 +91,7 @@ const FAB: React.FC<FABProps> = ({
       if (e.key === 'Escape') {
         e.stopPropagation();
         close();
-        mainBtnRef.current?.focus();
+        focusMainBtn();
       }
     };
 
@@ -102,7 +108,7 @@ const FAB: React.FC<FABProps> = ({
       document.removeEventListener('keydown', handleKey);
       document.removeEventListener('pointerdown', handlePointer);
     };
-  }, [open, close]);
+  }, [open, close, focusMainBtn]);
 
   // Focus trap minimal : à l'ouverture, focus la première action.
   useEffect(() => {
@@ -163,9 +169,10 @@ const FAB: React.FC<FABProps> = ({
           {visibleActions.map((action, i) => {
             const tone = action.tone ?? 'default';
             return (
-              <button
+              <Button
                 key={`${action.label}-${i}`}
                 type="button"
+                variant="ghost"
                 data-fab-action
                 onClick={() => handleActionClick(action)}
                 aria-label={action.label}
@@ -177,6 +184,10 @@ const FAB: React.FC<FABProps> = ({
                 style={{
                   animation: `fab-action-in 220ms var(--ease-spring) forwards`,
                   animationDelay: `${i * 40}ms`,
+                  textTransform: 'none',
+                  height: 'auto',
+                  borderRadius: 'var(--ds-radius-card, 12px)',
+                  justifyContent: 'flex-start',
                 }}
               >
                 <span
@@ -192,44 +203,50 @@ const FAB: React.FC<FABProps> = ({
                 <span className="font-sans text-[13px] font-medium text-text-0 whitespace-nowrap">
                   {action.label}
                 </span>
-              </button>
+              </Button>
             );
           })}
         </div>
       )}
 
       {/* Bouton principal */}
-      <button
-        ref={mainBtnRef}
-        type="button"
-        onClick={toggle}
-        aria-label={ariaLabel}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        className={cn(
-          'h-14 w-14 rounded-full',
-          'flex items-center justify-center',
-          'bg-accent text-bg-0',
-          'shadow-lg shadow-accent/30',
-          'transition-transform duration-200',
-          'active:scale-[0.94]',
-          'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2'
-        )}
-        style={{
-          transitionTimingFunction: 'var(--ease-spring)',
-        }}
-      >
-        <span
-          className="inline-flex items-center justify-center transition-transform duration-200"
+      <div ref={mainBtnContainerRef}>
+        <Button
+          type="button"
+          variant="primary"
+          onClick={toggle}
+          aria-label={ariaLabel}
+          aria-expanded={open}
+          aria-haspopup="menu"
+          className={cn(
+            'h-14 w-14',
+            'flex items-center justify-center',
+            'bg-accent text-bg-0',
+            'shadow-lg shadow-accent/30',
+            'transition-transform duration-200',
+            'active:scale-[0.94]',
+            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2'
+          )}
           style={{
-            transform: open ? 'rotate(45deg)' : 'rotate(0deg)',
             transitionTimingFunction: 'var(--ease-spring)',
+            borderRadius: '9999px',
+            height: '3.5rem',
+            width: '3.5rem',
+            padding: 0,
           }}
-          aria-hidden="true"
         >
-          {mainIcon ?? <Plus size={24} strokeWidth={2.5} />}
-        </span>
-      </button>
+          <span
+            className="inline-flex items-center justify-center transition-transform duration-200"
+            style={{
+              transform: open ? 'rotate(45deg)' : 'rotate(0deg)',
+              transitionTimingFunction: 'var(--ease-spring)',
+            }}
+            aria-hidden="true"
+          >
+            {mainIcon ?? <Plus size={24} strokeWidth={2.5} />}
+          </span>
+        </Button>
+      </div>
 
       {/* Keyframes inline — scoped ici pour éviter de polluer index.css */}
       <style>{`
