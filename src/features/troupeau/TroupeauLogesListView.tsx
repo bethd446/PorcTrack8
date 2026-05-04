@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home, Plus } from 'lucide-react';
 
-import Eyebrow from '../../components/design/Eyebrow';
 import EmptyState from '../../components/design/EmptyState';
 import { AnimalListItem, type ChipTone } from '../../components/agritech';
 import { Button } from '@/design-system';
@@ -117,17 +116,8 @@ const TroupeauLogesListView: React.FC = () => {
       className="flex flex-col gap-4"
       data-testid="troupeau-loges-list-view"
     >
-      {/* ── En-tête + CTA ─────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <Eyebrow dotColor="accent">Loges · {loges.length}</Eyebrow>
-          <p
-            className="mt-1.5 text-[13px]"
-            style={{ color: 'var(--muted)' }}
-          >
-            Référentiel des emplacements physiques.
-          </p>
-        </div>
+      {/* ── CTA ──────────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-end">
         <Button variant="primary" onClick={() => setAddOpen(true)} ariaLabel="Ajouter une nouvelle loge">
           <Plus size={14} aria-hidden="true" />
           Nouvelle loge

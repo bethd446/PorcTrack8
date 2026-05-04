@@ -28,7 +28,7 @@ import NotesTimeline from '../../components/design/NotesTimeline';
 import PhotoStrip from '../../components/PhotoStrip';
 import { VerratIcon } from '../../components/icons';
 import { SectionDivider, BottomSheet, type ChipTone } from '../../components/agritech';
-import { Button } from '@/design-system';
+import { Button, PageHeader } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import { updateBoar } from '../../services/supabaseWrites';
 import QuickHealthForm from '../../components/forms/QuickHealthForm';
@@ -123,31 +123,11 @@ const VerratDetailView: React.FC = () => {
               className="px-4 pt-5 pb-32 flex flex-col gap-5"
               style={{ maxWidth: 1100, margin: '0 auto' }}
             >
-              <header>
-                <Eyebrow dotColor="accent">Cheptel · Verrat {decodedId}</Eyebrow>
-                <h1
-                  style={{
-                    fontFamily: 'var(--font-heading)',
-                    fontSize: 34,
-                    fontWeight: 700,
-                    lineHeight: 1,
-                    letterSpacing: '-0.02em',
-                    color: 'var(--ink)',
-                    margin: '8px 0 4px',
-                  }}
-                >
-                  Verrat introuvable
-                </h1>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 13,
-                    color: 'var(--muted)',
-                  }}
-                >
-                  ID "{decodedId}"
-                </div>
-              </header>
+              <PageHeader
+                eyebrow="TROUPEAU · VERRAT"
+                title="Verrat introuvable"
+                subtitle="Fiche reproducteur"
+              />
               <div className="flex flex-col items-center gap-3">
                 <AlertCircle size={40} className="text-coral" aria-hidden="true" />
                 <p className="text-[12px] text-text-2 text-center max-w-xs">
@@ -194,6 +174,9 @@ const VerratDetailView: React.FC = () => {
             className="px-4 pt-5 pb-32 flex flex-col gap-5"
             style={{ maxWidth: 1100, margin: '0 auto' }}
           >
+            {/* V43 C3 — AnimalHero fait office de header complet (eyebrow + h1
+                + chips + photo + actions) ; on skip PageHeader pour éviter le
+                doublon visuel + double h1 cassant les tests a11y. */}
             {/* ── Hero unifié (AnimalHero) ────────────────────────────── */}
             <AnimalHero
               eyebrow={`Cheptel · Verrat ${displayId}`}

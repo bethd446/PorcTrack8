@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Home, ChevronDown, ChevronUp, AlertCircle, Lightbulb } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
 import { IsoBarn, Chip, SectionDivider } from '../../components/agritech';
+import { PageHeader } from '@/design-system';
 import { FARM_CONFIG } from '../../config/farm';
 import { Bandes } from '../../services/bandAnalysisEngine';
 import type { Truie, BandePorcelets } from '../../types/farm';
@@ -109,6 +110,11 @@ const TroupeauLogesView: React.FC = () => {
       aria-label="Vue des loges physiques de la ferme"
       className="flex flex-col gap-4"
     >
+      <PageHeader
+        eyebrow="TROUPEAU · OCCUPATION"
+        title="Occupation des loges"
+        subtitle="Vue 3D du bâtiment"
+      />
       {/* ── Summary strip ────────────────────────────────────────────────── */}
       <div
         className="card-dense p-3 flex flex-wrap items-center gap-x-4 gap-y-2"
