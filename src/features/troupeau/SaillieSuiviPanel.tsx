@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 
 import { BottomSheet } from '../../components/agritech';
+import { Button } from '@/design-system';
 import { enqueueUpdateRow } from '../../services/offlineQueue';
 import { useFarm } from '../../context/FarmContext';
 import { useEscapeKey } from '../../components/forms/useFormA11y';
@@ -510,12 +511,14 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
 
           {/* ── Présomption J+21 (CTA promu) ─────────────────────────── */}
           {showPresomption ? (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              fullWidth
               onClick={() => openModal('presomption')}
               disabled={saving}
-              className="pressable group flex w-full items-center gap-3 rounded-lg border border-gold/40 bg-gold/10 px-3 py-3 text-left transition-colors hover:bg-gold/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gold"
-              aria-label="Confirmer la gestation présumée — aucun retour chaleur observé"
+              ariaLabel="Confirmer la gestation présumée — aucun retour chaleur observé"
+              className="!flex !items-center !gap-3 !rounded-lg !border !border-gold/40 !bg-gold/10 !px-3 !py-3 !text-left !h-auto !justify-start"
+              style={{ textTransform: 'none' }}
             >
               <span
                 className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-bg-1 text-gold"
@@ -531,41 +534,43 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
                   J+{jour} · pas de retour chaleur observé
                 </span>
               </span>
-            </button>
+            </Button>
           ) : null}
 
           {/* ── CTA principales ──────────────────────────────────────── */}
           <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
+            <Button
+              variant="primary"
               onClick={() => openModal('confirmer')}
               disabled={saving}
-              aria-label="Confirmer la saillie"
-              className="pressable inline-flex h-11 items-center justify-center gap-1.5 rounded-md bg-accent text-bg-0 text-[11px] font-bold uppercase tracking-wide transition-opacity hover:brightness-110 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+              ariaLabel="Confirmer la saillie"
+              className="!rounded-md"
             >
               <CheckCircle2 size={14} aria-hidden="true" />
               Confirmer saillie
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="danger"
               onClick={() => openModal('retour')}
               disabled={saving}
-              aria-label="Signaler un retour chaleur"
-              className="pressable inline-flex h-11 items-center justify-center gap-1.5 rounded-md border border-red/60 bg-bg-1 text-red text-[11px] font-bold uppercase tracking-wide transition-colors hover:bg-red/10 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red focus-visible:outline-offset-2"
+              ariaLabel="Signaler un retour chaleur"
+              className="!rounded-md"
             >
               <HeartPulse size={14} aria-hidden="true" />
               Retour chaleur
-            </button>
+            </Button>
           </div>
 
           {/* ── Accordéon conseils ───────────────────────────────────── */}
           <div className="rounded-lg border border-border bg-bg-0/60">
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              fullWidth
               onClick={() => setExpanded(v => !v)}
               aria-expanded={expanded}
               aria-controls="saillie-conseils-panel"
-              className="pressable flex w-full items-center gap-2.5 px-3 py-2.5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+              className="!flex !items-center !gap-2.5 !px-3 !py-2.5 !text-left !h-auto !justify-start !rounded-none"
+              style={{ textTransform: 'none' }}
             >
               <span
                 className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-bg-2 text-amber"
@@ -588,7 +593,7 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
                   expanded ? 'rotate-180' : ''
                 }`}
               />
-            </button>
+            </Button>
             {expanded ? (
               <ol
                 id="saillie-conseils-panel"
@@ -840,29 +845,22 @@ const ConfirmBody: React.FC<ConfirmBodyProps> = ({
 
       {/* Actions */}
       <div className="flex items-center gap-2 pt-1">
-        <button
-          type="button"
+        <Button
+          variant="secondary"
           onClick={onCancel}
           disabled={saving}
-          aria-label="Annuler"
-          className="pressable flex-1 inline-flex h-12 items-center justify-center gap-1.5 rounded-md bg-bg-1 border border-border text-text-1 text-[11px] font-bold uppercase tracking-wide transition-colors hover:border-text-2 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+          ariaLabel="Annuler"
+          className="!flex-1 !rounded-md"
         >
           <X size={14} aria-hidden="true" />
           Annuler
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant={isDanger ? 'danger' : 'primary'}
           onClick={() => void onConfirm()}
           disabled={saving}
-          aria-label={isDanger ? 'Signaler le retour chaleur' : 'Confirmer'}
-          className={[
-            'pressable flex-[2] inline-flex h-12 items-center justify-center gap-1.5 rounded-md',
-            'text-[12px] font-bold uppercase tracking-wide',
-            'transition-opacity disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
-            isDanger
-              ? 'bg-red text-bg-0 hover:brightness-110 focus-visible:outline-red'
-              : 'bg-accent text-bg-0 hover:brightness-110 focus-visible:outline-accent',
-          ].join(' ')}
+          ariaLabel={isDanger ? 'Signaler le retour chaleur' : 'Confirmer'}
+          className="!flex-[2] !rounded-md"
         >
           {saving ? (
             <span className="animate-pulse">Enregistrement…</span>
@@ -876,7 +874,7 @@ const ConfirmBody: React.FC<ConfirmBodyProps> = ({
               {isDanger ? 'Signaler retour' : 'Confirmer'}
             </>
           )}
-        </button>
+        </Button>
       </div>
     </div>
   );

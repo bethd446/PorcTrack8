@@ -8,6 +8,7 @@ import {
   SectionDivider,
   type ChipTone,
 } from '../../components/agritech';
+import { Button } from '@/design-system';
 import EmptyState from '../../components/design/EmptyState';
 import QuickAddVerratForm from '../../components/forms/QuickAddVerratForm';
 import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
@@ -123,15 +124,14 @@ const TroupeauVerratsView: React.FC<TroupeauVerratsViewProps> = ({ searchText, s
     <div className="flex flex-col gap-5">
       {/* ── CTA primaire : ajouter un verrat ──────────────────── */}
       <div className="flex items-center justify-end">
-        <button
-          type="button"
+        <Button
+          variant="primary"
           onClick={() => setAddOpen(true)}
-          aria-label="Ajouter un verrat"
-          className="pressable inline-flex items-center gap-2 h-10 px-4 rounded-full bg-accent text-bg-0 text-[12px] font-medium uppercase tracking-wide shadow-sm hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-opacity"
+          ariaLabel="Ajouter un verrat"
         >
           <Plus size={15} aria-hidden="true" />
           Ajouter un verrat
-        </button>
+        </Button>
       </div>
 
       {/* ── Summary strip ──────────────────────────────────────── */}
@@ -317,18 +317,19 @@ const VerratCard: React.FC<VerratCardProps> = ({
         className="!border-b-0"
       />
       <div className="px-4 pb-3 pt-0">
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          fullWidth
           onClick={(e) => {
             e.stopPropagation();
             onSaillieClick();
           }}
-          aria-label={`Saisir une saillie avec le verrat ${displayId}`}
-          className="pressable w-full inline-flex items-center justify-center gap-2 h-10 rounded-md border border-border bg-bg-1 text-text-1 hover:border-accent hover:text-accent text-[11px] uppercase tracking-wide transition-colors duration-[160ms] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+          ariaLabel={`Saisir une saillie avec le verrat ${displayId}`}
+          className="!rounded-md"
         >
           <Heart size={14} aria-hidden="true" />
           Saisir saillie avec ce verrat
-        </button>
+        </Button>
       </div>
     </div>
   );

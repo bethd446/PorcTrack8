@@ -5,6 +5,7 @@ import { Home, Plus } from 'lucide-react';
 import Eyebrow from '../../components/design/Eyebrow';
 import EmptyState from '../../components/design/EmptyState';
 import { AnimalListItem, type ChipTone } from '../../components/agritech';
+import { Button } from '@/design-system';
 import QuickAddLogeForm from '../../components/forms/QuickAddLogeForm';
 
 import { listLoges, getLogeContents } from '../../services/supabaseWrites';
@@ -127,15 +128,10 @@ const TroupeauLogesListView: React.FC = () => {
             Référentiel des emplacements physiques.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setAddOpen(true)}
-          aria-label="Ajouter une nouvelle loge"
-          className="pressable inline-flex items-center gap-2 h-10 px-4 rounded-full bg-accent text-bg-0 text-[12px] font-medium uppercase tracking-wide shadow-sm hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 transition-opacity"
-        >
+        <Button variant="primary" onClick={() => setAddOpen(true)} ariaLabel="Ajouter une nouvelle loge">
           <Plus size={14} aria-hidden="true" />
           Nouvelle loge
-        </button>
+        </Button>
       </div>
 
       {/* ── Filtres par type ──────────────────────────────────────────── */}
@@ -147,21 +143,16 @@ const TroupeauLogesListView: React.FC = () => {
         {FILTER_OPTIONS.map((opt) => {
           const active = filter === opt.value;
           return (
-            <button
+            <Button
               key={opt.value}
-              type="button"
+              variant={active ? 'primary' : 'secondary'}
+              size="small"
               role="tab"
               aria-selected={active}
               onClick={() => setFilter(opt.value)}
-              className={[
-                'pressable h-8 px-3 rounded-full text-[11px] font-semibold uppercase tracking-wide transition-colors',
-                active
-                  ? 'bg-accent text-bg-0'
-                  : 'bg-bg-1 border border-border text-text-1 hover:bg-bg-2',
-              ].join(' ')}
             >
               {opt.label}
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -186,14 +177,10 @@ const TroupeauLogesListView: React.FC = () => {
           title="Aucune loge configurée"
           description="Configure tes loges pour activer le suivi des occupations et des mouvements."
           action={
-            <button
-              type="button"
-              onClick={() => setAddOpen(true)}
-              className="pressable inline-flex items-center gap-2 h-11 px-5 rounded-full bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-            >
+            <Button variant="primary" onClick={() => setAddOpen(true)}>
               <Plus size={14} aria-hidden="true" />
               Créer la première loge
-            </button>
+            </Button>
           }
         />
       ) : filtered.length === 0 ? (
