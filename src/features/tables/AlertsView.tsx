@@ -1,8 +1,8 @@
 /**
  * AlertsView — Refonte v6 « Terrain Vivant » (2026-04-30)
  * ══════════════════════════════════════════════════════════════════
- * Light surface (--bg-app), tokens v6, KpiCard sparklines, Eyebrow,
- * TopBarSync, TimelineVerticale-like row markers.
+ * Light surface (--bg-app), tokens v6, KpiCard sparklines, Section DS,
+ * TopBarSync, TimelineVerticale-like row markers. V44 — élimination Eyebrow legacy.
  *
  * Logique métier préservée :
  *   - useFarm/usePilotage/useMeta inchangés
@@ -31,11 +31,10 @@ import { useTroupeau } from '../../context/TroupeauContext';
 import { resolveAlertSubject, isAlertSubjectOrphan } from '../../utils/alertSubject';
 import AgritechLayout from '../../components/AgritechLayout';
 import KpiCardV6 from '../../components/design/KpiCard';
-import Eyebrow from '../../components/design/Eyebrow';
 import EmptyState from '../../components/design/EmptyState';
 import TopBarSync from '../../components/design/TopBarSync';
 import AlertCard from '../../components/agritech/AlertCard';
-import { Button, PageHeader } from '@/design-system';
+import { Button, PageHeader, Section } from '@/design-system';
 import { type FarmAlert, type AlertPriority, type AlertCategory } from '../../services/alertEngine';
 import { dismissAlert } from '../../services/alertDismissals';
 import { getPendingConfirmations, type PendingConfirmation } from '../../services/confirmationQueue';
@@ -764,9 +763,7 @@ const AlertsView: React.FC = () => {
             {/* ── Section Serveur ───────────────────────────────────── */}
             {alertesServeur.length > 0 && (
               <section aria-label="Alertes serveur">
-                <Eyebrow dotColor="terre">
-                  Serveur · {alertesServeur.length}
-                </Eyebrow>
+                <Section label={`SERVEUR · ${alertesServeur.length}`} />
                 <ul
                   style={{
                     listStyle: 'none',
@@ -809,8 +806,10 @@ const AlertsView: React.FC = () => {
             {/* ── Section Locales ───────────────────────────────────── */}
             {alerts.length > 0 && (
               <section aria-label="Alertes locales GTTT">
-                <Eyebrow dotColor="accent">
-                  Locales · {filteredAlerts.length}
+                <div className="flex items-center gap-2">
+                  <div style={{ flex: 1 }}>
+                    <Section label={`LOCALES · ${filteredAlerts.length}`} variant="accent" />
+                  </div>
                   {activeFilter !== 'ALL' && (
                     <Button
                       type="button"
@@ -818,7 +817,6 @@ const AlertsView: React.FC = () => {
                       size="small"
                       onClick={() => setActiveFilter('ALL')}
                       style={{
-                        marginLeft: 8,
                         background: 'none',
                         border: 'none',
                         color: 'var(--color-accent-500)',
@@ -828,12 +826,13 @@ const AlertsView: React.FC = () => {
                         textTransform: 'uppercase',
                         cursor: 'pointer',
                         padding: 0,
+                        flexShrink: 0,
                       }}
                     >
                       Effacer filtre
                     </Button>
                   )}
-                </Eyebrow>
+                </div>
                 {filteredAlerts.length === 0 ? (
                   <div
                     style={{
@@ -963,9 +962,7 @@ const AlertsView: React.FC = () => {
             {/* ── En attente de confirmation ────────────────────────── */}
             {pendingConfirmations.length > 0 && (
               <section aria-label="Actions en attente de confirmation">
-                <Eyebrow dotColor="amber">
-                  En attente · {pendingConfirmations.length}
-                </Eyebrow>
+                <Section label={`EN ATTENTE · ${pendingConfirmations.length}`} />
                 <ul
                   style={{
                     listStyle: 'none',
