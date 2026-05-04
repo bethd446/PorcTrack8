@@ -9,6 +9,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
 
 import { BottomSheet } from '../agritech';
+import { FormField, Input, Button } from '@/design-system';
 import type { PendingConfirmation } from '../../services/confirmationQueue';
 import { setBandePoidsInitial } from '../../services/supabaseWrites';
 import { useConfirmFlow } from './useConfirmFlow';
@@ -98,55 +99,48 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
             </p>
           </div>
 
-          <div className="space-y-2">
-            <label htmlFor="sevrage-date" className="block text-[11px] uppercase text-text-2">
-              Date de sevrage réelle
-            </label>
-            <input
+          <FormField label="Date de sevrage réelle">
+            <Input
               id="sevrage-date"
               type="date"
-              className="w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 font-mono text-[13px] tabular-nums"
+              aria-label="Date de sevrage réelle"
+              className="font-mono tabular-nums"
               value={dateSevrage}
               onChange={e => setDateSevrage(e.target.value)}
               max={todayIso()}
             />
-          </div>
+          </FormField>
 
-          <div className="space-y-2">
-            <label htmlFor="sevrage-nb" className="block text-[11px] uppercase text-text-2">
-              Nombre de porcelets sevrés
-            </label>
-            <input
+          <FormField
+            label="Nombre de porcelets sevrés"
+            hint={`Suggéré : ${sevresDefault} porcelet(s) sous mère`}
+          >
+            <Input
               id="sevrage-nb"
               type="number"
+              aria-label="Nombre de porcelets sevrés"
               min={0}
-              className="w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 text-[13px]"
               value={nbSevres}
               onChange={e => setNbSevres(Math.max(0, Number(e.target.value) || 0))}
             />
-            <span className="block text-[11px] text-text-2">
-              Suggéré : {sevresDefault} porcelet(s) sous mère
-            </span>
-          </div>
+          </FormField>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <label htmlFor="sevrage-poids" className="block text-[11px] uppercase text-text-2">
-                Poids moyen sevrage (kg) <span className="text-red normal-case">· obligatoire</span>
-              </label>
-              <span className="inline-flex items-center px-2 h-6 rounded-full bg-bg-2 border border-border text-mono-micro text-text-1">
-                5-7 kg cible
-              </span>
-            </div>
-            <input
+          <FormField
+            label="Poids moyen sevrage (kg)"
+            required
+            hint="5-7 kg cible"
+            error={poidsError}
+          >
+            <Input
               id="sevrage-poids"
               type="number"
               inputMode="decimal"
+              aria-label="Poids moyen sevrage"
               step={0.1}
               min={0.5}
               max={50}
               aria-required="true"
-              className="w-full h-12 rounded-md px-3 bg-bg-0 border text-text-0 text-[13px] tabular-nums"
+              className="tabular-nums"
               value={poidsKg}
               onChange={e => setPoidsKg(e.target.value)}
               placeholder="6.0"
@@ -158,7 +152,7 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
                 return (
                   <span
                     role="status"
-                    className="inline-flex items-center px-2 h-6 rounded-full bg-amber-100 border border-amber-300 text-mono-micro text-amber-900"
+                    className="mt-2 inline-flex items-center px-2 h-6 rounded-full bg-amber-100 border border-amber-300 text-mono-micro text-amber-900"
                   >
                     Hors plage cible 5-7 kg
                   </span>
@@ -166,10 +160,7 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
               }
               return null;
             })()}
-            {poidsError && (
-              <p role="alert" className="text-[11px] text-red">{poidsError}</p>
-            )}
-          </div>
+          </FormField>
 
           {error && (
             <p role="alert" className="text-[11px] text-red">
@@ -177,16 +168,16 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
             </p>
           )}
 
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            fullWidth
             onClick={handleConfirm}
             disabled={saving || !poidsKg}
             aria-busy={saving}
-            aria-label="Confirmer le sevrage"
-            className="pressable w-full h-14 rounded-md bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide disabled:opacity-40 disabled:cursor-not-allowed"
+            ariaLabel="Confirmer le sevrage"
           >
             {saving ? 'Enregistrement…' : 'Confirmer le sevrage'}
-          </button>
+          </Button>
         </div>
       </BottomSheet>
 
