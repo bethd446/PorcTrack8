@@ -299,12 +299,13 @@ describe('QuickMortalityForm · contrats UI (source-grep)', () => {
     expect(SRC).toMatch(/bandesDispo\.length\s*===\s*0/);
   });
 
-  it('utilise IonSelect (pas un <select> natif, bugué sur Android Capacitor)', () => {
-    // Sur Android, <select> natif dans un IonModal avec breakpoints peut ne
-    // pas s'ouvrir correctement à cause des transforms. IonSelect avec
-    // interface="popover" est la solution éprouvée (cf. QuickHealthForm).
-    expect(SRC).toMatch(/<IonSelect\b/);
-    expect(SRC).toMatch(/interface="popover"/);
-    expect(SRC).not.toMatch(/<select\s/);
+  it('V44 archétype 5 : utilise Select + Segment + FormField DS (0 IonSelect/IonSegment)', () => {
+    // Migration V44 : 0 Ionic UI primitives — DS V2 uniquement.
+    expect(SRC).not.toMatch(/<IonSelect\b/);
+    expect(SRC).not.toMatch(/<IonSegment\b/);
+    expect(SRC).not.toMatch(/<IonToast\b/);
+    expect(SRC).toMatch(/<Select\b/);
+    expect(SRC).toMatch(/<Segment\b/);
+    expect(SRC).toMatch(/<FormField\b/);
   });
 });
