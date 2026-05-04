@@ -31,12 +31,19 @@ else
 fi
 echo ""
 
-# CHECK 2 — Aucun bouton natif <button (hors pt-btn et design-system)
+# CHECK 2 — Aucun bouton natif <button (hors pt-btn, design-system, tests, commentaires)
+# V43-B-bis-final : exclusions complétées
+#   - *.test.tsx / *.test.ts / __tests__ : faux positifs (mocks Ionic, etc.)
+#   - lignes commençant par // ou /* ou * : commentaires JS qui mentionnent <button> en doc
 echo "CHECK 2 : Boutons natifs <button"
 MATCHES=$(grep -rn '<button' "$SRC" --include="*.tsx" \
+  --exclude='*.test.tsx' \
+  --exclude='*.test.ts' \
+  --exclude-dir='__tests__' \
   | grep -v 'pt-btn' \
   | grep -v 'design-system' \
   | grep -v 'design-system-v29' \
+  | grep -vE '^[^:]+:[0-9]+:\s*(//|/\*|\*[^/])' \
   || true)
 if [ -n "$MATCHES" ]; then
   echo "✗  Bouton(s) natif(s) trouvé(s) — utiliser <Button> du DS :"
