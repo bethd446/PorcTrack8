@@ -619,7 +619,7 @@ export const SettingsPage: React.FC = () => {
                     fontWeight: 600,
                   }}
                 >
-                  PorcTrack v29 · build <span style={{ fontFamily: 'var(--pt-font-mono)' }}>{APP_VERSION}</span>
+                  PorcTrack v43 · build <span style={{ fontFamily: 'var(--pt-font-mono)' }}>{APP_VERSION}</span>
                 </span>
               </div>
             </SettingsSection>

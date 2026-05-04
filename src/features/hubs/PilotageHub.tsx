@@ -263,7 +263,7 @@ const PilotageHub: React.FC = () => {
               }}
             >
               <Eyebrow dotColor={margeNegative ? 'pig' : 'accent'} withRule={false}>
-                Marge globale estimée · cheptel actif
+                Marge globale estimée · élevage actif
               </Eyebrow>
               <div
                 className="text-display-lg"
@@ -316,7 +316,7 @@ const PilotageHub: React.FC = () => {
               className="grid grid-cols-2 gap-[10px] sm:grid-cols-4"
             >
               <KpiCardV6
-                label="Valeur cheptel"
+                label="Valeur élevage"
                 value={formatNumber(totalRevenuProjete)}
                 unit={currencyUnit(currency)}
                 trend={buildTrend(revenuDelta, 'Revenus projetés')}
