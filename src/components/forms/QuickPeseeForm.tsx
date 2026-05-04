@@ -13,6 +13,7 @@ import {
 } from '../../services/supabaseWrites';
 import { safeDate } from '../../lib/truieHelpers';
 import { BottomSheet, DataRow } from '../agritech';
+import { Button } from '@/design-system';
 import type { BandePorcelets, Truie, Verrat } from '../../types/farm';
 import { extractPeseesForBande } from '../../services/growthAnalyzer';
 import { markPeseeEffectuee } from '../../services/peseePlanifieesService';
@@ -515,7 +516,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
           <Form {...form}>
             <form onSubmit={onSubmit} className="space-y-5">
               <div className="card-dense !p-3 flex items-center gap-3">
-                <button type="button" onClick={() => setStep(1)} className="pressable h-9 w-9 flex items-center justify-center rounded-md bg-bg-2 text-text-1"><ArrowLeft size={14} /></button>
+                <Button type="button" variant="ghost" size="small" onClick={() => setStep(1)} className="pressable h-9 w-9 flex items-center justify-center rounded-md bg-bg-2 text-text-1"><ArrowLeft size={14} /></Button>
                 <div className="min-w-0 flex-1">
                   <div className="text-[10px] uppercase text-text-2">{subjectType}</div>
                   <div className="truncate ft-code text-[13px] text-text-0">{subjectDisplay(selectedSubject)}</div>
@@ -627,8 +628,8 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
               />
 
               <div className="flex gap-2 pt-2">
-                <button type="button" onClick={handleClose} className="pressable flex-1 h-14 rounded-md bg-bg-1 border text-text-1 text-[12px] uppercase font-bold">Annuler</button>
-                <button type="submit" disabled={saving} className="pressable flex-[2] h-14 rounded-md bg-accent text-bg-0 text-[13px] uppercase font-bold">{saving ? 'Enregistrement…' : 'Enregistrer'}</button>
+                <Button type="button" variant="secondary" onClick={handleClose} className="pressable flex-1 h-14 rounded-md bg-bg-1 border text-text-1 text-[12px] uppercase font-bold">Annuler</Button>
+                <Button type="submit" variant="primary" disabled={saving} className="pressable flex-[2] h-14 rounded-md bg-accent text-bg-0 text-[13px] uppercase font-bold">{saving ? 'Enregistrement…' : 'Enregistrer'}</Button>
               </div>
             </form>
           </Form>
@@ -638,14 +639,16 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
         {step === 3 && selectedSubject && recapStats && (
           <div data-testid="pesee-recap" className="space-y-4">
             <div className="card-dense !p-3 flex items-center gap-3">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="small"
                 onClick={() => setStep(2)}
                 className="pressable h-9 w-9 flex items-center justify-center rounded-md bg-bg-2 text-text-1"
                 aria-label="Retour à la saisie"
               >
                 <ArrowLeft size={14} />
-              </button>
+              </Button>
               <div className="min-w-0 flex-1">
                 <div className="text-[10px] uppercase text-text-2">Récapitulatif · {subjectType}</div>
                 <div className="truncate ft-code text-[13px] text-text-0">{subjectDisplay(selectedSubject)}</div>
@@ -716,21 +719,23 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
             )}
 
             <div className="flex gap-2 pt-2">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={() => setStep(2)}
                 className="pressable flex-1 h-14 rounded-md bg-bg-1 border text-text-1 text-[12px] uppercase font-bold"
               >
                 Modifier
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="primary"
                 onClick={() => { void handleConfirmRecap(); }}
                 disabled={saving}
                 className="pressable flex-[2] h-14 rounded-md bg-accent text-bg-0 text-[13px] uppercase font-bold"
               >
                 {saving ? 'Enregistrement…' : 'Confirmer le nouveau poids'}
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -741,7 +746,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
             <CheckCircle2 size={64} className="text-accent mb-4" strokeWidth={1.5} />
             <p className="agritech-heading text-[18px] uppercase">Pesée enregistrée</p>
             {successSummary && <p className="mt-2 text-[12px] text-text-2 text-center px-4">{successSummary}</p>}
-            <button type="button" onClick={handleClose} className="pressable mt-8 h-12 px-8 rounded-md bg-accent text-bg-0 text-[12px] font-bold uppercase">OK</button>
+            <Button type="button" variant="primary" onClick={handleClose} className="pressable mt-8 h-12 px-8 rounded-md bg-accent text-bg-0 text-[12px] font-bold uppercase">OK</Button>
           </div>
         )}
       </div>
