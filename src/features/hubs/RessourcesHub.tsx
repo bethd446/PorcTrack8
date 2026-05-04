@@ -28,7 +28,7 @@ import {
   toRefillItem,
   type RefillStockItem,
 } from '../../components/forms/quickRefillLogic';
-import { Button } from '@/design-system';
+import { Button, PageHeader } from '@/design-system';
 import QuickEditStockForm from '../../components/forms/QuickEditStockForm';
 import type { StockKind } from '../../components/forms/quickEditStockLogic';
 import { useFarm, useMeta } from '../../context/FarmContext';
@@ -239,24 +239,11 @@ const RessourcesHub: React.FC = () => {
           />
 
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            {/* ── En-tête ───────────────────────────────────────────── */}
-            <header>
-              <Eyebrow dotColor="amber">Inventaire · Approvisionnement</Eyebrow>
-              <h1
-                className="text-page-title"
-                style={{ margin: '8px 0 4px' }}
-              >
-                Ressources
-              </h1>
-              <div
-                className="text-body"
-                style={{ color: 'var(--muted)' }}
-              >
-                {stats.total === 0
-                  ? 'Aucune référence suivie'
-                  : `${stats.total} référence${stats.total > 1 ? 's' : ''} suivie${stats.total > 1 ? 's' : ''}`} · {stockAliment.length} aliments · {stockVeto.length} produits véto
-              </div>
-            </header>
+            <PageHeader
+              eyebrow="RESSOURCES"
+              title="Ressources"
+              subtitle="Aliments, pharmacie, fournisseurs"
+            />
 
             {isStockBasFilter && (
               <div
