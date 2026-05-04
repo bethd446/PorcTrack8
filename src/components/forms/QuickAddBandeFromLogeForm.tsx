@@ -19,6 +19,7 @@ import { IonToast } from '@ionic/react';
 import { ChevronLeft, ChevronRight, Save, Plus, Shuffle, X } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { Button, FormField, Input, Select } from '@/design-system';
 import {
   addBatchSource,
   insertBatch,
@@ -419,18 +420,6 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
 
   // ─── UI helpers ──────────────────────────────────────────────────────────
 
-  const inputBase = (hasError: boolean): string =>
-    [
-      'w-full h-12 rounded-md px-3',
-      'bg-bg-0 border text-text-0 placeholder:text-text-2',
-      'text-[14px]',
-      'outline-none transition-colors duration-[160ms]',
-      'focus:border-accent focus:ring-1 focus:ring-accent',
-      hasError ? 'border-red' : 'border-border hover:border-text-2',
-    ].join(' ');
-
-  const labelCls = 'block text-mono-label text-text-2';
-
   const titleByStep: Record<Step, string> = {
     1: 'Choisir une loge',
     2: 'Effectif et poids',
@@ -519,11 +508,12 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                 >
                   {availableLoges.map(l => (
                     <li key={l.id}>
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
                         onClick={() => goStep2(l.id)}
                         className="pressable w-full flex items-center justify-between gap-3 px-3 py-3 text-left hover:bg-bg-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-[-2px]"
-                        aria-label={`Sélectionner ${logeNumeroPrefixed(l)}`}
+                        ariaLabel={`Sélectionner ${logeNumeroPrefixed(l)}`}
                         data-testid={`loge-option-${l.id}`}
                       >
                         <div className="flex flex-col min-w-0">
@@ -539,7 +529,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                           </span>
                         </div>
                         <ChevronRight size={16} className="text-text-2 shrink-0" />
-                      </button>
+                      </Button>
                     </li>
                   ))}
                 </ul>
@@ -574,11 +564,8 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
               )}
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label htmlFor="qabfl-effectif" className={labelCls}>
-                    Porcelets <span className="text-red normal-case">·</span>
-                  </label>
-                  <input
+                <FormField label="Porcelets" required error={errors.effectif}>
+                  <Input
                     id="qabfl-effectif"
                     type="number"
                     inputMode="numeric"
@@ -586,29 +573,15 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                     max={200}
                     step={1}
                     aria-required="true"
-                    aria-invalid={!!errors.effectif}
-                    aria-describedby={errors.effectif ? 'qabfl-effectif-err' : undefined}
-                    className={inputBase(!!errors.effectif)}
+                    invalid={!!errors.effectif}
                     placeholder="Ex: 24"
                     value={effectif}
                     onChange={e => setEffectif(e.target.value)}
                   />
-                  {errors.effectif ? (
-                    <p
-                      id="qabfl-effectif-err"
-                      role="alert"
-                      className="text-[11px] text-red"
-                    >
-                      {errors.effectif}
-                    </p>
-                  ) : null}
-                </div>
+                </FormField>
 
-                <div className="space-y-1.5">
-                  <label htmlFor="qabfl-poids" className={labelCls}>
-                    Poids moyen kg <span className="text-red normal-case">·</span>
-                  </label>
-                  <input
+                <FormField label="Poids moyen kg" required error={errors.poidsMoyenKg}>
+                  <Input
                     id="qabfl-poids"
                     type="number"
                     inputMode="decimal"
@@ -616,69 +589,46 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                     max={200}
                     step={0.1}
                     aria-required="true"
-                    aria-invalid={!!errors.poidsMoyenKg}
-                    aria-describedby={errors.poidsMoyenKg ? 'qabfl-poids-err' : undefined}
-                    className={inputBase(!!errors.poidsMoyenKg)}
+                    invalid={!!errors.poidsMoyenKg}
                     placeholder="Ex: 18.5"
                     value={poidsMoyenKg}
                     onChange={e => setPoidsMoyenKg(e.target.value)}
                   />
-                  {errors.poidsMoyenKg ? (
-                    <p
-                      id="qabfl-poids-err"
-                      role="alert"
-                      className="text-[11px] text-red"
-                    >
-                      {errors.poidsMoyenKg}
-                    </p>
-                  ) : null}
-                </div>
+                </FormField>
               </div>
 
-              <div className="space-y-1.5">
-                <label htmlFor="qabfl-date" className={labelCls}>
-                  Date d'entrée loge
-                </label>
-                <input
+              <FormField label="Date d'entrée loge" error={errors.dateEntree}>
+                <Input
                   id="qabfl-date"
                   type="date"
-                  aria-invalid={!!errors.dateEntree}
-                  aria-describedby={errors.dateEntree ? 'qabfl-date-err' : undefined}
-                  className={inputBase(!!errors.dateEntree)}
+                  invalid={!!errors.dateEntree}
                   value={dateEntree}
                   onChange={e => setDateEntree(e.target.value)}
                 />
-                {errors.dateEntree ? (
-                  <p
-                    id="qabfl-date-err"
-                    role="alert"
-                    className="text-[11px] text-red"
-                  >
-                    {errors.dateEntree}
-                  </p>
-                ) : null}
-              </div>
+              </FormField>
 
               <div className="flex items-center gap-2 pt-2">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setStep(1)}
                   className="pressable flex-1 h-12 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
-                  aria-label="Retour à la sélection de loge"
+                  ariaLabel="Retour à la sélection de loge"
                 >
                   <ChevronLeft size={14} aria-hidden="true" />
                   Retour
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="primary"
                   onClick={goStep3}
                   className="pressable flex-[2] h-12 rounded-md inline-flex items-center justify-center gap-2 bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide hover:brightness-110"
-                  aria-label="Étape suivante : âge"
+                  ariaLabel="Étape suivante : âge"
                   data-testid="step-2-next"
                 >
                   Suivant
                   <ChevronRight size={14} aria-hidden="true" />
-                </button>
+                </Button>
               </div>
             </section>
           )}
@@ -698,14 +648,10 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                 <span className="ft-code">"2 mois 1 semaine"</span>.
               </p>
 
-              <div className="space-y-1.5">
-                <label htmlFor="qabfl-age" className={labelCls}>
-                  Âge des porcelets
-                </label>
-                <input
+              <FormField label="Âge des porcelets">
+                <Input
                   id="qabfl-age"
                   type="text"
-                  className={inputBase(false)}
                   placeholder="Ex: 1 mois, 30j, 3 sem"
                   value={ageText}
                   disabled={ageInconnu}
@@ -714,7 +660,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                   autoComplete="off"
                 />
                 <div
-                  className="text-[11px] tabular-nums"
+                  className="text-[11px] tabular-nums mt-1"
                   aria-live="polite"
                   data-testid="age-live-indicator"
                 >
@@ -731,7 +677,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                     </span>
                   )}
                 </div>
-              </div>
+              </FormField>
 
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input
@@ -747,25 +693,27 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
               </label>
 
               <div className="flex items-center gap-2 pt-2">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setStep(2)}
                   className="pressable flex-1 h-12 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
-                  aria-label="Retour à l'effectif"
+                  ariaLabel="Retour à l'effectif"
                 >
                   <ChevronLeft size={14} aria-hidden="true" />
                   Retour
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="primary"
                   onClick={goStep4}
                   className="pressable flex-[2] h-12 rounded-md inline-flex items-center justify-center gap-2 bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide hover:brightness-110"
-                  aria-label="Étape suivante : génétique"
+                  ariaLabel="Étape suivante : génétique"
                   data-testid="step-3-next"
                 >
                   Suivant
                   <ChevronRight size={14} aria-hidden="true" />
-                </button>
+                </Button>
               </div>
             </section>
           )}
@@ -783,13 +731,9 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
               </p>
 
               {/* Truie mère */}
-              <div className="space-y-1.5">
-                <label htmlFor="qabfl-truie" className={labelCls}>
-                  Truie mère <span className="text-text-2 normal-case">· optionnel</span>
-                </label>
-                <select
+              <FormField label="Truie mère" hint="optionnel">
+                <Select
                   id="qabfl-truie"
-                  className={inputBase(false)}
                   value={truieMereId}
                   onChange={e => setTruieMereId(e.target.value)}
                   data-testid="truie-select"
@@ -802,40 +746,38 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                       {t.boucle ? ` (${t.boucle})` : ''}
                     </option>
                   ))}
-                </select>
+                </Select>
                 <div className="flex gap-2 pt-1">
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
                     onClick={pickRandomTruie}
                     disabled={truies.length === 0}
                     className="pressable inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 h-8 text-[10px] uppercase tracking-wide text-text-1 hover:border-accent hover:text-accent disabled:opacity-40"
-                    aria-label="Choisir une truie au hasard"
+                    ariaLabel="Choisir une truie au hasard"
                     data-testid="truie-random"
                   >
                     <Shuffle size={11} aria-hidden="true" />
                     Aléatoire
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="secondary"
                     onClick={() => setTruieMereId('')}
                     className="pressable inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 h-8 text-[10px] uppercase tracking-wide text-text-1 hover:border-text-2"
-                    aria-label="Ne pas renseigner la truie"
+                    ariaLabel="Ne pas renseigner la truie"
                     data-testid="truie-clear"
                   >
                     <X size={11} aria-hidden="true" />
                     Ne pas renseigner
-                  </button>
+                  </Button>
                 </div>
-              </div>
+              </FormField>
 
               {/* Verrat père */}
-              <div className="space-y-1.5">
-                <label htmlFor="qabfl-verrat" className={labelCls}>
-                  Verrat père <span className="text-text-2 normal-case">· optionnel</span>
-                </label>
-                <select
+              <FormField label="Verrat père" hint="optionnel">
+                <Select
                   id="qabfl-verrat"
-                  className={inputBase(false)}
                   value={verratPereId}
                   onChange={e => setVerratPereId(e.target.value)}
                   data-testid="verrat-select"
@@ -847,52 +789,56 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                       {v.nom ? ` · ${v.nom}` : ''}
                     </option>
                   ))}
-                </select>
+                </Select>
                 <div className="flex gap-2 pt-1">
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
                     onClick={pickRandomVerrat}
                     disabled={verrats.length === 0}
                     className="pressable inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 h-8 text-[10px] uppercase tracking-wide text-text-1 hover:border-accent hover:text-accent disabled:opacity-40"
-                    aria-label="Choisir un verrat au hasard"
+                    ariaLabel="Choisir un verrat au hasard"
                     data-testid="verrat-random"
                   >
                     <Shuffle size={11} aria-hidden="true" />
                     Aléatoire
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="secondary"
                     onClick={() => setVerratPereId('')}
                     className="pressable inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 h-8 text-[10px] uppercase tracking-wide text-text-1 hover:border-text-2"
-                    aria-label="Ne pas renseigner le verrat"
+                    ariaLabel="Ne pas renseigner le verrat"
                     data-testid="verrat-clear"
                   >
                     <X size={11} aria-hidden="true" />
                     Ne pas renseigner
-                  </button>
+                  </Button>
                 </div>
-              </div>
+              </FormField>
 
               <div className="flex items-center gap-2 pt-2">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setStep(3)}
                   className="pressable flex-1 h-12 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
-                  aria-label="Retour à l'âge"
+                  ariaLabel="Retour à l'âge"
                 >
                   <ChevronLeft size={14} aria-hidden="true" />
                   Retour
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="primary"
                   onClick={goStep5}
                   className="pressable flex-[2] h-12 rounded-md inline-flex items-center justify-center gap-2 bg-accent text-bg-0 text-[12px] font-bold uppercase tracking-wide hover:brightness-110"
-                  aria-label="Étape suivante : récap"
+                  ariaLabel="Étape suivante : récap"
                   data-testid="step-4-next"
                 >
                   Suivant
                   <ChevronRight size={14} aria-hidden="true" />
-                </button>
+                </Button>
               </div>
             </section>
           )}
@@ -960,22 +906,24 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
               </div>
 
               <div className="flex items-center gap-2 pt-2">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setStep(4)}
                   disabled={saving}
                   className="pressable flex-1 h-14 rounded-md inline-flex items-center justify-center gap-2 bg-bg-1 border border-border text-text-1 text-[12px] font-bold uppercase tracking-wide hover:border-text-2"
-                  aria-label="Retour à la génétique"
+                  ariaLabel="Retour à la génétique"
                 >
                   <ChevronLeft size={14} aria-hidden="true" />
                   Retour
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
+                  variant="primary"
                   disabled={saving}
                   aria-busy={saving}
                   className="pressable flex-[2] h-14 rounded-md inline-flex items-center justify-center gap-2 bg-accent text-bg-0 text-[13px] font-bold uppercase tracking-wide hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
-                  aria-label={isEditMode ? 'Valider la bande' : 'Créer la bande'}
+                  ariaLabel={isEditMode ? 'Valider la bande' : 'Créer la bande'}
                   data-testid="step-5-submit"
                 >
                   {saving ? (
@@ -987,7 +935,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
                       <Save size={14} aria-hidden="true" />
                     </>
                   )}
-                </button>
+                </Button>
               </div>
             </section>
           )}
