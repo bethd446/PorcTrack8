@@ -647,7 +647,7 @@ const AlertsView: React.FC = () => {
           </IonRefresher>
 
           <TopBarSync
-            crumbs={['Pilotage', 'Alertes']}
+            crumbs={[{ label: 'Outils', href: '/outils' }, 'Alertes']}
             onMariusClick={() => {
               const evt = new CustomEvent('open-chatbot');
               window.dispatchEvent(evt);
@@ -657,7 +657,7 @@ const AlertsView: React.FC = () => {
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
             {/* ── En-tête ───────────────────────────────────────────── */}
             <PageHeader
-              eyebrow="Tables · Alertes"
+              eyebrow="Outils · Alertes"
               title="Alertes"
               subtitle="Suivi des alertes en cours"
             />

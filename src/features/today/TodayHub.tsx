@@ -132,10 +132,14 @@ const TodayHub: React.FC = () => {
 
   // ── Confirmations en attente (file persistante) ───────────────────────
   const [pendingConfirmations, setPendingConfirmations] = useState<PendingConfirmation[]>([]);
+  const [confirmsLoaded, setConfirmsLoaded] = useState(false);
   useEffect(() => {
     let cancelled = false;
     void getPendingConfirmations().then((items) => {
-      if (!cancelled) setPendingConfirmations(items);
+      if (!cancelled) {
+        setPendingConfirmations(items);
+        setConfirmsLoaded(true);
+      }
     });
     return () => {
       cancelled = true;
@@ -463,7 +467,7 @@ const TodayHub: React.FC = () => {
     useState<PendingConfirmation | null>(null);
 
   // ── V25 — Pesées planifiées en attente ──────────────────────────────
-  const { pesees: peseesPending, refresh: refreshPesees } = usePeseePending();
+  const { pesees: peseesPending, loading: peseesLoading, refresh: refreshPesees } = usePeseePending();
   const [peseeForm, setPeseeForm] = useState<{ pesee: PeseePlanifiee; subject: BandePorcelets } | null>(null);
 
   const handlePhaseModalConfirm = useCallback(
@@ -694,6 +698,8 @@ const TodayHub: React.FC = () => {
             )}
 
             {/* ── Aussi à traiter ────────────────────────────────────── */}
+            {/* min-height réservé pendant le chargement des confirmations pour éviter CLS */}
+            <div style={{ minHeight: !confirmsLoaded ? 80 : undefined }}>
             {aussiATraiter.length > 0 && (
               <section aria-label="Aussi à traiter">
                 <Section label="Aussi à traiter" tone="accent" />
@@ -759,8 +765,11 @@ const TodayHub: React.FC = () => {
                 </ul>
               </section>
             )}
+            </div>
 
             {/* ── Pesées prévues (V25) ──────────────────────────────── */}
+            {/* min-height réservé pendant le chargement async pour éviter CLS */}
+            <div style={{ minHeight: peseesLoading ? 80 : undefined }}>
             {peseesPending.length > 0 && (
               <section aria-label="Pesées prévues">
                 <Section label="Pesées prévues" tone="accent" />
@@ -825,6 +834,7 @@ const TodayHub: React.FC = () => {
                 </div>
               </section>
             )}
+            </div>
 
             {/* ── Ton élevage ────────────────────────────────────────── */}
             <section aria-label="Ton élevage">

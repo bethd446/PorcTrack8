@@ -114,7 +114,11 @@ const VerratDetailView: React.FC = () => {
         <IonContent fullscreen className="ion-no-padding">
           <AgritechLayout>
             <TopBarSync
-              crumbs={['Élevage', 'Verrats', decodedId]}
+              crumbs={[
+                { label: 'Élevage', href: '/troupeau' },
+                { label: 'Verrats', href: '/troupeau?view=verrats' },
+                decodedId,
+              ]}
               onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
             />
             <div
@@ -164,7 +168,11 @@ const VerratDetailView: React.FC = () => {
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
           <TopBarSync
-            crumbs={['Élevage', 'Verrats', displayId]}
+            crumbs={[
+              { label: 'Élevage', href: '/troupeau' },
+              { label: 'Verrats', href: '/troupeau?view=verrats' },
+              displayId,
+            ]}
             onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
           />
 

@@ -213,14 +213,20 @@ const TABS: NavTabDef[] = [
     path: '/troupeau',
     label: 'Élevage',
     Icon: PiggyBank,
-    match: ['/troupeau', '/cheptel', '/bandes'],
+    // V43.7 : retire /cheptel et /bandes (routes legacy n'existant plus,
+    // toutes les vues élevage passent par /troupeau et ses sous-routes).
+    match: ['/troupeau'],
   },
   {
     id: 'repro',
     path: REPRO_PATH,
     label: 'Repro',
     Icon: Heart,
-    match: ['/reproduction', '/cycles/repro', '/cycles/maternite'],
+    // V43.7 : ajout de /cycles en match racine pour que toutes les sous-vues
+    // (post-sevrage, croissance, finition, engraissement, sortie) restent
+    // rattachées au tab Repro. Le longest-prefix match préserve les sous-routes
+    // explicites.
+    match: ['/reproduction', '/cycles', '/cycles/repro', '/cycles/maternite'],
   },
   // V33 — Onglet Outils : tout ce qui était dans Plus mais qui est un outil
   // métier (alertes, audit, journal santé, protocoles, stocks, fournisseurs).
@@ -242,12 +248,13 @@ const TABS: NavTabDef[] = [
       '/fournisseurs',
     ],
   },
-  // V35 — Perf placé après Outils (PDF DS v2 brief). OWNER-only : si non-OWNER
-  // on tombe sur 5 onglets (Aujourd'hui / Élevage / Repro / Outils / Plus).
+  // V43.7 — Tab "Pilotage" (renommé depuis "Perf" pour aligner label/URL/h1).
+  // OWNER-only : si non-OWNER on tombe sur 5 onglets
+  // (Aujourd'hui / Élevage / Repro / Outils / Plus).
   {
     id: 'perf',
     path: '/pilotage',
-    label: 'Perf',
+    label: 'Pilotage',
     Icon: BarChart3,
     match: ['/pilotage'],
     ownerOnly: true,

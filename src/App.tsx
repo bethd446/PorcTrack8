@@ -57,8 +57,6 @@ const ChatbotWidget = React.lazy(() =>
 
 // Lazy loading — chaque écran dans son propre chunk pour réduire le bundle initial
 const TableView = React.lazy(() => import(/* webpackChunkName: "table-view" */ './features/tables/TableView'));
-// CheptelView retirée des routes (AUDIT-3). Conservée @deprecated dans
-// features/tables/CheptelView.tsx pour archive — plus aucun import.
 const ControleQuotidien = React.lazy(() => import(/* webpackChunkName: "controle" */ './features/controle/ControleQuotidien'));
 const ChecklistFlow = React.lazy(() => import(/* webpackChunkName: "checklist" */ './features/controle/ChecklistFlow'));
 const AuditView = React.lazy(() => import(/* webpackChunkName: "audit" */ './features/controle/AuditView'));
@@ -356,6 +354,8 @@ const AppShell: React.FC = () => (
       <Route path="/alerts" element={<AlertsView />} />
       <Route path="/alertes" element={<Navigate to="/alerts" replace />} />
       <Route path="/more" element={<SettingsPage />} />
+      {/* V43.7 : alias /plus pour cohérence avec le label de l'onglet "Plus". */}
+      <Route path="/plus" element={<Navigate to="/more" replace />} />
       <Route path="/outils" element={<OutilsView />} />
       <Route path="/aide" element={<AideView />} />
       <Route path="/design-system" element={<DesignSystemView />} />
@@ -376,21 +376,18 @@ const AppShell: React.FC = () => (
         }
       />
 
-      {/* Troupeau sub-routes */}
+      {/* Troupeau sub-routes — toutes les vues legacy redirigent vers le hub
+          unifié TroupeauHub (V43 a remplacé CheptelView et BandesView par les
+          tabs internes du hub). */}
       <Route path="/troupeau/truies" element={<TroupeauTruiesRedirect />} />
-      {/* AUDIT-3 : redirige vers le hub unifié TroupeauHub onglet VERRATS
-          pour cohérence visuelle (CheptelView legacy a un layout différent
-          des autres tabs cheptel). CheptelView reste @deprecated. */}
       <Route path="/troupeau/verrats" element={<Navigate to="/troupeau?view=verrats" replace />} />
       <Route path="/troupeau/truies/:id" element={<TruieDetailView />} />
       <Route path="/troupeau/verrats/:id" element={<VerratDetailView />} />
-      {/* Route legacy /troupeau/bandes : la vue Sheets BandesView est cassée
-          (config colonne Portée). On redirige vers le hub TROUPEAU onglet
-          BANDES qui consomme bandes Supabase. BandesView reste @deprecated. */}
       <Route path="/troupeau/bandes" element={<Navigate to="/troupeau?view=bandes" replace />} />
       <Route path="/troupeau/bandes/:bandeId" element={<BandeDetailRoute />} />
-      {/* AUDIT-3 : redirige vers le hub unifié pour cohérence visuelle. */}
       <Route path="/troupeau/batiments" element={<Navigate to="/troupeau?view=batiments" replace />} />
+      {/* V43.7 : alias /troupeau/porcelets pour deep-links externes. */}
+      <Route path="/troupeau/porcelets" element={<Navigate to="/troupeau?view=porcelets" replace />} />
       <Route path="/troupeau/classement" element={<ClassementView />} />
       {/* V6-C : page détail loge (référentiel V24) */}
       <Route path="/troupeau/loges/:id" element={<LogeDetailView />} />

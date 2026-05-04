@@ -32,8 +32,8 @@ import { Button } from '@/design-system';
      3. Localisation           → secteur + pays
      4. Type de production     → typeProd (radio, 3 choix)
      5. Races (skip si Engraisseur seul)  → races jsonb[]
-     6. Cheptel truies (skip si Engraisseur seul) → effectif_truies_initial
-     7. Cheptel verrats        → effectif_verrats_initial
+     6. Élevage truies (skip si Engraisseur seul) → effectif_truies_initial
+     7. Élevage verrats        → effectif_verrats_initial
      8. Objectif porcelets/an  → objectif_porcelets_an
      9. Notes de démarrage     → notes_demarrage
     10. Loges (V24)            → quantités par type + numérotation libre
@@ -363,7 +363,7 @@ const OnboardingWizard: React.FC = () => {
       // E2 — Auto-création truies/verrats vides selon les effectifs saisis.
       // Best-effort : si une insertion échoue (ex: code_id en doublon), on
       // continue les autres et on log l'erreur. L'utilisateur pourra corriger
-      // via /troupeau/cheptel.
+      // via /troupeau (TroupeauHub).
       let truiesCreated = 0;
       let verratsCreated = 0;
       let truiesFailed = 0;

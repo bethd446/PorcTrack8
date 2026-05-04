@@ -72,14 +72,14 @@ function navigateToTarget(
 ): void {
   if (item.table === 'batches') {
     const code = (item.data as { code_id?: string }).code_id;
-    if (code) navigate(`/bandes/${encodeURIComponent(code)}`);
-    else navigate('/bandes');
+    if (code) navigate(`/troupeau/bandes/${encodeURIComponent(code)}`);
+    else navigate('/troupeau?view=bandes');
   } else if (item.table === 'health_logs') {
     const animalCode = (item.data as { animal_code?: string }).animal_code;
-    if (animalCode) navigate(`/bandes/${encodeURIComponent(animalCode)}`);
+    if (animalCode) navigate(`/troupeau/bandes/${encodeURIComponent(animalCode)}`);
     else navigate('/sante');
   } else {
-    navigate('/finances');
+    navigate('/pilotage/finances');
   }
 }
 

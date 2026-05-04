@@ -421,7 +421,7 @@ const TruieDetailView: React.FC = () => {
           {/* TopBar synchro (composant partagé) */}
           <TopBarSync
             crumbs={[
-              { label: 'Troupeau', href: '/troupeau' },
+              { label: 'Élevage', href: '/troupeau' },
               { label: 'Truies', href: '/troupeau?view=truies' },
               `${truie.displayId}${truie.nom ? ` · ${truie.nom}` : ''}`,
             ]}
@@ -431,7 +431,7 @@ const TruieDetailView: React.FC = () => {
           <div style={{ padding: '16px 22px 24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
             {/* V41 Phase C1 — Header sobre via PageHeader (eyebrow + h1 + subtitle 1 ligne) */}
             <PageHeader
-              eyebrow="Fiche truie"
+              eyebrow="Élevage · Truie"
               title={safeDisplay(truie.displayId)}
               subtitle={truie.statut || undefined}
             />
@@ -467,6 +467,8 @@ const TruieDetailView: React.FC = () => {
             </Card>
 
             {/* CTA Mise-bas imminente : J-3 → J+5 si truie Pleine */}
+            {/* min-height réservé pour éviter CLS quand la section apparaît après chargement */}
+            <div style={{ minHeight: isPleine ? 112 : undefined }}>
             {showMiseBasCTA && (
               <section aria-label="Mise-bas imminente" style={sectionStyle()}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -490,6 +492,7 @@ const TruieDetailView: React.FC = () => {
                 </div>
               </section>
             )}
+            </div>
 
             {/* V41 Phase C1 — Lignée déplacée dans onglet "Vue d'ensemble" */}
 
@@ -507,6 +510,8 @@ const TruieDetailView: React.FC = () => {
             />
 
             {/* V40 F5/F6 — Cycle timeline horizontal (Saillie/Surveillance/Écho/MB) */}
+            {/* min-height réservé pour éviter CLS quand cycleData arrive après chargement */}
+            <div style={{ minHeight: activeTab === 'apercu' && lastSaillie ? 100 : undefined }}>
             {cycleData && activeTab === 'apercu' && (
               <section aria-label="Cycle reproductif" style={sectionStyle()}>
                 <CycleTimeline
@@ -522,6 +527,7 @@ const TruieDetailView: React.FC = () => {
                 />
               </section>
             )}
+            </div>
 
             {/* V41 Phase C1 — Lignée déplacée dans onglet "Vue d'ensemble" */}
             {activeTab === 'apercu' && (

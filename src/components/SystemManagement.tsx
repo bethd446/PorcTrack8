@@ -499,7 +499,7 @@ export const SettingsPage: React.FC = () => {
         <AgritechLayout withNav={true}>
           <div className="px-4 pt-5 pb-32 max-w-md mx-auto">
             {/* V41 Phase D — Header canonique via PageHeader */}
-            <PageHeader eyebrow="Réglages" title="Plus" subtitle="Ton profil, ta ferme, l'équipe" />
+            <PageHeader eyebrow="Plus" title="Réglages" subtitle="Ton profil, ta ferme, l'équipe" />
 
             {/* V33 : Outils Terrain / Audit / Journal santé / Protocoles /
                 Stocks / Fournisseurs migrés vers /outils. La page Plus est

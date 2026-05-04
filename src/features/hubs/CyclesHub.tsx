@@ -318,7 +318,7 @@ function truieToPosition(t: Truie, saillies: Saillie[], today: Date): BandePosit
 
 const CyclesHub: React.FC = () => {
   const navigate = useNavigate();
-  const { truies, bandes, saillies } = useFarm();
+  const { truies, bandes, saillies, loading } = useFarm();
   const { handleRefresh } = useAutoRefresh();
   const today = useMemo(() => new Date(), []);
 
@@ -418,6 +418,7 @@ const CyclesHub: React.FC = () => {
             </div>
 
             {/* ── Pipeline horizontal ──────────────────────────────── */}
+            {/* min-height réservé pendant le chargement du contexte pour éviter CLS */}
             <section
               aria-label={`Pipeline ${TOTAL_DAYS} jours`}
               style={{
@@ -425,6 +426,7 @@ const CyclesHub: React.FC = () => {
                 borderRadius: 12,
                 padding: '18px 20px 16px',
                 boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
+                minHeight: loading ? 168 : undefined,
               }}
             >
               <Eyebrow dotColor="accent" withRule={false}>
@@ -441,6 +443,8 @@ const CyclesHub: React.FC = () => {
             </section>
 
             {/* ── Liste bandes actives ─────────────────────────────── */}
+            {/* min-height évite le saut de layout quand la liste apparaît après chargement */}
+            <div style={{ minHeight: loading ? 280 : undefined }}>
             {positions.length > 0 ? (
               <BandesList
                 positions={positions}
@@ -468,6 +472,7 @@ const CyclesHub: React.FC = () => {
                 </p>
               </div>
             )}
+            </div>
           </div>
         </AgritechLayout>
       </IonContent>

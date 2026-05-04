@@ -10,7 +10,7 @@
  *   5. Audit / export PDF
  */
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -75,10 +75,41 @@ const PilotageHub: React.FC = () => {
   // Compteur bandes actives pour la tuile Prévisions
   const nbBandesActives = realBandes.length;
 
-  const globalReport = useMemo(() => {
+  // globalReport et auditData calculés en différé via startTransition pour ne pas
+  // bloquer le first paint en prod (LCP). En test, le lazy init synchronise au
+  // premier render quand le contexte est déjà disponible (loading=false +
+  // realBandes peuplés au mount), ce qui évite l'attente d'un microtask
+  // startTransition non observé par les assertions vitest synchrones.
+  type GlobalReport = ReturnType<typeof genererRapportGlobal>;
+  type AuditData = ReturnType<typeof prepareAuditSnapshot>;
+  const [globalReport, setGlobalReport] = useState<GlobalReport | null>(() => {
     if (loading || realBandes.length === 0) return null;
     return genererRapportGlobal(realBandes, transitions);
-  }, [realBandes, transitions, loading]);
+  });
+  const [auditData, setAuditData] = useState<AuditData | null>(() => {
+    if (loading || realBandes.length === 0 || !alerts) return null;
+    return prepareAuditSnapshot(realBandes, transitions, alerts);
+  });
+
+  // Re-calcul à la volée quand les dépendances changent (post-mount). Le first
+  // mount est déjà synchronisé via le lazy init, donc cet effet ne tape qu'aux
+  // mises à jour ultérieures du contexte.
+  const isFirstRunRef = useRef(true);
+  useEffect(() => {
+    if (isFirstRunRef.current) {
+      isFirstRunRef.current = false;
+      return;
+    }
+    if (loading || realBandes.length === 0) {
+      setGlobalReport(null);
+      setAuditData(null);
+      return;
+    }
+    startTransition(() => {
+      setGlobalReport(genererRapportGlobal(realBandes, transitions));
+      setAuditData(alerts ? prepareAuditSnapshot(realBandes, transitions, alerts) : null);
+    });
+  }, [realBandes, transitions, alerts, loading]);
 
   // Snapshot précédent — chargé une fois au mount, pas re-fetché ensuite.
   const prevSnapshotRef = useRef(loadPreviousSnapshot());
@@ -96,11 +127,6 @@ const PilotageHub: React.FC = () => {
       tauxMortaliteMoyen: globalReport.tauxMortaliteMoyen,
     });
   }, [globalReport]);
-
-  const auditData = useMemo(() => {
-    if (loading || realBandes.length === 0 || !alerts) return null;
-    return prepareAuditSnapshot(realBandes, transitions, alerts);
-  }, [realBandes, transitions, alerts, loading]);
 
   const handlePrint = () => {
     setIsPrinting(true);
