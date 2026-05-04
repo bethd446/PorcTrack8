@@ -4,7 +4,7 @@ import { Home, Plus } from 'lucide-react';
 
 import EmptyState from '../../components/design/EmptyState';
 import { AnimalListItem, type ChipTone } from '../../components/agritech';
-import { Button, PageHeader } from '@/design-system';
+import { Button } from '@/design-system';
 import QuickAddLogeForm from '../../components/forms/QuickAddLogeForm';
 
 import { listLoges, getLogeContents } from '../../services/supabaseWrites';
@@ -116,11 +116,6 @@ const TroupeauLogesListView: React.FC = () => {
       className="flex flex-col gap-4"
       data-testid="troupeau-loges-list-view"
     >
-      <PageHeader
-        eyebrow="TROUPEAU · LOGES"
-        title="Loges"
-        subtitle="Référentiel des emplacements"
-      />
       {/* ── CTA ──────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-end">
         <Button variant="primary" onClick={() => setAddOpen(true)} ariaLabel="Ajouter une nouvelle loge">

@@ -3,7 +3,7 @@ import { Search, ChevronRight, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useFarm } from '../../context/FarmContext';
 import { AnimalListItem, SectionDivider, type ChipTone } from '../../components/agritech';
-import { Button, PageHeader } from '@/design-system';
+import { Button } from '@/design-system';
 import { BandeIcon } from '../../components/icons';
 import { listLoges } from '../../services/supabaseWrites';
 import { Bandes } from '../../services/bandAnalysisEngine';
@@ -213,11 +213,6 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader
-        eyebrow="TROUPEAU · PORCELETS"
-        title="Porcelets"
-        subtitle="Bandes en croissance"
-      />
       {/* CTA primaire — Nouvelle bande */}
       <Button
         variant="primary"
