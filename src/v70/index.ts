@@ -45,6 +45,17 @@ export { EmptyEdu } from './components/v70/EmptyEdu';
 export { ExportButton } from './components/v70/ExportButton';
 export { ToggleAdvancedMode } from './components/v70/ToggleAdvancedMode';
 
+// Couche éducative (Phase 6)
+export { EncyclopediaArticle } from './components/v70/EncyclopediaArticle';
+export type { EncyclopediaArticleProps } from './components/v70/EncyclopediaArticle';
+export { EncyclopediaPage } from './pages/EncyclopediaPage';
+export { OnboardingEduPage } from './pages/OnboardingEduPage';
+export type { OnboardingEduPageProps } from './pages/OnboardingEduPage';
+
+// BottomNav + Router (Phase 2)
+export { BottomNavV70 } from './components/v70/BottomNav';
+export { V70Routes } from './router/V70Routes';
+
 // Contexte UI
 export {
   UIPreferencesProvider,
