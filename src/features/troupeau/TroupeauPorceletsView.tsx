@@ -5,6 +5,7 @@ import { useFarm } from '../../context/FarmContext';
 import { AnimalListItem, SectionDivider, type ChipTone } from '../../components/agritech';
 import { Button } from '@/design-system';
 import { BandeIcon } from '../../components/icons';
+import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { listLoges } from '../../services/supabaseWrites';
 import { Bandes } from '../../services/bandAnalysisEngine';
 import type { BandePorcelets, Loge } from '../../types/farm';
@@ -408,7 +409,7 @@ const LogeBandeRow: React.FC<LogeBandeRowProps> = ({
   return (
     <li>
       <AnimalListItem
-        avatar={<BandeIcon size={20} aria-hidden="true" />}
+        avatar={<EntityAvatar species="bande" photoUrl={bande.photoUrl ?? null} size="md" shortCode={bande.idPortee || bande.id} />}
         primary={primary}
         secondary={secondaryParts.join(' · ')}
         meta={`${bande.vivants ?? 0} vivants`}

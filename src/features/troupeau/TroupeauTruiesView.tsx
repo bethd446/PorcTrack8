@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 
 import { TruieIcon } from '../../components/icons';
+import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import {
   AnimalListItem,
   SectionDivider,
@@ -467,7 +468,7 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
               <IonItemSliding key={t.id}>
                 <li role="listitem">
                   <AnimalListItem
-                    avatar={<TruieIcon size={22} aria-hidden="true" />}
+                    avatar={<EntityAvatar species="truie" photoUrl={t.photoUrl ?? null} size="md" shortCode={t.displayId} />}
                     primary={primaryNode}
                     secondary={secondaryNode}
                     chip={{ label: v.label, tone: v.tone }}

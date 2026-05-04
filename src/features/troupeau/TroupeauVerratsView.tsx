@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, Plus, Search } from 'lucide-react';
 
 import { VerratIcon } from '../../components/icons';
+import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import {
   AnimalListItem,
   SectionDivider,
@@ -218,6 +219,7 @@ const TroupeauVerratsView: React.FC<TroupeauVerratsViewProps> = ({ searchText, s
                 key={v.id}
                 title={title}
                 displayId={displayId}
+                photoUrl={v.photoUrl ?? null}
                 statutLabel={statutLabel}
                 statutTone={tone}
                 boucle={v.boucle}
@@ -260,6 +262,7 @@ const TroupeauVerratsView: React.FC<TroupeauVerratsViewProps> = ({ searchText, s
 interface VerratCardProps {
   title: string;
   displayId: string;
+  photoUrl?: string | null;
   statutLabel: string;
   statutTone: ChipTone;
   boucle?: string;
@@ -275,6 +278,7 @@ interface VerratCardProps {
 const VerratCard: React.FC<VerratCardProps> = ({
   title,
   displayId,
+  photoUrl,
   statutLabel,
   statutTone,
   boucle,
@@ -308,7 +312,7 @@ const VerratCard: React.FC<VerratCardProps> = ({
   return (
     <div className="card-dense !p-0 overflow-hidden">
       <AnimalListItem
-        avatar={<VerratIcon size={26} aria-hidden="true" />}
+        avatar={<EntityAvatar species="verrat" photoUrl={photoUrl} size="md" shortCode={displayId} />}
         primary={title}
         secondary={secondaryNode}
         chip={{ label: statutLabel, tone: statutTone }}
