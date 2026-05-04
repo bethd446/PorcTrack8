@@ -3,6 +3,7 @@ import { IonToast } from '@ionic/react';
 import { Edit3, Plus, Save, Trash2, X } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { Button, FormField, Input, Select, Textarea } from '@/design-system';
 import {
   addBatchSource,
   getBatchSources,
@@ -400,29 +401,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
 
   const displayId = bande.idPortee || bande.id;
 
-  // Classes inputs réutilisables
-  const inputBase = (hasError: boolean): string =>
-    [
-      'w-full h-12 rounded-md px-3',
-      'bg-bg-0 border text-text-0 placeholder:text-text-2',
-      'text-[14px]',
-      'outline-none transition-colors duration-[160ms]',
-      'focus:border-accent focus:ring-1 focus:ring-accent',
-      hasError ? 'border-red' : 'border-border hover:border-text-2',
-    ].join(' ');
-
-  const numInputCls = (hasError: boolean): string =>
-    [
-      'w-full h-12 rounded-md px-3',
-      'bg-bg-0 border text-text-0 placeholder:text-text-2',
-      'text-kpi-value text-center',
-      'outline-none transition-colors duration-[160ms]',
-      'focus:border-accent focus:ring-1 focus:ring-accent',
-      hasError ? 'border-red' : 'border-border hover:border-text-2',
-    ].join(' ');
-
-  const labelCls =
-    'block text-mono-label text-text-2';
+  const labelCls = 'block text-mono-label text-text-2';
 
   return (
     <>
@@ -476,23 +455,19 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
           <fieldset className="space-y-3" disabled={saving}>
             <legend className={labelCls + ' mb-1'}>Identité</legend>
 
-            <div className="space-y-1.5">
-              <label htmlFor="edit-bande-id" className={labelCls}>
-                Code interne <span className="text-red normal-case">· requis</span>
-              </label>
-              <input
+            <FormField
+              label="Code interne"
+              required
+              hint="Tu peux changer le préfixe (B → P, etc.) — code interne unique pour ta ferme · 3-15 lettres/chiffres/tirets"
+              error={errors.codeId}
+            >
+              <Input
                 id="edit-bande-id"
                 type="text"
                 maxLength={15}
                 aria-label={`Code interne portée ${displayId}`}
                 aria-required="true"
-                aria-invalid={!!errors.codeId}
-                aria-describedby={
-                  errors.codeId
-                    ? 'edit-bande-id-error'
-                    : 'edit-bande-id-hint'
-                }
-                className={inputBase(!!errors.codeId)}
+                invalid={!!errors.codeId}
                 placeholder="Ex: K13-P-001"
                 value={form.codeId}
                 onChange={e => update('codeId', e.target.value)}
@@ -500,63 +475,29 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                 autoComplete="off"
                 spellCheck={false}
               />
-              <p
-                id="edit-bande-id-hint"
-                className="text-[10px] text-text-2"
-              >
-                Tu peux changer le préfixe (B → P, etc.) — code interne unique
-                pour ta ferme · 3-15 lettres/chiffres/tirets
-              </p>
-              {errors.codeId ? (
-                <p
-                  id="edit-bande-id-error"
-                  role="alert"
-                  className="text-[11px] text-red"
-                >
-                  {errors.codeId}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
 
             {/* Origine (parents truie × verrat) — readonly */}
-            <div className="space-y-1.5">
-              <label htmlFor="edit-bande-origine" className={labelCls}>
-                Origine (parents)
-              </label>
-              <input
+            <FormField label="Origine (parents)">
+              <Input
                 id="edit-bande-origine"
                 type="text"
                 readOnly
                 aria-readonly="true"
                 value={origineDeduite || '—'}
-                className={[
-                  'w-full h-12 rounded-md px-3',
-                  'bg-bg-2 border border-border text-text-1',
-                  'text-[13px]',
-                  'cursor-not-allowed',
-                ].join(' ')}
+                className="bg-bg-2 cursor-not-allowed"
               />
-            </div>
+            </FormField>
 
             {/* Verrat père (combobox) */}
-            <div className="space-y-1.5">
-              <label htmlFor="edit-bande-verrat" className={labelCls}>
-                Verrat père{' '}
-                <span className="text-text-2 normal-case">· optionnel</span>
-              </label>
-              <select
+            <FormField
+              label="Verrat père"
+              hint="optionnel"
+              error={errors.verratPere}
+            >
+              <Select
                 id="edit-bande-verrat"
                 aria-invalid={!!errors.verratPere}
-                className={[
-                  'w-full h-12 rounded-md px-3',
-                  'bg-bg-0 border text-text-0',
-                  'text-[14px]',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  errors.verratPere
-                    ? 'border-red'
-                    : 'border-border hover:border-text-2',
-                ].join(' ')}
                 value={form.verratPere}
                 onChange={e => update('verratPere', e.target.value)}
               >
@@ -566,29 +507,15 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                     {v.displayId}{v.nom ? ` · ${v.nom}` : ''}
                   </option>
                 ))}
-              </select>
-              {errors.verratPere ? (
-                <p
-                  id="edit-bande-verrat-error"
-                  role="alert"
-                  className="text-[11px] text-red"
-                >
-                  {errors.verratPere}
-                </p>
-              ) : null}
-            </div>
+              </Select>
+            </FormField>
 
             {/* Loge (emplacement) */}
-            <div className="space-y-1.5">
-              <label htmlFor="edit-bande-loge-emplacement" className={labelCls}>
-                Emplacement loge{' '}
-                <span className="text-text-2 normal-case">· optionnel</span>
-              </label>
-              <input
+            <FormField label="Emplacement loge" hint="optionnel">
+              <Input
                 id="edit-bande-loge-emplacement"
                 type="text"
                 maxLength={30}
-                className={inputBase(false)}
                 placeholder="Ex: Engraissement L7"
                 value={loge}
                 onChange={e => {
@@ -597,65 +524,35 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                 }}
                 autoComplete="off"
               />
-            </div>
+            </FormField>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label htmlFor="edit-bande-truie" className={labelCls}>
-                  Truie (ID mère)
-                </label>
-                <input
+              <FormField label="Truie (ID mère)" error={errors.truie}>
+                <Input
                   id="edit-bande-truie"
                   ref={firstFieldRef}
                   type="text"
                   maxLength={30}
-                  aria-invalid={!!errors.truie}
-                  aria-describedby={errors.truie ? 'edit-bande-truie-error' : undefined}
-                  className={inputBase(!!errors.truie)}
+                  invalid={!!errors.truie}
                   placeholder="Ex: T05"
                   value={form.truie}
                   onChange={e => update('truie', e.target.value)}
                   autoComplete="off"
                 />
-                {errors.truie ? (
-                  <p
-                    id="edit-bande-truie-error"
-                    role="alert"
-                    className="text-[11px] text-red"
-                  >
-                    {errors.truie}
-                  </p>
-                ) : null}
-              </div>
+              </FormField>
 
-              <div className="space-y-1.5">
-                <label htmlFor="edit-bande-boucle" className={labelCls}>
-                  Boucle mère
-                </label>
-                <input
+              <FormField label="Boucle mère" error={errors.boucleMere}>
+                <Input
                   id="edit-bande-boucle"
                   type="text"
                   maxLength={30}
-                  aria-invalid={!!errors.boucleMere}
-                  aria-describedby={
-                    errors.boucleMere ? 'edit-bande-boucle-error' : undefined
-                  }
-                  className={inputBase(!!errors.boucleMere)}
+                  invalid={!!errors.boucleMere}
                   placeholder="Ex: FR12345"
                   value={form.boucleMere}
                   onChange={e => update('boucleMere', e.target.value)}
                   autoComplete="off"
                 />
-                {errors.boucleMere ? (
-                  <p
-                    id="edit-bande-boucle-error"
-                    role="alert"
-                    className="text-[11px] text-red"
-                  >
-                    {errors.boucleMere}
-                  </p>
-                ) : null}
-              </div>
+              </FormField>
             </div>
           </fieldset>
 
@@ -663,155 +560,85 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
           <fieldset className="space-y-3" disabled={saving}>
             <legend className={labelCls + ' mb-1'}>Mise-bas</legend>
 
-            <div className="space-y-1.5">
-              <label htmlFor="edit-bande-dmb" className={labelCls}>
-                Date mise-bas
-              </label>
-              <input
+            <FormField label="Date mise-bas" error={errors.dateMB}>
+              <Input
                 id="edit-bande-dmb"
                 type="date"
-                aria-invalid={!!errors.dateMB}
-                aria-describedby={errors.dateMB ? 'edit-bande-dmb-error' : undefined}
-                className={inputBase(!!errors.dateMB)}
+                invalid={!!errors.dateMB}
                 value={form.dateMB}
                 onChange={e => update('dateMB', e.target.value)}
               />
-              {errors.dateMB ? (
-                <p
-                  id="edit-bande-dmb-error"
-                  role="alert"
-                  className="text-[11px] text-red"
-                >
-                  {errors.dateMB}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
 
             <div className="grid grid-cols-3 gap-2">
-              <div className="space-y-1.5">
-                <label htmlFor="edit-bande-nv" className={labelCls}>
-                  NV
-                </label>
-                <input
+              <FormField label="NV" error={errors.nv}>
+                <Input
                   id="edit-bande-nv"
                   type="number"
                   inputMode="numeric"
                   min={0}
                   max={25}
                   step={1}
-                  aria-invalid={!!errors.nv}
-                  aria-describedby={errors.nv ? 'edit-bande-nv-error' : undefined}
-                  className={numInputCls(!!errors.nv)}
+                  invalid={!!errors.nv}
+                  className="text-kpi-value text-center"
                   placeholder="0"
                   value={form.nv}
                   onChange={e => update('nv', e.target.value)}
                 />
-                {errors.nv ? (
-                  <p
-                    id="edit-bande-nv-error"
-                    role="alert"
-                    className="text-[11px] text-red"
-                  >
-                    {errors.nv}
-                  </p>
-                ) : null}
-              </div>
+              </FormField>
 
-              <div className="space-y-1.5">
-                <label htmlFor="edit-bande-morts" className={labelCls}>
-                  Morts
-                </label>
-                <input
+              <FormField label="Morts" error={errors.morts}>
+                <Input
                   id="edit-bande-morts"
                   type="number"
                   inputMode="numeric"
                   min={0}
                   max={25}
                   step={1}
-                  aria-invalid={!!errors.morts}
-                  aria-describedby={
-                    errors.morts ? 'edit-bande-morts-error' : undefined
-                  }
-                  className={numInputCls(!!errors.morts)}
+                  invalid={!!errors.morts}
+                  className="text-kpi-value text-center"
                   placeholder="0"
                   value={form.morts}
                   onChange={e => update('morts', e.target.value)}
                 />
-                {errors.morts ? (
-                  <p
-                    id="edit-bande-morts-error"
-                    role="alert"
-                    className="text-[11px] text-red"
-                  >
-                    {errors.morts}
-                  </p>
-                ) : null}
-              </div>
+              </FormField>
 
-              <div className="space-y-1.5">
-                <label htmlFor="edit-bande-viv" className={labelCls}>
-                  Vivants
-                </label>
-                <input
+              <FormField label="Vivants" error={errors.vivants}>
+                <Input
                   id="edit-bande-viv"
                   type="number"
                   inputMode="numeric"
                   min={0}
                   max={25}
                   step={1}
-                  aria-invalid={!!errors.vivants}
-                  aria-describedby={
-                    errors.vivants ? 'edit-bande-viv-error' : undefined
-                  }
-                  className={numInputCls(!!errors.vivants)}
+                  invalid={!!errors.vivants}
+                  className="text-kpi-value text-center"
                   placeholder="0"
                   value={form.vivants}
                   onChange={e => update('vivants', e.target.value)}
                 />
-                {errors.vivants ? (
-                  <p
-                    id="edit-bande-viv-error"
-                    role="alert"
-                    className="text-[11px] text-red"
-                  >
-                    {errors.vivants}
-                  </p>
-                ) : null}
-              </div>
+              </FormField>
             </div>
 
             {/* Poids moyen courant (kg) */}
-            <div className="space-y-1.5">
-              <label htmlFor="edit-bande-pmoy" className={labelCls}>
-                Poids moyen (kg){' '}
-                <span className="text-text-2 normal-case">· optionnel</span>
-              </label>
-              <input
+            <FormField
+              label="Poids moyen (kg)"
+              hint="optionnel"
+              error={errors.poidsMoyenKg}
+            >
+              <Input
                 id="edit-bande-pmoy"
                 type="number"
                 inputMode="decimal"
                 min={0}
                 max={400}
                 step={0.1}
-                aria-invalid={!!errors.poidsMoyenKg}
-                aria-describedby={
-                  errors.poidsMoyenKg ? 'edit-bande-pmoy-error' : undefined
-                }
-                className={inputBase(!!errors.poidsMoyenKg)}
+                invalid={!!errors.poidsMoyenKg}
                 placeholder="0.0"
                 value={form.poidsMoyenKg}
                 onChange={e => update('poidsMoyenKg', e.target.value)}
               />
-              {errors.poidsMoyenKg ? (
-                <p
-                  id="edit-bande-pmoy-error"
-                  role="alert"
-                  className="text-[11px] text-red"
-                >
-                  {errors.poidsMoyenKg}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
           </fieldset>
 
           {/* ── Sevrage ─────────────────────────────────────────────── */}
@@ -819,57 +646,29 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
             <legend className={labelCls + ' mb-1'}>Sevrage</legend>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label htmlFor="edit-bande-sprev" className={labelCls}>
-                  Prévue
-                </label>
-                <input
+              <FormField label="Prévue" error={errors.dateSevragePrevue}>
+                <Input
                   id="edit-bande-sprev"
                   type="date"
-                  aria-invalid={!!errors.dateSevragePrevue}
-                  aria-describedby={
-                    errors.dateSevragePrevue ? 'edit-bande-sprev-error' : undefined
-                  }
-                  className={inputBase(!!errors.dateSevragePrevue)}
+                  invalid={!!errors.dateSevragePrevue}
                   value={form.dateSevragePrevue}
                   onChange={e => update('dateSevragePrevue', e.target.value)}
                 />
-                {errors.dateSevragePrevue ? (
-                  <p
-                    id="edit-bande-sprev-error"
-                    role="alert"
-                    className="text-[11px] text-red"
-                  >
-                    {errors.dateSevragePrevue}
-                  </p>
-                ) : null}
-              </div>
+              </FormField>
 
-              <div className="space-y-1.5">
-                <label htmlFor="edit-bande-sreel" className={labelCls}>
-                  Réelle <span className="text-text-2 normal-case">· opt.</span>
-                </label>
-                <input
+              <FormField
+                label="Réelle"
+                hint="opt."
+                error={errors.dateSevrageReelle}
+              >
+                <Input
                   id="edit-bande-sreel"
                   type="date"
-                  aria-invalid={!!errors.dateSevrageReelle}
-                  aria-describedby={
-                    errors.dateSevrageReelle ? 'edit-bande-sreel-error' : undefined
-                  }
-                  className={inputBase(!!errors.dateSevrageReelle)}
+                  invalid={!!errors.dateSevrageReelle}
                   value={form.dateSevrageReelle}
                   onChange={e => update('dateSevrageReelle', e.target.value)}
                 />
-                {errors.dateSevrageReelle ? (
-                  <p
-                    id="edit-bande-sreel-error"
-                    role="alert"
-                    className="text-[11px] text-red"
-                  >
-                    {errors.dateSevrageReelle}
-                  </p>
-                ) : null}
-              </div>
+              </FormField>
             </div>
           </fieldset>
 
@@ -878,113 +677,54 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
             <legend className={labelCls + ' mb-1'}>Séparation sexe</legend>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label htmlFor="edit-bande-males" className={labelCls}>
-                  Nb mâles
-                </label>
-                <input
+              <FormField label="Nb mâles" error={errors.nbMales}>
+                <Input
                   id="edit-bande-males"
                   type="number"
                   inputMode="numeric"
                   min={0}
                   max={25}
                   step={1}
-                  aria-invalid={!!errors.nbMales}
-                  aria-describedby={
-                    errors.nbMales ? 'edit-bande-males-error' : undefined
-                  }
-                  className={numInputCls(!!errors.nbMales)}
+                  invalid={!!errors.nbMales}
+                  className="text-kpi-value text-center"
                   placeholder="0"
                   value={form.nbMales}
                   onChange={e => update('nbMales', e.target.value)}
                 />
-                {errors.nbMales ? (
-                  <p
-                    id="edit-bande-males-error"
-                    role="alert"
-                    className="text-[11px] text-red"
-                  >
-                    {errors.nbMales}
-                  </p>
-                ) : null}
-              </div>
+              </FormField>
 
-              <div className="space-y-1.5">
-                <label htmlFor="edit-bande-fem" className={labelCls}>
-                  Nb femelles
-                </label>
-                <input
+              <FormField label="Nb femelles" error={errors.nbFemelles}>
+                <Input
                   id="edit-bande-fem"
                   type="number"
                   inputMode="numeric"
                   min={0}
                   max={25}
                   step={1}
-                  aria-invalid={!!errors.nbFemelles}
-                  aria-describedby={
-                    errors.nbFemelles ? 'edit-bande-fem-error' : undefined
-                  }
-                  className={numInputCls(!!errors.nbFemelles)}
+                  invalid={!!errors.nbFemelles}
+                  className="text-kpi-value text-center"
                   placeholder="0"
                   value={form.nbFemelles}
                   onChange={e => update('nbFemelles', e.target.value)}
                 />
-                {errors.nbFemelles ? (
-                  <p
-                    id="edit-bande-fem-error"
-                    role="alert"
-                    className="text-[11px] text-red"
-                  >
-                    {errors.nbFemelles}
-                  </p>
-                ) : null}
-              </div>
+              </FormField>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label htmlFor="edit-bande-dsep" className={labelCls}>
-                  Date séparation
-                </label>
-                <input
+              <FormField label="Date séparation" error={errors.dateSeparation}>
+                <Input
                   id="edit-bande-dsep"
                   type="date"
-                  aria-invalid={!!errors.dateSeparation}
-                  aria-describedby={
-                    errors.dateSeparation ? 'edit-bande-dsep-error' : undefined
-                  }
-                  className={inputBase(!!errors.dateSeparation)}
+                  invalid={!!errors.dateSeparation}
                   value={form.dateSeparation}
                   onChange={e => update('dateSeparation', e.target.value)}
                 />
-                {errors.dateSeparation ? (
-                  <p
-                    id="edit-bande-dsep-error"
-                    role="alert"
-                    className="text-[11px] text-red"
-                  >
-                    {errors.dateSeparation}
-                  </p>
-                ) : null}
-              </div>
+              </FormField>
 
-              <div className="space-y-1.5">
-                <label htmlFor="edit-bande-loge" className={labelCls}>
-                  Loge engraissement
-                </label>
-                <select
+              <FormField label="Loge engraissement" error={errors.logeEngraissement}>
+                <Select
                   id="edit-bande-loge"
                   aria-invalid={!!errors.logeEngraissement}
-                  className={[
-                    'w-full h-12 rounded-md px-3',
-                    'bg-bg-0 border text-text-0',
-                    'text-[14px]',
-                    'outline-none transition-colors duration-[160ms]',
-                    'focus:border-accent focus:ring-1 focus:ring-accent',
-                    errors.logeEngraissement
-                      ? 'border-red'
-                      : 'border-border hover:border-text-2',
-                  ].join(' ')}
                   value={form.logeEngraissement}
                   onChange={e =>
                     update(
@@ -996,8 +736,8 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                   <option value="">—</option>
                   <option value="M">Mâles (M)</option>
                   <option value="F">Femelles (F)</option>
-                </select>
-              </div>
+                </Select>
+              </FormField>
             </div>
           </fieldset>
 
@@ -1049,23 +789,25 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                         {s.nbPorceletsApportes > 1 ? 's' : ''} · {s.dateAjout}
                       </p>
                     </div>
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
                       onClick={() => handleRemoveSource(s.id)}
                       disabled={sourceBusy}
-                      aria-label={`Retirer la truie ${s.sowCode}`}
+                      ariaLabel={`Retirer la truie ${s.sowCode}`}
                       className="pressable rounded-md border border-border p-2 text-text-2 hover:text-red"
                     >
                       <Trash2 size={14} aria-hidden="true" />
-                    </button>
+                    </Button>
                   </li>
                 ))}
               </ul>
             )}
 
             {!addSourceOpen ? (
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={() => {
                   setAddSourceOpen(true);
                   setSourceError('');
@@ -1081,33 +823,30 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
               >
                 <Plus size={14} aria-hidden="true" />
                 Ajouter une truie source
-              </button>
+              </Button>
             ) : (
               <div className="space-y-2 rounded-md border border-accent/40 bg-bg-1 p-3">
                 <div className="flex items-center justify-between">
                   <p className="text-mono-label text-text-1">
                     Nouvelle source
                   </p>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
                     onClick={() => {
                       setAddSourceOpen(false);
                       setSourceError('');
                     }}
                     className="text-text-2 hover:text-text-0"
-                    aria-label="Fermer le formulaire d'ajout"
+                    ariaLabel="Fermer le formulaire d'ajout"
                   >
                     <X size={14} aria-hidden="true" />
-                  </button>
+                  </Button>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label htmlFor="add-src-truie" className={labelCls}>
-                    Truie
-                  </label>
-                  <select
+                <FormField label="Truie">
+                  <Select
                     id="add-src-truie"
-                    className={inputBase(false)}
                     value={newSourceSowId}
                     onChange={e => setNewSourceSowId(e.target.value)}
                   >
@@ -1119,55 +858,44 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                         {t.boucle ? ` · ${t.boucle}` : ''}
                       </option>
                     ))}
-                  </select>
-                </div>
+                  </Select>
+                </FormField>
 
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1.5">
-                    <label htmlFor="add-src-nb" className={labelCls}>
-                      Nb porcelets
-                    </label>
-                    <input
+                  <FormField label="Nb porcelets">
+                    <Input
                       id="add-src-nb"
                       type="number"
                       inputMode="numeric"
                       min={1}
                       max={30}
                       step={1}
-                      className={numInputCls(false)}
+                      className="text-kpi-value text-center"
                       placeholder="0"
                       value={newSourceNb}
                       onChange={e => setNewSourceNb(e.target.value)}
                     />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label htmlFor="add-src-date" className={labelCls}>
-                      Date ajout
-                    </label>
-                    <input
+                  </FormField>
+                  <FormField label="Date ajout">
+                    <Input
                       id="add-src-date"
                       type="date"
-                      className={inputBase(false)}
                       value={newSourceDate}
                       onChange={e => setNewSourceDate(e.target.value)}
                     />
-                  </div>
+                  </FormField>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label htmlFor="add-src-notes" className={labelCls}>
-                    Notes <span className="text-text-2 normal-case">· optionnel</span>
-                  </label>
-                  <input
+                <FormField label="Notes" hint="optionnel">
+                  <Input
                     id="add-src-notes"
                     type="text"
                     maxLength={120}
-                    className={inputBase(false)}
                     placeholder="Ex: adoption porcelets affaiblis"
                     value={newSourceNotes}
                     onChange={e => setNewSourceNotes(e.target.value)}
                   />
-                </div>
+                </FormField>
 
                 {sourceError ? (
                   <p role="alert" className="text-[11px] text-red">
@@ -1175,8 +903,10 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                   </p>
                 ) : null}
 
-                <button
+                <Button
                   type="button"
+                  variant="primary"
+                  fullWidth
                   onClick={handleAddSource}
                   disabled={sourceBusy}
                   className={[
@@ -1187,7 +917,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                   ].join(' ')}
                 >
                   {sourceBusy ? 'Ajout…' : 'Ajouter'}
-                </button>
+                </Button>
               </div>
             )}
           </fieldset>
@@ -1196,14 +926,9 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
           <fieldset className="space-y-3" disabled={saving}>
             <legend className={labelCls + ' mb-1'}>Loge (référentiel)</legend>
 
-            <div className="space-y-1.5">
-              <label htmlFor="edit-bande-loge-ref" className={labelCls}>
-                Loge actuelle{' '}
-                <span className="text-text-2 normal-case">· optionnel</span>
-              </label>
-              <select
+            <FormField label="Loge actuelle" hint="optionnel">
+              <Select
                 id="edit-bande-loge-ref"
-                className={inputBase(false)}
                 value={selectedLogeId}
                 onChange={e => {
                   setSelectedLogeId(e.target.value);
@@ -1217,57 +942,58 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                     {l.batiment ? ` · ${l.batiment}` : ''}
                   </option>
                 ))}
-              </select>
+              </Select>
+            </FormField>
 
-              {selectedLogeId ? (
-                (() => {
-                  const l = loges.find(x => x.id === selectedLogeId);
-                  if (!l) return null;
-                  const occupation = logeOccupation.get(l.id) ?? 0;
-                  const own = bande.vivants ?? 0;
-                  const totalIfAssigned = occupation + own;
-                  const over =
-                    l.capaciteMax != null && totalIfAssigned > l.capaciteMax;
-                  return (
-                    <div
-                      className={[
-                        'rounded-md border px-3 py-2 text-[11px]',
-                        over
-                          ? 'border-amber-deep/40 bg-amber-pork/10 text-amber-deep'
-                          : 'border-border bg-bg-1 text-text-1',
-                      ].join(' ')}
-                    >
-                      Occupation autres : {occupation}
-                      {l.capaciteMax != null
-                        ? ` / capacité ${l.capaciteMax}`
-                        : ''}
-                      {own > 0 ? ` · cette bande +${own}` : ''}
-                      {over ? ' · ⚠ capacité dépassée (warning)' : ''}
-                    </div>
-                  );
-                })()
-              ) : null}
+            {selectedLogeId ? (
+              (() => {
+                const l = loges.find(x => x.id === selectedLogeId);
+                if (!l) return null;
+                const occupation = logeOccupation.get(l.id) ?? 0;
+                const own = bande.vivants ?? 0;
+                const totalIfAssigned = occupation + own;
+                const over =
+                  l.capaciteMax != null && totalIfAssigned > l.capaciteMax;
+                return (
+                  <div
+                    className={[
+                      'rounded-md border px-3 py-2 text-[11px]',
+                      over
+                        ? 'border-amber-deep/40 bg-amber-pork/10 text-amber-deep'
+                        : 'border-border bg-bg-1 text-text-1',
+                    ].join(' ')}
+                  >
+                    Occupation autres : {occupation}
+                    {l.capaciteMax != null
+                      ? ` / capacité ${l.capaciteMax}`
+                      : ''}
+                    {own > 0 ? ` · cette bande +${own}` : ''}
+                    {over ? ' · ⚠ capacité dépassée (warning)' : ''}
+                  </div>
+                );
+              })()
+            ) : null}
 
-              {/* V25 — Conflit 1:1 (loge déjà occupée par autre sujet actif). */}
-              {logeConflict ? (
-                <div
-                  role="alert"
-                  data-testid="loge-conflict-warning"
-                  className="rounded-md border border-red/40 bg-red/10 px-3 py-2 text-[11px] text-red"
-                >
-                  Loge {loges.find(l => l.id === selectedLogeId)?.numero ?? ''} déjà
-                  occupée par{' '}
-                  {logeConflict.kind === 'bande'
-                    ? `bande ${logeConflict.label}`
-                    : logeConflict.kind === 'truie'
-                      ? `truie ${logeConflict.label}`
-                      : `verrat ${logeConflict.label}`}
-                </div>
-              ) : null}
-            </div>
+            {/* V25 — Conflit 1:1 (loge déjà occupée par autre sujet actif). */}
+            {logeConflict ? (
+              <div
+                role="alert"
+                data-testid="loge-conflict-warning"
+                className="rounded-md border border-red/40 bg-red/10 px-3 py-2 text-[11px] text-red"
+              >
+                Loge {loges.find(l => l.id === selectedLogeId)?.numero ?? ''} déjà
+                occupée par{' '}
+                {logeConflict.kind === 'bande'
+                  ? `bande ${logeConflict.label}`
+                  : logeConflict.kind === 'truie'
+                    ? `truie ${logeConflict.label}`
+                    : `verrat ${logeConflict.label}`}
+              </div>
+            ) : null}
 
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={() => setAddLogeOpen(true)}
               className={[
                 'pressable inline-flex items-center gap-2 rounded-md',
@@ -1278,27 +1004,15 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
             >
               <Plus size={14} aria-hidden="true" />
               Nouvelle loge
-            </button>
+            </Button>
           </fieldset>
 
           {/* ── Statut ──────────────────────────────────────────────── */}
-          <div className="space-y-1.5">
-            <label htmlFor="edit-bande-statut" className={labelCls}>
-              Statut <span className="text-red">*</span>
-            </label>
-            <select
+          <FormField label="Statut" required error={errors.statut}>
+            <Select
               id="edit-bande-statut"
               aria-required="true"
               aria-invalid={!!errors.statut}
-              aria-describedby={errors.statut ? 'edit-bande-statut-error' : undefined}
-              className={[
-                'w-full h-12 rounded-md px-3',
-                'bg-bg-0 border text-text-0',
-                'text-[14px]',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.statut ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
               value={form.statut}
               onChange={e => update('statut', e.target.value)}
               disabled={saving}
@@ -1309,68 +1023,35 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                   {s}
                 </option>
               ))}
-            </select>
-            {errors.statut ? (
-              <p
-                id="edit-bande-statut-error"
-                role="alert"
-                className="text-[11px] text-red"
-              >
-                {errors.statut}
-              </p>
-            ) : null}
-          </div>
+            </Select>
+          </FormField>
 
           {/* ── Notes ───────────────────────────────────────────────── */}
-          <div className="space-y-1.5">
-            <label htmlFor="edit-bande-notes" className={labelCls}>
-              Notes <span className="text-text-2 normal-case">· optionnel</span>
-            </label>
-            <textarea
+          <FormField
+            label="Notes"
+            hint={errors.notes ? undefined : `${form.notes.length}/300 · optionnel`}
+            error={errors.notes}
+          >
+            <Textarea
               id="edit-bande-notes"
               maxLength={300}
               aria-invalid={!!errors.notes}
-              aria-describedby={
-                errors.notes ? 'edit-bande-notes-error' : 'edit-bande-notes-hint'
-              }
-              className={[
-                'w-full rounded-md px-3 py-3',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'text-[13px]',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                'min-h-[88px] resize-y',
-                errors.notes ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
               placeholder="Observations libres…"
               value={form.notes}
               onChange={e => update('notes', e.target.value)}
               disabled={saving}
+              rows={4}
             />
-            <p
-              id="edit-bande-notes-hint"
-              className="text-[10px] text-text-2 tabular-nums"
-            >
-              {form.notes.length}/300
-            </p>
-            {errors.notes ? (
-              <p
-                id="edit-bande-notes-error"
-                role="alert"
-                className="text-[11px] text-red"
-              >
-                {errors.notes}
-              </p>
-            ) : null}
-          </div>
+          </FormField>
 
           {/* ── Actions ─────────────────────────────────────────────── */}
           <div className="flex items-center gap-2 pt-2">
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={handleClose}
               disabled={saving}
-              aria-label="Annuler et fermer"
+              ariaLabel="Annuler et fermer"
               className={[
                 'pressable flex-1 h-14 rounded-md',
                 'inline-flex items-center justify-center gap-2',
@@ -1382,11 +1063,12 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
               ].join(' ')}
             >
               Annuler
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={saving}
-              aria-label="Enregistrer les modifications de la bande"
+              ariaLabel="Enregistrer les modifications de la bande"
               aria-busy={saving}
               className={[
                 'pressable flex-[2] h-14 rounded-md',
@@ -1406,7 +1088,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                   <Save size={14} aria-hidden="true" />
                 </>
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </BottomSheet>
