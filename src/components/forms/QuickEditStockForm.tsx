@@ -3,6 +3,7 @@ import { IonToast } from '@ionic/react';
 import { Edit3, Save, RefreshCw } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
+import { FormField, Input, Select, Textarea, Button } from '@/design-system';
 import {
   updateProduitAliment,
   updateProduitVeto,
@@ -229,14 +230,8 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
 
           {/* ── Section Identité ─────────────────────────────────────── */}
           {kind === 'ALIMENT' ? (
-            <div className="space-y-1.5">
-              <label
-                htmlFor="edit-stock-libelle"
-                className="block text-mono-label text-text-2"
-              >
-                Libellé
-              </label>
-              <input
+            <FormField label="Libellé" required error={errors.libelle}>
+              <Input
                 id="edit-stock-libelle"
                 ref={firstFieldRef}
                 type="text"
@@ -244,43 +239,18 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                 aria-label="Libellé de l'aliment"
                 aria-required="true"
                 aria-invalid={!!errors.libelle}
-                aria-describedby={
-                  errors.libelle ? 'edit-stock-libelle-error' : undefined
-                }
-                className={[
-                  'w-full h-12 rounded-md px-3',
-                  'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                  'text-[14px]',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  errors.libelle ? 'border-red' : 'border-border hover:border-text-2',
-                ].join(' ')}
+                aria-describedby={errors.libelle ? 'edit-stock-libelle-error' : undefined}
                 placeholder="Ex: Truie gestation"
                 value={libelle}
                 onChange={e => setLibelle(e.target.value)}
                 disabled={saving}
                 autoComplete="off"
               />
-              {errors.libelle ? (
-                <p
-                  id="edit-stock-libelle-error"
-                  role="alert"
-                  className="text-[11px] text-red"
-                >
-                  {errors.libelle}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
           ) : (
             <div className="space-y-3">
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="edit-stock-produit"
-                  className="block text-mono-label text-text-2"
-                >
-                  Produit
-                </label>
-                <input
+              <FormField label="Produit" required error={errors.produit}>
+                <Input
                   id="edit-stock-produit"
                   ref={firstFieldRef}
                   type="text"
@@ -288,135 +258,57 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                   aria-label="Nom du produit vétérinaire"
                   aria-required="true"
                   aria-invalid={!!errors.produit}
-                  aria-describedby={
-                    errors.produit ? 'edit-stock-produit-error' : undefined
-                  }
-                  className={[
-                    'w-full h-12 rounded-md px-3',
-                    'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                    'text-[14px]',
-                    'outline-none transition-colors duration-[160ms]',
-                    'focus:border-accent focus:ring-1 focus:ring-accent',
-                    errors.produit ? 'border-red' : 'border-border hover:border-text-2',
-                  ].join(' ')}
+                  aria-describedby={errors.produit ? 'edit-stock-produit-error' : undefined}
                   placeholder="Ex: Ivermectine"
                   value={produit}
                   onChange={e => setProduit(e.target.value)}
                   disabled={saving}
                   autoComplete="off"
                 />
-                {errors.produit ? (
-                  <p
-                    id="edit-stock-produit-error"
-                    role="alert"
-                    className="text-[11px] text-red"
-                  >
-                    {errors.produit}
-                  </p>
-                ) : null}
-              </div>
+              </FormField>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="edit-stock-type"
-                    className="block text-mono-label text-text-2"
-                  >
-                    Type <span className="text-text-2 normal-case">· opt.</span>
-                  </label>
-                  <input
+                <FormField label="Type" hint="optionnel" error={errors.type}>
+                  <Input
                     id="edit-stock-type"
                     type="text"
                     maxLength={60}
                     aria-label="Type (catégorie) du produit"
                     aria-invalid={!!errors.type}
-                    aria-describedby={
-                      errors.type ? 'edit-stock-type-error' : undefined
-                    }
-                    className={[
-                      'w-full h-11 rounded-md px-3',
-                      'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                      'text-[13px]',
-                      'outline-none transition-colors duration-[160ms]',
-                      'focus:border-accent focus:ring-1 focus:ring-accent',
-                      errors.type ? 'border-red' : 'border-border hover:border-text-2',
-                    ].join(' ')}
+                    aria-describedby={errors.type ? 'edit-stock-type-error' : undefined}
                     placeholder="Ex: Antibiotique"
                     value={typeVeto}
                     onChange={e => setTypeVeto(e.target.value)}
                     disabled={saving}
                     autoComplete="off"
                   />
-                  {errors.type ? (
-                    <p
-                      id="edit-stock-type-error"
-                      role="alert"
-                      className="text-[11px] text-red"
-                    >
-                      {errors.type}
-                    </p>
-                  ) : null}
-                </div>
-
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="edit-stock-usage"
-                    className="block text-mono-label text-text-2"
-                  >
-                    Usage <span className="text-text-2 normal-case">· opt.</span>
-                  </label>
-                  <input
+                </FormField>
+                <FormField label="Usage" hint="optionnel" error={errors.usage}>
+                  <Input
                     id="edit-stock-usage"
                     type="text"
                     maxLength={60}
                     aria-label="Usage du produit"
                     aria-invalid={!!errors.usage}
-                    aria-describedby={
-                      errors.usage ? 'edit-stock-usage-error' : undefined
-                    }
-                    className={[
-                      'w-full h-11 rounded-md px-3',
-                      'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                      'text-[13px]',
-                      'outline-none transition-colors duration-[160ms]',
-                      'focus:border-accent focus:ring-1 focus:ring-accent',
-                      errors.usage ? 'border-red' : 'border-border hover:border-text-2',
-                    ].join(' ')}
+                    aria-describedby={errors.usage ? 'edit-stock-usage-error' : undefined}
                     placeholder="Ex: Prévention"
                     value={usageVeto}
                     onChange={e => setUsageVeto(e.target.value)}
                     disabled={saving}
                     autoComplete="off"
                   />
-                  {errors.usage ? (
-                    <p
-                      id="edit-stock-usage-error"
-                      role="alert"
-                      className="text-[11px] text-red"
-                    >
-                      {errors.usage}
-                    </p>
-                  ) : null}
-                </div>
+                </FormField>
               </div>
             </div>
           )}
 
           {/* ── Section Stock ───────────────────────────────────────── */}
           <div className="space-y-3">
-            <p className="text-mono-micro text-text-2">
-              Stock
-            </p>
+            <p className="text-mono-micro text-text-2">Stock</p>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="edit-stock-actuel"
-                  className="block text-mono-label text-text-2"
-                >
-                  Stock actuel
-                </label>
-                <input
+              <FormField label="Stock actuel" required error={errors.stockActuel}>
+                <Input
                   id="edit-stock-actuel"
                   type="number"
                   inputMode="decimal"
@@ -426,43 +318,17 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                   aria-label="Stock actuel"
                   aria-required="true"
                   aria-invalid={!!errors.stockActuel}
-                  aria-describedby={
-                    errors.stockActuel ? 'edit-stock-actuel-error' : undefined
-                  }
-                  className={[
-                    'w-full h-12 rounded-md px-3',
-                    'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                    'font-mono text-[16px] tabular-nums text-center',
-                    'outline-none transition-colors duration-[160ms]',
-                    'focus:border-accent focus:ring-1 focus:ring-accent',
-                    errors.stockActuel
-                      ? 'border-red'
-                      : 'border-border hover:border-text-2',
-                  ].join(' ')}
+                  aria-describedby={errors.stockActuel ? 'edit-stock-actuel-error' : undefined}
+                  className="font-mono tabular-nums text-center"
                   placeholder="0"
                   value={stockActuel}
                   onChange={e => setStockActuel(e.target.value)}
                   disabled={saving}
                 />
-                {errors.stockActuel ? (
-                  <p
-                    id="edit-stock-actuel-error"
-                    role="alert"
-                    className="text-[11px] text-red"
-                  >
-                    {errors.stockActuel}
-                  </p>
-                ) : null}
-              </div>
+              </FormField>
 
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="edit-stock-unite"
-                  className="block text-mono-label text-text-2"
-                >
-                  Unité
-                </label>
-                <input
+              <FormField label="Unité" required error={errors.unite}>
+                <Input
                   id="edit-stock-unite"
                   type="text"
                   list="edit-stock-unite-suggestions"
@@ -470,17 +336,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                   aria-label="Unité de mesure"
                   aria-required="true"
                   aria-invalid={!!errors.unite}
-                  aria-describedby={
-                    errors.unite ? 'edit-stock-unite-error' : undefined
-                  }
-                  className={[
-                    'w-full h-12 rounded-md px-3',
-                    'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                    'text-[14px]',
-                    'outline-none transition-colors duration-[160ms]',
-                    'focus:border-accent focus:ring-1 focus:ring-accent',
-                    errors.unite ? 'border-red' : 'border-border hover:border-text-2',
-                  ].join(' ')}
+                  aria-describedby={errors.unite ? 'edit-stock-unite-error' : undefined}
                   placeholder="kg"
                   value={unite}
                   onChange={e => setUnite(e.target.value)}
@@ -492,26 +348,16 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                     <option key={u} value={u} />
                   ))}
                 </datalist>
-                {errors.unite ? (
-                  <p
-                    id="edit-stock-unite-error"
-                    role="alert"
-                    className="text-[11px] text-red"
-                  >
-                    {errors.unite}
-                  </p>
-                ) : null}
-              </div>
+              </FormField>
             </div>
 
-            <div className="space-y-1.5">
-              <label
-                htmlFor="edit-stock-seuil"
-                className="block text-mono-label text-text-2"
-              >
-                Seuil d'alerte
-              </label>
-              <input
+            <FormField
+              label="Seuil d'alerte"
+              required
+              hint="Stock ≤ ce seuil → statut BAS"
+              error={errors.seuilAlerte}
+            >
+              <Input
                 id="edit-stock-seuil"
                 type="number"
                 inputMode="decimal"
@@ -521,43 +367,14 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
                 aria-label="Seuil d'alerte"
                 aria-required="true"
                 aria-invalid={!!errors.seuilAlerte}
-                aria-describedby={
-                  errors.seuilAlerte
-                    ? 'edit-stock-seuil-error'
-                    : 'edit-stock-seuil-hint'
-                }
-                className={[
-                  'w-full h-12 rounded-md px-3',
-                  'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                  'font-mono text-[16px] tabular-nums',
-                  'outline-none transition-colors duration-[160ms]',
-                  'focus:border-accent focus:ring-1 focus:ring-accent',
-                  errors.seuilAlerte
-                    ? 'border-red'
-                    : 'border-border hover:border-text-2',
-                ].join(' ')}
+                aria-describedby={errors.seuilAlerte ? 'edit-stock-seuil-error' : 'edit-stock-seuil-hint'}
+                className="font-mono tabular-nums"
                 placeholder="0"
                 value={seuilAlerte}
                 onChange={e => setSeuilAlerte(e.target.value)}
                 disabled={saving}
               />
-              {errors.seuilAlerte ? (
-                <p
-                  id="edit-stock-seuil-error"
-                  role="alert"
-                  className="text-[11px] text-red"
-                >
-                  {errors.seuilAlerte}
-                </p>
-              ) : (
-                <p
-                  id="edit-stock-seuil-hint"
-                  className="text-[10px] text-text-2"
-                >
-                  Stock ≤ ce seuil → statut BAS
-                </p>
-              )}
-            </div>
+            </FormField>
           </div>
 
           {/* ── Section Statut ──────────────────────────────────────── */}
@@ -569,36 +386,23 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
               >
                 Statut · <span className={statutTone}>{statut}</span>
               </label>
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="small"
                 onClick={handleRecalculer}
                 disabled={saving}
-                aria-label="Recalculer le statut depuis stock actuel et seuil"
-                className={[
-                  'pressable inline-flex items-center gap-1.5 h-8 px-3 rounded-md',
-                  'bg-bg-1 border border-border text-text-1',
-                  'text-mono-micro',
-                  'transition-colors duration-[160ms] hover:border-text-2 hover:text-accent',
-                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                  saving ? 'opacity-40 cursor-not-allowed' : '',
-                ].join(' ')}
+                ariaLabel="Recalculer le statut depuis stock actuel et seuil"
               >
-                <RefreshCw size={12} aria-hidden="true" />
-                Recalculer
-              </button>
+                <span className="inline-flex items-center gap-1.5">
+                  <RefreshCw size={12} aria-hidden="true" />
+                  Recalculer
+                </span>
+              </Button>
             </div>
-            <select
+            <Select
               id="edit-stock-statut"
               aria-label="Statut du stock"
               aria-invalid={!!errors.statut}
-              className={[
-                'w-full h-12 rounded-md px-3',
-                'bg-bg-0 border text-text-0',
-                'text-[14px] uppercase tracking-wide',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.statut ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
               value={statut}
               onChange={e => setStatut(e.target.value as EditableStatut)}
               disabled={saving}
@@ -606,7 +410,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
               <option value="OK">OK</option>
               <option value="BAS">BAS</option>
               <option value="RUPTURE">RUPTURE</option>
-            </select>
+            </Select>
             {errors.statut ? (
               <p role="alert" className="text-[11px] text-red">
                 {errors.statut}
@@ -615,95 +419,49 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
           </div>
 
           {/* ── Section Notes ───────────────────────────────────────── */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="edit-stock-notes"
-              className="block text-mono-label text-text-2"
-            >
-              Notes <span className="text-text-2 normal-case">· optionnel</span>
-            </label>
-            <textarea
+          <FormField
+            label="Notes"
+            hint={`optionnel · ${notes.length}/200`}
+            error={errors.notes}
+          >
+            <Textarea
               id="edit-stock-notes"
               maxLength={200}
               rows={3}
               aria-label="Notes libres"
               aria-invalid={!!errors.notes}
-              aria-describedby={
-                errors.notes ? 'edit-stock-notes-error' : 'edit-stock-notes-hint'
-              }
-              className={[
-                'w-full rounded-md px-3 py-2',
-                'bg-bg-0 border text-text-0 placeholder:text-text-2',
-                'text-[13px] resize-none',
-                'outline-none transition-colors duration-[160ms]',
-                'focus:border-accent focus:ring-1 focus:ring-accent',
-                errors.notes ? 'border-red' : 'border-border hover:border-text-2',
-              ].join(' ')}
+              aria-describedby={errors.notes ? 'edit-stock-notes-error' : 'edit-stock-notes-hint'}
               placeholder="Lot, fournisseur, observations…"
               value={notes}
               onChange={e => setNotes(e.target.value)}
               disabled={saving}
             />
-            <p
-              id="edit-stock-notes-hint"
-              className="text-[10px] text-text-2 tabular-nums"
-            >
-              {notes.length}/200
-            </p>
-            {errors.notes ? (
-              <p
-                id="edit-stock-notes-error"
-                role="alert"
-                className="text-[11px] text-red"
-              >
-                {errors.notes}
-              </p>
-            ) : null}
-          </div>
+          </FormField>
 
           {/* ── Actions ─────────────────────────────────────────────── */}
-          <div className="flex items-center gap-2 pt-2">
-            <button
-              type="button"
+          <div className="flex gap-3 justify-end pt-2 border-t border-border">
+            <Button
+              variant="secondary"
               onClick={handleClose}
               disabled={saving}
-              aria-label="Annuler et fermer"
-              className={[
-                'pressable flex-1 h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-bg-1 border border-border text-text-1',
-                'text-[12px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms] hover:border-text-2',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : '',
-              ].join(' ')}
+              ariaLabel="Annuler et fermer"
             >
               Annuler
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={saving}
-              aria-label="Enregistrer les modifications du stock"
+              ariaLabel="Enregistrer les modifications du stock"
               aria-busy={saving}
-              className={[
-                'pressable flex-[2] h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-accent text-bg-0',
-                'text-[13px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms]',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
-              ].join(' ')}
             >
-              {saving ? (
-                <span className="animate-pulse">Enregistrement…</span>
-              ) : (
-                <>
-                  <span>Enregistrer</span>
+              {saving ? 'Enregistrement…' : (
+                <span className="inline-flex items-center gap-2">
+                  Enregistrer
                   <Save size={14} aria-hidden="true" />
-                </>
+                </span>
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </BottomSheet>
