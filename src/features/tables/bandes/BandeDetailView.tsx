@@ -30,7 +30,7 @@ import {
   listLoges,
   listPorceletsByBatch,
 } from '../../../services/supabaseWrites';
-import { useNoUUID, Button } from '@/design-system';
+import { useNoUUID, Button, PageHeader } from '@/design-system';
 import {
   getRecommendedHealthLogs,
   HEALTH_LOG_TEMPLATES,
@@ -323,30 +323,29 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
   return (
     <div className="agritech-root h-full flex flex-col">
       <header className="bg-bg-0 border-b border-border px-4 pt-4 pb-3">
-        <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-start gap-3">
           <Button
             variant="ghost"
             size="small"
             onClick={onClose}
-            className="pressable inline-flex h-9 w-9 items-center justify-center rounded-md bg-bg-2 text-text-1 transition-colors"
+            className="pressable inline-flex h-9 w-9 items-center justify-center rounded-md bg-bg-2 text-text-1 transition-colors mt-1"
             ariaLabel="Retour"
           >
             <ChevronLeft size={20} />
           </Button>
           <div className="min-w-0 flex-1">
-            <h1 className="agritech-heading uppercase leading-none truncate" style={{ fontSize: 'clamp(20px, 5vw, 24px)' }}>
-              Portée {portéeLabel}
-            </h1>
-            <p className="mt-1 text-[11px] text-text-2 leading-none truncate">
-              {(bande.status as string) || 'Détails'} {bande.truie ? `· ${bande.truie}` : ''}
-            </p>
+            <PageHeader
+              eyebrow="Tables · Bande"
+              title={portéeLabel}
+              subtitle="Suivi de la bande"
+            />
           </div>
         </div>
 
         <IonSegment
           value={tab}
           onIonChange={e => setTab(e.detail.value as string)}
-          className="premium-segment bg-bg-1 border border-border rounded-md overflow-hidden"
+          className="premium-segment bg-bg-1 border border-border rounded-md overflow-hidden mt-3"
         >
           <IonSegmentButton value="resumé"><IonLabel className="text-[11px] uppercase tracking-wide">Résumé</IonLabel></IonSegmentButton>
           <IonSegmentButton value="details"><IonLabel className="text-[11px] uppercase tracking-wide">Détails</IonLabel></IonSegmentButton>

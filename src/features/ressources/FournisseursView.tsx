@@ -13,7 +13,7 @@ import { Plus, Phone, Mail, Trash2 } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
 import QuickAddFournisseurForm from '../../components/forms/QuickAddFournisseurForm';
-import { Button } from '@/design-system';
+import { Button, PageHeader } from '@/design-system';
 import {
   listFournisseurs,
   deleteFournisseur,
@@ -76,31 +76,11 @@ const FournisseursView: React.FC = () => {
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout withNav={true}>
           <div className="px-4 pt-5 pb-32 max-w-md mx-auto">
-            <header className="mb-6">
-              <h1
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 34,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                  color: 'var(--ink)',
-                  margin: '0 0 4px',
-                }}
-              >
-                Fournisseurs
-              </h1>
-              <p
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 13,
-                  color: 'var(--muted)',
-                  margin: 0,
-                }}
-              >
-                Carnet pour commande WhatsApp pré-remplie.
-              </p>
-            </header>
+            <PageHeader
+              eyebrow="Ressources · Fournisseurs"
+              title="Fournisseurs"
+              subtitle="Contacts et achats"
+            />
 
             <Button
               variant="primary"
