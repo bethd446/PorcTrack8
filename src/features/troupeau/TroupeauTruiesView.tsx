@@ -22,7 +22,7 @@ import {
   type ChipTone,
 } from '../../components/agritech';
 import EmptyStateShared from '../../components/design/EmptyState';
-import { Tag, Segment, Chip as DsChip, Button } from '../../design-system';
+import { Tag, Segment, Chip as DsChip, Button, PageHeader } from '../../design-system';
 
 type TagVariantKind = 'default' | 'primary' | 'accent' | 'soft' | 'danger' | 'warning';
 function chipToneToTagVariant(tone: ChipTone): TagVariantKind {
@@ -268,6 +268,11 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
 
   return (
     <div className="flex flex-col gap-4">
+      <PageHeader
+        eyebrow="TROUPEAU · TRUIES"
+        title="Truies"
+        subtitle="Cheptel reproducteur"
+      />
       {/* V41 : toolbar uniformisée — composants DS V2 (Segment + Chips) */}
       {/* ── CTA primaire : ajouter une truie + toggle viewMode (DS V2 Segment) ── */}
       <div className="flex items-center justify-between gap-2">
