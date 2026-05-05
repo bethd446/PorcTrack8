@@ -59,8 +59,14 @@ export const PerformanceV70: React.FC = () => {
   const [tab, setTab] = useState<PerfTab>('vue');
   const { advancedMode } = useUIPreferences();
 
+  const [pdfHint, setPdfHint] = useState(false);
   const handlePrintPdf = () => {
-    if (typeof window !== 'undefined') window.print();
+    setPdfHint(true);
+    if (typeof window !== 'undefined' && typeof window.print === 'function') {
+      // Defer print to let the hint render first
+      setTimeout(() => window.print(), 100);
+    }
+    setTimeout(() => setPdfHint(false), 4000);
   };
 
   return (
@@ -82,7 +88,16 @@ export const PerformanceV70: React.FC = () => {
         ]}
       />
 
-      {/* ISSE hero */}
+      {pdfHint && (
+        <div
+          role="status"
+          style={{ background: 'var(--pt-success)', color: 'white', padding: '10px 14px', borderRadius: 12, marginBottom: 12, fontSize: 13, textAlign: 'center' }}
+        >
+          📥 Aperçu PDF prêt — utilise « Enregistrer au format PDF » dans la fenêtre d'impression
+        </div>
+      )}
+
+      {/* ISSE hero (toujours visible : repère métier principal) */}
       <Card variant="hero">
         <div className="hero-row">
           <div className="hero-icon" style={{ background: 'var(--pt-success)' }}>📈</div>
@@ -109,14 +124,17 @@ export const PerformanceV70: React.FC = () => {
         </div>
       </Card>
 
-      {/* Edu card ISSE */}
-      <EduCard label="💡 Qu'est-ce que l'ISSE ?">
-        <strong>I</strong>ndice <strong>S</strong>evré-<strong>S</strong>aillie : nombre moyen de
-        porcelets sevrés par truie par cycle. Référence métier :{' '}
-        <strong>&gt;12 = excellent, 10-12 = bon, &lt;10 = à améliorer</strong>.
-      </EduCard>
+      {/* Edu card ISSE — visible en Vue + KPIs */}
+      {(tab === 'vue' || tab === 'kpis') && (
+        <EduCard label="💡 Qu'est-ce que l'ISSE ?">
+          <strong>I</strong>ndice <strong>S</strong>evré-<strong>S</strong>aillie : nombre moyen de
+          porcelets sevrés par truie par cycle. Référence métier :{' '}
+          <strong>&gt;12 = excellent, 10-12 = bon, &lt;10 = à améliorer</strong>.
+        </EduCard>
+      )}
 
-      {/* KPIs grid */}
+      {/* KPIs grid — visible en Vue + KPIs */}
+      {(tab === 'vue' || tab === 'kpis') && (
       <Section label="Indicateurs techniques">
         <Card>
           <div className="kv-row">
@@ -145,8 +163,10 @@ export const PerformanceV70: React.FC = () => {
           </div>
         </Card>
       </Section>
+      )}
 
-      {/* Finances (limité par rôle — V70 visuel only, RLS différé V71) */}
+      {/* Finances — visible en Vue + Finances */}
+      {(tab === 'vue' || tab === 'finances') && (
       <Section label="Finances">
         <Card>
           <div
@@ -189,8 +209,47 @@ export const PerformanceV70: React.FC = () => {
           </div>
         </Card>
       </Section>
+      )}
 
-      {/* Top performances */}
+      {/* Prévisions — section dédiée onglet Prévisions */}
+      {tab === 'previsions' && (
+        <>
+          <EduCard label="🔮 Prévisions d'élevage">
+            Projections basées sur les bandes en cycle : naissances attendues, sevrages à venir, sorties abattoir prévues. Affine ton planning ferme avec les <strong>3 prochains mois</strong>.
+          </EduCard>
+          <Section label="Prochaines mises-bas (28 jours)">
+            <Card>
+              <div className="kv-row">
+                <span className="kv-key">Bande de mai · 11 truies</span>
+                <span className="kv-val">28 août 2026</span>
+              </div>
+              <div className="kv-row">
+                <span className="kv-key">Bande d'avril · 9 truies</span>
+                <span className="kv-val">5 sept. 2026</span>
+              </div>
+              <div className="kv-row">
+                <span className="kv-key">Total porcelets attendus</span>
+                <span className="kv-val" style={{ color: 'var(--pt-primary)', fontWeight: 700 }}>~260 porcelets</span>
+              </div>
+            </Card>
+          </Section>
+          <Section label="Sorties abattoir prévues">
+            <Card>
+              <div className="kv-row">
+                <span className="kv-key">Bande de décembre · 95 cochons</span>
+                <span className="kv-val">12 mai 2026</span>
+              </div>
+              <div className="kv-row">
+                <span className="kv-key">Bande de janvier · 88 cochons</span>
+                <span className="kv-val">8 juin 2026</span>
+              </div>
+            </Card>
+          </Section>
+        </>
+      )}
+
+      {/* Top performances — visible en Vue uniquement */}
+      {tab === 'vue' && (
       <Section label="Top performances">
         <ListItem
           avatar={<EntityAvatar species="bande" size="md" shortCode="B-MAR" />}
@@ -207,6 +266,7 @@ export const PerformanceV70: React.FC = () => {
           onClick={() => navigate('/troupeau/bandes/B-FEV')}
         />
       </Section>
+      )}
 
       {advancedMode && (
         <Section label="Tableau détaillé (Mode avancé)">

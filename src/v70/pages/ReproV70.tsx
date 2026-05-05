@@ -89,69 +89,130 @@ export const ReproV70: React.FC = () => {
         <Stat value={3} label="MB 7j" />
       </StatsGrid>
 
-      <EduCard label="💡 Le saviez-vous ?">
-        Le cycle de gestation d'une truie dure <strong>115 jours</strong>. L'échographie à <strong>J28</strong> permet de confirmer la gestation et planifier la mise-bas.
-      </EduCard>
+      {tab === 'agenda' && (
+        <>
+          <EduCard label="💡 Le saviez-vous ?">
+            Le cycle de gestation d'une truie dure <strong>115 jours</strong>. L'échographie à <strong>J28</strong> permet de confirmer la gestation et planifier la mise-bas.
+          </EduCard>
 
-      <Section label="Cycle bande mai 2026">
-        <Card>
-          <CycleTimeline
-            currentDay={42}
-            totalDays={115}
-            steps={[
-              { label: 'Saillie', day: 0, done: true },
-              { label: 'Écho', day: 28, done: true },
-              { label: 'Gestation', day: 42, done: false },
-              { label: 'Mise-bas', day: 115, done: false, target: true },
-            ]}
-          />
-        </Card>
-      </Section>
+          <Section label="Cycle bande mai 2026">
+            <Card>
+              <CycleTimeline
+                currentDay={42}
+                totalDays={115}
+                steps={[
+                  { label: 'Saillie', day: 0, done: true },
+                  { label: 'Écho', day: 28, done: true },
+                  { label: 'Gestation', day: 42, done: false },
+                  { label: 'Mise-bas', day: 115, done: false, target: true },
+                ]}
+              />
+            </Card>
+          </Section>
 
-      <Section label="7 prochains jours">
-        <Card>
-          {UPCOMING.map((item) => (
-            <button
-              key={item.title}
-              type="button"
-              onClick={() => navigate(item.to)}
-              className="alert-row"
-              style={{
-                background: 'none',
-                border: 'none',
-                width: '100%',
-                textAlign: 'left',
-                padding: 0,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-              }}
-              aria-label={`${item.title} — voir détail`}
-            >
-              <div
-                style={{
-                  background: item.badgeBg,
-                  color: 'white',
-                  padding: '4px 8px',
-                  borderRadius: 6,
-                  fontSize: 10,
-                  fontWeight: 700,
-                  minWidth: 36,
-                  textAlign: 'center',
-                }}
+          <Section label="7 prochains jours">
+            <Card>
+              {UPCOMING.map((item) => (
+                <button
+                  key={item.title}
+                  type="button"
+                  onClick={() => navigate(item.to)}
+                  className="alert-row"
+                  style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}
+                  aria-label={`${item.title} — voir détail`}
+                >
+                  <div style={{ background: item.badgeBg, color: 'white', padding: '4px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700, minWidth: 36, textAlign: 'center' }}>
+                    {item.badge}
+                  </div>
+                  <div className="alert-info" style={{ flex: 1 }}>
+                    <div className="alert-title">{item.title}</div>
+                    <div className="alert-meta">{item.meta}</div>
+                  </div>
+                  <span className="list-arrow">›</span>
+                </button>
+              ))}
+            </Card>
+          </Section>
+        </>
+      )}
+
+      {tab === 'en-cours' && (
+        <Section label="Bandes en cycle reproduction">
+          <Card>
+            <CycleTimeline
+              currentDay={42}
+              totalDays={115}
+              steps={[
+                { label: 'Saillie', day: 0, done: true },
+                { label: 'Écho', day: 28, done: true },
+                { label: 'Gestation', day: 42, done: false },
+                { label: 'Mise-bas', day: 115, done: false, target: true },
+              ]}
+            />
+            <div style={{ marginTop: 16, fontSize: 12, color: 'var(--pt-muted)' }}>
+              Bande mai 2026 · 11 truies pleines · J42/115
+            </div>
+          </Card>
+          <button
+            type="button"
+            onClick={() => navigate('/troupeau/bandes/B-MAI')}
+            className="list-item"
+            style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer' }}
+          >
+            <div className="list-info">
+              <div className="list-title">Bande de mai · J42</div>
+              <div className="list-sub">Gestation · 11 truies · MB le 28 août</div>
+            </div>
+            <span className="list-arrow">›</span>
+          </button>
+        </Section>
+      )}
+
+      {tab === 'a-venir' && (
+        <Section label="Événements à venir (7 jours)">
+          <Card>
+            {UPCOMING.map((item) => (
+              <button
+                key={item.title}
+                type="button"
+                onClick={() => navigate(item.to)}
+                className="alert-row"
+                style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}
+                aria-label={`${item.title} — voir détail`}
               >
-                {item.badge}
+                <div style={{ background: item.badgeBg, color: 'white', padding: '4px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700, minWidth: 36, textAlign: 'center' }}>
+                  {item.badge}
+                </div>
+                <div className="alert-info" style={{ flex: 1 }}>
+                  <div className="alert-title">{item.title}</div>
+                  <div className="alert-meta">{item.meta}</div>
+                </div>
+                <span className="list-arrow">›</span>
+              </button>
+            ))}
+          </Card>
+        </Section>
+      )}
+
+      {tab === 'historique' && (
+        <Section label="Bandes passées">
+          <Card>
+            <div style={{ padding: '16px 8px', textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
+              📦 Historique des bandes terminées
+              <div style={{ marginTop: 8, fontSize: 11 }}>
+                Voir toutes les bandes (actives + historique) sur l'onglet
+                <button
+                  type="button"
+                  onClick={() => navigate('/troupeau?view=bandes')}
+                  style={{ marginLeft: 4, background: 'none', border: 'none', color: 'var(--pt-primary)', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}
+                >
+                  Élevage › Bandes
+                </button>
               </div>
-              <div className="alert-info" style={{ flex: 1 }}>
-                <div className="alert-title">{item.title}</div>
-                <div className="alert-meta">{item.meta}</div>
-              </div>
-              <span className="list-arrow">›</span>
-            </button>
-          ))}
-        </Card>
-      </Section>
+            </div>
+          </Card>
+        </Section>
+      )}
 
       <EmptyEdu
         icon="📚"
