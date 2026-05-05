@@ -329,7 +329,8 @@ export function RadioGroup<T extends string>({
   className?: string;
   testId?: string;
 }) {
-  const labelId = label && !ariaLabelledBy ? `radio-group-${React.useId()}` : undefined;
+  const generatedLabelId = React.useId();
+  const labelId = label && !ariaLabelledBy ? `radio-group-${generatedLabelId}` : undefined;
   return (
     <div className={`pt-radio-group ${className ?? ''}`}>
       {label && (
@@ -387,7 +388,8 @@ export function Checkbox({
   ariaLabel?: string;
   testId?: string;
 }) {
-  const inputId = id ?? `pt-checkbox-${React.useId()}`;
+  const generatedInputId = React.useId();
+  const inputId = id ?? `pt-checkbox-${generatedInputId}`;
   return (
     <label
       htmlFor={inputId}
