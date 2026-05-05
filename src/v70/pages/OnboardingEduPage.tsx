@@ -62,6 +62,7 @@ export const OnboardingEduPage: React.FC<OnboardingEduPageProps> = ({ onComplete
   const [step, setStep] = useState(0);
   const current = STEPS[step];
   const isLast = step === STEPS.length - 1;
+  const isFirst = step === 0;
 
   const handleNext = () => {
     if (isLast) {
@@ -69,6 +70,10 @@ export const OnboardingEduPage: React.FC<OnboardingEduPageProps> = ({ onComplete
     } else {
       setStep(step + 1);
     }
+  };
+
+  const handlePrev = () => {
+    if (!isFirst) setStep(step - 1);
   };
 
   return (
@@ -124,6 +129,7 @@ export const OnboardingEduPage: React.FC<OnboardingEduPageProps> = ({ onComplete
         style={{
           display: 'flex',
           gap: 8,
+          alignItems: 'center',
           justifyContent: 'space-between',
           marginTop: 16,
         }}
@@ -131,9 +137,16 @@ export const OnboardingEduPage: React.FC<OnboardingEduPageProps> = ({ onComplete
         <Button variant="ghost" size="sm" onClick={() => onComplete?.()}>
           Passer
         </Button>
-        <Button variant="primary" size="sm" onClick={handleNext}>
-          {isLast ? 'Terminer' : 'Suivant →'}
-        </Button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {!isFirst && (
+            <Button variant="secondary" size="sm" onClick={handlePrev}>
+              ← Précédent
+            </Button>
+          )}
+          <Button variant="primary" size="sm" onClick={handleNext}>
+            {isLast ? 'Terminer' : 'Suivant →'}
+          </Button>
+        </div>
       </div>
     </div>
   );
