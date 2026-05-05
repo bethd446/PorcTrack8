@@ -5,9 +5,18 @@
  * Vérifie : header h1 "Réglages", profil Christophe Owner, toggle Mode avancé,
  * 4 items config, 2 items Apprendre.
  */
-import { describe, it, expect, beforeAll, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+
+// V71.1 — mock AuthContext (ReglagesV70 lit profile.full_name + role)
+vi.mock('../../../context/AuthContext', () => ({
+  useAuth: () => ({
+    profile: { id: 'u1', email: 'christophe@porctrack.test', full_name: 'Christophe', role: 'OWNER' },
+    role: 'OWNER',
+  }),
+}));
+
 import { ReglagesV70 } from '../ReglagesV70';
 import { UIPreferencesProvider } from '../../context/UIPreferencesContext';
 
@@ -45,13 +54,11 @@ describe('ReglagesV70 — Phase 3E', () => {
     expect(screen.getByRole('heading', { level: 1, name: /réglages/i })).toBeTruthy();
   });
 
-  it('rend Profile card avec Christophe Owner', () => {
+  it('rend Profile card avec full_name + role depuis useAuth', () => {
     renderPage();
+    // V71.1 : profile.full_name + role (mock = "Christophe" + "OWNER")
     expect(screen.getByText('Christophe')).toBeTruthy();
-    // "Owner" apparaît dans le hero ("Owner · Ferme audit test") et dans le
-    // subtitle de l'item Mon équipe ("Owner+Porcher+Admin") → getAllByText
     expect(screen.getAllByText(/owner/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/owner · ferme audit test/i)).toBeTruthy();
   });
 
   it('rend toggle Mode avancé', () => {

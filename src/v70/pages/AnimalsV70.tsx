@@ -88,7 +88,26 @@ export const AnimalsV70: React.FC = () => {
   const { bandes, truies, verrats } = useFarm();
   const [tab, setTab] = useState<AnimalTab>('truies');
   const [filter, setFilter] = useState<AnimalFilter>('all');
+  const [search, setSearch] = useState('');
   const [addOpen, setAddOpen] = useState(false);
+
+  // V71.1 — counts live (étaient hardcodés 50/28/11/6/92/24)
+  const counts = useMemo(() => {
+    const truiesPleines = truies.filter(t => /pleine|gestante|gestation/i.test(t.statut ?? '')).length;
+    const truiesMater = truies.filter(t => /maternit[eé]|allaitante|allaitement/i.test(t.statut ?? '')).length;
+    const truiesVides = truies.filter(t => /attente saillie|vide|sevr[eé]e/i.test(t.statut ?? '')).length;
+    const porcelets = bandes.reduce((acc, b) => acc + (b.vivants ?? 0), 0);
+    return {
+      truies: truies.length,
+      truiesPleines,
+      truiesMater,
+      truiesVides,
+      verrats: verrats.length,
+      porcelets,
+      bandes: bandes.length,
+      totalAnimaux: truies.length + verrats.length + porcelets,
+    };
+  }, [truies, verrats, bandes]);
 
   // Données réelles via FarmContext quand dispo, sinon stubs cosmétiques V70
   const realStubs = useMemo<Record<AnimalTab, AnimalStub[] | null>>(() => ({
@@ -135,10 +154,43 @@ export const AnimalsV70: React.FC = () => {
     loges: 'Ajouter une loge',
   };
 
+  // V71.1 — section label dynamique depuis counts réels
+  const sectionLabel: Record<AnimalTab, string> = {
+    truies: `${counts.truies} truies`,
+    verrats: `${counts.verrats} verrats`,
+    porcelets: `${counts.porcelets} porcelets`,
+    bandes: `${counts.bandes} bandes actives`,
+    loges: TAB_DATA.loges.sectionLabel, // pas de count loges via FarmContext
+  };
+
+  // V71.1 — list filtré par search + filter (truies seulement)
+  const baseList = realStubs[tab] ?? TAB_DATA[tab].stubs;
+  const filteredList = useMemo(() => {
+    let list = baseList;
+    if (tab === 'truies' && filter !== 'all') {
+      list = list.filter(it => {
+        const s = (it.statusLabel ?? '').toLowerCase();
+        if (filter === 'pleines') return /pleine/i.test(s);
+        if (filter === 'maternite') return /maternit/i.test(s);
+        if (filter === 'vides') return /vide/i.test(s);
+        return true;
+      });
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(it =>
+        it.id.toLowerCase().includes(q) ||
+        (it.status ?? '').toLowerCase().includes(q) ||
+        (it.statusLabel ?? '').toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [baseList, filter, search, tab]);
+
   return (
     <div className="phone-content" style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
       <PageHeader
-        eyebrow="Élevage · 145 animaux"
+        eyebrow={`Élevage · ${counts.totalAnimaux} animaux`}
         title="Mes animaux"
         subtitle="Truies, verrats, porcelets, bandes, loges"
       />
@@ -159,14 +211,17 @@ export const AnimalsV70: React.FC = () => {
         <div style={{ padding: 4 }}>
           <input
             type="search"
-            placeholder={`🔍 Rechercher ${TAB_DATA[tab].stubs[0]?.id ?? '...'}...`}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={`🔍  Rechercher ${baseList[0]?.id ?? '...'}`}
             style={{
               width: '100%',
               border: 'none',
               outline: 'none',
-              fontSize: 12,
+              fontSize: 13,
               background: 'transparent',
               fontFamily: 'inherit',
+              padding: '8px 10px',
             }}
             aria-label="Rechercher un animal"
           />
@@ -182,7 +237,7 @@ export const AnimalsV70: React.FC = () => {
             style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
             aria-pressed={filter === 'all'}
           >
-            <Pill variant={filter === 'all' ? 'primary' : 'ghost'}>Toutes (50)</Pill>
+            <Pill variant={filter === 'all' ? 'primary' : 'ghost'}>{`Toutes (${counts.truies})`}</Pill>
           </button>
           <button
             type="button"
@@ -190,7 +245,7 @@ export const AnimalsV70: React.FC = () => {
             style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
             aria-pressed={filter === 'pleines'}
           >
-            <Pill variant={filter === 'pleines' ? 'primary' : 'ghost'}>Pleines (28)</Pill>
+            <Pill variant={filter === 'pleines' ? 'primary' : 'ghost'}>{`Pleines (${counts.truiesPleines})`}</Pill>
           </button>
           <button
             type="button"
@@ -198,7 +253,7 @@ export const AnimalsV70: React.FC = () => {
             style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
             aria-pressed={filter === 'maternite'}
           >
-            <Pill variant={filter === 'maternite' ? 'primary' : 'ghost'}>Maternité (11)</Pill>
+            <Pill variant={filter === 'maternite' ? 'primary' : 'ghost'}>{`Maternité (${counts.truiesMater})`}</Pill>
           </button>
           <button
             type="button"
@@ -206,27 +261,33 @@ export const AnimalsV70: React.FC = () => {
             style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
             aria-pressed={filter === 'vides'}
           >
-            <Pill variant={filter === 'vides' ? 'primary' : 'ghost'}>Vides (6)</Pill>
+            <Pill variant={filter === 'vides' ? 'primary' : 'ghost'}>{`Vides (${counts.truiesVides})`}</Pill>
           </button>
         </div>
       )}
 
-      <Section label={TAB_DATA[tab].sectionLabel}>
-        {(realStubs[tab] ?? TAB_DATA[tab].stubs).map((it) => (
-          <ListItem
-            key={it.id}
-            avatar={<EntityAvatar species={TAB_DATA[tab].species} size="md" shortCode={it.id.slice(0, 8)} />}
-            title={it.id.length > 16 ? `Bande ${it.id.slice(0, 8)}…` : it.id}
-            subtitle={it.status}
-            trailing={
-              <>
-                <Pill variant={it.pillVariant}>{it.statusLabel}</Pill>
-                <span className="list-arrow">›</span>
-              </>
-            }
-            onClick={() => navigate(`${TAB_DATA[tab].routePrefix}${it.id}`)}
-          />
-        ))}
+      <Section label={sectionLabel[tab]}>
+        {filteredList.length === 0 ? (
+          <div style={{ padding: 18, textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
+            {search.trim() ? `Aucun résultat pour « ${search} »` : 'Aucun animal'}
+          </div>
+        ) : (
+          filteredList.map((it) => (
+            <ListItem
+              key={it.id}
+              avatar={<EntityAvatar species={TAB_DATA[tab].species} size="md" shortCode={it.id.slice(0, 8)} />}
+              title={it.id.length > 16 ? `Bande ${it.id.slice(0, 8)}…` : it.id}
+              subtitle={it.status}
+              trailing={
+                <>
+                  <Pill variant={it.pillVariant}>{it.statusLabel}</Pill>
+                  <span className="list-arrow">›</span>
+                </>
+              }
+              onClick={() => navigate(`${TAB_DATA[tab].routePrefix}${it.id}`)}
+            />
+          ))
+        )}
       </Section>
 
       <button

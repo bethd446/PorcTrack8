@@ -10,6 +10,7 @@
  */
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
@@ -18,6 +19,13 @@ import { ToggleAdvancedMode } from '../components/v70/ToggleAdvancedMode';
 
 export const ReglagesV70: React.FC = () => {
   const navigate = useNavigate();
+  const { profile, role } = useAuth();
+
+  // V71.1 — données live profile (étaient hardcodées "Christophe / Owner · Ferme audit test")
+  const displayName = profile?.full_name?.trim() || 'Éleveur';
+  const initial = displayName.charAt(0).toUpperCase();
+  const farmLabel = (profile?.email?.split('@')[0] ?? 'ma-ferme').replace(/[._-]+/g, ' ');
+  const roleLabel = role || 'Utilisateur';
 
   return (
     <div className="phone-content" style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
@@ -38,11 +46,11 @@ export const ReglagesV70: React.FC = () => {
               fontWeight: 700,
             }}
           >
-            C
+            {initial}
           </div>
           <div className="hero-info">
-            <div className="hero-title-text">Christophe</div>
-            <div className="hero-sub">Owner · Ferme audit test</div>
+            <div className="hero-title-text">{displayName}</div>
+            <div className="hero-sub">{`${roleLabel} · ${farmLabel}`}</div>
           </div>
         </div>
       </Card>

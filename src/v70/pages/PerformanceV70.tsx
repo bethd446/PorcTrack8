@@ -15,7 +15,7 @@
  *
  * Phase 3D V70 — stubs data, Phase F branchera perfKpiAnalyzer.
  */
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
@@ -31,6 +31,7 @@ import { ExportButton } from '../components/v70/ExportButton';
 import { useUIPreferences } from '../context/UIPreferencesContext';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { useFarm } from '../../context/FarmContext';
+import { computeGlobalKpis } from '../../services/perfKpiAnalyzer';
 
 type PerfTab = 'vue' | 'kpis' | 'finances' | 'previsions';
 
@@ -57,10 +58,22 @@ const BANDES_COLUMNS: DataTableColumn<BandePerf>[] = [
 
 export const PerformanceV70: React.FC = () => {
   const navigate = useNavigate();
-  const { bandes } = useFarm();
+  const { bandes, truies, saillies } = useFarm();
   const [tab, setTab] = useState<PerfTab>('vue');
   const { advancedMode } = useUIPreferences();
   const topBandes = bandes?.slice(0, 2) ?? [];
+
+  // V71.1 — KPIs live calculés via perfKpiAnalyzer (étaient 11.8/86%/13.2/8.4%/5.1j hardcodés)
+  const kpis = useMemo(() => {
+    try {
+      return computeGlobalKpis(truies, bandes, saillies);
+    } catch {
+      return null;
+    }
+  }, [truies, bandes, saillies]);
+
+  const fmt = (n: number | null | undefined, digits = 1, suffix = ''): string =>
+    n === null || n === undefined || !Number.isFinite(n) ? '—' : `${n.toFixed(digits)}${suffix}`;
 
   const [pdfHint, setPdfHint] = useState(false);
   const handlePrintPdf = () => {
@@ -120,7 +133,7 @@ export const PerformanceV70: React.FC = () => {
                 lineHeight: 1,
               }}
             >
-              11.8
+              {fmt(kpis?.sevresParTruieAn ?? null, 1)}
             </div>
             <div style={{ fontSize: 10, color: 'var(--pt-muted)' }}>vs réf. 12.0</div>
           </div>
@@ -142,27 +155,23 @@ export const PerformanceV70: React.FC = () => {
         <Card>
           <div className="kv-row">
             <span className="kv-key">Taux mise-bas</span>
-            <span className="kv-val">
-              86 % <span style={{ color: 'var(--pt-success)', fontSize: 10 }}>↗ +2%</span>
-            </span>
+            <span className="kv-val">{fmt(kpis?.tauxMBPct ?? null, 0, ' %')}</span>
           </div>
           <div className="kv-row">
             <span className="kv-key">Nés vivants/portée</span>
-            <span className="kv-val">13.2</span>
+            <span className="kv-val">{fmt(kpis?.moyNV ?? null, 1)}</span>
           </div>
           <div className="kv-row">
             <span className="kv-key">
-              <Tooltip term="mortalite">Mortalité allaitement</Tooltip>
+              <Tooltip term="mortalite">Mortalité naiss.→sevrage</Tooltip>
             </span>
-            <span className="kv-val">
-              8.4 % <span style={{ color: 'var(--pt-success)', fontSize: 10 }}>↘ -1%</span>
-            </span>
+            <span className="kv-val">{fmt(kpis?.tauxMortaliteNaissanceSevrage ?? null, 1, ' %')}</span>
           </div>
           <div className="kv-row">
             <span className="kv-key">
               <Tooltip term="iem">IEM moyen</Tooltip>
             </span>
-            <span className="kv-val">5.1 j</span>
+            <span className="kv-val">{fmt(kpis?.iemMoyJours ?? null, 0, ' j')}</span>
           </div>
         </Card>
       </Section>
@@ -187,16 +196,18 @@ export const PerformanceV70: React.FC = () => {
               <div
                 style={{
                   fontFamily: 'var(--pt-font-display, sans-serif)',
-                  fontSize: 28,
+                  fontSize: 22,
                   fontWeight: 900,
-                  color: 'var(--pt-primary)',
+                  color: 'var(--pt-muted)',
                   lineHeight: 1,
                 }}
               >
-                + 1 240 €
+                — FCFA
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--pt-muted)', marginTop: 4 }}>
+                Voir « Détails » pour le calcul live
               </div>
             </div>
-            <Pill variant="success">+12% vs avril</Pill>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <Button

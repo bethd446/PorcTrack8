@@ -11,8 +11,9 @@
  * Décision : CycleTimeline API V45 ({label, day, done?, target?}), pas la
  * forme {label, date, status} du brief — adapté au composant existant.
  */
-import React, { useEffect, useState, lazy, Suspense } from 'react';
+import React, { useEffect, useMemo, useState, lazy, Suspense } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useFarm } from '../../context/FarmContext';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
@@ -64,6 +65,24 @@ const isReproTab = (v: string | null): v is ReproTab =>
 
 export const ReproV70: React.FC = () => {
   const navigate = useNavigate();
+  const { truies, bandes } = useFarm();
+
+  // V71.1 — KPIs live (étaient hardcodés 28/11/6/3)
+  const kpis = useMemo(() => {
+    const pleines = truies.filter(t => /pleine|gestante|gestation/i.test(t.statut ?? '')).length;
+    const materni = truies.filter(t => /maternit[eé]|allaitante|allaitement/i.test(t.statut ?? '')).length;
+    const vides = truies.filter(t => /attente saillie|vide|sevr[eé]e/i.test(t.statut ?? '')).length;
+    // MB prévues dans les 7 prochains jours : bandes avec dateMB dans la fenêtre
+    const now = new Date();
+    const in7days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const mbProches = bandes.filter(b => {
+      if (!b.dateMB) return false;
+      const d = new Date(b.dateMB);
+      return !isNaN(d.getTime()) && d >= now && d <= in7days;
+    }).length;
+    return { pleines, materni, vides, mbProches };
+  }, [truies, bandes]);
+
   // V71 FIX #4 — initial tab depuis URL (?tab=...) pour deep-links legacy
   // (/cycles/maternite → /reproduction?tab=en-cours&phase=maternite, etc.).
   const [searchParams, setSearchParams] = useSearchParams();
@@ -111,10 +130,10 @@ export const ReproV70: React.FC = () => {
       />
 
       <StatsGrid cols={4}>
-        <Stat value={28} label="Pleines" />
-        <Stat value={11} label="Materni." />
-        <Stat value={6} label="Vides" />
-        <Stat value={3} label="MB 7j" />
+        <Stat value={kpis.pleines} label="Pleines" />
+        <Stat value={kpis.materni} label="Materni." />
+        <Stat value={kpis.vides} label="Vides" />
+        <Stat value={kpis.mbProches} label="MB 7j" />
       </StatsGrid>
 
       {tab === 'agenda' && (

@@ -14,8 +14,9 @@ import { render, screen, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 // V70.2 — PerformanceV70 utilise useFarm pour brancher Top performances.
+// V71.1 — KPIs ISSE/Taux MB/Mortalité/IEM lus depuis useFarm via computeGlobalKpis
 vi.mock('../../../context/FarmContext', () => ({
-  useFarm: () => ({ bandes: [], truies: [], verrats: [] }),
+  useFarm: () => ({ bandes: [], truies: [], verrats: [], saillies: [], refreshData: vi.fn() }),
 }));
 
 import { PerformanceV70 } from '../PerformanceV70';
@@ -45,13 +46,15 @@ describe('PerformanceV70 — Phase 3 Hub Performance', () => {
     expect(screen.getByRole('heading', { level: 1, name: /performance/i })).toBeTruthy();
   });
 
-  it('rend ISSE hero avec valeur 11.8', () => {
+  it('rend ISSE hero (valeur live ou — quand pas de data)', () => {
     render(
       <MemoryRouter>
         <PerformanceV70 />
       </MemoryRouter>,
     );
-    expect(screen.getByText('11.8')).toBeTruthy();
+    // V71.1 : ISSE désormais calculée depuis useFarm. Avec mock data vide,
+    // computeGlobalKpis retourne null → '—'.
+    expect(screen.getByText(/isse moyen/i)).toBeTruthy();
   });
 
   it('rend Tooltip ISSE', () => {
@@ -73,13 +76,14 @@ describe('PerformanceV70 — Phase 3 Hub Performance', () => {
     expect(screen.getByText(/iem moyen/i)).toBeTruthy();
   });
 
-  it('rend section Finances avec Pill Owner', () => {
+  it('rend section Finances avec marge en attente data live', () => {
     render(
       <MemoryRouter>
         <PerformanceV70 />
       </MemoryRouter>,
     );
-    expect(screen.getByText('Owner')).toBeTruthy();
-    expect(screen.getByText(/1 240/)).toBeTruthy();
+    // V71.1 : marge mensuelle en attente data live (placeholder "—" + FCFA)
+    expect(screen.getByText(/marge mensuelle/i)).toBeTruthy();
+    expect(screen.getByText(/fcfa/i)).toBeTruthy();
   });
 });

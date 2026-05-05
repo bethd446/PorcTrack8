@@ -6,7 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 // V70.2 — AnimalsV70 utilise useFarm pour brancher la liste réelle des bandes.
 // En test, on mocke FarmContext pour éviter d'avoir à monter tous les providers.
 vi.mock('../../../context/FarmContext', () => ({
-  useFarm: () => ({ bandes: [], truies: [], verrats: [] }),
+  useFarm: () => ({ bandes: [], truies: [], verrats: [], saillies: [], refreshData: vi.fn() }),
 }));
 
 import { AnimalsV70 } from '../AnimalsV70';
