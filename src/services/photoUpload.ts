@@ -4,21 +4,20 @@
  * Bucket : `farm-photos` (à créer manuellement côté Supabase).
  * Path   : `${farmId}/${animalId}-${timestamp}.jpg`
  *
- * Compression côté client via canvas natif :
- *  - resize ≤ 1024×1024 (preserve ratio)
- *  - réencode en JPEG qualité 0.82 → généralement < 500 KB
- *  - max blob ≈ 1 MB (sinon abandon)
- *
- * Erreur typique : si le bucket n'existe pas, Supabase renvoie
- *   `{ error: { message: 'Bucket not found' } }` → on surface une erreur claire
- *   pour que l'UI puisse afficher un toast d'instruction.
+ * Compression côté client via le helper partagé `lib/imageCompress` :
+ *  - resize ≤ 1600 px côté max (preserve ratio) — sous la limite Anthropic 2000 px
+ *  - réencode JPEG qualité 0.85
+ *  - max blob ≈ 1.5 MB (sinon abandon)
  */
 import { supabase } from './supabaseClient';
+import {
+  compressImageBlob,
+  ImageCompressError,
+  DEFAULT_MAX_DIMENSION,
+} from '../lib/imageCompress';
 
 const BUCKET = 'farm-photos';
-const MAX_DIMENSION = 1024;
-const MAX_BYTES = 1_048_576; // 1 MB
-const JPEG_QUALITY = 0.82;
+export const PHOTO_MAX_DIMENSION = DEFAULT_MAX_DIMENSION;
 
 export class PhotoUploadError extends Error {
   readonly code: 'BUCKET_MISSING' | 'COMPRESS_FAILED' | 'UPLOAD_FAILED' | 'INVALID_INPUT';
@@ -27,53 +26,6 @@ export class PhotoUploadError extends Error {
     this.code = code;
     this.name = 'PhotoUploadError';
   }
-}
-
-/** Compresse un File image via canvas. Retourne un Blob JPEG. */
-async function compressImage(file: File): Promise<Blob> {
-  if (!file.type.startsWith('image/')) {
-    throw new PhotoUploadError('INVALID_INPUT', 'Le fichier doit être une image');
-  }
-
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new PhotoUploadError('COMPRESS_FAILED', 'Lecture fichier échouée'));
-    reader.onload = () => {
-      if (typeof reader.result === 'string') resolve(reader.result);
-      else reject(new PhotoUploadError('COMPRESS_FAILED', 'FileReader résultat invalide'));
-    };
-    reader.readAsDataURL(file);
-  });
-
-  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-    const i = new Image();
-    i.onload = () => resolve(i);
-    i.onerror = () => reject(new PhotoUploadError('COMPRESS_FAILED', 'Image illisible'));
-    i.src = dataUrl;
-  });
-
-  const ratio = Math.min(1, MAX_DIMENSION / Math.max(img.width, img.height));
-  const w = Math.round(img.width * ratio);
-  const h = Math.round(img.height * ratio);
-
-  const canvas = document.createElement('canvas');
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new PhotoUploadError('COMPRESS_FAILED', 'Canvas 2D indisponible');
-  ctx.drawImage(img, 0, 0, w, h);
-
-  const blob = await new Promise<Blob | null>(resolve =>
-    canvas.toBlob(resolve, 'image/jpeg', JPEG_QUALITY),
-  );
-  if (!blob) throw new PhotoUploadError('COMPRESS_FAILED', 'Encodage JPEG échoué');
-  if (blob.size > MAX_BYTES) {
-    throw new PhotoUploadError(
-      'COMPRESS_FAILED',
-      `Image trop lourde après compression (${Math.round(blob.size / 1024)} KB)`,
-    );
-  }
-  return blob;
 }
 
 /**
@@ -91,8 +43,20 @@ export async function uploadAnimalPhoto(
   if (!farmId || !animalId) {
     throw new PhotoUploadError('INVALID_INPUT', 'farmId et animalId requis');
   }
+  if (!file.type.startsWith('image/')) {
+    throw new PhotoUploadError('INVALID_INPUT', 'Le fichier doit être une image');
+  }
 
-  const blob = await compressImage(file);
+  let blob: Blob;
+  try {
+    blob = await compressImageBlob(file);
+  } catch (err) {
+    if (err instanceof ImageCompressError) {
+      throw new PhotoUploadError('COMPRESS_FAILED', err.message);
+    }
+    throw err;
+  }
+
   const path = `${farmId}/${animalId}-${Date.now()}.jpg`;
 
   const { error } = await supabase.storage
@@ -132,7 +96,7 @@ export async function deleteAnimalPhoto(url: string): Promise<void> {
 
   const { error } = await supabase.storage.from(BUCKET).remove([path]);
   if (error) {
-     
+
     console.warn('[photoUpload] delete failed', error.message);
   }
 }

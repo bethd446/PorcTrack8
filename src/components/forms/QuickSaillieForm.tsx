@@ -7,8 +7,18 @@ import {
   resolveBoarIdByCode,
 } from '../../services/supabaseWrites';
 import { BottomSheet } from '../agritech';
-import { Button, FormField, Section } from '@/design-system';
+import { Button, FormField, Input, Section } from '@/design-system';
 import { normaliseStatut } from '../../lib/truieStatut';
+
+// Saisie d'une saillie passée jusqu'à 60 jours en arrière (cas terrain :
+// éleveur qui rentre des saillies du carnet papier).
+const SAILLIE_BACKDATE_MAX_DAYS = 60;
+const todayISO = (): string => new Date().toISOString().slice(0, 10);
+const minDateISO = (days: number): string => {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d.toISOString().slice(0, 10);
+};
 
 /**
  * QuickSaillieForm — Modal rapide pour enregistrer une saillie
@@ -30,6 +40,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
   const { truies, verrats, refreshData } = useFarm();
   const [selectedTruie, setSelectedTruie] = useState(defaultTruieDisplayId ?? '');
   const [selectedVerrat, setSelectedVerrat] = useState('');
+  const [dateSaillie, setDateSaillie] = useState<string>(todayISO);
 
   const [lastOpenKey, setLastOpenKey] = useState<{ isOpen: boolean; defaultTruieDisplayId: string | undefined }>({
     isOpen,
@@ -37,8 +48,11 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
   });
   if (lastOpenKey.isOpen !== isOpen || lastOpenKey.defaultTruieDisplayId !== defaultTruieDisplayId) {
     setLastOpenKey({ isOpen, defaultTruieDisplayId });
-    if (isOpen && defaultTruieDisplayId) {
-      setSelectedTruie(defaultTruieDisplayId);
+    if (isOpen) {
+      setDateSaillie(todayISO());
+      if (defaultTruieDisplayId) {
+        setSelectedTruie(defaultTruieDisplayId);
+      }
     }
   }
   const [saving, setSaving] = useState(false);
@@ -60,14 +74,17 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
         resolveSowIdByCode(selectedTruie),
         resolveBoarIdByCode(selectedVerrat),
       ]);
+      const isBackdated = dateSaillie !== todayISO();
       await insertSaillie({
         sow_id: sowId,
         boar_id: boarId,
         sow_code_id: selectedTruie,
         boar_code_id: selectedVerrat,
-        date_saillie: new Date().toISOString().slice(0, 10),
+        date_saillie: dateSaillie,
         statut: 'SAILLIE',
-        notes: 'Saillie enregistrée depuis PorcTrack',
+        notes: isBackdated
+          ? `Saillie rétro-saisie depuis PorcTrack (date réelle : ${dateSaillie})`
+          : 'Saillie enregistrée depuis PorcTrack',
       });
       try { await refreshData(true); } catch { /* noop */ }
       setSuccess(true);
@@ -75,6 +92,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
         setSuccess(false);
         setSelectedTruie('');
         setSelectedVerrat('');
+        setDateSaillie(todayISO());
         onClose();
       }, 1500);
     } catch (e) {
@@ -87,6 +105,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
   const handleClose = (): void => {
     setSelectedTruie('');
     setSelectedVerrat('');
+    setDateSaillie(todayISO());
     setSuccess(false);
     onClose();
   };
@@ -177,6 +196,23 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
             )}
           </FormField>
 
+          {/* ── Date saillie (par défaut aujourd'hui, modifiable jusqu'à
+                 60 j en arrière pour rétro-saisie carnet papier) ────────── */}
+          <FormField
+            label="Date de saillie"
+            required
+            hint={dateSaillie !== todayISO() ? 'Saillie rétro-saisie' : undefined}
+          >
+            <Input
+              type="date"
+              aria-label="Date de saillie"
+              value={dateSaillie}
+              min={minDateISO(SAILLIE_BACKDATE_MAX_DAYS)}
+              max={todayISO()}
+              onChange={e => setDateSaillie(e.target.value)}
+            />
+          </FormField>
+
           {/* ── Verrat selection ──────────────────────────────────────── */}
           <FormField label="Verrat" required>
             {verrats.length > 0 ? (
@@ -239,7 +275,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
 
           {selectedTruie && selectedVerrat && (
             <p className="text-center text-mono-label text-text-2 tabular-nums">
-              {selectedTruie} × {selectedVerrat} · {new Date().toLocaleDateString('fr-FR')}
+              {selectedTruie} × {selectedVerrat} · {new Date(dateSaillie).toLocaleDateString('fr-FR')}
             </p>
           )}
         </div>

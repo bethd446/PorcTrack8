@@ -189,6 +189,40 @@ describe('QuickSaillieForm', () => {
     expect(payload.date_saillie).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
+  it('[4b] date_saillie custom (rétro-saisie) propagée dans le payload', async () => {
+    mockFarm.truies = [makeTruie({ displayId: 'T07' })];
+    mockFarm.verrats = [makeVerrat({ displayId: 'V01' })];
+
+    render(
+      <QuickSaillieForm
+        isOpen
+        onClose={() => undefined}
+        defaultTruieDisplayId="T07"
+      />,
+    );
+
+    // Saisir une date 7 jours en arrière
+    const past = new Date();
+    past.setDate(past.getDate() - 7);
+    const pastIso = past.toISOString().slice(0, 10);
+
+    const dateInput = screen.getByLabelText(/Date de saillie/i) as HTMLInputElement;
+    fireEvent.change(dateInput, { target: { value: pastIso } });
+
+    fireEvent.click(screen.getByLabelText(/Sélectionner le verrat V01/i));
+    fireEvent.click(
+      screen.getByRole('button', { name: /Confirmer la saillie/i }),
+    );
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    const payload = (insertSaillie as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    expect(payload.date_saillie).toBe(pastIso);
+    expect(payload.notes).toMatch(/rétro-saisie/i);
+  });
+
   it('[5] refreshData(true) appelée post-insert (V15 fix)', async () => {
     mockFarm.truies = [makeTruie({ displayId: 'T07' })];
     mockFarm.verrats = [makeVerrat({ displayId: 'V01' })];

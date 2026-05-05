@@ -1,6 +1,7 @@
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Preferences } from '@capacitor/preferences';
+import { compressImageDataUrl } from '../lib/imageCompress';
 
 export interface UserPhoto {
   filepath: string;
@@ -27,10 +28,19 @@ export async function takePhoto(subjectType: PhotoEntry['subjectType'], subjectI
       quality: 90
     });
 
+    // Resize <= 1600px côté max avant écriture sur disque, pour rester sous la
+    // limite Anthropic "many-image requests 2000px" si la photo est ensuite
+    // ré-envoyée à un endpoint IA (Marius, Claude, etc.) ou partagée à Claude
+    // Code en review.
+    const compressedDataUrl = await compressImageDataUrl(photo.webPath!).catch(() => null);
+    const dataPayload = compressedDataUrl
+      ? compressedDataUrl.split(',')[1]
+      : await base64FromPath(photo.webPath!);
+
     const fileName = `PH-${Date.now()}.jpeg`;
     await Filesystem.writeFile({
       path: fileName,
-      data: await base64FromPath(photo.webPath!),
+      data: dataPayload,
       directory: Directory.Data
     });
 
@@ -40,7 +50,7 @@ export async function takePhoto(subjectType: PhotoEntry['subjectType'], subjectI
         subjectId,
         ts: Date.now(),
         localPath: fileName,
-        webviewPath: photo.webPath
+        webviewPath: compressedDataUrl ?? photo.webPath
     };
 
     const { value } = await Preferences.get({ key: PHOTO_STORAGE });

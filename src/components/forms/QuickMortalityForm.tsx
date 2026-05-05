@@ -37,6 +37,16 @@ const CAUSE_LABEL: Record<string, string> = Object.fromEntries(
   CAUSE_OPTIONS.map(o => [o.value, o.label]),
 );
 
+// Saisie d'une mort passée jusqu'à 60 jours en arrière (cas terrain :
+// éleveur qui rentre des mortalités du carnet papier).
+const MORTALITY_BACKDATE_MAX_DAYS = 60;
+const todayISO = (): string => new Date().toISOString().slice(0, 10);
+const minDateISO = (days: number): string => {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d.toISOString().slice(0, 10);
+};
+
 /**
  * QuickMortalityForm — Déclaration rapide d'une mortalité (V44 archétype 5).
  *
@@ -171,6 +181,7 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
   const [nbMorts, setNbMorts] = useState<number>(MIN_DEATHS);
   const [cause, setCause] = useState<string>('INCONNUE');
   const [observation, setObservation] = useState<string>('');
+  const [dateMort, setDateMort] = useState<string>(todayISO);
   const [saving, setSaving] = useState(false);
   const [, setSuccess] = useState(false);
   const [impactFCFA, setImpactFCFA] = useState<number>(0);
@@ -235,6 +246,7 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
     setSelectedBandeId(defaultBandeId ?? '');
     setNbMorts(MIN_DEATHS);
     setObservation('');
+    setDateMort(todayISO());
     setSuccess(false);
     setError('');
     onClose();
@@ -286,7 +298,12 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
       setImpactFCFA(totalImpact);
 
       const author = kvGet('user_name') || 'Anonyme';
-      const now = new Date();
+      const logDate = dateMort || todayISO();
+      const isBackdated = logDate !== todayISO();
+      const baseNotes = `[CAUSE: ${cause}] ${observation}`.trim();
+      const notesWithBackdate = isBackdated
+        ? `${baseNotes} [Date réelle: ${logDate}]`
+        : baseNotes;
       const validationStatus = getDefaultValidationStatus(role);
 
       if (subjectType === 'BANDE') {
@@ -299,9 +316,9 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
           animal_reference: bande.id,
           log_type: 'MORTALITE',
           affected_animals: nb,
-          notes: `[CAUSE: ${cause}] ${observation}`.trim(),
+          notes: notesWithBackdate,
           operator: author,
-          log_date: now.toISOString().slice(0, 10),
+          log_date: logDate,
           validation_status: validationStatus,
         } as Parameters<typeof insertHealthLog>[0]);
         await updateBatchByCode(bande.id, {
@@ -316,9 +333,9 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
           animal_reference: selectedSubject.id,
           log_type: 'MORTALITE',
           affected_animals: 1,
-          notes: `[CAUSE: ${cause}] ${observation}`.trim(),
+          notes: notesWithBackdate,
           operator: author,
-          log_date: now.toISOString().slice(0, 10),
+          log_date: logDate,
           validation_status: validationStatus,
         } as Parameters<typeof insertHealthLog>[0]);
         if (subjectType === 'TRUIE') {
@@ -434,6 +451,25 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </Select>
+              </FormField>
+
+              {/* Date du décès — par défaut aujourd'hui, modifiable jusqu'à
+                  60 j en arrière pour rétro-saisie carnet papier. */}
+              <FormField
+                label="Date du décès"
+                required
+                hint={dateMort !== todayISO() ? 'Mortalité rétro-saisie' : undefined}
+              >
+                <Input
+                  id="mortality-date"
+                  type="date"
+                  aria-label="Date du décès"
+                  value={dateMort}
+                  min={minDateISO(MORTALITY_BACKDATE_MAX_DAYS)}
+                  max={todayISO()}
+                  onChange={e => setDateMort(e.target.value)}
+                  disabled={saving}
+                />
               </FormField>
 
               {subjectType === 'BANDE' && (
