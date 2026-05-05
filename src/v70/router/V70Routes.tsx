@@ -6,8 +6,9 @@
  * Phase 3E : sous-routes /reglages livrées (page principale + encyclopédie +
  * tutoriel onboarding).
  */
-import React, { Suspense } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import React, { Suspense, useCallback } from 'react';
+import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { useFarm } from '../../context/FarmContext';
 import { BottomNavV70 } from '../components/v70/BottomNav';
 import { UIPreferencesProvider } from '../context/UIPreferencesContext';
 import { TodayV70 } from '../pages/TodayV70';
@@ -74,6 +75,59 @@ const OnboardingRoute: React.FC = () => {
   return <OnboardingEduPage onComplete={() => navigate('/reglages')} />;
 };
 
+/**
+ * BandeDetailRoute V70 — wrapper qui agrège la prop `bande` attendue par
+ * BandeDetailView (cf. App.tsx ligne 303 pour le wrapper legacy équivalent).
+ */
+const BandeDetailRouteV70: React.FC = () => {
+  const { bandeId = '' } = useParams<{ bandeId: string }>();
+  const navigate = useNavigate();
+  const { getBandeById, refreshData } = useFarm();
+  const bandeTyped = getBandeById(bandeId);
+  const handleClose = useCallback(() => navigate(-1), [navigate]);
+  const handleRefresh = useCallback(() => { void refreshData(true); }, [refreshData]);
+
+  if (!bandeTyped) {
+    return (
+      <div style={{ padding: 32, textAlign: 'center' }}>
+        <p style={{ fontSize: 14, color: 'var(--pt-muted)', marginBottom: 16 }}>Bande introuvable</p>
+        <button
+          type="button"
+          onClick={handleClose}
+          style={{ padding: '10px 24px', background: 'var(--pt-primary)', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
+        >
+          Retour
+        </button>
+      </div>
+    );
+  }
+
+  const aggregated = {
+    id: bandeTyped.id,
+    count: 1,
+    truie: bandeTyped.truie ?? null,
+    boucleMere: bandeTyped.boucleMere ?? null,
+    dateMB: bandeTyped.dateMB ?? null,
+    age: null,
+    nv: bandeTyped.nv ?? 0,
+    morts: bandeTyped.morts ?? 0,
+    vivants: bandeTyped.vivants ?? bandeTyped.nv ?? 0,
+    status: bandeTyped.statut ?? null,
+    hasAlert: false,
+    rows: [],
+  };
+
+  return (
+    <BandeDetailView
+      bande={aggregated as never}
+      header={[]}
+      meta={null}
+      onClose={handleClose}
+      onRefresh={handleRefresh}
+    />
+  );
+};
+
 export const V70Routes: React.FC = () => (
   <UIPreferencesProvider>
     <div className="v70-root" style={{ minHeight: '100vh', paddingBottom: 80, background: 'var(--pt-bg)' }}>
@@ -85,7 +139,7 @@ export const V70Routes: React.FC = () => (
           {/* Fiches détail legacy (réutilisées tant que V70 n'a pas de fiches dédiées) */}
           <Route path="/troupeau/truies/:id" element={<TruieDetailView />} />
           <Route path="/troupeau/verrats/:id" element={<VerratDetailView />} />
-          <Route path="/troupeau/bandes/:bandeId" element={<BandeDetailView />} />
+          <Route path="/troupeau/bandes/:bandeId" element={<BandeDetailRouteV70 />} />
           <Route path="/troupeau/loges/:id" element={<LogeDetailView />} />
           <Route path="/troupeau/*" element={<AnimalsV70 />} />
 
