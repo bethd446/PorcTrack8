@@ -2,7 +2,7 @@
  * V70 — Page Encyclopédie (route /reglages/encyclopedie)
  *
  * Phase 6 niveau B : liste d'articles + lecteur intégré.
- * 5 articles V70 (cycle, ISSE, biosécurité, alimentation gestation, sevrage).
+ * V71 Phase 4 : 10 articles (cycles, économie, santé, alimentation, reproduction).
  */
 import React, { useState } from 'react';
 import { EncyclopediaArticle } from '../components/v70/EncyclopediaArticle';
@@ -47,6 +47,36 @@ const ARTICLES: ArticleEntry[] = [
     title: 'Le sevrage : timing et conditions',
     category: 'Cycles',
     level: 'intermédiaire',
+  },
+  {
+    slug: '06-mortalite-allaitement',
+    title: 'Mortalité allaitement : causes et prévention',
+    category: 'Santé',
+    level: 'intermédiaire',
+  },
+  {
+    slug: '07-reforme-zootechnique',
+    title: 'Réforme zootechnique : critères de décision',
+    category: 'Reproduction',
+    level: 'avancé',
+  },
+  {
+    slug: '08-lignees-tropicales',
+    title: 'Lignées génétiques en climat tropical',
+    category: 'Reproduction',
+    level: 'intermédiaire',
+  },
+  {
+    slug: '09-couts-alimentaires',
+    title: 'Calcul des coûts alimentaires',
+    category: 'Économique',
+    level: 'intermédiaire',
+  },
+  {
+    slug: '10-preparation-mise-bas',
+    title: 'Préparation à la mise-bas',
+    category: 'Cycles',
+    level: 'débutant',
   },
 ];
 

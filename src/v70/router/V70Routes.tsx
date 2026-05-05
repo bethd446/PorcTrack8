@@ -130,7 +130,19 @@ const BandeDetailRouteV70: React.FC = () => {
 
 export const V70Routes: React.FC = () => (
   <UIPreferencesProvider>
-    <div className="v70-root" style={{ minHeight: '100vh', paddingBottom: 80, background: 'var(--pt-bg)' }}>
+    <div
+      className="v70-root"
+      style={{
+        // V71 P1.6 — body Ionic est position:fixed + overflow:hidden, donc il faut
+        // récupérer le scroll ICI (sinon contenu débordé jamais accessible).
+        height: '100vh',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        WebkitOverflowScrolling: 'touch',
+        paddingBottom: 80,
+        background: 'var(--pt-bg)',
+      }}
+    >
       <Suspense fallback={<div style={{ padding: 24 }}>Chargement…</div>}>
         <Routes>
           <Route path="/" element={<Navigate to="/today" replace />} />
