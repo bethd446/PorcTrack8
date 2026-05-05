@@ -136,8 +136,8 @@ function fillStep2(): void {
   fireEvent.change(poids, { target: { value: '18.5' } });
   // Force une date passée déterministe : la valeur par défaut (todayIso) peut
   // être rejetée par validateFromLogeStep2 quand l'écart UTC/locale fait
-  // apparaître la date d'aujourd'hui comme future (cas observé en CI/locale
-  // européenne en tout début de journée locale).
+  // apparaître la date d'aujourd'hui comme future (cas observé en tout début
+  // de journée locale Europe/Paris où Date() < midnight UTC).
   const date = document.getElementById('qabfl-date') as HTMLInputElement;
   fireEvent.change(date, { target: { value: '2024-01-15' } });
 }
