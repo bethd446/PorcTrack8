@@ -2,12 +2,30 @@
 /**
  * V70 — TodayV70 smoke tests (Phase 3A — archétype Dashboard).
  *
- * Vérifie que la page rend les 4 sections obligatoires + PageHeader +
- * StatsGrid 4 stats troupeau + 3 alertes avec pills colorées.
+ * V71.1 — mocks FarmContext + AuthContext (TodayV70 lit truies/verrats/bandes
+ * + profile.full_name depuis V71.1 fix stubs hardcodés).
  */
-import { describe, it, expect, beforeAll, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+
+vi.mock('../../../context/FarmContext', () => ({
+  useFarm: () => ({
+    truies: [],
+    verrats: [],
+    bandes: [],
+    saillies: [],
+    refreshData: vi.fn(),
+  }),
+}));
+
+vi.mock('../../../context/AuthContext', () => ({
+  useAuth: () => ({
+    profile: { id: 'u1', email: 'christophe@porctrack.test', full_name: 'Christophe Audit', role: 'OWNER' },
+    role: 'OWNER',
+  }),
+}));
+
 import { TodayV70 } from '../TodayV70';
 
 describe('TodayV70 — Phase 3 archétype Dashboard', () => {

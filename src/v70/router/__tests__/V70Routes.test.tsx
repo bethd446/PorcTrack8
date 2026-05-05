@@ -4,8 +4,17 @@ import { render, screen, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 // V70.2 — pages V70 utilisent useFarm pour brancher la vraie data bandes.
+// V71.1 — saillies + refreshData ajoutés (KPIs ReproV70 + computeGlobalKpis Performance).
 vi.mock('../../../context/FarmContext', () => ({
-  useFarm: () => ({ bandes: [], truies: [], verrats: [] }),
+  useFarm: () => ({ bandes: [], truies: [], verrats: [], saillies: [], refreshData: vi.fn() }),
+}));
+
+// V71.1 — TodayV70 + ReglagesV70 lisent profile/role depuis useAuth
+vi.mock('../../../context/AuthContext', () => ({
+  useAuth: () => ({
+    profile: { id: 'u1', email: 'christophe@porctrack.test', full_name: 'Christophe', role: 'OWNER' },
+    role: 'OWNER',
+  }),
 }));
 
 import { V70Routes } from '../V70Routes';

@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
-import { describe, it, expect, beforeAll, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+
+// V71.1 — mock FarmContext (KPIs Repro lus depuis useFarm)
+vi.mock('../../../context/FarmContext', () => ({
+  useFarm: () => ({ truies: [], verrats: [], bandes: [], saillies: [], refreshData: vi.fn() }),
+}));
+
 import { ReproV70 } from '../ReproV70';
 
 beforeAll(() => {

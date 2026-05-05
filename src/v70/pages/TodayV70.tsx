@@ -11,8 +11,10 @@
  *
  * V70.1 — Câblage complet onClick (Option B).
  */
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useFarm } from '../../context/FarmContext';
+import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
@@ -62,9 +64,22 @@ const ALERTS_INITIAL: AlertItem[] = [
 
 export const TodayV70: React.FC = () => {
   const navigate = useNavigate();
+  const { truies, verrats, bandes } = useFarm();
+  const { profile } = useAuth();
   const [alerts, setAlerts] = useState<AlertItem[]>(ALERTS_INITIAL);
 
-  const userName = 'Christophe';
+  // V71.1 — données live FarmContext (était hardcodé 50/3/92/6)
+  const stats = useMemo(() => {
+    const porceletsVivants = bandes.reduce((acc, b) => acc + (b.vivants ?? 0), 0);
+    return {
+      truies: truies.length,
+      verrats: verrats.length,
+      porcelets: porceletsVivants,
+      bandes: bandes.length,
+    };
+  }, [truies, verrats, bandes]);
+
+  const userName = profile?.full_name?.split(' ')[0] || 'éleveur';
   const dateLabel = new Date().toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'long',
@@ -168,10 +183,10 @@ export const TodayV70: React.FC = () => {
       {/* Section 3 : MON ÉLEVAGE (KPIs résumés) */}
       <Section label="Mon élevage">
         <StatsGrid cols={4}>
-          <Stat value={50} label="Truies" />
-          <Stat value={3} label="Verrats" />
-          <Stat value={92} label="Porcelets" />
-          <Stat value={6} label="Bandes" />
+          <Stat value={stats.truies} label="Truies" />
+          <Stat value={stats.verrats} label="Verrats" />
+          <Stat value={stats.porcelets} label="Porcelets" />
+          <Stat value={stats.bandes} label="Bandes" />
         </StatsGrid>
       </Section>
 
