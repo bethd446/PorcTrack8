@@ -10,7 +10,8 @@
  * Phase 3B : page Hub catégoriel — TabsMini 5 catégories, search bar,
  * filter pills, liste truies stubs. FAB ajout (Phase F branchera contexte).
  */
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
@@ -18,6 +19,10 @@ import { TabsMini } from '../components/ds/TabsMini';
 import { Pill, type PillVariant } from '../components/ds/Pill';
 import { ListItem } from '../components/ds/ListItem';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
+
+const QuickAddTruieForm = lazy(() => import('../../components/forms/QuickAddTruieForm'));
+const QuickAddVerratForm = lazy(() => import('../../components/forms/QuickAddVerratForm'));
+const QuickAddBandeForm = lazy(() => import('../../components/forms/QuickAddBandeForm'));
 
 type AnimalTab = 'truies' | 'verrats' | 'porcelets' | 'bandes' | 'loges';
 type AnimalFilter = 'all' | 'pleines' | 'maternite' | 'vides';
@@ -38,8 +43,18 @@ const STUBS_TRUIES: TruieStub[] = [
 ];
 
 export const AnimalsV70: React.FC = () => {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<AnimalTab>('truies');
   const [filter, setFilter] = useState<AnimalFilter>('all');
+  const [addOpen, setAddOpen] = useState(false);
+
+  const fabLabel: Record<AnimalTab, string> = {
+    truies: 'Ajouter une truie',
+    verrats: 'Ajouter un verrat',
+    porcelets: 'Ajouter un porcelet',
+    bandes: 'Ajouter une bande',
+    loges: 'Ajouter une loge',
+  };
 
   return (
     <div className="phone-content" style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
@@ -127,11 +142,33 @@ export const AnimalsV70: React.FC = () => {
                 <span className="list-arrow">›</span>
               </>
             }
+            onClick={() => navigate(`/troupeau/truies/${t.id}`)}
           />
         ))}
       </Section>
 
-      <div className="fab" role="button" aria-label="Ajouter une truie" tabIndex={0}>+</div>
+      <button
+        type="button"
+        className="fab"
+        aria-label={fabLabel[tab]}
+        onClick={() => setAddOpen(true)}
+        style={{
+          background: 'var(--pt-primary)',
+          border: 'none',
+          color: 'white',
+          fontSize: 28,
+          fontWeight: 700,
+          cursor: 'pointer',
+        }}
+      >
+        +
+      </button>
+
+      <Suspense fallback={null}>
+        {tab === 'truies' && <QuickAddTruieForm isOpen={addOpen} onClose={() => setAddOpen(false)} />}
+        {tab === 'verrats' && <QuickAddVerratForm isOpen={addOpen} onClose={() => setAddOpen(false)} />}
+        {tab === 'bandes' && <QuickAddBandeForm isOpen={addOpen} onClose={() => setAddOpen(false)} />}
+      </Suspense>
     </div>
   );
 };

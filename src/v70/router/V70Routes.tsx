@@ -18,6 +18,57 @@ import { ReglagesV70 } from '../pages/ReglagesV70';
 import { EncyclopediaPage } from '../pages/EncyclopediaPage';
 import { OnboardingEduPage } from '../pages/OnboardingEduPage';
 
+// Pages détail legacy réutilisées dans le shell V70 — câblage Option B
+// (refonte fiches détail dédiées V70 = chantier V71+).
+const TruieDetailView = React.lazy(() =>
+  import('../../features/troupeau/TruieDetailView').then((m) => ({ default: m.default })),
+);
+const VerratDetailView = React.lazy(() =>
+  import('../../features/troupeau/VerratDetailView').then((m) => ({ default: m.default })),
+);
+const BandeDetailView = React.lazy(() =>
+  import('../../features/tables/bandes/BandeDetailView').then((m) => ({ default: m.default })),
+);
+const LogeDetailView = React.lazy(() =>
+  import('../../features/troupeau/LogeDetailView').then((m) => ({ default: m.default })),
+);
+const ControleQuotidien = React.lazy(() =>
+  import('../../features/controle/ControleQuotidien').then((m) => ({ default: m.default })),
+);
+const SettingsPage = React.lazy(() =>
+  import('../../components/SystemManagement').then((m) => ({ default: m.SettingsPage })),
+);
+const RessourcesHub = React.lazy(() =>
+  import('../../features/hubs/RessourcesHub').then((m) => ({ default: m.default })),
+);
+const ProtocolsView = React.lazy(() =>
+  import('../../features/protocoles/ProtocolsView').then((m) => ({ default: m.default })),
+);
+const AlimentsView = React.lazy(() =>
+  import('../../features/ressources/AlimentsView').then((m) => ({ default: m.default })),
+);
+const PharmacieView = React.lazy(() =>
+  import('../../features/ressources/PharmacieView').then((m) => ({ default: m.default })),
+);
+const FormulesView = React.lazy(() =>
+  import('../../features/ressources/FormulesView').then((m) => ({ default: m.default })),
+);
+const PlanAlimentationView = React.lazy(() =>
+  import('../../features/ressources/PlanAlimentationView').then((m) => ({ default: m.default })),
+);
+const FournisseursView = React.lazy(() =>
+  import('../../features/ressources/FournisseursView').then((m) => ({ default: m.default })),
+);
+const AlertsView = React.lazy(() =>
+  import('../../features/tables/AlertsView').then((m) => ({ default: m.default })),
+);
+const FinancesView = React.lazy(() =>
+  import('../../features/pilotage/FinancesView').then((m) => ({ default: m.default })),
+);
+const RapportFinancierView = React.lazy(() =>
+  import('../../features/pilotage/RapportFinancierView').then((m) => ({ default: m.default })),
+);
+
 const OnboardingRoute: React.FC = () => {
   const navigate = useNavigate();
   return <OnboardingEduPage onComplete={() => navigate('/reglages')} />;
@@ -30,12 +81,38 @@ export const V70Routes: React.FC = () => (
         <Routes>
           <Route path="/" element={<Navigate to="/today" replace />} />
           <Route path="/today" element={<TodayV70 />} />
+
+          {/* Fiches détail legacy (réutilisées tant que V70 n'a pas de fiches dédiées) */}
+          <Route path="/troupeau/truies/:id" element={<TruieDetailView />} />
+          <Route path="/troupeau/verrats/:id" element={<VerratDetailView />} />
+          <Route path="/troupeau/bandes/:bandeId" element={<BandeDetailView />} />
+          <Route path="/troupeau/loges/:id" element={<LogeDetailView />} />
           <Route path="/troupeau/*" element={<AnimalsV70 />} />
+
           <Route path="/reproduction/*" element={<ReproV70 />} />
           <Route path="/performance/*" element={<PerformanceV70 />} />
+
           <Route path="/reglages" element={<ReglagesV70 />} />
           <Route path="/reglages/encyclopedie" element={<EncyclopediaPage />} />
           <Route path="/reglages/onboarding" element={<OnboardingRoute />} />
+
+          {/* Routes legacy critiques rendues dans shell V70 (câblage Option B) */}
+          <Route path="/controle" element={<ControleQuotidien />} />
+          <Route path="/reglages/systeme" element={<SettingsPage />} />
+          <Route path="/protocoles" element={<ProtocolsView />} />
+          <Route path="/alerts" element={<AlertsView />} />
+
+          {/* Ressources */}
+          <Route path="/ressources" element={<RessourcesHub />} />
+          <Route path="/ressources/aliments" element={<AlimentsView />} />
+          <Route path="/ressources/aliments/plan" element={<PlanAlimentationView />} />
+          <Route path="/ressources/aliments/formules" element={<FormulesView />} />
+          <Route path="/ressources/pharmacie" element={<PharmacieView />} />
+          <Route path="/fournisseurs" element={<FournisseursView />} />
+
+          {/* Pilotage détail (rapport, finances V70 réutilisent legacy) */}
+          <Route path="/pilotage/finances/details" element={<FinancesView />} />
+          <Route path="/pilotage/rapport" element={<RapportFinancierView />} />
 
           {/* Redirects legacy V44/V45 → V70 (Phase 4) */}
           {/* /cycles/* → /reproduction?phase=* */}

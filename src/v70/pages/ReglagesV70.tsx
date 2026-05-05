@@ -57,24 +57,28 @@ export const ReglagesV70: React.FC = () => {
           title="Ma ferme"
           subtitle="Identité, secteur, devise"
           trailing={<span className="list-arrow">›</span>}
+          onClick={() => navigate('/reglages/systeme')}
         />
         <ListItem
           avatar={<span style={{ fontSize: 20 }}>👥</span>}
           title="Mon équipe"
           subtitle="4 utilisateurs · Owner+Porcher+Admin"
           trailing={<span className="list-arrow">›</span>}
+          onClick={() => navigate('/reglages/systeme')}
         />
         <ListItem
           avatar={<span style={{ fontSize: 20 }}>🌾</span>}
           title="Ressources & stocks"
           subtitle="Aliments, vétérinaire, fournisseurs"
           trailing={<span className="list-arrow">›</span>}
+          onClick={() => navigate('/ressources')}
         />
         <ListItem
           avatar={<span style={{ fontSize: 20 }}>📋</span>}
           title="Protocoles santé"
           subtitle="SOPs, vaccins, traitements"
           trailing={<span className="list-arrow">›</span>}
+          onClick={() => navigate('/protocoles')}
         />
       </Section>
 

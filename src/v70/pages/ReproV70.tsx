@@ -11,7 +11,8 @@
  * Décision : CycleTimeline API V45 ({label, day, done?, target?}), pas la
  * forme {label, date, status} du brief — adapté au composant existant.
  */
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
@@ -21,10 +22,46 @@ import { CycleTimeline } from '../components/ds/CycleTimeline';
 import { EduCard } from '../components/v70/EduCard';
 import { EmptyEdu } from '../components/v70/EmptyEdu';
 
+const QuickSaillieForm = lazy(() => import('../../components/forms/QuickSaillieForm'));
+
 type ReproTab = 'agenda' | 'en-cours' | 'a-venir' | 'historique';
 
+interface UpcomingItem {
+  badge: string;
+  badgeBg: string;
+  title: string;
+  meta: string;
+  to: string;
+}
+
+const UPCOMING: UpcomingItem[] = [
+  {
+    badge: 'DEM',
+    badgeBg: 'var(--pt-accent)',
+    title: 'Mise-bas T-018',
+    meta: 'Bande de février · J115',
+    to: '/troupeau/truies/T-018',
+  },
+  {
+    badge: '+2J',
+    badgeBg: 'var(--pt-primary)',
+    title: 'Sevrage bande mars',
+    meta: '11 truies · J+143',
+    to: '/reproduction?phase=maternite',
+  },
+  {
+    badge: '+5J',
+    badgeBg: 'var(--pt-info)',
+    title: 'Échographie planifiée',
+    meta: '7 truies saillies J+28',
+    to: '/reproduction?phase=saillie',
+  },
+];
+
 export const ReproV70: React.FC = () => {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<ReproTab>('agenda');
+  const [saillieOpen, setSaillieOpen] = useState(false);
 
   return (
     <div className="phone-content" style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
@@ -73,36 +110,46 @@ export const ReproV70: React.FC = () => {
 
       <Section label="7 prochains jours">
         <Card>
-          <div className="alert-row">
-            <div style={{ background: 'var(--pt-accent)', color: 'white', padding: '4px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700, minWidth: 36, textAlign: 'center' }}>
-              DEM
-            </div>
-            <div className="alert-info">
-              <div className="alert-title">Mise-bas T-018</div>
-              <div className="alert-meta">Bande de février · J115</div>
-            </div>
-            <span className="list-arrow">›</span>
-          </div>
-          <div className="alert-row">
-            <div style={{ background: 'var(--pt-primary)', color: 'white', padding: '4px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700, minWidth: 36, textAlign: 'center' }}>
-              +2J
-            </div>
-            <div className="alert-info">
-              <div className="alert-title">Sevrage bande mars</div>
-              <div className="alert-meta">11 truies · J+143</div>
-            </div>
-            <span className="list-arrow">›</span>
-          </div>
-          <div className="alert-row">
-            <div style={{ background: 'var(--pt-info)', color: 'white', padding: '4px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700, minWidth: 36, textAlign: 'center' }}>
-              +5J
-            </div>
-            <div className="alert-info">
-              <div className="alert-title">Échographie planifiée</div>
-              <div className="alert-meta">7 truies saillies J+28</div>
-            </div>
-            <span className="list-arrow">›</span>
-          </div>
+          {UPCOMING.map((item) => (
+            <button
+              key={item.title}
+              type="button"
+              onClick={() => navigate(item.to)}
+              className="alert-row"
+              style={{
+                background: 'none',
+                border: 'none',
+                width: '100%',
+                textAlign: 'left',
+                padding: 0,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+              }}
+              aria-label={`${item.title} — voir détail`}
+            >
+              <div
+                style={{
+                  background: item.badgeBg,
+                  color: 'white',
+                  padding: '4px 8px',
+                  borderRadius: 6,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  minWidth: 36,
+                  textAlign: 'center',
+                }}
+              >
+                {item.badge}
+              </div>
+              <div className="alert-info" style={{ flex: 1 }}>
+                <div className="alert-title">{item.title}</div>
+                <div className="alert-meta">{item.meta}</div>
+              </div>
+              <span className="list-arrow">›</span>
+            </button>
+          ))}
         </Card>
       </Section>
 
@@ -111,10 +158,29 @@ export const ReproV70: React.FC = () => {
         title="Comprendre les cycles"
         description="Apprends comment optimiser tes saillies et ton ISSE avec nos articles de l'encyclopédie."
         ctaLabel="Encyclopédie"
-        onCtaClick={() => { /* TODO Phase 6 navigate /reglages/encyclopedie */ }}
+        onCtaClick={() => navigate('/reglages/encyclopedie')}
       />
 
-      <div className="fab" role="button" aria-label="Ajouter saillie" tabIndex={0}>+</div>
+      <button
+        type="button"
+        className="fab"
+        aria-label="Ajouter saillie"
+        onClick={() => setSaillieOpen(true)}
+        style={{
+          background: 'var(--pt-primary)',
+          border: 'none',
+          color: 'white',
+          fontSize: 28,
+          fontWeight: 700,
+          cursor: 'pointer',
+        }}
+      >
+        +
+      </button>
+
+      <Suspense fallback={null}>
+        <QuickSaillieForm isOpen={saillieOpen} onClose={() => setSaillieOpen(false)} />
+      </Suspense>
     </div>
   );
 };

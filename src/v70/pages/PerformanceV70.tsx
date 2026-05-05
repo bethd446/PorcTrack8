@@ -16,6 +16,7 @@
  * Phase 3D V70 — stubs data, Phase F branchera perfKpiAnalyzer.
  */
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
@@ -54,8 +55,13 @@ const BANDES_COLUMNS: DataTableColumn<BandePerf>[] = [
 ];
 
 export const PerformanceV70: React.FC = () => {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<PerfTab>('vue');
   const { advancedMode } = useUIPreferences();
+
+  const handlePrintPdf = () => {
+    if (typeof window !== 'undefined') window.print();
+  };
 
   return (
     <div className="phone-content" style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
@@ -170,10 +176,14 @@ export const PerformanceV70: React.FC = () => {
             <Pill variant="success">+12% vs avril</Pill>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <Button variant="secondary" size="sm">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => navigate('/pilotage/finances/details')}
+            >
               Détails
             </Button>
-            <Button variant="secondary" size="sm">
+            <Button variant="secondary" size="sm" onClick={handlePrintPdf}>
               📥 PDF
             </Button>
           </div>
@@ -187,12 +197,14 @@ export const PerformanceV70: React.FC = () => {
           title="Bande de mars 🏆"
           subtitle="ISSE 12.4 · marge +890€"
           trailing={<span className="list-arrow">›</span>}
+          onClick={() => navigate('/troupeau/bandes/B-MAR')}
         />
         <ListItem
           avatar={<EntityAvatar species="bande" size="md" shortCode="B-FEV" />}
           title="Bande de février 🥈"
           subtitle="ISSE 11.9 · marge +650€"
           trailing={<span className="list-arrow">›</span>}
+          onClick={() => navigate('/troupeau/bandes/B-FEV')}
         />
       </Section>
 
