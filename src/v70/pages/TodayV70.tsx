@@ -111,49 +111,57 @@ export const TodayV70: React.FC = () => {
               ✓ Toutes les alertes sont traitées
             </div>
           )}
-          {alerts.map((alert) => (
-            <button
-              key={alert.id}
-              type="button"
-              onClick={() => navigate(alert.to)}
-              className="alert-row"
-              style={{
-                background: 'none',
-                border: 'none',
-                width: '100%',
-                textAlign: 'left',
-                padding: 0,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-              }}
-              aria-label={`${alert.title} — ouvrir le détail`}
-            >
-              <div className={`alert-dot ${alert.variant}`}></div>
-              <div className="alert-info" style={{ flex: 1 }}>
-                <div className="alert-title">{alert.title}</div>
-                <div className="alert-meta">{alert.meta}</div>
-              </div>
-              <Pill variant={alert.pillVariant}>{alert.pillLabel}</Pill>
-              <button
-                type="button"
-                onClick={(e) => dismissAlert(alert.id, e)}
-                aria-label={`Acquitter ${alert.title}`}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '4px 8px',
-                  fontSize: 16,
-                  color: 'var(--pt-muted)',
-                  marginLeft: 4,
+          {alerts.map((alert) => {
+            // V71 FIX #7 : wrapper en div role="button" (et non <button>) pour
+            // permettre le bouton "Acquitter" interne sans nesting illégal HTML5.
+            const handleActivate = () => navigate(alert.to);
+            return (
+              <div
+                key={alert.id}
+                role="button"
+                tabIndex={0}
+                onClick={handleActivate}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleActivate();
+                  }
                 }}
+                className="alert-row"
+                style={{
+                  width: '100%',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                }}
+                aria-label={`${alert.title} — ouvrir le détail`}
               >
-                ✓
-              </button>
-            </button>
-          ))}
+                <div className={`alert-dot ${alert.variant}`}></div>
+                <div className="alert-info" style={{ flex: 1 }}>
+                  <div className="alert-title">{alert.title}</div>
+                  <div className="alert-meta">{alert.meta}</div>
+                </div>
+                <Pill variant={alert.pillVariant}>{alert.pillLabel}</Pill>
+                <button
+                  type="button"
+                  onClick={(e) => dismissAlert(alert.id, e)}
+                  aria-label={`Acquitter ${alert.title}`}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '4px 8px',
+                    fontSize: 16,
+                    color: 'var(--pt-muted)',
+                    marginLeft: 4,
+                  }}
+                >
+                  ✓
+                </button>
+              </div>
+            );
+          })}
         </Card>
       </Section>
 
