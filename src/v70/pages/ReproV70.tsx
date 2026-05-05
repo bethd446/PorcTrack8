@@ -11,8 +11,8 @@
  * Décision : CycleTimeline API V45 ({label, day, done?, target?}), pas la
  * forme {label, date, status} du brief — adapté au composant existant.
  */
-import React, { useState, lazy, Suspense } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
@@ -58,9 +58,37 @@ const UPCOMING: UpcomingItem[] = [
   },
 ];
 
+const VALID_TABS: ReproTab[] = ['agenda', 'en-cours', 'a-venir', 'historique'];
+const isReproTab = (v: string | null): v is ReproTab =>
+  v !== null && (VALID_TABS as string[]).includes(v);
+
 export const ReproV70: React.FC = () => {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<ReproTab>('agenda');
+  // V71 FIX #4 — initial tab depuis URL (?tab=...) pour deep-links legacy
+  // (/cycles/maternite → /reproduction?tab=en-cours&phase=maternite, etc.).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab: ReproTab = isReproTab(searchParams.get('tab'))
+    ? (searchParams.get('tab') as ReproTab)
+    : 'agenda';
+  const [tab, setTab] = useState<ReproTab>(initialTab);
+
+  // Sync state ← URL : nécessaire pour deep-links directs (QR code, copier-coller)
+  // et navigation programmatique (Navigate replace, history.pushState).
+  useEffect(() => {
+    const urlTab = searchParams.get('tab');
+    if (isReproTab(urlTab) && urlTab !== tab) {
+      setTab(urlTab);
+    }
+  }, [searchParams, tab]);
+
+  const handleTabChange = (v: string) => {
+    setTab(v as ReproTab);
+    // Synchronise l'URL pour permettre partage / bookmark.
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', v);
+    setSearchParams(next, { replace: true });
+  };
+
   const [saillieOpen, setSaillieOpen] = useState(false);
 
   return (
@@ -73,7 +101,7 @@ export const ReproV70: React.FC = () => {
 
       <TabsMini
         value={tab}
-        onChange={(v) => setTab(v as ReproTab)}
+        onChange={handleTabChange}
         options={[
           { value: 'agenda', label: 'Agenda' },
           { value: 'en-cours', label: 'En cours' },
