@@ -14,7 +14,7 @@ import { IonToast } from '@ionic/react';
 import { Plus, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { FormField, Input, Select, Textarea, Button } from '@/design-system';
+import { FormField, Input, Select, Textarea, Button, Checkbox } from '@/design-system';
 import { insertFournisseur } from '../../services/supabaseWrites';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import {
@@ -214,23 +214,14 @@ const QuickAddFournisseurForm: React.FC<QuickAddFournisseurFormProps> = ({
             />
           </FormField>
 
-          {/* TODO V44: Checkbox DS missing */}
-          <div className="flex items-center gap-3">
-            <input
-              id="add-fourn-default"
-              type="checkbox"
-              className="h-5 w-5 rounded border-border accent-accent"
-              checked={isDefault}
-              onChange={e => setIsDefault(e.target.checked)}
-              disabled={saving}
-            />
-            <label
-              htmlFor="add-fourn-default"
-              className="text-mono-label text-text-1 cursor-pointer"
-            >
-              Fournisseur par défaut pour ce type
-            </label>
-          </div>
+          {/* V70.9 : Checkbox DS dédié — remplace l'input natif custom */}
+          <Checkbox
+            id="add-fourn-default"
+            label="Fournisseur par défaut pour ce type"
+            checked={isDefault}
+            onChange={setIsDefault}
+            disabled={saving}
+          />
 
           <div className="flex gap-3 justify-end pt-2 border-t border-border">
             <Button

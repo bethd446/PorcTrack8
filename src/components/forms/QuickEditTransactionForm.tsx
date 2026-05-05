@@ -24,7 +24,7 @@ import { IonToast } from '@ionic/react';
 import { Edit3, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { FormField, Input, Select, Textarea, Button } from '@/design-system';
+import { FormField, Input, Select, Textarea, Button, RadioGroup } from '@/design-system';
 import { type SheetCell } from '../../services/offlineQueue';
 import { supabase } from '../../services/supabaseClient';
 import { useFarm } from '../../context/FarmContext';
@@ -352,47 +352,14 @@ const QuickEditTransactionForm: React.FC<QuickEditTransactionFormProps> = ({
             />
           </FormField>
 
-          {/* TODO V44: Radio DS missing — radiogroup custom conservé */}
-          <div className="space-y-1.5">
-            <span
-              id="edit-tx-type-label"
-              className="block text-mono-label text-text-2"
-            >
-              Type
-            </span>
-            <div
-              className="flex gap-2"
-              role="radiogroup"
-              aria-labelledby="edit-tx-type-label"
-            >
-              {TYPES.map(t => {
-                const selected = draft.type === t;
-                return (
-                  <button
-                    key={t}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    aria-label={`Type ${t}`}
-                    onClick={() => update('type', t)}
-                    disabled={saving}
-                    className={[
-                      'pressable inline-flex items-center justify-center',
-                      'flex-1 h-10 px-3 rounded-md border',
-                      'text-[12px] uppercase tracking-wide',
-                      'transition-colors duration-[160ms]',
-                      'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                      selected
-                        ? 'bg-accent text-bg-0 border-accent font-semibold'
-                        : 'bg-bg-0 text-text-1 border-border hover:border-text-2',
-                    ].join(' ')}
-                  >
-                    {t}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          {/* V70.9 : Radio DS dédié — remplace le radiogroup custom */}
+          <RadioGroup
+            label="Type"
+            value={draft.type}
+            onChange={(v) => update('type', v as typeof draft.type)}
+            disabled={saving}
+            options={TYPES.map((t) => ({ value: t, label: t }))}
+          />
 
           <FormField label="Catégorie">
             <Select

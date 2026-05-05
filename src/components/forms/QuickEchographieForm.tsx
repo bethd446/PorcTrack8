@@ -4,7 +4,7 @@ import { IonToast } from '@ionic/react';
 import { Stethoscope, Check, CheckCircle2 } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { FormField, Input, Select, Textarea, Button, Section } from '@/design-system';
+import { FormField, Input, Select, Textarea, Button, Section, RadioGroup } from '@/design-system';
 import {
   listPendingEchographies,
   updateSaillie,
@@ -316,47 +316,19 @@ const QuickEchographieForm: React.FC<QuickEchographieFormProps> = ({
 
             <Section label="RÉSULTAT" />
 
-            {/* TODO V44: Radio DS missing — radiogroup custom conservé */}
-            <div className="space-y-2">
-              <span
-                id="echo-statut-label"
-                className="block text-mono-label text-text-2"
-              >
-                Résultat
-              </span>
-              <div
-                className="grid grid-cols-3 gap-2"
-                role="radiogroup"
-                aria-labelledby="echo-statut-label"
-                aria-required="true"
-              >
-                {STATUT_OPTIONS.map(opt => {
-                  const isSelected = statut === opt.value;
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      role="radio"
-                      aria-checked={isSelected}
-                      aria-label={`${opt.label} — ${opt.help}`}
-                      onClick={() => setStatut(opt.value)}
-                      disabled={saving}
-                      className={[
-                        'pressable inline-flex flex-col items-center justify-center',
-                        'h-14 rounded-md border px-2',
-                        'text-[12px] uppercase tracking-wide',
-                        'transition-colors duration-[160ms]',
-                        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                        isSelected
-                          ? 'bg-accent text-bg-0 border-accent font-semibold'
-                          : 'bg-bg-0 text-text-1 border-border hover:border-text-2',
-                      ].join(' ')}
-                    >
-                      <span>{opt.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
+            {/* V70.9 : Radio DS dédié — remplace le radiogroup custom */}
+            <RadioGroup
+              label="Résultat"
+              value={statut}
+              onChange={(v) => setStatut(v as typeof statut)}
+              disabled={saving}
+              options={STATUT_OPTIONS.map(opt => ({
+                value: opt.value,
+                label: opt.label,
+                ariaLabel: `${opt.label} — ${opt.help}`,
+              }))}
+            />
+            <div className="hidden">{/* placeholder pour fermer ancien wrapper supprimé */}
               {errors.statut ? (
                 <p role="alert" className="text-[10px] text-red">
                   {errors.statut}

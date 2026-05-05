@@ -69,6 +69,26 @@
 .pt-stat__value { font-family: var(--pt-font-display); font-size: var(--pt-text-h1); font-weight: 700; color: var(--pt-text); line-height: 1.1; }
 .pt-stat__label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: var(--pt-tracking-label); color: var(--pt-text-subtle); }
 
+/* === CHECKBOX (V70.9) === */
+.pt-checkbox { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+.pt-checkbox--disabled { opacity: 0.5; cursor: not-allowed; }
+.pt-checkbox__input { position: absolute; opacity: 0; pointer-events: none; }
+.pt-checkbox__box { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--pt-border, var(--pt-divider)); background: var(--pt-surface); color: white; transition: all var(--pt-t-fast); }
+.pt-checkbox:hover:not(.pt-checkbox--disabled) .pt-checkbox__box { border-color: var(--pt-text-muted); }
+.pt-checkbox__input:checked + .pt-checkbox__box { background: var(--pt-primary); border-color: var(--pt-primary); }
+.pt-checkbox__input:focus-visible + .pt-checkbox__box { outline: 2px solid var(--pt-primary); outline-offset: 2px; }
+.pt-checkbox__label { font-family: var(--pt-font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: var(--pt-tracking-label); color: var(--pt-text); }
+
+/* === RADIO GROUP (V70.9) === */
+.pt-radio-group { display: flex; flex-direction: column; gap: 6px; }
+.pt-radio-group__label { font-family: var(--pt-font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: var(--pt-tracking-label); color: var(--pt-text-muted); }
+.pt-radio-group__items { display: flex; gap: 8px; flex-wrap: wrap; }
+.pt-radio-group__item { flex: 1 0 auto; min-width: 80px; height: 44px; padding: 0 12px; border-radius: var(--pt-radius-md); border: 1px solid var(--pt-border, var(--pt-divider)); background: var(--pt-surface); color: var(--pt-text); font-family: var(--pt-font-body); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: var(--pt-tracking-button); cursor: pointer; transition: all var(--pt-t-fast); display: inline-flex; align-items: center; justify-content: center; }
+.pt-radio-group__item:hover:not(:disabled) { border-color: var(--pt-text-muted); }
+.pt-radio-group__item:disabled { opacity: 0.5; cursor: not-allowed; }
+.pt-radio-group__item--active { background: var(--pt-primary); color: white; border-color: var(--pt-primary); }
+.pt-radio-group__item:focus-visible { outline: 2px solid var(--pt-primary); outline-offset: 2px; }
+
 /* === TABS === */
 .pt-tabs { display: flex; gap: 4px; padding: 4px; background: var(--pt-surface); border-radius: var(--pt-radius-pill); overflow-x: auto; scrollbar-width: none; }
 .pt-tabs::-webkit-scrollbar { display: none; }

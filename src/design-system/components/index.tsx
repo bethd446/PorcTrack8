@@ -295,6 +295,134 @@ export function Tabs(props: {
 }
 
 // ============================================================
+// RADIO GROUP — V70.9 (résout TODO V44 "Radio DS missing")
+// Remplace les radiogroups custom des QuickAdd*/QuickEdit* forms.
+// Pattern : suite d'options exclusives stylées comme des chips toggle.
+// ============================================================
+export type RadioOption<T extends string = string> = {
+  value: T;
+  label: React.ReactNode;
+  disabled?: boolean;
+  /** Label accessible distinct du `label` visuel. Utile quand `label` est court
+   * mais qu'on veut donner un contexte plus riche aux lecteurs d'écran. */
+  ariaLabel?: string;
+};
+
+export function RadioGroup<T extends string>({
+  value,
+  onChange,
+  options,
+  label,
+  ariaLabel,
+  ariaLabelledBy,
+  disabled,
+  className,
+  testId,
+}: {
+  value: T;
+  onChange: (v: T) => void;
+  options: RadioOption<T>[];
+  label?: React.ReactNode;
+  ariaLabel?: string;
+  ariaLabelledBy?: string;
+  disabled?: boolean;
+  className?: string;
+  testId?: string;
+}) {
+  const labelId = label && !ariaLabelledBy ? `radio-group-${React.useId()}` : undefined;
+  return (
+    <div className={`pt-radio-group ${className ?? ''}`}>
+      {label && (
+        <span id={labelId} className="pt-radio-group__label">
+          {label}
+        </span>
+      )}
+      <div
+        className="pt-radio-group__items"
+        role="radiogroup"
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy ?? labelId}
+        data-testid={testId}
+      >
+        {options.map((opt) => {
+          const selected = opt.value === value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              aria-label={opt.ariaLabel}
+              disabled={disabled || opt.disabled}
+              className={`pt-radio-group__item${selected ? ' pt-radio-group__item--active' : ''}`}
+              onClick={() => onChange(opt.value)}
+            >
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// CHECKBOX — V70.9 (résout TODO V44 "Checkbox DS missing")
+// Remplace les `<input type="checkbox">` natifs avec label custom des forms.
+// ============================================================
+export function Checkbox({
+  id,
+  label,
+  checked,
+  onChange,
+  disabled,
+  ariaLabel,
+  testId,
+}: {
+  id?: string;
+  label?: React.ReactNode;
+  checked: boolean;
+  onChange: (next: boolean) => void;
+  disabled?: boolean;
+  ariaLabel?: string;
+  testId?: string;
+}) {
+  const inputId = id ?? `pt-checkbox-${React.useId()}`;
+  return (
+    <label
+      htmlFor={inputId}
+      className={`pt-checkbox${disabled ? ' pt-checkbox--disabled' : ''}`}
+    >
+      <input
+        id={inputId}
+        type="checkbox"
+        className="pt-checkbox__input"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        disabled={disabled}
+        aria-label={ariaLabel}
+        data-testid={testId}
+      />
+      <span className="pt-checkbox__box" aria-hidden="true">
+        {checked && (
+          <svg viewBox="0 0 12 12" width="12" height="12">
+            <path
+              d="M2 6l3 3 5-5"
+              stroke="currentColor"
+              strokeWidth="2"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        )}
+      </span>
+      {label && <span className="pt-checkbox__label">{label}</span>}
+    </label>
+  );
+}
+
+// ============================================================
 // SEGMENT
 // ============================================================
 export function Segment<T extends string>({ value, onChange, options, ariaLabel }: {

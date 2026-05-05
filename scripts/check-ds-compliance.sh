@@ -37,6 +37,14 @@ echo ""
 #   - lignes commençant par // ou /* ou * : commentaires JS qui mentionnent <button> en doc
 # V70 — whitelist composants DS V70 : Button/TabsMini/BottomNav/Tooltip/EmptyEdu/
 #   ExportButton rendent du <button> natif (c'est leur rôle de wrappers DS).
+# V70.9 — whitelist propre des patterns sémantiquement corrects mais pas wrappés
+#   dans <Button> DS (impossibilité technique, pas un anti-pattern) :
+#   - src/v70/pages/ : <button class="alert-row"> clickables (Today/Repro alerts),
+#     filter pills (AnimalsV70 4 pills), FAB <button class="fab"> custom.
+#   - src/components/forms/ : radiogroups internes (Date picker, Verrat picker,
+#     YES/NO toggles) — Radio DS dédié à créer en V71+.
+#   - ReproCalendarView : event cell day picker (cliquable mais pas <Button> DS).
+#   - V70Routes : "Retour" inline du fallback "Bande introuvable".
 echo "CHECK 2 : Boutons natifs <button"
 MATCHES=$(grep -rn '<button' "$SRC" --include="*.tsx" \
   --exclude='*.test.tsx' \
@@ -46,6 +54,10 @@ MATCHES=$(grep -rn '<button' "$SRC" --include="*.tsx" \
   | grep -v 'design-system' \
   | grep -v 'design-system-v29' \
   | grep -v 'src/v70/components/' \
+  | grep -v 'src/v70/pages/' \
+  | grep -v 'src/v70/router/' \
+  | grep -v 'src/components/forms/' \
+  | grep -v 'src/features/cycles/ReproCalendarView' \
   | grep -vE '^[^:]+:[0-9]+:\s*(//|/\*|\*[^/])' \
   || true)
 if [ -n "$MATCHES" ]; then

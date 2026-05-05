@@ -8,7 +8,7 @@ import { IonToast } from '@ionic/react';
 import { Edit3, Save, Trash2 } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
-import { FormField, Input, Select, Textarea, Button } from '@/design-system';
+import { FormField, Input, Select, Textarea, Button, RadioGroup } from '@/design-system';
 import {
   removePorcelet,
   updatePorcelet,
@@ -193,37 +193,18 @@ const QuickEditPorceletForm: React.FC<QuickEditPorceletFormProps> = ({
             />
           </FormField>
 
-          {/* TODO V44: Radio DS missing — radiogroup custom conservé */}
-          <div className="space-y-1.5">
-            <span className="block text-mono-label text-text-2">Sexe</span>
-            <div className="flex gap-2" role="radiogroup">
-              {(['M', 'F', 'INCONNU'] as PorceletSexe[]).map(s => {
-                const selected = sexe === s;
-                const label = s === 'M' ? 'Mâle' : s === 'F' ? 'Femelle' : 'Inconnu';
-                return (
-                  <button
-                    key={s}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    aria-label={label}
-                    onClick={() => setSexe(s)}
-                    disabled={saving}
-                    className={[
-                      'pressable inline-flex items-center justify-center',
-                      'flex-1 h-11 px-3 rounded-md border',
-                      'text-[12px] font-semibold uppercase tracking-wide',
-                      selected
-                        ? 'bg-accent text-bg-0 border-accent'
-                        : 'bg-bg-0 text-text-1 border-border hover:border-text-2',
-                    ].join(' ')}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          {/* V70.9 : Radio DS dédié — remplace le radiogroup custom */}
+          <RadioGroup<PorceletSexe>
+            label="Sexe"
+            value={sexe}
+            onChange={setSexe}
+            disabled={saving}
+            options={[
+              { value: 'M', label: 'Mâle' },
+              { value: 'F', label: 'Femelle' },
+              { value: 'INCONNU', label: 'Inconnu' },
+            ]}
+          />
 
           <FormField label="Statut">
             <Select
