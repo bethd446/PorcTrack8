@@ -35,6 +35,8 @@ echo ""
 # V43-B-bis-final : exclusions complétées
 #   - *.test.tsx / *.test.ts / __tests__ : faux positifs (mocks Ionic, etc.)
 #   - lignes commençant par // ou /* ou * : commentaires JS qui mentionnent <button> en doc
+# V70 — whitelist composants DS V70 : Button/TabsMini/BottomNav/Tooltip/EmptyEdu/
+#   ExportButton rendent du <button> natif (c'est leur rôle de wrappers DS).
 echo "CHECK 2 : Boutons natifs <button"
 MATCHES=$(grep -rn '<button' "$SRC" --include="*.tsx" \
   --exclude='*.test.tsx' \
@@ -43,6 +45,7 @@ MATCHES=$(grep -rn '<button' "$SRC" --include="*.tsx" \
   | grep -v 'pt-btn' \
   | grep -v 'design-system' \
   | grep -v 'design-system-v29' \
+  | grep -v 'src/v70/components/' \
   | grep -vE '^[^:]+:[0-9]+:\s*(//|/\*|\*[^/])' \
   || true)
 if [ -n "$MATCHES" ]; then
@@ -74,6 +77,8 @@ echo ""
 #     service externe non négociable
 # V45 — whitelist EntityAvatar : palette espèces (truie/verrat/porcelet/bande)
 #   dictée par la spec V45 PDF, palette stricte non-tokenisable.
+# V70 — whitelist fallbacks CSS `var(--pt-*, #hex)` : sémantiquement valides
+#   (valeur de repli si le token n'est pas chargé), pas du hex en dur.
 echo "CHECK 4 : Couleurs hex en dur"
 MATCHES=$(grep -rn '#[0-9a-fA-F]\{3,8\}' "$SRC" --include="*.tsx" --include="*.css" \
   | grep -v 'tokens\.css' \
@@ -90,6 +95,7 @@ MATCHES=$(grep -rn '#[0-9a-fA-F]\{3,8\}' "$SRC" --include="*.tsx" --include="*.c
   | grep -v 'WHATSAPP_BRAND' \
   | grep -v 'EntityAvatar\.tsx' \
   | grep -v 'EntityAvatar\.test\.tsx' \
+  | grep -vE 'var\(--[a-zA-Z0-9_-]+,\s*#[0-9a-fA-F]+\)' \
   || true)
 if [ -n "$MATCHES" ]; then
   echo "✗  Couleur(s) hex en dur trouvée(s) — utiliser var(--pt-*) :"
