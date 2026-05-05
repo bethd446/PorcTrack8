@@ -37,10 +37,14 @@ export const UIPreferencesProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
+const DEFAULT_PREFERENCES: UIPreferences = {
+  advancedMode: false,
+  setAdvancedMode: () => {
+    // no-op fallback hors Provider — usage en lecture seule (defaults).
+  },
+};
+
 export function useUIPreferences(): UIPreferences {
   const ctx = useContext(UIPreferencesContext);
-  if (!ctx) {
-    throw new Error('useUIPreferences must be used within UIPreferencesProvider');
-  }
-  return ctx;
+  return ctx ?? DEFAULT_PREFERENCES;
 }

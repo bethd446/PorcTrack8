@@ -44,6 +44,8 @@ export { EduCard } from './components/v70/EduCard';
 export { EmptyEdu } from './components/v70/EmptyEdu';
 export { ExportButton } from './components/v70/ExportButton';
 export { ToggleAdvancedMode } from './components/v70/ToggleAdvancedMode';
+export { DataTable } from './components/v70/DataTable';
+export type { DataTableColumn } from './components/v70/DataTable';
 
 // Couche éducative (Phase 6)
 export { EncyclopediaArticle } from './components/v70/EncyclopediaArticle';

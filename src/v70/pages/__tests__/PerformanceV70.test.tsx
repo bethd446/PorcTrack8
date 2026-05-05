@@ -14,6 +14,10 @@ import { render, screen, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { PerformanceV70 } from '../PerformanceV70';
 
+// P7 : PerformanceV70 utilise useUIPreferences (Mode avancé). Le hook
+// retourne des defaults hors Provider (fallback resilient ajouté Phase 7),
+// donc pas besoin de wrapper UIPreferencesProvider dans les tests.
+
 beforeAll(() => {
   if (typeof window !== 'undefined' && !window.localStorage) {
     Object.defineProperty(window, 'localStorage', {

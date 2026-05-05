@@ -25,12 +25,37 @@ import { TabsMini } from '../components/ds/TabsMini';
 import { ListItem } from '../components/ds/ListItem';
 import { Tooltip } from '../components/v70/Tooltip';
 import { EduCard } from '../components/v70/EduCard';
+import { DataTable, DataTableColumn } from '../components/v70/DataTable';
+import { ExportButton } from '../components/v70/ExportButton';
+import { useUIPreferences } from '../context/UIPreferencesContext';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
 
 type PerfTab = 'vue' | 'kpis' | 'finances' | 'previsions';
 
+interface BandePerf {
+  bande: string;
+  isse: number;
+  marge: number;
+  truies: number;
+  [key: string]: unknown;
+}
+
+const BANDES_DATA: BandePerf[] = [
+  { bande: 'Bande de mars', isse: 12.4, marge: 890, truies: 8 },
+  { bande: 'Bande de février', isse: 11.9, marge: 650, truies: 7 },
+  { bande: 'Bande de janvier', isse: 11.2, marge: 420, truies: 9 },
+];
+
+const BANDES_COLUMNS: DataTableColumn<BandePerf>[] = [
+  { key: 'bande', label: 'Bande' },
+  { key: 'isse', label: 'ISSE', align: 'right', sortable: true, render: (r) => r.isse.toFixed(1) },
+  { key: 'marge', label: 'Marge €', align: 'right', sortable: true, render: (r) => `+${r.marge}` },
+  { key: 'truies', label: 'Truies', align: 'right', sortable: true },
+];
+
 export const PerformanceV70: React.FC = () => {
   const [tab, setTab] = useState<PerfTab>('vue');
+  const { advancedMode } = useUIPreferences();
 
   return (
     <div className="phone-content" style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
@@ -170,6 +195,15 @@ export const PerformanceV70: React.FC = () => {
           trailing={<span className="list-arrow">›</span>}
         />
       </Section>
+
+      {advancedMode && (
+        <Section label="Tableau détaillé (Mode avancé)">
+          <DataTable data={BANDES_DATA} columns={BANDES_COLUMNS} />
+          <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+            <ExportButton data={BANDES_DATA} filename="performance-bandes.csv" label="Export CSV" />
+          </div>
+        </Section>
+      )}
     </div>
   );
 };
