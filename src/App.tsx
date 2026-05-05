@@ -42,6 +42,21 @@ import About from './pages/About';
 import Privacy from './pages/Privacy';
 import CGU from './pages/CGU';
 import NotFound from './pages/NotFound';
+import { featureFlags } from './config/featureFlags';
+
+// V70 — chargé conditionnellement via feature flag VITE_V70_ENABLED.
+// Lazy import : ne pèse pas sur le bundle legacy quand V70 est off.
+const V70Routes = React.lazy(() =>
+  import(/* webpackChunkName: "v70-routes" */ './v70/router/V70Routes').then((m) => ({
+    default: m.V70Routes,
+  })),
+);
+
+// CSS V70 importé conditionnellement (no-op si V70 off ; pas d'effet sur legacy).
+if (featureFlags.v70Enabled) {
+  void import('./v70/theme/v70-tokens.css');
+  void import('./v70/theme/v70-global.css');
+}
 
 const AdminDashboard = React.lazy(() => import('./features/admin/AdminDashboard'));
 import AgritechNavV2, { QuickActionsProvider } from './components/AgritechNavV2';
@@ -338,7 +353,7 @@ const BandeDetailRoute: React.FC = () => {
   );
 };
 
-const AppShell: React.FC = () => (
+const LegacyAppShell: React.FC = () => (
   <GlobalSearchProvider>
     <BannerMount />
     <Routes>
@@ -474,6 +489,19 @@ const AppShell: React.FC = () => (
     <SaisirFABMount />
   </GlobalSearchProvider>
 );
+
+/**
+ * AppShell — routage conditionnel V70 vs legacy.
+ *
+ * - VITE_V70_ENABLED=true → V70Routes (5 onglets, src/v70/)
+ * - VITE_V70_ENABLED=false (default) → LegacyAppShell (V44/V45 inchangé)
+ */
+const AppShell: React.FC = () => {
+  if (featureFlags.v70Enabled) {
+    return <V70Routes />;
+  }
+  return <LegacyAppShell />;
+};
 
 const AppContent = () => {
   useEffect(() => {

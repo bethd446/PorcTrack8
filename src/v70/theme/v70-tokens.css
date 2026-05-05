@@ -1,0 +1,44 @@
+/* src/v70/theme/v70-tokens.css */
+/* V70 — DNA visuel pixel-perfect du mockup v70-mockup.html */
+
+:root {
+  /* === PRIMAIRES === */
+  --pt-primary: #2D4A1F;
+  --pt-primary-deep: #1f3414;
+  --pt-primary-light: #4a7a2f;
+
+  /* === ACCENT (warm) === */
+  --pt-warm: #F5E9D8;
+  --pt-warm-deep: #E8D5B5;
+  --pt-accent: #B8703D;
+  --pt-accent-light: #D89968;
+
+  /* === BACKGROUNDS === */
+  --pt-bg: #FAF7F0;
+  --pt-bg-app: #F1ECE0;
+
+  /* === TEXTE === */
+  --pt-ink: #1a1a1a;
+  --pt-muted: #6b6357;
+  --pt-subtle: #a39888;
+
+  /* === SÉMANTIQUES === */
+  --pt-success: #4a7a2f;
+  --pt-warning: #c08a3d;
+  --pt-danger: #a4453d;
+  --pt-info: #4a6e8a;
+
+  /* === SÉPARATEURS === */
+  --pt-line: rgba(26,26,26,0.08);
+  --pt-line-strong: rgba(26,26,26,0.16);
+
+  /* === ENTITY AVATARS (V45 héritage, conservés V70) === */
+  --pt-truie-bg: #F4D4D4;
+  --pt-truie-fg: #8B4744;
+  --pt-verrat-bg: #C8D6E5;
+  --pt-verrat-fg: #3B5266;
+  --pt-porcelet-bg: #F5E9D8;
+  --pt-porcelet-fg: #8B6E3D;
+  --pt-bande-bg: #D4DFC8;
+  --pt-bande-fg: #3D5C2C;
+}
