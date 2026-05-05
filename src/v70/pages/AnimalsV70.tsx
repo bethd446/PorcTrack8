@@ -10,7 +10,7 @@
  * Phase 3B : page Hub catégoriel — TabsMini 5 catégories, search bar,
  * filter pills, liste truies stubs. FAB ajout (Phase F branchera contexte).
  */
-import React, { useState, lazy, Suspense } from 'react';
+import React, { useState, lazy, Suspense, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
@@ -19,6 +19,7 @@ import { TabsMini } from '../components/ds/TabsMini';
 import { Pill, type PillVariant } from '../components/ds/Pill';
 import { ListItem } from '../components/ds/ListItem';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
+import { useFarm } from '../../context/FarmContext';
 
 const QuickAddTruieForm = lazy(() => import('../../components/forms/QuickAddTruieForm'));
 const QuickAddVerratForm = lazy(() => import('../../components/forms/QuickAddVerratForm'));
@@ -84,9 +85,41 @@ const TAB_DATA: Record<AnimalTab, { stubs: AnimalStub[]; species: 'truie' | 'ver
 
 export const AnimalsV70: React.FC = () => {
   const navigate = useNavigate();
+  const { bandes, truies, verrats } = useFarm();
   const [tab, setTab] = useState<AnimalTab>('truies');
   const [filter, setFilter] = useState<AnimalFilter>('all');
   const [addOpen, setAddOpen] = useState(false);
+
+  // Données réelles via FarmContext quand dispo, sinon stubs cosmétiques V70
+  const realStubs = useMemo<Record<AnimalTab, AnimalStub[] | null>>(() => ({
+    truies: truies?.length
+      ? truies.slice(0, 8).map(t => ({
+          id: t.displayId ?? t.id,
+          status: t.statut ?? 'Truie active',
+          statusLabel: t.statut === 'Pleine' ? 'Pleine' : t.statut === 'En maternité' ? 'Maternité' : 'Vide',
+          pillVariant: (t.statut === 'Pleine' ? 'success' : t.statut === 'En maternité' ? 'warm' : 'warning') as PillVariant,
+        }))
+      : null,
+    verrats: verrats?.length
+      ? verrats.slice(0, 8).map(v => ({
+          id: v.displayId ?? v.id,
+          status: v.statut ?? 'Verrat',
+          statusLabel: v.statut === 'Actif' ? 'Actif' : 'Inactif',
+          pillVariant: (v.statut === 'Actif' ? 'success' : 'warning') as PillVariant,
+        }))
+      : null,
+    bandes: bandes?.length
+      ? bandes.slice(0, 8).map(b => ({
+          // ID utilisé pour l'affichage + nav : on prend l'UUID réel
+          id: b.id,
+          status: `${b.truie ? `Mère ${b.truie} · ` : ''}${b.dateMB ? `MB ${b.dateMB}` : 'En cours'}${b.nv ? ` · ${b.nv} NV` : ''}`,
+          statusLabel: b.statut ?? 'Active',
+          pillVariant: 'success' as PillVariant,
+        }))
+      : null,
+    porcelets: null, // pas de table porcelets dédiée pour le moment
+    loges: null,
+  }), [bandes, truies, verrats]);
 
   const fabLabel: Record<AnimalTab, string> = {
     truies: 'Ajouter une truie',
@@ -173,11 +206,11 @@ export const AnimalsV70: React.FC = () => {
       )}
 
       <Section label={TAB_DATA[tab].sectionLabel}>
-        {TAB_DATA[tab].stubs.map((it) => (
+        {(realStubs[tab] ?? TAB_DATA[tab].stubs).map((it) => (
           <ListItem
             key={it.id}
-            avatar={<EntityAvatar species={TAB_DATA[tab].species} size="md" shortCode={it.id} />}
-            title={it.id}
+            avatar={<EntityAvatar species={TAB_DATA[tab].species} size="md" shortCode={it.id.slice(0, 8)} />}
+            title={it.id.length > 16 ? `Bande ${it.id.slice(0, 8)}…` : it.id}
             subtitle={it.status}
             trailing={
               <>

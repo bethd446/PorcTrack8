@@ -30,6 +30,7 @@ import { DataTable, DataTableColumn } from '../components/v70/DataTable';
 import { ExportButton } from '../components/v70/ExportButton';
 import { useUIPreferences } from '../context/UIPreferencesContext';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
+import { useFarm } from '../../context/FarmContext';
 
 type PerfTab = 'vue' | 'kpis' | 'finances' | 'previsions';
 
@@ -56,8 +57,10 @@ const BANDES_COLUMNS: DataTableColumn<BandePerf>[] = [
 
 export const PerformanceV70: React.FC = () => {
   const navigate = useNavigate();
+  const { bandes } = useFarm();
   const [tab, setTab] = useState<PerfTab>('vue');
   const { advancedMode } = useUIPreferences();
+  const topBandes = bandes?.slice(0, 2) ?? [];
 
   const [pdfHint, setPdfHint] = useState(false);
   const handlePrintPdf = () => {
@@ -248,23 +251,29 @@ export const PerformanceV70: React.FC = () => {
         </>
       )}
 
-      {/* Top performances — visible en Vue uniquement */}
+      {/* Top performances — visible en Vue uniquement (vraies bandes via FarmContext) */}
       {tab === 'vue' && (
       <Section label="Top performances">
-        <ListItem
-          avatar={<EntityAvatar species="bande" size="md" shortCode="B-MAR" />}
-          title="Bande de mars 🏆"
-          subtitle="ISSE 12.4 · marge +890€"
-          trailing={<span className="list-arrow">›</span>}
-          onClick={() => navigate('/troupeau/bandes/B-MAR')}
-        />
-        <ListItem
-          avatar={<EntityAvatar species="bande" size="md" shortCode="B-FEV" />}
-          title="Bande de février 🥈"
-          subtitle="ISSE 11.9 · marge +650€"
-          trailing={<span className="list-arrow">›</span>}
-          onClick={() => navigate('/troupeau/bandes/B-FEV')}
-        />
+        {topBandes.length > 0 ? (
+          topBandes.map((b, idx) => (
+            <ListItem
+              key={b.id}
+              avatar={<EntityAvatar species="bande" size="md" shortCode={b.id.slice(0, 5)} />}
+              title={`${b.truie ? `Bande ${b.truie}` : `Bande ${b.id.slice(0, 8)}…`} ${idx === 0 ? '🏆' : '🥈'}`}
+              subtitle={`${b.dateMB ? `MB ${b.dateMB}` : ''} · ${b.nv ?? '?'} NV`}
+              trailing={<span className="list-arrow">›</span>}
+              onClick={() => navigate(`/troupeau/bandes/${b.id}`)}
+            />
+          ))
+        ) : (
+          <ListItem
+            avatar={<EntityAvatar species="bande" size="md" shortCode="..." />}
+            title="Aucune bande active"
+            subtitle="Crée ta première bande dans Élevage › Bandes"
+            trailing={<span className="list-arrow">›</span>}
+            onClick={() => navigate('/troupeau')}
+          />
+        )}
       </Section>
       )}
 

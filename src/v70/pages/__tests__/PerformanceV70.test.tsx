@@ -9,9 +9,15 @@
  *  - 4 KPIs techniques (Taux MB / NV / Mortalité / IEM)
  *  - Section Finances avec Pill "Owner" + marge 1 240 €
  */
-import { describe, it, expect, beforeAll, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+
+// V70.2 — PerformanceV70 utilise useFarm pour brancher Top performances.
+vi.mock('../../../context/FarmContext', () => ({
+  useFarm: () => ({ bandes: [], truies: [], verrats: [] }),
+}));
+
 import { PerformanceV70 } from '../PerformanceV70';
 
 // P7 : PerformanceV70 utilise useUIPreferences (Mode avancé). Le hook

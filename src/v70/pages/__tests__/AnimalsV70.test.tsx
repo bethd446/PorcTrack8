@@ -1,7 +1,14 @@
 // @vitest-environment jsdom
-import { describe, it, expect, beforeAll, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+
+// V70.2 — AnimalsV70 utilise useFarm pour brancher la liste réelle des bandes.
+// En test, on mocke FarmContext pour éviter d'avoir à monter tous les providers.
+vi.mock('../../../context/FarmContext', () => ({
+  useFarm: () => ({ bandes: [], truies: [], verrats: [] }),
+}));
+
 import { AnimalsV70 } from '../AnimalsV70';
 
 beforeAll(() => {

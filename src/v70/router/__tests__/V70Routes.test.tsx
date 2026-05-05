@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
-import { describe, it, expect, afterEach, beforeAll } from 'vitest';
+import { describe, it, expect, afterEach, beforeAll, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+
+// V70.2 — pages V70 utilisent useFarm pour brancher la vraie data bandes.
+vi.mock('../../../context/FarmContext', () => ({
+  useFarm: () => ({ bandes: [], truies: [], verrats: [] }),
+}));
+
 import { V70Routes } from '../V70Routes';
 
 // Vitest 4 + jsdom : localStorage stub absent. UIPreferencesProvider
