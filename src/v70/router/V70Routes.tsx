@@ -10,42 +10,10 @@ import React, { Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { BottomNavV70 } from '../components/v70/BottomNav';
 import { UIPreferencesProvider } from '../context/UIPreferencesContext';
-
-const TodayV70Stub: React.FC = () => (
-  <div style={{ padding: 24 }}>
-    <h1 style={{ fontFamily: 'var(--pt-font-display, sans-serif)', textTransform: 'uppercase' }}>
-      Aujourd'hui (V70 Phase 3)
-    </h1>
-    <p>Page en construction. Phase 3 livrera le contenu.</p>
-  </div>
-);
-
-const AnimalsV70Stub: React.FC = () => (
-  <div style={{ padding: 24 }}>
-    <h1 style={{ fontFamily: 'var(--pt-font-display, sans-serif)', textTransform: 'uppercase' }}>
-      Mes animaux (V70 Phase 3)
-    </h1>
-    <p>Page en construction. Phase 3 livrera le contenu.</p>
-  </div>
-);
-
-const ReproV70Stub: React.FC = () => (
-  <div style={{ padding: 24 }}>
-    <h1 style={{ fontFamily: 'var(--pt-font-display, sans-serif)', textTransform: 'uppercase' }}>
-      Reproduction (V70 Phase 3)
-    </h1>
-    <p>Page en construction. Phase 3 livrera le contenu.</p>
-  </div>
-);
-
-const PerformanceV70Stub: React.FC = () => (
-  <div style={{ padding: 24 }}>
-    <h1 style={{ fontFamily: 'var(--pt-font-display, sans-serif)', textTransform: 'uppercase' }}>
-      Performance (V70 Phase 3)
-    </h1>
-    <p>Page en construction. Phase 3 livrera le contenu.</p>
-  </div>
-);
+import { TodayV70 } from '../pages/TodayV70';
+import { AnimalsV70 } from '../pages/AnimalsV70';
+import { PerformanceV70 } from '../pages/PerformanceV70';
+import { ReproV70 } from '../pages/ReproV70';
 
 const ReglagesV70Stub: React.FC = () => (
   <div style={{ padding: 24 }}>
@@ -62,10 +30,10 @@ export const V70Routes: React.FC = () => (
       <Suspense fallback={<div style={{ padding: 24 }}>Chargement…</div>}>
         <Routes>
           <Route path="/" element={<Navigate to="/today" replace />} />
-          <Route path="/today" element={<TodayV70Stub />} />
-          <Route path="/troupeau/*" element={<AnimalsV70Stub />} />
-          <Route path="/reproduction/*" element={<ReproV70Stub />} />
-          <Route path="/performance/*" element={<PerformanceV70Stub />} />
+          <Route path="/today" element={<TodayV70 />} />
+          <Route path="/troupeau/*" element={<AnimalsV70 />} />
+          <Route path="/reproduction/*" element={<ReproV70 />} />
+          <Route path="/performance/*" element={<PerformanceV70 />} />
           <Route path="/reglages/*" element={<ReglagesV70Stub />} />
 
           {/* Redirects legacy → V70 (sera complété Phase 4) */}
