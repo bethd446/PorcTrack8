@@ -8,7 +8,7 @@
  *
  * Pattern V44 : options=[{value, label}] (cf. Annexe D règle 2 du brief).
  */
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 export interface TabOption {
   value: string;
@@ -22,23 +22,47 @@ export interface TabsMiniProps {
 }
 
 export const TabsMini: React.FC<TabsMiniProps> = ({ value, onChange, options }) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isScrollable, setIsScrollable] = useState(false);
+
+  // Détecte si le contenu déborde — affiche le fade indicateur uniquement
+  // quand un swipe horizontal est nécessaire pour voir tous les onglets.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const check = () => {
+      const overflow = el.scrollWidth > el.clientWidth + 2;
+      const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 2;
+      setIsScrollable(overflow && !atEnd);
+    };
+    check();
+    el.addEventListener('scroll', check, { passive: true });
+    window.addEventListener('resize', check);
+    return () => {
+      el.removeEventListener('scroll', check);
+      window.removeEventListener('resize', check);
+    };
+  }, [options]);
+
   return (
-    <div className="tabs-mini" role="tablist">
-      {options.map((opt) => {
-        const isActive = opt.value === value;
-        return (
-          <button
-            key={opt.value}
-            type="button"
-            role="tab"
-            aria-selected={isActive}
-            className={`tab-mini${isActive ? ' active' : ''}`}
-            onClick={() => onChange(opt.value)}
-          >
-            {opt.label}
-          </button>
-        );
-      })}
+    <div className={`tabs-mini-wrap${isScrollable ? ' is-scrollable' : ''}`}>
+      <div className="tabs-mini" role="tablist" ref={scrollRef}>
+        {options.map((opt) => {
+          const isActive = opt.value === value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              className={`tab-mini${isActive ? ' active' : ''}`}
+              onClick={() => onChange(opt.value)}
+            >
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 };

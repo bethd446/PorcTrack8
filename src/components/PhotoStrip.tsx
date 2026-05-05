@@ -107,7 +107,25 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ subjectType, subjectId }) => {
                   src={photo.webviewPath}
                   alt="Sujet"
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Fallback gracieux : URL Supabase Storage invalide / expirée.
+                    // On masque le <img> et affiche un placeholder neutre via CSS.
+                    const img = e.currentTarget;
+                    img.style.display = 'none';
+                    const fallback = img.nextElementSibling as HTMLElement | null;
+                    if (fallback && fallback.classList.contains('photo-fallback')) {
+                      fallback.style.display = 'flex';
+                    }
+                  }}
                 />
+                <div
+                  className="photo-fallback w-full h-full items-center justify-center bg-bg-1 text-text-muted"
+                  style={{ display: 'none', flexDirection: 'column', gap: 4, fontSize: 10 }}
+                  aria-hidden="true"
+                >
+                  <Camera size={20} />
+                  <span style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Indispo</span>
+                </div>
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-active:opacity-100 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-[160ms]">
                   <Maximize2 size={18} className="text-text-0" aria-hidden="true" />
                 </div>
@@ -186,6 +204,20 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ subjectType, subjectId }) => {
                   src={selectedPhoto.webviewPath}
                   alt="Vue complète"
                   className="max-w-full max-h-full rounded-md shadow-2xl"
+                  onError={(e) => {
+                    const img = e.currentTarget;
+                    img.style.display = 'none';
+                    const wrapper = img.parentElement;
+                    if (wrapper) {
+                      const note = document.createElement('div');
+                      note.style.color = 'rgba(255,255,255,0.7)';
+                      note.style.padding = '32px';
+                      note.style.textAlign = 'center';
+                      note.style.fontSize = '13px';
+                      note.textContent = 'Photo indisponible (URL expirée ou supprimée du stockage).';
+                      wrapper.appendChild(note);
+                    }
+                  }}
                 />
               )}
             </div>

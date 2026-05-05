@@ -37,6 +37,54 @@ interface ReproTrackerProps {
 
 export default function ReproTracker({ stages, progressPct, className = '' }: ReproTrackerProps) {
   const clamped = Math.max(0, Math.min(100, progressPct));
+  const [isNarrow, setIsNarrow] = React.useState(
+    typeof window !== 'undefined' && window.innerWidth < 480,
+  );
+
+  React.useEffect(() => {
+    const handler = () => setIsNarrow(window.innerWidth < 480);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+
+  // Mobile small (< 480px) : empilement vertical pour éviter le chevauchement
+  // des labels lorsque plusieurs stages sont concentrés dans 0-30% du cycle.
+  if (isNarrow) {
+    return (
+      <div className={className} style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '4px 0' }}>
+        {stages.map((stage, i) => (
+          <div
+            key={`${stage.label}-${i}`}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: '6px 0',
+              borderBottom: i < stages.length - 1 ? '1px solid var(--bg-app)' : 'none',
+            }}
+          >
+            <Marker state={stage.state} />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+              <span
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 11,
+                  textTransform: 'uppercase',
+                  color: stage.state === 'current' ? 'var(--amber-pork-deep)' : 'var(--ink)',
+                  fontWeight: stage.state === 'current' ? 600 : 500,
+                }}
+              >
+                {stage.label}
+              </span>
+              <span style={{ fontSize: 10, color: 'var(--muted)' }}>
+                {typeof stage.day === 'number' ? `J${stage.day}` : stage.day}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className={className} style={{ position: 'relative', padding: '8px 0 36px' }}>

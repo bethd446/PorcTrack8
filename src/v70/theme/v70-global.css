@@ -318,13 +318,35 @@
 .avatar-lg { width: 64px; height: 64px; border-radius: 16px; font-size: 32px; }
 
 /* ===== TABS MINI ===== */
+/* V70.6 : flex 1 0 auto + nowrap permettent le scroll horizontal natif.
+   Le wrapper ajoute un bord arrondi + indicateur via padding-right pour
+   suggérer la scrollabilité sans masquer le dernier tab. */
+.tabs-mini-wrap {
+  position: relative;
+  margin-bottom: 16px;
+}
+.tabs-mini-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 24px;
+  pointer-events: none;
+  background: linear-gradient(to right, transparent, var(--pt-bg));
+  border-radius: 0 999px 999px 0;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+.tabs-mini-wrap.is-scrollable::after {
+  opacity: 1;
+}
 .tabs-mini {
   display: flex;
   gap: 4px;
   background: var(--pt-warm);
   padding: 4px;
   border-radius: 999px;
-  margin-bottom: 16px;
   overflow-x: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;

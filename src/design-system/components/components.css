@@ -275,11 +275,14 @@
   text-align: center;
   line-height: 1.2;
 }
-/* Truncate intelligent sur mobile : on bascule labels longs en abrégés. */
-@media (max-width: 380px) {
+/* Truncate intelligent sur mobile : on bascule labels longs en abrégés.
+   V70.8 — breakpoint élargie de 380 à 480px pour couvrir iPhone 12+/13/14/15
+   (390-393px width). Sans cette bascule, "ENGRAISSEMENT" / "MATERNITÉ" / etc.
+   wrappent en deux lignes avec césure cassée ("ENGRAISSEMEN T"). */
+@media (max-width: 480px) {
   .pt-cycle__label-full { display: none; }
   .pt-cycle__label-short { display: inline; }
-  .pt-cycle__label { font-size: 10px; }
+  .pt-cycle__label { font-size: 10px; word-break: keep-all; hyphens: none; }
   .pt-cycle__day { font-size: 9px; }
 }
 
