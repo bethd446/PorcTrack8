@@ -93,12 +93,18 @@ export const AnimalsV70: React.FC = () => {
   // Données réelles via FarmContext quand dispo, sinon stubs cosmétiques V70
   const realStubs = useMemo<Record<AnimalTab, AnimalStub[] | null>>(() => ({
     truies: truies?.length
-      ? truies.slice(0, 8).map(t => ({
-          id: t.displayId ?? t.id,
-          status: t.statut ?? 'Truie active',
-          statusLabel: t.statut === 'Pleine' ? 'Pleine' : t.statut === 'En maternité' ? 'Maternité' : 'Vide',
-          pillVariant: (t.statut === 'Pleine' ? 'success' : t.statut === 'En maternité' ? 'warm' : 'warning') as PillVariant,
-        }))
+      ? truies.slice(0, 8).map(t => {
+          const s = (t.statut ?? '').toLowerCase();
+          const isPleine = /pleine|gestante|gestation/.test(s);
+          const isMater = /maternité|maternite|allaitante|allaitement/.test(s);
+          const isVide = /attente saillie|vide|sevrée|sevree/.test(s);
+          return {
+            id: t.displayId ?? t.id,
+            status: t.statut ?? 'Truie active',
+            statusLabel: isPleine ? 'Pleine' : isMater ? 'Maternité' : isVide ? 'Vide' : (t.statut ?? 'Active'),
+            pillVariant: (isPleine ? 'success' : isMater ? 'warm' : isVide ? 'warning' : 'info') as PillVariant,
+          };
+        })
       : null,
     verrats: verrats?.length
       ? verrats.slice(0, 8).map(v => ({

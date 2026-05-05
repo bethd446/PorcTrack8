@@ -1,6 +1,27 @@
 import React from 'react';
 import { Check } from 'lucide-react';
 
+// Abréviations pour éviter le chevauchement des labels sur mobile (< 420px).
+// Les labels longs (`Fenêtre retour chaleur`, `Surveillance retour chaleur`,
+// `Échographie`) débordaient et chevauchaient les marqueurs voisins.
+const ABBREV: Record<string, string> = {
+  'fenêtre retour chaleur': 'RETOUR CH.',
+  'surveillance retour chaleur': 'SURV. CH.',
+  'retour chaleur': 'RETOUR CH.',
+  'échographie': 'ÉCHO',
+  'echographie': 'ÉCHO',
+  'mise-bas': 'M-BAS',
+  'mise bas': 'M-BAS',
+  'maternité': 'MATER.',
+  'maternite': 'MATER.',
+  'sevrage': 'SEVR.',
+};
+
+function abbrev(label: string): string {
+  const key = label.toLowerCase().trim();
+  return ABBREV[key] ?? label;
+}
+
 export interface ReproStage {
   day: number | string;
   label: string;
@@ -70,16 +91,20 @@ export default function ReproTracker({ stages, progressPct, className = '' }: Re
                 marginTop: 8,
                 fontFamily: 'var(--font-mono)',
                 fontSize: 9,
-                letterSpacing: '0.10em',
+                letterSpacing: '0.06em',
                 textTransform: 'uppercase',
                 color: stage.state === 'current' ? 'var(--amber-pork-deep)' : 'var(--muted)',
                 textAlign: 'center',
-                lineHeight: 1.3,
-                whiteSpace: 'nowrap',
+                lineHeight: 1.15,
+                maxWidth: 60,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                wordBreak: 'break-word',
                 fontWeight: stage.state === 'current' ? 600 : 500,
               }}
+              title={stage.label}
             >
-              {stage.label}
+              {abbrev(stage.label)}
             </div>
             <div
               style={{
