@@ -23,6 +23,8 @@ import { EntityAvatar } from '../../components/ds/EntityAvatar';
 const QuickAddTruieForm = lazy(() => import('../../components/forms/QuickAddTruieForm'));
 const QuickAddVerratForm = lazy(() => import('../../components/forms/QuickAddVerratForm'));
 const QuickAddBandeForm = lazy(() => import('../../components/forms/QuickAddBandeForm'));
+const QuickAddPorceletForm = lazy(() => import('../../components/forms/QuickAddPorceletForm'));
+const QuickAddLogeForm = lazy(() => import('../../components/forms/QuickAddLogeForm'));
 
 type AnimalTab = 'truies' | 'verrats' | 'porcelets' | 'bandes' | 'loges';
 type AnimalFilter = 'all' | 'pleines' | 'maternite' | 'vides';
@@ -168,6 +170,8 @@ export const AnimalsV70: React.FC = () => {
         {tab === 'truies' && <QuickAddTruieForm isOpen={addOpen} onClose={() => setAddOpen(false)} />}
         {tab === 'verrats' && <QuickAddVerratForm isOpen={addOpen} onClose={() => setAddOpen(false)} />}
         {tab === 'bandes' && <QuickAddBandeForm isOpen={addOpen} onClose={() => setAddOpen(false)} />}
+        {tab === 'porcelets' && <QuickAddPorceletForm isOpen={addOpen} onClose={() => setAddOpen(false)} />}
+        {tab === 'loges' && <QuickAddLogeForm isOpen={addOpen} onClose={() => setAddOpen(false)} />}
       </Suspense>
     </div>
   );
