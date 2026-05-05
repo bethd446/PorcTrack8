@@ -325,11 +325,19 @@
   padding: 4px;
   border-radius: 999px;
   margin-bottom: 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tabs-mini::-webkit-scrollbar {
+  display: none;
 }
 
 .tab-mini {
-  flex: 1;
-  padding: 7px 8px;
+  flex: 1 0 auto;
+  min-width: 0;
+  padding: 7px 12px;
   border-radius: 999px;
   font-size: 10px;
   font-weight: 600;
@@ -338,6 +346,7 @@
   text-align: center;
   color: var(--pt-muted);
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .tab-mini.active {

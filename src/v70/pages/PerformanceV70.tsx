@@ -152,7 +152,7 @@ export const PerformanceV70: React.FC = () => {
           </div>
           <div className="kv-row">
             <span className="kv-key">
-              Mortalité allaitement <Tooltip term="mortalite" />
+              <Tooltip term="mortalite">Mortalité allaitement</Tooltip>
             </span>
             <span className="kv-val">
               8.4 % <span style={{ color: 'var(--pt-success)', fontSize: 10 }}>↘ -1%</span>
@@ -160,7 +160,7 @@ export const PerformanceV70: React.FC = () => {
           </div>
           <div className="kv-row">
             <span className="kv-key">
-              IEM moyen <Tooltip term="iem" />
+              <Tooltip term="iem">IEM moyen</Tooltip>
             </span>
             <span className="kv-val">5.1 j</span>
           </div>
