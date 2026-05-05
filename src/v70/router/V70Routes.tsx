@@ -130,7 +130,19 @@ const BandeDetailRouteV70: React.FC = () => {
 
 export const V70Routes: React.FC = () => (
   <UIPreferencesProvider>
-    <div className="v70-root" style={{ minHeight: '100vh', paddingBottom: 80, background: 'var(--pt-bg)' }}>
+    <div
+      className="v70-root"
+      style={{
+        // V71 P1.6 — body Ionic est position:fixed + overflow:hidden, donc il faut
+        // récupérer le scroll ICI (sinon contenu débordé jamais accessible).
+        height: '100vh',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        WebkitOverflowScrolling: 'touch',
+        paddingBottom: 80,
+        background: 'var(--pt-bg)',
+      }}
+    >
       <Suspense fallback={<div style={{ padding: 24 }}>Chargement…</div>}>
         <Routes>
           <Route path="/" element={<Navigate to="/today" replace />} />
@@ -169,15 +181,15 @@ export const V70Routes: React.FC = () => (
           <Route path="/pilotage/rapport" element={<RapportFinancierView />} />
 
           {/* Redirects legacy V44/V45 → V70 (Phase 4) */}
-          {/* /cycles/* → /reproduction?phase=* */}
-          <Route path="/cycles" element={<Navigate to="/reproduction?phase=saillie" replace />} />
-          <Route path="/cycles/repro" element={<Navigate to="/reproduction?phase=saillie" replace />} />
-          <Route path="/cycles/maternite" element={<Navigate to="/reproduction?phase=maternite" replace />} />
-          <Route path="/cycles/post-sevrage" element={<Navigate to="/reproduction?phase=post-sevrage" replace />} />
-          <Route path="/cycles/croissance" element={<Navigate to="/reproduction?phase=croissance" replace />} />
-          <Route path="/cycles/finition" element={<Navigate to="/reproduction?phase=finition" replace />} />
-          <Route path="/cycles/engraissement" element={<Navigate to="/reproduction?phase=engraissement" replace />} />
-          <Route path="/cycles/sortie" element={<Navigate to="/reproduction?phase=sortie" replace />} />
+          {/* /cycles/* legacy → /reproduction?tab=...&phase=* (V71 FIX #4) */}
+          <Route path="/cycles" element={<Navigate to="/reproduction?tab=agenda" replace />} />
+          <Route path="/cycles/repro" element={<Navigate to="/reproduction?tab=agenda" replace />} />
+          <Route path="/cycles/maternite" element={<Navigate to="/reproduction?tab=en-cours&phase=maternite" replace />} />
+          <Route path="/cycles/post-sevrage" element={<Navigate to="/reproduction?tab=en-cours&phase=post-sevrage" replace />} />
+          <Route path="/cycles/croissance" element={<Navigate to="/reproduction?tab=en-cours&phase=croissance" replace />} />
+          <Route path="/cycles/finition" element={<Navigate to="/reproduction?tab=en-cours&phase=finition" replace />} />
+          <Route path="/cycles/engraissement" element={<Navigate to="/reproduction?tab=en-cours&phase=engraissement" replace />} />
+          <Route path="/cycles/sortie" element={<Navigate to="/reproduction?tab=historique" replace />} />
 
           {/* /pilotage/* → /performance */}
           <Route path="/pilotage" element={<Navigate to="/performance" replace />} />

@@ -58,5 +58,45 @@
   "vaccin": {
     "label": "Vaccin",
     "definition": "Préparation administrée pour protéger contre une maladie infectieuse. Programme vaccinal type en Côte d'Ivoire : peste porcine classique, parvovirose, rouget, colibacillose. Respecter la chaîne du froid (2 à 8 °C) et les délais d'attente avant abattage."
+  },
+  "truie-pleine": {
+    "label": "Truie pleine",
+    "definition": "Truie en gestation confirmée, entre la saillie (J0) et la mise-bas (J115). Statut PorcTrack : 'Pleine'. Confirmation à l'échographie J28. Représente le cœur productif du troupeau : objectif d'avoir 80 à 85 % du cheptel reproducteur en gestation à tout moment."
+  },
+  "truie-vide": {
+    "label": "Truie vide",
+    "definition": "Truie non gestante, en attente de saillie après sevrage. Statut PorcTrack : 'En attente saillie'. Doit être saillie dans les 3 à 7 jours post-sevrage. Au-delà de J+7, alerte R3 (retour chaleur manqué). Truie vide >21 jours : candidate à la réforme."
+  },
+  "truie-allaitante": {
+    "label": "Truie allaitante",
+    "definition": "Truie en lactation, qui allaite sa portée pendant 21 à 28 jours après mise-bas. Statut PorcTrack : 'En maternité'. Besoins nutritionnels au pic (jusqu'à 8 kg/jour). Sous-alimentation = perte d'état corporel et retour en chaleur retardé."
+  },
+  "bande": {
+    "label": "Bande",
+    "definition": "Groupe de truies saillies dans une même fenêtre (idéalement ±3 jours), qui mettront bas ensemble et seront sevrées en même temps. Permet la conduite en bande : nettoyage tout-vide, gestion sanitaire simplifiée. PorcTrack alerte R6 si 2+ bandes sevrables à ±3 jours."
+  },
+  "loge": {
+    "label": "Loge",
+    "definition": "Box ou case d'élevage qui héberge un groupe d'animaux selon leur stade. Capacités PorcTrack par défaut : 9 truies en maternité, 6 porcelets en post-sevrage, 6 en engraissement. Surdensité = stress, baisse de croissance, risque sanitaire accru."
+  },
+  "porcelet": {
+    "label": "Porcelet",
+    "definition": "Jeune porc, de la naissance au sevrage (J0 à J28). Poids cible : 1,4 kg à la naissance, 7 à 8 kg au sevrage. Période la plus à risque : 24 premières heures (écrasement, hypothermie). Mortalité allaitement cible : <12 %, alerte PorcTrack si >15 %."
+  },
+  "verrat": {
+    "label": "Verrat",
+    "definition": "Mâle reproducteur du troupeau. Statut PorcTrack : 'Actif'. Ratio classique : 1 verrat pour 15 à 25 truies en saillie naturelle. Réforme à 3-4 ans ou en cas de baisse de fertilité. Évaluer la qualité de la semence régulièrement (mobilité, concentration)."
+  },
+  "engraissement": {
+    "label": "Engraissement",
+    "definition": "Phase de croissance entre J100 et J180 environ, de ~30 kg à ~100 kg vif. Durée PorcTrack : 80 jours (config par défaut). Période la plus consommatrice d'aliment, indice de consommation cible : 2,8 à 3,2 kg d'aliment par kg de gain de poids."
+  },
+  "finition": {
+    "label": "Finition",
+    "definition": "Dernière phase d'engraissement, à partir de J180 ou poids ≥ 100 kg, jusqu'à la sortie abattoir. Plage PorcTrack : 100 à 110 kg vif. Aliment moins protéiné (qualité de carcasse). Au-delà de 110 kg, dégradation du rendement et de la marge."
+  },
+  "sortie": {
+    "label": "Sortie abattoir",
+    "definition": "Départ d'un porc charcutier vers l'abattoir, déclenché à 110 kg vif (alerte R16). Prix de référence PorcTrack : 2 100 FCFA/kg vif. Coût fixe par porc : 5 000 FCFA. Anticiper l'enlèvement pour éviter la sur-finition et la perte de marge."
   }
 }

@@ -2,9 +2,10 @@
  * V70 — Page Encyclopédie (route /reglages/encyclopedie)
  *
  * Phase 6 niveau B : liste d'articles + lecteur intégré.
- * 5 articles V70 (cycle, ISSE, biosécurité, alimentation gestation, sevrage).
+ * V71 Phase 4 : 10 articles (cycles, économie, santé, alimentation, reproduction).
+ * V71 Phase 4.5 : recherche full-text titre + catégorie + niveau.
  */
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { EncyclopediaArticle } from '../components/v70/EncyclopediaArticle';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
@@ -48,10 +49,57 @@ const ARTICLES: ArticleEntry[] = [
     category: 'Cycles',
     level: 'intermédiaire',
   },
+  {
+    slug: '06-mortalite-allaitement',
+    title: 'Mortalité allaitement : causes et prévention',
+    category: 'Santé',
+    level: 'intermédiaire',
+  },
+  {
+    slug: '07-reforme-zootechnique',
+    title: 'Réforme zootechnique : critères de décision',
+    category: 'Reproduction',
+    level: 'avancé',
+  },
+  {
+    slug: '08-lignees-tropicales',
+    title: 'Lignées génétiques en climat tropical',
+    category: 'Reproduction',
+    level: 'intermédiaire',
+  },
+  {
+    slug: '09-couts-alimentaires',
+    title: 'Calcul des coûts alimentaires',
+    category: 'Économique',
+    level: 'intermédiaire',
+  },
+  {
+    slug: '10-preparation-mise-bas',
+    title: 'Préparation à la mise-bas',
+    category: 'Cycles',
+    level: 'débutant',
+  },
 ];
+
+function normalize(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '');
+}
 
 export const EncyclopediaPage: React.FC = () => {
   const [selected, setSelected] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+
+  const filtered = useMemo(() => {
+    const q = normalize(search.trim());
+    if (!q) return ARTICLES;
+    return ARTICLES.filter((a) => {
+      const haystack = normalize(`${a.title} ${a.category} ${a.level}`);
+      return haystack.includes(q);
+    });
+  }, [search]);
 
   if (selected) {
     return (
@@ -76,16 +124,57 @@ export const EncyclopediaPage: React.FC = () => {
         title="Encyclopédie porcine"
         subtitle={`${ARTICLES.length} articles · Cycles, santé, économie, alimentation`}
       />
-      <Section label={`${ARTICLES.length} articles`}>
-        {ARTICLES.map((a) => (
-          <ListItem
-            key={a.slug}
-            title={a.title}
-            subtitle={`${a.category} · ${a.level}`}
-            trailing={<span className="list-arrow">›</span>}
-            onClick={() => setSelected(a.slug)}
-          />
-        ))}
+
+      {/* V71 Phase 4.5 — recherche full-text accent-insensible */}
+      <div className="card" style={{ marginBottom: 12, padding: 4 }}>
+        <input
+          type="search"
+          aria-label="Rechercher dans l'encyclopédie"
+          placeholder="🔍 Rechercher un article..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{
+            width: '100%',
+            border: 'none',
+            outline: 'none',
+            fontSize: 13,
+            background: 'transparent',
+            fontFamily: 'inherit',
+            padding: '8px 12px',
+          }}
+        />
+      </div>
+
+      <Section
+        label={
+          search
+            ? `${filtered.length} résultat${filtered.length > 1 ? 's' : ''}`
+            : `${ARTICLES.length} articles`
+        }
+      >
+        {filtered.length === 0 ? (
+          <div
+            role="status"
+            style={{
+              padding: '24px 12px',
+              textAlign: 'center',
+              color: 'var(--pt-muted)',
+              fontSize: 13,
+            }}
+          >
+            Aucun article ne correspond à « {search} ».
+          </div>
+        ) : (
+          filtered.map((a) => (
+            <ListItem
+              key={a.slug}
+              title={a.title}
+              subtitle={`${a.category} · ${a.level}`}
+              trailing={<span className="list-arrow">›</span>}
+              onClick={() => setSelected(a.slug)}
+            />
+          ))
+        )}
       </Section>
     </div>
   );
