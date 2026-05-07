@@ -21,6 +21,7 @@ import { Card } from '../components/ds/Card';
 import { Button } from '../components/ds/Button';
 import { Pill } from '../components/ds/Pill';
 import { StatsGrid, Stat } from '../components/ds/StatsGrid';
+import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 
 interface AlertItem {
   id: string;
@@ -119,34 +120,7 @@ export const TodayV70: React.FC = () => {
 
   return (
     <div className="phone-content" style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          padding: '8px 12px',
-          marginBottom: 16,
-          borderRadius: 999,
-          background: 'rgba(6, 78, 59, 0.05)',
-          border: '1px solid rgba(6, 78, 59, 0.12)',
-        }}
-      >
-        <img
-          src="/images/marius-avatar.webp"
-          alt="Marius"
-          width={40}
-          height={40}
-          style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
-        />
-        <div style={{ minWidth: 0 }}>
-          <div className="ft-heading" style={{ fontSize: 12, letterSpacing: 0.8, textTransform: 'uppercase', color: 'var(--pt-primary, #064e3b)', fontWeight: 700 }}>
-            Marius
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--pt-muted, #6b7280)' }}>
-            vous écoute · poser une question
-          </div>
-        </div>
-      </div>
+      <MariusGreeting />
 
       <PageHeader
         eyebrow={dateLabel}

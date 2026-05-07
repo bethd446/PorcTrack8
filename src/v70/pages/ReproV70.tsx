@@ -22,6 +22,7 @@ import { StatsGrid, Stat } from '../components/ds/StatsGrid';
 import { CycleTimeline } from '../components/ds/CycleTimeline';
 import { EduCard } from '../components/v70/EduCard';
 import { EmptyEdu } from '../components/v70/EmptyEdu';
+import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 
 const QuickSaillieForm = lazy(() => import('../../components/forms/QuickSaillieForm'));
 
@@ -190,6 +191,8 @@ export const ReproV70: React.FC = () => {
           {banner.label}
         </span>
       </div>
+
+      <MariusGreeting pageContext="reproduction" />
 
       <PageHeader
         eyebrow="Cycle vivant"

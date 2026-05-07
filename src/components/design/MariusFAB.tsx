@@ -1,5 +1,4 @@
 import React from 'react';
-import { Sparkles } from 'lucide-react';
 import { Button } from '@/design-system';
 
 interface MariusFABProps {
@@ -23,8 +22,8 @@ export default function MariusFAB({ online = true, onClick, className = '' }: Ma
         background: 'var(--amber-pork)',
         color: 'var(--ink)',
         borderRadius: '50%',
-        width: 52,
-        height: 52,
+        width: 56,
+        height: 56,
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -35,9 +34,22 @@ export default function MariusFAB({ online = true, onClick, className = '' }: Ma
         cursor: 'pointer',
         transition: 'transform var(--duration-press, 160ms) var(--ease-emil, cubic-bezier(0.23,1,0.32,1))',
         textTransform: 'none',
+        padding: 0,
       }}
     >
-      <Sparkles size={24} strokeWidth={2} aria-hidden="true" />
+      <img
+        src="/images/marius-avatar.webp"
+        alt=""
+        aria-hidden="true"
+        width={36}
+        height={36}
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: '50%',
+          objectFit: 'cover',
+        }}
+      />
       {online && (
         <span
           aria-hidden="true"

@@ -32,6 +32,7 @@ import { useUIPreferences } from '../context/UIPreferencesContext';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { useFarm } from '../../context/FarmContext';
 import { computeGlobalKpis } from '../../services/perfKpiAnalyzer';
+import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 
 type PerfTab = 'vue' | 'kpis' | 'finances' | 'previsions';
 
@@ -92,6 +93,8 @@ export const PerformanceV70: React.FC = () => {
 
   return (
     <div className="phone-content" style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
+      <MariusGreeting pageContext="performance" />
+
       <PageHeader
         eyebrow="Pilotage · Mai 2026"
         title="Performance"

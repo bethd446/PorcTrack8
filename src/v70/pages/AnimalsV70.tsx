@@ -20,6 +20,7 @@ import { Pill, type PillVariant } from '../components/ds/Pill';
 import { ListItem } from '../components/ds/ListItem';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { useFarm } from '../../context/FarmContext';
+import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 
 const QuickAddTruieForm = lazy(() => import('../../components/forms/QuickAddTruieForm'));
 const QuickAddVerratForm = lazy(() => import('../../components/forms/QuickAddVerratForm'));
@@ -224,6 +225,8 @@ export const AnimalsV70: React.FC = () => {
           Vue d'ensemble
         </span>
       </div>
+
+      <MariusGreeting pageContext="élevage" />
 
       <PageHeader
         eyebrow={`Élevage · ${counts.totalAnimaux} animaux`}

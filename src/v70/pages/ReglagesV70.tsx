@@ -16,6 +16,7 @@ import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
 import { ListItem } from '../components/ds/ListItem';
 import { ToggleAdvancedMode } from '../components/v70/ToggleAdvancedMode';
+import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 
 export const ReglagesV70: React.FC = () => {
   const navigate = useNavigate();
@@ -29,6 +30,8 @@ export const ReglagesV70: React.FC = () => {
 
   return (
     <div className="phone-content" style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
+      <MariusGreeting pageContext="configuration" />
+
       <PageHeader
         eyebrow="Configuration"
         title="Réglages"

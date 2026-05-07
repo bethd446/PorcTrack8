@@ -1,6 +1,8 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { X, Send, Loader2 } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/design-system';
+import { MARIUS_SYSTEM_PROMPT, getSuggestionsForPath } from './mariusSystemPrompt';
 
 type Role = 'user' | 'assistant' | 'system';
 
@@ -43,6 +45,9 @@ export const ChatbotWidget: React.FC = () => {
     window.addEventListener('open-chatbot', handler);
     return () => window.removeEventListener('open-chatbot', handler);
   }, []);
+
+  const location = useLocation();
+  const suggestions = getSuggestionsForPath(location.pathname);
 
   useEffect(() => {
     if (open && isMariusConfigured) {
@@ -96,13 +101,29 @@ export const ChatbotWidget: React.FC = () => {
     setStreaming(false);
 
     try {
+      const recentHistory = messages
+        .filter((m) => m.role !== 'system')
+        .slice(-6)
+        .map((m) => ({ role: m.role, content: m.content }));
+
       const response = await fetch(`${API_BASE}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-API-Key': API_KEY,
         },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({
+          // Legacy : ancien serveur attend juste un string
+          message: text,
+          // Format OpenAI chat completion : si le serveur le supporte, utilise system + history
+          messages: [
+            { role: 'system', content: MARIUS_SYSTEM_PROMPT },
+            ...recentHistory,
+            { role: 'user', content: text },
+          ],
+          // Champ system standalone : autre wrapper llama-server l'utilise
+          system: MARIUS_SYSTEM_PROMPT,
+        }),
         signal: controller.signal,
       });
 
@@ -184,7 +205,7 @@ export const ChatbotWidget: React.FC = () => {
       setLoading(false);
       setStreaming(false);
     }
-  }, [input, loading, appendToLastAssistant]);
+  }, [input, loading, messages, appendToLastAssistant]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -239,10 +260,32 @@ export const ChatbotWidget: React.FC = () => {
         className="flex-1 overflow-y-auto px-3 py-3 space-y-3 min-h-[200px]"
       >
         {messages.length === 0 && (
-          <p className="text-xs text-center mt-8" style={{ color: 'var(--muted)' }}>
-            Bonjour, je suis Marius.<br />
-            Pose une question sur ton élevage.
-          </p>
+          <div className="text-center mt-6 px-2">
+            <p className="text-xs mb-3" style={{ color: 'var(--muted)' }}>
+              Bonjour, je suis Marius.<br />
+              Posez-moi une question sur votre élevage.
+            </p>
+            <div className="flex flex-col gap-2 mt-4">
+              {suggestions.map((q, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => {
+                    setInput(q);
+                    setTimeout(() => inputRef.current?.focus(), 0);
+                  }}
+                  className="text-xs text-left px-3 py-2 rounded-xl transition-colors hover:bg-[var(--bg-surface-2)]"
+                  style={{
+                    background: 'var(--bg-surface-2)',
+                    color: 'var(--ink)',
+                    border: '1px solid var(--line)',
+                  }}
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
         {messages.map((m, i) => {
           if (m.role === 'system') {
@@ -299,8 +342,8 @@ export const ChatbotWidget: React.FC = () => {
           ref={inputRef}
           value={input}
           onChange={e => setInput(e.target.value)}
-          placeholder="Question pour Marius…"
-          aria-label="Ta question pour Marius"
+          placeholder="Posez votre question…"
+          aria-label="Votre question pour Marius"
           disabled={loading}
           className="flex-1 text-sm rounded-full px-3 py-2 border outline-none
                      focus:border-[var(--color-accent-500)]"
