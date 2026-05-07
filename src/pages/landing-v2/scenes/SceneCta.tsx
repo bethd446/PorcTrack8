@@ -6,9 +6,9 @@ export function SceneCta() {
     <section
       style={{
         position: 'relative',
-        background: 'linear-gradient(180deg, #064e3b 0%, #022c22 100%)',
+        background: '#0a0a0a',
         color: '#fff',
-        padding: '120px 24px 64px',
+        padding: '160px 24px 64px',
         textAlign: 'center',
       }}
     >
@@ -18,10 +18,10 @@ export function SceneCta() {
           fontSize: 11,
           letterSpacing: '0.20em',
           textTransform: 'uppercase',
-          color: 'rgba(255,255,255,0.7)',
+          color: 'rgba(255,255,255,0.6)',
         }}
       >
-        Prêt ?
+        ● Prêt ?
       </span>
 
       <h2
@@ -30,7 +30,7 @@ export function SceneCta() {
           fontWeight: 900,
           fontSize: 'clamp(40px, 8vw, 104px)',
           lineHeight: 0.95,
-          letterSpacing: '-0.02em',
+          letterSpacing: '-0.03em',
           textTransform: 'uppercase',
           margin: '16px auto 32px',
           maxWidth: 1100,
@@ -38,7 +38,9 @@ export function SceneCta() {
       >
         Prêt à passer
         <br />
-        du cahier au pilotage&nbsp;?
+        <em style={{ fontStyle: 'normal', color: '#34d399' }}>
+          du cahier au pilotage&nbsp;?
+        </em>
       </h2>
 
       <p
@@ -46,7 +48,7 @@ export function SceneCta() {
           fontFamily: 'var(--font-body)',
           fontSize: 18,
           lineHeight: 1.5,
-          color: 'rgba(255,255,255,0.85)',
+          color: 'rgba(255,255,255,0.7)',
           maxWidth: 580,
           margin: '0 auto 48px',
         }}
@@ -72,15 +74,15 @@ export function SceneCta() {
             fontSize: 14,
             letterSpacing: '0.10em',
             textTransform: 'uppercase',
-            background: '#F4A261',
-            color: '#064e3b',
-            padding: '18px 36px',
+            background: '#10b981',
+            color: '#fff',
+            padding: '16px 32px',
             borderRadius: 999,
             textDecoration: 'none',
             display: 'inline-block',
           }}
         >
-          Créer un compte
+          Commencer
         </Link>
         <Link
           to="/login"
@@ -90,10 +92,10 @@ export function SceneCta() {
             fontSize: 14,
             letterSpacing: '0.10em',
             textTransform: 'uppercase',
-            background: 'rgba(255,255,255,0.08)',
+            background: 'transparent',
             color: '#fff',
             border: '1px solid rgba(255,255,255,0.25)',
-            padding: '18px 36px',
+            padding: '16px 32px',
             borderRadius: 999,
             textDecoration: 'none',
             display: 'inline-block',
@@ -109,7 +111,7 @@ export function SceneCta() {
           paddingTop: 32,
           fontFamily: 'var(--font-body)',
           fontSize: 12,
-          color: 'rgba(255,255,255,0.55)',
+          color: 'rgba(255,255,255,0.5)',
           display: 'flex',
           gap: 24,
           justifyContent: 'center',

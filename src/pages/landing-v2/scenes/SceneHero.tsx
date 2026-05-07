@@ -1,184 +1,181 @@
 import React, { useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
 
 gsap.registerPlugin(ScrollTrigger);
 
-type Kpi = { num: string; label: string; suffix?: string };
-
-const KPI: ReadonlyArray<Kpi> = [
-  { num: '115', suffix: 'j', label: 'Cycle gestation' },
-  { num: '16', label: 'Règles GTTT' },
-  { num: 'J18', suffix: '–J24', label: 'Retour chaleur' },
-  { num: '100', suffix: '%', label: 'Hors-ligne' },
-];
-
 export function SceneHero() {
-  const sceneRef = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   useGSAP(
     () => {
-      if (!sceneRef.current) return;
+      if (!ref.current) return;
+      if (
+        typeof window !== 'undefined' &&
+        window.matchMedia &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      ) {
+        return;
+      }
+
       gsap.fromTo(
-        sceneRef.current.querySelector('.hero-title'),
-        { opacity: 0, y: 60 },
+        ref.current.querySelector('.hero-title'),
+        { opacity: 0, y: 40 },
         {
           opacity: 1,
           y: 0,
+          ease: 'none',
           scrollTrigger: {
-            trigger: sceneRef.current,
+            trigger: ref.current,
             start: 'top 80%',
-            end: 'top 20%',
-            scrub: 0.8,
+            end: 'top 30%',
+            scrub: 1,
           },
         },
       );
-      sceneRef.current.querySelectorAll('.kpi-card').forEach((card, i) => {
-        gsap.to(card, {
-          y: -50 - i * 30,
+
+      gsap.fromTo(
+        ref.current.querySelector('.hero-image'),
+        { scale: 0.95 },
+        {
+          scale: 1.05,
+          ease: 'none',
           scrollTrigger: {
-            trigger: sceneRef.current,
+            trigger: ref.current,
             start: 'top top',
             end: 'bottom top',
-            scrub: 1,
+            scrub: 1.2,
           },
-        });
-      });
+        },
+      );
     },
-    { scope: sceneRef },
+    { scope: ref },
   );
 
   return (
     <section
-      ref={sceneRef}
+      ref={ref}
       style={{
         position: 'relative',
         minHeight: '100vh',
-        backgroundImage: 'url(/images/hero-1.webp)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        background: '#0a0a0a',
+        color: '#fff',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        padding: '80px 24px',
         overflow: 'hidden',
       }}
     >
-      <div
+      <span
         style={{
-          position: 'absolute',
-          inset: 0,
-          background:
-            'linear-gradient(180deg, rgba(6,78,59,0.2) 0%, rgba(6,78,59,0.7) 100%)',
-        }}
-      />
-
-      <div
-        style={{
-          position: 'relative',
-          zIndex: 1,
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: '0 24px',
-          color: '#fff',
-          textAlign: 'center',
+          fontFamily: 'var(--font-body)',
+          fontSize: 11,
+          letterSpacing: '0.20em',
+          textTransform: 'uppercase',
+          color: 'rgba(255,255,255,0.6)',
+          marginBottom: 24,
         }}
       >
-        <span
-          style={{
-            fontSize: 11,
-            letterSpacing: '0.20em',
-            textTransform: 'uppercase',
-            color: 'rgba(255,255,255,0.85)',
-            marginBottom: 24,
-          }}
-        >
-          ● Smart App Élevage 2026 · Côte d&apos;Ivoire
-        </span>
-        <h1
-          className="hero-title"
+        ● PorcTrack · Élevage 2026
+      </span>
+      <h1
+        className="hero-title"
+        style={{
+          fontFamily: 'var(--font-heading)',
+          fontWeight: 900,
+          fontSize: 'clamp(40px, 8vw, 96px)',
+          lineHeight: 0.95,
+          letterSpacing: '-0.03em',
+          textTransform: 'uppercase',
+          maxWidth: 1100,
+          margin: 0,
+          color: '#fff',
+          willChange: 'transform, opacity',
+        }}
+      >
+        Votre ferme,
+        <br />
+        <em style={{ fontStyle: 'normal', color: '#34d399' }}>
+          au cœur de la donnée.
+        </em>
+      </h1>
+      <p
+        style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: 18,
+          lineHeight: 1.5,
+          maxWidth: 580,
+          color: 'rgba(255,255,255,0.7)',
+          margin: '24px 0 40px',
+        }}
+      >
+        Suivi reproductif, alertes biologiques, alimentation calculée — pensé
+        pour les éleveurs de porcs.
+      </p>
+      <div
+        style={{
+          display: 'flex',
+          gap: 16,
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          marginBottom: 60,
+        }}
+      >
+        <Link
+          to="/signup"
           style={{
             fontFamily: 'var(--font-heading)',
-            fontWeight: 900,
-            fontSize: 'clamp(48px, 10vw, 120px)',
-            lineHeight: 0.92,
-            letterSpacing: '-0.03em',
+            fontWeight: 700,
+            fontSize: 14,
+            letterSpacing: '0.10em',
             textTransform: 'uppercase',
-            margin: 0,
-            maxWidth: 1200,
+            padding: '16px 32px',
+            background: '#10b981',
+            color: '#fff',
+            borderRadius: 999,
+            textDecoration: 'none',
           }}
         >
-          Pilotez votre élevage
-          <br />
-          en bandes
-        </h1>
-        <p
+          Commencer
+        </Link>
+        <Link
+          to="/login"
           style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: 18,
-            lineHeight: 1.5,
-            color: 'rgba(255,255,255,0.92)',
-            marginTop: 24,
-            maxWidth: 580,
+            fontFamily: 'var(--font-heading)',
+            fontWeight: 700,
+            fontSize: 14,
+            letterSpacing: '0.10em',
+            textTransform: 'uppercase',
+            padding: '16px 32px',
+            background: 'transparent',
+            color: '#fff',
+            border: '1px solid rgba(255,255,255,0.25)',
+            borderRadius: 999,
+            textDecoration: 'none',
           }}
         >
-          Suivez vos truies, saillies et alertes biologiques en un coup d&apos;œil.
-          Pensé pour vos bandes, votre rythme, votre ferme.
-        </p>
-
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: 16,
-            marginTop: 64,
-            width: '100%',
-            maxWidth: 1000,
-          }}
-        >
-          {KPI.map((k, i) => (
-            <div
-              key={i}
-              className="kpi-card"
-              style={{
-                background: 'rgba(255,255,255,0.08)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255,255,255,0.15)',
-                borderRadius: 20,
-                padding: '20px 16px',
-                textAlign: 'center',
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontWeight: 700,
-                  fontSize: 36,
-                  color: '#fff',
-                  lineHeight: 1,
-                }}
-              >
-                {k.num}
-                {k.suffix && (
-                  <small style={{ fontSize: 18, opacity: 0.7 }}>{k.suffix}</small>
-                )}
-              </div>
-              <div
-                style={{
-                  fontSize: 10,
-                  letterSpacing: '0.16em',
-                  textTransform: 'uppercase',
-                  color: 'rgba(255,255,255,0.75)',
-                  marginTop: 8,
-                }}
-              >
-                {k.label}
-              </div>
-            </div>
-          ))}
-        </div>
+          Se connecter
+        </Link>
       </div>
+      <img
+        className="hero-image"
+        src="/images/landing/scene-hero-devices.webp"
+        alt="PorcTrack sur iPhone et iPad"
+        loading="eager"
+        fetchPriority="high"
+        style={{
+          width: '100%',
+          maxWidth: 1100,
+          height: 'auto',
+          display: 'block',
+          willChange: 'transform',
+        }}
+      />
     </section>
   );
 }

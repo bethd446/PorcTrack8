@@ -1,17 +1,21 @@
 import React from 'react';
 import { useLenisScroll } from './hooks/useLenisScroll';
 import { SceneHero } from './scenes/SceneHero';
-import { SceneTimeline } from './scenes/SceneTimeline';
-import { SceneTerritoire } from './scenes/SceneTerritoire';
+import { SceneRepro } from './scenes/SceneRepro';
+import { SceneFeed } from './scenes/SceneFeed';
+import { SceneHealth } from './scenes/SceneHealth';
+import { SceneOffline } from './scenes/SceneOffline';
 import { SceneCta } from './scenes/SceneCta';
 
 export default function LandingScrollytelling() {
   useLenisScroll();
   return (
-    <div style={{ background: 'var(--pt-bg)', overflow: 'hidden' }}>
+    <div style={{ background: '#0a0a0a', overflow: 'hidden' }}>
       <SceneHero />
-      <SceneTimeline />
-      <SceneTerritoire />
+      <SceneRepro />
+      <SceneFeed />
+      <SceneHealth />
+      <SceneOffline />
       <SceneCta />
     </div>
   );
