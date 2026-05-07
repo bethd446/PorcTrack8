@@ -81,7 +81,7 @@ const TAB_DATA: Record<AnimalTab, { stubs: AnimalStub[]; species: 'truie' | 'ver
   verrats: { stubs: STUBS_VERRATS, species: 'verrat', sectionLabel: '3 verrats', routePrefix: '/troupeau/verrats/', emoji: '🐗' },
   porcelets: { stubs: STUBS_PORCELETS, species: 'porcelet', sectionLabel: '92 porcelets', routePrefix: '/troupeau/bandes/', emoji: '🐷' },
   bandes: { stubs: STUBS_BANDES, species: 'bande', sectionLabel: '6 bandes actives', routePrefix: '/troupeau/bandes/', emoji: '📦' },
-  loges: { stubs: STUBS_LOGES, species: 'bande', sectionLabel: '24 loges', routePrefix: '/troupeau/loges/', emoji: '🏠' },
+  loges: { stubs: STUBS_LOGES, species: 'bande', sectionLabel: 'Loges', routePrefix: '/troupeau/loges/', emoji: '🏠' },
 };
 
 export const AnimalsV70: React.FC = () => {

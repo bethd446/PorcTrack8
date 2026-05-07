@@ -14,6 +14,7 @@
 import React, { useEffect, useMemo, useState, lazy, Suspense } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useFarm } from '../../context/FarmContext';
+import { safeDate } from '../../lib/truieHelpers';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
@@ -23,6 +24,8 @@ import { CycleTimeline } from '../components/ds/CycleTimeline';
 import { EduCard } from '../components/v70/EduCard';
 import { EmptyEdu } from '../components/v70/EmptyEdu';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
+
+const GESTATION_JOURS = 115;
 
 const QuickSaillieForm = lazy(() => import('../../components/forms/QuickSaillieForm'));
 
@@ -62,6 +65,39 @@ export const ReproV70: React.FC = () => {
     }).length;
     return { pleines, materni, vides, mbProches };
   }, [truies, bandes]);
+
+  // V71.3 — bande "active" pour CycleTimeline : on choisit la bande dont la
+  // date MB (réalisée ou prévue) est la plus proche dans le futur. Sinon la
+  // plus récente passée. Calcul du jour de cycle = today - (dateMB - 115j).
+  const cycleBande = useMemo(() => {
+    const now = new Date();
+    let chosen: { bande: typeof bandes[number]; dateMB: Date; currentDay: number } | null = null;
+    for (const b of bandes) {
+      const d = safeDate(b.dateMB);
+      if (!d) continue;
+      const dateSaillie = new Date(d.getTime() - GESTATION_JOURS * 86400000);
+      const currentDay = Math.max(
+        0,
+        Math.min(GESTATION_JOURS, Math.floor((now.getTime() - dateSaillie.getTime()) / 86400000)),
+      );
+      // Préférer une bande pour laquelle on est encore en gestation (current < 115)
+      if (!chosen) {
+        chosen = { bande: b, dateMB: d, currentDay };
+        continue;
+      }
+      const chosenInCycle = chosen.currentDay < GESTATION_JOURS;
+      const candidateInCycle = currentDay < GESTATION_JOURS;
+      if (candidateInCycle && !chosenInCycle) {
+        chosen = { bande: b, dateMB: d, currentDay };
+      } else if (candidateInCycle && chosenInCycle) {
+        // Garder celle dont la MB est la plus proche
+        if (d.getTime() < chosen.dateMB.getTime()) {
+          chosen = { bande: b, dateMB: d, currentDay };
+        }
+      }
+    }
+    return chosen;
+  }, [bandes]);
 
   const upcomingItems = useMemo((): UpcomingItem[] => {
     if (!bandes.length && !saillies.length) return [];
@@ -224,20 +260,30 @@ export const ReproV70: React.FC = () => {
             Le cycle de gestation d'une truie dure <strong>115 jours</strong>. L'échographie à <strong>J28</strong> permet de confirmer la gestation et planifier la mise-bas.
           </EduCard>
 
-          <Section label="Cycle bande mai 2026">
-            <Card>
-              <CycleTimeline
-                currentDay={42}
-                totalDays={115}
-                steps={[
-                  { label: 'Saillie', day: 0, done: true },
-                  { label: 'Écho', day: 28, done: true },
-                  { label: 'Gestation', day: 42, done: false },
-                  { label: 'Mise-bas', day: 115, done: false, target: true },
-                ]}
-              />
-            </Card>
-          </Section>
+          {cycleBande ? (
+            <Section label={`Cycle ${cycleBande.bande.idPortee || cycleBande.bande.id}`}>
+              <Card>
+                <CycleTimeline
+                  currentDay={cycleBande.currentDay}
+                  totalDays={GESTATION_JOURS}
+                  steps={[
+                    { label: 'Saillie', day: 0, done: cycleBande.currentDay >= 0 },
+                    { label: 'Écho', day: 28, done: cycleBande.currentDay >= 28 },
+                    { label: 'Gestation', day: Math.min(GESTATION_JOURS, Math.max(28, cycleBande.currentDay)), done: false },
+                    { label: 'Mise-bas', day: GESTATION_JOURS, done: cycleBande.currentDay >= GESTATION_JOURS, target: true },
+                  ]}
+                />
+              </Card>
+            </Section>
+          ) : (
+            <Section label="Cycle reproduction">
+              <Card>
+                <div style={{ padding: 16, textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
+                  Aucune bande en cycle. Crée une saillie pour démarrer un cycle.
+                </div>
+              </Card>
+            </Section>
+          )}
 
           <Section label="7 prochains jours">
             <Card>
@@ -271,33 +317,51 @@ export const ReproV70: React.FC = () => {
 
       {tab === 'en-cours' && (
         <Section label="Bandes en cycle reproduction">
-          <Card>
-            <CycleTimeline
-              currentDay={42}
-              totalDays={115}
-              steps={[
-                { label: 'Saillie', day: 0, done: true },
-                { label: 'Écho', day: 28, done: true },
-                { label: 'Gestation', day: 42, done: false },
-                { label: 'Mise-bas', day: 115, done: false, target: true },
-              ]}
-            />
-            <div style={{ marginTop: 16, fontSize: 12, color: 'var(--pt-muted)' }}>
-              Bande mai 2026 · 11 truies pleines · J42/115
-            </div>
-          </Card>
-          <button
-            type="button"
-            onClick={() => navigate('/troupeau/bandes/B-MAI')}
-            className="list-item"
-            style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer' }}
-          >
-            <div className="list-info">
-              <div className="list-title">Bande de mai · J42</div>
-              <div className="list-sub">Gestation · 11 truies · MB le 28 août</div>
-            </div>
-            <span className="list-arrow">›</span>
-          </button>
+          {cycleBande ? (
+            <>
+              <Card>
+                <CycleTimeline
+                  currentDay={cycleBande.currentDay}
+                  totalDays={GESTATION_JOURS}
+                  steps={[
+                    { label: 'Saillie', day: 0, done: cycleBande.currentDay >= 0 },
+                    { label: 'Écho', day: 28, done: cycleBande.currentDay >= 28 },
+                    { label: 'Gestation', day: Math.min(GESTATION_JOURS, Math.max(28, cycleBande.currentDay)), done: false },
+                    { label: 'Mise-bas', day: GESTATION_JOURS, done: cycleBande.currentDay >= GESTATION_JOURS, target: true },
+                  ]}
+                />
+                <div style={{ marginTop: 16, fontSize: 12, color: 'var(--pt-muted)' }}>
+                  {cycleBande.bande.idPortee || cycleBande.bande.id}
+                  {cycleBande.bande.truie ? ` · ${cycleBande.bande.truie}` : ''}
+                  {' · '}J{cycleBande.currentDay}/{GESTATION_JOURS}
+                </div>
+              </Card>
+              <button
+                type="button"
+                onClick={() => navigate(`/troupeau/bandes/${cycleBande.bande.id}`)}
+                className="list-item"
+                style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer' }}
+              >
+                <div className="list-info">
+                  <div className="list-title">
+                    Bande {cycleBande.bande.idPortee || cycleBande.bande.id.slice(0, 8)} · J{cycleBande.currentDay}
+                  </div>
+                  <div className="list-sub">
+                    {cycleBande.currentDay >= GESTATION_JOURS ? 'Mise-bas' : 'Gestation'}
+                    {cycleBande.bande.truie ? ` · ${cycleBande.bande.truie}` : ''}
+                    {' · MB le '}{cycleBande.dateMB.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
+                  </div>
+                </div>
+                <span className="list-arrow">›</span>
+              </button>
+            </>
+          ) : (
+            <Card>
+              <div style={{ padding: 16, textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
+                Aucune bande en cycle. Crée une saillie pour démarrer un cycle.
+              </div>
+            </Card>
+          )}
         </Section>
       )}
 

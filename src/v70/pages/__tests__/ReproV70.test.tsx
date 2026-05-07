@@ -44,11 +44,8 @@ describe('ReproV70 — Phase 3 Hub Repro', () => {
     expect(screen.getByText(/115 jours/i)).toBeTruthy();
   });
 
-  it('rend CycleTimeline avec 4 étapes', () => {
+  it('rend empty-state cycle quand aucune bande (V71.3 — CycleTimeline data-driven)', () => {
     render(<MemoryRouter><ReproV70 /></MemoryRouter>);
-    expect(screen.getByText('Saillie')).toBeTruthy();
-    expect(screen.getByText('Écho')).toBeTruthy();
-    expect(screen.getByText('Gestation')).toBeTruthy();
-    expect(screen.getByText('Mise-bas')).toBeTruthy();
+    expect(screen.getByText(/aucune bande en cycle/i)).toBeTruthy();
   });
 });

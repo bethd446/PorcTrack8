@@ -32,6 +32,7 @@ import { useUIPreferences } from '../context/UIPreferencesContext';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { useFarm } from '../../context/FarmContext';
 import { computeGlobalKpis } from '../../services/perfKpiAnalyzer';
+import { buildForecastEvents } from '../../utils/forecastEvents';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 
 const PAGE_BACKGROUND_SRC = '/images/ambiance-croissance.webp';
@@ -80,6 +81,29 @@ export const PerformanceV70: React.FC = () => {
     }));
   }, [bandes]);
 
+  // V71.3 — Prévisions dynamiques basées sur buildForecastEvents (saillie+115j → MB,
+  // dateMB+165j → sortie abattoir). Avant : labels hardcodés ("Bande de mai · 11
+  // truies / 28 août 2026", etc.).
+  const forecasts = useMemo(() => {
+    const today = new Date();
+    const events = buildForecastEvents({ truies, bandes, saillies }, today, 90);
+    const mises = events.filter(e => e.type === 'MISE_BAS').slice(0, 4);
+    const sorties = events.filter(e => e.type === 'SORTIE').slice(0, 4);
+    // Total porcelets attendus : moyenne NV troupeau × nb mises-bas prévues.
+    const moyNV = (() => {
+      const datedNV = bandes
+        .map(b => b.nv ?? 0)
+        .filter(n => n > 0);
+      if (datedNV.length === 0) return null;
+      const sum = datedNV.reduce((s, n) => s + n, 0);
+      return sum / datedNV.length;
+    })();
+    const totalPorceletsEstimes = moyNV !== null && mises.length > 0
+      ? Math.round(moyNV * mises.length)
+      : null;
+    return { mises, sorties, totalPorceletsEstimes };
+  }, [truies, bandes, saillies]);
+
   const fmt = (n: number | null | undefined, digits = 1, suffix = ''): string =>
     n === null || n === undefined || !Number.isFinite(n) ? '—' : `${n.toFixed(digits)}${suffix}`;
 
@@ -116,7 +140,7 @@ export const PerformanceV70: React.FC = () => {
       <MariusGreeting pageContext="performance" />
 
       <PageHeader
-        eyebrow="Pilotage · Mai 2026"
+        eyebrow={`Pilotage · ${new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).replace(/^./, c => c.toUpperCase())}`}
         title="Performance"
         subtitle="Comment se porte ton élevage"
       />
@@ -259,32 +283,48 @@ export const PerformanceV70: React.FC = () => {
           <EduCard label="🔮 Prévisions d'élevage">
             Projections basées sur les bandes en cycle : naissances attendues, sevrages à venir, sorties abattoir prévues. Affine ton planning ferme avec les <strong>3 prochains mois</strong>.
           </EduCard>
-          <Section label="Prochaines mises-bas (28 jours)">
+          <Section label="Prochaines mises-bas (90 jours)">
             <Card>
-              <div className="kv-row">
-                <span className="kv-key">Bande de mai · 11 truies</span>
-                <span className="kv-val">28 août 2026</span>
-              </div>
-              <div className="kv-row">
-                <span className="kv-key">Bande d'avril · 9 truies</span>
-                <span className="kv-val">5 sept. 2026</span>
-              </div>
-              <div className="kv-row">
-                <span className="kv-key">Total porcelets attendus</span>
-                <span className="kv-val" style={{ color: 'var(--pt-primary)', fontWeight: 700 }}>~260 porcelets</span>
-              </div>
+              {forecasts.mises.length === 0 ? (
+                <div style={{ padding: '12px 0', textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
+                  Aucune mise-bas prévue. Enregistre une saillie pour générer la prévision (saillie + 115 j).
+                </div>
+              ) : (
+                forecasts.mises.map(ev => (
+                  <div key={ev.id} className="kv-row">
+                    <span className="kv-key">{ev.title}</span>
+                    <span className="kv-val">
+                      {ev.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                  </div>
+                ))
+              )}
+              {forecasts.totalPorceletsEstimes !== null && (
+                <div className="kv-row">
+                  <span className="kv-key">Total porcelets attendus</span>
+                  <span className="kv-val" style={{ color: 'var(--pt-primary)', fontWeight: 700 }}>
+                    ~{forecasts.totalPorceletsEstimes} porcelets
+                  </span>
+                </div>
+              )}
             </Card>
           </Section>
-          <Section label="Sorties abattoir prévues">
+          <Section label="Sorties abattoir prévues (90 jours)">
             <Card>
-              <div className="kv-row">
-                <span className="kv-key">Bande de décembre · 95 cochons</span>
-                <span className="kv-val">12 mai 2026</span>
-              </div>
-              <div className="kv-row">
-                <span className="kv-key">Bande de janvier · 88 cochons</span>
-                <span className="kv-val">8 juin 2026</span>
-              </div>
+              {forecasts.sorties.length === 0 ? (
+                <div style={{ padding: '12px 0', textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
+                  Aucune sortie abattoir prévue dans la fenêtre.
+                </div>
+              ) : (
+                forecasts.sorties.map(ev => (
+                  <div key={ev.id} className="kv-row">
+                    <span className="kv-key">{ev.title}{ev.subtitle ? ` · ${ev.subtitle}` : ''}</span>
+                    <span className="kv-val">
+                      {ev.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                  </div>
+                ))
+              )}
             </Card>
           </Section>
         </>
