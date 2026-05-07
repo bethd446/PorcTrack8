@@ -14,6 +14,7 @@ import {
   SectionDivider,
 } from '../../components/agritech';
 import { PageHeader } from '@/design-system';
+import PhaseBanner from './PhaseBanner';
 import { useFarm } from '../../context/FarmContext';
 import {
   computeBandePhase,
@@ -135,6 +136,11 @@ const EngraissementView: React.FC = () => {
               eyebrow="ENGRAISSEMENT"
               title="Engraissement"
               subtitle="Phase d'engraissement"
+            />
+            <PhaseBanner
+              src="/images/ambiance-croissance.webp"
+              alt="Engraissement — couloir lots"
+              label="ENGRAISSEMENT"
             />
             {/* ── Summary Stats ────────────────────────────────────────── */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

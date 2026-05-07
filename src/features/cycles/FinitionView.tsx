@@ -15,6 +15,7 @@ import {
   SectionDivider,
 } from '../../components/agritech';
 import { Button, PageHeader } from '@/design-system';
+import PhaseBanner from './PhaseBanner';
 import { useFarm } from '../../context/FarmContext';
 import { filterRealPortees } from '../../services/bandesAggregator';
 import {
@@ -143,6 +144,11 @@ const FinitionView: React.FC = () => {
               eyebrow="FINITION"
               title="Finition"
               subtitle="Phase de finition"
+            />
+            <PhaseBanner
+              src="/images/ambiance-croissance.webp"
+              alt="Finition — couloir lots"
+              label="FINITION"
             />
             <div className="flex justify-end">
               <Button

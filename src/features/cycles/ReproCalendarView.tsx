@@ -32,6 +32,7 @@ import { default as KpiCardV6 } from '../../components/design/KpiCard';
 import EmptyState from '../../components/design/EmptyState';
 import { Chip, SectionDivider } from '../../components/agritech';
 import { Button, PageHeader } from '@/design-system';
+import PhaseBanner from './PhaseBanner';
 import type { Truie, BandePorcelets, Saillie } from '../../types/farm';
 import QuickEditSaillieForm from '../../components/forms/QuickEditSaillieForm';
 
@@ -217,6 +218,11 @@ const ReproCalendarView: React.FC = () => {
               eyebrow="REPRO · CALENDRIER"
               title="Calendrier reproduction"
               subtitle="Échéances saillies & échographies"
+            />
+            <PhaseBanner
+              src="/images/ambiance-verrat.webp"
+              alt="Reproduction — verrat reproducteur"
+              label="REPRODUCTION"
             />
             {/* ── Summary strip (4 KPI) ─────────────────────────────────── */}
             <section

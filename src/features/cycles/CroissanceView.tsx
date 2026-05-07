@@ -15,6 +15,7 @@ import {
   SectionDivider,
 } from '../../components/agritech';
 import { Button, PageHeader } from '@/design-system';
+import PhaseBanner from './PhaseBanner';
 import { useFarm } from '../../context/FarmContext';
 import {
   computeBandePhase,
@@ -135,6 +136,11 @@ const CroissanceView: React.FC = () => {
               eyebrow="CROISSANCE"
               title="Croissance"
               subtitle="Phase de croissance"
+            />
+            <PhaseBanner
+              src="/images/ambiance-croissance.webp"
+              alt="Croissance — couloir lots"
+              label="CROISSANCE"
             />
             {/* ── Summary Stats ────────────────────────────────────────── */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

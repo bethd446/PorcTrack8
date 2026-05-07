@@ -15,6 +15,7 @@ import {
   SectionDivider,
 } from '../../components/agritech';
 import { Button, PageHeader } from '@/design-system';
+import PhaseBanner from './PhaseBanner';
 import { useFarm } from '../../context/FarmContext';
 import {
   computeBandePhase,
@@ -148,6 +149,11 @@ const PostSevrageView: React.FC = () => {
               eyebrow="POST-SEVRAGE"
               title="Post-sevrage"
               subtitle="Phase post-sevrage"
+            />
+            <PhaseBanner
+              src="/images/ambiance-croissance.webp"
+              alt="Post-sevrage — couloir lots porcelets"
+              label="POST-SEVRAGE"
             />
             {/* ── Summary Stats ────────────────────────────────────────── */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

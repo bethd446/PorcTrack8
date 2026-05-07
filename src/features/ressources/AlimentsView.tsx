@@ -27,6 +27,7 @@ import {
   Tabs,
   Tag,
 } from '@/design-system';
+import PhaseBanner from '../cycles/PhaseBanner';
 import { updateProduitAliment } from '../../services/supabaseWrites';
 import type { StockAliment, StockStatut, Truie, Verrat, BandePorcelets } from '../../types/farm';
 import QuickAddAlimentForm from '../../components/forms/QuickAddAlimentForm';
@@ -537,6 +538,11 @@ const AlimentsView: React.FC = () => {
               eyebrow="Ressources · Aliments"
               title="Aliments"
               subtitle="Stocks et consommation"
+            />
+            <PhaseBanner
+              src="/images/ambiance-stock.webp"
+              alt="Stocks — sacs aliment"
+              label="STOCKS"
             />
 
             {/* ── Filtres + recherche dans une Card DS ──────────────── */}

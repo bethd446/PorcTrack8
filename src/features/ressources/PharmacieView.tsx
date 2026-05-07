@@ -22,6 +22,7 @@ import {
   type OrderItem,
 } from '../../utils/whatsappOrder';
 import { Button, PageHeader, Section, Tag } from '@/design-system';
+import PhaseBanner from '../cycles/PhaseBanner';
 
 type TagVariant = 'default' | 'primary' | 'accent' | 'soft' | 'danger' | 'warning';
 
@@ -254,6 +255,11 @@ const PharmacieView: React.FC = () => {
               eyebrow="Ressources · Pharmacie"
               title="Pharmacie"
               subtitle="Stocks véto et sanitaire"
+            />
+            <PhaseBanner
+              src="/images/ambiance-veto.webp"
+              alt="Santé — main gantée et outils véto"
+              label="SANTÉ"
             />
             {treatmentSummaryLine && (
               <div

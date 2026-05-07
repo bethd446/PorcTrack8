@@ -37,10 +37,11 @@ import CommandPalette from './design/CommandPalette';
 import { Button } from '@/design-system';
 
 /**
- * AppSidebar — sidebar desktop ≥1024px (V22-B1).
+ * AppSidebar — sidebar desktop ≥1024px (V70 parity).
  *
- * Sections : Épinglé · Aujourd’hui · Mon élevage · Reproduction · Performance · Stocks · Plus.
- * Cycles biologiques expandable sous "Mon élevage", état persisté kvStore.
+ * Sections V70 : Épinglé · Aujourd’hui · Élevage · Repro · Pilotage · Outils · Plus.
+ * Aligné sur la bottom tab bar mobile V70 (AgritechNavV2) : 5 onglets principaux
+ * + section Plus. Cycles biologiques expandable sous "Élevage", état persisté kvStore.
  * Trigger Cmd+K en haut, palette globale (CommandPalette).
  */
 
@@ -277,12 +278,12 @@ const AppSidebar: React.FC = () => {
           />
         </Section>
 
-        {/* 2. Mon élevage */}
-        <Section title="Mon élevage">
+        {/* 2. Élevage (V70) — troupeau + cycles biologiques expandable */}
+        <Section title="Élevage">
           <SidebarRow
             icon={PawPrint}
             label="Tout le troupeau"
-            active={isActive('/troupeau')}
+            active={isActive('/troupeau') && !isActive('/troupeau/classement')}
             onClick={() => navigate('/troupeau')}
           />
           <SidebarRow
@@ -309,23 +310,25 @@ const AppSidebar: React.FC = () => {
                 active={location.pathname === '/cycles'}
                 onClick={() => navigate('/cycles')}
               />
-              {cyclesItems.map((c) => (
-                <SidebarRow
-                  key={c.href}
-                  icon={c.icon}
-                  label={c.label}
-                  indent
-                  active={isActive(c.href)}
-                  onClick={() => navigate(c.href)}
-                  moduleAccent={accentFor(c.href)}
-                />
-              ))}
+              {cyclesItems
+                .filter((c) => c.href !== '/reproduction' && c.href !== '/cycles/repro')
+                .map((c) => (
+                  <SidebarRow
+                    key={c.href}
+                    icon={c.icon}
+                    label={c.label}
+                    indent
+                    active={isActive(c.href)}
+                    onClick={() => navigate(c.href)}
+                    moduleAccent={accentFor(c.href)}
+                  />
+                ))}
             </div>
           </div>
         </Section>
 
-        {/* 3. Reproduction */}
-        <Section title="Reproduction">
+        {/* 3. Repro (V70) — vue, calendrier saillies, lots */}
+        <Section title="Repro">
           <SidebarRow
             icon={HeartPulse}
             label="Vue reproduction"
@@ -341,6 +344,13 @@ const AppSidebar: React.FC = () => {
             moduleAccent={accentFor('/cycles/repro')}
           />
           <SidebarRow
+            icon={Layers}
+            label="Lots"
+            active={isActive('/reproduction/lots')}
+            onClick={() => navigate('/reproduction/lots')}
+            moduleAccent={accentFor('/reproduction/lots')}
+          />
+          <SidebarRow
             icon={Baby}
             label="Maternité"
             active={isActive('/cycles/maternite')}
@@ -349,10 +359,9 @@ const AppSidebar: React.FC = () => {
           />
         </Section>
 
-        {/* 4. Performance (ex-Pilotage, OWNER only) */}
+        {/* 4. Pilotage (V70, OWNER only) — KPIs, Classement, Finances, Prévisions */}
         {showPerformanceSection ? (
-          <Section title="Performance">
-            {/* AUDIT-5 : entrée hub Pilotage parent. */}
+          <Section title="Pilotage">
             <SidebarRow
               icon={LayoutGrid}
               label="Vue d’ensemble"
@@ -387,12 +396,30 @@ const AppSidebar: React.FC = () => {
           </Section>
         ) : null}
 
-        {/* 5. Stocks */}
-        <Section title="Stocks">
-          {/* AUDIT-5 : ajout du hub /ressources comme entrée parent. */}
+        {/* 5. Outils (V70) — terrain + stocks fusionnés */}
+        <Section title="Outils">
+          <SidebarRow
+            icon={ClipboardCheck}
+            label="Contrôle quotidien"
+            active={isActive('/controle')}
+            onClick={() => navigate('/controle')}
+          />
+          <SidebarRow
+            icon={Stethoscope}
+            label="Journal santé"
+            active={isActive('/sante')}
+            onClick={() => navigate('/sante')}
+            moduleAccent={accentFor('/sante')}
+          />
+          <SidebarRow
+            icon={BookOpen}
+            label="Protocoles"
+            active={isActive('/protocoles')}
+            onClick={() => navigate('/protocoles')}
+          />
           <SidebarRow
             icon={Boxes}
-            label="Vue d’ensemble"
+            label="Stocks"
             active={isActive('/ressources') && !isActive('/ressources/aliments') && !isActive('/ressources/pharmacie')}
             onClick={() => navigate('/ressources')}
             moduleAccent={accentFor('/ressources')}
@@ -420,30 +447,7 @@ const AppSidebar: React.FC = () => {
           />
         </Section>
 
-        {/* 6. Outils terrain (AUDIT-5 : routes auparavant orphelines) */}
-        <Section title="Outils terrain">
-          <SidebarRow
-            icon={ClipboardCheck}
-            label="Contrôle quotidien"
-            active={isActive('/controle')}
-            onClick={() => navigate('/controle')}
-          />
-          <SidebarRow
-            icon={Stethoscope}
-            label="Journal santé"
-            active={isActive('/sante')}
-            onClick={() => navigate('/sante')}
-            moduleAccent={accentFor('/sante')}
-          />
-          <SidebarRow
-            icon={BookOpen}
-            label="Protocoles"
-            active={isActive('/protocoles')}
-            onClick={() => navigate('/protocoles')}
-          />
-        </Section>
-
-        {/* 7. Plus */}
+        {/* 6. Plus (V70) — Admin, Réglages, Aide */}
         <Section title="Plus">
           {showAdminItem ? (
             <SidebarRow

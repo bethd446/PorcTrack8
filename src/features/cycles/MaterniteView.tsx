@@ -16,6 +16,7 @@ import {
 import { Button, PageHeader } from '@/design-system';
 import { TruieIcon } from '../../components/icons';
 import QuickMiseBasForm from '../../components/forms/QuickMiseBasForm';
+import PhaseBanner from './PhaseBanner';
 import { useFarm } from '../../context/FarmContext';
 import {
   logesMaterniteOccupation,
@@ -160,6 +161,11 @@ const MaterniteView: React.FC = () => {
               eyebrow="MATERNITÉ"
               title="Maternité"
               subtitle="Suivi des portées en cours"
+            />
+            <PhaseBanner
+              src="/images/ambiance-maternite.webp"
+              alt="Maternité — truie et porcelets"
+              label="MATERNITÉ"
             />
             {/* ── Primary Action ───────────────────────────────────────── */}
             <Button
