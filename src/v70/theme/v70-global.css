@@ -12,7 +12,10 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-family: 'JetBrains Mono', monospace;
+  /* V71 typo-lock : InstrumentSans + tabular-nums (était JetBrains Mono) */
+  font-family: var(--pt-font-body, 'InstrumentSans', system-ui, sans-serif);
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  font-variant-numeric: tabular-nums lining-nums;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.14em;
@@ -274,9 +277,13 @@
 
 .list-info { flex: 1; min-width: 0; }
 .list-title {
-  font-family: 'JetBrains Mono', monospace;
+  /* V71 typo-lock : InstrumentSans + tabular-nums (était JetBrains Mono) */
+  font-family: var(--pt-font-body, 'InstrumentSans', system-ui, sans-serif);
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  font-variant-numeric: tabular-nums lining-nums;
   font-size: 13px;
   font-weight: 600;
+  letter-spacing: 0.01em;
 }
 .list-sub {
   font-size: 11px;
@@ -458,7 +465,11 @@
 .tl-date {
   font-size: 9px;
   color: var(--pt-muted);
-  font-family: 'JetBrains Mono', monospace;
+  /* V71 typo-lock : InstrumentSans + tabular-nums (était JetBrains Mono) */
+  font-family: var(--pt-font-body, 'InstrumentSans', system-ui, sans-serif);
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: 0.04em;
 }
 
 /* ===== EDUCATIONAL TOOLTIP ===== */

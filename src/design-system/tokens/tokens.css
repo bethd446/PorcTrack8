@@ -10,16 +10,16 @@
   --pt-surface-danger:     #FBE9E5;
   --pt-surface-warning:    #FDF1DC;
 
-  /* === MARQUE === */
-  --pt-primary:            #2D4A1F;
-  --pt-primary-hover:      #3A5C28;
-  --pt-primary-soft:       rgba(45, 74, 31, 0.08);
+  /* === MARQUE — Terrain Vivant (post-mockup, audit 2026-05-07) === */
+  --pt-primary:            #064e3b; /* emerald-premium (était #2D4A1F olive) */
+  --pt-primary-hover:      #065f46; /* forest-mid */
+  --pt-primary-soft:       rgba(6, 78, 59, 0.08);
   --pt-primary-text:       #FFFFFF;
 
-  --pt-accent:             #D4915C;
-  --pt-accent-soft:        #F5D9B8;
+  --pt-accent:             #F4A261; /* amber-pork (était #D4915C) */
+  --pt-accent-soft:        #FCE4C9;
   --pt-accent-pill:        #E8B07A;
-  --pt-accent-deep:        #B8703D;
+  --pt-accent-deep:        #c2662b; /* amber-deep (était #B8703D) */
 
   /* === TEXTE === */
   --pt-text:               #1A1A1A;
@@ -30,9 +30,11 @@
   --pt-warning:            #D4915C;
 
   /* === TYPO === */
-  --pt-font-display:       'Big Shoulders', Impact, sans-serif;
-  --pt-font-body:          'Instrument Sans', -apple-system, system-ui, sans-serif;
-  --pt-font-mono:          'JetBrains Mono', monospace;
+  /* V71 typo-lock : 2 fonts strict. --pt-font-mono = body avec tabular-nums
+     pour préserver l'alignement vertical des chiffres/IDs sans dédiée monospace. */
+  --pt-font-display:       'BigShoulders', Impact, sans-serif;
+  --pt-font-body:          'InstrumentSans', -apple-system, system-ui, sans-serif;
+  --pt-font-mono:          'InstrumentSans', -apple-system, system-ui, sans-serif;
 
   --pt-text-display: 32px;
   --pt-text-h1: 24px;

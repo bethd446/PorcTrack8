@@ -22,19 +22,24 @@
 @import "./styles/terrain-vivant-v6.css";
 
 /* ── Polices ──────────────────────────────────────────────────────────────── */
+/* V71 typo lock — 2 fonts only (audit senior-designer V70).
+   BigShoulders : titres, KPIs, chiffres signature.
+   InstrumentSans : body, labels, IDs/codes (avec tabular-nums via .ft-code). */
 @font-face { font-family: 'BigShoulders'; src: url('/fonts/BigShoulders-Bold.woff2') format('woff2'); font-weight: 700; font-display: swap; }
 @font-face { font-family: 'BigShoulders'; src: url('/fonts/BigShoulders-Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
-@font-face { font-family: 'DMMono'; src: url('/fonts/DMMono-Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
 @font-face { font-family: 'InstrumentSans'; src: url('/fonts/InstrumentSans-Bold.woff2') format('woff2'); font-weight: 700; font-display: swap; }
 @font-face { font-family: 'InstrumentSans'; src: url('/fonts/InstrumentSans-Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
 
 @theme {
-  /* === Polices PorcTrack 8 — SOURCE UNIQUE (commit 2/3) === */
+  /* === Polices PorcTrack 8 — 2 fonts strict (V71 lock) === */
   --font-heading: "BigShoulders", Impact, sans-serif;
   --font-body:    "InstrumentSans", -apple-system, system-ui, sans-serif;
-  --font-mono:    "DMMono", ui-monospace, Menlo, monospace;
+  /* --font-mono : intentionnellement = InstrumentSans. Les chiffres/IDs/codes
+     restent alignés via font-feature-settings: "tnum" 1, "lnum" 1. */
+  --font-mono:    "InstrumentSans", -apple-system, system-ui, sans-serif;
+  --font-num:     "BigShoulders", Impact, sans-serif;
 
-  /* === Aliases backward-compat (deprecated, supprimés au commit 3) === */
+  /* === Aliases backward-compat === */
   --font-sans:    var(--font-body);
   --font-display: var(--font-heading);
   --font-values:  var(--font-heading);
@@ -124,30 +129,33 @@
   }
 }
 
-/* ── Hiérarchie typographique — Terrain Vivant v6 (2026-04-30) ──────────
-   Stack v6 :
-   1. BigShoulders (--font-display / --font-heading) → Titres sentence case
-   2. InstrumentSans (--font-body)                   → Body, labels, boutons
-   3. DMMono (--font-mono)                           → IDs, dates, codes
+/* ── Hiérarchie typographique — Terrain Vivant v6 + V71 typo-lock ─────
+   Stack 2 fonts strict :
+   1. BigShoulders (--font-heading / --font-num) → Titres + chiffres signature
+   2. InstrumentSans (--font-body / --font-mono) → Body, IDs, codes
+      → alignement vertical des chiffres via tabular-nums + lining-nums.
    ──────────────────────────────────────────────────────────────────── */
-.ft-heading {
+.ft-heading,
+[class*="ft-heading"] {
   font-family: var(--font-heading) !important;
   font-weight: 700;
   letter-spacing: 0.02em;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
-.ft-values {
+.ft-values,
+[class*="ft-values"] {
   font-family: var(--font-body) !important;
   font-weight: 600;
-  font-feature-settings: "tnum" 1;
-  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  font-variant-numeric: tabular-nums lining-nums;
 }
-.ft-code {
-  font-family: var(--font-mono) !important;
-  letter-spacing: 0.01em;
-  font-feature-settings: "tnum" 1;
-  font-variant-numeric: tabular-nums;
+.ft-code,
+[class*="ft-code"] {
+  font-family: var(--font-body) !important;
+  letter-spacing: 0.02em;
+  font-feature-settings: "tnum" 1, "lnum" 1, "ss01" 1;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 /* ── Boutons design system : --font-body explicite (Bug audit /login) ──── */

@@ -17,7 +17,7 @@ export interface SyncStatusBadgeProps {
  *  - pending  → ambré Cloud "{n} en attente"
  *  - idle     → vert subtle "Synchro OK" (caché par défaut)
  *
- * Design system Terrain Vivant : DMMono uppercase 11px, rounded-full, py-1 px-2.5.
+ * Design system Terrain Vivant : InstrumentSans tabular-nums uppercase 11px, rounded-full, py-1 px-2.5.
  */
 const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({
   showWhenIdle = false,

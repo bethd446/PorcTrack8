@@ -4,10 +4,10 @@
    10 classes utilitaires canoniques pour remplacer ~1870 occurrences de
    fontSize inline + text-[Xpx] arbitrary distribuées sur 110+ fichiers.
 
-   Source de vérité unique : 3 vars définies dans index.css (@theme) :
+   Source de vérité unique : 2 fonts strict (V71 typo-lock) dans index.css (@theme) :
      --font-heading: BigShoulders, Impact, sans-serif
      --font-body:    InstrumentSans, system-ui, sans-serif
-     --font-mono:    DMMono, ui-monospace, Menlo, monospace
+     --font-mono:    = --font-body (InstrumentSans + tabular-nums via .ft-code)
 
    Échelle : 9.5 / 10 / 11 / 12 / 13 / 14 / 18 / 20 / 22 / 34 / 44 px.
    88 % du volume actuel tient dans 5 valeurs (11/10/12/13/14).
