@@ -2,6 +2,7 @@ import React from 'react';
 import { useLenisScroll } from './hooks/useLenisScroll';
 import { SceneHero } from './scenes/SceneHero';
 import { SceneRepro } from './scenes/SceneRepro';
+import { SceneBandes } from './scenes/SceneBandes';
 import { SceneFeed } from './scenes/SceneFeed';
 import { SceneHealth } from './scenes/SceneHealth';
 import { SceneOffline } from './scenes/SceneOffline';
@@ -13,6 +14,7 @@ export default function LandingScrollytelling() {
     <div style={{ background: '#0a0a0a', overflow: 'hidden' }}>
       <SceneHero />
       <SceneRepro />
+      <SceneBandes />
       <SceneFeed />
       <SceneHealth />
       <SceneOffline />

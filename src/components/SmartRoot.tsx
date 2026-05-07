@@ -1,6 +1,13 @@
+import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import Landing from '../pages/Landing';
+
+const LandingScrollytelling = React.lazy(
+  () =>
+    import(
+      /* webpackChunkName: "landing-v2" */ '../pages/landing-v2/LandingScrollytelling'
+    ),
+);
 
 export default function SmartRoot() {
   const { session, loading } = useAuth();
@@ -22,5 +29,9 @@ export default function SmartRoot() {
     return <Navigate to="/today" replace />;
   }
 
-  return <Landing />;
+  return (
+    <React.Suspense fallback={null}>
+      <LandingScrollytelling />
+    </React.Suspense>
+  );
 }
