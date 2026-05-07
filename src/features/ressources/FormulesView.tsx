@@ -3,7 +3,6 @@ import { IonContent, IonPage } from '@ionic/react';
 import { ClipboardList, Calculator, AlertTriangle } from 'lucide-react';
 import AgritechLayout from '../../components/AgritechLayout';
 import EmptyState from '../../components/design/EmptyState';
-import TopBarSync from '../../components/design/TopBarSync';
 import {
   PHASE_LABELS,
   PHASE_TONES,
@@ -11,7 +10,8 @@ import {
 } from '../../config/aliments';
 import { calculerRation, type CalculResult } from '../../services/rationCalculator';
 import { useFarm } from '../../context/FarmContext';
-import { Button, Card, FormField, Input, PageHeader, Section, Tabs, Tag } from '@/design-system';
+import { Button, Card, FormField, Input, Section, Tabs, Tag } from '@/design-system';
+import { PageHeader } from '../../v70/components/ds/PageHeader';
 
 /** Presets quantité — 100 kg (sac), 500 kg, 1 tonne, 2 tonnes. */
 const PRESETS_KG: ReadonlyArray<{ label: string; value: number }> = [
@@ -202,14 +202,9 @@ const FormulesView: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
-          <TopBarSync
-            crumbs={['Ressources', 'Formules']}
-            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
-          />
-
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
             <PageHeader
-              eyebrow="Ressources · Formules"
+              eyebrow="ALIMENTS · FORMULES"
               title="Formules"
               subtitle="Compositions alimentaires"
             />

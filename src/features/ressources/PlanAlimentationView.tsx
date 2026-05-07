@@ -2,16 +2,15 @@ import React, { useMemo, useState } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
 import { AlertTriangle } from 'lucide-react';
 import AgritechLayout from '../../components/AgritechLayout';
-import TopBarSync from '../../components/design/TopBarSync';
 import {
   Card,
   ListItem,
-  PageHeader,
   Search,
   Section,
   Tabs,
   Tag,
 } from '@/design-system';
+import { PageHeader } from '../../v70/components/ds/PageHeader';
 import { useFarm } from '../../context/FarmContext';
 import {
   buildAlimentationPlan,
@@ -109,15 +108,10 @@ const PlanAlimentationView: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
-          <TopBarSync
-            crumbs={['Ressources', 'Plan']}
-            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
-          />
-
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
             <PageHeader
-              eyebrow="Ressources · Plan"
-              title="Plan alimentation"
+              eyebrow="ALIMENTS · PLAN"
+              title="Plan alimentaire"
               subtitle="Programme nutritionnel"
             />
 

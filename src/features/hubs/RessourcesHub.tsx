@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
-import TopBarSync from '../../components/design/TopBarSync';
 import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import QuickRefillForm from '../../components/forms/QuickRefillForm';
 import {
@@ -25,12 +24,12 @@ import {
 import {
   Button,
   Card,
-  PageHeader,
   Section,
   Stat,
   StatsGrid,
   Tabs,
 } from '@/design-system';
+import { PageHeader } from '../../v70/components/ds/PageHeader';
 import QuickEditStockForm from '../../components/forms/QuickEditStockForm';
 import type { StockKind } from '../../components/forms/quickEditStockLogic';
 import { useFarm, useMeta } from '../../context/FarmContext';
@@ -235,17 +234,9 @@ const RessourcesHub: React.FC = () => {
             <IonRefresherContent />
           </IonRefresher>
 
-          <TopBarSync
-            crumbs={['Ressources', 'Vue globale']}
-            onMariusClick={() => {
-              const evt = new CustomEvent('open-chatbot');
-              window.dispatchEvent(evt);
-            }}
-          />
-
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
             <PageHeader
-              eyebrow="RESSOURCES"
+              eyebrow="STOCKS"
               title="Ressources"
               subtitle="Aliments, pharmacie, fournisseurs"
             />

@@ -14,10 +14,10 @@ import {
   Input,
   FormField,
   Toggle,
-  PageHeader,
   StatsGrid,
   Stat,
 } from '@/design-system';
+import { PageHeader } from '../v70/components/ds/PageHeader';
 import { useAuth } from '../context/AuthContext';
 import { useMeta } from '../context/FarmContext';
 import { APP_VERSION } from '../config';
@@ -500,8 +500,8 @@ export const SettingsPage: React.FC = () => {
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout withNav={true}>
           <div className="px-4 pt-5 pb-32 max-w-md mx-auto">
-            {/* V41 Phase D — Header canonique via PageHeader */}
-            <PageHeader eyebrow="Plus" title="Réglages" subtitle="Ton profil, ta ferme, l'équipe" />
+            {/* V70 — Header monumental BigShoulders UPPERCASE */}
+            <PageHeader eyebrow="CONFIGURATION" title="Ma ferme" subtitle="Ton profil, ta ferme, l'équipe" />
 
             {/* V44 — VUE D'ENSEMBLE : 4 stats clés (archétype 2 Hub) */}
             <section aria-label="Vue d'ensemble" style={{ marginBottom: 28 }}>

@@ -15,18 +15,17 @@ import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
 import { AppToast, useAppToast } from '../../components/agritech';
 import EmptyState from '../../components/design/EmptyState';
-import TopBarSync from '../../components/design/TopBarSync';
 import { useFarm, useMeta } from '../../context/FarmContext';
 import {
   Button,
   Card,
   Fab,
-  PageHeader,
   Search,
   Section,
   Tabs,
   Tag,
 } from '@/design-system';
+import { PageHeader } from '../../v70/components/ds/PageHeader';
 import PhaseBanner from '../cycles/PhaseBanner';
 import { updateProduitAliment } from '../../services/supabaseWrites';
 import type { StockAliment, StockStatut, Truie, Verrat, BandePorcelets } from '../../types/farm';
@@ -528,21 +527,16 @@ const AlimentsView: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
-          <TopBarSync
-            crumbs={['Ressources', 'Aliments']}
-            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
-          />
-
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
             <PageHeader
-              eyebrow="Ressources · Aliments"
+              eyebrow="STOCKS · ALIMENTS"
               title="Aliments"
               subtitle="Stocks et consommation"
             />
             <PhaseBanner
               src="/images/ambiance-stock.webp"
-              alt="Stocks — sacs aliment"
-              label="STOCKS"
+              alt=""
+              label="STOCKS ALIMENTS"
             />
 
             {/* ── Filtres + recherche dans une Card DS ──────────────── */}

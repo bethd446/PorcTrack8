@@ -18,12 +18,13 @@ import {
   Card,
   IconBox,
   ListItem,
-  PageHeader,
   Search,
   Section,
   Tabs,
   Tag,
 } from '@/design-system';
+import { PageHeader } from '../../v70/components/ds/PageHeader';
+import PhaseBanner from '../cycles/PhaseBanner';
 import {
   listFournisseurs,
   deleteFournisseur,
@@ -120,9 +121,14 @@ const FournisseursView: React.FC = () => {
         <AgritechLayout withNav={true}>
           <div className="px-4 pt-5 pb-32 max-w-md mx-auto flex flex-col gap-5">
             <PageHeader
-              eyebrow="Ressources"
+              eyebrow="RESSOURCES · FOURNISSEURS"
               title="Fournisseurs"
               subtitle="Contacts et achats"
+            />
+            <PhaseBanner
+              src="/images/ambiance-stock.webp"
+              alt=""
+              label="FOURNISSEURS"
             />
 
             {/* Filtres + Search */}

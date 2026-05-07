@@ -7,7 +7,6 @@ import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
 import { DataRow, KpiCard } from '../../components/agritech';
 import EmptyState from '../../components/design/EmptyState';
-import TopBarSync from '../../components/design/TopBarSync';
 import { SeringueIcon } from '../../components/icons';
 import { useFarm, useMeta } from '../../context/FarmContext';
 import { updateProduitVeto } from '../../services/supabaseWrites';
@@ -21,7 +20,8 @@ import {
   hasWhatsAppSupport,
   type OrderItem,
 } from '../../utils/whatsappOrder';
-import { Button, PageHeader, Section, Tag } from '@/design-system';
+import { Button, Section, Tag } from '@/design-system';
+import { PageHeader } from '../../v70/components/ds/PageHeader';
 import PhaseBanner from '../cycles/PhaseBanner';
 
 type TagVariant = 'default' | 'primary' | 'accent' | 'soft' | 'danger' | 'warning';
@@ -245,21 +245,16 @@ const PharmacieView: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout>
-          <TopBarSync
-            crumbs={['Ressources', 'Pharmacie']}
-            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
-          />
-
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
             <PageHeader
-              eyebrow="Ressources · Pharmacie"
+              eyebrow="STOCKS · PHARMACIE"
               title="Pharmacie"
               subtitle="Stocks véto et sanitaire"
             />
             <PhaseBanner
               src="/images/ambiance-veto.webp"
-              alt="Santé — main gantée et outils véto"
-              label="SANTÉ"
+              alt=""
+              label="PHARMACIE"
             />
             {treatmentSummaryLine && (
               <div

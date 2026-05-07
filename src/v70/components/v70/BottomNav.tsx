@@ -23,7 +23,7 @@ const TABS_V70: NavTabV70[] = [
   { id: 'animals',  href: '/troupeau',      icon: '🐖', label: 'Élevage',      match: ['/troupeau'] },
   { id: 'repro',    href: '/reproduction',  icon: '❤', label: 'Repro',        match: ['/reproduction', '/cycles'] },
   { id: 'perf',     href: '/performance',   icon: '📊', label: 'Performance',  match: ['/performance', '/pilotage'] },
-  { id: 'settings', href: '/reglages',      icon: '⚙', label: 'Réglages',     match: ['/reglages', '/more', '/admin', '/aide'] },
+  { id: 'settings', href: '/reglages',      icon: '⚙', label: 'Réglages',     match: ['/reglages', '/more', '/admin', '/aide', '/ressources', '/fournisseurs', '/protocoles'] },
 ];
 
 function resolveActiveTab(pathname: string): NavTabV70['id'] {

@@ -16,8 +16,9 @@ import {
 } from 'lucide-react';
 import AgritechLayout from '../../components/AgritechLayout';
 import { Chip } from '../../components/agritech';
-import TopBarSync from '../../components/design/TopBarSync';
-import { Button, PageHeader, Section, Tabs } from '@/design-system';
+import { Button, Section, Tabs } from '@/design-system';
+import { PageHeader } from '../../v70/components/ds/PageHeader';
+import PhaseBanner from '../cycles/PhaseBanner';
 
 type TabKey = 'cycle' | 'terrain' | 'biosecurite' | 'rations' | 'checklists';
 
@@ -260,16 +261,16 @@ const ProtocolsView: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <AgritechLayout withNav={true}>
-          <TopBarSync
-            crumbs={['Outils', 'Protocoles']}
-            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
-          />
-
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
             <PageHeader
-              eyebrow="Outils · Protocoles"
+              eyebrow="OUTILS · PROTOCOLES"
               title="Protocoles"
               subtitle="Procédures et SOP"
+            />
+            <PhaseBanner
+              src="/images/ambiance-veto.webp"
+              alt=""
+              label="PROTOCOLES"
             />
 
             <Tabs
