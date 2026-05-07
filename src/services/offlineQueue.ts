@@ -21,6 +21,7 @@ import {
   insertFinance,
   insertProduitAliment,
   insertProduitVeto,
+  insertWeightDistribution,
   updateSow,
   updateBoar,
   updateBatch,
@@ -54,7 +55,14 @@ export type SupabaseTable =
   | 'saillies'
   | 'finances'
   | 'produits_aliments'
-  | 'produits_veto';
+  | 'produits_veto'
+  | 'pesees'
+  | 'porcelets_individuels'
+  | 'loges'
+  | 'loge_movements'
+  | 'daily_checks_mb'
+  | 'weight_distributions'
+  | 'feed_consumption_logs';
 
 export type QueuedMutation =
   | { kind: 'insert'; table: SupabaseTable; values: Record<string, unknown> }
@@ -104,14 +112,37 @@ function newId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+/**
+ * UUID v4 client-side. Si `crypto.randomUUID` est dispo, on l'utilise ;
+ * sinon polyfill (JSDOM ancien, navigateurs hors HTTPS, etc.). Garantit
+ * l'idempotence du replay : un payload sans id reçoit un UUID stable, donc
+ * un retry post-crash insère le MÊME row Supabase (pas de doublon).
+ */
+export function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 export async function enqueueInsert(
   table: SupabaseTable,
   values: Record<string, unknown>,
 ): Promise<void> {
+  // Idempotence : si pas d'id, on en génère un client-side. Supabase respecte
+  // l'id fourni s'il s'agit d'un UUID valide, ce qui rend le replay safe.
+  const enriched: Record<string, unknown> = {
+    ...values,
+    id: typeof values.id === 'string' && values.id.length > 0 ? values.id : generateUUID(),
+  };
   const queue = await loadQueue();
   queue.push({
     id: newId('INS'),
-    mutation: { kind: 'insert', table, values },
+    mutation: { kind: 'insert', table, values: enriched },
     timestamp: new Date().toISOString(),
     tries: 0,
   });
@@ -234,15 +265,24 @@ async function runInsert(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const v = values as any;
   switch (table) {
-    case 'sows':              await insertSow(v); return;
-    case 'boars':             await insertBoar(v); return;
-    case 'batches':           await insertBatch(v); return;
-    case 'notes':             await insertNote(v); return;
-    case 'health_logs':       await insertHealthLog(v); return;
-    case 'saillies':          await insertSaillie(v); return;
-    case 'finances':          await insertFinance(v); return;
-    case 'produits_aliments': await insertProduitAliment(v); return;
-    case 'produits_veto':     await insertProduitVeto(v); return;
+    case 'sows':                  await insertSow(v); return;
+    case 'boars':                 await insertBoar(v); return;
+    case 'batches':               await insertBatch(v); return;
+    case 'notes':                 await insertNote(v); return;
+    case 'health_logs':           await insertHealthLog(v); return;
+    case 'saillies':              await insertSaillie(v); return;
+    case 'finances':              await insertFinance(v); return;
+    case 'produits_aliments':     await insertProduitAliment(v); return;
+    case 'produits_veto':         await insertProduitVeto(v); return;
+    case 'weight_distributions':  await insertWeightDistribution(v); return;
+    // TODO: brancher sur supabaseWrites quand les helpers existeront
+    case 'pesees':
+    case 'porcelets_individuels':
+    case 'loges':
+    case 'loge_movements':
+    case 'daily_checks_mb':
+    case 'feed_consumption_logs':
+      throw new Error(`[offlineQueue] insert non supporté pour la table '${table}' (helper manquant dans supabaseWrites)`);
   }
 }
 
@@ -264,6 +304,13 @@ async function runUpdate(
     case 'health_logs':
     case 'saillies':
     case 'finances':
+    case 'pesees':
+    case 'porcelets_individuels':
+    case 'loges':
+    case 'loge_movements':
+    case 'daily_checks_mb':
+    case 'weight_distributions':
+    case 'feed_consumption_logs':
       throw new Error(`[offlineQueue] update non supporté pour la table '${table}'`);
   }
   if (!res.success) throw new Error(res.error ?? `update ${table} failed`);
@@ -300,6 +347,13 @@ async function runDelete(
     case 'produits_veto':     await deleteProduitVeto(id); return;
     case 'saillies':
     case 'finances':
+    case 'pesees':
+    case 'porcelets_individuels':
+    case 'loges':
+    case 'loge_movements':
+    case 'daily_checks_mb':
+    case 'weight_distributions':
+    case 'feed_consumption_logs':
       throw new Error(`[offlineQueue] delete non supporté pour la table '${table}'`);
   }
 }
