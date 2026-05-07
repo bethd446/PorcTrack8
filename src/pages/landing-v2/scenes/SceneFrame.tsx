@@ -61,21 +61,21 @@ export function SceneFrame({
 
       const titleEl = ref.current.querySelector('.scene-title-block');
       if (titleEl) {
-        gsap.fromTo(
-          titleEl,
-          { opacity: 0, y: 40 },
-          {
-            opacity: 1,
-            y: 0,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: ref.current,
-              start: 'top 80%',
-              end: 'top 30%',
-              scrub: 1,
-            },
+        // Animation simple toggle (pas scrub) : plus robuste face aux
+        // refreshs ScrollTrigger en présence de Lenis + override Ionic.
+        // Le titre reste visible (opacity 1) si l'animation ne déclenche
+        // pas, vs scrub qui le bloque à opacity 0.
+        gsap.from(titleEl, {
+          opacity: 0,
+          y: 40,
+          duration: 0.9,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: ref.current,
+            start: 'top 75%',
+            toggleActions: 'play none none reverse',
           },
-        );
+        });
       }
 
       const imgEl = ref.current.querySelector('.scene-img');
