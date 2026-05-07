@@ -26,6 +26,7 @@ import { computeBandePhase } from './bandesAggregator';
 import { detectTruiesAReformer } from './perfKpiAnalyzer';
 import { extractPeseesForBande } from './growthAnalyzer';
 import { detectPendingTransitions, PHASE_LABEL, type PendingTransition } from './phaseEngine';
+import { FARM_CONFIG } from '../config/farm';
 
 /** Fuseau horaire de référence pour toute la logique métier GTTT.
  *  L'élevage est en Côte d'Ivoire, mais les données Sheets sont saisies
@@ -112,6 +113,16 @@ const BIO = {
   ECHO_DEBUT_JOURS: 25,
   ECHO_FIN_JOURS: 35,
 } as const;
+
+/**
+ * Statuts qui désignent une saillie active (pas encore d'écho négative ni d'échec).
+ * - `SAILLIE` : statut DB par défaut à la création (cf. QuickSaillieForm).
+ * - `PLEINE` : statut posé après confirmation d'échographie.
+ * - `Active` : ancien libellé legacy conservé pour rétrocompat fixtures/tests.
+ * Référence audit 2026-05-07 : R7 ne se déclenchait jamais en prod car le
+ * code ne testait que `'Active'` alors que la DB stockait `'SAILLIE'`.
+ */
+const SAILLIE_ACTIVE_STATUTS = new Set(['SAILLIE', 'PLEINE', 'Active']);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UTILITAIRES DE DATE
@@ -462,8 +473,15 @@ function checkRegroupementBandes(bandes: BandePorcelets[], today: Date): FarmAle
 }
 
 function checkFenetreEcho(truie: Truie, saillies: Saillie[], today: Date): FarmAlert | null {
-  if (normaliseStatut(truie.statut) !== 'PLEINE') return null;
-  const active = saillies.find(s => (s.truieId === truie.id || s.truieId === truie.displayId) && s.statut === 'Active');
+  // R7 — Règle métier : "saillie il y a J25-J35 et pas encore d'écho confirmée → rappel".
+  // L'ancien code exigeait `truie.statut === 'PLEINE'` AVANT de chercher la saillie,
+  // mais PLEINE n'est posé qu'APRÈS écho confirmée → cercle vicieux, R7 ne poussait
+  // jamais à FAIRE l'écho. Audit 2026-05-07.
+  // On exclut uniquement les statuts pour lesquels l'écho n'a plus de sens
+  // (truie déjà en maternité = MB faite, morte ou réformée).
+  const statutNorm = normaliseStatut(truie.statut);
+  if (statutNorm === 'MATERNITE' || truie.statut === 'Morte' || truie.statut === 'Réforme') return null;
+  const active = saillies.find(s => (s.truieId === truie.id || s.truieId === truie.displayId) && SAILLIE_ACTIVE_STATUTS.has(s.statut ?? ''));
   if (!active) return null;
   const dSaillie = parseFrDate(active.dateSaillie);
   if (!dSaillie) return null;
@@ -551,7 +569,7 @@ function checkSurdensiteLoges(bandes: BandePorcelets[], _today: Date): FarmAlert
      const s = (b.statut || '').toLowerCase();
      return s.includes('croissance') || s.includes('finition') || s.includes('engraiss');
   });
-  const CAPACITY = 6;
+  const CAPACITY = FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY ?? 6;
 
   if (engraissement.length > CAPACITY) {
     return {

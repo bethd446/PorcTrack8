@@ -221,7 +221,12 @@ export const ChatbotWidget: React.FC = () => {
                    bg-[var(--color-accent-500)] text-white"
       >
         <div className="flex items-center gap-2">
-          <img src="/images/porc-mark.svg" alt="" className="w-6 h-6" />
+          <img
+            src="/images/marius-avatar.webp"
+            alt=""
+            aria-hidden
+            className="w-8 h-8 rounded-full object-cover"
+          />
           <span className="ft-heading text-sm uppercase tracking-wide">Marius</span>
         </div>
         <Button variant="ghost" size="small" onClick={handleClose} aria-label="Fermer la conversation">

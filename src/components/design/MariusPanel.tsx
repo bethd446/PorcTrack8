@@ -33,12 +33,20 @@ export default function MariusPanel({
           marginBottom: 8,
           display: 'flex',
           alignItems: 'center',
-          gap: 6,
+          gap: 8,
           fontWeight: 500,
         }}
       >
+        <img
+          src="/images/marius-avatar.webp"
+          alt=""
+          aria-hidden
+          width={28}
+          height={28}
+          style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+        />
         <Sparkles size={11} strokeWidth={0} fill="currentColor" aria-hidden />
-        {title}
+        <span>Marius · {title}</span>
       </div>
       <div className="marius-content">{children}</div>
       <style>{`

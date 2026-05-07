@@ -133,6 +133,7 @@ export default function Landing() {
             </span>
 
             <h1
+              className="uppercase"
               style={{
                 fontFamily: FONT_DISPLAY,
                 fontWeight: 700,
@@ -169,9 +170,8 @@ export default function Landing() {
                 maxWidth: 560,
               }}
             >
-              PorcTrack suit chaque saillie, mise-bas et pesée, anticipe les retours en chaleur entre J18 et J24,
-              et donne à Marius — votre assistant — les bons éléments pour vous conseiller au bon moment.
-              Pour éleveurs naisseurs-engraisseurs en Afrique de l'Ouest.
+              Suivez vos truies, saillies et alertes biologiques en un coup d'œil.
+              Pensé pour vos bandes, votre rythme, votre ferme.
             </p>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -210,23 +210,34 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Stats card */}
+          {/* Hero visuel + stats */}
           <aside
             aria-label="Chiffres clés PorcTrack"
-            className="self-start"
-            style={{
-              background: 'var(--bg-app)',
-              border: '1px solid var(--line)',
-              borderRadius: 'var(--radius-card)',
-              overflow: 'hidden',
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-            }}
+            className="self-start flex flex-col gap-5"
           >
-            <Stat num="115" suffix=" j" label="Cycle gestation suivi" border="r b" />
-            <Stat num="14" label="Règles GTTT actives" border="b" />
-            <Stat num="J18" suffix="–J24" label="Fenêtre retour chaleur" border="r" />
-            <Stat num="100" suffix="%" label="Hors-ligne" />
+            <img
+              src="/images/hero-1.webp"
+              alt="Éleveur consultant PorcTrack en porcherie ivoirienne"
+              className="w-full h-auto rounded-[28px] shadow-xl"
+              loading="eager"
+              fetchPriority="high"
+              style={{ aspectRatio: '2400 / 1340', objectFit: 'cover' }}
+            />
+            <div
+              style={{
+                background: 'var(--bg-app)',
+                border: '1px solid var(--line)',
+                borderRadius: 'var(--radius-card)',
+                overflow: 'hidden',
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+              }}
+            >
+              <Stat num="115" suffix=" j" label="Cycle gestation suivi" border="r b" />
+              <Stat num="14" label="Règles GTTT actives" border="b" />
+              <Stat num="J18" suffix="–J24" label="Fenêtre retour chaleur" border="r" />
+              <Stat num="100" suffix="%" label="Hors-ligne" />
+            </div>
           </aside>
         </div>
       </section>
@@ -454,16 +465,32 @@ export default function Landing() {
         >
           <span className="uppercase">© 2026 PorcTrack · porctrack.tech</span>
           <nav className="flex flex-wrap gap-5">
-            <Link to="/a-propos" className="uppercase" style={{ color: 'var(--muted)' }}>
+            <Link
+              to="/a-propos"
+              className="uppercase py-3 inline-flex items-center"
+              style={{ color: 'var(--muted)', minHeight: 48 }}
+            >
               À propos
             </Link>
-            <Link to="/privacy" className="uppercase" style={{ color: 'var(--muted)' }}>
+            <Link
+              to="/privacy"
+              className="uppercase py-3 inline-flex items-center"
+              style={{ color: 'var(--muted)', minHeight: 48 }}
+            >
               Confidentialité
             </Link>
-            <Link to="/cgu" className="uppercase" style={{ color: 'var(--muted)' }}>
+            <Link
+              to="/cgu"
+              className="uppercase py-3 inline-flex items-center"
+              style={{ color: 'var(--muted)', minHeight: 48 }}
+            >
               CGU
             </Link>
-            <a href="mailto:contact@porctrack.tech" className="uppercase" style={{ color: 'var(--muted)' }}>
+            <a
+              href="mailto:contact@porctrack.tech"
+              className="uppercase py-3 inline-flex items-center"
+              style={{ color: 'var(--muted)', minHeight: 48 }}
+            >
               Contact
             </a>
           </nav>

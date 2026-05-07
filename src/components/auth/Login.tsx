@@ -262,8 +262,14 @@ export default function Login() {
                 </div>
               </div>
             ) : (
-            <form onSubmit={mode === 'reset' ? handleResetSubmit : handleLogin} className="space-y-4">
+            <form
+              onSubmit={mode === 'reset' ? handleResetSubmit : handleLogin}
+              method="post"
+              className="space-y-4"
+            >
               <Field
+                id="login-email"
+                name="email"
                 label={mode === 'reset' ? 'Email du compte' : 'Email'}
                 type="email"
                 value={email}
@@ -275,6 +281,8 @@ export default function Login() {
 
               {mode === 'login' && (
                 <Field
+                  id="login-password"
+                  name="password"
                   label="Mot de passe"
                   type="password"
                   value={password}
@@ -480,6 +488,8 @@ export default function Login() {
 }
 
 interface FieldProps {
+  id: string;
+  name: string;
   label: string;
   type: string;
   value: string;
@@ -490,10 +500,11 @@ interface FieldProps {
   minLength?: number;
 }
 
-function Field({ label, type, value, onChange, autoComplete, placeholder, required, minLength }: FieldProps) {
+function Field({ id, name, label, type, value, onChange, autoComplete, placeholder, required, minLength }: FieldProps) {
   return (
-    <label style={{ display: 'block' }}>
-      <span
+    <div style={{ display: 'block' }}>
+      <label
+        htmlFor={id}
         style={{
           display: 'block',
           fontSize: 10,
@@ -505,8 +516,10 @@ function Field({ label, type, value, onChange, autoComplete, placeholder, requir
         }}
       >
         {label}
-      </span>
+      </label>
       <input
+        id={id}
+        name={name}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -521,21 +534,21 @@ function Field({ label, type, value, onChange, autoComplete, placeholder, requir
           fontFamily: FONT_BODY,
           fontSize: 15,
           color: 'var(--ink)',
-          background: 'var(--bg-surface-2)',
-          border: '1px solid var(--line)',
+          // Audit 2026-05-07 : input bg #F7F5F0 vs page #FAF7F0 → contraste 1.02
+          // (invisible plein soleil). Forcer bg blanc + border emerald 2px.
+          background: '#FFFFFF',
+          border: '2px solid rgba(6, 78, 59, 0.30)',
           borderRadius: 'var(--radius-card)',
           outline: 'none',
           transition: 'border-color 160ms var(--ease-emil), background 160ms var(--ease-emil)',
         }}
         onFocus={(e) => {
           e.currentTarget.style.borderColor = 'var(--color-accent-500)';
-          e.currentTarget.style.background = 'var(--bg-surface)';
         }}
         onBlur={(e) => {
-          e.currentTarget.style.borderColor = 'var(--line)';
-          e.currentTarget.style.background = 'var(--bg-surface-2)';
+          e.currentTarget.style.borderColor = 'rgba(6, 78, 59, 0.30)';
         }}
       />
-    </label>
+    </div>
   );
 }

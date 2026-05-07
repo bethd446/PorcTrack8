@@ -89,6 +89,19 @@
   --phase-finit-soft:  var(--color-secondary-soft);
   --phase-sortie:      var(--color-accent-500);
   --phase-sortie-soft: var(--color-accent-100);
+
+  /* ── Tokens DS Terrain Vivant (audit 2026-05-07) ────────────────────────────
+     Ces tokens étaient référencés dans la doc DS mais non définis dans :root,
+     ce qui faisait que `var(--pt-emerald-premium)` etc. tombait sur le fallback
+     hex hardcodé (#2D4A1F olive militaire) au lieu de la palette Terrain Vivant.
+     On les ajoute en alias des tokens existants `--color-*` pour permettre
+     leur usage par les nouveaux composants (Landing/Login/Marius) sans dupliquer. */
+  --pt-emerald-premium: #064e3b;
+  --pt-forest-mid:      #065f46;
+  --pt-forest-light:    #d1fae5;
+  --pt-amber-pork:      #F4A261;
+  --pt-amber-deep:      #c2662b;
+  --pt-bg-app:          #f0f4f3;
 }
 
 /* ── @keyframes pulse — utilisés par repro tracker, sync indicator ──────── */

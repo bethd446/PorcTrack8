@@ -563,6 +563,24 @@ describe('R7 — Fenêtre Échographie', () => {
     expect(ech?.priority).toBe('INFO');
     expect(ech?.daysOffset).toBe(30);
   });
+
+  it('R7 — déclenche avec statut DB réel "SAILLIE" (régression bug audit 2026-05-07)', () => {
+    // Bug audit 2026-05-07 : la prod stockait s.statut='SAILLIE' (cf. QuickSaillieForm)
+    // mais checkFenetreEcho filtrait s.statut==='Active' → R7 ne se déclenchait jamais.
+    // De plus, la guard truie.statut==='PLEINE' créait un cercle vicieux : PLEINE n'est
+    // posé qu'après écho confirmée, donc R7 ne poussait jamais à FAIRE l'écho.
+    const truie = makeTruie({ id: 'T1', statut: 'En attente saillie' });
+    const saillie = makeSaillie({
+      truieId: 'T1',
+      dateSaillie: toFrDate(dayOffset(NOW, -30)),
+      statut: 'SAILLIE',
+    });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie], saillies: [saillie] }));
+    const ech = alerts.find(a => a.id.startsWith('ECH-'));
+    expect(ech).toBeDefined();
+    expect(ech?.priority).toBe('INFO');
+    expect(ech?.daysOffset).toBe(30);
+  });
 });
 
 // ─── R8 — Re-Saillie Proactive ───────────────────────────────────────────────
@@ -718,6 +736,31 @@ describe('R10 — Surdensité', () => {
     }));
     const alerts = runAlertEngine(emptyInput({ bandes }));
     expect(alerts.find(a => a.id === 'surdensite-engraissement')).toBeUndefined();
+  });
+
+  it('R10 — utilise FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY (régression bug audit 2026-05-07)', async () => {
+    // Bug audit : `const CAPACITY = 6` hardcodé au lieu de FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY.
+    // On vérifie que le seuil et le message sont bien dérivés du config.
+    const { FARM_CONFIG } = await import('../config/farm');
+    const capacity = FARM_CONFIG.ENGRAISSEMENT_LOGES_CAPACITY;
+
+    // À capacité, pas d'alerte.
+    const bandesAtCap = Array.from({ length: capacity }, (_, i) => makeBande({
+      id: `B${i}`,
+      statut: 'En croissance',
+    }));
+    const noAlerts = runAlertEngine(emptyInput({ bandes: bandesAtCap }));
+    expect(noAlerts.find(a => a.id === 'surdensite-engraissement')).toBeUndefined();
+
+    // Capacité + 1 → alerte avec message qui mentionne la capacité config.
+    const bandesOver = Array.from({ length: capacity + 1 }, (_, i) => makeBande({
+      id: `B${i}`,
+      statut: 'En croissance',
+    }));
+    const overAlerts = runAlertEngine(emptyInput({ bandes: bandesOver }));
+    const surd = overAlerts.find(a => a.id === 'surdensite-engraissement');
+    expect(surd).toBeDefined();
+    expect(surd?.message).toContain(`${capacity} loges`);
   });
 });
 
