@@ -188,10 +188,17 @@ const VerratDetailView: React.FC = () => {
           >
             {/* V45 P3B — Pattern archétype 4 : PageHeader + Card hero compact
                 (EntityAvatar xl + tag statut + actions inline). Remplace
-                AnimalHero custom V43 C3 pour uniformiser avec TruieDetail. */}
+                AnimalHero custom V43 C3 pour uniformiser avec TruieDetail.
+                V71 lisibilité : subtitle ajouté (statut + nb saillies). */}
             <PageHeader
               eyebrow="Élevage · Verrat"
               title={title}
+              subtitle={(() => {
+                const parts: string[] = [];
+                if (verrat.statut) parts.push(verrat.statut);
+                if (saillesVerrat.length > 0) parts.push(`${saillesVerrat.length} saillie${saillesVerrat.length > 1 ? 's' : ''}`);
+                return parts.length > 0 ? parts.join(' · ') : undefined;
+              })()}
             />
 
             <Card>

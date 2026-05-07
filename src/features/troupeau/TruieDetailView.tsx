@@ -429,10 +429,17 @@ const TruieDetailView: React.FC = () => {
 
           <div style={{ padding: '16px 22px 24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
             {/* V41 Phase C1 — Header sobre via PageHeader (eyebrow + h1 + subtitle 1 ligne) */}
+            {/* V71 lisibilité : subtitle enrichi avec phase repro + J post-saillie pour donner le contexte d'un coup d'œil */}
             <PageHeader
               eyebrow="Élevage · Truie"
               title={safeDisplay(truie.displayId)}
-              subtitle={truie.statut || undefined}
+              subtitle={(() => {
+                const parts: string[] = [];
+                if (truie.statut) parts.push(labelStatutTruie(truie.statut));
+                if (cycleData) parts.push(`J${cycleData.dayPost} post-saillie`);
+                else if (truie.nbPortees != null) parts.push(`${truie.nbPortees} portée${truie.nbPortees > 1 ? 's' : ''}`);
+                return parts.length > 0 ? parts.join(' · ') : undefined;
+              })()}
             />
 
             {/* V45 P3A — Hero compact archétype 4 : EntityAvatar xl + tags + actions inline */}

@@ -334,10 +334,18 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
           style={{ maxWidth: 1100, margin: '0 auto' }}
           data-testid="bande-detail-view"
         >
+          {/* V71 lisibilité : subtitle enrichi (statut + jour + nb vivants) au lieu d'un placeholder générique. */}
           <PageHeader
             eyebrow="Élevage · Bande"
             title={portéeLabel}
-            subtitle="Suivi de la bande"
+            subtitle={(() => {
+              const parts: string[] = [];
+              if (bande.status) parts.push(String(bande.status));
+              if (bande.age != null) parts.push(`J${bande.age}`);
+              const v = bandeTyped?.vivants ?? Number(bande.vivants ?? 0);
+              if (v > 0) parts.push(`${v} vivants`);
+              return parts.length > 0 ? parts.join(' · ') : 'Suivi de la bande';
+            })()}
           />
 
           {/* V45 P3C — Hero compact archétype 4 : EntityAvatar + tags + actions */}

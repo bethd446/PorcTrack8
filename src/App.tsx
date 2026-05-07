@@ -36,6 +36,12 @@ import SmartRoot from './components/SmartRoot';
 import About from './pages/About';
 import Privacy from './pages/Privacy';
 import CGU from './pages/CGU';
+const LandingScrollytelling = React.lazy(
+  () =>
+    import(
+      /* webpackChunkName: "landing-v2" */ './pages/landing-v2/LandingScrollytelling'
+    ),
+);
 
 // V70 — chargé via lazy import. v70Enabled est désormais true par défaut
 // (commit 986414d). Le shell V70 est le routeur principal.
@@ -191,6 +197,7 @@ const AppContent = () => {
           <Routes>
             {/* ── Routes publiques ─────────────────────────────────────── */}
             <Route path="/" element={<SmartRoot />} />
+            <Route path="/landing-v2" element={<LandingScrollytelling />} />
             <Route path="/a-propos" element={<About />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/cgu" element={<CGU />} />

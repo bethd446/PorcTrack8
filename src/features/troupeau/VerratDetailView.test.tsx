@@ -175,9 +175,12 @@ describe('VerratDetailView', () => {
     renderAt('/troupeau/verrats/V01');
     // V40 F1/F2 : AnimalHero utilise <Tag variant="primary"> du DS V2
     // (mapping tone='green' → variant='primary' = pill vert).
-    const chip = screen.getByText('Actif');
-    expect(chip.tagName.toLowerCase()).toBe('span');
-    expect(chip.className).toContain('pt-tag');
+    // V71 : "Actif" apparaît aussi dans le subtitle PageHeader, on cible le pill via class pt-tag.
+    const matches = screen.getAllByText('Actif');
+    const chip = matches.find((el) => el.className.includes('pt-tag'));
+    expect(chip).toBeDefined();
+    expect(chip!.tagName.toLowerCase()).toBe('span');
+    expect(chip!.className).toContain('pt-tag');
   });
 
   it('bouton « Saillir » présent avec aria-label', () => {
