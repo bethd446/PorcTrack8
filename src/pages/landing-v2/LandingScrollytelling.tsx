@@ -1,5 +1,9 @@
 import React, { useEffect } from 'react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useLenisScroll } from './hooks/useLenisScroll';
+
+gsap.registerPlugin(ScrollTrigger);
 import { SceneHero } from './scenes/SceneHero';
 import { SceneRepro } from './scenes/SceneRepro';
 import { SceneBandes } from './scenes/SceneBandes';
@@ -45,7 +49,16 @@ function useScrollUnlock() {
       ionApp.style.contain = 'none';
     }
 
+    // ScrollTrigger calcule ses positions au mount. Comme le useScrollUnlock
+    // change la layout après le mount des Scenes, les positions sont
+    // désaxées. On force un refresh asynchrone pour réaligner.
+    const refreshIds: number[] = [];
+    refreshIds.push(window.setTimeout(() => ScrollTrigger.refresh(true), 50));
+    refreshIds.push(window.setTimeout(() => ScrollTrigger.refresh(true), 300));
+    refreshIds.push(window.setTimeout(() => ScrollTrigger.refresh(true), 800));
+
     return () => {
+      refreshIds.forEach((id) => window.clearTimeout(id));
       body.style.overflow = prev.bodyOverflow;
       body.style.position = prev.bodyPosition;
       body.style.height = prev.bodyHeight;
