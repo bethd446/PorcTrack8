@@ -19,8 +19,13 @@ test-results/
 .env.local
 .env.production
 .env.development
+.env.*.bak
+*.env.bak
 !.env.example
 !website/.env.example
+
+# Backups manuels (peuvent contenir des secrets)
+*.bak
 
 # Website node_modules (build commité pour VPS sans Node)
 website/node_modules/
