@@ -234,7 +234,7 @@ export default function Landing() {
               }}
             >
               <Stat num="115" suffix=" j" label="Cycle gestation suivi" border="r b" />
-              <Stat num="14" label="Règles GTTT actives" border="b" />
+              <Stat num="16" label="Règles GTTT actives" border="b" />
               <Stat num="J18" suffix="–J24" label="Fenêtre retour chaleur" border="r" />
               <Stat num="100" suffix="%" label="Hors-ligne" />
             </div>
@@ -284,7 +284,7 @@ export default function Landing() {
           <Feature
             tone="accent"
             icon={<ShieldCheck size={20} strokeWidth={2} />}
-            title="14 alertes biologiques"
+            title="16 alertes biologiques"
             body="Mise-bas, sevrage, retour chaleur, mortalité, stocks critiques : les règles GTTT déclenchent au bon jour."
           />
           <Feature
@@ -302,6 +302,52 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ── Galerie bandes ─────────────────────────────────────────── */}
+      <section
+        style={{
+          background: 'var(--bg-app)',
+          borderTop: '1px solid var(--line)',
+        }}
+      >
+        <div className="mx-auto max-w-6xl px-5 py-16 md:px-8 md:py-24">
+          <Eyebrow dotColor="terre">Vos bandes, sans détour</Eyebrow>
+          <h2
+            style={{
+              fontFamily: FONT_DISPLAY,
+              fontWeight: 700,
+              fontSize: 'clamp(28px, 4vw, 40px)',
+              lineHeight: 1.05,
+              letterSpacing: '-0.02em',
+              margin: '14px 0 32px',
+              color: 'var(--ink)',
+              maxWidth: 720,
+            }}
+          >
+            Maternité, saillie, croissance — chaque phase a sa fiche.
+          </h2>
+          <div className="grid gap-5 md:grid-cols-3">
+            <BandeCard
+              src="/images/ambiance-maternite.webp"
+              alt="Truie en maternité avec ses porcelets"
+              tag="Maternité"
+              caption="Mise-bas, allaitement, sevrage J28."
+            />
+            <BandeCard
+              src="/images/ambiance-verrat.webp"
+              alt="Verrat en bonne santé dans son enclos"
+              tag="Saillie"
+              caption="Couple truie × verrat tracé. Échographie J25-J35."
+            />
+            <BandeCard
+              src="/images/ambiance-croissance.webp"
+              alt="Lot de porcs en phase de croissance"
+              tag="Croissance"
+              caption="Passage de phase au poids ou à l'âge, jamais oublié."
+            />
+          </div>
+        </div>
+      </section>
+
       {/* ── Marius ─────────────────────────────────────────────────── */}
       <section
         style={{
@@ -312,7 +358,23 @@ export default function Landing() {
       >
         <div className="mx-auto grid max-w-6xl gap-10 px-5 py-16 md:grid-cols-[1fr_1.1fr] md:px-8 md:py-24">
           <div>
-            <Eyebrow dotColor="amber">Lecture du dossier</Eyebrow>
+            <div className="flex items-center gap-3" style={{ marginBottom: 4 }}>
+              <img
+                src="/images/marius-avatar.webp"
+                alt="Marius — assistant IA PorcTrack"
+                width={56}
+                height={56}
+                loading="lazy"
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: '50%',
+                  background: 'var(--color-amber-pork-soft)',
+                  flexShrink: 0,
+                }}
+              />
+              <Eyebrow dotColor="amber">Lecture du dossier</Eyebrow>
+            </div>
             <h2
               style={{
                 fontFamily: FONT_DISPLAY,
@@ -395,6 +457,59 @@ export default function Landing() {
               <span className="uppercase">J19 / 35 · fenêtre J18-J24</span>
             </div>
           </article>
+        </div>
+      </section>
+
+      {/* ── Bandeau territoire ─────────────────────────────────────── */}
+      <section
+        aria-label="Ferme PorcTrack en Côte d'Ivoire"
+        style={{
+          position: 'relative',
+          backgroundImage: 'url(/images/ambiance-territoire.webp)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          minHeight: 'clamp(280px, 40vw, 480px)',
+          display: 'flex',
+          alignItems: 'flex-end',
+          color: 'var(--bg-surface)',
+        }}
+      >
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(180deg, rgba(6,78,59,0) 0%, rgba(6,78,59,0.55) 100%)',
+          }}
+        />
+        <div
+          className="mx-auto max-w-6xl px-5 py-10 md:px-8 md:py-14"
+          style={{ position: 'relative', zIndex: 1, width: '100%' }}
+        >
+          <span
+            style={{
+              fontSize: '10px',
+              letterSpacing: '0.20em',
+              textTransform: 'uppercase',
+              color: 'rgba(255,255,255,0.85)',
+            }}
+          >
+            · Pensé en Côte d'Ivoire · Déployé partout
+          </span>
+          <h2
+            style={{
+              fontFamily: FONT_DISPLAY,
+              fontWeight: 700,
+              fontSize: 'clamp(24px, 3.5vw, 36px)',
+              lineHeight: 1.05,
+              letterSpacing: '-0.02em',
+              margin: '8px 0 0',
+              color: 'var(--bg-surface)',
+              maxWidth: 720,
+            }}
+          >
+            Une ferme moderne, au rythme de votre terre.
+          </h2>
         </div>
       </section>
 
@@ -616,6 +731,68 @@ function Feature({ tone, icon, title, body }: FeatureProps) {
       >
         {body}
       </p>
+    </article>
+  );
+}
+
+interface BandeCardProps {
+  src: string;
+  alt: string;
+  tag: string;
+  caption: string;
+}
+
+function BandeCard({ src, alt, tag, caption }: BandeCardProps) {
+  return (
+    <article
+      style={{
+        background: 'var(--bg-surface)',
+        borderRadius: 'var(--radius-card)',
+        overflow: 'hidden',
+        border: '1px solid var(--line)',
+        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+      }}
+    >
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        style={{
+          width: '100%',
+          height: 220,
+          objectFit: 'cover',
+          display: 'block',
+        }}
+      />
+      <div style={{ padding: '16px 18px 18px' }}>
+        <span
+          style={{
+            display: 'inline-block',
+            fontSize: '9.5px',
+            letterSpacing: '0.16em',
+            textTransform: 'uppercase',
+            color: 'var(--color-accent-600)',
+            background: 'var(--color-accent-100)',
+            padding: '4px 10px',
+            borderRadius: 'var(--radius-pill)',
+            fontWeight: 500,
+            marginBottom: 10,
+          }}
+        >
+          {tag}
+        </span>
+        <p
+          style={{
+            fontFamily: FONT_BODY,
+            fontSize: 14,
+            lineHeight: 1.5,
+            color: 'var(--ink-soft)',
+            margin: 0,
+          }}
+        >
+          {caption}
+        </p>
+      </div>
     </article>
   );
 }
