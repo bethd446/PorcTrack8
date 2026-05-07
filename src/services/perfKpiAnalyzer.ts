@@ -115,6 +115,12 @@ export interface GlobalKpis {
   nbSaillies12m: number;
   /** Nombre de mises-bas sur les 12 derniers mois (alias sur nbPortees12m). */
   nbMB12m: number;
+  /**
+   * IC moyen réel troupeau (kg aliment / kg gain poids vif), agrégé sur les
+   * bandes 12m dotées des champs `alimentConsommeKg` et `gainPoidsKg`.
+   * `null` si aucune bande exploitable (pas de saisies conso). Ref. métier 2.5-3.0.
+   */
+  icMoyenReel: number | null;
 }
 
 export interface TruieRanking {
@@ -449,6 +455,23 @@ export function computeGlobalKpis(
     if (ts >= cutoff12m && ts <= nowTs) nbSaillies12m += 1;
   }
 
+  // --- IC moyen réel (12m) — agrégat sur bandes ayant les champs feed/gain ---
+  let icAlimentTotal = 0;
+  let icGainTotal = 0;
+  for (const p of portees12m) {
+    const r = p as unknown as Record<string, unknown>;
+    const aliment = typeof r.alimentConsommeKg === 'number' ? r.alimentConsommeKg : null;
+    const gain = typeof r.gainPoidsKg === 'number' ? r.gainPoidsKg : null;
+    if (aliment != null && gain != null && gain > 0) {
+      icAlimentTotal += aliment;
+      icGainTotal += gain;
+    }
+  }
+  const icMoyenReel: number | null =
+    icGainTotal > 0
+      ? Math.round((icAlimentTotal / icGainTotal) * 100) / 100
+      : null;
+
   return {
     nbTruiesTotal,
     nbTruiesProductives,
@@ -467,6 +490,7 @@ export function computeGlobalKpis(
     nbTruiesAvecMBMultiples,
     nbSaillies12m,
     nbMB12m: nbPortees12m,
+    icMoyenReel,
   };
 }
 

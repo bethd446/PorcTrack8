@@ -1085,3 +1085,63 @@ describe('R5b — Stock Vétérinaire', () => {
     expect(alerts.find(x => x.id.startsWith('VET-'))).toBeUndefined();
   });
 });
+
+// ─── R17 — Rappel mensuel post-sevrage ───────────────────────────────────────
+
+describe('R17 — Rappel mensuel post-sevrage', () => {
+  it('déclenche INFO à J+30 post-sevrage (1er rappel mensuel)', () => {
+    const bande = makeBande({
+      dateSevrageReelle: toFrDate(dayOffset(NOW, -30)),
+      statut: 'Sevrés',
+    });
+    const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
+    const r = alerts.find(a => a.id.startsWith('RSV-'));
+    expect(r).toBeDefined();
+    expect(r?.priority).toBe('INFO');
+    expect(r?.id).toContain('M1');
+    expect(r?.daysOffset).toBe(30);
+  });
+
+  it('déclenche INFO à J+60 puis J+90 (paliers mensuels)', () => {
+    const bande60 = makeBande({
+      id: 'BP-060',
+      dateSevrageReelle: toFrDate(dayOffset(NOW, -60)),
+      statut: 'Croissance',
+    });
+    const bande90 = makeBande({
+      id: 'BP-090',
+      dateSevrageReelle: toFrDate(dayOffset(NOW, -90)),
+      statut: 'Croissance',
+    });
+    const alerts = runAlertEngine(emptyInput({ bandes: [bande60, bande90] }));
+    const r60 = alerts.find(a => a.id.startsWith('RSV-BP-060'));
+    const r90 = alerts.find(a => a.id.startsWith('RSV-BP-090'));
+    expect(r60?.id).toContain('M2');
+    expect(r90?.id).toContain('M3');
+  });
+
+  it('ne déclenche pas si aucune date de sevrage', () => {
+    const bande = makeBande({
+      dateSevrageReelle: undefined,
+      statut: 'Sous mère',
+    });
+    const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
+    expect(alerts.find(a => a.id.startsWith('RSV-'))).toBeUndefined();
+  });
+
+  it('ne déclenche pas hors fenêtre (J+15 trop tôt, J+45 entre paliers)', () => {
+    const bande15 = makeBande({
+      id: 'BP-015',
+      dateSevrageReelle: toFrDate(dayOffset(NOW, -15)),
+      statut: 'Sevrés',
+    });
+    const bande45 = makeBande({
+      id: 'BP-045',
+      dateSevrageReelle: toFrDate(dayOffset(NOW, -45)),
+      statut: 'Sevrés',
+    });
+    const alerts = runAlertEngine(emptyInput({ bandes: [bande15, bande45] }));
+    expect(alerts.find(a => a.id.startsWith('RSV-BP-015'))).toBeUndefined();
+    expect(alerts.find(a => a.id.startsWith('RSV-BP-045'))).toBeUndefined();
+  });
+});

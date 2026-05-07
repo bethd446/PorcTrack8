@@ -99,6 +99,36 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
             </p>
           </div>
 
+          <aside
+            role="note"
+            style={{
+              background: 'rgba(244, 162, 97, 0.10)',
+              border: '1px solid rgba(244, 162, 97, 0.35)',
+              borderRadius: 14,
+              padding: '10px 12px',
+              display: 'flex',
+              gap: 10,
+              alignItems: 'flex-start',
+            }}
+          >
+            <span style={{ fontSize: 16, lineHeight: 1 }} aria-hidden>💡</span>
+            <div style={{ flex: 1 }}>
+              <strong style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Le saviez-vous ?
+              </strong>
+              <p style={{ fontSize: 11, margin: '3px 0 0', lineHeight: 1.4 }}>
+                Le poids moyen au sevrage est <strong>obligatoire</strong> : il fixe la
+                base de calcul du gain de poids et de l'IC pour cette bande.
+              </p>
+              <a
+                href="/reglages/encyclopedie?slug=05-sevrage-timing-conditions"
+                style={{ fontSize: 10, color: 'var(--color-accent, #c2662b)', textDecoration: 'underline' }}
+              >
+                En savoir plus →
+              </a>
+            </div>
+          </aside>
+
           <FormField label="Date de sevrage réelle">
             <Input
               id="sevrage-date"

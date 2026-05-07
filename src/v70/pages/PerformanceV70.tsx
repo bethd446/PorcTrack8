@@ -225,6 +225,20 @@ export const PerformanceV70: React.FC = () => {
             </span>
             <span className="kv-val">{fmt(kpis?.iemMoyJours ?? null, 0, ' j')}</span>
           </div>
+          <div
+            className="kv-row"
+            title="Indice de consommation = kg aliment / kg gain poids vif. Référence métier 2.5-3.0."
+          >
+            <span className="kv-key">IC moyen (post-sevrage)</span>
+            <span className="kv-val">
+              {kpis?.icMoyenReel != null && kpis.icMoyenReel > 0
+                ? `${kpis.icMoyenReel.toFixed(2)} kg/kg`
+                : '—'}
+              <span style={{ color: 'var(--pt-muted)', fontSize: 11, marginLeft: 8 }}>
+                réf. 2.5-3.0
+              </span>
+            </span>
+          </div>
         </Card>
       </Section>
       )}

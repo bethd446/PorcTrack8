@@ -148,7 +148,11 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
         }
       }
       setSuccess(true);
-      showToast(`Sevrage enregistré · ${nb} porcelets`, 'success', { duration: 2200 });
+      showToast(
+        `Sevrage enregistré · ${nb} porcelets · ${poids.toFixed(1)} kg`,
+        'success',
+        { duration: 2400 },
+      );
       try { await refreshData(true); } catch { /* noop */ }
       if (onSuccess) onSuccess();
       setTimeout(() => {
@@ -213,6 +217,38 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
                 </p>
               </div>
             </div>
+
+            {/* "Le saviez-vous ?" — pédagogie sevrage */}
+            <aside
+              role="note"
+              style={{
+                background: 'rgba(244, 162, 97, 0.10)',
+                border: '1px solid rgba(244, 162, 97, 0.35)',
+                borderRadius: 14,
+                padding: '12px 14px',
+                display: 'flex',
+                gap: 10,
+                alignItems: 'flex-start',
+              }}
+            >
+              <span style={{ fontSize: 18, lineHeight: 1 }} aria-hidden>💡</span>
+              <div style={{ flex: 1 }}>
+                <strong style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Le saviez-vous ?
+                </strong>
+                <p style={{ fontSize: 12, margin: '4px 0 0', lineHeight: 1.45 }}>
+                  Sevrage standard à <strong>J28</strong>. Plus tôt fragilise les porcelets,
+                  plus tard alourdit la truie. Poids attendu <strong>5-7 kg</strong>,
+                  mortalité &lt;5 % à ce stade est excellente.
+                </p>
+                <a
+                  href="/reglages/encyclopedie?slug=05-sevrage-timing-conditions"
+                  style={{ fontSize: 11, color: 'var(--color-accent, #c2662b)', textDecoration: 'underline' }}
+                >
+                  En savoir plus →
+                </a>
+              </div>
+            </aside>
 
             {/* ═══ Section : Informations principales ════════════════════ */}
             <Section label="INFORMATIONS PRINCIPALES" />

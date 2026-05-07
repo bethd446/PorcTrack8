@@ -11,12 +11,15 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildICReel,
+  computeICMoyen,
+  computeICNiveau,
   computeICRatio,
   computeKgPorcProduit,
   computeVsTheoriquePct,
   IC_THEORIQUE_DEFAUT,
   MIN_SAISIES_FIABLE,
   POIDS_NAISSANCE_KG,
+  type BandeICInput,
   type FeedConsoLog,
 } from './feedConsumptionAnalyzer';
 
@@ -136,5 +139,66 @@ describe('buildICReel', () => {
       ((4 - IC_THEORIQUE_DEFAUT) / IC_THEORIQUE_DEFAUT) * 100,
       1,
     );
+  });
+});
+
+describe('computeICNiveau', () => {
+  it('classe excellent / bon / moyen / a-ameliorer aux bons seuils', () => {
+    expect(computeICNiveau(2.0)).toBe('excellent');
+    expect(computeICNiveau(2.49)).toBe('excellent');
+    expect(computeICNiveau(2.5)).toBe('bon');
+    expect(computeICNiveau(2.99)).toBe('bon');
+    expect(computeICNiveau(3.0)).toBe('moyen');
+    expect(computeICNiveau(3.49)).toBe('moyen');
+    expect(computeICNiveau(3.5)).toBe('a-ameliorer');
+    expect(computeICNiveau(4.2)).toBe('a-ameliorer');
+  });
+
+  it('retourne incalculable pour un IC nul ou négatif ou NaN', () => {
+    expect(computeICNiveau(0)).toBe('incalculable');
+    expect(computeICNiveau(-1)).toBe('incalculable');
+    expect(computeICNiveau(Number.NaN)).toBe('incalculable');
+  });
+});
+
+describe('computeICMoyen', () => {
+  const bandes: BandeICInput[] = [
+    { id: 'B01', vivants: 10, poids_moyen_kg: 30 },
+    { id: 'B02', vivants: 10, poids_moyen_kg: 30 },
+    { id: 'B03', vivants: 10, poids_moyen_kg: 30 },
+  ];
+
+  it('retourne la moyenne des IC réels exploitables', () => {
+    // B01 : 286 kg / 286 kg gain → 1.0 (excellent)
+    // B02 : 858 kg / 286 kg gain → 3.0 (moyen)
+    // B03 : pas de logs → exclus
+    const gain = (30 - POIDS_NAISSANCE_KG) * 10;
+    const logsByBande: Record<string, FeedConsoLog[]> = {
+      B01: [{ qty_kg: gain, date_conso: '2026-04-01' }],
+      B02: [{ qty_kg: gain * 3, date_conso: '2026-04-01' }],
+      B03: [],
+    };
+    const res = computeICMoyen(bandes, logsByBande);
+    expect(res.nbBandes).toBe(2);
+    expect(res.ic).toBe(2);
+    expect(res.niveau).toBe('excellent');
+  });
+
+  it('retourne incalculable si aucune bande exploitable', () => {
+    const res = computeICMoyen(bandes, { B01: [], B02: [], B03: [] });
+    expect(res.ic).toBe(0);
+    expect(res.nbBandes).toBe(0);
+    expect(res.niveau).toBe('incalculable');
+  });
+
+  it('exclut les bandes sans gain de poids', () => {
+    const noGain: BandeICInput[] = [
+      { id: 'X', vivants: 10, poids_moyen_kg: POIDS_NAISSANCE_KG },
+    ];
+    const res = computeICMoyen(noGain, {
+      X: [{ qty_kg: 500, date_conso: '2026-04-01' }],
+    });
+    expect(res.nbBandes).toBe(0);
+    expect(res.niveau).toBe('incalculable');
   });
 });

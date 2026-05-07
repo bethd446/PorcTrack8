@@ -53,6 +53,25 @@ export interface FeedConsoLog {
   date_conso: string;
 }
 
+/**
+ * Niveau qualitatif de l'IC d'une bande, dérivé du ratio brut.
+ * Référence métier porcin (post-sevrage → finition) :
+ *   IC < 2.5  → 'excellent'
+ *   IC 2.5-3.0 → 'bon'
+ *   IC 3.0-3.5 → 'moyen'
+ *   IC > 3.5  → 'a-ameliorer'
+ *   IC 0 (pas de saisies / dénominateur nul) → 'incalculable'
+ */
+export type ICNiveau = 'excellent' | 'bon' | 'moyen' | 'a-ameliorer' | 'incalculable';
+
+export function computeICNiveau(ic: number): ICNiveau {
+  if (!Number.isFinite(ic) || ic <= 0) return 'incalculable';
+  if (ic < 2.5) return 'excellent';
+  if (ic < 3.0) return 'bon';
+  if (ic < 3.5) return 'moyen';
+  return 'a-ameliorer';
+}
+
 /** Données bande nécessaires au calcul. */
 export interface BandeICInput {
   id: string;
@@ -199,6 +218,40 @@ export interface FeedConsoInsertInput {
   date_conso: string; // YYYY-MM-DD
   qty_kg: number;
   notes: string | null;
+}
+
+/**
+ * Calcule l'IC moyen sur un ensemble de bandes (helper pur, sans Supabase).
+ *
+ * `logsByBande` est un map `bandeId → FeedConsoLog[]`. Les bandes sans logs
+ * ou avec un IC `incalculable` (pas de gain, pas de saisies) sont exclues
+ * du calcul. Retourne 0 si aucune bande exploitable.
+ *
+ * Utile pour PerformanceV70 : afficher un IC moyen ferme à partir des
+ * bandes en cours, sans bloquer si certaines bandes n'ont pas encore de
+ * saisies.
+ */
+export function computeICMoyen(
+  bandes: BandeICInput[],
+  logsByBande: Record<string, FeedConsoLog[]>,
+  icTheorique: number = IC_THEORIQUE_DEFAUT,
+): { ic: number; niveau: ICNiveau; nbBandes: number } {
+  const ics: number[] = [];
+  for (const b of bandes) {
+    const logs = logsByBande[b.id] ?? [];
+    const r = buildICReel(b, logs, icTheorique);
+    if (r.ic_reel > 0) ics.push(r.ic_reel);
+  }
+  if (ics.length === 0) {
+    return { ic: 0, niveau: 'incalculable', nbBandes: 0 };
+  }
+  const moy = ics.reduce((s, x) => s + x, 0) / ics.length;
+  const round = Math.round(moy * 100) / 100;
+  return {
+    ic: round,
+    niveau: computeICNiveau(round),
+    nbBandes: ics.length,
+  };
 }
 
 export async function insertFeedConsumption(

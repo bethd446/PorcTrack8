@@ -400,6 +400,37 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
         </p>
       </div>
 
+      <aside
+        role="note"
+        style={{
+          background: 'rgba(244, 162, 97, 0.10)',
+          border: '1px solid rgba(244, 162, 97, 0.35)',
+          borderRadius: 14,
+          padding: '12px 14px',
+          display: 'flex',
+          gap: 10,
+          alignItems: 'flex-start',
+        }}
+      >
+        <span style={{ fontSize: 18, lineHeight: 1 }} aria-hidden>💡</span>
+        <div style={{ flex: 1 }}>
+          <strong style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            Le saviez-vous ?
+          </strong>
+          <p style={{ fontSize: 12, margin: '4px 0 0', lineHeight: 1.45 }}>
+            Sevrage groupé : on regroupe les portées sevrées à <strong>±3 j</strong> pour
+            former des bandes homogènes (poids cible 5-7 kg). Le poids moyen au sevrage est
+            <strong> obligatoire</strong> — il sert de référence à l'IC et au suivi croissance.
+          </p>
+          <a
+            href="/reglages/encyclopedie?slug=05-sevrage-timing-conditions"
+            style={{ fontSize: 11, color: 'var(--color-accent, #c2662b)', textDecoration: 'underline' }}
+          >
+            En savoir plus →
+          </a>
+        </div>
+      </aside>
+
       {bandesEligibles.length === 0 ? (
         <p className="text-[12px] uppercase tracking-wide text-text-2">
           Aucune portée éligible (Sous mère / Maternité avec date MB)

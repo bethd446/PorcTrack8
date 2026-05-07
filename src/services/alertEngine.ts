@@ -540,6 +540,43 @@ function checkReSaillieProactive(truie: Truie, today: Date): FarmAlert | null {
   return null;
 }
 
+/**
+ * R17 — Rappel mensuel post-sevrage.
+ * Pour chaque bande sevrée, on émet une alerte INFO tous les 30 jours
+ * (J+30, J+60, J+90, J+120, …) avec une fenêtre de 3 jours (jour J du palier
+ * et 2 jours suivants) pour ne pas être manquée si le porcher n'ouvre
+ * l'app qu'1 fois la semaine. Idempotent : `id` inclut le numéro de mois.
+ *
+ * Stoppe à 6 mois post-sevrage (porcs sortis du circuit GTTT élevage).
+ */
+function checkRappelMensuelSevrage(bande: BandePorcelets, today: Date): FarmAlert | null {
+  if (bande.statut === 'RECAP') return null;
+  const dSevrage = parseFrDate(bande.dateSevrageReelle);
+  if (!dSevrage) return null;
+
+  const jours = daysDiff(dSevrage, today);
+  if (jours < 30) return null;
+  if (jours > 180) return null;
+
+  const moisDepuis = Math.floor(jours / 30);
+  const reste = jours % 30;
+  if (reste > 2) return null;
+
+  return {
+    id: alertId('RSV', bande.id, `M${moisDepuis}`),
+    priority: 'INFO',
+    category: 'BANDES',
+    subjectId: bande.id,
+    subjectLabel: bande.idPortee || bande.id,
+    title: `Suivi mensuel post-sevrage — ${bande.idPortee || bande.id}`,
+    message: `${moisDepuis} mois post-sevrage. Pesée mensuelle recommandée pour suivi croissance et IC.`,
+    requiresAction: false,
+    daysOffset: jours,
+    actions: [{ type: 'DISMISS', label: 'Noté', variant: 'secondary' }],
+    createdAt: new Date(),
+  };
+}
+
 function checkRetardPhase(bande: BandePorcelets, today: Date): FarmAlert | null {
   if (bande.dateSevrageReelle || (bande.statut || '').toLowerCase().includes('sevr')) return null;
   const dMB = parseFrDate(bande.dateMB);
@@ -809,6 +846,10 @@ export function runAlertEngine(input: AlertEngineInput): FarmAlert[] {
   }
   for (const bande of input.bandes) {
     const a = checkRetardPhase(bande, today);
+    if (a) alerts.push(a);
+  }
+  for (const bande of input.bandes) {
+    const a = checkRappelMensuelSevrage(bande, today);
     if (a) alerts.push(a);
   }
   const surdensite = checkSurdensiteLoges(input.bandes, today);
