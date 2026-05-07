@@ -35,37 +35,16 @@ interface UpcomingItem {
   to: string;
 }
 
-const UPCOMING: UpcomingItem[] = [
-  {
-    badge: 'DEM',
-    badgeBg: 'var(--pt-accent)',
-    title: 'Mise-bas T-018',
-    meta: 'Bande de février · J115',
-    to: '/troupeau/truies/T-018',
-  },
-  {
-    badge: '+2J',
-    badgeBg: 'var(--pt-primary)',
-    title: 'Sevrage bande mars',
-    meta: '11 truies · J+143',
-    to: '/reproduction?phase=maternite',
-  },
-  {
-    badge: '+5J',
-    badgeBg: 'var(--pt-info)',
-    title: 'Échographie planifiée',
-    meta: '7 truies saillies J+28',
-    to: '/reproduction?phase=saillie',
-  },
-];
 
 const VALID_TABS: ReproTab[] = ['agenda', 'en-cours', 'a-venir', 'historique'];
+
+
 const isReproTab = (v: string | null): v is ReproTab =>
   v !== null && (VALID_TABS as string[]).includes(v);
 
 export const ReproV70: React.FC = () => {
   const navigate = useNavigate();
-  const { truies, bandes } = useFarm();
+  const { truies, bandes, saillies } = useFarm();
 
   // V71.1 — KPIs live (étaient hardcodés 28/11/6/3)
   const kpis = useMemo(() => {
@@ -83,6 +62,54 @@ export const ReproV70: React.FC = () => {
     return { pleines, materni, vides, mbProches };
   }, [truies, bandes]);
 
+  const upcomingItems = useMemo((): UpcomingItem[] => {
+    if (!bandes.length && !saillies.length) return [];
+    const now = new Date();
+    const in7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const items: UpcomingItem[] = [];
+    bandes.forEach(b => {
+      if (!b.dateMB) return;
+      const d = new Date(b.dateMB);
+      if (isNaN(d.getTime()) || d < now || d > in7) return;
+      const diffDays = Math.ceil((d.getTime() - now.getTime()) / 86400000);
+      items.push({
+        badge: diffDays <= 0 ? 'AUJ' : diffDays === 1 ? 'DEM' : `+${diffDays}J`,
+        badgeBg: 'var(--pt-accent)',
+        title: `Mise-bas${b.truie ? ` ${b.truie}` : ''}`,
+        meta: `${b.idPortee || b.id} · J115`,
+        to: b.truie ? `/troupeau/truies/${b.truie}` : `/troupeau/bandes/${b.id}`,
+      });
+    });
+    bandes.filter(b => b.statut === 'Sous mère' && b.dateSevragePrevue).forEach(b => {
+      const d = new Date(b.dateSevragePrevue!);
+      if (isNaN(d.getTime()) || d < now || d > in7) return;
+      const diffDays = Math.ceil((d.getTime() - now.getTime()) / 86400000);
+      items.push({
+        badge: `+${Math.max(0, diffDays)}J`,
+        badgeBg: 'var(--pt-primary)',
+        title: `Sevrage ${b.idPortee || b.id}`,
+        meta: `${b.vivants ?? '?'} porcelets · J+28`,
+        to: '/reproduction?phase=maternite',
+      });
+    });
+    saillies.slice(0, 5).forEach(s => {
+      if (!s.dateSaillie) return;
+      const ds = new Date(s.dateSaillie);
+      if (isNaN(ds.getTime())) return;
+      const echoDate = new Date(ds.getTime() + 28 * 86400000);
+      if (echoDate < now || echoDate > in7) return;
+      const diffDays = Math.ceil((echoDate.getTime() - now.getTime()) / 86400000);
+      items.push({
+        badge: `+${Math.max(0, diffDays)}J`,
+        badgeBg: 'var(--pt-info)',
+        title: 'Échographie planifiée',
+        meta: 'Vérification gestation J+28',
+        to: '/reproduction?phase=saillie',
+      });
+    });
+    return items.slice(0, 4);
+  }, [bandes, saillies]);
+
   // V71 FIX #4 — initial tab depuis URL (?tab=...) pour deep-links legacy
   // (/cycles/maternite → /reproduction?tab=en-cours&phase=maternite, etc.).
   const [searchParams, setSearchParams] = useSearchParams();
@@ -98,7 +125,8 @@ export const ReproV70: React.FC = () => {
     if (isReproTab(urlTab) && urlTab !== tab) {
       setTab(urlTab);
     }
-  }, [searchParams, tab]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const handleTabChange = (v: string) => {
     setTab(v as ReproTab);
@@ -159,7 +187,11 @@ export const ReproV70: React.FC = () => {
 
           <Section label="7 prochains jours">
             <Card>
-              {UPCOMING.map((item) => (
+              {upcomingItems.length === 0 ? (
+                <div style={{ padding: '12px 0', textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
+                  Aucun événement dans les 7 prochains jours
+                </div>
+              ) : upcomingItems.map((item) => (
                 <button
                   key={item.title}
                   type="button"
@@ -218,7 +250,11 @@ export const ReproV70: React.FC = () => {
       {tab === 'a-venir' && (
         <Section label="Événements à venir (7 jours)">
           <Card>
-            {UPCOMING.map((item) => (
+            {upcomingItems.length === 0 ? (
+              <div style={{ padding: '12px 0', textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
+                Aucun événement dans les 7 prochains jours
+              </div>
+            ) : upcomingItems.map((item) => (
               <button
                 key={item.title}
                 type="button"

@@ -32,41 +32,66 @@ interface AlertItem {
   to: string;
 }
 
-const ALERTS_INITIAL: AlertItem[] = [
-  {
-    id: 'reforme-T-001',
-    variant: 'warning',
-    pillVariant: 'warning',
-    pillLabel: 'Action',
-    title: 'Réforme suggérée — T-001',
-    meta: 'Aucune saillie depuis 90 jours',
-    to: '/troupeau/truies/T-001',
-  },
-  {
-    id: 'sevrage-bande-mai',
-    variant: 'info',
-    pillVariant: 'info',
-    pillLabel: 'Auto',
-    title: 'Sevrage à confirmer',
-    meta: 'Bande de mai · J+143',
-    to: '/reproduction?phase=maternite',
-  },
-  {
-    id: 'stock-aliment',
-    variant: 'danger',
-    pillVariant: 'danger',
-    pillLabel: 'Urgent',
-    title: 'Stock aliment critique',
-    meta: 'Truie gestante · 2 jours restants',
-    to: '/ressources/aliments',
-  },
-];
-
 export const TodayV70: React.FC = () => {
   const navigate = useNavigate();
   const { truies, verrats, bandes } = useFarm();
   const { profile } = useAuth();
-  const [alerts, setAlerts] = useState<AlertItem[]>(ALERTS_INITIAL);
+
+  // V71.2 — alertes calculées depuis FarmContext (plus de mocks statiques)
+  const computedAlerts = useMemo((): AlertItem[] => {
+    const result: AlertItem[] = [];
+    const now = new Date();
+    const in7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    // MB prévues dans les 7 prochains jours
+    bandes.forEach(b => {
+      if (!b.dateMB) return;
+      const d = new Date(b.dateMB);
+      if (isNaN(d.getTime()) || d < now || d > in7) return;
+      const diffDays = Math.ceil((d.getTime() - now.getTime()) / 86400000);
+      result.push({
+        id: `mb-${b.id}`,
+        variant: diffDays <= 1 ? 'danger' : 'warning',
+        pillVariant: diffDays <= 1 ? 'danger' : 'warning',
+        pillLabel: diffDays <= 0 ? 'Urgent' : `J-${diffDays}`,
+        title: `Mise-bas${b.truie ? ` — ${b.truie}` : ''}`,
+        meta: `${b.idPortee || b.id} · dans ${diffDays <= 0 ? "aujourd'hui" : `${diffDays}j`}`,
+        to: b.truie ? `/troupeau/truies/${b.truie}` : `/troupeau/bandes/${b.id}`,
+      });
+    });
+
+    // Truies à réformer
+    truies.filter(t => /réforme|reforme/i.test(t.statut ?? '')).forEach(t => {
+      result.push({
+        id: `reforme-${t.id}`,
+        variant: 'warning',
+        pillVariant: 'warning',
+        pillLabel: 'Action',
+        title: `Réforme suggérée — ${t.displayId}`,
+        meta: 'Productivité insuffisante · voir fiche',
+        to: `/troupeau/truies/${t.id}`,
+      });
+    });
+
+    return result.slice(0, 5);
+  }, [truies, bandes]);
+
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const alerts = useMemo(
+    () => computedAlerts.filter(a => !dismissed.has(a.id)),
+    [computedAlerts, dismissed],
+  );
+
+  // MB imminente dans 3j → hero card
+  const heroMiseBas = useMemo(() => {
+    const now = new Date();
+    const in3 = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+    return bandes.find(b => {
+      if (!b.dateMB) return false;
+      const d = new Date(b.dateMB);
+      return !isNaN(d.getTime()) && d >= now && d <= in3;
+    }) ?? null;
+  }, [bandes]);
 
   // V71.1 — données live FarmContext (était hardcodé 50/3/92/6)
   const stats = useMemo(() => {
@@ -89,7 +114,7 @@ export const TodayV70: React.FC = () => {
 
   const dismissAlert = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setAlerts((prev) => prev.filter((a) => a.id !== id));
+    setDismissed(prev => new Set([...prev, id]));
   };
 
   return (
@@ -100,23 +125,36 @@ export const TodayV70: React.FC = () => {
         subtitle={`Bonjour ${userName} — ${alerts.length} priorités`}
       />
 
-      {/* Section 1 : TÂCHE PRIORITAIRE (Hero) */}
-      <Card variant="hero">
-        <div className="hero-row">
-          <div className="hero-icon">🐖</div>
-          <div className="hero-info">
-            <div className="hero-title-text">Mise-bas imminente</div>
-            <div className="hero-sub">T-018 · prévue demain</div>
+      {/* Section 1 : TÂCHE PRIORITAIRE (Hero) — affiché uniquement si MB imminente réelle */}
+      {heroMiseBas && (
+        <Card variant="hero">
+          <div className="hero-row">
+            <div className="hero-icon">🐖</div>
+            <div className="hero-info">
+              <div className="hero-title-text">Mise-bas imminente</div>
+              <div className="hero-sub">
+                {heroMiseBas.truie ?? heroMiseBas.idPortee} · prévue{' '}
+                {(() => {
+                  const d = new Date(heroMiseBas.dateMB!);
+                  const diff = Math.ceil((d.getTime() - Date.now()) / 86400000);
+                  return diff <= 0 ? "aujourd'hui" : diff === 1 ? 'demain' : `dans ${diff}j`;
+                })()}
+              </div>
+            </div>
           </div>
-        </div>
-        <Button
-          variant="primary"
-          size="full"
-          onClick={() => navigate('/troupeau/truies/T-018')}
-        >
-          → Voir T-018
-        </Button>
-      </Card>
+          <Button
+            variant="primary"
+            size="full"
+            onClick={() => navigate(
+              heroMiseBas.truie
+                ? `/troupeau/truies/${heroMiseBas.truie}`
+                : `/troupeau/bandes/${heroMiseBas.id}`,
+            )}
+          >
+            → Voir {heroMiseBas.truie ?? heroMiseBas.idPortee}
+          </Button>
+        </Card>
+      )}
 
       {/* Section 2 : À TRAITER (alertes cliquables + dismiss inline) */}
       <Section label={`À traiter (${alerts.length})`}>

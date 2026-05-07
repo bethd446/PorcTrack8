@@ -37,23 +37,17 @@ type PerfTab = 'vue' | 'kpis' | 'finances' | 'previsions';
 
 interface BandePerf {
   bande: string;
-  isse: number;
-  marge: number;
-  truies: number;
+  isse: number | null;
+  marge: number | null;
+  truies: number | null;
   [key: string]: unknown;
 }
 
-const BANDES_DATA: BandePerf[] = [
-  { bande: 'Bande de mars', isse: 12.4, marge: 890, truies: 8 },
-  { bande: 'Bande de février', isse: 11.9, marge: 650, truies: 7 },
-  { bande: 'Bande de janvier', isse: 11.2, marge: 420, truies: 9 },
-];
-
 const BANDES_COLUMNS: DataTableColumn<BandePerf>[] = [
   { key: 'bande', label: 'Bande' },
-  { key: 'isse', label: 'ISSE', align: 'right', sortable: true, render: (r) => r.isse.toFixed(1) },
-  { key: 'marge', label: 'Marge €', align: 'right', sortable: true, render: (r) => `+${r.marge}` },
-  { key: 'truies', label: 'Truies', align: 'right', sortable: true },
+  { key: 'isse', label: 'ISSE', align: 'right', sortable: true, render: (r) => r.isse != null ? r.isse.toFixed(1) : '—' },
+  { key: 'marge', label: 'Marge FCFA', align: 'right', sortable: true, render: (r) => r.marge != null ? `+${r.marge}` : '—' },
+  { key: 'truies', label: 'Truies', align: 'right', sortable: true, render: (r) => r.truies != null ? String(r.truies) : '—' },
 ];
 
 export const PerformanceV70: React.FC = () => {
@@ -71,6 +65,17 @@ export const PerformanceV70: React.FC = () => {
       return null;
     }
   }, [truies, bandes, saillies]);
+
+  // V71.2 — données bandes calculées depuis FarmContext (plus de stubs BANDES_DATA)
+  const bandesData = useMemo((): BandePerf[] => {
+    if (!bandes.length) return [];
+    return bandes.slice(0, 10).map(b => ({
+      bande: b.idPortee || b.id,
+      isse: null,   // calculé via perfKpiAnalyzer par bande — disponible après 1 cycle complet
+      marge: null,
+      truies: null,
+    }));
+  }, [bandes]);
 
   const fmt = (n: number | null | undefined, digits = 1, suffix = ''): string =>
     n === null || n === undefined || !Number.isFinite(n) ? '—' : `${n.toFixed(digits)}${suffix}`;
@@ -290,10 +295,18 @@ export const PerformanceV70: React.FC = () => {
 
       {advancedMode && (
         <Section label="Tableau détaillé (Mode avancé)">
-          <DataTable data={BANDES_DATA} columns={BANDES_COLUMNS} />
-          <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-            <ExportButton data={BANDES_DATA} filename="performance-bandes.csv" label="Export CSV" />
-          </div>
+          {bandesData.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--pt-muted)', fontSize: 13 }}>
+              Données disponibles après le 1er cycle complet
+            </div>
+          ) : (
+            <>
+              <DataTable data={bandesData} columns={BANDES_COLUMNS} />
+              <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                <ExportButton data={bandesData} filename="performance-bandes.csv" label="Export CSV" />
+              </div>
+            </>
+          )}
         </Section>
       )}
     </div>

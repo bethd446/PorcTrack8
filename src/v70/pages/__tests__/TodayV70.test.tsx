@@ -71,14 +71,15 @@ describe('TodayV70 — Phase 3 archétype Dashboard', () => {
     expect(screen.getByText('Bandes')).toBeTruthy();
   });
 
-  it('rend 3 alertes avec pills colorées', () => {
+  it('rend section alertes vide quand farm vide (alertes calculées depuis FarmContext)', () => {
+    // V71.2 : alertes calculées depuis useFarm (plus de mocks statiques ALERTS_INITIAL).
+    // Avec farm vide (truies=[], bandes=[]) → 0 alertes → empty state.
     render(
       <MemoryRouter>
         <TodayV70 />
       </MemoryRouter>,
     );
-    expect(screen.getByText(/réforme suggérée/i)).toBeTruthy();
-    expect(screen.getByText(/sevrage à confirmer/i)).toBeTruthy();
-    expect(screen.getByText(/stock aliment critique/i)).toBeTruthy();
+    expect(screen.getByText(/à traiter \(0\)/i)).toBeTruthy();
+    expect(screen.getByText(/toutes les alertes sont traitées/i)).toBeTruthy();
   });
 });
