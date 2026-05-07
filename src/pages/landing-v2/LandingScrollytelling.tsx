@@ -9,38 +9,60 @@ import { SceneOffline } from './scenes/SceneOffline';
 import { SceneCta } from './scenes/SceneCta';
 
 /**
- * Override le body fixed/overflow:hidden imposé par Ionic shell pour
- * permettre le scroll natif requis par GSAP ScrollTrigger + Lenis.
- * Sans ça, la page fait 100vh et les scènes 2-7 sont invisibles.
+ * Override le shell Ionic (body fixed/overflow:hidden + ion-app
+ * position:absolute inset:0) pour permettre le scroll natif sur window.
+ * Restauration au démontage. C'est nécessaire pour que GSAP ScrollTrigger
+ * et Lenis (sur window) puissent piloter les animations scroll-driven
+ * à travers les 7 scènes (~6500-7500px de hauteur totale).
  */
-function useNativeScroll() {
+function useScrollUnlock() {
   useEffect(() => {
     const body = document.body;
     const html = document.documentElement;
+    const ionApp = document.querySelector('ion-app') as HTMLElement | null;
+
     const prev = {
       bodyOverflow: body.style.overflow,
       bodyPosition: body.style.position,
       bodyHeight: body.style.height,
       htmlOverflow: html.style.overflow,
       htmlHeight: html.style.height,
+      ionPosition: ionApp?.style.position ?? '',
+      ionHeight: ionApp?.style.height ?? '',
+      ionDisplay: ionApp?.style.display ?? '',
+      ionContain: ionApp?.style.contain ?? '',
     };
+
     body.style.overflow = 'auto';
     body.style.position = 'static';
     body.style.height = 'auto';
     html.style.overflow = 'auto';
     html.style.height = 'auto';
+    if (ionApp) {
+      ionApp.style.position = 'static';
+      ionApp.style.height = 'auto';
+      ionApp.style.display = 'block';
+      ionApp.style.contain = 'none';
+    }
+
     return () => {
       body.style.overflow = prev.bodyOverflow;
       body.style.position = prev.bodyPosition;
       body.style.height = prev.bodyHeight;
       html.style.overflow = prev.htmlOverflow;
       html.style.height = prev.htmlHeight;
+      if (ionApp) {
+        ionApp.style.position = prev.ionPosition;
+        ionApp.style.height = prev.ionHeight;
+        ionApp.style.display = prev.ionDisplay;
+        ionApp.style.contain = prev.ionContain;
+      }
     };
   }, []);
 }
 
 export default function LandingScrollytelling() {
-  useNativeScroll();
+  useScrollUnlock();
   useLenisScroll();
   return (
     <div style={{ background: '#0a0a0a', overflowX: 'hidden' }}>
