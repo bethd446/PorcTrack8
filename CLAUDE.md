@@ -4,13 +4,16 @@ Tu es l'agent de développement principal de **PorcTrack 8**, une application mo
 
 ## MÉMOIRE — Lis ces fichiers AU DÉMARRAGE
 1. **`.claude/AGENT_CONTRACT.md`** — Garde-fou anti-hallucination. **OBLIGATOIRE** pour tout sub-agent dispatché. Format `=== VERIFICATION ===` strict.
-2. `.claude/SESSION_MEMORY.md` — État complet du projet, routes, design system, architecture
-3. `.claude/LEARNINGS.md` — Leçons apprises, préférences client, patterns réutilisables, erreurs à éviter
-4. `.claude/WORKFLOW_DESIGN.md` — Workflow UI/UX Pro Max + Magic Chat (ordre de travail, commandes)
-5. `AGENT_PROMPT.md` — Prompts agent avec variantes (tâches, design, multi-agents)
-6. `.agents/skills/emil-design-eng/SKILL.md` — Philosophie design Emil Kowalski
-7. `.claude/skills/ui-ux-pro-max-skill/SKILL.md` — Skill UI/UX Pro Max (99 guidelines, 161 palettes)
-8. `design-system/porctrack-8/MASTER.md` — Design system persisté (Organic Biophilic)
+2. `.claude/memory/learnings.md` — Leçons techniques accumulées (patterns réutilisables, erreurs à éviter, préférences client)
+3. `.claude/memory/decisions.md` — Décisions architecturales/métier/UX actées (NE PAS remettre en cause)
+4. `.claude/memory/blockers.md` — Blocages actifs/résolus (zones à risque connues)
+5. `.claude/memory/journal.md` — Historique chronologique des sessions et vagues (état courant projet)
+6. `.claude/HANDOFF_NEXT_SESSION.md` — Snapshot post-Sheets-Out (V70/V71 consolidation, métriques live)
+7. `.claude/BRIEF_AGENTS_IA.md` — Brief d'orchestration multi-agents (modèles, dispatch, contrats)
+8. `.claude/skills/ui-ux-pro-max-skill/SKILL.md` — Skill UI/UX Pro Max (161 palettes, 99 guidelines, 25 chart types)
+9. `.agents/skills/emil-design-eng/SKILL.md` — Philosophie design Emil Kowalski (animations, easings, active states)
+
+**À NE PAS LIRE** : `.claude/_archive/*` (snapshots obsolètes pré-V70, conservés pour historique uniquement).
 
 ## SUB-AGENTS — Garde-fou anti-hallucination
 Tout brief dispatché à un sub-agent (Opus/Sonnet/Haiku) **DOIT** se terminer par :
@@ -27,7 +30,11 @@ L'orchestrateur (toi) :
   (`wc -l`, `grep`, `git log --oneline -- <fichier>`)
 - Reproduit la commande de validation localement avant tout commit
 
-**À la FIN de chaque session**, mets à jour `.claude/LEARNINGS.md` avec les nouvelles leçons apprises et `.claude/SESSION_MEMORY.md` avec l'état actuel.
+**À la FIN de chaque session**, mets à jour la mémoire vivante :
+- `.claude/memory/learnings.md` — nouvelles leçons techniques, patterns découverts
+- `.claude/memory/decisions.md` — toute décision architecturale/UX actée (format daté)
+- `.claude/memory/blockers.md` — blocages rencontrés (statut 🔴/🟡/✅/⏸)
+- `.claude/memory/journal.md` — résumé chronologique de la session (vagues, métriques, fichiers touchés)
 
 ---
 
