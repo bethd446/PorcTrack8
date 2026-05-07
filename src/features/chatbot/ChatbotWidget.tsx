@@ -11,22 +11,82 @@ interface Message {
   content: string;
 }
 
-// SECURITY: VITE_* env vars are inlined into the client bundle at build time
-// and visible to anyone inspecting the JS. Acceptable for MVP, but for prod
-// route requests through a backend proxy that holds the real secret.
-const API_BASE = import.meta.env.VITE_MARIUS_API_BASE as string | undefined;
-const API_KEY = import.meta.env.VITE_MARIUS_API_KEY as string | undefined;
+// Mistral cloud API (bascule officielle 2026-05-07)
+// Le VPS llama-server custom ignorait le system prompt — Mistral cloud l'applique correctement.
+// SECURITY: VITE_MISTRAL_API_KEY est inlinée dans le bundle client (visible).
+// À migrer vers Supabase Edge Function pour la prod long terme.
+const MISTRAL_API_BASE = 'https://api.mistral.ai/v1';
+const MISTRAL_API_KEY = import.meta.env.VITE_MISTRAL_API_KEY as string | undefined;
+const MISTRAL_MODEL = 'mistral-small-latest';
 
-export const isMariusConfigured: boolean = Boolean(API_BASE && API_KEY);
+// VPS Hostinger en backup (legacy, system prompt non appliqué — fallback uniquement si Mistral KO)
+const VPS_API_BASE = import.meta.env.VITE_MARIUS_API_BASE as string | undefined;
+const VPS_API_KEY = import.meta.env.VITE_MARIUS_API_KEY as string | undefined;
+
+export const isMariusConfigured: boolean = Boolean(
+  MISTRAL_API_KEY || (VPS_API_BASE && VPS_API_KEY),
+);
 
 function warnMixedContent(): void {
-  if (typeof window === 'undefined' || !API_BASE) return;
-  if (window.location.protocol === 'https:' && API_BASE.startsWith('http://')) {
+  if (typeof window === 'undefined' || !VPS_API_BASE) return;
+  if (window.location.protocol === 'https:' && VPS_API_BASE.startsWith('http://')) {
     console.warn(
-      '[Marius] Mixed Content: la page est servie en HTTPS mais API_BASE est en HTTP. ' +
+      '[Marius] Mixed Content: la page est servie en HTTPS mais VPS_API_BASE est en HTTP. ' +
         'Configure HTTPS sur ton VPS (Cloudflare Tunnel ou Caddy + Let\'s Encrypt).',
     );
   }
+}
+
+async function callMariusAPI(
+  messages: Message[],
+  systemPrompt: string,
+  signal: AbortSignal,
+): Promise<Response> {
+  // Tentative 1 : Mistral cloud (system prompt appliqué)
+  if (MISTRAL_API_KEY) {
+    try {
+      const res = await fetch(`${MISTRAL_API_BASE}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${MISTRAL_API_KEY}`,
+          'Accept': 'text/event-stream',
+        },
+        body: JSON.stringify({
+          model: MISTRAL_MODEL,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            ...messages
+              .filter((m) => m.role !== 'system')
+              .map((m) => ({ role: m.role, content: m.content })),
+          ],
+          stream: true,
+          max_tokens: 800,
+          temperature: 0.7,
+        }),
+        signal,
+      });
+      if (res.ok && res.body) return res;
+      console.warn('[Marius] Mistral cloud failed, falling back to VPS', res.status);
+    } catch (err) {
+      console.warn('[Marius] Mistral cloud error, falling back to VPS', err);
+    }
+  }
+
+  // Fallback : VPS Hostinger (system prompt ignoré mais répond)
+  if (!VPS_API_BASE || !VPS_API_KEY) {
+    throw new Error('Aucune API Marius configurée');
+  }
+  const lastUser = [...messages].reverse().find((m) => m.role === 'user')?.content ?? '';
+  return await fetch(`${VPS_API_BASE}/chat`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-API-Key': VPS_API_KEY,
+    },
+    body: JSON.stringify({ message: lastUser }),
+    signal,
+  });
 }
 
 export const ChatbotWidget: React.FC = () => {
@@ -79,7 +139,7 @@ export const ChatbotWidget: React.FC = () => {
     const text = input.trim();
     if (!text || loading) return;
 
-    if (!isMariusConfigured || !API_BASE || !API_KEY) {
+    if (!isMariusConfigured) {
       setMessages(prev => [
         ...prev,
         { role: 'system', content: 'Marius n\'est pas configuré sur cette instance.' },
@@ -101,31 +161,17 @@ export const ChatbotWidget: React.FC = () => {
     setStreaming(false);
 
     try {
-      const recentHistory = messages
-        .filter((m) => m.role !== 'system')
-        .slice(-6)
-        .map((m) => ({ role: m.role, content: m.content }));
+      const userMessage: Message = { role: 'user', content: text };
+      const updatedMessages = [
+        ...messages.filter((m) => m.role !== 'system'),
+        userMessage,
+      ];
 
-      const response = await fetch(`${API_BASE}/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-Key': API_KEY,
-        },
-        body: JSON.stringify({
-          // Legacy : ancien serveur attend juste un string
-          message: text,
-          // Format OpenAI chat completion : si le serveur le supporte, utilise system + history
-          messages: [
-            { role: 'system', content: MARIUS_SYSTEM_PROMPT },
-            ...recentHistory,
-            { role: 'user', content: text },
-          ],
-          // Champ system standalone : autre wrapper llama-server l'utilise
-          system: MARIUS_SYSTEM_PROMPT,
-        }),
-        signal: controller.signal,
-      });
+      const response = await callMariusAPI(
+        updatedMessages.slice(-8),
+        MARIUS_SYSTEM_PROMPT,
+        controller.signal,
+      );
 
       if (!response.ok || !response.body) {
         throw new Error(`HTTP ${response.status}`);
