@@ -345,7 +345,6 @@ const ReproCalendarView: React.FC = () => {
                         <div
                           className="flex items-stretch border-b border-border last:border-b-0"
                         >
-                          {/* TODO V44: refactor as <ListItem>/<AnimalListItem> — complex card-as-button layout */}
                           <button
                             type="button"
                             onClick={() => goTruie(item.truieId)}

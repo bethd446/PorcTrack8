@@ -44,6 +44,7 @@ const DEFAULT_PREFERENCES: UIPreferences = {
   },
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useUIPreferences(): UIPreferences {
   const ctx = useContext(UIPreferencesContext);
   return ctx ?? DEFAULT_PREFERENCES;

@@ -77,16 +77,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!email || !password) return;
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        console.warn('[Dev autologin] échec :', error.message);
+        if (import.meta.env.DEV) { console.warn('[Dev autologin] échec :', error.message); }
       } else {
-        console.info('[Dev autologin] connecté en tant que', email);
+        if (import.meta.env.DEV) { console.info('[Dev autologin] connecté en tant que', email); }
       }
     };
 
     // Safety: force loading=false après 6s même si tout hang. Évite splash bloquant définitif.
     const safetyTimeout = window.setTimeout(() => {
       if (mounted) {
-        console.warn('[AuthContext] safety timeout — forcing loading=false');
+        if (import.meta.env.DEV) { console.warn('[AuthContext] safety timeout — forcing loading=false'); }
         setLoading(false);
       }
     }, 6000);
@@ -118,7 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       })
       .catch((err) => {
-        console.error('[AuthContext] getSession failed', err);
+        if (import.meta.env.DEV) { console.error('[AuthContext] getSession failed', err); }
         finishLoading();
       });
 

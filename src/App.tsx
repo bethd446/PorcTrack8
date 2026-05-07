@@ -507,7 +507,7 @@ const AppContent = () => {
   useEffect(() => {
     // Non-bloquant : si GAS échoue, on n'empêche pas le rendu de l'app.
     loadChecklistDefinitions().catch((err) => {
-      console.warn('[App] loadChecklistDefinitions failed (non-fatal):', err);
+      if (import.meta.env.DEV) { console.warn('[App] loadChecklistDefinitions failed (non-fatal):', err); }
     });
   }, []);
 

@@ -11,6 +11,7 @@ import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-do
 import { useFarm } from '../../context/FarmContext';
 import { BottomNavV70 } from '../components/v70/BottomNav';
 import { UIPreferencesProvider } from '../context/UIPreferencesContext';
+import { V70ErrorBoundary } from '../components/V70ErrorBoundary';
 import { TodayV70 } from '../pages/TodayV70';
 import { AnimalsV70 } from '../pages/AnimalsV70';
 import { PerformanceV70 } from '../pages/PerformanceV70';
@@ -146,19 +147,19 @@ export const V70Routes: React.FC = () => (
       <Suspense fallback={<div style={{ padding: 24 }}>Chargement…</div>}>
         <Routes>
           <Route path="/" element={<Navigate to="/today" replace />} />
-          <Route path="/today" element={<TodayV70 />} />
+          <Route path="/today" element={<V70ErrorBoundary pageName="Aujourd'hui"><TodayV70 /></V70ErrorBoundary>} />
 
           {/* Fiches détail legacy (réutilisées tant que V70 n'a pas de fiches dédiées) */}
           <Route path="/troupeau/truies/:id" element={<TruieDetailView />} />
           <Route path="/troupeau/verrats/:id" element={<VerratDetailView />} />
           <Route path="/troupeau/bandes/:bandeId" element={<BandeDetailRouteV70 />} />
           <Route path="/troupeau/loges/:id" element={<LogeDetailView />} />
-          <Route path="/troupeau/*" element={<AnimalsV70 />} />
+          <Route path="/troupeau/*" element={<V70ErrorBoundary pageName="Elevage"><AnimalsV70 /></V70ErrorBoundary>} />
 
-          <Route path="/reproduction/*" element={<ReproV70 />} />
-          <Route path="/performance/*" element={<PerformanceV70 />} />
+          <Route path="/reproduction/*" element={<V70ErrorBoundary pageName="Reproduction"><ReproV70 /></V70ErrorBoundary>} />
+          <Route path="/performance/*" element={<V70ErrorBoundary pageName="Performance"><PerformanceV70 /></V70ErrorBoundary>} />
 
-          <Route path="/reglages" element={<ReglagesV70 />} />
+          <Route path="/reglages" element={<V70ErrorBoundary pageName="Reglages"><ReglagesV70 /></V70ErrorBoundary>} />
           <Route path="/reglages/encyclopedie" element={<EncyclopediaPage />} />
           <Route path="/reglages/onboarding" element={<OnboardingRoute />} />
 
