@@ -9,6 +9,11 @@ import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
 import type { Loge, Verrat } from '../../types/farm';
 import {
+  canAssignAnimal,
+  getLogeOccupants,
+  isVerratReproducteur,
+} from '../../services/logeAssignmentRules';
+import {
   validateVerratEdit,
   ORIGINE_SUGGESTIONS,
   ALIMENTATION_SUGGESTIONS,
@@ -126,29 +131,48 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
     };
   }, [isOpen]);
 
-  // V25 — Validation 1:1 : la loge sélectionnée est-elle déjà occupée par
-  // un AUTRE sujet (autre verrat, truie ou bande active) ?
-  const logeConflict = useMemo<{ kind: 'verrat' | 'truie' | 'bande'; label: string } | null>(() => {
-    if (!selectedLogeId) return null;
-    const otherVerrat = verrats.find(
-      v => v.id !== verrat.id && v.logeId === selectedLogeId,
+  // V70 — Animal courant projeté en occupant pour le helper.
+  const animalForRule = useMemo(
+    () => ({
+      kind: 'verrat' as const,
+      reproducteur: isVerratReproducteur({ statut }),
+    }),
+    [statut],
+  );
+
+  // V70 — Occupants par loge.
+  const logeOccupantsMap = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof getLogeOccupants>>();
+    for (const loge of loges) {
+      map.set(loge.id, getLogeOccupants(loge, truies, verrats));
+    }
+    return map;
+  }, [loges, truies, verrats]);
+
+  // V70 — Bandes par loge (collision séparée, helper ne gère que truies/verrats).
+  const logeBandesMap = useMemo(() => {
+    const map = new Map<string, { id: string; label: string }>();
+    for (const b of bandes) {
+      if (b.logeId) {
+        map.set(b.logeId, { id: b.id, label: b.idPortee || b.id });
+      }
+    }
+    return map;
+  }, [bandes]);
+
+  // V70 — Verdict éligibilité loge sélectionnée.
+  const logeAssignmentResult = useMemo<{ ok: boolean; raison?: string }>(() => {
+    if (!selectedLogeId) return { ok: true };
+    const loge = loges.find(l => l.id === selectedLogeId);
+    const bande = logeBandesMap.get(selectedLogeId);
+    if (bande) {
+      return { ok: false, raison: `Loge occupée par bande ${bande.label}.` };
+    }
+    const occupants = (logeOccupantsMap.get(selectedLogeId) ?? []).filter(
+      o => o.id !== verrat.id,
     );
-    if (otherVerrat) {
-      return {
-        kind: 'verrat',
-        label: otherVerrat.displayId || otherVerrat.boucle || otherVerrat.id,
-      };
-    }
-    const t = truies.find(t0 => t0.logeId === selectedLogeId);
-    if (t) {
-      return { kind: 'truie', label: t.displayId || t.boucle || t.id };
-    }
-    const b = bandes.find(b0 => b0.logeId === selectedLogeId);
-    if (b) {
-      return { kind: 'bande', label: b.idPortee || b.id };
-    }
-    return null;
-  }, [selectedLogeId, verrats, truies, bandes, verrat.id]);
+    return canAssignAnimal(animalForRule, occupants, loge);
+  }, [selectedLogeId, loges, logeOccupantsMap, logeBandesMap, animalForRule, verrat.id]);
 
   // Render-time sync: reset on (re)open or verrat change (avoids setState-in-effect).
   const [lastKey, setLastKey] = useState<{ isOpen: boolean; verratId: string }>({
@@ -199,17 +223,9 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
       setErrors(result.errors);
       return;
     }
-    // V25 — Bloque si la loge sélectionnée est occupée par un autre sujet.
-    if (selectedLogeIdDirty && logeConflict) {
-      setToast(
-        `Loge déjà occupée par ${
-          logeConflict.kind === 'verrat'
-            ? `verrat ${logeConflict.label}`
-            : logeConflict.kind === 'truie'
-              ? `truie ${logeConflict.label}`
-              : `bande ${logeConflict.label}`
-        }`,
-      );
+    // V70 — Bloque si la loge sélectionnée viole les règles d'attribution.
+    if (selectedLogeIdDirty && selectedLogeId && !logeAssignmentResult.ok) {
+      setToast(`Impossible : ${logeAssignmentResult.raison ?? 'loge non éligible'}`);
       return;
     }
     setErrors({});
@@ -498,8 +514,15 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
               />
             </FormField>
 
-            {/* V25 — Loge structurée (référentiel) */}
-            <FormField label="Loge (référentiel)" hint="1 verrat = 1 loge dédiée (spec) · optionnel">
+            {/* V70 — Loge structurée (référentiel) avec compteur métier */}
+            <FormField
+              label="Loge (référentiel)"
+              hint={
+                animalForRule.reproducteur
+                  ? 'optionnel · verrat reproducteur = seul dans sa loge'
+                  : 'optionnel · les jeunes verrats peuvent partager une loge'
+              }
+            >
               <Select
                 id="edit-verrat-loge-ref"
                 value={selectedLogeId}
@@ -510,27 +533,46 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                 disabled={saving}
               >
                 <option value="">— Aucune —</option>
-                {loges.map(l => (
-                  <option key={l.id} value={l.id}>
-                    {l.numero} · {l.type.toLowerCase().replace('_', '-')}
-                    {l.batiment ? ` · ${l.batiment}` : ''}
-                  </option>
-                ))}
+                {loges.map(l => {
+                  const occupants = (logeOccupantsMap.get(l.id) ?? []).filter(
+                    o => o.id !== verrat.id,
+                  );
+                  const truiesCount = occupants.filter(o => o.kind === 'truie').length;
+                  const verratsCount = occupants.filter(o => o.kind === 'verrat').length;
+                  const bande = logeBandesMap.get(l.id);
+                  const result = bande
+                    ? { ok: false, raison: `bande ${bande.label}` }
+                    : canAssignAnimal(animalForRule, occupants, l);
+                  const isCurrent = l.id === verrat.logeId;
+                  let compteur: string;
+                  if (bande) compteur = `bande ${bande.label}`;
+                  else if (occupants.length === 0) compteur = 'libre';
+                  else if (truiesCount > 0 && verratsCount === 0)
+                    compteur = `${truiesCount} truie${truiesCount > 1 ? 's' : ''}`;
+                  else if (verratsCount > 0 && truiesCount === 0)
+                    compteur = `${verratsCount} verrat${verratsCount > 1 ? 's' : ''}`;
+                  else compteur = `${truiesCount}T+${verratsCount}V`;
+                  const suffix = !result.ok && !isCurrent ? ' — saturée' : '';
+                  return (
+                    <option
+                      key={l.id}
+                      value={l.id}
+                      disabled={!result.ok && !isCurrent}
+                    >
+                      {l.numero} · {l.type.toLowerCase().replace('_', '-')}
+                      {l.batiment ? ` · ${l.batiment}` : ''} · {compteur}{suffix}
+                    </option>
+                  );
+                })}
               </Select>
             </FormField>
-            {logeConflict ? (
+            {selectedLogeId && !logeAssignmentResult.ok ? (
               <p
                 role="alert"
                 data-testid="loge-conflict-warning"
                 className="rounded-md border border-red/40 bg-red/10 px-3 py-2 text-[11px] text-red"
               >
-                Loge {loges.find(l => l.id === selectedLogeId)?.numero ?? ''}{' '}
-                occupée par{' '}
-                {logeConflict.kind === 'verrat'
-                  ? `verrat ${logeConflict.label}`
-                  : logeConflict.kind === 'truie'
-                    ? `truie ${logeConflict.label}`
-                    : `bande ${logeConflict.label}`}
+                ⚠ {logeAssignmentResult.raison ?? 'Loge non éligible'}
               </p>
             ) : null}
           </section>

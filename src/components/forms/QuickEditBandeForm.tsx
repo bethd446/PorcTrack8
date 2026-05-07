@@ -926,7 +926,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
           <fieldset className="space-y-3" disabled={saving}>
             <legend className={labelCls + ' mb-1'}>Loge (référentiel)</legend>
 
-            <FormField label="Loge actuelle" hint="optionnel">
+            <FormField label="Loge actuelle" hint="optionnel · 1 bande active par loge">
               <Select
                 id="edit-bande-loge-ref"
                 value={selectedLogeId}
@@ -936,12 +936,42 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                 }}
               >
                 <option value="">— Aucune —</option>
-                {loges.map(l => (
-                  <option key={l.id} value={l.id}>
-                    {l.numero} · {l.type.toLowerCase().replace('_', '-')}
-                    {l.batiment ? ` · ${l.batiment}` : ''}
-                  </option>
-                ))}
+                {loges.map(l => {
+                  const otherBande = bandes.find(
+                    b => b.id !== bande.id && b.logeId === l.id,
+                  );
+                  const truie = truies.find(t => t.logeId === l.id);
+                  const verrat = verrats.find(v => v.logeId === l.id);
+                  const occupation = logeOccupation.get(l.id) ?? 0;
+                  const isCurrent = l.id === bande.logeId;
+                  let compteur: string;
+                  let blocked = false;
+                  if (otherBande) {
+                    compteur = `bande ${otherBande.idPortee || otherBande.id}`;
+                    blocked = true;
+                  } else if (truie) {
+                    compteur = `truie ${truie.displayId || truie.boucle || truie.id}`;
+                    blocked = true;
+                  } else if (verrat) {
+                    compteur = `verrat ${verrat.displayId || verrat.boucle || verrat.id}`;
+                    blocked = true;
+                  } else if (l.capaciteMax != null) {
+                    compteur = `${occupation}/${l.capaciteMax} places`;
+                  } else {
+                    compteur = occupation > 0 ? `${occupation} occup.` : 'libre';
+                  }
+                  const suffix = blocked && !isCurrent ? ' — saturée' : '';
+                  return (
+                    <option
+                      key={l.id}
+                      value={l.id}
+                      disabled={blocked && !isCurrent}
+                    >
+                      {l.numero} · {l.type.toLowerCase().replace('_', '-')}
+                      {l.batiment ? ` · ${l.batiment}` : ''} · {compteur}{suffix}
+                    </option>
+                  );
+                })}
               </Select>
             </FormField>
 
@@ -974,15 +1004,15 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
               })()
             ) : null}
 
-            {/* V25 — Conflit 1:1 (loge déjà occupée par autre sujet actif). */}
+            {/* V70 — Conflit (loge déjà occupée par autre sujet actif). */}
             {logeConflict ? (
               <div
                 role="alert"
                 data-testid="loge-conflict-warning"
                 className="rounded-md border border-red/40 bg-red/10 px-3 py-2 text-[11px] text-red"
               >
-                Loge {loges.find(l => l.id === selectedLogeId)?.numero ?? ''} déjà
-                occupée par{' '}
+                ⚠ Loge {loges.find(l => l.id === selectedLogeId)?.numero ?? ''}
+                {' '}occupée par{' '}
                 {logeConflict.kind === 'bande'
                   ? `bande ${logeConflict.label}`
                   : logeConflict.kind === 'truie'

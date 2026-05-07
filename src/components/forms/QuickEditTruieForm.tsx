@@ -8,6 +8,11 @@ import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
 import type { Loge, Truie } from '../../types/farm';
 import {
+  canAssignAnimal,
+  getLogeOccupants,
+  LOGE_RULES,
+} from '../../services/logeAssignmentRules';
+import {
   validateTruieEditFull,
   frDateToIso,
   type TruieEditDraft,
@@ -155,26 +160,49 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
     };
   }, [isOpen]);
 
-  // V25 — Validation 1:1 : la loge sélectionnée est-elle déjà occupée par
-  // un AUTRE sujet (autre truie, verrat ou bande active) ?
-  const logeConflict = useMemo<{ kind: 'truie' | 'verrat' | 'bande'; label: string } | null>(() => {
-    if (!selectedLogeId) return null;
-    const otherTruie = truies.find(
-      t => t.id !== truie.id && t.logeId === selectedLogeId,
-    );
-    if (otherTruie) {
-      return { kind: 'truie', label: otherTruie.displayId || otherTruie.boucle || otherTruie.id };
+  // V70 — Occupants par loge (pré-calcul mémoïsé pour éviter N×M).
+  const logeOccupantsMap = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof getLogeOccupants>>();
+    for (const loge of loges) {
+      map.set(loge.id, getLogeOccupants(loge, truies, verrats));
     }
-    const verrat = verrats.find(v => v.logeId === selectedLogeId);
-    if (verrat) {
-      return { kind: 'verrat', label: verrat.displayId || verrat.boucle || verrat.id };
+    return map;
+  }, [loges, truies, verrats]);
+
+  // V70 — Bandes par loge (le helper ne couvre que truies/verrats — on garde
+  // la collision avec une bande active comme blocage explicite).
+  const logeBandesMap = useMemo(() => {
+    const map = new Map<string, { id: string; label: string }>();
+    for (const b of bandes) {
+      if (b.logeId) {
+        map.set(b.logeId, { id: b.id, label: b.idPortee || b.id });
+      }
     }
-    const bande = bandes.find(b => b.logeId === selectedLogeId);
+    return map;
+  }, [bandes]);
+
+  // V70 — Verdict éligibilité de la loge sélectionnée (règles métier V70).
+  // `raison` est le message helper V70, `bandeBlocker` est l'override pour
+  // une bande déjà installée (helper ne sait pas la voir).
+  const logeAssignmentResult = useMemo<
+    { ok: boolean; raison?: string; bandeBlocker?: { label: string } }
+  >(() => {
+    if (!selectedLogeId) return { ok: true };
+    const loge = loges.find(l => l.id === selectedLogeId);
+    const bande = logeBandesMap.get(selectedLogeId);
     if (bande) {
-      return { kind: 'bande', label: bande.idPortee || bande.id };
+      return {
+        ok: false,
+        bandeBlocker: { label: bande.label },
+        raison: `Loge occupée par bande ${bande.label}.`,
+      };
     }
-    return null;
-  }, [selectedLogeId, truies, verrats, bandes, truie.id]);
+    const occupants = (logeOccupantsMap.get(selectedLogeId) ?? []).filter(
+      o => o.id !== truie.id,
+    );
+    return canAssignAnimal({ kind: 'truie' }, occupants, loge);
+  }, [selectedLogeId, loges, logeOccupantsMap, logeBandesMap, truie.id]);
+
 
   // Render-time sync: reset on (re)open or truie change (avoids setState-in-effect).
   const [lastKey, setLastKey] = useState<{ isOpen: boolean; truieId: string }>({
@@ -217,18 +245,12 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
       setErrors(result.errors);
       return;
     }
-    // V25 — Bloque si la loge sélectionnée est occupée par un autre sujet.
-    if (selectedLogeIdDirty && logeConflict) {
+    // V70 — Bloque si la loge sélectionnée viole les règles d'attribution.
+    if (selectedLogeIdDirty && selectedLogeId && !logeAssignmentResult.ok) {
       showToast(
-        `Loge déjà occupée par ${
-          logeConflict.kind === 'truie'
-            ? `truie ${logeConflict.label}`
-            : logeConflict.kind === 'verrat'
-              ? `verrat ${logeConflict.label}`
-              : `bande ${logeConflict.label}`
-        }`,
+        `Impossible : ${logeAssignmentResult.raison ?? 'loge non éligible'}`,
         'warning',
-        { duration: 1800 },
+        { duration: 2200 },
       );
       return;
     }
@@ -533,8 +555,11 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
               />
             </FormField>
 
-            {/* V25 — Loge structurée (référentiel) */}
-            <FormField label="Loge (référentiel)" hint="optionnel · 1 truie = 1 loge dédiée (spec).">
+            {/* V70 — Loge structurée (référentiel) avec compteur métier */}
+            <FormField
+              label="Loge (référentiel)"
+              hint={`optionnel · max ${LOGE_RULES.TRUIE_MAX_PAR_LOGE} truies par loge`}
+            >
               <Select
                 id="edit-truie-loge-ref"
                 value={selectedLogeId}
@@ -545,26 +570,39 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
                 disabled={saving}
               >
                 <option value="">— Aucune —</option>
-                {loges.map(l => (
-                  <option key={l.id} value={l.id}>
-                    {l.numero} · {l.type.toLowerCase().replace('_', '-')}
-                    {l.batiment ? ` · ${l.batiment}` : ''}
-                  </option>
-                ))}
+                {loges.map(l => {
+                  const occupants = (logeOccupantsMap.get(l.id) ?? []).filter(
+                    o => o.id !== truie.id,
+                  );
+                  const truiesCount = occupants.filter(o => o.kind === 'truie').length;
+                  const bande = logeBandesMap.get(l.id);
+                  const result = bande
+                    ? { ok: false, raison: `bande ${bande.label}` }
+                    : canAssignAnimal({ kind: 'truie' }, occupants, l);
+                  const isCurrent = l.id === truie.logeId;
+                  const compteur = bande
+                    ? `bande ${bande.label}`
+                    : `${truiesCount}/${LOGE_RULES.TRUIE_MAX_PAR_LOGE} truies`;
+                  const suffix = !result.ok && !isCurrent ? ' — saturée' : '';
+                  return (
+                    <option
+                      key={l.id}
+                      value={l.id}
+                      disabled={!result.ok && !isCurrent}
+                    >
+                      {l.numero} · {l.type.toLowerCase().replace('_', '-')}
+                      {l.batiment ? ` · ${l.batiment}` : ''} · {compteur}{suffix}
+                    </option>
+                  );
+                })}
               </Select>
-              {logeConflict ? (
+              {selectedLogeId && !logeAssignmentResult.ok ? (
                 <p
                   role="alert"
                   data-testid="loge-conflict-warning"
                   className="mt-1 rounded-md border border-red/40 bg-red/10 px-3 py-2 text-[11px] text-red"
                 >
-                  Loge {loges.find(l => l.id === selectedLogeId)?.numero ?? ''}{' '}
-                  occupée par{' '}
-                  {logeConflict.kind === 'truie'
-                    ? `truie ${logeConflict.label}`
-                    : logeConflict.kind === 'verrat'
-                      ? `verrat ${logeConflict.label}`
-                      : `bande ${logeConflict.label}`}
+                  ⚠ {logeAssignmentResult.raison ?? 'Loge non éligible'}
                 </p>
               ) : null}
             </FormField>
