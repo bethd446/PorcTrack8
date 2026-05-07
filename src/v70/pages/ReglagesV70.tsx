@@ -8,8 +8,9 @@
  * - /reglages/encyclopedie → EncyclopediaPage
  * - /reglages/onboarding → OnboardingEduPage
  */
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { LogOut, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
@@ -18,9 +19,21 @@ import { ListItem } from '../components/ds/ListItem';
 import { ToggleAdvancedMode } from '../components/v70/ToggleAdvancedMode';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 
+const PAGE_BACKGROUND_SRC = '/images/ambiance-ux.webp';
+
 export const ReglagesV70: React.FC = () => {
   const navigate = useNavigate();
-  const { profile, role } = useAuth();
+  const { profile, role, signOut } = useAuth();
+
+  const handleSignOut = useCallback(async () => {
+    if (!window.confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) return;
+    try {
+      await signOut();
+      navigate('/login', { replace: true });
+    } catch (err) {
+      console.error('Sign out failed', err);
+    }
+  }, [signOut, navigate]);
 
   // V71.1 — données live profile (étaient hardcodées "Christophe / Owner · Ferme audit test")
   const displayName = profile?.full_name?.trim() || 'Éleveur';
@@ -29,7 +42,25 @@ export const ReglagesV70: React.FC = () => {
   const roleLabel = role || 'Utilisateur';
 
   return (
-    <div className="phone-content" style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
+    <div
+      className="phone-content"
+      style={{ padding: 24, maxWidth: 600, margin: '0 auto', position: 'relative', minHeight: '100%' }}
+    >
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `url(${PAGE_BACKGROUND_SRC})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center top',
+          backgroundRepeat: 'no-repeat',
+          opacity: 0.06,
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+      <div style={{ position: 'relative', zIndex: 1 }}>
       <MariusGreeting pageContext="configuration" />
 
       <PageHeader
@@ -68,14 +99,14 @@ export const ReglagesV70: React.FC = () => {
           title="Ma ferme"
           subtitle="Identité, secteur, devise"
           trailing={<span className="list-arrow">›</span>}
-          onClick={() => navigate('/reglages/systeme')}
+          onClick={() => navigate('/reglages/ma-ferme')}
         />
         <ListItem
           avatar={<span style={{ fontSize: 20 }}>👥</span>}
           title="Mon équipe"
-          subtitle="4 utilisateurs · Owner+Porcher+Admin"
+          subtitle="Rôles, accès et invitations"
           trailing={<span className="list-arrow">›</span>}
-          onClick={() => navigate('/reglages/systeme')}
+          onClick={() => navigate('/reglages/mon-equipe')}
         />
         <ListItem
           avatar={<span style={{ fontSize: 20 }}>🌾</span>}
@@ -109,6 +140,58 @@ export const ReglagesV70: React.FC = () => {
           onClick={() => navigate('/reglages/onboarding')}
         />
       </Section>
+
+      {/* SECTION DÉCONNEXION — visible et accessible (V70 P1.7) */}
+      <section style={{ marginTop: 24, marginBottom: 32 }}>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          aria-label="Se déconnecter de PorcTrack"
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            padding: '14px 16px',
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--line)',
+            borderRadius: 16,
+            cursor: 'pointer',
+            transition: 'background 200ms ease, border-color 200ms ease',
+            fontFamily: 'var(--font-body)',
+            fontSize: 15,
+            color: 'var(--ink)',
+            textAlign: 'left',
+          }}
+          className="hover:bg-[var(--bg-surface-2)] hover:border-[var(--color-danger,#a4453d)]"
+        >
+          <span
+            aria-hidden
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              background: 'rgba(164, 69, 61, 0.08)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <LogOut size={18} color="var(--color-danger, #a4453d)" />
+          </span>
+          <span style={{ flex: 1 }}>
+            <span style={{ display: 'block', fontWeight: 600, color: 'var(--ink)' }}>
+              Se déconnecter
+            </span>
+            <span style={{ display: 'block', fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
+              Quitter votre session PorcTrack
+            </span>
+          </span>
+          <ChevronRight size={18} color="var(--muted)" aria-hidden />
+        </button>
+      </section>
+      </div>
     </div>
   );
 };

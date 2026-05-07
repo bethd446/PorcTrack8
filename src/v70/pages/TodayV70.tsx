@@ -22,6 +22,10 @@ import { Button } from '../components/ds/Button';
 import { Pill } from '../components/ds/Pill';
 import { StatsGrid, Stat } from '../components/ds/StatsGrid';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
+import { useFarmContextHints } from '../../features/encyclopedia/useFarmContextHints';
+import { HintCard } from '../../features/encyclopedia/HintCard';
+
+const PAGE_BACKGROUND_SRC = '/images/hero-2.webp';
 
 interface AlertItem {
   id: string;
@@ -118,8 +122,29 @@ export const TodayV70: React.FC = () => {
     setDismissed(prev => new Set([...prev, id]));
   };
 
+  // V71 — hints encyclopédie contextuels (max 1 affiché à la fois)
+  const hints = useFarmContextHints();
+
   return (
-    <div className="phone-content" style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
+    <div
+      className="phone-content"
+      style={{ padding: 24, maxWidth: 600, margin: '0 auto', position: 'relative', minHeight: '100%' }}
+    >
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `url(${PAGE_BACKGROUND_SRC})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center top',
+          backgroundRepeat: 'no-repeat',
+          opacity: 0.06,
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+      <div style={{ position: 'relative', zIndex: 1 }}>
       <MariusGreeting />
 
       <PageHeader
@@ -127,6 +152,9 @@ export const TodayV70: React.FC = () => {
         title="Aujourd'hui"
         subtitle={`Bonjour ${userName} — ${alerts.length} priorités`}
       />
+
+      {/* V71 — Carte pédagogique contextuelle (encyclopédie liée à l'état ferme) */}
+      {hints.length > 0 && <HintCard hint={hints[0]} />}
 
       {/* Section 1 : TÂCHE PRIORITAIRE (Hero) — affiché uniquement si MB imminente réelle */}
       {heroMiseBas && (
@@ -250,6 +278,7 @@ export const TodayV70: React.FC = () => {
           </Button>
         </Card>
       </Section>
+      </div>
     </div>
   );
 };

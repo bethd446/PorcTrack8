@@ -17,6 +17,8 @@ import { AnimalsV70 } from '../pages/AnimalsV70';
 import { PerformanceV70 } from '../pages/PerformanceV70';
 import { ReproV70 } from '../pages/ReproV70';
 import { ReglagesV70 } from '../pages/ReglagesV70';
+import { MaFermeV70 } from '../pages/MaFermeV70';
+import { MonEquipeV70 } from '../pages/MonEquipeV70';
 import { EncyclopediaPage } from '../pages/EncyclopediaPage';
 import { OnboardingEduPage } from '../pages/OnboardingEduPage';
 
@@ -160,6 +162,8 @@ export const V70Routes: React.FC = () => (
           <Route path="/performance/*" element={<V70ErrorBoundary pageName="Performance"><PerformanceV70 /></V70ErrorBoundary>} />
 
           <Route path="/reglages" element={<V70ErrorBoundary pageName="Reglages"><ReglagesV70 /></V70ErrorBoundary>} />
+          <Route path="/reglages/ma-ferme" element={<V70ErrorBoundary pageName="Ma ferme"><MaFermeV70 /></V70ErrorBoundary>} />
+          <Route path="/reglages/mon-equipe" element={<V70ErrorBoundary pageName="Mon équipe"><MonEquipeV70 /></V70ErrorBoundary>} />
           <Route path="/reglages/encyclopedie" element={<EncyclopediaPage />} />
           <Route path="/reglages/onboarding" element={<OnboardingRoute />} />
 

@@ -5,7 +5,8 @@
  * V71 Phase 4 : 10 articles (cycles, économie, santé, alimentation, reproduction).
  * V71 Phase 4.5 : recherche full-text titre + catégorie + niveau.
  */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { EncyclopediaArticle } from '../components/v70/EncyclopediaArticle';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
@@ -89,8 +90,18 @@ function normalize(s: string): string {
 }
 
 export const EncyclopediaPage: React.FC = () => {
+  const location = useLocation();
   const [selected, setSelected] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+
+  // V71 — deep-link via `?slug=...` (depuis hints contextuels TodayV70)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const slug = params.get('slug');
+    if (slug && ARTICLES.some((a) => a.slug === slug)) {
+      setSelected(slug);
+    }
+  }, [location.search]);
 
   const filtered = useMemo(() => {
     const q = normalize(search.trim());
