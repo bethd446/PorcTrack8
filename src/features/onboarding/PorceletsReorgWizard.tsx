@@ -1,18 +1,22 @@
 /**
- * PorceletsReorgWizard — Wizard "Création manuelle de bandes" (V72)
+ * PorceletsReorgWizard — Wizard "Création manuelle de bandes" (V72-P4)
  *
  * Affiché au login (via PorceletsReorgGate) si la ferme courante a des
  * porcelets en vrac (porcelets_individuels.batch_id IS NULL).
  *
- * Workflow :
- *  1. Liste les porcelets en vrac avec filtres sexe + tranche de poids
- *  2. L'éleveur sélectionne jusqu'à 40 porcelets via checkbox
- *  3. Clic "Créer une bande" → form (loge, stade, type, âge, poids moyen, note)
- *  4. Submit :
- *     - INSERT loges (si nouvelle)
- *     - INSERT batches (code_id auto)
- *     - UPDATE porcelets_individuels SET batch_id = new_batch.id
- *  5. Refresh : retire les sélectionnés, propose de continuer si 0 vrac restant
+ * Workflow refondu (validé par éleveur Christophe) :
+ *   1. Sélection porcelets (multi-select, filtres sexe + poids)
+ *   2. Numéro de bande — texte libre, unique sur la ferme
+ *   3. Truie / verrat (optionnel) — radio Aucun / Truie / Verrat
+ *   4. Loge 1 — numéro libre + type (F / M / Mixte)
+ *   5. Loge 2 (optionnel, si Loge 1 ≠ Mixte) — pour split F/M
+ *   6. Confirmation — récap + INSERT cascade
+ *
+ * Cycle métier : à ~2 mois (post-sevrage), porcelets sont sexés ; F + M
+ * peuvent occuper 2 loges distinctes (ou 1 mixte en urgence).
+ *
+ * Schema : `porcelets_individuels.loge_id` (V72-P4 migration) permet de
+ * stocker la loge effective par porcelet, sans changer `batches.loge_id`.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -22,9 +26,6 @@ import {
   CheckSquare,
   Filter,
   Loader2,
-  Plus,
-  Save,
-  X,
 } from 'lucide-react';
 
 import {
@@ -38,10 +39,16 @@ import {
   RadioGroup,
   Section,
   Select,
-  Textarea,
+  Wizard,
 } from '@/design-system';
 import { supabase } from '../../services/supabaseClient';
+import {
+  insertLoge,
+  insertBatch,
+  updatePorceletIndividuel,
+} from '../../services/supabaseWrites';
 import { useAuth } from '../../context/AuthContext';
+import { useFarm } from '../../context/FarmContext';
 import { useToast } from '../../context/ToastContext';
 
 // ─── Constantes métier ───────────────────────────────────────────────────────
@@ -58,7 +65,11 @@ type Stade =
   | 'Engraissement'
   | 'Finition';
 
-type TypeLoge = 'MALES' | 'FEMELLES' | 'MIXTE';
+/** Type de loge porté par le wizard (UI) : F = femelles, M = mâles, MIXTE = libre. */
+export type WizardTypeLoge = 'F' | 'M' | 'MIXTE';
+
+/** Source reproductive optionnelle saisie par l'éleveur. */
+export type SourceReproType = 'NONE' | 'SOW' | 'BOAR';
 
 interface PorceletVrac {
   id: string;
@@ -67,40 +78,31 @@ interface PorceletVrac {
   poids_courant_kg: number | null;
 }
 
-interface LogeOption {
+interface SowOption {
   id: string;
+  displayId: string;
+  boucle: string;
+}
+
+interface BoarOption {
+  id: string;
+  displayId: string;
+  boucle: string;
+}
+
+interface LogeFormState {
   numero: string;
-  type: string;
-  repartition: string | null;
+  type: WizardTypeLoge | null;
 }
 
-interface CreationForm {
-  logeMode: 'EXISTING' | 'NEW';
-  logeId: string; // si EXISTING
-  logeNumero: string; // si NEW
-  stade: Stade | null;
-  typeLoge: TypeLoge | null;
-  ageMois: string;
-  poidsMoyenKg: string;
-  note: string;
-}
-
-const STADE_OPTIONS: { value: Stade; label: string }[] = [
-  { value: 'Sous mère', label: 'Maternité (Sous mère)' },
-  { value: 'Post-sevrage', label: 'Post-sevrage' },
-  { value: 'Croissance', label: 'Croissance' },
-  { value: 'Engraissement', label: 'Engraissement' },
-  { value: 'Finition', label: 'Finition' },
-];
-
-const TYPE_LOGE_OPTIONS: { value: TypeLoge; label: string }[] = [
-  { value: 'MALES', label: 'Mâles seulement' },
-  { value: 'FEMELLES', label: 'Femelles seulement' },
-  { value: 'MIXTE', label: 'Mixte' },
+const TYPE_LOGE_OPTIONS_LOGE1: { value: WizardTypeLoge; label: string }[] = [
+  { value: 'F', label: 'Femelles uniquement' },
+  { value: 'M', label: 'Mâles uniquement' },
+  { value: 'MIXTE', label: 'Mixte (urgence : F + M ensemble)' },
 ];
 
 // Mapping stade → type loge canonique (LogeType DB)
-const STADE_TO_LOGE_TYPE: Record<Stade, string> = {
+export const STADE_TO_LOGE_TYPE: Record<Stade, string> = {
   'Sous mère': 'MATERNITE',
   'Post-sevrage': 'POST_SEVRAGE',
   Croissance: 'CROISSANCE',
@@ -108,16 +110,8 @@ const STADE_TO_LOGE_TYPE: Record<Stade, string> = {
   Finition: 'FINITION',
 };
 
-const STADE_CODE: Record<Stade, string> = {
-  'Sous mère': 'MAT',
-  'Post-sevrage': 'PS',
-  Croissance: 'CR',
-  Engraissement: 'ENG',
-  Finition: 'FIN',
-};
-
 // Plage de poids attendue par stade (warning soft uniquement)
-const STADE_POIDS_RANGE: Record<Stade, { min: number; max: number }> = {
+export const STADE_POIDS_RANGE: Record<Stade, { min: number; max: number }> = {
   'Sous mère': { min: 0, max: 7 },
   'Post-sevrage': { min: 5, max: 25 },
   Croissance: { min: 20, max: 60 },
@@ -125,26 +119,7 @@ const STADE_POIDS_RANGE: Record<Stade, { min: number; max: number }> = {
   Finition: { min: 80, max: 120 },
 };
 
-const DEFAULT_FORM: CreationForm = {
-  logeMode: 'EXISTING',
-  logeId: '',
-  logeNumero: '',
-  stade: null,
-  typeLoge: null,
-  ageMois: '',
-  poidsMoyenKg: '',
-  note: '',
-};
-
 // ─── Helpers exposés (testables) ─────────────────────────────────────────────
-
-export function buildBandeCodeId(stade: Stade, logeNumero: string, today: Date): string {
-  const yy = String(today.getFullYear()).slice(2);
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  const safe = logeNumero.trim().replace(/[^A-Za-z0-9]/g, '') || 'LX';
-  return `B-${yy}${mm}${dd}-L${safe}-${STADE_CODE[stade]}`;
-}
 
 export function avgPoids(porcelets: { poids_courant_kg: number | null }[]): number | null {
   const valid = porcelets
@@ -178,23 +153,62 @@ export function filtrePorcelets(
   });
 }
 
-export function typeLogeCoherent(
-  typeLoge: TypeLoge,
-  selection: { sexe: 'M' | 'F' | 'INCONNU' | null }[],
+/**
+ * Vérifie qu'un numéro de bande saisi librement n'est pas déjà utilisé sur la
+ * ferme. Comparaison case-insensitive et trim.
+ */
+export function validationNumeroBandeUnique(
+  codeId: string,
+  existingBatches: { code_id: string }[],
 ): boolean {
-  if (typeLoge === 'MIXTE') return true;
-  if (typeLoge === 'MALES') return selection.every((s) => s.sexe === 'M');
-  if (typeLoge === 'FEMELLES') return selection.every((s) => s.sexe === 'F');
-  return true;
+  const norm = codeId.trim().toLowerCase();
+  if (norm === '') return false;
+  return !existingBatches.some((b) => (b.code_id ?? '').trim().toLowerCase() === norm);
 }
 
-// ─── Hook : fetch porcelets vrac + loges ─────────────────────────────────────
+/**
+ * V72-P4 — Pour chaque porcelet sélectionné, calcule la loge cible selon le
+ * mode de répartition Loge 1 / Loge 2. Pure : utilisée dans le submit ET
+ * dans les tests pour vérifier le bucket.
+ *
+ *  - Loge 1 = MIXTE → tout va sur loge1Id (loge2Id ignorée).
+ *  - Loge 1 = F → femelles sur loge1, mâles sur loge2 si présente sinon loge1.
+ *  - Loge 1 = M → mâles sur loge1, femelles sur loge2 si présente sinon loge1.
+ *  - Sexe inconnu : reste sur loge1.
+ */
+export function repartitionPorceletsParLoge<
+  T extends { id: string; sexe: 'M' | 'F' | 'INCONNU' | null },
+>(
+  porcelets: T[],
+  loge1Type: WizardTypeLoge,
+  loge1Id: string,
+  loge2Id: string | null,
+): { porceletId: string; logeId: string }[] {
+  return porcelets.map((p) => {
+    if (loge1Type === 'MIXTE') {
+      return { porceletId: p.id, logeId: loge1Id };
+    }
+    if (loge1Type === 'F') {
+      return {
+        porceletId: p.id,
+        logeId: p.sexe === 'M' && loge2Id ? loge2Id : loge1Id,
+      };
+    }
+    // loge1Type === 'M'
+    return {
+      porceletId: p.id,
+      logeId: p.sexe === 'F' && loge2Id ? loge2Id : loge1Id,
+    };
+  });
+}
+
+// ─── Hook : fetch porcelets vrac + bandes existantes ─────────────────────────
 
 interface UseVracDataState {
   loading: boolean;
   error: string | null;
   porcelets: PorceletVrac[];
-  loges: LogeOption[];
+  existingCodeIds: string[];
   refresh: () => void;
 }
 
@@ -202,7 +216,7 @@ function useVracData(farmId: string | null): UseVracDataState {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [porcelets, setPorcelets] = useState<PorceletVrac[]>([]);
-  const [loges, setLoges] = useState<LogeOption[]>([]);
+  const [existingCodeIds, setExistingCodeIds] = useState<string[]>([]);
   const [tick, setTick] = useState(0);
 
   const refresh = useCallback(() => setTick((t) => t + 1), []);
@@ -225,17 +239,15 @@ function useVracData(farmId: string | null): UseVracDataState {
         if (pErr) throw pErr;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: lRows, error: lErr } = await (supabase as any)
-          .from('loges')
-          .select('id, numero, type, repartition')
-          .eq('farm_id', farmId)
-          .eq('active', true)
-          .order('numero', { ascending: true });
-        if (lErr) throw lErr;
+        const { data: bRows, error: bErr } = await (supabase as any)
+          .from('batches')
+          .select('code_id')
+          .eq('farm_id', farmId);
+        if (bErr) throw bErr;
 
         if (cancelled) return;
         setPorcelets(pRows ?? []);
-        setLoges(lRows ?? []);
+        setExistingCodeIds(((bRows ?? []) as { code_id: string }[]).map((b) => b.code_id));
         setLoading(false);
       } catch (e) {
         if (cancelled) return;
@@ -249,7 +261,7 @@ function useVracData(farmId: string | null): UseVracDataState {
     };
   }, [farmId, tick]);
 
-  return { loading, error, porcelets, loges, refresh };
+  return { loading, error, porcelets, existingCodeIds, refresh };
 }
 
 // ─── Composant principal ─────────────────────────────────────────────────────
@@ -258,17 +270,54 @@ export default function PorceletsReorgWizard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { truies, verrats } = useFarm();
   const farmId = user?.id ?? null;
 
-  const { loading, error, porcelets, loges, refresh } = useVracData(farmId);
+  const { loading, error, porcelets, existingCodeIds, refresh } = useVracData(farmId);
 
+  // Étape 1 : sélection
   const [sexeFilter, setSexeFilter] = useState<SexeFilter>('ALL');
   const [poidsFilter, setPoidsFilter] = useState<PoidsFilter>('ALL');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState<CreationForm>(DEFAULT_FORM);
+  const [showWizard, setShowWizard] = useState(false);
+
+  // Étape 2 : numéro de bande
+  const [numeroBande, setNumeroBande] = useState('');
+
+  // Étape 3 : source reproductive
+  const [sourceType, setSourceType] = useState<SourceReproType>('NONE');
+  const [sowId, setSowId] = useState('');
+  const [boarId, setBoarId] = useState('');
+
+  // Étape 4-5 : loges
+  const [loge1, setLoge1] = useState<LogeFormState>({ numero: '', type: null });
+  const [loge2Activated, setLoge2Activated] = useState(false);
+  const [loge2, setLoge2] = useState<LogeFormState>({ numero: '', type: null });
+
+  // Submit
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Mappings sows/boars en options légères
+  const sowOptions: SowOption[] = useMemo(
+    () =>
+      truies.map((t) => ({
+        id: t.id,
+        displayId: t.displayId || t.id.slice(0, 8),
+        boucle: t.boucle ?? '',
+      })),
+    [truies],
+  );
+
+  const boarOptions: BoarOption[] = useMemo(
+    () =>
+      verrats.map((v) => ({
+        id: v.id,
+        displayId: v.displayId || v.id.slice(0, 8),
+        boucle: v.boucle ?? '',
+      })),
+    [verrats],
+  );
 
   const totalCount = porcelets.length;
   const malesCount = useMemo(() => porcelets.filter((p) => p.sexe === 'M').length, [porcelets]);
@@ -284,6 +333,9 @@ export default function PorceletsReorgWizard() {
     [porcelets, selectedIds],
   );
 
+  const selectedMales = selectedPorcelets.filter((p) => p.sexe === 'M').length;
+  const selectedFemelles = selectedPorcelets.filter((p) => p.sexe === 'F').length;
+
   const selectionAtMax = selectedIds.size >= MAX_PORCELETS_PAR_BANDE;
 
   const toggleSelect = (id: string) => {
@@ -298,119 +350,182 @@ export default function PorceletsReorgWizard() {
     });
   };
 
-  const openForm = () => {
+  const openWizard = () => {
     if (selectedIds.size === 0) return;
-    const avg = avgPoids(selectedPorcelets);
-    setForm({
-      ...DEFAULT_FORM,
-      poidsMoyenKg: avg !== null ? String(avg) : '',
-    });
+    // Reset le state du wizard à chaque ouverture
+    setNumeroBande('');
+    setSourceType('NONE');
+    setSowId('');
+    setBoarId('');
+    setLoge1({ numero: '', type: null });
+    setLoge2Activated(false);
+    setLoge2({ numero: '', type: null });
     setSubmitError(null);
-    setShowForm(true);
+    setShowWizard(true);
   };
 
-  const closeForm = () => {
-    setShowForm(false);
+  const closeWizard = () => {
+    setShowWizard(false);
     setSubmitError(null);
   };
 
-  const formCanSubmit =
-    (form.logeMode === 'EXISTING' ? form.logeId !== '' : form.logeNumero.trim() !== '') &&
-    form.stade !== null &&
-    form.typeLoge !== null &&
-    form.ageMois !== '' &&
-    Number(form.ageMois) > 0;
+  // ── Validation par étape ──────────────────────────────────────────────────
 
-  const poidsMoyenNum = form.poidsMoyenKg !== '' ? Number(form.poidsMoyenKg) : null;
-  const poidsWarn =
-    form.stade !== null &&
-    poidsMoyenNum !== null &&
-    !poidsCohorent(form.stade, poidsMoyenNum);
+  const numeroBandeValide = useMemo(() => {
+    const trimmed = numeroBande.trim();
+    if (trimmed === '') return false;
+    return validationNumeroBandeUnique(trimmed, existingCodeIds.map((c) => ({ code_id: c })));
+  }, [numeroBande, existingCodeIds]);
 
-  const typeLogeMismatch =
-    form.typeLoge !== null &&
-    !typeLogeCoherent(form.typeLoge, selectedPorcelets);
+  const sourceValide = useMemo(() => {
+    if (sourceType === 'NONE') return true;
+    if (sourceType === 'SOW') return sowId !== '';
+    return boarId !== '';
+  }, [sourceType, sowId, boarId]);
+
+  const loge1Valide = useMemo(() => {
+    if (loge1.numero.trim() === '') return false;
+    if (loge1.type === null) return false;
+    // Cohérence sexes
+    if (loge1.type === 'F' && selectedMales > 0 && !loge2Activated) return false;
+    if (loge1.type === 'M' && selectedFemelles > 0 && !loge2Activated) return false;
+    return true;
+  }, [loge1, selectedMales, selectedFemelles, loge2Activated]);
+
+  const loge2Valide = useMemo(() => {
+    if (!loge2Activated) return true;
+    if (loge2.numero.trim() === '') return false;
+    if (loge1.type === 'MIXTE') return false;
+    if (loge1.numero.trim() !== '' && loge2.numero.trim().toLowerCase() === loge1.numero.trim().toLowerCase()) {
+      return false;
+    }
+    return true;
+  }, [loge2Activated, loge2, loge1]);
+
+  const recapValide =
+    selectedIds.size > 0 &&
+    numeroBandeValide &&
+    sourceValide &&
+    loge1Valide &&
+    loge2Valide;
+
+  // Type de loge2 dérivé : opposé de loge1.type quand activée.
+  const loge2TypeDerivé: WizardTypeLoge | null =
+    loge2Activated && loge1.type === 'F'
+      ? 'M'
+      : loge2Activated && loge1.type === 'M'
+      ? 'F'
+      : null;
+
+  // ── Submit cascade ────────────────────────────────────────────────────────
 
   const handleSubmit = async () => {
-    if (!farmId || !formCanSubmit || form.stade === null || form.typeLoge === null) return;
-    if (typeLogeMismatch) {
-      setSubmitError(
-        'Le type de loge sélectionné ne correspond pas aux sexes des porcelets. Ajuste la sélection ou le type.',
-      );
-      return;
-    }
+    if (!farmId || !recapValide || loge1.type === null) return;
     setSubmitting(true);
     setSubmitError(null);
     try {
-      // 1. Loge — création si nécessaire, sinon récup numéro
-      let logeIdToUse = form.logeId;
-      let logeNumeroToUse = '';
-      if (form.logeMode === 'NEW') {
-        const newLogePayload = {
-          farm_id: farmId,
-          numero: form.logeNumero.trim(),
-          type: STADE_TO_LOGE_TYPE[form.stade],
-          repartition: form.typeLoge,
-          capacite_max: Math.ceil(selectedIds.size * 1.2),
+      // 1. INSERT loge 1 (toujours créée — on ne réutilise pas l'existant pour
+      //    éviter d'écraser une loge en cours d'usage par une autre bande)
+      const loge1Db = await insertLoge({
+        numero: loge1.numero.trim(),
+        type: STADE_TO_LOGE_TYPE['Post-sevrage'],
+        repartition: loge1.type === 'MIXTE' ? 'MIXTE' : loge1.type === 'F' ? 'FEMELLES' : 'MALES',
+        capacite_max: Math.max(
+          1,
+          Math.ceil(
+            (loge1.type === 'F'
+              ? selectedFemelles
+              : loge1.type === 'M'
+              ? selectedMales
+              : selectedIds.size) * 1.2,
+          ),
+        ),
+        active: true,
+      });
+
+      // 2. INSERT loge 2 si activée
+      let loge2Db: { id: string; numero: string } | null = null;
+      if (loge2Activated && loge2TypeDerivé) {
+        const created = await insertLoge({
+          numero: loge2.numero.trim(),
+          type: STADE_TO_LOGE_TYPE['Post-sevrage'],
+          repartition: loge2TypeDerivé === 'F' ? 'FEMELLES' : 'MALES',
+          capacite_max: Math.max(
+            1,
+            Math.ceil(
+              (loge2TypeDerivé === 'F' ? selectedFemelles : selectedMales) * 1.2,
+            ),
+          ),
           active: true,
-        };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: newLoge, error: logeErr } = await (supabase as any)
-          .from('loges')
-          .insert(newLogePayload)
-          .select('id, numero')
-          .single();
-        if (logeErr) throw logeErr;
-        logeIdToUse = newLoge.id;
-        logeNumeroToUse = newLoge.numero;
-      } else {
-        const existing = loges.find((l) => l.id === form.logeId);
-        logeNumeroToUse = existing?.numero ?? '';
+        });
+        loge2Db = { id: created.id, numero: created.numero };
       }
 
-      // 2. Bande
-      const codeId = buildBandeCodeId(form.stade, logeNumeroToUse, new Date());
-      const ageJours = Math.round(Number(form.ageMois) * 30);
+      // 3. INSERT batch (loge_id = loge1, code_id = numéro saisi librement)
+      const avg = avgPoids(selectedPorcelets) ?? 0;
       const batchPayload: Record<string, unknown> = {
-        farm_id: farmId,
-        code_id: codeId,
-        phase: form.stade,
+        code_id: numeroBande.trim(),
+        phase: 'Post-sevrage',
         statut: 'En cours',
-        loge: logeNumeroToUse,
-        loge_id: logeIdToUse,
+        loge: loge1Db.numero,
+        loge_id: loge1Db.id,
+        porcelets_nes_total: selectedIds.size,
         porcelets_nes_vivants: selectedIds.size,
-        poids_initial_kg: poidsMoyenNum ?? 0,
-        age_jours_estime: ageJours,
+        porcelets_sevrene_total: 0,
+        poids_initial_kg: avg,
+        validation_status: 'VALIDATED',
       };
-      if (poidsMoyenNum !== null) batchPayload.poids_moyen_kg = poidsMoyenNum;
-      if (form.note.trim() !== '') batchPayload.notes = form.note.trim();
-
+      if (avg > 0) batchPayload.poids_moyen_kg = avg;
+      if (sourceType === 'SOW' && sowId) batchPayload.sow_id = sowId;
+      if (sourceType === 'BOAR' && boarId) batchPayload.boar_id = boarId;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: newBatch, error: batchErr } = await (supabase as any)
-        .from('batches')
-        .insert(batchPayload)
-        .select('id')
-        .single();
-      if (batchErr) throw batchErr;
+      const newBatch = await insertBatch(batchPayload as any);
+      const newBatchId = newBatch.id as string;
 
-      // 3. UPDATE porcelets sélectionnés
-      const ids = Array.from(selectedIds);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: updErr } = await (supabase as any)
-        .from('porcelets_individuels')
-        .update({ batch_id: newBatch.id })
-        .in('id', ids)
-        .eq('farm_id', farmId);
-      if (updErr) throw updErr;
+      // 4. INSERT batch_sows si truie présente (lien explicite multi-mères)
+      if (sourceType === 'SOW' && sowId) {
+        const today = new Date().toISOString().slice(0, 10);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: bsErr } = await (supabase.from('batch_sows' as any) as any).insert({
+          farm_id: farmId,
+          batch_id: newBatchId,
+          sow_id: sowId,
+          nb_porcelets_apportes: selectedIds.size,
+          date_ajout: today,
+          notes: null,
+        });
+        if (bsErr) {
+          console.warn('[batch_sows] insert wizard failed (best-effort):', bsErr.message);
+        }
+      }
 
+      // 5. UPDATE porcelets — batch_id + loge_id selon répartition F/M
+      const repartition = repartitionPorceletsParLoge(
+        selectedPorcelets,
+        loge1.type,
+        loge1Db.id,
+        loge2Db?.id ?? null,
+      );
+      for (const r of repartition) {
+        const res = await updatePorceletIndividuel(r.porceletId, {
+          batch_id: newBatchId,
+          loge_id: r.logeId,
+        });
+        if (!res.success) {
+          throw new Error(res.error ?? `update porcelet ${r.porceletId} failed`);
+        }
+      }
+
+      const logesLabel = loge2Db
+        ? `Loges ${loge1Db.numero} + ${loge2Db.numero}`
+        : `Loge ${loge1Db.numero}`;
       showToast(
-        `Bande créée · ${selectedIds.size} porcelets · Loge ${logeNumeroToUse}`,
+        `Bande ${numeroBande.trim()} créée · ${selectedIds.size} porcelets · ${logesLabel}`,
         'success',
         4000,
       );
       setSelectedIds(new Set());
-      setShowForm(false);
-      setForm(DEFAULT_FORM);
+      setShowWizard(false);
       refresh();
     } catch (e) {
       setSubmitError((e as Error).message ?? 'Erreur lors de la création de la bande');
@@ -418,6 +533,342 @@ export default function PorceletsReorgWizard() {
       setSubmitting(false);
     }
   };
+
+  // ── Étapes du wizard (UI) ─────────────────────────────────────────────────
+
+  const stepNumeroBande = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <p
+        style={{
+          fontSize: 14,
+          color: 'var(--pt-text-subtle)',
+          fontFamily: 'var(--pt-font-body)',
+        }}
+      >
+        Quel numéro pour cette bande ? Saisis ce que tu utilises sur le terrain
+        (ex: 001, 2026-A, BANDE-MARS).
+      </p>
+      <FormField label="Numéro de bande" required>
+        <Input
+          type="text"
+          placeholder="ex: 001"
+          value={numeroBande}
+          onChange={(e) => setNumeroBande(e.target.value)}
+          aria-label="Numéro de bande"
+          data-testid="wizard-numero-bande"
+          autoFocus
+        />
+      </FormField>
+      {numeroBande.trim() !== '' && !numeroBandeValide && (
+        <div
+          style={{
+            padding: 8,
+            background: 'var(--pt-danger-soft, rgba(239,68,68,0.08))',
+            borderRadius: 8,
+            fontSize: 12,
+            color: 'var(--pt-danger)',
+          }}
+        >
+          Ce numéro est déjà utilisé pour une autre bande de ta ferme. Choisis-en
+          un autre.
+        </div>
+      )}
+    </div>
+  );
+
+  const stepSourceRepro = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <p
+        style={{
+          fontSize: 14,
+          color: 'var(--pt-text-subtle)',
+          fontFamily: 'var(--pt-font-body)',
+        }}
+      >
+        D'où viennent ces porcelets ? Tu peux laisser vide si tu ne sais plus.
+      </p>
+      <FormField label="Origine">
+        <RadioGroup
+          value={sourceType}
+          onChange={(v) => setSourceType(v as SourceReproType)}
+          options={[
+            { value: 'NONE', label: 'Aucune (passer)' },
+            { value: 'SOW', label: 'Truie qui a mis bas' },
+            { value: 'BOAR', label: 'Verrat qui a sailli' },
+          ]}
+          ariaLabel="Origine des porcelets"
+        />
+      </FormField>
+      {sourceType === 'SOW' && (
+        <FormField label="Sélectionner la truie">
+          <Select
+            value={sowId}
+            onChange={(e) => setSowId(e.target.value)}
+            aria-label="Truie ayant mis bas"
+          >
+            <option value="">— Sélectionner —</option>
+            {sowOptions.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.displayId} {s.boucle ? `· ${s.boucle}` : ''}
+              </option>
+            ))}
+          </Select>
+        </FormField>
+      )}
+      {sourceType === 'BOAR' && (
+        <FormField label="Sélectionner le verrat">
+          <Select
+            value={boarId}
+            onChange={(e) => setBoarId(e.target.value)}
+            aria-label="Verrat ayant sailli"
+          >
+            <option value="">— Sélectionner —</option>
+            {boarOptions.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.displayId} {b.boucle ? `· ${b.boucle}` : ''}
+              </option>
+            ))}
+          </Select>
+        </FormField>
+      )}
+    </div>
+  );
+
+  const stepLoge1 = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <p
+        style={{
+          fontSize: 14,
+          color: 'var(--pt-text-subtle)',
+          fontFamily: 'var(--pt-font-body)',
+        }}
+      >
+        Dans quelle loge mets-tu ces porcelets ?
+      </p>
+      <FormField label="Numéro de loge" required>
+        <Input
+          type="text"
+          placeholder="ex: L3, Maternité 1"
+          value={loge1.numero}
+          onChange={(e) => setLoge1((l) => ({ ...l, numero: e.target.value }))}
+          aria-label="Numéro de loge 1"
+          data-testid="wizard-loge1-numero"
+        />
+      </FormField>
+      <FormField label="Type de loge" required>
+        <RadioGroup
+          value={loge1.type ?? ''}
+          onChange={(v) => setLoge1((l) => ({ ...l, type: v as WizardTypeLoge }))}
+          options={TYPE_LOGE_OPTIONS_LOGE1}
+          ariaLabel="Type de loge 1"
+        />
+      </FormField>
+      <div
+        style={{
+          padding: 10,
+          background: 'var(--pt-surface-alt)',
+          borderRadius: 8,
+          fontSize: 12,
+          color: 'var(--pt-text-subtle)',
+          fontFamily: 'var(--pt-font-body)',
+        }}
+      >
+        Sélection actuelle : {selectedIds.size} porcelets ·{' '}
+        {selectedFemelles} femelles · {selectedMales} mâles
+      </div>
+      {loge1.type === 'F' && selectedMales > 0 && !loge2Activated && (
+        <div
+          style={{
+            padding: 8,
+            background: 'var(--pt-danger-soft, rgba(239,68,68,0.08))',
+            borderRadius: 8,
+            fontSize: 12,
+            color: 'var(--pt-danger)',
+          }}
+        >
+          Tu as {selectedMales} mâle{selectedMales > 1 ? 's' : ''} dans la
+          sélection. Ajoute une 2e loge pour les mâles à l'étape suivante, ou
+          choisis « Mixte ».
+        </div>
+      )}
+      {loge1.type === 'M' && selectedFemelles > 0 && !loge2Activated && (
+        <div
+          style={{
+            padding: 8,
+            background: 'var(--pt-danger-soft, rgba(239,68,68,0.08))',
+            borderRadius: 8,
+            fontSize: 12,
+            color: 'var(--pt-danger)',
+          }}
+        >
+          Tu as {selectedFemelles} femelle{selectedFemelles > 1 ? 's' : ''}{' '}
+          dans la sélection. Ajoute une 2e loge pour les femelles à l'étape
+          suivante, ou choisis « Mixte ».
+        </div>
+      )}
+    </div>
+  );
+
+  const stepLoge2 = () => {
+    const sexeManquant: WizardTypeLoge | null =
+      loge1.type === 'F' && selectedMales > 0
+        ? 'M'
+        : loge1.type === 'M' && selectedFemelles > 0
+        ? 'F'
+        : null;
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <p
+          style={{
+            fontSize: 14,
+            color: 'var(--pt-text-subtle)',
+            fontFamily: 'var(--pt-font-body)',
+          }}
+        >
+          {loge1.type === 'MIXTE'
+            ? 'Loge 1 est mixte : pas de 2e loge possible.'
+            : 'Veux-tu mettre les autres dans une 2e loge ?'}
+        </p>
+        {loge1.type !== 'MIXTE' && (
+          <>
+            <FormField label="Activer une 2e loge">
+              <RadioGroup
+                value={loge2Activated ? 'YES' : 'NO'}
+                onChange={(v) => setLoge2Activated(v === 'YES')}
+                options={[
+                  { value: 'NO', label: 'Non, garder une seule loge' },
+                  {
+                    value: 'YES',
+                    label: sexeManquant
+                      ? `Oui, créer une 2e loge pour les ${sexeManquant === 'F' ? 'femelles' : 'mâles'}`
+                      : 'Oui, splitter sur 2 loges',
+                  },
+                ]}
+                ariaLabel="Ajouter une 2e loge"
+              />
+            </FormField>
+            {loge2Activated && (
+              <>
+                <FormField
+                  label={`Numéro de la 2e loge (${
+                    loge2TypeDerivé === 'F' ? 'femelles' : 'mâles'
+                  })`}
+                  required
+                >
+                  <Input
+                    type="text"
+                    placeholder="ex: L4"
+                    value={loge2.numero}
+                    onChange={(e) =>
+                      setLoge2((l) => ({ ...l, numero: e.target.value }))
+                    }
+                    aria-label="Numéro de loge 2"
+                    data-testid="wizard-loge2-numero"
+                  />
+                </FormField>
+                {loge2.numero.trim() !== '' &&
+                  loge2.numero.trim().toLowerCase() ===
+                    loge1.numero.trim().toLowerCase() && (
+                    <div
+                      style={{
+                        padding: 8,
+                        background: 'var(--pt-danger-soft, rgba(239,68,68,0.08))',
+                        borderRadius: 8,
+                        fontSize: 12,
+                        color: 'var(--pt-danger)',
+                      }}
+                    >
+                      Le numéro de la 2e loge doit être différent de la 1ère.
+                    </div>
+                  )}
+              </>
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
+
+  const stepRecap = () => {
+    const sourceLabel =
+      sourceType === 'NONE'
+        ? '—'
+        : sourceType === 'SOW'
+        ? sowOptions.find((s) => s.id === sowId)?.displayId ?? '—'
+        : boarOptions.find((b) => b.id === boarId)?.displayId ?? '—';
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <p
+          style={{
+            fontSize: 14,
+            color: 'var(--pt-text-subtle)',
+            fontFamily: 'var(--pt-font-body)',
+          }}
+        >
+          Vérifie avant de créer la bande.
+        </p>
+        <Card>
+          <div
+            style={{
+              padding: 16,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+              fontFamily: 'var(--pt-font-body)',
+              fontSize: 14,
+            }}
+          >
+            <RecapRow label="Bande" value={numeroBande.trim()} />
+            <RecapRow
+              label="Porcelets"
+              value={`${selectedIds.size} (${selectedFemelles} F · ${selectedMales} M)`}
+            />
+            <RecapRow
+              label={
+                sourceType === 'SOW'
+                  ? 'Truie'
+                  : sourceType === 'BOAR'
+                  ? 'Verrat'
+                  : 'Origine'
+              }
+              value={sourceLabel}
+            />
+            <RecapRow
+              label="Loge 1"
+              value={`${loge1.numero.trim()} · ${
+                loge1.type === 'F'
+                  ? 'Femelles'
+                  : loge1.type === 'M'
+                  ? 'Mâles'
+                  : 'Mixte'
+              }`}
+            />
+            {loge2Activated && (
+              <RecapRow
+                label="Loge 2"
+                value={`${loge2.numero.trim()} · ${
+                  loge2TypeDerivé === 'F' ? 'Femelles' : 'Mâles'
+                }`}
+              />
+            )}
+          </div>
+        </Card>
+        {submitError && (
+          <div
+            style={{
+              padding: 8,
+              color: 'var(--pt-danger)',
+              fontSize: 13,
+            }}
+          >
+            {submitError}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   if (!farmId) {
     return (
@@ -495,7 +946,7 @@ export default function PorceletsReorgWizard() {
             </Card>
           )}
 
-          {!loading && !error && totalCount > 0 && !showForm && (
+          {!loading && !error && totalCount > 0 && !showWizard && (
             <>
               <Section label="FILTRES" tone="primary" />
               <div
@@ -686,278 +1137,101 @@ export default function PorceletsReorgWizard() {
                 >
                   <Button
                     variant="primary"
-                    onClick={openForm}
+                    onClick={openWizard}
                     ariaLabel="Créer une bande à partir de la sélection"
                     style={{ width: '100%' }}
+                    data-testid="open-wizard-cta"
                   >
-                    <CheckSquare size={14} aria-hidden /> Créer une bande à partir de la
-                    sélection ({selectedIds.size} porcelet{selectedIds.size > 1 ? 's' : ''})
+                    <CheckSquare size={14} aria-hidden /> Créer une bande
+                    ({selectedIds.size} porcelet{selectedIds.size > 1 ? 's' : ''})
                   </Button>
                 </div>
               )}
             </>
           )}
 
-          {showForm && (
-            <>
-              <Section label="NOUVELLE BANDE" tone="accent" />
-              <Card>
-                <div
-                  style={{
-                    padding: 16,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 16,
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontFamily: 'var(--pt-font-display)',
-                        fontWeight: 700,
-                        fontSize: 16,
-                      }}
-                    >
-                      {selectedIds.size} porcelet{selectedIds.size > 1 ? 's' : ''} sélectionné
-                      {selectedIds.size > 1 ? 's' : ''}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={closeForm}
-                      aria-label="Annuler la création"
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color: 'var(--pt-muted)',
-                        padding: 4,
-                      }}
-                    >
-                      <X size={18} aria-hidden />
-                    </button>
-                  </div>
-
-                  <FormField label="Numéro de loge" required>
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 8,
-                      }}
-                    >
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button
-                          type="button"
-                          onClick={() => setForm((f) => ({ ...f, logeMode: 'EXISTING' }))}
-                          style={{
-                            flex: 1,
-                            padding: '8px 12px',
-                            borderRadius: 8,
-                            border:
-                              form.logeMode === 'EXISTING'
-                                ? '2px solid var(--pt-primary)'
-                                : '1px solid var(--pt-line-strong)',
-                            background:
-                              form.logeMode === 'EXISTING'
-                                ? 'var(--pt-surface-alt)'
-                                : 'var(--pt-bg)',
-                            fontSize: 13,
-                            fontFamily: 'var(--pt-font-display)',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                          }}
-                        >
-                          Loge existante
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setForm((f) => ({ ...f, logeMode: 'NEW' }))}
-                          style={{
-                            flex: 1,
-                            padding: '8px 12px',
-                            borderRadius: 8,
-                            border:
-                              form.logeMode === 'NEW'
-                                ? '2px solid var(--pt-primary)'
-                                : '1px solid var(--pt-line-strong)',
-                            background:
-                              form.logeMode === 'NEW'
-                                ? 'var(--pt-surface-alt)'
-                                : 'var(--pt-bg)',
-                            fontSize: 13,
-                            fontFamily: 'var(--pt-font-display)',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <Plus size={12} aria-hidden style={{ display: 'inline' }} /> Nouvelle
-                          loge
-                        </button>
-                      </div>
-                      {form.logeMode === 'EXISTING' ? (
-                        <Select
-                          value={form.logeId}
-                          onChange={(e) =>
-                            setForm((f) => ({ ...f, logeId: e.target.value }))
-                          }
-                          aria-label="Sélectionner une loge existante"
-                        >
-                          <option value="">— Sélectionner —</option>
-                          {loges.map((l) => (
-                            <option key={l.id} value={l.id}>
-                              {l.numero} ({l.type})
-                            </option>
-                          ))}
-                        </Select>
-                      ) : (
-                        <Input
-                          type="text"
-                          placeholder="ex: L7"
-                          value={form.logeNumero}
-                          onChange={(e) =>
-                            setForm((f) => ({ ...f, logeNumero: e.target.value }))
-                          }
-                          aria-label="Numéro de la nouvelle loge"
-                        />
-                      )}
-                    </div>
-                  </FormField>
-
-                  <FormField label="Stade" required>
-                    <RadioGroup
-                      value={form.stade ?? ''}
-                      onChange={(v) => setForm((f) => ({ ...f, stade: v as Stade }))}
-                      options={STADE_OPTIONS}
-                      ariaLabel="Stade"
-                    />
-                  </FormField>
-
-                  <FormField label="Type de loge" required>
-                    <RadioGroup
-                      value={form.typeLoge ?? ''}
-                      onChange={(v) => setForm((f) => ({ ...f, typeLoge: v as TypeLoge }))}
-                      options={TYPE_LOGE_OPTIONS}
-                      ariaLabel="Type de loge"
-                    />
-                  </FormField>
-
-                  {typeLogeMismatch && (
-                    <div
-                      style={{
-                        padding: 8,
-                        background: 'var(--pt-danger-soft, rgba(239,68,68,0.08))',
-                        borderRadius: 8,
-                        fontSize: 12,
-                        color: 'var(--pt-danger)',
-                      }}
-                    >
-                      Le type de loge ne correspond pas aux sexes des porcelets sélectionnés.
-                    </div>
-                  )}
-
-                  <FormField label="Âge (en mois)" required>
-                    <Input
-                      type="number"
-                      min={0}
-                      step={1}
-                      placeholder="ex: 2"
-                      value={form.ageMois}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, ageMois: e.target.value }))
-                      }
-                      aria-label="Âge en mois"
-                    />
-                  </FormField>
-
-                  <FormField
-                    label="Poids moyen (kg)"
-                    hint="Pré-rempli depuis les imports. Modifiable."
-                  >
-                    <Input
-                      type="number"
-                      min={0}
-                      step={0.1}
-                      placeholder="kg"
-                      value={form.poidsMoyenKg}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, poidsMoyenKg: e.target.value }))
-                      }
-                      aria-label="Poids moyen kg"
-                    />
-                  </FormField>
-                  {poidsWarn && (
-                    <div
-                      style={{
-                        marginTop: -8,
-                        fontSize: 12,
-                        color: 'var(--pt-muted)',
-                      }}
-                    >
-                      Note : poids inhabituel pour ce stade.
-                    </div>
-                  )}
-
-                  <FormField label="Note (optionnel)">
-                    <Textarea
-                      value={form.note}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, note: e.target.value }))
-                      }
-                      aria-label="Note"
-                    />
-                  </FormField>
-
-                  {submitError && (
-                    <div
-                      style={{
-                        padding: 8,
-                        color: 'var(--pt-danger)',
-                        fontSize: 13,
-                      }}
-                    >
-                      {submitError}
-                    </div>
-                  )}
-
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <Button
-                      variant="secondary"
-                      onClick={closeForm}
-                      disabled={submitting}
-                      style={{ flex: 1 }}
-                    >
-                      Annuler
-                    </Button>
-                    <Button
-                      variant="primary"
-                      onClick={handleSubmit}
-                      disabled={!formCanSubmit || submitting}
-                      style={{ flex: 1 }}
-                      ariaLabel="Créer la bande"
-                    >
-                      {submitting ? (
-                        <>
-                          <Loader2 size={14} className="animate-spin" aria-hidden /> Création…
-                        </>
-                      ) : (
-                        <>
-                          <Save size={14} aria-hidden /> Créer la bande
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            </>
+          {showWizard && (
+            <Wizard
+              id="reorg-wizard"
+              eyebrow="Nouvelle bande"
+              completeLabel={
+                submitting ? 'Création…' : 'Créer la bande'
+              }
+              busy={submitting}
+              steps={[
+                {
+                  label: 'Numéro de bande',
+                  render: stepNumeroBande,
+                  validate: () => numeroBandeValide,
+                },
+                {
+                  label: 'Origine',
+                  render: stepSourceRepro,
+                  validate: () => sourceValide,
+                },
+                {
+                  label: 'Loge 1',
+                  render: stepLoge1,
+                  validate: () => loge1Valide || loge2Activated,
+                  // Note : on autorise le passage si loge2 sera activée
+                  // pour gérer le cas F+M (le check final loge1Valide se
+                  // fera lors de loge2 + recap).
+                },
+                {
+                  label: 'Loge 2',
+                  render: stepLoge2,
+                  validate: () => loge1Valide && loge2Valide,
+                },
+                {
+                  label: 'Confirmation',
+                  render: stepRecap,
+                  validate: () => recapValide,
+                },
+              ]}
+              onCancel={closeWizard}
+              onComplete={handleSubmit}
+            />
           )}
         </div>
       </IonContent>
     </IonPage>
   );
 }
+
+// ─── Sub-component : RecapRow ────────────────────────────────────────────────
+
+const RecapRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div
+    style={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      gap: 12,
+      borderBottom: '1px solid var(--pt-line)',
+      paddingBottom: 8,
+    }}
+  >
+    <span
+      style={{
+        fontFamily: 'var(--pt-font-display)',
+        fontSize: 12,
+        textTransform: 'uppercase',
+        letterSpacing: 'var(--pt-tracking-label)',
+        color: 'var(--pt-text-muted)',
+        fontWeight: 600,
+      }}
+    >
+      {label}
+    </span>
+    <span
+      style={{
+        fontFamily: 'var(--pt-font-display)',
+        fontSize: 14,
+        fontWeight: 600,
+        color: 'var(--pt-text)',
+        textAlign: 'right',
+      }}
+    >
+      {value}
+    </span>
+  </div>
+);

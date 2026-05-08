@@ -22,12 +22,21 @@ import {
   insertProduitAliment,
   insertProduitVeto,
   insertWeightDistribution,
+  insertPesee,
+  insertPorceletIndividuel,
+  insertLoge,
+  insertLogeMovement,
+  insertDailyCheckMb,
+  insertFeedConsumptionLog,
   updateSow,
   updateBoar,
   updateBatch,
   updateNote,
   updateProduitAliment,
   updateProduitVeto,
+  updatePesee,
+  updatePorceletIndividuel,
+  updateLogeRow,
   updateSowByCode,
   updateBoarByCode,
   updateBatchByCode,
@@ -378,14 +387,13 @@ async function runInsert(
     case 'produits_aliments':     await insertProduitAliment(v); return;
     case 'produits_veto':         await insertProduitVeto(v); return;
     case 'weight_distributions':  await insertWeightDistribution(v); return;
-    // TODO: brancher sur supabaseWrites quand les helpers existeront
-    case 'pesees':
-    case 'porcelets_individuels':
-    case 'loges':
-    case 'loge_movements':
-    case 'daily_checks_mb':
-    case 'feed_consumption_logs':
-      throw new Error(`[offlineQueue] insert non supporté pour la table '${table}' (helper manquant dans supabaseWrites)`);
+    // V72 — branchés sur les helpers thin de supabaseWrites
+    case 'pesees':                await insertPesee(v); return;
+    case 'porcelets_individuels': await insertPorceletIndividuel(v); return;
+    case 'loges':                 await insertLoge(v); return;
+    case 'loge_movements':        await insertLogeMovement(v); return;
+    case 'daily_checks_mb':       await insertDailyCheckMb(v); return;
+    case 'feed_consumption_logs': await insertFeedConsumptionLog(v); return;
   }
 }
 
@@ -404,12 +412,13 @@ async function runUpdate(
     case 'notes':             res = await updateNote(id, f); break;
     case 'produits_aliments': res = await updateProduitAliment(id, f); break;
     case 'produits_veto':     res = await updateProduitVeto(id, f); break;
+    // V72 — update branchés
+    case 'pesees':                res = await updatePesee(id, f); break;
+    case 'porcelets_individuels': res = await updatePorceletIndividuel(id, f); break;
+    case 'loges':                 res = await updateLogeRow(id, f); break;
     case 'health_logs':
     case 'saillies':
     case 'finances':
-    case 'pesees':
-    case 'porcelets_individuels':
-    case 'loges':
     case 'loge_movements':
     case 'daily_checks_mb':
     case 'weight_distributions':

@@ -1191,12 +1191,13 @@ export type Database = {
       }
       porcelets_individuels: {
         Row: {
-          batch_id: string
+          batch_id: string | null
           boucle: string
           couleur_boucle: string | null
           created_at: string | null
           farm_id: string
           id: string
+          loge_id: string | null
           notes: string | null
           photo_url: string | null
           poids_courant_kg: number | null
@@ -1205,12 +1206,13 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          batch_id: string
+          batch_id?: string | null
           boucle: string
           couleur_boucle?: string | null
           created_at?: string | null
           farm_id: string
           id?: string
+          loge_id?: string | null
           notes?: string | null
           photo_url?: string | null
           poids_courant_kg?: number | null
@@ -1219,12 +1221,13 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          batch_id?: string
+          batch_id?: string | null
           boucle?: string
           couleur_boucle?: string | null
           created_at?: string | null
           farm_id?: string
           id?: string
+          loge_id?: string | null
           notes?: string | null
           photo_url?: string | null
           poids_courant_kg?: number | null
@@ -1238,6 +1241,13 @@ export type Database = {
             columns: ["batch_id"]
             isOneToOne: false
             referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "porcelets_individuels_loge_id_fkey"
+            columns: ["loge_id"]
+            isOneToOne: false
+            referencedRelation: "loges"
             referencedColumns: ["id"]
           },
           {
@@ -1404,6 +1414,56 @@ export type Database = {
           role?: string | null
         }
         Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string | null
+          enabled: boolean | null
+          endpoint: string
+          farm_id: string | null
+          id: string
+          last_used_at: string | null
+          p256dh: string
+          updated_at: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string | null
+          enabled?: boolean | null
+          endpoint: string
+          farm_id?: string | null
+          id?: string
+          last_used_at?: string | null
+          p256dh: string
+          updated_at?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string | null
+          enabled?: boolean | null
+          endpoint?: string
+          farm_id?: string | null
+          id?: string
+          last_used_at?: string | null
+          p256dh?: string
+          updated_at?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_farm_id_fkey"
+            columns: ["farm_id"]
+            isOneToOne: false
+            referencedRelation: "farms"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       saillies: {
         Row: {

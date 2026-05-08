@@ -49,6 +49,16 @@ export type ProduitAlimentRow =
   Database['public']['Tables']['produits_aliments']['Row'];
 export type ProduitVetoRow =
   Database['public']['Tables']['produits_veto']['Row'];
+export type PeseeRow = Database['public']['Tables']['pesees']['Row'];
+export type PorceletIndividuelDbRow =
+  Database['public']['Tables']['porcelets_individuels']['Row'];
+export type LogeDbRow = Database['public']['Tables']['loges']['Row'];
+export type LogeMovementDbRow =
+  Database['public']['Tables']['loge_movements']['Row'];
+export type DailyCheckMbRow =
+  Database['public']['Tables']['daily_checks_mb']['Row'];
+export type FeedConsumptionLogRow =
+  Database['public']['Tables']['feed_consumption_logs']['Row'];
 
 type SowInsert = Database['public']['Tables']['sows']['Insert'];
 type BoarInsert = Database['public']['Tables']['boars']['Insert'];
@@ -73,7 +83,13 @@ type WriteTable =
   | 'notes'
   | 'health_logs'
   | 'saillies'
-  | 'finances';
+  | 'finances'
+  | 'pesees'
+  | 'porcelets_individuels'
+  | 'loges'
+  | 'loge_movements'
+  | 'daily_checks_mb'
+  | 'feed_consumption_logs';
 
 // ── Helpers internes ─────────────────────────────────────────────────────────
 
@@ -1394,6 +1410,66 @@ export async function listPorceletsByBatch(
 }
 
 /**
+ * V72-P4 — Loge effective d'une bande, déduite des porcelets de cette bande.
+ *
+ * Une bande peut occuper jusqu'à 2 loges (1 femelles + 1 mâles, ou 1 mixte).
+ * Cette fonction lit `porcelets_individuels.loge_id` (V72-P4 column) JOIN
+ * `loges` et dédoublonne par loge.
+ *
+ * Retourne 0..2 entrées triées par numéro asc.
+ */
+export interface BandeLogeEffective {
+  id: string;
+  numero: string;
+  type: string;
+  porceletsCount: number;
+  /** Sexes contenus dans cette loge (pour cette bande). */
+  sexes: Array<'M' | 'F' | 'INCONNU'>;
+}
+
+export async function listLogesEffectivesParBande(
+  batchId: string,
+): Promise<BandeLogeEffective[]> {
+  if (!batchId) return [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from('porcelets_individuels' as any) as any)
+    .select('id, sexe, loge_id, loges(id, numero, type)')
+    .eq('batch_id', batchId);
+  if (error) {
+    console.warn('[porcelets_individuels] list loges effectives failed:', error.message);
+    return [];
+  }
+  type Row = {
+    id: string;
+    sexe: 'M' | 'F' | 'INCONNU' | null;
+    loge_id: string | null;
+    loges: { id: string; numero: string; type: string } | null;
+  };
+  const rows = ((data as Row[] | null) ?? []).filter((r) => r.loge_id && r.loges);
+  const buckets = new Map<string, BandeLogeEffective>();
+  for (const r of rows) {
+    const lid = r.loge_id as string;
+    const existing = buckets.get(lid);
+    const sexe = r.sexe ?? 'INCONNU';
+    if (existing) {
+      existing.porceletsCount += 1;
+      if (!existing.sexes.includes(sexe)) existing.sexes.push(sexe);
+    } else {
+      buckets.set(lid, {
+        id: lid,
+        numero: r.loges!.numero,
+        type: r.loges!.type,
+        porceletsCount: 1,
+        sexes: [sexe],
+      });
+    }
+  }
+  return Array.from(buckets.values()).sort((a, b) =>
+    a.numero.localeCompare(b.numero),
+  );
+}
+
+/**
  * Crée un porcelet individuel rattaché à une bande.
  * Boucle UNIQUE par farm (contrainte DB) — l'erreur remonte si conflit.
  */
@@ -1551,4 +1627,86 @@ export async function splitBatch(args: {
     movedCount: args.porceletsIds.length,
     sourceArchivedAsRecap,
   };
+}
+
+// ── V72 — Helpers d'écriture pour la queue offline ──────────────────────────
+// Wrappers thin pour brancher `offlineQueue.runner` sur les 6 tables qui
+// throwaient « insert non supporté ». Pattern uniforme `runInsert/runUpdate`,
+// signatures `(values: Record<string, unknown>)` compatibles dispatcher.
+//
+// Coexistent avec les helpers métier riches (`createLoge`, `addPorcelet`,
+// `submitDailyCheck`, `insertFeedConsumption`, `moveSubject`) — non touchés
+// pour rétro-compat des call sites existants.
+
+type PeseeInsert = Database['public']['Tables']['pesees']['Insert'];
+type PorceletIndividuelInsert =
+  Database['public']['Tables']['porcelets_individuels']['Insert'];
+type LogeInsert = Database['public']['Tables']['loges']['Insert'];
+type LogeMovementInsert =
+  Database['public']['Tables']['loge_movements']['Insert'];
+type DailyCheckMbInsert =
+  Database['public']['Tables']['daily_checks_mb']['Insert'];
+type FeedConsumptionLogInsert =
+  Database['public']['Tables']['feed_consumption_logs']['Insert'];
+
+export function insertPesee(
+  values: WithoutFarm<PeseeInsert>,
+): Promise<PeseeRow> {
+  return runInsert<PeseeRow>('pesees', values);
+}
+
+export function updatePesee(
+  id: string,
+  patch: Partial<PeseeRow>,
+): Promise<WriteResult> {
+  return runUpdate('pesees', id, patch);
+}
+
+export function insertPorceletIndividuel(
+  values: WithoutFarm<PorceletIndividuelInsert>,
+): Promise<PorceletIndividuelDbRow> {
+  return runInsert<PorceletIndividuelDbRow>('porcelets_individuels', values);
+}
+
+export function updatePorceletIndividuel(
+  id: string,
+  patch: Partial<PorceletIndividuelDbRow>,
+): Promise<WriteResult> {
+  return runUpdate('porcelets_individuels', id, patch);
+}
+
+export function insertLoge(
+  values: WithoutFarm<LogeInsert>,
+): Promise<LogeDbRow> {
+  return runInsert<LogeDbRow>('loges', values);
+}
+
+/**
+ * Patch DB-shape (snake_case). Distinct de `updateLoge(id, Partial<Loge>)`
+ * historique qui mappe le shape camelCase métier — celui-ci est consommé
+ * par le runner de la queue offline qui passe directement le payload DB.
+ */
+export function updateLogeRow(
+  id: string,
+  patch: Partial<LogeDbRow>,
+): Promise<WriteResult> {
+  return runUpdate('loges', id, patch);
+}
+
+export function insertLogeMovement(
+  values: WithoutFarm<LogeMovementInsert>,
+): Promise<LogeMovementDbRow> {
+  return runInsert<LogeMovementDbRow>('loge_movements', values);
+}
+
+export function insertDailyCheckMb(
+  values: WithoutFarm<DailyCheckMbInsert>,
+): Promise<DailyCheckMbRow> {
+  return runInsert<DailyCheckMbRow>('daily_checks_mb', values);
+}
+
+export function insertFeedConsumptionLog(
+  values: WithoutFarm<FeedConsumptionLogInsert>,
+): Promise<FeedConsumptionLogRow> {
+  return runInsert<FeedConsumptionLogRow>('feed_consumption_logs', values);
 }

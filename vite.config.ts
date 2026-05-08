@@ -38,6 +38,11 @@ export default defineConfig(() => {
           // heures après un push (régressions V23 fantômes observées).
           skipWaiting: true,
           clientsClaim: true,
+          // V72 — Web Push handler : on garde le mode `generateSW` (workbox
+          // gère precaching + runtime caching) et on injecte notre handler
+          // `push` / `notificationclick` via importScripts. Le fichier vit
+          // dans /public/ et est servi à la racine (/push-handler.js).
+          importScripts: ['push-handler.js'],
           // AUDIT-V29 P0 : élimine les chunks stale d'anciennes versions
           // qui restaient en cache et causaient "Failed to fetch dynamically
           // imported module" + "expected JS but got text/html" quand l'index

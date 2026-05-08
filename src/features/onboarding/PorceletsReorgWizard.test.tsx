@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
 /**
- * Tests unitaires — PorceletsReorgWizard (V72 "Création manuelle de bandes")
+ * Tests unitaires — PorceletsReorgWizard (V72-P4 "Refonte wizard")
  * ════════════════════════════════════════════════════════════════════════════
  * Couvre la logique métier exportée :
- *   1. buildBandeCodeId() : format `B-{YYMMDD}-L{numero}-{stadeCode}`
- *   2. avgPoids() : moyenne arrondie au dixième + cas vides
- *   3. poidsCohorent() : plages par stade (warning soft)
- *   4. filtrePorcelets() : filtre sexe + tranche poids
- *   5. typeLogeCoherent() : MIXTE toujours OK ; MALES/FEMELLES strict
+ *   1. avgPoids() : moyenne arrondie au dixième + cas vides
+ *   2. poidsCohorent() : plages par stade (warning soft)
+ *   3. filtrePorcelets() : filtre sexe + tranche poids
+ *   4. validationNumeroBandeUnique() : non vide + pas dans la liste existante
+ *   5. repartitionPorceletsParLoge() : F/M sur 2 loges, MIXTE 1 loge
  *   6. MAX_PORCELETS_PAR_BANDE constante
  */
 import { describe, it, expect } from 'vitest';
@@ -15,43 +15,16 @@ import { describe, it, expect } from 'vitest';
 import {
   MAX_PORCELETS_PAR_BANDE,
   avgPoids,
-  buildBandeCodeId,
   filtrePorcelets,
   poidsCohorent,
-  typeLogeCoherent,
+  repartitionPorceletsParLoge,
+  validationNumeroBandeUnique,
 } from './PorceletsReorgWizard';
 
-describe('PorceletsReorgWizard — helpers métier', () => {
+describe('PorceletsReorgWizard — helpers métier (V72-P4)', () => {
   describe('MAX_PORCELETS_PAR_BANDE', () => {
     it('vaut 40 (règle métier stricte Christophe)', () => {
       expect(MAX_PORCELETS_PAR_BANDE).toBe(40);
-    });
-  });
-
-  describe('buildBandeCodeId', () => {
-    it('formate en B-YYMMDD-L{numero}-{stadeCode} pour Post-sevrage', () => {
-      const code = buildBandeCodeId('Post-sevrage', 'L7', new Date(2026, 4, 8));
-      expect(code).toBe('B-260508-LL7-PS');
-    });
-
-    it('formate Maternité avec code MAT', () => {
-      const code = buildBandeCodeId('Sous mère', '12', new Date(2026, 0, 1));
-      expect(code).toBe('B-260101-L12-MAT');
-    });
-
-    it('formate Engraissement avec code ENG', () => {
-      const code = buildBandeCodeId('Engraissement', 'L5', new Date(2026, 11, 31));
-      expect(code).toBe('B-261231-LL5-ENG');
-    });
-
-    it('nettoie les caractères non alphanumériques du numéro de loge', () => {
-      const code = buildBandeCodeId('Croissance', 'L-Rattrapage 5', new Date(2026, 0, 1));
-      expect(code).toBe('B-260101-LLRattrapage5-CR');
-    });
-
-    it('utilise LX si numero vide ou seulement caractères spéciaux', () => {
-      const code = buildBandeCodeId('Finition', '   ', new Date(2026, 0, 1));
-      expect(code).toBe('B-260101-LLX-FIN');
     });
   });
 
@@ -171,31 +144,69 @@ describe('PorceletsReorgWizard — helpers métier', () => {
     });
   });
 
-  describe('typeLogeCoherent', () => {
-    it('MIXTE est toujours cohérent', () => {
-      expect(
-        typeLogeCoherent('MIXTE', [
-          { sexe: 'M' },
-          { sexe: 'F' },
-          { sexe: 'INCONNU' },
-        ]),
-      ).toBe(true);
+  describe('validationNumeroBandeUnique', () => {
+    const existing = [{ code_id: '001' }, { code_id: '2026-A' }, { code_id: 'BANDE-MARS' }];
+
+    it('refuse une chaîne vide', () => {
+      expect(validationNumeroBandeUnique('', existing)).toBe(false);
+      expect(validationNumeroBandeUnique('   ', existing)).toBe(false);
     });
 
-    it('MALES exige tous mâles', () => {
-      expect(typeLogeCoherent('MALES', [{ sexe: 'M' }, { sexe: 'M' }])).toBe(true);
-      expect(typeLogeCoherent('MALES', [{ sexe: 'M' }, { sexe: 'F' }])).toBe(false);
+    it('accepte un numéro non utilisé', () => {
+      expect(validationNumeroBandeUnique('002', existing)).toBe(true);
+      expect(validationNumeroBandeUnique('2026-B', existing)).toBe(true);
     });
 
-    it('FEMELLES exige toutes femelles', () => {
-      expect(typeLogeCoherent('FEMELLES', [{ sexe: 'F' }, { sexe: 'F' }])).toBe(true);
-      expect(typeLogeCoherent('FEMELLES', [{ sexe: 'F' }, { sexe: 'M' }])).toBe(false);
+    it('refuse un numéro déjà existant (case-insensitive + trim)', () => {
+      expect(validationNumeroBandeUnique('001', existing)).toBe(false);
+      expect(validationNumeroBandeUnique('  001  ', existing)).toBe(false);
+      expect(validationNumeroBandeUnique('bande-mars', existing)).toBe(false);
+      expect(validationNumeroBandeUnique('BANDE-mars', existing)).toBe(false);
     });
 
-    it('liste vide est cohérente avec tous types', () => {
-      expect(typeLogeCoherent('MALES', [])).toBe(true);
-      expect(typeLogeCoherent('FEMELLES', [])).toBe(true);
-      expect(typeLogeCoherent('MIXTE', [])).toBe(true);
+    it('liste vide → tout numéro non vide est unique', () => {
+      expect(validationNumeroBandeUnique('001', [])).toBe(true);
+    });
+  });
+
+  describe('repartitionPorceletsParLoge', () => {
+    const porcelets = [
+      { id: 'p1', sexe: 'F' as const },
+      { id: 'p2', sexe: 'F' as const },
+      { id: 'p3', sexe: 'M' as const },
+      { id: 'p4', sexe: 'M' as const },
+      { id: 'p5', sexe: null },
+    ];
+
+    it('Loge 1 = MIXTE → tous les porcelets sur loge1, loge2 ignorée', () => {
+      const r = repartitionPorceletsParLoge(porcelets, 'MIXTE', 'L1', 'L2');
+      expect(r).toHaveLength(5);
+      expect(r.every((x) => x.logeId === 'L1')).toBe(true);
+    });
+
+    it('Loge 1 = F sans loge 2 → tout sur loge1', () => {
+      const r = repartitionPorceletsParLoge(porcelets, 'F', 'L1', null);
+      expect(r.every((x) => x.logeId === 'L1')).toBe(true);
+    });
+
+    it('Loge 1 = F + Loge 2 → F sur L1, M sur L2, sexe inconnu reste sur L1', () => {
+      const r = repartitionPorceletsParLoge(porcelets, 'F', 'L1', 'L2');
+      expect(r.find((x) => x.porceletId === 'p1')?.logeId).toBe('L1'); // F
+      expect(r.find((x) => x.porceletId === 'p2')?.logeId).toBe('L1'); // F
+      expect(r.find((x) => x.porceletId === 'p3')?.logeId).toBe('L2'); // M
+      expect(r.find((x) => x.porceletId === 'p4')?.logeId).toBe('L2'); // M
+      expect(r.find((x) => x.porceletId === 'p5')?.logeId).toBe('L1'); // null → L1
+    });
+
+    it('Loge 1 = M + Loge 2 → M sur L1, F sur L2', () => {
+      const r = repartitionPorceletsParLoge(porcelets, 'M', 'L1', 'L2');
+      expect(r.find((x) => x.porceletId === 'p1')?.logeId).toBe('L2'); // F → L2
+      expect(r.find((x) => x.porceletId === 'p3')?.logeId).toBe('L1'); // M → L1
+      expect(r.find((x) => x.porceletId === 'p5')?.logeId).toBe('L1'); // null → L1
+    });
+
+    it('liste vide retourne []', () => {
+      expect(repartitionPorceletsParLoge([], 'F', 'L1', 'L2')).toEqual([]);
     });
   });
 });

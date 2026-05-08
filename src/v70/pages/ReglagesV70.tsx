@@ -28,6 +28,7 @@ import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
 import { ToggleAdvancedMode } from '../components/v70/ToggleAdvancedMode';
 import { NotifCategoriesSwitches } from '../components/v70/NotifCategoriesSwitches';
+import { PushNotifToggle } from '../components/v70/PushNotifToggle';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 import FarmSwitcher from '../../components/FarmSwitcher';
 import { useOfflineQueue } from '../../hooks/useOfflineQueue';
@@ -198,6 +199,7 @@ export const ReglagesV70: React.FC = () => {
       </Section>
 
       <Section label="Notifications">
+        <PushNotifToggle />
         <NotifCategoriesSwitches />
       </Section>
 

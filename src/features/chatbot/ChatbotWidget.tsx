@@ -1,11 +1,11 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { X, Send, Loader2 } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
 import { Button } from '@/design-system';
-import { MARIUS_SYSTEM_PROMPT, getSuggestionsForPath } from './mariusSystemPrompt';
+import { MARIUS_SYSTEM_PROMPT } from './mariusSystemPrompt';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
 import { buildFarmContextPrompt, type FarmSnapshot } from './buildFarmContext';
+import { buildMariusSuggestions } from './buildMariusSuggestions';
 import { kvGet } from '../../services/kvStore';
 
 type Role = 'user' | 'assistant' | 'system';
@@ -135,8 +135,24 @@ export const ChatbotWidget: React.FC = () => {
     return () => window.removeEventListener('open-chatbot', handler);
   }, []);
 
-  const location = useLocation();
-  const suggestions = getSuggestionsForPath(location.pathname);
+  // V72 — Suggestions DYNAMIQUES dérivées du snapshot ferme (mise-bas
+  // imminente, stocks rupture, retour chaleur, écho, etc.). Fallback
+  // général si la ferme est calme.
+  const suggestions = useMemo(
+    () =>
+      buildMariusSuggestions({
+        nomFerme: farm.nomFerme,
+        pays: farm.pays,
+        truies: farm.truies,
+        verrats: farm.verrats,
+        bandes: farm.bandes,
+        stockAliment: farm.stockAliment,
+        stockVeto: farm.stockVeto,
+        alerts: farm.alerts,
+        saillies: farm.saillies,
+      }),
+    [farm.nomFerme, farm.pays, farm.truies, farm.verrats, farm.bandes, farm.stockAliment, farm.stockVeto, farm.alerts, farm.saillies],
+  );
 
   useEffect(() => {
     if (open && isMariusConfigured) {
@@ -360,12 +376,12 @@ export const ChatbotWidget: React.FC = () => {
               Posez-moi une question sur votre élevage.
             </p>
             <div className="flex flex-col gap-2 mt-4">
-              {suggestions.map((q, i) => (
+              {suggestions.map((s) => (
                 <button
-                  key={i}
+                  key={s.id}
                   type="button"
                   onClick={() => {
-                    setInput(q);
+                    setInput(s.question);
                     setTimeout(() => inputRef.current?.focus(), 0);
                   }}
                   className="text-xs text-left px-3 py-2 rounded-xl transition-colors hover:bg-[var(--bg-surface-2)]"
@@ -375,7 +391,7 @@ export const ChatbotWidget: React.FC = () => {
                     border: '1px solid var(--line)',
                   }}
                 >
-                  {q}
+                  {s.question}
                 </button>
               ))}
             </div>

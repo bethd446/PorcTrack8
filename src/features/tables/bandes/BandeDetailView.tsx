@@ -27,7 +27,9 @@ import {
   getBatchSources,
   getLogeContents,
   listLoges,
+  listLogesEffectivesParBande,
   listPorceletsByBatch,
+  type BandeLogeEffective,
 } from '../../../services/supabaseWrites';
 import { useNoUUID, Button, Card, PageHeader, Tabs, Tag as DsTag, CycleTimeline } from '@/design-system';
 import { EntityAvatar } from '../../../components/ds/EntityAvatar';
@@ -80,6 +82,8 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
   const [sources, setSources] = useState<BatchSource[]>([]);
   const [loges, setLoges] = useState<Loge[]>([]);
   const [logeOccupation, setLogeOccupation] = useState<number | null>(null);
+  // V72-P4 — Loges effectives (1 ou 2) déduites de porcelets_individuels.loge_id
+  const [logesEffectives, setLogesEffectives] = useState<BandeLogeEffective[]>([]);
   const [editBandeOpen, setEditBandeOpen] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
 
@@ -170,11 +174,24 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
     }
   }, [bande?.id]);
 
+  // V72-P4 — Loges effectives déduites des porcelets (1 bande peut avoir 2 loges F+M)
+  const loadLogesEffectives = useCallback(async () => {
+    const id = bande?.id;
+    if (!id) return;
+    try {
+      const rows = await listLogesEffectivesParBande(id);
+      setLogesEffectives(rows);
+    } catch (e) {
+      console.warn('[bande-detail] listLogesEffectivesParBande failed', e);
+    }
+  }, [bande?.id]);
+
   useEffect(() => {
     loadSources();
     loadLogeData();
     loadPorcelets();
-  }, [loadSources, loadLogeData, loadPorcelets]);
+    loadLogesEffectives();
+  }, [loadSources, loadLogeData, loadPorcelets, loadLogesEffectives]);
 
   // Set unicité boucles (toutes les bandes du context, même celles non chargées
   // localement). On utilise les porcelets locaux comme proxy. Pour une unicité
@@ -625,7 +642,44 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                   </Button>
                 </div>
 
-                {bandeTyped?.logeNumero || currentLoge ? (
+                {logesEffectives.length >= 2 ? (
+                  // V72-P4 — Affichage multi-loges : 1 carte par loge effective
+                  <div
+                    className="grid gap-2"
+                    style={{
+                      gridTemplateColumns:
+                        logesEffectives.length === 2
+                          ? 'repeat(2, minmax(0, 1fr))'
+                          : 'repeat(1, minmax(0, 1fr))',
+                    }}
+                    data-testid="bande-loges-effectives"
+                  >
+                    {logesEffectives.map((le) => {
+                      const sexesLabel = le.sexes
+                        .map((s) => (s === 'M' ? 'M' : s === 'F' ? 'F' : '?'))
+                        .join(' · ');
+                      return (
+                        <Button
+                          key={le.id}
+                          variant="ghost"
+                          onClick={() => navigate(`/troupeau/loges/${le.id}`)}
+                          className="pressable flex w-full flex-col items-start gap-1 rounded-md border border-border bg-bg-0 px-3 py-3 text-left"
+                          ariaLabel={`Voir fiche loge ${le.numero}`}
+                        >
+                          <span className="flex items-center gap-2">
+                            <MapPin size={14} className="text-accent" aria-hidden="true" />
+                            <span className="text-[13px] font-semibold text-text-0">
+                              {le.numero}
+                            </span>
+                          </span>
+                          <span className="text-[11px] uppercase tracking-wide text-text-2">
+                            {le.porceletsCount} porcelet{le.porceletsCount > 1 ? 's' : ''} · {sexesLabel}
+                          </span>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                ) : bandeTyped?.logeNumero || currentLoge ? (
                   <div className="space-y-2">
                     <Button
                       variant="ghost"
