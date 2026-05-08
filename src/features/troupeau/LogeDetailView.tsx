@@ -149,7 +149,7 @@ const LogeDetailView: React.FC = () => {
       <IonPage>
         <IonContent className="ion-no-padding">
           <AgritechLayout>
-            <div className="px-4 pt-5 pb-32" style={{ maxWidth: 1100, margin: '0 auto' }}>
+            <div className="px-4 pt-5 pb-44" style={{ maxWidth: 1100, margin: '0 auto' }}>
               <p
                 className="text-[12px] mt-8 text-center"
                 style={{ color: 'var(--muted)' }}
@@ -168,7 +168,7 @@ const LogeDetailView: React.FC = () => {
       <IonPage>
         <IonContent className="ion-no-padding">
           <AgritechLayout>
-            <div className="px-4 pt-5 pb-32" style={{ maxWidth: 1100, margin: '0 auto' }}>
+            <div className="px-4 pt-5 pb-44" style={{ maxWidth: 1100, margin: '0 auto' }}>
               <EmptyState
                 icon={<Home size={28} aria-hidden="true" />}
                 title="Loge introuvable"
@@ -200,7 +200,7 @@ const LogeDetailView: React.FC = () => {
           />
 
           <div
-            className="px-4 pt-5 pb-32 flex flex-col gap-5"
+            className="px-4 pt-5 pb-44 flex flex-col gap-5"
             style={{ maxWidth: 1100, margin: '0 auto' }}
             data-testid="loge-detail-view"
           >

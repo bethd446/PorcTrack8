@@ -330,7 +330,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
 
       <IonContent className="ion-no-padding">
         <div
-          className="px-4 pt-5 pb-32 flex flex-col gap-5"
+          className="px-4 pt-5 pb-44 flex flex-col gap-5"
           style={{ maxWidth: 1100, margin: '0 auto' }}
           data-testid="bande-detail-view"
         >

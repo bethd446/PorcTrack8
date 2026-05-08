@@ -189,7 +189,7 @@ export const AnimalsV70: React.FC = () => {
   }, [baseList, filter, search, tab]);
 
   return (
-    <div className="phone-content" style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
+    <div className="phone-content" style={{ padding: '24px 24px 168px', maxWidth: 600, margin: '0 auto' }}>
       <div
         style={{
           position: 'relative',

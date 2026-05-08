@@ -131,7 +131,7 @@ const VerratDetailView: React.FC = () => {
             <div
               role="main"
               aria-label="Verrat introuvable"
-              className="px-4 pt-5 pb-32 flex flex-col gap-5"
+              className="px-4 pt-5 pb-44 flex flex-col gap-5"
               style={{ maxWidth: 1100, margin: '0 auto' }}
             >
               <PageHeader
@@ -186,7 +186,7 @@ const VerratDetailView: React.FC = () => {
           <div
             role="main"
             aria-label={`Détail verrat ${displayId}`}
-            className="px-4 pt-5 pb-32 flex flex-col gap-5"
+            className="px-4 pt-5 pb-44 flex flex-col gap-5"
             style={{ maxWidth: 1100, margin: '0 auto' }}
           >
             {/* V45 P3B — Pattern archétype 4 : PageHeader + Card hero compact

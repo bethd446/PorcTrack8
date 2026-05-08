@@ -414,7 +414,7 @@ const TruieDetailView: React.FC = () => {
             background: 'var(--bg-app)',
             minHeight: '100%',
             position: 'relative',
-            paddingBottom: 80,
+            paddingBottom: 168,
           }}
         >
           {/* TopBar synchro (composant partagé) */}
@@ -453,7 +453,9 @@ const TruieDetailView: React.FC = () => {
                 />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 200 }}>
                   <div style={{ fontFamily: 'var(--pt-font-display)', fontSize: 18, fontWeight: 700, color: 'var(--pt-text)' }}>
-                    {safeDisplay(truie.nom ?? truie.boucle ?? truie.displayId)}
+                    {safeDisplay(
+                      (truie.nom && truie.nom.trim()) || (truie.boucle && truie.boucle.trim()) || truie.displayId,
+                    )}
                     {truie.race ? <span style={{ fontFamily: 'var(--pt-font-body)', fontSize: 13, fontWeight: 400, color: 'var(--pt-text-muted)', marginLeft: 8 }}>— {truie.race}</span> : null}
                   </div>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -684,7 +686,14 @@ const TruieDetailView: React.FC = () => {
                       boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04)',
                     }}
                   >
-                    <DataRow label="Code · Boucle" value={`${truie.displayId} · ${truie.boucle}`} />
+                    <DataRow
+                      label="Code · Boucle"
+                      value={
+                        truie.boucle && truie.boucle.trim()
+                          ? `${truie.displayId} · ${truie.boucle}`
+                          : truie.displayId
+                      }
+                    />
                     {truie.race && <DataRow label="Race" value={truie.race} />}
                     {truie.dateNaissance && (
                       <DataRow label="Naissance" value={formatDate(truie.dateNaissance)} />
