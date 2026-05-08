@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Heart, Check, CheckCircle2 } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
+import { useToast } from '../../context/ToastContext';
 import {
   insertSaillie,
   resolveSowIdByCode,
@@ -38,6 +39,7 @@ interface QuickSaillieFormProps {
 
 const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, defaultTruieDisplayId }) => {
   const { truies, verrats, refreshData } = useFarm();
+  const { showToast } = useToast();
   const [selectedTruie, setSelectedTruie] = useState(defaultTruieDisplayId ?? '');
   const [selectedVerrat, setSelectedVerrat] = useState('');
   const [dateSaillie, setDateSaillie] = useState<string>(todayISO);
@@ -87,6 +89,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
           : 'Saillie enregistrée depuis PorcTrack',
       });
       try { await refreshData(true); } catch { /* noop */ }
+      showToast(`Saillie enregistrée · ${selectedTruie} × ${selectedVerrat}`, 'success');
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);
@@ -97,6 +100,8 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
       }, 1500);
     } catch (e) {
       console.error('Erreur enregistrement saillie:', e);
+      const msg = (e as Error)?.message ?? 'Erreur lors de l\'enregistrement de la saillie';
+      showToast(msg, 'error', 4000);
     } finally {
       setSaving(false);
     }

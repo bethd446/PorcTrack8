@@ -31,6 +31,9 @@ test-results/
 website/node_modules/
 # website/dist/ inclus volontairement — déployé depuis GitHub
 
+# Sous-projet PorcTrack8/website + PorcTrack8/orchestrator (indépendants)
+PorcTrack8/
+
 # Shared
 shared/*.js
 shared/*.d.ts

@@ -57,6 +57,7 @@ void import('./v70/theme/v70-tokens.css');
 void import('./v70/theme/v70-global.css');
 
 import { QuickActionsProvider } from './components/AgritechNavV2';
+import { ToastProvider } from './context/ToastContext';
 import { GlobalSearchProvider } from './context/GlobalSearchContext';
 import { loadChecklistDefinitions } from './services/checklistService';
 
@@ -194,6 +195,7 @@ const AppContent = () => {
     <IonApp>
       <React.Suspense fallback={<SuspenseFallback />}>
         <QuickActionsProvider>
+          <ToastProvider>
           <OnboardingGate />
           <PorceletsReorgGate />
           <Routes>
@@ -236,6 +238,7 @@ const AppContent = () => {
               }
             />
           </Routes>
+          </ToastProvider>
         </QuickActionsProvider>
       </React.Suspense>
     </IonApp>
