@@ -353,10 +353,11 @@ export const ChatbotWidget: React.FC = () => {
       >
         <div className="flex items-center gap-2">
           <img
-            src="/images/marius-avatar.webp"
+            src="/images/v73/marius/orb-emeraude.webp"
             alt=""
             aria-hidden
             className="w-8 h-8 rounded-full object-cover"
+            style={{ boxShadow: '0 0 12px rgba(52,211,153,0.55)' }}
           />
           <span className="ft-heading text-sm uppercase tracking-wide">Marius</span>
         </div>

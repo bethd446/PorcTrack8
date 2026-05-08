@@ -5,8 +5,8 @@ export function SceneFeed() {
   return (
     <SceneFrame
       theme="dark"
-      image="/images/landing/scene-feed-grains.webp"
-      imageAlt="Grains dorés et hologrammes de données"
+      image="/images/v73/landing/alimentation.jpg"
+      imageAlt="Porcs mangeant à un feeder en inox, vue plongée"
       eyebrow="● Alimentation"
       title={
         <>

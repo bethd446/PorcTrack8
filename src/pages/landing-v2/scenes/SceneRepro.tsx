@@ -5,8 +5,8 @@ export function SceneRepro() {
   return (
     <SceneFrame
       theme="light"
-      image="/images/landing/scene-repro-dna.webp"
-      imageAlt="ADN entrelacé avec un cochon métallique"
+      image="/images/v73/landing/reproduction.jpg"
+      imageAlt="Truie gestante au repos sur la paille, lumière dorée"
       eyebrow="● Suivi reproductif"
       title={
         <>

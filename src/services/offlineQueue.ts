@@ -108,6 +108,30 @@ const ARCHIVE_KEY = 'pt:queue_archive';
 const ARCHIVE_MAX_ITEMS = 100;
 
 /**
+ * V73 — Cap dur sur la queue active. Au-delà, les nouveaux enqueues sont
+ * rejetés (UI doit afficher "queue saturée — synchroniser maintenant"). Sans
+ * cap, une boucle bug ou un mode offline prolongé saturait Preferences (≈4MB
+ * sur Android, ≈10MB en localStorage web) et bloquait le boot suivant.
+ */
+const QUEUE_MAX_ITEMS = 1000;
+
+/**
+ * V73 — Erreur explicite levée quand le cap est atteint. Les callers UI
+ * peuvent intercepter pour afficher un toast plutôt que de logger silencieusement.
+ */
+export class QueueFullError extends Error {
+  constructor(maxItems: number) {
+    super(
+      `[offlineQueue] queue saturée (${maxItems} items max). Synchroniser avant nouvelle action.`,
+    );
+    this.name = 'QueueFullError';
+  }
+}
+
+/** V73 — Cap exposé en lecture seule pour l'UI (afficher le seuil). */
+export const QUEUE_MAX_ITEMS_FOR_UI: number = QUEUE_MAX_ITEMS;
+
+/**
  * Délais de backoff exponentiel par nombre de tries (index = tries actuels
  * AVANT incrément). Au 1er échec → 1s, 2e → 5s, 3e → 30s, 4e → 5min,
  * 5e → 30min puis abandon (MAX_TRIES = 5). Permet à un retry réseau
@@ -204,6 +228,7 @@ export async function enqueueInsert(
     id: typeof values.id === 'string' && values.id.length > 0 ? values.id : generateUUID(),
   };
   const queue = await loadQueue();
+  if (queue.length >= QUEUE_MAX_ITEMS) throw new QueueFullError(QUEUE_MAX_ITEMS);
   queue.push({
     id: newId('INS'),
     mutation: { kind: 'insert', table, values: enriched },
@@ -219,6 +244,7 @@ export async function enqueueUpdate(
   fields: Record<string, unknown>,
 ): Promise<void> {
   const queue = await loadQueue();
+  if (queue.length >= QUEUE_MAX_ITEMS) throw new QueueFullError(QUEUE_MAX_ITEMS);
   queue.push({
     id: newId('UPD'),
     mutation: { kind: 'update', table, id, fields },
@@ -234,6 +260,7 @@ export async function enqueueUpdateByCode(
   fields: Record<string, unknown>,
 ): Promise<void> {
   const queue = await loadQueue();
+  if (queue.length >= QUEUE_MAX_ITEMS) throw new QueueFullError(QUEUE_MAX_ITEMS);
   queue.push({
     id: newId('UPC'),
     mutation: { kind: 'updateByCode', table, codeId, fields },
@@ -249,6 +276,7 @@ export async function enqueueDelete(
   reason?: string,
 ): Promise<void> {
   const queue = await loadQueue();
+  if (queue.length >= QUEUE_MAX_ITEMS) throw new QueueFullError(QUEUE_MAX_ITEMS);
   queue.push({
     id: newId('DEL'),
     mutation: { kind: 'delete', table, id, reason },
@@ -470,9 +498,43 @@ async function runDelete(
   }
 }
 
-export async function processQueue(): Promise<{
-  success: boolean; processed: number; remaining: number; abandoned: number; skipped: number;
-}> {
+/**
+ * V73 — Mutex in-flight pour empêcher 2 flushs concurrents.
+ *
+ * Sans ce verrou, deux events `online` rapprochés (ou un boot + un reconnect)
+ * pouvaient charger la même queue, dispatcher les mêmes INSERT en parallèle,
+ * et produire :
+ *  - succès du 1er → INSERT serveur OK ;
+ *  - 2e dispatch après 1er save → unique violation côté Postgres ;
+ *  - tries++ sur item DÉJÀ inséré → archivage erroné après MAX_TRIES.
+ *
+ * Pattern : la 2e invocation s'aligne sur la promise en cours, retourne le
+ * MÊME résultat. Pas de file d'attente FIFO : les évènements `online` qui
+ * arrivent pendant un flush sont coalescés en un seul flush.
+ */
+let _inFlight: Promise<ProcessQueueResult> | null = null;
+
+export interface ProcessQueueResult {
+  success: boolean;
+  processed: number;
+  remaining: number;
+  abandoned: number;
+  skipped: number;
+}
+
+export function processQueue(): Promise<ProcessQueueResult> {
+  // NOTE : non-async délibérément pour retourner la MÊME référence de promesse
+  // au 2e appel concurrent (coalescing). Un wrapper `async` créerait une
+  // nouvelle promesse englobante et casserait l'invariant `p1 === p2`.
+  if (_inFlight) return _inFlight;
+  const p = _processQueueInner().finally(() => {
+    if (_inFlight === p) _inFlight = null;
+  });
+  _inFlight = p;
+  return p;
+}
+
+async function _processQueueInner(): Promise<ProcessQueueResult> {
   const queue = await loadQueue();
   if (queue.length === 0) return { success: true, processed: 0, remaining: 0, abandoned: 0, skipped: 0 };
 
@@ -577,6 +639,7 @@ export async function tryFlushIfOnline(): Promise<void> {
 export function __resetQueueForTests(): void {
   _memCache = [];
   _archiveMemCache = [];
+  _inFlight = null;
 }
 
 /** Délais de backoff exposés pour les tests (lecture seule). */

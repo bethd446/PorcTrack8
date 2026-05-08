@@ -35,7 +35,7 @@ export const MariusGreeting: React.FC<MariusGreetingProps> = ({ onClick, pageCon
       aria-label="Ouvrir l'assistant Marius"
     >
       <img
-        src="/images/marius-avatar.webp"
+        src="/images/v73/marius/orb-emeraude.webp"
         alt=""
         aria-hidden="true"
         width={40}

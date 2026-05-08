@@ -67,6 +67,16 @@ vi.mock('../../services/supabaseWrites', () => ({
   updateBatch: vi.fn(async () => ({ success: true })),
   updateSowByCode: vi.fn(async () => null),
   listLoges: vi.fn(async () => []),
+  // V73 — required by PhotoUpload/PhotoGallery
+  getCurrentFarmIdRef: () => null,
+}));
+
+// V73 — Mock léger des nouveaux composants photo (évite charge browser-image-compression)
+vi.mock('../../v70/components/v70/PhotoUpload', () => ({
+  default: () => <div data-testid="photo-upload" />,
+}));
+vi.mock('../../v70/components/v70/PhotoGallery', () => ({
+  default: () => <div data-testid="photo-gallery" />,
 }));
 
 // Mock useIonAlert : expose presentAlertMock pour pouvoir simuler la confirmation

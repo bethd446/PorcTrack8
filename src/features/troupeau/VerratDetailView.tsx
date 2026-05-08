@@ -27,7 +27,8 @@ import TopBarSync from '../../components/design/TopBarSync';
 import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
 import NotesTimeline from '../../components/design/NotesTimeline';
-import PhotoStrip from '../../components/PhotoStrip';
+import PhotoUpload from '../../v70/components/v70/PhotoUpload';
+import PhotoGallery from '../../v70/components/v70/PhotoGallery';
 import { SectionDivider, BottomSheet, type ChipTone } from '../../components/agritech';
 import { Button, Card, PageHeader, Section, Tabs, Tag } from '@/design-system';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
@@ -97,6 +98,7 @@ const VerratDetailView: React.FC = () => {
   const [toast, setToast] = useState<string>('');
   // V45 PHASE 4 — Tabs uniformisés 4 onglets
   const [activeTab, setActiveTab] = useState<VerratTabId>('overview');
+  const [photosRefreshKey, setPhotosRefreshKey] = useState(0);
 
   const decodedId = id ? decodeURIComponent(id) : '';
 
@@ -211,6 +213,7 @@ const VerratDetailView: React.FC = () => {
                   photoUrl={verrat.photoUrl}
                   size="xl"
                   shortCode={displayId}
+                  useV73Defaults
                 />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 160 }}>
                   <div style={{ fontFamily: 'var(--pt-font-display)', fontSize: 18, fontWeight: 700, color: 'var(--pt-text)' }}>
@@ -355,7 +358,18 @@ const VerratDetailView: React.FC = () => {
                   subjectLabel={verrat.displayId ?? undefined}
                   onAddNote={() => setSheet('note')}
                 />
-                <PhotoStrip subjectType="VERRAT" subjectId={verrat.id} />
+                <PhotoUpload
+                  entityType="boars"
+                  entityId={verrat.id}
+                  multiple
+                  maxPhotos={20}
+                  onUploaded={() => setPhotosRefreshKey((k) => k + 1)}
+                />
+                <PhotoGallery
+                  entityType="boars"
+                  entityId={verrat.id}
+                  refreshKey={photosRefreshKey}
+                />
               </div>
             </section>
 

@@ -13,6 +13,8 @@ import EmptyState from '../../components/design/EmptyState';
 import TopBarSync from '../../components/design/TopBarSync';
 import { AnimalListItem, Chip, SectionDivider } from '../../components/agritech';
 import { Button, PageHeader } from '@/design-system';
+import PhotoUpload from '../../v70/components/v70/PhotoUpload';
+import PhotoGallery from '../../v70/components/v70/PhotoGallery';
 
 import {
   listLoges,
@@ -76,6 +78,7 @@ const LogeDetailView: React.FC = () => {
   const [movements, setMovements] = useState<MovementRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState('');
+  const [photosRefreshKey, setPhotosRefreshKey] = useState(0);
 
   const loadAll = useCallback(async () => {
     if (!id) return;
@@ -362,6 +365,25 @@ const LogeDetailView: React.FC = () => {
                   })}
                 </ul>
               )}
+            </section>
+
+            {/* ── Photos (V73 Vague R) ─────────────────────────────── */}
+            <section aria-label="Photos de la loge">
+              <SectionDivider label="Photos" />
+              <div className="mt-3 flex flex-col gap-3">
+                <PhotoUpload
+                  entityType="loges"
+                  entityId={loge.id}
+                  multiple
+                  maxPhotos={10}
+                  onUploaded={() => setPhotosRefreshKey((k) => k + 1)}
+                />
+                <PhotoGallery
+                  entityType="loges"
+                  entityId={loge.id}
+                  refreshKey={photosRefreshKey}
+                />
+              </div>
             </section>
           </div>
         </AgritechLayout>

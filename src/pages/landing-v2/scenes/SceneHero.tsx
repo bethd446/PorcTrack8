@@ -99,10 +99,10 @@ export function SceneHero() {
           willChange: 'transform, opacity',
         }}
       >
-        Le carnet papier,
+        LE CARNET PAPIER,
         <br />
         <em style={{ fontStyle: 'normal', color: '#34d399' }}>
-          sans les pages froissées.
+          SANS LES PAGES FROISSÉES.
         </em>
       </h1>
       <p
@@ -163,20 +163,27 @@ export function SceneHero() {
           Se connecter
         </Link>
       </div>
-      <img
-        className="hero-image"
-        src="/images/landing/scene-hero-devices.webp"
-        alt="PorcTrack sur iPhone et iPad"
-        loading="eager"
-        fetchPriority="high"
-        style={{
-          width: '100%',
-          maxWidth: 1100,
-          height: 'auto',
-          display: 'block',
-          willChange: 'transform',
-        }}
-      />
+      <picture>
+        <source
+          srcSet="/images/v73/landing/hero-wide.webp"
+          type="image/webp"
+        />
+        <img
+          className="hero-image"
+          src="/images/v73/landing/hero-wide.jpg"
+          alt="Bâtiment porcin moderne, cochon adulte dans le couloir central"
+          loading="eager"
+          fetchPriority="high"
+          style={{
+            width: '100%',
+            maxWidth: 1400,
+            height: 'auto',
+            display: 'block',
+            borderRadius: 28,
+            willChange: 'transform',
+          }}
+        />
+      </picture>
     </section>
   );
 }

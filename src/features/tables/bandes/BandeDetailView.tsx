@@ -6,7 +6,8 @@ import {
   Stethoscope, TrendingUp, CalendarClock, CheckCircle2,
   Edit3, Home, MapPin, Move, Tag, Plus, ClipboardCheck, Split,
 } from 'lucide-react';
-import PhotoStrip from '../../../components/PhotoStrip';
+import PhotoUpload from '../../../v70/components/v70/PhotoUpload';
+import PhotoGallery from '../../../v70/components/v70/PhotoGallery';
 import { Chip, AnimalListItem } from '../../../components/agritech';
 import { computeBandePhase } from '../../../services/bandesAggregator';
 import QuickNoteForm from '../../../components/forms/QuickNoteForm';
@@ -96,6 +97,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
   const [healthLogPorceletOpen, setHealthLogPorceletOpen] = useState(false);
   // V36-E P3 — Splitter une bande
   const [splitOpen, setSplitOpen] = useState(false);
+  const [photosRefreshKey, setPhotosRefreshKey] = useState(0);
 
   const currentLoge = useMemo<Loge | undefined>(() => {
     const id = bandeTyped?.logeId;
@@ -441,7 +443,18 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
 
           {activeTab === 'overview' && (
             <div className="flex flex-col gap-4">
-              <PhotoStrip subjectType="BANDE" subjectId={bande.id} />
+              <PhotoUpload
+                entityType="batches"
+                entityId={bande.id}
+                multiple
+                maxPhotos={20}
+                onUploaded={() => setPhotosRefreshKey((k) => k + 1)}
+              />
+              <PhotoGallery
+                entityType="batches"
+                entityId={bande.id}
+                refreshKey={photosRefreshKey}
+              />
 
               {(() => {
                 const age = bande.age ?? 0;
@@ -1040,7 +1053,11 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                 </div>
               )}
 
-              <PhotoStrip subjectType="BANDE" subjectId={bande.id} />
+              <PhotoGallery
+                entityType="batches"
+                entityId={bande.id}
+                refreshKey={photosRefreshKey}
+              />
             </div>
           )}
         </div>

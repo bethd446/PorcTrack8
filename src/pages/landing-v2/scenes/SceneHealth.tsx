@@ -5,8 +5,8 @@ export function SceneHealth() {
   return (
     <SceneFrame
       theme="dark"
-      image="/images/landing/scene-health-shield.webp"
-      imageAlt="Croix médicale et bouclier caducée néon vert"
+      image="/images/v73/landing/alertes.jpg"
+      imageAlt="Groupe de porcelets dans une loge propre, cercle holographique discret"
       eyebrow="● Santé · Marius IA"
       title={
         <>
@@ -18,18 +18,17 @@ export function SceneHealth() {
       subtitle="16 règles biologiques surveillent votre troupeau 24h/24. Alertes au bon jour, jamais de pesée oubliée, jamais de sevrage manqué."
       topSlot={
         <img
-          src="/images/marius-avatar.webp"
+          src="/images/v73/marius/orb-emeraude.webp"
           alt="Marius, assistant IA"
           loading="lazy"
           style={{
-            width: 64,
-            height: 64,
+            width: 72,
+            height: 72,
             borderRadius: '50%',
             objectFit: 'cover',
             margin: '0 auto 20px',
             display: 'block',
-            border: '2px solid rgba(52,211,153,0.45)',
-            boxShadow: '0 0 24px rgba(52,211,153,0.25)',
+            boxShadow: '0 0 28px rgba(52,211,153,0.45)',
           }}
         />
       }

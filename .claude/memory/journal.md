@@ -217,3 +217,27 @@
 **Liens** : [[decisions]] · [[learnings]] · [[blockers]]
 
 ---
+
+## 2026-05-08 · [V72] Vagues M+N+O+P4 — push backend, queue 6 tables, Marius dynamique, wizard 2-loges · commit `93e8871`
+
+**Livré** (4 sub-agents Opus 4.7 dispatched parallèle + 1 debugger) :
+- **Vague M** — extension `offlineQueue` 6 tables (pesees/porcelets_individuels/loges/loge_movements/daily_checks_mb/feed_consumption_logs). 9 helpers thin pattern runInsert/runUpdate dans supabaseWrites. Wizard migré.
+- **Vague N** — Marius suggestions dynamiques. 8 règles métier (mise-bas imminente, rupture stock, retour chaleur, écho, alertes critiques, surdensité, sevrage proche, fallback). Remplace HINTS statiques.
+- **Vague O** — Push backend complet. Table `push_subscriptions` + Edge Function `send-push` (VAPID/web-push@3.6.7) + frontend `pushSubscription.ts` + SW handler `push-handler.js` + UI `PushNotifToggle` Réglages.
+- **V72-P4** — refonte wizard `PorceletsReorgWizard` selon scénario éleveur Christophe. Migration `porcelets_individuels.loge_id` (1 bande peut occuper 2 loges F+M). Wizard 5 étapes : sélection → numéro libre → truie/verrat optionnel → loge1 (F/M/Mixte) → loge2 optionnelle → confirm. BandeDetailView multi-loges via `listLogesEffectivesParBande`.
+
+**Reset DB Christophe** (`bc96ddbd-c34d-46b1-b624-4a3dca181a2c`) — 5 loges supprimées + backup `farms.metadata.v72_p4_reset_loges_bandes_backup`. État final : 0 loge / 0 batch / 117 porcelets vrac (batch_id NULL) / 117 pesées / 17 truies / 2 verrats / 10 saillies. Wizard auto-redirect au prochain login.
+
+**Bug "Bande introuvable"** — diagnostiqué via sub-agent debugger : pas un bug code mais cache PWA stale + 0 batch DB. Les "4" affichées = 4 truies "En maternité" rendues comme portées dérivées avec liens vers fiche bande inexistante.
+
+**Tests** : 1840 (Vague N) → 1855 (M) → 1866 (O) — +42 sur baseline pré-V72 (1824)
+**TSC** : 0 erreur (3 erreurs offlineQueue.tables.test.ts fixées via type des mocks)
+**Build** : OK 2.88s, PWA 95 entries
+
+**Actions manuelles à charge user** : `node scripts/gen-vapid-keys.mjs` + configurer `VITE_VAPID_PUBLIC_KEY` (.env.local) + `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` (Dashboard Supabase Edge Functions secrets).
+
+**Audit UI public** : login/landing-v2/a-propos/signup/privacy DNA V70 OK. 1 typo détectée à corriger ("FROISSEES" → "FROISSÉES" sur landing).
+
+**Liens** : [[decisions#bande-2-loges]] · [[decisions#numero-bande-libre]] · src/features/onboarding/PorceletsReorgWizard.tsx · src/services/pushSubscription.ts
+
+---

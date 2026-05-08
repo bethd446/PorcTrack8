@@ -309,9 +309,65 @@ export const AnimalsV70: React.FC = () => {
 
       <Section label={sectionLabel[tab]}>
         {filteredList.length === 0 ? (
-          <div style={{ padding: 18, textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
-            {search.trim() ? `Aucun résultat pour « ${search} »` : 'Aucun animal'}
-          </div>
+          search.trim() ? (
+            <div style={{ padding: 18, textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
+              {`Aucun résultat pour « ${search} »`}
+            </div>
+          ) : (
+            <div
+              style={{
+                position: 'relative',
+                borderRadius: 20,
+                overflow: 'hidden',
+                aspectRatio: '4 / 3',
+                margin: '12px 0',
+                background: '#f5efe2',
+              }}
+            >
+              <picture>
+                <source srcSet="/images/v73/empty-states/aucun-animal.webp" type="image/webp" />
+                <img
+                  src="/images/v73/empty-states/aucun-animal.jpg"
+                  alt="Loge propre vide, paille fraîche"
+                  loading="lazy"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    display: 'block',
+                  }}
+                />
+              </picture>
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background:
+                    'linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.55) 100%)',
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  padding: '20px 22px',
+                }}
+              >
+                <div style={{ color: '#fff' }}>
+                  <div
+                    style={{
+                      fontFamily: 'var(--pt-font-display)',
+                      fontWeight: 700,
+                      fontSize: 18,
+                      lineHeight: 1.1,
+                      marginBottom: 4,
+                    }}
+                  >
+                    Aucun animal
+                  </div>
+                  <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)' }}>
+                    Loge prête. Ajoutez votre premier animal.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
         ) : (
           filteredList.map((it) => (
             <ListItem

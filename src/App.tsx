@@ -74,13 +74,21 @@ const OnboardingWizard = React.lazy(() => import(/* webpackChunkName: "onboardin
 const SuspenseFallback = () => (
   <div
     className="flex flex-col items-center justify-center h-screen"
-    style={{ background: 'var(--bg-app)' }}
+    style={{ background: '#fdfaf3' }}
   >
     <div className="animate-pulse-soft flex flex-col items-center gap-5">
-      <img src="/images/icon.svg" alt="PorcTrack" className="w-16 h-16 rounded-xl" />
+      <picture>
+        <source srcSet="/images/v73/icons/app-icon-1024.webp" type="image/webp" />
+        <img
+          src="/images/v73/icons/app-icon-1024.jpg"
+          alt="PorcTrack"
+          className="w-20 h-20 rounded-2xl"
+          style={{ boxShadow: '0 6px 24px rgba(6,78,59,0.18)' }}
+        />
+      </picture>
       <div className="space-y-1 text-center">
         <p className="text-[18px] font-bold text-gray-900">PorcTrack</p>
-        <p className="text-[12px] text-gray-400">Intelligence Terrain</p>
+        <p className="text-[12px] text-gray-500">Intelligence Terrain</p>
       </div>
     </div>
   </div>

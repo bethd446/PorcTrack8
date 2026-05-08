@@ -752,12 +752,57 @@ const AlertsView: React.FC = () => {
 
             {/* ── Empty state ───────────────────────────────────────── */}
             {showEmpty && (
-              <EmptyState
-                size="lg"
-                icon={<CheckCircle2 size={32} aria-hidden="true" strokeWidth={2} />}
-                title="Aucune alerte active"
-                description="Ton élevage tourne bien."
-              />
+              <div
+                style={{
+                  position: 'relative',
+                  borderRadius: 20,
+                  overflow: 'hidden',
+                  aspectRatio: '4 / 3',
+                  margin: '12px 0',
+                  background: '#f5efe2',
+                }}
+              >
+                <picture>
+                  <source
+                    srcSet="/images/v73/empty-states/aucune-alerte.webp"
+                    type="image/webp"
+                  />
+                  <img
+                    src="/images/v73/empty-states/aucune-alerte.jpg"
+                    alt="Couloir bâtiment porcin calme, cochons distants"
+                    loading="lazy"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
+                </picture>
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background:
+                      'linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.55) 100%)',
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    padding: '20px 22px',
+                  }}
+                >
+                  <div style={{ color: '#fff' }}>
+                    <div
+                      style={{
+                        fontFamily: 'var(--pt-font-display)',
+                        fontWeight: 700,
+                        fontSize: 18,
+                        lineHeight: 1.1,
+                        marginBottom: 4,
+                      }}
+                    >
+                      Aucune alerte active
+                    </div>
+                    <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)' }}>
+                      Ton élevage tourne bien.
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* ── Section Serveur ───────────────────────────────────── */}

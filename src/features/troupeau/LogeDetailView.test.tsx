@@ -62,6 +62,8 @@ vi.mock('../../services/supabaseWrites', () => ({
   listLoges: () => listLogesMock(),
   getLogeContents: (id: string) => getLogeContentsMock(id),
   deactivateLoge: (id: string) => deactivateLogeMock(id),
+  // V73 — required by PhotoUpload/PhotoGallery (now used in LogeDetailView)
+  getCurrentFarmIdRef: () => null,
 }));
 
 vi.mock('../../services/supabaseClient', () => ({
@@ -75,6 +77,12 @@ vi.mock('../../services/supabaseClient', () => ({
         }),
       }),
     }),
+    storage: {
+      from: () => ({
+        list: async () => ({ data: [], error: null }),
+        getPublicUrl: () => ({ data: { publicUrl: '' } }),
+      }),
+    },
   },
 }));
 

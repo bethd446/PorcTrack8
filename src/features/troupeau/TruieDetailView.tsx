@@ -45,7 +45,8 @@ import NotesTimeline from '../../components/design/NotesTimeline';
 import LineageBreadcrumb, { type LineageNode } from '../../components/design/LineageBreadcrumb';
 import LineageTree from '../../components/design/LineageTree';
 import TopBarSync from '../../components/design/TopBarSync';
-import PhotoStrip from '../../components/PhotoStrip';
+import PhotoUpload from '../../v70/components/v70/PhotoUpload';
+import PhotoGallery from '../../v70/components/v70/PhotoGallery';
 
 import type { Truie, BandePorcelets, Saillie, TraitementSante } from '../../types/farm';
 import {
@@ -117,6 +118,7 @@ const TruieDetailView: React.FC = () => {
   const [miseBasOpen, setMiseBasOpen] = useState(false);
   const [mortalityOpen, setMortalityOpen] = useState(false);
   const [echoOpen, setEchoOpen] = useState(false);
+  const [photosRefreshKey, setPhotosRefreshKey] = useState(0);
 
   const handleEventAction = useCallback((action: TruieEventAction): void => {
     setEventSheetOpen(false);
@@ -453,6 +455,7 @@ const TruieDetailView: React.FC = () => {
                   photoUrl={truie.photoUrl}
                   size="xl"
                   shortCode={truie.displayId}
+                  useV73Defaults
                 />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 200 }}>
                   <div style={{ fontFamily: 'var(--pt-font-display)', fontSize: 18, fontWeight: 700, color: 'var(--pt-text)' }}>
@@ -853,11 +856,22 @@ const TruieDetailView: React.FC = () => {
                 </>
                 )}
 
-                {/* Photos (V25 — documentation visuelle) — Onglet "Historique" */}
+                {/* Photos — V73 Vague R : galerie multi-photos cloud (PWA) */}
                 {activeTab === 'historique' && (
                 <section aria-label="Photos" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <Section label="PHOTOS" />
-                  <PhotoStrip subjectType="TRUIE" subjectId={truie.id} />
+                  <PhotoUpload
+                    entityType="sows"
+                    entityId={truie.id}
+                    multiple
+                    maxPhotos={20}
+                    onUploaded={() => setPhotosRefreshKey((k) => k + 1)}
+                  />
+                  <PhotoGallery
+                    entityType="sows"
+                    entityId={truie.id}
+                    refreshKey={photosRefreshKey}
+                  />
                 </section>
                 )}
               </div>

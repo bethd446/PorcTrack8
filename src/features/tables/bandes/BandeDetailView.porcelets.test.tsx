@@ -31,8 +31,12 @@ vi.mock('@ionic/react', () => {
   };
 });
 
-vi.mock('../../../components/PhotoStrip', () => ({
-  default: () => <div data-testid="photo-strip" />,
+// V73 — PhotoStrip remplacé par PhotoUpload + PhotoGallery dans BandeDetailView
+vi.mock('../../../v70/components/v70/PhotoUpload', () => ({
+  default: () => <div data-testid="photo-upload" />,
+}));
+vi.mock('../../../v70/components/v70/PhotoGallery', () => ({
+  default: () => <div data-testid="photo-gallery" />,
 }));
 
 vi.mock('../../../components/design/NotesTimeline', () => ({

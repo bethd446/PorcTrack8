@@ -38,7 +38,7 @@ export default function MariusPanel({
         }}
       >
         <img
-          src="/images/marius-avatar.webp"
+          src="/images/v73/marius/orb-emeraude.webp"
           alt=""
           aria-hidden
           width={28}

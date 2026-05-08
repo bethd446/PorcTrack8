@@ -9,6 +9,8 @@ export interface EntityAvatarProps {
   size?: AvatarSize;
   shortCode?: string;
   className?: string;
+  /** Si true, utilise les portraits V73 photoréalistes par défaut quand `photoUrl` est absent. */
+  useV73Defaults?: boolean;
 }
 
 const SIZE_PX: Record<AvatarSize, number> = { sm: 32, md: 48, lg: 64, xl: 96 };
@@ -19,6 +21,12 @@ const PALETTE: Record<EntitySpecies, { bg: string; fg: string }> = {
   verrat:   { bg: '#C8D6E5', fg: '#3B5266' },
   porcelet: { bg: '#F5E9D8', fg: '#8B6E3D' },
   bande:    { bg: '#D4DFC8', fg: '#3D5C2C' },
+};
+
+const V73_PORTRAIT: Partial<Record<EntitySpecies, string>> = {
+  truie: '/images/v73/avatars/truie.webp',
+  verrat: '/images/v73/avatars/verrat.webp',
+  porcelet: '/images/v73/avatars/porcelet.webp',
 };
 
 interface SvgProps {
@@ -105,13 +113,16 @@ export const EntityAvatar: React.FC<EntityAvatarProps> = ({
   size = 'md',
   shortCode,
   className,
+  useV73Defaults = false,
 }) => {
   const [imgError, setImgError] = useState(false);
   const px = SIZE_PX[size];
   const radius = RADIUS_PX[size];
   const { bg, fg } = PALETTE[species];
 
-  const showPhoto = Boolean(photoUrl) && !imgError;
+  const fallbackUrl = useV73Defaults ? V73_PORTRAIT[species] ?? null : null;
+  const effectiveUrl = photoUrl ?? fallbackUrl;
+  const showPhoto = Boolean(effectiveUrl) && !imgError;
   const Svg = SVG_BY_SPECIES[species];
 
   return (
@@ -133,8 +144,9 @@ export const EntityAvatar: React.FC<EntityAvatarProps> = ({
     >
       {showPhoto ? (
         <img
-          src={photoUrl ?? undefined}
+          src={effectiveUrl ?? undefined}
           alt={shortCode ?? species}
+          loading="lazy"
           onError={() => setImgError(true)}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
