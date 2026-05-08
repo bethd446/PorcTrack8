@@ -3,6 +3,10 @@ import { X, Send, Loader2 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { Button } from '@/design-system';
 import { MARIUS_SYSTEM_PROMPT, getSuggestionsForPath } from './mariusSystemPrompt';
+import { useFarm } from '../../context/FarmContext';
+import { useAuth } from '../../context/AuthContext';
+import { buildFarmContextPrompt, type FarmSnapshot } from './buildFarmContext';
+import { kvGet } from '../../services/kvStore';
 
 type Role = 'user' | 'assistant' | 'system';
 
@@ -89,16 +93,41 @@ async function callMariusAPI(
   });
 }
 
+/**
+ * Vérifie si le mode debug Marius est actif.
+ * Activé via :
+ *   - URL : `?marius_debug=1`
+ *   - kvStore : `pt:marius_debug = '1'`
+ * En debug, le bloc CONTEXTE FERME injecté dans la dernière requête est
+ * affiché en bas du chat (texte gris, mono).
+ */
+function isMariusDebug(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('marius_debug') === '1') return true;
+  } catch {
+    /* noop */
+  }
+  return kvGet('pt:marius_debug') === '1';
+}
+
 export const ChatbotWidget: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [streaming, setStreaming] = useState(false);
+  const [lastInjectedContext, setLastInjectedContext] = useState<string | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Snapshot ferme pour enrichir le user message avant chaque envoi à Marius.
+  const farm = useFarm();
+  const { userName } = useAuth();
+  const debugEnabled = isMariusDebug();
 
   useEffect(() => {
     const handler = () => setOpen(true);
@@ -161,7 +190,26 @@ export const ChatbotWidget: React.FC = () => {
     setStreaming(false);
 
     try {
-      const userMessage: Message = { role: 'user', content: text };
+      // Marius RAG MVP — préfixe le user message avec un bloc CONTEXTE FERME
+      // (truies critiques, bandes, stocks, alertes) pour que la réponse soit
+      // ancrée sur les données réelles de la ferme courante. L'UI continue
+      // d'afficher le texte original (cf. setMessages plus haut), seul l'API
+      // call reçoit la version enrichie.
+      const snapshot: FarmSnapshot = {
+        nomFerme: farm.nomFerme,
+        pays: farm.pays,
+        truies: farm.truies,
+        verrats: farm.verrats,
+        bandes: farm.bandes,
+        stockAliment: farm.stockAliment,
+        stockVeto: farm.stockVeto,
+        alerts: farm.alerts,
+      };
+      const farmContext = buildFarmContextPrompt(snapshot, { userName });
+      setLastInjectedContext(farmContext);
+
+      const enrichedUserContent = `${farmContext}\n\nQuestion utilisateur : ${text}`;
+      const userMessage: Message = { role: 'user', content: enrichedUserContent };
       const updatedMessages = [
         ...messages.filter((m) => m.role !== 'system'),
         userMessage,
@@ -251,7 +299,7 @@ export const ChatbotWidget: React.FC = () => {
       setLoading(false);
       setStreaming(false);
     }
-  }, [input, loading, messages, appendToLastAssistant]);
+  }, [input, loading, messages, appendToLastAssistant, farm, userName]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -375,6 +423,21 @@ export const ChatbotWidget: React.FC = () => {
               Marius reflechit…
             </span>
           </div>
+        )}
+        {debugEnabled && lastInjectedContext && (
+          <details
+            className="mt-3 mx-1 text-[10px] rounded-lg p-2 ft-code"
+            style={{
+              background: 'var(--bg-surface-2)',
+              color: 'var(--muted)',
+              border: '1px dashed var(--line)',
+            }}
+          >
+            <summary className="cursor-pointer select-none">
+              Marius debug — contexte injecté ({lastInjectedContext.length} car.)
+            </summary>
+            <pre className="mt-2 whitespace-pre-wrap leading-tight">{lastInjectedContext}</pre>
+          </details>
         )}
         <div ref={bottomRef} />
       </div>
