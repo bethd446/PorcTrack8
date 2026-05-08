@@ -1,3 +1,5 @@
+import type { Database } from './database.types';
+
 export type DataSource = 'NETWORK' | 'CACHE' | 'FALLBACK';
 export type SyncStatus = 'synced' | 'pending' | 'offline';
 
@@ -7,6 +9,24 @@ export interface TableIndexEntry {
   headerRow: number;
   idHeader: string;
   module: string;
+}
+
+// ─── V71-P2 — Multi-user (farms + farm_members) ─────────────────────────────
+
+/** V71-P2 — Rôle d'un membre dans une ferme. */
+export type FarmRole = 'OWNER' | 'ADMIN' | 'PORCHER';
+
+/** V71-P2 — Row complète de la table `farms` (Supabase). */
+export type Farm = Database['public']['Tables']['farms']['Row'];
+
+/**
+ * V71-P2 — Membership : (farm_id, user_id, role).
+ * Représente l'appartenance d'un user à une ferme avec son rôle.
+ */
+export interface FarmMembership {
+  farm_id: string;
+  user_id: string;
+  role: FarmRole;
 }
 
 /**

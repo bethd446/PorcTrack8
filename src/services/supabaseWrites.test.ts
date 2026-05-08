@@ -47,12 +47,17 @@ const {
   setPorceletStatut,
   insertHealthLogForPorcelet,
   listHealthLogsForPorcelet,
+  setCurrentFarmIdRef,
+  __resetCurrentFarmIdRefForTests,
 } = await import('./supabaseWrites');
 
 const FARM_ID = 'farm-uuid-aaaa';
 const BATCH_ID = 'batch-uuid-1111';
 const SOW_ID = 'sow-uuid-2222';
 const LOGE_ID = 'loge-uuid-3333';
+// V71-P2 — UUID d'une ferme distincte de auth.uid() pour tester la priorité
+// `currentFarmId` du FarmContext sur le fallback `auth.uid()`.
+const CURRENT_FARM_ID = 'farm-uuid-current-bbbb';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -69,10 +74,13 @@ beforeEach(() => {
     data: { session: { user: { id: FARM_ID } } },
     error: null,
   });
+  // V71-P2 — Reset entre tests pour éviter les fuites d'état.
+  __resetCurrentFarmIdRefForTests();
 });
 
 afterEach(() => {
   vi.restoreAllMocks();
+  __resetCurrentFarmIdRefForTests();
 });
 
 describe('findLastSaillieForTruie', () => {
@@ -731,5 +739,87 @@ describe('V25 — listHealthLogsForPorcelet', () => {
     const res = await listHealthLogsForPorcelet(PORC_ID);
     expect(res).toEqual([]);
     mockChain.order.mockReturnThis();
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════════
+// V71-P2 — Tests multi-user : getFarmId() priorise currentFarmIdRef
+// ════════════════════════════════════════════════════════════════════════
+
+describe('V71-P2 — getFarmId via currentFarmIdRef (multi-user)', () => {
+  it('utilise currentFarmIdRef quand setCurrentFarmIdRef() a été appelé', async () => {
+    // Set la ferme courante (simule FarmContext.switchFarm())
+    setCurrentFarmIdRef(CURRENT_FARM_ID);
+
+    // Stub insert path : un addPorcelet déclenche getFarmId() en interne.
+    mockChain.single.mockResolvedValueOnce({
+      data: {
+        id: 'porc-x',
+        batch_id: BATCH_ID,
+        boucle: 'P-X',
+        sexe: 'M',
+        poids_courant_kg: null,
+        statut: 'VIVANT',
+        notes: null,
+      },
+      error: null,
+    });
+
+    await addPorcelet({ batchId: BATCH_ID, boucle: 'P-X', sexe: 'M' });
+
+    // Le farm_id injecté doit être CURRENT_FARM_ID (priorité), pas FARM_ID.
+    expect(mockChain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ farm_id: CURRENT_FARM_ID }),
+    );
+    // Et getSession() ne doit PAS avoir été appelé puisque la ref a court-circuité.
+    expect(getSessionMock).not.toHaveBeenCalled();
+  });
+
+  it('retombe sur auth.uid() (fallback) si currentFarmIdRef est null', async () => {
+    // Pas de setCurrentFarmIdRef → ref est null après __resetCurrentFarmIdRefForTests.
+    mockChain.single.mockResolvedValueOnce({
+      data: {
+        id: 'porc-y',
+        batch_id: BATCH_ID,
+        boucle: 'P-Y',
+        sexe: 'F',
+        poids_courant_kg: null,
+        statut: 'VIVANT',
+        notes: null,
+      },
+      error: null,
+    });
+
+    await addPorcelet({ batchId: BATCH_ID, boucle: 'P-Y', sexe: 'F' });
+
+    // Fallback → farm_id = auth.uid() = FARM_ID (mock).
+    expect(mockChain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ farm_id: FARM_ID }),
+    );
+    expect(getSessionMock).toHaveBeenCalled();
+  });
+
+  it('switch de ferme : changement dynamique de la ref', async () => {
+    setCurrentFarmIdRef(CURRENT_FARM_ID);
+    mockChain.single.mockResolvedValueOnce({
+      data: { id: 'p1', batch_id: BATCH_ID, boucle: 'A', sexe: 'M', poids_courant_kg: null, statut: 'VIVANT', notes: null },
+      error: null,
+    });
+    await addPorcelet({ batchId: BATCH_ID, boucle: 'A', sexe: 'M' });
+    expect(mockChain.insert).toHaveBeenLastCalledWith(
+      expect.objectContaining({ farm_id: CURRENT_FARM_ID }),
+    );
+
+    // Bascule sur une autre ferme.
+    const OTHER_FARM = 'farm-uuid-other-cccc';
+    setCurrentFarmIdRef(OTHER_FARM);
+    mockChain.single.mockResolvedValueOnce({
+      data: { id: 'p2', batch_id: BATCH_ID, boucle: 'B', sexe: 'F', poids_courant_kg: null, statut: 'VIVANT', notes: null },
+      error: null,
+    });
+    await addPorcelet({ batchId: BATCH_ID, boucle: 'B', sexe: 'F' });
+    expect(mockChain.insert).toHaveBeenLastCalledWith(
+      expect.objectContaining({ farm_id: OTHER_FARM }),
+    );
   });
 });

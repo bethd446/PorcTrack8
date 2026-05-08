@@ -7,8 +7,10 @@
  * codes (T01, V03, B12).
  *
  * Conventions :
- *  - `farm_id` est auto-injecté à partir de `supabase.auth.getSession()`.
- *  - RLS Postgres filtre `farm_id = auth.uid()` → pas de scoping client.
+ *  - `farm_id` est auto-injecté via `getFarmId()` :
+ *      1. priorité au `currentFarmId` exposé par FarmContext (V71-P2 multi-user) ;
+ *      2. fallback sur `auth.uid()` (rétro-compat V71-P1 : un user = une ferme).
+ *  - RLS Postgres scope par `farm_members` (helper SECURITY DEFINER).
  *  - Les `update*` retournent `WriteResult` (compat composants inline edit).
  *  - Les `insert*` retournent la row insérée typée, ou throw une erreur claire.
  *  - Les `delete*` loggent dans `deletion_log` (best-effort — si la table
@@ -75,7 +77,39 @@ type WriteTable =
 
 // ── Helpers internes ─────────────────────────────────────────────────────────
 
+/**
+ * V71-P2 — Référence globale vers la `currentFarmId` exposée par FarmContext.
+ *
+ * Pourquoi un module-level ref plutôt qu'un import direct du contexte React ?
+ * Les fonctions de ce service sont appelées depuis des handlers async (forms,
+ * services tiers) qui n'ont pas accès au React tree. On garde donc une simple
+ * ref settable que `FarmContext` met à jour via `setCurrentFarmIdRef()` à
+ * chaque mount/switch.
+ *
+ * Si la ref est `null` (pas encore initialisée, ou tests qui n'utilisent pas
+ * FarmContext), `getFarmId()` retombe sur `auth.uid()` — comportement
+ * rétro-compatible avec le backfill V71-P2 (`farms.id = profiles.id`).
+ */
+let globalCurrentFarmIdRef: string | null = null;
+
+/**
+ * V71-P2 — Set la `currentFarmId` accessible depuis les services.
+ * Appelé par FarmContext via useEffect au mount et à chaque `switchFarm()`.
+ */
+export function setCurrentFarmIdRef(farmId: string | null): void {
+  globalCurrentFarmIdRef = farmId;
+}
+
+/** V71-P2 — Test-only : reset la ref globale entre tests. */
+export function __resetCurrentFarmIdRefForTests(): void {
+  globalCurrentFarmIdRef = null;
+}
+
 async function getFarmId(): Promise<string> {
+  // 1. Priorité : currentFarmId exposé par FarmContext (multi-user).
+  if (globalCurrentFarmIdRef) return globalCurrentFarmIdRef;
+
+  // 2. Fallback : auth.uid() (rétro-compat V71-P1, backfill farms.id=profiles.id).
   const { data, error } = await supabase.auth.getSession();
   if (error) throw new Error(`Auth session error: ${error.message}`);
   const uid = data.session?.user.id;

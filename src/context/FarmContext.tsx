@@ -31,6 +31,7 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import type {
   Truie, Verrat, BandePorcelets, TraitementSante,
   FarmState, AlerteServeur, Saillie, FinanceEntry, TransitionBande,
+  FarmRole, FarmMembership,
 } from '../types/farm';
 import type { Animal, Note } from '../types';
 import type { FormuleAliment } from '../config/aliments';
@@ -49,8 +50,21 @@ import { PilotageProvider, usePilotage } from './PilotageContext';
 import { useAuth } from './AuthContext';
 import { fetchFarm } from '../services/settingsService';
 import { inferCurrencyFromCountry, type Currency } from '../lib/currency';
+import { supabase } from '../services/supabaseClient';
+import { setCurrentFarmIdRef } from '../services/supabaseWrites';
+import { kvGet, kvSet } from '../services/kvStore';
 
-// ── Shape publique (inchangée par rapport à l'existant) ────────────────────
+/** V71-P2 — Clé de persistance Capacitor Preferences pour la ferme courante. */
+const CURRENT_FARM_ID_KV_KEY = 'pt:current_farm_id';
+
+/** V71-P2 — Slim shape exposée pour le picker de ferme dans l'UI. */
+export interface AvailableFarm {
+  id: string;
+  name: string;
+  role: FarmRole;
+}
+
+// ── Shape publique (inchangée par rapport à l'existant + V71-P2) ───────────
 interface FarmContextType extends FarmState {
   loading: boolean;
   notes: Note[];
@@ -65,6 +79,12 @@ interface FarmContextType extends FarmState {
   nomFerme: string;
   pays: string | null;
   currency: Currency;
+  /** V71-P2 — UUID de la ferme actuellement active (null tant que non résolue). */
+  currentFarmId: string | null;
+  /** V71-P2 — Liste des fermes accessibles à l'utilisateur courant. */
+  availableFarms: AvailableFarm[];
+  /** V71-P2 — Bascule la ferme courante (vérifie qu'elle ∈ availableFarms). */
+  switchFarm: (farmId: string) => void;
   refreshData: (force?: boolean) => Promise<void>;
   getTruieById: (id: string) => Truie | undefined;
   getVerratById: (id: string) => Verrat | undefined;
@@ -93,6 +113,14 @@ interface MetaContextType {
   currency: Currency;
   /** false tant que fetchFarm n'a pas résolu (skeleton UI possible). */
   identityLoaded: boolean;
+  /** V71-P2 — UUID de la ferme courante (initialisé à auth.uid() au login). */
+  currentFarmId: string | null;
+  /** V71-P2 — Fermes accessibles via farm_members. */
+  availableFarms: AvailableFarm[];
+  /** V71-P2 — Rôle effectif de l'user dans la ferme courante. */
+  currentRole: FarmRole | null;
+  /** V71-P2 — Bascule sur une autre ferme (must be in availableFarms). */
+  switchFarm: (farmId: string) => void;
   refreshData: (force?: boolean) => Promise<void>;
   pullData: () => Promise<void>;
   processQueue: () => Promise<void>;
@@ -119,7 +147,10 @@ const DEFAULT_FARM_IDENTITY: FarmIdentity = {
 const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [meta, setMeta] = useState(() => getSnapshot('meta'));
   const [identity, setIdentity] = useState<FarmIdentity>(DEFAULT_FARM_IDENTITY);
-  // Dépend de la session auth : RLS Supabase filtre par auth.uid() = farm_id.
+  // V71-P2 — State multi-ferme.
+  const [currentFarmId, setCurrentFarmIdState] = useState<string | null>(null);
+  const [availableFarms, setAvailableFarms] = useState<AvailableFarm[]>([]);
+  // Dépend de la session auth : RLS Supabase filtre via `farm_members`.
   // Sans session, toutes les requêtes reviennent vides — il faut donc attendre
   // que la session soit attachée avant le premier refreshAll().
   const { session, loading: authLoading } = useAuth();
@@ -129,11 +160,73 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     return subscribe('meta', setMeta);
   }, []);
 
-  // Fetch initial : on attend que l'auth ait fini son boot ET qu'une session
-  // soit présente. Re-déclenché si l'utilisateur change (logout/login).
+  // V71-P2 — Charge la liste des fermes accessibles + résout currentFarmId.
+  // Stratégie de résolution :
+  //   1. Lit `pt:current_farm_id` depuis kvStore (persist Capacitor Preferences) ;
+  //   2. Si présent ET ∈ availableFarms → utilise ;
+  //   3. Sinon → fallback sur auth.uid() (rétro-compat backfill V71-P2).
   useEffect(() => {
     if (authLoading) return;
     if (!userId) {
+      setCurrentFarmIdState(null);
+      setAvailableFarms([]);
+      setCurrentFarmIdRef(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      // Lit les memberships via JOIN farm_members → farms.
+      const { data, error } = await supabase
+        .from('farm_members')
+        .select('farm_id, role, farms(id, name)')
+        .eq('user_id', userId);
+      if (cancelled) return;
+      let farms: AvailableFarm[] = [];
+      if (!error && Array.isArray(data)) {
+        farms = (data as Array<{
+          farm_id: string;
+          role: string;
+          farms: { id: string; name: string } | { id: string; name: string }[] | null;
+        }>)
+          .map((r) => {
+            // Supabase renvoie soit un objet (FK 1-1) soit un tableau selon les
+            // versions du schema cache. On normalise dans les deux cas.
+            const f = Array.isArray(r.farms) ? r.farms[0] : r.farms;
+            const id = f?.id ?? r.farm_id;
+            const name = f?.name?.trim() || 'Ma ferme';
+            const role = (r.role === 'OWNER' || r.role === 'ADMIN' || r.role === 'PORCHER')
+              ? (r.role as FarmRole)
+              : 'PORCHER';
+            return { id, name, role };
+          })
+          .filter((f) => !!f.id);
+      }
+      setAvailableFarms(farms);
+
+      // Résout currentFarmId : kvStore → si valide, sinon auth.uid().
+      const stored = kvGet(CURRENT_FARM_ID_KV_KEY);
+      const validStored = stored && farms.some((f) => f.id === stored) ? stored : null;
+      const nextId = validStored ?? userId;
+      setCurrentFarmIdState(nextId);
+      setCurrentFarmIdRef(nextId);
+    })().catch(() => {
+      // Silent : RLS / offline. On retombe sur auth.uid().
+      if (cancelled) return;
+      setAvailableFarms([]);
+      setCurrentFarmIdState(userId);
+      setCurrentFarmIdRef(userId);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, userId]);
+
+  // Fetch initial : on attend que l'auth ait fini son boot ET qu'une session
+  // soit présente. Re-déclenché si l'utilisateur change (logout/login) ou si
+  // currentFarmId change (switch de ferme).
+  useEffect(() => {
+    if (authLoading) return;
+    if (!userId || !currentFarmId) {
       setIdentity(DEFAULT_FARM_IDENTITY);
       return;
     }
@@ -141,7 +234,7 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     void refreshAll();
     // Charge l'identité ferme (nom_ferme, pays) → devise.
     let cancelled = false;
-    void fetchFarm(userId)
+    void fetchFarm(currentFarmId)
       .then((f) => {
         if (cancelled || !f) {
           // Pas de farm row trouvée mais fetch ok : on marque loaded pour
@@ -167,7 +260,7 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     return () => {
       cancelled = true;
     };
-  }, [authLoading, userId]);
+  }, [authLoading, userId, currentFarmId]);
 
   useEffect(() => {
     const onOnline = (): void => {
@@ -195,6 +288,21 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     await processQueueAndRefresh();
   }, []);
 
+  // V71-P2 — Bascule de ferme. Vérifie l'appartenance, persiste, met à jour
+  // la ref globale lue par supabaseWrites.getFarmId().
+  const switchFarm = useCallback((farmId: string) => {
+    if (!farmId) return;
+    if (!availableFarms.some((f) => f.id === farmId)) return;
+    setCurrentFarmIdState(farmId);
+    setCurrentFarmIdRef(farmId);
+    void kvSet(CURRENT_FARM_ID_KV_KEY, farmId);
+  }, [availableFarms]);
+
+  // V71-P2 — Rôle dérivé : lookup dans availableFarms par currentFarmId.
+  const currentRole: FarmRole | null = currentFarmId
+    ? availableFarms.find((f) => f.id === currentFarmId)?.role ?? null
+    : null;
+
   return (
     <MetaContext.Provider value={{
       loading: meta.loading,
@@ -205,6 +313,10 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       pays: identity.pays,
       currency: identity.currency,
       identityLoaded: identity.loaded,
+      currentFarmId,
+      availableFarms,
+      currentRole,
+      switchFarm,
       refreshData,
       pullData,
       processQueue,
@@ -297,12 +409,19 @@ export const useFarm = (): FarmContextType => {
     nomFerme: meta.nomFerme,
     pays: meta.pays,
     currency: meta.currency,
+    // V71-P2 — Multi-user
+    currentFarmId: meta.currentFarmId,
+    availableFarms: meta.availableFarms,
+    switchFarm: meta.switchFarm,
     refreshData: meta.refreshData,
     pullData: meta.pullData,
     processQueue: meta.processQueue,
     recomputeAlerts: meta.recomputeAlerts,
   };
 };
+
+// V71-P2 — Re-export du type membership pour les consommateurs UI.
+export type { FarmMembership };
 
 // Les consommateurs souhaitant un accès ciblé doivent importer directement
 // depuis ./TroupeauContext, ./RessourcesContext ou ./PilotageContext.

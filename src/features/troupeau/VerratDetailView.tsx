@@ -1,15 +1,18 @@
 /**
  * VerratDetailView — /troupeau/verrats/:id
  * ══════════════════════════════════════════════════════════════════════════
- * Fiche détail d'un verrat — inspirée de `TruieDetailView`.
+ * Fiche détail d'un verrat — alignée sur le pattern V70 de `TruieDetailView`.
  *
- * Structure (V45 archétype 4) :
+ * Structure :
  *   1. PageHeader       : eyebrow "Élevage · Verrat" + h1 displayId · nom + statut
  *   2. Hero compact Card: EntityAvatar xl + nom/origine + Tag statut + actions
- *   3. IDENTITÉ         : Boucle / Nom / Origine / Alimentation / Ration kg/j
- *   4. SAILLIES         : total + dernière + 5 dernières
- *   5. HISTORIQUE SOINS : DataRow list (type · traitement · date · obs)
- *   6. Grille actions   : Saillir · Soigner · Note · Pesée
+ *   3. Tabs (4)         : Vue d'ensemble · Saillies · Santé · Lignée
+ *
+ * Onglet "Vue d'ensemble" (4 cards V70) :
+ *   - IDENTITÉ        : boucle, nom, origine, naissance, loge
+ *   - REPRODUCTION    : alimentation, ration, total saillies, dernière saillie
+ *   - JOURNAL TERRAIN : notes inline + NotesTimeline + PhotoStrip
+ *   - ACTIONS         : grid 2×2 (Saillir, Soigner, Note, Pesée)
  */
 
 import React, { useMemo, useState } from 'react';
@@ -26,7 +29,7 @@ import EditableText from '../../components/EditableText';
 import NotesTimeline from '../../components/design/NotesTimeline';
 import PhotoStrip from '../../components/PhotoStrip';
 import { SectionDivider, BottomSheet, type ChipTone } from '../../components/agritech';
-import { Button, Card, PageHeader, Tabs, Tag } from '@/design-system';
+import { Button, Card, PageHeader, Section, Tabs, Tag } from '@/design-system';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { useFarm } from '../../context/FarmContext';
 import { updateBoar } from '../../services/supabaseWrites';
@@ -248,10 +251,17 @@ const VerratDetailView: React.FC = () => {
 
             {activeTab === 'overview' && (
             <>
-            {/* ── Identité ───────────────────────────────────────────── */}
-            <section aria-label="Identité">
-              <SectionDivider label="Identité" />
-              <div className="card-dense !p-0 overflow-hidden mt-3">
+            {/* ── Card 1 : IDENTITÉ ────────────────────────────────────── */}
+            <section aria-label="Identité" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <Section label="IDENTITÉ" />
+              <div
+                style={{
+                  background: 'var(--bg-surface)',
+                  borderRadius: 12,
+                  padding: '6px 16px',
+                  boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04)',
+                }}
+              >
                 <DetailRow label="Boucle" value={verrat.boucle || '—'} mono />
                 <EditableDetailRow label="Nom">
                   <EditableText
@@ -271,6 +281,20 @@ const VerratDetailView: React.FC = () => {
                   <DetailRow label="Naissance" value={formatDate(verrat.dateNaissance)} />
                 ) : null}
                 {verrat.loge ? <DetailRow label="Loge" value={verrat.loge} /> : null}
+              </div>
+            </section>
+
+            {/* ── Card 2 : REPRODUCTION ────────────────────────────────── */}
+            <section aria-label="Reproduction" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <Section label="REPRODUCTION" />
+              <div
+                style={{
+                  background: 'var(--bg-surface)',
+                  borderRadius: 12,
+                  padding: '6px 16px',
+                  boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04)',
+                }}
+              >
                 <DetailRow label="Alimentation" value={verrat.alimentation || '—'} />
                 <EditableDetailRow label="Ration/j">
                   <EditableNumber
@@ -287,13 +311,32 @@ const VerratDetailView: React.FC = () => {
                     }}
                   />
                 </EditableDetailRow>
+                <DetailRow
+                  label="Total saillies"
+                  value={saillesVerrat.length > 0 ? String(saillesVerrat.length) : '—'}
+                  mono
+                />
+                <DetailRow
+                  label="Dernière saillie"
+                  value={lastSaillie ? `${formatDate(lastSaillie.dateSaillie)} · ${truieName(lastSaillie)}` : '—'}
+                />
               </div>
             </section>
 
-            {/* ── Notes (édition inline texte) ───────────────────────── */}
-            <section aria-label="Notes verrat">
-              <SectionDivider label="Notes" />
-              <div className="card-dense mt-3 !p-3">
+            {/* ── Card 3 : JOURNAL TERRAIN (notes + photos) ───────────── */}
+            <section aria-label="Journal terrain" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <Section label="JOURNAL TERRAIN" />
+              <div
+                style={{
+                  background: 'var(--bg-surface)',
+                  borderRadius: 12,
+                  padding: 16,
+                  boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 16,
+                }}
+              >
                 <EditableText
                   value={verrat.notes ?? null}
                   multiline
@@ -306,31 +349,19 @@ const VerratDetailView: React.FC = () => {
                     return res;
                   }}
                 />
-              </div>
-            </section>
-
-            {/* ── Historique notes terrain (V21-6 C2) ───────────────── */}
-            <section aria-label="Historique notes">
-              <div className="mt-3">
                 <NotesTimeline
                   subjectType="VERRAT"
                   subjectId={verrat.id}
                   subjectLabel={verrat.displayId ?? undefined}
                   onAddNote={() => setSheet('note')}
                 />
-              </div>
-            </section>
-
-            {/* ── Photos (V25 — documentation visuelle) ───────────────── */}
-            <section aria-label="Photos">
-              <SectionDivider label="Photos" />
-              <div className="mt-3">
                 <PhotoStrip subjectType="VERRAT" subjectId={verrat.id} />
               </div>
             </section>
 
-            {/* ── Actions 2×2 (overview) ─────────────────────────────── */}
-            <section aria-label="Actions">
+            {/* ── Card 4 : ACTIONS ─────────────────────────────────────── */}
+            <section aria-label="Actions" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <Section label="ACTIONS" />
               <div className="grid grid-cols-2 gap-2.5">
                 <ActionButton
                   icon={<Heart size={16} aria-hidden="true" />}

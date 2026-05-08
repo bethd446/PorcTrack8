@@ -3,6 +3,7 @@ import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabaseClient';
 import { kvGet, kvSet } from '../services/kvStore';
 import type { UserRole } from '../types/user.types';
+import type { FarmRole } from '../types/farm';
 
 interface SupabaseProfile {
   id: string;
@@ -25,13 +26,33 @@ interface AuthContextType {
   userName: string;
   setRole: (role: UserRole) => void;
   isOwner: boolean;
+  /** V71-P2 — Rôle effectif dans la ferme courante (null = inconnu). */
+  currentRole: FarmRole | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-function mapToLegacyRole(supabaseRole: string | null | undefined, fallback: UserRole): UserRole {
-  if (supabaseRole === 'OWNER' || supabaseRole === 'ADMIN') return 'OWNER';
-  if (supabaseRole === 'WORKER' || supabaseRole === 'PORCHER') return 'WORKER';
+/** V71-P2 — Clé de persistance Capacitor Preferences (mirror FarmContext). */
+const CURRENT_FARM_ID_KV_KEY = 'pt:current_farm_id';
+
+/**
+ * Map un rôle (profiles.role legacy OU farm_members.role V71-P2) vers le
+ * UserRole binaire historique consommé par l'UI ('OWNER' / 'WORKER').
+ *
+ * V71-P2 — Priorité au rôle farm_members ; fallback profiles.role ; fallback
+ * `legacyRole` persisté localement.
+ */
+function mapToLegacyRole(
+  membershipRole: FarmRole | null,
+  profileRole: string | null | undefined,
+  fallback: UserRole,
+): UserRole {
+  // Priorité 1 : rôle dans la ferme courante (farm_members).
+  if (membershipRole === 'OWNER' || membershipRole === 'ADMIN') return 'OWNER';
+  if (membershipRole === 'PORCHER') return 'WORKER';
+  // Priorité 2 : profiles.role legacy.
+  if (profileRole === 'OWNER' || profileRole === 'ADMIN') return 'OWNER';
+  if (profileRole === 'WORKER' || profileRole === 'PORCHER') return 'WORKER';
   return fallback;
 }
 
@@ -43,19 +64,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [legacyRole, setLegacyRoleState] = useState<UserRole>(
     () => (kvGet('user_role') as UserRole | null) ?? 'OWNER',
   );
+  // V71-P2 — Memberships chargés en parallèle du profile pour calculer le
+  // rôle effectif dans la ferme courante.
+  const [memberships, setMemberships] = useState<Array<{ farm_id: string; role: FarmRole }>>([]);
 
   const fetchProfile = useCallback(async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, email, full_name, role')
-        .eq('id', userId)
-        .single();
-      if (error || !data) {
+      // Profile + memberships en parallèle.
+      const [profileRes, membersRes] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, email, full_name, role')
+          .eq('id', userId)
+          .single(),
+        supabase
+          .from('farm_members')
+          .select('farm_id, role')
+          .eq('user_id', userId),
+      ]);
+
+      if (profileRes.error || !profileRes.data) {
         setProfile(null);
-        return;
+      } else {
+        setProfile(profileRes.data as SupabaseProfile);
       }
-      setProfile(data as SupabaseProfile);
+
+      if (membersRes.error || !Array.isArray(membersRes.data)) {
+        setMemberships([]);
+      } else {
+        const rows = (membersRes.data as Array<{ farm_id: string; role: string }>)
+          .map((r) => ({
+            farm_id: r.farm_id,
+            role: (r.role === 'OWNER' || r.role === 'ADMIN' || r.role === 'PORCHER')
+              ? (r.role as FarmRole)
+              : 'PORCHER' as FarmRole,
+          }));
+        setMemberships(rows);
+      }
     } finally {
       setProfileLoaded(true);
     }
@@ -129,6 +174,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         void fetchProfile(newSession.user.id);
       } else {
         setProfile(null);
+        setMemberships([]);
       }
     });
 
@@ -148,7 +194,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
   }, []);
 
-  const role = mapToLegacyRole(profile?.role, legacyRole);
+  // V71-P2 — Résout le rôle effectif :
+  //  1. Lit `pt:current_farm_id` (kvStore) — partagé avec FarmContext ;
+  //  2. Match dans memberships ; sinon prend le 1er membership (single-farm
+  //     case courant : 7 users actuels = 7 fermes solo) ;
+  //  3. Map vers UserRole legacy via mapToLegacyRole().
+  const storedFarmId = kvGet(CURRENT_FARM_ID_KV_KEY);
+  const activeMembership =
+    (storedFarmId && memberships.find((m) => m.farm_id === storedFarmId)) ||
+    memberships[0] ||
+    null;
+  const currentRole: FarmRole | null = activeMembership?.role ?? null;
+  const role = mapToLegacyRole(currentRole, profile?.role, legacyRole);
   const userName = profile?.full_name ?? (kvGet('user_name') as string | null) ?? 'Utilisateur';
   const isOwner = role === 'OWNER';
   const user = session?.user ?? null;
@@ -167,6 +224,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         userName,
         setRole,
         isOwner,
+        currentRole,
       }}
     >
       {children}
