@@ -312,6 +312,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
           porcelets_nes_total: nb,
           porcelets_sevrene_total: nb,
           poids_moyen_sevrage_kg: poids,
+          poids_initial_kg: poids,
           poids_moyen_kg: poids,
           statut: 'Sevré',
           phase: 'post-sevrage',

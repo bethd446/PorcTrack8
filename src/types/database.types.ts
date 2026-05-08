@@ -41,72 +41,152 @@ export type Database = {
         }
         Relationships: []
       }
+      adoptions: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          date_adoption: string
+          farm_id: string
+          from_batch_id: string
+          id: string
+          motif: string | null
+          nb_porcelets: number
+          notes: string | null
+          to_batch_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          date_adoption: string
+          farm_id: string
+          from_batch_id: string
+          id?: string
+          motif?: string | null
+          nb_porcelets: number
+          notes?: string | null
+          to_batch_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          date_adoption?: string
+          farm_id?: string
+          from_batch_id?: string
+          id?: string
+          motif?: string | null
+          nb_porcelets?: number
+          notes?: string | null
+          to_batch_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "adoptions_from_batch_id_fkey"
+            columns: ["from_batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adoptions_to_batch_id_fkey"
+            columns: ["to_batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alert_dismissals: {
         Row: {
           alert_id: string
           dismissed_at: string
           dismissed_by: string
           expires_at: string
-          user_id: string
           id: string
           reason: string | null
+          user_id: string
         }
         Insert: {
           alert_id: string
           dismissed_at?: string
           dismissed_by: string
           expires_at?: string
-          user_id: string
           id?: string
           reason?: string | null
+          user_id: string
         }
         Update: {
           alert_id?: string
           dismissed_at?: string
           dismissed_by?: string
           expires_at?: string
-          user_id?: string
           id?: string
           reason?: string | null
+          user_id?: string
         }
         Relationships: []
       }
-      bandes: {
+      batch_sows: {
         Row: {
-          date_entree: string | null
+          batch_id: string
+          created_at: string | null
+          date_ajout: string
+          farm_id: string
           id: string
-          nom: string
-          statut: string | null
-          troupeau_id: string | null
+          nb_porcelets_apportes: number
+          notes: string | null
+          sow_id: string
         }
         Insert: {
-          date_entree?: string | null
+          batch_id: string
+          created_at?: string | null
+          date_ajout?: string
+          farm_id: string
           id?: string
-          nom: string
-          statut?: string | null
-          troupeau_id?: string | null
+          nb_porcelets_apportes: number
+          notes?: string | null
+          sow_id: string
         }
         Update: {
-          date_entree?: string | null
+          batch_id?: string
+          created_at?: string | null
+          date_ajout?: string
+          farm_id?: string
           id?: string
-          nom?: string
-          statut?: string | null
-          troupeau_id?: string | null
+          nb_porcelets_apportes?: number
+          notes?: string | null
+          sow_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "bandes_troupeau_id_fkey"
-            columns: ["troupeau_id"]
+            foreignKeyName: "batch_sows_batch_id_fkey"
+            columns: ["batch_id"]
             isOneToOne: false
-            referencedRelation: "troupeaux"
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batch_sows_farm_id_fkey"
+            columns: ["farm_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batch_sows_sow_id_fkey"
+            columns: ["sow_id"]
+            isOneToOne: false
+            referencedRelation: "sows"
             referencedColumns: ["id"]
           },
         ]
       }
       batches: {
         Row: {
+          abattoir_nom: string | null
+          age_jours_estime: number | null
           aliment_actuel: string | null
           boar_id: string | null
+          canal_vente: string | null
           code_id: string
           date_mise_bas: string | null
           date_prochain_event: string | null
@@ -116,23 +196,37 @@ export type Database = {
           farm_id: string
           id: string
           loge: string | null
+          loge_id: string | null
+          nb_femelles_naissance: number | null
+          nb_males_naissance: number | null
           nb_mort_nes: number | null
           notes: string | null
           phase: string | null
           photo_url: string | null
+          poids_carcasse_kg: number | null
+          poids_initial_kg: number
           poids_moyen_kg: number | null
           poids_moyen_sevrage_kg: number | null
           poids_portee_naissance_kg: number | null
+          poids_vif_kg: number | null
           porcelets_nes_total: number
           porcelets_nes_vivants: number
           porcelets_sevrene_total: number
+          prix_carcasse_fcfa_kg: number | null
           prochain_event: string | null
+          rendement_carcasse_pct: number | null
           sow_id: string | null
           statut: string | null
+          validated_at: string | null
+          validated_by: string | null
+          validation_status: string | null
         }
         Insert: {
+          abattoir_nom?: string | null
+          age_jours_estime?: number | null
           aliment_actuel?: string | null
           boar_id?: string | null
+          canal_vente?: string | null
           code_id: string
           date_mise_bas?: string | null
           date_prochain_event?: string | null
@@ -142,23 +236,37 @@ export type Database = {
           farm_id: string
           id?: string
           loge?: string | null
+          loge_id?: string | null
+          nb_femelles_naissance?: number | null
+          nb_males_naissance?: number | null
           nb_mort_nes?: number | null
           notes?: string | null
           phase?: string | null
           photo_url?: string | null
+          poids_carcasse_kg?: number | null
+          poids_initial_kg: number
           poids_moyen_kg?: number | null
           poids_moyen_sevrage_kg?: number | null
           poids_portee_naissance_kg?: number | null
+          poids_vif_kg?: number | null
           porcelets_nes_total?: number
           porcelets_nes_vivants?: number
           porcelets_sevrene_total?: number
+          prix_carcasse_fcfa_kg?: number | null
           prochain_event?: string | null
+          rendement_carcasse_pct?: number | null
           sow_id?: string | null
           statut?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_status?: string | null
         }
         Update: {
+          abattoir_nom?: string | null
+          age_jours_estime?: number | null
           aliment_actuel?: string | null
           boar_id?: string | null
+          canal_vente?: string | null
           code_id?: string
           date_mise_bas?: string | null
           date_prochain_event?: string | null
@@ -168,19 +276,30 @@ export type Database = {
           farm_id?: string
           id?: string
           loge?: string | null
+          loge_id?: string | null
+          nb_femelles_naissance?: number | null
+          nb_males_naissance?: number | null
           nb_mort_nes?: number | null
           notes?: string | null
           phase?: string | null
           photo_url?: string | null
+          poids_carcasse_kg?: number | null
+          poids_initial_kg?: number
           poids_moyen_kg?: number | null
           poids_moyen_sevrage_kg?: number | null
           poids_portee_naissance_kg?: number | null
+          poids_vif_kg?: number | null
           porcelets_nes_total?: number
           porcelets_nes_vivants?: number
           porcelets_sevrene_total?: number
+          prix_carcasse_fcfa_kg?: number | null
           prochain_event?: string | null
+          rendement_carcasse_pct?: number | null
           sow_id?: string | null
           statut?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_status?: string | null
         }
         Relationships: [
           {
@@ -195,6 +314,13 @@ export type Database = {
             columns: ["farm_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batches_loge_id_fkey"
+            columns: ["loge_id"]
+            isOneToOne: false
+            referencedRelation: "loges"
             referencedColumns: ["id"]
           },
           {
@@ -218,6 +344,7 @@ export type Database = {
           id: string
           lignee_parentale: string | null
           localisation: string | null
+          loge_id: string | null
           name: string | null
           notes: string | null
           origine: string | null
@@ -236,6 +363,7 @@ export type Database = {
           id?: string
           lignee_parentale?: string | null
           localisation?: string | null
+          loge_id?: string | null
           name?: string | null
           notes?: string | null
           origine?: string | null
@@ -254,6 +382,7 @@ export type Database = {
           id?: string
           lignee_parentale?: string | null
           localisation?: string | null
+          loge_id?: string | null
           name?: string | null
           notes?: string | null
           origine?: string | null
@@ -267,6 +396,205 @@ export type Database = {
             columns: ["farm_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boars_loge_id_fkey"
+            columns: ["loge_id"]
+            isOneToOne: false
+            referencedRelation: "loges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_checks_mb: {
+        Row: {
+          batch_id: string
+          comportement: string | null
+          created_at: string
+          date_check: string
+          diarrhee: string | null
+          eau_ok: boolean | null
+          farm_id: string
+          id: string
+          lampe_ok: boolean | null
+          mamelles_utilisees: boolean | null
+          morts_jour: number
+          notes: string | null
+          photo_url: string | null
+          respiration_ok: boolean | null
+          truie_alimentation: string | null
+          updated_at: string
+        }
+        Insert: {
+          batch_id: string
+          comportement?: string | null
+          created_at?: string
+          date_check?: string
+          diarrhee?: string | null
+          eau_ok?: boolean | null
+          farm_id: string
+          id?: string
+          lampe_ok?: boolean | null
+          mamelles_utilisees?: boolean | null
+          morts_jour?: number
+          notes?: string | null
+          photo_url?: string | null
+          respiration_ok?: boolean | null
+          truie_alimentation?: string | null
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string
+          comportement?: string | null
+          created_at?: string
+          date_check?: string
+          diarrhee?: string | null
+          eau_ok?: boolean | null
+          farm_id?: string
+          id?: string
+          lampe_ok?: boolean | null
+          mamelles_utilisees?: boolean | null
+          morts_jour?: number
+          notes?: string | null
+          photo_url?: string | null
+          respiration_ok?: boolean | null
+          truie_alimentation?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_checks_mb_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_checks_mb_farm_id_fkey"
+            columns: ["farm_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      farm_members: {
+        Row: {
+          created_at: string
+          farm_id: string
+          invited_by: string | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          farm_id: string
+          invited_by?: string | null
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          farm_id?: string
+          invited_by?: string | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farm_members_farm_id_fkey"
+            columns: ["farm_id"]
+            isOneToOne: false
+            referencedRelation: "farms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      farms: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          pays: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id: string
+          pays?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          pays?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      feed_consumption_logs: {
+        Row: {
+          batch_id: string | null
+          created_at: string | null
+          created_by: string
+          date_conso: string
+          farm_id: string
+          id: string
+          notes: string | null
+          produit_aliment_id: string | null
+          qty_kg: number
+          sow_id: string | null
+        }
+        Insert: {
+          batch_id?: string | null
+          created_at?: string | null
+          created_by: string
+          date_conso: string
+          farm_id: string
+          id?: string
+          notes?: string | null
+          produit_aliment_id?: string | null
+          qty_kg: number
+          sow_id?: string | null
+        }
+        Update: {
+          batch_id?: string | null
+          created_at?: string | null
+          created_by?: string
+          date_conso?: string
+          farm_id?: string
+          id?: string
+          notes?: string | null
+          produit_aliment_id?: string | null
+          qty_kg?: number
+          sow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_consumption_logs_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_consumption_logs_produit_aliment_id_fkey"
+            columns: ["produit_aliment_id"]
+            isOneToOne: false
+            referencedRelation: "produits_aliments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_consumption_logs_sow_id_fkey"
+            columns: ["sow_id"]
+            isOneToOne: false
+            referencedRelation: "sows"
             referencedColumns: ["id"]
           },
         ]
@@ -329,6 +657,9 @@ export type Database = {
           pct_total: number | null
           poste: string
           type: string | null
+          validated_at: string | null
+          validated_by: string | null
+          validation_status: string | null
         }
         Insert: {
           annuel_fcfa?: number | null
@@ -340,6 +671,9 @@ export type Database = {
           pct_total?: number | null
           poste: string
           type?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_status?: string | null
         }
         Update: {
           annuel_fcfa?: number | null
@@ -351,6 +685,9 @@ export type Database = {
           pct_total?: number | null
           poste?: string
           type?: string | null
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_status?: string | null
         }
         Relationships: [
           {
@@ -361,6 +698,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      fournisseurs: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          farm_id: string
+          id: string
+          is_default: boolean | null
+          nom: string
+          notes: string | null
+          type: string | null
+          whatsapp_number: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          farm_id: string
+          id?: string
+          is_default?: boolean | null
+          nom: string
+          notes?: string | null
+          type?: string | null
+          whatsapp_number?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          farm_id?: string
+          id?: string
+          is_default?: boolean | null
+          nom?: string
+          notes?: string | null
+          type?: string | null
+          whatsapp_number?: string | null
+        }
+        Relationships: []
       }
       health_logs: {
         Row: {
@@ -373,6 +746,7 @@ export type Database = {
           diagnosis: string | null
           dose_cost: number | null
           dose_count: number | null
+          dose_or_quantity: string | null
           duration: string | null
           farm_id: string
           id: string
@@ -381,6 +755,8 @@ export type Database = {
           logged_at: string
           notes: string | null
           operator: string | null
+          porcelet_id: string | null
+          produit_id: string | null
           result: string | null
           sow_id: string | null
           symptom: string | null
@@ -388,6 +764,9 @@ export type Database = {
           treatment: string | null
           treatment_name: string | null
           updated_at: string
+          validated_at: string | null
+          validated_by: string | null
+          validation_status: string | null
           weight_kg: number | null
         }
         Insert: {
@@ -400,6 +779,7 @@ export type Database = {
           diagnosis?: string | null
           dose_cost?: number | null
           dose_count?: number | null
+          dose_or_quantity?: string | null
           duration?: string | null
           farm_id: string
           id?: string
@@ -408,6 +788,8 @@ export type Database = {
           logged_at?: string
           notes?: string | null
           operator?: string | null
+          porcelet_id?: string | null
+          produit_id?: string | null
           result?: string | null
           sow_id?: string | null
           symptom?: string | null
@@ -415,6 +797,9 @@ export type Database = {
           treatment?: string | null
           treatment_name?: string | null
           updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_status?: string | null
           weight_kg?: number | null
         }
         Update: {
@@ -427,6 +812,7 @@ export type Database = {
           diagnosis?: string | null
           dose_cost?: number | null
           dose_count?: number | null
+          dose_or_quantity?: string | null
           duration?: string | null
           farm_id?: string
           id?: string
@@ -435,6 +821,8 @@ export type Database = {
           logged_at?: string
           notes?: string | null
           operator?: string | null
+          porcelet_id?: string | null
+          produit_id?: string | null
           result?: string | null
           sow_id?: string | null
           symptom?: string | null
@@ -442,6 +830,9 @@ export type Database = {
           treatment?: string | null
           treatment_name?: string | null
           updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_status?: string | null
           weight_kg?: number | null
         }
         Relationships: [
@@ -460,10 +851,126 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "health_logs_porcelet_id_fkey"
+            columns: ["porcelet_id"]
+            isOneToOne: false
+            referencedRelation: "porcelets_individuels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "health_logs_produit_id_fkey"
+            columns: ["produit_id"]
+            isOneToOne: false
+            referencedRelation: "produits_veto"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "health_logs_sow_id_fkey"
             columns: ["sow_id"]
             isOneToOne: false
             referencedRelation: "sows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loge_movements: {
+        Row: {
+          created_at: string | null
+          date_mvt: string
+          farm_id: string
+          from_loge_id: string | null
+          id: string
+          reason: string | null
+          subject_id: string
+          subject_type: string
+          to_loge_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date_mvt?: string
+          farm_id: string
+          from_loge_id?: string | null
+          id?: string
+          reason?: string | null
+          subject_id: string
+          subject_type: string
+          to_loge_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date_mvt?: string
+          farm_id?: string
+          from_loge_id?: string | null
+          id?: string
+          reason?: string | null
+          subject_id?: string
+          subject_type?: string
+          to_loge_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loge_movements_farm_id_fkey"
+            columns: ["farm_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loge_movements_from_loge_id_fkey"
+            columns: ["from_loge_id"]
+            isOneToOne: false
+            referencedRelation: "loges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loge_movements_to_loge_id_fkey"
+            columns: ["to_loge_id"]
+            isOneToOne: false
+            referencedRelation: "loges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loges: {
+        Row: {
+          active: boolean
+          batiment: string | null
+          capacite_max: number | null
+          created_at: string | null
+          farm_id: string
+          id: string
+          notes: string | null
+          numero: string
+          type: string
+        }
+        Insert: {
+          active?: boolean
+          batiment?: string | null
+          capacite_max?: number | null
+          created_at?: string | null
+          farm_id: string
+          id?: string
+          notes?: string | null
+          numero: string
+          type: string
+        }
+        Update: {
+          active?: boolean
+          batiment?: string | null
+          capacite_max?: number | null
+          created_at?: string | null
+          farm_id?: string
+          id?: string
+          notes?: string | null
+          numero?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loges_farm_id_fkey"
+            columns: ["farm_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -475,6 +982,7 @@ export type Database = {
           category: string | null
           content: string
           created_at: string
+          embedding: string | null
           farm_id: string
           id: string
           photo_url: string | null
@@ -486,6 +994,7 @@ export type Database = {
           category?: string | null
           content: string
           created_at?: string
+          embedding?: string | null
           farm_id: string
           id?: string
           photo_url?: string | null
@@ -497,12 +1006,132 @@ export type Database = {
           category?: string | null
           content?: string
           created_at?: string
+          embedding?: string | null
           farm_id?: string
           id?: string
           photo_url?: string | null
           tags?: string[] | null
         }
         Relationships: []
+      }
+      pesee_planifiees: {
+        Row: {
+          batch_id: string | null
+          created_at: string | null
+          date_effectuee: string | null
+          date_prevue: string
+          effectuee: boolean
+          farm_id: string
+          id: string
+          porcelet_id: string | null
+          rappel_j1: boolean
+          rappel_j3: boolean
+        }
+        Insert: {
+          batch_id?: string | null
+          created_at?: string | null
+          date_effectuee?: string | null
+          date_prevue: string
+          effectuee?: boolean
+          farm_id: string
+          id?: string
+          porcelet_id?: string | null
+          rappel_j1?: boolean
+          rappel_j3?: boolean
+        }
+        Update: {
+          batch_id?: string | null
+          created_at?: string | null
+          date_effectuee?: string | null
+          date_prevue?: string
+          effectuee?: boolean
+          farm_id?: string
+          id?: string
+          porcelet_id?: string | null
+          rappel_j1?: boolean
+          rappel_j3?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pesee_planifiees_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pesee_planifiees_farm_id_fkey"
+            columns: ["farm_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pesee_planifiees_porcelet_id_fkey"
+            columns: ["porcelet_id"]
+            isOneToOne: false
+            referencedRelation: "porcelets_individuels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pesees: {
+        Row: {
+          created_at: string | null
+          date_pesee: string
+          farm_id: string
+          id: string
+          notes: string | null
+          operateur: string | null
+          poids_kg: number
+          porcelet_id: string
+          session_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date_pesee: string
+          farm_id: string
+          id?: string
+          notes?: string | null
+          operateur?: string | null
+          poids_kg: number
+          porcelet_id: string
+          session_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date_pesee?: string
+          farm_id?: string
+          id?: string
+          notes?: string | null
+          operateur?: string | null
+          poids_kg?: number
+          porcelet_id?: string
+          session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pesees_farm_id_fkey"
+            columns: ["farm_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pesees_porcelet_id_fkey"
+            columns: ["porcelet_id"]
+            isOneToOne: false
+            referencedRelation: "porcelets_individuels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pesees_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions_pesee"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plan_alimentation: {
         Row: {
@@ -554,16 +1183,78 @@ export type Database = {
           },
         ]
       }
+      porcelets_individuels: {
+        Row: {
+          batch_id: string
+          boucle: string
+          couleur_boucle: string | null
+          created_at: string | null
+          farm_id: string
+          id: string
+          notes: string | null
+          photo_url: string | null
+          poids_courant_kg: number | null
+          sexe: string | null
+          statut: string
+          updated_at: string | null
+        }
+        Insert: {
+          batch_id: string
+          boucle: string
+          couleur_boucle?: string | null
+          created_at?: string | null
+          farm_id: string
+          id?: string
+          notes?: string | null
+          photo_url?: string | null
+          poids_courant_kg?: number | null
+          sexe?: string | null
+          statut?: string
+          updated_at?: string | null
+        }
+        Update: {
+          batch_id?: string
+          boucle?: string
+          couleur_boucle?: string | null
+          created_at?: string | null
+          farm_id?: string
+          id?: string
+          notes?: string | null
+          photo_url?: string | null
+          poids_courant_kg?: number | null
+          sexe?: string | null
+          statut?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "porcelets_individuels_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "porcelets_individuels_farm_id_fkey"
+            columns: ["farm_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       produits_aliments: {
         Row: {
           code_id: string
           created_at: string | null
           en_alerte: boolean | null
           farm_id: string
+          fournisseur_id: string | null
           id: string
           libelle: string
           notes: string | null
           seuil_alerte: number | null
+          short_code: string | null
           stock_actuel: number | null
           unite: string | null
           updated_at: string | null
@@ -573,10 +1264,12 @@ export type Database = {
           created_at?: string | null
           en_alerte?: boolean | null
           farm_id: string
+          fournisseur_id?: string | null
           id?: string
           libelle: string
           notes?: string | null
           seuil_alerte?: number | null
+          short_code?: string | null
           stock_actuel?: number | null
           unite?: string | null
           updated_at?: string | null
@@ -586,10 +1279,12 @@ export type Database = {
           created_at?: string | null
           en_alerte?: boolean | null
           farm_id?: string
+          fournisseur_id?: string | null
           id?: string
           libelle?: string
           notes?: string | null
           seuil_alerte?: number | null
+          short_code?: string | null
           stock_actuel?: number | null
           unite?: string | null
           updated_at?: string | null
@@ -602,6 +1297,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "produits_aliments_fournisseur_id_fkey"
+            columns: ["fournisseur_id"]
+            isOneToOne: false
+            referencedRelation: "fournisseurs"
+            referencedColumns: ["id"]
+          },
         ]
       }
       produits_veto: {
@@ -611,9 +1313,11 @@ export type Database = {
           created_at: string | null
           dlc: string | null
           farm_id: string
+          fournisseur_id: string | null
           id: string
           libelle: string
           notes: string | null
+          short_code: string | null
           stock_actuel: number | null
           stock_min: number | null
           type: string | null
@@ -627,9 +1331,11 @@ export type Database = {
           created_at?: string | null
           dlc?: string | null
           farm_id: string
+          fournisseur_id?: string | null
           id?: string
           libelle: string
           notes?: string | null
+          short_code?: string | null
           stock_actuel?: number | null
           stock_min?: number | null
           type?: string | null
@@ -643,9 +1349,11 @@ export type Database = {
           created_at?: string | null
           dlc?: string | null
           farm_id?: string
+          fournisseur_id?: string | null
           id?: string
           libelle?: string
           notes?: string | null
+          short_code?: string | null
           stock_actuel?: number | null
           stock_min?: number | null
           type?: string | null
@@ -659,6 +1367,13 @@ export type Database = {
             columns: ["farm_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produits_veto_fournisseur_id_fkey"
+            columns: ["fournisseur_id"]
+            isOneToOne: false
+            referencedRelation: "fournisseurs"
             referencedColumns: ["id"]
           },
         ]
@@ -689,45 +1404,61 @@ export type Database = {
           boar_code_id: string | null
           boar_id: string | null
           created_at: string | null
+          date_echo: string | null
           date_mb_prevue: string | null
           date_saillie: string | null
           farm_id: string
           id: string
           notes: string | null
+          notes_echo: string | null
           sow_code_id: string | null
           sow_id: string | null
           statut: string | null
+          statut_echo: string | null
           updated_at: string | null
         }
         Insert: {
           boar_code_id?: string | null
           boar_id?: string | null
           created_at?: string | null
+          date_echo?: string | null
           date_mb_prevue?: string | null
           date_saillie?: string | null
           farm_id: string
           id?: string
           notes?: string | null
+          notes_echo?: string | null
           sow_code_id?: string | null
           sow_id?: string | null
           statut?: string | null
+          statut_echo?: string | null
           updated_at?: string | null
         }
         Update: {
           boar_code_id?: string | null
           boar_id?: string | null
           created_at?: string | null
+          date_echo?: string | null
           date_mb_prevue?: string | null
           date_saillie?: string | null
           farm_id?: string
           id?: string
           notes?: string | null
+          notes_echo?: string | null
           sow_code_id?: string | null
           sow_id?: string | null
           statut?: string | null
+          statut_echo?: string | null
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "saillies_boar_id_fkey"
+            columns: ["boar_id"]
+            isOneToOne: false
+            referencedRelation: "boars"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "saillies_farm_id_fkey"
             columns: ["farm_id"]
@@ -742,11 +1473,42 @@ export type Database = {
             referencedRelation: "sows"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      sessions_pesee: {
+        Row: {
+          created_at: string | null
+          date_session: string
+          farm_id: string
+          id: string
+          notes: string | null
+          operateur: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string | null
+          date_session: string
+          farm_id: string
+          id?: string
+          notes?: string | null
+          operateur?: string | null
+          type?: string
+        }
+        Update: {
+          created_at?: string | null
+          date_session?: string
+          farm_id?: string
+          id?: string
+          notes?: string | null
+          operateur?: string | null
+          type?: string
+        }
+        Relationships: [
           {
-            foreignKeyName: "saillies_boar_id_fkey"
-            columns: ["boar_id"]
+            foreignKeyName: "sessions_pesee_farm_id_fkey"
+            columns: ["farm_id"]
             isOneToOne: false
-            referencedRelation: "boars"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -763,6 +1525,7 @@ export type Database = {
           farm_id: string
           id: string
           localisation: string | null
+          loge_id: string | null
           name: string | null
           nb_portees: number | null
           notes: string | null
@@ -783,6 +1546,7 @@ export type Database = {
           farm_id: string
           id?: string
           localisation?: string | null
+          loge_id?: string | null
           name?: string | null
           nb_portees?: number | null
           notes?: string | null
@@ -803,6 +1567,7 @@ export type Database = {
           farm_id?: string
           id?: string
           localisation?: string | null
+          loge_id?: string | null
           name?: string | null
           nb_portees?: number | null
           notes?: string | null
@@ -820,6 +1585,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "sows_loge_id_fkey"
+            columns: ["loge_id"]
+            isOneToOne: false
+            referencedRelation: "loges"
+            referencedColumns: ["id"]
+          },
         ]
       }
       troupeaux: {
@@ -834,7 +1606,7 @@ export type Database = {
           objectif_porcelets_an: number | null
           onboarding_completed_at: string | null
           pays: string | null
-          races: unknown | null
+          races: Json | null
           secteur: string | null
           user_id: string | null
         }
@@ -849,7 +1621,7 @@ export type Database = {
           objectif_porcelets_an?: number | null
           onboarding_completed_at?: string | null
           pays?: string | null
-          races?: unknown | null
+          races?: Json | null
           secteur?: string | null
           user_id?: string | null
         }
@@ -864,7 +1636,7 @@ export type Database = {
           objectif_porcelets_an?: number | null
           onboarding_completed_at?: string | null
           pays?: string | null
-          races?: unknown | null
+          races?: Json | null
           secteur?: string | null
           user_id?: string | null
         }
@@ -917,15 +1689,98 @@ export type Database = {
           },
         ]
       }
+      weight_distributions: {
+        Row: {
+          batch_id: string
+          created_at: string | null
+          created_by: string
+          date_pesee: string
+          farm_id: string
+          id: string
+          nb_100_to_110kg: number | null
+          nb_90_to_100kg: number | null
+          nb_above_110kg: number | null
+          nb_under_90kg: number | null
+          notes: string | null
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string | null
+          created_by: string
+          date_pesee: string
+          farm_id: string
+          id?: string
+          nb_100_to_110kg?: number | null
+          nb_90_to_100kg?: number | null
+          nb_above_110kg?: number | null
+          nb_under_90kg?: number | null
+          notes?: string | null
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string | null
+          created_by?: string
+          date_pesee?: string
+          farm_id?: string
+          id?: string
+          nb_100_to_110kg?: number | null
+          nb_90_to_100kg?: number | null
+          nb_above_110kg?: number | null
+          nb_under_90kg?: number | null
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weight_distributions_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      current_user_farms: { Args: never; Returns: string[] }
       get_user_role: { Args: { user_id: string }; Returns: string }
+      is_member_with_role: {
+        Args: { p_farm_id: string; p_roles: string[] }
+        Returns: boolean
+      }
+      is_owner_or_admin: { Args: never; Returns: boolean }
+      match_notes: {
+        Args: {
+          match_count: number
+          match_threshold: number
+          query_embedding: string
+        }
+        Returns: {
+          content: string
+          id: string
+          similarity: number
+        }[]
+      }
+      user_farms: { Args: { uid: string }; Returns: string[] }
     }
     Enums: {
-      [_ in never]: never
+      health_log_type:
+        | "FER_J3"
+        | "VERMIFUGE"
+        | "VACCIN_PESTE"
+        | "VACCIN_MYCOPLASME"
+        | "VACCIN_AUTRE"
+        | "CASTRATION"
+        | "COUPE_QUEUE"
+        | "BOITERIE"
+        | "TOUX"
+        | "DIARRHEE"
+        | "FIEVRE"
+        | "ECRASEMENT"
+        | "PARASITOSE"
+        | "AUTRE"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1052,6 +1907,23 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      health_log_type: [
+        "FER_J3",
+        "VERMIFUGE",
+        "VACCIN_PESTE",
+        "VACCIN_MYCOPLASME",
+        "VACCIN_AUTRE",
+        "CASTRATION",
+        "COUPE_QUEUE",
+        "BOITERIE",
+        "TOUX",
+        "DIARRHEE",
+        "FIEVRE",
+        "ECRASEMENT",
+        "PARASITOSE",
+        "AUTRE",
+      ],
+    },
   },
 } as const

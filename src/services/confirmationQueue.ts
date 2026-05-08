@@ -227,6 +227,7 @@ async function runConfirmedAction(
         date_sevrage: new Date().toISOString().slice(0, 10),
         porcelets_sevrene_total: totalVivants,
         porcelets_nes_vivants: totalVivants,
+        poids_initial_kg: 0,
         statut: 'En cours',
         notes: note ?? `Regroupement automatique : ${bandeIds.join(', ')}`,
       });
