@@ -19,6 +19,46 @@
 
 ---
 
+## 2026-05-08 · [V71-P2] Multi-user schema + landing-v2 fix + Verrat refonte + DESIGN.md · commits `43ac792`→`746623b`
+
+**Contexte** : Reprise du brief d'hier (récap user : 5 priorités après 13 chantiers livrés en V71-P1). HEAD pré-session `f8f3481` (rollback / vers Landing classique car scrollytelling P2 buggé). Sub-agents Opus 4.7 utilisés en parallèle (3 dispatches : designer-pilot bloqué Edit, supabase-ops design, dev-troupeau frontend MVP).
+
+**Livré (4 commits, +1551 / -53 nets)** :
+- `43ac792` Fix scrollytelling /landing-v2 → bascule `/` :
+  - Cause titres invisibles : `gsap.from(titleEl, {opacity:0})` + `immediateRender:true` (défaut) → fige opacity:0 si ScrollTrigger échoue à trigger (Lenis + override Ionic + sticky + refresh tardif). Fix : passage à `gsap.fromTo` + `immediateRender:false` + `toggleActions` (SceneFrame, SceneHero, SceneBandes).
+  - Cause sticky cassé : `body.style.overflow = 'auto'` dans useScrollUnlock créait un scrolling container interne qui devenait le scope des `position:sticky` des Scenes → fix via `body.overflow:visible`. Aussi `overflowX:hidden` du wrapper root forçait `overflow-y:auto` (CSS spec) → fix via `overflowX:clip`.
+  - Tracking git de `supabase/migrations/20260508_rls_quickwins.sql` + `supabase/functions/marius-chat/index.ts` (déjà appliqués prod) + `_DRAFT_v71_multi_user_schema.sql` (563 lignes designé par sub-agent supabase-ops Opus 4.7).
+- `ff54a98` Apply migration V71-P2 multi-user via MCP (`20260508095426_v71_p2_multi_user_schema`) :
+  - 2 tables (farms PK uuid, farm_members PK composite + role CHECK 'OWNER'|'ADMIN'|'PORCHER')
+  - 3 helpers SECURITY DEFINER STABLE search_path locked (`user_farms(uid)`, `current_user_farms()`, `is_member_with_role(farm_id, ...roles)`)
+  - 40 policies farm-scoped sur 24 tables refondues (USING `farm_id IN (SELECT current_user_farms())`)
+  - handle_new_user étendu (signup crée farm + member OWNER)
+  - Backfill zero-cost : farms.id = profiles.id (7 users existants → 7 farms + 7 farm_members OWNER)
+  - Types Supabase régénérés (`src/types/database.types.ts` 1057→1929 lignes), 2 erreurs TS pré-existantes fixées (poids_initial_kg NOT NULL sur batches).
+- `971b189` Frontend MVP multi-user + refonte Verrat :
+  - FarmContext étendu : currentFarmId/availableFarms/switchFarm/currentRole, persistance kvStore `pt:current_farm_id`, useEffect dédié charge farm_members JOIN farms.
+  - AuthContext.mapToLegacyRole(membershipRole, profileRole, fallback) — priorité farm_members.role > profiles.role.
+  - supabaseWrites.getFarmId() : ref module-level `globalCurrentFarmIdRef` (set par FarmContext.setCurrentFarmIdRef), fallback auth.uid() si null. 103 consommateurs useFarm/useAuth/useMeta non cassés (shape additive).
+  - VerratDetailView "Vue d'ensemble" → 4 cards V70 (IDENTITÉ, REPRODUCTION, JOURNAL TERRAIN, ACTIONS) alignées sur pattern TruieDetailView (`<Section label />` + div card-style inline).
+- `746623b` DESIGN.md format Stitch/impeccable — formalisation V70 (248 lignes, 6 sections spec, frontmatter YAML 18 colors + 8 typo nommés + 4 components, 4 Named Rules).
+
+**Tests** : 1739 → 1742 (+3 V71-P2 getFarmId via currentFarmIdRef). 0 régression. tsc 0 erreur. Build OK (92 entries / 3981 KiB).
+
+**Sub-agents Opus 4.7 dispatchés (3)** :
+- designer-pilot : bloqué Edit/Write par permissions sub-agent → diag fait, fix appliqué localement. Leçon : pour Edit critique, faire localement.
+- supabase-ops : ✅ design draft V71-P2 (563 lignes) + audit 24 tables/40 policies/21 fichiers frontend.
+- dev-troupeau : ✅ refactor frontend MVP multi-user (5 fichiers, +341/-20 lignes, 3 nouveaux tests).
+
+**Écarts/notes** :
+- Pixel-perfect V70 préservé : pas modifié les sizes typo (9/10/11/12/13/18/22/36) malgré ratios non-1.2. DESIGN.md formalise les noms (display/headline/title/body/caption/label/nav/tiny) sans toucher au code.
+- Multi-user "complet" pas livré : refactor de peseePlanifieesService, mbWorkflowService, feedConsumptionAnalyzer, validationWorkflow, supabaseService, alertDismissals à faire en V71-P2 phase C (continuent via auth.uid() + RLS rétro-compat backfill pour l'instant).
+- Task #7 (audit fonctionnel multi-user en condition réelle) reportée — demande 30-60 min de test 2 users browser.
+- Pas push to remote (4 commits ahead `main`) — confirmation user requise.
+
+**Liens** : [[decisions#V71-P2]] · [[learnings#scrollytelling]] · [[learnings#multi-user-rls]]
+
+---
+
 ## 2026-05-04 · [V43.7] Cohérence DS V2 + perf CLS/LCP · commit `fcd2373`
 
 **Contexte** : Audit prod V43.7 (chrome-devtools-mcp, 25 routes parcourues) après refactor BandeDetailView V43.6. 3 axes confirmés : vocabulaire résiduel ancienne structure, CLS élevé sur 3 pages clés, LCP bloquant `/pilotage`. Le user demande mode minutieux, zéro tolérance aux chevauchements ancienne/nouvelle structure.

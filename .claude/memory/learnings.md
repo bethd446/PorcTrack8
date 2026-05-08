@@ -3,6 +3,98 @@
 
 ---
 
+## Leçons Techniques — Session 2026-05-08 (V71-P2 multi-user + landing-v2 fix)
+
+### GSAP ScrollTrigger + Lenis : pièges et patterns robustes
+
+**Anti-pattern figeant l'état initial** :
+```js
+gsap.from(titleEl, { opacity: 0, y: 40, scrollTrigger: { trigger, toggleActions } });
+```
+`gsap.from()` a `immediateRender: true` par défaut → l'élément est SET à opacity:0 au mount. Si ScrollTrigger échoue à trigger (Lenis hijack le scroll, override Ionic body, sticky parents, refresh tardifs), l'élément reste invisible à vie.
+
+**Pattern robuste** :
+```js
+gsap.fromTo(
+  titleEl,
+  { opacity: 0, y: 40 },
+  {
+    opacity: 1, y: 0, duration: 0.9, ease: 'power2.out',
+    immediateRender: false,  // ← clef : ne fige pas l'état initial
+    scrollTrigger: { trigger, start: 'top 75%', toggleActions: 'play none none reverse' },
+  },
+);
+```
+Avec `immediateRender:false`, l'élément reste à son CSS initial (opacity:1) tant que le tween n'est pas joué. Si ScrollTrigger trigger correctement, anim entrée jouée. Si non, l'élément reste visible — pas de bug invisible.
+
+### CSS : `overflow-x:hidden` force `overflow-y:auto` (et casse position:sticky)
+
+CSS spec : si `overflow-x` ou `overflow-y` n'est pas `visible`, l'autre devient `auto` automatiquement. Donc `overflowX:'hidden'` sur un wrapper crée implicitement un nouveau scrolling container vertical → tous les `position:sticky` enfants se réfèrent à ce wrapper, pas au viewport, et le sticky ne s'active jamais.
+
+**Fix** : utiliser `overflow-x: clip` (CSS moderne, supporté Chrome 90+/Safari 16+/Firefox 81+). `clip` n'introduit PAS de scroll context. Idem pour `overflow-y: clip` si on veut bloquer le scroll vertical sans casser sticky.
+
+**Aussi** : `body.style.overflow = 'auto'` rend body scrollable et fait du body le scrolling container des sticky enfants — sur une SPA Ionic où le scroll attendu est sur window/html, c'est cassé. Préférer `body.style.overflow = 'visible'`.
+
+### Sub-agents general-purpose : limitations Edit/Write
+
+Un sub-agent dispatché en `general-purpose` (Opus 4.7) peut être refusé Edit/Write — comportement vu sur cette session avec le sub-agent designer-pilot. Le diagnostic + plan sont produits, mais l'application bloque.
+
+**Workaround** : pour les Edit critiques, faire localement après avoir reçu le diag du sub-agent. Le sub-agent reste utile pour audit/design/plan mais pas pour application code direct si les permissions sont restrictives.
+
+**Sub-agents OK pour Edit** : tests, design draft SQL/migrations (qui produisent `_DRAFT_*.sql`), refactor frontend coordonné (sub-agent dev-troupeau a réussi sur cette session — refactor 5 fichiers FarmContext/AuthContext/supabaseWrites/types).
+
+### Supabase RLS multi-tenant : pattern `farms.id = profiles.id` au backfill
+
+Quand on passe d'un modèle "1 user = 1 farm" (`farm_id = auth.uid()`) à un modèle multi-tenant (`farms` + `farm_members`), le backfill peut être **zero-cost** si on choisit `farms.id = profiles.id` pour les users existants. Aucun UPDATE de farm_id sur les 24 tables — uniquement INSERT INTO farms + INSERT INTO farm_members.
+
+Pendant la transition (frontend pas encore refactor), les RLS continuent de fonctionner via fallback : `farm_id IN (SELECT current_user_farms())` retourne `{auth.uid()}` pour chaque user existant grâce au backfill, donc équivaut à `farm_id = auth.uid()` côté ancien code.
+
+### Helper SECURITY DEFINER STABLE search_path locked (perf RLS)
+
+Pattern Supabase pour les helpers RLS performants :
+```sql
+CREATE OR REPLACE FUNCTION public.current_user_farms()
+RETURNS SETOF uuid
+LANGUAGE sql
+SECURITY DEFINER     -- exécute avec privilèges du créateur
+STABLE               -- résultats cachés au sein d'une transaction
+SET search_path = ''  -- bloque search_path injection
+AS $$
+  SELECT farm_id FROM public.farm_members WHERE user_id = auth.uid();
+$$;
+REVOKE EXECUTE ON FUNCTION public.current_user_farms() FROM anon, public;
+GRANT  EXECUTE ON FUNCTION public.current_user_farms() TO authenticated;
+```
+- `STABLE` permet au planner Postgres de cacher l'appel.
+- `SET search_path = ''` empêche un attaquant de forcer le helper à lire une table dans un schéma piégé.
+- `REVOKE FROM anon, public` + `GRANT TO authenticated` = principe de moindre privilège.
+
+### Préfixe `_DRAFT_` pour migrations Supabase non encore appliquées
+
+Convention utile : nommer un fichier de migration `_DRAFT_xxx.sql` empêche `supabase db push` de l'exécuter automatiquement (le CLI ignore les fichiers non-timestamped). Permet de garder le draft en review dans le repo, puis renommer en `<timestamp>_xxx.sql` avant apply.
+
+### globalCurrentFarmIdRef : pattern context-to-service
+
+Pour partager un état React Context avec un service module-level (sans wrapper React partout) :
+```ts
+// src/services/supabaseWrites.ts
+let globalCurrentFarmIdRef: string | null = null;
+export function setCurrentFarmIdRef(farmId: string | null) {
+  globalCurrentFarmIdRef = farmId;
+}
+async function getFarmId(): Promise<string> {
+  if (globalCurrentFarmIdRef) return globalCurrentFarmIdRef;
+  // fallback auth.uid() si ref pas encore set
+  ...
+}
+
+// src/context/FarmContext.tsx
+useEffect(() => { setCurrentFarmIdRef(currentFarmId); }, [currentFarmId]);
+```
+Évite de wrapper tous les call-sites avec un hook `useFarmId()`. Trade-off : couplage module-global, mais acceptable pour un contexte mono-instance comme une farm courante. Le test peut reset via `__resetCurrentFarmIdRefForTests()`.
+
+---
+
 ## Leçons Techniques — Sprint 5 (19/04/2026)
 
 ### Pattern pipeline statut (Troupeau + Cycles)
