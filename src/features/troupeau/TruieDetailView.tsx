@@ -311,7 +311,10 @@ const TruieDetailView: React.FC = () => {
 
   // ── Vitales : empty state si jamais saillie ───────────────────────────────
   const pariteVal = truie.nbPortees ?? historique.length;
-  const showVitalesEmpty = pariteVal === 0 && truie.statut === 'En attente saillie';
+  // V71-P3 fix : afficher l'empty state seulement si AUCUNE saillie n'existe au registre
+  // (avant : check statut === 'En attente saillie', mais une truie peut avoir des saillies
+  // historiques même en attente d'une nouvelle)
+  const showVitalesEmpty = sowSaillies.length === 0 && pariteVal === 0;
 
   // ── Vitales (5 KPI) ────────────────────────────────────────────────────────
 
