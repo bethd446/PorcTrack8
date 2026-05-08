@@ -61,21 +61,26 @@ export function SceneFrame({
 
       const titleEl = ref.current.querySelector('.scene-title-block');
       if (titleEl) {
-        // Animation simple toggle (pas scrub) : plus robuste face aux
-        // refreshs ScrollTrigger en présence de Lenis + override Ionic.
-        // Le titre reste visible (opacity 1) si l'animation ne déclenche
-        // pas, vs scrub qui le bloque à opacity 0.
-        gsap.from(titleEl, {
-          opacity: 0,
-          y: 40,
-          duration: 0.9,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: ref.current,
-            start: 'top 75%',
-            toggleActions: 'play none none reverse',
+        // fromTo + immediateRender:false : le titre reste à son état CSS
+        // (opacity 1) tant que ScrollTrigger n'a pas trigger. gsap.from()
+        // figerait à opacity:0 au mount, ce qui bloque le rendu si Lenis
+        // ou l'override Ionic empêche le trigger de se déclencher.
+        gsap.fromTo(
+          titleEl,
+          { opacity: 0, y: 40 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.9,
+            ease: 'power2.out',
+            immediateRender: false,
+            scrollTrigger: {
+              trigger: ref.current,
+              start: 'top 75%',
+              toggleActions: 'play none none reverse',
+            },
           },
-        });
+        );
       }
 
       const imgEl = ref.current.querySelector('.scene-img');

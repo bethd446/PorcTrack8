@@ -45,12 +45,13 @@ export function SceneBandes() {
           {
             opacity: 1,
             y: 0,
-            ease: 'none',
+            duration: 0.8,
+            ease: 'power2.out',
+            immediateRender: false,
             scrollTrigger: {
               trigger: ref.current,
               start: 'top 80%',
-              end: 'top 30%',
-              scrub: 0.8,
+              toggleActions: 'play none none reverse',
             },
           },
         );
@@ -65,13 +66,14 @@ export function SceneBandes() {
           {
             opacity: 1,
             y: 0,
-            stagger: 0.15,
-            ease: 'none',
+            duration: 0.7,
+            stagger: 0.12,
+            ease: 'power2.out',
+            immediateRender: false,
             scrollTrigger: {
               trigger: grid,
               start: 'top 85%',
-              end: 'top 40%',
-              scrub: 1,
+              toggleActions: 'play none none reverse',
             },
           },
         );

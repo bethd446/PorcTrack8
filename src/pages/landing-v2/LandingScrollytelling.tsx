@@ -37,10 +37,13 @@ function useScrollUnlock() {
       ionContain: ionApp?.style.contain ?? '',
     };
 
-    body.style.overflow = 'auto';
+    // body en overflow:visible (pas 'auto') pour ne PAS créer de scrolling
+    // container interne qui casserait position:sticky des Scenes. Le scroll
+    // se fait sur window (html), comme attendu par GSAP ScrollTrigger + Lenis.
+    body.style.overflow = 'visible';
     body.style.position = 'static';
     body.style.height = 'auto';
-    html.style.overflow = 'auto';
+    html.style.overflow = 'visible';
     html.style.height = 'auto';
     if (ionApp) {
       ionApp.style.position = 'static';
@@ -78,7 +81,7 @@ export default function LandingScrollytelling() {
   useScrollUnlock();
   useLenisScroll();
   return (
-    <div style={{ background: '#0a0a0a', overflowX: 'hidden' }}>
+    <div style={{ background: '#0a0a0a', overflowX: 'clip' }}>
       <SceneHero />
       <SceneRepro />
       <SceneBandes />

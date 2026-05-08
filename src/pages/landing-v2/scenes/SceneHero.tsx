@@ -26,12 +26,13 @@ export function SceneHero() {
         {
           opacity: 1,
           y: 0,
-          ease: 'none',
+          duration: 0.9,
+          ease: 'power2.out',
+          immediateRender: false,
           scrollTrigger: {
             trigger: ref.current,
             start: 'top 80%',
-            end: 'top 30%',
-            scrub: 1,
+            toggleActions: 'play none none reverse',
           },
         },
       );
