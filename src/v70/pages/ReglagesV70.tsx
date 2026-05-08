@@ -10,17 +10,112 @@
  */
 import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, ChevronRight } from 'lucide-react';
+import {
+  LogOut,
+  ChevronRight,
+  Home,
+  Users,
+  Wheat,
+  ClipboardList,
+  BookOpen,
+  GraduationCap,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
-import { ListItem } from '../components/ds/ListItem';
 import { ToggleAdvancedMode } from '../components/v70/ToggleAdvancedMode';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 import FarmSwitcher from '../../components/FarmSwitcher';
 
 const PAGE_BACKGROUND_SRC = '/images/ambiance-ux.webp';
+
+/**
+ * V70 P2 — Liste typographique anti-AI.
+ * Plus de card icon+titre+soustitre+chevron uniforme : rangée éditoriale
+ * avec séparateurs `--pt-line`, titre BigShoulders bold, subtitle muted,
+ * icône Lucide discrète à droite (affordance, pas hiérarchie).
+ */
+interface SettingsRowProps {
+  title: string;
+  subtitle: string;
+  Icon: LucideIcon;
+  onClick: () => void;
+  isLast?: boolean;
+}
+
+const SettingsRow: React.FC<SettingsRowProps> = ({ title, subtitle, Icon, onClick, isLast }) => {
+  const [hover, setHover] = React.useState(false);
+  const [active, setActive] = React.useState(false);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => { setHover(false); setActive(false); }}
+      onMouseDown={() => setActive(true)}
+      onMouseUp={() => setActive(false)}
+      aria-label={`${title} — ${subtitle}`}
+      style={{
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 16,
+        minHeight: 64,
+        padding: '18px 4px',
+        background: active
+          ? 'var(--pt-bg-app)'
+          : hover
+            ? 'rgba(26,26,26,0.025)'
+            : 'transparent',
+        border: 'none',
+        borderBottom: isLast ? 'none' : '1px solid var(--pt-line)',
+        cursor: 'pointer',
+        textAlign: 'left',
+        transition: 'background 160ms ease',
+        fontFamily: 'inherit',
+        color: 'inherit',
+      }}
+    >
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span
+          style={{
+            display: 'block',
+            fontFamily: 'var(--pt-font-display, "BigShouldersDisplay", system-ui, sans-serif)',
+            fontWeight: 700,
+            fontSize: 18,
+            lineHeight: 1.15,
+            letterSpacing: '0.005em',
+            color: 'var(--pt-ink)',
+            textTransform: 'none',
+          }}
+        >
+          {title}
+        </span>
+        <span
+          style={{
+            display: 'block',
+            fontFamily: 'var(--pt-font-body, "InstrumentSans", system-ui, sans-serif)',
+            fontSize: 13,
+            lineHeight: 1.4,
+            color: 'var(--pt-muted)',
+            marginTop: 4,
+          }}
+        >
+          {subtitle}
+        </span>
+      </span>
+      <Icon
+        size={18}
+        strokeWidth={1.5}
+        color="var(--pt-muted)"
+        aria-hidden
+        style={{ flexShrink: 0 }}
+      />
+    </button>
+  );
+};
 
 export const ReglagesV70: React.FC = () => {
   const navigate = useNavigate();
@@ -99,51 +194,51 @@ export const ReglagesV70: React.FC = () => {
       </Section>
 
       <Section label="Configuration">
-        <ListItem
-          avatar={<span style={{ fontSize: 20 }}>🏠</span>}
-          title="Ma ferme"
-          subtitle="Identité, secteur, devise"
-          trailing={<span className="list-arrow">›</span>}
-          onClick={() => navigate('/reglages/ma-ferme')}
-        />
-        <ListItem
-          avatar={<span style={{ fontSize: 20 }}>👥</span>}
-          title="Mon équipe"
-          subtitle="Rôles, accès et invitations"
-          trailing={<span className="list-arrow">›</span>}
-          onClick={() => navigate('/reglages/mon-equipe')}
-        />
-        <ListItem
-          avatar={<span style={{ fontSize: 20 }}>🌾</span>}
-          title="Ressources & stocks"
-          subtitle="Aliments, vétérinaire, fournisseurs"
-          trailing={<span className="list-arrow">›</span>}
-          onClick={() => navigate('/ressources')}
-        />
-        <ListItem
-          avatar={<span style={{ fontSize: 20 }}>📋</span>}
-          title="Protocoles santé"
-          subtitle="SOPs, vaccins, traitements"
-          trailing={<span className="list-arrow">›</span>}
-          onClick={() => navigate('/protocoles')}
-        />
+        <div style={{ borderTop: '1px solid var(--pt-line)' }}>
+          <SettingsRow
+            title="Ma ferme"
+            subtitle="Identité, secteur, devise"
+            Icon={Home}
+            onClick={() => navigate('/reglages/ma-ferme')}
+          />
+          <SettingsRow
+            title="Mon équipe"
+            subtitle="Rôles, accès, invitations"
+            Icon={Users}
+            onClick={() => navigate('/reglages/mon-equipe')}
+          />
+          <SettingsRow
+            title="Ressources & stocks"
+            subtitle="Aliments, vétérinaire, fournisseurs"
+            Icon={Wheat}
+            onClick={() => navigate('/ressources')}
+          />
+          <SettingsRow
+            title="Protocoles santé"
+            subtitle="SOPs, vaccins, traitements"
+            Icon={ClipboardList}
+            onClick={() => navigate('/protocoles')}
+            isLast
+          />
+        </div>
       </Section>
 
       <Section label="Apprendre">
-        <ListItem
-          avatar={<span style={{ fontSize: 20 }}>📚</span>}
-          title="Encyclopédie porcine"
-          subtitle="5 articles · cycles, santé, économie"
-          trailing={<span className="list-arrow">›</span>}
-          onClick={() => navigate('/reglages/encyclopedie')}
-        />
-        <ListItem
-          avatar={<span style={{ fontSize: 20 }}>🎓</span>}
-          title="Refaire le tutoriel"
-          subtitle="2 min · découverte de l'app"
-          trailing={<span className="list-arrow">›</span>}
-          onClick={() => navigate('/reglages/onboarding')}
-        />
+        <div style={{ borderTop: '1px solid var(--pt-line)' }}>
+          <SettingsRow
+            title="Encyclopédie porcine"
+            subtitle="5 articles · cycles, santé, économie"
+            Icon={BookOpen}
+            onClick={() => navigate('/reglages/encyclopedie')}
+          />
+          <SettingsRow
+            title="Refaire le tutoriel"
+            subtitle="2 min · découverte de l'app"
+            Icon={GraduationCap}
+            onClick={() => navigate('/reglages/onboarding')}
+            isLast
+          />
+        </div>
       </Section>
 
       {/* SECTION DÉCONNEXION — visible et accessible (V70 P1.7) */}
