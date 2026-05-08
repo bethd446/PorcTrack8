@@ -1,13 +1,15 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Landing from '../pages/Landing';
 
-const LandingScrollytelling = React.lazy(
-  () =>
-    import(
-      /* webpackChunkName: "landing-v2" */ '../pages/landing-v2/LandingScrollytelling'
-    ),
-);
+// LandingScrollytelling (Apple-style) en pause — bug scènes 3-7 invisibles
+// (animations scrub désaxées par useScrollUnlock + Lenis). À reprendre
+// après refonte des animations en mode toggleActions partout. Fichier
+// /landing-v2 reste accessible via App.tsx pour itération.
+// const LandingScrollytelling = React.lazy(() =>
+//   import(/* webpackChunkName: "landing-v2" */ '../pages/landing-v2/LandingScrollytelling')
+// );
 
 export default function SmartRoot() {
   const { session, loading } = useAuth();
@@ -29,9 +31,5 @@ export default function SmartRoot() {
     return <Navigate to="/today" replace />;
   }
 
-  return (
-    <React.Suspense fallback={null}>
-      <LandingScrollytelling />
-    </React.Suspense>
-  );
+  return <Landing />;
 }
