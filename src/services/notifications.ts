@@ -20,6 +20,7 @@ import {
 import type { FarmAlert } from './alertEngine';
 import type { PeseePlanifiee } from './peseePlanifieesService';
 import { logger } from './logger';
+import { kvGet, kvSet } from './kvStore';
 
 const SCOPE = 'Notifications';
 
@@ -244,4 +245,236 @@ export async function schedulePeseeReminders(
   } catch (err) {
     console.error(`[${SCOPE}] schedulePeseeReminders failed`, err);
   }
+}
+
+// ─── PWA Web Notifications (V72) ──────────────────────────────────────────
+//
+// Sur navigateur (PWA installée ou onglet ouvert), Capacitor.LocalNotifications
+// est inopérant : `Capacitor.isNativePlatform() === false`. Pour que
+// Christophe reçoive quand même les alertes critiques quand l'app PWA est
+// en arrière-plan ou onglet inactif, on utilise l'API native :
+//
+//   - `Notification.requestPermission()` pour le consentement
+//   - `ServiceWorkerRegistration.showNotification()` pour l'affichage
+//     (fonctionne en background, pas le constructeur `new Notification()`
+//     qui exige une page foreground sur Chrome desktop).
+//
+// Scope MVP : notifications LOCALES uniquement (déclenchées côté client à
+// partir de `runAlertEngine()` dont les résultats arrivent dans
+// `FarmContext.alerts`). Pas de Web Push serveur — ça réclamerait un
+// endpoint backend (Supabase Edge Function + VAPID) hors scope.
+
+/** Catégories de notif activables/désactivables dans Réglages. */
+export type NotifCategoryKey = 'mise_bas' | 'stocks' | 'cycles_repro';
+
+/** Préférences utilisateur : { mise_bas: true, stocks: true, cycles_repro: true } */
+export type NotifCategories = Record<NotifCategoryKey, boolean>;
+
+const NOTIF_CATEGORIES_DEFAULT: NotifCategories = {
+  mise_bas: true,
+  stocks: true,
+  cycles_repro: true,
+};
+
+/** Clés kvStore utilisées par le module Web Notifications. */
+const KV_NOTIFIED_IDS = 'pt:notified_alert_ids';
+const KV_DISMISSED_AT = 'pt:notif_dismissed_at';
+const KV_CATEGORIES = 'pt:notif_categories';
+
+/** TTL bannière "Plus tard" — 7 jours en ms. */
+export const NOTIF_DISMISS_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Prefix → catégorie. Aligné sur les 16 règles métier de `alertEngine.ts`. */
+const PREFIX_TO_CATEGORY: Record<string, NotifCategoryKey> = {
+  MB: 'mise_bas',     // R1
+  STK: 'stocks',      // R5 / R5b
+  CHA: 'cycles_repro',// R3 retour chaleur
+  SVR: 'cycles_repro',// R2 sevrage
+  ECHO: 'cycles_repro',// R7 échographie
+};
+
+/**
+ * Vérifie le support PWA des notifications côté browser.
+ * Renvoie `false` sur Capacitor natif (utilise LocalNotifications à la place).
+ */
+export function isWebSupported(): boolean {
+  if (typeof navigator === 'undefined' || typeof window === 'undefined') return false;
+  if (Capacitor.isNativePlatform()) return false;
+  return (
+    'Notification' in window &&
+    'serviceWorker' in navigator &&
+    'showNotification' in (window as unknown as { ServiceWorkerRegistration?: { prototype?: object } })
+      .ServiceWorkerRegistration?.prototype
+  );
+}
+
+/**
+ * Lit l'état actuel des permissions (sans demander).
+ * Renvoie 'unsupported' si l'API n'existe pas (Safari iOS hors PWA, etc.).
+ */
+export function getWebPermission(): NotificationPermission | 'unsupported' {
+  if (!isWebSupported()) return 'unsupported';
+  return Notification.permission;
+}
+
+/**
+ * Demande la permission Web (PWA). Sur native, délégue à `requestPermission`
+ * (Capacitor LocalNotifications) pour rester rétrocompatible.
+ *
+ * Idempotent : si déjà accordée/refusée, renvoie l'état actuel sans re-prompt.
+ */
+export async function requestWebPermission(): Promise<NotificationPermission | 'unsupported'> {
+  if (Capacitor.isNativePlatform()) {
+    const granted = await requestPermission();
+    return granted ? 'granted' : 'denied';
+  }
+  if (!isWebSupported()) return 'unsupported';
+  if (Notification.permission !== 'default') return Notification.permission;
+  try {
+    const result = await Notification.requestPermission();
+    logger.info(SCOPE, `web permission → ${result}`);
+    return result;
+  } catch (e) {
+    logger.warn(SCOPE, 'requestWebPermission failed', e);
+    return 'denied';
+  }
+}
+
+/** Lit les catégories actives depuis kvStore (par défaut tout `true`). */
+export function getNotifCategories(): NotifCategories {
+  const raw = kvGet(KV_CATEGORIES);
+  if (!raw) return { ...NOTIF_CATEGORIES_DEFAULT };
+  try {
+    const parsed = JSON.parse(raw) as Partial<NotifCategories>;
+    return { ...NOTIF_CATEGORIES_DEFAULT, ...parsed };
+  } catch {
+    return { ...NOTIF_CATEGORIES_DEFAULT };
+  }
+}
+
+/** Persiste les catégories actives. */
+export function setNotifCategories(cats: NotifCategories): Promise<void> {
+  return kvSet(KV_CATEGORIES, JSON.stringify(cats));
+}
+
+/** Vrai si la bannière de consentement a été masquée < 7 jours. */
+export function isPromptDismissed(now: Date = new Date()): boolean {
+  const raw = kvGet(KV_DISMISSED_AT);
+  if (!raw) return false;
+  const ts = Number(raw);
+  if (!Number.isFinite(ts)) return false;
+  return now.getTime() - ts < NOTIF_DISMISS_TTL_MS;
+}
+
+/** Marque la bannière comme "Plus tard" (re-réaffichage dans 7 jours). */
+export function dismissPrompt(now: Date = new Date()): Promise<void> {
+  return kvSet(KV_DISMISSED_AT, String(now.getTime()));
+}
+
+/** Liste des `alert.id` déjà notifiés (persistée pour éviter le spam). */
+function getNotifiedIds(): Set<string> {
+  const raw = kvGet(KV_NOTIFIED_IDS);
+  if (!raw) return new Set();
+  try {
+    const arr = JSON.parse(raw) as string[];
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function persistNotifiedIds(ids: Set<string>): Promise<void> {
+  return kvSet(KV_NOTIFIED_IDS, JSON.stringify([...ids]));
+}
+
+/** Catégorie d'une alerte (depuis son préfixe d'id). `null` si inconnue. */
+function categoryOf(alert: FarmAlert): NotifCategoryKey | null {
+  const prefix = alert.id.split('-')[0];
+  return PREFIX_TO_CATEGORY[prefix] ?? null;
+}
+
+/**
+ * Affiche une notification locale via le Service Worker enregistré.
+ * Sur native ou si l'API n'est pas dispo, no-op silencieux (logué).
+ */
+export async function showLocal(
+  title: string,
+  body: string,
+  opts?: NotificationOptions,
+): Promise<void> {
+  if (!isWebSupported()) {
+    logger.debug(SCOPE, 'showLocal skipped (web API unsupported)');
+    return;
+  }
+  if (Notification.permission !== 'granted') {
+    logger.debug(SCOPE, `showLocal skipped (permission=${Notification.permission})`);
+    return;
+  }
+  try {
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (!reg) {
+      logger.debug(SCOPE, 'showLocal skipped (no SW registration)');
+      return;
+    }
+    await reg.showNotification(title, {
+      body,
+      icon: '/images/porc-mark.svg',
+      badge: '/images/porc-mark.svg',
+      tag: opts?.tag,
+      data: opts?.data,
+      ...opts,
+    });
+  } catch (e) {
+    logger.warn(SCOPE, 'showLocal failed', e);
+  }
+}
+
+/**
+ * Notifie les alertes CRITIQUE/HAUTE non encore notifiées et qui appartiennent
+ * à une catégorie active dans les préférences. Persiste les ids notifiés
+ * pour ne pas re-spammer entre 2 ouvertures.
+ *
+ * Appelé depuis FarmContext quand `alerts` est mis à jour, et au boot.
+ */
+export async function notifyCriticalAlerts(
+  alerts: readonly FarmAlert[],
+): Promise<number> {
+  if (!isWebSupported()) return 0;
+  if (Notification.permission !== 'granted') return 0;
+
+  const cats = getNotifCategories();
+  const notified = getNotifiedIds();
+  let sent = 0;
+
+  for (const alert of alerts) {
+    if (alert.priority !== 'CRITIQUE' && alert.priority !== 'HAUTE') continue;
+    if (notified.has(alert.id)) continue;
+    const cat = categoryOf(alert);
+    if (cat && !cats[cat]) continue;
+
+    await showLocal(alert.title || 'PorcTrack', alert.message, {
+      tag: alert.id,
+      data: { alertId: alert.id, priority: alert.priority },
+    });
+    notified.add(alert.id);
+    sent++;
+  }
+
+  // Purge les ids qui ne sont plus dans la liste courante (alertes résolues)
+  // afin que la kv ne grandisse pas à l'infini.
+  const currentIds = new Set(alerts.map((a) => a.id));
+  for (const id of notified) {
+    if (!currentIds.has(id)) notified.delete(id);
+  }
+
+  await persistNotifiedIds(notified);
+  if (sent > 0) logger.info(SCOPE, `notified ${sent} critical alerts (web)`);
+  return sent;
+}
+
+/** Test-only — réinitialise l'état kvStore notifications. */
+export async function __resetWebNotifStateForTests(): Promise<void> {
+  await kvSet(KV_NOTIFIED_IDS, '');
+  await kvSet(KV_DISMISSED_AT, '');
+  await kvSet(KV_CATEGORIES, '');
 }

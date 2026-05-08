@@ -25,6 +25,7 @@ import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 import { useFarmContextHints } from '../../features/encyclopedia/useFarmContextHints';
 import { HintCard } from '../../features/encyclopedia/HintCard';
+import { NotificationsPermissionPrompt } from '../../components/NotificationsPermissionPrompt';
 
 const PAGE_BACKGROUND_SRC = '/images/hero-2.webp';
 
@@ -145,6 +146,8 @@ export const TodayV70: React.FC = () => {
       />
       <div style={{ position: 'relative', zIndex: 1 }}>
       <MariusGreeting />
+
+      <NotificationsPermissionPrompt />
 
       <PageHeader
         eyebrow={dateLabel}

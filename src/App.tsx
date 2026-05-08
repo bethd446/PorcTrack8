@@ -64,6 +64,7 @@ import { loadChecklistDefinitions } from './services/checklistService';
 
 // Lazy : FAB et widgets non critiques au LCP, montés au shell mais ouverts uniquement sur interaction
 const SaisirFAB = React.lazy(() => import(/* webpackChunkName: "saisir-fab" */ './components/SaisirFAB'));
+import { NotificationsBridge } from './components/NotificationsBridge';
 const ChatbotWidget = React.lazy(() =>
   import(/* webpackChunkName: "chatbot-widget" */ './features/chatbot').then(m => ({ default: m.ChatbotWidget })),
 );
@@ -177,6 +178,7 @@ const SaisirFABMount: React.FC = () => {
 const AppShell: React.FC = () => (
   <GlobalSearchProvider>
     <V70Routes />
+    <NotificationsBridge />
     <React.Suspense fallback={null}>
       <ChatbotWidget />
     </React.Suspense>

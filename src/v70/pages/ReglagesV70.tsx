@@ -26,6 +26,7 @@ import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
 import { ToggleAdvancedMode } from '../components/v70/ToggleAdvancedMode';
+import { NotifCategoriesSwitches } from '../components/v70/NotifCategoriesSwitches';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 import FarmSwitcher from '../../components/FarmSwitcher';
 
@@ -191,6 +192,10 @@ export const ReglagesV70: React.FC = () => {
 
       <Section label="Mode d'affichage">
         <ToggleAdvancedMode />
+      </Section>
+
+      <Section label="Notifications">
+        <NotifCategoriesSwitches />
       </Section>
 
       <Section label="Configuration">
