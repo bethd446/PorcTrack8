@@ -3,6 +3,102 @@
 
 ---
 
+## Leçons Techniques — Session 2026-05-08 V71-P3 (audit mobile + wizards bloquants + trigger DB)
+
+### Trigger Postgres SECURITY DEFINER comme garde-fou métier (vs frontend)
+
+**Problème** : Le statut d'une truie devait passer auto en 'Pleine' après une saillie. Initialement, le frontend (insertSaillie) ne gérait pas cet effet de bord → truie restait "En attente saillie" même après saillie créée.
+
+**Solution choisie** : trigger Postgres `AFTER INSERT ON saillies` qui UPDATE `sows.statut = 'Pleine'` SI le statut courant est compatible (NULL, '', En attente saillie, Vide, Sevrée).
+
+**Pourquoi pas frontend** :
+- Couvre tous les call-paths (UI, API direct, scripts MCP, futurs imports CSV) — frontend ne couvrirait que la UI.
+- Atomique avec l'INSERT (pas de race condition).
+- Robuste face aux refactors frontend.
+
+**Pattern technique** :
+```sql
+CREATE OR REPLACE FUNCTION public.set_sow_pleine_on_saillie()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER          -- exécute avec privilèges créateur (bypass RLS)
+SET search_path = ''       -- bloque injection search_path
+AS $$
+BEGIN
+  IF NEW.sow_id IS NOT NULL THEN
+    UPDATE public.sows
+    SET statut = 'Pleine'
+    WHERE id = NEW.sow_id
+      AND (statut IS NULL OR statut ILIKE '%attente%saillie%' OR statut ILIKE 'vide%' OR statut = 'Sevrée');
+  END IF;
+  RETURN NEW;
+END;
+$$;
+REVOKE EXECUTE ON FUNCTION public.set_sow_pleine_on_saillie() FROM anon, authenticated, public;
+```
+
+**Quand utiliser** : invariants métier qui doivent tenir peu importe le call-path. Pas pour la logique purement présentationnelle (qui reste frontend).
+
+### CSS `mask-image` linear-gradient comme indicateur de scroll horizontal
+
+**Pattern utilisé pour `.pt-tabs`** (Tabs DS V70) :
+```css
+.pt-tabs {
+  overflow-x: auto;
+  scrollbar-width: none;  /* Firefox cache scrollbar */
+  mask-image: linear-gradient(to right, black 0, black calc(100% - 28px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black 0, black calc(100% - 28px), transparent 100%);
+}
+.pt-tabs::-webkit-scrollbar { display: none; }
+```
+
+Effet : la dernière tab tronquée fade progressivement vers transparent → indique visuellement qu'on peut scroller. Trade-off accepté : si toutes les tabs rentrent, la dernière tab a un léger fade sur ses 28 derniers px (acceptable).
+
+### Genération auto DB cascade dans onboarding wizard
+
+**Pattern OnboardingV2Wizard étape 5** : à la confirmation, INSERT en cascade :
+1. N truies (sows) avec code_id "T-001"..."T-N" + statut "En attente saillie"
+2. N verrats (boars) avec code_id "V-001"..."V-N" + statut "Actif"
+3. N cases maternité (loges) M-01...M-N, capacite_max=1, type=MATERNITE
+4. N loges post-sevrage PS-01..., capacite_max=N, repartition=MIXTE
+5. N loges engraissement E-01... (si type === NAISSEUR_ENGRAISSEUR)
+6. UPDATE farms.metadata.onboarding_v2 = { completed_at, version, profile }
+
+**Leçon** : pour un onboarding obligatoire, **générer la structure de données dès le wizard** plutôt que de laisser l'user créer manuellement après. Réduit le drop-off et garantit cohérence (codes formatés, statuts initiaux corrects).
+
+**Important** : code_id format `T-001` (3 digits avec padding). Les futures saisies via QuickAddTruieForm doivent suivre ce format pour cohérence.
+
+### Backfill `metadata.onboarding_vN.completed_at = created_at` pour skip auto users existants
+
+**Pattern** : quand on déploie un nouveau wizard onboarding obligatoire, **les users existants ne doivent PAS être redirigés** (ils ont déjà des données, le wizard les écraserait). Backfill SQL en même temps que la migration :
+
+```sql
+UPDATE public.farms
+SET metadata = jsonb_set(
+  COALESCE(metadata, '{}'::jsonb),
+  '{onboarding_v2}',
+  jsonb_build_object('completed_at', COALESCE(created_at, now())::text, 'version', 'auto-skip-v1')
+)
+WHERE metadata->'onboarding_v2'->>'completed_at' IS NULL
+  AND created_at < now();
+```
+
+`auto-skip-v1` est un marqueur explicite (différent de `v2` qui marque les vrais onboardings via wizard).
+
+### IonToast centralisé via Provider top-level (vs in-line par form)
+
+**Problème** : Les toasts in-line (useState local + render IonToast dans le form) **disparaissent quand la modale se ferme** (le DOM du toast est démonté avec son parent).
+
+**Solution** : `<ToastProvider>` mounté **au top niveau** (App.tsx, sous QuickActionsProvider), expose `useToast()` hook avec `showToast(msg, type, duration)`. Les toasts vivent au top du DOM, survivent à toutes les navigations et fermetures de modales.
+
+**Pattern de queue** : `[ToastMessage[]]` state, `IonToast` rendu pour chaque, auto-dismiss via `onDidDismiss` qui filter le tableau. Parallel toasts visibles simultanément.
+
+### `overflow-x: clip` (CSS moderne) > `overflow-x: hidden` quand on a position:sticky enfants
+
+(Déjà documenté V71-P2 mais ré-affirmé V71-P3) : `overflow-x:hidden` force `overflow-y:auto` par CSS spec → casse `position:sticky`. `overflow-x:clip` est l'équivalent qui n'introduit PAS de scroll context.
+
+---
+
 ## Leçons Techniques — Session 2026-05-08 (V71-P2 multi-user + landing-v2 fix)
 
 ### GSAP ScrollTrigger + Lenis : pièges et patterns robustes

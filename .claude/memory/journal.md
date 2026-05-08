@@ -19,6 +19,42 @@
 
 ---
 
+## 2026-05-08 · [V71-P3] Audit mobile + Wizards bloquants + Trigger DB + Toast · commits `bb0d069`→`0e79c98`
+
+**Contexte** : Session reprise après V71-P2 (multi-user schema + landing-v2). User a demandé audit mobile complet sur fiches individuelles + correction de tous les bugs identifiés + wizard onboarding obligatoire pour nouveaux users + workflow ré-organisation porcelets pour Christophe (compte EasyFarm K13 a 13 bandes orphelines de mère après migration depuis ancienne app).
+
+**Livré (8 commits, +1100/-30 nets)** :
+- `bb0d069` Fix mobile fiches détail (FAB chevauchement, `—` orphelin nom, séparateur orphelin)
+- `c1dd7c2` Fix mobile UX (tabs scroll mask gradient, saisir-sheet wrap, alerts grid responsive 4→2 cols)
+- `096d354` **PorceletsReorgWizard** + migration DB `loges.repartition` (MIXTE/MALES/FEMELLES/NA) + sync data Christophe (10 bandes ont récupéré leur loge text)
+- `473acf1` Trigger DB `set_sow_pleine_on_saillie` AFTER INSERT (truie auto-Pleine post-saillie) + VITALES filter cohérent
+- `0731510` Toast feedback unifié (ToastProvider + useToast hook) + cleanup gitignore PorcTrack8/
+- `ff060e9` **OnboardingV2Wizard 5 étapes** obligatoire (Type/Cheptel/Races/Infrastructure/Confirmation) avec génération auto DB cascade (truies T-001..., verrats V-001..., cases mat M-01..., loges PS/Eng) + farms.metadata onboarding_v2 + backfill 7/7 users existants en auto-skip-v1
+- `0e79c98` Export JSON 14 portées Excel SUIVI_FERME_A130 → docs/data/
+
+**Sub-agents Opus 4.7 dispatchés (3 en parallèle final)** :
+- Vague A : Toast sur 5 forms restants (Mise-bas/Soin/Pesée/Note/Mortalité)
+- Vague B : UI switcher multi-farm + invitation membre dans MonEquipe
+- Vague C : Tests E2E Playwright (signup→onboarding, saillie complète, multi-user RLS)
+
+**Tests** : 1742 passing baseline préservée (avant et après chaque fix). tsc 0 erreur. Build OK (~3 sec).
+
+**Migrations DB appliquées (3)** :
+- `v71_p3_loges_repartition` : ALTER + backfill heuristique
+- `v71_p3_auto_pleine_on_saillie` : trigger + helper SECURITY DEFINER
+- `v71_p3_onboarding_v2_metadata` : ALTER farms + backfill auto-skip-v1
+
+**Why** : User commence à voir l'app comme un produit propre, doit ouvrir aux nouveaux users (onboarding obligatoire avec génération auto data) tout en réparant l'historique de Christophe (porcelets-reorg). L'objectif final : ferme K13 production-ready + nouveaux signups frictionless.
+
+**How to apply** :
+- Pour Christophe (`bc96ddbd-c34d-46b1-b624-4a3dca181a2c`) : à sa prochaine connexion sur prod, OnboardingV2Gate skip auto, PorceletsReorgGate redirige vers /porcelets-reorg, il choisit mère + loge pour les 13 bandes (référence visuelle : docs/data/SUIVI_FERME_A130_portees.json).
+- Pour nouveaux users : OnboardingV2Gate redirige vers /onboarding-v2 5 étapes obligatoires.
+- Aucune migration DB additionnelle requise pour utiliser ces wizards.
+
+**Liens** : [[learnings#trigger-rls-pattern]] · [[decisions#wizards-bloquants-V71P3]]
+
+---
+
 ## 2026-05-08 · [V71-P2] Multi-user schema + landing-v2 fix + Verrat refonte + DESIGN.md · commits `43ac792`→`746623b`
 
 **Contexte** : Reprise du brief d'hier (récap user : 5 priorités après 13 chantiers livrés en V71-P1). HEAD pré-session `f8f3481` (rollback / vers Landing classique car scrollytelling P2 buggé). Sub-agents Opus 4.7 utilisés en parallèle (3 dispatches : designer-pilot bloqué Edit, supabase-ops design, dev-troupeau frontend MVP).
