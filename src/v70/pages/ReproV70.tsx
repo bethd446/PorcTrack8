@@ -234,7 +234,7 @@ export const ReproV70: React.FC = () => {
       <PageHeader
         eyebrow="Cycle vivant"
         title="Reproduction"
-        subtitle="Le cycle complet, en un seul écran"
+        subtitle="Saillie → écho J28 → mise-bas J115 → sevrage J143."
       />
 
       <TabsMini
@@ -426,7 +426,7 @@ export const ReproV70: React.FC = () => {
           />
         }
         title="Comprendre les cycles"
-        description="Apprends comment optimiser tes saillies et ton ISSE avec nos articles de l'encyclopédie."
+        description="Cycle de vie, ISSE, biosécurité. À lire entre deux tournées."
         ctaLabel="Encyclopédie"
         onCtaClick={() => navigate('/reglages/encyclopedie')}
       />

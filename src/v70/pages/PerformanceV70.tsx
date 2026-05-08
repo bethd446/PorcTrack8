@@ -143,7 +143,7 @@ export const PerformanceV70: React.FC = () => {
       <PageHeader
         eyebrow={`Pilotage · ${new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).replace(/^./, c => c.toUpperCase())}`}
         title="Performance"
-        subtitle="Comment se porte ton élevage"
+        subtitle="L'année en chiffres. Sans détour."
       />
 
       <TabsMini
@@ -286,7 +286,7 @@ export const PerformanceV70: React.FC = () => {
                 — FCFA
               </div>
               <div style={{ fontSize: 11, color: 'var(--pt-muted)', marginTop: 4 }}>
-                Voir « Détails » pour le calcul live
+                Calcul live · ouvre les détails
               </div>
             </div>
           </div>

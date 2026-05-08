@@ -276,7 +276,7 @@ export const TodayV70: React.FC = () => {
             </div>
             <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Tournée terrain</div>
             <div style={{ fontSize: 11, color: 'var(--pt-muted)' }}>
-              12 points de contrôle aujourd'hui
+              12 points · biosécurité, alimentation, santé
             </div>
           </div>
           <Button

@@ -99,10 +99,10 @@ export function SceneHero() {
           willChange: 'transform, opacity',
         }}
       >
-        Votre ferme,
+        Le carnet papier,
         <br />
         <em style={{ fontStyle: 'normal', color: '#34d399' }}>
-          au cœur de la donnée.
+          sans les pages froissées.
         </em>
       </h1>
       <p
