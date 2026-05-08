@@ -17,6 +17,7 @@
  */
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { TrendingUp, Download, Trophy, Medal } from 'lucide-react';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
@@ -161,14 +162,28 @@ export const PerformanceV70: React.FC = () => {
           role="status"
           style={{ background: 'var(--pt-success)', color: 'white', padding: '10px 14px', borderRadius: 12, marginBottom: 12, fontSize: 13, textAlign: 'center' }}
         >
-          📥 Aperçu PDF prêt — utilise « Enregistrer au format PDF » dans la fenêtre d'impression
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+            <Download size={14} strokeWidth={1.5} aria-hidden="true" />
+            Aperçu PDF prêt — utilise « Enregistrer au format PDF » dans la fenêtre d'impression
+          </span>
         </div>
       )}
 
       {/* ISSE hero (toujours visible : repère métier principal) */}
       <Card variant="hero">
         <div className="hero-row">
-          <div className="hero-icon" style={{ background: 'var(--pt-success)' }}>📈</div>
+          <div
+            className="hero-icon"
+            style={{
+              background: 'var(--pt-success)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+            }}
+          >
+            <TrendingUp size={20} strokeWidth={1.5} aria-hidden="true" />
+          </div>
           <div className="hero-info">
             <div className="hero-title-text">ISSE moyen</div>
             <div className="hero-sub">
@@ -194,7 +209,7 @@ export const PerformanceV70: React.FC = () => {
 
       {/* Edu card ISSE — visible en Vue + KPIs */}
       {(tab === 'vue' || tab === 'kpis') && (
-        <EduCard label="💡 Qu'est-ce que l'ISSE ?">
+        <EduCard label="Qu'est-ce que l'ISSE ?">
           <strong>I</strong>ndice <strong>S</strong>evré-<strong>S</strong>aillie : nombre moyen de
           porcelets sevrés par truie par cycle. Référence métier :{' '}
           <strong>&gt;12 = excellent, 10-12 = bon, &lt;10 = à améliorer</strong>.
@@ -284,7 +299,10 @@ export const PerformanceV70: React.FC = () => {
               Détails
             </Button>
             <Button variant="secondary" size="sm" onClick={handlePrintPdf}>
-              📥 PDF
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <Download size={14} strokeWidth={1.5} aria-hidden="true" />
+                PDF
+              </span>
             </Button>
           </div>
         </Card>
@@ -348,16 +366,31 @@ export const PerformanceV70: React.FC = () => {
       {tab === 'vue' && (
       <Section label="Top performances">
         {topBandes.length > 0 ? (
-          topBandes.map((b, idx) => (
-            <ListItem
-              key={b.id}
-              avatar={<EntityAvatar species="bande" size="md" shortCode={b.id.slice(0, 5)} />}
-              title={`${b.truie ? `Bande ${b.truie}` : `Bande ${b.id.slice(0, 8)}…`} ${idx === 0 ? '🏆' : '🥈'}`}
-              subtitle={`${b.dateMB ? `MB ${b.dateMB}` : ''} · ${b.nv ?? '?'} NV`}
-              trailing={<span className="list-arrow">›</span>}
-              onClick={() => navigate(`/troupeau/bandes/${b.id}`)}
-            />
-          ))
+          topBandes.map((b, idx) => {
+            const RankIcon = idx === 0 ? Trophy : Medal;
+            const rankColor = idx === 0 ? 'var(--pt-accent)' : 'var(--pt-muted)';
+            const rankLabel = idx === 0 ? 'Top 1' : 'Top 2';
+            return (
+              <ListItem
+                key={b.id}
+                avatar={<EntityAvatar species="bande" size="md" shortCode={b.id.slice(0, 5)} />}
+                title={
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    {b.truie ? `Bande ${b.truie}` : `Bande ${b.id.slice(0, 8)}…`}
+                    <RankIcon
+                      size={14}
+                      strokeWidth={1.5}
+                      aria-label={rankLabel}
+                      style={{ color: rankColor, flexShrink: 0 }}
+                    />
+                  </span>
+                }
+                subtitle={`${b.dateMB ? `MB ${b.dateMB}` : ''} · ${b.nv ?? '?'} NV`}
+                trailing={<span className="list-arrow">›</span>}
+                onClick={() => navigate(`/troupeau/bandes/${b.id}`)}
+              />
+            );
+          })
         ) : (
           <ListItem
             avatar={<EntityAvatar species="bande" size="md" shortCode="..." />}

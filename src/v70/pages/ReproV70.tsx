@@ -13,6 +13,7 @@
  */
 import React, { useEffect, useMemo, useState, lazy, Suspense } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { BookOpen } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
 import { safeDate } from '../../lib/truieHelpers';
 import { PageHeader } from '../components/ds/PageHeader';
@@ -256,7 +257,7 @@ export const ReproV70: React.FC = () => {
 
       {tab === 'agenda' && (
         <>
-          <EduCard label="💡 Le saviez-vous ?">
+          <EduCard label="Le saviez-vous ?">
             Le cycle de gestation d'une truie dure <strong>115 jours</strong>. L'échographie à <strong>J28</strong> permet de confirmer la gestation et planifier la mise-bas.
           </EduCard>
 
@@ -416,7 +417,14 @@ export const ReproV70: React.FC = () => {
       )}
 
       <EmptyEdu
-        icon="📚"
+        icon={
+          <BookOpen
+            size={20}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            style={{ color: 'var(--pt-muted)' }}
+          />
+        }
         title="Comprendre les cycles"
         description="Apprends comment optimiser tes saillies et ton ISSE avec nos articles de l'encyclopédie."
         ctaLabel="Encyclopédie"

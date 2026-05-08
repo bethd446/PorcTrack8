@@ -13,8 +13,8 @@ import React from 'react';
 
 export interface ListItemProps {
   avatar?: React.ReactNode;
-  title: string;
-  subtitle?: string;
+  title: React.ReactNode;
+  subtitle?: React.ReactNode;
   trailing?: React.ReactNode;
   onClick?: () => void;
 }

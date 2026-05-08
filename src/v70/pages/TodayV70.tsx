@@ -13,6 +13,7 @@
  */
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ClipboardList, Play } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../components/ds/PageHeader';
@@ -263,7 +264,16 @@ export const TodayV70: React.FC = () => {
       <Section label="Tournée du jour">
         <Card>
           <div style={{ textAlign: 'center', padding: '8px 0 14px' }}>
-            <div style={{ fontSize: 28, marginBottom: 4 }}>📋</div>
+            <div
+              style={{
+                marginBottom: 4,
+                display: 'flex',
+                justifyContent: 'center',
+                color: 'var(--pt-muted)',
+              }}
+            >
+              <ClipboardList size={18} strokeWidth={1.5} aria-hidden="true" />
+            </div>
             <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Tournée terrain</div>
             <div style={{ fontSize: 11, color: 'var(--pt-muted)' }}>
               12 points de contrôle aujourd'hui
@@ -274,7 +284,10 @@ export const TodayV70: React.FC = () => {
             size="full"
             onClick={() => navigate('/controle')}
           >
-            ▶ Démarrer la tournée
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              <Play size={14} strokeWidth={2} aria-hidden="true" />
+              Démarrer la tournée
+            </span>
           </Button>
         </Card>
       </Section>

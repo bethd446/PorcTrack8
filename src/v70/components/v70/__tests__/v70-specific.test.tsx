@@ -17,7 +17,8 @@ describe('V70 specifics — smoke tests', () => {
 
   it('EduCard rend label + content', () => {
     render(<EduCard>Test content</EduCard>);
-    expect(screen.getByText('💡 Le saviez-vous ?')).toBeTruthy();
+    // V71.4 — label par défaut sans emoji (Lucide Lightbulb à la place de 💡)
+    expect(screen.getByText('Le saviez-vous ?')).toBeTruthy();
     expect(screen.getByText('Test content')).toBeTruthy();
   });
 
