@@ -12,6 +12,7 @@
  */
 import React, { useState, lazy, Suspense, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Boxes, Home } from 'lucide-react';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
@@ -81,8 +82,8 @@ const TAB_DATA: Record<AnimalTab, { stubs: AnimalStub[]; species: 'truie' | 'ver
   truies: { stubs: STUBS_TRUIES, species: 'truie', sectionLabel: '50 truies', routePrefix: '/troupeau/truies/', icon: <PigSilhouette size={18} /> },
   verrats: { stubs: STUBS_VERRATS, species: 'verrat', sectionLabel: '3 verrats', routePrefix: '/troupeau/verrats/', icon: <PigSilhouette size={18} /> },
   porcelets: { stubs: STUBS_PORCELETS, species: 'porcelet', sectionLabel: '92 porcelets', routePrefix: '/troupeau/bandes/', icon: <PigSilhouette size={16} /> },
-  bandes: { stubs: STUBS_BANDES, species: 'bande', sectionLabel: '6 bandes actives', routePrefix: '/troupeau/bandes/', icon: '📦' },
-  loges: { stubs: STUBS_LOGES, species: 'bande', sectionLabel: 'Loges', routePrefix: '/troupeau/loges/', icon: '🏠' },
+  bandes: { stubs: STUBS_BANDES, species: 'bande', sectionLabel: '6 bandes actives', routePrefix: '/troupeau/bandes/', icon: <Boxes size={18} /> },
+  loges: { stubs: STUBS_LOGES, species: 'bande', sectionLabel: 'Loges', routePrefix: '/troupeau/loges/', icon: <Home size={18} /> },
 };
 
 export const AnimalsV70: React.FC = () => {

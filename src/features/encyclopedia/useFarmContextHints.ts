@@ -7,14 +7,19 @@
  * Les slugs renvoient vers la page Encyclopédie via query param `?slug=`
  * (cf. `EncyclopediaPage` — auto-sélection à l'arrivée).
  */
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useFarm } from '../../context/FarmContext';
 import { safeDate } from '../../lib/truieHelpers';
+import { PigSilhouette } from '../../v70/components/v70/icons/PigSilhouette';
 
 export interface FarmHint {
   id: string;
   level: 'info' | 'soon' | 'critical';
-  emoji: string;
+  /**
+   * Glyphe ou icône affichée à côté du badge "Le saviez-vous ?".
+   * Accepte un emoji (string) ou un composant React (ex: <PigSilhouette />).
+   */
+  emoji: React.ReactNode;
   title: string;
   body: string;
   /** Chemin complet (route + query) vers l'article encyclopédie. */
@@ -61,7 +66,7 @@ export function useFarmContextHints(): FarmHint[] {
       hints.push({
         id: 'mise-bas-incoming',
         level: 'soon',
-        emoji: '🐷',
+        emoji: React.createElement(PigSilhouette, { size: 16 }),
         title: `${proxMB.length} mise-bas attendue${proxMB.length > 1 ? 's' : ''} sous 7 jours`,
         body:
           "Préparez les loges maternité (lampe chauffante, paille sèche), vérifiez l'eau et anticipez les soins post-partum (oxytocine, antibiotique si besoin).",
@@ -117,7 +122,7 @@ export function useFarmContextHints(): FarmHint[] {
 
     // Hint D — Le saviez-vous quotidien (rotation jour, fallback si rien d'urgent)
     if (hints.length === 0) {
-      const dailyHints: Array<{ emoji: string; title: string; body: string; slug: string }> = [
+      const dailyHints: Array<{ emoji: React.ReactNode; title: string; body: string; slug: string }> = [
         {
           emoji: '💡',
           title: "L'ISSE, votre meilleur indicateur économique",
@@ -140,7 +145,7 @@ export function useFarmContextHints(): FarmHint[] {
           slug: SLUGS.mortalite,
         },
         {
-          emoji: '🐖',
+          emoji: React.createElement(PigSilhouette, { size: 16 }),
           title: 'Sevrage à J28, pas avant',
           body:
             "Sevrage précoce = porcelets fragiles, truies sur-sollicitées, plus de soins. Sevrage trop tardif = perte d'ISSE. J28 reste le compromis métier dominant.",
