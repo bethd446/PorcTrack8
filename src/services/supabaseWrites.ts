@@ -100,6 +100,16 @@ export function setCurrentFarmIdRef(farmId: string | null): void {
   globalCurrentFarmIdRef = farmId;
 }
 
+/**
+ * V71-P2 phase C — Getter exporté pour permettre aux autres services
+ * (peseePlanifieesService, mbWorkflowService, feedConsumptionAnalyzer, …)
+ * de résoudre `farm_id` en priorité via `currentFarmId` avant fallback
+ * `auth.uid()`. Évite la duplication du pattern dans chaque service.
+ */
+export function getCurrentFarmIdRef(): string | null {
+  return globalCurrentFarmIdRef;
+}
+
 /** V71-P2 — Test-only : reset la ref globale entre tests. */
 export function __resetCurrentFarmIdRefForTests(): void {
   globalCurrentFarmIdRef = null;

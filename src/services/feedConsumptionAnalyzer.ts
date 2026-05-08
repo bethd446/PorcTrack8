@@ -18,6 +18,7 @@
  */
 
 import { supabase } from './supabaseClient';
+import { getCurrentFarmIdRef } from './supabaseWrites';
 
 /** Poids moyen estimé d'un porcelet à la naissance (kg). */
 export const POIDS_NAISSANCE_KG = 1.4;
@@ -209,7 +210,8 @@ export async function computeICReel(
 
 /**
  * Insert d'une saisie conso aliment.
- * `created_by` est auto-injecté via `auth.uid()` côté write.
+ * `farm_id` résolu via `getCurrentFarmIdRef()` (FarmContext) avec fallback
+ * `auth.uid()` ; `created_by` reste user-scoped (`auth.uid()` direct).
  */
 export interface FeedConsoInsertInput {
   batch_id: string | null;
@@ -257,14 +259,19 @@ export function computeICMoyen(
 export async function insertFeedConsumption(
   values: FeedConsoInsertInput,
 ): Promise<{ id: string }> {
+  // `created_by` reste l'auteur réel (user-scoped) → auth.uid().
   const { data: session, error: sessErr } = await supabase.auth.getSession();
   if (sessErr || !session.session?.user.id) {
     throw new Error('Aucune session authentifiée — connexion requise');
   }
   const uid = session.session.user.id;
+
+  // `farm_id` : priorité au currentFarmId (multi-user), fallback uid.
+  const farm_id = getCurrentFarmIdRef() ?? uid;
+
   const payload = {
     ...values,
-    farm_id: uid,
+    farm_id,
     created_by: uid,
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

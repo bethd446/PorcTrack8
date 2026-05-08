@@ -1,13 +1,16 @@
 /**
  * peseePlanifieesService — Pesées planifiées (mensuelles) par bande / porcelet.
  * ════════════════════════════════════════════════════════════════════════════
- * Adossé à la table `pesee_planifiees` (migration V25). RLS : `farm_id = auth.uid()`.
+ * Adossé à la table `pesee_planifiees` (migration V25). RLS : scope par
+ * `farm_members` côté Postgres (V71-P2). `farm_id` injecté via `getFarmId()`
+ * qui priorise `currentFarmId` (FarmContext) avec fallback `auth.uid()`.
  *
  * Auto-scheduling : `autoScheduleMonthly(bandes)` crée 1 pesée par bande active
  * sans pesée prévue dans les 30 prochains jours, datée à J+30.
  */
 
 import { supabase } from './supabaseClient';
+import { getCurrentFarmIdRef } from './supabaseWrites';
 import { logger } from './logger';
 import type { BandePorcelets } from '../types/farm';
 
@@ -50,7 +53,14 @@ function rowToModel(r: PeseePlanifieeRow): PeseePlanifiee {
   };
 }
 
+/**
+ * V71-P2 phase C — Résolution `farm_id` :
+ *  1. Priorité : `currentFarmId` exposé par FarmContext (multi-user).
+ *  2. Fallback : `auth.uid()` (rétro-compat pré-multi-user).
+ */
 async function getFarmId(): Promise<string> {
+  const ref = getCurrentFarmIdRef();
+  if (ref) return ref;
   const { data, error } = await supabase.auth.getSession();
   if (error) throw new Error(`Auth session error: ${error.message}`);
   const uid = data.session?.user.id;

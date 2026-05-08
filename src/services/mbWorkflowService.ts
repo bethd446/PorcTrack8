@@ -12,7 +12,7 @@
  */
 
 import { supabase } from './supabaseClient';
-import { insertBatch } from './supabaseWrites';
+import { insertBatch, getCurrentFarmIdRef } from './supabaseWrites';
 import {
   selectSailliesProchesMB,
   type SaillieProcheMB,
@@ -81,7 +81,14 @@ export interface BandeSousMere {
 
 // ─── Helpers internes ────────────────────────────────────────────────────────
 
+/**
+ * V71-P2 phase C — Résolution `farm_id` :
+ *  1. Priorité : `currentFarmId` exposé par FarmContext (multi-user).
+ *  2. Fallback : `auth.uid()` (rétro-compat pré-multi-user).
+ */
 async function getFarmId(): Promise<string> {
+  const ref = getCurrentFarmIdRef();
+  if (ref) return ref;
   const { data, error } = await supabase.auth.getSession();
   if (error) throw new Error(`Auth session error: ${error.message}`);
   const uid = data.session?.user.id;

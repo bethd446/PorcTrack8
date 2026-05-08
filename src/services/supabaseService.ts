@@ -508,4 +508,5 @@ export async function getFinances(
 // n'auto-injectaient pas `farm_id` et ouvraient un risque multi-tenant. Tous
 // les écrivains métier passent désormais par `services/supabaseWrites.ts`
 // (`insertSow`, `updateBatch`, `deleteNote`, etc.) qui résout `farm_id` via
-// `auth.getSession()` et le scelle au payload.
+// `getCurrentFarmIdRef()` (FarmContext, V71-P2) avec fallback `auth.uid()`,
+// et le scelle au payload.

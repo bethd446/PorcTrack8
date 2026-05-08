@@ -26,6 +26,8 @@ vi.mock('./supabaseWrites', () => ({
     id: 'new-batch-id',
     code_id: payload.code_id as string,
   })),
+  // V71-P2 phase C : mbWorkflowService consomme aussi le getter farm-id.
+  getCurrentFarmIdRef: vi.fn(() => null),
 }));
 
 import {
