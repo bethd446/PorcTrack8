@@ -2,10 +2,16 @@
  * V70 — EmptyEdu (réplique mockup .empty-edu)
  *
  * Empty state pédagogique avec icône, titre, description et CTA optionnel.
+ *
+ * V71 — Anti-AI feel : icône par défaut Lucide BookOpen (trait fin,
+ * couleur var(--pt-muted)) au lieu d'un emoji livre. Override possible
+ * via prop `icon`, ou désactivation via `icon={null}`.
  */
 import React from 'react';
+import { BookOpen } from 'lucide-react';
 
 export interface EmptyEduProps {
+  /** Icon to render above the title. Defaults to a BookOpen. Pass `null` to hide. */
   icon?: React.ReactNode;
   title: string;
   description: string;
@@ -13,8 +19,17 @@ export interface EmptyEduProps {
   onCtaClick?: () => void;
 }
 
+const DEFAULT_ICON = (
+  <BookOpen
+    size={20}
+    strokeWidth={1.5}
+    aria-hidden="true"
+    style={{ color: 'var(--pt-muted)' }}
+  />
+);
+
 export const EmptyEdu: React.FC<EmptyEduProps> = ({
-  icon = '📚',
+  icon = DEFAULT_ICON,
   title,
   description,
   ctaLabel,

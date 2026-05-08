@@ -23,8 +23,9 @@ describe('V70 specifics — smoke tests', () => {
   });
 
   it('EmptyEdu rend icon + title + description', () => {
-    render(<EmptyEdu title="Vide" description="Plus rien" />);
-    expect(screen.getByText('📚')).toBeTruthy();
+    const { container } = render(<EmptyEdu title="Vide" description="Plus rien" />);
+    // V71 — icône par défaut Lucide BookOpen (SVG) à la place de l'emoji 📚
+    expect(container.querySelector('.empty-edu-icon svg')).toBeTruthy();
     expect(screen.getByText('Vide')).toBeTruthy();
     expect(screen.getByText('Plus rien')).toBeTruthy();
   });
