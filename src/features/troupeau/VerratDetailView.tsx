@@ -19,7 +19,7 @@ import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { IonContent, IonPage, IonToast } from '@ionic/react';
 import {
-  Syringe, Scale, Heart, FileText, AlertCircle, Pencil,
+  Syringe, Scale, Heart, FileText, Pencil,
 } from 'lucide-react';
 
 import AgritechLayout from '../../components/AgritechLayout';
@@ -33,6 +33,8 @@ import { SectionDivider, BottomSheet, type ChipTone } from '../../components/agr
 import { Button, Card, PageHeader, Section, Tabs, Tag } from '@/design-system';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { useFarm } from '../../context/FarmContext';
+import { useEntityWithRetry } from '../../hooks/useEntityWithRetry';
+import { SpinnerCenter, EntityNotFoundCard } from '../../v70/components/v70/EntityNotFoundGuard';
 import { updateBoar } from '../../services/supabaseWrites';
 import QuickHealthForm from '../../components/forms/QuickHealthForm';
 import QuickNoteForm from '../../components/forms/QuickNoteForm';
@@ -117,7 +119,22 @@ const VerratDetailView: React.FC = () => {
     [verrat, saillies],
   );
 
-  if (!verrat) {
+  // V74 défense-en-profondeur : guard loading/retry/not-found uniforme.
+  const verratGuard = useEntityWithRetry(verrat);
+
+  if (verratGuard.state === 'loading') {
+    return (
+      <IonPage>
+        <IonContent fullscreen className="ion-no-padding">
+          <AgritechLayout>
+            <SpinnerCenter />
+          </AgritechLayout>
+        </IonContent>
+      </IonPage>
+    );
+  }
+
+  if (verratGuard.state === 'not-found') {
     return (
       <IonPage>
         <IonContent fullscreen className="ion-no-padding">
@@ -136,23 +153,21 @@ const VerratDetailView: React.FC = () => {
               className="px-4 pt-5 pb-44 flex flex-col gap-5"
               style={{ maxWidth: 1100, margin: '0 auto' }}
             >
-              <PageHeader
-                eyebrow="ÉLEVAGE · VERRAT"
-                title="Verrat introuvable"
-                subtitle="Fiche reproducteur"
+              <EntityNotFoundCard
+                label="verrat"
+                message="Ce verrat n'existe pas ou plus dans votre exploitation."
+                onBack={() => window.history.back()}
               />
-              <div className="flex flex-col items-center gap-3">
-                <AlertCircle size={40} className="text-coral" aria-hidden="true" />
-                <p className="text-[12px] text-text-2 text-center max-w-xs">
-                  Ce verrat n'existe pas (ou plus) dans ta feuille VERRATS.
-                </p>
-              </div>
             </div>
           </AgritechLayout>
         </IonContent>
       </IonPage>
     );
   }
+
+  // Type narrowing manuel : verratGuard.state === 'ready' mais TS ne le déduit pas
+  // depuis verrat (issu de useMemo<Verrat | undefined>).
+  if (!verrat) return null;
 
   const displayId = verrat.displayId || verrat.id;
   const title = verrat.nom ? `${displayId} · ${verrat.nom}` : displayId;

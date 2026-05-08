@@ -9,6 +9,8 @@
 import React, { Suspense, useCallback } from 'react';
 import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useFarm } from '../../context/FarmContext';
+import { useEntityWithRetry } from '../../hooks/useEntityWithRetry';
+import { SpinnerCenter, EntityNotFoundCard } from '../components/v70/EntityNotFoundGuard';
 import { BottomNavV70 } from '../components/v70/BottomNav';
 import { UIPreferencesProvider } from '../context/UIPreferencesContext';
 import { V70ErrorBoundary } from '../components/V70ErrorBoundary';
@@ -94,35 +96,25 @@ const BandeDetailRouteV70: React.FC = () => {
   const navigate = useNavigate();
   const { getBandeById, refreshData } = useFarm();
   const bandeTyped = getBandeById(bandeId);
+  const guard = useEntityWithRetry(bandeTyped);
   const handleClose = useCallback(() => navigate(-1), [navigate]);
   const handleRefresh = useCallback(() => { void refreshData(true); }, [refreshData]);
 
-  if (!bandeTyped) {
-    return (
-      <div style={{ padding: 32, textAlign: 'center' }}>
-        <p style={{ fontSize: 14, color: 'var(--pt-muted)', marginBottom: 16 }}>Bande introuvable</p>
-        <button
-          type="button"
-          onClick={handleClose}
-          style={{ padding: '10px 24px', background: 'var(--pt-primary)', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
-        >
-          Retour
-        </button>
-      </div>
-    );
-  }
+  if (guard.state === 'loading') return <SpinnerCenter />;
+  if (guard.state === 'not-found') return <EntityNotFoundCard label="bande" onBack={handleClose} />;
 
+  const bandeReady = guard.entity;
   const aggregated = {
-    id: bandeTyped.id,
+    id: bandeReady.id,
     count: 1,
-    truie: bandeTyped.truie ?? null,
-    boucleMere: bandeTyped.boucleMere ?? null,
-    dateMB: bandeTyped.dateMB ?? null,
+    truie: bandeReady.truie ?? null,
+    boucleMere: bandeReady.boucleMere ?? null,
+    dateMB: bandeReady.dateMB ?? null,
     age: null,
-    nv: bandeTyped.nv ?? 0,
-    morts: bandeTyped.morts ?? 0,
-    vivants: bandeTyped.vivants ?? bandeTyped.nv ?? 0,
-    status: bandeTyped.statut ?? null,
+    nv: bandeReady.nv ?? 0,
+    morts: bandeReady.morts ?? 0,
+    vivants: bandeReady.vivants ?? bandeReady.nv ?? 0,
+    status: bandeReady.statut ?? null,
     hasAlert: false,
     rows: [],
   };

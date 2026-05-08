@@ -21,6 +21,8 @@ import { IonContent, IonModal, IonPage, IonToast, useIonAlert } from '@ionic/rea
 import { Pencil, Printer } from 'lucide-react';
 
 import { useFarm } from '../../context/FarmContext';
+import { useEntityWithRetry } from '../../hooks/useEntityWithRetry';
+import { SpinnerCenter, EntityNotFoundCard } from '../../v70/components/v70/EntityNotFoundGuard';
 import { enqueueUpdateRow } from '../../services/offlineQueue';
 import { updateSow, updateBatch } from '../../services/supabaseWrites';
 import EditableNumber from '../../components/EditableNumber';
@@ -239,36 +241,34 @@ const TruieDetailView: React.FC = () => {
     });
   }, [presentAlert, truie]);
 
-  // ── État non trouvé ─────────────────────────────────────────────────────────
+  // ── État non trouvé / loading (V74 défense-en-profondeur) ─────────────────
+  // useEntityWithRetry doit être appelé inconditionnellement (rules-of-hooks).
 
-  if (!truie) {
+  const truieGuard = useEntityWithRetry(truie);
+
+  if (truieGuard.state === 'loading') {
     return (
       <IonPage>
         <IonContent className="ion-padding">
-          <h1
-            style={{
-              fontFamily: 'var(--pt-font-display)',
-              fontSize: 28,
-              fontWeight: 700,
-              color: 'var(--pt-text)',
-              textTransform: 'uppercase',
-              letterSpacing: '-0.02em',
-            }}
-          >
-            Truie introuvable
-          </h1>
-          <p style={{ marginTop: 8, color: 'var(--pt-text-muted)' }}>
-            Cette truie n'existe pas dans les données de votre exploitation.
-          </p>
-          <div style={{ marginTop: 16 }}>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/troupeau')}>
-              Retour au troupeau
-            </Button>
-          </div>
+          <SpinnerCenter />
         </IonContent>
       </IonPage>
     );
   }
+
+  if (truieGuard.state === 'not-found') {
+    return (
+      <IonPage>
+        <IonContent className="ion-padding">
+          <EntityNotFoundCard label="truie" onBack={() => navigate('/troupeau')} />
+        </IonContent>
+      </IonPage>
+    );
+  }
+
+  // À partir d'ici, truieGuard.state === 'ready' donc truie est défini.
+  // Type narrowing manuel pour TS (useMemo retourne T | undefined).
+  if (!truie) return null;
 
   // ── Chips hero ─────────────────────────────────────────────────────────────
 
