@@ -290,7 +290,7 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
                 >
                   <Icon size={22} strokeWidth={2} aria-hidden />
                 </span>
-                <span className="min-w-0 flex-1">
+                <span className="min-w-0 flex-1 whitespace-normal">
                   <span
                     className="block text-[15px] font-semibold leading-tight"
                     style={{

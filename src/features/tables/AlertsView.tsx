@@ -666,7 +666,7 @@ const AlertsView: React.FC = () => {
               aria-label="Résumé des alertes locales"
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
                 gap: 10,
               }}
             >

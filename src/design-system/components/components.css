@@ -90,7 +90,7 @@
 .pt-radio-group__item:focus-visible { outline: 2px solid var(--pt-primary); outline-offset: 2px; }
 
 /* === TABS === */
-.pt-tabs { display: flex; gap: 4px; padding: 4px; background: var(--pt-surface); border-radius: var(--pt-radius-pill); overflow-x: auto; scrollbar-width: none; }
+.pt-tabs { display: flex; gap: 4px; padding: 4px; background: var(--pt-surface); border-radius: var(--pt-radius-pill); overflow-x: auto; scrollbar-width: none; mask-image: linear-gradient(to right, black 0, black calc(100% - 28px), transparent 100%); -webkit-mask-image: linear-gradient(to right, black 0, black calc(100% - 28px), transparent 100%); }
 .pt-tabs::-webkit-scrollbar { display: none; }
 .pt-tab { flex: 1 0 auto; min-width: 0; padding: 10px 14px; border-radius: var(--pt-radius-pill); background: transparent; border: none; cursor: pointer; font-family: var(--pt-font-body); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: var(--pt-tracking-button); color: var(--pt-text-muted); white-space: nowrap; transition: all var(--pt-t-fast); }
 .pt-tab--active { background: var(--pt-primary); color: white; }
