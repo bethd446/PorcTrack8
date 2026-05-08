@@ -76,11 +76,44 @@ export interface QueueItem {
   timestamp: string;
   tries: number;
   lastError?: string;
+  /**
+   * Timestamp ISO (ms epoch) avant lequel l'item ne doit PAS être retenté.
+   * Calculé à chaque échec via `BACKOFF_DELAYS_MS[tries]`. Absent ou ≤ now()
+   * = éligible immédiatement. Garantit le retry exponentiel structuré
+   * (1s, 5s, 30s, 5min, 30min) et évite le hammering au flush boucle.
+   */
+  nextAttemptAt?: number;
+}
+
+/**
+ * Forme stockée dans `pt:queue_archive` : item failed (>= MAX_TRIES) +
+ * timestamp d'archivage. Utilisé par la modale "Voir la file" pour
+ * afficher l'historique des échecs définitifs.
+ */
+export interface ArchivedQueueItem extends QueueItem {
+  archivedAt: string;
 }
 
 const QUEUE_KEY = 'porctrack_sync_queue_v8';
+const ARCHIVE_KEY = 'pt:queue_archive';
+const ARCHIVE_MAX_ITEMS = 100;
+
+/**
+ * Délais de backoff exponentiel par nombre de tries (index = tries actuels
+ * AVANT incrément). Au 1er échec → 1s, 2e → 5s, 3e → 30s, 4e → 5min,
+ * 5e → 30min puis abandon (MAX_TRIES = 5). Permet à un retry réseau
+ * intermittent de se résorber sans noyer Supabase ni cramer la batterie.
+ */
+const BACKOFF_DELAYS_MS: readonly number[] = [
+  1_000,        // après 1er fail → retry dans 1s
+  5_000,        // après 2e fail → 5s
+  30_000,       // après 3e fail → 30s
+  5 * 60_000,   // après 4e fail → 5min
+  30 * 60_000,  // après 5e fail → 30min (sécurité — abandonné juste après)
+];
 
 let _memCache: QueueItem[] = [];
+let _archiveMemCache: ArchivedQueueItem[] = [];
 
 async function loadQueue(): Promise<QueueItem[]> {
   try {
@@ -102,8 +135,30 @@ async function saveQueue(queue: QueueItem[]): Promise<void> {
   }
 }
 
+async function loadArchive(): Promise<ArchivedQueueItem[]> {
+  try {
+    const { value } = await Preferences.get({ key: ARCHIVE_KEY });
+    _archiveMemCache = value ? JSON.parse(value) : [];
+    return _archiveMemCache;
+  } catch {
+    return _archiveMemCache;
+  }
+}
+
+async function saveArchive(items: ArchivedQueueItem[]): Promise<void> {
+  // Cap dur à ARCHIVE_MAX_ITEMS — on conserve les plus récents.
+  const capped = items.slice(-ARCHIVE_MAX_ITEMS);
+  _archiveMemCache = capped;
+  try {
+    await Preferences.set({ key: ARCHIVE_KEY, value: JSON.stringify(capped) });
+  } catch (e) {
+    console.error('[Queue] saveArchive failed:', e);
+  }
+}
+
 export async function initQueue(): Promise<void> {
   await loadQueue();
+  await loadArchive();
 }
 
 // ── API publique typée Supabase ──────────────────────────────────────────────
@@ -237,6 +292,54 @@ export function hasFailedSync(): boolean {
   return _memCache.some((item) => item.tries > 0);
 }
 
+/**
+ * Nombre d'items ayant déjà subi au moins un échec — utilisé par l'UI
+ * pour afficher "X erreurs Sync" (variante danger du badge).
+ */
+export function getErrorCount(): number {
+  return _memCache.filter((item) => item.tries > 0).length;
+}
+
+/** Liste figée des items en attente (clone shallow). */
+export function getQueueItems(): QueueItem[] {
+  return [..._memCache];
+}
+
+/** Archive en mémoire (items abandonnés après MAX_TRIES). */
+export function getArchivedItems(): ArchivedQueueItem[] {
+  return [..._archiveMemCache];
+}
+
+/** Vide l'archive (debug / cleanup côté écran "Voir la file"). */
+export async function clearArchive(): Promise<void> {
+  await saveArchive([]);
+}
+
+/**
+ * Force un retry immédiat sur un item en queue : reset `nextAttemptAt`
+ * pour qu'il soit éligible au prochain `processQueue`. Ne change PAS
+ * `tries` — le compteur reste honnête.
+ */
+export async function retryItem(itemId: string): Promise<boolean> {
+  const queue = await loadQueue();
+  const idx = queue.findIndex((it) => it.id === itemId);
+  if (idx === -1) return false;
+  queue[idx] = { ...queue[idx], nextAttemptAt: undefined };
+  await saveQueue(queue);
+  return true;
+}
+
+/**
+ * Force un retry immédiat sur tous les items en queue.
+ */
+export async function retryAll(): Promise<number> {
+  const queue = await loadQueue();
+  if (queue.length === 0) return 0;
+  const next = queue.map((it) => ({ ...it, nextAttemptAt: undefined }));
+  await saveQueue(next);
+  return next.length;
+}
+
 // ── Runner ───────────────────────────────────────────────────────────────────
 
 const MAX_TRIES = 5;
@@ -359,17 +462,28 @@ async function runDelete(
 }
 
 export async function processQueue(): Promise<{
-  success: boolean; processed: number; remaining: number; abandoned: number;
+  success: boolean; processed: number; remaining: number; abandoned: number; skipped: number;
 }> {
   const queue = await loadQueue();
-  if (queue.length === 0) return { success: true, processed: 0, remaining: 0, abandoned: 0 };
+  if (queue.length === 0) return { success: true, processed: 0, remaining: 0, abandoned: 0, skipped: 0 };
 
+  const now = Date.now();
   const remaining: QueueItem[] = [];
+  const archivedNow: ArchivedQueueItem[] = [];
   let processed = 0;
   let abandoned = 0;
+  let skipped = 0;
   let hasError = false;
 
   for (const item of queue) {
+    // Backoff exponentiel : on skippe les items pas encore éligibles. Le
+    // listener `online` ré-essaiera, et l'auto-flush via polling rattrapera
+    // les retries différés au tick suivant.
+    if (typeof item.nextAttemptAt === 'number' && item.nextAttemptAt > now) {
+      remaining.push(item);
+      skipped++;
+      continue;
+    }
     try {
       await runMutation(item.mutation);
       processed++;
@@ -378,8 +492,11 @@ export async function processQueue(): Promise<{
       item.lastError = e instanceof Error ? e.message : String(e);
       if (item.tries >= MAX_TRIES) {
         console.error(`[Queue] item ${item.id} abandonné après ${MAX_TRIES} essais :`, item.lastError);
+        archivedNow.push({ ...item, archivedAt: new Date().toISOString() });
         abandoned++;
       } else {
+        const delay = BACKOFF_DELAYS_MS[item.tries - 1] ?? BACKOFF_DELAYS_MS[BACKOFF_DELAYS_MS.length - 1];
+        item.nextAttemptAt = Date.now() + delay;
         remaining.push(item);
       }
       hasError = true;
@@ -387,7 +504,11 @@ export async function processQueue(): Promise<{
   }
 
   await saveQueue(remaining);
-  return { success: !hasError, processed, remaining: remaining.length, abandoned };
+  if (archivedNow.length > 0) {
+    const archive = await loadArchive();
+    await saveArchive([...archive, ...archivedNow]);
+  }
+  return { success: !hasError, processed, remaining: remaining.length, abandoned, skipped };
 }
 
 export const flushQueue = processQueue;
@@ -427,3 +548,27 @@ export function installOnlineFlushListener(
   window.addEventListener('online', handler);
   return () => window.removeEventListener('online', handler);
 }
+
+/**
+ * Tente un flush si l'app est en ligne et que la queue n'est pas vide.
+ * À appeler au boot après `initQueue()` pour drainer ce qui reste d'une
+ * session précédente. No-op silencieux en cas d'erreur réseau.
+ */
+export async function tryFlushIfOnline(): Promise<void> {
+  if (!isOnline()) return;
+  if (_memCache.length === 0) return;
+  try {
+    await processQueue();
+  } catch (e) {
+    console.warn('[offlineQueue] tryFlushIfOnline failed:', e);
+  }
+}
+
+/** Test-only helper to reset module state between tests. */
+export function __resetQueueForTests(): void {
+  _memCache = [];
+  _archiveMemCache = [];
+}
+
+/** Délais de backoff exposés pour les tests (lecture seule). */
+export const __BACKOFF_DELAYS_MS_FOR_TESTS = BACKOFF_DELAYS_MS;

@@ -21,6 +21,7 @@ import { MaFermeV70 } from '../pages/MaFermeV70';
 import { MonEquipeV70 } from '../pages/MonEquipeV70';
 import { EncyclopediaPage } from '../pages/EncyclopediaPage';
 import { OnboardingEduPage } from '../pages/OnboardingEduPage';
+import { SynchronisationV70 } from '../pages/SynchronisationV70';
 
 // Pages détail legacy réutilisées dans le shell V70 — câblage Option B
 // (refonte fiches détail dédiées V70 = chantier V71+).
@@ -172,6 +173,7 @@ export const V70Routes: React.FC = () => (
           <Route path="/reglages/mon-equipe" element={<V70ErrorBoundary pageName="Mon équipe"><MonEquipeV70 /></V70ErrorBoundary>} />
           <Route path="/reglages/encyclopedie" element={<EncyclopediaPage />} />
           <Route path="/reglages/onboarding" element={<OnboardingRoute />} />
+          <Route path="/reglages/sync" element={<V70ErrorBoundary pageName="Synchronisation"><SynchronisationV70 /></V70ErrorBoundary>} />
 
           {/* V71-P3 — Wizard ré-organisation porcelets→bandes→loges (bloquant) */}
           <Route path="/porcelets-reorg" element={<PorceletsReorgWizard />} />

@@ -1,56 +1,79 @@
 import React from 'react';
-import { Cloud, CloudOff, Loader2 } from 'lucide-react';
+import { AlertTriangle, Cloud, CloudOff, Loader2 } from 'lucide-react';
 import { useOfflineQueue } from '../hooks/useOfflineQueue';
 import { cn } from '../lib/utils';
 
 export interface SyncStatusBadgeProps {
   /** Si true, affiche aussi l'état "Synchro OK" quand pendingCount=0 et online. Défaut false (caché). */
   showWhenIdle?: boolean;
+  /** Callback au clic — utilisé pour ouvrir la modale "Voir la file". */
+  onClick?: () => void;
   className?: string;
 }
 
 /**
  * Badge compact d'état synchro — visible dans les top headers / layout.
- * Quatre états :
- *  - flushing → spinner ambré "Synchro…"
+ * Cinq états :
+ *  - flushing → spinner ambré "Sync … en cours"
+ *  - errors   → rouge AlertTriangle "X erreurs sync" (si tries>0 sur ≥1 item)
  *  - offline  → gris CloudOff "Hors ligne"
- *  - pending  → ambré Cloud "{n} en attente"
+ *  - pending  → ambré Cloud "Sync N en cours"
  *  - idle     → vert subtle "Synchro OK" (caché par défaut)
  *
- * Design system Terrain Vivant : InstrumentSans tabular-nums uppercase 11px, rounded-full, py-1 px-2.5.
+ * Si `onClick` est fourni → rendu en `<button>` (file cliquable). Sinon `<span>`.
+ * Design system V70 : tokens `var(--pt-*)`, Lucide icons, ft-code uppercase.
  */
 const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({
   showWhenIdle = false,
+  onClick,
   className,
 }) => {
-  const { pendingCount, isOnline, isFlushing } = useOfflineQueue();
+  const { pendingCount, isOnline, isFlushing, errorCount } = useOfflineQueue();
 
-  const variant = resolveVariant({ pendingCount, isOnline, isFlushing });
+  const variant = resolveVariant({ pendingCount, isOnline, isFlushing, errorCount });
   if (variant.kind === 'idle' && !showWhenIdle) return null;
+
+  const baseClasses = cn(
+    'ft-code inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] uppercase tracking-wide whitespace-nowrap',
+    variant.classes,
+    onClick ? 'cursor-pointer' : '',
+    className,
+  );
+
+  const content = (
+    <>
+      <variant.Icon size={14} aria-hidden="true" className={variant.iconClassName} />
+      <span>{variant.label}</span>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={variant.aria}
+        className={baseClasses}
+      >
+        {content}
+      </button>
+    );
+  }
 
   return (
     <span
       role="status"
       aria-live="polite"
       aria-label={variant.aria}
-      className={cn(
-        'ft-code inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] uppercase tracking-wide whitespace-nowrap',
-        variant.classes,
-        className,
-      )}
+      className={baseClasses}
     >
-      <variant.Icon
-        size={14}
-        aria-hidden="true"
-        className={variant.iconClassName}
-      />
-      <span>{variant.label}</span>
+      {content}
     </span>
   );
 };
 
 interface Variant {
-  kind: 'flushing' | 'offline' | 'pending' | 'idle';
+  kind: 'flushing' | 'errors' | 'offline' | 'pending' | 'idle';
   Icon: React.ComponentType<{ size?: number; className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>;
   iconClassName?: string;
   label: string;
@@ -62,15 +85,27 @@ function resolveVariant(s: {
   pendingCount: number;
   isOnline: boolean;
   isFlushing: boolean;
+  errorCount: number;
 }): Variant {
   if (s.isFlushing) {
     return {
       kind: 'flushing',
       Icon: Loader2,
       iconClassName: 'animate-spin',
-      label: 'Synchro…',
+      label: s.pendingCount > 0 ? `Sync ${s.pendingCount} en cours` : 'Synchro…',
       aria: 'Synchronisation en cours',
       classes: 'bg-amber-50 text-amber-800 border border-amber-200',
+    };
+  }
+  // Erreurs en priorité sur "pending neutre" : si des items ont déjà échoué,
+  // l'éleveur DOIT le voir (pill rouge cliquable).
+  if (s.errorCount > 0) {
+    return {
+      kind: 'errors',
+      Icon: AlertTriangle,
+      label: `${s.errorCount} erreur${s.errorCount > 1 ? 's' : ''} sync`,
+      aria: `${s.errorCount} action${s.errorCount > 1 ? 's' : ''} en échec — toucher pour détail`,
+      classes: 'bg-red-50 text-red-700 border border-red-200',
     };
   }
   if (!s.isOnline) {

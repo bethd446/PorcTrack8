@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   getQueueLength,
+  getErrorCount,
   isOnline as readIsOnline,
   installOnlineFlushListener,
   flushQueue,
@@ -10,6 +11,8 @@ export interface OfflineQueueState {
   pendingCount: number;
   isOnline: boolean;
   isFlushing: boolean;
+  /** Nombre d'items en queue avec au moins un échec passé. */
+  errorCount: number;
 }
 
 const POLL_INTERVAL_MS = 2000;
@@ -24,6 +27,7 @@ export function useOfflineQueue(): OfflineQueueState {
     pendingCount: safeGetQueueLength(),
     isOnline: readIsOnline(),
     isFlushing: false,
+    errorCount: safeGetErrorCount(),
   }));
 
   const flushingRef = useRef(false);
@@ -38,11 +42,13 @@ export function useOfflineQueue(): OfflineQueueState {
           pendingCount: safeGetQueueLength(),
           isOnline: readIsOnline(),
           isFlushing: flushingRef.current,
+          errorCount: safeGetErrorCount(),
         };
         if (
           prev.pendingCount === next.pendingCount &&
           prev.isOnline === next.isOnline &&
-          prev.isFlushing === next.isFlushing
+          prev.isFlushing === next.isFlushing &&
+          prev.errorCount === next.errorCount
         ) {
           return prev;
         }
@@ -87,6 +93,14 @@ export function useOfflineQueue(): OfflineQueueState {
 function safeGetQueueLength(): number {
   try {
     return getQueueLength();
+  } catch {
+    return 0;
+  }
+}
+
+function safeGetErrorCount(): number {
+  try {
+    return getErrorCount();
   } catch {
     return 0;
   }

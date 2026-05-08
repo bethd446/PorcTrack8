@@ -36,7 +36,7 @@ import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
 
 import { setupIonicReact } from '@ionic/react';
-import { initQueue } from './services/offlineQueue';
+import { initQueue, tryFlushIfOnline } from './services/offlineQueue';
 import { initRegistry } from './features/tables/tablesRegistry';
 import { logger } from './services/logger';
 import { requestPermission as requestNotifPermission } from './services/notifications';
@@ -79,6 +79,11 @@ if (typeof document !== 'undefined') {
   }
   try {
     await Promise.all([initQueue(), initRegistry()]);
+    // V72 — drainage automatique : si l'app est online au boot et qu'il
+    // reste des actions en queue d'une session précédente, on flush. Pas
+    // de blocage du rendu (fire-and-forget). Erreurs silencieuses (les
+    // listeners online ré-essaieront).
+    void tryFlushIfOnline();
   } catch (e) {
     logger.warn('Init', 'startup init failed', e);
   }

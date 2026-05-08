@@ -19,6 +19,7 @@ import {
   ClipboardList,
   BookOpen,
   GraduationCap,
+  CloudUpload,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -29,6 +30,7 @@ import { ToggleAdvancedMode } from '../components/v70/ToggleAdvancedMode';
 import { NotifCategoriesSwitches } from '../components/v70/NotifCategoriesSwitches';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 import FarmSwitcher from '../../components/FarmSwitcher';
+import { useOfflineQueue } from '../../hooks/useOfflineQueue';
 
 const PAGE_BACKGROUND_SRC = '/images/ambiance-ux.webp';
 
@@ -121,6 +123,7 @@ const SettingsRow: React.FC<SettingsRowProps> = ({ title, subtitle, Icon, onClic
 export const ReglagesV70: React.FC = () => {
   const navigate = useNavigate();
   const { profile, role, signOut } = useAuth();
+  const { pendingCount, errorCount } = useOfflineQueue();
 
   const handleSignOut = useCallback(async () => {
     if (!window.confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) return;
@@ -196,6 +199,22 @@ export const ReglagesV70: React.FC = () => {
 
       <Section label="Notifications">
         <NotifCategoriesSwitches />
+      </Section>
+
+      <Section label="Synchronisation">
+        <div style={{ borderTop: '1px solid var(--pt-line)' }}>
+          <SettingsRow
+            title={pendingCount === 0 ? 'Tout est synchronisé' : `${pendingCount} action${pendingCount > 1 ? 's' : ''} en attente`}
+            subtitle={
+              errorCount > 0
+                ? `${errorCount} erreur${errorCount > 1 ? 's' : ''} · voir la file pour relancer`
+                : 'File offline · retry automatique au retour réseau'
+            }
+            Icon={CloudUpload}
+            onClick={() => navigate('/reglages/sync')}
+            isLast
+          />
+        </div>
       </Section>
 
       <Section label="Configuration">
