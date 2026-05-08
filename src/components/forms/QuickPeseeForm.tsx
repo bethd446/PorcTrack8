@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import {
   insertNote,
   updateSowByCode,
@@ -139,6 +140,7 @@ function jFrom(frDate: string | undefined): number | null {
 const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeId, prefillSubject }) => {
   const { bandes, truies, verrats, notes, refreshData } = useFarm();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [presentAlert] = useIonAlert();
 
   const [step, setStep] = useState<Step>(1);
@@ -292,12 +294,22 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
       }
 
       setStep(4);
+      const subjectLabel =
+        subjectType === 'BANDE'
+          ? ((selectedSubject as BandePorcelets).idPortee || selectedSubject.id)
+          : ((selectedSubject as Truie | Verrat).displayId || selectedSubject.id);
+      showToast(`Pesée enregistrée · ${subjectLabel} · ${poids} kg`, 'success');
       try { await refreshData(true); } catch { /* noop */ }
     } catch (err) {
       // AUDIT-V1 P0-2 : log explicite sinon submit silencieux côté terrain.
       // eslint-disable-next-line no-console
       console.error('[QuickPeseeForm] insertNote failed', err);
       setSubmitError(err instanceof Error ? err.message : 'Erreur enregistrement pesée');
+      showToast(
+        (err as Error)?.message ?? "Erreur lors de l'enregistrement de la pesée",
+        'error',
+        4000,
+      );
     } finally {
       setSaving(false);
     }

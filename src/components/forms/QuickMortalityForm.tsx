@@ -5,6 +5,7 @@ import { CheckCircle2, Search, ChevronRight, ArrowLeft } from 'lucide-react';
 import { AppToast, BottomSheet, DataRow, useAppToast } from '../agritech';
 import { Button, FormField, Input, Section, Segment, Select, Textarea } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
+import { useToast } from '../../context/ToastContext';
 import { filterRealPortees } from '../../services/bandesAggregator';
 import {
   insertHealthLog,
@@ -171,6 +172,7 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
 }) => {
   const { bandes, truies, verrats, refreshData } = useFarm();
   const { role } = useAuth();
+  const { showToast } = useToast();
   const [presentAlert] = useIonAlert();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -347,14 +349,25 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
 
       setSuccess(true);
       setStep(3);
+      const subjectLabel = subjectDisplay(selectedSubject);
+      const causeLabel = CAUSE_LABEL[cause] ?? cause;
+      showToast(
+        `Mortalité enregistrée · ${subjectLabel} · cause: ${causeLabel}`,
+        'success',
+      );
       try { await refreshData(true); } catch { /* noop */ }
       if (onSuccess) onSuccess();
 
       closeTimerRef.current = setTimeout(() => {
         handleClose();
       }, 3000);
-    } catch {
+    } catch (err) {
       setError('Erreur enregistrement');
+      showToast(
+        (err as Error)?.message ?? "Erreur lors de l'enregistrement de la mortalité",
+        'error',
+        4000,
+      );
     } finally {
       setSaving(false);
     }

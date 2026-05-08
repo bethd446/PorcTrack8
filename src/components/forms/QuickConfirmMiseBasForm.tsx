@@ -20,6 +20,7 @@ import { listLoges } from '../../services/supabaseWrites';
 import { supabase } from '../../services/supabaseClient';
 import { confirmMiseBas } from '../../services/mbWorkflowService';
 import { useFarm } from '../../context/FarmContext';
+import { useToast } from '../../context/ToastContext';
 import { useEscapeKey } from './useFormA11y';
 import type { Loge } from '../../types/farm';
 import {
@@ -54,6 +55,7 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
   onSuccess,
 }) => {
   const { truies, verrats, refreshData } = useFarm();
+  const { showToast: showGlobalToast } = useToast();
 
   const [saillie, setSaillie] = useState<SailliePreload | null>(null);
   const [loges, setLoges] = useState<Loge[]>([]);
@@ -198,6 +200,11 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
       });
 
       showToast(`Mise bas confirmée — bande ${codeId}`, 'success');
+      const codeTruie = truieDisplay?.displayId ?? saillie.sow_code_id ?? '—';
+      showGlobalToast(
+        `Mise-bas enregistrée · ${codeTruie} · ${result.values.nbVivants} nés vivants`,
+        'success',
+      );
       try {
         await refreshData(true);
       } catch {
@@ -209,6 +216,11 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
       showToast(
         err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement',
         'error',
+      );
+      showGlobalToast(
+        (err as Error)?.message ?? "Erreur lors de l'enregistrement de la mise-bas",
+        'error',
+        4000,
       );
     } finally {
       setSaving(false);

@@ -5,6 +5,7 @@ import { insertNote } from '../../services/supabaseWrites';
 import { Button, Textarea } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { kvGet } from '../../services/kvStore';
 import { uploadAnimalPhoto, deleteAnimalPhoto, PhotoUploadError } from '../../services/photoUpload';
 import { useVoiceDictation } from '../../services/voiceDictation';
@@ -95,6 +96,7 @@ export function validateNoteInputs(args: {
 const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, onSuccess }) => {
   const { refreshData } = useFarm();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const farmId = user?.id ?? '';
 
   const [note, setNote] = useState('');
@@ -204,14 +206,20 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
         show: true,
         message: online ? 'Note enregistrée' : 'Note mise en file · sync auto',
       });
+      showToast(`Note ajoutée · ${subjectType} ${subjectId}`, 'success');
       try {
         await refreshData(true);
       } catch {
         /* noop */
       }
       if (onSuccess) onSuccess();
-    } catch {
+    } catch (err) {
       setToast({ show: true, message: 'Erreur enregistrement local' });
+      showToast(
+        (err as Error)?.message ?? "Erreur lors de l'enregistrement de la note",
+        'error',
+        4000,
+      );
     } finally {
       setLoading(false);
     }
