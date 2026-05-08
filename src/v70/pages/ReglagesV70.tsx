@@ -18,6 +18,7 @@ import { Card } from '../components/ds/Card';
 import { ListItem } from '../components/ds/ListItem';
 import { ToggleAdvancedMode } from '../components/v70/ToggleAdvancedMode';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
+import FarmSwitcher from '../../components/FarmSwitcher';
 
 const PAGE_BACKGROUND_SRC = '/images/ambiance-ux.webp';
 
@@ -68,6 +69,10 @@ export const ReglagesV70: React.FC = () => {
         title="Réglages"
         subtitle="Profil, ferme, équipe, ressources"
       />
+
+      <div style={{ marginBottom: 12 }}>
+        <FarmSwitcher />
+      </div>
 
       <Card variant="hero">
         <div className="hero-row">

@@ -14,6 +14,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useFarm } from '../../context/FarmContext';
 import { PageHeader } from '../components/ds/PageHeader';
 import { fetchFarm, type FarmInfo } from '../../services/settingsService';
+import FarmSwitcher from '../../components/FarmSwitcher';
 
 const PAGE_BACKGROUND_SRC = '/images/ambiance-territoire.webp';
 
@@ -95,6 +96,9 @@ export const MaFermeV70: React.FC = () => {
       className="phone-content"
       style={{ padding: 24, maxWidth: 600, margin: '0 auto', position: 'relative', minHeight: '100%' }}
     >
+      <div style={{ marginBottom: 12 }}>
+        <FarmSwitcher />
+      </div>
       <div
         style={{
           position: 'relative',

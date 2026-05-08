@@ -3,7 +3,10 @@ import { Link } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import SyncIndicator from './SyncIndicator';
 import { useSyncState } from '../../hooks/useSyncState';
+import { useAuth } from '../../context/AuthContext';
+import { useFarm } from '../../context/FarmContext';
 import { Button } from '@/design-system';
+import type { FarmRole } from '../../types/farm';
 
 export type Crumb = string | { label: string; href?: string };
 
@@ -31,6 +34,31 @@ const crumbHref = (c: Crumb): string | undefined =>
  * Préférer `SyncStatusBadge` (RT2) basé sur `useOfflineQueue` pour les nouvelles
  * vues. Migration globale différée (~25 consumers).
  */
+const ROLE_PILL_STYLE: Record<FarmRole, { label: string; bg: string; fg: string }> = {
+  OWNER:   { label: 'Owner',   bg: '#cce0bf',             fg: '#2d4a1f' },
+  ADMIN:   { label: 'Admin',   bg: '#f4dcb6',             fg: '#6b4910' },
+  PORCHER: { label: 'Porcher', bg: 'rgba(26,26,26,0.06)', fg: 'var(--ink, #1a1a1a)' },
+};
+
+/**
+ * Safe accessor : ces deux contextes peuvent être absents dans des unit tests
+ * legacy qui montent TopBarSync via un parent (LogeDetailView, BandeDetail)
+ * en passthrough — sans wrapper Auth/FarmProvider. Dans ce cas, le badge
+ * rôle/ferme s'auto-masque (return null) sans casser le test.
+ */
+function useFarmRoleBadge(): { nomFerme: string; currentRole: FarmRole } | null {
+  let currentRole: FarmRole | null = null;
+  let nomFerme = '';
+  try {
+    currentRole = useAuth().currentRole;
+  } catch { /* AuthProvider absent en test */ }
+  try {
+    nomFerme = useFarm().nomFerme;
+  } catch { /* FarmProvider absent en test */ }
+  if (!currentRole || !nomFerme) return null;
+  return { currentRole, nomFerme };
+}
+
 export default function TopBarSync({
   crumbs,
   onMariusClick,
@@ -38,6 +66,9 @@ export default function TopBarSync({
   className = '',
 }: TopBarSyncProps) {
   const syncState = useSyncState();
+  const badge = useFarmRoleBadge();
+  const roleStyle = badge ? ROLE_PILL_STYLE[badge.currentRole] : null;
+  const nomFerme = badge?.nomFerme;
   return (
     <div
       role="navigation"
@@ -115,6 +146,52 @@ export default function TopBarSync({
       </ol>
 
       <div style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 14 }}>
+        {roleStyle && nomFerme ? (
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              fontSize: 11,
+              color: 'var(--muted)',
+              minWidth: 0,
+            }}
+            aria-label={`Ferme ${nomFerme} — rôle ${roleStyle.label}`}
+          >
+            <span
+              style={{
+                fontFamily: 'var(--font-heading)',
+                fontWeight: 600,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+                color: 'var(--ink)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: 160,
+              }}
+            >
+              {nomFerme}
+            </span>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '2px 8px',
+                borderRadius: 999,
+                fontSize: 9,
+                fontWeight: 600,
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase',
+                background: roleStyle.bg,
+                color: roleStyle.fg,
+                fontFamily: 'var(--font-body)',
+              }}
+            >
+              {roleStyle.label}
+            </span>
+          </div>
+        ) : null}
         <SyncIndicator state={syncState} />
         {onMariusClick && mariusActive ? (
           <Button

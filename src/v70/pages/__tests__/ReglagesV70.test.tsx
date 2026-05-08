@@ -17,6 +17,12 @@ vi.mock('../../../context/AuthContext', () => ({
   }),
 }));
 
+// V71-P3 — ReglagesV70 monte désormais FarmSwitcher qui consomme useFarm().
+// Mock minimal (mono-farm → switcher s'auto-masque).
+vi.mock('../../../context/FarmContext', () => ({
+  useFarm: () => ({ availableFarms: [], currentFarmId: null, switchFarm: vi.fn() }),
+}));
+
 import { ReglagesV70 } from '../ReglagesV70';
 import { UIPreferencesProvider } from '../../context/UIPreferencesContext';
 
