@@ -81,7 +81,12 @@ export default function Login() {
       style={{
         minHeight: '100%',
         width: '100%',
-        background: 'var(--bg-app)',
+        backgroundColor: 'var(--bg-app)',
+        backgroundImage:
+          "linear-gradient(180deg, rgba(250,247,240,0.50) 0%, rgba(250,247,240,0.30) 35%, rgba(250,247,240,0.85) 100%), url('/images/auth/auth-login-bg.webp')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
         color: 'var(--ink)',
         fontFamily: FONT_BODY,
         display: 'flex',
