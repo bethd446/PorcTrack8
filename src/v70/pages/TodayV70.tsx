@@ -194,17 +194,55 @@ export const TodayV70: React.FC = () => {
       {/* Section 2 : À TRAITER (registre journal — anti-AI feel, plus de cards uniformes) */}
       <Section label={`À traiter (${alerts.length})`}>
         {alerts.length === 0 ? (
-          <div
-            style={{
-              padding: '14px 4px',
-              color: 'var(--pt-muted)',
-              fontSize: 13,
-              fontStyle: 'italic',
-              borderTop: '1px solid var(--pt-line)',
-              borderBottom: '1px solid var(--pt-line)',
-            }}
-          >
-            Carnet vide — toutes les alertes sont traitées.
+          // V74 — empty state V73 : carnet vide avec image couloir calme.
+          // L'image renforce le sentiment "tout va bien" sans remplir avec
+          // des cards mock. Texte gardé pour conformité tests existants.
+          <div data-testid="today-empty-state">
+            <div
+              style={{
+                position: 'relative',
+                borderRadius: 16,
+                overflow: 'hidden',
+                aspectRatio: '16 / 9',
+                margin: '4px 0 10px',
+                background: '#eef2f0',
+              }}
+            >
+              <picture>
+                <source srcSet="/images/v73/empty-states/aucune-alerte.webp" type="image/webp" />
+                <img
+                  src="/images/v73/empty-states/aucune-alerte.jpg"
+                  alt="Couloir bâtiment porcin calme, ambiance sereine"
+                  loading="lazy"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    display: 'block',
+                  }}
+                />
+              </picture>
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background:
+                    'linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,0.5) 100%)',
+                }}
+              />
+            </div>
+            <div
+              style={{
+                padding: '10px 4px',
+                color: 'var(--pt-muted)',
+                fontSize: 13,
+                fontStyle: 'italic',
+                borderTop: '1px solid var(--pt-line)',
+                borderBottom: '1px solid var(--pt-line)',
+              }}
+            >
+              Carnet vide — toutes les alertes sont traitées.
+            </div>
           </div>
         ) : (
           <div

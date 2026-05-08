@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
-import EmptyState from '../../components/design/EmptyState';
 import { AnimalListItem, type ChipTone } from '../../components/agritech';
 import { Button } from '@/design-system';
 import QuickAddLogeForm from '../../components/forms/QuickAddLogeForm';
@@ -162,17 +161,71 @@ const TroupeauLogesListView: React.FC = () => {
           </p>
         </div>
       ) : loges.length === 0 ? (
-        <EmptyState
-          icon={<Home size={28} aria-hidden="true" />}
-          title="Aucune loge configurée"
-          description="Configure tes loges pour activer le suivi des occupations et des mouvements."
-          action={
+        // V74 — empty state V73 : image loge propre + CTA création
+        <div
+          data-testid="loges-empty-state"
+          style={{
+            position: 'relative',
+            borderRadius: 20,
+            overflow: 'hidden',
+            aspectRatio: '4 / 3',
+            background: '#f5efe2',
+          }}
+        >
+          <picture>
+            <source
+              srcSet="/images/v73/empty-states/aucun-animal.webp"
+              type="image/webp"
+            />
+            <img
+              src="/images/v73/empty-states/aucun-animal.jpg"
+              alt="Loge propre vide, paille fraîche"
+              loading="lazy"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                display: 'block',
+              }}
+            />
+          </picture>
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background:
+                'linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,0.62) 100%)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              justifyContent: 'flex-end',
+              padding: '20px 22px',
+              gap: 12,
+            }}
+          >
+            <div style={{ color: '#fff' }}>
+              <div
+                style={{
+                  fontFamily: 'var(--pt-font-display, var(--font-heading))',
+                  fontWeight: 700,
+                  fontSize: 18,
+                  lineHeight: 1.1,
+                  marginBottom: 4,
+                }}
+              >
+                Aucune loge configurée
+              </div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.88)' }}>
+                Ajoute tes loges pour activer le suivi des occupations et des
+                mouvements.
+              </div>
+            </div>
             <Button variant="primary" onClick={() => setAddOpen(true)}>
               <Plus size={14} aria-hidden="true" />
               Créer la première loge
             </Button>
-          }
-        />
+          </div>
+        </div>
       ) : filtered.length === 0 ? (
         <div
           className="card-dense p-4 text-center"

@@ -241,3 +241,52 @@
 **Liens** : [[decisions#bande-2-loges]] · [[decisions#numero-bande-libre]] · src/features/onboarding/PorceletsReorgWizard.tsx · src/services/pushSubscription.ts
 
 ---
+
+## 2026-05-08 · [V73] Vagues P+Q+R — landing 13 images + crash hardening + photos · commit `5709fbd`
+
+**Livré** (3 sub-agents Opus 4.7 dispatched parallèle) :
+- **Vague P** — Refonte landing-v2 avec 13 images premium photoréalistes (DNA "Terrain Vivant" : bois clair + inox + caillebotis béton). Compression sharp+mozjpeg ~30x (115MB → 3.7MB). Hero/repro/alertes/alimentation/Marius orb/avatars Truie+Verrat/empty states. Manifest PWA + OG meta. Fix typo "FROISSEES" → "FROISSÉES" (CSS uppercase + BigShoulders dépouillait accents → fix par écriture directe majuscules accentuées source).
+- **Vague Q** — Tests crash + robustesse webapp pré-launch multi-utilisateurs. 2 bugs P1 fixés : (1) mutex `_inFlight` queue (coalesce flushs concurrents en network flapping) ; (2) cap 1000 items queue + `QueueFullError` (anti-saturation Preferences 4MB Android). Audit RLS : 0 table critique sans policy. 5 issues P2 backlog : SECURITY DEFINER REVOKE, search_path SET, leaked_password_protection toggle, vector ext move, optimistic locking truies multi-users.
+- **Vague R** — Module photos webapp PWA. `browser-image-compression@2.0.2` + `heic2any` lazy. Bucket `farm-photos` étendu (1MB → 5MB + HEIC/HEIF) + 3 RLS V73 (INSERT/UPDATE/DELETE par farm_id). Service `uploadEntityPhoto/deleteEntityPhoto/listEntityPhotos`. Composants `<PhotoUpload>` (drag&drop + capture caméra) + `<PhotoGallery>` (lightbox + swipe + suppression confirmée). Intégrés Truie/Verrat/Bande/Loge DetailViews. Path : `<farm_id>/<entity_type>/<entity_id>/<uuid>.webp`.
+
+**Tests** : 1866 → 1898 passing (+32 stress/race + photos). tsc OK 0 erreur. Build 2.95s.
+**Bundle impact** : +30-50KB gzip sans HEIC, +400KB conditionnel HEIC. Acceptable.
+
+**Compte audit identifié** : `audit-final@porctrack.test` / OWNER / "Ferme Audit Test" — à utiliser pour audit UI authentifié en suivant.
+
+**Bugs pré-existants signalés non bloquants (à fixer en V74)** :
+- `index.html` référence `/manifest.webmanifest` mais fichier réel = `/manifest.json`
+- 3 images surplus 5_58PM* dans `~/Downloads/` (variantes hero/alertes/repro non utilisées)
+- `EntityAvatar useV73Defaults` opt-in (false par défaut, activé Truie+Verrat xl uniquement)
+- Empty states V73 branchés Animaux + Alerts (Today/Bandes/Loges en suivant)
+
+**Liens** : [[decisions#bande-2-loges]] · src/services/photoUpload.ts · src/v70/components/v70/PhotoUpload.tsx · src/services/offlineQueue.ts:525-535
+
+---
+
+## 2026-05-08 · [V74] Vagues S+T — sécurité Supabase + empty states finalisés · commit (à venir)
+
+**Livré** (2 sub-agents Opus 4.7 dispatched parallèle) :
+- **Vague S** — Backlog P2 sécurité Supabase. Audit advisor 11 → 6 WARN. Migrations appliquées :
+  - `v74_security_search_path` : 4 fonctions (`set_updated_at`, `match_notes`, `tg_push_subs_touch_updated_at`, `get_user_role`) sécurisées avec `SET search_path = public, pg_temp`
+  - `v74_security_vector_schema` : extension `vector` déplacée `public` → `extensions` schema
+  - `v74_security_revoke_helpers` : ROLLBACK obligé. Le REVOKE des 5 SECURITY DEFINER helpers (`current_user_farms`, etc.) cassait RLS car les policies utilisent `farm_id IN (SELECT current_user_farms())` — la sous-requête s'exécute dans le role appelant `authenticated`, pas en SECURITY DEFINER. Test critique a déclenché rollback automatique — **bon comportement**.
+
+- **Vague T** — Empty states V73 finalisés + fix manifest pré-existant :
+  - `TodayV70.tsx` : image `aucune-alerte.webp` au-dessus du texte "Carnet vide"
+  - `AnimalsV70.tsx` : empty states différenciés bandes/loges/truies (désactivation des stubs hardcodés 6 fausses bandes / 5 fausses loges)
+  - `TroupeauLogesListView.tsx` : remplacement `<EmptyState>` minimal par pattern V73 immersif
+  - **Fix manifest** : suppression `public/manifest.json` orphelin (jamais référencé). `index.html` pointait déjà sur `/manifest.webmanifest` généré par vite-plugin-pwa. Renforcement `vite.config.ts` avec icones PNG 192/512/maskable + `lang: 'fr'`.
+
+**Tests** : 1898 stable (0 régression). tsc OK. Build 2.96s.
+
+**Backlog V75** (décisions architecturales requises) :
+- 5 SECURITY DEFINER helpers : trancher entre Option A (move to `private` schema, ~20 policies à réécrire), Option B (SECURITY INVOKER + SQL inline policies), Option C (accept risk — les helpers ne fuitent rien, retournent uniquement les farm_ids du caller). **Mon avis : C** sauf audit externe demandant explicitement le fix.
+- Optimistic locking truies multi-users (P2 backlog UI, hors scope migration).
+
+**Action manuelle utilisateur** :
+- Dashboard Supabase → Authentication → Settings → **Enable HaveIBeenPwned check** (anti-passwords leaked)
+
+**Liens** : [[decisions]] · vite.config.ts · src/v70/pages/TodayV70.tsx · src/v70/pages/AnimalsV70.tsx · src/features/troupeau/TroupeauLogesListView.tsx
+
+---

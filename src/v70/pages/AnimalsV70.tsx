@@ -167,7 +167,13 @@ export const AnimalsV70: React.FC = () => {
   };
 
   // V71.1 — list filtré par search + filter (truies seulement)
-  const baseList = realStubs[tab] ?? TAB_DATA[tab].stubs;
+  // V74 — pour bandes/loges, on ne fallback PLUS sur les stubs hardcodés :
+  // si la donnée réelle est vide → empty state V73 affiché (au lieu de
+  // 6 fausses bandes / 5 fausses loges). Truies/verrats/porcelets gardent
+  // les stubs cosmétiques V70 tant que la donnée FarmContext est absente.
+  const baseList = (tab === 'bandes' || tab === 'loges')
+    ? (realStubs[tab] ?? [])
+    : (realStubs[tab] ?? TAB_DATA[tab].stubs);
   const filteredList = useMemo(() => {
     let list = baseList;
     if (tab === 'truies' && filter !== 'all') {
@@ -313,61 +319,107 @@ export const AnimalsV70: React.FC = () => {
             <div style={{ padding: 18, textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
               {`Aucun résultat pour « ${search} »`}
             </div>
-          ) : (
-            <div
-              style={{
-                position: 'relative',
-                borderRadius: 20,
-                overflow: 'hidden',
-                aspectRatio: '4 / 3',
-                margin: '12px 0',
-                background: '#f5efe2',
-              }}
-            >
-              <picture>
-                <source srcSet="/images/v73/empty-states/aucun-animal.webp" type="image/webp" />
-                <img
-                  src="/images/v73/empty-states/aucun-animal.jpg"
-                  alt="Loge propre vide, paille fraîche"
-                  loading="lazy"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    display: 'block',
-                  }}
-                />
-              </picture>
+          ) : (() => {
+            // V74 — empty state V73 contextualisé : bandes / loges / défaut
+            const emptyCopy = tab === 'bandes'
+              ? {
+                  alt: 'Couloir bâtiment porcin calme, loge libre prête à accueillir une bande',
+                  title: 'Aucune bande active',
+                  desc: 'Crée ta première bande pour démarrer le suivi.',
+                }
+              : tab === 'loges'
+              ? {
+                  alt: 'Loge propre vide, paille fraîche',
+                  title: 'Aucune loge configurée',
+                  desc: 'Ajoute tes loges pour activer le suivi par bande.',
+                }
+              : {
+                  alt: 'Loge propre vide, paille fraîche',
+                  title: 'Aucun animal',
+                  desc: 'Loge prête. Ajoute ton premier animal.',
+                };
+            return (
               <div
                 style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background:
-                    'linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.55) 100%)',
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  padding: '20px 22px',
+                  position: 'relative',
+                  borderRadius: 20,
+                  overflow: 'hidden',
+                  aspectRatio: '4 / 3',
+                  margin: '12px 0',
+                  background: '#f5efe2',
                 }}
+                data-testid={`empty-state-${tab}`}
               >
-                <div style={{ color: '#fff' }}>
-                  <div
+                <picture>
+                  <source srcSet="/images/v73/empty-states/aucun-animal.webp" type="image/webp" />
+                  <img
+                    src="/images/v73/empty-states/aucun-animal.jpg"
+                    alt={emptyCopy.alt}
+                    loading="lazy"
                     style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      display: 'block',
+                    }}
+                  />
+                </picture>
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background:
+                      'linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,0.62) 100%)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    justifyContent: 'flex-end',
+                    padding: '20px 22px',
+                    gap: 12,
+                  }}
+                >
+                  <div style={{ color: '#fff' }}>
+                    <div
+                      style={{
+                        fontFamily: 'var(--pt-font-display)',
+                        fontWeight: 700,
+                        fontSize: 18,
+                        lineHeight: 1.1,
+                        marginBottom: 4,
+                      }}
+                    >
+                      {emptyCopy.title}
+                    </div>
+                    <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.88)' }}>
+                      {emptyCopy.desc}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAddOpen(true)}
+                    aria-label={fabLabel[tab]}
+                    style={{
+                      alignSelf: 'flex-start',
+                      background: '#fff',
+                      color: 'var(--pt-ink)',
+                      border: 'none',
+                      borderRadius: 10,
+                      padding: '8px 14px',
                       fontFamily: 'var(--pt-font-display)',
                       fontWeight: 700,
-                      fontSize: 18,
-                      lineHeight: 1.1,
-                      marginBottom: 4,
+                      fontSize: 13,
+                      letterSpacing: '0.02em',
+                      textTransform: 'uppercase',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
                     }}
                   >
-                    Aucun animal
-                  </div>
-                  <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)' }}>
-                    Loge prête. Ajoutez votre premier animal.
-                  </div>
+                    {fabLabel[tab]}
+                  </button>
                 </div>
               </div>
-            </div>
-          )
+            );
+          })()
         ) : (
           filteredList.map((it) => (
             <ListItem

@@ -12,6 +12,10 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
+        // V74 — vite-plugin-pwa génère /manifest.webmanifest (référencé par
+        // index.html). L'ancien public/manifest.json a été supprimé (orphelin
+        // jamais référencé). Icônes PNG 192/512/maskable pointées explicitement
+        // pour install prompts Android/iOS (le SVG seul ne suffisait pas).
         manifest: {
           name: 'PorcTrack 8',
           short_name: 'PorcTrack',
@@ -22,12 +26,31 @@ export default defineConfig(() => {
           background_color: '#f0f4f3',
           theme_color: '#064e3b',
           orientation: 'portrait',
+          lang: 'fr',
           icons: [
+            {
+              src: '/images/v73/icons/app-icon-192.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'any',
+            },
+            {
+              src: '/images/v73/icons/app-icon-512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any',
+            },
+            {
+              src: '/images/v73/icons/app-icon-maskable-512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable',
+            },
             {
               src: '/images/porc-mark.svg',
               sizes: 'any',
               type: 'image/svg+xml',
-              purpose: 'any maskable',
+              purpose: 'any',
             },
           ],
         },
