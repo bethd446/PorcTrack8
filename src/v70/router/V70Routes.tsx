@@ -39,6 +39,9 @@ const LogeDetailView = React.lazy(() =>
 const ControleQuotidien = React.lazy(() =>
   import('../../features/controle/ControleQuotidien').then((m) => ({ default: m.default })),
 );
+const PorceletsReorgWizard = React.lazy(() =>
+  import('../../features/onboarding/PorceletsReorgWizard').then((m) => ({ default: m.default })),
+);
 const SettingsPage = React.lazy(() =>
   import('../../components/SystemManagement').then((m) => ({ default: m.SettingsPage })),
 );
@@ -166,6 +169,9 @@ export const V70Routes: React.FC = () => (
           <Route path="/reglages/mon-equipe" element={<V70ErrorBoundary pageName="Mon équipe"><MonEquipeV70 /></V70ErrorBoundary>} />
           <Route path="/reglages/encyclopedie" element={<EncyclopediaPage />} />
           <Route path="/reglages/onboarding" element={<OnboardingRoute />} />
+
+          {/* V71-P3 — Wizard ré-organisation porcelets→bandes→loges (bloquant) */}
+          <Route path="/porcelets-reorg" element={<PorceletsReorgWizard />} />
 
           {/* Routes legacy critiques rendues dans shell V70 (câblage Option B) */}
           <Route path="/controle" element={<ControleQuotidien />} />

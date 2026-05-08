@@ -941,6 +941,7 @@ export type Database = {
           id: string
           notes: string | null
           numero: string
+          repartition: string | null
           type: string
         }
         Insert: {
@@ -952,6 +953,7 @@ export type Database = {
           id?: string
           notes?: string | null
           numero: string
+          repartition?: string | null
           type: string
         }
         Update: {
@@ -963,6 +965,7 @@ export type Database = {
           id?: string
           notes?: string | null
           numero?: string
+          repartition?: string | null
           type?: string
         }
         Relationships: [

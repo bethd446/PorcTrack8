@@ -28,6 +28,7 @@ import { FarmProvider } from './context/FarmContext';
 import { usePageFabConfig, Fab } from './design-system';
 import { AuthProvider } from './context/AuthContext';
 import SupabaseProtectedRoute from './components/auth/ProtectedRoute';
+import PorceletsReorgGate from './components/auth/PorceletsReorgGate';
 import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
 import AuthCallback from './components/auth/AuthCallback';
@@ -194,6 +195,7 @@ const AppContent = () => {
       <React.Suspense fallback={<SuspenseFallback />}>
         <QuickActionsProvider>
           <OnboardingGate />
+          <PorceletsReorgGate />
           <Routes>
             {/* ── Routes publiques ─────────────────────────────────────── */}
             <Route path="/" element={<SmartRoot />} />
