@@ -9,18 +9,19 @@
  */
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { PigSilhouette } from './icons/PigSilhouette';
 
 interface NavTabV70 {
   id: 'today' | 'animals' | 'repro' | 'perf' | 'settings';
   href: string;
-  icon: string;
+  icon: React.ReactNode;
   label: string;
   match: string[];
 }
 
 const TABS_V70: NavTabV70[] = [
   { id: 'today',    href: '/today',         icon: '⌂', label: "Aujourd'hui", match: ['/today'] },
-  { id: 'animals',  href: '/troupeau',      icon: '🐖', label: 'Élevage',      match: ['/troupeau'] },
+  { id: 'animals',  href: '/troupeau',      icon: <PigSilhouette size={20} />, label: 'Élevage', match: ['/troupeau'] },
   { id: 'repro',    href: '/reproduction',  icon: '❤', label: 'Repro',        match: ['/reproduction', '/cycles'] },
   { id: 'perf',     href: '/performance',   icon: '📊', label: 'Performance',  match: ['/performance', '/pilotage'] },
   { id: 'settings', href: '/reglages',      icon: '⚙', label: 'Réglages',     match: ['/reglages', '/more', '/admin', '/aide', '/ressources', '/fournisseurs', '/protocoles'] },

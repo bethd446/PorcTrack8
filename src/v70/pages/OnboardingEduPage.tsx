@@ -14,11 +14,12 @@ import React, { useState } from 'react';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Card } from '../components/ds/Card';
 import { Button } from '../components/ds/Button';
+import { PigSilhouette } from '../components/v70/icons/PigSilhouette';
 
 interface OnboardingStep {
   title: string;
   content: string;
-  illustration?: string;
+  illustration?: React.ReactNode;
 }
 
 const STEPS: OnboardingStep[] = [
@@ -26,7 +27,7 @@ const STEPS: OnboardingStep[] = [
     title: 'Bienvenue dans PorcTrack',
     content:
       "Voici comment fonctionne le cycle d'une truie : saillie → écho J28 → mise-bas J115 → maternité → sevrage J143 → retour chaleur J3-7.",
-    illustration: '🐖',
+    illustration: <PigSilhouette size={64} strokeWidth={1.25} />,
   },
   {
     title: '14+ alertes automatiques',
