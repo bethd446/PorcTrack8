@@ -42,6 +42,9 @@ const ControleQuotidien = React.lazy(() =>
 const PorceletsReorgWizard = React.lazy(() =>
   import('../../features/onboarding/PorceletsReorgWizard').then((m) => ({ default: m.default })),
 );
+const OnboardingV2Wizard = React.lazy(() =>
+  import('../../features/onboarding/OnboardingV2Wizard').then((m) => ({ default: m.default })),
+);
 const SettingsPage = React.lazy(() =>
   import('../../components/SystemManagement').then((m) => ({ default: m.SettingsPage })),
 );
@@ -172,6 +175,8 @@ export const V70Routes: React.FC = () => (
 
           {/* V71-P3 — Wizard ré-organisation porcelets→bandes→loges (bloquant) */}
           <Route path="/porcelets-reorg" element={<PorceletsReorgWizard />} />
+          {/* V71-P3 — Onboarding v2 obligatoire 5 étapes (nouveaux users) */}
+          <Route path="/onboarding-v2" element={<OnboardingV2Wizard />} />
 
           {/* Routes legacy critiques rendues dans shell V70 (câblage Option B) */}
           <Route path="/controle" element={<ControleQuotidien />} />

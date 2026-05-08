@@ -29,6 +29,7 @@ import { usePageFabConfig, Fab } from './design-system';
 import { AuthProvider } from './context/AuthContext';
 import SupabaseProtectedRoute from './components/auth/ProtectedRoute';
 import PorceletsReorgGate from './components/auth/PorceletsReorgGate';
+import OnboardingV2Gate from './components/auth/OnboardingV2Gate';
 import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
 import AuthCallback from './components/auth/AuthCallback';
@@ -197,6 +198,7 @@ const AppContent = () => {
         <QuickActionsProvider>
           <ToastProvider>
           <OnboardingGate />
+          <OnboardingV2Gate />
           <PorceletsReorgGate />
           <Routes>
             {/* ── Routes publiques ─────────────────────────────────────── */}

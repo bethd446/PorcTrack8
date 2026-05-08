@@ -1,0 +1,424 @@
+/**
+ * OnboardingV2Wizard — V71-P3 wizard onboarding obligatoire 5 étapes
+ *
+ * Workflow nouveau user :
+ *   1. Type d'élevage : Naisseur OU Naisseur-engraisseur
+ *   2. Cheptel : nb verrats + nb truies actifs
+ *   3. Races : multi-select (Large White, Landrace, Duroc, Piétrain, Local, Autre)
+ *   4. Infrastructure : nb loges + cases maternité, post-sevrage, engraissement
+ *   5. Confirmation + génération auto DB
+ *
+ * À la soumission, INSERT en cascade :
+ *   - N truies T-001 → T-N (statut "En attente saillie")
+ *   - N verrats V-001 → V-N (statut "Actif")
+ *   - N cases maternité M-01 → M-N (loges, type=MATERNITE, repartition=NA)
+ *   - N loges post-sevrage PS-01 → PS-N (capacité = par_loge)
+ *   - N loges engraissement E-01 → E-N (capacité = par_loge)
+ *   - UPDATE farms SET metadata.onboarding_v2.completed_at = NOW(),
+ *     metadata.onboarding_v2.profile = { type, races, ... }
+ */
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { IonPage, IonContent } from '@ionic/react';
+import { ChevronLeft, ChevronRight, CheckCircle2, Loader2 } from 'lucide-react';
+
+import { Button, Card, PageHeader, Section } from '@/design-system';
+import { supabase } from '../../services/supabaseClient';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
+
+type ElevageType = 'NAISSEUR' | 'NAISSEUR_ENGRAISSEUR';
+
+interface WizardData {
+  type: ElevageType | null;
+  nbVerrats: number;
+  nbTruies: number;
+  races: string[];
+  raceAutre: string;
+  // Infrastructure
+  nbLogesMat: number;
+  casesParLogeMat: number;
+  nbLogesPS: number;
+  capacitePS: number;
+  nbLogesEng: number;
+  capaciteEng: number;
+}
+
+const RACES_OPTIONS = ['Large White', 'Landrace', 'Duroc', 'Piétrain', 'Local', 'Hampshire'];
+
+const DEFAULT_DATA: WizardData = {
+  type: null,
+  nbVerrats: 1,
+  nbTruies: 10,
+  races: [],
+  raceAutre: '',
+  nbLogesMat: 1,
+  casesParLogeMat: 9,
+  nbLogesPS: 1,
+  capacitePS: 30,
+  nbLogesEng: 2,
+  capaciteEng: 25,
+};
+
+export default function OnboardingV2Wizard() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { showToast } = useToast();
+  const [step, setStep] = useState(1);
+  const [data, setData] = useState<WizardData>(DEFAULT_DATA);
+  const [submitting, setSubmitting] = useState(false);
+
+  const canNext = (() => {
+    if (step === 1) return data.type !== null;
+    if (step === 2) return data.nbVerrats > 0 && data.nbTruies > 0;
+    if (step === 3) return data.races.length > 0 || data.raceAutre.trim().length > 0;
+    if (step === 4) {
+      return (
+        data.nbLogesMat > 0 &&
+        data.casesParLogeMat > 0 &&
+        (data.type === 'NAISSEUR' || (data.nbLogesPS > 0 && data.capacitePS > 0))
+      );
+    }
+    return true;
+  })();
+
+  const handleSubmit = async () => {
+    if (!user) return;
+    setSubmitting(true);
+    try {
+      const farmId = user.id;
+      const allRaces = [...data.races, ...(data.raceAutre.trim() ? [data.raceAutre.trim()] : [])];
+
+      // 1. Truies T-001 → T-N
+      const truies = Array.from({ length: data.nbTruies }, (_, i) => ({
+        farm_id: farmId,
+        code_id: `T-${String(i + 1).padStart(3, '0')}`,
+        statut: 'En attente saillie',
+        race: allRaces[0] ?? 'Local',
+      }));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: sowsErr } = await (supabase as any).from('sows').insert(truies);
+      if (sowsErr) throw sowsErr;
+
+      // 2. Verrats V-001 → V-N
+      const verrats = Array.from({ length: data.nbVerrats }, (_, i) => ({
+        farm_id: farmId,
+        code_id: `V-${String(i + 1).padStart(3, '0')}`,
+        statut: 'Actif',
+        race: allRaces[0] ?? 'Local',
+      }));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: boarsErr } = await (supabase as any).from('boars').insert(verrats);
+      if (boarsErr) throw boarsErr;
+
+      // 3. Cases maternité M-01 → M-N (1 case = 1 truie+portée)
+      const totalMat = data.nbLogesMat * data.casesParLogeMat;
+      const matLoges = Array.from({ length: totalMat }, (_, i) => ({
+        farm_id: farmId,
+        numero: `M-${String(i + 1).padStart(2, '0')}`,
+        type: 'MATERNITE',
+        repartition: 'NA',
+        capacite_max: 1,
+        active: true,
+      }));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: logesMatErr } = await (supabase as any).from('loges').insert(matLoges);
+      if (logesMatErr) throw logesMatErr;
+
+      // 4. Loges post-sevrage PS-01 → PS-N (sauf si type === NAISSEUR pur, on garde quand même quelques loges PS pour les sevrés avant vente)
+      const psLoges = Array.from({ length: data.nbLogesPS }, (_, i) => ({
+        farm_id: farmId,
+        numero: `PS-${String(i + 1).padStart(2, '0')}`,
+        type: 'POST_SEVRAGE',
+        repartition: 'MIXTE',
+        capacite_max: data.capacitePS,
+        active: true,
+      }));
+      if (data.nbLogesPS > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: psErr } = await (supabase as any).from('loges').insert(psLoges);
+        if (psErr) throw psErr;
+      }
+
+      // 5. Loges engraissement E-01 → E-N (seulement si NAISSEUR_ENGRAISSEUR)
+      if (data.type === 'NAISSEUR_ENGRAISSEUR' && data.nbLogesEng > 0) {
+        const engLoges = Array.from({ length: data.nbLogesEng }, (_, i) => ({
+          farm_id: farmId,
+          numero: `E-${String(i + 1).padStart(2, '0')}`,
+          type: 'ENGRAISSEMENT',
+          repartition: 'MIXTE',
+          capacite_max: data.capaciteEng,
+          active: true,
+        }));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: engErr } = await (supabase as any).from('loges').insert(engLoges);
+        if (engErr) throw engErr;
+      }
+
+      // 6. Mark farms.metadata.onboarding_v2.completed_at + profile
+      const profile = {
+        completed_at: new Date().toISOString(),
+        version: 'v2',
+        type: data.type,
+        cheptel: { verrats: data.nbVerrats, truies: data.nbTruies },
+        races: allRaces,
+        infrastructure: {
+          mat_loges: data.nbLogesMat,
+          mat_cases_per_loge: data.casesParLogeMat,
+          mat_total_cases: totalMat,
+          ps_loges: data.nbLogesPS,
+          ps_capacite: data.capacitePS,
+          eng_loges: data.type === 'NAISSEUR_ENGRAISSEUR' ? data.nbLogesEng : 0,
+          eng_capacite: data.capaciteEng,
+        },
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: farmErr } = await (supabase as any)
+        .from('farms')
+        .update({ metadata: { onboarding_v2: profile } })
+        .eq('id', farmId);
+      if (farmErr) throw farmErr;
+
+      showToast(
+        `Élevage créé · ${data.nbTruies} truies · ${data.nbVerrats} verrats · ${totalMat} cases mat`,
+        'success',
+        4000,
+      );
+      navigate('/today', { replace: true });
+    } catch (e) {
+      console.error('OnboardingV2 erreur:', e);
+      showToast((e as Error).message ?? "Erreur lors de la création de l'élevage", 'error', 5000);
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <IonPage>
+      <IonContent fullscreen>
+        <div className="phone-content" style={{ padding: '24px 24px 168px', maxWidth: 720, margin: '0 auto' }}>
+          <PageHeader
+            eyebrow={`Étape ${step} / 5`}
+            title="Bienvenue sur PorcTrack"
+            subtitle="2 minutes pour configurer ton élevage. Marius t'accompagne dès la première saisie."
+          />
+
+          {/* ÉTAPE 1 : Type d'élevage */}
+          {step === 1 && (
+            <Card>
+              <div style={{ padding: 16 }}>
+                <Section label="TYPE D'ÉLEVAGE" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+                  {([
+                    { value: 'NAISSEUR' as ElevageType, label: 'Naisseur', desc: 'Truies + saillies, vente porcelets sevrés (J28-63)' },
+                    { value: 'NAISSEUR_ENGRAISSEUR' as ElevageType, label: 'Naisseur-engraisseur', desc: 'Cycle complet jusqu\'à abattoir 110 kg' },
+                  ]).map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setData((d) => ({ ...d, type: opt.value }))}
+                      style={{
+                        textAlign: 'left',
+                        padding: 16,
+                        borderRadius: 12,
+                        border: data.type === opt.value ? '2px solid var(--pt-primary)' : '1px solid var(--pt-line-strong)',
+                        background: data.type === opt.value ? 'var(--pt-warm)' : 'var(--pt-bg)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>{opt.label}</div>
+                      <div style={{ fontSize: 12, color: 'var(--pt-muted)' }}>{opt.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* ÉTAPE 2 : Cheptel */}
+          {step === 2 && (
+            <Card>
+              <div style={{ padding: 16 }}>
+                <Section label="CHEPTEL ACTUEL" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 12 }}>
+                  <NumberField
+                    label="Nombre de verrats actifs"
+                    value={data.nbVerrats}
+                    min={1}
+                    max={50}
+                    onChange={(v) => setData((d) => ({ ...d, nbVerrats: v }))}
+                  />
+                  <NumberField
+                    label="Nombre de truies actives"
+                    value={data.nbTruies}
+                    min={1}
+                    max={500}
+                    onChange={(v) => setData((d) => ({ ...d, nbTruies: v }))}
+                  />
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* ÉTAPE 3 : Races */}
+          {step === 3 && (
+            <Card>
+              <div style={{ padding: 16 }}>
+                <Section label="RACES PRÉSENTES" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+                  {RACES_OPTIONS.map((race) => (
+                    <label key={race} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, borderRadius: 8, background: 'var(--pt-bg)', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={data.races.includes(race)}
+                        onChange={(e) => {
+                          if (e.target.checked) setData((d) => ({ ...d, races: [...d.races, race] }));
+                          else setData((d) => ({ ...d, races: d.races.filter((r) => r !== race) }));
+                        }}
+                        style={{ width: 18, height: 18 }}
+                      />
+                      <span style={{ fontSize: 14 }}>{race}</span>
+                    </label>
+                  ))}
+                  <input
+                    type="text"
+                    placeholder="Autre race (optionnel)"
+                    value={data.raceAutre}
+                    onChange={(e) => setData((d) => ({ ...d, raceAutre: e.target.value }))}
+                    style={{ marginTop: 8, padding: '10px 12px', borderRadius: 8, border: '1px solid var(--pt-line-strong)', fontSize: 14 }}
+                  />
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* ÉTAPE 4 : Infrastructure */}
+          {step === 4 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <Card>
+                <div style={{ padding: 16 }}>
+                  <Section label="MATERNITÉ" />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+                    <NumberField label="Nombre de loges/salles MB" value={data.nbLogesMat} min={1} max={50} onChange={(v) => setData((d) => ({ ...d, nbLogesMat: v }))} />
+                    <NumberField label="Cases par loge maternité" value={data.casesParLogeMat} min={1} max={30} onChange={(v) => setData((d) => ({ ...d, casesParLogeMat: v }))} />
+                    <div style={{ fontSize: 12, color: 'var(--pt-muted)' }}>
+                      Total : <strong>{data.nbLogesMat * data.casesParLogeMat} cases</strong> (1 case = 1 truie + sa portée)
+                    </div>
+                  </div>
+                </div>
+              </Card>
+              <Card>
+                <div style={{ padding: 16 }}>
+                  <Section label="POST-SEVRAGE" />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+                    <NumberField label="Nombre de loges PS" value={data.nbLogesPS} min={0} max={20} onChange={(v) => setData((d) => ({ ...d, nbLogesPS: v }))} />
+                    <NumberField label="Capacité par loge PS" value={data.capacitePS} min={1} max={200} onChange={(v) => setData((d) => ({ ...d, capacitePS: v }))} />
+                  </div>
+                </div>
+              </Card>
+              {data.type === 'NAISSEUR_ENGRAISSEUR' && (
+                <Card>
+                  <div style={{ padding: 16 }}>
+                    <Section label="ENGRAISSEMENT" />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+                      <NumberField label="Nombre de loges Eng" value={data.nbLogesEng} min={0} max={20} onChange={(v) => setData((d) => ({ ...d, nbLogesEng: v }))} />
+                      <NumberField label="Capacité par loge Eng" value={data.capaciteEng} min={1} max={100} onChange={(v) => setData((d) => ({ ...d, capaciteEng: v }))} />
+                    </div>
+                  </div>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {/* ÉTAPE 5 : Confirmation */}
+          {step === 5 && (
+            <Card>
+              <div style={{ padding: 16 }}>
+                <Section label="RÉCAPITULATIF" tone="accent" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12, fontSize: 14 }}>
+                  <Recap label="Type" value={data.type === 'NAISSEUR' ? 'Naisseur' : 'Naisseur-engraisseur'} />
+                  <Recap label="Cheptel" value={`${data.nbTruies} truies + ${data.nbVerrats} verrats`} />
+                  <Recap label="Races" value={[...data.races, ...(data.raceAutre.trim() ? [data.raceAutre.trim()] : [])].join(', ')} />
+                  <Recap label="Maternité" value={`${data.nbLogesMat} loge${data.nbLogesMat > 1 ? 's' : ''} × ${data.casesParLogeMat} cases = ${data.nbLogesMat * data.casesParLogeMat} cases`} />
+                  <Recap label="Post-sevrage" value={data.nbLogesPS > 0 ? `${data.nbLogesPS} loge${data.nbLogesPS > 1 ? 's' : ''} × ${data.capacitePS} porcelets` : '—'} />
+                  {data.type === 'NAISSEUR_ENGRAISSEUR' && (
+                    <Recap label="Engraissement" value={data.nbLogesEng > 0 ? `${data.nbLogesEng} loge${data.nbLogesEng > 1 ? 's' : ''} × ${data.capaciteEng}` : '—'} />
+                  )}
+                </div>
+                <div style={{ marginTop: 16, padding: 12, borderRadius: 8, background: 'var(--pt-warm)', fontSize: 12, color: 'var(--pt-ink)' }}>
+                  À la confirmation, on crée automatiquement : <strong>{data.nbTruies}</strong> truies (T-001 à T-{String(data.nbTruies).padStart(3, '0')}), <strong>{data.nbVerrats}</strong> verrats, <strong>{data.nbLogesMat * data.casesParLogeMat}</strong> cases maternité, <strong>{data.nbLogesPS}</strong> loges post-sevrage{data.type === 'NAISSEUR_ENGRAISSEUR' ? `, ${data.nbLogesEng} loges engraissement` : ''}.
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Navigation */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 16, position: 'sticky', bottom: 24 }}>
+            {step > 1 && (
+              <Button variant="secondary" onClick={() => setStep((s) => s - 1)} disabled={submitting} ariaLabel="Précédent">
+                <ChevronLeft size={14} aria-hidden /> Précédent
+              </Button>
+            )}
+            {step < 5 ? (
+              <Button
+                variant="primary"
+                onClick={() => setStep((s) => s + 1)}
+                disabled={!canNext}
+                ariaLabel="Suivant"
+                style={{ flex: 1, opacity: !canNext ? 0.5 : 1 }}
+              >
+                Suivant <ChevronRight size={14} aria-hidden />
+              </Button>
+            ) : (
+              <Button
+                variant="primary"
+                onClick={handleSubmit}
+                disabled={submitting}
+                ariaLabel="Créer mon élevage"
+                style={{ flex: 1, opacity: submitting ? 0.5 : 1 }}
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" aria-hidden /> Création…
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 size={14} aria-hidden /> Créer mon élevage
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        </div>
+      </IonContent>
+    </IonPage>
+  );
+}
+
+// ── Sous-composants ──
+
+function NumberField({ label, value, min, max, onChange }: { label: string; value: number; min?: number; max?: number; onChange: (v: number) => void }) {
+  return (
+    <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--pt-muted)' }}>
+        {label}
+      </span>
+      <input
+        type="number"
+        value={value}
+        min={min}
+        max={max}
+        onChange={(e) => onChange(parseInt(e.target.value, 10) || 0)}
+        style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid var(--pt-line-strong)', fontSize: 16, background: 'var(--pt-bg)' }}
+      />
+    </label>
+  );
+}
+
+function Recap({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--pt-line)' }}>
+      <span style={{ color: 'var(--pt-muted)' }}>{label}</span>
+      <span style={{ fontWeight: 600, textAlign: 'right' }}>{value}</span>
+    </div>
+  );
+}

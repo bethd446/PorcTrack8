@@ -515,6 +515,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          metadata: Json
           name: string
           owner_id: string
           pays: string | null
@@ -523,6 +524,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          metadata?: Json
           name?: string
           owner_id: string
           pays?: string | null
@@ -531,6 +533,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          metadata?: Json
           name?: string
           owner_id?: string
           pays?: string | null
