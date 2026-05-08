@@ -13,15 +13,15 @@
  */
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, Play } from 'lucide-react';
+import { ClipboardList, Play, ChevronRight, CheckCheck } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
 import { Button } from '../components/ds/Button';
-import { Pill } from '../components/ds/Pill';
 import { StatsGrid, Stat } from '../components/ds/StatsGrid';
+import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 import { useFarmContextHints } from '../../features/encyclopedia/useFarmContextHints';
 import { HintCard } from '../../features/encyclopedia/HintCard';
@@ -31,8 +31,8 @@ const PAGE_BACKGROUND_SRC = '/images/hero-2.webp';
 interface AlertItem {
   id: string;
   variant: 'warning' | 'info' | 'danger';
-  pillVariant: 'warning' | 'info' | 'danger';
-  pillLabel: string;
+  /** Étiquette courte type "Urgent", "J-2", "Action" — affichée en eyebrow ligne. */
+  tag: string;
   title: string;
   meta: string;
   to: string;
@@ -58,8 +58,7 @@ export const TodayV70: React.FC = () => {
       result.push({
         id: `mb-${b.id}`,
         variant: diffDays <= 1 ? 'danger' : 'warning',
-        pillVariant: diffDays <= 1 ? 'danger' : 'warning',
-        pillLabel: diffDays <= 0 ? 'Urgent' : `J-${diffDays}`,
+        tag: diffDays <= 0 ? 'Urgent' : `J-${diffDays}`,
         title: `Mise-bas${b.truie ? ` — ${b.truie}` : ''}`,
         meta: `${b.idPortee || b.id} · dans ${diffDays <= 0 ? "aujourd'hui" : `${diffDays}j`}`,
         to: b.truie ? `/troupeau/truies/${b.truie}` : `/troupeau/bandes/${b.id}`,
@@ -71,8 +70,7 @@ export const TodayV70: React.FC = () => {
       result.push({
         id: `reforme-${t.id}`,
         variant: 'warning',
-        pillVariant: 'warning',
-        pillLabel: 'Action',
+        tag: 'À décider',
         title: `Réforme suggérée — ${t.displayId}`,
         meta: 'Productivité insuffisante · voir fiche',
         to: `/troupeau/truies/${t.id}`,
@@ -161,7 +159,9 @@ export const TodayV70: React.FC = () => {
       {heroMiseBas && (
         <Card variant="hero">
           <div className="hero-row">
-            <div className="hero-icon">🐖</div>
+            <div className="hero-icon" style={{ background: 'transparent', padding: 0 }}>
+              <EntityAvatar species="truie" size="md" />
+            </div>
             <div className="hero-info">
               <div className="hero-title-text">Mise-bas imminente</div>
               <div className="hero-sub">
@@ -188,66 +188,189 @@ export const TodayV70: React.FC = () => {
         </Card>
       )}
 
-      {/* Section 2 : À TRAITER (alertes cliquables + dismiss inline) */}
+      {/* Section 2 : À TRAITER (registre journal — anti-AI feel, plus de cards uniformes) */}
       <Section label={`À traiter (${alerts.length})`}>
-        <Card>
-          {alerts.length === 0 && (
-            <div style={{ padding: '12px 0', textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
-              ✓ Toutes les alertes sont traitées
-            </div>
-          )}
-          {alerts.map((alert) => {
-            // V71 FIX #7 : wrapper en div role="button" (et non <button>) pour
-            // permettre le bouton "Acquitter" interne sans nesting illégal HTML5.
-            const handleActivate = () => navigate(alert.to);
-            return (
-              <div
-                key={alert.id}
-                role="button"
-                tabIndex={0}
-                onClick={handleActivate}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleActivate();
-                  }
-                }}
-                className="alert-row"
-                style={{
-                  width: '100%',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                }}
-                aria-label={`${alert.title} — ouvrir le détail`}
-              >
-                <div className={`alert-dot ${alert.variant}`}></div>
-                <div className="alert-info" style={{ flex: 1 }}>
-                  <div className="alert-title">{alert.title}</div>
-                  <div className="alert-meta">{alert.meta}</div>
-                </div>
-                <Pill variant={alert.pillVariant}>{alert.pillLabel}</Pill>
-                <button
-                  type="button"
-                  onClick={(e) => dismissAlert(alert.id, e)}
-                  aria-label={`Acquitter ${alert.title}`}
+        {alerts.length === 0 ? (
+          <div
+            style={{
+              padding: '14px 4px',
+              color: 'var(--pt-muted)',
+              fontSize: 13,
+              fontStyle: 'italic',
+              borderTop: '1px solid var(--pt-line)',
+              borderBottom: '1px solid var(--pt-line)',
+            }}
+          >
+            Carnet vide — toutes les alertes sont traitées.
+          </div>
+        ) : (
+          <div
+            role="list"
+            aria-label="Registre des alertes à traiter"
+            style={{
+              borderTop: '1px solid var(--pt-line)',
+              borderBottom: '1px solid var(--pt-line)',
+            }}
+          >
+            {alerts.map((alert, idx) => {
+              const handleActivate = () => navigate(alert.to);
+              const isDanger = alert.variant === 'danger';
+              const seq = String(idx + 1).padStart(2, '0');
+              // Espacement vertical varié selon la priorité : danger plus dense,
+              // warning standard, info plus aéré (anti-grille uniforme).
+              const padTop =
+                alert.variant === 'danger' ? 10 : alert.variant === 'warning' ? 12 : 14;
+              const padBottom = padTop;
+              return (
+                <div
+                  key={alert.id}
+                  role="listitem"
                   style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '4px 8px',
-                    fontSize: 16,
-                    color: 'var(--pt-muted)',
-                    marginLeft: 4,
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 14,
+                    padding: `${padTop}px 0 ${padBottom}px`,
+                    borderBottom:
+                      idx < alerts.length - 1 ? '1px solid var(--pt-line)' : 'none',
                   }}
                 >
-                  ✓
-                </button>
-              </div>
-            );
-          })}
-        </Card>
+                  {/* Numérotation manuscrite-style à gauche */}
+                  <div
+                    aria-hidden
+                    style={{
+                      fontFamily: "'Big Shoulders Display', sans-serif",
+                      fontSize: 18,
+                      fontWeight: 700,
+                      lineHeight: 1,
+                      color: 'var(--pt-muted)',
+                      letterSpacing: '-0.02em',
+                      minWidth: 26,
+                      paddingTop: 2,
+                      opacity: 0.7,
+                    }}
+                  >
+                    {seq}.
+                  </div>
+
+                  {/* Corps cliquable (titre + méta) */}
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={handleActivate}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleActivate();
+                      }
+                    }}
+                    aria-label={`${alert.title} — ouvrir le détail`}
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 2,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'baseline',
+                        gap: 8,
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "'Big Shoulders Display', sans-serif",
+                          fontSize: 15,
+                          fontWeight: 700,
+                          color: 'var(--pt-ink)',
+                          letterSpacing: '0.005em',
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {alert.title}
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                          fontSize: 10,
+                          fontWeight: 600,
+                          letterSpacing: '0.08em',
+                          textTransform: 'uppercase',
+                          color: isDanger ? 'var(--pt-danger)' : 'var(--pt-muted)',
+                        }}
+                      >
+                        {isDanger ? '• ' : ''}
+                        {alert.tag}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: 'InstrumentSans, system-ui, sans-serif',
+                        fontSize: 12,
+                        color: 'var(--pt-muted)',
+                        lineHeight: 1.35,
+                      }}
+                    >
+                      {alert.meta}
+                    </div>
+                  </div>
+
+                  {/* Actions discrètes : ouvrir + acquitter */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      paddingTop: 2,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={(e) => dismissAlert(alert.id, e)}
+                      aria-label={`Acquitter ${alert.title}`}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: 6,
+                        color: 'var(--pt-muted)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: 6,
+                      }}
+                    >
+                      <CheckCheck size={15} strokeWidth={1.6} aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleActivate}
+                      aria-label={`Ouvrir ${alert.title}`}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: 6,
+                        color: 'var(--pt-ink)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: 6,
+                      }}
+                    >
+                      <ChevronRight size={16} strokeWidth={1.8} aria-hidden="true" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </Section>
 
       {/* Section 3 : MON ÉLEVAGE (KPIs résumés) */}
