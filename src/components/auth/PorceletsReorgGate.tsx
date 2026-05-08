@@ -1,15 +1,13 @@
 /**
- * PorceletsReorgGate — Gate V71-P3
+ * PorceletsReorgGate — Gate V72
  *
- * Au login, vérifie si la ferme a des bandes orphelines :
- *   - bande.loge_id IS NULL, OU
- *   - bande.sow_id IS NULL ET bande.phase IN ('Sous mère','Maternité')
- *
- * Si oui → redirige vers /porcelets-reorg (wizard bloquant). Sinon, no-op.
+ * Au login, vérifie si la ferme courante a des porcelets en vrac (sans
+ * batch_id). Si oui → redirige vers /porcelets-reorg (wizard bloquant
+ * "Création manuelle de bandes"). Sinon, no-op.
  *
  * S'applique à TOUS les users (existants + nouveaux). Skip pour les routes
- * publiques (login/signup/auth) et pour la route wizard elle-même pour éviter
- * les boucles.
+ * publiques (login/signup/auth) et pour la route wizard elle-même pour
+ * éviter les boucles.
  */
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -36,13 +34,13 @@ export const PorceletsReorgGate: React.FC = () => {
     let cancelled = false;
     void (async () => {
       try {
-        // Bandes orphelines : loge_id NULL OU (sow_id NULL ET phase pré-sevrage)
+        // Porcelets en vrac (batch_id NULL) sur la farm courante
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { count, error } = await (supabase as any)
-          .from('batches')
+          .from('porcelets_individuels')
           .select('id', { count: 'exact', head: true })
           .eq('farm_id', user.id)
-          .or('loge_id.is.null,and(sow_id.is.null,phase.in.("Sous mère","Maternité"))');
+          .is('batch_id', null);
         if (cancelled) return;
         if (error) return; // silencieux : on ne bloque pas si la requête échoue
         if ((count ?? 0) > 0) {
