@@ -36,7 +36,7 @@ describe('ReproV70 — Phase 3 Hub Repro', () => {
   it('rend KPIs Repro (4 stats)', () => {
     render(<MemoryRouter><ReproV70 /></MemoryRouter>);
     expect(screen.getByText('Pleines')).toBeTruthy();
-    expect(screen.getByText('Materni.')).toBeTruthy();
+    expect(screen.getByText('Maternité')).toBeTruthy();
   });
 
   it('rend EduCard avec 115 jours', () => {
