@@ -18,6 +18,7 @@ import './index.css';
 addIcons({ informationCircle, checkmarkCircle, alertCircle, closeCircle });
 import { ThemeProvider } from './context/ThemeContext';
 import { Toaster } from './components/ui/sonner';
+import { PwaUpdatePrompt } from './components/PwaUpdatePrompt';
 
 if (Capacitor.isNativePlatform()) {
   StatusBar.setStyle({ style: Style.Light }).catch(() => {});
@@ -103,21 +104,17 @@ try {
   logger.warn('Init', 'notif permission bootstrap failed', e);
 }
 
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  import('virtual:pwa-register').then(({ registerSW }) => {
-    registerSW({
-      immediate: true,
-      onRegisteredSW: () => logger.info('main', 'SW registered'),
-      onRegisterError: (err) => logger.error('main', 'SW register failed', err),
-    });
-  });
-}
+// V75-r : SW registration + needRefresh toast déplacés dans <PwaUpdatePrompt />
+// (component React monté plus bas, qui utilise useRegisterSW de
+// virtual:pwa-register/react). Le hook est idempotent — pas de double register
+// même si le component remount.
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
       <App />
       <Toaster richColors position="top-right" />
+      <PwaUpdatePrompt />
     </ThemeProvider>
   </StrictMode>,
 );
