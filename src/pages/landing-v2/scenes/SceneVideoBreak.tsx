@@ -10,29 +10,34 @@ export function SceneVideoBreak() {
         background: 'var(--pt-bg)',
       }}
     >
-      <picture>
-        <source srcSet="/images/v73/landing/alimentation.webp" type="image/webp" />
-        <img
-          src="/images/v73/landing/alimentation.jpg"
-          alt="Vue d'un feeder inox dans une loge porcine, paille fraîche dorée"
-          loading="lazy"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            objectPosition: 'center',
-          }}
-        />
-      </picture>
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        poster="/videos/landing/finishing-pen-poster.jpg"
+        aria-label="Bande arrivée à la finition six mois plus tard, deux porcs au feeder dans une lumière dorée de fin de journée"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          objectPosition: 'center',
+        }}
+      >
+        <source src="/videos/landing/finishing-pen.webm" type="video/webm" />
+        <source src="/videos/landing/finishing-pen.mp4" type="video/mp4" />
+      </video>
+      {/* Voile haut + bas : transition douce + masque watermark Creatify bottom-right */}
       <div
         aria-hidden="true"
         style={{
           position: 'absolute',
           inset: 0,
           background:
-            'linear-gradient(to bottom, var(--pt-bg) 0%, transparent 18%, transparent 82%, var(--pt-bg) 100%)',
+            'linear-gradient(to bottom, var(--pt-bg) 0%, transparent 18%, transparent 70%, rgba(250,247,240,0.85) 88%, var(--pt-bg) 100%)',
           pointerEvents: 'none',
         }}
       />
