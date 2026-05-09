@@ -15,8 +15,8 @@
  *
  * Phase 3D V70 — stubs data, Phase F branchera perfKpiAnalyzer.
  */
-import React, { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { TrendingUp, Download, Trophy, Medal } from 'lucide-react';
 import { PageHeader } from '../components/ds/PageHeader';
@@ -43,6 +43,9 @@ const PAGE_BACKGROUND_SRC = '/images/ambiance-croissance.webp';
 
 type PerfTab = 'vue' | 'kpis' | 'finances' | 'previsions';
 
+const isPerfTab = (v: string | null): v is PerfTab =>
+  v === 'vue' || v === 'kpis' || v === 'finances' || v === 'previsions';
+
 interface BandePerf {
   bande: string;
   isse: number | null;
@@ -62,7 +65,26 @@ export const PerformanceV70: React.FC = () => {
   const navigate = useNavigate();
   const { bandes, truies, saillies } = useFarm();
   const { loading: farmLoading } = useMeta();
-  const [tab, setTab] = useState<PerfTab>('vue');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab: PerfTab = isPerfTab(searchParams.get('tab'))
+    ? (searchParams.get('tab') as PerfTab)
+    : 'vue';
+  const [tab, setTab] = useState<PerfTab>(initialTab);
+
+  useEffect(() => {
+    const urlTab = searchParams.get('tab');
+    if (isPerfTab(urlTab) && urlTab !== tab) {
+      setTab(urlTab);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const handleTabChange = (v: string) => {
+    setTab(v as PerfTab);
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', v);
+    setSearchParams(next, { replace: true });
+  };
   const { advancedMode } = useUIPreferences();
 
   // V71.1 — KPIs live calculés via perfKpiAnalyzer (étaient 11.8/86%/13.2/8.4%/5.1j hardcodés)
@@ -217,7 +239,7 @@ export const PerformanceV70: React.FC = () => {
 
       <TabsMini
         value={tab}
-        onChange={(v) => setTab(v as PerfTab)}
+        onChange={handleTabChange}
         options={[
           { value: 'vue', label: 'Vue' },
           { value: 'kpis', label: 'KPIs' },
@@ -464,7 +486,17 @@ export const PerformanceV70: React.FC = () => {
       {/* Prévisions — section dédiée onglet Prévisions */}
       {tab === 'previsions' && (
         <>
-          <EduCard label="🔮 Prévisions d'élevage">
+          <EduCard
+            label="Prévisions d'élevage"
+            icon={
+              <TrendingUp
+                size={14}
+                strokeWidth={1.5}
+                aria-hidden="true"
+                style={{ color: 'var(--pt-muted)', flexShrink: 0 }}
+              />
+            }
+          >
             Projections basées sur les bandes en cycle : naissances attendues, sevrages à venir, sorties abattoir prévues. Affine ton planning ferme avec les <strong>3 prochains mois</strong>.
           </EduCard>
           <Section label="Prochaines mises-bas (90 jours)">

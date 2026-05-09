@@ -328,16 +328,6 @@ export const MaFermeV70: React.FC = () => {
           Modifier la ferme
           <ChevronRight size={18} aria-hidden />
         </button>
-        <p
-          style={{
-            fontSize: 12,
-            color: 'var(--muted)',
-            marginTop: 10,
-            textAlign: 'center',
-          }}
-        >
-          Édition complète sur l'écran legacy (refonte V71+).
-        </p>
       </section>
     </div>
   );

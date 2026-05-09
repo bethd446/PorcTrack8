@@ -23,6 +23,7 @@ import TopBarSync from '../../../components/design/TopBarSync';
 import BandeCroissanceCard from '../../../components/bande/BandeCroissanceCard';
 import TruieIcon from '../../../components/icons/TruieIcon';
 import { useFarm } from '../../../context/FarmContext';
+import { formatDateFr } from '../../../v70/lib/formatters';
 import { getJournalSante, getNotesTerrain } from '../../../services/supabaseService';
 import {
   getBatchSources,
@@ -389,7 +390,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                   Bande {portéeLabel}
                   {bandeTyped?.dateMB ? (
                     <span style={{ fontFamily: 'var(--pt-font-body)', fontSize: 13, fontWeight: 400, color: 'var(--pt-text-muted)', marginLeft: 8 }}>
-                      — MB {String(bandeTyped.dateMB)}
+                      — MB {formatDateFr(String(bandeTyped.dateMB))}
                     </span>
                   ) : null}
                 </div>
@@ -539,7 +540,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                   {[
                     { label: 'Truie', value: bande.truie },
                     { label: 'Boucle mère', value: bande.boucleMere },
-                    { label: 'Date MB', value: bande.dateMB },
+                    { label: 'Date MB', value: formatDateFr(bande.dateMB) },
                     { label: 'Nés vivants', value: bande.nv },
                     { label: 'Morts', value: bande.morts },
                     { label: 'Âge', value: bande.age ? `${bande.age} jours` : '—' },

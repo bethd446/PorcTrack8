@@ -676,16 +676,6 @@ export const MonEquipeV70: React.FC = () => {
           Modifier l'équipe
           <ChevronRight size={18} aria-hidden />
         </button>
-        <p
-          style={{
-            fontSize: 12,
-            color: 'var(--muted)',
-            marginTop: 10,
-            textAlign: 'center',
-          }}
-        >
-          Console admin (rôles, invitations) — refonte V71+.
-        </p>
       </section>
 
       {currentFarmId && (

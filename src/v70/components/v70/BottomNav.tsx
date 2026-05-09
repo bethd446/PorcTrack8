@@ -9,6 +9,7 @@
  */
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { Home, Heart, BarChart3, Settings } from 'lucide-react';
 import { PigSilhouette } from './icons/PigSilhouette';
 
 interface NavTabV70 {
@@ -20,11 +21,11 @@ interface NavTabV70 {
 }
 
 const TABS_V70: NavTabV70[] = [
-  { id: 'today',    href: '/today',         icon: '⌂', label: "Aujourd'hui", match: ['/today'] },
-  { id: 'animals',  href: '/troupeau',      icon: <PigSilhouette size={20} />, label: 'Élevage', match: ['/troupeau'] },
-  { id: 'repro',    href: '/reproduction',  icon: '❤', label: 'Repro',        match: ['/reproduction', '/cycles'] },
-  { id: 'perf',     href: '/performance',   icon: '📊', label: 'Performance',  match: ['/performance', '/pilotage'] },
-  { id: 'settings', href: '/reglages',      icon: '⚙', label: 'Réglages',     match: ['/reglages', '/more', '/admin', '/aide', '/ressources', '/fournisseurs', '/protocoles'] },
+  { id: 'today',    href: '/today',         icon: <Home size={20} strokeWidth={1.75} aria-hidden />,       label: "Aujourd'hui", match: ['/today'] },
+  { id: 'animals',  href: '/troupeau',      icon: <PigSilhouette size={20} />,                              label: 'Élevage',     match: ['/troupeau'] },
+  { id: 'repro',    href: '/reproduction',  icon: <Heart size={20} strokeWidth={1.75} aria-hidden />,      label: 'Repro',       match: ['/reproduction', '/cycles'] },
+  { id: 'perf',     href: '/performance',   icon: <BarChart3 size={20} strokeWidth={1.75} aria-hidden />,  label: 'Performance', match: ['/performance', '/pilotage'] },
+  { id: 'settings', href: '/reglages',      icon: <Settings size={20} strokeWidth={1.75} aria-hidden />,   label: 'Réglages',    match: ['/reglages', '/more', '/admin', '/aide', '/ressources', '/fournisseurs', '/protocoles'] },
 ];
 
 function resolveActiveTab(pathname: string): NavTabV70['id'] {

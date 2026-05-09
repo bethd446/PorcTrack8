@@ -13,7 +13,7 @@
  */
 import React, { useEffect, useMemo, useState, lazy, Suspense } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BookOpen } from 'lucide-react';
+import { Archive, BookOpen } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
 import { safeDate } from '../../lib/truieHelpers';
 import { PageHeader } from '../components/ds/PageHeader';
@@ -458,7 +458,10 @@ export const ReproV70: React.FC = () => {
         <Section label="Bandes passées">
           <Card>
             <div style={{ padding: '16px 8px', textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
-              📦 Historique des bandes terminées
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <Archive size={14} strokeWidth={1.5} aria-hidden="true" />
+                Historique des bandes terminées
+              </span>
               <div style={{ marginTop: 8, fontSize: 11 }}>
                 Voir toutes les bandes (actives + historique) sur l'onglet{' '}
                 <button

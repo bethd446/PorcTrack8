@@ -141,7 +141,7 @@ export const V70Routes: React.FC = () => (
         overflowY: 'auto',
         overflowX: 'hidden',
         WebkitOverflowScrolling: 'touch',
-        paddingBottom: 80,
+        paddingBottom: 'calc(96px + env(safe-area-inset-bottom, 0px) + 16px)',
         background: 'var(--pt-bg)',
       }}
     >
