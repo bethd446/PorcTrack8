@@ -354,16 +354,25 @@ export const ChatbotWidget: React.FC = () => {
       }
     } catch (err) {
       if ((err as { name?: string }).name === 'AbortError') return;
+      // V75-t : message d'erreur clair selon le type de panne (429 quota,
+      // CORS/network, autre). Aide l'éleveur à comprendre que ce n'est pas
+      // forcément sa connexion.
+      const errMsg = (err as { message?: string }).message ?? '';
+      const status = (err as { status?: number }).status;
+      let userMsg = 'Marius est temporairement indisponible. Réessaye dans quelques minutes.';
+      if (status === 429 || /429|quota|rate.?limit/i.test(errMsg)) {
+        userMsg = 'Marius reçoit beaucoup de questions en ce moment. Réessaye dans 1-2 minutes.';
+      } else if (/CORS|network|fetch/i.test(errMsg)) {
+        userMsg = 'Pas de réponse du serveur Marius. Vérifie ta connexion ou réessaye plus tard.';
+      }
+      // eslint-disable-next-line no-console
+      console.error('[Marius] erreur réponse', { status, errMsg, err });
       setMessages(prev => {
         const next = [...prev];
-        // remplace la bulle assistant vide par un message d'erreur
         if (next.length > 0 && next[next.length - 1].role === 'assistant' && !next[next.length - 1].content) {
           next.pop();
         }
-        next.push({
-          role: 'system',
-          content: 'Marius est indisponible (vérifiez la connexion).',
-        });
+        next.push({ role: 'system', content: userMsg });
         return next;
       });
     } finally {
