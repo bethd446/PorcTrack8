@@ -181,8 +181,6 @@ export const TodayV70: React.FC = () => {
       <div style={{ position: 'relative', zIndex: 1 }}>
       <MariusGreeting />
 
-      <NotificationsPermissionPrompt />
-
       <PageHeader
         eyebrow={dateLabel}
         title="Aujourd'hui"
@@ -465,6 +463,10 @@ export const TodayV70: React.FC = () => {
           </div>
         )}
       </Section>
+
+      {/* F-1 V75-n — bannière onboarding repositionnée APRÈS À traiter pour ne
+          pas masquer une mise-bas urgente quand l'éleveur ouvre l'app à 5h. */}
+      <NotificationsPermissionPrompt />
 
       {/* Section 3 : MON ÉLEVAGE (KPIs résumés) */}
       <Section label="Mon élevage">

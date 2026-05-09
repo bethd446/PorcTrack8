@@ -193,18 +193,30 @@ export const PerformanceV70: React.FC = () => {
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div
-              style={{
-                fontFamily: 'var(--pt-font-display, sans-serif)',
-                fontSize: 32,
-                fontWeight: 900,
-                color: 'var(--pt-success)',
-                lineHeight: 1,
-              }}
-            >
-              {fmt(kpis?.sevresParTruieAn ?? null, 1)}
-            </div>
-            <div style={{ fontSize: 10, color: 'var(--pt-muted)' }}>vs réf. 12.0</div>
+            {(() => {
+              // F-32 V75-n — ISSE n'a de sens qu'avec ≥ 1 cycle clos (au moins
+              // une bande avec dateSevrageReelle). Sinon on affiche "—" pour
+              // éviter de montrer "0.0" qui ressemble à une perf catastrophique.
+              const aCycleClos = (kpis?.nbSevrés12m ?? 0) > 0;
+              return (
+                <>
+                  <div
+                    style={{
+                      fontFamily: 'var(--pt-font-display, sans-serif)',
+                      fontSize: 32,
+                      fontWeight: 900,
+                      color: 'var(--pt-success)',
+                      lineHeight: 1,
+                    }}
+                  >
+                    {aCycleClos ? fmt(kpis?.sevresParTruieAn ?? null, 1) : '—'}
+                  </div>
+                  <div style={{ fontSize: 10, color: 'var(--pt-muted)' }}>
+                    {aCycleClos ? 'vs réf. 12.0' : 'Aucun cycle clos pour le moment'}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
       </Card>
@@ -399,7 +411,7 @@ export const PerformanceV70: React.FC = () => {
                     />
                   </span>
                 }
-                subtitle={`${b.dateMB ? `MB ${b.dateMB}` : ''} · ${b.nv ?? '?'} NV`}
+                subtitle={`${b.dateMB ? `MB ${b.dateMB}` : ''} · ${b.nv ?? '?'} nés vivants`}
                 trailing={<span className="list-arrow">›</span>}
                 onClick={() => navigate(`/troupeau/bandes/${b.id}`)}
               />

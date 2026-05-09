@@ -112,6 +112,60 @@ function isMariusDebug(): boolean {
   return kvGet('pt:marius_debug') === '1';
 }
 
+/**
+ * Rendu markdown ultra-light pour les réponses Marius (F-29 V75-n).
+ * Avant : `**Priorité absolue**` et `\n` étaient affichés bruts.
+ * Supporte : paragraphes, listes (- ou *), gras (**xxx**).
+ * Tolère le streaming partiel (`**Prio` sans fermeture rendu tel quel).
+ */
+function renderInline(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    return <React.Fragment key={i}>{part}</React.Fragment>;
+  });
+}
+
+function renderMariusMarkdown(text: string): React.ReactNode {
+  const lines = text.split('\n');
+  const elements: React.ReactNode[] = [];
+  let currentList: string[] = [];
+
+  const flushList = () => {
+    if (currentList.length === 0) return;
+    elements.push(
+      <ul key={`ul-${elements.length}`} style={{ margin: '4px 0 8px 18px', padding: 0 }}>
+        {currentList.map((item, i) => (
+          <li key={i} style={{ marginBottom: 4 }}>{renderInline(item)}</li>
+        ))}
+      </ul>,
+    );
+    currentList = [];
+  };
+
+  lines.forEach(line => {
+    const trimmed = line.trimStart();
+    const isItem = /^[-*]\s+/.test(trimmed);
+    if (isItem) {
+      currentList.push(trimmed.replace(/^[-*]\s+/, ''));
+    } else if (trimmed === '') {
+      flushList();
+    } else {
+      flushList();
+      elements.push(
+        <p key={`p-${elements.length}`} style={{ margin: '0 0 8px 0' }}>
+          {renderInline(trimmed)}
+        </p>,
+      );
+    }
+  });
+  flushList();
+
+  return <>{elements}</>;
+}
+
 export const ChatbotWidget: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -430,7 +484,9 @@ export const ChatbotWidget: React.FC = () => {
                     : { background: 'var(--bg-surface-2)', color: 'var(--ink)' }
                 }
               >
-                {m.content || (loading && !streaming ? 'Marius reflechit…' : '')}
+                {m.content
+                ? (m.role === 'assistant' ? renderMariusMarkdown(m.content) : m.content)
+                : (loading && !streaming ? 'Marius reflechit…' : '')}
               </div>
             </div>
           );

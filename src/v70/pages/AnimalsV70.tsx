@@ -36,6 +36,9 @@ const QuickAddLogeForm = lazy(() => import('../../components/forms/QuickAddLogeF
 
 type AnimalTab = 'truies' | 'verrats' | 'porcelets' | 'bandes' | 'loges';
 type AnimalFilter = 'all' | 'pleines' | 'maternite' | 'vides' | 'a-vendre';
+// V75-n F-17 / F-23 — tri listings
+type TruiesSort = 'code' | 'parite' | 'derniereMB' | 'statut';
+type BandesSort = 'dateMB' | 'effectif' | 'statut';
 
 interface AnimalStub {
   id: string;                  // identifiant utilisé pour la navigation (UUID OK)
@@ -103,6 +106,9 @@ export const AnimalsV70: React.FC = () => {
   const [filter, setFilter] = useState<AnimalFilter>('all');
   const [search, setSearch] = useState('');
   const [expandedBandes, setExpandedBandes] = useState<Set<string>>(new Set());
+  // V75-n F-17 / F-23 — tri listings (truies + bandes)
+  const [truiesSort, setTruiesSort] = useState<TruiesSort>('code');
+  const [bandesSort, setBandesSort] = useState<BandesSort>('dateMB');
 
   // V75-h : ouvrir le 1er groupe par défaut quand les bandes arrivent (data lazy via FarmContext).
   useEffect(() => {
@@ -139,48 +145,91 @@ export const AnimalsV70: React.FC = () => {
     };
   }, [truies, verrats, bandes]);
 
-  // Données réelles via FarmContext quand dispo, sinon stubs cosmétiques V70
-  const realStubs = useMemo<Record<AnimalTab, AnimalStub[] | null>>(() => ({
-    truies: truies?.length
-      ? truies.map(t => {
-          const s = (t.statut ?? '').toLowerCase();
-          const isPleine = /pleine|gestante|gestation/.test(s);
-          const isMater = /maternité|maternite|allaitante|allaitement/.test(s);
-          const isVide = /attente saillie|vide|sevrée|sevree/.test(s);
-          const isAVendre = /réforme|reforme/.test(s);
-          return {
-            id: t.displayId ?? t.id,
-            status: t.statut ?? 'Truie active',
-            statusLabel: isPleine ? 'Pleine' : isMater ? 'Maternité' : isVide ? 'Vide' : isAVendre ? 'À vendre' : (t.statut ?? 'Active'),
-            pillVariant: (isPleine ? 'success' : isMater ? 'warm' : isVide ? 'warning' : isAVendre ? 'ghost' : 'info') as PillVariant,
-          };
-        })
-      : null,
-    verrats: verrats?.length
-      ? verrats.slice(0, 8).map(v => ({
-          id: v.displayId ?? v.id,
-          status: v.statut ?? 'Verrat',
-          statusLabel: v.statut === 'Actif' ? 'Actif' : 'Inactif',
-          pillVariant: (v.statut === 'Actif' ? 'success' : 'warning') as PillVariant,
-        }))
-      : null,
-    bandes: bandes?.length
-      ? bandes.slice(0, 8).map(b => ({
-          id: b.id,
-          displayName: formatBandeName({
+  // Données réelles via FarmContext quand dispo, sinon stubs cosmétiques V70.
+  // V75-n F-19 : retrait du slice(0, 8) (truies / verrats / bandes) — tout afficher.
+  // V75-n F-17 / F-23 : tri appliqué sur les données originales (Truie / BandePorcelets)
+  // avant mapping, pour avoir accès aux champs métier (nbPortees, dateMBPrevue, dateMB, nv).
+  const realStubs = useMemo<Record<AnimalTab, AnimalStub[] | null>>(() => {
+    // --- Tri truies ---
+    const truiesSorted = truies?.length ? [...truies] : [];
+    if (truiesSorted.length) {
+      if (truiesSort === 'parite') {
+        truiesSorted.sort((a, b) => (b.nbPortees ?? 0) - (a.nbPortees ?? 0));
+      } else if (truiesSort === 'derniereMB') {
+        // Plus récente d'abord (dateMBPrevue absente → fin de liste)
+        truiesSorted.sort((a, b) => {
+          const da = a.dateMBPrevue ? new Date(a.dateMBPrevue).getTime() : -Infinity;
+          const db = b.dateMBPrevue ? new Date(b.dateMBPrevue).getTime() : -Infinity;
+          return db - da;
+        });
+      } else if (truiesSort === 'statut') {
+        truiesSorted.sort((a, b) => (a.statut ?? '').localeCompare(b.statut ?? ''));
+      } else {
+        // 'code' : ordre A-Z par displayId
+        truiesSorted.sort((a, b) => (a.displayId ?? a.id).localeCompare(b.displayId ?? b.id));
+      }
+    }
+
+    // --- Tri bandes ---
+    const bandesSorted = bandes?.length ? [...bandes] : [];
+    if (bandesSorted.length) {
+      if (bandesSort === 'effectif') {
+        bandesSorted.sort((a, b) => (b.nv ?? 0) - (a.nv ?? 0));
+      } else if (bandesSort === 'statut') {
+        bandesSorted.sort((a, b) => (a.statut ?? '').localeCompare(b.statut ?? ''));
+      } else {
+        // 'dateMB' : récente d'abord (dateMB absente → fin de liste)
+        bandesSorted.sort((a, b) => {
+          const da = a.dateMB ? new Date(a.dateMB).getTime() : -Infinity;
+          const db = b.dateMB ? new Date(b.dateMB).getTime() : -Infinity;
+          return db - da;
+        });
+      }
+    }
+
+    return {
+      truies: truiesSorted.length
+        ? truiesSorted.map(t => {
+            const s = (t.statut ?? '').toLowerCase();
+            const isPleine = /pleine|gestante|gestation/.test(s);
+            const isMater = /maternité|maternite|allaitante|allaitement/.test(s);
+            const isVide = /attente saillie|vide|sevrée|sevree/.test(s);
+            const isAVendre = /réforme|reforme/.test(s);
+            return {
+              id: t.displayId ?? t.id,
+              status: t.statut ?? 'Truie active',
+              statusLabel: isPleine ? 'Pleine' : isMater ? 'Maternité' : isVide ? 'Vide' : isAVendre ? 'À vendre' : (t.statut ?? 'Active'),
+              pillVariant: (isPleine ? 'success' : isMater ? 'warm' : isVide ? 'warning' : isAVendre ? 'ghost' : 'info') as PillVariant,
+            };
+          })
+        : null,
+      verrats: verrats?.length
+        ? verrats.map(v => ({
+            id: v.displayId ?? v.id,
+            status: v.statut ?? 'Verrat',
+            statusLabel: v.statut === 'Actif' ? 'Actif' : 'Inactif',
+            pillVariant: (v.statut === 'Actif' ? 'success' : 'warning') as PillVariant,
+          }))
+        : null,
+      bandes: bandesSorted.length
+        ? bandesSorted.map(b => ({
             id: b.id,
-            idPortee: b.idPortee,
-            truieMere: b.truie,
-            dateMB: b.dateMB,
-          }),
-          status: `${b.truie ? `Mère ${b.truie} · ` : ''}${b.dateMB ? `MB ${b.dateMB}` : 'En cours'}${b.nv ? ` · ${b.nv} NV` : ''}`,
-          statusLabel: b.statut ?? 'Active',
-          pillVariant: 'success' as PillVariant,
-        }))
-      : null,
-    porcelets: null, // pas de table porcelets dédiée pour le moment
-    loges: null,
-  }), [bandes, truies, verrats]);
+            displayName: formatBandeName({
+              id: b.id,
+              idPortee: b.idPortee,
+              truieMere: b.truie,
+              dateMB: b.dateMB,
+            }),
+            // V75-n F-22 : NV → "nés vivants" (libellé explicite)
+            status: `${b.truie ? `Mère ${b.truie} · ` : ''}${b.dateMB ? `MB ${b.dateMB}` : 'En cours'}${b.nv ? ` · ${b.nv} nés vivants` : ''}`,
+            statusLabel: b.statut ?? 'Active',
+            pillVariant: 'success' as PillVariant,
+          }))
+        : null,
+      porcelets: null, // pas de table porcelets dédiée pour le moment
+      loges: null,
+    };
+  }, [bandes, truies, verrats, truiesSort, bandesSort]);
 
   const fabLabel: Record<AnimalTab, string> = {
     truies: 'Ajouter une truie',
@@ -227,9 +276,8 @@ export const AnimalsV70: React.FC = () => {
         (it.statusLabel ?? '').toLowerCase().includes(q)
       );
     }
-    if (tab === 'truies' && filter === 'all' && !search.trim()) {
-      return list.slice(0, 8);
-    }
+    // V75-n F-19 : retrait du slice(0, 8). Tout afficher (perf OK pour fermes
+    // 50-200 truies cibles. Pour > 200, ajouter pagination dans un sprint séparé).
     return list;
   }, [baseList, filter, search, tab]);
 
@@ -359,6 +407,53 @@ export const AnimalsV70: React.FC = () => {
           >
             <Pill variant={filter === 'a-vendre' ? 'primary' : 'ghost'}>{`À vendre (${counts.truiesAVendre})`}</Pill>
           </button>
+          {/* V75-n F-17 — tri truies */}
+          <select
+            value={truiesSort}
+            onChange={(e) => setTruiesSort(e.target.value as TruiesSort)}
+            aria-label="Trier les truies"
+            style={{
+              marginLeft: 'auto',
+              padding: '6px 12px',
+              borderRadius: 999,
+              fontFamily: 'var(--font-body, inherit)',
+              fontSize: 12,
+              border: '1px solid var(--pt-line)',
+              background: 'var(--pt-bg)',
+              color: 'var(--pt-ink)',
+              cursor: 'pointer',
+            }}
+          >
+            <option value="code">Code A-Z</option>
+            <option value="parite">Parité ↓</option>
+            <option value="derniereMB">Dernière MB ↓</option>
+            <option value="statut">Statut</option>
+          </select>
+        </div>
+      )}
+
+      {/* V75-n F-23 — tri bandes */}
+      {tab === 'bandes' && (
+        <div style={{ display: 'flex', gap: 6, marginBottom: 14, marginTop: 14, justifyContent: 'flex-end' }}>
+          <select
+            value={bandesSort}
+            onChange={(e) => setBandesSort(e.target.value as BandesSort)}
+            aria-label="Trier les bandes"
+            style={{
+              padding: '6px 12px',
+              borderRadius: 999,
+              fontFamily: 'var(--font-body, inherit)',
+              fontSize: 12,
+              border: '1px solid var(--pt-line)',
+              background: 'var(--pt-bg)',
+              color: 'var(--pt-ink)',
+              cursor: 'pointer',
+            }}
+          >
+            <option value="dateMB">Date MB ↓</option>
+            <option value="effectif">Effectif (NV) ↓</option>
+            <option value="statut">Statut</option>
+          </select>
         </div>
       )}
 

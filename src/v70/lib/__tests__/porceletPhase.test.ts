@@ -38,8 +38,29 @@ describe('derivePorceletPhase', () => {
     expect(phase).toBe('FINITION');
   });
 
-  it('Pas de dateMB — retourne null', () => {
-    const phase = derivePorceletPhase({ poidsCourantKg: 30 }, {});
+  it('Pas de dateMB ni poids — retourne null', () => {
+    const phase = derivePorceletPhase({ poidsCourantKg: 0 }, {});
     expect(phase).toBeNull();
+  });
+
+  // V75-n F-26 — fallback poids quand dateMB absente
+  it('Fallback poids — pas de dateMB, poids 5kg → SOUS_MERE', () => {
+    expect(derivePorceletPhase({ poidsCourantKg: 5 }, {})).toBe('SOUS_MERE');
+  });
+
+  it('Fallback poids — pas de dateMB, poids 15kg → POST_SEVRAGE', () => {
+    expect(derivePorceletPhase({ poidsCourantKg: 15 }, {})).toBe('POST_SEVRAGE');
+  });
+
+  it('Fallback poids — pas de dateMB, poids 30kg → CROISSANCE', () => {
+    expect(derivePorceletPhase({ poidsCourantKg: 30 }, {})).toBe('CROISSANCE');
+  });
+
+  it('Fallback poids — pas de dateMB, poids 80kg → ENGRAISSEMENT', () => {
+    expect(derivePorceletPhase({ poidsCourantKg: 80 }, {})).toBe('ENGRAISSEMENT');
+  });
+
+  it('Fallback poids — pas de dateMB, poids ≥100kg → FINITION', () => {
+    expect(derivePorceletPhase({ poidsCourantKg: 105 }, {})).toBe('FINITION');
   });
 });
