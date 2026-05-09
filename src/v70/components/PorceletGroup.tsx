@@ -35,7 +35,13 @@ export const PorceletGroup: React.FC<PorceletGroupProps> = ({
   onNavigateToBande,
 }) => {
   const allPorcelets = bande.porcelets ?? [];
-  const activePorcelets = allPorcelets.filter(p => ACTIVE_STATUTS.has(p.statut));
+  // V75-u-C P1#7 — tri naturel par boucle (numeric-aware) pour éviter
+  // l'illusion d'un trou dans la séquence (ex. "25" placé devant "CR-02"
+  // donnait l'impression qu'il manquait CR-25 alors que les 30 sont là).
+  const activePorcelets = allPorcelets
+    .filter(p => ACTIVE_STATUTS.has(p.statut))
+    .slice()
+    .sort((a, b) => a.boucle.localeCompare(b.boucle, undefined, { numeric: true, sensitivity: 'base' }));
   const count = activePorcelets.length;
   const isEmpty = count === 0;
   const bandeName = formatBandeName({

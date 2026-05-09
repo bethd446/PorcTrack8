@@ -11,7 +11,7 @@
  * filter pills, liste truies stubs. FAB ajout (Phase F branchera contexte).
  */
 import React, { useState, useEffect, lazy, Suspense, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Boxes, Home } from 'lucide-react';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
@@ -36,6 +36,10 @@ const QuickAddLogeForm = lazy(() => import('../../components/forms/QuickAddLogeF
 
 type AnimalTab = 'truies' | 'verrats' | 'porcelets' | 'bandes' | 'loges';
 type AnimalFilter = 'all' | 'pleines' | 'maternite' | 'vides' | 'a-vendre';
+
+const VALID_ANIMAL_TABS: AnimalTab[] = ['truies', 'verrats', 'porcelets', 'bandes', 'loges'];
+const isAnimalTab = (v: string | null): v is AnimalTab =>
+  v !== null && (VALID_ANIMAL_TABS as string[]).includes(v);
 // V75-n F-17 / F-23 — tri listings
 type TruiesSort = 'code' | 'parite' | 'derniereMB' | 'statut';
 type BandesSort = 'dateMB' | 'effectif' | 'statut';
@@ -102,7 +106,34 @@ export const AnimalsV70: React.FC = () => {
   // Truies/verrats/porcelets utilisent les stubs cosmétiques V70 → pas de
   // faux empty state à craindre, le user voit toujours quelque chose.
   const tabBandesEmptyForLoading = useListingLoadingGuard(farmLoading, bandes.length);
-  const [tab, setTab] = useState<AnimalTab>('truies');
+
+  // V75-u P1 #5 — Sync URL ?view= ↔ tab pour deep-links (ex: /troupeau?view=verrats
+  // depuis breadcrumb fiche détail). Sans cette synchro, naviguer directement vers
+  // /troupeau?view=verrats laissait l'onglet Truies sélectionné.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab: AnimalTab = isAnimalTab(searchParams.get('view'))
+    ? (searchParams.get('view') as AnimalTab)
+    : 'truies';
+  const [tab, setTab] = useState<AnimalTab>(initialTab);
+
+  // Sync state ← URL : nécessaire quand l'utilisateur arrive via un deep-link
+  // (QR code, copier-coller, navigate replace) ou via back navigation depuis
+  // une fiche détail dont le breadcrumb pointe vers /troupeau?view=...
+  useEffect(() => {
+    const urlTab = searchParams.get('view');
+    if (isAnimalTab(urlTab) && urlTab !== tab) {
+      setTab(urlTab);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const handleTabChange = (v: string) => {
+    setTab(v as AnimalTab);
+    const next = new URLSearchParams(searchParams);
+    next.set('view', v);
+    setSearchParams(next, { replace: true });
+  };
+
   const [filter, setFilter] = useState<AnimalFilter>('all');
   const [search, setSearch] = useState('');
   const [expandedBandes, setExpandedBandes] = useState<Set<string>>(new Set());
@@ -333,7 +364,7 @@ export const AnimalsV70: React.FC = () => {
 
       <TabsMini
         value={tab}
-        onChange={(v) => setTab(v as AnimalTab)}
+        onChange={handleTabChange}
         options={[
           { value: 'truies', label: 'Truies' },
           { value: 'verrats', label: 'Verrats' },

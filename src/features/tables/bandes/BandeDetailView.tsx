@@ -114,6 +114,15 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
   const nesVivants = bandeTyped?.nv ?? Number(bande?.nv ?? 0);
   const ecart = sourcesTotal - nesVivants;
 
+  // V75-u-C P1#7 — single source of truth pour "vivants" : compter les
+  // porcelets actifs (VIVANT/MALADE/QUARANTAINE) au lieu de relire
+  // `bande.vivants` qui était aliasé sur `nv` (donc ignorait morts/vendus).
+  // Aligne fiche bande avec le tab Porcelets (PorceletGroup).
+  const vivantsActifs = useMemo(() => {
+    const ACTIVE: PorceletStatut[] = ['VIVANT', 'MALADE', 'QUARANTAINE'];
+    return porcelets.filter(p => ACTIVE.includes(p.statut)).length;
+  }, [porcelets]);
+
   // V28-CTA — Daily Check disponible uniquement pour les bandes en phase Sous mère.
   const isSousMere = useMemo(
     () => (bandeTyped ? computeBandePhase(bandeTyped) === 'SOUS_MERE' : false),
@@ -361,8 +370,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
               const parts: string[] = [];
               if (bande.status) parts.push(String(bande.status));
               if (bande.age != null) parts.push(`J${bande.age}`);
-              const v = bandeTyped?.vivants ?? Number(bande.vivants ?? 0);
-              if (v > 0) parts.push(`${v} vivants`);
+              if (vivantsActifs > 0) parts.push(`${vivantsActifs} vivants`);
               return parts.length > 0 ? parts.join(' · ') : 'Suivi de la bande';
             })()}
           />
@@ -397,10 +405,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                       {bandeTyped.statut}
                     </DsTag>
                   ) : null}
-                  {(() => {
-                    const v = bandeTyped?.vivants ?? Number(bande.vivants ?? 0);
-                    return v > 0 ? <DsTag variant="soft">{v} vivants</DsTag> : null;
-                  })()}
+                  {vivantsActifs > 0 ? <DsTag variant="soft">{vivantsActifs} vivants</DsTag> : null}
                   {bande.age != null ? (
                     <DsTag variant="default">{bande.age} j</DsTag>
                   ) : null}
@@ -505,7 +510,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                     <span className="kpi-label">Performances</span>
                   </div>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-[22px] font-semibold tabular-nums text-text-0">{String(bande.vivants || 0)}</span>
+                    <span className="text-[22px] font-semibold tabular-nums text-text-0">{vivantsActifs}</span>
                     <span className="text-[11px] uppercase text-text-2">Vivants</span>
                   </div>
                 </div>

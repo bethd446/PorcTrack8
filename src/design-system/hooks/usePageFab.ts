@@ -20,7 +20,10 @@ export type PageFabConfig =
   | { action: string; label: string };
 
 const FAB_GENERIC_PATHS: ReadonlyArray<RegExp> = [
-  /^\/troupeau($|\/)/,
+  /^\/troupeau\/truies\//,
+  /^\/troupeau\/verrats\//,
+  /^\/troupeau\/bandes\//,
+  /^\/troupeau\/loges\//,
   /^\/elevage($|\/)/,
   /^\/reproduction($|\/)/,
   /^\/repro($|\/)/,
@@ -32,6 +35,7 @@ const FAB_GENERIC_PATHS: ReadonlyArray<RegExp> = [
 ];
 
 const FAB_DISABLED_PATHS: ReadonlyArray<RegExp> = [
+  /^\/troupeau\/?$/,
   /^\/admin/,
   /^\/onboarding/,
   /^\/checklist\//,

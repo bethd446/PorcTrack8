@@ -17,6 +17,7 @@
  */
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { TrendingUp, Download, Trophy, Medal } from 'lucide-react';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
@@ -125,14 +126,66 @@ export const PerformanceV70: React.FC = () => {
     n === null || n === undefined || !Number.isFinite(n) ? '—' : `${n.toFixed(digits)}${suffix}`;
 
   const [pdfHint, setPdfHint] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  // V75-u-C P1#10 — feedback toast Sonner pendant la génération PDF
+  // (window.print bloque le main thread ~10s sur Android sans aucun feedback
+  // visuel auparavant). Toast loading → success/error pour rassurer l'éleveur.
   const handlePrintPdf = () => {
+    if (pdfLoading) return;
+    const toastId = toast.loading('Génération du PDF en cours…');
+    setPdfLoading(true);
     setPdfHint(true);
-    if (typeof window !== 'undefined' && typeof window.print === 'function') {
-      // Defer print to let the hint render first
-      setTimeout(() => window.print(), 100);
+    try {
+      if (typeof window !== 'undefined' && typeof window.print === 'function') {
+        // Defer print to let the hint render first
+        setTimeout(() => {
+          try {
+            window.print();
+            toast.success('Aperçu PDF prêt', {
+              id: toastId,
+              description: 'Choisis « Enregistrer au format PDF » dans la fenêtre d\'impression.',
+            });
+          } catch (err) {
+            toast.error('Erreur PDF', { id: toastId, description: String(err) });
+          } finally {
+            setPdfLoading(false);
+          }
+        }, 100);
+      } else {
+        toast.error('Impression non supportée', { id: toastId });
+        setPdfLoading(false);
+      }
+    } catch (err) {
+      toast.error('Erreur PDF', { id: toastId, description: String(err) });
+      setPdfLoading(false);
     }
     setTimeout(() => setPdfHint(false), 4000);
   };
+
+  // V75-u-C P1#6 — skeleton pendant le chargement initial pour éviter le
+  // flash "—" / "0.0" sur les KPIs avant que FarmContext résolve.
+  const showSkeleton = farmLoading && bandes.length === 0 && truies.length === 0;
+  if (showSkeleton) {
+    const skeletonStyle = {
+      background: 'var(--pt-warm, #faf6ef)',
+      borderRadius: 16,
+      marginBottom: 12,
+    } as const;
+    return (
+      <div
+        className="phone-content"
+        style={{ padding: 24, maxWidth: 600, margin: '0 auto', position: 'relative', minHeight: '100%' }}
+        data-testid="performance-loading-skeleton"
+      >
+        <div style={{ ...skeletonStyle, height: 56 }} className="animate-pulse" aria-hidden="true" />
+        <div style={{ ...skeletonStyle, height: 36, width: '60%' }} className="animate-pulse" aria-hidden="true" />
+        <div style={{ ...skeletonStyle, height: 110 }} className="animate-pulse" aria-hidden="true" />
+        <div style={{ ...skeletonStyle, height: 96 }} className="animate-pulse" aria-hidden="true" />
+        <div style={{ ...skeletonStyle, height: 220 }} className="animate-pulse" aria-hidden="true" />
+        <div style={{ ...skeletonStyle, height: 140 }} className="animate-pulse" aria-hidden="true" />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -391,10 +444,16 @@ export const PerformanceV70: React.FC = () => {
             >
               Détails
             </Button>
-            <Button variant="secondary" size="sm" onClick={handlePrintPdf}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handlePrintPdf}
+              disabled={pdfLoading}
+              aria-busy={pdfLoading}
+            >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 <Download size={14} strokeWidth={1.5} aria-hidden="true" />
-                PDF
+                {pdfLoading ? 'Génération…' : 'PDF'}
               </span>
             </Button>
           </div>

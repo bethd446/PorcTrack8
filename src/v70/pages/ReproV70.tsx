@@ -30,6 +30,7 @@ import { formatBandeName } from '../lib';
 const GESTATION_JOURS = 115;
 
 const QuickSaillieForm = lazy(() => import('../../components/forms/QuickSaillieForm'));
+const QuickMiseBasForm = lazy(() => import('../../components/forms/QuickMiseBasForm'));
 
 type ReproTab = 'agenda' | 'en-cours' | 'a-venir' | 'historique';
 
@@ -213,6 +214,22 @@ export const ReproV70: React.FC = () => {
   };
 
   const [saillieOpen, setSaillieOpen] = useState(false);
+  const [miseBasOpen, setMiseBasOpen] = useState(false);
+
+  // V75-u — Brancher le FAB extended contextuel MISE-BAS dispatché par
+  // App.tsx > SaisirFABMount (CustomEvent 'pt-fab-action' avec
+  // detail.action === 'add_birth'). Sans ce listener, le bouton MISE-BAS
+  // était silencieusement no-op.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ action?: string }>).detail;
+      if (detail?.action === 'add_birth') {
+        setMiseBasOpen(true);
+      }
+    };
+    window.addEventListener('pt-fab-action', handler);
+    return () => window.removeEventListener('pt-fab-action', handler);
+  }, []);
 
   // V71 cleanup — banner conditionnel selon ?phase= ou tab actif.
   const phaseParam = searchParams.get('phase');
@@ -491,6 +508,7 @@ export const ReproV70: React.FC = () => {
 
       <Suspense fallback={null}>
         <QuickSaillieForm isOpen={saillieOpen} onClose={() => setSaillieOpen(false)} />
+        <QuickMiseBasForm isOpen={miseBasOpen} onClose={() => setMiseBasOpen(false)} />
       </Suspense>
     </div>
   );
