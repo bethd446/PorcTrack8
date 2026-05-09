@@ -26,6 +26,8 @@ import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 import { useFarmContextHints } from '../../features/encyclopedia/useFarmContextHints';
 import { HintCard } from '../../features/encyclopedia/HintCard';
 import { NotificationsPermissionPrompt } from '../../components/NotificationsPermissionPrompt';
+import { isReformed, needsReformConsideration, alreadySortedOut, reformReason } from '../lib';
+import type { Truie } from '../../types/farm';
 
 const PAGE_BACKGROUND_SRC = '/images/hero-2.webp';
 
@@ -67,17 +69,33 @@ export const TodayV70: React.FC = () => {
       });
     });
 
-    // Truies à réformer
-    truies.filter(t => /réforme|reforme/i.test(t.statut ?? '')).forEach(t => {
-      result.push({
-        id: `reforme-${t.id}`,
-        variant: 'warning',
-        tag: 'À décider',
-        title: `Réforme suggérée — ${t.displayId}`,
-        meta: 'Productivité insuffisante · voir fiche',
-        to: `/troupeau/truies/${t.id}`,
+    // Truies à décider (statut ≠ réforme + critères métier)
+    truies
+      .filter(t => !isReformed(t) && needsReformConsideration(t))
+      .forEach(t => {
+        result.push({
+          id: `reform-suggest-${t.id}`,
+          variant: 'warning',
+          tag: 'Bientôt',
+          title: `À sortir bientôt — ${t.displayId}`,
+          meta: reformReason(t),
+          to: `/troupeau/truies/${t.id}`,
+        });
       });
-    });
+
+    // Truies déjà réformées (à sortir physiquement du cheptel)
+    truies
+      .filter(t => isReformed(t) && !alreadySortedOut(t as Truie & { dateSortie?: string | null }))
+      .forEach(t => {
+        result.push({
+          id: `reform-action-${t.id}`,
+          variant: 'warning',
+          tag: 'Cette semaine',
+          title: `À vendre — ${t.displayId}`,
+          meta: 'Marquer comme vendue ou abattue depuis sa fiche',
+          to: `/troupeau/truies/${t.id}`,
+        });
+      });
 
     return result.slice(0, 5);
   }, [truies, bandes]);

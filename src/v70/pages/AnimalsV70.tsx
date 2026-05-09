@@ -22,7 +22,7 @@ import { ListItem } from '../components/ds/ListItem';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { PigSilhouette } from '../components/v70/icons/PigSilhouette';
 import { useFarm, useMeta } from '../../context/FarmContext';
-import { formatBandeName } from '../lib';
+import { formatBandeName, isReformed } from '../lib';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 import ListingSkeleton from '../../components/design/ListingSkeleton';
 import { useListingLoadingGuard } from '../../hooks/useListingLoadingGuard';
@@ -34,7 +34,7 @@ const QuickAddPorceletForm = lazy(() => import('../../components/forms/QuickAddP
 const QuickAddLogeForm = lazy(() => import('../../components/forms/QuickAddLogeForm'));
 
 type AnimalTab = 'truies' | 'verrats' | 'porcelets' | 'bandes' | 'loges';
-type AnimalFilter = 'all' | 'pleines' | 'maternite' | 'vides';
+type AnimalFilter = 'all' | 'pleines' | 'maternite' | 'vides' | 'a-vendre';
 
 interface AnimalStub {
   id: string;                  // identifiant utilisé pour la navigation (UUID OK)
@@ -108,12 +108,14 @@ export const AnimalsV70: React.FC = () => {
     const truiesPleines = truies.filter(t => /pleine|gestante|gestation/i.test(t.statut ?? '')).length;
     const truiesMater = truies.filter(t => /maternit[eé]|allaitante|allaitement/i.test(t.statut ?? '')).length;
     const truiesVides = truies.filter(t => /attente saillie|vide|sevr[eé]e/i.test(t.statut ?? '')).length;
+    const truiesAVendre = truies.filter(isReformed).length;
     const porcelets = bandes.reduce((acc, b) => acc + (b.vivants ?? 0), 0);
     return {
       truies: truies.length,
       truiesPleines,
       truiesMater,
       truiesVides,
+      truiesAVendre,
       verrats: verrats.length,
       porcelets,
       bandes: bandes.length,
@@ -124,16 +126,17 @@ export const AnimalsV70: React.FC = () => {
   // Données réelles via FarmContext quand dispo, sinon stubs cosmétiques V70
   const realStubs = useMemo<Record<AnimalTab, AnimalStub[] | null>>(() => ({
     truies: truies?.length
-      ? truies.slice(0, 8).map(t => {
+      ? truies.map(t => {
           const s = (t.statut ?? '').toLowerCase();
           const isPleine = /pleine|gestante|gestation/.test(s);
           const isMater = /maternité|maternite|allaitante|allaitement/.test(s);
           const isVide = /attente saillie|vide|sevrée|sevree/.test(s);
+          const isAVendre = /réforme|reforme/.test(s);
           return {
             id: t.displayId ?? t.id,
             status: t.statut ?? 'Truie active',
-            statusLabel: isPleine ? 'Pleine' : isMater ? 'Maternité' : isVide ? 'Vide' : (t.statut ?? 'Active'),
-            pillVariant: (isPleine ? 'success' : isMater ? 'warm' : isVide ? 'warning' : 'info') as PillVariant,
+            statusLabel: isPleine ? 'Pleine' : isMater ? 'Maternité' : isVide ? 'Vide' : isAVendre ? 'À vendre' : (t.statut ?? 'Active'),
+            pillVariant: (isPleine ? 'success' : isMater ? 'warm' : isVide ? 'warning' : isAVendre ? 'ghost' : 'info') as PillVariant,
           };
         })
       : null,
@@ -196,6 +199,7 @@ export const AnimalsV70: React.FC = () => {
         if (filter === 'pleines') return /pleine/i.test(s);
         if (filter === 'maternite') return /maternit/i.test(s);
         if (filter === 'vides') return /vide/i.test(s);
+        if (filter === 'a-vendre') return /à vendre|a vendre|réforme|reforme/i.test(s);
         return true;
       });
     }
@@ -206,6 +210,9 @@ export const AnimalsV70: React.FC = () => {
         (it.status ?? '').toLowerCase().includes(q) ||
         (it.statusLabel ?? '').toLowerCase().includes(q)
       );
+    }
+    if (tab === 'truies' && filter === 'all' && !search.trim()) {
+      return list.slice(0, 8);
     }
     return list;
   }, [baseList, filter, search, tab]);
@@ -323,6 +330,14 @@ export const AnimalsV70: React.FC = () => {
             aria-pressed={filter === 'vides'}
           >
             <Pill variant={filter === 'vides' ? 'primary' : 'ghost'}>{`Vides (${counts.truiesVides})`}</Pill>
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilter('a-vendre')}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+            aria-pressed={filter === 'a-vendre'}
+          >
+            <Pill variant={filter === 'a-vendre' ? 'primary' : 'ghost'}>{`À vendre (${counts.truiesAVendre})`}</Pill>
           </button>
         </div>
       )}

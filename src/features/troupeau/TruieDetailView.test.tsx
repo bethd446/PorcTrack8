@@ -309,7 +309,7 @@ describe('TruieDetailView', () => {
     () => {},
   );
 
-  it('SURVEILLANCE : bouton « Passer en réforme » avec confirm dialog', () => {
+  it('SURVEILLANCE : bouton « Sortir cette truie » avec confirm dialog', () => {
     // Simule l'appui sur « Confirmer » en appelant le handler du bouton destructif.
     presentAlertMock.mockImplementationOnce((opts: {
       buttons: { role?: string; handler?: () => void }[];
@@ -321,7 +321,7 @@ describe('TruieDetailView', () => {
 
     renderAt('/troupeau/truies/T22');
     const region = screen.getByRole('region', { name: /actions métier/i });
-    const btn = within(region).getByRole('button', { name: /passer en réforme/i });
+    const btn = within(region).getByRole('button', { name: /sortir cette truie/i });
     expect(btn).toBeDefined();
 
     fireEvent.click(btn);
@@ -344,7 +344,7 @@ describe('TruieDetailView', () => {
 
     renderAt('/troupeau/truies/T22');
     const region = screen.getByRole('region', { name: /actions métier/i });
-    fireEvent.click(within(region).getByRole('button', { name: /passer en réforme/i }));
+    fireEvent.click(within(region).getByRole('button', { name: /sortir cette truie/i }));
 
     expect(presentAlertMock).toHaveBeenCalledTimes(1);
     expect(enqueueUpdateRowMock).not.toHaveBeenCalled();

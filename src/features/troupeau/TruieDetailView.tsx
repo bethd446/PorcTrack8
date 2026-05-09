@@ -58,6 +58,7 @@ import {
 } from '../../services/rationCalculator';
 import { FEED_CONFIG } from '../../config/feed';
 import { labelStatutTruie } from '../../lib/labels';
+import { isReformed } from '../../v70/lib';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -226,7 +227,7 @@ const TruieDetailView: React.FC = () => {
     if (!truie) return;
     presentAlert({
       header: 'Mise en réforme',
-      message: `Confirmer la mise en réforme de la truie ${truie.displayId} ?`,
+      message: `Confirmer que la truie ${truie.displayId} doit être sortie du cheptel ?`,
       buttons: [
         { text: 'Annuler', role: 'cancel' },
         {
@@ -234,7 +235,7 @@ const TruieDetailView: React.FC = () => {
           role: 'destructive',
           handler: () => {
             void enqueueUpdateRow('SUIVI_TRUIES_REPRODUCTION', 'ID', truie.id, { STATUT: 'Réforme' });
-            setToast('Truie passée en réforme');
+            setToast('Truie marquée à sortir');
           },
         },
       ],
@@ -902,9 +903,19 @@ const TruieDetailView: React.FC = () => {
                 <section aria-label="Actions métier" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <Section label="ACTIONS" />
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {(truie.statut === 'À surveiller' || truie.statut === 'Réforme') && (
+                    {!isReformed(truie) && truie.statut === 'À surveiller' && (
                       <Button variant="danger" size="sm" onClick={handleReformer}>
-                        Passer en réforme
+                        Sortir cette truie
+                      </Button>
+                    )}
+                    {isReformed(truie) && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled
+                        ariaLabel={`Marquer la truie ${truie.displayId} comme vendue (bientôt disponible)`}
+                      >
+                        Marquer comme vendue (bientôt)
                       </Button>
                     )}
                     <Button
