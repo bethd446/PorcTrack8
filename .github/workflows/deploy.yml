@@ -36,6 +36,12 @@ jobs:
           # V70 (tag v3.0.0) : refonte 5 onglets + couche éducative + Mode avancé.
           # Rollback : remettre 'false' et redéployer (ou git revert merge V70).
           VITE_V70_ENABLED: 'true'
+          # V75-j Marius : sans ces clés, isMariusConfigured=false côté client
+          # et le widget chat reste désactivé. Mistral cloud primary,
+          # VPS Hostinger fallback.
+          VITE_MISTRAL_API_KEY: ${{ secrets.VITE_MISTRAL_API_KEY }}
+          VITE_MARIUS_API_BASE: ${{ secrets.VITE_MARIUS_API_BASE }}
+          VITE_MARIUS_API_KEY: ${{ secrets.VITE_MARIUS_API_KEY }}
 
       - name: Test FTP path canary
         run: |
