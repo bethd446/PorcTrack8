@@ -264,7 +264,25 @@
 
 ---
 
-## 2026-05-08 · [V74] Vagues S+T — sécurité Supabase + empty states finalisés · commit (à venir)
+## 2026-05-09 · [V74-V] Vague V — loading guards listings + signaux cancelled async · commit `229b942`
+
+**Livré** (1 session orchestrateur, suite logique de V74-U `2874558`) :
+
+- **Pattern listings** : nouveau hook `src/hooks/useListingLoadingGuard.ts` (36L) + composant partagé `src/components/design/ListingSkeleton.tsx` (44L). Élimine la classe de bug "faux empty state" pendant le chargement initial du FarmContext (items=[] vu avant `refreshAll()`, "Aucune truie" affiché 1-2s puis 50 truies surgissent). Le hook retourne `true` tant que `loading=true` ; en `loading=false` + `count=0` on laisse l'appelant afficher son empty state légitime.
+
+- **6 listings refactorés** : TroupeauTruiesView, TroupeauVerratsView, TroupeauPorceletsView, AnimalsV70 (onglets bandes/loges uniquement — truies/verrats restent stubs cosmétiques), PerformanceV70 (Top performances), TodayV70 (registre alertes).
+
+- **9 useEffect async durcis** avec signal `{ cancelled: false }` (pattern uniforme cleanup) : PhotoStrip, PhotoGallery, EncyclopediaArticle, AdminDashboard (LogsPanel + main), PendingValidationsView, FournisseursView, LogeDetailView, PoidsTriView, TroupeauLogesListView. Évite warnings React "setState on unmounted" + fuites mémoire en navigation rapide.
+
+- **Tests** : nouveau `useListingLoadingGuard.test.ts` (47L, 5 cas) + `PhotoGallery.cancelled.test.tsx` (60L, vérifie absence de warning console.error via mock photoUpload). 4 snapshots ajustés.
+
+**Tests** : 1898 → 1910 passing (+12). 0 régression. tsc OK 0 erreur. Build 3.08s, PWA 103 entries.
+
+**Liens** : src/hooks/useListingLoadingGuard.ts · src/components/design/ListingSkeleton.tsx · [[learnings#cancelled-signal-pattern]]
+
+---
+
+## 2026-05-08 · [V74] Vagues S+T — sécurité Supabase + empty states finalisés · commit `8d23a3d`
 
 **Livré** (2 sub-agents Opus 4.7 dispatched parallèle) :
 - **Vague S** — Backlog P2 sécurité Supabase. Audit advisor 11 → 6 WARN. Migrations appliquées :
