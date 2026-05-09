@@ -1,7 +1,7 @@
 import React from 'react';
 import type { BandePorcelets, PorceletIndividuel } from '../../types/farm';
 import { Pill, type PillVariant } from './ds/Pill';
-import { formatBandeName, derivePorceletPhase, type PorceletPhase } from '../lib';
+import { formatBandeName, derivePorceletPhase, formatPoids, type PorceletPhase } from '../lib';
 
 const PHASE_LABEL: Record<PorceletPhase, string> = {
   SOUS_MERE: 'Sous mère',
@@ -158,7 +158,7 @@ export const PorceletGroup: React.FC<PorceletGroupProps> = ({
                   {p.boucle}
                 </span>
                 <span style={{ color: 'var(--pt-muted)', minWidth: 70 }}>
-                  {p.poidsCourantKg != null ? `${p.poidsCourantKg} kg` : '—'}
+                  {formatPoids(p.poidsCourantKg)}
                 </span>
                 <span style={{ color: 'var(--pt-muted)', minWidth: 24 }}>
                   {p.sexe === 'INCONNU' ? '—' : p.sexe}

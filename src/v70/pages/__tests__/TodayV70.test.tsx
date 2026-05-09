@@ -66,10 +66,11 @@ describe('TodayV70 — Phase 3 archétype Dashboard', () => {
         <TodayV70 />
       </MemoryRouter>,
     );
-    expect(screen.getByText('Truies')).toBeTruthy();
-    expect(screen.getByText('Verrats')).toBeTruthy();
-    expect(screen.getByText('Porcelets')).toBeTruthy();
-    expect(screen.getByText('Bandes')).toBeTruthy();
+    // V75-q (F-3) — labels suffixés "· auj." pour cadrer temporellement.
+    expect(screen.getByText(/Truies · auj\./)).toBeTruthy();
+    expect(screen.getByText(/Verrats · auj\./)).toBeTruthy();
+    expect(screen.getByText(/Porcelets · auj\./)).toBeTruthy();
+    expect(screen.getByText(/Bandes · auj\./)).toBeTruthy();
   });
 
   it('rend section alertes vide quand farm vide (alertes calculées depuis FarmContext)', () => {

@@ -12,9 +12,8 @@
  *   5. Montant auto-calculé        → computeVenteMontant(nb, poids, prix)
  *   6. Vivants = 0 après vente     → bandePatch.STATUT = 'Vendue'
  *
- * Les deux enqueues passent par `enqueueUpdateRow` puis `enqueueAppendRow`
- * (ordre préservé : bande AVANT finance, pour ne pas créer de comptabilité
- * orpheline en cas de crash entre les deux).
+ * Les deux mutations sont émises dans l'ordre bande AVANT finance pour ne
+ * pas créer de comptabilité orpheline en cas de crash entre les deux.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

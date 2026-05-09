@@ -432,12 +432,14 @@ export const TodayV70: React.FC = () => {
       <NotificationsPermissionPrompt />
 
       {/* Section 3 : MON ÉLEVAGE (KPIs résumés) */}
+      {/* V75-q (F-3) — suffixe "aujourd'hui" sur chaque label pour cadrer
+          temporellement les counts (instantané, pas de tendance dispo). */}
       <Section label="Mon élevage">
         <StatsGrid cols={4}>
-          <Stat value={showSkeletons ? '—' : stats.truies} label="Truies" />
-          <Stat value={showSkeletons ? '—' : stats.verrats} label="Verrats" />
-          <Stat value={showSkeletons ? '—' : stats.porcelets} label="Porcelets" />
-          <Stat value={showSkeletons ? '—' : stats.bandes} label="Bandes" />
+          <Stat value={showSkeletons ? '—' : stats.truies} label="Truies · auj." />
+          <Stat value={showSkeletons ? '—' : stats.verrats} label="Verrats · auj." />
+          <Stat value={showSkeletons ? '—' : stats.porcelets} label="Porcelets · auj." />
+          <Stat value={showSkeletons ? '—' : stats.bandes} label="Bandes · auj." />
         </StatsGrid>
       </Section>
 

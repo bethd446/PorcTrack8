@@ -2,24 +2,23 @@
 /**
  * Tests unitaires — QuickEditBandeForm (logic-level).
  * ════════════════════════════════════════════════════════════════════════
- * Vitest tourne en `node` env (pas de jsdom), on teste donc :
- *   1. Le validateur pur `validateBandeEdit` (règles cohérence + dates).
- *   2. L'helper de submit qui miroir la logique du composant — confirme
- *      que la sheet cible est `PORCELETS_BANDES_DETAIL` avec idHeader `ID`,
- *      les clés canoniques (DATE_MB, NV, MORTS, VIVANTS, …) et la
- *      conversion ISO → dd/MM/yyyy.
+ * V75-q-D : retrait du mock `enqueueUpdateRow` (fonction supprimée). Le
+ * composant runtime appelle désormais `updateBatchByCode` direct via
+ * Supabase ; les tests valident maintenant `validateBandeEdit` et le diff
+ * patch produit (clés canoniques + conversion dates).
  *
- * Couvre les 7 cas demandés :
+ * Couvre :
  *   [1] Render (signature des champs / raw input mapping)
  *   [2] Validation Morts + Vivants > NV rejetée
  *   [3] Validation date sevrage avant date MB rejetée
- *   [4] Submit patch correct
- *   [5] Submit patch partiel (juste vivants modifié)
- *   [6] Patch dates au format dd/MM/yyyy
- *   [7] Submit offline → queue
+ *   [4] Diff patch — sheet/id n'existent plus, on assert sur les clés canoniques
+ *   [5] Diff patch partiel (juste vivants modifié)
+ *   [6] Conversion dates ISO → dd/MM/yyyy dans le patch
+ *   [V24] Sources multi-mères + sélection loge
+ *   [V25] Conflit loge 1:1
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   validateBandeEdit,
@@ -28,20 +27,6 @@ import {
   type BandeEditRawInput,
 } from './quickEditBandeValidation';
 import type { BandePorcelets } from '../../types/farm';
-
-// ── Mock global du module offlineQueue ─────────────────────────────────────
-type EnqueueUpdateRowArgs = [
-  sheet: string,
-  idHeader: string,
-  idValue: string,
-  patch: Record<string, string | number | boolean | null>,
-];
-const enqueueUpdateRowMock = vi.fn<(...args: EnqueueUpdateRowArgs) => Promise<void>>(
-  async () => undefined,
-);
-vi.mock('../../services/offlineQueue', () => ({
-  enqueueUpdateRow: (...args: EnqueueUpdateRowArgs) => enqueueUpdateRowMock(...args),
-}));
 
 // ── Fixtures ───────────────────────────────────────────────────────────────
 function makeBande(overrides: Partial<BandePorcelets> = {}): BandePorcelets {
@@ -83,46 +68,6 @@ function makeInput(overrides: Partial<BandeEditRawInput> = {}): BandeEditRawInpu
     ...overrides,
   };
 }
-
-// Helper mirroring le submit du composant
-async function submitBandeEdit(opts: {
-  bande: BandePorcelets;
-  input: BandeEditRawInput;
-  initial: BandeEditRawInput;
-  refreshData: () => Promise<void>;
-}): Promise<{
-  ok: boolean;
-  mode: 'online' | 'offline';
-  errors?: Record<string, string>;
-  patch?: Record<string, string | number | boolean | null>;
-}> {
-  const result = validateBandeEdit(opts.input, opts.initial);
-  if (!result.ok || !result.patch) {
-    return { ok: false, mode: 'online', errors: result.errors as Record<string, string> };
-  }
-  if (Object.keys(result.patch).length === 0) {
-    return { ok: true, mode: 'online', patch: {} };
-  }
-  const { enqueueUpdateRow } = await import('../../services/offlineQueue');
-  await enqueueUpdateRow(
-    'PORCELETS_BANDES_DETAIL',
-    'ID',
-    opts.bande.id,
-    result.patch as Record<string, string | number | boolean | null>,
-  );
-  const online =
-    typeof navigator !== 'undefined' && (navigator as { onLine?: boolean }).onLine;
-  await opts.refreshData();
-  return {
-    ok: true,
-    mode: online ? 'online' : 'offline',
-    patch: result.patch as Record<string, string | number | boolean | null>,
-  };
-}
-
-beforeEach(() => {
-  enqueueUpdateRowMock.mockClear();
-});
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -299,14 +244,9 @@ describe('[3] cohérence dates MB / Sevrage', () => {
   });
 });
 
-// ─── [4] Submit patch correct ─────────────────────────────────────────────
-describe('[4] submit patch correct — sheet + idHeader + clés canoniques', () => {
-  it('envoie le patch à PORCELETS_BANDES_DETAIL avec idHeader ID', async () => {
-    Object.defineProperty(navigator, 'onLine', {
-      configurable: true,
-      get: () => true,
-    });
-    const refreshData = vi.fn(async () => undefined);
+// ─── [4] Diff patch — clés canoniques ─────────────────────────────────────
+describe('[4] diff patch — clés canoniques', () => {
+  it('produit un patch multi-clés avec TRUIE, NV, MORTS, VIVANTS, STATUT, NOTES', () => {
     const bande = makeBande();
     const initial = bandeToRawInput(bande);
     const input: BandeEditRawInput = {
@@ -320,18 +260,9 @@ describe('[4] submit patch correct — sheet + idHeader + clés canoniques', () 
       notes: 'Portée solide',
     };
 
-    const out = await submitBandeEdit({ bande, input, initial, refreshData });
-
-    expect(out.ok).toBe(true);
-    expect(out.mode).toBe('online');
-    expect(enqueueUpdateRowMock).toHaveBeenCalledTimes(1);
-    const [sheet, idHeader, idValue, patch] = enqueueUpdateRowMock.mock.calls[0];
-    expect(sheet).toBe('PORCELETS_BANDES_DETAIL');
-    expect(idHeader).toBe('ID');
-    expect(idValue).toBe('P-2026-03');
-
-    // Clés canoniques présentes
-    expect(patch).toMatchObject({
+    const result = validateBandeEdit(input, initial);
+    expect(result.ok).toBe(true);
+    expect(result.patch).toMatchObject({
       TRUIE: 'T07',
       NV: 15,
       MORTS: 3,
@@ -339,48 +270,40 @@ describe('[4] submit patch correct — sheet + idHeader + clés canoniques', () 
       STATUT: 'Sevrés',
       NOTES: 'Portée solide',
     });
-    expect(refreshData).toHaveBeenCalledTimes(1);
   });
 });
 
 // ─── [5] Patch partiel — un seul champ modifié ────────────────────────────
 describe('[5] patch partiel — seules les valeurs modifiées', () => {
-  it('envoie uniquement VIVANTS quand seul ce champ change', async () => {
-    const refreshData = vi.fn(async () => undefined);
+  it('produit uniquement VIVANTS quand seul ce champ change', () => {
     const bande = makeBande();
     const initial = bandeToRawInput(bande);
     const input: BandeEditRawInput = { ...initial, vivants: '11' }; // seule modif
 
-    const out = await submitBandeEdit({ bande, input, initial, refreshData });
-    expect(out.ok).toBe(true);
-    expect(out.patch).toEqual({ VIVANTS: 11 });
-
-    const call = enqueueUpdateRowMock.mock.calls[0];
-    expect(call[3]).toEqual({ VIVANTS: 11 });
+    const result = validateBandeEdit(input, initial);
+    expect(result.ok).toBe(true);
+    expect(result.patch).toEqual({ VIVANTS: 11 });
 
     // Aucune autre clé (TRUIE, NV, MORTS, STATUT, etc.) ne doit apparaître
-    const keys = Object.keys(call[3]);
+    const keys = Object.keys(result.patch ?? {});
     expect(keys).toHaveLength(1);
     expect(keys).toEqual(['VIVANTS']);
   });
 
-  it('patch vide → aucun appel réseau', async () => {
-    const refreshData = vi.fn(async () => undefined);
+  it('patch vide quand aucune modification', () => {
     const bande = makeBande();
     const initial = bandeToRawInput(bande);
     const input = { ...initial }; // aucune modif
 
-    const out = await submitBandeEdit({ bande, input, initial, refreshData });
-    expect(out.ok).toBe(true);
-    expect(out.patch).toEqual({});
-    expect(enqueueUpdateRowMock).not.toHaveBeenCalled();
+    const result = validateBandeEdit(input, initial);
+    expect(result.ok).toBe(true);
+    expect(result.patch).toEqual({});
   });
 });
 
 // ─── [6] Dates au format dd/MM/yyyy ───────────────────────────────────────
 describe('[6] conversion dates ISO → dd/MM/yyyy dans le patch', () => {
-  it('convertit DATE_MB, DATE_SEVRAGE_PREVUE, DATE_SEVRAGE_REELLE, DATE_SEPARATION', async () => {
-    const refreshData = vi.fn(async () => undefined);
+  it('convertit DATE_MB, DATE_SEVRAGE_PREVUE, DATE_SEVRAGE_REELLE, DATE_SEPARATION', () => {
     const bande = makeBande({
       dateMB: undefined,
       dateSevragePrevue: undefined,
@@ -396,9 +319,9 @@ describe('[6] conversion dates ISO → dd/MM/yyyy dans le patch', () => {
       dateSeparation: '2026-06-22',
     };
 
-    const out = await submitBandeEdit({ bande, input, initial, refreshData });
-    expect(out.ok).toBe(true);
-    expect(out.patch).toMatchObject({
+    const result = validateBandeEdit(input, initial);
+    expect(result.ok).toBe(true);
+    expect(result.patch).toMatchObject({
       DATE_MB: '15/03/2026',
       DATE_SEVRAGE_PREVUE: '12/04/2026',
       DATE_SEVRAGE_REELLE: '14/04/2026',
@@ -406,17 +329,16 @@ describe('[6] conversion dates ISO → dd/MM/yyyy dans le patch', () => {
     });
   });
 
-  it('effacer une date → envoie chaîne vide', async () => {
-    const refreshData = vi.fn(async () => undefined);
+  it('effacer une date → patch contient chaîne vide', () => {
     const bande = makeBande({ dateSevrageReelle: '14/04/2026' });
     const initial = bandeToRawInput(bande);
     const input: BandeEditRawInput = {
       ...initial,
       dateSevrageReelle: '',
     };
-    const out = await submitBandeEdit({ bande, input, initial, refreshData });
-    expect(out.ok).toBe(true);
-    expect(out.patch).toEqual({ DATE_SEVRAGE_REELLE: '' });
+    const result = validateBandeEdit(input, initial);
+    expect(result.ok).toBe(true);
+    expect(result.patch).toEqual({ DATE_SEVRAGE_REELLE: '' });
   });
 });
 
@@ -575,29 +497,15 @@ describe('[V25-1] conflit loge 1:1 — bande déjà occupée', () => {
   });
 });
 
-// ─── [7] Submit offline → queue ───────────────────────────────────────────
-describe('[7] submit offline → queue', () => {
-  it('enqueue + mode offline quand navigator.onLine = false', async () => {
-    Object.defineProperty(navigator, 'onLine', {
-      configurable: true,
-      get: () => false,
-    });
-    const refreshData = vi.fn(async () => undefined);
+// ─── [7] Patch STATUT seul ────────────────────────────────────────────────
+describe('[7] patch STATUT seul', () => {
+  it('produit { STATUT } quand seul le statut change', () => {
     const bande = makeBande();
     const initial = bandeToRawInput(bande);
     const input: BandeEditRawInput = { ...initial, statut: 'Sevrés' };
 
-    const out = await submitBandeEdit({ bande, input, initial, refreshData });
-
-    expect(out.ok).toBe(true);
-    expect(out.mode).toBe('offline');
-    expect(enqueueUpdateRowMock).toHaveBeenCalledTimes(1);
-    expect(enqueueUpdateRowMock).toHaveBeenCalledWith(
-      'PORCELETS_BANDES_DETAIL',
-      'ID',
-      'P-2026-03',
-      { STATUT: 'Sevrés' },
-    );
-    expect(refreshData).toHaveBeenCalledTimes(1);
+    const result = validateBandeEdit(input, initial);
+    expect(result.ok).toBe(true);
+    expect(result.patch).toEqual({ STATUT: 'Sevrés' });
   });
 });

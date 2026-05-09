@@ -4,10 +4,11 @@
  * Persistance : Capacitor Preferences (SharedPreferences/NSUserDefaults).
  * Backend cible : Supabase via les helpers typés de `supabaseWrites.ts`.
  *
- * Les anciennes signatures `enqueueAppendRow` / `enqueueUpdateRow` sont
- * conservées en alias rétro-compat pour ne pas casser les ~40 formulaires
- * Quick* qui les appellent encore. Vague 2b : migration de ces callers
- * vers `enqueueInsert` / `enqueueUpdate` directement.
+ * V75-q-D : la signature legacy `enqueueUpdateRow` a été supprimée — tous
+ * les callers runtime ont migré vers `enqueueUpdate` (V75-p) puis vers les
+ * writes Supabase directs (`updateSow`, `updateBoarByCode`, etc.). Reste
+ * uniquement `enqueueAppendRow` pour deux callers Sheets résiduels
+ * (notesApi `SHEET_DAILY`/`SHEET_WEEKLY`, phaseEngine `HISTORIQUE_TRANSITIONS`).
  */
 
 import { Preferences } from '@capacitor/preferences';
@@ -286,10 +287,10 @@ export async function enqueueDelete(
   await saveQueue(queue);
 }
 
-// ── Alias rétro-compat (signatures Sheets héritées) ─────────────────────────
-// Ne fonctionnent plus runtime côté Sheets — la vague 2b migrera leurs callers
-// vers enqueueInsert/enqueueUpdate. Ils compilent et logguent un warning pour
-// signaler les usages qui restent.
+// ── Alias rétro-compat (signature Sheets héritée) ───────────────────────────
+// Ne fonctionne plus runtime côté Sheets — les deux callers résiduels
+// (notesApi, phaseEngine) écrivent dans des sheets sans équivalent Supabase.
+// La fonction logge un warning et drop silencieusement les valeurs.
 
 /** @deprecated migrer vers enqueueInsert(table, values) */
 export async function enqueueAppendRow(
@@ -300,26 +301,6 @@ export async function enqueueAppendRow(
     `[offlineQueue] enqueueAppendRow('${sheet}', …) appelé — caller à migrer vers enqueueInsert (vague 2b).`,
   );
   void values;
-}
-
-/**
- * @deprecated TOUS LES CALLERS RUNTIME ONT ÉTÉ MIGRÉS (V75-p) vers
- * `enqueueUpdate(table, id, fields)` ou un write Supabase direct. Cette
- * fonction est conservée uniquement parce que des tests legacy
- * (Quick*EditForm.test.tsx) la mockent encore via vi.mock — supprimer dès
- * que ces tests seront migrés ou retirés. Ne PAS l'utiliser dans du code
- * runtime : elle drop silencieusement le patch.
- */
-export async function enqueueUpdateRow(
-  sheet: string,
-  idHeader: string,
-  idValue: string,
-  patch: Record<string, SheetCell>,
-): Promise<void> {
-  console.warn(
-    `[offlineQueue] enqueueUpdateRow('${sheet}', '${idHeader}'='${idValue}', …) appelé — DATA LOSS. Migrer vers enqueueUpdate.`,
-  );
-  void patch;
 }
 
 // ── Lecture cache mémoire ────────────────────────────────────────────────────

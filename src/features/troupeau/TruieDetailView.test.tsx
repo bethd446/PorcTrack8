@@ -391,8 +391,8 @@ describe('TruieDetailView', () => {
     // Race est dans la section Identité.
     expect(within(identite).getByText('Race')).toBeDefined();
     expect(within(identite).getByText('Large White')).toBeDefined();
-    // Le poids est désormais affiché dans les Vitales (KPI cards).
-    const vitales = screen.getByRole('region', { name: /vitales/i });
+    // Le poids est désormais affiché dans la section Dernière activité (KPI cards).
+    const vitales = screen.getByRole('region', { name: /derni[èe]re activit[ée]/i });
     expect(within(vitales).getByText('Poids')).toBeDefined();
     // Valeur 235 affichée séparément de l'unité "kg" (split valeur/small).
     expect(within(vitales).getByText('235')).toBeDefined();

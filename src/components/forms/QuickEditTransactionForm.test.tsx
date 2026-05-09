@@ -1,16 +1,21 @@
 /**
  * Tests unitaires — QuickEditTransactionForm (logic-level, node env).
  * ════════════════════════════════════════════════════════════════════════
+ * V75-q-D : retrait du mock `enqueueUpdateRow` (fonction supprimée). Le
+ * composant runtime appelle désormais `supabase.from('finances').update(...)`
+ * direct ; les tests valident maintenant `validateEditTransaction` et le
+ * diff patch produit (clés canoniques + conversion date).
+ *
  * Couvre :
  *   [1] render — transactionToDraft convertit dd/MM/yyyy → yyyy-MM-dd.
  *   [2] validation — montant négatif rejeté, libellé vide rejeté, notes > 200.
- *   [3] submit update — enqueueUpdateRow appelé avec sheet FINANCES + id.
- *   [4] offline queue — appel même sans navigator.onLine.
- *   [5] patch partiel — seuls les champs modifiés sont envoyés.
+ *   [3] diff patch — clés canoniques (LIBELLE, MONTANT, CATEGORIE, TYPE, …).
+ *   [4] patch partiel — seuls les champs modifiés sont envoyés.
+ *   [5] patch partiel — les valeurs construites par buildEditPatch.
  *   [6] conversion date → dd/MM/yyyy dans le patch.
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   validateEditTransaction,
@@ -18,24 +23,8 @@ import {
   transactionToDraft,
   frToIsoDate,
   type EditTransactionDraft,
-  type EditTransactionPatch,
 } from './QuickEditTransactionForm';
 import type { FinanceEntry } from '../../types/farm';
-import type { SheetCell } from '../../services/offlineQueue';
-
-// ── Mock global de offlineQueue ─────────────────────────────────────────────
-type EnqueueUpdateRowArgs = [
-  sheet: string,
-  idHeader: string,
-  idValue: string,
-  patch: Record<string, SheetCell>,
-];
-const enqueueUpdateRowMock = vi.fn<(...args: EnqueueUpdateRowArgs) => Promise<void>>(
-  async () => undefined,
-);
-vi.mock('../../services/offlineQueue', () => ({
-  enqueueUpdateRow: (...args: EnqueueUpdateRowArgs) => enqueueUpdateRowMock(...args),
-}));
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
 function makeTx(overrides: Partial<FinanceEntry> = {}): FinanceEntry {
@@ -62,30 +51,6 @@ function makeDraft(overrides: Partial<EditTransactionDraft> = {}): EditTransacti
     ...overrides,
   };
 }
-
-// Mirror du submit composant pour tests node.
-async function submitEdit(
-  input: EditTransactionDraft,
-  initial: EditTransactionDraft,
-  id: string,
-  refreshData: () => Promise<void>,
-): Promise<{ ok: boolean; patch?: EditTransactionPatch; errors?: Record<string, string> }> {
-  const v = validateEditTransaction(input, initial);
-  if (!v.ok || !v.patch) {
-    return { ok: false, errors: v.errors };
-  }
-  if (Object.keys(v.patch).length === 0) {
-    return { ok: true, patch: {} };
-  }
-  const { enqueueUpdateRow } = await import('../../services/offlineQueue');
-  await enqueueUpdateRow('FINANCES', 'ID', id, v.patch);
-  await refreshData();
-  return { ok: true, patch: v.patch };
-}
-
-beforeEach(() => {
-  enqueueUpdateRowMock.mockClear();
-});
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -179,11 +144,11 @@ describe('[2] validation', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// [3] Submit → enqueueUpdateRow (sheet + id corrects)
+// [3] Diff patch — clés canoniques
 // ═══════════════════════════════════════════════════════════════════════════
 
-describe('[3] submit → enqueueUpdateRow', () => {
-  it('appelle enqueueUpdateRow avec FINANCES/ID/id + patch complet', async () => {
+describe('[3] diff patch — clés canoniques', () => {
+  it('produit un patch complet avec LIBELLE, MONTANT, CATEGORIE, TYPE, BANDE_ID, NOTES', () => {
     const initial = makeDraft();
     const input = makeDraft({
       libelle: 'Sac aliment v2',
@@ -193,65 +158,39 @@ describe('[3] submit → enqueueUpdateRow', () => {
       bandeId: 'P-2026-03',
       notes: 'correction',
     });
-    const refreshData = vi.fn(async () => undefined);
-    const out = await submitEdit(input, initial, 'FIN-2026-042', refreshData);
-
-    expect(out.ok).toBe(true);
-    expect(enqueueUpdateRowMock).toHaveBeenCalledTimes(1);
-    const [sheet, idHeader, idValue, patch] = enqueueUpdateRowMock.mock.calls[0];
-    expect(sheet).toBe('FINANCES');
-    expect(idHeader).toBe('ID');
-    expect(idValue).toBe('FIN-2026-042');
-
+    const v = validateEditTransaction(input, initial);
+    expect(v.ok).toBe(true);
+    expect(v.patch).toBeDefined();
+    const patch = v.patch ?? {};
     expect(patch.LIBELLE).toBe('Sac aliment v2');
     expect(patch.MONTANT).toBe(22000);
     expect(patch.CATEGORIE).toBe('VETO');
     expect(patch.TYPE).toBe('REVENU');
     expect(patch.BANDE_ID).toBe('P-2026-03');
     expect(patch.NOTES).toBe('correction');
-    expect(refreshData).toHaveBeenCalledTimes(1);
   });
 
-  it('submit invalide → pas d\'enqueue', async () => {
+  it('input invalide → ok=false, pas de patch', () => {
     const initial = makeDraft();
-    const refreshData = vi.fn(async () => undefined);
-    const out = await submitEdit(
+    const v = validateEditTransaction(
       makeDraft({ libelle: '', montant: '-2' }),
       initial,
-      'FIN-999',
-      refreshData,
     );
-    expect(out.ok).toBe(false);
-    expect(enqueueUpdateRowMock).not.toHaveBeenCalled();
-    expect(refreshData).not.toHaveBeenCalled();
+    expect(v.ok).toBe(false);
+    expect(v.patch).toBeUndefined();
   });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// [4] Offline queue
+// [4] Patch vide quand aucune modification
 // ═══════════════════════════════════════════════════════════════════════════
 
-describe('[4] offline queue — indépendante de navigator.onLine', () => {
-  it('enqueueUpdateRow est appelée même offline (la queue gère la persistance)', async () => {
-    // Simule offline via vi.stubGlobal (pas d'impact sur l'appel à enqueue)
-    vi.stubGlobal('navigator', { onLine: false });
+describe('[4] patch vide quand aucune modification', () => {
+  it('input identique à initial → patch vide', () => {
     const initial = makeDraft();
-    const input = makeDraft({ montant: '19000' });
-    const refreshData = vi.fn(async () => undefined);
-    const out = await submitEdit(input, initial, 'FIN-1', refreshData);
-
-    expect(out.ok).toBe(true);
-    expect(enqueueUpdateRowMock).toHaveBeenCalledTimes(1);
-    vi.unstubAllGlobals();
-  });
-
-  it('patch vide → pas d\'enqueue (rien à faire)', async () => {
-    const initial = makeDraft();
-    const refreshData = vi.fn(async () => undefined);
-    const out = await submitEdit(initial, initial, 'FIN-1', refreshData);
-    expect(out.ok).toBe(true);
-    expect(out.patch).toEqual({});
-    expect(enqueueUpdateRowMock).not.toHaveBeenCalled();
+    const v = validateEditTransaction(initial, initial);
+    expect(v.ok).toBe(true);
+    expect(v.patch).toEqual({});
   });
 });
 

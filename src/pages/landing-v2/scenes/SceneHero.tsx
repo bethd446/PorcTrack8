@@ -172,7 +172,7 @@ export function SceneHero() {
           }}
         >
           L'app GTTT pensée pour les naisseurs-engraisseurs d'Afrique de l'Ouest.
-          117 porcelets, 13 bandes, 5 loges suivis sans Excel.
+          Suivez vos truies, vos bandes et vos porcelets sans Excel.
         </p>
 
         <div

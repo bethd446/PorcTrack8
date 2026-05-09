@@ -2,23 +2,20 @@
 /**
  * Tests unitaires — QuickEditSaillieForm (logic-level).
  * ════════════════════════════════════════════════════════════════════════
- * Vitest tourne en `node` env (pas de jsdom), on teste donc :
- *   1. Le validateur pur `validateSaillieEdit` (règles + diff patch partiel).
- *   2. Les helpers de dates (addDaysIso, frToIso, isoToFr).
- *   3. Un helper miroir du submit — confirme sheet 'SUIVI_REPRODUCTION_ACTUEL',
- *      idHeader 'ID TRUIE' et clés canoniques (ID TRUIE, VERRAT, DATE SAILLIE,
- *      DATE MB PREVUE, STATUT, NOTES).
+ * V75-q-D : retrait du mock `enqueueUpdateRow` (fonction supprimée). Le
+ * composant runtime appelle désormais `supabase.from('saillies').update(...)`
+ * direct ; les tests valident `validateSaillieEdit` et le diff patch produit.
  *
- * Cas couverts (6) :
- *   [1] Render — constantes exposées (STATUT_OPTIONS, GESTATION_DAYS)
- *   [2] Validation date invalide rejetée
- *   [3] Submit patch correct (sheet + idHeader + clés canoniques)
- *   [4] Auto-calc MB prévue à +115j (addDaysIso)
- *   [5] Offline queue (navigator.onLine = false)
- *   [6] Patch partiel (juste date modifiée → pas les autres clés)
+ * Couvre :
+ *   [1] Render — constantes exposées (STATUT_OPTIONS, GESTATION_DAYS).
+ *   [2] Validation date invalide rejetée.
+ *   [3] Diff patch — clés canoniques (VERRAT, STATUT, …).
+ *   [4] Auto-calc MB prévue à +115j (addDaysIso).
+ *   [5] Patch multi-champs (verrat + notes).
+ *   [6] Patch partiel (juste date modifiée → pas les autres clés).
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   validateSaillieEdit,
@@ -30,56 +27,6 @@ import {
   type SaillieEditForm,
   type SaillieEditInitial,
 } from './quickEditSaillieValidation';
-
-// ── Mock global du module offlineQueue ─────────────────────────────────────
-type EnqueueUpdateRowArgs = [
-  sheet: string,
-  idHeader: string,
-  idValue: string,
-  patch: Record<string, string | number | boolean | null>,
-];
-const enqueueUpdateRowMock = vi.fn<(...args: EnqueueUpdateRowArgs) => Promise<void>>(
-  async () => undefined,
-);
-vi.mock('../../services/offlineQueue', () => ({
-  enqueueUpdateRow: (...args: EnqueueUpdateRowArgs) => enqueueUpdateRowMock(...args),
-}));
-
-// Helper qui miroir la logique du submit — isolé pour test node env.
-async function submitSaillieEdit(opts: {
-  truieId: string;
-  form: SaillieEditForm;
-  initial: SaillieEditInitial;
-  refreshData: () => Promise<void>;
-}): Promise<{
-  ok: boolean;
-  mode: 'online' | 'offline';
-  errors?: Record<string, string | undefined>;
-  patchApplied?: Record<string, string | number | boolean | null>;
-}> {
-  const result = validateSaillieEdit(opts.form, opts.initial);
-  if (!result.ok || !result.patch) {
-    return { ok: false, mode: 'online', errors: result.errors };
-  }
-  if (Object.keys(result.patch).length === 0) {
-    return { ok: true, mode: 'online', patchApplied: {} };
-  }
-  const { enqueueUpdateRow } = await import('../../services/offlineQueue');
-  await enqueueUpdateRow(
-    'SUIVI_REPRODUCTION_ACTUEL',
-    'ID TRUIE',
-    opts.truieId,
-    result.patch,
-  );
-  const online =
-    typeof navigator !== 'undefined' && (navigator as { onLine?: boolean }).onLine;
-  await opts.refreshData();
-  return {
-    ok: true,
-    mode: online ? 'online' : 'offline',
-    patchApplied: result.patch,
-  };
-}
 
 // ── Fixtures ──────────────────────────────────────────────────────────────
 function makeInitial(over: Partial<SaillieEditInitial> = {}): SaillieEditInitial {
@@ -105,10 +52,6 @@ function makeForm(over: Partial<SaillieEditForm> = {}): SaillieEditForm {
     ...over,
   };
 }
-
-beforeEach(() => {
-  enqueueUpdateRowMock.mockClear();
-});
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -229,54 +172,37 @@ describe('[2] validation date invalide rejetée', () => {
     expect(res.errors.verratId).toBeTruthy();
   });
 
-  it('submit avec date invalide → pas d\'enqueue, pas de refresh', async () => {
-    const refreshData = vi.fn(async () => undefined);
-    const out = await submitSaillieEdit({
-      truieId: 'T01',
-      form: makeForm({ dateSaillie: 'not-a-date' }),
-      initial: makeInitial(),
-      refreshData,
-    });
-    expect(out.ok).toBe(false);
-    expect(out.errors?.dateSaillie).toBeTruthy();
-    expect(enqueueUpdateRowMock).not.toHaveBeenCalled();
-    expect(refreshData).not.toHaveBeenCalled();
+  it('date invalide → ok=false, pas de patch', () => {
+    const res = validateSaillieEdit(
+      makeForm({ dateSaillie: 'not-a-date' }),
+      makeInitial(),
+    );
+    expect(res.ok).toBe(false);
+    expect(res.errors.dateSaillie).toBeTruthy();
+    expect(res.patch).toBeUndefined();
   });
 });
 
 // ══════════════════════════════════════════════════════════════════════════
-// [3] Submit patch correct (sheet + idHeader + clés canoniques)
+// [3] Diff patch — clés canoniques
 // ══════════════════════════════════════════════════════════════════════════
-describe('[3] submit patch correct', () => {
-  it('modifier VERRAT uniquement → patch = { VERRAT }', async () => {
-    const refreshData = vi.fn(async () => undefined);
-    const out = await submitSaillieEdit({
-      truieId: 'T01',
-      form: makeForm({ verratId: 'V02' }),
-      initial: makeInitial({ verratId: 'V01' }),
-      refreshData,
-    });
-    expect(out.ok).toBe(true);
-    expect(out.patchApplied).toEqual({ VERRAT: 'V02' });
-    expect(enqueueUpdateRowMock).toHaveBeenCalledTimes(1);
-    expect(enqueueUpdateRowMock).toHaveBeenCalledWith(
-      'SUIVI_REPRODUCTION_ACTUEL',
-      'ID TRUIE',
-      'T01',
-      { VERRAT: 'V02' },
+describe('[3] diff patch — clés canoniques', () => {
+  it('modifier VERRAT uniquement → patch = { VERRAT }', () => {
+    const res = validateSaillieEdit(
+      makeForm({ verratId: 'V02' }),
+      makeInitial({ verratId: 'V01' }),
     );
+    expect(res.ok).toBe(true);
+    expect(res.patch).toEqual({ VERRAT: 'V02' });
   });
 
-  it('modifier statut → patch.STATUT', async () => {
-    const refreshData = vi.fn(async () => undefined);
-    const out = await submitSaillieEdit({
-      truieId: 'T01',
-      form: makeForm({ statut: 'Confirmée' }),
-      initial: makeInitial({ statut: 'Active' }),
-      refreshData,
-    });
-    expect(out.ok).toBe(true);
-    expect(out.patchApplied).toEqual({ STATUT: 'Confirmée' });
+  it('modifier statut → patch.STATUT', () => {
+    const res = validateSaillieEdit(
+      makeForm({ statut: 'Confirmée' }),
+      makeInitial({ statut: 'Active' }),
+    );
+    expect(res.ok).toBe(true);
+    expect(res.patch).toEqual({ STATUT: 'Confirmée' });
   });
 
   it('tous les statuts valides acceptés', () => {
@@ -287,20 +213,6 @@ describe('[3] submit patch correct', () => {
       );
       expect(res.ok).toBe(true);
     }
-  });
-
-  it('sheet cible = SUIVI_REPRODUCTION_ACTUEL, idHeader = ID TRUIE', async () => {
-    const refreshData = vi.fn(async () => undefined);
-    await submitSaillieEdit({
-      truieId: 'T07',
-      form: makeForm({ verratId: 'V02', notes: 'Nouvel essai' }),
-      initial: makeInitial(),
-      refreshData,
-    });
-    const [sheet, idHeader, idValue] = enqueueUpdateRowMock.mock.calls[0];
-    expect(sheet).toBe('SUIVI_REPRODUCTION_ACTUEL');
-    expect(idHeader).toBe('ID TRUIE');
-    expect(idValue).toBe('T07');
   });
 });
 
@@ -325,21 +237,18 @@ describe('[4] auto-calc MB prévue à +115 jours', () => {
     expect(addDaysIso('invalid', 115)).toBe('');
   });
 
-  it('submit avec nouvelle date saillie + auto MB recalc → patch contient les 2 dates au format dd/MM/yyyy', async () => {
-    const refreshData = vi.fn(async () => undefined);
+  it('nouvelle date saillie + auto MB recalc → patch contient les 2 dates au format dd/MM/yyyy', () => {
     const newDate = '2025-11-01';
     const autoMb = addDaysIso(newDate, GESTATION_DAYS); // 2026-02-24
     expect(autoMb).toBe('2026-02-24');
 
-    const out = await submitSaillieEdit({
-      truieId: 'T01',
-      form: makeForm({ dateSaillie: newDate, dateMBPrevue: autoMb }),
-      initial: makeInitial(),
-      refreshData,
-    });
-    expect(out.ok).toBe(true);
-    // Le patch envoyé doit contenir les dates au format Sheets dd/MM/yyyy
-    expect(out.patchApplied).toEqual({
+    const res = validateSaillieEdit(
+      makeForm({ dateSaillie: newDate, dateMBPrevue: autoMb }),
+      makeInitial(),
+    );
+    expect(res.ok).toBe(true);
+    // Le patch produit doit contenir les dates au format dd/MM/yyyy
+    expect(res.patch).toEqual({
       'DATE SAILLIE': '01/11/2025',
       'DATE MB PREVUE': '24/02/2026',
     });
@@ -347,33 +256,19 @@ describe('[4] auto-calc MB prévue à +115 jours', () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════
-// [5] Offline queue (navigator.onLine = false)
+// [5] Patch multi-champs (verrat + notes)
 // ══════════════════════════════════════════════════════════════════════════
-describe('[5] submit offline → queue', () => {
-  it('navigator.onLine = false → mode offline, enqueue appelé', async () => {
-    Object.defineProperty(navigator, 'onLine', {
-      configurable: true,
-      get: () => false,
-    });
-    const refreshData = vi.fn(async () => undefined);
-
-    const out = await submitSaillieEdit({
-      truieId: 'T05',
-      form: makeForm({ verratId: 'V02', notes: 'Sync auto plus tard' }),
-      initial: makeInitial(),
-      refreshData,
-    });
-
-    expect(out.ok).toBe(true);
-    expect(out.mode).toBe('offline');
-    expect(enqueueUpdateRowMock).toHaveBeenCalledTimes(1);
-    expect(enqueueUpdateRowMock).toHaveBeenCalledWith(
-      'SUIVI_REPRODUCTION_ACTUEL',
-      'ID TRUIE',
-      'T05',
-      { VERRAT: 'V02', NOTES: 'Sync auto plus tard' },
+describe('[5] patch multi-champs', () => {
+  it('verrat + notes modifiés → patch = { VERRAT, NOTES }', () => {
+    const res = validateSaillieEdit(
+      makeForm({ verratId: 'V02', notes: 'Sync auto plus tard' }),
+      makeInitial(),
     );
-    expect(refreshData).toHaveBeenCalledTimes(1);
+    expect(res.ok).toBe(true);
+    expect(res.patch).toEqual({
+      VERRAT: 'V02',
+      NOTES: 'Sync auto plus tard',
+    });
   });
 });
 
@@ -381,57 +276,41 @@ describe('[5] submit offline → queue', () => {
 // [6] Patch partiel : juste date modifiée → pas les autres clés
 // ══════════════════════════════════════════════════════════════════════════
 describe('[6] patch partiel (diff uniquement)', () => {
-  it('modifier uniquement DATE SAILLIE → patch contient seulement cette clé', async () => {
-    const refreshData = vi.fn(async () => undefined);
-    const out = await submitSaillieEdit({
-      truieId: 'T01',
-      form: makeForm({ dateSaillie: '2025-10-16' }),
-      initial: makeInitial({ dateSaillie: '2025-10-15' }),
-      refreshData,
-    });
-    expect(out.ok).toBe(true);
-    expect(out.patchApplied).toEqual({ 'DATE SAILLIE': '16/10/2025' });
-    expect(out.patchApplied).not.toHaveProperty('VERRAT');
-    expect(out.patchApplied).not.toHaveProperty('STATUT');
-    expect(out.patchApplied).not.toHaveProperty('NOTES');
-    expect(out.patchApplied).not.toHaveProperty('DATE MB PREVUE');
-    expect(out.patchApplied).not.toHaveProperty('ID TRUIE');
+  it('modifier uniquement DATE SAILLIE → patch contient seulement cette clé', () => {
+    const res = validateSaillieEdit(
+      makeForm({ dateSaillie: '2025-10-16' }),
+      makeInitial({ dateSaillie: '2025-10-15' }),
+    );
+    expect(res.ok).toBe(true);
+    expect(res.patch).toEqual({ 'DATE SAILLIE': '16/10/2025' });
+    expect(res.patch).not.toHaveProperty('VERRAT');
+    expect(res.patch).not.toHaveProperty('STATUT');
+    expect(res.patch).not.toHaveProperty('NOTES');
+    expect(res.patch).not.toHaveProperty('DATE MB PREVUE');
+    expect(res.patch).not.toHaveProperty('ID TRUIE');
   });
 
-  it('modifier uniquement NOTES → patch = { NOTES }', async () => {
-    const refreshData = vi.fn(async () => undefined);
-    const out = await submitSaillieEdit({
-      truieId: 'T01',
-      form: makeForm({ notes: 'Observation tardive' }),
-      initial: makeInitial({ notes: '' }),
-      refreshData,
-    });
-    expect(out.ok).toBe(true);
-    expect(out.patchApplied).toEqual({ NOTES: 'Observation tardive' });
+  it('modifier uniquement NOTES → patch = { NOTES }', () => {
+    const res = validateSaillieEdit(
+      makeForm({ notes: 'Observation tardive' }),
+      makeInitial({ notes: '' }),
+    );
+    expect(res.ok).toBe(true);
+    expect(res.patch).toEqual({ NOTES: 'Observation tardive' });
   });
 
-  it('aucune modification → patch vide, pas d\'enqueue', async () => {
-    const refreshData = vi.fn(async () => undefined);
-    const out = await submitSaillieEdit({
-      truieId: 'T01',
-      form: makeForm(),
-      initial: makeInitial(),
-      refreshData,
-    });
-    expect(out.ok).toBe(true);
-    expect(out.patchApplied).toEqual({});
-    expect(enqueueUpdateRowMock).not.toHaveBeenCalled();
+  it('aucune modification → patch vide', () => {
+    const res = validateSaillieEdit(makeForm(), makeInitial());
+    expect(res.ok).toBe(true);
+    expect(res.patch).toEqual({});
   });
 
-  it('effacer dateMBPrevue → patch contient DATE MB PREVUE = ""', async () => {
-    const refreshData = vi.fn(async () => undefined);
-    const out = await submitSaillieEdit({
-      truieId: 'T01',
-      form: makeForm({ dateMBPrevue: '' }),
-      initial: makeInitial({ dateMBPrevue: '2026-02-07' }),
-      refreshData,
-    });
-    expect(out.ok).toBe(true);
-    expect(out.patchApplied).toEqual({ 'DATE MB PREVUE': '' });
+  it('effacer dateMBPrevue → patch contient DATE MB PREVUE = ""', () => {
+    const res = validateSaillieEdit(
+      makeForm({ dateMBPrevue: '' }),
+      makeInitial({ dateMBPrevue: '2026-02-07' }),
+    );
+    expect(res.ok).toBe(true);
+    expect(res.patch).toEqual({ 'DATE MB PREVUE': '' });
   });
 });

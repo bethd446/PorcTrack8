@@ -2,18 +2,19 @@
 /**
  * Tests unitaires — QuickEditTruieForm (logic-level).
  * ════════════════════════════════════════════════════════════════════════
- * Vitest tourne en `node` env (pas de jsdom / testing-library dans ce repo),
- * on teste donc :
+ * V75-q-D : retrait du mock `enqueueUpdateRow` (fonction supprimée). Le
+ * composant runtime appelle désormais `updateSow` direct via Supabase ;
+ * les tests se concentrent sur les validators purs et le diff patch.
+ *
+ * Couvre :
  *   1. Le validateur pur `validateTruieEdit` (règles nom + ration) — LEGACY.
  *   2. Le validateur étendu `validateTruieEditFull` — multi-champs, diff patch.
- *   3. Le comportement de `submitTruieEdit` (helper local) sur le mock
- *      d'`enqueueUpdateRow` — confirme colonnes GAS, sheet et idHeader.
- *   4. Conversion date yyyy-MM-dd → dd/MM/yyyy pour GAS.
- *
- * Couvre les cas historiques + les 8 nouveaux cas demandés pour la v2.
+ *   3. Conversion date yyyy-MM-dd → dd/MM/yyyy pour le patch.
+ *   4. [V25] Détection conflit loge 1:1.
+ *   5. [V26-FIX] Persistance Supabase via updateSow(uuid).
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   validateTruieEdit,
@@ -23,70 +24,6 @@ import {
   type TruieEditDraft,
   type TruieEditInitial,
 } from './quickEditTruieValidation';
-
-// ── Mock global du module offlineQueue ─────────────────────────────────────
-type EnqueueUpdateRowArgs = [
-  sheet: string,
-  idHeader: string,
-  idValue: string,
-  patch: Record<string, string | number | boolean | null>,
-];
-const enqueueUpdateRowMock = vi.fn<(...args: EnqueueUpdateRowArgs) => Promise<void>>(
-  async () => undefined,
-);
-vi.mock('../../services/offlineQueue', () => ({
-  enqueueUpdateRow: (...args: EnqueueUpdateRowArgs) => enqueueUpdateRowMock(...args),
-}));
-
-// Helper qui miroir la logique du submit dans le composant — isolé pour test
-// node env sans jsdom. Le vrai composant fait exactement ces 3 appels.
-async function submitTruieEdit(opts: {
-  truieId: string;
-  nom: string;
-  ration: string;
-  refreshData: () => Promise<void>;
-}): Promise<{ ok: boolean; mode: 'online' | 'offline'; errors?: Record<string, string> }> {
-  const result = validateTruieEdit(opts.nom, opts.ration);
-  if (!result.ok || !result.patch) {
-    return { ok: false, mode: 'online', errors: result.errors };
-  }
-
-  const { enqueueUpdateRow } = await import('../../services/offlineQueue');
-  await enqueueUpdateRow(
-    'SUIVI_TRUIES_REPRODUCTION',
-    'ID',
-    opts.truieId,
-    result.patch,
-  );
-  const online =
-    typeof navigator !== 'undefined' && (navigator as { onLine?: boolean }).onLine;
-  await opts.refreshData();
-  return { ok: true, mode: online ? 'online' : 'offline' };
-}
-
-// Helper miroir du submit v2 (multi-champs avec diff patch)
-async function submitTruieEditFull(opts: {
-  truieId: string;
-  draft: TruieEditDraft;
-  initial: TruieEditInitial;
-  refreshData: () => Promise<void>;
-}): Promise<{ ok: boolean; mode: 'online' | 'offline'; errors?: Record<string, string>; patch?: Record<string, unknown> }> {
-  const result = validateTruieEditFull(opts.draft, opts.initial);
-  if (!result.ok || !result.patch) {
-    return { ok: false, mode: 'online', errors: result.errors };
-  }
-  const { enqueueUpdateRow } = await import('../../services/offlineQueue');
-  await enqueueUpdateRow(
-    'SUIVI_TRUIES_REPRODUCTION',
-    'ID',
-    opts.truieId,
-    result.patch,
-  );
-  const online =
-    typeof navigator !== 'undefined' && (navigator as { onLine?: boolean }).onLine;
-  await opts.refreshData();
-  return { ok: true, mode: online ? 'online' : 'offline', patch: result.patch };
-}
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
 const baseInitial: TruieEditInitial = {
@@ -107,10 +44,6 @@ const baseInitial: TruieEditInitial = {
 };
 
 const baseDraft: TruieEditDraft = { ...baseInitial };
-
-beforeEach(() => {
-  enqueueUpdateRowMock.mockClear();
-});
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -176,70 +109,24 @@ describe('validateTruieEdit (legacy 2-args)', () => {
   });
 });
 
-describe('submitTruieEdit — enqueueUpdateRow + refreshData', () => {
-  it('[3] submit offline → enqueue (colonnes GAS correctes), mode offline', async () => {
-    Object.defineProperty(navigator, 'onLine', {
-      configurable: true,
-      get: () => false,
-    });
-    const refreshData = vi.fn(async () => undefined);
-
-    const out = await submitTruieEdit({
-      truieId: 'T05',
-      nom: 'Hermione',
-      ration: '4.2',
-      refreshData,
-    });
-
-    expect(out.ok).toBe(true);
-    expect(out.mode).toBe('offline');
-    expect(enqueueUpdateRowMock).toHaveBeenCalledTimes(1);
-    expect(enqueueUpdateRowMock).toHaveBeenCalledWith(
-      'SUIVI_TRUIES_REPRODUCTION',
-      'ID',
-      'T05',
-      { NOM: 'Hermione', 'RATION KG/J': 4.2 },
-    );
-    expect(refreshData).toHaveBeenCalledTimes(1);
+describe('validateTruieEdit — patch contenu', () => {
+  it('[3] patch contient NOM + RATION KG/J pour nom + ration valides', () => {
+    const result = validateTruieEdit('Hermione', '4.2');
+    expect(result.ok).toBe(true);
+    expect(result.patch).toEqual({ NOM: 'Hermione', 'RATION KG/J': 4.2 });
   });
 
-  it('[4] submit online → enqueue + refreshData appelé, mode online', async () => {
-    Object.defineProperty(navigator, 'onLine', {
-      configurable: true,
-      get: () => true,
-    });
-    const refreshData = vi.fn(async () => undefined);
-
-    const out = await submitTruieEdit({
-      truieId: 'T18',
-      nom: '',
-      ration: '6',
-      refreshData,
-    });
-
-    expect(out.ok).toBe(true);
-    expect(out.mode).toBe('online');
-    expect(enqueueUpdateRowMock).toHaveBeenCalledWith(
-      'SUIVI_TRUIES_REPRODUCTION',
-      'ID',
-      'T18',
-      { NOM: '', 'RATION KG/J': 6 },
-    );
-    expect(refreshData).toHaveBeenCalledTimes(1);
+  it('[4] patch retire le nom (NOM="") quand vide', () => {
+    const result = validateTruieEdit('', '6');
+    expect(result.ok).toBe(true);
+    expect(result.patch).toEqual({ NOM: '', 'RATION KG/J': 6 });
   });
 
-  it("submit invalide → pas d'enqueue, pas de refresh", async () => {
-    const refreshData = vi.fn(async () => undefined);
-    const out = await submitTruieEdit({
-      truieId: 'T99',
-      nom: 'A',
-      ration: '15', // > 10
-      refreshData,
-    });
-    expect(out.ok).toBe(false);
-    expect(out.errors?.ration).toBeTruthy();
-    expect(enqueueUpdateRowMock).not.toHaveBeenCalled();
-    expect(refreshData).not.toHaveBeenCalled();
+  it('submit invalide → ok=false + erreur ration', () => {
+    const result = validateTruieEdit('A', '15'); // > 10
+    expect(result.ok).toBe(false);
+    expect(result.errors.ration).toBeTruthy();
+    expect(result.patch).toBeUndefined();
   });
 });
 
@@ -323,14 +210,8 @@ describe('validateTruieEditFull (v2 multi-champs)', () => {
     expect(res.patch).not.toHaveProperty('POIDS');
   });
 
-  // [NEW-7] Submit offline → queue
-  it('[NEW-7] submit offline → enqueue avec patch multi-champs', async () => {
-    Object.defineProperty(navigator, 'onLine', {
-      configurable: true,
-      get: () => false,
-    });
-    const refreshData = vi.fn(async () => undefined);
-
+  // [NEW-7] Patch multi-champs avec conversion date
+  it('[NEW-7] patch multi-champs (race, stade, date convertie)', () => {
     const draft: TruieEditDraft = {
       ...baseInitial,
       race: 'Duroc', // modifié
@@ -338,27 +219,13 @@ describe('validateTruieEditFull (v2 multi-champs)', () => {
       dateMBPrevue: '2026-06-15', // modifié
     };
 
-    const out = await submitTruieEditFull({
-      truieId: 'T07',
-      draft,
-      initial: baseInitial,
-      refreshData,
+    const result = validateTruieEditFull(draft, baseInitial);
+    expect(result.ok).toBe(true);
+    expect(result.patch).toEqual({
+      RACE: 'Duroc',
+      STADE: 'Gestante',
+      DATE_MB_PREVUE: '15/06/2026', // converti yyyy-MM-dd → dd/MM/yyyy
     });
-
-    expect(out.ok).toBe(true);
-    expect(out.mode).toBe('offline');
-    expect(enqueueUpdateRowMock).toHaveBeenCalledTimes(1);
-    expect(enqueueUpdateRowMock).toHaveBeenCalledWith(
-      'SUIVI_TRUIES_REPRODUCTION',
-      'ID',
-      'T07',
-      {
-        RACE: 'Duroc',
-        STADE: 'Gestante',
-        DATE_MB_PREVUE: '15/06/2026', // converti yyyy-MM-dd → dd/MM/yyyy
-      },
-    );
-    expect(refreshData).toHaveBeenCalledTimes(1);
   });
 
   // [NEW-8] Date MB prévue : conversion yyyy-MM-dd → dd/MM/yyyy

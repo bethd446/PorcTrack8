@@ -33,6 +33,7 @@ import { PushNotifToggle } from '../components/v70/PushNotifToggle';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 import FarmSwitcher from '../../components/FarmSwitcher';
 import { useOfflineQueue } from '../../hooks/useOfflineQueue';
+import { titleCase } from '../lib';
 
 const PAGE_BACKGROUND_SRC = '/images/ambiance-ux.webp';
 
@@ -138,7 +139,8 @@ export const ReglagesV70: React.FC = () => {
   }, [signOut, navigate]);
 
   // V71.1 — données live profile (étaient hardcodées "Christophe / Owner · Ferme audit test")
-  const displayName = profile?.full_name?.trim() || 'Éleveur';
+  // V75-q B-1 (F-34) : Title Case pour rendu pro ("audit final" → "Audit Final").
+  const displayName = titleCase(profile?.full_name?.trim()) || 'Éleveur';
   const initial = displayName.charAt(0).toUpperCase();
   const farmLabel = (profile?.email?.split('@')[0] ?? 'ma-ferme').replace(/[._-]+/g, ' ');
   const roleLabel = role || 'Utilisateur';

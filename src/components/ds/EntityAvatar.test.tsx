@@ -108,6 +108,20 @@ describe('EntityAvatar', () => {
     expect(screen.getByLabelText('Avatar porcelet')).toBeTruthy();
   });
 
+  // V75-q (F-20) — un shortCode qui ressemble à un fragment UUID (hex pur)
+  // ne doit plus être annoncé au screenreader : il pollue l'a11y sans
+  // apporter d'information utile à l'éleveur.
+  it('masque un shortCode UUID-fragment (hex pur) dans aria-label', () => {
+    render(<EntityAvatar species="truie" shortCode="a3f9b2c1" />);
+    expect(screen.getByLabelText('Avatar truie')).toBeTruthy();
+    expect(screen.queryByLabelText('Avatar truie a3f9b2c1')).toBeNull();
+  });
+
+  it('garde un shortCode métier (lettres + chiffres) dans aria-label', () => {
+    render(<EntityAvatar species="truie" shortCode="T-001" />);
+    expect(screen.getByLabelText('Avatar truie T-001')).toBeTruthy();
+  });
+
   it('forward le className au wrapper', () => {
     const { container } = render(<EntityAvatar species="truie" className="my-avatar" />);
     expect(container.querySelector('.my-avatar')).not.toBeNull();

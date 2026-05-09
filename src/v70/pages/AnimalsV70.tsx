@@ -23,7 +23,7 @@ import { PorceletGroup } from '../components/PorceletGroup';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { PigSilhouette } from '../components/v70/icons/PigSilhouette';
 import { useFarm, useMeta } from '../../context/FarmContext';
-import { formatBandeName, isReformed } from '../lib';
+import { formatBandeName, isReformed, formatDateFr } from '../lib';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 import ListingSkeleton from '../../components/design/ListingSkeleton';
 import { useListingLoadingGuard } from '../../hooks/useListingLoadingGuard';
@@ -221,7 +221,7 @@ export const AnimalsV70: React.FC = () => {
               dateMB: b.dateMB,
             }),
             // V75-n F-22 : NV → "nés vivants" (libellé explicite)
-            status: `${b.truie ? `Mère ${b.truie} · ` : ''}${b.dateMB ? `MB ${b.dateMB}` : 'En cours'}${b.nv ? ` · ${b.nv} nés vivants` : ''}`,
+            status: `${b.truie ? `Mère ${b.truie} · ` : ''}${b.dateMB ? `MB ${formatDateFr(b.dateMB)}` : 'En cours'}${b.nv ? ` · ${b.nv} nés vivants` : ''}`,
             statusLabel: b.statut ?? 'Active',
             pillVariant: 'success' as PillVariant,
           }))

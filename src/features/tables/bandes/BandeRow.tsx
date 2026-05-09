@@ -2,6 +2,7 @@ import React from 'react';
 import { AlertCircle, ChevronRight, CheckCheck } from 'lucide-react';
 import { Chip } from '../../../components/agritech';
 import { Button } from '@/design-system';
+import { formatDateFr } from '../../../v70/lib';
 import { statusTone, type AggregatedBande } from './types';
 
 interface BandeRowProps {
@@ -66,7 +67,7 @@ const BandeRow: React.FC<BandeRowProps> = ({ bande, isSelected, selectionMode, o
 
           <div className="flex items-center gap-3 text-[11px] text-text-2 flex-wrap">
             {bande.dateMB ? (
-              <span>MB&nbsp;{String(bande.dateMB)}</span>
+              <span>MB&nbsp;{formatDateFr(String(bande.dateMB))}</span>
             ) : null}
             {bande.age !== null ? (
               <span className="text-accent">

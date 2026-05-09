@@ -11,3 +11,5 @@ export {
 
 export { derivePorceletPhase } from './porceletPhase';
 export type { PorceletPhase } from './porceletPhase';
+
+export { formatDateFr, formatPoids, titleCase } from './formatters';

@@ -107,6 +107,18 @@ const SVG_BY_SPECIES: Record<EntitySpecies, React.FC<SvgProps>> = {
   bande: BandeSvg,
 };
 
+// V75-q (F-20) — Filtre les shortCode de type UUID-fragment (hex pur, ≥ 6
+// caractères) pour ne pas les exposer au screenreader. Ces fragments sont
+// utilisés en interne pour générer une couleur stable, mais n'apportent aucune
+// information utile à un éleveur qui parcourt la liste au voiceover.
+// Les codes métier ("T-001", "B-002", "porc-12-A") restent exposés.
+const HEX_ONLY_RE = /^[0-9a-f]{6,}$/i;
+
+function isMeaningfulShortCode(code: string | undefined): code is string {
+  if (!code) return false;
+  return !HEX_ONLY_RE.test(code);
+}
+
 export const EntityAvatar: React.FC<EntityAvatarProps> = ({
   species,
   photoUrl,
@@ -124,6 +136,7 @@ export const EntityAvatar: React.FC<EntityAvatarProps> = ({
   const effectiveUrl = photoUrl ?? fallbackUrl;
   const showPhoto = Boolean(effectiveUrl) && !imgError;
   const Svg = SVG_BY_SPECIES[species];
+  const announceCode = isMeaningfulShortCode(shortCode);
 
   return (
     <div
@@ -140,12 +153,12 @@ export const EntityAvatar: React.FC<EntityAvatarProps> = ({
         flexShrink: 0,
       }}
       role="img"
-      aria-label={shortCode ? `Avatar ${species} ${shortCode}` : `Avatar ${species}`}
+      aria-label={announceCode ? `Avatar ${species} ${shortCode}` : `Avatar ${species}`}
     >
       {showPhoto ? (
         <img
           src={effectiveUrl ?? undefined}
-          alt={shortCode ?? species}
+          alt={announceCode ? shortCode : species}
           loading="lazy"
           onError={() => setImgError(true)}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}

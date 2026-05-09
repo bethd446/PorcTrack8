@@ -435,17 +435,58 @@ const TruieDetailView: React.FC = () => {
     .slice(0, 12);
 
   // ── Marius (analyse synthétique) ───────────────────────────────────────────
+  // V75-q (F-10) — la branche "Aucune saillie enregistrée" était affichée même
+  // sur une truie réformée, ce qui était absurde (elle ne va plus se reproduire).
+  // On distingue maintenant les cas réforme / sortie / statuts de cycle.
 
   const mariusAnalysis = (() => {
     const nbSaillies = sowSaillies.length;
     const nbReussies = sowSaillies.filter(s => s.statut === 'CONFIRMEE').length;
-    if (nbSaillies === 0) {
+
+    if (isReformed(truie)) {
+      if (alreadySortedOut(truie)) {
+        return (
+          <>
+            {formatSortieLabel(truie)}. <strong className="ink">Aucune action requise — la truie est sortie du cheptel.</strong>
+          </>
+        );
+      }
       return (
         <>
-          Aucune saillie enregistrée pour cette truie. <strong className="ink">Surveille la première détection de chaleurs pour planifier la mise à la reproduction.</strong>
+          Truie en réforme. <strong className="ink">À sortir du cheptel — utilise le bouton « Marquer comme sortie » ci-dessous (vente, abattoir ou mortalité).</strong>
         </>
       );
     }
+
+    if (nbSaillies === 0) {
+      if (truie.statut === 'En attente saillie') {
+        return (
+          <>
+            Aucune saillie enregistrée pour cette truie. <strong className="ink">Surveille la première détection de chaleurs pour planifier la mise à la reproduction.</strong>
+          </>
+        );
+      }
+      if (truie.statut === 'Pleine') {
+        return (
+          <>
+            Truie déclarée pleine sans saillie historisée. <strong className="ink">Pense à enregistrer la saillie dans le journal pour estimer la mise-bas (J115).</strong>
+          </>
+        );
+      }
+      if (truie.statut === 'En maternité') {
+        return (
+          <>
+            Truie en maternité. <strong className="ink">Vérifie le colostrum sur les premiers porcelets et surveille la mortalité allaitement (seuil 15 %).</strong>
+          </>
+        );
+      }
+      return (
+        <>
+          Statut courant : <strong>{truie.statut ?? '—'}</strong>. <strong className="ink">Surveille les prochains événements et enregistre les saillies dès la détection des chaleurs.</strong>
+        </>
+      );
+    }
+
     return (
       <>
         {truie.displayId} compte <strong>{nbSaillies} saillies</strong> au registre dont <strong>{nbReussies} confirmées</strong>. Moyenne ferme : 12 % de retours. <strong className="ink">Si nouvel échec après cette saillie, point vétérinaire recommandé.</strong>
@@ -605,9 +646,9 @@ const TruieDetailView: React.FC = () => {
 
             {/* Vitales · 5 KPI (Aperçu uniquement) */}
             {activeTab === 'overview' && (
-            <section aria-label="Vitales">
+            <section aria-label="Dernière activité">
               <div style={{ marginBottom: 12 }}>
-                <Section label="VITALES" />
+                <Section label="DERNIÈRE ACTIVITÉ" />
               </div>
               {showVitalesEmpty ? (
                 <div

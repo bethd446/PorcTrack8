@@ -35,7 +35,7 @@ import { useFarm, useMeta } from '../../context/FarmContext';
 import { computeGlobalKpis } from '../../services/perfKpiAnalyzer';
 import { buildForecastEvents } from '../../utils/forecastEvents';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
-import { formatBandeName } from '../lib';
+import { formatBandeName, formatDateFr } from '../lib';
 import { computeScoreGlobal } from '../lib/scoreGlobal';
 
 const PAGE_BACKGROUND_SRC = '/images/ambiance-croissance.webp';
@@ -299,11 +299,13 @@ export const PerformanceV70: React.FC = () => {
       </Card>
 
       {/* Edu card ISSE — visible en Vue + KPIs */}
+      {/* V75-q (F-30) — on retire l'effet d'épellation I/S/S (lettres en gras
+          isolées) qui ralentissait la lecture pour un éleveur novice : le sigle
+          est maintenant énoncé en clair une seule fois en intro. */}
       {(tab === 'vue' || tab === 'kpis') && (
         <EduCard label="Qu'est-ce que l'ISSE ?">
-          <strong>I</strong>ndice <strong>S</strong>evré-<strong>S</strong>aillie : nombre moyen de
-          porcelets sevrés par truie par cycle. Référence métier :{' '}
-          <strong>&gt;12 = excellent, 10-12 = bon, &lt;10 = à améliorer</strong>.
+          Indice Sevré-Saillie : nombre moyen de porcelets sevrés par truie par cycle.
+          Référence métier : <strong>&gt;12 = excellent, 10-12 = bon, &lt;10 = à améliorer</strong>.
         </EduCard>
       )}
 
@@ -498,7 +500,7 @@ export const PerformanceV70: React.FC = () => {
                     />
                   </span>
                 }
-                subtitle={`${b.dateMB ? `MB ${b.dateMB}` : ''} · ${b.nv ?? '?'} nés vivants`}
+                subtitle={`${b.dateMB ? `MB ${formatDateFr(b.dateMB)}` : ''} · ${b.nv ?? '?'} nés vivants`}
                 trailing={<span className="list-arrow">›</span>}
                 onClick={() => navigate(`/troupeau/bandes/${b.id}`)}
               />

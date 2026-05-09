@@ -1,59 +1,30 @@
 /**
  * Tests unitaires — QuickEditStockForm (logic-level).
  * ════════════════════════════════════════════════════════════════════════
- * Vitest tourne en `node` env (pas de jsdom), on teste donc les helpers purs
- * + le flow de soumission contre un mock d'`enqueueUpdateRow`.
+ * V75-q-D : retrait du mock `enqueueUpdateRow` (fonction supprimée). Le
+ * composant runtime appelle désormais `updateProduitAliment`/`updateProduitVeto`
+ * direct via Supabase ; les tests valident `validateStockEdit` et le patch
+ * produit (clés canoniques + sheetName).
  *
- * 6 tests obligatoires :
+ * Couvre :
  *   [1] Render mode Aliment — pré-remplissage affiche libelle
  *   [2] Render mode Véto    — pré-remplissage affiche produit + type + usage
  *   [3] Validation libellé/produit vide → rejetée
- *   [4] Submit patch correct pour Aliment (colonnes canoniques + sheet)
- *   [5] Submit patch correct pour Véto (colonnes canoniques + sheet)
+ *   [4] validateStockEdit Aliment → sheetName STOCK_ALIMENTS + colonnes canoniques
+ *   [5] validateStockEdit Véto → sheetName STOCK_VETO + colonnes canoniques
  *   [6] Bouton Recalculer applique la logique stock/seuil → statut
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   recomputeStatut,
   stockLabelFor,
   toStockEditInput,
   validateStockEdit,
-  type StockEditErrors,
   type StockEditInput,
 } from './quickEditStockLogic';
 import type { StockAliment, StockVeto } from '../../types/farm';
-
-// ── Mock global offlineQueue ───────────────────────────────────────────────
-type EnqueueUpdateRowArgs = [
-  sheet: string,
-  idHeader: string,
-  idValue: string,
-  patch: Record<string, string | number | boolean | null>,
-];
-const enqueueUpdateRowMock = vi.fn<(...args: EnqueueUpdateRowArgs) => Promise<void>>(
-  async () => undefined,
-);
-vi.mock('../../services/offlineQueue', () => ({
-  enqueueUpdateRow: (...args: EnqueueUpdateRowArgs) => enqueueUpdateRowMock(...args),
-}));
-
-// Helper qui miroir le submit du composant — isolé pour test node env.
-async function submitStockEdit(opts: {
-  id: string;
-  input: StockEditInput;
-  refreshData: () => Promise<void>;
-}): Promise<{ ok: boolean; errors?: StockEditErrors }> {
-  const result = validateStockEdit(opts.input);
-  if (!result.ok || !result.patch || !result.sheetName) {
-    return { ok: false, errors: result.errors };
-  }
-  const { enqueueUpdateRow } = await import('../../services/offlineQueue');
-  await enqueueUpdateRow(result.sheetName, 'ID', opts.id, result.patch);
-  await opts.refreshData();
-  return { ok: true };
-}
 
 // ── Fixtures ───────────────────────────────────────────────────────────────
 function makeAliment(over: Partial<StockAliment> = {}): StockAliment {
@@ -84,10 +55,6 @@ function makeVeto(over: Partial<StockVeto> = {}): StockVeto {
     ...over,
   };
 }
-
-beforeEach(() => {
-  enqueueUpdateRowMock.mockClear();
-});
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -231,11 +198,9 @@ describe('QuickEditStockForm · Validation identité', () => {
   });
 });
 
-// ─── [4] Submit patch correct pour Aliment ───────────────────────────────
-describe('QuickEditStockForm · Submit Aliment', () => {
-  it('[4] submit Aliment → enqueueUpdateRow(STOCK_ALIMENTS, ID, …) avec colonnes canoniques', async () => {
-    const refreshData = vi.fn(async () => undefined);
-
+// ─── [4] validateStockEdit Aliment — sheetName + colonnes canoniques ─────
+describe('QuickEditStockForm · validateStockEdit Aliment', () => {
+  it('[4] sheet STOCK_ALIMENTS + patch avec colonnes canoniques (LIBELLE, STOCK_ACTUEL, …)', () => {
     const input: StockEditInput = {
       kind: 'ALIMENT',
       libelle: '  Truie gestation  ', // trim attendu
@@ -246,32 +211,20 @@ describe('QuickEditStockForm · Submit Aliment', () => {
       notes: 'Nouveau lot',
     };
 
-    const out = await submitStockEdit({
-      id: 'ALIM-01',
-      input,
-      refreshData,
+    const result = validateStockEdit(input);
+    expect(result.ok).toBe(true);
+    expect(result.sheetName).toBe('STOCK_ALIMENTS');
+    expect(result.patch).toEqual({
+      LIBELLE: 'Truie gestation',
+      STOCK_ACTUEL: 250,
+      UNITE: 'kg',
+      SEUIL_ALERTE: 100,
+      STATUT_STOCK: 'OK',
+      NOTES: 'Nouveau lot',
     });
-
-    expect(out.ok).toBe(true);
-    expect(enqueueUpdateRowMock).toHaveBeenCalledTimes(1);
-    expect(enqueueUpdateRowMock).toHaveBeenCalledWith(
-      'STOCK_ALIMENTS',
-      'ID',
-      'ALIM-01',
-      {
-        LIBELLE: 'Truie gestation',
-        STOCK_ACTUEL: 250,
-        UNITE: 'kg',
-        SEUIL_ALERTE: 100,
-        STATUT_STOCK: 'OK',
-        NOTES: 'Nouveau lot',
-      },
-    );
-    expect(refreshData).toHaveBeenCalledTimes(1);
   });
 
-  it('patch Aliment ne contient PAS les colonnes véto', async () => {
-    const refreshData = vi.fn(async () => undefined);
+  it('patch Aliment ne contient PAS les colonnes véto', () => {
     const input: StockEditInput = {
       kind: 'ALIMENT',
       libelle: 'Porcelets',
@@ -282,19 +235,18 @@ describe('QuickEditStockForm · Submit Aliment', () => {
       notes: '',
     };
 
-    await submitStockEdit({ id: 'ALIM-02', input, refreshData });
-    const patchArg = enqueueUpdateRowMock.mock.calls[0]?.[3] ?? {};
+    const result = validateStockEdit(input);
+    expect(result.ok).toBe(true);
+    const patchArg = result.patch ?? {};
     expect(Object.keys(patchArg)).not.toContain('PRODUIT');
     expect(Object.keys(patchArg)).not.toContain('TYPE');
     expect(Object.keys(patchArg)).not.toContain('USAGE');
   });
 });
 
-// ─── [5] Submit patch correct pour Véto ──────────────────────────────────
-describe('QuickEditStockForm · Submit Véto', () => {
-  it('[5] submit Véto → enqueueUpdateRow(STOCK_VETO, ID, …) avec PRODUIT + TYPE + USAGE', async () => {
-    const refreshData = vi.fn(async () => undefined);
-
+// ─── [5] validateStockEdit Véto — sheetName + colonnes canoniques ────────
+describe('QuickEditStockForm · validateStockEdit Véto', () => {
+  it('[5] sheet STOCK_VETO + patch avec PRODUIT + TYPE + USAGE + STOCK_ACTUEL …', () => {
     const input: StockEditInput = {
       kind: 'VETO',
       produit: 'Ivermectine',
@@ -307,34 +259,22 @@ describe('QuickEditStockForm · Submit Véto', () => {
       notes: 'Lot reçu 01/04',
     };
 
-    const out = await submitStockEdit({
-      id: 'VET-03',
-      input,
-      refreshData,
+    const result = validateStockEdit(input);
+    expect(result.ok).toBe(true);
+    expect(result.sheetName).toBe('STOCK_VETO');
+    expect(result.patch).toEqual({
+      PRODUIT: 'Ivermectine',
+      TYPE: 'Antiparasitaire',
+      USAGE: 'Déparasitage',
+      STOCK_ACTUEL: 50,
+      UNITE: 'mL',
+      SEUIL_ALERTE: 20,
+      STATUT_STOCK: 'OK',
+      NOTES: 'Lot reçu 01/04',
     });
-
-    expect(out.ok).toBe(true);
-    expect(enqueueUpdateRowMock).toHaveBeenCalledTimes(1);
-    expect(enqueueUpdateRowMock).toHaveBeenCalledWith(
-      'STOCK_VETO',
-      'ID',
-      'VET-03',
-      {
-        PRODUIT: 'Ivermectine',
-        TYPE: 'Antiparasitaire',
-        USAGE: 'Déparasitage',
-        STOCK_ACTUEL: 50,
-        UNITE: 'mL',
-        SEUIL_ALERTE: 20,
-        STATUT_STOCK: 'OK',
-        NOTES: 'Lot reçu 01/04',
-      },
-    );
-    expect(refreshData).toHaveBeenCalledTimes(1);
   });
 
-  it('patch Véto ne contient PAS la colonne LIBELLE', async () => {
-    const refreshData = vi.fn(async () => undefined);
+  it('patch Véto ne contient PAS la colonne LIBELLE', () => {
     const input: StockEditInput = {
       kind: 'VETO',
       produit: 'Amoxicilline',
@@ -347,8 +287,9 @@ describe('QuickEditStockForm · Submit Véto', () => {
       notes: '',
     };
 
-    await submitStockEdit({ id: 'VET-05', input, refreshData });
-    const patchArg = enqueueUpdateRowMock.mock.calls[0]?.[3] ?? {};
+    const result = validateStockEdit(input);
+    expect(result.ok).toBe(true);
+    const patchArg = result.patch ?? {};
     expect(Object.keys(patchArg)).not.toContain('LIBELLE');
     expect(patchArg.USAGE).toBe('');
   });
