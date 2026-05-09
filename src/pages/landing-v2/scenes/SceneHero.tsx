@@ -22,10 +22,11 @@ export function SceneHero() {
 
       gsap.fromTo(
         ref.current.querySelector('.hero-title'),
-        { opacity: 0, y: 40 },
+        { opacity: 0, y: 40, scale: 0.96 },
         {
           opacity: 1,
           y: 0,
+          scale: 1,
           duration: 0.9,
           ease: 'power2.out',
           immediateRender: false,
@@ -38,10 +39,10 @@ export function SceneHero() {
       );
 
       gsap.fromTo(
-        ref.current.querySelector('.hero-image'),
-        { scale: 0.95 },
+        ref.current.querySelector('.hero-video'),
+        { objectPosition: 'center 25%' },
         {
-          scale: 1.05,
+          objectPosition: 'center 60%',
           ease: 'none',
           scrollTrigger: {
             trigger: ref.current,
@@ -58,132 +59,174 @@ export function SceneHero() {
   return (
     <section
       ref={ref}
+      className="hero-sticky-wrapper"
       style={{
         position: 'relative',
         minHeight: '100vh',
-        background: '#0a0a0a',
-        color: '#fff',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center',
-        padding: '80px 24px',
+        background: 'var(--pt-bg)',
+        color: 'var(--pt-ink)',
         overflow: 'hidden',
       }}
     >
-      <span
+      <video
+        className="hero-video"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        poster="/videos/landing/hero-maternity-dawn-poster.jpg"
+        aria-label="Élevage porcin moderne au lever du jour, ambiance contemplative"
         style={{
-          fontFamily: 'var(--font-body)',
-          fontSize: 11,
-          letterSpacing: '0.20em',
-          textTransform: 'uppercase',
-          color: 'rgba(255,255,255,0.6)',
-          marginBottom: 24,
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          objectPosition: 'center 25%',
+          willChange: 'object-position',
         }}
       >
-        ● PorcTrack · Élevage 2026
-      </span>
-      <h1
-        className="hero-title"
+        <source src="/videos/landing/hero-maternity-dawn.webm" type="video/webm" />
+        <source src="/videos/landing/hero-maternity-dawn.mp4" type="video/mp4" />
+      </video>
+
+      {/* Voile dégradé bottom-up : masque le watermark Creatify + lisibilité texte */}
+      <div
+        aria-hidden="true"
         style={{
-          fontFamily: 'var(--font-heading)',
-          fontWeight: 900,
-          fontSize: 'clamp(40px, 8vw, 96px)',
-          lineHeight: 0.95,
-          letterSpacing: '-0.03em',
-          textTransform: 'uppercase',
-          maxWidth: 1100,
-          margin: 0,
-          color: '#fff',
-          willChange: 'transform, opacity',
+          position: 'absolute',
+          inset: 0,
+          background:
+            'linear-gradient(to top, var(--pt-bg) 0%, rgba(250,247,240,0.85) 14%, rgba(26,26,26,0.45) 55%, transparent 85%)',
+          pointerEvents: 'none',
         }}
-      >
-        LE CARNET PAPIER,
-        <br />
-        <em style={{ fontStyle: 'normal', color: '#34d399' }}>
-          SANS LES PAGES FROISSÉES.
-        </em>
-      </h1>
-      <p
-        style={{
-          fontFamily: 'var(--font-body)',
-          fontSize: 18,
-          lineHeight: 1.5,
-          maxWidth: 580,
-          color: 'rgba(255,255,255,0.7)',
-          margin: '24px 0 40px',
-        }}
-      >
-        Suivi reproductif, alertes biologiques, alimentation calculée — pensé
-        pour les éleveurs de porcs.
-      </p>
+      />
+
       <div
         style={{
+          position: 'relative',
+          zIndex: 1,
+          minHeight: '100vh',
           display: 'flex',
-          gap: 16,
-          flexWrap: 'wrap',
+          flexDirection: 'column',
+          alignItems: 'center',
           justifyContent: 'center',
-          marginBottom: 60,
+          textAlign: 'center',
+          padding: '80px 24px 60px',
         }}
       >
-        <Link
-          to="/signup"
+        <span
           style={{
-            fontFamily: 'var(--font-heading)',
-            fontWeight: 700,
-            fontSize: 14,
-            letterSpacing: '0.10em',
+            fontFamily: 'var(--font-body)',
+            fontSize: 11,
+            letterSpacing: '0.20em',
             textTransform: 'uppercase',
-            padding: '16px 32px',
-            background: '#10b981',
             color: '#fff',
-            borderRadius: 999,
-            textDecoration: 'none',
+            opacity: 0.85,
+            marginBottom: 24,
           }}
         >
-          Commencer
-        </Link>
-        <Link
-          to="/login"
+          PORCTRACK · ÉLEVAGE 2026
+        </span>
+
+        <h1
+          className="hero-title"
           style={{
             fontFamily: 'var(--font-heading)',
-            fontWeight: 700,
-            fontSize: 14,
-            letterSpacing: '0.10em',
+            fontWeight: 900,
+            fontSize: 'clamp(44px, 9vw, 104px)',
+            lineHeight: 0.94,
+            letterSpacing: '-0.02em',
             textTransform: 'uppercase',
-            padding: '16px 32px',
-            background: 'transparent',
+            maxWidth: 1100,
+            margin: 0,
             color: '#fff',
-            border: '1px solid rgba(255,255,255,0.25)',
-            borderRadius: 999,
-            textDecoration: 'none',
+            textShadow: '0 2px 24px rgba(26,26,26,0.35)',
+            willChange: 'transform, opacity',
           }}
         >
-          Se connecter
-        </Link>
+          La précision
+          <br />
+          <em
+            style={{
+              fontStyle: 'normal',
+              color: 'var(--pt-warm)',
+              borderBottom: '4px solid var(--pt-accent)',
+              paddingBottom: 4,
+            }}
+          >
+            en plein élevage.
+          </em>
+        </h1>
+
+        <p
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 18,
+            lineHeight: 1.5,
+            maxWidth: 620,
+            color: 'rgba(255,255,255,0.92)',
+            margin: '28px 0 44px',
+            textShadow: '0 1px 12px rgba(26,26,26,0.4)',
+          }}
+        >
+          L'app GTTT pensée pour les naisseurs-engraisseurs d'Afrique de l'Ouest.
+          117 porcelets, 13 bandes, 5 loges suivis sans Excel.
+        </p>
+
+        <div
+          style={{
+            display: 'flex',
+            gap: 16,
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+          }}
+        >
+          <Link
+            to="/signup"
+            style={{
+              fontFamily: 'var(--font-heading)',
+              fontWeight: 700,
+              fontSize: 14,
+              letterSpacing: '0.10em',
+              textTransform: 'uppercase',
+              padding: '18px 36px',
+              background: 'var(--pt-primary)',
+              color: 'var(--pt-warm)',
+              borderRadius: 999,
+              textDecoration: 'none',
+              boxShadow: '0 8px 32px rgba(45,74,31,0.35)',
+              minHeight: 44,
+              display: 'inline-flex',
+              alignItems: 'center',
+            }}
+          >
+            Démarrer mon élevage
+          </Link>
+          <a
+            href="#marius"
+            style={{
+              fontFamily: 'var(--font-heading)',
+              fontWeight: 700,
+              fontSize: 14,
+              letterSpacing: '0.10em',
+              textTransform: 'uppercase',
+              padding: '18px 36px',
+              background: 'transparent',
+              color: '#fff',
+              border: '1.5px solid rgba(255,255,255,0.55)',
+              borderRadius: 999,
+              textDecoration: 'none',
+              minHeight: 44,
+              display: 'inline-flex',
+              alignItems: 'center',
+            }}
+          >
+            Voir une démo ›
+          </a>
+        </div>
       </div>
-      <picture>
-        <source
-          srcSet="/images/v73/landing/hero-wide.webp"
-          type="image/webp"
-        />
-        <img
-          className="hero-image"
-          src="/images/v73/landing/hero-wide.jpg"
-          alt="Bâtiment porcin moderne, cochon adulte dans le couloir central"
-          loading="eager"
-          fetchPriority="high"
-          style={{
-            width: '100%',
-            maxWidth: 1400,
-            height: 'auto',
-            display: 'block',
-            borderRadius: 28,
-            willChange: 'transform',
-          }}
-        />
-      </picture>
     </section>
   );
 }
