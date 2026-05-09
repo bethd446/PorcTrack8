@@ -62,6 +62,7 @@ import {
 import { FEED_CONFIG } from '../../config/feed';
 import { labelStatutTruie } from '../../lib/labels';
 import { isReformed, alreadySortedOut, formatSortieLabel } from '../../v70/lib';
+import { computeTruiePerformanceEco } from '../../v70/lib/truiePerformanceEco';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -251,11 +252,19 @@ const TruieDetailView: React.FC = () => {
       if (!truie) return;
       // V75-l : write direct via supabaseWrites.updateSow (snake_case columns).
       // `enqueueUpdateRow` est deprecated/no-op (cf. offlineQueue.ts:306).
-      const res = await updateSow(truie.id, {
+      // V75-o-a (F-16) : concaténation de la note libre éleveur dans
+      // `notes` existante (pas de nouvelle colonne pour rester migration-free).
+      const updates: Parameters<typeof updateSow>[1] = {
         date_sortie: data.dateSortie,
         type_sortie: data.typeSortie,
         prix_sortie_fcfa: data.prixSortieFcfa ?? null,
-      });
+      };
+      if (data.notes && data.notes.trim() !== '') {
+        const stamp = `[Sortie ${data.dateSortie} ${data.typeSortie}] ${data.notes.trim()}`;
+        const existing = (truie.notes ?? '').trim();
+        updates.notes = existing ? `${existing}\n${stamp}` : stamp;
+      }
+      const res = await updateSow(truie.id, updates);
       if (!res.success) {
         setToast(`Erreur : ${res.error ?? 'écriture impossible'}`);
         return;
@@ -340,6 +349,12 @@ const TruieDetailView: React.FC = () => {
     if (daysUntilMB > 0) return `${truie.displayId} doit mettre bas dans ${daysUntilMB}j`;
     return `${truie.displayId} a dépassé la date prévue (+${Math.abs(daysUntilMB)}j)`;
   })();
+
+  // ── V75-o C · F-12 — Performance économique (réforme decision aid) ────────
+  const perfEco = useMemo(
+    () => computeTruiePerformanceEco(truie, bandes),
+    [truie, bandes],
+  );
 
   // ── Vitales : empty state si jamais saillie ───────────────────────────────
   const pariteVal = truie.nbPortees ?? historique.length;
@@ -706,6 +721,68 @@ const TruieDetailView: React.FC = () => {
             </section>
             )}
 
+            {/* V75-o C · F-12 — PERFORMANCE économique (Aperçu uniquement) */}
+            {activeTab === 'overview' && (
+              <section aria-label="Performance économique" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <Section label="PERFORMANCE" />
+                <div
+                  style={{
+                    background: 'var(--bg-surface)',
+                    borderRadius: 12,
+                    border: '1px solid var(--line)',
+                    padding: '18px 20px',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: 18,
+                  }}
+                >
+                  <PerfCell
+                    label="Portées"
+                    value={`${perfEco.portees}`}
+                    sub={perfEco.derniereNV != null ? `Dernière NV : ${perfEco.derniereNV}` : 'Aucune NV enregistrée'}
+                  />
+                  <PerfCell
+                    label="NV moyens / portée"
+                    value={perfEco.moyNVParPortee != null ? perfEco.moyNVParPortee.toFixed(1) : '—'}
+                    sub={perfEco.moyNVParPortee != null ? 'sur historique bandes' : 'données insuffisantes'}
+                  />
+                  <PerfCell
+                    label="Aliment consommée"
+                    value={
+                      perfEco.alimConsommeeFcfa != null
+                        ? `${formatFcfa(perfEco.alimConsommeeFcfa)} FCFA`
+                        : perfEco.alimConsommeeKg != null
+                          ? `${perfEco.alimConsommeeKg.toFixed(0)} kg`
+                          : '—'
+                    }
+                    sub={
+                      perfEco.alimConsommeeKg != null
+                        ? `≈ ${perfEco.alimConsommeeKg.toFixed(0)} kg cumulés`
+                        : 'date naissance ou ration manquante'
+                    }
+                  />
+                  <PerfCell
+                    label="Marge estimée"
+                    value={
+                      perfEco.margeStatus === 'CALCULEE' && perfEco.margeEstimeeFcfa != null
+                        ? `${formatFcfa(perfEco.margeEstimeeFcfa)} FCFA`
+                        : '—'
+                    }
+                    sub={
+                      perfEco.margeStatus === 'CALCULEE'
+                        ? 'prix vente − alim consommée'
+                        : perfEco.margeStatus === 'NON_APPLICABLE'
+                          ? 'sortie non commerciale'
+                          : perfEco.margeStatus === 'DONNEES_INSUFFISANTES'
+                            ? 'alim non calculable'
+                            : 'calculée à la sortie'
+                    }
+                    accent={perfEco.margeStatus === 'CALCULEE' && (perfEco.margeEstimeeFcfa ?? 0) < 0}
+                  />
+                </div>
+              </section>
+            )}
+
             {/* Body 2 col (V32 PHASE 4 — restructuré en onglets) */}
             <div className="sow-body">
               {/* Colonne gauche */}
@@ -735,7 +812,17 @@ const TruieDetailView: React.FC = () => {
                       <DataRow label="Naissance" value={formatDate(truie.dateNaissance)} />
                     )}
                     {truie.origine && <DataRow label="Origine" value={truie.origine} />}
-                    <DataRow label="Loge" value={truie.loge || '—'} last />
+                    <DataRow
+                      label="Loge"
+                      value={
+                        truie.loge
+                          ? truie.loge
+                          : isReformed(truie)
+                            ? '— (réformée, hors loge)'
+                            : 'Aucune loge assignée'
+                      }
+                      last
+                    />
                   </div>
                 </section>
                 )}
@@ -1096,6 +1183,62 @@ function sectionStyle(): React.CSSProperties {
     padding: '18px 24px 22px',
     border: '1px solid var(--line)',
   };
+}
+
+function formatFcfa(n: number): string {
+  // Espaces fines comme séparateurs de milliers (lecture éleveur).
+  return Math.round(n).toLocaleString('fr-FR').replace(/ | /g, ' ');
+}
+
+function PerfCell({
+  label,
+  value,
+  sub,
+  accent,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  accent?: boolean;
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+      <small
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 9.5,
+          letterSpacing: '0.16em',
+          textTransform: 'uppercase',
+          color: 'var(--muted)',
+        }}
+      >
+        {label}
+      </small>
+      <div
+        style={{
+          fontFamily: 'var(--font-heading)',
+          fontSize: 20,
+          fontWeight: 600,
+          color: accent ? 'var(--pig-deep, #b91c1c)' : 'var(--ink)',
+          letterSpacing: '-0.02em',
+          lineHeight: 1.1,
+        }}
+      >
+        {value}
+      </div>
+      {sub ? (
+        <small
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 11.5,
+            color: 'var(--muted)',
+          }}
+        >
+          {sub}
+        </small>
+      ) : null}
+    </div>
+  );
 }
 
 function DataRow({ label, value, last }: { label: string; value: string; last?: boolean }) {

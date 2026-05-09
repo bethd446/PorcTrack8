@@ -68,9 +68,10 @@ export const ReproV70: React.FC = () => {
     return { pleines, materni, vides, mbProches };
   }, [truies, bandes]);
 
-  // V71.3 — bande "active" pour CycleTimeline : on choisit la bande dont la
-  // date MB (réalisée ou prévue) est la plus proche dans le futur. Sinon la
-  // plus récente passée. Calcul du jour de cycle = today - (dateMB - 115j).
+  // V71.3 — bande "active" pour CycleTimeline (tab Agenda) : on choisit la
+  // bande dont la date MB (réalisée ou prévue) est la plus proche dans le
+  // futur. Sinon la plus récente passée. Calcul du jour de cycle = today -
+  // (dateMB - 115j).
   const cycleBande = useMemo(() => {
     const now = new Date();
     let chosen: { bande: typeof bandes[number]; dateMB: Date; currentDay: number } | null = null;
@@ -99,6 +100,42 @@ export const ReproV70: React.FC = () => {
       }
     }
     return chosen;
+  }, [bandes]);
+
+  // V75-o B.1 (F-28) — TOUS les cycles actifs pour tab "En cours" : bandes en
+  // gestation (today < dateMB) OU en maternité (dateMB ≤ today < dateMB+28j).
+  // Avant : tab "En cours" affichait 1 seul cycle (cycleBande), ne reflétait
+  // pas les 11 truies en MATERNITÉ visibles dans Élevage.
+  const SEVRAGE_JOURS_POST_MB = 28;
+  const cyclesEnCours = useMemo(() => {
+    const now = new Date();
+    type Cycle = {
+      bande: typeof bandes[number];
+      dateMB: Date;
+      currentDay: number;
+      phase: 'gestation' | 'maternite';
+    };
+    const list: Cycle[] = [];
+    for (const b of bandes) {
+      const d = safeDate(b.dateMB);
+      if (!d) continue;
+      const dateSaillie = new Date(d.getTime() - GESTATION_JOURS * 86400000);
+      const dateSevrage = new Date(d.getTime() + SEVRAGE_JOURS_POST_MB * 86400000);
+      // Filtre : exclure les bandes dont la maternité est terminée (sevrées).
+      if (now > dateSevrage) continue;
+      const currentDay = Math.max(
+        0,
+        Math.floor((now.getTime() - dateSaillie.getTime()) / 86400000),
+      );
+      const phase: 'gestation' | 'maternite' = now < d ? 'gestation' : 'maternite';
+      list.push({ bande: b, dateMB: d, currentDay, phase });
+    }
+    // Tri : gestation d'abord (par MB la plus proche), puis maternité.
+    list.sort((a, b) => {
+      if (a.phase !== b.phase) return a.phase === 'gestation' ? -1 : 1;
+      return a.dateMB.getTime() - b.dateMB.getTime();
+    });
+    return list;
   }, [bandes]);
 
   const upcomingItems = useMemo((): UpcomingItem[] => {
@@ -317,55 +354,55 @@ export const ReproV70: React.FC = () => {
       )}
 
       {tab === 'en-cours' && (
-        <Section label="Bandes en cycle reproduction">
-          {cycleBande ? (
-            <>
-              <Card>
-                <CycleTimeline
-                  currentDay={cycleBande.currentDay}
-                  totalDays={GESTATION_JOURS}
-                  steps={[
-                    { label: 'Saillie', day: 0, done: cycleBande.currentDay >= 0 },
-                    { label: 'Écho', day: 28, done: cycleBande.currentDay >= 28 },
-                    { label: 'Mise-bas', day: GESTATION_JOURS, done: cycleBande.currentDay >= GESTATION_JOURS, target: true },
-                  ]}
-                />
-                <div style={{ marginTop: 16, fontSize: 12, color: 'var(--pt-muted)' }}>
-                  {cycleBande.bande.idPortee || cycleBande.bande.id}
-                  {cycleBande.bande.truie ? ` · ${cycleBande.bande.truie}` : ''}
-                  {' · '}J{cycleBande.currentDay}/{GESTATION_JOURS}
-                </div>
-              </Card>
-              <button
-                type="button"
-                onClick={() => navigate(`/troupeau/bandes/${cycleBande.bande.id}`)}
-                className="list-item"
-                style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer' }}
-              >
-                <div className="list-info">
-                  <div className="list-title">
-                    {formatBandeName({
-                      id: cycleBande.bande.id,
-                      idPortee: cycleBande.bande.idPortee,
-                      truieMere: cycleBande.bande.truie,
-                      dateMB: cycleBande.bande.dateMB,
-                    }, { compact: true })} · J{cycleBande.currentDay}
-                  </div>
-                  <div className="list-sub">
-                    {cycleBande.currentDay >= GESTATION_JOURS ? 'Mise-bas' : 'Gestation'}
-                    {cycleBande.bande.truie ? ` · ${cycleBande.bande.truie}` : ''}
-                    {' · MB le '}{cycleBande.dateMB.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
-                  </div>
-                </div>
-                <span className="list-arrow">›</span>
-              </button>
-            </>
-          ) : (
+        <Section label={`${cyclesEnCours.length} cycle${cyclesEnCours.length > 1 ? 's' : ''} actif${cyclesEnCours.length > 1 ? 's' : ''}`}>
+          {cyclesEnCours.length === 0 ? (
             <Card>
               <div style={{ padding: 16, textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
                 Aucune bande en cycle. Crée une saillie pour démarrer un cycle.
               </div>
             </Card>
+          ) : (
+            cyclesEnCours.map(c => {
+              const inGestation = c.phase === 'gestation';
+              const dayCapped = Math.min(c.currentDay, GESTATION_JOURS);
+              return (
+                <Card key={c.bande.id}>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/troupeau/bandes/${c.bande.id}`)}
+                    style={{ background: 'none', border: 'none', padding: 0, width: '100%', textAlign: 'left', cursor: 'pointer' }}
+                    aria-label={`Cycle ${c.bande.idPortee || c.bande.id} — voir détail`}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12, gap: 12 }}>
+                      <strong style={{ fontSize: 14 }}>
+                        {formatBandeName({
+                          id: c.bande.id,
+                          idPortee: c.bande.idPortee,
+                          truieMere: c.bande.truie,
+                          dateMB: c.bande.dateMB,
+                        }, { compact: true })}
+                      </strong>
+                      <span style={{ fontSize: 11, color: 'var(--pt-muted)', whiteSpace: 'nowrap' }}>
+                        {inGestation ? `J${dayCapped}/${GESTATION_JOURS}` : `Maternité · J+${c.currentDay - GESTATION_JOURS}`}
+                      </span>
+                    </div>
+                    <CycleTimeline
+                      currentDay={inGestation ? dayCapped : GESTATION_JOURS}
+                      totalDays={GESTATION_JOURS}
+                      steps={[
+                        { label: 'Saillie', day: 0, done: true },
+                        { label: 'Écho', day: 28, done: dayCapped >= 28 },
+                        { label: 'Mise-bas', day: GESTATION_JOURS, done: !inGestation, target: true },
+                      ]}
+                    />
+                    <div style={{ marginTop: 12, fontSize: 11, color: 'var(--pt-muted)' }}>
+                      {c.bande.truie ? `${c.bande.truie} · ` : ''}
+                      MB {inGestation ? 'prévue' : 'réalisée'} le {c.dateMB.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
+                    </div>
+                  </button>
+                </Card>
+              );
+            })
           )}
         </Section>
       )}

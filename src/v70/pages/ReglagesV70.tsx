@@ -20,6 +20,7 @@ import {
   BookOpen,
   GraduationCap,
   CloudUpload,
+  LifeBuoy,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -262,6 +263,17 @@ export const ReglagesV70: React.FC = () => {
             subtitle="2 min · découverte de l'app"
             Icon={GraduationCap}
             onClick={() => navigate('/reglages/onboarding')}
+          />
+          {/* V75-o-a (F-36) — point d'entrée support, mailto cohérent avec
+              SystemManagement (SUPPORT_EMAIL = support@porctrack.tech). */}
+          <SettingsRow
+            title="Aide & support"
+            subtitle="support@porctrack.tech · réponse sous 24h"
+            Icon={LifeBuoy}
+            onClick={() => {
+              window.location.href =
+                'mailto:support@porctrack.tech?subject=Support%20PorcTrack';
+            }}
             isLast
           />
         </div>

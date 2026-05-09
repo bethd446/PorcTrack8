@@ -11,9 +11,9 @@
  *
  * V70.1 — Câblage complet onClick (Option B).
  */
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, Play, ChevronRight, CheckCheck } from 'lucide-react';
+import { ClipboardList, Play, ChevronRight } from 'lucide-react';
 import { useFarm, useMeta } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../components/ds/PageHeader';
@@ -100,11 +100,10 @@ export const TodayV70: React.FC = () => {
     return result.slice(0, 5);
   }, [truies, bandes]);
 
-  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
-  const alerts = useMemo(
-    () => computedAlerts.filter(a => !dismissed.has(a.id)),
-    [computedAlerts, dismissed],
-  );
+  // V75-o-a (F-6) : state dismissed retiré avec le bouton Acquitter.
+  // L'acquittement reviendra via long-press ou menu contextuel à un sprint
+  // ultérieur. En attendant, toutes les alertes calculées sont affichées.
+  const alerts = computedAlerts;
 
   // MB imminente dans 3j → hero card
   const heroMiseBas = useMemo(() => {
@@ -150,11 +149,6 @@ export const TodayV70: React.FC = () => {
     year: 'numeric',
     weekday: 'long',
   });
-
-  const dismissAlert = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setDismissed(prev => new Set([...prev, id]));
-  };
 
   // V71 — hints encyclopédie contextuels (max 1 affiché à la fois)
   const hints = useFarmContextHints();
@@ -410,52 +404,21 @@ export const TodayV70: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Actions discrètes : ouvrir + acquitter */}
+                  {/* V75-o-a (F-6) : 1 seule zone tappable. Le chevron à droite
+                      n'est plus un bouton dupliqué mais un indicateur visuel
+                      non interactif. L'acquittement passera en sprint séparé
+                      via long-press ou menu contextuel. */}
                   <div
+                    aria-hidden
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 2,
                       paddingTop: 2,
                       flexShrink: 0,
+                      color: 'var(--pt-muted)',
                     }}
                   >
-                    <button
-                      type="button"
-                      onClick={(e) => dismissAlert(alert.id, e)}
-                      aria-label={`Acquitter ${alert.title}`}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        padding: 6,
-                        color: 'var(--pt-muted)',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: 6,
-                      }}
-                    >
-                      <CheckCheck size={15} strokeWidth={1.6} aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleActivate}
-                      aria-label={`Ouvrir ${alert.title}`}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        padding: 6,
-                        color: 'var(--pt-ink)',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: 6,
-                      }}
-                    >
-                      <ChevronRight size={16} strokeWidth={1.8} aria-hidden="true" />
-                    </button>
+                    <ChevronRight size={16} strokeWidth={1.8} />
                   </div>
                 </div>
               );

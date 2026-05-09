@@ -36,6 +36,7 @@ import { computeGlobalKpis } from '../../services/perfKpiAnalyzer';
 import { buildForecastEvents } from '../../utils/forecastEvents';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 import { formatBandeName } from '../lib';
+import { computeScoreGlobal } from '../lib/scoreGlobal';
 
 const PAGE_BACKGROUND_SRC = '/images/ambiance-croissance.webp';
 
@@ -62,7 +63,6 @@ export const PerformanceV70: React.FC = () => {
   const { loading: farmLoading } = useMeta();
   const [tab, setTab] = useState<PerfTab>('vue');
   const { advancedMode } = useUIPreferences();
-  const topBandes = bandes?.slice(0, 2) ?? [];
 
   // V71.1 — KPIs live calculés via perfKpiAnalyzer (étaient 11.8/86%/13.2/8.4%/5.1j hardcodés)
   const kpis = useMemo(() => {
@@ -72,6 +72,20 @@ export const PerformanceV70: React.FC = () => {
       return null;
     }
   }, [truies, bandes, saillies]);
+
+  // V75-o B.2 (F-31) — Score global synthèse 4 KPIs.
+  const scoreGlobal = useMemo(() => computeScoreGlobal(kpis), [kpis]);
+
+  // V75-o B.3 (F-33) — Top performances trié par nés vivants à la naissance
+  // (critère explicite affiché en sous-label). Avant : `bandes.slice(0, 2)`
+  // ne reflétait aucun classement → testeur ne savait pas pourquoi telle bande
+  // sortait en Top 1.
+  const topBandes = useMemo(() => {
+    return [...(bandes ?? [])]
+      .filter(b => (b.nv ?? 0) > 0)
+      .sort((a, b) => (b.nv ?? 0) - (a.nv ?? 0))
+      .slice(0, 2);
+  }, [bandes]);
 
   // V71.2 — données bandes calculées depuis FarmContext (plus de stubs BANDES_DATA)
   const bandesData = useMemo((): BandePerf[] => {
@@ -168,6 +182,69 @@ export const PerformanceV70: React.FC = () => {
             <Download size={14} strokeWidth={1.5} aria-hidden="true" />
             Aperçu PDF prêt — utilise « Enregistrer au format PDF » dans la fenêtre d'impression
           </span>
+        </div>
+      )}
+
+      {/* V75-o B.2 (F-31) — Score global troupeau (Vue uniquement) : synthèse
+          A/B/C/D des 4 KPIs principaux. Avant : pas de vue d'ensemble, KPIs en
+          silos. Affiche "—" + progression si < 5 cycles clos. */}
+      {tab === 'vue' && (
+        <div
+          style={{
+            background: 'var(--pt-warm, #faf6ef)',
+            padding: 24,
+            borderRadius: 16,
+            marginBottom: 16,
+            border: '1px solid var(--pt-line, #e8e3d8)',
+          }}
+        >
+          <div
+            className="ft-heading"
+            style={{
+              fontSize: 10,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: 'var(--pt-muted)',
+              fontWeight: 700,
+              marginBottom: 8,
+            }}
+          >
+            Score global
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'baseline',
+              gap: 12,
+              marginBottom: 4,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: 'var(--pt-font-display, sans-serif)',
+                fontSize: 56,
+                fontWeight: 900,
+                lineHeight: 1,
+                color:
+                  scoreGlobal.level === 'A'
+                    ? 'var(--pt-success)'
+                    : scoreGlobal.level === 'B'
+                      ? 'var(--pt-primary)'
+                      : scoreGlobal.level === 'C'
+                        ? 'var(--pt-accent)'
+                        : scoreGlobal.level === 'D'
+                          ? 'var(--pt-danger, #c0392b)'
+                          : 'var(--pt-muted)',
+              }}
+              aria-label={`Niveau ${scoreGlobal.level === 'EN_CONSTRUCTION' ? 'En construction' : scoreGlobal.level}`}
+            >
+              {scoreGlobal.level === 'EN_CONSTRUCTION' ? '—' : scoreGlobal.level}
+            </span>
+            <span style={{ fontSize: 14, color: 'var(--pt-muted)' }}>{scoreGlobal.label}</span>
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--pt-muted)', marginTop: 4 }}>
+            {scoreGlobal.detail}
+          </div>
         </div>
       )}
 
@@ -379,6 +456,16 @@ export const PerformanceV70: React.FC = () => {
       {/* Top performances — visible en Vue uniquement (vraies bandes via FarmContext) */}
       {tab === 'vue' && (
       <Section label="Top performances">
+        <p
+          style={{
+            margin: '-8px 0 12px',
+            fontSize: 11,
+            color: 'var(--pt-muted)',
+            fontStyle: 'italic',
+          }}
+        >
+          Classement par nés vivants à la naissance
+        </p>
         {farmLoading && topBandes.length === 0 ? (
           <ListItem
             avatar={<EntityAvatar species="bande" size="md" shortCode="..." />}

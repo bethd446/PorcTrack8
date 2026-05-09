@@ -17,6 +17,8 @@ export interface QuickConfirmSortieFormData {
   dateSortie: string;
   typeSortie: SortieType;
   prixSortieFcfa?: number;
+  /** V75-o-a (F-16) — note libre éleveur, concaténée à `truie.notes` côté parent. */
+  notes?: string;
 }
 
 export interface QuickConfirmSortieFormProps {
@@ -43,6 +45,7 @@ const QuickConfirmSortieForm: React.FC<QuickConfirmSortieFormProps> = ({
   const [dateSortie, setDateSortie] = useState<string>(todayIso());
   const [typeSortie, setTypeSortie] = useState<SortieType>('VENTE');
   const [prixSortieRaw, setPrixSortieRaw] = useState<string>('');
+  const [notes, setNotes] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -50,6 +53,7 @@ const QuickConfirmSortieForm: React.FC<QuickConfirmSortieFormProps> = ({
       setDateSortie(todayIso());
       setTypeSortie('VENTE');
       setPrixSortieRaw('');
+      setNotes('');
       setError(null);
     }
   }, [isOpen]);
@@ -68,7 +72,13 @@ const QuickConfirmSortieForm: React.FC<QuickConfirmSortieFormProps> = ({
       }
       prixSortieFcfa = parsed;
     }
-    onConfirm({ dateSortie, typeSortie, prixSortieFcfa });
+    const trimmedNotes = notes.trim();
+    onConfirm({
+      dateSortie,
+      typeSortie,
+      prixSortieFcfa,
+      notes: trimmedNotes !== '' ? trimmedNotes : undefined,
+    });
   };
 
   return (
@@ -141,6 +151,31 @@ const QuickConfirmSortieForm: React.FC<QuickConfirmSortieFormProps> = ({
             />
           </FormField>
         )}
+
+        {/* V75-o-a (F-16) — note libre éleveur (contexte / raison). */}
+        <FormField label="Notes (optionnel)">
+          <textarea
+            id="sortie-notes"
+            aria-label="Notes ou raison de la sortie"
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+            placeholder="Ex. vendu au voisin Konan, abattage forcé suite à boiterie…"
+            rows={3}
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              borderRadius: 12,
+              border: '1px solid var(--line, #e2e8f0)',
+              background: 'var(--bg-surface, #fff)',
+              color: 'var(--ink, #0f172a)',
+              fontFamily: 'var(--font-body, inherit)',
+              fontSize: 14,
+              lineHeight: 1.4,
+              resize: 'vertical',
+              minHeight: 64,
+            }}
+          />
+        </FormField>
 
         {error && (
           <p role="alert" className="text-[11px] text-red">
