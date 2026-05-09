@@ -22,7 +22,6 @@ import {
   Syringe, Scale, Heart, FileText, Pencil,
 } from 'lucide-react';
 
-import AgritechLayout from '../../components/AgritechLayout';
 import TopBarSync from '../../components/design/TopBarSync';
 import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
@@ -126,9 +125,7 @@ const VerratDetailView: React.FC = () => {
     return (
       <IonPage>
         <IonContent fullscreen className="ion-no-padding">
-          <AgritechLayout>
             <SpinnerCenter />
-          </AgritechLayout>
         </IonContent>
       </IonPage>
     );
@@ -138,7 +135,6 @@ const VerratDetailView: React.FC = () => {
     return (
       <IonPage>
         <IonContent fullscreen className="ion-no-padding">
-          <AgritechLayout>
             <TopBarSync
               crumbs={[
                 { label: 'Élevage', href: '/troupeau' },
@@ -159,7 +155,6 @@ const VerratDetailView: React.FC = () => {
                 onBack={() => window.history.back()}
               />
             </div>
-          </AgritechLayout>
         </IonContent>
       </IonPage>
     );
@@ -190,7 +185,14 @@ const VerratDetailView: React.FC = () => {
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
-        <AgritechLayout>
+        <div
+          style={{
+            background: 'var(--bg-app)',
+            minHeight: '100%',
+            position: 'relative',
+            paddingBottom: 168,
+          }}
+        >
           <TopBarSync
             crumbs={[
               { label: 'Élevage', href: '/troupeau' },
@@ -552,7 +554,7 @@ const VerratDetailView: React.FC = () => {
             </section>
             )}
           </div>
-        </AgritechLayout>
+        </div>
       </IonContent>
 
       {/* ── Sheets ──────────────────────────────────────────────────── */}
