@@ -19,6 +19,58 @@
 
 ---
 
+## 2026-05-09 · [V75 a/b/c] Naming & Cohérence · commits `269333c`→`83159bf`→`510dd39`
+
+**Contexte** : Session post-audit V74 sur compte `audit-final@porctrack.test`. 8 frictions identifiées : 2 P0 (UUID bandes exposés à l'éleveur ET à Marius, 5 fausses alertes "Réforme suggérée" sur truies déjà réformées), 4 P1 (H1 "Mes animaux" hors décision A brief V70, filtre RÉFORMÉES manquant, bouton "Passer en réforme" inadapté, breadcrumb "Outils" reliquat), 2 P2 (Marius pas d'auto-submit, Performance Top inconsistance UUID/mère). Brief utilisateur : langage simple pour éleveurs francophones niveau variable, app PWA cible senior testeur.
+
+**Vague A — `269333c feat(v75-a): helper formatBandeName + propagation 5 sites`**
+- Création `src/v70/lib/formatBandeName.ts` (51L) — pure helper avec 5 règles : `idPortee` custom non-UUID > `dateMB` mois français > `truieMere` seule "en cours" > fallback `id.slice(0, 8)`. Option `compact` pour cards étroites.
+- Création `src/v70/lib/index.ts` re-export module.
+- 6 tests Vitest passants.
+- Propagation 5 sites : `AnimalsV70.tsx` (interface AnimalStub étendue `displayName?`, mapping bandes), `ReproV70.tsx` (timeline cycles compact), `PerformanceV70.tsx` (Top performances compact), `src/features/chatbot/buildFarmContext.ts` (vrai compositeur context Marius — découvert que `formatBande()` exposait `b.id` brut Supabase à Marius, fix la racine du bug "Marius cite UUID").
+- 1 spec Playwright `tests/e2e/naming-coherence.spec.ts` valide bandes affichent un nom lisible (no UUID 8-hex).
+
+**Vague B — `83159bf feat(v75-b): refonte AlertEngine + filtre À vendre + actions fiche truie`**
+- Création `src/v70/lib/reformLogic.ts` (44L) — 4 prédicats métier : `isReformed`, `needsReformConsideration` (parité ≥6 OU 0 portée + âge ≥12 mois), `alreadySortedOut`, `reformReason` (textes simples).
+- 11 tests Vitest reformLogic passants.
+- `TodayV70.tsx` AlertEngine éclaté en 2 générateurs : "À sortir bientôt" (truies pas encore réformées, tag `Bientôt`) et "À vendre" (déjà réformées, tag `Cette semaine`). Plus de faux positifs dashboard.
+- `AnimalsV70.tsx` : pill `À VENDRE (n)` ajoutée + count `truiesAVendre` + filtre listing étendu. Mapping `realStubs.truies` revu : retrait slice initial pour voir réformées, slice conditionnel après filtre.
+- `TruieDetailView.tsx` : bouton conditionnel selon statut. Truie active "À surveiller" → "Sortir cette truie" (variant danger). Truie réformée → "Marquer comme vendue (bientôt)" disabled v1 (dialog persistence vente/abattoir hors-scope ce chantier). Dialog mise en réforme : message "doit être sortie du cheptel". Toast : "Truie marquée à sortir".
+- `TruieDetailView.test.tsx` adapté au nouveau libellé.
+- 2 specs Playwright additionnelles : alertes refondues + filtre À vendre.
+
+**Vague C — `510dd39 feat(v75-c): H1 Élevage + breadcrumb + langage simplifié + Marius auto-send`**
+- `AnimalsV70.tsx` H1 `"Mes animaux"` → `"Élevage"` (alignement strict décision A brief V70). Test associé adapté.
+- `ControleQuotidien.tsx` breadcrumb `['Outils', 'Audit terrain']` → `[{label: "Aujourd'hui", href: '/today'}, 'Audit terrain']` (2 occurrences via `TopBarSync` crumbs prop). Élimine onglet Outils reliquat (décision B brief).
+- `ChatbotWidget.tsx` Marius : ajout `formRef = useRef<HTMLFormElement>(null)` + `ref={formRef}` sur form. onClick suggestion : `formRef.current?.requestSubmit()` au lieu de `inputRef.current?.focus()`. Auto-submit immédiat type ChatGPT.
+- Audit grep : 0 résidu "À décider" / "À planifier" / "Productivité insuffisante" / "Réforme suggérée" dans code utilisateur. 4 résidus tests rétro-compat (`alertSubject.test.ts`, `QuickConfirmReformeForm.test.tsx`) conservés volontairement.
+
+**Tests** :
+- baseline 1898 (selon plan) → réelle 1916 sur main avant chantier
+- final : **1927 passing | 5 skipped (1932)** (+11 reformLogic, +6 formatBandeName intégrés dans le total)
+- 3/3 specs Playwright `naming-coherence.spec.ts` vertes (5.3s mobile-chromium)
+- tsc 0 erreur, build OK
+
+**Smoke browser live** (compte `audit-final@porctrack.test`) :
+- `/today` : 5 alertes affichent maintenant "À vendre — T-046..T-050" tag Cette semaine. Plus aucune "Réforme suggérée".
+- `/troupeau` H1 = "ÉLEVAGE". Filtres truies : `Toutes(50)/Pleines(28)/Maternité(11)/Vides(6)/À VENDRE(5)` — total cohérent 50.
+- `/troupeau` tab Bandes : 6 bandes affichent leurs `idPortee` métier (B-AUDIT-CR, 26-T16-01, 26-T1-01, B-20260503-M-02, B-AUDIT-MB, B-AUDIT-PS) — aucun UUID 8-hex tronqué.
+- Console DevTools : 0 erreur projet (1 erreur manifest pré-existante non liée au chantier).
+
+**Frictions audit V74 résolues** : P0-1 ✅, P0-2 ✅, P1-1 ✅, P1-2 ✅, P1-5 ✅, P1-6 ✅, P2-3 ✅, P2-6 ✅ (cascade fix).
+
+**Hors-scope (chantiers ultérieurs)** :
+- P1-3 : listing porcelets 92 vs 4 lignes (modèle data + UX décision)
+- P1-4 : audit terrain "12 points" annoncé vs 3 questions réelles (extension rédaction)
+- Dialog persistence sortie cheptel : permet "Marquer comme vendue" actif (vs disabled v1)
+- Patch VPS llama-server system prompt : si Marius garde des UUIDs même après fix client (improbable, le compositeur fix client était la racine)
+
+**Méthode** : exécution subagent-driven (skill `superpowers:subagent-driven-development`). 11 dispatches general-purpose pour les tasks d'implémentation + 1 spec-reviewer + 1 code-quality-reviewer pour Task 1 (helper). Tasks 2-5 review allégée vu nature mécanique des propagations identiques. Tasks 14+15+16 batched dans 1 dispatch. Bloc `=== VERIFICATION ===` AGENT_CONTRACT respecté à chaque dispatch.
+
+**Liens** : [[decisions]] (décisions A et B brief V70 alignées) · [[learnings]] (helper pivot pour formatage métier, regex `réforme|reforme/i` partout)
+
+---
+
 ## 2026-05-08 · [V71-P3] Audit mobile + Wizards bloquants + Trigger DB + Toast · commits `bb0d069`→`0e79c98`
 
 **Contexte** : Session reprise après V71-P2 (multi-user schema + landing-v2). User a demandé audit mobile complet sur fiches individuelles + correction de tous les bugs identifiés + wizard onboarding obligatoire pour nouveaux users + workflow ré-organisation porcelets pour Christophe (compte EasyFarm K13 a 13 bandes orphelines de mère après migration depuis ancienne app).
