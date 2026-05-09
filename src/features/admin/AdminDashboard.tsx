@@ -107,12 +107,14 @@ function LogsPanel() {
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let cancelled = false;
     supabase
       .from('admin_logs')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(30)
       .then(({ data, error: fetchErr }) => {
+        if (cancelled) return;
         if (fetchErr) {
           console.error('[AdminDashboard] LogsPanel fetch failed', fetchErr);
           setError('Impossible de charger les journaux.');
@@ -122,6 +124,7 @@ function LogsPanel() {
         }
         setLoading(false);
       }, (err) => {
+        if (cancelled) return;
         console.error('[AdminDashboard] LogsPanel fetch failed', err);
         setError('Impossible de charger les journaux.');
         setLogs([]);
@@ -139,6 +142,7 @@ function LogsPanel() {
       .subscribe();
 
     return () => {
+      cancelled = true;
       channelRef.current?.unsubscribe();
     };
   }, []);
@@ -813,12 +817,14 @@ export default function AdminDashboard() {
   const [inviteToast, setInviteToast] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     supabase
       .from('admin_logs')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(100)
       .then(({ data, error: fetchErr }) => {
+        if (cancelled) return;
         if (fetchErr) {
           console.error('[AdminDashboard] logs aggregate fetch failed', fetchErr);
           setGlobalError('Erreur de chargement du journal.');
@@ -831,6 +837,7 @@ export default function AdminDashboard() {
         const today = new Date().toISOString().slice(0, 10);
         setTodayCount(allLogs.filter(l => l.created_at.startsWith(today)).length);
       }, (err) => {
+        if (cancelled) return;
         console.error('[AdminDashboard] logs aggregate fetch failed', err);
         setGlobalError('Erreur de chargement du journal.');
         setLogs([]);
@@ -842,6 +849,7 @@ export default function AdminDashboard() {
       .select('id, role, last_sign_in_at, email')
       .order('role', { ascending: true })
       .then(({ data, error: fetchErr }) => {
+        if (cancelled) return;
         if (fetchErr) {
           console.error(
             '[AdminDashboard] profiles fetch failed',
@@ -863,12 +871,16 @@ export default function AdminDashboard() {
         }
         setProfilesLoading(false);
       }, (err: unknown) => {
+        if (cancelled) return;
         console.error('[AdminDashboard] profiles fetch failed', err);
         const msg = err instanceof Error ? err.message : String(err);
         setProfilesError(`Erreur chargement utilisateurs : ${msg}`);
         setProfiles([]);
         setProfilesLoading(false);
       });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const isSoloOwner =

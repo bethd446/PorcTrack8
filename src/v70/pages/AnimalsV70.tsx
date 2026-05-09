@@ -21,8 +21,10 @@ import { Pill, type PillVariant } from '../components/ds/Pill';
 import { ListItem } from '../components/ds/ListItem';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { PigSilhouette } from '../components/v70/icons/PigSilhouette';
-import { useFarm } from '../../context/FarmContext';
+import { useFarm, useMeta } from '../../context/FarmContext';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
+import ListingSkeleton from '../../components/design/ListingSkeleton';
+import { useListingLoadingGuard } from '../../hooks/useListingLoadingGuard';
 
 const QuickAddTruieForm = lazy(() => import('../../components/forms/QuickAddTruieForm'));
 const QuickAddVerratForm = lazy(() => import('../../components/forms/QuickAddVerratForm'));
@@ -89,6 +91,11 @@ const TAB_DATA: Record<AnimalTab, { stubs: AnimalStub[]; species: 'truie' | 'ver
 export const AnimalsV70: React.FC = () => {
   const navigate = useNavigate();
   const { bandes, truies, verrats } = useFarm();
+  const { loading: farmLoading } = useMeta();
+  // Pour bandes/loges, l'empty state est V73 (image + CTA), donc on guard.
+  // Truies/verrats/porcelets utilisent les stubs cosmétiques V70 → pas de
+  // faux empty state à craindre, le user voit toujours quelque chose.
+  const tabBandesEmptyForLoading = useListingLoadingGuard(farmLoading, bandes.length);
   const [tab, setTab] = useState<AnimalTab>('truies');
   const [filter, setFilter] = useState<AnimalFilter>('all');
   const [search, setSearch] = useState('');
@@ -319,6 +326,8 @@ export const AnimalsV70: React.FC = () => {
             <div style={{ padding: 18, textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
               {`Aucun résultat pour « ${search} »`}
             </div>
+          ) : (tab === 'bandes' || tab === 'loges') && tabBandesEmptyForLoading ? (
+            <ListingSkeleton count={3} />
           ) : (() => {
             // V74 — empty state V73 contextualisé : bandes / loges / défaut
             const emptyCopy = tab === 'bandes'

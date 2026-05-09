@@ -31,7 +31,7 @@ import { DataTable, DataTableColumn } from '../components/v70/DataTable';
 import { ExportButton } from '../components/v70/ExportButton';
 import { useUIPreferences } from '../context/UIPreferencesContext';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
-import { useFarm } from '../../context/FarmContext';
+import { useFarm, useMeta } from '../../context/FarmContext';
 import { computeGlobalKpis } from '../../services/perfKpiAnalyzer';
 import { buildForecastEvents } from '../../utils/forecastEvents';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
@@ -58,6 +58,7 @@ const BANDES_COLUMNS: DataTableColumn<BandePerf>[] = [
 export const PerformanceV70: React.FC = () => {
   const navigate = useNavigate();
   const { bandes, truies, saillies } = useFarm();
+  const { loading: farmLoading } = useMeta();
   const [tab, setTab] = useState<PerfTab>('vue');
   const { advancedMode } = useUIPreferences();
   const topBandes = bandes?.slice(0, 2) ?? [];
@@ -365,7 +366,14 @@ export const PerformanceV70: React.FC = () => {
       {/* Top performances — visible en Vue uniquement (vraies bandes via FarmContext) */}
       {tab === 'vue' && (
       <Section label="Top performances">
-        {topBandes.length > 0 ? (
+        {farmLoading && topBandes.length === 0 ? (
+          <ListItem
+            avatar={<EntityAvatar species="bande" size="md" shortCode="..." />}
+            title="Chargement..."
+            subtitle="Lecture des bandes en cours"
+            data-testid="top-perf-loading"
+          />
+        ) : topBandes.length > 0 ? (
           topBandes.map((b, idx) => {
             const RankIcon = idx === 0 ? Trophy : Medal;
             const rankColor = idx === 0 ? 'var(--pt-accent)' : 'var(--pt-muted)';

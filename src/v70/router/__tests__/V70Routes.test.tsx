@@ -7,6 +7,7 @@ import { MemoryRouter } from 'react-router-dom';
 // V71.1 — saillies + refreshData ajoutés (KPIs ReproV70 + computeGlobalKpis Performance).
 vi.mock('../../../context/FarmContext', () => ({
   useFarm: () => ({ bandes: [], truies: [], verrats: [], saillies: [], refreshData: vi.fn() }),
+  useMeta: () => ({ loading: false }),
 }));
 
 // V71.1 — TodayV70 + ReglagesV70 lisent profile/role depuis useAuth

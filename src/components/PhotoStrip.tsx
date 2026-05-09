@@ -23,17 +23,22 @@ const PhotoStrip: React.FC<PhotoStripProps> = ({ subjectType, subjectId }) => {
 
   const captionId = useId();
 
-  const loadPhotos = useCallback(async () => {
+  const loadPhotos = useCallback(async (signal?: { cancelled: boolean }) => {
     setLoading(true);
     const data = await getPhotosForSubject(subjectType, subjectId);
+    if (signal?.cancelled) return;
     setPhotos(data);
     setLoading(false);
   }, [subjectType, subjectId]);
 
   useEffect(() => {
+    const signal = { cancelled: false };
     // Legitimate I/O: async fetch of photos for subject
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadPhotos();
+    loadPhotos(signal);
+    return () => {
+      signal.cancelled = true;
+    };
   }, [loadPhotos]);
 
   const handleAddPhoto = async (): Promise<void> => {

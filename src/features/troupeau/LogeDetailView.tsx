@@ -80,15 +80,17 @@ const LogeDetailView: React.FC = () => {
   const [toast, setToast] = useState('');
   const [photosRefreshKey, setPhotosRefreshKey] = useState(0);
 
-  const loadAll = useCallback(async () => {
+  const loadAll = useCallback(async (signal?: { cancelled: boolean }) => {
     if (!id) return;
     setLoading(true);
     try {
       const all = await listLoges();
+      if (signal?.cancelled) return;
       const found = all.find((l) => l.id === id) ?? null;
       setLoge(found);
 
       const c = await getLogeContents(id);
+      if (signal?.cancelled) return;
       setContents(c);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -99,16 +101,21 @@ const LogeDetailView: React.FC = () => {
         .or(`from_loge_id.eq.${id},to_loge_id.eq.${id}`)
         .order('date_mvt', { ascending: false })
         .limit(50);
+      if (signal?.cancelled) return;
       if (!error && data) {
         setMovements(data as MovementRow[]);
       }
     } finally {
-      setLoading(false);
+      if (!signal?.cancelled) setLoading(false);
     }
   }, [id]);
 
   useEffect(() => {
-    void loadAll();
+    const signal = { cancelled: false };
+    void loadAll(signal);
+    return () => {
+      signal.cancelled = true;
+    };
   }, [loadAll]);
 
   const handleDeactivate = useCallback(() => {

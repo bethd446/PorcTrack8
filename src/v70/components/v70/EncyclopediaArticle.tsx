@@ -105,11 +105,18 @@ export const EncyclopediaArticle: React.FC<EncyclopediaArticleProps> = ({ slug }
       setError('Article introuvable');
       return;
     }
+    let cancelled = false;
     (loader() as Promise<string>)
       .then((raw) => {
+        if (cancelled) return;
         setContent(parseFrontmatter(raw));
       })
-      .catch(() => setError('Erreur chargement article'));
+      .catch(() => {
+        if (!cancelled) setError('Erreur chargement article');
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [slug]);
 
   if (error) {

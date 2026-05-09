@@ -66,18 +66,23 @@ const FournisseursView: React.FC = () => {
   const [query, setQuery] = useState('');
   const [presentAlert] = useIonAlert();
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (signal?: { cancelled: boolean }) => {
     setLoading(true);
     try {
       const list = await listFournisseurs();
+      if (signal?.cancelled) return;
       setRows(list);
     } finally {
-      setLoading(false);
+      if (!signal?.cancelled) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void refresh();
+    const signal = { cancelled: false };
+    void refresh(signal);
+    return () => {
+      signal.cancelled = true;
+    };
   }, [refresh]);
 
   const handleDelete = useCallback(

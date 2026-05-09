@@ -72,10 +72,11 @@ const TroupeauLogesListView: React.FC = () => {
   const [filter, setFilter] = useState<FilterValue>('ALL');
   const [addOpen, setAddOpen] = useState(false);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (signal?: { cancelled: boolean }) => {
     setLoading(true);
     try {
       const list = await listLoges();
+      if (signal?.cancelled) return;
       const active = list.filter((l) => l.active);
       // Pour chaque loge active, calcule l'occupation totale (truies + verrats + porcelets)
       const enriched = await Promise.all(
@@ -88,14 +89,19 @@ const TroupeauLogesListView: React.FC = () => {
           }
         }),
       );
+      if (signal?.cancelled) return;
       setLoges(enriched);
     } finally {
-      setLoading(false);
+      if (!signal?.cancelled) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void refresh();
+    const signal = { cancelled: false };
+    void refresh(signal);
+    return () => {
+      signal.cancelled = true;
+    };
   }, [refresh]);
 
   const filtered = useMemo<LogeWithOccupation[]>(() => {

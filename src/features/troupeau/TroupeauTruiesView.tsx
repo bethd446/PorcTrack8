@@ -23,7 +23,10 @@ import {
   type ChipTone,
 } from '../../components/agritech';
 import EmptyStateShared from '../../components/design/EmptyState';
+import ListingSkeleton from '../../components/design/ListingSkeleton';
 import { Tag, Segment, Chip as DsChip, Button } from '../../design-system';
+import { useMeta } from '../../context/FarmContext';
+import { useListingLoadingGuard } from '../../hooks/useListingLoadingGuard';
 
 type TagVariantKind = 'default' | 'primary' | 'accent' | 'soft' | 'danger' | 'warning';
 function chipToneToTagVariant(tone: ChipTone): TagVariantKind {
@@ -191,6 +194,8 @@ interface TroupeauTruiesViewProps {
 const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, setSearchText }) => {
   const navigate = useNavigate();
   const { activeTruies } = useTroupeauPipeline();
+  const { loading: farmLoading } = useMeta();
+  const isInitialLoading = useListingLoadingGuard(farmLoading, activeTruies.length);
   const today = useMemo(() => new Date(), []);
 
   const [filter, setFilter] = useState<FilterKey>('tout');
@@ -374,7 +379,9 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
       />
 
       {/* ── Liste ou Grille ─────────────────────────────────────── */}
-      {filtered.length === 0 ? (
+      {isInitialLoading && searchText.trim().length === 0 ? (
+        <ListingSkeleton count={4} />
+      ) : filtered.length === 0 ? (
         <EmptyStateShared
           size="sm"
           icon={<Users size={20} aria-hidden="true" />}

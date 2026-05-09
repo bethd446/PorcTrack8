@@ -85,24 +85,31 @@ const PoidsTriView: React.FC<PoidsTriViewProps> = ({
   const [error, setError] = useState<string>('');
 
   const bandeIdValue = bande.id;
-  const fetchLatest = useCallback(async () => {
+  const fetchLatest = useCallback(async (signal?: { cancelled: boolean }) => {
     if (!bandeIdValue) return;
     setLoading(true);
     setError('');
     try {
       const rows = await listWeightDistributions(bandeIdValue);
+      if (signal?.cancelled) return;
       setLatest(rows[0] ?? null);
     } catch (e) {
+      if (signal?.cancelled) return;
       setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setLoading(false);
+      if (!signal?.cancelled) setLoading(false);
     }
   }, [bandeIdValue]);
 
   useEffect(() => {
     if (initialDist === undefined) {
-      void fetchLatest();
+      const signal = { cancelled: false };
+      void fetchLatest(signal);
+      return () => {
+        signal.cancelled = true;
+      };
     }
+    return undefined;
   }, [fetchLatest, initialDist]);
 
   const summary = summarize(latest);

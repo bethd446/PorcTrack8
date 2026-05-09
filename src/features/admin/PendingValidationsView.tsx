@@ -101,23 +101,29 @@ export default function PendingValidationsView({ embedded, onChange }: PendingVa
   const [actingId, setActingId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
-  const loadPending = useCallback(async () => {
+  const loadPending = useCallback(async (signal?: { cancelled: boolean }) => {
     setLoading(true);
     setError(null);
     try {
       const list = await getPendingValidations();
+      if (signal?.cancelled) return;
       setItems(list);
     } catch (e) {
+      if (signal?.cancelled) return;
       console.error('[PendingValidationsView] load failed', e);
       setError('Impossible de charger les actions en attente.');
       setItems([]);
     } finally {
-      setLoading(false);
+      if (!signal?.cancelled) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void loadPending();
+    const signal = { cancelled: false };
+    void loadPending(signal);
+    return () => {
+      signal.cancelled = true;
+    };
   }, [loadPending]);
 
   const showToast = (msg: string) => {

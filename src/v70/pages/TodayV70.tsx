@@ -14,7 +14,7 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ClipboardList, Play, ChevronRight, CheckCheck } from 'lucide-react';
-import { useFarm } from '../../context/FarmContext';
+import { useFarm, useMeta } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
@@ -42,6 +42,7 @@ interface AlertItem {
 export const TodayV70: React.FC = () => {
   const navigate = useNavigate();
   const { truies, verrats, bandes } = useFarm();
+  const { loading: farmLoading } = useMeta();
   const { profile } = useAuth();
 
   // V71.2 — alertes calculées depuis FarmContext (plus de mocks statiques)
@@ -193,7 +194,21 @@ export const TodayV70: React.FC = () => {
 
       {/* Section 2 : À TRAITER (registre journal — anti-AI feel, plus de cards uniformes) */}
       <Section label={`À traiter (${alerts.length})`}>
-        {alerts.length === 0 ? (
+        {farmLoading && truies.length === 0 && bandes.length === 0 ? (
+          // V74 Vague V — pendant le chargement initial : skeleton plutôt que
+          // "Carnet vide". Évite le flash "tout va bien" pendant 1-2s avant que
+          // les vraies alertes apparaissent.
+          <div data-testid="today-loading-skeleton" className="flex flex-col gap-2 py-2">
+            {[0, 1].map((i) => (
+              <div
+                key={i}
+                className="rounded-md bg-bg-2 animate-pulse"
+                style={{ height: 56 }}
+                aria-hidden="true"
+              />
+            ))}
+          </div>
+        ) : alerts.length === 0 ? (
           // V74 — empty state V73 : carnet vide avec image couloir calme.
           // L'image renforce le sentiment "tout va bien" sans remplir avec
           // des cards mock. Texte gardé pour conformité tests existants.

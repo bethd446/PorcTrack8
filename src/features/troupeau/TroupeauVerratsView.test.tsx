@@ -80,6 +80,7 @@ vi.mock('../../context/FarmContext', () => ({
     pullData: vi.fn(),
     processQueue: vi.fn(),
   }),
+  useMeta: () => ({ loading: false }),
   FarmProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 

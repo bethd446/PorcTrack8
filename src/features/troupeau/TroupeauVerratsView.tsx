@@ -11,9 +11,11 @@ import {
 } from '../../components/agritech';
 import { Button } from '@/design-system';
 import EmptyState from '../../components/design/EmptyState';
+import ListingSkeleton from '../../components/design/ListingSkeleton';
 import QuickAddVerratForm from '../../components/forms/QuickAddVerratForm';
 import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
-import { useFarm } from '../../context/FarmContext';
+import { useFarm, useMeta } from '../../context/FarmContext';
+import { useListingLoadingGuard } from '../../hooks/useListingLoadingGuard';
 import type { Verrat, Saillie } from '../../types/farm';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -71,6 +73,8 @@ interface TroupeauVerratsViewProps {
 const TroupeauVerratsView: React.FC<TroupeauVerratsViewProps> = ({ searchText, setSearchText }) => {
   const navigate = useNavigate();
   const { verrats, saillies } = useFarm();
+  const { loading: farmLoading } = useMeta();
+  const isInitialLoading = useListingLoadingGuard(farmLoading, verrats.length);
   const [sheetVerratId, setSheetVerratId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
 
@@ -184,7 +188,9 @@ const TroupeauVerratsView: React.FC<TroupeauVerratsViewProps> = ({ searchText, s
       </div>
 
       {/* ── Liste verrats ──────────────────────────────────────── */}
-      {verrats.length === 0 ? (
+      {isInitialLoading ? (
+        <ListingSkeleton count={3} />
+      ) : verrats.length === 0 ? (
         <EmptyState
           icon={<VerratIcon size={32} />}
           title="Aucun verrat enregistré"

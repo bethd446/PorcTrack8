@@ -17,6 +17,7 @@ vi.mock('../../../context/FarmContext', () => ({
     saillies: [],
     refreshData: vi.fn(),
   }),
+  useMeta: () => ({ loading: false }),
 }));
 
 vi.mock('../../../context/AuthContext', () => ({

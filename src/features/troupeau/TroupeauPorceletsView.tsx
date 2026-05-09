@@ -1,12 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Search, ChevronRight, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useFarm } from '../../context/FarmContext';
+import { useFarm, useMeta } from '../../context/FarmContext';
 import { AnimalListItem, SectionDivider, type ChipTone } from '../../components/agritech';
 import { Button } from '@/design-system';
 import { BandeIcon } from '../../components/icons';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { listLoges } from '../../services/supabaseWrites';
+import ListingSkeleton from '../../components/design/ListingSkeleton';
+import { useListingLoadingGuard } from '../../hooks/useListingLoadingGuard';
 import { Bandes } from '../../services/bandAnalysisEngine';
 import type { BandePorcelets, Loge } from '../../types/farm';
 import { usePhaseTransitions } from '../../hooks/usePhaseTransitions';
@@ -108,6 +110,7 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({
 }) => {
   const navigate = useNavigate();
   const { bandes } = useFarm();
+  const { loading: farmLoading } = useMeta();
   const today = useMemo(() => new Date(), []);
 
   const { pending, confirm } = usePhaseTransitions();
@@ -211,6 +214,7 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({
   const nbBandes = occupiedLoges.length;
 
   const hasAnyActive = realBandes.length > 0;
+  const isInitialLoading = useListingLoadingGuard(farmLoading, realBandes.length);
 
   return (
     <div className="flex flex-col gap-4">
@@ -270,7 +274,9 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({
         />
       </div>
 
-      {!hasAnyActive ? (
+      {isInitialLoading ? (
+        <ListingSkeleton count={3} />
+      ) : !hasAnyActive ? (
         <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
           <BandeIcon size={48} className="text-text-2" />
           <p className="text-[14px] font-medium text-text-1">Aucune bande en cours</p>

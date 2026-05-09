@@ -17,6 +17,7 @@ import { MemoryRouter } from 'react-router-dom';
 // V71.1 — KPIs ISSE/Taux MB/Mortalité/IEM lus depuis useFarm via computeGlobalKpis
 vi.mock('../../../context/FarmContext', () => ({
   useFarm: () => ({ bandes: [], truies: [], verrats: [], saillies: [], refreshData: vi.fn() }),
+  useMeta: () => ({ loading: false }),
 }));
 
 import { PerformanceV70 } from '../PerformanceV70';

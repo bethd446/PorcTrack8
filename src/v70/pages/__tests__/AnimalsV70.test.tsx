@@ -7,6 +7,7 @@ import { MemoryRouter } from 'react-router-dom';
 // En test, on mocke FarmContext pour éviter d'avoir à monter tous les providers.
 vi.mock('../../../context/FarmContext', () => ({
   useFarm: () => ({ bandes: [], truies: [], verrats: [], saillies: [], refreshData: vi.fn() }),
+  useMeta: () => ({ loading: false }),
 }));
 
 import { AnimalsV70 } from '../AnimalsV70';

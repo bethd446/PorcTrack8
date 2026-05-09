@@ -40,18 +40,23 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (signal?: { cancelled: boolean }) => {
     setLoading(true);
     try {
       const list = await listEntityPhotos(entityType, entityId);
+      if (signal?.cancelled) return;
       setPhotos(list);
     } finally {
-      setLoading(false);
+      if (!signal?.cancelled) setLoading(false);
     }
   }, [entityType, entityId]);
 
   useEffect(() => {
-    void refresh();
+    const signal = { cancelled: false };
+    void refresh(signal);
+    return () => {
+      signal.cancelled = true;
+    };
   }, [refresh, refreshKey]);
 
   const handleDelete = useCallback(
