@@ -274,7 +274,11 @@ export const AnimalsV70: React.FC = () => {
       <MariusGreeting pageContext="élevage" />
 
       <PageHeader
-        eyebrow={`Élevage · ${counts.totalAnimaux} animaux`}
+        eyebrow={
+          farmLoading && truies.length === 0 && bandes.length === 0
+            ? 'Élevage'
+            : `Élevage · ${counts.totalAnimaux} animaux`
+        }
         title="Élevage"
         subtitle="Truies, verrats, porcelets, bandes, loges"
       />

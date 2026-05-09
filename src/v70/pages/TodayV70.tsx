@@ -118,15 +118,30 @@ export const TodayV70: React.FC = () => {
   }, [bandes]);
 
   // V71.1 — données live FarmContext (était hardcodé 50/3/92/6)
+  // V75-j-2 (F-NEW-3) — porcelets actifs alignés sur Élevage : on filtre les
+  // porcelets par statut (VIVANT/MALADE/QUARANTAINE) au lieu d'agréger
+  // bande.vivants (qui inclut compte historique). Source unique de vérité =
+  // même calcul que AnimalsV70.tsx l. 123-128.
   const stats = useMemo(() => {
-    const porceletsVivants = bandes.reduce((acc, b) => acc + (b.vivants ?? 0), 0);
+    const porceletsActifs = bandes.reduce((acc, b) => {
+      const active = (b.porcelets ?? []).filter(
+        p => p.statut === 'VIVANT' || p.statut === 'MALADE' || p.statut === 'QUARANTAINE',
+      ).length;
+      return acc + active;
+    }, 0);
     return {
       truies: truies.length,
       verrats: verrats.length,
-      porcelets: porceletsVivants,
+      porcelets: porceletsActifs,
       bandes: bandes.length,
     };
   }, [truies, verrats, bandes]);
+
+  // V75-j-2 (F-NEW-4) — pendant le chargement initial, éviter le flash
+  // "0 truies / 0 porcelets" qui donne l'impression d'une ferme vide.
+  // Le pattern existant farmLoading + arrays vides est déjà utilisé ligne 215
+  // pour la section alertes, on l'étend aux KPIs et au greeting subtitle.
+  const showSkeletons = farmLoading && truies.length === 0 && bandes.length === 0;
 
   const userName = profile?.full_name?.split(' ')[0] || 'éleveur';
   const dateLabel = new Date().toLocaleDateString('fr-FR', {
@@ -171,7 +186,11 @@ export const TodayV70: React.FC = () => {
       <PageHeader
         eyebrow={dateLabel}
         title="Aujourd'hui"
-        subtitle={`Bonjour ${userName} — ${alerts.length} priorités`}
+        subtitle={
+          showSkeletons
+            ? `Bonjour ${userName}`
+            : `Bonjour ${userName} — ${alerts.length} priorités`
+        }
       />
 
       {/* V71 — Carte pédagogique contextuelle (encyclopédie liée à l'état ferme) */}
@@ -450,10 +469,10 @@ export const TodayV70: React.FC = () => {
       {/* Section 3 : MON ÉLEVAGE (KPIs résumés) */}
       <Section label="Mon élevage">
         <StatsGrid cols={4}>
-          <Stat value={stats.truies} label="Truies" />
-          <Stat value={stats.verrats} label="Verrats" />
-          <Stat value={stats.porcelets} label="Porcelets" />
-          <Stat value={stats.bandes} label="Bandes" />
+          <Stat value={showSkeletons ? '—' : stats.truies} label="Truies" />
+          <Stat value={showSkeletons ? '—' : stats.verrats} label="Verrats" />
+          <Stat value={showSkeletons ? '—' : stats.porcelets} label="Porcelets" />
+          <Stat value={showSkeletons ? '—' : stats.bandes} label="Bandes" />
         </StatsGrid>
       </Section>
 
