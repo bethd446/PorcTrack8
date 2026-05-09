@@ -74,6 +74,12 @@ export interface Truie {
   logeId?: string;
   /** V24 — Numéro de loge résolu via JOIN (ex: "M-01"). */
   logeNumero?: string;
+  /** V75-l — Date effective de sortie du cheptel (DATE ISO yyyy-MM-dd). NULL si encore présente. */
+  dateSortie?: string;
+  /** V75-l — Type de sortie : VENTE / ABATTOIR / MORTALITE. NULL si pas encore sortie. */
+  typeSortie?: 'VENTE' | 'ABATTOIR' | 'MORTALITE';
+  /** V75-l — Prix vente FCFA (uniquement si typeSortie = VENTE). NULL sinon. */
+  prixSortieFcfa?: number;
   synced: boolean;
   raw?: (string | number | boolean)[];
 }

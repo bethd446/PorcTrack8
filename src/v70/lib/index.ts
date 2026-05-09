@@ -5,6 +5,7 @@ export {
   isReformed,
   needsReformConsideration,
   alreadySortedOut,
+  formatSortieLabel,
   reformReason,
 } from './reformLogic';
 

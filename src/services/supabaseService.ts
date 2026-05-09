@@ -84,6 +84,9 @@ export async function getTruies(
         loge:          (r.localisation as string | null) ?? undefined,
         logeId:        (r.loge_id as string | null) ?? undefined,
         logeNumero:    r.loges?.numero ?? undefined,
+        dateSortie:    (r.date_sortie as string | null) ?? undefined,
+        typeSortie:    (r.type_sortie as Truie['typeSortie'] | null) ?? undefined,
+        prixSortieFcfa:(r.prix_sortie_fcfa as number | null) ?? undefined,
         synced:        true,
       };
     });

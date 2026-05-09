@@ -27,8 +27,19 @@ export function needsReformConsideration(t: Pick<Truie, 'statut' | 'nbPortees' |
   return false;
 }
 
-export function alreadySortedOut(t: Truie & { dateSortie?: string | null }): boolean {
+export function alreadySortedOut(t: Pick<Truie, 'dateSortie'>): boolean {
   return Boolean(t.dateSortie);
+}
+
+export function formatSortieLabel(t: Pick<Truie, 'dateSortie' | 'typeSortie'>): string {
+  if (!t.dateSortie) return '';
+  const typeLabel: Record<NonNullable<Truie['typeSortie']>, string> = {
+    VENTE: 'Vendue',
+    ABATTOIR: 'Abattoir',
+    MORTALITE: 'Morte',
+  };
+  const label = t.typeSortie ? typeLabel[t.typeSortie] : 'Sortie';
+  return `${label} le ${t.dateSortie}`;
 }
 
 export function reformReason(t: Pick<Truie, 'nbPortees' | 'dateNaissance'>): string {

@@ -3,6 +3,7 @@ import {
   isReformed,
   needsReformConsideration,
   alreadySortedOut,
+  formatSortieLabel,
   reformReason,
 } from '../reformLogic';
 
@@ -66,11 +67,37 @@ describe('needsReformConsideration', () => {
 
 describe('alreadySortedOut', () => {
   it('vrai si dateSortie présente', () => {
-    expect(alreadySortedOut({ ...baseTruie, dateSortie: '2026-04-01' } as any)).toBe(true);
+    expect(alreadySortedOut({ dateSortie: '2026-04-01' })).toBe(true);
   });
 
   it('faux si dateSortie absente', () => {
-    expect(alreadySortedOut(baseTruie as any)).toBe(false);
+    expect(alreadySortedOut({})).toBe(false);
+  });
+});
+
+describe('formatSortieLabel', () => {
+  it('vide si dateSortie absente', () => {
+    expect(formatSortieLabel({})).toBe('');
+  });
+
+  it('VENTE → "Vendue le …"', () => {
+    expect(formatSortieLabel({ dateSortie: '2026-04-01', typeSortie: 'VENTE' }))
+      .toBe('Vendue le 2026-04-01');
+  });
+
+  it('ABATTOIR → "Abattoir le …"', () => {
+    expect(formatSortieLabel({ dateSortie: '2026-05-02', typeSortie: 'ABATTOIR' }))
+      .toBe('Abattoir le 2026-05-02');
+  });
+
+  it('MORTALITE → "Morte le …"', () => {
+    expect(formatSortieLabel({ dateSortie: '2026-05-03', typeSortie: 'MORTALITE' }))
+      .toBe('Morte le 2026-05-03');
+  });
+
+  it('typeSortie absent mais dateSortie présent → "Sortie le …"', () => {
+    expect(formatSortieLabel({ dateSortie: '2026-05-04' }))
+      .toBe('Sortie le 2026-05-04');
   });
 });
 

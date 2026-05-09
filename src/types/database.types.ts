@@ -1588,6 +1588,7 @@ export type Database = {
           created_on: string
           date_mb_prevue: string | null
           date_naissance: string | null
+          date_sortie: string | null
           farm_id: string
           id: string
           localisation: string | null
@@ -1597,9 +1598,11 @@ export type Database = {
           notes: string | null
           origine: string | null
           photo_url: string | null
+          prix_sortie_fcfa: number | null
           ration_kg_j: number | null
           statut: string | null
           statut_repro: string | null
+          type_sortie: string | null
         }
         Insert: {
           alimentation?: string | null
@@ -1609,6 +1612,7 @@ export type Database = {
           created_on?: string
           date_mb_prevue?: string | null
           date_naissance?: string | null
+          date_sortie?: string | null
           farm_id: string
           id?: string
           localisation?: string | null
@@ -1618,9 +1622,11 @@ export type Database = {
           notes?: string | null
           origine?: string | null
           photo_url?: string | null
+          prix_sortie_fcfa?: number | null
           ration_kg_j?: number | null
           statut?: string | null
           statut_repro?: string | null
+          type_sortie?: string | null
         }
         Update: {
           alimentation?: string | null
@@ -1630,6 +1636,7 @@ export type Database = {
           created_on?: string
           date_mb_prevue?: string | null
           date_naissance?: string | null
+          date_sortie?: string | null
           farm_id?: string
           id?: string
           localisation?: string | null
@@ -1639,9 +1646,11 @@ export type Database = {
           notes?: string | null
           origine?: string | null
           photo_url?: string | null
+          prix_sortie_fcfa?: number | null
           ration_kg_j?: number | null
           statut?: string | null
           statut_repro?: string | null
+          type_sortie?: string | null
         }
         Relationships: [
           {

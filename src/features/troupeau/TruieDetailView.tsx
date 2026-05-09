@@ -32,6 +32,9 @@ import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
 import QuickMiseBasForm from '../../components/forms/QuickMiseBasForm';
 import QuickMortalityForm from '../../components/forms/QuickMortalityForm';
 import QuickEchographieForm from '../../components/forms/QuickEchographieForm';
+import QuickConfirmSortieForm, {
+  type QuickConfirmSortieFormData,
+} from '../../components/forms/QuickConfirmSortieForm';
 import TruieEventActionSheet, { type TruieEventAction } from '../../components/forms/TruieEventActionSheet';
 
 import Chip from '../../components/design/Chip';
@@ -58,7 +61,7 @@ import {
 } from '../../services/rationCalculator';
 import { FEED_CONFIG } from '../../config/feed';
 import { labelStatutTruie } from '../../lib/labels';
-import { isReformed } from '../../v70/lib';
+import { isReformed, alreadySortedOut, formatSortieLabel } from '../../v70/lib';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -121,6 +124,7 @@ const TruieDetailView: React.FC = () => {
   const [miseBasOpen, setMiseBasOpen] = useState(false);
   const [mortalityOpen, setMortalityOpen] = useState(false);
   const [echoOpen, setEchoOpen] = useState(false);
+  const [sortieFormOpen, setSortieFormOpen] = useState(false);
   const [photosRefreshKey, setPhotosRefreshKey] = useState(0);
 
   const handleEventAction = useCallback((action: TruieEventAction): void => {
@@ -241,6 +245,31 @@ const TruieDetailView: React.FC = () => {
       ],
     });
   }, [presentAlert, truie]);
+
+  const handleConfirmSortie = useCallback(
+    async (data: QuickConfirmSortieFormData): Promise<void> => {
+      if (!truie) return;
+      // V75-l : write direct via supabaseWrites.updateSow (snake_case columns).
+      // `enqueueUpdateRow` est deprecated/no-op (cf. offlineQueue.ts:306).
+      const res = await updateSow(truie.id, {
+        date_sortie: data.dateSortie,
+        type_sortie: data.typeSortie,
+        prix_sortie_fcfa: data.prixSortieFcfa ?? null,
+      });
+      if (!res.success) {
+        setToast(`Erreur : ${res.error ?? 'écriture impossible'}`);
+        return;
+      }
+      const verb =
+        data.typeSortie === 'VENTE' ? 'vendue'
+        : data.typeSortie === 'ABATTOIR' ? 'abattue'
+        : 'sortie (mortalité)';
+      setToast(`Truie ${truie.displayId} marquée ${verb}`);
+      setSortieFormOpen(false);
+      await refreshData();
+    },
+    [truie, refreshData],
+  );
 
   // ── État non trouvé / loading (V74 défense-en-profondeur) ─────────────────
   // useEntityWithRetry doit être appelé inconditionnellement (rules-of-hooks).
@@ -908,15 +937,29 @@ const TruieDetailView: React.FC = () => {
                         Sortir cette truie
                       </Button>
                     )}
-                    {isReformed(truie) && (
+                    {isReformed(truie) && !alreadySortedOut(truie) && (
                       <Button
-                        variant="secondary"
+                        variant="primary"
                         size="sm"
-                        disabled
-                        ariaLabel={`Marquer la truie ${truie.displayId} comme vendue (bientôt disponible)`}
+                        onClick={() => setSortieFormOpen(true)}
+                        ariaLabel={`Marquer la truie ${truie.displayId} comme sortie du cheptel`}
                       >
-                        Marquer comme vendue (bientôt)
+                        Marquer comme sortie
                       </Button>
+                    )}
+                    {isReformed(truie) && alreadySortedOut(truie) && (
+                      <div
+                        style={{
+                          padding: '10px 14px',
+                          borderRadius: 12,
+                          background: 'var(--pt-warm)',
+                          color: 'var(--pt-muted)',
+                          fontSize: 13,
+                          fontFamily: 'var(--font-body)',
+                        }}
+                      >
+                        {formatSortieLabel(truie)}
+                      </div>
                     )}
                     <Button
                       variant="secondary"
@@ -987,6 +1030,14 @@ const TruieDetailView: React.FC = () => {
           isOpen={echoOpen}
           onClose={() => setEchoOpen(false)}
           defaultTruieDisplayId={truie.displayId}
+        />
+
+        {/* V75-l — Sortie effective du cheptel (vente / abattoir / mortalité) */}
+        <QuickConfirmSortieForm
+          isOpen={sortieFormOpen}
+          truie={truie}
+          onClose={() => setSortieFormOpen(false)}
+          onConfirm={(data) => { void handleConfirmSortie(data); }}
         />
 
         {/* Modal arbre généalogique */}
