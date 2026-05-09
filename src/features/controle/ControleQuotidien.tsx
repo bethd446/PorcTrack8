@@ -63,7 +63,7 @@ const ControleQuotidien: React.FC = () => {
         <IonContent fullscreen className="ion-no-padding">
           <AgritechLayout withNav={false}>
             <TopBarSync
-              crumbs={['Outils', 'Audit terrain']}
+              crumbs={[{ label: "Aujourd'hui", href: '/today' }, 'Audit terrain']}
               onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
             />
             <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>

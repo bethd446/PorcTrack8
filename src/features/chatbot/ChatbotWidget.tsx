@@ -121,6 +121,7 @@ export const ChatbotWidget: React.FC = () => {
   const [lastInjectedContext, setLastInjectedContext] = useState<string | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -383,7 +384,8 @@ export const ChatbotWidget: React.FC = () => {
                   type="button"
                   onClick={() => {
                     setInput(s.question);
-                    setTimeout(() => inputRef.current?.focus(), 0);
+                    // Auto-submit après que React ait flush l'input.
+                    setTimeout(() => formRef.current?.requestSubmit(), 0);
                   }}
                   className="text-xs text-left px-3 py-2 rounded-xl transition-colors hover:bg-[var(--bg-surface-2)]"
                   style={{
@@ -460,6 +462,7 @@ export const ChatbotWidget: React.FC = () => {
       </div>
 
       <form
+        ref={formRef}
         onSubmit={handleSubmit}
         className="flex items-center gap-2 px-3 py-2 border-t"
         style={{ borderColor: 'var(--line)' }}

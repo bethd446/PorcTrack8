@@ -23,9 +23,9 @@ beforeAll(() => {
 afterEach(() => cleanup());
 
 describe('AnimalsV70 — Phase 3 Hub Élevage', () => {
-  it('rend H1 "Mes animaux" (décision A : nav=Élevage, h1=Mes animaux)', () => {
+  it('rend H1 "Élevage" (décision A : nav=Élevage, h1=Élevage — V75-c)', () => {
     render(<MemoryRouter><AnimalsV70 /></MemoryRouter>);
-    expect(screen.getByRole('heading', { level: 1, name: /mes animaux/i })).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 1, name: /élevage/i })).toBeTruthy();
   });
 
   it('rend 5 tabs catégoriels', () => {

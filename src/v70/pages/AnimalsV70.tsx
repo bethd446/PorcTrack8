@@ -5,7 +5,7 @@
  *
  * Décision A Christophe :
  * - Tab nav label : "Élevage" (BottomNav Phase 2 OK)
- * - H1 page : "Mes animaux" (titre lu par l'utilisateur, plus chaleureux)
+ * - H1 page : "Élevage" (alignement strict décision A — V75-c naming-coherence)
  *
  * Phase 3B : page Hub catégoriel — TabsMini 5 catégories, search bar,
  * filter pills, liste truies stubs. FAB ajout (Phase F branchera contexte).
@@ -259,7 +259,7 @@ export const AnimalsV70: React.FC = () => {
 
       <PageHeader
         eyebrow={`Élevage · ${counts.totalAnimaux} animaux`}
-        title="Mes animaux"
+        title="Élevage"
         subtitle="Truies, verrats, porcelets, bandes, loges"
       />
 
