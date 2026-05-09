@@ -251,7 +251,7 @@ export const ReproV70: React.FC = () => {
 
       <StatsGrid cols={4}>
         <Stat value={kpis.pleines} label="Pleines" />
-        <Stat value={kpis.materni} label="Materni." />
+        <Stat value={kpis.materni} label="Maternité" />
         <Stat value={kpis.vides} label="Vides" />
         <Stat value={kpis.mbProches} label="MB 7j" />
       </StatsGrid>
@@ -271,7 +271,6 @@ export const ReproV70: React.FC = () => {
                   steps={[
                     { label: 'Saillie', day: 0, done: cycleBande.currentDay >= 0 },
                     { label: 'Écho', day: 28, done: cycleBande.currentDay >= 28 },
-                    { label: 'Gestation', day: Math.min(GESTATION_JOURS, Math.max(28, cycleBande.currentDay)), done: false },
                     { label: 'Mise-bas', day: GESTATION_JOURS, done: cycleBande.currentDay >= GESTATION_JOURS, target: true },
                   ]}
                 />
@@ -328,7 +327,6 @@ export const ReproV70: React.FC = () => {
                   steps={[
                     { label: 'Saillie', day: 0, done: cycleBande.currentDay >= 0 },
                     { label: 'Écho', day: 28, done: cycleBande.currentDay >= 28 },
-                    { label: 'Gestation', day: Math.min(GESTATION_JOURS, Math.max(28, cycleBande.currentDay)), done: false },
                     { label: 'Mise-bas', day: GESTATION_JOURS, done: cycleBande.currentDay >= GESTATION_JOURS, target: true },
                   ]}
                 />
