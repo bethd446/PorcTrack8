@@ -303,6 +303,13 @@ export interface AlerteServeur {
  * aux portées qu'il a engendrées (via match date MB).
  */
 export interface Saillie {
+  /**
+   * UUID Supabase de la saillie (`saillies.id`). Optionnel : non rempli par
+   * les fixtures legacy / tests qui construisent des Saillies à la main.
+   * Requis pour `enqueueUpdate('saillies', id, …)` dans les flux de
+   * confirmation / retour chaleur.
+   */
+  id?: string;
   /** ID de la truie (ex: T01). Mappe la colonne `ID Truie`. */
   truieId: string;
   /** Boucle snapshot de la truie au moment de la saillie (optionnel). */

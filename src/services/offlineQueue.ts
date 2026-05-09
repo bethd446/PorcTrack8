@@ -302,7 +302,14 @@ export async function enqueueAppendRow(
   void values;
 }
 
-/** @deprecated migrer vers enqueueUpdate(table, id, fields) */
+/**
+ * @deprecated TOUS LES CALLERS RUNTIME ONT ÉTÉ MIGRÉS (V75-p) vers
+ * `enqueueUpdate(table, id, fields)` ou un write Supabase direct. Cette
+ * fonction est conservée uniquement parce que des tests legacy
+ * (Quick*EditForm.test.tsx) la mockent encore via vi.mock — supprimer dès
+ * que ces tests seront migrés ou retirés. Ne PAS l'utiliser dans du code
+ * runtime : elle drop silencieusement le patch.
+ */
 export async function enqueueUpdateRow(
   sheet: string,
   idHeader: string,
@@ -310,7 +317,7 @@ export async function enqueueUpdateRow(
   patch: Record<string, SheetCell>,
 ): Promise<void> {
   console.warn(
-    `[offlineQueue] enqueueUpdateRow('${sheet}', '${idHeader}'='${idValue}', …) appelé — caller à migrer vers enqueueUpdate (vague 2b).`,
+    `[offlineQueue] enqueueUpdateRow('${sheet}', '${idHeader}'='${idValue}', …) appelé — DATA LOSS. Migrer vers enqueueUpdate.`,
   );
   void patch;
 }

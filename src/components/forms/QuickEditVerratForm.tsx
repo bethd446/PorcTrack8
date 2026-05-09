@@ -35,9 +35,9 @@ import PhotoUploader from './PhotoUploader';
      - Statut       : Actif · Réforme · Mort · Quarantaine
      - Notes        : textarea max 200 chars
 
-   Submit → enqueueUpdateRow('VERRATS', 'ID', verrat.id, patch) avec clés
-   canoniques NOM · BOUCLE · ORIGINE · ALIMENTATION · RATION KG/J · STATUT
-   · NOTES. Le patch est PARTIEL : seuls les champs modifiés sont envoyés.
+   Submit → updateBoarByCode(verrat.id, patch) avec clés snake_case
+   (nom, boucle, origine, alimentation, ration_kg_j, statut, notes).
+   Le patch est PARTIEL : seuls les champs modifiés sont envoyés.
    ═════════════════════════════════════════════════════════════════════════ */
 
 interface QuickEditVerratFormProps {

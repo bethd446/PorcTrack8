@@ -3,11 +3,8 @@
  * ════════════════════════════════════════════════════════════════════════
  * BottomSheet : mêmes champs que Add, pré-remplis depuis la transaction.
  *
- * Submit → `enqueueUpdateRow('FINANCES', 'ID', transaction.id, patch)`.
+ * Submit → write Supabase direct sur la table `finances` (snake_case).
  * Patch PARTIEL : seuls les champs modifiés sont inclus.
- *
- * Clés canoniques envoyées :
- *   DATE (dd/MM/yyyy), CATEGORIE, LIBELLE, MONTANT, TYPE, BANDE_ID, NOTES.
  *
  * La prop `transaction` est un `FinanceEntry & { id: string }` — l'id est
  * fourni par la vue appelante (clé ligne Sheets).

@@ -23,7 +23,7 @@ import { Pencil, Printer } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
 import { useEntityWithRetry } from '../../hooks/useEntityWithRetry';
 import { SpinnerCenter, EntityNotFoundCard } from '../../v70/components/v70/EntityNotFoundGuard';
-import { enqueueUpdateRow } from '../../services/offlineQueue';
+import { enqueueUpdate } from '../../services/offlineQueue';
 import { updateSow, updateBatch } from '../../services/supabaseWrites';
 import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
@@ -218,13 +218,13 @@ const TruieDetailView: React.FC = () => {
 
   const handleConfirmGestation = useCallback(() => {
     if (!truie) return;
-    enqueueUpdateRow('SUIVI_TRUIES_REPRODUCTION', 'ID', truie.id, { STATUT: 'Pleine' });
+    void enqueueUpdate('sows', truie.id, { statut: 'Pleine' });
     setToast('Gestation confirmée');
   }, [truie]);
 
   const handleRetourChaleur = useCallback(() => {
     if (!truie) return;
-    enqueueUpdateRow('SUIVI_TRUIES_REPRODUCTION', 'ID', truie.id, { STATUT: 'En attente saillie' });
+    void enqueueUpdate('sows', truie.id, { statut: 'En attente saillie' });
     setToast('Retour en chaleur enregistré');
   }, [truie]);
 
@@ -239,7 +239,7 @@ const TruieDetailView: React.FC = () => {
           text: 'Confirmer',
           role: 'destructive',
           handler: () => {
-            void enqueueUpdateRow('SUIVI_TRUIES_REPRODUCTION', 'ID', truie.id, { STATUT: 'Réforme' });
+            void enqueueUpdate('sows', truie.id, { statut: 'Réforme' });
             setToast('Truie marquée à sortir');
           },
         },
@@ -251,7 +251,6 @@ const TruieDetailView: React.FC = () => {
     async (data: QuickConfirmSortieFormData): Promise<void> => {
       if (!truie) return;
       // V75-l : write direct via supabaseWrites.updateSow (snake_case columns).
-      // `enqueueUpdateRow` est deprecated/no-op (cf. offlineQueue.ts:306).
       // V75-o-a (F-16) : concaténation de la note libre éleveur dans
       // `notes` existante (pas de nouvelle colonne pour rester migration-free).
       const updates: Parameters<typeof updateSow>[1] = {

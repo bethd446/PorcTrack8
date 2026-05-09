@@ -291,6 +291,7 @@ export async function getSaillies(
       'DATE_MB_PREVUE', 'STATUT', 'NOTES'];
 
     const mapped: Saillie[] = (data ?? []).map(r => ({
+      id:           r.id,
       truieId:      r.sows?.code_id ?? r.sow_id ?? '',
       truieBoucle:  r.sows?.boucle ?? undefined,
       truieNom:     r.sows?.name ?? undefined,

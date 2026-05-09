@@ -36,12 +36,10 @@ import QuickAddLogeForm from './QuickAddLogeForm';
      - Statut (select)
      - Notes (textarea 300 chars)
 
-   Submit → enqueueUpdateRow('PORCELETS_BANDES_DETAIL', 'ID', bande.id, patch)
-   Clés canoniques envoyées : DATE_MB, NV, MORTS, VIVANTS, DATE_SEVRAGE_PREVUE,
-   DATE_SEVRAGE_REELLE, NB_MALES, NB_FEMELLES, DATE_SEPARATION,
-   LOGE_ENGRAISSEMENT, STATUT, NOTES, TRUIE, BOUCLE_MERE.
-
-   Dates converties ISO yyyy-MM-dd → dd/MM/yyyy (format Sheets).
+   Submit → updateBatchByCode(bande.id, patch) avec clés snake_case
+   (date_mb, nv, morts, vivants, date_sevrage_prevue, date_sevrage_reelle,
+   nb_males, nb_femelles, date_separation, loge_engraissement, statut,
+   notes, truie, boucle_mere).
    Patch partiel : seules les valeurs modifiées sont envoyées.
    ═════════════════════════════════════════════════════════════════════════ */
 

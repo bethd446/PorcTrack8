@@ -35,9 +35,9 @@ vi.mock('../../context/AuthContext', () => ({
 }));
 
 // Mock offlineQueue pour observer les updates de statut.
-const enqueueUpdateRowMock = vi.fn();
+const enqueueUpdateMock = vi.fn();
 vi.mock('../../services/offlineQueue', () => ({
-  enqueueUpdateRow: (...args: unknown[]) => enqueueUpdateRowMock(...args),
+  enqueueUpdate: (...args: unknown[]) => enqueueUpdateMock(...args),
 }));
 
 // V27 — Preferences mock (Capacitor) requis par PhotoStrip → service photos
@@ -317,7 +317,7 @@ describe('TruieDetailView', () => {
       const destructive = opts.buttons.find(b => b.role === 'destructive');
       destructive?.handler?.();
     });
-    enqueueUpdateRowMock.mockClear();
+    enqueueUpdateMock.mockClear();
 
     renderAt('/troupeau/truies/T22');
     const region = screen.getByRole('region', { name: /actions métier/i });
@@ -327,11 +327,10 @@ describe('TruieDetailView', () => {
     fireEvent.click(btn);
 
     expect(presentAlertMock).toHaveBeenCalledTimes(1);
-    expect(enqueueUpdateRowMock).toHaveBeenCalledWith(
-      'SUIVI_TRUIES_REPRODUCTION',
-      'ID',
+    expect(enqueueUpdateMock).toHaveBeenCalledWith(
+      'sows',
       'T22',
-      { STATUT: 'Réforme' },
+      { statut: 'Réforme' },
     );
 
     presentAlertMock.mockReset();
@@ -340,14 +339,14 @@ describe('TruieDetailView', () => {
   it("SURVEILLANCE : confirm annulé → pas d'update", () => {
     // Simule l'appui sur « Annuler » — on ne déclenche aucun handler.
     presentAlertMock.mockImplementationOnce(() => { /* annulé — rien */ });
-    enqueueUpdateRowMock.mockClear();
+    enqueueUpdateMock.mockClear();
 
     renderAt('/troupeau/truies/T22');
     const region = screen.getByRole('region', { name: /actions métier/i });
     fireEvent.click(within(region).getByRole('button', { name: /sortir cette truie/i }));
 
     expect(presentAlertMock).toHaveBeenCalledTimes(1);
-    expect(enqueueUpdateRowMock).not.toHaveBeenCalled();
+    expect(enqueueUpdateMock).not.toHaveBeenCalled();
 
     presentAlertMock.mockReset();
   });

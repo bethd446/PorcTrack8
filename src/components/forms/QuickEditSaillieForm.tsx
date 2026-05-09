@@ -28,14 +28,7 @@ import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
      - Statut         : Active · Confirmée · Non confirmée · Avortement · Archivée
      - Notes          : textarea max 200 chars
 
-   Submit → enqueueUpdateRow('SUIVI_REPRODUCTION_ACTUEL', 'ID TRUIE',
-                              saillie.truieId, patch)
-   Clés canoniques (cf. mapSaillie) : ID TRUIE · VERRAT · DATE SAILLIE
-   · DATE MB PREVUE · STATUT · NOTES.
-
-   Note : `Saillie` n'a pas d'`id` stable — on utilise `ID TRUIE` comme clé,
-   le backend GAS matche la ligne la plus récente pour cette truie.
-
+   Submit → write Supabase direct sur la table `saillies` (clés snake_case).
    Patch PARTIEL : seuls les champs modifiés sont envoyés.
    ═════════════════════════════════════════════════════════════════════════ */
 

@@ -6,8 +6,8 @@
  *
  *   S1 — Rendu conditionnel (dateSaillie absente vs présente)
  *   S2 — Présomption gestation à J+21 (avec / sans retour chaleur tagué)
- *   S3 — Confirmer saillie → patch STATUT=Confirmée sur SUIVI_REPRODUCTION_ACTUEL
- *   S4 — Signaler retour chaleur → 2 patches (saillie Non confirmée + truie Vide)
+ *   S3 — Confirmer saillie → patch statut=Confirmée sur table `saillies`
+ *   S4 — Signaler retour chaleur → 2 patches (saillies Non confirmée + sows Vide)
  *   S5 — Race condition : double-clic Confirmer ≠ double patch (useRef guard)
  *
  * Bonus — Regex `retourDejaSignale` stricte (tag canonique vs faux-positifs).
@@ -16,7 +16,7 @@
  *
  * Mocks :
  *   - `useFarm` → `{ verrats: [], refreshData: vi.fn() }`
- *   - `enqueueUpdateRow` → spy vi.fn (observer sheet/idHeader/idValue/patch)
+ *   - `enqueueUpdate` → spy vi.fn (observer table/id/fields)
  *   - `@ionic/react` → passthrough minimal (évite les web-components jsdom)
  *   - `BottomSheet` → passthrough qui rend children quand isOpen=true
  *
@@ -38,16 +38,15 @@ import type { Saillie, Truie, Verrat } from '../../types/farm';
 // ── Mocks ───────────────────────────────────────────────────────────────────
 
 type EnqueueArgs = [
-  sheet: string,
-  idHeader: string,
-  idValue: string,
-  patch: Record<string, string | number | boolean | null>,
+  table: string,
+  id: string,
+  fields: Record<string, unknown>,
 ];
-const enqueueUpdateRowMock = vi.fn<(...a: EnqueueArgs) => Promise<void>>(
+const enqueueUpdateMock = vi.fn<(...a: EnqueueArgs) => Promise<void>>(
   async () => undefined,
 );
 vi.mock('../../services/offlineQueue', () => ({
-  enqueueUpdateRow: (...args: EnqueueArgs) => enqueueUpdateRowMock(...args),
+  enqueueUpdate: (...args: EnqueueArgs) => enqueueUpdateMock(...args),
 }));
 
 const refreshDataMock = vi.fn<() => Promise<void>>(async () => undefined);
@@ -116,6 +115,7 @@ function makeTruie(over: Partial<Truie> = {}): Truie {
 
 function makeSaillie(over: Partial<Saillie> = {}): Saillie {
   return {
+    id: 'sail-uuid-001',
     truieId: 'T01',
     dateSaillie: '21/04/2026', // J0 = today
     verratId: 'V01',
@@ -178,8 +178,8 @@ class StubbedDate extends RealDate {
 
 beforeEach(() => {
   globalThis.Date = StubbedDate as unknown as DateConstructor;
-  enqueueUpdateRowMock.mockClear();
-  enqueueUpdateRowMock.mockImplementation(async () => undefined);
+  enqueueUpdateMock.mockClear();
+  enqueueUpdateMock.mockImplementation(async () => undefined);
   refreshDataMock.mockClear();
   refreshDataMock.mockImplementation(async () => undefined);
   farmState.verrats = [];
@@ -290,11 +290,11 @@ describe('S2 · Présomption gestation J+21', () => {
 // S3 — Confirmer saillie
 // ════════════════════════════════════════════════════════════════════════════
 describe('S3 · Confirmer saillie', () => {
-  it('clic Confirmer → 1 patch STATUT=Confirmée sur SUIVI_REPRODUCTION_ACTUEL avec clé ID TRUIE=saillie.truieId', async () => {
+  it('clic Confirmer → 1 patch statut=Confirmée sur table `saillies` avec saillie.id', async () => {
     render(
       <SaillieSuiviPanel
         truie={makeTruie({ id: 'T01' })}
-        saillie={makeSaillie({ truieId: 'T01' })}
+        saillie={makeSaillie({ id: 'sail-uuid-001', truieId: 'T01' })}
       />,
     );
 
@@ -310,13 +310,12 @@ describe('S3 · Confirmer saillie', () => {
     fireEvent.click(confirmBtn);
 
     await waitFor(() => {
-      expect(enqueueUpdateRowMock).toHaveBeenCalledTimes(1);
+      expect(enqueueUpdateMock).toHaveBeenCalledTimes(1);
     });
-    expect(enqueueUpdateRowMock).toHaveBeenCalledWith(
-      'SUIVI_REPRODUCTION_ACTUEL',
-      'ID TRUIE',
-      'T01',
-      { STATUT: 'Confirmée' },
+    expect(enqueueUpdateMock).toHaveBeenCalledWith(
+      'saillies',
+      'sail-uuid-001',
+      { statut: 'Confirmée' },
     );
   });
 
@@ -343,11 +342,11 @@ describe('S3 · Confirmer saillie', () => {
 // S4 — Signaler retour chaleur
 // ════════════════════════════════════════════════════════════════════════════
 describe('S4 · Signaler retour chaleur', () => {
-  it('clic Retour chaleur → 2 patches dans l\'ordre : saillie Non confirmée PUIS truie Vide', async () => {
+  it('clic Retour chaleur → 2 patches dans l\'ordre : saillies Non confirmée PUIS sows Vide', async () => {
     render(
       <SaillieSuiviPanel
         truie={makeTruie({ id: 'T01' })}
-        saillie={makeSaillie({ truieId: 'T01', notes: '' })}
+        saillie={makeSaillie({ id: 'sail-uuid-001', truieId: 'T01', notes: '' })}
       />,
     );
 
@@ -362,27 +361,25 @@ describe('S4 · Signaler retour chaleur', () => {
     fireEvent.click(signalerBtn);
 
     await waitFor(() => {
-      expect(enqueueUpdateRowMock).toHaveBeenCalledTimes(2);
+      expect(enqueueUpdateMock).toHaveBeenCalledTimes(2);
     });
 
-    // ── Appel #1 : SUIVI_REPRODUCTION_ACTUEL · STATUT=Non confirmée + NOTES
-    const firstCall = enqueueUpdateRowMock.mock.calls[0];
-    expect(firstCall[0]).toBe('SUIVI_REPRODUCTION_ACTUEL');
-    expect(firstCall[1]).toBe('ID TRUIE');
-    expect(firstCall[2]).toBe('T01');
-    const firstPatch = firstCall[3];
-    expect(firstPatch.STATUT).toBe('Non confirmée');
+    // ── Appel #1 : table saillies · statut=Non confirmée + notes
+    const firstCall = enqueueUpdateMock.mock.calls[0];
+    expect(firstCall[0]).toBe('saillies');
+    expect(firstCall[1]).toBe('sail-uuid-001');
+    const firstPatch = firstCall[2];
+    expect(firstPatch.statut).toBe('Non confirmée');
     // Tag canonique `Retour chaleur dd/MM/yyyy` doit être intact
-    expect(String(firstPatch.NOTES)).toMatch(/Retour chaleur \d{2}\/\d{2}\/\d{4}/);
+    expect(String(firstPatch.notes)).toMatch(/Retour chaleur \d{2}\/\d{2}\/\d{4}/);
     // Date attendue = today (21/04/2026)
-    expect(String(firstPatch.NOTES)).toContain('Retour chaleur 21/04/2026');
+    expect(String(firstPatch.notes)).toContain('Retour chaleur 21/04/2026');
 
-    // ── Appel #2 : SUIVI_TRUIES_REPRODUCTION · STATUT=En attente saillie
-    const secondCall = enqueueUpdateRowMock.mock.calls[1];
-    expect(secondCall[0]).toBe('SUIVI_TRUIES_REPRODUCTION');
-    expect(secondCall[1]).toBe('ID');
-    expect(secondCall[2]).toBe('T01');
-    expect(secondCall[3]).toEqual({ STATUT: 'En attente saillie' });
+    // ── Appel #2 : table sows · statut=En attente saillie
+    const secondCall = enqueueUpdateMock.mock.calls[1];
+    expect(secondCall[0]).toBe('sows');
+    expect(secondCall[1]).toBe('T01');
+    expect(secondCall[2]).toEqual({ statut: 'En attente saillie' });
   });
 
   it('préserve les notes existantes en les concaténant avec le tag', async () => {
@@ -401,10 +398,10 @@ describe('S4 · Signaler retour chaleur', () => {
     );
 
     await waitFor(() => {
-      expect(enqueueUpdateRowMock).toHaveBeenCalled();
+      expect(enqueueUpdateMock).toHaveBeenCalled();
     });
-    const firstPatch = enqueueUpdateRowMock.mock.calls[0][3];
-    const notes = String(firstPatch.NOTES);
+    const firstPatch = enqueueUpdateMock.mock.calls[0][2];
+    const notes = String(firstPatch.notes);
     // Contient à la fois l'historique ET le tag canonique
     expect(notes).toContain('Double saillie J+1');
     expect(notes).toMatch(/Retour chaleur 21\/04\/2026/);
@@ -420,7 +417,7 @@ describe('S5 · Anti-spam double-clic Confirmer', () => {
     // une fenêtre pendant laquelle le second clic peut arriver avant que
     // `savingRef.current` repasse à `false`.
     let resolveEnqueue: () => void = () => undefined;
-    enqueueUpdateRowMock.mockImplementationOnce(
+    enqueueUpdateMock.mockImplementationOnce(
       () =>
         new Promise<void>(resolve => {
           resolveEnqueue = resolve;
@@ -447,7 +444,7 @@ describe('S5 · Anti-spam double-clic Confirmer', () => {
     });
 
     // ≤ 1 appel total malgré les 2 clics
-    expect(enqueueUpdateRowMock).toHaveBeenCalledTimes(1);
+    expect(enqueueUpdateMock).toHaveBeenCalledTimes(1);
   });
 });
 

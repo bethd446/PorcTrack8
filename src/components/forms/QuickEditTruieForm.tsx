@@ -31,8 +31,8 @@ import PhotoUploader from './PhotoUploader';
                       Date MB prévue
      • Notes
 
-   Seule la Boucle est obligatoire. Submit → enqueueUpdateRow avec patch
-   diff (uniquement les champs modifiés).
+   Seule la Boucle est obligatoire. Submit → updateSow(id, patch) avec
+   patch diff snake_case (uniquement les champs modifiés).
    ═════════════════════════════════════════════════════════════════════════ */
 
 

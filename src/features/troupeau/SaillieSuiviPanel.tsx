@@ -12,9 +12,9 @@
  *     J25-J35  ─── Fenêtre échographie (confirmation gestation)
  *     J115 ─── Mise-bas prévue
  *
- * Deux actions principales (patch → `SUIVI_REPRODUCTION_ACTUEL`) :
- *   • Confirmer saillie       → STATUT = 'Confirmée'
- *   • Signaler retour chaleur → STATUT = 'Non confirmée' + NOTES append
+ * Deux actions principales (patch via `enqueueUpdate('saillies', id, …)`) :
+ *   • Confirmer saillie       → statut = 'Confirmée'
+ *   • Signaler retour chaleur → statut = 'Non confirmée' + notes append
  *                                + statut truie → 'En attente saillie' (déclenche R3)
  *
  * Bonus :
@@ -45,7 +45,7 @@ import {
 
 import { BottomSheet } from '../../components/agritech';
 import { Button } from '@/design-system';
-import { enqueueUpdateRow } from '../../services/offlineQueue';
+import { enqueueUpdate } from '../../services/offlineQueue';
 import { useFarm } from '../../context/FarmContext';
 import { useEscapeKey } from '../../components/forms/useFormA11y';
 import type { Saillie, Truie, Verrat } from '../../types/farm';
@@ -166,7 +166,7 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
   const [toast, setToast] = useState<string>('');
   // Anti-spam double-clic : un useRef garantit que 2 taps rapides avant que
   // setSaving(true) ne soit reflété dans le render ne déclenchent pas 2
-  // enqueueUpdateRow dupliqués.
+  // enqueueUpdate dupliqués.
   const savingRef = useRef<boolean>(false);
 
   // ── Horloge système (Sprint 6 fix minuit) ───────────────────────────────
@@ -264,15 +264,14 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
   async function runConfirmerSaillie(): Promise<void> {
     if (!dateMBPrevue) return;
     if (savingRef.current) return;
+    if (!saillie.id) {
+      setToast('Erreur : saillie sans UUID — rafraîchir et ressayer');
+      return;
+    }
     savingRef.current = true;
     setSaving(true);
     try {
-      await enqueueUpdateRow(
-        'SUIVI_REPRODUCTION_ACTUEL',
-        'ID TRUIE',
-        saillie.truieId,
-        { STATUT: 'Confirmée' },
-      );
+      await enqueueUpdate('saillies', saillie.id, { statut: 'Confirmée' });
       setToast(`Gestation confirmée · suivi jusqu'à MB ${formatFrShort(dateMBPrevue)}`);
       try {
         await refreshData();
@@ -301,6 +300,10 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
 
   async function runSignalerRetour(): Promise<void> {
     if (savingRef.current) return;
+    if (!saillie.id) {
+      setToast('Erreur : saillie sans UUID — rafraîchir et ressayer');
+      return;
+    }
     savingRef.current = true;
     setSaving(true);
     try {
@@ -321,12 +324,10 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
         ? `${trimmedExisting}${SEP}${TAG}`
         : TAG;
 
-      await enqueueUpdateRow(
-        'SUIVI_REPRODUCTION_ACTUEL',
-        'ID TRUIE',
-        saillie.truieId,
-        { STATUT: 'Non confirmée', NOTES: notesCapped },
-      );
+      await enqueueUpdate('saillies', saillie.id, {
+        statut: 'Non confirmée',
+        notes: notesCapped,
+      });
       // Met la truie en "En attente saillie" pour que R3 puisse repérer la
       // fenêtre de retour chaleur post-signalement. Valeur canonique alignée
       // avec `alertEngine.ts:302/397` et `types.ts:17`.
@@ -337,12 +338,7 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
       // rollback qui pourrait elle-même échouer. On remonte l'erreur pour
       // garder la modal ouverte et inviter à ressayer.
       try {
-        await enqueueUpdateRow(
-          'SUIVI_TRUIES_REPRODUCTION',
-          'ID',
-          truie.id,
-          { STATUT: 'En attente saillie' },
-        );
+        await enqueueUpdate('sows', truie.id, { statut: 'En attente saillie' });
       } catch (err) {
         console.error(
           '[SaillieSuiviPanel] Truie status patch failed after saillie status patch succeeded — manual correction needed:',
