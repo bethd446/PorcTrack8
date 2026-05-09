@@ -8,7 +8,6 @@ import {
 } from '@ionic/react';
 import { Home, ChevronLeft, Pencil, Archive, Users, ArrowLeftRight } from 'lucide-react';
 
-import AgritechLayout from '../../components/AgritechLayout';
 import EmptyState from '../../components/design/EmptyState';
 import TopBarSync from '../../components/design/TopBarSync';
 import { AnimalListItem, Chip, SectionDivider } from '../../components/agritech';
@@ -158,7 +157,6 @@ const LogeDetailView: React.FC = () => {
     return (
       <IonPage>
         <IonContent className="ion-no-padding">
-          <AgritechLayout>
             <div className="px-4 pt-5 pb-44" style={{ maxWidth: 1100, margin: '0 auto' }}>
               <p
                 className="text-[12px] mt-8 text-center"
@@ -167,7 +165,6 @@ const LogeDetailView: React.FC = () => {
                 Chargement…
               </p>
             </div>
-          </AgritechLayout>
         </IonContent>
       </IonPage>
     );
@@ -177,7 +174,6 @@ const LogeDetailView: React.FC = () => {
     return (
       <IonPage>
         <IonContent className="ion-no-padding">
-          <AgritechLayout>
             <div className="px-4 pt-5 pb-44" style={{ maxWidth: 1100, margin: '0 auto' }}>
               <EmptyState
                 icon={<Home size={28} aria-hidden="true" />}
@@ -191,7 +187,6 @@ const LogeDetailView: React.FC = () => {
                 }
               />
             </div>
-          </AgritechLayout>
         </IonContent>
       </IonPage>
     );
@@ -200,7 +195,14 @@ const LogeDetailView: React.FC = () => {
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
-        <AgritechLayout>
+        <div
+          style={{
+            background: 'var(--bg-app)',
+            minHeight: '100%',
+            position: 'relative',
+            paddingBottom: 168,
+          }}
+        >
           <TopBarSync
             crumbs={['Élevage', 'Loges', loge.numero]}
             onMariusClick={() => {
@@ -393,7 +395,7 @@ const LogeDetailView: React.FC = () => {
               </div>
             </section>
           </div>
-        </AgritechLayout>
+        </div>
       </IonContent>
 
       <IonToast
