@@ -19,6 +19,80 @@
 
 ---
 
+## 2026-05-09 · [V75 d/e/f] Refonte Landing Page · commits `8bbd5ca`→`5cf8c7e`→`c441bd1`
+
+**Contexte** : Suite immédiate du chantier naming-coherence (V75 a/b/c). Diagnostic état initial landing-v2 : `LandingScrollytelling.tsx` orchestrant 7 scènes mais 4 stubs vides (Repro, Feed, Health, Offline) + scene Bandes refondue, `SceneHero` avec background `#0a0a0a` noir générique + texte blanc + CTA `#10b981` vert mint + accent `#34d399` — violation directe du DNA "Terrain Vivant" V70 (palette terre/cream/vert forêt). Vidéo Creatify 8s déjà rendue dans `~/Downloads/`, watermark Creatify bottom-right à masquer. Cible : senior testeur manuel + éleveurs naisseurs-engraisseurs PWA.
+
+**Choix structurants validés en brainstorming** :
+- Format : vidéo plein écran sticky bg + sections cards par-dessus (option recommandée vs landing classique vs scrollytelling pur)
+- Voix copywriting : directe & technique (vs ironique, vs impérative) — promesse fonctionnelle, vocabulaire métier, chiffres réels
+- Palette : tokens `--pt-*` brief V70 strict (`#2D4A1F` primary, `#F5E9D8` warm, `#B8703D` accent, `#FAF7F0` bg)
+- Stack : conservé GSAP + ScrollTrigger + Lenis + useGSAP
+
+**Vague D — `8bbd5ca feat(v75-d): nettoyage landing-v2 + assets vidéo`**
+- Suppression 5 scènes stubs vides (SceneRepro 23L, SceneFeed 21L, SceneHealth 37L, SceneOffline 23L, SceneBandes 211L) + SceneFrame.tsx orphelin (213L) → -315L de code mort
+- Suppression background `#0a0a0a` hard-codé dans `LandingScrollytelling.tsx` → `var(--pt-bg)` ivoire
+- Création stubs minimaux pour 5 nouveaux composants (FloatingCardsStack, SceneVideoBreak, SectionPourQui, SectionWorkflow, SectionMarius) — refonte au commit suivant
+- Compression vidéo Creatify 8s via ffmpeg : MP4 H.264 1920×1080 faststart `2.6 MB`, WebM VP9 `1.8 MB`, poster JPEG mozjpeg `87 KB` extrait à 0.5s
+- ffmpeg installé via `brew install ffmpeg` (n'était pas présent au démarrage)
+
+**Vague E — `5cf8c7e feat(v75-e): refonte SceneHero + sections vidéo + cards landing-v2`**
+- `SceneHero.tsx` refonte complète (232L) : vidéo `<video autoPlay muted loop playsInline>` MP4+WebM en `position: absolute inset: 0 objectFit: cover`, voile dégradé bottom-up `linear-gradient(to top, var(--pt-bg) 0%, rgba(250,247,240,0.85) 14%, rgba(26,26,26,0.45) 55%, transparent 85%)` qui masque le watermark Creatify ET assure la lisibilité texte. Headline "LA PRÉCISION EN PLEIN ÉLEVAGE." en Big Shoulders 900 blanc + soulignement ambre, body "L'app GTTT pensée pour les naisseurs-engraisseurs d'Afrique de l'Ouest. 117 porcelets, 13 bandes, 5 loges suivis sans Excel.", 2 CTAs (`Démarrer mon élevage` → `/signup` vert forêt, `Voir une démo ›` ghost). Animations GSAP : fade hero-title sur scroll start (`opacity 0→1, y 40→0, scale 0.96→1`), parallax video `objectPosition center 25% → center 60%` scrubbed. Reduced motion guard.
+- `FloatingCardsStack.tsx` (153L) : 3 cards en quinconce gauche/centre/droite avec stagger fade-in 0.18s :
+  - REPRO `T-031 · PLEINE J42` `Mise-bas prévue 03/07 · ISSE 12.4`
+  - BANDE `BANDE MAI 2026 · T-001` `11 NV sous mère · Sevrage 31/05`
+  - ALERTE `À SORTIR BIENTÔT — T-018` `Trop âgée ou pas assez de portées`
+- `SceneVideoBreak.tsx` (41L) : photo `alimentation.{webp,jpg}` 100vh + dégradé haut/bas pour transition douce (placeholder vidéo 2 hors-scope v1)
+- `SectionPourQui.tsx` (139L) : grid responsive 3 profils éleveur (`auto-fit, minmax(280px, 1fr)`) avec photos Nano Banana V73 (`hero-wide`, `reproduction`, `alertes`), titres en BigShoulders, body Instrument Sans, stats en JetBrains Mono tabular-nums ambre
+- `SectionWorkflow.tsx` (146L) : 3 étapes en quinconce avec gros numéros 1/2/3 en ambre `clamp(72px, 10vw, 120px)` letter-spacing -0.04em, en vis-à-vis avec titre+body Instrument Sans
+
+**Vague F — `c441bd1 feat(v75-f): SectionMarius + refonte SceneCta + 5 specs Playwright`**
+- `SectionMarius.tsx` (94L) : section pleine surface en `var(--pt-primary)` vert forêt avec id `marius` (cible ancre CTA secondaire hero "Voir une démo"). Eyebrow `ASSISTANT IA` en ambre clair, H2 "Marius connaît ton élevage." en cream, body "Pas un chatbot générique. Marius lit tes truies, tes alertes, ton calendrier. Il répond avec tes données.", capture conversation réelle dans card semi-transparente avec contexte ferme : T-026 mise-bas J-2, T-016 maternité colostrum, sevrage 31/05 bandes Mai 2026
+- `SceneCta.tsx` refonte complète (120L) : suppression `#0a0a0a`/`#10b981`/`#34d399`, palette `--pt-*` partout. Eyebrow `PRÊT ?`, H2 "TON ÉLEVAGE MÉRITE LA PRÉCISION." (vert forêt + souligné ambre), body "Démarre PorcTrack maintenant. Importe ton cheptel en quelques minutes et laisse les alertes biologiques travailler pour toi.", CTA répété `Démarrer mon élevage` → `/signup`, footer 1 ligne sobre `app.porctrack.tech` + Mentions + Contact
+- 5 specs Playwright `tests/e2e/landing-v75.spec.ts` (102L) :
+  1. Hero affiche headline "la précision en plein élevage" + 2 CTAs visibles
+  2. Aucune couleur hard-coded interdite : wrapper bg = `rgb(250,247,240)`, 0 élément avec bg `rgb(10,10,10)`
+  3. Vidéo hero charge et autoplay : `readyState ≥ 2`, `paused: false`, `muted: true`, `loop: true`
+  4. ≥ 2 CTAs primaires `Démarrer mon élevage` avec `href="/signup"`
+  5. Poster JPEG `/videos/landing/hero-maternity-dawn-poster.jpg` référencé sur `video.hero-video`
+
+**Tests** :
+- baseline 1927 passing préservée (chantier UI-only sans nouveau code testable unitaire)
+- 5/5 specs Playwright `landing-v75.spec.ts` vertes en 7.1s sur mobile-chromium
+- 3/3 specs Playwright `naming-coherence.spec.ts` toujours vertes
+- tsc 0 erreur
+- npm run build OK 3.06s
+
+**Smoke browser live** sur `http://localhost:5173/landing-v2` :
+- Hero : vidéo Creatify autoplay loop avec golden hour rim light visible, watermark Creatify bottom-right MASQUÉ par voile dégradé ivoire (verified visuellement). Headline blanc avec texte-shadow + soulignement ambre. CTAs accessibles touch ≥ 44px.
+- Section 2 : 3 cards REPRO/BANDE/ALERTE en quinconce sur fond ivoire avec shadows subtiles
+- Section 3 : photo `alimentation.jpg` plein écran avec dégradés haut+bas
+- Section 4 : 3 profils éleveur en grid responsive
+- Section 5 : COMMENT ÇA MARCHE avec gros 1/2/3 ambre — composition impactante DNA-aligned
+- Section 6 : MARIUS sur fond vert forêt avec capture conversation
+- Section 7 : CTA final + footer sobre
+- Console DevTools : 0 erreur projet (1 erreur manifest pré-existante non liée — déjà présente avant V75)
+
+**Frictions audit corrigées vs landing initiale** :
+- Thème noir générique `#0a0a0a` éliminé sur 7 sections + wrapper
+- Couleurs hors palette `#10b981`/`#34d399` éliminées (CTAs primaire et accent)
+- 4 scènes vides remplacées par contenu utile + 1 réécrite (SceneBandes → SectionWorkflow)
+- Copywriting passé d'ironique ("LE CARNET PAPIER, SANS LES PAGES FROISSÉES") à directe & technique ("LA PRÉCISION EN PLEIN ÉLEVAGE")
+- Pas de chrome/néon/gradient générique, pas de glassmorphism
+
+**Hors-scope (sprints suivants)** :
+- Génération vidéo 2 (Tournée du soir / main+tablette) → placeholder photo `alimentation.jpg` v1
+- Régen 9:16 mobile portrait → fallback poster v1 (à reconsidérer si conversion mobile chute)
+- Section Pricing → décision produit séparée
+- Page démo dédiée `/demo` → ancre `#marius` v1
+- Watermark Creatify : voile CSS suffit visuellement v1, regen Creatify Pro à activer si test browser réel montre fuite
+
+**Méthode** : suite subagent-driven. 1 dispatch pour Tasks 6-10 (5 sections), 1 dispatch pour Tasks 12-14 (Marius + CTA + tests). Tasks 1-5 + 11 + 15 inline (assets ffmpeg, suppressions, refactor LandingScrollytelling, commits). Total : 2 dispatches subagent + edits inline rapides.
+
+**Liens** : [[decisions]] (palette `--pt-*` strict appliqué partout) · [[learnings]] (voile dégradé bottom-up pour masquer watermark vidéo, GSAP `objectPosition` scrub pour parallax léger)
+
+---
+
 ## 2026-05-09 · [V75 a/b/c] Naming & Cohérence · commits `269333c`→`83159bf`→`510dd39`
 
 **Contexte** : Session post-audit V74 sur compte `audit-final@porctrack.test`. 8 frictions identifiées : 2 P0 (UUID bandes exposés à l'éleveur ET à Marius, 5 fausses alertes "Réforme suggérée" sur truies déjà réformées), 4 P1 (H1 "Mes animaux" hors décision A brief V70, filtre RÉFORMÉES manquant, bouton "Passer en réforme" inadapté, breadcrumb "Outils" reliquat), 2 P2 (Marius pas d'auto-submit, Performance Top inconsistance UUID/mère). Brief utilisateur : langage simple pour éleveurs francophones niveau variable, app PWA cible senior testeur.
