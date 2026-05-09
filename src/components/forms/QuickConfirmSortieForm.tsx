@@ -143,6 +143,7 @@ const QuickConfirmSortieForm: React.FC<QuickConfirmSortieFormProps> = ({
               id="sortie-prix"
               type="number"
               min={0}
+              max={999999999}
               inputMode="numeric"
               aria-label="Prix de vente en FCFA"
               value={prixSortieRaw}

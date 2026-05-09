@@ -121,6 +121,7 @@ export const PushNotifToggle: React.FC = () => {
           type="checkbox"
           role="switch"
           aria-label="Notifications app fermée"
+          aria-checked={subscribed}
           checked={subscribed}
           disabled={loading}
           onChange={(e) => void handleToggle(e.target.checked)}

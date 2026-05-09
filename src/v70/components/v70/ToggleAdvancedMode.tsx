@@ -37,6 +37,7 @@ export const ToggleAdvancedMode: React.FC = () => {
         type="checkbox"
         role="switch"
         aria-label="Mode avancé"
+        aria-checked={advancedMode}
         checked={advancedMode}
         onChange={(e) => setAdvancedMode(e.target.checked)}
         style={{ transform: 'scale(1.5)', cursor: 'pointer' }}

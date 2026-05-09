@@ -10,6 +10,7 @@
  */
 import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useIonAlert } from '@ionic/react';
 import {
   LogOut,
   ChevronRight,
@@ -34,6 +35,7 @@ import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 import FarmSwitcher from '../../components/FarmSwitcher';
 import { useOfflineQueue } from '../../hooks/useOfflineQueue';
 import { titleCase } from '../lib';
+import { ARTICLES as ENCYCLOPEDIA_ARTICLES } from './EncyclopediaPage';
 
 const PAGE_BACKGROUND_SRC = '/images/ambiance-ux.webp';
 
@@ -127,22 +129,43 @@ export const ReglagesV70: React.FC = () => {
   const navigate = useNavigate();
   const { profile, role, signOut } = useAuth();
   const { pendingCount, errorCount } = useOfflineQueue();
+  const [presentAlert] = useIonAlert();
 
-  const handleSignOut = useCallback(async () => {
-    if (!window.confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) return;
-    try {
-      await signOut();
-      navigate('/login', { replace: true });
-    } catch (err) {
-      console.error('Sign out failed', err);
-    }
-  }, [signOut, navigate]);
+  // V75-v P2#8 — remplace `window.confirm()` natif (laid, hors design system)
+  // par un IonAlert stylisé, cohérent avec le pattern handleReformer
+  // (TruieDetailView). Garde la même UX : annulation par défaut, action
+  // destructive explicite, focus sur "Annuler".
+  const handleSignOut = useCallback(() => {
+    void presentAlert({
+      header: 'Se déconnecter ?',
+      message: 'Tu reviendras au login. Tes données restent sauvegardées.',
+      buttons: [
+        { text: 'Annuler', role: 'cancel' },
+        {
+          text: 'Se déconnecter',
+          role: 'destructive',
+          handler: () => {
+            void (async () => {
+              try {
+                await signOut();
+                navigate('/login', { replace: true });
+              } catch (err) {
+                console.error('Sign out failed', err);
+              }
+            })();
+          },
+        },
+      ],
+    });
+  }, [presentAlert, signOut, navigate]);
 
   // V71.1 — données live profile (étaient hardcodées "Christophe / Owner · Ferme audit test")
-  // V75-q B-1 (F-34) : Title Case pour rendu pro ("audit final" → "Audit Final").
+  // V75-q B-1 (F-34) / V75-v P2#1 : Title Case sur displayName ET farmLabel (le QA voit
+  // "OWNER · audit final" — le "audit final" vient de l'email, pas du full_name).
   const displayName = titleCase(profile?.full_name?.trim()) || 'Éleveur';
   const initial = displayName.charAt(0).toUpperCase();
-  const farmLabel = (profile?.email?.split('@')[0] ?? 'ma-ferme').replace(/[._-]+/g, ' ');
+  const farmLabelRaw = (profile?.email?.split('@')[0] ?? 'ma-ferme').replace(/[._-]+/g, ' ');
+  const farmLabel = titleCase(farmLabelRaw);
   const roleLabel = role || 'Utilisateur';
 
   return (
@@ -256,7 +279,7 @@ export const ReglagesV70: React.FC = () => {
         <div style={{ borderTop: '1px solid var(--pt-line)' }}>
           <SettingsRow
             title="Encyclopédie porcine"
-            subtitle="5 articles · cycles, santé, économie"
+            subtitle={`${ENCYCLOPEDIA_ARTICLES.length} articles · cycles, santé, économie`}
             Icon={BookOpen}
             onClick={() => navigate('/reglages/encyclopedie')}
           />

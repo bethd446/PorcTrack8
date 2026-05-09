@@ -66,6 +66,7 @@ const Row: React.FC<RowProps> = ({ title, subtitle, checked, disabled, onChange,
       type="checkbox"
       role="switch"
       aria-label={title}
+      aria-checked={checked}
       checked={checked}
       disabled={disabled}
       onChange={(e) => onChange(e.target.checked)}

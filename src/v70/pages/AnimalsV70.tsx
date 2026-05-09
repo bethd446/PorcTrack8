@@ -301,11 +301,20 @@ export const AnimalsV70: React.FC = () => {
     }
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter(it =>
-        it.id.toLowerCase().includes(q) ||
-        (it.status ?? '').toLowerCase().includes(q) ||
-        (it.statusLabel ?? '').toLowerCase().includes(q)
-      );
+      // V75-v P2#2 : normalise les zéros leading après tiret pour permettre
+      // "T-1" → match T-001/T-010/.../T-019. Sans ça, includes("t-1") sur
+      // "t-001" renvoie false (pas de "t-1" littéral dans la string).
+      const stripPad = (s: string) => s.toLowerCase().replace(/-0+/g, '-');
+      const qNorm = stripPad(q);
+      list = list.filter(it => {
+        const idNorm = stripPad(it.id);
+        return (
+          idNorm.includes(qNorm) ||
+          it.id.toLowerCase().includes(q) ||
+          (it.status ?? '').toLowerCase().includes(q) ||
+          (it.statusLabel ?? '').toLowerCase().includes(q)
+        );
+      });
     }
     // V75-n F-19 : retrait du slice(0, 8). Tout afficher (perf OK pour fermes
     // 50-200 truies cibles. Pour > 200, ajouter pagination dans un sprint séparé).

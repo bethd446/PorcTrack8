@@ -460,7 +460,7 @@ export const ReproV70: React.FC = () => {
             <div style={{ padding: '16px 8px', textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
               📦 Historique des bandes terminées
               <div style={{ marginTop: 8, fontSize: 11 }}>
-                Voir toutes les bandes (actives + historique) sur l'onglet
+                Voir toutes les bandes (actives + historique) sur l'onglet{' '}
                 <button
                   type="button"
                   onClick={() => navigate('/troupeau?view=bandes')}

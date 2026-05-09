@@ -111,10 +111,22 @@ describe('EntityAvatar', () => {
   // V75-q (F-20) — un shortCode qui ressemble à un fragment UUID (hex pur)
   // ne doit plus être annoncé au screenreader : il pollue l'a11y sans
   // apporter d'information utile à l'éleveur.
-  it('masque un shortCode UUID-fragment (hex pur) dans aria-label', () => {
-    render(<EntityAvatar species="truie" shortCode="a3f9b2c1" />);
-    expect(screen.getByLabelText('Avatar truie')).toBeTruthy();
+  // V75-v P2#5 — quand shortCode est purement décoratif (hex) et pas de photo,
+  // on passe l'avatar en aria-hidden pour éviter la concat parente
+  // ("Avatar bande Bande B-AUDIT-CR" dans un ListItem).
+  it('masque un shortCode UUID-fragment (hex pur) — avatar décoratif sans aria-label', () => {
+    const { container } = render(<EntityAvatar species="truie" shortCode="a3f9b2c1" />);
     expect(screen.queryByLabelText('Avatar truie a3f9b2c1')).toBeNull();
+    const wrapper = container.querySelector('div[aria-hidden="true"]');
+    expect(wrapper).not.toBeNull();
+    expect(container.querySelector('div[role="img"]')).toBeNull();
+  });
+
+  // V75-v P2#5 — un shortCode hex court (5 chars, ex "21af3") doit aussi être
+  // filtré : V75-q seuil ≥ 6 chars laissait passer ces fragments.
+  it('masque un shortCode UUID-fragment court (5 chars hex)', () => {
+    const { container } = render(<EntityAvatar species="bande" shortCode="21af3" />);
+    expect(container.querySelector('div[aria-hidden="true"]')).not.toBeNull();
   });
 
   it('garde un shortCode métier (lettres + chiffres) dans aria-label', () => {

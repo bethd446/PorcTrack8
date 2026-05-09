@@ -107,12 +107,13 @@ const SVG_BY_SPECIES: Record<EntitySpecies, React.FC<SvgProps>> = {
   bande: BandeSvg,
 };
 
-// V75-q (F-20) — Filtre les shortCode de type UUID-fragment (hex pur, ≥ 6
-// caractères) pour ne pas les exposer au screenreader. Ces fragments sont
-// utilisés en interne pour générer une couleur stable, mais n'apportent aucune
-// information utile à un éleveur qui parcourt la liste au voiceover.
-// Les codes métier ("T-001", "B-002", "porc-12-A") restent exposés.
-const HEX_ONLY_RE = /^[0-9a-f]{6,}$/i;
+// V75-q (F-20) / V75-v P2#5 — Filtre les shortCode de type UUID-fragment.
+// V75-q seuil ≥ 6 chars hex laissait passer "21af3" (5 chars), QA crash test
+// 2026-05-09 : "Avatar bande 21af3 Bande B-AUDIT-CR" exposé au voiceover.
+// V75-v : seuil abaissé à ≥ 4 chars hex pur (couvre tronc UUID 4+ chars sans
+// tiret métier). Les codes métier avec séparateur ("T-001", "B-002",
+// "porc-12-A") gardent une lettre + un tiret donc ne matchent pas la regex.
+const HEX_ONLY_RE = /^[0-9a-f]{4,}$/i;
 
 function isMeaningfulShortCode(code: string | undefined): code is string {
   if (!code) return false;
@@ -138,6 +139,14 @@ export const EntityAvatar: React.FC<EntityAvatarProps> = ({
   const Svg = SVG_BY_SPECIES[species];
   const announceCode = isMeaningfulShortCode(shortCode);
 
+  // V75-v P2#5 — quand un shortCode hex (UUID-fragment) a été passé mais qu'il
+  // est purement décoratif (filtré par isMeaningfulShortCode), on cesse
+  // d'exposer un role="img" : sinon le screen reader concat
+  // "Avatar bande" + title du ListItem parent → "Avatar bande Bande B-AUDIT-CR".
+  // Quand aucun shortCode n'est fourni (usage isolé hors liste), on garde
+  // l'aria-label "Avatar truie" pour rester découvrable au voiceover.
+  const isDecorative = shortCode !== undefined && !announceCode && !showPhoto;
+
   return (
     <div
       className={className}
@@ -152,8 +161,12 @@ export const EntityAvatar: React.FC<EntityAvatarProps> = ({
         justifyContent: 'center',
         flexShrink: 0,
       }}
-      role="img"
-      aria-label={announceCode ? `Avatar ${species} ${shortCode}` : `Avatar ${species}`}
+      {...(isDecorative
+        ? { 'aria-hidden': true }
+        : {
+            role: 'img',
+            'aria-label': announceCode ? `Avatar ${species} ${shortCode}` : `Avatar ${species}`,
+          })}
     >
       {showPhoto ? (
         <img

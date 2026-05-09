@@ -19,7 +19,8 @@ interface ArticleEntry {
   level: string;
 }
 
-const ARTICLES: ArticleEntry[] = [
+// V75-v P2#7 — Exporté pour synchroniser le compteur avec ReglagesV70.
+export const ARTICLES: ArticleEntry[] = [
   {
     slug: '01-cycle-vie-truie',
     title: 'Le cycle de vie de la truie',
