@@ -156,8 +156,8 @@ describe('buildFarmContextPrompt', () => {
   it('exclut les bandes RECAP de la liste', () => {
     const snap = mkSnapshot({
       bandes: [
-        mkBande({ id: 'B-1', statut: 'Sous mère' }),
-        mkBande({ id: 'B-RECAP', statut: 'RECAP' }),
+        mkBande({ id: 'B-1', idPortee: 'B-1', statut: 'Sous mère' }),
+        mkBande({ id: 'B-RECAP', idPortee: 'B-RECAP', statut: 'RECAP' }),
       ],
     });
     const out = buildFarmContextPrompt(snap, { now: NOW });
@@ -283,7 +283,7 @@ describe('buildFarmContextPrompt', () => {
       Date : vendredi 2026-05-08. Utilisateur : Christophe.
       Ferme : Ferme Liégeois (France). Cheptel : 3 truies actives, 2 verrats actifs, 1 bandes en cours, 12 porcelets sous bandes.
       Truies à surveiller : T-016 (MB en retard 3j, En maternité) · T-018 (J-2, En maternité) · T-001 (J118 post-saillie, En attente saillie).
-      Bandes en cours : B-26-T18-01 (Sous mère, mère T-018, 12 porcelets, sevrage 18/04/2026).
+      Bandes en cours : Bande B-26-T18-01 (Sous mère, mère T-018, 12 porcelets, sevrage 18/04/2026).
       Stocks critiques : Maïs 0kg (RUPTURE) · Aliment truie gestation 0kg (RUPTURE).
       Alertes prioritaires (2) : CRITIQUE T-016 — Mise-bas en retard · HAUTE T-001 — Retour chaleur attendu.
       [FIN CONTEXTE]"

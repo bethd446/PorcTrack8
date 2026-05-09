@@ -22,6 +22,7 @@ import { ListItem } from '../components/ds/ListItem';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { PigSilhouette } from '../components/v70/icons/PigSilhouette';
 import { useFarm, useMeta } from '../../context/FarmContext';
+import { formatBandeName } from '../lib';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 import ListingSkeleton from '../../components/design/ListingSkeleton';
 import { useListingLoadingGuard } from '../../hooks/useListingLoadingGuard';
@@ -36,7 +37,8 @@ type AnimalTab = 'truies' | 'verrats' | 'porcelets' | 'bandes' | 'loges';
 type AnimalFilter = 'all' | 'pleines' | 'maternite' | 'vides';
 
 interface AnimalStub {
-  id: string;
+  id: string;                  // identifiant utilisé pour la navigation (UUID OK)
+  displayName?: string;        // nom affiché à l'utilisateur (optionnel — fallback sur id)
   status: string;
   statusLabel: string;
   pillVariant: PillVariant;
@@ -145,8 +147,13 @@ export const AnimalsV70: React.FC = () => {
       : null,
     bandes: bandes?.length
       ? bandes.slice(0, 8).map(b => ({
-          // ID utilisé pour l'affichage + nav : on prend l'UUID réel
           id: b.id,
+          displayName: formatBandeName({
+            id: b.id,
+            idPortee: b.idPortee,
+            truieMere: b.truie,
+            dateMB: b.dateMB,
+          }),
           status: `${b.truie ? `Mère ${b.truie} · ` : ''}${b.dateMB ? `MB ${b.dateMB}` : 'En cours'}${b.nv ? ` · ${b.nv} NV` : ''}`,
           statusLabel: b.statut ?? 'Active',
           pillVariant: 'success' as PillVariant,
@@ -434,7 +441,7 @@ export const AnimalsV70: React.FC = () => {
             <ListItem
               key={it.id}
               avatar={<EntityAvatar species={TAB_DATA[tab].species} size="md" shortCode={it.id.slice(0, 8)} />}
-              title={it.id.length > 16 ? `Bande ${it.id.slice(0, 8)}…` : it.id}
+              title={it.displayName ?? (it.id.length > 16 ? `Bande ${it.id.slice(0, 8)}…` : it.id)}
               subtitle={it.status}
               trailing={
                 <>

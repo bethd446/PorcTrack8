@@ -25,6 +25,7 @@ import { CycleTimeline } from '../components/ds/CycleTimeline';
 import { EduCard } from '../components/v70/EduCard';
 import { EmptyEdu } from '../components/v70/EmptyEdu';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
+import { formatBandeName } from '../lib';
 
 const GESTATION_JOURS = 115;
 
@@ -345,7 +346,12 @@ export const ReproV70: React.FC = () => {
               >
                 <div className="list-info">
                   <div className="list-title">
-                    Bande {cycleBande.bande.idPortee || cycleBande.bande.id.slice(0, 8)} · J{cycleBande.currentDay}
+                    {formatBandeName({
+                      id: cycleBande.bande.id,
+                      idPortee: cycleBande.bande.idPortee,
+                      truieMere: cycleBande.bande.truie,
+                      dateMB: cycleBande.bande.dateMB,
+                    }, { compact: true })} · J{cycleBande.currentDay}
                   </div>
                   <div className="list-sub">
                     {cycleBande.currentDay >= GESTATION_JOURS ? 'Mise-bas' : 'Gestation'}

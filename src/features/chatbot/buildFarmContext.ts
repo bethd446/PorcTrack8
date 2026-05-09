@@ -24,6 +24,7 @@ import type {
   StockVeto,
 } from '../../types/farm';
 import type { FarmAlert, AlertPriority } from '../../services/alertEngine';
+import { formatBandeName } from '../../v70/lib';
 
 const DAYS_FR = [
   'dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi',
@@ -76,12 +77,19 @@ function formatTruie(t: Truie): string {
 }
 
 function formatBande(b: BandePorcelets): string {
-  const id = b.id || b.idPortee || '?';
+  // V75-a — naming-coherence : passe par formatBandeName pour ne JAMAIS
+  // exposer un UUID brut à Marius (cas observé : "bandes 56284a1c et 81d64a30").
+  const name = formatBandeName({
+    id: b.id,
+    idPortee: b.idPortee,
+    truieMere: b.truie,
+    dateMB: b.dateMB,
+  });
   const truie = b.truie ? `mère ${b.truie}` : '';
   const nv = typeof b.nv === 'number' ? `${b.vivants ?? b.nv} porcelets` : '';
   const sevrage = b.dateSevragePrevue ? `sevrage ${b.dateSevragePrevue}` : '';
   const parts = [b.statut, truie, nv, sevrage].filter(Boolean).join(', ');
-  return `${id} (${parts})`;
+  return `${name} (${parts})`;
 }
 
 function formatStock(s: StockAliment | StockVeto): string {

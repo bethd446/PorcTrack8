@@ -35,6 +35,7 @@ import { useFarm, useMeta } from '../../context/FarmContext';
 import { computeGlobalKpis } from '../../services/perfKpiAnalyzer';
 import { buildForecastEvents } from '../../utils/forecastEvents';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
+import { formatBandeName } from '../lib';
 
 const PAGE_BACKGROUND_SRC = '/images/ambiance-croissance.webp';
 
@@ -384,7 +385,12 @@ export const PerformanceV70: React.FC = () => {
                 avatar={<EntityAvatar species="bande" size="md" shortCode={b.id.slice(0, 5)} />}
                 title={
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                    {b.truie ? `Bande ${b.truie}` : `Bande ${b.id.slice(0, 8)}…`}
+                    {formatBandeName({
+                      id: b.id,
+                      idPortee: b.idPortee,
+                      truieMere: b.truie,
+                      dateMB: b.dateMB,
+                    }, { compact: true })}
                     <RankIcon
                       size={14}
                       strokeWidth={1.5}
