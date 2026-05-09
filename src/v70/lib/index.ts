@@ -7,3 +7,6 @@ export {
   alreadySortedOut,
   reformReason,
 } from './reformLogic';
+
+export { derivePorceletPhase } from './porceletPhase';
+export type { PorceletPhase } from './porceletPhase';

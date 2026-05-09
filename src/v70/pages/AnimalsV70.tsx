@@ -10,7 +10,7 @@
  * Phase 3B : page Hub catégoriel — TabsMini 5 catégories, search bar,
  * filter pills, liste truies stubs. FAB ajout (Phase F branchera contexte).
  */
-import React, { useState, lazy, Suspense, useMemo } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Boxes, Home } from 'lucide-react';
 import { PageHeader } from '../components/ds/PageHeader';
@@ -19,6 +19,7 @@ import { Card } from '../components/ds/Card';
 import { TabsMini } from '../components/ds/TabsMini';
 import { Pill, type PillVariant } from '../components/ds/Pill';
 import { ListItem } from '../components/ds/ListItem';
+import { PorceletGroup } from '../components/PorceletGroup';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { PigSilhouette } from '../components/v70/icons/PigSilhouette';
 import { useFarm, useMeta } from '../../context/FarmContext';
@@ -101,6 +102,16 @@ export const AnimalsV70: React.FC = () => {
   const [tab, setTab] = useState<AnimalTab>('truies');
   const [filter, setFilter] = useState<AnimalFilter>('all');
   const [search, setSearch] = useState('');
+  const [expandedBandes, setExpandedBandes] = useState<Set<string>>(new Set());
+
+  // V75-h : ouvrir le 1er groupe par défaut quand les bandes arrivent (data lazy via FarmContext).
+  useEffect(() => {
+    if (bandes.length > 0 && expandedBandes.size === 0) {
+      setExpandedBandes(new Set([bandes[0].id]));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bandes.length]);
+
   const [addOpen, setAddOpen] = useState(false);
 
   // V71.1 — counts live (étaient hardcodés 50/28/11/6/92/24)
@@ -109,7 +120,12 @@ export const AnimalsV70: React.FC = () => {
     const truiesMater = truies.filter(t => /maternit[eé]|allaitante|allaitement/i.test(t.statut ?? '')).length;
     const truiesVides = truies.filter(t => /attente saillie|vide|sevr[eé]e/i.test(t.statut ?? '')).length;
     const truiesAVendre = truies.filter(isReformed).length;
-    const porcelets = bandes.reduce((acc, b) => acc + (b.vivants ?? 0), 0);
+    const porcelets = bandes.reduce((acc, b) => {
+      const active = (b.porcelets ?? []).filter(
+        p => p.statut === 'VIVANT' || p.statut === 'MALADE' || p.statut === 'QUARANTAINE',
+      ).length;
+      return acc + active;
+    }, 0);
     return {
       truies: truies.length,
       truiesPleines,
@@ -343,7 +359,51 @@ export const AnimalsV70: React.FC = () => {
       )}
 
       <Section label={sectionLabel[tab]}>
-        {filteredList.length === 0 ? (
+        {tab === 'porcelets' ? (
+          (() => {
+            const q = search.trim().toLowerCase();
+            const visibleBandes = q
+              ? bandes.filter(b => {
+                  const bandeNameLc = (
+                    b.idPortee || `${b.truie ?? ''} ${b.dateMB ?? ''}`
+                  ).toLowerCase();
+                  if (bandeNameLc.includes(q)) return true;
+                  return (b.porcelets ?? []).some(p => p.boucle.toLowerCase().includes(q));
+                })
+              : bandes;
+
+            if (visibleBandes.length === 0) {
+              return (
+                <div style={{ padding: 18, textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
+                  {q ? `Aucun résultat pour « ${search} »` : 'Aucune bande active'}
+                </div>
+              );
+            }
+
+            return visibleBandes.map(b => {
+              const matchesByBoucle = q
+                ? (b.porcelets ?? []).some(p => p.boucle.toLowerCase().includes(q))
+                : false;
+              const isExpanded = expandedBandes.has(b.id) || matchesByBoucle;
+              return (
+                <PorceletGroup
+                  key={b.id}
+                  bande={b}
+                  isExpanded={isExpanded}
+                  onToggle={() => {
+                    setExpandedBandes(prev => {
+                      const next = new Set(prev);
+                      if (next.has(b.id)) next.delete(b.id);
+                      else next.add(b.id);
+                      return next;
+                    });
+                  }}
+                  onNavigateToBande={(id) => { navigate(`/troupeau/bandes/${id}`); }}
+                />
+              );
+            });
+          })()
+        ) : filteredList.length === 0 ? (
           search.trim() ? (
             <div style={{ padding: 18, textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
               {`Aucun résultat pour « ${search} »`}
