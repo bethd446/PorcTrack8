@@ -6,9 +6,9 @@ export function SceneCta() {
     <section
       style={{
         position: 'relative',
-        background: '#0a0a0a',
-        color: '#fff',
-        padding: '160px 24px 64px',
+        background: 'var(--pt-bg)',
+        color: 'var(--pt-ink)',
+        padding: '160px 24px 80px',
         textAlign: 'center',
       }}
     >
@@ -18,28 +18,36 @@ export function SceneCta() {
           fontSize: 11,
           letterSpacing: '0.20em',
           textTransform: 'uppercase',
-          color: 'rgba(255,255,255,0.6)',
+          color: 'var(--pt-accent)',
+          display: 'block',
+          marginBottom: 16,
         }}
       >
-        ● Prêt ?
+        PRÊT ?
       </span>
 
       <h2
         style={{
           fontFamily: 'var(--font-heading)',
           fontWeight: 900,
-          fontSize: 'clamp(40px, 8vw, 104px)',
-          lineHeight: 0.95,
-          letterSpacing: '-0.03em',
+          fontSize: 'clamp(40px, 8vw, 96px)',
+          lineHeight: 0.96,
+          letterSpacing: '-0.02em',
           textTransform: 'uppercase',
-          margin: '16px auto 32px',
+          margin: '0 auto 32px',
           maxWidth: 1100,
+          color: 'var(--pt-primary)',
         }}
       >
-        Prêt à passer
+        Ton élevage mérite
         <br />
-        <em style={{ fontStyle: 'normal', color: '#34d399' }}>
-          du cahier au pilotage&nbsp;?
+        <em
+          style={{
+            fontStyle: 'normal',
+            color: 'var(--pt-accent)',
+          }}
+        >
+          la précision.
         </em>
       </h2>
 
@@ -48,13 +56,13 @@ export function SceneCta() {
           fontFamily: 'var(--font-body)',
           fontSize: 18,
           lineHeight: 1.5,
-          color: 'rgba(255,255,255,0.7)',
+          color: 'var(--pt-muted)',
           maxWidth: 580,
           margin: '0 auto 48px',
         }}
       >
-        Essayez PorcTrack 8 gratuitement. Importez votre cheptel en quelques
-        minutes et laissez les alertes biologiques travailler pour vous.
+        Démarre PorcTrack maintenant. Importe ton cheptel en quelques minutes
+        et laisse les alertes biologiques travailler pour toi.
       </p>
 
       <div
@@ -63,7 +71,7 @@ export function SceneCta() {
           gap: 16,
           justifyContent: 'center',
           flexWrap: 'wrap',
-          marginBottom: 96,
+          marginBottom: 80,
         }}
       >
         <Link
@@ -74,60 +82,38 @@ export function SceneCta() {
             fontSize: 14,
             letterSpacing: '0.10em',
             textTransform: 'uppercase',
-            background: '#10b981',
-            color: '#fff',
-            padding: '16px 32px',
+            background: 'var(--pt-primary)',
+            color: 'var(--pt-warm)',
+            padding: '18px 36px',
             borderRadius: 999,
             textDecoration: 'none',
-            display: 'inline-block',
+            boxShadow: '0 8px 32px rgba(45,74,31,0.25)',
+            minHeight: 44,
+            display: 'inline-flex',
+            alignItems: 'center',
           }}
         >
-          Commencer
-        </Link>
-        <Link
-          to="/login"
-          style={{
-            fontFamily: 'var(--font-heading)',
-            fontWeight: 700,
-            fontSize: 14,
-            letterSpacing: '0.10em',
-            textTransform: 'uppercase',
-            background: 'transparent',
-            color: '#fff',
-            border: '1px solid rgba(255,255,255,0.25)',
-            padding: '16px 32px',
-            borderRadius: 999,
-            textDecoration: 'none',
-            display: 'inline-block',
-          }}
-        >
-          Se connecter
+          Démarrer mon élevage
         </Link>
       </div>
 
       <footer
         style={{
-          borderTop: '1px solid rgba(255,255,255,0.1)',
-          paddingTop: 32,
           fontFamily: 'var(--font-body)',
-          fontSize: 12,
-          color: 'rgba(255,255,255,0.5)',
-          display: 'flex',
-          gap: 24,
-          justifyContent: 'center',
-          flexWrap: 'wrap',
+          fontSize: 13,
+          color: 'var(--pt-muted)',
+          paddingTop: 32,
+          borderTop: '1px solid var(--pt-line)',
         }}
       >
-        <span>© 2026 PorcTrack</span>
-        <Link to="/a-propos" style={{ color: 'inherit', textDecoration: 'none' }}>
-          À propos
-        </Link>
-        <Link to="/privacy" style={{ color: 'inherit', textDecoration: 'none' }}>
-          Confidentialité
-        </Link>
-        <Link to="/cgu" style={{ color: 'inherit', textDecoration: 'none' }}>
-          CGU
-        </Link>
+        PorcTrack · App :{' '}
+        <a
+          href="https://app.porctrack.tech"
+          style={{ color: 'var(--pt-accent)', textDecoration: 'none' }}
+        >
+          app.porctrack.tech
+        </a>{' '}
+        · Mentions · Contact
       </footer>
     </section>
   );
