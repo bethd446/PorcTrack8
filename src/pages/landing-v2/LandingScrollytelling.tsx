@@ -5,11 +5,11 @@ import { useLenisScroll } from './hooks/useLenisScroll';
 
 gsap.registerPlugin(ScrollTrigger);
 import { SceneHero } from './scenes/SceneHero';
-import { SceneRepro } from './scenes/SceneRepro';
-import { SceneBandes } from './scenes/SceneBandes';
-import { SceneFeed } from './scenes/SceneFeed';
-import { SceneHealth } from './scenes/SceneHealth';
-import { SceneOffline } from './scenes/SceneOffline';
+import { FloatingCardsStack } from './scenes/FloatingCardsStack';
+import { SceneVideoBreak } from './scenes/SceneVideoBreak';
+import { SectionPourQui } from './scenes/SectionPourQui';
+import { SectionWorkflow } from './scenes/SectionWorkflow';
+import { SectionMarius } from './scenes/SectionMarius';
 import { SceneCta } from './scenes/SceneCta';
 
 /**
@@ -81,13 +81,13 @@ export default function LandingScrollytelling() {
   useScrollUnlock();
   useLenisScroll();
   return (
-    <div style={{ background: '#0a0a0a', overflowX: 'clip' }}>
+    <div style={{ background: 'var(--pt-bg)', overflowX: 'clip' }}>
       <SceneHero />
-      <SceneRepro />
-      <SceneBandes />
-      <SceneFeed />
-      <SceneHealth />
-      <SceneOffline />
+      <FloatingCardsStack />
+      <SceneVideoBreak />
+      <SectionPourQui />
+      <SectionWorkflow />
+      <SectionMarius />
       <SceneCta />
     </div>
   );
