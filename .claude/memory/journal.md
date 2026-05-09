@@ -19,6 +19,34 @@
 
 ---
 
+## 2026-05-09 · [V75-h] Listing porcelets dépliable · commit `c6a15b1`
+
+**Contexte** : friction P1-3 audit V74 — `AnimalsV70.tsx` tab Porcelets affichait "92 porcelets" eyebrow mais seulement 4 stubs hardcodés (P-MAR-01..P-JAN-01). Décision UX brainstorming : grouping par bande dépliable (vs vrac virtualisé, vs représentant seul).
+
+**Découverte clé pendant exploration** : `BandePorcelets.porcelets?: PorceletIndividuel[]` existe déjà (V25, `src/types/farm.ts:147`) et est auto-chargé via JOIN `porcelets_individuels(id, batch_id, boucle, sexe, poids_courant_kg, statut, notes)` dans `src/services/supabaseService.ts:178`. → Pas de modification FarmContext / TroupeauContext / farmDataLoader nécessaire. Spec §2.1 prévoyait un plumbing context inutile, simplifié dans le plan.
+
+**Livré** :
+- Helper `src/v70/lib/porceletPhase.ts` (40L) : `derivePorceletPhase(porcelet, bande)` retourne 5 phases (SOUS_MERE/POST_SEVRAGE/CROISSANCE/ENGRAISSEMENT/FINITION) avec priorité poids ≥ 100kg → FINITION. Seuils alignés `src/config/farm.ts` (J28/J63/J100/J180). 7 tests Vitest passing.
+- Composant `src/v70/components/PorceletGroup.tsx` (175L) : ligne bande dépliable. Header `aria-expanded` toggleable (cliquable) + chevron `›` distinct vers fiche bande (zone séparée avec `aria-label`). Sub-items rendent boucle (mono tabular-nums) + poids + sexe + pill phase. Cas "0 vivants — bande terminée" rendu `disabled`.
+- `AnimalsV70.tsx` : counts.porcelets depuis `bande.porcelets` actifs (filter `VIVANT|MALADE|QUARANTAINE`) au lieu de `bande.vivants` agrégé. State `expandedBandes: Set<string>`. 1er groupe ouvert par défaut via `useEffect` au passage `bandes.length 0 → N` (data lazy FarmContext). Branche conditionnelle rendu `PorceletGroup` sur `tab === 'porcelets'`, empty state V74 préservé. Search étendue : nom de bande OU boucle porcelet (force déplié si match boucle).
+- 2 specs Playwright `tests/e2e/porcelets-listing.spec.ts` (gestion 3 cas selon état listing : tous disabled / tous expanded / au moins collapsed).
+
+**Tests** : 1927 → 1934 passing (+7 porceletPhase). 12/12 specs Playwright V75 totales (3 naming + 5 landing + 2 porcelets + 2 préexistantes). tsc 0, build OK 3.16s.
+
+**Limitation prod actuelle** : la ferme `audit-final@porctrack.test` n'a aucun `porcelet_individuel` peuplé en DB. Les 6 groupes affichent tous `0 vivants — bande terminée` disabled. Le code est fonctionnel ; le provisioning de la donnée porcelets est un sprint data séparé (insert SQL ou import Excel via `porcelets_individuels`).
+
+**Hors-scope (sprints suivants)** :
+- Fiche porcelet dédiée `/troupeau/porcelets/{id}` avec édition
+- Bottom-sheet quick-actions (pesée, mortalité, vente) sur clic sub-item
+- Tri/filtre par poids, phase, sexe
+- Pagination si > 500 porcelets
+
+**Méthode** : subagent-driven, 3 dispatches groupés (Tasks 1+2 helper+composant, Tasks 3-6 modifs AnimalsV70, Task 7 Playwright). 1 commit final inline. AGENT_CONTRACT bloc VERIFICATION respecté à chaque dispatch.
+
+**Liens** : [[learnings]] (réutiliser JOIN existant > recharger via context, lecture du code AVANT plan évite plumbing inutile)
+
+---
+
 ## 2026-05-09 · [V75 d/e/f] Refonte Landing Page · commits `8bbd5ca`→`5cf8c7e`→`c441bd1`
 
 **Contexte** : Suite immédiate du chantier naming-coherence (V75 a/b/c). Diagnostic état initial landing-v2 : `LandingScrollytelling.tsx` orchestrant 7 scènes mais 4 stubs vides (Repro, Feed, Health, Offline) + scene Bandes refondue, `SceneHero` avec background `#0a0a0a` noir générique + texte blanc + CTA `#10b981` vert mint + accent `#34d399` — violation directe du DNA "Terrain Vivant" V70 (palette terre/cream/vert forêt). Vidéo Creatify 8s déjà rendue dans `~/Downloads/`, watermark Creatify bottom-right à masquer. Cible : senior testeur manuel + éleveurs naisseurs-engraisseurs PWA.
