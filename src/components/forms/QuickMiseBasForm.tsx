@@ -258,14 +258,14 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
 
   return (
     <>
-      <IonModal isOpen={isOpen} onDidDismiss={handleClose} className="agritech-bottom-sheet pt-sheet-modal" aria-label="Saisir une mise-bas">
-        <div className="ion-page" style={{ position: 'relative', overflow: 'auto' }}>
+      <IonModal isOpen={isOpen} onDidDismiss={handleClose} breakpoints={[0, 1]} initialBreakpoint={1} className="agritech-bottom-sheet pt-sheet-modal pt-screen" aria-label="Saisir une mise-bas">
+        <div className="ion-page pt-screen" style={{ position: 'relative', overflow: 'auto' }}>
           <form className="sheet" onSubmit={handleSubmit} noValidate aria-label="Saisie d'une mise-bas" style={{ position: 'relative', height: '100%', maxHeight: '100%' }}>
-            <div className="sheet__handle" />
+            <span className="sheet__handle" />
             <header className="sheet__head">
               <div>
                 <div className="eyebrow">Nouvelle mise-bas</div>
-                <h2>Saisir une mise-bas</h2>
+                <h2 className="sheet__title">Saisir une mise-bas</h2>
               </div>
               <button type="button" className="sheet__close" onClick={handleClose} aria-label="Fermer" disabled={saving}>
                 <X size={14} aria-hidden="true" />
@@ -273,7 +273,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
             </header>
             <div className="sheet__body">
               <div className="field">
-                <label className="field__label" htmlFor="mb-truie">TRUIE EN GESTATION J110+ <span className="req">requis</span></label>
+                <label className="label--v77" htmlFor="mb-truie">TRUIE EN GESTATION J110+ <span className="req">requis</span></label>
                 <input id="mb-truie" ref={firstFieldRef} className={`field__input mono${truieId ? ' filled' : ' field__input--ghost'}`} type="text" aria-label="Truie en gestation" aria-required="true" aria-invalid={!!errors.truieId} placeholder="Rechercher T-…" value={truieQuery} onChange={e => { setTruieQuery(e.target.value); if (e.target.value === '') setTruieId(''); }} disabled={saving} autoComplete="off" />
                 {truieSuggestions.length > 0 && truieQuery !== truieId ? (
                   <div role="listbox" style={{ marginTop: 4, border: '1px solid var(--pt-line)', borderRadius: 10, background: 'var(--pt-bg)', maxHeight: 200, overflowY: 'auto' }}>
@@ -305,12 +305,12 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
 
               <div className="field--inline">
                 <div className="field">
-                  <label className="field__label" htmlFor="mb-date">DATE MB <span className="req">requis</span></label>
+                  <label className="label--v77" htmlFor="mb-date">DATE MB <span className="req">requis</span></label>
                   <input id="mb-date" className={`field__input mono${dateIso ? ' filled' : ' field__input--ghost'}`} type="date" aria-label="Date de mise-bas" aria-required="true" aria-invalid={!!errors.dateIso} value={dateIso} onChange={e => setDateIso(e.target.value)} disabled={saving} />
                   {errMsg(errors.dateIso)}
                 </div>
                 <div className="field">
-                  <label className="field__label" htmlFor="mb-nv">NV VIVANTS <span className="req">requis</span></label>
+                  <label className="label--v77" htmlFor="mb-nv">NV VIVANTS <span className="req">requis</span></label>
                   <div className="stepper">
                     <button type="button" onClick={() => adjustNumber(setNesVivants, nesVivants, -1)} aria-label="Diminuer NV" disabled={saving}><Minus size={14} aria-hidden="true" /></button>
                     <input id="mb-nv" type="number" inputMode="numeric" min={0} max={MISE_BAS_BOUNDS.maxNes} step={1} aria-label="Nombre de porcelets nés vivants" aria-required="true" aria-invalid={!!errors.nesVivants} placeholder="0" value={nesVivants} onChange={e => setNesVivants(e.target.value)} disabled={saving} />
@@ -323,7 +323,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
 
               <div className="field--inline">
                 <div className="field">
-                  <label className="field__label" htmlFor="mb-morts-naiss">MORTS NAISSANCE</label>
+                  <label className="label--v77" htmlFor="mb-morts-naiss">MORTS NAISSANCE</label>
                   <div className="stepper">
                     <button type="button" onClick={() => adjustNumber(setMortsNaissance, mortsNaissance, -1)} aria-label="Diminuer morts naissance" disabled={saving}><Minus size={14} aria-hidden="true" /></button>
                     <input id="mb-morts-naiss" type="number" inputMode="numeric" min={0} max={25} step={1} aria-label="Morts à la naissance" placeholder="0" value={mortsNaissance} onChange={e => setMortsNaissance(e.target.value)} disabled={saving} />
@@ -332,7 +332,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
                   </div>
                 </div>
                 <div className="field">
-                  <label className="field__label" htmlFor="mb-mn">MORT-NÉS</label>
+                  <label className="label--v77" htmlFor="mb-mn">MORT-NÉS</label>
                   <div className="stepper">
                     <button type="button" onClick={() => adjustNumber(setMortsNes, mortsNes, -1)} aria-label="Diminuer mort-nés" disabled={saving}><Minus size={14} aria-hidden="true" /></button>
                     <input id="mb-mn" type="number" inputMode="numeric" min={0} max={MISE_BAS_BOUNDS.maxNes} step={1} aria-label="Nombre de porcelets morts-nés" aria-invalid={!!errors.mortsNes} placeholder="0" value={mortsNes} onChange={e => setMortsNes(e.target.value)} disabled={saving} />
@@ -344,14 +344,14 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
               </div>
 
               <div className="field">
-                <label className="field__label" htmlFor="mb-id-portee">IDENTIFIANT PORTÉE <span className="hint">auto</span></label>
+                <label className="label--v77" htmlFor="mb-id-portee">IDENTIFIANT PORTÉE <span className="hint">auto</span></label>
                 <input id="mb-id-portee" className={`field__input mono${idPortee ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={20} autoCapitalize="characters" aria-label="Identifiant de la portée" aria-required="true" aria-invalid={!!errors.idPortee} placeholder="26-T7-01" value={idPortee} onChange={e => { setIdPortee(e.target.value); setIdPorteeEditedManually(true); }} disabled={saving || !truieId} autoComplete="off" />
                 {errMsg(errors.idPortee)}
               </div>
             </div>
             <footer className="sheet__foot">
               <button type="button" className="btn btn--ghost" onClick={handleClose} disabled={saving} aria-label="Annuler et fermer">Annuler</button>
-              <button type="submit" className="btn btn--primary" disabled={saving || !isValid || truiesEligibles.length === 0} aria-busy={saving} aria-label="Enregistrer la mise-bas">
+              <button type="submit" className="btn-primary--lg" disabled={saving || !isValid || truiesEligibles.length === 0} aria-busy={saving} aria-label="Enregistrer la mise-bas">
                 {saving ? 'Enregistrement…' : <><Check size={14} aria-hidden="true" /> Enregistrer la mise-bas</>}
               </button>
             </footer>

@@ -128,14 +128,14 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
   const isValid = !!selectedTruie && !!selectedVerrat;
 
   return (
-    <IonModal isOpen={isOpen} onDidDismiss={handleClose} className="agritech-bottom-sheet pt-sheet-modal" aria-label="Saisir une saillie">
-      <div className="ion-page" style={{ position: 'relative', overflow: 'auto' }}>
+    <IonModal isOpen={isOpen} onDidDismiss={handleClose} breakpoints={[0, 1]} initialBreakpoint={1} className="agritech-bottom-sheet pt-sheet-modal pt-screen" aria-label="Saisir une saillie">
+      <div className="ion-page pt-screen" style={{ position: 'relative', overflow: 'auto' }}>
         <div className="sheet" style={{ position: 'relative', height: '100%', maxHeight: '100%' }}>
-          <div className="sheet__handle" />
+          <span className="sheet__handle" />
           <header className="sheet__head">
             <div>
               <div className="eyebrow">Nouvelle saillie</div>
-              <h2>Saisir une saillie</h2>
+              <h2 className="sheet__title">Saisir une saillie</h2>
             </div>
             <button type="button" className="sheet__close" onClick={handleClose} aria-label="Fermer" disabled={saving}>
               <X size={14} aria-hidden="true" />
@@ -143,14 +143,14 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
           </header>
           <div className="sheet__body">
             <div className="field">
-              <label className="field__label">TRUIE EN CHALEUR <span className="req">requis</span></label>
+              <label className="label--v77">TRUIE EN CHALEUR <span className="req">requis</span></label>
               {truiesDisponibles.length > 0 ? (
-                <div className="radio-chips" role="radiogroup" aria-label="Truie">
+                <div className="radio-chips--cards" role="radiogroup" aria-label="Truie">
                   {truiesDisponibles.map(t => (
                     <button
                       key={t.id}
                       type="button"
-                      className="radio-chip"
+                      className={`radio-chip--card${selectedTruie === t.displayId ? ' is-selected' : ''}`}
                       role="radio"
                       aria-checked={selectedTruie === t.displayId}
                       aria-label={`Sélectionner la truie ${t.displayId}`}
@@ -170,14 +170,14 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
 
             <div className="field--inline">
               <div className="field">
-                <label className="field__label">VERRAT <span className="req">requis</span></label>
+                <label className="label--v77">VERRAT <span className="req">requis</span></label>
                 {verrats.length > 0 ? (
-                  <div className="radio-chips" role="radiogroup" aria-label="Verrat">
+                  <div className="radio-chips--cards" role="radiogroup" aria-label="Verrat">
                     {verrats.map(v => (
                       <button
                         key={v.id}
                         type="button"
-                        className="radio-chip"
+                        className={`radio-chip--card${selectedVerrat === v.displayId ? ' is-selected' : ''}`}
                         role="radio"
                         aria-checked={selectedVerrat === v.displayId}
                         aria-label={`Sélectionner le verrat ${v.displayId}`}
@@ -196,7 +196,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
               </div>
 
               <div className="field">
-                <label className="field__label" htmlFor="saillie-date">DATE SAILLIE</label>
+                <label className="label--v77" htmlFor="saillie-date">DATE SAILLIE</label>
                 <input
                   id="saillie-date"
                   ref={firstFieldRef}
@@ -233,7 +233,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
             <button type="button" className="btn btn--ghost" onClick={handleClose} disabled={saving} aria-label="Annuler et fermer">Annuler</button>
             <button
               type="button"
-              className="btn btn--primary"
+              className="btn-primary--lg"
               onClick={handleSave}
               disabled={!isValid || saving}
               aria-busy={saving}

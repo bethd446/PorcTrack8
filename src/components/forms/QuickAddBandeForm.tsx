@@ -181,14 +181,14 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({ isOpen, onClose, 
 
   return (
     <>
-      <IonModal isOpen={isOpen} onDidDismiss={handleClose} className="agritech-bottom-sheet pt-sheet-modal" aria-label="Ajouter une bande">
-        <div className="ion-page" style={{ position: 'relative', overflow: 'auto' }}>
+      <IonModal isOpen={isOpen} onDidDismiss={handleClose} breakpoints={[0, 1]} initialBreakpoint={1} className="agritech-bottom-sheet pt-sheet-modal pt-screen" aria-label="Ajouter une bande">
+        <div className="ion-page pt-screen" style={{ position: 'relative', overflow: 'auto' }}>
           <form className="sheet" onSubmit={handleSubmit} noValidate aria-label="Création d'une bande" style={{ position: 'relative', height: '100%', maxHeight: '100%' }}>
-            <div className="sheet__handle" />
+            <span className="sheet__handle" />
             <header className="sheet__head">
               <div>
                 <div className="eyebrow">Nouvelle bande</div>
-                <h2>Ajouter une bande</h2>
+                <h2 className="sheet__title">Ajouter une bande</h2>
               </div>
               <button type="button" className="sheet__close" onClick={handleClose} aria-label="Fermer" disabled={saving}>
                 <X size={14} aria-hidden="true" />
@@ -196,7 +196,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({ isOpen, onClose, 
             </header>
             <div className="sheet__body">
               <div className="field">
-                <label className="field__label" htmlFor="add-bande-truie">TRUIE MÈRE <span className="req">requis</span></label>
+                <label className="label--v77" htmlFor="add-bande-truie">TRUIE MÈRE <span className="req">requis</span></label>
                 <input id="add-bande-truie" ref={firstFieldRef} className={`field__input mono${truieId ? ' filled' : ' field__input--ghost'}`} type="text" aria-label="Truie mère (autocomplete)" aria-required="true" aria-invalid={!!errors.truieId} placeholder="Rechercher T-…" value={truieQuery} onChange={e => { setTruieQuery(e.target.value); if (e.target.value === '') setTruieId(''); }} disabled={saving} autoComplete="off" />
                 {truieSuggestions.length > 0 && truieQuery !== truieId ? (
                   <div role="listbox" style={{ marginTop: 4, border: '1px solid var(--pt-line)', borderRadius: 10, background: 'var(--pt-bg)', maxHeight: 200, overflowY: 'auto' }}>
@@ -211,7 +211,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({ isOpen, onClose, 
               </div>
               {verrats.length > 0 ? (
                 <div className="field">
-                  <label className="field__label" htmlFor="add-bande-verrat">VERRAT PÈRE <span className="hint">optionnel</span></label>
+                  <label className="label--v77" htmlFor="add-bande-verrat">VERRAT PÈRE <span className="hint">optionnel</span></label>
                   <select id="add-bande-verrat" className={`field__input${verratId ? ' mono filled' : ' field__input--ghost'}`} aria-label="Verrat père" value={verratId} onChange={e => setVerratId(e.target.value)} disabled={saving}>
                     <option value="">— Aucun —</option>
                     {verrats.map(v => <option key={v.id} value={v.displayId || v.id}>{v.displayId || v.id}{v.nom ? ` · ${v.nom}` : ''}</option>)}
@@ -220,12 +220,12 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({ isOpen, onClose, 
               ) : null}
               <div className="field--inline">
                 <div className="field">
-                  <label className="field__label" htmlFor="add-bande-date-mb">DATE MB <span className="req">requis</span></label>
+                  <label className="label--v77" htmlFor="add-bande-date-mb">DATE MB <span className="req">requis</span></label>
                   <input id="add-bande-date-mb" className={`field__input mono${dateMb ? ' filled' : ' field__input--ghost'}`} type="date" aria-label="Date de mise-bas" aria-required="true" aria-invalid={!!errors.dateMb} value={dateMb} onChange={e => setDateMb(e.target.value)} disabled={saving} />
                   {errMsg(errors.dateMb)}
                 </div>
                 <div className="field">
-                  <label className="field__label" htmlFor="add-bande-nv">NV VIVANTS <span className="req">requis</span></label>
+                  <label className="label--v77" htmlFor="add-bande-nv">NV VIVANTS <span className="req">requis</span></label>
                   <div className="stepper">
                     <button type="button" onClick={() => adjustNumber(setNesVivants, nesVivants, -1)} aria-label="Diminuer NV" disabled={saving}><Minus size={14} aria-hidden="true" /></button>
                     <input id="add-bande-nv" type="number" inputMode="numeric" min={0} max={25} step={1} aria-label="Nombre de porcelets nés vivants" aria-required="true" aria-invalid={!!errors.nesVivants} placeholder="0" value={nesVivants} onChange={e => setNesVivants(e.target.value)} disabled={saving} />
@@ -236,7 +236,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({ isOpen, onClose, 
                 </div>
               </div>
               <div className="field">
-                <label className="field__label" htmlFor="add-bande-mn">MORTS-NÉS <span className="hint">optionnel</span></label>
+                <label className="label--v77" htmlFor="add-bande-mn">MORTS-NÉS <span className="hint">optionnel</span></label>
                 <div className="stepper">
                   <button type="button" onClick={() => adjustNumber(setMortsNes, mortsNes, -1)} aria-label="Diminuer mort-nés" disabled={saving}><Minus size={14} aria-hidden="true" /></button>
                   <input id="add-bande-mn" type="number" inputMode="numeric" min={0} max={25} step={1} aria-label="Mort-nés" aria-invalid={!!errors.mortsNes} placeholder="0" value={mortsNes} onChange={e => setMortsNes(e.target.value)} disabled={saving} />
@@ -246,7 +246,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({ isOpen, onClose, 
                 {errMsg(errors.mortsNes)}
               </div>
               <div className="field">
-                <label className="field__label" htmlFor="add-bande-id">IDENTIFIANT PORTÉE <span className="hint">aperçu auto</span></label>
+                <label className="label--v77" htmlFor="add-bande-id">IDENTIFIANT PORTÉE <span className="hint">aperçu auto</span></label>
                 <input id="add-bande-id" className={`field__input mono${idPortee ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={30} aria-label="Identifiant de la portée" aria-invalid={!!errors.idPortee} placeholder="Mai 2026 · M-—" value={idPorteeMonthlyPreview || idPortee} readOnly />
                 {dateMb ? (
                   <span style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 10.5, color: 'var(--pt-subtle)' }}>
@@ -259,7 +259,7 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({ isOpen, onClose, 
             </div>
             <footer className="sheet__foot">
               <button type="button" className="btn btn--ghost" onClick={handleClose} disabled={saving} aria-label="Annuler et fermer">Annuler</button>
-              <button type="submit" className="btn btn--primary" disabled={saving || !isValid} aria-busy={saving} aria-label="Créer la bande">
+              <button type="submit" className="btn-primary--lg" disabled={saving || !isValid} aria-busy={saving} aria-label="Créer la bande">
                 {saving ? 'Enregistrement…' : <><Check size={14} aria-hidden="true" /> Créer la bande</>}
               </button>
             </footer>

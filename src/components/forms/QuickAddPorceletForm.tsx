@@ -113,14 +113,14 @@ const QuickAddPorceletForm: React.FC<QuickAddPorceletFormProps> = ({
 
   return (
     <>
-      <IonModal isOpen={isOpen} onDidDismiss={handleClose} className="agritech-bottom-sheet pt-sheet-modal" aria-label="Ajouter un porcelet">
-        <div className="ion-page" style={{ position: 'relative', overflow: 'auto' }}>
+      <IonModal isOpen={isOpen} onDidDismiss={handleClose} breakpoints={[0, 1]} initialBreakpoint={1} className="agritech-bottom-sheet pt-sheet-modal pt-screen" aria-label="Ajouter un porcelet">
+        <div className="ion-page pt-screen" style={{ position: 'relative', overflow: 'auto' }}>
           <form className="sheet" onSubmit={handleSubmit} noValidate aria-label="Ajout d'un porcelet" style={{ position: 'relative', height: '100%', maxHeight: '100%' }}>
-            <div className="sheet__handle" />
+            <span className="sheet__handle" />
             <header className="sheet__head">
               <div>
                 <div className="eyebrow">Nouveau porcelet</div>
-                <h2>Ajouter un porcelet</h2>
+                <h2 className="sheet__title">Ajouter un porcelet</h2>
               </div>
               <button type="button" className="sheet__close" onClick={handleClose} aria-label="Fermer" disabled={saving}>
                 <X size={14} aria-hidden="true" />
@@ -128,7 +128,7 @@ const QuickAddPorceletForm: React.FC<QuickAddPorceletFormProps> = ({
             </header>
             <div className="sheet__body">
               <div className="field">
-                <label className="field__label" htmlFor="add-porcelet-bande">BANDE <span className="req">requis</span></label>
+                <label className="label--v77" htmlFor="add-porcelet-bande">BANDE <span className="req">requis</span></label>
                 <select id="add-porcelet-bande" ref={firstFieldRef} className={`field__input${selectedBatchId ? ' mono filled' : ' field__input--ghost'}`} aria-label="Bande" aria-required="true" value={selectedBatchId} onChange={e => setSelectedBatchId(e.target.value)} disabled={saving}>
                   <option value="">— Sélectionner —</option>
                   {bandes.map(b => (
@@ -137,7 +137,7 @@ const QuickAddPorceletForm: React.FC<QuickAddPorceletFormProps> = ({
                 </select>
               </div>
               <div className="field">
-                <label className="field__label" htmlFor="add-porcelet-boucle">BOUCLE</label>
+                <label className="label--v77" htmlFor="add-porcelet-boucle">BOUCLE</label>
                 <input id="add-porcelet-boucle" className={`field__input mono${boucle ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={15} autoCapitalize="characters" aria-label="Boucle" aria-required="true" aria-invalid={!!errors.boucle} placeholder="CR-13" value={boucle} onChange={e => setBoucle(e.target.value)} disabled={saving} autoComplete="off" />
                 {duplicate ? (
                   <div role="status" aria-live="polite" data-testid="add-porcelet-dup-warning" style={{ marginTop: 6, padding: '6px 10px', border: '1px solid #fcd34d', background: '#fffbeb', borderRadius: 8, display: 'flex', gap: 6, alignItems: 'flex-start' }}>
@@ -155,15 +155,15 @@ const QuickAddPorceletForm: React.FC<QuickAddPorceletFormProps> = ({
                 {errMsg(errors.boucle)}
               </div>
               <div className="field">
-                <label className="field__label">SEXE</label>
-                <div className="radio-chips" role="radiogroup" aria-label="Sexe">
+                <label className="label--v77">SEXE</label>
+                <div className="radio-chips--cards" role="radiogroup" aria-label="Sexe">
                   {SEXE_CHOICES.map(s => (
-                    <button key={s.value} type="button" className="radio-chip" role="radio" aria-checked={sexe === s.value} onClick={() => setSexe(s.value)} disabled={saving}>{s.label}</button>
+                    <button key={s.value} type="button" className={`radio-chip--card${sexe === s.value ? ' is-selected' : ''}`} role="radio" aria-checked={sexe === s.value} onClick={() => setSexe(s.value)} disabled={saving}>{s.label}</button>
                   ))}
                 </div>
               </div>
               <div className="field">
-                <label className="field__label" htmlFor="add-porcelet-poids">POIDS NAISSANCE <span className="hint">kg</span></label>
+                <label className="label--v77" htmlFor="add-porcelet-poids">POIDS NAISSANCE <span className="hint">kg</span></label>
                 <div className="stepper">
                   <button type="button" onClick={() => adjustPoids(-0.05)} aria-label="Diminuer poids" disabled={saving}><Minus size={14} aria-hidden="true" /></button>
                   <input id="add-porcelet-poids" type="number" inputMode="decimal" step={0.05} min={0.5} max={5} aria-label="Poids en kg" aria-invalid={!!errors.poidsCourantKg} placeholder="1.4" value={poidsCourantKg} onChange={e => setPoidsCourantKg(e.target.value)} disabled={saving} />
@@ -175,7 +175,7 @@ const QuickAddPorceletForm: React.FC<QuickAddPorceletFormProps> = ({
             </div>
             <footer className="sheet__foot">
               <button type="button" className="btn btn--ghost" onClick={handleClose} disabled={saving} aria-label="Annuler et fermer">Annuler</button>
-              <button type="submit" className="btn btn--primary" disabled={saving || !isValid} aria-busy={saving} aria-label="Enregistrer le porcelet">
+              <button type="submit" className="btn-primary--lg" disabled={saving || !isValid} aria-busy={saving} aria-label="Enregistrer le porcelet">
                 {saving ? 'Enregistrement…' : <><Check size={14} aria-hidden="true" /> Enregistrer le porcelet</>}
               </button>
             </footer>

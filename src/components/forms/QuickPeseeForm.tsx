@@ -18,6 +18,7 @@ import { Button, Input as DSInput, Search as SearchInput, Section } from '@/desi
 import type { BandePorcelets, Truie, Verrat } from '../../types/farm';
 import { extractPeseesForBande } from '../../services/growthAnalyzer';
 import { markPeseeEffectuee } from '../../services/peseePlanifieesService';
+import { formatBandeName } from '../../v70/lib/formatBandeName';
 
 type PeseeSubject = BandePorcelets | Truie | Verrat;
 import { biologyValidators } from '../../utils/biologyValidators';
@@ -296,7 +297,12 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
       setStep(4);
       const subjectLabel =
         subjectType === 'BANDE'
-          ? ((selectedSubject as BandePorcelets).idPortee || selectedSubject.id)
+          ? formatBandeName({
+              id: selectedSubject.id,
+              idPortee: (selectedSubject as BandePorcelets).idPortee,
+              truieMere: (selectedSubject as BandePorcelets).truie,
+              dateMB: (selectedSubject as BandePorcelets).dateMB,
+            }, { compact: true })
           : ((selectedSubject as Truie | Verrat).displayId || selectedSubject.id);
       showToast(`Pesée enregistrée · ${subjectLabel} · ${poids} kg`, 'success');
       try { await refreshData(true); } catch { /* noop */ }
@@ -361,7 +367,14 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
   const subjectDisplay = (s: PeseeSubject) => {
     const sb = s as BandePorcelets;
     const sr = s as Truie | Verrat;
-    if (subjectType === 'BANDE') return (sb.idPortee || sb.id) + (sb.truie ? ` · ${sb.truie}` : '');
+    if (subjectType === 'BANDE') {
+      return formatBandeName({
+        id: sb.id,
+        idPortee: sb.idPortee,
+        truieMere: sb.truie,
+        dateMB: sb.dateMB,
+      });
+    }
     return (sr.displayId || sr.id) + (sr.nom ? ` · ${sr.nom}` : '');
   };
 

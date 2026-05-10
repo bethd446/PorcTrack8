@@ -21,7 +21,7 @@ export interface SyncStatusBadgeProps {
  *  - idle     → vert subtle "Synchro OK" (caché par défaut)
  *
  * Si `onClick` est fourni → rendu en `<button>` (file cliquable). Sinon `<span>`.
- * Design system V70 : tokens `var(--pt-*)`, Lucide icons, ft-code uppercase.
+ * Design system V77 : tokens `var(--pt-*)`, Lucide icons, font-mono uppercase.
  */
 const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({
   showWhenIdle = false,
@@ -34,7 +34,7 @@ const SyncStatusBadge: React.FC<SyncStatusBadgeProps> = ({
   if (variant.kind === 'idle' && !showWhenIdle) return null;
 
   const baseClasses = cn(
-    'ft-code inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] uppercase tracking-wide whitespace-nowrap',
+    'font-mono tabular-nums inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] uppercase tracking-wide whitespace-nowrap',
     variant.classes,
     onClick ? 'cursor-pointer' : '',
     className,

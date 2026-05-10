@@ -129,14 +129,14 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({ isOpen, onClose, 
 
   return (
     <>
-      <IonModal isOpen={isOpen} onDidDismiss={handleClose} className="agritech-bottom-sheet pt-sheet-modal" aria-label="Ajouter une truie">
-        <div className="ion-page" style={{ position: 'relative', overflow: 'auto' }}>
+      <IonModal isOpen={isOpen} onDidDismiss={handleClose} breakpoints={[0, 1]} initialBreakpoint={1} className="agritech-bottom-sheet pt-sheet-modal pt-screen" aria-label="Ajouter une truie">
+        <div className="ion-page pt-screen" style={{ position: 'relative', overflow: 'auto' }}>
           <form className="sheet" onSubmit={handleSubmit} noValidate aria-label="Création d'une truie" style={{ position: 'relative', height: '100%', maxHeight: '100%' }}>
-            <div className="sheet__handle" />
+            <span className="sheet__handle" />
             <header className="sheet__head">
               <div>
                 <div className="eyebrow">Nouvelle truie</div>
-                <h2>Ajouter une truie</h2>
+                <h2 className="sheet__title">Ajouter une truie</h2>
               </div>
               <button type="button" className="sheet__close" onClick={handleClose} aria-label="Fermer" disabled={saving}>
                 <X size={14} aria-hidden="true" />
@@ -144,30 +144,30 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({ isOpen, onClose, 
             </header>
             <div className="sheet__body">
               <div className="field">
-                <label className="field__label" htmlFor="add-truie-code">CODE <span className="hint">auto-généré</span></label>
+                <label className="label--v77" htmlFor="add-truie-code">CODE <span className="hint">auto-généré</span></label>
                 <input id="add-truie-code" ref={firstFieldRef} className={`field__input mono${code ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={10} autoCapitalize="characters" aria-label="Code de la truie" aria-required="true" aria-invalid={!!errors.id} placeholder="T-051" value={code} onChange={e => setCode(e.target.value)} disabled={saving} autoComplete="off" />
                 {errMsg(errors.id)}
               </div>
               <div className="field">
-                <label className="field__label" htmlFor="add-truie-boucle">BOUCLE OFFICIELLE <span className="req">requis</span></label>
+                <label className="label--v77" htmlFor="add-truie-boucle">BOUCLE OFFICIELLE <span className="req">requis</span></label>
                 <input id="add-truie-boucle" className={`field__input mono${boucle ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={20} aria-label="Numéro de boucle" aria-required="true" aria-invalid={!!errors.boucle} placeholder="CI-051-26" value={boucle} onChange={e => setBoucle(e.target.value)} disabled={saving} autoComplete="off" />
                 {errMsg(errors.boucle)}
               </div>
               <div className="field">
-                <label className="field__label">STATUT</label>
-                <div className="radio-chips" role="radiogroup" aria-label="Statut">
+                <label className="label--v77">STATUT</label>
+                <div className="radio-chips--cards" role="radiogroup" aria-label="Statut">
                   {STATUT_CHOICES.map(s => (
-                    <button key={s.key} type="button" className="radio-chip" role="radio" aria-checked={statut === s.key} onClick={() => setStatut(s.key)} disabled={saving}>{s.label}</button>
+                    <button key={s.key} type="button" className={`radio-chip--card${statut === s.key ? ' is-selected' : ''}`} role="radio" aria-checked={statut === s.key} onClick={() => setStatut(s.key)} disabled={saving}>{s.label}</button>
                   ))}
                 </div>
               </div>
               <div className="field">
-                <label className="field__label" htmlFor="add-truie-naissance">DATE NAISSANCE</label>
+                <label className="label--v77" htmlFor="add-truie-naissance">DATE NAISSANCE</label>
                 <input id="add-truie-naissance" className={`field__input mono${dateNaissance ? ' filled' : ' field__input--ghost'}`} type="date" aria-label="Date de naissance" value={dateNaissance} onChange={e => setDateNaissance(e.target.value)} disabled={saving} />
               </div>
               {loges.length > 0 ? (
                 <div className="field">
-                  <label className="field__label" htmlFor="add-truie-loge">LOGE ACTUELLE</label>
+                  <label className="label--v77" htmlFor="add-truie-loge">LOGE ACTUELLE</label>
                   <select id="add-truie-loge" className={`field__input${logeId ? ' mono filled' : ' field__input--ghost'}`} aria-label="Loge actuelle" value={logeId} onChange={e => setLogeId(e.target.value)} disabled={saving}>
                     <option value="">— Sélectionner —</option>
                     {loges.map(l => <option key={l.id} value={l.id}>{l.numero}{l.type ? ` · ${l.type}` : ''}</option>)}
@@ -175,7 +175,7 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({ isOpen, onClose, 
                 </div>
               ) : null}
               <div className="field">
-                <label className="field__label" htmlFor="add-truie-mere">TRUIE MÈRE <span className="hint">optionnel</span></label>
+                <label className="label--v77" htmlFor="add-truie-mere">TRUIE MÈRE <span className="hint">optionnel</span></label>
                 <input id="add-truie-mere" className={`field__input mono${truieMereId ? ' filled' : ' field__input--ghost'}`} type="text" aria-label="Truie mère" placeholder="Rechercher T-…" value={truieMereQuery} onChange={e => { setTruieMereQuery(e.target.value); if (e.target.value === '') setTruieMereId(''); }} disabled={saving} autoComplete="off" />
                 {truieMereSuggestions.length > 0 && truieMereQuery !== truieMereId ? (
                   <div role="listbox" style={{ marginTop: 4, border: '1px solid var(--pt-line)', borderRadius: 10, background: 'var(--pt-bg)', maxHeight: 200, overflowY: 'auto' }}>
@@ -189,7 +189,7 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({ isOpen, onClose, 
               </div>
               {verrats.length > 0 ? (
                 <div className="field">
-                  <label className="field__label" htmlFor="add-truie-verrat">VERRAT ORIGINE <span className="hint">optionnel</span></label>
+                  <label className="label--v77" htmlFor="add-truie-verrat">VERRAT ORIGINE <span className="hint">optionnel</span></label>
                   <select id="add-truie-verrat" className={`field__input${verratOrigineId ? ' mono filled' : ' field__input--ghost'}`} aria-label="Verrat origine" value={verratOrigineId} onChange={e => setVerratOrigineId(e.target.value)} disabled={saving}>
                     <option value="">— Aucun —</option>
                     {verrats.map(v => <option key={v.id} value={v.displayId || v.id}>{v.displayId || v.id}{v.nom ? ` · ${v.nom}` : ''}</option>)}
@@ -199,7 +199,7 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({ isOpen, onClose, 
             </div>
             <footer className="sheet__foot">
               <button type="button" className="btn btn--ghost" onClick={handleClose} disabled={saving} aria-label="Annuler et fermer">Annuler</button>
-              <button type="submit" className="btn btn--primary" disabled={saving || !isValid} aria-busy={saving} aria-label="Ajouter la truie au troupeau">
+              <button type="submit" className="btn-primary--lg" disabled={saving || !isValid} aria-busy={saving} aria-label="Ajouter la truie au troupeau">
                 {saving ? 'Enregistrement…' : <><Check size={14} aria-hidden="true" /> Enregistrer la truie</>}
               </button>
             </footer>

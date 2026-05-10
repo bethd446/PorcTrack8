@@ -124,14 +124,14 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({ isOpen, onClose, on
 
   return (
     <>
-      <IonModal isOpen={isOpen} onDidDismiss={handleClose} className="agritech-bottom-sheet pt-sheet-modal" aria-label="Ajouter une loge">
-        <div className="ion-page" style={{ position: 'relative', overflow: 'auto' }}>
+      <IonModal isOpen={isOpen} onDidDismiss={handleClose} breakpoints={[0, 1]} initialBreakpoint={1} className="agritech-bottom-sheet pt-sheet-modal pt-screen" aria-label="Ajouter une loge">
+        <div className="ion-page pt-screen" style={{ position: 'relative', overflow: 'auto' }}>
           <form className="sheet" onSubmit={handleSubmit} noValidate aria-label="Création d'une loge" style={{ position: 'relative', height: '100%', maxHeight: '100%' }}>
-            <div className="sheet__handle" />
+            <span className="sheet__handle" />
             <header className="sheet__head">
               <div>
                 <div className="eyebrow">Nouvelle loge</div>
-                <h2>Ajouter une loge</h2>
+                <h2 className="sheet__title">Ajouter une loge</h2>
               </div>
               <button type="button" className="sheet__close" onClick={handleClose} aria-label="Fermer" disabled={saving}>
                 <X size={14} aria-hidden="true" />
@@ -139,20 +139,20 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({ isOpen, onClose, on
             </header>
             <div className="sheet__body">
               <div className="field">
-                <label className="field__label">CATÉGORIE</label>
-                <div className="radio-chips" role="radiogroup" aria-label="Catégorie">
+                <label className="label--v77">CATÉGORIE</label>
+                <div className="radio-chips--cards" role="radiogroup" aria-label="Catégorie">
                   {TYPE_CHOICES.map((t, i) => (
-                    <button key={t.value} ref={i === 0 ? firstFieldRef : undefined} type="button" className="radio-chip" role="radio" aria-checked={type === t.value} onClick={() => { setType(t.value); setCodeManuallyEdited(false); }} disabled={saving}>{t.label}</button>
+                    <button key={t.value} ref={i === 0 ? firstFieldRef : undefined} type="button" className={`radio-chip--card${type === t.value ? ' is-selected' : ''}`} role="radio" aria-checked={type === t.value} onClick={() => { setType(t.value); setCodeManuallyEdited(false); }} disabled={saving}>{t.label}</button>
                   ))}
                 </div>
               </div>
               <div className="field">
-                <label className="field__label" htmlFor="add-loge-code">CODE <span className="hint">auto selon type</span></label>
+                <label className="label--v77" htmlFor="add-loge-code">CODE <span className="hint">auto selon type</span></label>
                 <input id="add-loge-code" className={`field__input mono${code ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={20} aria-label="Code de la loge" aria-required="true" aria-invalid={!!errors.numero} placeholder="M-04" value={code} onChange={e => { setCode(e.target.value); setCodeManuallyEdited(true); }} disabled={saving} autoComplete="off" />
                 {errMsg(errors.numero)}
               </div>
               <div className="field">
-                <label className="field__label" htmlFor="add-loge-capacite">CAPACITÉ MAX</label>
+                <label className="label--v77" htmlFor="add-loge-capacite">CAPACITÉ MAX</label>
                 <div className="stepper">
                   <button type="button" onClick={() => adjustCapacite(-1)} aria-label="Diminuer capacité" disabled={saving}><Minus size={14} aria-hidden="true" /></button>
                   <input id="add-loge-capacite" type="number" inputMode="numeric" min={0} max={500} step={1} aria-label="Capacité max" aria-invalid={!!errors.capaciteMax} placeholder="0" value={capacite} onChange={e => setCapacite(e.target.value)} disabled={saving} />
@@ -162,13 +162,13 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({ isOpen, onClose, on
                 {errMsg(errors.capaciteMax)}
               </div>
               <div className="field">
-                <label className="field__label" htmlFor="add-loge-position">POSITION <span className="hint">libre</span></label>
+                <label className="label--v77" htmlFor="add-loge-position">POSITION <span className="hint">libre</span></label>
                 <input id="add-loge-position" className={`field__input${position ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={50} aria-label="Position" placeholder="ex. bâtiment A · case 4" value={position} onChange={e => setPosition(e.target.value)} disabled={saving} autoComplete="off" />
               </div>
             </div>
             <footer className="sheet__foot">
               <button type="button" className="btn btn--ghost" onClick={handleClose} disabled={saving} aria-label="Annuler et fermer">Annuler</button>
-              <button type="submit" className="btn btn--primary" disabled={saving || !isValid} aria-busy={saving} aria-label="Créer la loge">
+              <button type="submit" className="btn-primary--lg" disabled={saving || !isValid} aria-busy={saving} aria-label="Créer la loge">
                 {saving ? 'Création…' : <><Check size={14} aria-hidden="true" /> Enregistrer la loge</>}
               </button>
             </footer>
