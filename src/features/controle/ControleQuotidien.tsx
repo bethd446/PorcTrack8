@@ -6,10 +6,9 @@ import {
 import { ChevronRight, Box, CheckCircle2, Shield } from 'lucide-react';
 import { CONTROLE_QUESTIONS } from './questions';
 import { insertNote } from '../../services/supabaseWrites';
-import AgritechLayout from '../../components/AgritechLayout';
-import TopBarSync from '../../components/design/TopBarSync';
 import { Chip } from '../../components/agritech';
-import { Button, PageHeader, Section } from '@/design-system';
+import { Button, Section } from '@/design-system';
+import { PageHeader } from '../../v70/components/ds/PageHeader';
 import { kvGet } from '../../services/kvStore';
 
 const ControleQuotidien: React.FC = () => {
@@ -61,17 +60,13 @@ const ControleQuotidien: React.FC = () => {
     return (
       <IonPage>
         <IonContent fullscreen className="ion-no-padding">
-          <AgritechLayout withNav={false}>
-            <TopBarSync
-              crumbs={[{ label: "Aujourd'hui", href: '/today' }, 'Audit terrain']}
-              onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
+          <div className="phone-content px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto', minHeight: '100%' }}>
+            <PageHeader
+              eyebrow="Outils · Audit"
+              title="Contrôle terminé"
+              subtitle="Questionnaire quotidien"
+              onBack={() => navigate(-1)}
             />
-            <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-              <PageHeader
-                eyebrow="Outils · Audit"
-                title="Contrôle terminé"
-                subtitle="Questionnaire quotidien"
-              />
 
               <div className="flex flex-col items-center text-center">
               <div
@@ -101,7 +96,6 @@ const ControleQuotidien: React.FC = () => {
               </div>
               </div>
             </div>
-          </AgritechLayout>
         </IonContent>
       </IonPage>
     );
@@ -111,18 +105,13 @@ const ControleQuotidien: React.FC = () => {
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
-        <AgritechLayout withNav={false}>
-          <TopBarSync
-            crumbs={['Outils', 'Audit terrain']}
-            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
+        <div className="phone-content px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto', minHeight: '100%' }}>
+          <PageHeader
+            eyebrow="Outils · Audit"
+            title="Audit terrain"
+            subtitle="Questionnaire quotidien"
+            onBack={() => navigate(-1)}
           />
-
-          <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <PageHeader
-              eyebrow="Outils · Audit"
-              title="Audit terrain"
-              subtitle="Questionnaire quotidien"
-            />
 
             <Section label="PROGRESSION" />
             <div
@@ -217,11 +206,10 @@ const ControleQuotidien: React.FC = () => {
               </div>
             </section>
 
-            <p className="mt-6 text-center text-[10px] uppercase tracking-wide text-text-2">
-              PorcTrack · registre audité
-            </p>
-          </div>
-        </AgritechLayout>
+          <p className="mt-6 text-center text-[10px] uppercase tracking-wide text-text-2">
+            PorcTrack · registre audité
+          </p>
+        </div>
 
         <IonLoading
           isOpen={loading}

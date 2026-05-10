@@ -7,9 +7,6 @@ import { isPageFabEnabled, usePageFab } from './usePageFab';
 
 describe('isPageFabEnabled — pure function', () => {
   it.each([
-    '/troupeau',
-    '/troupeau/',
-    '/troupeau/truies',
     '/troupeau/bandes/L5RM',
     '/reproduction',
     '/reproduction/lots',
@@ -32,7 +29,10 @@ describe('isPageFabEnabled — pure function', () => {
     '/onboarding/bandes-pending',
     '/checklist/daily',
     '/design-system',
-  ])('renvoie false pour %s (hub synthèse, parcours guidé, ou admin)', (path) => {
+    '/troupeau',
+    '/troupeau/',
+    '/troupeau/truies',
+  ])('renvoie false pour %s (hub Élevage = FAB contextuel par sous-tab, hub synthèse, parcours guidé, ou admin)', (path) => {
     expect(isPageFabEnabled(path)).toBe(false);
   });
 
@@ -55,11 +55,11 @@ describe('usePageFab — hook React', () => {
   const wrapper = ({ children, path }: { children: React.ReactNode; path: string }) =>
     React.createElement(MemoryRouter, { initialEntries: [path] }, children);
 
-  it('renvoie true sur /troupeau', () => {
+  it('renvoie false sur /troupeau (hub Élevage — chaque sous-tab a son propre FAB contextuel)', () => {
     const { result } = renderHook(() => usePageFab(), {
       wrapper: ({ children }) => wrapper({ children, path: '/troupeau' }),
     });
-    expect(result.current).toBe(true);
+    expect(result.current).toBe(false);
   });
 
   it('renvoie false sur /today', () => {

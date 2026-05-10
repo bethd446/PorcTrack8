@@ -33,6 +33,9 @@ const TruieDetailView = React.lazy(() =>
 const VerratDetailView = React.lazy(() =>
   import('../../features/troupeau/VerratDetailView').then((m) => ({ default: m.default })),
 );
+const PorceletDetailView = React.lazy(() =>
+  import('../../features/troupeau/PorceletDetailView').then((m) => ({ default: m.default })),
+);
 const BandeDetailView = React.lazy(() =>
   import('../../features/tables/bandes/BandeDetailView').then((m) => ({ default: m.default })),
 );
@@ -80,6 +83,11 @@ const FinancesView = React.lazy(() =>
 );
 const RapportFinancierView = React.lazy(() =>
   import('../../features/pilotage/RapportFinancierView').then((m) => ({ default: m.default })),
+);
+const MariusChatFullscreen = React.lazy(() =>
+  import('../../features/chatbot/MariusChatFullscreen').then((m) => ({
+    default: m.default,
+  })),
 );
 
 const OnboardingRoute: React.FC = () => {
@@ -153,6 +161,7 @@ export const V70Routes: React.FC = () => (
           {/* Fiches détail legacy (réutilisées tant que V70 n'a pas de fiches dédiées) */}
           <Route path="/troupeau/truies/:id" element={<TruieDetailView />} />
           <Route path="/troupeau/verrats/:id" element={<VerratDetailView />} />
+          <Route path="/troupeau/porcelets/:id" element={<PorceletDetailView />} />
           <Route path="/troupeau/bandes/:bandeId" element={<BandeDetailRouteV70 />} />
           <Route path="/troupeau/loges/:id" element={<LogeDetailView />} />
           <Route path="/troupeau/*" element={<V70ErrorBoundary pageName="Elevage"><AnimalsV70 /></V70ErrorBoundary>} />
@@ -218,6 +227,9 @@ export const V70Routes: React.FC = () => (
           <Route path="/plus" element={<Navigate to="/reglages" replace />} />
           <Route path="/outils" element={<Navigate to="/today" replace />} />
           <Route path="/alertes" element={<Navigate to="/today" replace />} />
+
+          {/* V77 — Marius chat plein écran (Sprint 7 livrable, route câblée P1-1) */}
+          <Route path="/marius" element={<MariusChatFullscreen />} />
 
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/today" replace />} />

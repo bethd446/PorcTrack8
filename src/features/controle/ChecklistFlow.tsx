@@ -30,10 +30,9 @@ import {
   updateProduitAliment,
   resolveProduitAlimentByCode,
 } from '../../services/supabaseWrites';
-import AgritechLayout from '../../components/AgritechLayout';
-import AgritechHeader from '../../components/AgritechHeader';
 import { Chip } from '../../components/agritech';
 import { Button } from '@/design-system';
+import { PageHeader } from '../../v70/components/ds/PageHeader';
 import { kvGet } from '../../services/kvStore';
 
 // Consumed shape: the service-provided ChecklistItem + legacy UPPERCASE aliases
@@ -339,15 +338,22 @@ const ChecklistFlow: React.FC = () => {
     return (
       <IonPage>
         <IonContent fullscreen className="ion-no-padding">
-          <AgritechLayout withNav={false}>
-            <AgritechHeader title="Chargement" subtitle="Préparation du parcours" />
+          <div
+            className="phone-content"
+            style={{ padding: 24, maxWidth: 600, margin: '0 auto', minHeight: '100%' }}
+          >
+            <PageHeader
+              eyebrow="Audit"
+              title="Chargement"
+              subtitle="Préparation du parcours"
+            />
             <div className="flex flex-col items-center justify-center py-20 px-4">
               <IonSpinner name="crescent" style={{ color: 'var(--color-accent)' }} />
               <p className="mt-4 text-[11px] uppercase tracking-wide text-text-2">
                 Initialisation…
               </p>
             </div>
-          </AgritechLayout>
+          </div>
         </IonContent>
       </IonPage>
     );
@@ -363,13 +369,17 @@ const ChecklistFlow: React.FC = () => {
     return (
       <IonPage>
         <IonContent fullscreen className="ion-no-padding">
-          <AgritechLayout withNav={false}>
-            <AgritechHeader
+          <div
+            className="phone-content"
+            style={{ padding: 24, maxWidth: 600, margin: '0 auto', minHeight: '100%' }}
+          >
+            <PageHeader
+              eyebrow="Audit"
               title="Tournée du jour"
               subtitle="Choisis le type d'audit"
-              backTo="/"
+              onBack={() => navigate('/')}
             />
-            <div className="px-4 pt-6 pb-10">
+            <div className="pt-2 pb-10">
               <h2 className="agritech-heading text-[18px] uppercase leading-tight mb-4">
                 Quelle tournée fais-tu aujourd'hui ?
               </h2>
@@ -412,7 +422,7 @@ const ChecklistFlow: React.FC = () => {
                 </Button>
               </div>
             </div>
-          </AgritechLayout>
+          </div>
         </IonContent>
       </IonPage>
     );
@@ -424,12 +434,16 @@ const ChecklistFlow: React.FC = () => {
     return (
       <IonPage>
         <IonContent fullscreen className="ion-no-padding">
-          <AgritechLayout withNav={false}>
-            <AgritechHeader
+          <div
+            className="phone-content"
+            style={{ padding: 24, maxWidth: 600, margin: '0 auto', minHeight: '100%' }}
+          >
+            <PageHeader
+              eyebrow="Audit"
               title={isFriday ? 'Bilan hebdo' : 'Mission terminée'}
               subtitle="Données synchronisées"
             />
-            <div className="px-4 pt-8 pb-8 flex flex-col items-center text-center">
+            <div className="pt-2 pb-8 flex flex-col items-center text-center">
               <div
                 className="inline-flex h-20 w-20 items-center justify-center rounded-md bg-bg-1 border border-accent/40 text-accent mb-6"
                 aria-hidden="true"
@@ -478,7 +492,7 @@ const ChecklistFlow: React.FC = () => {
                 </Button>
               </div>
             </div>
-          </AgritechLayout>
+          </div>
         </IonContent>
       </IonPage>
     );
@@ -489,9 +503,17 @@ const ChecklistFlow: React.FC = () => {
     return (
       <IonPage>
         <IonContent fullscreen className="ion-no-padding">
-          <AgritechLayout withNav={false}>
-            <AgritechHeader title="Erreur" subtitle="Questions introuvables" backTo="/" />
-            <div className="px-4 pt-10 flex flex-col items-center text-center">
+          <div
+            className="phone-content"
+            style={{ padding: 24, maxWidth: 600, margin: '0 auto', minHeight: '100%' }}
+          >
+            <PageHeader
+              eyebrow="Audit"
+              title="Erreur"
+              subtitle="Questions introuvables"
+              onBack={() => navigate('/')}
+            />
+            <div className="pt-4 flex flex-col items-center text-center">
               <div
                 className="inline-flex h-16 w-16 items-center justify-center rounded-md bg-bg-1 border border-red/40 text-red mb-5"
                 aria-hidden="true"
@@ -508,7 +530,7 @@ const ChecklistFlow: React.FC = () => {
                 Retour
               </Button>
             </div>
-          </AgritechLayout>
+          </div>
         </IonContent>
       </IonPage>
     );
@@ -526,21 +548,29 @@ const ChecklistFlow: React.FC = () => {
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
-        <AgritechLayout withNav={false}>
-          <AgritechHeader
-            title={(name || 'Contrôle').toString()}
-            subtitle={`Étape ${currentStep + 1} / ${questions.length}`}
-            backTo="/"
-            action={
+        <div
+          className="phone-content"
+          style={{ padding: 24, maxWidth: 600, margin: '0 auto', minHeight: '100%' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <PageHeader
+                eyebrow="Audit"
+                title={(name || 'Contrôle').toString()}
+                subtitle={`Étape ${currentStep + 1} / ${questions.length}`}
+                onBack={() => navigate('/')}
+              />
+            </div>
+            <div style={{ flexShrink: 0, paddingTop: 28 }}>
               <Chip
                 label={`${currentStep + 1}/${questions.length}`}
                 tone="accent"
                 size="xs"
               />
-            }
-          />
+            </div>
+          </div>
 
-          <div className="px-4 pt-4 pb-10">
+          <div className="pt-2 pb-10">
             {/* Progress bar */}
             <div
               className="relative h-1.5 w-full rounded-full bg-bg-2 overflow-hidden"
@@ -743,7 +773,7 @@ const ChecklistFlow: React.FC = () => {
               </Button>
             </div>
           </div>
-        </AgritechLayout>
+        </div>
 
         <IonToast
           isOpen={showToast}

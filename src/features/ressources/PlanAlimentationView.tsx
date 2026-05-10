@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import { AlertTriangle } from 'lucide-react';
-import AgritechLayout from '../../components/AgritechLayout';
 import {
   Card,
   ListItem,
@@ -67,6 +67,7 @@ type CoverageFilter = 'all' | 'critique' | 'haute' | 'ok';
  * `sortCoveragesByUrgency`) intacte. Lecture seule.
  */
 const PlanAlimentationView: React.FC = () => {
+  const navigate = useNavigate();
   const { truies, verrats, bandes, stockAliment } = useFarm();
   const [filter, setFilter] = useState<CoverageFilter>('all');
   const [query, setQuery] = useState('');
@@ -107,13 +108,13 @@ const PlanAlimentationView: React.FC = () => {
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
-        <AgritechLayout>
-          <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <PageHeader
-              eyebrow="ALIMENTS · PLAN"
-              title="Plan alimentaire"
-              subtitle="Programme nutritionnel"
-            />
+        <div className="phone-content px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto', minHeight: '100%' }}>
+          <PageHeader
+            eyebrow="ALIMENTS · PLAN"
+            title="Plan alimentaire"
+            subtitle="Programme nutritionnel"
+            onBack={() => navigate(-1)}
+          />
 
             {/* ── Filtres + recherche dans une Card DS ──────────────── */}
             {sortedCoverages.length > 0 && (
@@ -216,8 +217,7 @@ const PlanAlimentationView: React.FC = () => {
                 {`Conso ${formatKg(plan.consommationJournaliereTotale)} kg/j · Stock ${formatKg(plan.stockTotal)} kg · Couv. moy. ${formatJours(plan.joursCouvertureMoyenne)}j`}
               </div>
             )}
-          </div>
-        </AgritechLayout>
+        </div>
       </IonContent>
     </IonPage>
   );

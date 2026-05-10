@@ -56,11 +56,8 @@ vi.mock('@ionic/react', () => ({
   IonDatetime: () => <input type="date" />,
 }));
 
-vi.mock('../../components/AgritechLayout', () => ({
-  default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-vi.mock('../../components/AgritechHeader', () => ({
-  default: ({ title, subtitle }: { title: string; subtitle?: string }) => (
+vi.mock('../../v70/components/ds/PageHeader', () => ({
+  PageHeader: ({ title, subtitle }: { title: string; subtitle?: string }) => (
     <header>
       <h1>{title}</h1>
       {subtitle && <p>{subtitle}</p>}

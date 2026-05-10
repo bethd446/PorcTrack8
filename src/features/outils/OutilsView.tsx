@@ -25,7 +25,6 @@ import {
   Truck,
 } from 'lucide-react';
 
-import AgritechLayout from '../../components/AgritechLayout';
 import {
   Card,
   Section,
@@ -48,23 +47,22 @@ const OutilsView: React.FC = () => {
   return (
     <IonPage>
       <IonContent fullscreen>
-        <AgritechLayout withNav={true}>
-          <div
-            style={{
-              background: 'var(--pt-bg)',
-              minHeight: '100%',
-              padding: '24px 16px 96px',
-              maxWidth: 720,
-              margin: '0 auto',
-            }}
-          >
-            {/* V41 Phase D — Header canonique via PageHeader */}
-            <PageHeader eyebrow="Outils" title="Outils terrain" subtitle="Tes raccourcis quotidiens" />
+        <div
+          className="phone-content"
+          style={{
+            background: 'var(--pt-bg)',
+            minHeight: '100%',
+            padding: '24px 16px 96px',
+            maxWidth: 720,
+            margin: '0 auto',
+          }}
+        >
+          <PageHeader eyebrow="Outils" title="Outils terrain" subtitle="Tes raccourcis quotidiens" />
 
-            <section
-              aria-label="Outils terrain"
-              style={{ display: 'flex', flexDirection: 'column', gap: 24 }}
-            >
+          <section
+            aria-label="Outils terrain"
+            style={{ display: 'flex', flexDirection: 'column', gap: 24 }}
+          >
               <Section label="Au quotidien" />
               <Card style={{ padding: 8 }}>
                 <ActionRow
@@ -139,7 +137,6 @@ const OutilsView: React.FC = () => {
               </Card>
             </section>
           </div>
-        </AgritechLayout>
       </IonContent>
     </IonPage>
   );

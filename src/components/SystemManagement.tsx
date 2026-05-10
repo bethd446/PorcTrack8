@@ -4,7 +4,6 @@ import {
   IonContent, IonPage, IonAlert, IonModal, IonHeader, IonToolbar, IonTitle, IonButtons,
 } from '@ionic/react';
 import { LogOut, Trash2, Mail, Lock } from 'lucide-react';
-import AgritechLayout from './AgritechLayout';
 import {
   Button as DsButton,
   Section,
@@ -498,10 +497,13 @@ export const SettingsPage: React.FC = () => {
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
-        <AgritechLayout withNav={true}>
-          <div className="px-4 pt-5 pb-32 max-w-md mx-auto">
-            {/* V70 — Header monumental BigShoulders UPPERCASE */}
-            <PageHeader eyebrow="CONFIGURATION" title="Ma ferme" subtitle="Ton profil, ta ferme, l'équipe" />
+        <div className="phone-content px-4 pt-5 pb-32 max-w-md mx-auto" style={{ minHeight: '100%' }}>
+          <PageHeader
+            eyebrow="CONFIGURATION"
+            title="Ma ferme"
+            subtitle="Ton profil, ta ferme, l'équipe"
+            onBack={() => navigate(-1)}
+          />
 
             {/* V44 — VUE D'ENSEMBLE : 4 stats clés (archétype 2 Hub) */}
             <section aria-label="Vue d'ensemble" style={{ marginBottom: 28 }}>
@@ -681,8 +683,7 @@ export const SettingsPage: React.FC = () => {
                 {toast}
               </div>
             ) : null}
-          </div>
-        </AgritechLayout>
+        </div>
 
         <ProfileEditModal
           isOpen={showProfileEdit}

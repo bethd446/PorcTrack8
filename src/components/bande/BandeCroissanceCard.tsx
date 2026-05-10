@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { Scale, HelpCircle } from 'lucide-react';
-import { default as KpiCardV6 } from '../design/KpiCard';
 import { Chip, SectionDivider, DataRow } from '../agritech';
 import type { ChipTone } from '../agritech';
 import { Button } from '@/design-system';
@@ -167,35 +166,36 @@ const BandeCroissanceCard: React.FC<BandeCroissanceCardProps> = ({ bande, notes 
         </div>
       ) : (
         <>
-          {/* ── Grid KPIs ─────────────────────────────────────────────── */}
-          <div className="grid grid-cols-3 gap-2">
-            <KpiCardV6
-              label="Dernier poids"
-              value={dernierPoids !== undefined ? dernierPoids.toFixed(1) : '—'}
-              unit="kg"
-              trend={
-                joursDepuisDerniere !== undefined && joursDepuisDerniere >= 0
-                  ? joursDepuisDerniere === 0
-                    ? 'aujourd\'hui'
-                    : `il y a ${joursDepuisDerniere}j`
-                  : undefined
-              }
-            />
-            <KpiCardV6
-              label="GMQ moyen"
-              value={gmqMoyenGlobal > 0 ? gmqMoyenGlobal : '—'}
-              unit={gmqMoyenGlobal > 0 ? 'g/j' : undefined}
-              accentColor={alerte === 'SOUS_CIBLE' ? 'var(--amber-pork)' : undefined}
-            />
-            <KpiCardV6
-              label="Cible phase"
-              value={
-                gmqCibleActuel.max > 0
-                  ? `${gmqCibleActuel.min}-${gmqCibleActuel.max}`
-                  : '—'
-              }
-              unit={gmqCibleActuel.max > 0 ? 'g/j' : undefined}
-            />
+          {/* ── KPIs strip (V70) ──────────────────────────────────────── */}
+          <div className="kpis-strip">
+            <div className="kpi">
+              <div className="kpi__label">Dernier poids</div>
+              <div className="kpi__val num">
+                {dernierPoids !== undefined ? `${dernierPoids.toFixed(1)} kg` : '—'}
+              </div>
+              {joursDepuisDerniere !== undefined && joursDepuisDerniere >= 0 ? (
+                <div className="kpi__trend">
+                  {joursDepuisDerniere === 0 ? "aujourd'hui" : `il y a ${joursDepuisDerniere}j`}
+                </div>
+              ) : null}
+            </div>
+            <div className="kpi">
+              <div className="kpi__label">GMQ moyen</div>
+              <div
+                className="kpi__val num"
+                style={alerte === 'SOUS_CIBLE' ? { color: 'var(--amber-pork)' } : undefined}
+              >
+                {gmqMoyenGlobal > 0 ? `${gmqMoyenGlobal} g/j` : '—'}
+              </div>
+            </div>
+            <div className="kpi">
+              <div className="kpi__label">Cible phase</div>
+              <div className="kpi__val num">
+                {gmqCibleActuel.max > 0
+                  ? `${gmqCibleActuel.min}-${gmqCibleActuel.max} g/j`
+                  : '—'}
+              </div>
+            </div>
           </div>
 
           {/* ── Chip alerte ──────────────────────────────────────────── */}

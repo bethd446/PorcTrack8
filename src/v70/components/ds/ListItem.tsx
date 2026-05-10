@@ -10,6 +10,14 @@
  * - .list-action (l. 524-530) : flex column, gap 4px
  */
 import React from 'react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
+
+export interface ListItemPointerHandlers {
+  onPointerDown?: (e: ReactPointerEvent) => void;
+  onPointerUp?: (e: ReactPointerEvent) => void;
+  onPointerLeave?: (e: ReactPointerEvent) => void;
+  onPointerCancel?: (e: ReactPointerEvent) => void;
+}
 
 export interface ListItemProps {
   avatar?: React.ReactNode;
@@ -17,6 +25,7 @@ export interface ListItemProps {
   subtitle?: React.ReactNode;
   trailing?: React.ReactNode;
   onClick?: () => void;
+  pointerHandlers?: ListItemPointerHandlers;
 }
 
 export const ListItem: React.FC<ListItemProps> = ({
@@ -25,6 +34,7 @@ export const ListItem: React.FC<ListItemProps> = ({
   subtitle,
   trailing,
   onClick,
+  pointerHandlers,
 }) => {
   return (
     <div
@@ -42,6 +52,7 @@ export const ListItem: React.FC<ListItemProps> = ({
             }
           : undefined
       }
+      {...(pointerHandlers ?? {})}
     >
       {avatar}
       <div className="list-info">

@@ -10,9 +10,9 @@
  * Phase 3B : page Hub catégoriel — TabsMini 5 catégories, search bar,
  * filter pills, liste truies stubs. FAB ajout (Phase F branchera contexte).
  */
-import React, { useState, useEffect, lazy, Suspense, useMemo } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Boxes, Home, Sprout } from 'lucide-react';
+import { Boxes, Home, Sprout, Eye, Edit3, Scale, LogOut } from 'lucide-react';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
@@ -22,6 +22,13 @@ import { ListItem } from '../components/ds/ListItem';
 import { PorceletGroup } from '../components/PorceletGroup';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { PigSilhouette } from '../components/v70/icons/PigSilhouette';
+import {
+  ToastProvider as V70ToastProvider,
+  useToast as useV70Toast,
+} from '../components/v70/Toast';
+import { Dialog as V70Dialog } from '../components/v70/Dialog';
+import { LongPressSheet as V70LongPressSheet } from '../components/v70/LongPressSheet';
+import { useLongPress } from '../hooks/useLongPress';
 import { useFarm, useMeta } from '../../context/FarmContext';
 import { formatBandeName, isReformed, formatDateFr } from '../lib';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
@@ -98,8 +105,15 @@ const TAB_DATA: Record<AnimalTab, { stubs: AnimalStub[]; species: 'truie' | 'ver
   loges: { stubs: STUBS_LOGES, species: 'bande', sectionLabel: 'Loges', routePrefix: '/troupeau/loges/', icon: <Home size={18} /> },
 };
 
-export const AnimalsV70: React.FC = () => {
+export const AnimalsV70: React.FC = () => (
+  <V70ToastProvider>
+    <AnimalsV70Inner />
+  </V70ToastProvider>
+);
+
+const AnimalsV70Inner: React.FC = () => {
   const navigate = useNavigate();
+  const v70Toast = useV70Toast();
   const { bandes, truies, verrats } = useFarm();
   const { loading: farmLoading } = useMeta();
   // Pour bandes/loges, l'empty state est V73 (image + CTA), donc on guard.
@@ -150,6 +164,12 @@ export const AnimalsV70: React.FC = () => {
   }, [bandes.length]);
 
   const [addOpen, setAddOpen] = useState(false);
+
+  // V77 P1-2 — pilote LongPressSheet + Dialog + Toast (Sprint 8 patterns)
+  // Long-press 500ms sur une truie ouvre un sheet d'actions rapides.
+  // Le clic standard reste navigate vers la fiche détail (pas de breaking change).
+  const [lpTruie, setLpTruie] = useState<AnimalStub | null>(null);
+  const [confirmReformTruie, setConfirmReformTruie] = useState<AnimalStub | null>(null);
 
   // V71.1 — counts live (étaient hardcodés 50/28/11/6/92/24)
   const counts = useMemo(() => {
@@ -598,18 +618,12 @@ export const AnimalsV70: React.FC = () => {
           })()
         ) : (
           filteredList.map((it) => (
-            <ListItem
+            <TruieListRow
               key={it.id}
-              avatar={<EntityAvatar species={TAB_DATA[tab].species} size="md" shortCode={it.id.slice(0, 8)} />}
-              title={it.displayName ?? (it.id.length > 16 ? `Bande ${it.id.slice(0, 8)}…` : it.id)}
-              subtitle={it.status}
-              trailing={
-                <>
-                  <Pill variant={it.pillVariant}>{it.statusLabel}</Pill>
-                  <span className="list-arrow">›</span>
-                </>
-              }
-              onClick={() => navigate(`${TAB_DATA[tab].routePrefix}${it.id}`)}
+              it={it}
+              tab={tab}
+              onNavigate={() => navigate(`${TAB_DATA[tab].routePrefix}${it.id}`)}
+              onLongPress={tab === 'truies' ? () => setLpTruie(it) : null}
             />
           ))
         )}
@@ -641,6 +655,122 @@ export const AnimalsV70: React.FC = () => {
         {tab === 'porcelets' && <QuickAddPorceletForm isOpen={addOpen} onClose={() => setAddOpen(false)} />}
         {tab === 'loges' && <QuickAddLogeForm isOpen={addOpen} onClose={() => setAddOpen(false)} />}
       </Suspense>
+
+      {/* V77 P1-2 — Long-press sheet (pilote Sprint 8) */}
+      <V70LongPressSheet
+        isOpen={lpTruie !== null}
+        onClose={() => setLpTruie(null)}
+        eyebrow="Truie"
+        title={lpTruie?.id ?? ''}
+        actions={[
+          {
+            icon: Eye,
+            label: 'Voir la fiche',
+            onClick: () => {
+              if (!lpTruie) return;
+              const target = lpTruie;
+              setLpTruie(null);
+              navigate(`/troupeau/truies/${target.id}`);
+            },
+          },
+          {
+            icon: Scale,
+            label: 'Peser',
+            onClick: () => {
+              setLpTruie(null);
+              v70Toast.showSuccess('Pesée à venir (chantier V77 P2)');
+            },
+          },
+          {
+            icon: Edit3,
+            label: 'Modifier',
+            onClick: () => {
+              if (!lpTruie) return;
+              const target = lpTruie;
+              setLpTruie(null);
+              navigate(`/troupeau/truies/${target.id}?edit=1`);
+            },
+          },
+          {
+            icon: LogOut,
+            label: 'Marquer sortie',
+            variant: 'danger',
+            onClick: () => {
+              setConfirmReformTruie(lpTruie);
+              setLpTruie(null);
+            },
+          },
+        ]}
+      />
+
+      {/* V77 P1-2 — Dialog confirmation sortie (pilote Sprint 8) */}
+      <V70Dialog
+        isOpen={confirmReformTruie !== null}
+        onDismiss={() => setConfirmReformTruie(null)}
+        title="Marquer la truie à sortir ?"
+        body={
+          confirmReformTruie
+            ? `${confirmReformTruie.id} sera marquée pour sortie. Action réversible depuis la fiche.`
+            : null
+        }
+        cancelLabel="Annuler"
+        actionLabel="Confirmer la sortie"
+        actionVariant="danger"
+        onAction={() => {
+          const target = confirmReformTruie;
+          setConfirmReformTruie(null);
+          if (target) {
+            v70Toast.showWarning(`${target.id} marquée à sortir (preview démo)`);
+          }
+        }}
+      />
     </div>
+  );
+};
+
+// ───────────────────────────────────────────────────────────────────────────
+// Sous-composant : ligne ListItem avec long-press optionnel.
+// Extrait pour pouvoir appeler useLongPress (hooks dans la map = anti-pattern).
+// ───────────────────────────────────────────────────────────────────────────
+interface TruieListRowProps {
+  it: AnimalStub;
+  tab: AnimalTab;
+  onNavigate: () => void;
+  onLongPress: (() => void) | null;
+}
+
+const TruieListRow: React.FC<TruieListRowProps> = ({ it, tab, onNavigate, onLongPress }) => {
+  // Trigger flag pour ne PAS naviguer juste après un long-press réussi
+  // (sinon onClick re-fire à pointerUp et écrase le sheet).
+  const triggeredRef = React.useRef(false);
+  const lpCallback = useCallback(() => {
+    triggeredRef.current = true;
+    onLongPress?.();
+  }, [onLongPress]);
+  const longPressHandlers = useLongPress(lpCallback, 500);
+  const handlers = onLongPress ? longPressHandlers : undefined;
+
+  const handleClick = () => {
+    if (triggeredRef.current) {
+      triggeredRef.current = false;
+      return;
+    }
+    onNavigate();
+  };
+
+  return (
+    <ListItem
+      avatar={<EntityAvatar species={TAB_DATA[tab].species} size="md" shortCode={it.id.slice(0, 8)} />}
+      title={it.displayName ?? (it.id.length > 16 ? `Bande ${it.id.slice(0, 8)}…` : it.id)}
+      subtitle={it.status}
+      trailing={
+        <>
+          <Pill variant={it.pillVariant}>{it.statusLabel}</Pill>
+          <span className="list-arrow">›</span>
+        </>
+      }
+      onClick={handleClick}
+      pointerHandlers={handlers}
+    />
   );
 };

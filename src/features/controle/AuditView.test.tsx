@@ -245,8 +245,9 @@ describe('AuditView V41 — PageHeader sobre', () => {
 
     // V41 : le subtitle doit être "Suivi qualité de ta ferme" (pas de chiffres).
     // Les compteurs sont rendus dans les Tabs ci-dessous (chips count) + AlertGroups.
+    // Migration V70 : PageHeader v70 utilise la classe .page-subtitle.
     await waitFor(() => {
-      const subtitle = document.querySelector('.pt-page-header__subtitle');
+      const subtitle = document.querySelector('.page-subtitle, .pt-page-header__subtitle');
       expect(subtitle?.textContent).toBe('Suivi qualité de ta ferme');
       expect(subtitle?.textContent).not.toMatch(/\d+\s*(critique|stock|santé)/i);
     });

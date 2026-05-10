@@ -1,9 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import { HelpCircle, Phone } from 'lucide-react';
-import AgritechLayout from '../../components/AgritechLayout';
-import TopBarSync from '../../components/design/TopBarSync';
-import { Button, PageHeader } from '@/design-system';
+import { Button } from '@/design-system';
+import { PageHeader } from '../../v70/components/ds/PageHeader';
 import { buildWhatsappUrl, getSupportWhatsapp } from '../../services/supportContact';
 
 const FONT_DISPLAY = 'var(--font-heading)';
@@ -71,6 +71,7 @@ const cardStyle: React.CSSProperties = {
 };
 
 const AideView: React.FC = () => {
+  const navigate = useNavigate();
   const supportNumber = getSupportWhatsapp();
   const supportUrl = buildWhatsappUrl(SUPPORT_MESSAGE);
 
@@ -82,29 +83,25 @@ const AideView: React.FC = () => {
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
-        <AgritechLayout withNav={true}>
-          <TopBarSync
-            crumbs={['Plus', 'Aide']}
-            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
+        <div
+          className="phone-content px-4 pt-5 pb-32"
+          style={{
+            fontFamily: FONT_BODY,
+            color: 'var(--ink)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 24,
+            maxWidth: 1100,
+            margin: '0 auto',
+            minHeight: '100%',
+          }}
+        >
+          <PageHeader
+            eyebrow="Outils · Aide"
+            title="Aide"
+            subtitle="Documentation et tutoriels"
+            onBack={() => navigate(-1)}
           />
-
-          <div
-            className="px-4 pt-5 pb-32"
-            style={{
-              fontFamily: FONT_BODY,
-              color: 'var(--ink)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 24,
-              maxWidth: 1100,
-              margin: '0 auto',
-            }}
-          >
-            <PageHeader
-              eyebrow="Outils · Aide"
-              title="Aide"
-              subtitle="Documentation et tutoriels"
-            />
 
             <section aria-label="Introduction">
               <div
@@ -255,7 +252,6 @@ const AideView: React.FC = () => {
               )}
             </section>
           </div>
-        </AgritechLayout>
       </IonContent>
     </IonPage>
   );

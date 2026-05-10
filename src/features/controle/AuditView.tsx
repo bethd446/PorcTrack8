@@ -11,12 +11,11 @@ import {
   getJournalSante,
   getStockVeto,
 } from '../../services/supabaseService';
-import AgritechLayout from '../../components/AgritechLayout';
-import TopBarSync from '../../components/design/TopBarSync';
 import {
-  AlertGroup, AlertRow, Section, Tabs, PageHeader,
+  AlertGroup, AlertRow, Section, Tabs,
   Card, StatsGrid, Stat, safeDisplay,
 } from '@/design-system';
+import { PageHeader } from '../../v70/components/ds/PageHeader';
 
 /**
  * AuditView — V31-FIX-PACK-01
@@ -261,25 +260,23 @@ const AuditView: React.FC = () => {
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
-        <AgritechLayout withNav={true}>
-          <TopBarSync
-            crumbs={['Outils', 'Audit du jour']}
-            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
+        <IonRefresher
+          slot="fixed"
+          onIonRefresh={e => runAudit().then(() => e.detail.complete())}
+        >
+          <IonRefresherContent />
+        </IonRefresher>
+
+        <div
+          className="phone-content px-4 pt-5 pb-32 flex flex-col gap-6"
+          style={{ maxWidth: 900, margin: '0 auto', minHeight: '100%' }}
+        >
+          <PageHeader
+            eyebrow="Audit"
+            title="Alertes & contrôles"
+            subtitle="Suivi qualité de ta ferme"
+            onBack={() => navigate(-1)}
           />
-
-          <IonRefresher
-            slot="fixed"
-            onIonRefresh={e => runAudit().then(() => e.detail.complete())}
-          >
-            <IonRefresherContent />
-          </IonRefresher>
-
-          <div
-            className="px-4 pt-5 pb-32 flex flex-col gap-6"
-            style={{ maxWidth: 900, margin: '0 auto' }}
-          >
-            {/* V41 Phase D — Header sobre via PageHeader (subtitle non-numérique) */}
-            <PageHeader eyebrow="Audit" title="Alertes & contrôles" subtitle="Suivi qualité de ta ferme" />
 
             {/* V44 — VUE D'ENSEMBLE : 4 stats clés (archétype 2 Hub) */}
             {!loading ? (
@@ -584,8 +581,7 @@ const AuditView: React.FC = () => {
                 ) : null}
               </>
             )}
-          </div>
-        </AgritechLayout>
+        </div>
       </IonContent>
     </IonPage>
   );

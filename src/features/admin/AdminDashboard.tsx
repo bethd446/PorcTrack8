@@ -7,10 +7,8 @@ import { kvGet, kvSet } from '../../services/kvStore';
 import { useAuth } from '../../context/AuthContext';
 import { useMeta } from '../../context/FarmContext';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import AgritechLayout from '../../components/AgritechLayout';
-import KpiCardV6 from '../../components/design/KpiCard';
 import { Button } from '@/design-system';
-import Eyebrow from '../../components/design/Eyebrow';
+import { PageHeader } from '../../v70/components/ds/PageHeader';
 import PendingValidationsView from './PendingValidationsView';
 
 interface AdminLog {
@@ -901,50 +899,39 @@ export default function AdminDashboard() {
   };
 
   return (
-    <AgritechLayout>
-      <main
+    <div
+      className="phone-content"
+      style={{
+        maxWidth: 1100,
+        margin: '0 auto',
+        padding: '32px 20px 96px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 24,
+        minHeight: '100%',
+      }}
+    >
+      <div
         style={{
-          maxWidth: 1100,
-          margin: '0 auto',
-          padding: '32px 20px 96px',
           display: 'flex',
-          flexDirection: 'column',
-          gap: 24,
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: 16,
         }}
       >
-        <header
-          style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            gap: 16,
-            flexWrap: 'wrap',
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <Eyebrow>Console d'administration</Eyebrow>
-            <h1
-              style={{
-                fontFamily: 'var(--font-heading)',
-                fontSize: 'clamp(32px, 5vw, 44px)',
-                lineHeight: 1.05,
-                letterSpacing: '-0.01em',
-                color: 'var(--ink)',
-                fontWeight: 700,
-                margin: 0,
-              }}
-            >
-              Administration
-            </h1>
-            <p style={{ fontSize: 14, color: 'var(--ink-soft)', margin: 0 }}>
-              Supervision, utilisateurs et journal d'événements.
-            </p>
-          </div>
-          <Button variant="ghost" size="sm" onClick={handleLogout}>
-            <LogOut size={14} strokeWidth={1.75} />
-            Déconnexion
-          </Button>
-        </header>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <PageHeader
+            eyebrow="Console d'administration"
+            title="Administration"
+            subtitle="Supervision, utilisateurs et journal d'événements."
+            onBack={() => navigate(-1)}
+          />
+        </div>
+        <Button variant="ghost" size="sm" onClick={handleLogout}>
+          <LogOut size={14} strokeWidth={1.75} />
+          Déconnexion
+        </Button>
+      </div>
 
         {globalError && (
           <div
@@ -982,28 +969,19 @@ export default function AdminDashboard() {
           <OnboardingHero onInvite={() => setInviteOpen(true)} />
         ) : (
           <>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                gap: 16,
-              }}
-            >
-              <KpiCardV6
-                label="Logs totaux"
-                value={logs.length}
-                accentColor="var(--color-accent-500)"
-              />
-              <KpiCardV6
-                label="Logs aujourd'hui"
-                value={todayCount}
-                accentColor="var(--amber-pork)"
-              />
-              <KpiCardV6
-                label="Utilisateurs"
-                value={profiles.length}
-                accentColor="var(--color-accent-500)"
-              />
+            <div className="kpis-strip">
+              <div className="kpi">
+                <div className="kpi__label">Logs totaux</div>
+                <div className="kpi__val num">{logs.length}</div>
+              </div>
+              <div className="kpi">
+                <div className="kpi__label">Logs aujourd'hui</div>
+                <div className="kpi__val num">{todayCount}</div>
+              </div>
+              <div className="kpi">
+                <div className="kpi__label">Utilisateurs</div>
+                <div className="kpi__val num">{profiles.length}</div>
+              </div>
             </div>
 
             <PendingValidationsView />
@@ -1036,7 +1014,6 @@ export default function AdminDashboard() {
             Retour au dashboard élevage
           </Button>
         </div>
-      </main>
 
       <InviteOperatorModal
         isOpen={inviteOpen}
@@ -1044,6 +1021,6 @@ export default function AdminDashboard() {
         currentUserId={currentUserId}
         onInvited={handleInviteSuccess}
       />
-    </AgritechLayout>
+    </div>
   );
 }

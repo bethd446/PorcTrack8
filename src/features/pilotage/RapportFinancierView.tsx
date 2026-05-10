@@ -13,13 +13,13 @@
  */
 
 import React, { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import { Download, TrendingUp, Trophy, BarChart3 } from 'lucide-react';
 
-import AgritechLayout from '../../components/AgritechLayout';
-import TopBarSync from '../../components/design/TopBarSync';
 import { KpiCard, SectionDivider, Chip } from '../../components/agritech';
-import { Button, PageHeader } from '@/design-system';
+import { Button } from '@/design-system';
+import { PageHeader } from '../../v70/components/ds/PageHeader';
 import { useFarm } from '../../context/FarmContext';
 import {
   formatMontant,
@@ -65,6 +65,7 @@ function extractBandeId(entry: FinanceEntry): string {
 // ─── Composant ──────────────────────────────────────────────────────────────
 
 const RapportFinancierView: React.FC = () => {
+  const navigate = useNavigate();
   const { finances, currency } = useFarm();
   const entries = finances as FinanceEntry[];
 
@@ -130,21 +131,16 @@ const RapportFinancierView: React.FC = () => {
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
-        <AgritechLayout>
-          <TopBarSync
-            crumbs={['Pilotage', 'Rapports']}
-            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
+        <div
+          className="phone-content px-4 pt-5 pb-32 flex flex-col gap-5"
+          style={{ maxWidth: 1100, margin: '0 auto', minHeight: '100%' }}
+        >
+          <PageHeader
+            eyebrow="Pilotage · Rapport"
+            title="Rapport financier"
+            subtitle="Synthèse économique"
+            onBack={() => navigate(-1)}
           />
-
-          <div
-            className="px-4 pt-5 pb-32 flex flex-col gap-5"
-            style={{ maxWidth: 1100, margin: '0 auto' }}
-          >
-            <PageHeader
-              eyebrow="Pilotage · Rapport"
-              title="Rapport financier"
-              subtitle="Synthèse économique"
-            />
 
             {/* ── KPI synthèse ────────────────────────────────────────── */}
             <div className="grid grid-cols-3 gap-2.5">
@@ -228,8 +224,7 @@ const RapportFinancierView: React.FC = () => {
                 Export PDF · bientôt
               </span>
             </Button>
-          </div>
-        </AgritechLayout>
+        </div>
       </IonContent>
     </IonPage>
   );

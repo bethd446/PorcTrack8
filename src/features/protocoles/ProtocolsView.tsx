@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { IonPage, IonContent } from '@ionic/react';
 import {
   Apple,
@@ -14,11 +15,9 @@ import {
   Target,
   Info,
 } from 'lucide-react';
-import AgritechLayout from '../../components/AgritechLayout';
 import { Chip } from '../../components/agritech';
 import { Button, Section, Tabs } from '@/design-system';
 import { PageHeader } from '../../v70/components/ds/PageHeader';
-import PhaseBanner from '../cycles/PhaseBanner';
 
 type TabKey = 'cycle' | 'terrain' | 'biosecurite' | 'rations' | 'checklists';
 
@@ -57,6 +56,7 @@ interface ChecklistItem {
 }
 
 const ProtocolsView: React.FC = () => {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<TabKey>('cycle');
 
   const protocols = useMemo<{
@@ -260,20 +260,15 @@ const ProtocolsView: React.FC = () => {
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
-        <AgritechLayout withNav={true}>
-          <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <PageHeader
-              eyebrow="RÉGLAGES · PROTOCOLES"
-              title="Protocoles"
-              subtitle="Procédures et SOP"
-            />
-            <PhaseBanner
-              src="/images/ambiance-veto.webp"
-              alt=""
-              label="PROTOCOLES"
-            />
+        <div className="phone-content px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto', minHeight: '100%' }}>
+          <PageHeader
+            eyebrow="RÉGLAGES · PROTOCOLES"
+            title="Protocoles"
+            subtitle="Procédures et SOP"
+            onBack={() => navigate(-1)}
+          />
 
-            <Tabs
+          <Tabs
               ariaLabel="Catégories de protocoles"
               value={tab}
               onChange={(v) => setTab(v as TabKey)}
@@ -526,8 +521,7 @@ const ProtocolsView: React.FC = () => {
               </div>
             )}
           </div>
-          </div>
-        </AgritechLayout>
+        </div>
       </IonContent>
     </IonPage>
   );

@@ -4,7 +4,7 @@
  * Vue générique de tables Sheets (JOURNAL_SANTE, STOCK_ALIMENTS,
  * STOCK_VETO, SUIVI_TRUIES_REPRODUCTION, VERRATS, NOTES_TERRAIN…).
  *
- *   · AgritechLayout + AgritechHeader (wrapper dark cockpit)
+ *   · PageHeader V70 + phone-content (V70 Agent C)
  *   · Search dense intégrée dans le slot children du header
  *   · Rows en `.card-dense` avec border-left accent, data mono
  *   · Empty state contextuel (icône par tableKey)
@@ -29,11 +29,10 @@ import {
 } from 'lucide-react';
 import { getTableByKey } from '../../services/tableLoader';
 import TableRowEdit from './TableRowEdit';
-import AgritechHeader from '../../components/AgritechHeader';
-import AgritechLayout from '../../components/AgritechLayout';
 import { BottomSheet, Chip } from '../../components/agritech';
 import type { ChipTone } from '../../components/agritech';
 import { Button } from '@/design-system';
+import { PageHeader } from '../../v70/components/ds/PageHeader';
 
 interface TableViewProps {
   tableKey: string;
@@ -295,38 +294,46 @@ const TableView: React.FC<TableViewProps> = ({ tableKey }) => {
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
-        <AgritechLayout withNav={false}>
-          <AgritechHeader title={descriptor.title} subtitle={descriptor.subtitle}>
-            {/* Dark search bar inside header slot */}
-            <div
-              className={[
-                'flex items-center gap-2 px-3 py-2 rounded-md',
-                'bg-bg-1 border border-border',
-                'focus-within:border-accent transition-colors duration-[160ms]',
-              ].join(' ')}
-            >
-              <Search size={16} className="shrink-0 text-text-2" aria-hidden="true" />
-              <input
-                type="search"
-                className="w-full bg-transparent border-none outline-none text-text-0 placeholder:text-text-2 text-[13px]"
-                placeholder="Filtrer les données…"
-                value={searchText}
-                onChange={e => setSearchText(e.target.value)}
-                aria-label={`Rechercher dans ${descriptor.title}`}
-              />
-            </div>
-          </AgritechHeader>
+        <IonRefresher
+          slot="fixed"
+          onIonRefresh={(e) => {
+            loadData().then(() => e.detail.complete());
+          }}
+        >
+          <IonRefresherContent />
+        </IonRefresher>
 
-          <IonRefresher
-            slot="fixed"
-            onIonRefresh={(e) => {
-              loadData().then(() => e.detail.complete());
-            }}
+        <div
+          className="phone-content"
+          style={{ padding: 24, maxWidth: 600, margin: '0 auto', minHeight: '100%' }}
+        >
+          <PageHeader
+            eyebrow="Tables"
+            title={descriptor.title}
+            subtitle={descriptor.subtitle}
+            onBack={() => navigate(-1)}
+          />
+
+          <div
+            className={[
+              'flex items-center gap-2 px-3 py-2 rounded-md',
+              'bg-bg-1 border border-border',
+              'focus-within:border-accent transition-colors duration-[160ms]',
+              'mb-4',
+            ].join(' ')}
           >
-            <IonRefresherContent />
-          </IonRefresher>
+            <Search size={16} className="shrink-0 text-text-2" aria-hidden="true" />
+            <input
+              type="search"
+              className="w-full bg-transparent border-none outline-none text-text-0 placeholder:text-text-2 text-[13px]"
+              placeholder="Filtrer les données…"
+              value={searchText}
+              onChange={e => setSearchText(e.target.value)}
+              aria-label={`Rechercher dans ${descriptor.title}`}
+            />
+          </div>
 
-          <div className="px-4 pt-4 pb-8 flex flex-col gap-3">
+          <div className="flex flex-col gap-3">
             {loading ? (
               <LoadingSkeleton />
             ) : error ? (
@@ -442,7 +449,7 @@ const TableView: React.FC<TableViewProps> = ({ tableKey }) => {
               </>
             )}
           </div>
-        </AgritechLayout>
+        </div>
 
         <BottomSheet
           isOpen={!!selectedRow}
