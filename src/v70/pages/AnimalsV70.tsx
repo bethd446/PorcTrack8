@@ -12,7 +12,7 @@
  */
 import React, { useState, useEffect, lazy, Suspense, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Boxes, Home } from 'lucide-react';
+import { Boxes, Home, Sprout } from 'lucide-react';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
@@ -323,42 +323,6 @@ export const AnimalsV70: React.FC = () => {
 
   return (
     <div className="phone-content" style={{ padding: '24px 24px 168px', maxWidth: 600, margin: '0 auto' }}>
-      <div
-        style={{
-          position: 'relative',
-          height: 160,
-          marginBottom: 16,
-          borderRadius: 16,
-          overflow: 'hidden',
-          background: "url('/images/ambiance-territoire.webp') center/cover no-repeat",
-        }}
-        aria-hidden="true"
-      >
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0) 30%, rgba(6,78,59,0.55) 100%)',
-          }}
-        />
-        <span
-          className="ft-heading"
-          style={{
-            position: 'absolute',
-            left: 16,
-            bottom: 12,
-            color: 'white',
-            fontSize: 14,
-            letterSpacing: 1.2,
-            textTransform: 'uppercase',
-            fontWeight: 700,
-            textShadow: '0 1px 2px rgba(0,0,0,0.4)',
-          }}
-        >
-          Vue d'ensemble
-        </span>
-      </div>
-
       <MariusGreeting pageContext="élevage" />
 
       <PageHeader
@@ -550,103 +514,85 @@ export const AnimalsV70: React.FC = () => {
           ) : (tab === 'bandes' || tab === 'loges') && tabBandesEmptyForLoading ? (
             <ListingSkeleton count={3} />
           ) : (() => {
-            // V74 — empty state V73 contextualisé : bandes / loges / défaut
+            // V76 — empty state DNA Terrain Vivant : icône Lucide grand format
+            // + titre Big Shoulders + sub muted + CTA primary unique. Pattern
+            // .empty (cf v70-global.css), conforme mockup 3c F.2.
             const emptyCopy = tab === 'bandes'
               ? {
-                  alt: 'Couloir bâtiment porcin calme, loge libre prête à accueillir une bande',
+                  Icon: Boxes,
+                  iconColor: 'var(--pt-bande-fg)',
                   title: 'Aucune bande active',
-                  desc: 'Crée ta première bande pour démarrer le suivi.',
+                  desc: 'Crée ta première bande pour suivre les naissances.',
                 }
               : tab === 'loges'
               ? {
-                  alt: 'Loge propre vide, paille fraîche',
+                  Icon: Home,
+                  iconColor: 'var(--pt-subtle)',
                   title: 'Aucune loge configurée',
                   desc: 'Ajoute tes loges pour activer le suivi par bande.',
                 }
+              : tab === 'truies'
+              ? {
+                  Icon: Sprout,
+                  iconColor: 'var(--pt-truie-fg)',
+                  title: 'Aucune truie',
+                  desc: 'Ajoute ta première truie pour démarrer le suivi.',
+                }
+              : tab === 'verrats'
+              ? {
+                  Icon: PigSilhouette,
+                  iconColor: 'var(--pt-verrat-fg)',
+                  title: 'Aucun verrat',
+                  desc: 'Ajoute un verrat pour activer les saillies.',
+                }
               : {
-                  alt: 'Loge propre vide, paille fraîche',
-                  title: 'Aucun animal',
-                  desc: 'Loge prête. Ajoute ton premier animal.',
+                  Icon: PigSilhouette,
+                  iconColor: 'var(--pt-porcelet-fg)',
+                  title: 'Aucun porcelet',
+                  desc: 'Les porcelets apparaîtront automatiquement après mise-bas.',
                 };
+            const { Icon, iconColor, title, desc } = emptyCopy;
             return (
-              <div
-                style={{
-                  position: 'relative',
-                  borderRadius: 20,
-                  overflow: 'hidden',
-                  aspectRatio: '4 / 3',
-                  margin: '12px 0',
-                  background: '#f5efe2',
-                }}
-                data-testid={`empty-state-${tab}`}
-              >
-                <picture>
-                  <source srcSet="/images/v73/empty-states/aucun-animal.webp" type="image/webp" />
-                  <img
-                    src="/images/v73/empty-states/aucun-animal.jpg"
-                    alt={emptyCopy.alt}
-                    loading="lazy"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      display: 'block',
-                    }}
-                  />
-                </picture>
+              <div className="empty" data-testid={`empty-state-${tab}`}>
+                <Icon size={48} strokeWidth={1.25} color={iconColor} aria-hidden />
                 <div
                   style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background:
-                      'linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,0.62) 100%)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-start',
-                    justifyContent: 'flex-end',
-                    padding: '20px 22px',
-                    gap: 12,
+                    fontFamily: 'var(--pt-font-display)',
+                    fontWeight: 900,
+                    textTransform: 'uppercase',
+                    fontSize: 22,
+                    letterSpacing: '-0.005em',
+                    color: 'var(--pt-ink)',
                   }}
                 >
-                  <div style={{ color: '#fff' }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--pt-font-display)',
-                        fontWeight: 700,
-                        fontSize: 18,
-                        lineHeight: 1.1,
-                        marginBottom: 4,
-                      }}
-                    >
-                      {emptyCopy.title}
-                    </div>
-                    <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.88)' }}>
-                      {emptyCopy.desc}
-                    </div>
-                  </div>
+                  {title}
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--pt-muted)', maxWidth: '32ch' }}>
+                  {desc}
+                </div>
+                {tab !== 'porcelets' && (
                   <button
                     type="button"
                     onClick={() => setAddOpen(true)}
                     aria-label={fabLabel[tab]}
                     style={{
-                      alignSelf: 'flex-start',
-                      background: '#fff',
-                      color: 'var(--pt-ink)',
+                      marginTop: 6,
+                      background: 'var(--pt-primary)',
+                      color: 'var(--pt-warm)',
                       border: 'none',
-                      borderRadius: 10,
-                      padding: '8px 14px',
-                      fontFamily: 'var(--pt-font-display)',
-                      fontWeight: 700,
-                      fontSize: 13,
-                      letterSpacing: '0.02em',
+                      borderRadius: 12,
+                      padding: '11px 18px',
+                      fontFamily: 'var(--pt-font-mono)',
+                      fontWeight: 600,
+                      fontSize: 11,
+                      letterSpacing: '0.14em',
                       textTransform: 'uppercase',
                       cursor: 'pointer',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
                     }}
                   >
                     {fabLabel[tab]}
                   </button>
-                </div>
+                )}
               </div>
             );
           })()

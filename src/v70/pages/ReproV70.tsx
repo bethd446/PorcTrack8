@@ -231,59 +231,8 @@ export const ReproV70: React.FC = () => {
     return () => window.removeEventListener('pt-fab-action', handler);
   }, []);
 
-  // V71 cleanup — banner conditionnel selon ?phase= ou tab actif.
-  const phaseParam = searchParams.get('phase');
-  const banner = useMemo(() => {
-    if (tab === 'historique') {
-      return { image: '/images/ambiance-territoire.webp', label: 'Historique' };
-    }
-    if (phaseParam === 'maternite') {
-      return { image: '/images/ambiance-maternite.webp', label: 'Maternité' };
-    }
-    if (phaseParam && ['croissance', 'post-sevrage', 'engraissement', 'finition'].includes(phaseParam)) {
-      return { image: '/images/ambiance-croissance.webp', label: phaseParam.replace('-', ' ') };
-    }
-    return { image: '/images/ambiance-verrat.webp', label: 'Cycle reproduction' };
-  }, [tab, phaseParam]);
-
   return (
     <div className="phone-content" style={{ padding: '24px 24px 168px', maxWidth: 600, margin: '0 auto' }}>
-      <div
-        style={{
-          position: 'relative',
-          height: 160,
-          marginBottom: 16,
-          borderRadius: 16,
-          overflow: 'hidden',
-          background: `url(${banner.image}) center/cover no-repeat`,
-        }}
-        aria-hidden="true"
-      >
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0) 30%, rgba(6,78,59,0.55) 100%)',
-          }}
-        />
-        <span
-          className="ft-heading"
-          style={{
-            position: 'absolute',
-            left: 16,
-            bottom: 12,
-            color: 'white',
-            fontSize: 14,
-            letterSpacing: 1.2,
-            textTransform: 'uppercase',
-            fontWeight: 700,
-            textShadow: '0 1px 2px rgba(0,0,0,0.4)',
-          }}
-        >
-          {banner.label}
-        </span>
-      </div>
-
       <MariusGreeting pageContext="reproduction" />
 
       <PageHeader

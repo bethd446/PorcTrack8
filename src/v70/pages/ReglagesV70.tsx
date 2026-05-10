@@ -37,8 +37,6 @@ import { useOfflineQueue } from '../../hooks/useOfflineQueue';
 import { titleCase } from '../lib';
 import { ARTICLES as ENCYCLOPEDIA_ARTICLES } from './EncyclopediaPage';
 
-const PAGE_BACKGROUND_SRC = '/images/ambiance-ux.webp';
-
 /**
  * V76 — Pattern card-link issu du mockup Claude Design (reglages-pilotage v76).
  * Icône carrée colorée + titre mono + sub muted + chevron. Utilisé pour les
@@ -112,23 +110,8 @@ export const ReglagesV70: React.FC = () => {
   return (
     <div
       className="phone-content"
-      style={{ padding: 24, maxWidth: 600, margin: '0 auto', position: 'relative', minHeight: '100%' }}
+      style={{ padding: 24, maxWidth: 600, margin: '0 auto', minHeight: '100%' }}
     >
-      <div
-        aria-hidden
-        style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: `url(${PAGE_BACKGROUND_SRC})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center top',
-          backgroundRepeat: 'no-repeat',
-          opacity: 0.06,
-          pointerEvents: 'none',
-          zIndex: 0,
-        }}
-      />
-      <div style={{ position: 'relative', zIndex: 1 }}>
       <MariusGreeting pageContext="configuration" />
 
       <PageHeader
@@ -284,7 +267,6 @@ export const ReglagesV70: React.FC = () => {
           <ChevronRight size={18} color="var(--muted)" aria-hidden />
         </button>
       </section>
-      </div>
     </div>
   );
 };

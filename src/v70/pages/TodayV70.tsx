@@ -13,7 +13,7 @@
  */
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, CalendarDays, Info, ClipboardList, Play, ChevronRight } from 'lucide-react';
+import { AlertTriangle, CalendarDays, CheckCircle2, Info, ClipboardList, Play, ChevronRight } from 'lucide-react';
 import { useFarm, useMeta } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../components/ds/PageHeader';
@@ -28,8 +28,6 @@ import { HintCard } from '../../features/encyclopedia/HintCard';
 import { NotificationsPermissionPrompt } from '../../components/NotificationsPermissionPrompt';
 import { isReformed, needsReformConsideration, alreadySortedOut, reformReason } from '../lib';
 import type { Truie } from '../../types/farm';
-
-const PAGE_BACKGROUND_SRC = '/images/hero-2.webp';
 
 interface AlertItem {
   id: string;
@@ -156,23 +154,8 @@ export const TodayV70: React.FC = () => {
   return (
     <div
       className="phone-content"
-      style={{ padding: 24, maxWidth: 600, margin: '0 auto', position: 'relative', minHeight: '100%' }}
+      style={{ padding: 24, maxWidth: 600, margin: '0 auto', minHeight: '100%' }}
     >
-      <div
-        aria-hidden
-        style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: `url(${PAGE_BACKGROUND_SRC})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center top',
-          backgroundRepeat: 'no-repeat',
-          opacity: 0.06,
-          pointerEvents: 'none',
-          zIndex: 0,
-        }}
-      />
-      <div style={{ position: 'relative', zIndex: 1 }}>
       <MariusGreeting />
 
       <PageHeader
@@ -238,54 +221,22 @@ export const TodayV70: React.FC = () => {
             ))}
           </div>
         ) : alerts.length === 0 ? (
-          // V74 — empty state V73 : carnet vide avec image couloir calme.
-          // L'image renforce le sentiment "tout va bien" sans remplir avec
-          // des cards mock. Texte gardé pour conformité tests existants.
-          <div data-testid="today-empty-state">
+          <div data-testid="today-empty-state" className="empty">
+            <CheckCircle2 size={48} strokeWidth={1.25} color="var(--pt-success)" aria-hidden />
             <div
               style={{
-                position: 'relative',
-                borderRadius: 16,
-                overflow: 'hidden',
-                aspectRatio: '16 / 9',
-                margin: '4px 0 10px',
-                background: '#eef2f0',
+                fontFamily: 'var(--pt-font-display)',
+                fontWeight: 900,
+                textTransform: 'uppercase',
+                fontSize: 22,
+                letterSpacing: '-0.005em',
+                color: 'var(--pt-ink)',
               }}
             >
-              <picture>
-                <source srcSet="/images/v73/empty-states/aucune-alerte.webp" type="image/webp" />
-                <img
-                  src="/images/v73/empty-states/aucune-alerte.jpg"
-                  alt="Couloir bâtiment porcin calme, ambiance sereine"
-                  loading="lazy"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    display: 'block',
-                  }}
-                />
-              </picture>
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background:
-                    'linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,0.5) 100%)',
-                }}
-              />
+              Carnet vide
             </div>
-            <div
-              style={{
-                padding: '10px 4px',
-                color: 'var(--pt-muted)',
-                fontSize: 13,
-                fontStyle: 'italic',
-                borderTop: '1px solid var(--pt-line)',
-                borderBottom: '1px solid var(--pt-line)',
-              }}
-            >
-              Carnet vide — toutes les alertes sont traitées.
+            <div style={{ fontSize: 13, color: 'var(--pt-muted)', maxWidth: '32ch' }}>
+              Toutes les alertes sont traitées. Bonne tournée.
             </div>
           </div>
         ) : (
@@ -372,7 +323,6 @@ export const TodayV70: React.FC = () => {
           </Button>
         </Card>
       </Section>
-      </div>
     </div>
   );
 };

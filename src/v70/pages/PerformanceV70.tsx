@@ -39,8 +39,6 @@ import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 import { formatBandeName, formatDateFr } from '../lib';
 import { computeScoreGlobal } from '../lib/scoreGlobal';
 
-const PAGE_BACKGROUND_SRC = '/images/ambiance-croissance.webp';
-
 type PerfTab = 'vue' | 'kpis' | 'finances' | 'previsions';
 
 const isPerfTab = (v: string | null): v is PerfTab =>
@@ -212,23 +210,8 @@ export const PerformanceV70: React.FC = () => {
   return (
     <div
       className="phone-content"
-      style={{ padding: 24, maxWidth: 600, margin: '0 auto', position: 'relative', minHeight: '100%' }}
+      style={{ padding: 24, maxWidth: 600, margin: '0 auto', minHeight: '100%' }}
     >
-      <div
-        aria-hidden
-        style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: `url(${PAGE_BACKGROUND_SRC})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center top',
-          backgroundRepeat: 'no-repeat',
-          opacity: 0.06,
-          pointerEvents: 'none',
-          zIndex: 0,
-        }}
-      />
-      <div style={{ position: 'relative', zIndex: 1 }}>
       <MariusGreeting pageContext="performance" />
 
       <PageHeader
@@ -625,7 +608,6 @@ export const PerformanceV70: React.FC = () => {
           )}
         </Section>
       )}
-      </div>
     </div>
   );
 };

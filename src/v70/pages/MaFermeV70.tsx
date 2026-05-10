@@ -16,7 +16,6 @@ import { PageHeader } from '../components/ds/PageHeader';
 import { fetchFarm, type FarmInfo } from '../../services/settingsService';
 import FarmSwitcher from '../../components/FarmSwitcher';
 
-const PAGE_BACKGROUND_SRC = '/images/ambiance-territoire.webp';
 
 interface InfoCardProps {
   label: string;
@@ -94,51 +93,17 @@ export const MaFermeV70: React.FC = () => {
   return (
     <div
       className="phone-content"
-      style={{ padding: 24, maxWidth: 600, margin: '0 auto', position: 'relative', minHeight: '100%' }}
+      style={{ padding: 24, maxWidth: 600, margin: '0 auto', minHeight: '100%' }}
     >
       <div style={{ marginBottom: 12 }}>
         <FarmSwitcher />
-      </div>
-      <div
-        style={{
-          position: 'relative',
-          height: 160,
-          marginBottom: 16,
-          borderRadius: 16,
-          overflow: 'hidden',
-          background: `url('${PAGE_BACKGROUND_SRC}') center/cover no-repeat`,
-        }}
-        aria-hidden="true"
-      >
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0) 30%, rgba(6,78,59,0.55) 100%)',
-          }}
-        />
-        <span
-          className="ft-heading"
-          style={{
-            position: 'absolute',
-            left: 16,
-            bottom: 12,
-            color: 'white',
-            fontSize: 14,
-            letterSpacing: 1.2,
-            textTransform: 'uppercase',
-            fontWeight: 700,
-            textShadow: '0 1px 2px rgba(0,0,0,0.4)',
-          }}
-        >
-          Ma ferme
-        </span>
       </div>
 
       <PageHeader
         eyebrow="Configuration"
         title="Ma ferme"
         subtitle="Identité, secteur, devise"
+        onBack={() => navigate('/reglages')}
       />
 
       <section style={{ marginTop: 8 }}>
