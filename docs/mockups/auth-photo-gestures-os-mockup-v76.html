@@ -1,0 +1,1456 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PorcTrack 8 — Auth + Photo + Gestures + OS v76 (5 · final)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  :root{
+    --pt-primary:#2D4A1F;--pt-primary-deep:#1f3414;--pt-primary-light:#4a7a2f;
+    --pt-warm:#F5E9D8;--pt-warm-deep:#E8D5B5;
+    --pt-accent:#B8703D;--pt-accent-light:#D89968;
+    --pt-bg:#FAF7F0;--pt-bg-app:#F1ECE0;
+    --pt-ink:#1a1a1a;--pt-muted:#6b6357;--pt-subtle:#a39888;
+    --pt-success:#4a7a2f;--pt-warning:#c08a3d;--pt-danger:#a4453d;--pt-info:#4a6e8a;
+    --pt-line:rgba(26,26,26,0.08);--pt-line-strong:rgba(26,26,26,0.16);
+    --pt-truie-bg:#F4D4D4;--pt-truie-fg:#8B4744;
+    --pt-verrat-bg:#C8D6E5;--pt-verrat-fg:#3B5266;
+    --pt-porcelet-bg:#F5E9D8;--pt-porcelet-fg:#8B6E3D;
+    --pt-bande-bg:#D4DFC8;--pt-bande-fg:#3D5C2C;
+    --pt-loge-bg:#E8D5B5;--pt-loge-fg:#6b4f2c;
+    --pt-font-display:'Big Shoulders Display',sans-serif;
+    --pt-font-body:'Instrument Sans',sans-serif;
+    --pt-font-mono:'JetBrains Mono',monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--pt-bg-app);color:var(--pt-ink);font-family:var(--pt-font-body);font-size:14px;line-height:1.4;-webkit-font-smoothing:antialiased}
+  .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+  .eyebrow{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle)}
+
+  /* TOP NAV */
+  .top-nav{position:sticky;top:0;z-index:50;background:var(--pt-ink);color:var(--pt-warm);border-bottom:1px solid rgba(245,233,216,0.08)}
+  .top-nav__inner{max-width:1240px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+  .top-nav__brand{display:flex;align-items:center;gap:10px;font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:20px;letter-spacing:-0.01em}
+  .top-nav__brand-mark{width:28px;height:28px;border-radius:6px;background:var(--pt-accent);color:var(--pt-warm);display:flex;align-items:center;justify-content:center;font-family:var(--pt-font-mono);font-weight:600;font-size:12px}
+  .top-nav__divider{height:18px;width:1px;background:rgba(245,233,216,0.18)}
+  .top-nav__meta{font-family:var(--pt-font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-subtle)}
+  .top-nav__links{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+  .top-nav__link{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-warm);text-decoration:none;padding:8px 10px;border-radius:6px;border:1px solid transparent}
+  .top-nav__link:hover{border-color:rgba(245,233,216,0.18);background:rgba(245,233,216,0.04)}
+  .top-nav__link .num{color:var(--pt-subtle);margin-left:6px}
+
+  .shell{max-width:1240px;margin:0 auto;padding:32px 24px 80px}
+  .doc-header{padding:48px 0 24px;border-bottom:1px solid var(--pt-line);margin-bottom:36px}
+  .doc-header .eyebrow{margin-bottom:14px}
+  .doc-header h1{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:60px;letter-spacing:-0.01em;line-height:.92;margin:0}
+  .doc-header p{margin:18px 0 0;color:var(--pt-muted);max-width:64ch;font-size:15px}
+
+  .section-title{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:34px;letter-spacing:-0.01em;line-height:.92;margin:56px 0 6px}
+  .sub-hint{font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--pt-subtle);margin:0 0 28px}
+  h3.section-rule{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle);margin:36px 0 14px;display:flex;align-items:center;gap:10px}
+  h3.section-rule::after{content:"";flex:1;height:1px;background:var(--pt-line)}
+
+  .frames{display:grid;grid-template-columns:repeat(auto-fill,minmax(390px,1fr));gap:48px 32px;align-items:start}
+  .frames--3{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:32px 24px;align-items:start}
+  .frame-wrap{display:flex;flex-direction:column;gap:14px}
+  .frame-wrap > .eyebrow{display:flex;gap:12px;align-items:center}
+  .frame-wrap > .eyebrow::after{content:"";flex:1;height:1px;background:var(--pt-line)}
+  .frame{width:390px;height:844px;border-radius:36px;background:var(--pt-bg);border:1px solid var(--pt-line-strong);overflow:hidden;position:relative;display:flex;flex-direction:column}
+  .frame--auto{height:auto;min-height:420px}
+
+  .stbar{display:flex;justify-content:space-between;align-items:center;padding:10px 22px 4px;font-family:var(--pt-font-mono);font-size:12px;font-weight:600;color:var(--pt-ink);flex-shrink:0}
+  .stbar__icons{display:flex;gap:6px;align-items:center}
+  .stbar__icons svg{width:14px;height:14px;stroke:var(--pt-ink)}
+  .stbar--ink{color:var(--pt-warm);background:var(--pt-ink)}
+  .stbar--ink .stbar__icons svg{stroke:var(--pt-warm)}
+
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;font-family:var(--pt-font-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;border:1px solid transparent;white-space:nowrap}
+  .pill::before{content:"";width:5px;height:5px;border-radius:999px;background:currentColor}
+  .pill--success{background:rgba(74,122,47,.12);color:var(--pt-success);border-color:rgba(74,122,47,.22)}
+  .pill--warm{background:rgba(184,112,61,.14);color:var(--pt-accent);border-color:rgba(184,112,61,.24)}
+  .pill--warning{background:rgba(192,138,61,.14);color:var(--pt-warning);border-color:rgba(192,138,61,.24)}
+  .pill--danger{background:rgba(164,69,61,.12);color:var(--pt-danger);border-color:rgba(164,69,61,.24)}
+  .pill--info{background:rgba(74,110,138,.12);color:var(--pt-info);border-color:rgba(74,110,138,.22)}
+  .pill--soft{background:rgba(26,26,26,.06);color:var(--pt-muted);border-color:var(--pt-line-strong)}
+  .pill--no-dot::before{display:none}
+
+  .av{border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--pt-font-mono);font-weight:600;flex-shrink:0;border:1px solid rgba(26,26,26,0.06)}
+  .av--sm{width:24px;height:24px;font-size:9px;border-radius:6px}
+  .av--md{width:36px;height:36px;font-size:11px;border-radius:8px}
+  .av--lg{width:48px;height:48px;font-size:13px;border-radius:10px}
+  .av--truie{background:var(--pt-truie-bg);color:var(--pt-truie-fg)}
+  .av--verrat{background:var(--pt-verrat-bg);color:var(--pt-verrat-fg)}
+  .av--bande{background:var(--pt-bande-bg);color:var(--pt-bande-fg)}
+  .av--loge{background:var(--pt-loge-bg);color:var(--pt-loge-fg)}
+
+  .btn{border:none;font-family:var(--pt-font-mono);font-weight:600;text-transform:uppercase;letter-spacing:.14em;font-size:11px;padding:13px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;line-height:1}
+  .btn svg{width:13px;height:13px}
+  .btn--primary{background:var(--pt-primary);color:var(--pt-warm)}
+  .btn--accent{background:var(--pt-accent);color:var(--pt-warm)}
+  .btn--danger{background:var(--pt-danger);color:var(--pt-warm)}
+  .btn--cream{background:var(--pt-warm);color:var(--pt-ink)}
+  .btn--ghost{background:transparent;color:var(--pt-muted);border:1px solid var(--pt-line-strong)}
+  .btn--ghost-cream{background:transparent;color:var(--pt-warm);border:1px solid rgba(245,233,216,0.32)}
+  .btn--sm{padding:9px 11px;font-size:10px}
+  .btn--lg{padding:15px 16px;font-size:12px}
+  .btn--full{width:100%}
+
+  /* AUTH */
+  .auth-shell{flex:1;display:flex;flex-direction:column;padding:18px 22px 22px;overflow:hidden}
+  .auth-brand{display:flex;align-items:center;gap:10px;margin:8px 0 24px}
+  .auth-brand__mark{width:36px;height:36px;border-radius:8px;background:var(--pt-accent);color:var(--pt-warm);display:flex;align-items:center;justify-content:center;font-family:var(--pt-font-display);font-weight:900;font-size:18px;letter-spacing:-0.02em}
+  .auth-brand__main{display:flex;flex-direction:column;gap:1px}
+  .auth-brand__name{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:18px;letter-spacing:-0.01em;color:var(--pt-ink);line-height:1}
+  .auth-brand__meta{font-family:var(--pt-font-mono);font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-subtle);margin-top:3px}
+  .auth-h1{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:36px;letter-spacing:-0.01em;line-height:.92;margin:0;color:var(--pt-ink)}
+  .auth-sub{font-size:14px;color:var(--pt-muted);margin:8px 0 22px;line-height:1.45}
+
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field__label{font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--pt-subtle);display:flex;justify-content:space-between;align-items:center}
+  .field__label .req{color:var(--pt-danger);font-size:9px}
+  .field__input{font-family:var(--pt-font-body);font-size:14px;padding:11px 12px;border-radius:10px;border:1px solid var(--pt-line-strong);background:var(--pt-bg);color:var(--pt-ink);width:100%;outline:none}
+  .field__input::placeholder{color:var(--pt-subtle)}
+  .field__input.filled{border-color:var(--pt-primary);background:var(--pt-bg)}
+  .field__input.error{border-color:var(--pt-danger)}
+  .field__error{font-family:var(--pt-font-mono);font-size:11px;font-weight:500;color:var(--pt-danger);margin-top:2px;display:flex;align-items:center;gap:5px}
+  .field__error svg{width:11px;height:11px;flex-shrink:0}
+  .field__hint{font-family:var(--pt-font-mono);font-size:10.5px;font-weight:500;color:var(--pt-subtle);margin-top:2px}
+
+  .field--icon{position:relative}
+  .field--icon .field__icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--pt-subtle);display:flex;pointer-events:none}
+  .field--icon .field__icon svg{width:15px;height:15px}
+  .field--icon .field__input{padding-left:36px}
+  .field--icon .field__btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:var(--pt-subtle);width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer}
+  .field--icon .field__btn svg{width:15px;height:15px}
+  .field--icon .field__btn:hover{color:var(--pt-ink);background:var(--pt-warm)}
+
+  .auth-form{display:flex;flex-direction:column;gap:14px}
+  .auth-divider{display:flex;align-items:center;gap:10px;margin:18px 0 8px;font-family:var(--pt-font-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;color:var(--pt-subtle)}
+  .auth-divider::before,.auth-divider::after{content:"";flex:1;height:1px;background:var(--pt-line-strong)}
+  .auth-foot{margin-top:auto;text-align:center;font-size:13px;color:var(--pt-muted)}
+  .auth-foot a{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-primary);text-decoration:none}
+  .auth-link-ghost{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-muted);text-align:center;display:block;margin-top:10px;text-decoration:none}
+
+  .alert-card{display:flex;align-items:flex-start;gap:10px;padding:11px 12px;border-radius:12px;background:var(--pt-ink);color:var(--pt-warm);border:1px solid var(--pt-ink);margin-bottom:14px}
+  .alert-card__icon{width:24px;height:24px;border-radius:6px;background:rgba(245,233,216,0.14);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--pt-warning);margin-top:1px}
+  .alert-card__icon svg{width:13px;height:13px}
+  .alert-card__title{font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,233,216,0.7);margin-bottom:3px}
+  .alert-card__text{font-size:13px;line-height:1.4;color:var(--pt-warm)}
+
+  /* Strength meter */
+  .pwd-strength{display:flex;gap:4px;margin-top:6px}
+  .pwd-strength span{flex:1;height:4px;border-radius:99px;background:var(--pt-line-strong)}
+  .pwd-strength.s1 span:nth-child(-n+1){background:var(--pt-danger)}
+  .pwd-strength.s2 span:nth-child(-n+2){background:var(--pt-warning)}
+  .pwd-strength.s3 span:nth-child(-n+3){background:var(--pt-accent)}
+  .pwd-strength.s4 span:nth-child(-n+4){background:var(--pt-success)}
+  .pwd-strength__label{font-family:var(--pt-font-mono);font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-top:5px}
+
+  .checkbox-row{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--pt-muted);line-height:1.45}
+  .checkbox-row__box{width:18px;height:18px;border:1.5px solid var(--pt-line-strong);border-radius:5px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;background:var(--pt-bg)}
+  .checkbox-row__box.checked{background:var(--pt-primary);border-color:var(--pt-primary);color:var(--pt-warm)}
+  .checkbox-row__box svg{width:11px;height:11px}
+  .checkbox-row a{color:var(--pt-primary);text-decoration:underline}
+
+  .country-select{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid var(--pt-line-strong);background:var(--pt-bg);cursor:pointer}
+  .country-flag{width:24px;height:18px;border-radius:3px;background:linear-gradient(to right,#FF8200 33%,#fff 33%,#fff 66%,#009E60 66%);flex-shrink:0;border:1px solid rgba(0,0,0,0.08)}
+  .country-name{flex:1;font-size:14px;color:var(--pt-ink)}
+  .country-select svg{width:14px;height:14px;color:var(--pt-subtle)}
+
+  /* Confirmation hero */
+  .auth-hero-icon{width:80px;height:80px;border-radius:20px;background:rgba(184,112,61,0.12);color:var(--pt-accent);display:flex;align-items:center;justify-content:center;margin:32px auto 22px}
+  .auth-hero-icon svg{width:38px;height:38px}
+  .auth-hero-icon--success{background:rgba(74,122,47,0.12);color:var(--pt-success)}
+  .auth-hero-h1{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:34px;letter-spacing:-0.01em;line-height:.95;margin:0;text-align:center;color:var(--pt-ink)}
+  .auth-hero-sub{text-align:center;font-size:14px;color:var(--pt-muted);margin:12px 0 26px;line-height:1.5;max-width:34ch;align-self:center}
+  .auth-hero-sub b{color:var(--pt-ink);font-weight:600}
+  .resend-counter{font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--pt-subtle);text-align:center;margin-top:12px}
+
+  /* PHOTO */
+  .photo-bg{flex:1;background:var(--pt-bg-app);position:relative;overflow:hidden}
+  .photo-bg .ph{padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+  .photo-bg .pe{font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle)}
+  .photo-bg h1{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:30px;letter-spacing:-0.01em;line-height:.95;margin:0;color:var(--pt-ink)}
+  .scrim{position:absolute;inset:0;background:rgba(26,26,26,0.4)}
+
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:var(--pt-bg);border-top-left-radius:24px;border-top-right-radius:24px;box-shadow:0 -10px 30px rgba(0,0,0,0.18);max-height:90%;display:flex;flex-direction:column}
+  .sheet__handle{width:40px;height:4px;border-radius:99px;background:var(--pt-subtle);margin:8px auto 6px;flex-shrink:0;opacity:.6}
+  .sheet__head{padding:6px 18px 8px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;border-bottom:1px solid var(--pt-line);flex-shrink:0}
+  .sheet__head h2{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:24px;letter-spacing:-0.01em;line-height:.95;margin:6px 0 0;color:var(--pt-ink)}
+  .sheet__head .eyebrow{margin-top:0}
+  .sheet__close{width:32px;height:32px;border-radius:8px;border:1px solid var(--pt-line-strong);background:transparent;color:var(--pt-ink);cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .sheet__close svg{width:14px;height:14px}
+  .sheet__body{padding:14px 18px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;flex:1}
+  .sheet__foot{padding:12px 16px;display:grid;grid-template-columns:auto 1fr;gap:8px;border-top:1px solid var(--pt-line);background:var(--pt-bg);flex-shrink:0}
+
+  .source-card{display:flex;align-items:center;gap:14px;padding:14px;border-radius:14px;border:1px solid var(--pt-line-strong);background:var(--pt-bg);text-decoration:none;color:inherit}
+  .source-card__icon{width:48px;height:48px;border-radius:12px;background:var(--pt-warm);color:var(--pt-primary);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .source-card__icon svg{width:22px;height:22px}
+  .source-card__main{flex:1;min-width:0}
+  .source-card__title{font-family:var(--pt-font-display);font-weight:900;font-size:18px;text-transform:uppercase;letter-spacing:-0.005em;line-height:1;color:var(--pt-ink)}
+  .source-card__sub{font-size:12.5px;color:var(--pt-muted);margin-top:4px;line-height:1.3}
+  .source-card svg.chev{width:16px;height:16px;color:var(--pt-subtle);flex-shrink:0}
+
+  /* Camera */
+  .cam{flex:1;background:#0a0a0a;color:var(--pt-warm);position:relative;display:flex;flex-direction:column}
+  .cam__topbar{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:12px 18px;z-index:3}
+  .cam__icon{width:38px;height:38px;border-radius:99px;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);color:var(--pt-warm);display:flex;align-items:center;justify-content:center;border:1px solid rgba(245,233,216,0.16);cursor:pointer}
+  .cam__icon svg{width:16px;height:16px}
+  .cam__icon--active{background:var(--pt-warning);color:var(--pt-ink);border-color:transparent}
+  .cam__topright{display:flex;gap:8px}
+  .cam__view{flex:1;background:radial-gradient(ellipse at center,#1a1a1a 0%,#0a0a0a 70%);position:relative;overflow:hidden}
+  .cam__grid{position:absolute;inset:60px 0 220px;opacity:.18}
+  .cam__grid::before,.cam__grid::after{content:"";position:absolute;background:var(--pt-warm)}
+  .cam__grid::before{left:33.33%;top:0;bottom:0;width:1px;box-shadow:33.33% 0 0 var(--pt-warm)}
+  .cam__grid::after{left:0;right:0;top:33.33%;height:1px;box-shadow:0 33.33% 0 var(--pt-warm)}
+  .cam__subject{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:240px;height:280px;border-radius:20px;background:linear-gradient(135deg,#3a2a1a,#5a4030 60%,#8b5e3c);display:flex;align-items:center;justify-content:center;color:rgba(245,233,216,0.32);font-family:var(--pt-font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.85}
+  .cam__bottom{position:absolute;bottom:0;left:0;right:0;padding:18px 24px 32px;display:grid;grid-template-columns:60px 1fr 60px;align-items:center;gap:14px;background:linear-gradient(to top,rgba(0,0,0,0.55),transparent);z-index:3}
+  .cam__thumb{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#3D5C2C,#4a7a2f);border:2px solid rgba(245,233,216,0.4);display:flex;align-items:flex-end;justify-content:flex-start;padding:4px;font-family:var(--pt-font-mono);font-size:8px;color:var(--pt-warm);font-weight:600}
+  .cam__shutter{justify-self:center;width:72px;height:72px;border-radius:99px;border:4px solid var(--pt-warm);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .cam__shutter-inner{width:56px;height:56px;border-radius:99px;background:var(--pt-warm)}
+  .cam__gallery{justify-self:end;width:38px;height:38px;border-radius:10px;background:rgba(0,0,0,0.5);border:1px solid rgba(245,233,216,0.16);display:flex;align-items:center;justify-content:center;color:var(--pt-warm);cursor:pointer}
+  .cam__gallery svg{width:18px;height:18px}
+  .cam__orient{position:absolute;left:50%;transform:translateX(-50%);bottom:118px;font-family:var(--pt-font-mono);font-size:9.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,233,216,0.55);background:rgba(0,0,0,0.4);padding:4px 8px;border-radius:99px;z-index:3}
+
+  /* Crop */
+  .crop{flex:1;background:#0a0a0a;display:flex;flex-direction:column;position:relative}
+  .crop__top{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;flex-shrink:0}
+  .crop__top button{display:flex;align-items:center;gap:6px;background:transparent;border:1px solid rgba(245,233,216,0.2);color:var(--pt-warm);padding:8px 12px;border-radius:8px;font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+  .crop__top button svg{width:13px;height:13px}
+  .crop__ratio-pill{font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-warm);padding:6px 10px;background:rgba(245,233,216,0.12);border-radius:99px}
+  .crop__view{flex:1;display:flex;align-items:center;justify-content:center;padding:0 28px;position:relative}
+  .crop__img{width:100%;aspect-ratio:1;border-radius:6px;background:linear-gradient(135deg,#3a2a1a,#6b4f2c 50%,#8b5e3c);display:flex;align-items:center;justify-content:center;color:rgba(245,233,216,0.28);font-family:var(--pt-font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;position:relative;overflow:hidden}
+  .crop__handles{position:absolute;inset:0}
+  .crop__handles::before,.crop__handles::after{content:"";position:absolute;background:var(--pt-warm);opacity:.5}
+  .crop__handles::before{left:33.33%;top:0;bottom:0;width:1px;box-shadow:33.33% 0 0 var(--pt-warm)}
+  .crop__handles::after{left:0;right:0;top:33.33%;height:1px;box-shadow:0 33.33% 0 var(--pt-warm)}
+  .crop__corner{position:absolute;width:18px;height:18px;border:3px solid var(--pt-warm)}
+  .crop__corner--tl{left:-2px;top:-2px;border-right:none;border-bottom:none}
+  .crop__corner--tr{right:-2px;top:-2px;border-left:none;border-bottom:none}
+  .crop__corner--bl{left:-2px;bottom:-2px;border-right:none;border-top:none}
+  .crop__corner--br{right:-2px;bottom:-2px;border-left:none;border-top:none}
+  .crop__tools{display:flex;justify-content:center;gap:10px;padding:18px 24px 12px;flex-shrink:0}
+  .crop__tool{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 14px;border-radius:10px;border:1px solid rgba(245,233,216,0.16);background:rgba(245,233,216,0.04);color:var(--pt-warm);cursor:pointer;min-width:62px}
+  .crop__tool.active{background:rgba(184,112,61,0.2);border-color:var(--pt-accent);color:var(--pt-warm)}
+  .crop__tool svg{width:16px;height:16px}
+  .crop__tool span{font-family:var(--pt-font-mono);font-size:9.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
+  .crop__foot{padding:14px 18px 22px;display:grid;grid-template-columns:auto 1fr;gap:8px;flex-shrink:0;border-top:1px solid rgba(245,233,216,0.08);background:rgba(0,0,0,0.6)}
+
+  /* Tag chip */
+  .chip-list{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:6px 10px;border-radius:99px;background:var(--pt-bg);border:1px solid var(--pt-line-strong);color:var(--pt-muted);display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+  .chip.selected{background:var(--pt-primary);color:var(--pt-warm);border-color:var(--pt-primary)}
+  .chip.add{border-style:dashed;color:var(--pt-subtle)}
+  .chip svg{width:11px;height:11px}
+
+  .photo-thumb-mini{width:64px;height:64px;border-radius:10px;background:linear-gradient(135deg,#3a2a1a,#6b4f2c 50%,#8b5e3c);flex-shrink:0;border:1px solid rgba(0,0,0,0.08)}
+
+  .link-row{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;border:1px solid var(--pt-line);background:var(--pt-warm)}
+  .link-row__main{flex:1;min-width:0}
+  .link-row__main b{font-family:var(--pt-font-display);font-weight:900;font-size:15px;text-transform:uppercase;letter-spacing:-0.005em;color:var(--pt-ink);display:block;line-height:1}
+  .link-row__main span{font-family:var(--pt-font-mono);font-size:10.5px;font-weight:500;color:var(--pt-muted);margin-top:3px;display:block;letter-spacing:.06em}
+
+  /* GESTURES */
+  .gesture-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:start}
+  .gesture-state{display:flex;flex-direction:column;gap:10px}
+  .gesture-state__label{font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle);display:flex;align-items:center;gap:8px}
+  .gesture-state__label::before{content:"";width:18px;height:1px;background:var(--pt-line-strong)}
+  .gesture-state--active .gesture-state__label{color:var(--pt-accent)}
+  .gesture-state--active .gesture-state__label::before{background:var(--pt-accent)}
+  .gesture-state--done .gesture-state__label{color:var(--pt-success)}
+  .gesture-state--done .gesture-state__label::before{background:var(--pt-success)}
+  .gesture-frame{width:100%;max-width:340px;height:560px;border-radius:28px;background:var(--pt-bg);border:1px solid var(--pt-line-strong);overflow:hidden;display:flex;flex-direction:column;position:relative}
+
+  /* Pull-to-refresh */
+  .ptr-list{flex:1;overflow:hidden;background:var(--pt-bg-app);position:relative}
+  .ptr-indicator{position:absolute;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:6px;font-family:var(--pt-font-mono);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle);padding:12px 0;z-index:1}
+  .ptr-indicator svg{width:18px;height:18px}
+  .ptr-indicator--ready{color:var(--pt-primary)}
+  .ptr-indicator--running svg{animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .ptr-row{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--pt-bg);border-bottom:1px solid var(--pt-line)}
+  .ptr-row__main{flex:1;min-width:0}
+  .ptr-row__main b{font-family:var(--pt-font-display);font-weight:900;font-size:14px;text-transform:uppercase;letter-spacing:-0.005em;display:block;line-height:1}
+  .ptr-row__main span{font-family:var(--pt-font-mono);font-size:10.5px;color:var(--pt-muted);margin-top:3px;display:block;letter-spacing:.04em}
+  .ptr-row--new{animation:slidein 320ms cubic-bezier(.2,.8,.3,1) backwards}
+  .ptr-row--new:nth-child(1){animation-delay:0ms}
+  .ptr-row--new:nth-child(2){animation-delay:60ms}
+  .ptr-row--new:nth-child(3){animation-delay:120ms}
+  @keyframes slidein{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+  .ptr-list--pulling{padding-top:64px}
+  .ptr-list--running{padding-top:48px}
+
+  /* Swipe-to-delete */
+  .swipe-row{position:relative;background:var(--pt-bg);border-bottom:1px solid var(--pt-line);overflow:hidden}
+  .swipe-row__content{display:flex;align-items:center;gap:10px;padding:13px 14px;background:var(--pt-bg);position:relative;z-index:2;transition:transform 200ms cubic-bezier(.2,.8,.3,1)}
+  .swipe-row--left .swipe-row__content{transform:translateX(-160px)}
+  .swipe-row--right .swipe-row__content{transform:translateX(120px)}
+  .swipe-row--collapsing{height:0;border-bottom:none;transition:height 200ms ease}
+  .swipe-row__actions{position:absolute;top:0;bottom:0;display:flex;z-index:1}
+  .swipe-row__actions--right{right:0}
+  .swipe-row__actions--left{left:0}
+  .swipe-action{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:80px;color:var(--pt-warm);font-family:var(--pt-font-mono);font-size:9.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border:none}
+  .swipe-action svg{width:16px;height:16px}
+  .swipe-action--edit{background:var(--pt-info)}
+  .swipe-action--delete{background:var(--pt-danger)}
+  .swipe-action--success{background:var(--pt-success);width:120px}
+  .undo-toast{position:absolute;left:14px;right:14px;bottom:24px;background:var(--pt-ink);color:var(--pt-warm);border-radius:12px;padding:11px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,0.18)}
+  .undo-toast__icon{width:24px;height:24px;border-radius:6px;background:rgba(192,138,61,0.22);color:var(--pt-warning);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .undo-toast__icon svg{width:13px;height:13px}
+  .undo-toast__main{flex:1;font-size:13px}
+  .undo-toast__main b{font-weight:600}
+  .undo-toast__action{font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-accent-light);background:transparent;border:none;cursor:pointer;padding:4px 6px}
+
+  /* Drag reorder */
+  .reorder-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:var(--pt-bg);border-bottom:1px solid var(--pt-line)}
+  .reorder-head h3{font-family:var(--pt-font-display);font-weight:900;font-size:18px;text-transform:uppercase;letter-spacing:-0.005em;margin:0;color:var(--pt-ink)}
+  .reorder-toggle{font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-muted);background:transparent;border:1px solid var(--pt-line-strong);padding:7px 10px;border-radius:8px;cursor:pointer}
+  .reorder-toggle.active{color:var(--pt-warm);background:var(--pt-primary);border-color:var(--pt-primary)}
+  .reorder-list{flex:1;background:var(--pt-bg-app);padding:8px 12px;overflow:hidden;display:flex;flex-direction:column;gap:6px;position:relative}
+  .reorder-row{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--pt-bg);border:1px solid var(--pt-line);border-radius:12px}
+  .reorder-row__main{flex:1;min-width:0}
+  .reorder-row__main b{font-family:var(--pt-font-display);font-weight:900;font-size:15px;text-transform:uppercase;letter-spacing:-0.005em;display:block;line-height:1}
+  .reorder-row__main span{font-family:var(--pt-font-mono);font-size:10.5px;color:var(--pt-muted);margin-top:3px;display:block;letter-spacing:.04em}
+  .reorder-grip{color:var(--pt-subtle)}
+  .reorder-grip svg{width:14px;height:14px}
+  .reorder-row--dragging{box-shadow:0 8px 24px rgba(0,0,0,0.18);opacity:1;transform:translateY(-2px)}
+  .reorder-row--ghost{opacity:.45}
+  .reorder-row.dim{opacity:.55}
+  .reorder-insert{height:2px;background:var(--pt-accent);border-radius:2px;margin:-2px 0;position:relative;z-index:2}
+  .reorder-insert::before,.reorder-insert::after{content:"";position:absolute;top:50%;width:6px;height:6px;border-radius:99px;background:var(--pt-accent);transform:translateY(-50%)}
+  .reorder-insert::before{left:-2px}
+  .reorder-insert::after{right:-2px}
+
+  /* OS prompts */
+  .os-card{padding:32px 24px 24px;display:flex;flex-direction:column;align-items:center;text-align:center;flex:1}
+  .os-card__icon{width:80px;height:80px;border-radius:20px;background:rgba(184,112,61,0.12);color:var(--pt-accent);display:flex;align-items:center;justify-content:center;margin:8px 0 22px}
+  .os-card__icon svg{width:38px;height:38px}
+  .os-card__h{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:32px;letter-spacing:-0.01em;line-height:.95;margin:0;color:var(--pt-ink)}
+  .os-card__sub{font-size:14px;color:var(--pt-muted);margin:12px 0 22px;line-height:1.45;max-width:30ch}
+  .os-bullets{display:flex;flex-direction:column;gap:14px;width:100%;text-align:left;margin:0 0 18px}
+  .os-bullet{display:flex;align-items:center;gap:14px}
+  .os-bullet__icon{width:42px;height:42px;border-radius:12px;background:var(--pt-warm);color:var(--pt-primary);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .os-bullet__icon svg{width:19px;height:19px}
+  .os-bullet__main b{font-family:var(--pt-font-display);font-weight:900;font-size:15px;text-transform:uppercase;letter-spacing:-0.005em;color:var(--pt-ink);display:block;line-height:1}
+  .os-bullet__main span{font-size:12.5px;color:var(--pt-muted);margin-top:3px;display:block;line-height:1.35}
+
+  .install-banner{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;background:var(--pt-ink);color:var(--pt-warm);margin:16px 16px 0}
+  .install-banner__icon{width:36px;height:36px;border-radius:10px;background:rgba(184,112,61,0.22);color:var(--pt-accent-light);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .install-banner__icon svg{width:17px;height:17px}
+  .install-banner__main{flex:1;min-width:0}
+  .install-banner__title{font-family:var(--pt-font-mono);font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--pt-accent-light);display:block}
+  .install-banner__sub{font-size:12.5px;line-height:1.35;color:rgba(245,233,216,0.86);margin-top:2px;display:block}
+  .install-banner__cta{font-family:var(--pt-font-mono);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-ink);background:var(--pt-warm);padding:8px 10px;border-radius:8px;border:none;cursor:pointer;flex-shrink:0}
+  .install-banner__close{width:28px;height:28px;border-radius:6px;background:transparent;border:1px solid rgba(245,233,216,0.16);color:var(--pt-warm);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+  .install-banner__close svg{width:12px;height:12px}
+
+  .ios-instr{padding:18px 22px;display:flex;flex-direction:column;gap:14px;font-size:13px;color:var(--pt-ink);line-height:1.45}
+  .ios-instr__step{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:12px;background:var(--pt-warm);border:1px solid var(--pt-line)}
+  .ios-instr__num{width:26px;height:26px;border-radius:99px;background:var(--pt-primary);color:var(--pt-warm);font-family:var(--pt-font-mono);font-weight:600;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .ios-instr__main{flex:1}
+  .ios-instr__main b{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:14px;letter-spacing:-0.005em;line-height:1.15;display:block;margin-bottom:4px;color:var(--pt-ink)}
+  .ios-instr__main p{margin:0;font-size:12.5px;color:var(--pt-muted);line-height:1.35}
+  .ios-instr__main svg.share{width:14px;height:14px;display:inline-block;vertical-align:-2px;color:var(--pt-info);margin:0 2px}
+
+  .closer{padding:38px 0 0;border-top:1px solid var(--pt-line);margin-top:64px}
+  .closer h2{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:34px;letter-spacing:-0.01em;line-height:.92;margin:0 0 22px;color:var(--pt-ink)}
+  .closer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:24px}
+  .closer-card{padding:18px 20px;border:1px solid var(--pt-line-strong);border-radius:14px;background:var(--pt-bg)}
+  .closer-card .eyebrow{margin-bottom:10px}
+  .closer-card h3{font-family:var(--pt-font-display);font-weight:900;font-size:18px;text-transform:uppercase;letter-spacing:-0.005em;margin:0 0 10px;color:var(--pt-ink);line-height:1.05}
+  .closer-card ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+  .closer-card li{padding-left:14px;position:relative;font-size:13px;line-height:1.5;color:var(--pt-muted)}
+  .closer-card li::before{content:"";width:5px;height:5px;border-radius:99px;background:var(--pt-accent);position:absolute;left:2px;top:8px}
+  .closer-card li b{color:var(--pt-ink);font-weight:600}
+  .closer-card li code{font-family:var(--pt-font-mono);font-size:11.5px;font-weight:600;color:var(--pt-accent);background:rgba(184,112,61,.08);padding:1px 5px;border-radius:4px}
+  .closer-card--ink{background:var(--pt-ink);color:var(--pt-warm);border-color:var(--pt-ink)}
+  .closer-card--ink h3{color:var(--pt-warm)}
+  .closer-card--ink li{color:rgba(245,233,216,0.78)}
+  .closer-card--ink li b{color:var(--pt-warm)}
+  .closer-card--ink li::before{background:var(--pt-accent-light)}
+  .closer-card--ink .eyebrow{color:var(--pt-accent-light)}
+
+  .effort-table{width:100%;border-collapse:collapse;margin-top:8px}
+  .effort-table th,.effort-table td{padding:10px 12px;text-align:left;font-size:13px;border-bottom:1px solid var(--pt-line)}
+  .effort-table th{font-family:var(--pt-font-mono);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle)}
+  .effort-table td.num{font-family:var(--pt-font-mono);font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+  .effort-table tr:last-child td{border-bottom:none}
+  .effort-table tr.total td{font-weight:600;border-top:1px solid var(--pt-line-strong);background:var(--pt-warm)}
+
+  /* BottomNav */
+  .bn{display:flex;justify-content:space-around;padding:8px 0 calc(8px + env(safe-area-inset-bottom));background:var(--pt-bg);border-top:1px solid var(--pt-line);flex-shrink:0}
+  .bn__item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;color:var(--pt-subtle);text-decoration:none;font-family:var(--pt-font-mono);font-size:9.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+  .bn__item svg{width:18px;height:18px}
+  .bn__item.active{color:var(--pt-primary)}
+
+  .ph-screen-bg{padding:16px 18px;background:var(--pt-bg-app);flex:1;display:flex;flex-direction:column;gap:14px;overflow:hidden}
+  .ph-screen-bg .pe{font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle)}
+  .ph-screen-bg h1{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:28px;letter-spacing:-0.01em;line-height:.95;margin:0;color:var(--pt-ink)}
+
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="top-nav__inner">
+    <div class="top-nav__brand">
+      <span class="top-nav__brand-mark">P8</span>
+      <span>PorcTrack</span>
+    </div>
+    <span class="top-nav__divider"></span>
+    <span class="top-nav__meta">v76 · Mockup 5 · Auth + Photo + Gestures + OS</span>
+    <div class="top-nav__links">
+      <a class="top-nav__link" href="#auth">Auth<span class="num">H</span></a>
+      <a class="top-nav__link" href="#photo">Photo<span class="num">I</span></a>
+      <a class="top-nav__link" href="#gestures">Gestures<span class="num">J</span></a>
+      <a class="top-nav__link" href="#os">OS<span class="num">K</span></a>
+      <a class="top-nav__link" href="#closer">Closer</a>
+    </div>
+  </div>
+</nav>
+
+<main class="shell">
+
+  <header class="doc-header">
+    <div class="eyebrow">Mockup 5 · Final · DNA Terrain Vivant verrouillé</div>
+    <h1>Auth · Photo · Gestures · OS</h1>
+    <p>Quatre zones critiques utilisateur encore en pattern legacy : flow d'authentification email-only, workflow caméra mobile (Capacitor), gestures natifs (pull/swipe/reorder) et prompts OS-level (push, install). Avec ce 5<sup>ᵉ</sup> mockup la série v76 atteint 100% du DNA designé — Yao s'inscrit, prend ses photos, swipe ses listes, accepte ses rappels. Plus aucun écran legacy.</p>
+  </header>
+
+  <!-- ============== H. AUTH ============== -->
+  <h2 id="auth" class="section-title">H · Authentification</h2>
+  <p class="sub-hint">4 écrans · Pas de BottomNav · Branding cohérent · Email-only V1</p>
+
+  <h3 class="section-rule">H.1 — Login</h3>
+  <div class="frames">
+
+    <!-- H.1a Login empty -->
+    <div class="frame-wrap">
+      <div class="eyebrow">H.1a · /login · état repos</div>
+      <div class="frame">
+        <div class="stbar"><span>06:14</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="auth-shell">
+          <div class="auth-brand">
+            <div class="auth-brand__mark">P8</div>
+            <div class="auth-brand__main">
+              <div class="auth-brand__name">PorcTrack 8</div>
+              <div class="auth-brand__meta">Cahier de troupeau · Côte d'Ivoire</div>
+            </div>
+          </div>
+          <h1 class="auth-h1">Connexion</h1>
+          <p class="auth-sub">Reprends ton cahier d'éleveur.</p>
+          <form class="auth-form" onsubmit="return false">
+            <div class="field field--icon">
+              <label class="field__label">Email</label>
+              <span class="field__icon"><i data-lucide="mail"></i></span>
+              <input class="field__input" type="email" placeholder="yao@porctrack.test" />
+            </div>
+            <div class="field field--icon">
+              <label class="field__label">Mot de passe</label>
+              <span class="field__icon"><i data-lucide="lock"></i></span>
+              <input class="field__input" type="password" placeholder="••••••••" />
+              <button type="button" class="field__btn" aria-label="Afficher"><i data-lucide="eye"></i></button>
+            </div>
+            <button class="btn btn--primary btn--lg btn--full" type="submit" style="margin-top:8px">Se connecter</button>
+            <a href="#" class="auth-link-ghost">Mot de passe oublié ?</a>
+          </form>
+          <div class="auth-foot">
+            <div class="auth-divider">— ou —</div>
+            <div style="margin-top:14px;display:flex;justify-content:center;align-items:center;gap:8px">Pas encore de compte ? <a href="#">S'inscrire →</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- H.1b Login loading -->
+    <div class="frame-wrap">
+      <div class="eyebrow">H.1b · état loading 3G fluctuante</div>
+      <div class="frame">
+        <div class="stbar"><span>06:14</span><div class="stbar__icons"><i data-lucide="signal-low"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="auth-shell">
+          <div class="auth-brand">
+            <div class="auth-brand__mark">P8</div>
+            <div class="auth-brand__main">
+              <div class="auth-brand__name">PorcTrack 8</div>
+              <div class="auth-brand__meta">Cahier de troupeau · Côte d'Ivoire</div>
+            </div>
+          </div>
+          <h1 class="auth-h1">Connexion</h1>
+          <p class="auth-sub">Reprends ton cahier d'éleveur.</p>
+          <form class="auth-form" onsubmit="return false">
+            <div class="field field--icon">
+              <label class="field__label">Email</label>
+              <span class="field__icon"><i data-lucide="mail"></i></span>
+              <input class="field__input filled" type="email" value="yao.kouassi@porctrack.test" disabled />
+            </div>
+            <div class="field field--icon">
+              <label class="field__label">Mot de passe</label>
+              <span class="field__icon"><i data-lucide="lock"></i></span>
+              <input class="field__input filled" type="password" value="••••••••••" disabled />
+              <button type="button" class="field__btn" disabled><i data-lucide="eye"></i></button>
+            </div>
+            <button class="btn btn--primary btn--lg btn--full" type="submit" disabled style="margin-top:8px;opacity:.85"><i data-lucide="loader-2" style="animation:spin 1s linear infinite"></i> Connexion…</button>
+            <a class="auth-link-ghost" style="opacity:.4">Mot de passe oublié ?</a>
+          </form>
+          <div class="auth-foot">
+            <div class="eyebrow" style="margin-top:14px;color:var(--pt-subtle)">3G · 4,2 s écoulés</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- H.1c Login error -->
+    <div class="frame-wrap">
+      <div class="eyebrow">H.1c · état erreur identifiants</div>
+      <div class="frame">
+        <div class="stbar"><span>06:15</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="auth-shell">
+          <div class="auth-brand">
+            <div class="auth-brand__mark">P8</div>
+            <div class="auth-brand__main">
+              <div class="auth-brand__name">PorcTrack 8</div>
+              <div class="auth-brand__meta">Cahier de troupeau · Côte d'Ivoire</div>
+            </div>
+          </div>
+          <h1 class="auth-h1">Connexion</h1>
+          <p class="auth-sub">Reprends ton cahier d'éleveur.</p>
+
+          <div class="alert-card">
+            <div class="alert-card__icon"><i data-lucide="alert-triangle"></i></div>
+            <div>
+              <div class="alert-card__title">Identifiants refusés</div>
+              <div class="alert-card__text">Email ou mot de passe incorrect. Vérifie tes minuscules.</div>
+            </div>
+          </div>
+
+          <form class="auth-form" onsubmit="return false">
+            <div class="field field--icon">
+              <label class="field__label">Email</label>
+              <span class="field__icon"><i data-lucide="mail"></i></span>
+              <input class="field__input filled" type="email" value="yao.kouassi@porctrack.test" />
+            </div>
+            <div class="field field--icon">
+              <label class="field__label">Mot de passe</label>
+              <span class="field__icon"><i data-lucide="lock"></i></span>
+              <input class="field__input error" type="password" value="••••••" />
+              <button type="button" class="field__btn"><i data-lucide="eye"></i></button>
+            </div>
+            <button class="btn btn--primary btn--lg btn--full" type="submit" style="margin-top:8px">Réessayer</button>
+            <a href="#" class="auth-link-ghost">Mot de passe oublié ?</a>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <h3 class="section-rule">H.2 — Signup · long scroll 1 page</h3>
+  <div class="frames">
+
+    <!-- H.2a Signup empty -->
+    <div class="frame-wrap">
+      <div class="eyebrow">H.2a · /signup · état repos</div>
+      <div class="frame">
+        <div class="stbar"><span>06:16</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="auth-shell" style="overflow-y:auto">
+          <div class="auth-brand">
+            <div class="auth-brand__mark">P8</div>
+            <div class="auth-brand__main">
+              <div class="auth-brand__name">PorcTrack 8</div>
+              <div class="auth-brand__meta">Cahier de troupeau · Côte d'Ivoire</div>
+            </div>
+          </div>
+          <h1 class="auth-h1">Créer un compte</h1>
+          <p class="auth-sub">Démarre ton suivi de troupeau.</p>
+          <form class="auth-form" onsubmit="return false">
+            <div class="field field--icon">
+              <label class="field__label">Nom complet <span class="req">REQUIS</span></label>
+              <span class="field__icon"><i data-lucide="user"></i></span>
+              <input class="field__input" type="text" placeholder="Yao Kouassi" />
+            </div>
+            <div class="field field--icon">
+              <label class="field__label">Email <span class="req">REQUIS</span></label>
+              <span class="field__icon"><i data-lucide="mail"></i></span>
+              <input class="field__input" type="email" placeholder="yao@porctrack.test" />
+            </div>
+            <div class="field field--icon">
+              <label class="field__label">Mot de passe <span class="req">REQUIS</span></label>
+              <span class="field__icon"><i data-lucide="lock"></i></span>
+              <input class="field__input" type="password" placeholder="8 caractères min." />
+              <button type="button" class="field__btn"><i data-lucide="eye"></i></button>
+            </div>
+            <div class="field field--icon">
+              <label class="field__label">Nom de la ferme</label>
+              <span class="field__icon"><i data-lucide="warehouse"></i></span>
+              <input class="field__input" type="text" placeholder="Ferme Yamoussoukro" />
+            </div>
+            <div class="field">
+              <label class="field__label">Pays</label>
+              <div class="country-select">
+                <span class="country-flag"></span>
+                <span class="country-name">Côte d'Ivoire</span>
+                <i data-lucide="chevron-down"></i>
+              </div>
+            </div>
+            <div class="checkbox-row" style="margin-top:6px">
+              <span class="checkbox-row__box"></span>
+              <span>J'accepte les <a href="#">conditions d'utilisation</a> et la <a href="#">politique de confidentialité</a>.</span>
+            </div>
+            <button class="btn btn--primary btn--lg btn--full" type="submit" style="margin-top:6px;opacity:.55" disabled>Créer mon compte</button>
+          </form>
+          <div class="auth-foot" style="padding:18px 0 8px">
+            Déjà un compte ? <a href="#">Se connecter →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- H.2b Signup filled -->
+    <div class="frame-wrap">
+      <div class="eyebrow">H.2b · état rempli · pwd fort · CGU OK</div>
+      <div class="frame">
+        <div class="stbar"><span>06:18</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="auth-shell" style="overflow-y:auto">
+          <div class="auth-brand">
+            <div class="auth-brand__mark">P8</div>
+            <div class="auth-brand__main">
+              <div class="auth-brand__name">PorcTrack 8</div>
+              <div class="auth-brand__meta">Cahier de troupeau · Côte d'Ivoire</div>
+            </div>
+          </div>
+          <h1 class="auth-h1">Créer un compte</h1>
+          <p class="auth-sub">Démarre ton suivi de troupeau.</p>
+          <form class="auth-form" onsubmit="return false">
+            <div class="field field--icon">
+              <label class="field__label">Nom complet <span class="req">REQUIS</span></label>
+              <span class="field__icon"><i data-lucide="user"></i></span>
+              <input class="field__input filled" type="text" value="Yao Kouassi" />
+            </div>
+            <div class="field field--icon">
+              <label class="field__label">Email <span class="req">REQUIS</span></label>
+              <span class="field__icon"><i data-lucide="mail"></i></span>
+              <input class="field__input filled" type="email" value="yao.kouassi@porctrack.test" />
+            </div>
+            <div class="field field--icon">
+              <label class="field__label">Mot de passe <span class="req">REQUIS</span></label>
+              <span class="field__icon"><i data-lucide="lock"></i></span>
+              <input class="field__input filled" type="password" value="••••••••••••" />
+              <button type="button" class="field__btn"><i data-lucide="eye-off"></i></button>
+              <div class="pwd-strength s4"><span></span><span></span><span></span><span></span></div>
+              <div class="pwd-strength__label" style="color:var(--pt-success)">FORCE FORT · 12 CARACTÈRES</div>
+            </div>
+            <div class="field field--icon">
+              <label class="field__label">Nom de la ferme</label>
+              <span class="field__icon"><i data-lucide="warehouse"></i></span>
+              <input class="field__input filled" type="text" value="Ferme Yamoussoukro" />
+            </div>
+            <div class="field">
+              <label class="field__label">Pays</label>
+              <div class="country-select" style="border-color:var(--pt-primary)">
+                <span class="country-flag"></span>
+                <span class="country-name">Côte d'Ivoire</span>
+                <i data-lucide="chevron-down"></i>
+              </div>
+            </div>
+            <div class="checkbox-row" style="margin-top:6px">
+              <span class="checkbox-row__box checked"><i data-lucide="check"></i></span>
+              <span>J'accepte les <a href="#">conditions d'utilisation</a> et la <a href="#">politique de confidentialité</a>.</span>
+            </div>
+            <button class="btn btn--primary btn--lg btn--full" type="submit" style="margin-top:6px">Créer mon compte</button>
+          </form>
+          <div class="auth-foot" style="padding:18px 0 8px">
+            Déjà un compte ? <a href="#">Se connecter →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <h3 class="section-rule">H.3 — Reset password</h3>
+  <div class="frames">
+
+    <!-- H.3a Reset form -->
+    <div class="frame-wrap">
+      <div class="eyebrow">H.3a · /reset-password</div>
+      <div class="frame">
+        <div class="stbar"><span>06:20</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="auth-shell">
+          <button class="btn btn--ghost btn--sm" style="align-self:flex-start;margin:0 0 18px"><i data-lucide="chevron-left"></i> Retour</button>
+          <h1 class="auth-h1">Mot de passe oublié</h1>
+          <p class="auth-sub">On t'envoie un lien par email pour le réinitialiser.</p>
+          <form class="auth-form" onsubmit="return false">
+            <div class="field field--icon">
+              <label class="field__label">Email</label>
+              <span class="field__icon"><i data-lucide="mail"></i></span>
+              <input class="field__input filled" type="email" value="yao.kouassi@porctrack.test" />
+              <div class="field__hint">Le lien sera valide 24 h.</div>
+            </div>
+            <button class="btn btn--primary btn--lg btn--full" type="submit" style="margin-top:6px">Envoyer le lien</button>
+          </form>
+          <div class="auth-foot">
+            Tu te souviens ? <a href="#">Connexion →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- H.3b Reset success -->
+    <div class="frame-wrap">
+      <div class="eyebrow">H.3b · état succès · email envoyé</div>
+      <div class="frame">
+        <div class="stbar"><span>06:21</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="auth-shell">
+          <div class="auth-brand">
+            <div class="auth-brand__mark">P8</div>
+            <div class="auth-brand__main">
+              <div class="auth-brand__name">PorcTrack 8</div>
+              <div class="auth-brand__meta">Cahier de troupeau · Côte d'Ivoire</div>
+            </div>
+          </div>
+          <div class="auth-hero-icon auth-hero-icon--success"><i data-lucide="check-circle"></i></div>
+          <h1 class="auth-hero-h1">Email envoyé</h1>
+          <p class="auth-hero-sub">Vérifie ta boîte (et les spams) à <b>yao.kouassi@porctrack.test</b>. Le lien est valide 24 h.</p>
+          <button class="btn btn--ghost btn--lg btn--full"><i data-lucide="arrow-left"></i> Retour au login</button>
+          <div class="resend-counter">Renvoyer le lien dans 0:28</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <h3 class="section-rule">H.4 — Email confirmation</h3>
+  <div class="frames">
+
+    <!-- H.4a En attente -->
+    <div class="frame-wrap">
+      <div class="eyebrow">H.4a · /auth/confirm · attente</div>
+      <div class="frame">
+        <div class="stbar"><span>06:22</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="auth-shell">
+          <div class="auth-brand">
+            <div class="auth-brand__mark">P8</div>
+            <div class="auth-brand__main">
+              <div class="auth-brand__name">PorcTrack 8</div>
+              <div class="auth-brand__meta">Cahier de troupeau · Côte d'Ivoire</div>
+            </div>
+          </div>
+          <div class="auth-hero-icon"><i data-lucide="mail"></i></div>
+          <h1 class="auth-hero-h1">Confirme ton email</h1>
+          <p class="auth-hero-sub">On t'a envoyé un lien à <b>yao.kouassi@porctrack.test</b>. Clique dessus pour activer ton compte.</p>
+          <button class="btn btn--ghost btn--lg btn--full" disabled style="opacity:.55"><i data-lucide="rotate-cw"></i> Renvoyer le lien</button>
+          <div class="resend-counter">Renvoyer dans 0:24</div>
+          <a class="auth-link-ghost" style="margin-top:auto">← Changer d'email</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- H.4b Activé -->
+    <div class="frame-wrap">
+      <div class="eyebrow">H.4b · variant · compte activé</div>
+      <div class="frame">
+        <div class="stbar"><span>06:24</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="auth-shell">
+          <div class="auth-brand">
+            <div class="auth-brand__mark">P8</div>
+            <div class="auth-brand__main">
+              <div class="auth-brand__name">PorcTrack 8</div>
+              <div class="auth-brand__meta">Cahier de troupeau · Côte d'Ivoire</div>
+            </div>
+          </div>
+          <div class="auth-hero-icon auth-hero-icon--success"><i data-lucide="check-circle-2"></i></div>
+          <h1 class="auth-hero-h1">Compte activé</h1>
+          <p class="auth-hero-sub">Bienvenue, <b>Yao</b>. Ton compte est prêt — on lance le tour de configuration en 5 étapes.</p>
+          <button class="btn btn--primary btn--lg btn--full">Continuer vers PorcTrack <i data-lucide="arrow-right"></i></button>
+          <div class="auth-foot" style="padding-top:14px">
+            <span class="eyebrow">→ Redirige vers /onboarding C.1</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============== I. PHOTO UPLOAD ============== -->
+  <h2 id="photo" class="section-title">I · Photo upload mobile</h2>
+  <p class="sub-hint">4 écrans · Capacitor Camera + Crop · workflow caméra → tags → save</p>
+
+  <h3 class="section-rule">I.1 — Photo source picker · sheet bottom</h3>
+  <div class="frames">
+    <div class="frame-wrap">
+      <div class="eyebrow">I.1 · sheet sur fiche T-031 · 3 sources</div>
+      <div class="frame">
+        <div class="stbar"><span>06:30</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="photo-bg">
+          <div class="ph">
+            <div class="pe">FICHE TRUIE · T-031</div>
+            <h1>Yvonne</h1>
+            <div style="display:flex;gap:8px"><span class="pill pill--warm">CYCLE 4 · GESTATION</span><span class="pill pill--soft">J+72</span></div>
+            <div style="margin-top:8px;padding:14px;border:1px dashed var(--pt-line-strong);border-radius:14px;display:flex;align-items:center;gap:12px;color:var(--pt-subtle)"><i data-lucide="image" style="width:22px;height:22px"></i><span style="font-family:var(--pt-font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase">PAS ENCORE DE PHOTOS</span></div>
+          </div>
+          <div class="scrim"></div>
+          <div class="sheet">
+            <div class="sheet__handle"></div>
+            <div class="sheet__head">
+              <div>
+                <div class="eyebrow">AJOUTER UNE PHOTO</div>
+                <h2>Source</h2>
+              </div>
+              <button class="sheet__close"><i data-lucide="x"></i></button>
+            </div>
+            <div class="sheet__body">
+              <a class="source-card">
+                <div class="source-card__icon"><i data-lucide="camera"></i></div>
+                <div class="source-card__main">
+                  <div class="source-card__title">Caméra</div>
+                  <div class="source-card__sub">Prendre une photo maintenant</div>
+                </div>
+                <i data-lucide="chevron-right" class="chev"></i>
+              </a>
+              <a class="source-card">
+                <div class="source-card__icon"><i data-lucide="image-plus"></i></div>
+                <div class="source-card__main">
+                  <div class="source-card__title">Galerie</div>
+                  <div class="source-card__sub">Choisir dans la pellicule du téléphone</div>
+                </div>
+                <i data-lucide="chevron-right" class="chev"></i>
+              </a>
+              <a class="source-card">
+                <div class="source-card__icon"><i data-lucide="file-text"></i></div>
+                <div class="source-card__main">
+                  <div class="source-card__title">Document</div>
+                  <div class="source-card__sub">Importer un PDF ou un fichier</div>
+                </div>
+                <i data-lucide="chevron-right" class="chev"></i>
+              </a>
+            </div>
+            <div class="sheet__foot" style="grid-template-columns:1fr">
+              <button class="btn btn--ghost btn--lg">Annuler</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- I.2 Camera fullscreen -->
+    <div class="frame-wrap">
+      <div class="eyebrow">I.2 · caméra fullscreen · viewfinder</div>
+      <div class="frame">
+        <div class="stbar stbar--ink"><span>06:31</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="cam">
+          <div class="cam__topbar">
+            <button class="cam__icon"><i data-lucide="x"></i></button>
+            <div class="cam__topright">
+              <button class="cam__icon cam__icon--active" title="Flash on"><i data-lucide="zap"></i></button>
+              <button class="cam__icon"><i data-lucide="rotate-ccw"></i></button>
+            </div>
+          </div>
+          <div class="cam__view">
+            <div class="cam__grid"></div>
+            <div class="cam__subject">SUJET · LOGE M-01</div>
+          </div>
+          <div class="cam__orient">PORTRAIT · 4:3</div>
+          <div class="cam__bottom">
+            <div class="cam__thumb">12</div>
+            <button class="cam__shutter"><span class="cam__shutter-inner"></span></button>
+            <button class="cam__gallery"><i data-lucide="images"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- I.3 Crop -->
+    <div class="frame-wrap">
+      <div class="eyebrow">I.3 · crop &amp; adjust · 4:3 forcé</div>
+      <div class="frame">
+        <div class="stbar stbar--ink"><span>06:32</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="crop">
+          <div class="crop__top">
+            <button><i data-lucide="chevron-left"></i> Refaire</button>
+            <span class="crop__ratio-pill">4 : 3</span>
+            <button style="padding:8px;border-color:transparent;background:transparent"><i data-lucide="more-horizontal"></i></button>
+          </div>
+          <div class="crop__view">
+            <div class="crop__img" style="aspect-ratio:4/3">
+              <span>SUJET · T-031 LOGE M-01</span>
+              <div class="crop__handles"></div>
+              <div class="crop__corner crop__corner--tl"></div>
+              <div class="crop__corner crop__corner--tr"></div>
+              <div class="crop__corner crop__corner--bl"></div>
+              <div class="crop__corner crop__corner--br"></div>
+            </div>
+          </div>
+          <div class="crop__tools">
+            <button class="crop__tool active"><i data-lucide="crop"></i><span>Recadrer</span></button>
+            <button class="crop__tool"><i data-lucide="rotate-cw"></i><span>Tourner</span></button>
+            <button class="crop__tool"><i data-lucide="sliders-horizontal"></i><span>Filtres</span></button>
+          </div>
+          <div class="crop__foot">
+            <button class="btn btn--ghost-cream btn--lg">Annuler</button>
+            <button class="btn btn--primary btn--lg"><i data-lucide="check"></i> Confirmer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- I.4 Tags & contexte -->
+    <div class="frame-wrap">
+      <div class="eyebrow">I.4 · tags &amp; contexte · sheet bottom</div>
+      <div class="frame">
+        <div class="stbar"><span>06:33</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="photo-bg">
+          <div class="scrim"></div>
+          <div class="sheet" style="max-height:96%">
+            <div class="sheet__handle"></div>
+            <div class="sheet__head">
+              <div>
+                <div class="eyebrow">DÉTAILS DE LA PHOTO</div>
+                <h2>Tags &amp; contexte</h2>
+              </div>
+              <button class="sheet__close"><i data-lucide="x"></i></button>
+            </div>
+            <div class="sheet__body">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div class="photo-thumb-mini"></div>
+                <div>
+                  <div class="eyebrow" style="color:var(--pt-success)">CAPTURÉE</div>
+                  <div style="font-family:var(--pt-font-mono);font-weight:600;font-size:13px;margin-top:3px">06:33 · 4:3 · 1,8 Mo</div>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="field__label">Description</label>
+                <textarea class="field__input" rows="2" style="font-family:var(--pt-font-body);resize:none;line-height:1.4">T-031 — comportement vendredi soir, refus de l'aliment.</textarea>
+              </div>
+
+              <div class="field">
+                <label class="field__label">Tags <span style="font-family:var(--pt-font-mono);text-transform:none;letter-spacing:0;font-weight:500;color:var(--pt-subtle)">2 / 4 max</span></label>
+                <div class="chip-list">
+                  <span class="chip selected"><i data-lucide="check"></i> Comportement</span>
+                  <span class="chip selected"><i data-lucide="check"></i> Avant/Après</span>
+                  <span class="chip"><i data-lucide="tag"></i> Santé</span>
+                  <span class="chip"><i data-lucide="tag"></i> Loge</span>
+                  <span class="chip"><i data-lucide="tag"></i> Tournée</span>
+                  <span class="chip add"><i data-lucide="plus"></i> Ajouter</span>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="field__label">Lié à <span style="font-family:var(--pt-font-mono);text-transform:none;letter-spacing:0;font-weight:500;color:var(--pt-subtle)">auto · depuis fiche</span></label>
+                <div class="link-row">
+                  <div class="av av--md av--truie">T31</div>
+                  <div class="link-row__main">
+                    <b>T-031 · Yvonne</b>
+                    <span>CYCLE 4 · GESTATION · J+72</span>
+                  </div>
+                  <button class="btn btn--ghost btn--sm" style="padding:6px 9px"><i data-lucide="x"></i></button>
+                </div>
+              </div>
+            </div>
+            <div class="sheet__foot">
+              <button class="btn btn--ghost btn--lg">Annuler</button>
+              <button class="btn btn--primary btn--lg"><i data-lucide="check"></i> Enregistrer la photo</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== J. GESTURES ============== -->
+  <h2 id="gestures" class="section-title">J · Gestures natifs</h2>
+  <p class="sub-hint">3 patterns × 3 états · Capacitor Ionic + HTML5 drag · 240 ms easeOutCubic</p>
+
+  <h3 class="section-rule">J.1 — Pull-to-refresh · liste Élevage</h3>
+  <div class="gesture-grid">
+    <div class="gesture-state">
+      <div class="gesture-state__label">État 1 · Repos</div>
+      <div class="gesture-frame">
+        <div class="stbar"><span>06:40</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="ph-screen-bg">
+          <div class="pe">ÉLEVAGE · TRUIES</div>
+          <h1>50 truies</h1>
+        </div>
+        <div class="ptr-list">
+          <div class="ptr-row"><div class="av av--md av--truie">T31</div><div class="ptr-row__main"><b>T-031 · Yvonne</b><span>GESTATION · J+72</span></div><span class="pill pill--soft">C4</span></div>
+          <div class="ptr-row"><div class="av av--md av--truie">T46</div><div class="ptr-row__main"><b>T-046 · Marguerite</b><span>LACTATION · J+12</span></div><span class="pill pill--success">C2</span></div>
+          <div class="ptr-row"><div class="av av--md av--truie">T18</div><div class="ptr-row__main"><b>T-018 · Solange</b><span>VIDE · J+4</span></div><span class="pill pill--soft">C5</span></div>
+          <div class="ptr-row"><div class="av av--md av--truie">T07</div><div class="ptr-row__main"><b>T-007 · Bernadette</b><span>SAILLIE · J+1</span></div><span class="pill pill--warm">C1</span></div>
+        </div>
+        <div class="bn">
+          <div class="bn__item active"><i data-lucide="warehouse"></i><span>Élevage</span></div>
+          <div class="bn__item"><i data-lucide="repeat"></i><span>Repro</span></div>
+          <div class="bn__item"><i data-lucide="sun"></i><span>Today</span></div>
+          <div class="bn__item"><i data-lucide="line-chart"></i><span>Pilotage</span></div>
+          <div class="bn__item"><i data-lucide="settings-2"></i><span>Réglages</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gesture-state gesture-state--active">
+      <div class="gesture-state__label">État 2 · Pulling · 80 px+</div>
+      <div class="gesture-frame">
+        <div class="stbar"><span>06:40</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="ph-screen-bg">
+          <div class="pe">ÉLEVAGE · TRUIES</div>
+          <h1>50 truies</h1>
+        </div>
+        <div class="ptr-list ptr-list--pulling">
+          <div class="ptr-indicator ptr-indicator--ready" style="top:0">
+            <i data-lucide="arrow-down"></i>
+            <span>Relâcher pour rafraîchir</span>
+          </div>
+          <div class="ptr-row"><div class="av av--md av--truie">T31</div><div class="ptr-row__main"><b>T-031 · Yvonne</b><span>GESTATION · J+72</span></div><span class="pill pill--soft">C4</span></div>
+          <div class="ptr-row"><div class="av av--md av--truie">T46</div><div class="ptr-row__main"><b>T-046 · Marguerite</b><span>LACTATION · J+12</span></div><span class="pill pill--success">C2</span></div>
+          <div class="ptr-row"><div class="av av--md av--truie">T18</div><div class="ptr-row__main"><b>T-018 · Solange</b><span>VIDE · J+4</span></div><span class="pill pill--soft">C5</span></div>
+        </div>
+        <div class="bn">
+          <div class="bn__item active"><i data-lucide="warehouse"></i><span>Élevage</span></div>
+          <div class="bn__item"><i data-lucide="repeat"></i><span>Repro</span></div>
+          <div class="bn__item"><i data-lucide="sun"></i><span>Today</span></div>
+          <div class="bn__item"><i data-lucide="line-chart"></i><span>Pilotage</span></div>
+          <div class="bn__item"><i data-lucide="settings-2"></i><span>Réglages</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gesture-state gesture-state--done">
+      <div class="gesture-state__label">État 3 · Refreshing · cascade</div>
+      <div class="gesture-frame">
+        <div class="stbar"><span>06:40</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="ph-screen-bg">
+          <div class="pe">ÉLEVAGE · TRUIES</div>
+          <h1>53 truies</h1>
+        </div>
+        <div class="ptr-list ptr-list--running">
+          <div class="ptr-indicator ptr-indicator--running" style="top:0;color:var(--pt-primary)">
+            <i data-lucide="loader-2"></i>
+            <span>Sync · 50 truies + 3 verrats</span>
+          </div>
+          <div class="ptr-row ptr-row--new" style="background:rgba(74,122,47,.08)"><div class="av av--md av--truie">T54</div><div class="ptr-row__main"><b>T-054 · NEW</b><span>SAILLIE · J+0 · Aïssa</span></div><span class="pill pill--success pill--no-dot">+</span></div>
+          <div class="ptr-row ptr-row--new"><div class="av av--md av--truie">T31</div><div class="ptr-row__main"><b>T-031 · Yvonne</b><span>GESTATION · J+72</span></div><span class="pill pill--soft">C4</span></div>
+          <div class="ptr-row ptr-row--new"><div class="av av--md av--truie">T46</div><div class="ptr-row__main"><b>T-046 · Marguerite</b><span>LACTATION · J+12</span></div><span class="pill pill--success">C2</span></div>
+        </div>
+        <div class="bn">
+          <div class="bn__item active"><i data-lucide="warehouse"></i><span>Élevage</span></div>
+          <div class="bn__item"><i data-lucide="repeat"></i><span>Repro</span></div>
+          <div class="bn__item"><i data-lucide="sun"></i><span>Today</span></div>
+          <div class="bn__item"><i data-lucide="line-chart"></i><span>Pilotage</span></div>
+          <div class="bn__item"><i data-lucide="settings-2"></i><span>Réglages</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="section-rule">J.2 — Swipe-to-delete · item truie</h3>
+  <div class="gesture-grid">
+    <div class="gesture-state">
+      <div class="gesture-state__label">État 1 · Swipe gauche · destructif</div>
+      <div class="gesture-frame">
+        <div class="stbar"><span>06:42</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="ph-screen-bg" style="flex:0 0 auto;padding-bottom:6px"><div class="pe">ÉLEVAGE · TRUIES</div><h1>50 truies</h1></div>
+        <div style="flex:1;background:var(--pt-bg-app)">
+          <div class="swipe-row">
+            <div class="swipe-row__content"><div class="av av--md av--truie">T31</div><div class="ptr-row__main"><b>T-031 · Yvonne</b><span>GESTATION · J+72</span></div><span class="pill pill--soft">C4</span></div>
+          </div>
+          <div class="swipe-row swipe-row--left">
+            <div class="swipe-row__actions swipe-row__actions--right">
+              <button class="swipe-action swipe-action--edit"><i data-lucide="pencil"></i><span>Modifier</span></button>
+              <button class="swipe-action swipe-action--delete"><i data-lucide="trash-2"></i><span>Supprimer</span></button>
+            </div>
+            <div class="swipe-row__content"><div class="av av--md av--truie">T46</div><div class="ptr-row__main"><b>T-046 · Marguerite</b><span>LACTATION · J+12</span></div><span class="pill pill--success">C2</span></div>
+          </div>
+          <div class="swipe-row">
+            <div class="swipe-row__content"><div class="av av--md av--truie">T18</div><div class="ptr-row__main"><b>T-018 · Solange</b><span>VIDE · J+4</span></div><span class="pill pill--soft">C5</span></div>
+          </div>
+          <div class="swipe-row">
+            <div class="swipe-row__content"><div class="av av--md av--truie">T07</div><div class="ptr-row__main"><b>T-007 · Bernadette</b><span>SAILLIE · J+1</span></div><span class="pill pill--warm">C1</span></div>
+          </div>
+        </div>
+        <div class="bn">
+          <div class="bn__item active"><i data-lucide="warehouse"></i><span>Élevage</span></div>
+          <div class="bn__item"><i data-lucide="repeat"></i><span>Repro</span></div>
+          <div class="bn__item"><i data-lucide="sun"></i><span>Today</span></div>
+          <div class="bn__item"><i data-lucide="line-chart"></i><span>Pilotage</span></div>
+          <div class="bn__item"><i data-lucide="settings-2"></i><span>Réglages</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gesture-state gesture-state--active">
+      <div class="gesture-state__label">État 2 · Swipe droite · acquitter alerte</div>
+      <div class="gesture-frame">
+        <div class="stbar"><span>06:43</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="ph-screen-bg" style="flex:0 0 auto;padding-bottom:6px"><div class="pe">PILOTAGE · ALERTES</div><h1>4 alertes</h1></div>
+        <div style="flex:1;background:var(--pt-bg-app)">
+          <div class="swipe-row swipe-row--right">
+            <div class="swipe-row__actions swipe-row__actions--left">
+              <button class="swipe-action swipe-action--success"><i data-lucide="check"></i><span>Marquer traité</span></button>
+            </div>
+            <div class="swipe-row__content" style="border-left:3px solid var(--pt-warning)"><div class="av av--md av--truie">T31</div><div class="ptr-row__main"><b>MB attendue J−3</b><span>T-031 · Yvonne · 09 mai</span></div><span class="pill pill--warning">URG</span></div>
+          </div>
+          <div class="swipe-row">
+            <div class="swipe-row__content" style="border-left:3px solid var(--pt-danger)"><div class="av av--md av--loge">M01</div><div class="ptr-row__main"><b>Stock aliment bas</b><span>M-01 · 1,8 j restants</span></div><span class="pill pill--danger">CRIT</span></div>
+          </div>
+          <div class="swipe-row">
+            <div class="swipe-row__content" style="border-left:3px solid var(--pt-info)"><div class="av av--md av--bande">M26</div><div class="ptr-row__main"><b>Sevrage dû J0</b><span>Bande Mai 2026 · 11 NV</span></div><span class="pill pill--info">INFO</span></div>
+          </div>
+        </div>
+        <div class="bn">
+          <div class="bn__item"><i data-lucide="warehouse"></i><span>Élevage</span></div>
+          <div class="bn__item"><i data-lucide="repeat"></i><span>Repro</span></div>
+          <div class="bn__item"><i data-lucide="sun"></i><span>Today</span></div>
+          <div class="bn__item active"><i data-lucide="line-chart"></i><span>Pilotage</span></div>
+          <div class="bn__item"><i data-lucide="settings-2"></i><span>Réglages</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gesture-state gesture-state--done">
+      <div class="gesture-state__label">État 3 · Suppression confirmée + undo</div>
+      <div class="gesture-frame">
+        <div class="stbar"><span>06:44</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="ph-screen-bg" style="flex:0 0 auto;padding-bottom:6px"><div class="pe">ÉLEVAGE · TRUIES</div><h1>49 truies</h1></div>
+        <div style="flex:1;background:var(--pt-bg-app);position:relative">
+          <div class="swipe-row">
+            <div class="swipe-row__content"><div class="av av--md av--truie">T31</div><div class="ptr-row__main"><b>T-031 · Yvonne</b><span>GESTATION · J+72</span></div><span class="pill pill--soft">C4</span></div>
+          </div>
+          <div class="swipe-row swipe-row--collapsing" style="height:0"></div>
+          <div class="swipe-row">
+            <div class="swipe-row__content"><div class="av av--md av--truie">T18</div><div class="ptr-row__main"><b>T-018 · Solange</b><span>VIDE · J+4</span></div><span class="pill pill--soft">C5</span></div>
+          </div>
+          <div class="swipe-row">
+            <div class="swipe-row__content"><div class="av av--md av--truie">T07</div><div class="ptr-row__main"><b>T-007 · Bernadette</b><span>SAILLIE · J+1</span></div><span class="pill pill--warm">C1</span></div>
+          </div>
+
+          <div class="undo-toast">
+            <div class="undo-toast__icon"><i data-lucide="trash-2"></i></div>
+            <div class="undo-toast__main"><b>T-046 supprimée.</b> Annule dans 5 s.</div>
+            <button class="undo-toast__action">Annuler</button>
+          </div>
+        </div>
+        <div class="bn">
+          <div class="bn__item active"><i data-lucide="warehouse"></i><span>Élevage</span></div>
+          <div class="bn__item"><i data-lucide="repeat"></i><span>Repro</span></div>
+          <div class="bn__item"><i data-lucide="sun"></i><span>Today</span></div>
+          <div class="bn__item"><i data-lucide="line-chart"></i><span>Pilotage</span></div>
+          <div class="bn__item"><i data-lucide="settings-2"></i><span>Réglages</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="section-rule">J.3 — Drag-and-drop reorder · loges custom</h3>
+  <div class="gesture-grid">
+
+    <div class="gesture-state">
+      <div class="gesture-state__label">État 1 · Repos · grip visible</div>
+      <div class="gesture-frame">
+        <div class="stbar"><span>06:46</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="reorder-head">
+          <h3>Loges</h3>
+          <button class="reorder-toggle">Réorganiser</button>
+        </div>
+        <div class="reorder-list">
+          <div class="reorder-row"><div class="av av--md av--loge">M01</div><div class="reorder-row__main"><b>M-01 · Maternité 1</b><span>10 PLACES · LACTATION</span></div></div>
+          <div class="reorder-row"><div class="av av--md av--loge">M02</div><div class="reorder-row__main"><b>M-02 · Maternité 2</b><span>10 PLACES · GESTATION</span></div></div>
+          <div class="reorder-row"><div class="av av--md av--loge">M03</div><div class="reorder-row__main"><b>M-03 · Maternité 3</b><span>8 PLACES · ENGRAIS</span></div></div>
+          <div class="reorder-row"><div class="av av--md av--loge">G01</div><div class="reorder-row__main"><b>G-01 · Gestante</b><span>16 PLACES · GROUPE</span></div></div>
+          <div class="reorder-row"><div class="av av--md av--loge">VR1</div><div class="reorder-row__main"><b>V-01 · Verraterie</b><span>3 PLACES · 3 VERRATS</span></div></div>
+        </div>
+        <div class="bn">
+          <div class="bn__item active"><i data-lucide="warehouse"></i><span>Élevage</span></div>
+          <div class="bn__item"><i data-lucide="repeat"></i><span>Repro</span></div>
+          <div class="bn__item"><i data-lucide="sun"></i><span>Today</span></div>
+          <div class="bn__item"><i data-lucide="line-chart"></i><span>Pilotage</span></div>
+          <div class="bn__item"><i data-lucide="settings-2"></i><span>Réglages</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gesture-state gesture-state--active">
+      <div class="gesture-state__label">État 2 · Drag actif · ligne d'insertion</div>
+      <div class="gesture-frame">
+        <div class="stbar"><span>06:46</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="reorder-head">
+          <h3>Loges</h3>
+          <button class="reorder-toggle active">Terminer</button>
+        </div>
+        <div class="reorder-list">
+          <div class="reorder-row dim"><div class="av av--md av--loge">M01</div><div class="reorder-row__main"><b>M-01 · Maternité 1</b><span>10 PLACES · LACTATION</span></div><span class="reorder-grip"><i data-lucide="grip-vertical"></i></span></div>
+          <div class="reorder-row reorder-row--ghost"><div class="av av--md av--loge">M03</div><div class="reorder-row__main"><b>M-03 · Maternité 3</b><span>8 PLACES · ENGRAIS</span></div><span class="reorder-grip"><i data-lucide="grip-vertical"></i></span></div>
+          <div class="reorder-insert"></div>
+          <div class="reorder-row reorder-row--dragging"><div class="av av--md av--loge">M03</div><div class="reorder-row__main"><b>M-03 · Maternité 3</b><span>EN COURS DE DÉPLACEMENT</span></div><span class="reorder-grip" style="color:var(--pt-accent)"><i data-lucide="grip-vertical"></i></span></div>
+          <div class="reorder-row dim"><div class="av av--md av--loge">G01</div><div class="reorder-row__main"><b>G-01 · Gestante</b><span>16 PLACES · GROUPE</span></div><span class="reorder-grip"><i data-lucide="grip-vertical"></i></span></div>
+          <div class="reorder-row dim"><div class="av av--md av--loge">VR1</div><div class="reorder-row__main"><b>V-01 · Verraterie</b><span>3 PLACES · 3 VERRATS</span></div><span class="reorder-grip"><i data-lucide="grip-vertical"></i></span></div>
+        </div>
+        <div class="bn">
+          <div class="bn__item active"><i data-lucide="warehouse"></i><span>Élevage</span></div>
+          <div class="bn__item"><i data-lucide="repeat"></i><span>Repro</span></div>
+          <div class="bn__item"><i data-lucide="sun"></i><span>Today</span></div>
+          <div class="bn__item"><i data-lucide="line-chart"></i><span>Pilotage</span></div>
+          <div class="bn__item"><i data-lucide="settings-2"></i><span>Réglages</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gesture-state gesture-state--done">
+      <div class="gesture-state__label">État 3 · Drop · flip 180 ms</div>
+      <div class="gesture-frame">
+        <div class="stbar"><span>06:47</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="reorder-head">
+          <h3>Loges</h3>
+          <button class="reorder-toggle active">Terminer</button>
+        </div>
+        <div class="reorder-list">
+          <div class="reorder-row"><div class="av av--md av--loge">M01</div><div class="reorder-row__main"><b>M-01 · Maternité 1</b><span>10 PLACES · LACTATION</span></div><span class="reorder-grip"><i data-lucide="grip-vertical"></i></span></div>
+          <div class="reorder-row" style="border-color:var(--pt-accent);background:rgba(184,112,61,0.06)"><div class="av av--md av--loge">M03</div><div class="reorder-row__main"><b>M-03 · Maternité 3</b><span>DÉPLACÉE EN POSITION 2</span></div><span class="reorder-grip" style="color:var(--pt-success)"><i data-lucide="check"></i></span></div>
+          <div class="reorder-row"><div class="av av--md av--loge">M02</div><div class="reorder-row__main"><b>M-02 · Maternité 2</b><span>10 PLACES · GESTATION</span></div><span class="reorder-grip"><i data-lucide="grip-vertical"></i></span></div>
+          <div class="reorder-row"><div class="av av--md av--loge">G01</div><div class="reorder-row__main"><b>G-01 · Gestante</b><span>16 PLACES · GROUPE</span></div><span class="reorder-grip"><i data-lucide="grip-vertical"></i></span></div>
+          <div class="reorder-row"><div class="av av--md av--loge">VR1</div><div class="reorder-row__main"><b>V-01 · Verraterie</b><span>3 PLACES · 3 VERRATS</span></div><span class="reorder-grip"><i data-lucide="grip-vertical"></i></span></div>
+        </div>
+        <div class="bn">
+          <div class="bn__item active"><i data-lucide="warehouse"></i><span>Élevage</span></div>
+          <div class="bn__item"><i data-lucide="repeat"></i><span>Repro</span></div>
+          <div class="bn__item"><i data-lucide="sun"></i><span>Today</span></div>
+          <div class="bn__item"><i data-lucide="line-chart"></i><span>Pilotage</span></div>
+          <div class="bn__item"><i data-lucide="settings-2"></i><span>Réglages</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== K. OS PROMPTS ============== -->
+  <h2 id="os" class="section-title">K · OS prompts</h2>
+  <p class="sub-hint">Custom UI V76 EN AMONT du natif · jamais déclencher direct</p>
+
+  <h3 class="section-rule">K.1 — Push permission</h3>
+  <div class="frames">
+
+    <div class="frame-wrap">
+      <div class="eyebrow">K.1a · sheet pleine page · trigger 1ʳᵉ saillie</div>
+      <div class="frame">
+        <div class="stbar"><span>06:50</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="os-card">
+          <div class="os-card__icon"><i data-lucide="bell"></i></div>
+          <h1 class="os-card__h">Active les rappels</h1>
+          <p class="os-card__sub">PorcTrack te ping à J−3, J−1 et le jour J pour les mises-bas. Aussi pour stocks bas et sevrages dûs.</p>
+          <ul class="os-bullets">
+            <li class="os-bullet">
+              <div class="os-bullet__icon"><i data-lucide="calendar"></i></div>
+              <div class="os-bullet__main"><b>Mises-bas</b><span>4 truies pleines · prochaine MB le 09/05 (J−3)</span></div>
+            </li>
+            <li class="os-bullet">
+              <div class="os-bullet__icon"><i data-lucide="package"></i></div>
+              <div class="os-bullet__main"><b>Stock aliment</b><span>Quand il reste &lt; 2 jours en silo</span></div>
+            </li>
+            <li class="os-bullet">
+              <div class="os-bullet__icon"><i data-lucide="heart"></i></div>
+              <div class="os-bullet__main"><b>Sevrages &amp; chaleurs</b><span>Sevrage J0, retour chaleurs J5–J7</span></div>
+            </li>
+          </ul>
+          <div style="display:grid;grid-template-columns:auto 1fr;gap:8px;width:100%;margin-top:auto">
+            <button class="btn btn--ghost btn--lg">Plus tard</button>
+            <button class="btn btn--primary btn--lg"><i data-lucide="bell"></i> Activer les rappels</button>
+          </div>
+          <div class="eyebrow" style="margin-top:10px;color:var(--pt-subtle)">→ DÉCLENCHE Notification.requestPermission()</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="frame-wrap">
+      <div class="eyebrow">K.1b · refusé · état "plus tard"</div>
+      <div class="frame">
+        <div class="stbar"><span>06:51</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="ph-screen-bg">
+          <div class="pe">PILOTAGE · TODAY</div>
+          <h1>Mardi 06 mai</h1>
+          <div style="padding:14px 16px;border-radius:12px;background:var(--pt-warm);border:1px solid var(--pt-line);display:flex;gap:12px;align-items:flex-start">
+            <div style="width:36px;height:36px;border-radius:10px;background:rgba(192,138,61,0.18);color:var(--pt-warning);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i data-lucide="bell-off"></i></div>
+            <div style="flex:1">
+              <div class="eyebrow" style="color:var(--pt-warning)">RAPPELS DÉSACTIVÉS</div>
+              <div style="font-family:var(--pt-font-display);font-weight:900;font-size:18px;text-transform:uppercase;letter-spacing:-0.005em;line-height:1.05;margin:6px 0 4px">Tu rateras les MB</div>
+              <p style="font-size:13px;color:var(--pt-muted);margin:0 0 10px;line-height:1.4">PorcTrack ne pourra pas te ping à J−3 sur les 4 truies pleines.</p>
+              <button class="btn btn--accent btn--sm"><i data-lucide="bell"></i> Activer maintenant</button>
+            </div>
+          </div>
+
+          <div style="padding:14px 16px;border-radius:12px;background:var(--pt-bg);border:1px solid var(--pt-line);display:flex;flex-direction:column;gap:10px">
+            <div class="eyebrow">PROCHAINES MB · ALERTES PASSIVES</div>
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:var(--pt-font-mono);font-weight:600;font-size:13px">T-031 · Yvonne</span><span class="pill pill--warning">J−3 · 09/05</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:var(--pt-font-mono);font-weight:600;font-size:13px">T-046 · Marguerite</span><span class="pill pill--soft">J−12 · 18/05</span></div>
+          </div>
+
+          <div class="eyebrow" style="margin-top:8px;color:var(--pt-subtle)">→ ré-prompt après 7 j ou trigger métier</div>
+        </div>
+        <div class="bn">
+          <div class="bn__item"><i data-lucide="warehouse"></i><span>Élevage</span></div>
+          <div class="bn__item"><i data-lucide="repeat"></i><span>Repro</span></div>
+          <div class="bn__item active"><i data-lucide="sun"></i><span>Today</span></div>
+          <div class="bn__item"><i data-lucide="line-chart"></i><span>Pilotage</span></div>
+          <div class="bn__item"><i data-lucide="settings-2"></i><span>Réglages</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <h3 class="section-rule">K.2 — PWA install banner</h3>
+  <div class="frames">
+
+    <div class="frame-wrap">
+      <div class="eyebrow">K.2a · Android Chrome · sticky top · 3 visites</div>
+      <div class="frame">
+        <div class="stbar"><span>06:53</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="install-banner">
+          <div class="install-banner__icon"><i data-lucide="download"></i></div>
+          <div class="install-banner__main">
+            <span class="install-banner__title">INSTALLER PORCTRACK 8</span>
+            <span class="install-banner__sub">Ajoute l'app à ton écran d'accueil — accès direct, sans Chrome. <b style="color:var(--pt-warm)">5,9 Mo</b></span>
+          </div>
+          <button class="install-banner__cta">Installer</button>
+          <button class="install-banner__close"><i data-lucide="x"></i></button>
+        </div>
+        <div class="ph-screen-bg" style="padding-top:14px">
+          <div class="pe">PILOTAGE · TODAY</div>
+          <h1>Mardi 06 mai</h1>
+          <div style="padding:14px 16px;border-radius:12px;background:var(--pt-bg);border:1px solid var(--pt-line)">
+            <div class="eyebrow">À FAIRE AUJOURD'HUI</div>
+            <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;gap:10px;align-items:center"><span class="pill pill--warning">URG</span><span style="font-family:var(--pt-font-mono);font-size:12.5px">MB T-031 · J−3</span></div>
+              <div style="display:flex;gap:10px;align-items:center"><span class="pill pill--info">VOIR</span><span style="font-family:var(--pt-font-mono);font-size:12.5px">Tournée maternités M-01 → M-03</span></div>
+              <div style="display:flex;gap:10px;align-items:center"><span class="pill pill--soft">OK</span><span style="font-family:var(--pt-font-mono);font-size:12.5px">Saillie T-007 · enregistrée hier</span></div>
+            </div>
+          </div>
+          <div class="eyebrow" style="color:var(--pt-subtle)">→ DÉCLENCHE beforeinstallprompt natif</div>
+        </div>
+        <div class="bn">
+          <div class="bn__item"><i data-lucide="warehouse"></i><span>Élevage</span></div>
+          <div class="bn__item"><i data-lucide="repeat"></i><span>Repro</span></div>
+          <div class="bn__item active"><i data-lucide="sun"></i><span>Today</span></div>
+          <div class="bn__item"><i data-lucide="line-chart"></i><span>Pilotage</span></div>
+          <div class="bn__item"><i data-lucide="settings-2"></i><span>Réglages</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="frame-wrap">
+      <div class="eyebrow">K.2b · iOS Safari · instructions visuelles</div>
+      <div class="frame">
+        <div class="stbar"><span>06:54</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div style="flex:1;display:flex;flex-direction:column;background:var(--pt-bg);overflow:hidden">
+          <div style="padding:24px 22px 8px">
+            <div class="eyebrow">INSTALLATION · IOS SAFARI</div>
+            <h1 style="font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:30px;letter-spacing:-0.01em;line-height:.95;margin:10px 0 6px;color:var(--pt-ink)">Ajouter à l'écran d'accueil</h1>
+            <p style="font-size:13.5px;color:var(--pt-muted);margin:0;line-height:1.45">Safari ne propose pas d'installation auto — voici les 2 étapes.</p>
+          </div>
+          <div class="ios-instr">
+            <div class="ios-instr__step">
+              <div class="ios-instr__num">1</div>
+              <div class="ios-instr__main">
+                <b>Appuie sur Partager <svg class="share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><rect x="4" y="13" width="16" height="8" rx="2"/></svg></b>
+                <p>Le bouton avec la flèche qui monte ↑, en bas de Safari.</p>
+              </div>
+            </div>
+            <div class="ios-instr__step">
+              <div class="ios-instr__num">2</div>
+              <div class="ios-instr__main">
+                <b>Choisis "Sur l'écran d'accueil"</b>
+                <p>Une icône PorcTrack 8 apparaît avec tes autres apps.</p>
+              </div>
+            </div>
+          </div>
+          <div style="padding:14px 18px;margin-top:auto;display:grid;grid-template-columns:1fr 1fr;gap:8px;border-top:1px solid var(--pt-line)">
+            <button class="btn btn--ghost btn--lg">Plus tard</button>
+            <button class="btn btn--primary btn--lg">J'ai compris</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============== CLOSER ============== -->
+  <section id="closer" class="closer">
+    <div class="eyebrow">Notes design · Mockup 5 · Final</div>
+    <h2>Closer · décisions, hésitations, effort</h2>
+
+    <div class="closer-grid">
+
+      <div class="closer-card">
+        <div class="eyebrow">5 décisions tranchées</div>
+        <h3>Patterns retenus</h3>
+        <ul>
+          <li><b>Auth signup</b> : long scroll 1 page (pas wizard 3 étapes). Yao remplit 5 champs en 90 s, pas de tunnel multi-écrans à abandonner.</li>
+          <li><b>Photo crop</b> : <code>4:3</code> forcé (mémoire device + sujet animal). Carré 1:1 trop serré pour une loge, ratio libre = chaos galerie.</li>
+          <li><b>Pull-to-refresh</b> : custom V76 (<code>Loader2</code> mono + label uppercase). Le natif Ionic est trop blanc/neutre pour le DNA terrain.</li>
+          <li><b>PWA install</b> : sticky top sur Today (pas floating bottom). Le bottom est déjà saturé par BottomNav + toasts undo + sheets.</li>
+          <li><b>Push permission</b> : trigger métier <b>1ʳᵉ saillie enregistrée</b> (pas onboarding C.5). Yao comprend pourquoi quand le contexte est concret — pas en abstrait au step 5.</li>
+        </ul>
+      </div>
+
+      <div class="closer-card">
+        <div class="eyebrow">2 hésitations détaillées</div>
+        <h3>À débattre avec dev</h3>
+        <ul>
+          <li><b>Email confirmation H.4</b> : faut-il une <b>polling auto</b> côté front (toutes les 4 s vérifier si le user a cliqué) ou laisser le user revenir manuellement ? Polling = meilleure UX mais coûte 1 requête/4 s × N users en attente. Compromis : polling 30 s puis fallback manuel.</li>
+          <li><b>Swipe-to-delete sur alertes vs truies</b> : même geste, conséquences très différentes. Sur truie = soft-delete + undo 5 s OK. Sur alerte = "marquer traité" = changement métier réel. Risque de confusion. Option B : sur alerte, swipe = action contextuelle (acquitter), pas destructif.</li>
+        </ul>
+      </div>
+
+      <div class="closer-card closer-card--ink">
+        <div class="eyebrow">Top 3 priorités d'implémentation</div>
+        <h3>À porter d'abord</h3>
+        <ul>
+          <li><b>Auth flow complet</b> · Supabase Auth déjà branché — UI uniquement, 2 j. Bloquant pour <i>tout</i> le reste.</li>
+          <li><b>Photo upload Capacitor</b> · Camera + Crop natifs, autorisations, tags. 4 j. Débloque 5 fiches qui ont déjà des slots photo.</li>
+          <li><b>Push permission custom prompt</b> · trigger 1ʳᵉ saillie + ré-prompt 7 j. 1,5 j. Débloque la valeur métier #1 (ne pas rater une MB).</li>
+        </ul>
+      </div>
+
+      <div class="closer-card">
+        <div class="eyebrow">Effort dev React/Ionic Capacitor</div>
+        <h3>Estimation jours · 1 dev</h3>
+        <table class="effort-table">
+          <thead><tr><th>Zone</th><th>Détail</th><th class="num">Jours</th></tr></thead>
+          <tbody>
+            <tr><td>H · Auth</td><td>4 écrans + Supabase + erreurs</td><td class="num">2,0</td></tr>
+            <tr><td>I · Photo</td><td>Capacitor Camera + Crop + tags</td><td class="num">4,0</td></tr>
+            <tr><td>J · Gestures</td><td>IonRefresher · IonItemSliding · drag</td><td class="num">3,5</td></tr>
+            <tr><td>K · OS prompts</td><td>Notification + beforeinstallprompt</td><td class="num">1,5</td></tr>
+            <tr class="total"><td colspan="2">Total mockup 5</td><td class="num">11,0 j</td></tr>
+            <tr class="total" style="background:var(--pt-warm-deep)"><td colspan="2">Total série v76 (5 mockups)</td><td class="num">~52 j</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="closer-card" style="grid-column:1 / -1">
+        <div class="eyebrow">DNA Terrain Vivant · couverture finale</div>
+        <h3>Série v76 · 5 mockups · ~58 écrans · 100 % couverture</h3>
+        <ul style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+          <li><b>1 · Élevage</b> · 5 listes + 5 fiches détail + system block</li>
+          <li><b>2 · Réglages + Pilotage</b> · 7 + 7 écrans + Aïssa coopérative</li>
+          <li><b>3 · Ressources + Reproduction</b> · 5 + 4 écrans</li>
+          <li><b>4 · Onboarding + Modals</b> · 5 wizard + 6 quick-add</li>
+          <li><b>5 · Auth + Photo + Gestures + OS</b> · ce mockup</li>
+          <li><b>+ Marius · Patterns · Bonus</b> · chat + 21 patterns + 3 desktop</li>
+        </ul>
+        <p style="margin:14px 0 0;font-size:13px;color:var(--pt-muted);line-height:1.5">Plus aucune zone critique du flow utilisateur en pattern legacy. <b style="color:var(--pt-ink)">DNA Terrain Vivant verrouillé</b>. Yao s'inscrit, configure sa ferme, prend ses photos, swipe ses listes, accepte ses rappels — bout en bout dans le langage v76.</p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<script>
+  if(window.lucide){lucide.createIcons();}
+</script>
+
+</body>
+</html>
