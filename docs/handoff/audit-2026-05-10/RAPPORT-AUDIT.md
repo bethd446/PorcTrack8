@@ -9,12 +9,9 @@
 
 ## P0 — Bloquants à corriger immédiatement
 
-### P0-1 · Écran "Ma ferme" V70 affiche données fantômes
-**Fichier** : `src/v70/pages/MaFermeV70.tsx:86`
-**Symptôme** : nom = "Ma ferme" (fallback) au lieu de "Ferme Audit Test", BILAN 0 truies / 0 verrats / 0 bandes (réalité : 50 / 3 / 6). Pays / secteur vides.
-**Cause** : `fetchFarm()` (`src/services/settingsService.ts:20`) lit table `troupeaux` filtrée `user_id = userId`. Pour ce compte (OWNER multi-membre), la ligne n'existe pas dans `troupeaux.user_id` — la ferme est rattachée via `farm_members` ou table `fermes`. Le contexte `useFarm()` retourne aussi 0 partout, même cause.
-**Preuve** : l'écran legacy `/reglages/systeme` affiche correctement "Ferme Audit Test" / "FERM-DA7B5A" → la donnée existe, mais via une autre source.
-**Fix** : aligner `fetchFarm` sur la source utilisée par `/reglages/systeme` (probablement `fermes` jointe à `farm_members` avec `role = OWNER`), ou injecter directement le farm courant via `FarmContext`.
+### P0-1 · ~~Écran "Ma ferme" V70 affiche données fantômes~~ → **FAUX POSITIF**
+**Statut (vérifié 2026-05-10 Lot 2)** : pas un bug. Le snapshot initial avait été pris pendant le render asynchrone de `MaFermeV70` — entre le moment où le composant monte avec `farm = null` (fallback "Ma ferme") et la réponse de `fetchFarm(user.id)` peuplant le state. Hard reload vérifié via Supabase MCP (table `troupeaux` row `da7b5a17-...` avec `nom_ferme = 'Ferme Audit Test'`, RLS `auth.uid() = user_id` OK) puis re-render browser : tout s'affiche correctement (nom, code FERM-DA7B5A, pays Belgique, bilan 50/3/6).
+**Dette UX résiduelle (P3)** : l'écran flash le fallback "Ma ferme" pendant 100-300ms à la première navigation. Un skeleton ou `Suspense` pendant le `fetchFarm` évacuerait ce flash. Pas urgent.
 
 ### P0-2 · Clic "Bande" depuis Élevage > Bandes redirige vers /reproduction
 **Fichier** : à localiser dans `src/v70/pages/AnimalsV70.tsx` (carte bande, vue=bandes)
