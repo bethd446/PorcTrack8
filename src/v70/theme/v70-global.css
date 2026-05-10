@@ -874,3 +874,269 @@
   letter-spacing: 0.1em;
   line-height: 1.5;
 }
+
+/* ========================================================================== */
+/* V76 mockup 3a (Ressources + Reproduction)                                  */
+/* cycle-mini, cycle-card, stockbar, chips, kpis-strip, dt (DataTable).       */
+/* ========================================================================== */
+
+/* cycle-mini : mini cycle rail 5 nœuds 18px (Repro En cours, fiche bande) */
+.cycle-mini {
+  position: relative;
+  height: 18px;
+  margin-top: 8px;
+  width: 100%;
+}
+
+.cycle-mini__line {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: 9px;
+  height: 2px;
+  background: var(--pt-line-strong);
+}
+
+.cycle-mini__line-done {
+  position: absolute;
+  left: 6px;
+  top: 9px;
+  height: 2px;
+  background: var(--pt-primary);
+}
+
+.cycle-mini__dot {
+  position: absolute;
+  top: 3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 99px;
+  transform: translateX(-50%);
+  background: var(--pt-bg);
+  border: 2px solid var(--pt-line-strong);
+}
+
+.cycle-mini__dot.done {
+  background: var(--pt-primary);
+  border-color: var(--pt-primary);
+}
+
+.cycle-mini__dot.now {
+  background: var(--pt-accent);
+  border-color: var(--pt-accent);
+  box-shadow: 0 0 0 3px rgba(184, 112, 61, 0.20);
+}
+
+.cycle-mini__labels {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  font-family: var(--pt-font-mono);
+  font-size: 8.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--pt-subtle);
+  text-align: center;
+  margin-top: 6px;
+}
+
+.cycle-mini__labels span.cur {
+  color: var(--pt-accent);
+}
+
+/* cycle-card : card horizontale Repro En cours avec mini cycle rail intégré */
+.cycle-card {
+  background: var(--pt-warm);
+  border: 1px solid var(--pt-line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.cycle-card + .cycle-card {
+  margin-top: 8px;
+}
+
+.cycle-card__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cycle-card__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.cycle-card__title {
+  font-family: var(--pt-font-mono);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--pt-ink);
+  letter-spacing: 0.02em;
+}
+
+.cycle-card__sub {
+  font-size: 11.5px;
+  color: var(--pt-muted);
+  margin-top: 2px;
+}
+
+/* stockbar : mini barre 48×6px pour stock visuel (Aliments, Pharmacie) */
+.stockbar {
+  position: relative;
+  width: 48px;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--pt-bg-app);
+  overflow: hidden;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.stockbar > span {
+  display: block;
+  height: 100%;
+  background: var(--pt-primary);
+  border-radius: 99px;
+}
+
+.stockbar.warn > span {
+  background: var(--pt-warning);
+}
+
+.stockbar.danger > span {
+  background: var(--pt-danger);
+}
+
+/* chips : chips horizontaux scrollables (filtres Repro En cours, Fournisseurs) */
+.chips {
+  display: flex;
+  gap: 6px;
+  padding: 12px 0 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chips::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--pt-line-strong);
+  font-family: var(--pt-font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--pt-muted);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.chip .num {
+  color: var(--pt-subtle);
+}
+
+.chip[aria-pressed="true"] {
+  background: var(--pt-ink);
+  border-color: var(--pt-ink);
+  color: var(--pt-warm);
+}
+
+.chip[aria-pressed="true"] .num {
+  color: var(--pt-warm-deep);
+}
+
+/* kpis-strip : grille KPIs horizontale persistante (Repro 4 KPIs) */
+.kpis-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--pt-bg);
+  border: 1px solid var(--pt-line);
+  border-radius: 14px;
+  margin: 8px 0 12px;
+  overflow: hidden;
+}
+
+.kpis-strip .kpi {
+  padding: 10px 8px;
+  border-right: 1px solid var(--pt-line);
+  text-align: center;
+}
+
+.kpis-strip .kpi:last-child {
+  border-right: none;
+}
+
+.kpis-strip .kpi__label {
+  font-family: var(--pt-font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--pt-subtle);
+}
+
+.kpis-strip .kpi__val {
+  font-family: var(--pt-font-display);
+  font-weight: 900;
+  font-size: 22px;
+  letter-spacing: -0.01em;
+  color: var(--pt-ink);
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}
+
+/* dt : DataTable mode avancé (Performance KPIs, Repro Historique, Finances) */
+.dt {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--pt-font-mono);
+  font-size: 11px;
+}
+
+.dt thead th {
+  text-align: left;
+  padding: 8px 6px;
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--pt-subtle);
+  border-bottom: 1px solid var(--pt-line-strong);
+  white-space: nowrap;
+}
+
+.dt thead th.sortable {
+  cursor: pointer;
+}
+
+.dt thead th.sortable::after {
+  content: " ↓";
+  color: var(--pt-accent);
+}
+
+.dt tbody td {
+  padding: 10px 6px;
+  border-bottom: 1px dashed var(--pt-line);
+  color: var(--pt-ink);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.dt tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.dt .num-r {
+  text-align: right;
+}
