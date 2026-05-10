@@ -120,7 +120,7 @@ const VetoRow: React.FC<VetoRowProps> = ({ item, farmName, onRefresh }) => {
           <div
             className="card-link__title"
             style={{
-              fontFamily: 'var(--pt-font-display)',
+              fontFamily: 'var(--ff-display)',
               fontWeight: 700,
               fontSize: 15,
               textTransform: 'none',
@@ -133,7 +133,7 @@ const VetoRow: React.FC<VetoRowProps> = ({ item, farmName, onRefresh }) => {
             className="card-link__sub"
             style={{
               marginTop: 2,
-              fontFamily: 'var(--pt-font-mono)',
+              fontFamily: 'var(--ff-mono)',
               fontSize: 11,
               letterSpacing: '0.04em',
             }}
@@ -150,7 +150,7 @@ const VetoRow: React.FC<VetoRowProps> = ({ item, farmName, onRefresh }) => {
           flexWrap: 'wrap',
           gap: 8,
           alignItems: 'center',
-          fontFamily: 'var(--pt-font-mono)',
+          fontFamily: 'var(--ff-mono)',
           fontSize: 11,
           color: 'var(--pt-muted)',
           width: '100%',
@@ -203,23 +203,18 @@ const VetoRow: React.FC<VetoRowProps> = ({ item, farmName, onRefresh }) => {
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`Commander ${item.produit} via WhatsApp`}
+          className="btn--primary"
           style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
             padding: '8px 14px',
             borderRadius: 999,
+            minHeight: 36,
+            fontSize: 11,
+            alignSelf: 'flex-start',
+            textDecoration: 'none',
             background:
               treatment === 'urgent' ? 'var(--pt-danger)' : 'var(--pt-primary)',
-            color: 'white',
-            fontFamily: 'var(--pt-font-mono)',
-            fontSize: 11,
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            textDecoration: 'none',
-            minHeight: 36,
-            alignSelf: 'flex-start',
+            borderColor:
+              treatment === 'urgent' ? 'var(--pt-danger)' : 'var(--pt-primary)',
           }}
         >
           Commander
@@ -322,28 +317,10 @@ const PharmacieView: React.FC = () => {
               className="back"
               aria-label="Retour à Ressources"
               onClick={() => navigate('/ressources')}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                background: 'none',
-                border: 'none',
-                padding: '4px 0',
-                marginBottom: 8,
-                color: 'rgba(245, 233, 216, 0.7)',
-                fontFamily: 'var(--pt-font-mono)',
-                fontSize: 11,
-                fontWeight: 500,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-                minHeight: 44,
-              }}
             >
-              <ChevronLeft size={14} strokeWidth={1.75} aria-hidden />
-              Retour
+              <ChevronLeft size={18} strokeWidth={1.8} aria-hidden />
             </button>
-            <div className="eyebrow">Stocks · Vétérinaire</div>
+            <div className="eyebrow">Ressources · Pharmacie</div>
             <h1>Pharmacie</h1>
             <div className="sub">{subtitle}</div>
           </header>
@@ -369,25 +346,13 @@ const PharmacieView: React.FC = () => {
             </div>
 
             {stats.rupture > 0 && (
-              <div
-                role="alert"
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: 10,
-                  padding: '12px 14px',
-                  background: 'var(--pt-rose-bg)',
-                  color: 'var(--pt-rose-ink)',
-                  borderRadius: 12,
-                  margin: '8px 0 12px',
-                }}
-              >
-                <AlertOctagon size={18} aria-hidden style={{ flexShrink: 0, marginTop: 2 }} />
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 700, fontSize: 14, textTransform: 'uppercase' }}>
+              <div role="alert" className="alert-card alert-card--danger">
+                <AlertOctagon size={18} className="alert-card__icon" aria-hidden />
+                <div className="alert-card__body">
+                  <div className="alert-card__title">
                     {stats.rupture} produit{stats.rupture > 1 ? 's' : ''} en rupture
                   </div>
-                  <div style={{ fontSize: 12, marginTop: 2 }}>
+                  <div className="alert-card__text">
                     Commander d’urgence pour ne pas interrompre les traitements.
                   </div>
                 </div>
@@ -400,23 +365,14 @@ const PharmacieView: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`Commander ${stocksAOrdonner.length} produits via WhatsApp`}
+                className="btn--primary"
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
+                  width: '100%',
                   justifyContent: 'space-between',
-                  gap: 10,
                   padding: '12px 16px',
-                  borderRadius: 12,
-                  background: 'var(--pt-primary)',
-                  color: 'white',
-                  textDecoration: 'none',
-                  fontFamily: 'var(--pt-font-display)',
-                  fontWeight: 800,
-                  fontSize: 13,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em',
-                  marginBottom: 12,
                   minHeight: 44,
+                  marginBottom: 12,
+                  textDecoration: 'none',
                 }}
               >
                 <span>Commander {stocksAOrdonner.length} produits via WhatsApp</span>
@@ -429,22 +385,13 @@ const PharmacieView: React.FC = () => {
                 type="button"
                 onClick={() => navigate('/reglages')}
                 aria-label="Configurer le numéro WhatsApp dans les Réglages"
+                className="btn--ghost"
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '10px 14px',
-                  borderRadius: 12,
-                  background: 'transparent',
-                  border: '1px dashed var(--pt-line-strong)',
-                  color: 'var(--pt-muted)',
-                  fontFamily: 'var(--pt-font-mono)',
-                  fontSize: 12,
-                  textAlign: 'left',
-                  marginBottom: 12,
                   width: '100%',
+                  justifyContent: 'flex-start',
+                  padding: '10px 14px',
                   minHeight: 44,
-                  cursor: 'pointer',
+                  marginBottom: 12,
                 }}
               >
                 <Settings size={13} aria-hidden />
@@ -458,8 +405,7 @@ const PharmacieView: React.FC = () => {
                   key={t.value}
                   type="button"
                   role="tab"
-                  className="pill"
-                  aria-pressed={tab === t.value}
+                  className={`pill${tab === t.value ? ' is-active' : ''}`}
                   aria-selected={tab === t.value}
                   aria-label={`${t.label} · ${t.count}`}
                   onClick={() => setTab(t.value)}
@@ -471,7 +417,7 @@ const PharmacieView: React.FC = () => {
 
             {isEmpty ? (
               <div className="empty-state">
-                <div className="empty-state__illu" aria-hidden>
+                <div className="empty-state__icon" aria-hidden>
                   <Stethoscope size={48} strokeWidth={1.25} />
                 </div>
                 <div className="empty-state__title">Pharmacie vide</div>
@@ -480,8 +426,9 @@ const PharmacieView: React.FC = () => {
                 </div>
                 <button
                   type="button"
-                  className="btn--primary empty-state__cta"
+                  className="btn--primary"
                   onClick={() => setAddOpen(true)}
+                  style={{ padding: '12px 20px', minHeight: 44 }}
                 >
                   <Plus size={14} aria-hidden /> Nouveau produit
                 </button>
@@ -490,7 +437,7 @@ const PharmacieView: React.FC = () => {
               <Section label={`${items.length} produit${items.length > 1 ? 's' : ''}`}>
                 {items.length === 0 ? (
                   <div className="empty-state">
-                    <div className="empty-state__illu" aria-hidden>
+                    <div className="empty-state__icon" aria-hidden>
                       <Stethoscope size={40} strokeWidth={1.25} />
                     </div>
                     <div className="empty-state__title">Aucun élément</div>

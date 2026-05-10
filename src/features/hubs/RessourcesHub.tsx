@@ -73,28 +73,10 @@ const RessourcesHub: React.FC = () => {
               className="back"
               aria-label="Retour aux Réglages"
               onClick={() => navigate('/reglages')}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                background: 'none',
-                border: 'none',
-                padding: '4px 0',
-                marginBottom: 8,
-                color: 'rgba(245, 233, 216, 0.7)',
-                fontFamily: 'var(--pt-font-mono)',
-                fontSize: 11,
-                fontWeight: 500,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-                minHeight: 44,
-              }}
             >
-              <ChevronLeft size={14} strokeWidth={1.75} aria-hidden />
-              Retour
+              <ChevronLeft size={18} strokeWidth={1.8} aria-hidden />
             </button>
-            <div className="eyebrow">Stocks</div>
+            <div className="eyebrow">Ressources</div>
             <h1>Ressources</h1>
             <div className="sub">{subtitle}</div>
           </header>

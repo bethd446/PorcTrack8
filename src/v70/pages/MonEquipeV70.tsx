@@ -6,6 +6,10 @@
  *  - bouton "Inviter un membre" visible si currentRole ∈ {OWNER, ADMIN}
  *  - BottomSheet form (email + rôle) → INSERT farm_members
  *  - vérification user existant via lookup `profiles.email` (RLS-safe)
+ *
+ * V77.1 — polish : KPI tiles et lignes membre extraits dans des styles
+ * partagés (avatar 44px, nom mono 600, badge rôle pill mono). Boutons CTA
+ * via `.btn--primary btn--full` (constitution V77.1 — pas de --lg).
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -27,7 +31,6 @@ interface TeamMember {
 }
 
 // V76: roles colors — couleurs sémantiques métier dérivées des tokens DNA.
-// Tokens utilisés : --pt-primary (Owner), --pt-amber-ink (Porcher), reste = teintes spécifiques rôles non couvertes par les tokens globaux.
 const ROLE_LABELS: Record<string, { label: string; color: string; bg: string }> = {
   OWNER:    { label: 'Owner',    color: 'var(--pt-primary)',    bg: '#cce0bf' },
   ADMIN:    { label: 'Admin',    color: '#6b4910',              bg: '#f4dcb6' },
@@ -45,6 +48,98 @@ function initialOf(member: TeamMember): string {
   const src = member.full_name?.trim() || member.email?.trim() || member.user_id;
   return (src.charAt(0) || '?').toUpperCase();
 }
+
+const statTileStyle: React.CSSProperties = {
+  background: 'var(--bg-surface)',
+  borderRadius: 'var(--radius-card, 24px)',
+  padding: '18px 12px',
+  border: '1px solid var(--line)',
+  textAlign: 'center',
+};
+
+const statValueStyle: React.CSSProperties = {
+  fontFamily: 'var(--pt-font-display)',
+  fontSize: 28,
+  fontWeight: 800,
+  color: 'var(--ink)',
+  lineHeight: 1,
+};
+
+const statLabelStyle: React.CSSProperties = {
+  fontFamily: 'var(--pt-font-mono)',
+  fontSize: 10,
+  letterSpacing: '0.14em',
+  textTransform: 'uppercase',
+  color: 'var(--muted)',
+  marginTop: 6,
+  fontWeight: 600,
+};
+
+const memberRowStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 12,
+  padding: '14px 16px',
+  background: 'var(--bg-surface)',
+  border: '1px solid var(--line)',
+  borderRadius: 16,
+  marginBottom: 8,
+};
+
+const memberAvatarStyle: React.CSSProperties = {
+  width: 44,
+  height: 44,
+  borderRadius: 14,
+  background: 'var(--pt-primary, #2D4A1F)',
+  color: 'white',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontFamily: 'var(--pt-font-display)',
+  fontWeight: 800,
+  fontSize: 16,
+  flexShrink: 0,
+};
+
+const memberNameStyle: React.CSSProperties = {
+  fontFamily: 'var(--pt-font-mono)',
+  fontSize: 13,
+  fontWeight: 600,
+  color: 'var(--ink)',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+};
+
+const memberSubStyle: React.CSSProperties = {
+  fontSize: 11,
+  color: 'var(--muted)',
+  marginTop: 2,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+};
+
+const roleBadgeStyle: React.CSSProperties = {
+  fontFamily: 'var(--pt-font-mono)',
+  fontSize: 10,
+  fontWeight: 700,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  padding: '5px 10px',
+  borderRadius: 999,
+  flexShrink: 0,
+};
+
+const emptyStateStyle: React.CSSProperties = {
+  padding: 18,
+  background: 'var(--bg-surface)',
+  border: '1px solid var(--line)',
+  borderRadius: 16,
+  fontSize: 13,
+  color: 'var(--muted)',
+  textAlign: 'center',
+};
 
 const ROLE_OPTIONS: Array<{ value: FarmRole; title: string; subtitle: string }> = [
   { value: 'PORCHER', title: 'Porcher',  subtitle: 'Saisie terrain · pas d’accès finances' },
@@ -67,7 +162,6 @@ const InviteSheet: React.FC<InviteSheetProps> = ({ isOpen, onClose, onInvited, c
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Reset à la fermeture
   useEffect(() => {
     if (!isOpen) {
       setEmail('');
@@ -87,7 +181,6 @@ const InviteSheet: React.FC<InviteSheetProps> = ({ isOpen, onClose, onInvited, c
     }
     setSubmitting(true);
     try {
-      // 1. Lookup user via profiles.email (RLS — l'utilisateur doit voir le profil cible).
       const { data: profileRow, error: lookupErr } = await supabase
         .from('profiles')
         .select('id, email')
@@ -106,7 +199,6 @@ const InviteSheet: React.FC<InviteSheetProps> = ({ isOpen, onClose, onInvited, c
         return;
       }
 
-      // 2. INSERT farm_members
       const { error: insertErr } = await supabase
         .from('farm_members')
         .insert({
@@ -141,11 +233,12 @@ const InviteSheet: React.FC<InviteSheetProps> = ({ isOpen, onClose, onInvited, c
             htmlFor="invite-email"
             style={{
               display: 'block',
-              fontSize: 11,
-              letterSpacing: '0.16em',
+              fontFamily: 'var(--pt-font-mono)',
+              fontSize: 10,
+              letterSpacing: '0.14em',
               textTransform: 'uppercase',
               color: 'var(--pt-muted, #6b6357)',
-              fontWeight: 500,
+              fontWeight: 600,
               marginBottom: 6,
             }}
           >
@@ -178,11 +271,12 @@ const InviteSheet: React.FC<InviteSheetProps> = ({ isOpen, onClose, onInvited, c
           <span
             style={{
               display: 'block',
-              fontSize: 11,
-              letterSpacing: '0.16em',
+              fontFamily: 'var(--pt-font-mono)',
+              fontSize: 10,
+              letterSpacing: '0.14em',
               textTransform: 'uppercase',
               color: 'var(--pt-muted, #6b6357)',
-              fontWeight: 500,
+              fontWeight: 600,
               marginBottom: 8,
             }}
           >
@@ -220,7 +314,7 @@ const InviteSheet: React.FC<InviteSheetProps> = ({ isOpen, onClose, onInvited, c
                       style={{
                         display: 'block',
                         fontFamily: 'var(--pt-font-display)',
-                        fontWeight: 700,
+                        fontWeight: 800,
                         fontSize: 13,
                         letterSpacing: '0.04em',
                         textTransform: 'uppercase',
@@ -258,20 +352,7 @@ const InviteSheet: React.FC<InviteSheetProps> = ({ isOpen, onClose, onInvited, c
         <button
           type="submit"
           disabled={submitting || !email.trim()}
-          style={{
-            width: '100%',
-            padding: '14px 18px',
-            background: submitting ? 'var(--pt-muted, #6b6357)' : 'var(--pt-primary, #2D4A1F)',
-            color: 'white',
-            border: 'none',
-            borderRadius: 16,
-            cursor: submitting ? 'not-allowed' : 'pointer',
-            fontFamily: 'var(--pt-font-display)',
-            fontWeight: 700,
-            fontSize: 14,
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-          }}
+          className="btn--primary btn--full"
         >
           {submitting ? 'Envoi…' : 'Envoyer l’invitation'}
         </button>
@@ -303,9 +384,6 @@ export const MonEquipeV70: React.FC = () => {
     setLoading(true);
     setError(null);
     void (async () => {
-      // Pas de FK déclarée farm_members → profiles dans le schema Supabase :
-      // on fait deux requêtes (membres puis profiles.id IN (...)) et on
-      // hydrate côté client.
       const { data: rows, error: fetchErr } = await supabase
         .from('farm_members')
         .select('user_id, role')
@@ -397,246 +475,95 @@ export const MonEquipeV70: React.FC = () => {
         </div>
 
         <section className="section">
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 12,
-            }}
-          >
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
             {[
               { value: stats.total, label: 'Membres' },
               { value: stats.owners, label: 'Owners' },
               { value: stats.porchers, label: 'Porchers' },
             ].map((kpi) => (
-            <article
-              key={kpi.label}
-              style={{
-                background: 'var(--bg-surface)',
-                borderRadius: 'var(--radius-card, 24px)',
-                padding: '18px 12px',
-                border: '1px solid var(--line)',
-                textAlign: 'center',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 28,
-                  fontFamily: 'var(--pt-font-display)',
-                  fontWeight: 700,
-                  color: 'var(--ink)',
-                }}
-              >
-                {kpi.value}
-              </div>
-              <div
-                style={{
-                  fontSize: 11,
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                  color: 'var(--muted)',
-                  marginTop: 4,
-                }}
-              >
-                {kpi.label}
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {canInvite && (
-        <section className="section">
-          <button
-            type="button"
-            onClick={() => setInviteOpen(true)}
-            aria-label="Inviter un membre dans la ferme"
-            className="btn-secondary--lg"
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 10,
-              background: 'var(--pt-accent, #B8703D)',
-              color: 'white',
-              borderColor: 'transparent',
-            }}
-          >
-            <UserPlus size={18} aria-hidden />
-            Inviter un membre
-          </button>
+              <article key={kpi.label} style={statTileStyle}>
+                <div style={statValueStyle}>{kpi.value}</div>
+                <div style={statLabelStyle}>{kpi.label}</div>
+              </article>
+            ))}
+          </div>
         </section>
-      )}
 
-      <section className="section">
-        <div className="section__label">Membres</div>
-
-        {loading && (
-          <div
-            style={{
-              padding: 18,
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--line)',
-              borderRadius: 16,
-              fontSize: 13,
-              color: 'var(--muted)',
-              textAlign: 'center',
-            }}
-          >
-            Chargement…
-          </div>
-        )}
-
-        {!loading && error && (
-          <div
-            style={{
-              padding: 18,
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--line)',
-              borderRadius: 16,
-              fontSize: 13,
-              color: 'var(--pt-danger)',
-              textAlign: 'center',
-            }}
-          >
-            {error}
-          </div>
-        )}
-
-        {!loading && !error && members.length === 0 && (
-          <div
-            style={{
-              padding: 18,
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--line)',
-              borderRadius: 16,
-              fontSize: 13,
-              color: 'var(--muted)',
-              textAlign: 'center',
-            }}
-          >
-            Aucun membre enregistré.
-          </div>
-        )}
-
-        {!loading && !error && members.map((m) => {
-          const roleStyle = getRoleStyle((m.role || '').toUpperCase());
-          const isYou = profile?.id === m.user_id;
-          const displayName = m.full_name?.trim() || m.email || m.user_id.substring(0, 8) + '…';
-          return (
-            <article
-              key={m.user_id}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                padding: '14px 16px',
-                background: 'var(--bg-surface)',
-                border: '1px solid var(--line)',
-                borderRadius: 16,
-                marginBottom: 10,
-              }}
+        {canInvite && (
+          <section className="section">
+            <button
+              type="button"
+              onClick={() => setInviteOpen(true)}
+              aria-label="Inviter un membre dans la ferme"
+              className="btn--primary btn--full"
             >
-              <span
-                aria-hidden
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: '50%',
-                  background: 'var(--pt-primary, #064e3b)',
-                  color: 'white',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: 'var(--pt-font-display)',
-                  fontWeight: 700,
-                  fontSize: 16,
-                  flexShrink: 0,
-                }}
-              >
-                {initialOf(m)}
-              </span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: 'var(--ink)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {displayName}
-                  {isYou && (
-                    <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 500, marginLeft: 6 }}>
-                      (vous)
-                    </span>
+              <UserPlus size={18} aria-hidden />
+              Inviter un membre
+            </button>
+          </section>
+        )}
+
+        <section className="section">
+          <div className="section__label">Membres</div>
+
+          {loading && <div style={emptyStateStyle}>Chargement…</div>}
+
+          {!loading && error && (
+            <div style={{ ...emptyStateStyle, color: 'var(--pt-danger)' }}>{error}</div>
+          )}
+
+          {!loading && !error && members.length === 0 && (
+            <div style={emptyStateStyle}>Aucun membre enregistré.</div>
+          )}
+
+          {!loading && !error && members.map((m) => {
+            const roleStyle = getRoleStyle((m.role || '').toUpperCase());
+            const isYou = profile?.id === m.user_id;
+            const displayName = m.full_name?.trim() || m.email || m.user_id.substring(0, 8) + '…';
+            return (
+              <article key={m.user_id} style={memberRowStyle}>
+                <span aria-hidden style={memberAvatarStyle}>{initialOf(m)}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={memberNameStyle}>
+                    {displayName}
+                    {isYou && (
+                      <span style={{ fontSize: 10, color: 'var(--muted)', fontWeight: 500, marginLeft: 6 }}>
+                        (vous)
+                      </span>
+                    )}
+                  </div>
+                  {m.email && m.email !== displayName && (
+                    <div style={memberSubStyle}>{m.email}</div>
                   )}
                 </div>
-                {m.email && m.email !== displayName && (
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: 'var(--muted)',
-                      marginTop: 2,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {m.email}
-                  </div>
-                )}
-              </div>
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  padding: '5px 10px',
-                  borderRadius: 999,
-                  color: roleStyle.color,
-                  background: roleStyle.bg,
-                  flexShrink: 0,
-                }}
-              >
-                {roleStyle.label}
-              </span>
-            </article>
-          );
-        })}
-      </section>
+                <span style={{ ...roleBadgeStyle, color: roleStyle.color, background: roleStyle.bg }}>
+                  {roleStyle.label}
+                </span>
+              </article>
+            );
+          })}
+        </section>
 
-      <section className="section" style={{ marginTop: 32, marginBottom: 32 }}>
-        <button
-          type="button"
-          onClick={() => navigate('/admin')}
-          aria-label="Modifier l’équipe"
-          className="btn-primary--lg"
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            justifyContent: 'center',
-          }}
-        >
-          Modifier l’équipe
-          <ChevronRight size={18} aria-hidden />
-        </button>
-      </section>
+        <section className="section" style={{ marginTop: 32, marginBottom: 32 }}>
+          <button
+            type="button"
+            onClick={() => navigate('/admin')}
+            aria-label="Modifier l’équipe"
+            className="btn--primary btn--full"
+          >
+            Modifier l’équipe
+            <ChevronRight size={18} aria-hidden />
+          </button>
+        </section>
 
-      {currentFarmId && (
-        <InviteSheet
-          isOpen={inviteOpen}
-          onClose={() => setInviteOpen(false)}
-          onInvited={() => setRefreshTick((n) => n + 1)}
-          currentFarmId={currentFarmId}
-        />
-      )}
+        {currentFarmId && (
+          <InviteSheet
+            isOpen={inviteOpen}
+            onClose={() => setInviteOpen(false)}
+            onInvited={() => setRefreshTick((n) => n + 1)}
+            currentFarmId={currentFarmId}
+          />
+        )}
       </div>
     </div>
   );

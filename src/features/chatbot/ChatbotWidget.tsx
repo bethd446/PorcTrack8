@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { X, Send, Loader2 } from 'lucide-react';
+import { X, Send } from 'lucide-react';
 import { Button } from '@/design-system';
 import { MARIUS_SYSTEM_PROMPT } from './mariusSystemPrompt';
 import { useFarm } from '../../context/FarmContext';
@@ -420,19 +420,25 @@ export const ChatbotWidget: React.FC = () => {
       style={{ background: 'var(--bg-surface)' }}
     >
       <header className="ph ph--primary" style={{ margin: 0, borderRadius: 0 }}>
-        <div className="ph__row">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-            <img
-              src="/images/v73/marius/orb-emeraude.webp"
-              alt=""
-              aria-hidden
-              className="w-8 h-8 rounded-full object-cover"
-              style={{ boxShadow: '0 0 12px rgba(52,211,153,0.55)', flexShrink: 0 }}
-            />
-            <div style={{ minWidth: 0 }}>
-              <div className="ph__eyebrow">Assistant IA</div>
-              <h1 className="ph__h1" style={{ fontSize: 18 }}>Marius</h1>
-            </div>
+        <div className="ph__row" style={{ alignItems: 'center', gap: 12 }}>
+          <img
+            src="/images/v73/marius/orb-emeraude.webp"
+            alt=""
+            aria-hidden
+            width={36}
+            height={36}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: '50%',
+              objectFit: 'cover',
+              flexShrink: 0,
+              boxShadow: '0 0 12px rgba(52, 211, 153, 0.55)',
+            }}
+          />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="ph__eyebrow">Assistant IA</div>
+            <h1 className="ph__h1" style={{ fontSize: 18 }}>Marius</h1>
           </div>
           <Button variant="ghost" size="small" onClick={handleClose} ariaLabel="Fermer la conversation">
             <X size={18} />
@@ -442,44 +448,58 @@ export const ChatbotWidget: React.FC = () => {
 
       <div
         aria-live="polite"
-        className="flex-1 overflow-y-auto px-3 py-3 space-y-3 min-h-[200px]"
+        className="flex-1 overflow-y-auto px-3 py-3 min-h-[200px]"
+        style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
       >
         {messages.length === 0 && (
-          <div className="text-center mt-6 px-2">
-            <p className="text-xs mb-3" style={{ color: 'var(--muted)' }}>
-              Bonjour, je suis Marius.<br />
-              Posez-moi une question sur votre élevage.
-            </p>
-            <div className="flex flex-col gap-2 mt-4">
+          <>
+            <div className="bubble bubble--marius">
+              <p style={{ margin: 0 }}>
+                Bonjour, je suis Marius.
+                <br />
+                Pose-moi une question sur ton élevage.
+              </p>
+            </div>
+            <div
+              className="pills"
+              style={{
+                padding: '4px 0 2px',
+                margin: 0,
+                flexWrap: 'wrap',
+                overflowX: 'visible',
+              }}
+            >
               {suggestions.map((s) => (
                 <button
                   key={s.id}
                   type="button"
+                  className="pill"
                   onClick={() => {
                     setInput(s.question);
-                    // Auto-submit après que React ait flush l'input.
                     setTimeout(() => formRef.current?.requestSubmit(), 0);
-                  }}
-                  className="text-xs text-left px-3 py-2 rounded-xl transition-colors hover:bg-[var(--bg-surface-2)]"
-                  style={{
-                    background: 'var(--bg-surface-2)',
-                    color: 'var(--ink)',
-                    border: '1px solid var(--line)',
                   }}
                 >
                   {s.question}
                 </button>
               ))}
             </div>
-          </div>
+          </>
         )}
         {messages.map((m, i) => {
           if (m.role === 'system') {
             return (
               <div
                 key={i}
-                className="text-xs text-center px-3 py-2 rounded-lg mx-auto max-w-[90%]"
-                style={{ background: 'var(--bg-surface-2)', color: 'var(--muted)' }}
+                style={{
+                  alignSelf: 'center',
+                  fontSize: 12,
+                  color: 'var(--pt-muted)',
+                  background: 'var(--pt-bg-app)',
+                  borderRadius: 8,
+                  padding: '6px 10px',
+                  maxWidth: '90%',
+                  textAlign: 'center',
+                }}
               >
                 {m.content}
               </div>
@@ -487,28 +507,54 @@ export const ChatbotWidget: React.FC = () => {
           }
           if (m.role === 'user') {
             return (
-              <div key={i} className="flex justify-end">
-                <div className="bubble" style={{ maxWidth: '80%' }}>
-                  {m.content}
-                </div>
+              <div key={i} className="bubble bubble--user">
+                {m.content}
               </div>
             );
           }
           return (
-            <div key={i} className="flex justify-start">
-              <div className="alert-card--info" style={{ maxWidth: '80%' }}>
-                {m.content
-                  ? renderMariusMarkdown(m.content)
-                  : (loading && !streaming ? 'Marius reflechit…' : '')}
-              </div>
+            <div key={i} className="bubble bubble--marius">
+              {m.content
+                ? renderMariusMarkdown(m.content)
+                : loading && !streaming
+                  ? 'Marius reflechit…'
+                  : ''}
             </div>
           );
         })}
         {loading && !streaming && (
-          <div className="flex justify-start items-center gap-2 px-2">
-            <Loader2 size={14} className="animate-spin" style={{ color: 'var(--muted)' }} />
-            <span className="text-xs" style={{ color: 'var(--muted)' }}>
-              Marius reflechit…
+          <div className="bubble bubble--marius" aria-label="Marius rédige">
+            <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 99,
+                  background: 'var(--pt-muted)',
+                  animation: 'tdot 1.2s infinite',
+                  animationDelay: '0s',
+                }}
+              />
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 99,
+                  background: 'var(--pt-muted)',
+                  animation: 'tdot 1.2s infinite',
+                  animationDelay: '0.15s',
+                }}
+              />
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 99,
+                  background: 'var(--pt-muted)',
+                  animation: 'tdot 1.2s infinite',
+                  animationDelay: '0.3s',
+                }}
+              />
             </span>
           </div>
         )}

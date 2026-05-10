@@ -22,7 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import { IonPage, IonContent } from '@ionic/react';
 import { ChevronLeft, ChevronRight, CheckCircle2, Loader2 } from 'lucide-react';
 
-import { Button, Card, PageHeader, Section } from '@/design-system';
+import { Button, Card, Section } from '@/design-system';
 import { supabase } from '../../services/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -207,23 +207,61 @@ export default function OnboardingV2Wizard() {
           <header className="ph ph--primary">
             <div className="ph__row">
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="ph__eyebrow">Configuration · {stepLabels[step]}</div>
-                <h1 className="ph__h1">Bienvenue sur PorcTrack</h1>
+                <div className="ph__eyebrow">Configuration · Bienvenue</div>
+                <h1 className="ph__h1">{stepLabels[step]}</h1>
                 <p className="ph__sub">
-                  2 minutes pour configurer ton élevage. Marius t&apos;accompagne dès la première saisie.
+                  2 minutes pour configurer ton élevage. Marius t&apos;accompagne dès la première
+                  saisie.
                 </p>
               </div>
             </div>
-            <div style={{ marginTop: 14 }}>
-              <span className="step-pill">Étape {step} / 5</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14 }}>
+              <span className="step-pill" style={{ margin: 0 }}>
+                Étape {step} / 5
+              </span>
+              <div
+                style={{
+                  flex: 1,
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(5, 1fr)',
+                  gap: 4,
+                }}
+              >
+                {[1, 2, 3, 4, 5].map((idx) => {
+                  const isDone = idx < step;
+                  const isNow = idx === step;
+                  return (
+                    <div
+                      key={idx}
+                      style={{
+                        height: 3,
+                        borderRadius: 99,
+                        background: isDone
+                          ? 'var(--pt-warm)'
+                          : isNow
+                            ? 'var(--pt-accent-light, var(--pt-accent))'
+                            : 'rgba(245, 233, 216, 0.2)',
+                      }}
+                    />
+                  );
+                })}
+              </div>
             </div>
           </header>
-          <div className="phone-content" style={{ padding: '8px 24px 168px', maxWidth: 720, margin: '0 auto' }}>
-            <PageHeader
-              eyebrow={`Étape ${step} / 5`}
-              title={stepLabels[step]}
-              subtitle="Renseigne les infos demandées. Tu pourras les modifier ensuite depuis Réglages."
-            />
+          <div
+            className="phone-content"
+            style={{ padding: '8px 24px 168px', maxWidth: 720, margin: '0 auto' }}
+          >
+            <p
+              style={{
+                fontSize: 13,
+                color: 'var(--pt-muted)',
+                margin: '12px 0 16px',
+                lineHeight: 1.5,
+              }}
+            >
+              Renseigne les infos demandées. Tu pourras les modifier ensuite depuis Réglages.
+            </p>
 
           {/* ÉTAPE 1 : Type d'élevage */}
           {step === 1 && (
@@ -367,8 +405,18 @@ export default function OnboardingV2Wizard() {
                     <Recap label="Engraissement" value={data.nbLogesEng > 0 ? `${data.nbLogesEng} loge${data.nbLogesEng > 1 ? 's' : ''} × ${data.capaciteEng}` : '—'} />
                   )}
                 </div>
-                <div style={{ marginTop: 16, padding: 12, borderRadius: 8, background: 'var(--pt-warm)', fontSize: 12, color: 'var(--pt-ink)' }}>
-                  À la confirmation, on crée automatiquement : <strong>{data.nbTruies}</strong> truies (T-001 à T-{String(data.nbTruies).padStart(3, '0')}), <strong>{data.nbVerrats}</strong> verrats, <strong>{data.nbLogesMat * data.casesParLogeMat}</strong> cases maternité, <strong>{data.nbLogesPS}</strong> loges post-sevrage{data.type === 'NAISSEUR_ENGRAISSEUR' ? `, ${data.nbLogesEng} loges engraissement` : ''}.
+                <div className="alert-card--info" style={{ marginTop: 16 }}>
+                  <div className="alert-card__body">
+                    À la confirmation, on crée automatiquement : <strong>{data.nbTruies}</strong>{' '}
+                    truies (T-001 à T-{String(data.nbTruies).padStart(3, '0')}),{' '}
+                    <strong>{data.nbVerrats}</strong> verrats,{' '}
+                    <strong>{data.nbLogesMat * data.casesParLogeMat}</strong> cases maternité,{' '}
+                    <strong>{data.nbLogesPS}</strong> loges post-sevrage
+                    {data.type === 'NAISSEUR_ENGRAISSEUR'
+                      ? `, ${data.nbLogesEng} loges engraissement`
+                      : ''}
+                    .
+                  </div>
                 </div>
               </div>
             </Card>

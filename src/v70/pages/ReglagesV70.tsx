@@ -5,6 +5,10 @@
  * (cohérent avec /performance, /finances, /animals). Cards sections via
  * `.section` + `.section__label`, navigation via `.card-link`.
  *
+ * V77.1 — polish : bouton signOut converti au pattern `.card-link` pour
+ * uniformité avec les autres rangées de réglages (icône 40x40, titre mono,
+ * sub muted, chevron). Avatar profil simplifié (font display 800).
+ *
  * Sous-routes (montées dans V70Routes) :
  * - /reglages/encyclopedie → EncyclopediaPage
  * - /reglages/onboarding → OnboardingEduPage
@@ -44,7 +48,12 @@ interface SettingsRowProps {
 }
 
 const SettingsRow: React.FC<SettingsRowProps> = ({ title, subtitle, Icon, onClick }) => (
-  <button type="button" className="card-link" onClick={onClick} aria-label={`${title} — ${subtitle}`}>
+  <button
+    type="button"
+    className="card-link"
+    onClick={onClick}
+    aria-label={`${title} — ${subtitle}`}
+  >
     <span className="card-link__icon" aria-hidden>
       <Icon size={18} strokeWidth={1.6} />
     </span>
@@ -57,6 +66,13 @@ const SettingsRow: React.FC<SettingsRowProps> = ({ title, subtitle, Icon, onClic
     </span>
   </button>
 );
+
+const profileAvatarStyle: React.CSSProperties = {
+  background: 'var(--pt-primary)',
+  color: 'white',
+  fontFamily: 'var(--pt-font-display)',
+  fontWeight: 800,
+};
 
 export const ReglagesV70: React.FC = () => {
   const navigate = useNavigate();
@@ -118,15 +134,7 @@ export const ReglagesV70: React.FC = () => {
 
         <Card variant="hero">
           <div className="hero-row">
-            <div
-              className="avatar avatar-lg"
-              style={{
-                background: 'var(--pt-primary)',
-                color: 'white',
-                fontSize: 32,
-                fontWeight: 700,
-              }}
-            >
+            <div className="avatar avatar-lg" style={profileAvatarStyle} aria-hidden>
               {initial}
             </div>
             <div className="hero-info">
@@ -150,7 +158,11 @@ export const ReglagesV70: React.FC = () => {
         <section className="section">
           <div className="section__label">Synchronisation</div>
           <SettingsRow
-            title={pendingCount === 0 ? 'Tout est synchronisé' : `${pendingCount} action${pendingCount > 1 ? 's' : ''} en attente`}
+            title={
+              pendingCount === 0
+                ? 'Tout est synchronisé'
+                : `${pendingCount} action${pendingCount > 1 ? 's' : ''} en attente`
+            }
             subtitle={
               errorCount > 0
                 ? `${errorCount} erreur${errorCount > 1 ? 's' : ''} · voir la file pour relancer`
@@ -219,40 +231,22 @@ export const ReglagesV70: React.FC = () => {
             type="button"
             onClick={handleSignOut}
             aria-label="Se déconnecter de PorcTrack"
-            className="btn-secondary--lg"
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              textAlign: 'left',
-              justifyContent: 'flex-start',
-            }}
+            className="card-link"
           >
             <span
+              className="card-link__icon"
               aria-hidden
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                background: 'rgba(164, 69, 61, 0.08)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
+              style={{ background: 'rgba(164, 69, 61, 0.08)' }}
             >
-              <LogOut size={18} color="var(--color-danger, #a4453d)" />
+              <LogOut size={18} strokeWidth={1.6} color="var(--pt-danger, #a4453d)" />
             </span>
-            <span style={{ flex: 1 }}>
-              <span style={{ display: 'block', fontWeight: 600, color: 'var(--ink)' }}>
-                Se déconnecter
-              </span>
-              <span style={{ display: 'block', fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
-                Quitter votre session PorcTrack
-              </span>
+            <span className="card-link__main">
+              <span className="card-link__title">Se déconnecter</span>
+              <span className="card-link__sub">Quitter votre session PorcTrack</span>
             </span>
-            <ChevronRight size={18} color="var(--muted)" aria-hidden />
+            <span className="card-link__chev" aria-hidden>
+              <ChevronRight size={16} strokeWidth={1.6} />
+            </span>
           </button>
         </section>
       </div>

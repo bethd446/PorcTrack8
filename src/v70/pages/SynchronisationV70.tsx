@@ -5,6 +5,10 @@
  * actions en attente, retry individuel ou bulk, vider la file, consulter
  * les actions échouées (archive).
  *
+ * V77.1 — polish : boutons CTA via classes DS canoniques
+ * (`.btn--primary btn--sm` / `.btn--ghost btn--sm` override couleur danger).
+ * Plus de helpers inline `btnPrimaryStyle/btnDangerStyle`.
+ *
  * Pas de nouvelle dépendance UI — DS V70 strict (tokens var(--pt-*),
  * Lucide icons, pas d'emoji).
  */
@@ -93,9 +97,29 @@ function statusForItem(it: QueueItem): ItemStatus {
   return {
     label: `Retry ${it.tries}/5`,
     color: 'var(--pt-amber-ink)',
-    bg: '#fef3c7', // V76: pas de token équivalent (warning bg pâle)
+    bg: '#fef3c7',
   };
 }
+
+const dangerBtnOverride: React.CSSProperties = {
+  color: 'var(--pt-crimson-ink)',
+  borderColor: '#fecdd3',
+};
+
+const retryChipStyle = (disabled: boolean): React.CSSProperties => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 4,
+  padding: '6px 10px',
+  borderRadius: 999,
+  background: 'var(--pt-bg-app)',
+  border: '1px solid var(--pt-line)',
+  color: 'var(--pt-ink)',
+  fontSize: 12,
+  cursor: disabled ? 'not-allowed' : 'pointer',
+  opacity: disabled ? 0.5 : 1,
+  flexShrink: 0,
+});
 
 export const SynchronisationV70: React.FC = () => {
   const navigate = useNavigate();
@@ -208,130 +232,210 @@ export const SynchronisationV70: React.FC = () => {
         style={{ padding: '0 24px 24px', maxWidth: 600, margin: '0 auto' }}
       >
         {/* Bandeau état réseau */}
-      <div
-        role="status"
-        aria-live="polite"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          padding: '12px 14px',
-          borderRadius: 12,
-          background: online ? 'var(--pt-bg-app)' : '#fef3c7',
-          border: `1px solid ${online ? 'var(--pt-line)' : '#fde68a'}`,
-          fontFamily: 'var(--pt-font-body)',
-          fontSize: 13,
-          color: online ? 'var(--pt-ink)' : 'var(--pt-amber-ink)',
-          marginBottom: 16,
-        }}
-      >
-        {online ? (
-          <Cloud size={16} aria-hidden color="var(--pt-primary, #064e3b)" />
-        ) : (
-          <CloudOff size={16} aria-hidden color="var(--pt-amber-ink)" />
-        )}
-        <span>
-          {online ? 'Réseau disponible' : 'Hors ligne — la file se drainera au retour réseau'}
-        </span>
-      </div>
-
-      {/* Actions globales */}
-      {totalPending > 0 && (
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            onClick={handleRetryAll}
-            disabled={busy || !online}
-            aria-label="Tout retry maintenant"
-            style={btnPrimaryStyle(busy || !online)}
-          >
-            <RefreshCw size={14} aria-hidden /> Tout retry
-          </button>
-          <button
-            type="button"
-            onClick={handleClearQueue}
-            disabled={busy}
-            aria-label="Vider la file"
-            style={btnDangerStyle(busy)}
-          >
-            <Trash2 size={14} aria-hidden /> Vider la file
-          </button>
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            padding: '12px 14px',
+            borderRadius: 12,
+            background: online ? 'var(--pt-bg-app)' : '#fef3c7',
+            border: `1px solid ${online ? 'var(--pt-line)' : '#fde68a'}`,
+            fontFamily: 'var(--pt-font-body)',
+            fontSize: 13,
+            color: online ? 'var(--pt-ink)' : 'var(--pt-amber-ink)',
+            marginBottom: 16,
+          }}
+        >
+          {online ? (
+            <Cloud size={16} aria-hidden color="var(--pt-primary, #064e3b)" />
+          ) : (
+            <CloudOff size={16} aria-hidden color="var(--pt-amber-ink)" />
+          )}
+          <span>
+            {online ? 'Réseau disponible' : 'Hors ligne — la file se drainera au retour réseau'}
+          </span>
         </div>
-      )}
 
-      <section className="section">
-        <div className="section__label">
-          {totalPending > 0 ? 'Actions en attente' : 'Aucune action en attente'}
-        </div>
-        {totalPending === 0 ? (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '16px 14px',
-              borderRadius: 12,
-              background: 'var(--pt-emerald-bg)',
-              border: '1px solid #a7f3d0', // V76: pas de token équivalent (emerald-200 border)
-              color: 'var(--pt-emerald-ink)',
-              fontSize: 13,
-            }}
-          >
-            <CheckCircle2 size={16} aria-hidden /> Tout est synchronisé.
+        {/* Actions globales */}
+        {totalPending > 0 && (
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={handleRetryAll}
+              disabled={busy || !online}
+              aria-label="Tout retry maintenant"
+              className="btn--primary btn--sm"
+            >
+              <RefreshCw size={14} aria-hidden /> Tout retry
+            </button>
+            <button
+              type="button"
+              onClick={handleClearQueue}
+              disabled={busy}
+              aria-label="Vider la file"
+              className="btn--ghost btn--sm"
+              style={dangerBtnOverride}
+            >
+              <Trash2 size={14} aria-hidden /> Vider la file
+            </button>
           </div>
-        ) : (
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-            {items.map((it) => {
-              const status = statusForItem(it);
-              return (
-                <li
-                  key={it.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: '12px 0',
-                    borderBottom: '1px solid var(--pt-line)',
-                  }}
-                >
-                  <div style={{ flex: 1, minWidth: 0 }}>
+        )}
+
+        <section className="section">
+          <div className="section__label">
+            {totalPending > 0 ? 'Actions en attente' : 'Aucune action en attente'}
+          </div>
+          {totalPending === 0 ? (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '16px 14px',
+                borderRadius: 12,
+                background: 'var(--pt-emerald-bg)',
+                border: '1px solid #a7f3d0',
+                color: 'var(--pt-emerald-ink)',
+                fontSize: 13,
+              }}
+            >
+              <CheckCircle2 size={16} aria-hidden /> Tout est synchronisé.
+            </div>
+          ) : (
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+              {items.map((it) => {
+                const status = statusForItem(it);
+                return (
+                  <li
+                    key={it.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: '12px 0',
+                      borderBottom: '1px solid var(--pt-line)',
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontFamily: 'var(--pt-font-display)',
+                          fontWeight: 800,
+                          fontSize: 14,
+                          color: 'var(--pt-ink)',
+                          letterSpacing: '-0.005em',
+                        }}
+                      >
+                        {formatMutationLabel(it.mutation)}
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: 'var(--pt-font-mono)',
+                          fontSize: 11,
+                          color: 'var(--pt-muted)',
+                          marginTop: 2,
+                          display: 'flex',
+                          gap: 8,
+                          alignItems: 'center',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        <span>{formatRelativeTime(it.timestamp)}</span>
+                        <span
+                          style={{
+                            padding: '2px 8px',
+                            borderRadius: 999,
+                            background: status.bg,
+                            color: status.color,
+                            fontSize: 10,
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.04em',
+                          }}
+                        >
+                          {status.label}
+                        </span>
+                      </div>
+                      {it.lastError && (
+                        <div
+                          style={{
+                            marginTop: 4,
+                            fontSize: 11,
+                            color: 'var(--pt-crimson-ink)',
+                            fontFamily: 'var(--pt-font-mono, monospace)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            maxWidth: '100%',
+                          }}
+                          title={it.lastError}
+                        >
+                          {it.lastError}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRetryOne(it.id)}
+                      disabled={busy || !online}
+                      aria-label={`Retry ${formatMutationLabel(it.mutation)}`}
+                      style={retryChipStyle(busy || !online)}
+                    >
+                      <RefreshCw size={12} aria-hidden /> Retry
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+
+        {/* Archive */}
+        <section className="section">
+          <div className="section__label">
+            {archive.length > 0 ? `Erreurs définitives (${archive.length})` : 'Aucune erreur définitive'}
+          </div>
+          {archive.length === 0 ? (
+            <p style={{ color: 'var(--pt-muted)', fontSize: 13, marginTop: 8 }}>
+              Pas d'action abandonnée. Les retries se sont tous résolus.
+            </p>
+          ) : (
+            <>
+              <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                {archive.slice().reverse().map((it) => (
+                  <li
+                    key={it.id}
+                    style={{
+                      padding: '10px 0',
+                      borderBottom: '1px solid var(--pt-line)',
+                    }}
+                  >
                     <div
                       style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        fontSize: 13,
+                        color: 'var(--pt-crimson-ink)',
                         fontFamily: 'var(--pt-font-display)',
-                        fontWeight: 700,
-                        fontSize: 14,
-                        color: 'var(--pt-ink)',
+                        fontWeight: 800,
                       }}
                     >
+                      <AlertTriangle size={14} aria-hidden />
                       {formatMutationLabel(it.mutation)}
                     </div>
                     <div
                       style={{
-                        fontFamily: 'var(--pt-font-body)',
+                        fontFamily: 'var(--pt-font-mono)',
                         fontSize: 11,
                         color: 'var(--pt-muted)',
                         marginTop: 2,
-                        display: 'flex',
-                        gap: 8,
-                        alignItems: 'center',
-                        flexWrap: 'wrap',
                       }}
                     >
-                      <span>{formatRelativeTime(it.timestamp)}</span>
-                      <span
-                        style={{
-                          padding: '2px 8px',
-                          borderRadius: 999,
-                          background: status.bg,
-                          color: status.color,
-                          fontSize: 10,
-                          fontWeight: 600,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.04em',
-                        }}
-                      >
-                        {status.label}
-                      </span>
+                      Abandonnée {formatRelativeTime(it.archivedAt)}
                     </div>
                     {it.lastError && (
                       <div
@@ -340,166 +444,38 @@ export const SynchronisationV70: React.FC = () => {
                           fontSize: 11,
                           color: 'var(--pt-crimson-ink)',
                           fontFamily: 'var(--pt-font-mono, monospace)',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          maxWidth: '100%',
+                          wordBreak: 'break-word',
                         }}
-                        title={it.lastError}
                       >
                         {it.lastError}
                       </div>
                     )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleRetryOne(it.id)}
-                    disabled={busy || !online}
-                    aria-label={`Retry ${formatMutationLabel(it.mutation)}`}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      padding: '6px 10px',
-                      borderRadius: 999,
-                      background: 'var(--pt-bg-app)',
-                      border: '1px solid var(--pt-line)',
-                      color: 'var(--pt-ink)',
-                      fontSize: 12,
-                      cursor: busy || !online ? 'not-allowed' : 'pointer',
-                      opacity: busy || !online ? 0.5 : 1,
-                      flexShrink: 0,
-                    }}
-                  >
-                    <RefreshCw size={12} aria-hidden /> Retry
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
+                  </li>
+                ))}
+              </ul>
+              <button
+                type="button"
+                onClick={handleClearArchive}
+                disabled={busy}
+                aria-label="Effacer l'historique des erreurs"
+                className="btn--ghost btn--sm"
+                style={{ ...dangerBtnOverride, marginTop: 12 }}
+              >
+                <Trash2 size={14} aria-hidden /> Effacer l'historique
+              </button>
+            </>
+          )}
+        </section>
 
-      {/* Archive */}
-      <section className="section">
-        <div className="section__label">
-          {archive.length > 0 ? `Erreurs définitives (${archive.length})` : 'Aucune erreur définitive'}
+        {/* Lien diag */}
+        <div style={{ marginTop: 24, fontFamily: 'var(--pt-font-mono)', fontSize: 11, color: 'var(--pt-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span>Stockage local : Capacitor Preferences</span>
+          <ChevronRight size={12} aria-hidden />
+          <span>5 retries max · backoff 1s/5s/30s/5min/30min</span>
         </div>
-        {archive.length === 0 ? (
-          <p style={{ color: 'var(--pt-muted)', fontSize: 13, marginTop: 8 }}>
-            Pas d'action abandonnée. Les retries se sont tous résolus.
-          </p>
-        ) : (
-          <>
-            <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-              {archive.slice().reverse().map((it) => (
-                <li
-                  key={it.id}
-                  style={{
-                    padding: '10px 0',
-                    borderBottom: '1px solid var(--pt-line)',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      fontSize: 13,
-                      color: 'var(--pt-crimson-ink)',
-                      fontFamily: 'var(--pt-font-display)',
-                      fontWeight: 700,
-                    }}
-                  >
-                    <AlertTriangle size={14} aria-hidden />
-                    {formatMutationLabel(it.mutation)}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: 'var(--pt-muted)',
-                      marginTop: 2,
-                    }}
-                  >
-                    Abandonnée {formatRelativeTime(it.archivedAt)}
-                  </div>
-                  {it.lastError && (
-                    <div
-                      style={{
-                        marginTop: 4,
-                        fontSize: 11,
-                        color: 'var(--pt-crimson-ink)',
-                        fontFamily: 'var(--pt-font-mono, monospace)',
-                        wordBreak: 'break-word',
-                      }}
-                    >
-                      {it.lastError}
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-            <button
-              type="button"
-              onClick={handleClearArchive}
-              disabled={busy}
-              aria-label="Effacer l'historique des erreurs"
-              style={{
-                marginTop: 12,
-                ...btnDangerStyle(busy),
-              }}
-            >
-              <Trash2 size={14} aria-hidden /> Effacer l'historique
-            </button>
-          </>
-        )}
-      </section>
-
-      {/* Lien diag */}
-      <div style={{ marginTop: 24, fontSize: 11, color: 'var(--pt-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-        <span>Stockage local : Capacitor Preferences</span>
-        <ChevronRight size={12} aria-hidden />
-        <span>5 retries max · backoff 1s/5s/30s/5min/30min</span>
-      </div>
       </div>
     </div>
   );
 };
-
-function btnPrimaryStyle(disabled: boolean): React.CSSProperties {
-  return {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 6,
-    padding: '10px 14px',
-    borderRadius: 10,
-    background: 'var(--pt-primary, #064e3b)',
-    color: 'white',
-    border: 'none',
-    fontFamily: 'var(--pt-font-body)',
-    fontSize: 13,
-    fontWeight: 600,
-    cursor: disabled ? 'not-allowed' : 'pointer',
-    opacity: disabled ? 0.5 : 1,
-  };
-}
-
-function btnDangerStyle(disabled: boolean): React.CSSProperties {
-  return {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 6,
-    padding: '10px 14px',
-    borderRadius: 10,
-    background: 'transparent',
-    color: 'var(--pt-crimson-ink)',
-    border: '1px solid #fecdd3',
-    fontFamily: 'var(--pt-font-body)',
-    fontSize: 13,
-    fontWeight: 600,
-    cursor: disabled ? 'not-allowed' : 'pointer',
-    opacity: disabled ? 0.5 : 1,
-  };
-}
 
 export default SynchronisationV70;

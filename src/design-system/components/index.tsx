@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Search as SearchIcon, X } from 'lucide-react';
+import { Search as SearchIcon, Sparkles, X } from 'lucide-react';
 import './components.css';
 
 // ============================================================
@@ -106,7 +106,7 @@ export function InsightCard({ title, children, className, style }: {
   return (
     <div className={`pt-insight ${className ?? ''}`} style={style}>
       <div className="pt-insight__title">
-        <span aria-hidden="true">✨</span>
+        <Sparkles size={14} aria-hidden="true" />
         <span>{title}</span>
       </div>
       <div className="pt-insight__body">{children}</div>

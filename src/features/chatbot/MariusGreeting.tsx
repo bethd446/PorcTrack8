@@ -43,8 +43,8 @@ export const MariusGreeting: React.FC<MariusGreetingProps> = ({ onClick, pageCon
           alignItems: 'center',
           gap: 12,
           padding: '10px 14px',
-          background: 'var(--color-amber-pork-soft, #fef3e0)',
-          border: '1px solid color-mix(in srgb, var(--color-amber-pork, #F4A261) 30%, transparent)',
+          background: 'var(--pt-warm, #fef3e0)',
+          border: '1px solid var(--pt-warm-deep, color-mix(in srgb, var(--pt-accent) 30%, transparent))',
           borderRadius: 999,
           cursor: 'pointer',
           textAlign: 'left',
@@ -58,22 +58,29 @@ export const MariusGreeting: React.FC<MariusGreetingProps> = ({ onClick, pageCon
           aria-hidden="true"
           width={40}
           height={40}
-          style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            objectFit: 'cover',
+            flexShrink: 0,
+            boxShadow: '0 0 12px rgba(52, 211, 153, 0.45)',
+          }}
         />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <span
             style={{
-              fontFamily: 'var(--font-heading)',
+              fontFamily: 'var(--ff-display, var(--font-heading))',
               fontWeight: 700,
               fontSize: 13,
-              color: 'var(--ink)',
+              color: 'var(--pt-ink)',
               letterSpacing: '0.04em',
               textTransform: 'uppercase',
             }}
           >
             Marius
           </span>
-          <span style={{ fontSize: 12, color: 'var(--muted)' }}>{tagline}</span>
+          <span style={{ fontSize: 12, color: 'var(--pt-muted)' }}>{tagline}</span>
         </div>
       </button>
       <button
@@ -87,11 +94,11 @@ export const MariusGreeting: React.FC<MariusGreetingProps> = ({ onClick, pageCon
           justifyContent: 'center',
           width: 44,
           padding: 0,
-          background: 'var(--color-amber-pork-soft, #fef3e0)',
-          border: '1px solid color-mix(in srgb, var(--color-amber-pork, #F4A261) 30%, transparent)',
+          background: 'var(--pt-warm, #fef3e0)',
+          border: '1px solid var(--pt-warm-deep, color-mix(in srgb, var(--pt-accent) 30%, transparent))',
           borderRadius: 999,
           cursor: 'pointer',
-          color: 'var(--ink)',
+          color: 'var(--pt-ink)',
           flexShrink: 0,
           transition: 'background 200ms ease',
         }}

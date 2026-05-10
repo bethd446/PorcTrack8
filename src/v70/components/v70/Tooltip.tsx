@@ -78,7 +78,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ term, children }) => {
             left: 0,
             marginTop: 8,
             padding: '12px 14px',
-            background: 'var(--pt-ink, #0f1a14)',
+            background: 'var(--pt-ink, #1a1a1a)',
             color: 'white',
             borderRadius: 10,
             fontSize: 12,

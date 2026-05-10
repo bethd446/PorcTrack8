@@ -277,7 +277,7 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
                   border: '1px solid var(--pt-divider)',
                   outlineColor: 'var(--color-accent-500)',
                   transition: 'transform var(--duration-press) var(--ease-emil)',
-                  borderRadius: '1rem',
+                  borderRadius: '14px',
                   textTransform: 'none',
                   height: 'auto',
                   justifyContent: 'flex-start',
@@ -288,14 +288,18 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
                   className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
                   style={{ background: TONE_BG[tone], color: TONE_FG[tone] }}
                 >
-                  <Icon size={22} strokeWidth={2} aria-hidden />
+                  <Icon size={22} strokeWidth={1.8} aria-hidden />
                 </span>
                 <span className="min-w-0 flex-1 whitespace-normal">
                   <span
-                    className="block text-[15px] font-semibold leading-tight"
+                    className="saisir-sheet__title block leading-tight"
                     style={{
-                      fontFamily: 'var(--font-body)',
+                      fontFamily: 'var(--ff-mono, var(--font-body))',
                       color: 'var(--pt-text)',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
                     }}
                   >
                     {title}

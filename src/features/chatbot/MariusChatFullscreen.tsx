@@ -435,18 +435,28 @@ export const MariusChatFullscreen: React.FC = () => {
         }}
       >
         <header className="ph ph--primary">
-          <div className="ph__row">
+          <div className="ph__row" style={{ alignItems: 'center', gap: 14 }}>
+            <img
+              src="/images/v73/marius/orb-emeraude.webp"
+              alt=""
+              aria-hidden
+              width={48}
+              height={48}
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                objectFit: 'cover',
+                flexShrink: 0,
+                boxShadow: '0 0 18px rgba(52, 211, 153, 0.55)',
+              }}
+            />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="ph__eyebrow">Assistant IA</div>
               <h1 className="ph__h1">Marius</h1>
               <p className="ph__sub">Hors-ligne</p>
             </div>
-            <button
-              type="button"
-              className="iconbtn"
-              onClick={handleClose}
-              aria-label="Fermer"
-            >
+            <button type="button" className="iconbtn" onClick={handleClose} aria-label="Fermer">
               <X size={16} />
             </button>
           </div>
@@ -468,11 +478,23 @@ export const MariusChatFullscreen: React.FC = () => {
         flexDirection: 'column',
       }}
     >
-      <header
-        className="ph ph--primary"
-        style={{ position: 'sticky', top: 0, zIndex: 10 }}
-      >
-        <div className="ph__row">
+      <header className="ph ph--primary" style={{ position: 'sticky', top: 0, zIndex: 10 }}>
+        <div className="ph__row" style={{ alignItems: 'center', gap: 14 }}>
+          <img
+            src="/images/v73/marius/orb-emeraude.webp"
+            alt=""
+            aria-hidden
+            width={48}
+            height={48}
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: '50%',
+              objectFit: 'cover',
+              flexShrink: 0,
+              boxShadow: '0 0 18px rgba(52, 211, 153, 0.55)',
+            }}
+          />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="ph__eyebrow">Assistant IA</div>
             <h1 className="ph__h1">Marius</h1>
@@ -509,14 +531,11 @@ export const MariusChatFullscreen: React.FC = () => {
             }}
           >
             {messages.length === 0 && (
-              <div
-                className="alert-card--info"
-                style={{ alignSelf: 'flex-start' }}
-              >
+              <div className="bubble bubble--marius">
                 <h4>Bonjour {(userName || 'éleveur').split(' ')[0]}</h4>
                 <p>
-                  Pose-moi une question sur ton élevage. Je lis ton cheptel, tes bandes,
-                  tes stocks et tes alertes en temps réel.
+                  Pose-moi une question sur ton élevage. Je lis ton cheptel, tes bandes, tes stocks
+                  et tes alertes en temps réel.
                 </p>
               </div>
             )}
@@ -542,19 +561,19 @@ export const MariusChatFullscreen: React.FC = () => {
               }
               if (m.role === 'user') {
                 return (
-                  <div key={m.id} className="bubble" style={{ alignSelf: 'flex-end' }}>
+                  <div key={m.id} className="bubble bubble--user">
                     {m.content}
                   </div>
                 );
               }
               return (
-                <div key={m.id} className="alert-card--info" style={{ alignSelf: 'flex-start' }}>
+                <div key={m.id} className="bubble bubble--marius">
                   {m.content ? renderMarkdown(m.content) : null}
                 </div>
               );
             })}
             {loading && !streaming && (
-              <div className="alert-card--info" aria-label="Marius rédige" style={{ alignSelf: 'flex-start' }}>
+              <div className="bubble bubble--marius" aria-label="Marius rédige">
                 <span style={{ display: 'inline-flex', gap: 4 }}>
                   <span
                     style={{

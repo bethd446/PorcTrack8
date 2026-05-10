@@ -7,6 +7,10 @@
  * V77 — hint devise corrigé : "Devise plateforme — FCFA" (cohérent V43.3,
  * la plateforme est FCFA only, pas dérivée du pays).
  *
+ * V77.1 — polish visuel : InfoCard + StatTile partagent un style cohérent
+ * (label mono uppercase, valeur display 800, hint muted). CTA bas via
+ * `.btn--primary btn--full` (constitution V77.1, plus de variantes --lg).
+ *
  * L'édition réelle (formulaire farm, profil, mot de passe) reste pour
  * l'instant déléguée au legacy /reglages/systeme via le CTA bas de page.
  */
@@ -18,6 +22,38 @@ import { useFarm } from '../../context/FarmContext';
 import { fetchFarm, type FarmInfo } from '../../services/settingsService';
 import FarmSwitcher from '../../components/FarmSwitcher';
 
+const infoCardStyle: React.CSSProperties = {
+  background: 'var(--bg-surface)',
+  borderRadius: 'var(--radius-card, 24px)',
+  padding: '18px 20px',
+  border: '1px solid var(--line)',
+  marginBottom: 10,
+};
+
+const infoLabelStyle: React.CSSProperties = {
+  fontFamily: 'var(--pt-font-mono)',
+  fontSize: 10,
+  letterSpacing: '0.14em',
+  textTransform: 'uppercase',
+  color: 'var(--muted)',
+  marginBottom: 6,
+  fontWeight: 600,
+};
+
+const infoValueStyle: React.CSSProperties = {
+  fontFamily: 'var(--pt-font-display)',
+  fontSize: 18,
+  fontWeight: 800,
+  color: 'var(--ink)',
+  lineHeight: 1.25,
+  letterSpacing: '-0.005em',
+};
+
+const infoHintStyle: React.CSSProperties = {
+  fontSize: 12,
+  color: 'var(--muted)',
+  marginTop: 6,
+};
 
 interface InfoCardProps {
   label: string;
@@ -26,42 +62,48 @@ interface InfoCardProps {
 }
 
 const InfoCard: React.FC<InfoCardProps> = ({ label, value, hint }) => (
-  <article
-    style={{
-      background: 'var(--bg-surface)',
-      borderRadius: 'var(--radius-card, 24px)',
-      padding: '20px 22px',
-      border: '1px solid var(--line)',
-      boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-      marginBottom: 12,
-    }}
-  >
-    <div
-      style={{
-        fontSize: 11,
-        letterSpacing: '0.16em',
-        textTransform: 'uppercase',
-        color: 'var(--muted)',
-        marginBottom: 8,
-        fontWeight: 500,
-      }}
-    >
-      {label}
-    </div>
-    <div
-      style={{
-        fontSize: 18,
-        fontFamily: 'var(--pt-font-display)',
-        fontWeight: 700,
-        color: 'var(--ink)',
-        lineHeight: 1.3,
-      }}
-    >
-      {value}
-    </div>
-    {hint && (
-      <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>{hint}</div>
-    )}
+  <article style={infoCardStyle}>
+    <div style={infoLabelStyle}>{label}</div>
+    <div style={infoValueStyle}>{value}</div>
+    {hint && <div style={infoHintStyle}>{hint}</div>}
+  </article>
+);
+
+const statTileStyle: React.CSSProperties = {
+  background: 'var(--bg-surface)',
+  borderRadius: 'var(--radius-card, 24px)',
+  padding: '18px 12px',
+  border: '1px solid var(--line)',
+  textAlign: 'center',
+};
+
+const statValueStyle: React.CSSProperties = {
+  fontFamily: 'var(--pt-font-display)',
+  fontSize: 28,
+  fontWeight: 800,
+  color: 'var(--ink)',
+  lineHeight: 1,
+};
+
+const statLabelStyle: React.CSSProperties = {
+  fontFamily: 'var(--pt-font-mono)',
+  fontSize: 10,
+  letterSpacing: '0.14em',
+  textTransform: 'uppercase',
+  color: 'var(--muted)',
+  marginTop: 6,
+  fontWeight: 600,
+};
+
+interface StatTileProps {
+  value: React.ReactNode;
+  label: string;
+}
+
+const StatTile: React.FC<StatTileProps> = ({ value, label }) => (
+  <article style={statTileStyle}>
+    <div style={statValueStyle}>{value}</div>
+    <div style={statLabelStyle}>{label}</div>
   </article>
 );
 
@@ -127,7 +169,9 @@ export const MaFermeV70: React.FC = () => {
           <InfoCard
             label="Code"
             value={
-              <span style={{ fontFamily: 'var(--pt-font-body)', fontSize: 15, letterSpacing: 0.4 }}>
+              <span
+                style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 14, letterSpacing: '0.06em' }}
+              >
                 {farmShortId}
               </span>
             }
@@ -149,106 +193,10 @@ export const MaFermeV70: React.FC = () => {
 
         <section className="section">
           <div className="section__label">Bilan</div>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 12,
-            }}
-          >
-            <article
-              style={{
-                background: 'var(--bg-surface)',
-                borderRadius: 'var(--radius-card, 24px)',
-                padding: '18px 16px',
-                border: '1px solid var(--line)',
-                textAlign: 'center',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 28,
-                  fontFamily: 'var(--pt-font-display)',
-                  fontWeight: 700,
-                  color: 'var(--ink)',
-                }}
-              >
-                {truies?.length ?? 0}
-              </div>
-              <div
-                style={{
-                  fontSize: 11,
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                  color: 'var(--muted)',
-                  marginTop: 4,
-                }}
-              >
-                Truies
-              </div>
-            </article>
-            <article
-              style={{
-                background: 'var(--bg-surface)',
-                borderRadius: 'var(--radius-card, 24px)',
-                padding: '18px 16px',
-                border: '1px solid var(--line)',
-                textAlign: 'center',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 28,
-                  fontFamily: 'var(--pt-font-display)',
-                  fontWeight: 700,
-                  color: 'var(--ink)',
-                }}
-              >
-                {verrats?.length ?? 0}
-              </div>
-              <div
-                style={{
-                  fontSize: 11,
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                  color: 'var(--muted)',
-                  marginTop: 4,
-                }}
-              >
-                Verrats
-              </div>
-            </article>
-            <article
-              style={{
-                background: 'var(--bg-surface)',
-                borderRadius: 'var(--radius-card, 24px)',
-                padding: '18px 16px',
-                border: '1px solid var(--line)',
-                textAlign: 'center',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 28,
-                  fontFamily: 'var(--pt-font-display)',
-                  fontWeight: 700,
-                  color: 'var(--ink)',
-                }}
-              >
-                {bandes?.length ?? 0}
-              </div>
-              <div
-                style={{
-                  fontSize: 11,
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                  color: 'var(--muted)',
-                  marginTop: 4,
-                }}
-              >
-                Bandes
-              </div>
-            </article>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+            <StatTile value={truies?.length ?? 0} label="Truies" />
+            <StatTile value={verrats?.length ?? 0} label="Verrats" />
+            <StatTile value={bandes?.length ?? 0} label="Bandes" />
           </div>
         </section>
 
@@ -257,14 +205,7 @@ export const MaFermeV70: React.FC = () => {
             type="button"
             onClick={() => navigate('/reglages/systeme')}
             aria-label="Modifier l’identité de la ferme"
-            className="btn-primary--lg"
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 12,
-            }}
+            className="btn--primary btn--full"
           >
             Modifier la ferme
             <ChevronRight size={18} aria-hidden />
