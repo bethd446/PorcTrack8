@@ -252,7 +252,9 @@ export const ReproV70: React.FC = () => {
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<{ action?: string }>).detail;
-      if (detail?.action === 'add_birth') {
+      if (detail?.action === 'add_saillie') {
+        setSaillieOpen(true);
+      } else if (detail?.action === 'add_birth') {
         setMiseBasOpen(true);
       }
     };
@@ -582,23 +584,6 @@ export const ReproV70: React.FC = () => {
         ctaLabel="Encyclopédie"
         onCtaClick={() => navigate('/reglages/encyclopedie')}
       />
-
-      <button
-        type="button"
-        className="fab"
-        aria-label="Ajouter saillie"
-        onClick={() => setSaillieOpen(true)}
-        style={{
-          background: 'var(--pt-primary)',
-          border: 'none',
-          color: 'white',
-          fontSize: 28,
-          fontWeight: 700,
-          cursor: 'pointer',
-        }}
-      >
-        +
-      </button>
 
       <Suspense fallback={null}>
         <QuickSaillieForm isOpen={saillieOpen} onClose={() => setSaillieOpen(false)} />

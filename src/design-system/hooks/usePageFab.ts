@@ -53,7 +53,7 @@ const FAB_DISABLED_PATHS: ReadonlyArray<RegExp> = [
 ];
 
 const FAB_CONTEXTUAL: ReadonlyArray<{ pattern: RegExp; config: { action: string; label: string } }> = [
-  { pattern: /^\/reproduction\/?$/, config: { action: 'add_birth', label: 'MISE-BAS' } },
+  { pattern: /^\/reproduction\/?$/, config: { action: 'add_saillie', label: 'SAILLIE' } },
 ];
 
 export function getPageFabConfig(pathname: string): PageFabConfig {
