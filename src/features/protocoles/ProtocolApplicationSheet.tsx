@@ -142,18 +142,13 @@ export const ProtocolApplicationSheet: React.FC<ProtocolApplicationSheetProps> =
       className="pt-screen"
       aria-label="Appliquer le protocole"
     >
-      <div className="pt-screen sheet-v77">
-        <div className="sheet-v77__handle" />
-        <h2 className="sheet-v77__title">Appliquer le protocole</h2>
-        <div className="sheet-v77__sub">{protocol.title}</div>
+      <div className="pt-screen sheet">
+        <div className="sheet__handle" />
+        <h2 className="sheet__title">Appliquer le protocole</h2>
+        <div className="sheet__sub">{protocol.title}</div>
 
         {empty ? (
-          <div
-            className="calc-card"
-            role="status"
-            aria-live="polite"
-            style={{ marginTop: 12 }}
-          >
+          <div className="calc-card" role="status" aria-live="polite">
             <div className="calc-card__big">Aucune bande disponible</div>
             <div className="calc-card__hint">
               Créez une bande pour appliquer ce protocole.
@@ -206,7 +201,7 @@ export const ProtocolApplicationSheet: React.FC<ProtocolApplicationSheetProps> =
                 <Calendar size={18} strokeWidth={1.6} aria-hidden />
               </span>
             </label>
-            <button type="button" className="field--row" style={{ cursor: 'pointer' }}>
+            <button type="button" className="field--row">
               <span>{operatorName}</span>
               <span className="field__icon" aria-hidden>
                 <ChevronDown size={18} strokeWidth={1.6} aria-hidden />
@@ -228,9 +223,8 @@ export const ProtocolApplicationSheet: React.FC<ProtocolApplicationSheetProps> =
 
             <button
               type="button"
-              className="btn-primary--lg"
+              className="btn--primary"
               onClick={handleSubmit}
-              style={{ marginTop: 8 }}
             >
               <Save size={18} strokeWidth={1.8} aria-hidden />
               Enregistrer l’application

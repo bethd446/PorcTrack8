@@ -133,6 +133,59 @@ function groupStockAlerts(alerts: FarmAlert[]): DisplayAlert[] {
   return [...others, grouped];
 }
 
+// Styles inline partagés (déduplication V77.1)
+const META_LINE: React.CSSProperties = {
+  fontFamily: 'var(--ff-mono)',
+  fontSize: 11,
+  color: 'var(--pt-muted)',
+};
+
+const DETAIL_LINE: React.CSSProperties = {
+  fontSize: 13,
+  color: 'var(--pt-muted)',
+  marginTop: 4,
+};
+
+const ACTIONS_ROW: React.CSSProperties = {
+  display: 'flex',
+  gap: 8,
+  marginTop: 10,
+};
+
+const STACK_COL: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 8,
+  marginTop: 8,
+};
+
+const EMPTY_TITLE: React.CSSProperties = {
+  fontFamily: 'var(--ff-display)',
+  fontWeight: 900,
+  fontSize: 22,
+  textTransform: 'uppercase',
+  letterSpacing: '-0.01em',
+  color: 'var(--pt-ink)',
+};
+
+const EMPTY_SUB: React.CSSProperties = {
+  fontSize: 13,
+  color: 'var(--pt-muted)',
+};
+
+const CONTENT_WRAP: React.CSSProperties = {
+  padding: 24,
+  maxWidth: 600,
+  margin: '0 auto',
+};
+
+const PILLS_ROW: React.CSSProperties = { marginBottom: 12 };
+
+const PILL_COUNT: React.CSSProperties = {
+  fontFamily: 'var(--ff-mono)',
+  marginLeft: 6,
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Filter chips
 // ─────────────────────────────────────────────────────────────────────────────
@@ -324,7 +377,6 @@ const AlertsView: React.FC = () => {
     total: liveAlerts.length,
     critique: liveAlerts.filter(a => a.priority === 'CRITIQUE').length,
     haute:    liveAlerts.filter(a => a.priority === 'HAUTE').length,
-    normale:  liveAlerts.filter(a => a.priority === 'NORMALE' || a.priority === 'INFO').length,
   }), [liveAlerts]);
 
   const filteredAlerts = useMemo<DisplayAlert[]>(() => {
@@ -425,12 +477,9 @@ const AlertsView: React.FC = () => {
             </div>
           </header>
 
-          <div
-            className="phone-content"
-            style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}
-          >
+          <div className="phone-content" style={CONTENT_WRAP}>
           {/* ── Pills filtres ─────────────────────────────────────────── */}
-          <div className="pills" role="tablist" aria-label="Filtres alertes" style={{ marginBottom: 12 }}>
+          <div className="pills" role="tablist" aria-label="Filtres alertes" style={PILLS_ROW}>
             {FILTERS.map(f => {
               const active = activeFilter === f.id;
               return (
@@ -445,9 +494,7 @@ const AlertsView: React.FC = () => {
                 >
                   {f.label}
                   {f.id === 'ALL' && (
-                    <span style={{ fontFamily: 'var(--ff-mono)', marginLeft: 6 }}>
-                      {summary.total}
-                    </span>
+                    <span style={PILL_COUNT}>{summary.total}</span>
                   )}
                 </button>
               );
@@ -462,7 +509,7 @@ const AlertsView: React.FC = () => {
           )}
 
           {alerts.length > 0 && filteredAlerts.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+            <div style={STACK_COL}>
               {filteredAlerts.map(alert => {
                 const sev = severityClass(alert.priority);
                 const sevLabel = severityLabel(alert.priority);
@@ -494,20 +541,14 @@ const AlertsView: React.FC = () => {
                         {sevLabel}
                       </span>
                     </div>
-                    <div
-                      style={{
-                        fontFamily: 'var(--ff-mono)',
-                        fontSize: 11,
-                        color: 'var(--pt-muted)',
-                      }}
-                    >
+                    <div style={META_LINE}>
                       {ruleLabel}{timeAgo ? ` · ${timeAgo}` : ''}
                     </div>
-                    <div style={{ fontSize: 13, color: 'var(--pt-muted)', marginTop: 4 }}>
+                    <div style={DETAIL_LINE}>
                       {detail}
                     </div>
                     {!isGrouped && original && (
-                      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                      <div style={ACTIONS_ROW}>
                         <button
                           type="button"
                           className="btn-ghost-sm"
@@ -532,7 +573,7 @@ const AlertsView: React.FC = () => {
                       </div>
                     )}
                     {isGrouped && (
-                      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                      <div style={ACTIONS_ROW}>
                         <button
                           type="button"
                           className="btn-primary-sm"
@@ -555,7 +596,7 @@ const AlertsView: React.FC = () => {
           {alertesServeur.length > 0 && (
             <>
               <Section label={`Serveur · ${alertesServeur.length}`} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+              <div style={STACK_COL}>
                 {alertesServeur.map((a, i) => {
                   const formatted = formatAlertServeurMessage(a);
                   const actionTrimmed = a.actionRequise?.trim() ?? '';
@@ -579,16 +620,10 @@ const AlertsView: React.FC = () => {
                           {sevLabel}
                         </span>
                       </div>
-                      <div
-                        style={{
-                          fontFamily: 'var(--ff-mono)',
-                          fontSize: 11,
-                          color: 'var(--pt-muted)',
-                        }}
-                      >
+                      <div style={META_LINE}>
                         Serveur{a.date ? ` · ${a.date}` : ''}
                       </div>
-                      <div style={{ fontSize: 13, color: 'var(--pt-muted)', marginTop: 4 }}>
+                      <div style={DETAIL_LINE}>
                         {description}
                       </div>
                     </article>
@@ -602,7 +637,7 @@ const AlertsView: React.FC = () => {
           {pendingConfirmations.length > 0 && (
             <>
               <Section label={`En attente · ${pendingConfirmations.length}`} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+              <div style={STACK_COL}>
                 {pendingConfirmations.map(pc => (
                   <article key={pc.id} className="alert-card alert-card--warning">
                     <div className="alert-card__head">
@@ -613,19 +648,13 @@ const AlertsView: React.FC = () => {
                         À confirmer
                       </span>
                     </div>
-                    <div
-                      style={{
-                        fontFamily: 'var(--ff-mono)',
-                        fontSize: 11,
-                        color: 'var(--pt-muted)',
-                      }}
-                    >
+                    <div style={META_LINE}>
                       {formatDistanceToNow(new Date(pc.createdAt), {
                         addSuffix: true,
                         locale: fr,
                       })}
                     </div>
-                    <div style={{ fontSize: 13, color: 'var(--pt-muted)', marginTop: 4 }}>
+                    <div style={DETAIL_LINE}>
                       {resolveAlertSubject(pc.alertMessage, lookup)}
                     </div>
                   </article>
@@ -638,19 +667,10 @@ const AlertsView: React.FC = () => {
           {(showEmpty || (alerts.length > 0 && filteredAlerts.length === 0)) && (
             <div className="empty-state">
               <CheckCircle2 size={48} strokeWidth={1.25} color="var(--pt-success)" aria-hidden="true" />
-              <div
-                style={{
-                  fontFamily: 'var(--ff-display)',
-                  fontWeight: 900,
-                  fontSize: 22,
-                  textTransform: 'uppercase',
-                  letterSpacing: '-0.01em',
-                  color: 'var(--pt-ink)',
-                }}
-              >
+              <div style={EMPTY_TITLE}>
                 {showEmpty ? 'Carnet vide' : 'Aucune alerte dans ce filtre'}
               </div>
-              <div style={{ fontSize: 13, color: 'var(--pt-muted)' }}>
+              <div style={EMPTY_SUB}>
                 {showEmpty
                   ? 'Toutes les alertes sont traitées. Bonne tournée.'
                   : 'Change de filtre ou reviens plus tard.'}

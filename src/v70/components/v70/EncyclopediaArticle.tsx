@@ -157,8 +157,7 @@ export const EncyclopediaArticle: React.FC<EncyclopediaArticleProps> = ({
         {onBack && (
           <button
             type="button"
-            className="btn-secondary"
-            style={{ maxWidth: 280, margin: '0 auto' }}
+            className="btn--ghost btn--full"
             onClick={onBack}
           >
             <ChevronLeft size={18} strokeWidth={1.8} />
@@ -254,15 +253,15 @@ export const EncyclopediaArticle: React.FC<EncyclopediaArticleProps> = ({
         })}
 
         {meta.sources && (
-          <section className="section" aria-label="Sources" style={{ padding: '24px 0 0' }}>
+          <section className="section section--sources" aria-label="Sources">
             <div className="section__label">Sources</div>
-            <p style={{ fontSize: 13, color: 'var(--pt-muted)' }}>{meta.sources}</p>
+            <p className="article-sources">{meta.sources}</p>
           </section>
         )}
       </article>
 
       <div className="cta-sticky">
-        <button type="button" className="btn-secondary">
+        <button type="button" className="btn--primary btn--full">
           <Check size={18} strokeWidth={1.8} aria-hidden="true" />
           Marquer comme lu
         </button>

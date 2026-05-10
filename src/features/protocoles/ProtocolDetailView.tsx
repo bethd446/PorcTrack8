@@ -31,7 +31,7 @@ const ProtocolDetailView: React.FC = () => {
     return (
       <IonPage>
         <IonContent fullscreen className="ion-no-padding">
-          <div className="pt-screen" style={{ paddingBottom: 120 }}>
+          <div className="pt-screen">
             <header className="ph--primary">
               <button
                 type="button"
@@ -48,7 +48,7 @@ const ProtocolDetailView: React.FC = () => {
             <div className="actions-stack">
               <button
                 type="button"
-                className="btn-secondary--lg"
+                className="btn--ghost"
                 onClick={() => navigate('/protocoles')}
               >
                 Retour aux protocoles
@@ -67,7 +67,7 @@ const ProtocolDetailView: React.FC = () => {
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
-        <div className="pt-screen" style={{ paddingBottom: 120 }}>
+        <div className="pt-screen">
           <header className="ph--primary">
             <button
               type="button"
@@ -95,7 +95,7 @@ const ProtocolDetailView: React.FC = () => {
             </div>
           </section>
 
-          <section className="section" style={{ paddingTop: 0 }}>
+          <section className="section">
             <div className="section__label">Posologie</div>
             <table className="dt">
               <thead>
@@ -119,7 +119,7 @@ const ProtocolDetailView: React.FC = () => {
             </table>
           </section>
 
-          <section className="section" style={{ paddingTop: 0 }}>
+          <section className="section">
             <div className="section__label">Étapes d’application</div>
             {proto.steps.map((step, idx) => (
               <div key={idx} className="timeline__step">
@@ -132,10 +132,7 @@ const ProtocolDetailView: React.FC = () => {
             ))}
 
             {proto.contreIndication && (
-              <div
-                className="alert-card alert-card--danger"
-                style={{ marginTop: 8 }}
-              >
+              <div className="alert-card alert-card--danger">
                 <span className="alert-card__icon" aria-hidden>
                   <AlertTriangle size={22} strokeWidth={1.6} aria-hidden />
                 </span>
@@ -150,7 +147,7 @@ const ProtocolDetailView: React.FC = () => {
           <div className="actions-stack">
             <button
               type="button"
-              className="btn-primary--lg"
+              className="btn--primary"
               onClick={() => setSheetOpen(true)}
             >
               <Check size={18} strokeWidth={1.8} aria-hidden />
@@ -158,7 +155,7 @@ const ProtocolDetailView: React.FC = () => {
             </button>
             <button
               type="button"
-              className="btn-secondary--lg"
+              className="btn--ghost"
               onClick={handleExport}
             >
               <FileDown size={18} strokeWidth={1.6} aria-hidden />

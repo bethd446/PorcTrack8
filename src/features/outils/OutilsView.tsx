@@ -38,6 +38,28 @@ interface ToolItem {
   count?: number;
 }
 
+const CONTENT_WRAP: React.CSSProperties = {
+  padding: 24,
+  maxWidth: 600,
+  margin: '0 auto',
+};
+
+const STACK_COL: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 8,
+  marginTop: 8,
+};
+
+const STACK_COL_WITH_GAP: React.CSSProperties = {
+  ...STACK_COL,
+  marginBottom: 24,
+};
+
+const COUNT_STYLE: React.CSSProperties = {
+  fontFamily: 'var(--ff-mono)',
+};
+
 const OutilsView: React.FC = () => {
   const navigate = useNavigate();
   const { alerts, alertesServeur } = usePilotage();
@@ -114,10 +136,7 @@ const OutilsView: React.FC = () => {
         <div className="card-link__sub">{item.description}</div>
       </div>
       {item.count !== undefined && (
-        <span
-          className="card-link__count"
-          style={{ fontFamily: 'var(--ff-mono)' }}
-        >
+        <span className="card-link__count" style={COUNT_STYLE}>
           {item.count}
         </span>
       )}
@@ -135,21 +154,14 @@ const OutilsView: React.FC = () => {
             <div className="sub">Tes raccourcis quotidiens</div>
           </header>
 
-          <div
-            className="phone-content"
-            style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}
-          >
+          <div className="phone-content" style={CONTENT_WRAP}>
             <Section label="Au quotidien" />
-            <div
-              style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8, marginBottom: 24 }}
-            >
+            <div style={STACK_COL_WITH_GAP}>
               {quotidien.map(renderTool)}
             </div>
 
             <Section label="Ressources" />
-            <div
-              style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}
-            >
+            <div style={STACK_COL}>
               {ressources.map(renderTool)}
             </div>
           </div>
