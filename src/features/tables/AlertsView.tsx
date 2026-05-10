@@ -26,7 +26,7 @@ import { useMeta } from '../../context/FarmContext';
 import { usePilotage } from '../../context/PilotageContext';
 import { useTroupeau } from '../../context/TroupeauContext';
 import { resolveAlertSubject, isAlertSubjectOrphan } from '../../utils/alertSubject';
-import { PageHeader, Section } from '@/design-system';
+import { Section } from '@/design-system';
 import { type FarmAlert, type AlertPriority, type AlertCategory } from '../../services/alertEngine';
 import { dismissAlert } from '../../services/alertDismissals';
 import { getPendingConfirmations, type PendingConfirmation } from '../../services/confirmationQueue';
@@ -50,10 +50,13 @@ interface DisplayAlert {
   groupedIds?: string[];
 }
 
-function severityClass(priority: AlertPriority): 'crit' | 'high' | 'norm' {
-  if (priority === 'CRITIQUE') return 'crit';
-  if (priority === 'HAUTE') return 'high';
-  return 'norm';
+type AlertVariant = 'alert-card--danger' | 'alert-card--warning' | 'alert-card--info' | 'alert-card--success';
+
+function severityClass(priority: AlertPriority): AlertVariant {
+  if (priority === 'CRITIQUE') return 'alert-card--danger';
+  if (priority === 'HAUTE') return 'alert-card--warning';
+  if (priority === 'NORMALE') return 'alert-card--info';
+  return 'alert-card--success';
 }
 
 function severityLabel(priority: AlertPriority): string {
@@ -411,18 +414,23 @@ const AlertsView: React.FC = () => {
           <IonRefresherContent />
         </IonRefresher>
 
-        <div
-          className="phone-content"
-          style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}
-        >
-          <PageHeader
-            eyebrow={`Pilotage · ${summary.total} alerte${summary.total > 1 ? 's' : ''}`}
-            title="Alertes"
-            subtitle={`${summary.critique} critique${summary.critique > 1 ? 's' : ''} · ${summary.haute} haute${summary.haute > 1 ? 's' : ''} · ${summary.normale} normale${summary.normale > 1 ? 's' : ''}`}
-          />
+        <div className="pt-screen">
+          <header className="ph--primary">
+            <div className="eyebrow">Suivi technique</div>
+            <h1>Alertes</h1>
+            <div className="sub">
+              {summary.total === 0
+                ? 'Aucune alerte active'
+                : `${summary.total} active${summary.total > 1 ? 's' : ''} · ${summary.critique} critique${summary.critique > 1 ? 's' : ''} · ${summary.haute} haute${summary.haute > 1 ? 's' : ''}`}
+            </div>
+          </header>
 
-          {/* ── Filter chips ──────────────────────────────────────────── */}
-          <div className="chips" role="tablist" aria-label="Filtres alertes" style={{ marginBottom: 12 }}>
+          <div
+            className="phone-content"
+            style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}
+          >
+          {/* ── Pills filtres ─────────────────────────────────────────── */}
+          <div className="pills" role="tablist" aria-label="Filtres alertes" style={{ marginBottom: 12 }}>
             {FILTERS.map(f => {
               const active = activeFilter === f.id;
               return (
@@ -430,14 +438,16 @@ const AlertsView: React.FC = () => {
                   key={f.id}
                   type="button"
                   role="tab"
-                  className="chip"
+                  className={`pill${active ? ' is-active' : ''}`}
                   aria-pressed={active}
                   aria-selected={active}
                   onClick={() => setActiveFilter(f.id)}
                 >
                   {f.label}
                   {f.id === 'ALL' && (
-                    <span className="num">{summary.total}</span>
+                    <span style={{ fontFamily: 'var(--ff-mono)', marginLeft: 6 }}>
+                      {summary.total}
+                    </span>
                   )}
                 </button>
               );
@@ -485,9 +495,8 @@ const AlertsView: React.FC = () => {
                       </span>
                     </div>
                     <div
-                      className="num"
                       style={{
-                        fontFamily: 'var(--pt-font-mono)',
+                        fontFamily: 'var(--ff-mono)',
                         fontSize: 11,
                         color: 'var(--pt-muted)',
                       }}
@@ -571,9 +580,8 @@ const AlertsView: React.FC = () => {
                         </span>
                       </div>
                       <div
-                        className="num"
                         style={{
-                          fontFamily: 'var(--pt-font-mono)',
+                          fontFamily: 'var(--ff-mono)',
                           fontSize: 11,
                           color: 'var(--pt-muted)',
                         }}
@@ -596,7 +604,7 @@ const AlertsView: React.FC = () => {
               <Section label={`En attente · ${pendingConfirmations.length}`} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
                 {pendingConfirmations.map(pc => (
-                  <article key={pc.id} className="alert-card high">
+                  <article key={pc.id} className="alert-card alert-card--warning">
                     <div className="alert-card__head">
                       <h3 className="alert-card__title">
                         {resolveAlertSubject(pc.alertTitle, lookup)}
@@ -606,9 +614,8 @@ const AlertsView: React.FC = () => {
                       </span>
                     </div>
                     <div
-                      className="num"
                       style={{
-                        fontFamily: 'var(--pt-font-mono)',
+                        fontFamily: 'var(--ff-mono)',
                         fontSize: 11,
                         color: 'var(--pt-muted)',
                       }}
@@ -629,11 +636,11 @@ const AlertsView: React.FC = () => {
 
           {/* ── Empty state ───────────────────────────────────────────── */}
           {(showEmpty || (alerts.length > 0 && filteredAlerts.length === 0)) && (
-            <div className="empty">
+            <div className="empty-state">
               <CheckCircle2 size={48} strokeWidth={1.25} color="var(--pt-success)" aria-hidden="true" />
               <div
                 style={{
-                  fontFamily: 'var(--pt-font-display)',
+                  fontFamily: 'var(--ff-display)',
                   fontWeight: 900,
                   fontSize: 22,
                   textTransform: 'uppercase',
@@ -650,6 +657,7 @@ const AlertsView: React.FC = () => {
               </div>
             </div>
           )}
+          </div>
         </div>
 
         <ConfirmationModal

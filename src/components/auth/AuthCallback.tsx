@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { IonPage, IonContent } from '@ionic/react';
-import { ArrowRight, CheckCircle2, Loader2, Mail } from 'lucide-react';
+import { AlertTriangle, ArrowRight, CheckCircle2, Loader2, Mail } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
 
 type Phase = 'processing' | 'confirmed' | 'error';
@@ -12,8 +12,6 @@ export default function AuthCallback() {
   const [phase, setPhase] = useState<Phase>('processing');
   const [error, setError] = useState<string | null>(null);
 
-  // Si l'URL inclut ?status=confirmed (variante mockup H.4b), on affiche
-  // directement le hero "Compte activé" sans rappeler getSession.
   const params = new URLSearchParams(location.search);
   const explicitConfirmed = params.get('status') === 'confirmed';
 
@@ -63,69 +61,76 @@ export default function AuthCallback() {
   return (
     <IonPage>
       <IonContent fullscreen scrollY={true}>
-        <div data-public-page className="auth-shell">
-          <header className="auth-brand">
-            <span className="auth-brand__mark">P8</span>
-            <div className="auth-brand__main">
-              <span className="auth-brand__name">PorcTrack 8</span>
-              <span className="auth-brand__meta">Cahier de troupeau · Côte d’Ivoire</span>
-            </div>
-          </header>
+        <div className="pt-screen">
+          <div data-public-page className="auth-shell">
+            <header className="auth-hero">
+              <h1 className="auth-hero__brand">PorcTrack</h1>
+              <p className="auth-hero__tagline">Gestion technique troupeau porcin</p>
+            </header>
 
-          {phase === 'processing' && (
-            <>
-              <div className="auth-hero-icon" aria-hidden>
-                <Mail strokeWidth={2} />
-              </div>
-              <h1 className="auth-hero-h1">Confirme ton email</h1>
-              <p className="auth-hero-sub">
-                Connexion en cours. Si rien ne se passe, vérifie le lien dans ta boîte mail.
-              </p>
-              <p className="resend-counter" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
-                <Loader2 size={14} strokeWidth={2} className="animate-spin" aria-hidden="true" />
-                Patiente un instant…
-              </p>
-            </>
-          )}
+            {phase === 'processing' && (
+              <>
+                <div className="auth-hero-icon" aria-hidden>
+                  <Mail strokeWidth={2} />
+                </div>
+                <h2 className="auth-hero-h1">Confirme ton email</h2>
+                <p className="auth-hero-sub">
+                  Connexion en cours. Si rien ne se passe, vérifie le lien dans ta boîte mail.
+                </p>
+                <p className="resend-counter" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+                  <Loader2 size={14} strokeWidth={2} className="animate-spin" aria-hidden="true" />
+                  Patiente un instant…
+                </p>
+              </>
+            )}
 
-          {phase === 'confirmed' && (
-            <>
-              <div className="auth-hero-icon auth-hero-icon--success" aria-hidden>
-                <CheckCircle2 strokeWidth={2} />
-              </div>
-              <h1 className="auth-hero-h1">Compte activé</h1>
-              <p className="auth-hero-sub">
-                Bienvenue sur PorcTrack. On t’emmène à ton cahier de troupeau.
-              </p>
-              <button
-                type="button"
-                className="primary-cta-block"
-                onClick={() => navigate('/today', { replace: true })}
-              >
-                Continuer vers PorcTrack
-                <ArrowRight size={16} strokeWidth={2} />
-              </button>
-            </>
-          )}
+            {phase === 'confirmed' && (
+              <>
+                <div className="auth-hero-icon auth-hero-icon--success" aria-hidden>
+                  <CheckCircle2 strokeWidth={2} />
+                </div>
+                <h2 className="auth-hero-h1">Compte activé</h2>
+                <p className="auth-hero-sub">
+                  Bienvenue sur PorcTrack. On t’emmène à ton cahier de troupeau.
+                </p>
+                <button
+                  type="button"
+                  className="btn-primary--lg"
+                  onClick={() => navigate('/today', { replace: true })}
+                >
+                  Continuer vers PorcTrack
+                  <ArrowRight size={16} strokeWidth={2} />
+                </button>
+              </>
+            )}
 
-          {phase === 'error' && (
-            <>
-              <h1 className="auth-h1">Connexion impossible</h1>
-              <p className="auth-sub" style={{ wordBreak: 'break-word' }}>
-                {error ?? 'Une erreur est survenue lors de la confirmation.'}
-              </p>
-              <button
-                type="button"
-                className="primary-cta-block"
-                onClick={() => {
-                  window.location.href = '/login';
-                }}
-              >
-                Retour à la connexion
-                <ArrowRight size={16} strokeWidth={2} />
-              </button>
-            </>
-          )}
+            {phase === 'error' && (
+              <>
+                <h2 className="auth-h1">Connexion impossible</h2>
+                <div role="alert" className="alert-card alert-card--danger">
+                  <span className="alert-card__icon" aria-hidden>
+                    <AlertTriangle size={18} strokeWidth={2} />
+                  </span>
+                  <div className="alert-card__body">
+                    <div className="alert-card__title">Erreur</div>
+                    <div className="alert-card__text" style={{ wordBreak: 'break-word' }}>
+                      {error ?? 'Une erreur est survenue lors de la confirmation.'}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="btn-primary--lg"
+                  onClick={() => {
+                    window.location.href = '/login';
+                  }}
+                >
+                  Retour à la connexion
+                  <ArrowRight size={16} strokeWidth={2} />
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </IonContent>
     </IonPage>

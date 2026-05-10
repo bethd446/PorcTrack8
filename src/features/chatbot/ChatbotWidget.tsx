@@ -185,9 +185,17 @@ export const ChatbotWidget: React.FC = () => {
   const debugEnabled = isMariusDebug();
 
   useEffect(() => {
-    const handler = () => setOpen(true);
-    window.addEventListener('open-chatbot', handler);
-    return () => window.removeEventListener('open-chatbot', handler);
+    const openHandler = () => setOpen(true);
+    const closeHandler = () => {
+      abortRef.current?.abort();
+      setOpen(false);
+    };
+    window.addEventListener('open-chatbot', openHandler);
+    window.addEventListener('close-chatbot', closeHandler);
+    return () => {
+      window.removeEventListener('open-chatbot', openHandler);
+      window.removeEventListener('close-chatbot', closeHandler);
+    };
   }, []);
 
   // V72 — Suggestions DYNAMIQUES dérivées du snapshot ferme (mise-bas
@@ -406,29 +414,31 @@ export const ChatbotWidget: React.FC = () => {
     <div
       role="dialog"
       aria-label="Conversation avec Marius"
-      className="fixed bottom-20 right-4 z-50 w-[340px] max-h-[520px]
+      className="pt-screen fixed bottom-20 right-4 z-50 w-[340px] max-h-[520px]
                  rounded-2xl shadow-2xl flex flex-col overflow-hidden
                  border border-[var(--color-accent-100)]"
       style={{ background: 'var(--bg-surface)' }}
     >
-      <div
-        className="flex items-center justify-between px-4 py-3
-                   bg-[var(--color-accent-500)] text-white"
-      >
-        <div className="flex items-center gap-2">
-          <img
-            src="/images/v73/marius/orb-emeraude.webp"
-            alt=""
-            aria-hidden
-            className="w-8 h-8 rounded-full object-cover"
-            style={{ boxShadow: '0 0 12px rgba(52,211,153,0.55)' }}
-          />
-          <span className="ft-heading text-sm uppercase tracking-wide">Marius</span>
+      <header className="ph ph--primary" style={{ margin: 0, borderRadius: 0 }}>
+        <div className="ph__row">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+            <img
+              src="/images/v73/marius/orb-emeraude.webp"
+              alt=""
+              aria-hidden
+              className="w-8 h-8 rounded-full object-cover"
+              style={{ boxShadow: '0 0 12px rgba(52,211,153,0.55)', flexShrink: 0 }}
+            />
+            <div style={{ minWidth: 0 }}>
+              <div className="ph__eyebrow">Assistant IA</div>
+              <h1 className="ph__h1" style={{ fontSize: 18 }}>Marius</h1>
+            </div>
+          </div>
+          <Button variant="ghost" size="small" onClick={handleClose} ariaLabel="Fermer la conversation">
+            <X size={18} />
+          </Button>
         </div>
-        <Button variant="ghost" size="small" onClick={handleClose} aria-label="Fermer la conversation">
-          <X size={18} />
-        </Button>
-      </div>
+      </header>
 
       <div
         aria-live="polite"
@@ -475,27 +485,21 @@ export const ChatbotWidget: React.FC = () => {
               </div>
             );
           }
+          if (m.role === 'user') {
+            return (
+              <div key={i} className="flex justify-end">
+                <div className="bubble" style={{ maxWidth: '80%' }}>
+                  {m.content}
+                </div>
+              </div>
+            );
+          }
           return (
-            <div
-              key={i}
-              className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm leading-relaxed
-                  ${
-                    m.role === 'user'
-                      ? 'bg-[var(--color-accent-500)] text-white rounded-br-sm'
-                      : 'rounded-bl-sm'
-                  }`}
-                style={
-                  m.role === 'user'
-                    ? undefined
-                    : { background: 'var(--bg-surface-2)', color: 'var(--ink)' }
-                }
-              >
+            <div key={i} className="flex justify-start">
+              <div className="alert-card--info" style={{ maxWidth: '80%' }}>
                 {m.content
-                ? (m.role === 'assistant' ? renderMariusMarkdown(m.content) : m.content)
-                : (loading && !streaming ? 'Marius reflechit…' : '')}
+                  ? renderMariusMarkdown(m.content)
+                  : (loading && !streaming ? 'Marius reflechit…' : '')}
               </div>
             </div>
           );

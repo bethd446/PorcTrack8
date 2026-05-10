@@ -1,9 +1,11 @@
 /**
  * FinancesView — Refonte V70 (Sprint Legacy 1, 2026-05-10)
  * ════════════════════════════════════════════════════════════════════════════
- * Pattern V70 natif (mockup B.4) : phone-content + PageHeader + score-billboard
- * marge mensuelle + kpis-strip 3 KPIs + bar chart 12 mois SVG + card-link
- * vers le rapport détaillé. Plus d'AgritechLayout / KpiCardV6 / TopBarSync.
+ * Pattern V70 natif (mockup B.4) : pt-screen + ph--primary (eyebrow Pilotage /
+ * titre Finances / sub Détail des transactions / back arrow vers
+ * /performance?tab=finances) + phone-content + score-billboard marge mensuelle
+ * + kpis-strip 3 KPIs + bar chart 12 mois SVG + card-link vers le rapport
+ * détaillé. Plus d'AgritechLayout / KpiCardV6 / TopBarSync.
  *
  * Logique métier préservée :
  *   - useFarm.finances + useFarm.currency inchangés
@@ -18,9 +20,9 @@ import { useNavigate } from 'react-router-dom';
 import {
   IonContent, IonPage, IonRefresher, IonRefresherContent,
 } from '@ionic/react';
-import { ChevronRight, FileText, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileText, Plus } from 'lucide-react';
 
-import { PageHeader, Section } from '@/design-system';
+import { Section } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   summarizeByPeriode,
@@ -152,15 +154,24 @@ const FinancesView: React.FC = () => {
           <IonRefresherContent />
         </IonRefresher>
 
-        <div
-          className="phone-content"
-          style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}
-        >
-          <PageHeader
-            eyebrow="Pilotage · Finances"
-            title="Finances"
-            subtitle={`Marge mensuelle ${currentMonthLabel}`}
-          />
+        <div className="pt-screen">
+          <header className="ph--primary">
+            <button
+              type="button"
+              className="back"
+              aria-label="Retour à Performance"
+              onClick={() => navigate('/performance?tab=finances')}
+            >
+              <ChevronLeft size={18} strokeWidth={1.8} aria-hidden />
+            </button>
+            <div className="eyebrow">Pilotage</div>
+            <h1>Finances</h1>
+            <div className="sub">Détail des transactions</div>
+          </header>
+          <div
+            className="phone-content"
+            style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}
+          >
 
           {!hasData ? (
             <div className="empty" style={{ marginTop: 16 }}>
@@ -205,17 +216,16 @@ const FinancesView: React.FC = () => {
                 >
                   <div style={{ minWidth: 0 }}>
                     <div
-                      className="num"
+                      className={`num ${marge >= 0 ? 'amount--positive' : 'amount--negative'}`}
                       style={{
                         fontFamily: 'var(--pt-font-display)',
                         fontWeight: 900,
                         fontSize: 36,
-                        color: marge >= 0 ? 'var(--pt-success)' : 'var(--pt-danger)',
                         letterSpacing: '-0.01em',
                         lineHeight: 1,
                       }}
                     >
-                      {marge >= 0 ? '+' : ''}{formatMontant(marge, currency)}
+                      {marge >= 0 ? '+' : '−'}{formatMontant(Math.abs(marge), currency)}
                     </div>
                     <div className="eyebrow" style={{ marginTop: 6 }}>
                       {currentMonthLabel}
@@ -224,15 +234,14 @@ const FinancesView: React.FC = () => {
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
                     {deltaPct !== null ? (
                       <div
-                        className="num"
+                        className={`num ${deltaPct >= 0 ? 'amount--positive' : 'amount--negative'}`}
                         style={{
                           fontFamily: 'var(--pt-font-mono)',
                           fontSize: 13,
-                          color: deltaPct >= 0 ? 'var(--pt-success)' : 'var(--pt-danger)',
                           fontWeight: 600,
                         }}
                       >
-                        {deltaPct >= 0 ? '↑ +' : '↓ '}{Math.abs(deltaPct)}%
+                        {deltaPct >= 0 ? '↑ +' : '↓ −'}{Math.abs(deltaPct)}%
                       </div>
                     ) : (
                       <div
@@ -261,21 +270,22 @@ const FinancesView: React.FC = () => {
               >
                 <div className="kpi">
                   <div className="kpi__label">Revenus</div>
-                  <div className="kpi__val num">{formatMontant(revenus, currency)}</div>
+                  <div className="kpi__val num amount--positive">
+                    +{formatMontant(revenus, currency)}
+                  </div>
                 </div>
                 <div className="kpi">
                   <div className="kpi__label">Charges</div>
-                  <div className="kpi__val num">{formatMontant(charges, currency)}</div>
+                  <div className="kpi__val num amount--negative">
+                    −{formatMontant(charges, currency)}
+                  </div>
                 </div>
                 <div className="kpi">
                   <div className="kpi__label">Marge</div>
                   <div
-                    className="kpi__val num"
-                    style={{
-                      color: marge >= 0 ? 'var(--pt-success)' : 'var(--pt-danger)',
-                    }}
+                    className={`kpi__val num ${marge >= 0 ? 'amount--positive' : 'amount--negative'}`}
                   >
-                    {formatMontant(marge, currency)}
+                    {marge >= 0 ? '+' : '−'}{formatMontant(Math.abs(marge), currency)}
                   </div>
                 </div>
               </div>
@@ -294,16 +304,15 @@ const FinancesView: React.FC = () => {
                 }}
               >
                 <div
-                  className="num"
+                  className={`num ${tresorerieCumul >= 0 ? 'amount--positive' : 'amount--negative'}`}
                   style={{
                     fontFamily: 'var(--pt-font-display)',
                     fontWeight: 900,
                     fontSize: 24,
-                    color: tresorerieCumul >= 0 ? 'var(--pt-ink)' : 'var(--pt-danger)',
                     letterSpacing: '-0.01em',
                   }}
                 >
-                  {formatMontant(tresorerieCumul, currency)}
+                  {tresorerieCumul >= 0 ? '+' : '−'}{formatMontant(Math.abs(tresorerieCumul), currency)}
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--pt-muted)', marginTop: 4 }}>
                   Solde net depuis le début de l’historique
@@ -399,6 +408,7 @@ const FinancesView: React.FC = () => {
               </button>
             </>
           )}
+          </div>
         </div>
 
         {/* ── FAB Nouvelle transaction ──────────────────────────────── */}

@@ -9,12 +9,11 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, UserPlus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, UserPlus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useFarm } from '../../context/FarmContext';
 import { useToast } from '../../context/ToastContext';
 import { supabase } from '../../services/supabaseClient';
-import { PageHeader } from '../components/ds/PageHeader';
 import BottomSheet from '../../components/agritech/BottomSheet';
 import FarmSwitcher from '../../components/FarmSwitcher';
 import type { FarmRole } from '../../types/farm';
@@ -369,34 +368,47 @@ export const MonEquipeV70: React.FC = () => {
   }, [members]);
 
   return (
-    <div
-      className="phone-content"
-      style={{ padding: 24, maxWidth: 600, margin: '0 auto', position: 'relative', minHeight: '100%' }}
-    >
-      <div style={{ marginBottom: 12 }}>
-        <FarmSwitcher />
-      </div>
+    <div className="pt-screen">
+      <header className="ph ph--primary">
+        <div className="ph__row">
+          <div style={{ flex: 1 }}>
+            <button
+              type="button"
+              onClick={() => navigate('/reglages')}
+              aria-label="Retour aux réglages"
+              className="iconbtn"
+              style={{ marginBottom: 10 }}
+            >
+              <ChevronLeft size={16} strokeWidth={1.8} aria-hidden />
+            </button>
+            <div className="ph__eyebrow">Configuration · Équipe</div>
+            <h1 className="ph__h1">Mon équipe</h1>
+            <p className="ph__sub">Gérer rôles et accès</p>
+          </div>
+        </div>
+      </header>
 
-      <PageHeader
-        eyebrow="Configuration · Équipe"
-        title="Mon équipe"
-        subtitle="Gérer rôles et accès"
-        onBack={() => navigate('/reglages')}
-      />
+      <div
+        className="phone-content"
+        style={{ padding: '0 24px 24px', maxWidth: 600, margin: '0 auto', position: 'relative' }}
+      >
+        <div style={{ marginBottom: 12 }}>
+          <FarmSwitcher />
+        </div>
 
-      <section style={{ marginTop: 8 }}>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 12,
-          }}
-        >
-          {[
-            { value: stats.total, label: 'Membres' },
-            { value: stats.owners, label: 'Owners' },
-            { value: stats.porchers, label: 'Porchers' },
-          ].map((kpi) => (
+        <section className="section">
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 12,
+            }}
+          >
+            {[
+              { value: stats.total, label: 'Membres' },
+              { value: stats.owners, label: 'Owners' },
+              { value: stats.porchers, label: 'Porchers' },
+            ].map((kpi) => (
             <article
               key={kpi.label}
               style={{
@@ -434,28 +446,21 @@ export const MonEquipeV70: React.FC = () => {
       </section>
 
       {canInvite && (
-        <section style={{ marginTop: 20 }}>
+        <section className="section">
           <button
             type="button"
             onClick={() => setInviteOpen(true)}
             aria-label="Inviter un membre dans la ferme"
+            className="btn-secondary--lg"
             style={{
               width: '100%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: 10,
-              padding: '14px 18px',
               background: 'var(--pt-accent, #B8703D)',
               color: 'white',
-              border: 'none',
-              borderRadius: 16,
-              cursor: 'pointer',
-              fontFamily: 'var(--pt-font-display)',
-              fontWeight: 700,
-              fontSize: 14,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
+              borderColor: 'transparent',
             }}
           >
             <UserPlus size={18} aria-hidden />
@@ -464,19 +469,8 @@ export const MonEquipeV70: React.FC = () => {
         </section>
       )}
 
-      <section style={{ marginTop: 24 }}>
-        <div
-          style={{
-            fontSize: 11,
-            letterSpacing: '0.16em',
-            textTransform: 'uppercase',
-            color: 'var(--muted)',
-            marginBottom: 10,
-            fontWeight: 500,
-          }}
-        >
-          Membres
-        </div>
+      <section className="section">
+        <div className="section__label">Membres</div>
 
         {loading && (
           <div
@@ -616,27 +610,17 @@ export const MonEquipeV70: React.FC = () => {
         })}
       </section>
 
-      <section style={{ marginTop: 32, marginBottom: 32 }}>
+      <section className="section" style={{ marginTop: 32, marginBottom: 32 }}>
         <button
           type="button"
           onClick={() => navigate('/admin')}
           aria-label="Modifier l’équipe"
+          className="btn-primary--lg"
           style={{
             width: '100%',
             display: 'flex',
             alignItems: 'center',
             gap: 12,
-            padding: '16px 18px',
-            background: 'var(--pt-primary, #064e3b)',
-            color: 'white',
-            border: 'none',
-            borderRadius: 16,
-            cursor: 'pointer',
-            fontFamily: 'var(--pt-font-display)',
-            fontWeight: 700,
-            fontSize: 15,
-            letterSpacing: 0.4,
-            textTransform: 'uppercase',
             justifyContent: 'center',
           }}
         >
@@ -653,6 +637,7 @@ export const MonEquipeV70: React.FC = () => {
           currentFarmId={currentFarmId}
         />
       )}
+      </div>
     </div>
   );
 };

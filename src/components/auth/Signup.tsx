@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { IonPage, IonContent } from '@ionic/react';
 import {
+  AlertTriangle,
+  ArrowLeft,
   ArrowRight,
   Check,
-  CheckCircle2,
   ChevronDown,
   Eye,
   EyeOff,
@@ -194,51 +195,51 @@ export default function Signup() {
     return (
       <IonPage>
         <IonContent fullscreen scrollY={true}>
-          <div data-public-page className="auth-shell">
-            <header className="auth-brand">
-              <span className="auth-brand__mark">P8</span>
-              <div className="auth-brand__main">
-                <span className="auth-brand__name">PorcTrack 8</span>
-                <span className="auth-brand__meta">Cahier de troupeau · Côte d’Ivoire</span>
+          <div className="pt-screen">
+            <div data-public-page className="auth-shell">
+              <header className="auth-hero">
+                <h1 className="auth-hero__brand">PorcTrack</h1>
+                <p className="auth-hero__tagline">Gestion technique troupeau porcin</p>
+              </header>
+
+              <div className="auth-hero-icon" aria-hidden>
+                <Mail strokeWidth={2} />
               </div>
-            </header>
+              <h2 className="auth-hero-h1">Confirme ton email</h2>
+              <p className="auth-hero-sub">
+                On t’a envoyé un lien à <b>{email}</b>. Clique dessus pour activer ton compte.
+              </p>
 
-            <div className="auth-hero-icon" aria-hidden>
-              <Mail strokeWidth={2} />
+              <button
+                type="button"
+                className="btn--ghost btn--lg btn--full"
+                onClick={handleResend}
+                disabled={resendCooldown > 0 || resendLoading}
+                aria-busy={resendLoading}
+              >
+                {resendLoading && <Loader2 size={16} strokeWidth={2} className="animate-spin" aria-hidden="true" />}
+                {resendLoading
+                  ? 'Envoi…'
+                  : resendCooldown > 0
+                  ? `Renvoyer le lien (${resendCooldown}s)`
+                  : 'Renvoyer le lien'}
+              </button>
+              {resendNotice && <div className="resend-counter">{resendNotice}</div>}
+
+              <button
+                type="button"
+                className="auth-link-ghost"
+                onClick={() => {
+                  setSent(false);
+                  setResendCooldown(0);
+                  setResendNotice(null);
+                }}
+                style={{ marginTop: 'auto' }}
+              >
+                <ArrowLeft size={14} strokeWidth={2} />
+                Changer d’email
+              </button>
             </div>
-            <h1 className="auth-hero-h1">Confirme ton email</h1>
-            <p className="auth-hero-sub">
-              On t’a envoyé un lien à <b>{email}</b>. Clique dessus pour activer ton compte.
-            </p>
-
-            <button
-              type="button"
-              className="btn--ghost btn--lg btn--full"
-              onClick={handleResend}
-              disabled={resendCooldown > 0 || resendLoading}
-              aria-busy={resendLoading}
-            >
-              {resendLoading && <Loader2 size={16} strokeWidth={2} className="animate-spin" aria-hidden="true" />}
-              {resendLoading
-                ? 'Envoi…'
-                : resendCooldown > 0
-                ? `Renvoyer le lien (${resendCooldown}s)`
-                : 'Renvoyer le lien'}
-            </button>
-            {resendNotice && <div className="resend-counter">{resendNotice}</div>}
-
-            <button
-              type="button"
-              className="auth-link-ghost"
-              onClick={() => {
-                setSent(false);
-                setResendCooldown(0);
-                setResendNotice(null);
-              }}
-              style={{ background: 'transparent', border: 'none', cursor: 'pointer', marginTop: 'auto' }}
-            >
-              ← Changer d’email
-            </button>
           </div>
         </IonContent>
       </IonPage>
@@ -248,202 +249,201 @@ export default function Signup() {
   return (
     <IonPage>
       <IonContent fullscreen scrollY={true}>
-        <div data-public-page className="auth-shell" style={{ overflowY: 'auto' }}>
-          <header className="auth-brand">
-            <span className="auth-brand__mark">P8</span>
-            <div className="auth-brand__main">
-              <span className="auth-brand__name">PorcTrack 8</span>
-              <span className="auth-brand__meta">Cahier de troupeau · Côte d’Ivoire</span>
-            </div>
-          </header>
+        <div className="pt-screen">
+          <div data-public-page className="auth-shell" style={{ overflowY: 'auto' }}>
+            <header className="auth-hero">
+              <h1 className="auth-hero__brand">PorcTrack</h1>
+              <p className="auth-hero__tagline">Gestion technique troupeau porcin</p>
+            </header>
 
-          <h1 className="auth-h1">Créer un compte</h1>
-          <p className="auth-sub">Démarre ton suivi de troupeau.</p>
+            <h2 className="auth-h1">Créer un compte</h2>
+            <p className="auth-sub">Démarre ton suivi de troupeau.</p>
 
-          <form className="auth-form" onSubmit={submit} noValidate>
-            <div className="field field--icon">
-              <label className="field__label" htmlFor="signup-name">
-                Nom complet <span className="req">REQUIS</span>
-              </label>
-              <span className="field__icon" aria-hidden>
-                <User size={16} strokeWidth={2} />
-              </span>
-              <input
-                id="signup-name"
-                name="name"
-                type="text"
-                className="field__input"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                autoComplete="name"
-                placeholder="Yao Kouassi"
-                required
-              />
-            </div>
-
-            <div className="field field--icon">
-              <label className="field__label" htmlFor="signup-email">
-                Email <span className="req">REQUIS</span>
-              </label>
-              <span className="field__icon" aria-hidden>
-                <Mail size={16} strokeWidth={2} />
-              </span>
-              <input
-                id="signup-email"
-                name="email"
-                type="email"
-                className="field__input"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                placeholder="yao@porctrack.test"
-                required
-              />
-            </div>
-
-            <div className="field field--icon">
-              <label className="field__label" htmlFor="signup-password">
-                Mot de passe <span className="req">REQUIS</span>
-              </label>
-              <span className="field__icon" aria-hidden>
-                <Lock size={16} strokeWidth={2} />
-              </span>
-              <input
-                id="signup-password"
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                className="field__input"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="new-password"
-                placeholder="8 caractères min."
-                required
-                minLength={8}
-              />
-              <button
-                type="button"
-                className="field__btn"
-                aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                onClick={() => setShowPassword((v) => !v)}
-              >
-                {showPassword ? <EyeOff size={16} strokeWidth={2} /> : <Eye size={16} strokeWidth={2} />}
-              </button>
-              {password.length > 0 && (
-                <>
-                  <div className={`pwd-strength s${strength.score}`} aria-hidden>
-                    <span />
-                    <span />
-                    <span />
-                    <span />
-                  </div>
-                  <div className="pwd-strength__label" style={{ color: strength.color }}>
-                    {strength.label}
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="field field--icon">
-              <label className="field__label" htmlFor="signup-farm">
-                Nom de la ferme
-              </label>
-              <span className="field__icon" aria-hidden>
-                <Warehouse size={16} strokeWidth={2} />
-              </span>
-              <input
-                id="signup-farm"
-                name="farm"
-                type="text"
-                className="field__input"
-                value={farmName}
-                onChange={(e) => setFarmName(e.target.value)}
-                placeholder="Ferme Yamoussoukro"
-              />
-            </div>
-
-            <div className="field">
-              <label className="field__label" htmlFor="signup-country">
-                Pays
-              </label>
-              <div style={{ position: 'relative' }}>
-                <select
-                  id="signup-country"
-                  name="country"
-                  className="country-select"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                >
-                  {COUNTRIES.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.flag} {c.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  strokeWidth={2}
-                  aria-hidden
-                  style={{
-                    position: 'absolute',
-                    right: 12,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'var(--pt-subtle)',
-                    pointerEvents: 'none',
-                  }}
+            <form className="auth-form" onSubmit={submit} noValidate>
+              <div className="field field--icon">
+                <label className="label--v77" htmlFor="signup-name">
+                  Nom complet <span className="req">REQUIS</span>
+                </label>
+                <span className="field__icon" aria-hidden>
+                  <User size={16} strokeWidth={2} />
+                </span>
+                <input
+                  id="signup-name"
+                  name="name"
+                  type="text"
+                  className="field__input"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  autoComplete="name"
+                  placeholder="Yao Kouassi"
+                  required
                 />
               </div>
-            </div>
 
-            <label className="checkbox-row" style={{ marginTop: 6 }}>
-              <input
-                type="checkbox"
-                checked={acceptTerms}
-                onChange={(e) => setAcceptTerms(e.target.checked)}
-                style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
-              />
-              <span className={`checkbox-row__box${acceptTerms ? ' checked' : ''}`} aria-hidden>
-                {acceptTerms && <Check strokeWidth={3} />}
-              </span>
-              <span>
-                J’accepte les <Link to="/cgu">conditions d’utilisation</Link> et la{' '}
-                <Link to="/privacy">politique de confidentialité</Link>.
-              </span>
-            </label>
-
-            {error && (
-              <div role="alert" className="alert-card">
-                <span className="alert-card__icon" aria-hidden>
-                  <CheckCircle2 size={18} strokeWidth={2} />
+              <div className="field field--icon">
+                <label className="label--v77" htmlFor="signup-email">
+                  Email <span className="req">REQUIS</span>
+                </label>
+                <span className="field__icon" aria-hidden>
+                  <Mail size={16} strokeWidth={2} />
                 </span>
-                <div>
-                  <div className="alert-card__title">Inscription impossible</div>
-                  <div className="alert-card__text" style={{ whiteSpace: 'pre-line' }}>
-                    {error}
-                  </div>
+                <input
+                  id="signup-email"
+                  name="email"
+                  type="email"
+                  className="field__input"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  placeholder="yao@porctrack.test"
+                  required
+                />
+              </div>
+
+              <div className="field field--icon">
+                <label className="label--v77" htmlFor="signup-password">
+                  Mot de passe <span className="req">REQUIS</span>
+                </label>
+                <span className="field__icon" aria-hidden>
+                  <Lock size={16} strokeWidth={2} />
+                </span>
+                <input
+                  id="signup-password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  className="field__input"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="new-password"
+                  placeholder="8 caractères min."
+                  required
+                  minLength={8}
+                />
+                <button
+                  type="button"
+                  className="field__btn"
+                  aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  onClick={() => setShowPassword((v) => !v)}
+                >
+                  {showPassword ? <EyeOff size={16} strokeWidth={2} /> : <Eye size={16} strokeWidth={2} />}
+                </button>
+                {password.length > 0 && (
+                  <>
+                    <div className={`pwd-strength s${strength.score}`} aria-hidden>
+                      <span />
+                      <span />
+                      <span />
+                      <span />
+                    </div>
+                    <div className="pwd-strength__label" style={{ color: strength.color }}>
+                      {strength.label}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="field field--icon">
+                <label className="label--v77" htmlFor="signup-farm">
+                  Nom de la ferme
+                </label>
+                <span className="field__icon" aria-hidden>
+                  <Warehouse size={16} strokeWidth={2} />
+                </span>
+                <input
+                  id="signup-farm"
+                  name="farm"
+                  type="text"
+                  className="field__input"
+                  value={farmName}
+                  onChange={(e) => setFarmName(e.target.value)}
+                  placeholder="Ferme Yamoussoukro"
+                />
+              </div>
+
+              <div className="field">
+                <label className="label--v77" htmlFor="signup-country">
+                  Pays
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <select
+                    id="signup-country"
+                    name="country"
+                    className="country-select"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                  >
+                    {COUNTRIES.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.flag} {c.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={16}
+                    strokeWidth={2}
+                    aria-hidden
+                    style={{
+                      position: 'absolute',
+                      right: 12,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: 'var(--pt-subtle)',
+                      pointerEvents: 'none',
+                    }}
+                  />
                 </div>
               </div>
-            )}
 
-            <button
-              type="submit"
-              className="primary-cta-block"
-              disabled={!canSubmit}
-              aria-busy={loading}
-              style={{ marginTop: 6 }}
-            >
-              {loading && <Loader2 size={16} strokeWidth={2} className="animate-spin" aria-hidden="true" />}
-              {loading ? 'Création…' : 'Créer mon compte'}
-              {!loading && <ArrowRight size={16} strokeWidth={2} />}
-            </button>
-          </form>
+              <label className="checkbox-row" style={{ marginTop: 6 }}>
+                <input
+                  type="checkbox"
+                  checked={acceptTerms}
+                  onChange={(e) => setAcceptTerms(e.target.checked)}
+                  style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+                />
+                <span className={`checkbox-row__box${acceptTerms ? ' checked' : ''}`} aria-hidden>
+                  {acceptTerms && <Check strokeWidth={3} />}
+                </span>
+                <span>
+                  J’accepte les <Link to="/cgu">conditions d’utilisation</Link> et la{' '}
+                  <Link to="/privacy">politique de confidentialité</Link>.
+                </span>
+              </label>
 
-          <p className="auth-foot" style={{ paddingTop: 18 }}>
-            Déjà un compte ?{' '}
-            <Link to="/login" onClick={() => navigate('/login')}>
-              Se connecter →
-            </Link>
-          </p>
+              {error && (
+                <div role="alert" className="alert-card alert-card--danger">
+                  <span className="alert-card__icon" aria-hidden>
+                    <AlertTriangle size={18} strokeWidth={2} />
+                  </span>
+                  <div className="alert-card__body">
+                    <div className="alert-card__title">Inscription impossible</div>
+                    <div className="alert-card__text" style={{ whiteSpace: 'pre-line' }}>
+                      {error}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="btn-primary--lg"
+                disabled={!canSubmit}
+                aria-busy={loading}
+                style={{ marginTop: 6 }}
+              >
+                {loading && <Loader2 size={16} strokeWidth={2} className="animate-spin" aria-hidden="true" />}
+                {loading ? 'Création…' : 'Créer mon compte'}
+                {!loading && <ArrowRight size={16} strokeWidth={2} />}
+              </button>
+            </form>
+
+            <p className="auth-foot" style={{ paddingTop: 18 }}>
+              Déjà un compte ?{' '}
+              <Link to="/login" className="auth-link-ghost" onClick={() => navigate('/login')}>
+                Se connecter →
+              </Link>
+            </p>
+          </div>
         </div>
       </IonContent>
     </IonPage>

@@ -10,9 +10,7 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RefreshCw, Trash2, AlertTriangle, CheckCircle2, ChevronRight, Cloud, CloudOff } from 'lucide-react';
-import { PageHeader } from '../components/ds/PageHeader';
-import { Section } from '../components/ds/Section';
+import { RefreshCw, Trash2, AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Cloud, CloudOff } from 'lucide-react';
 import {
   flushQueue,
   getQueueItems,
@@ -179,23 +177,37 @@ export const SynchronisationV70: React.FC = () => {
   const totalPending = items.length;
   const totalErrors = items.filter((i) => i.tries > 0).length;
 
-  return (
-    <div
-      className="phone-content"
-      style={{ padding: 24, maxWidth: 600, margin: '0 auto', minHeight: '100%' }}
-    >
-      <PageHeader
-        eyebrow="Synchronisation"
-        title="File d'attente"
-        onBack={() => navigate(-1)}
-        subtitle={
-          totalPending === 0
-            ? 'Tout est synchronisé.'
-            : `${totalPending} action${totalPending > 1 ? 's' : ''} en attente${totalErrors > 0 ? ` · ${totalErrors} en erreur` : ''}`
-        }
-      />
+  const subtitle =
+    totalPending === 0
+      ? 'Tout est synchronisé.'
+      : `${totalPending} action${totalPending > 1 ? 's' : ''} en attente${totalErrors > 0 ? ` · ${totalErrors} en erreur` : ''}`;
 
-      {/* Bandeau état réseau */}
+  return (
+    <div className="pt-screen">
+      <header className="ph ph--primary">
+        <div className="ph__row">
+          <div style={{ flex: 1 }}>
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              aria-label="Retour"
+              className="iconbtn"
+              style={{ marginBottom: 10 }}
+            >
+              <ChevronLeft size={16} strokeWidth={1.8} aria-hidden />
+            </button>
+            <div className="ph__eyebrow">Synchronisation</div>
+            <h1 className="ph__h1">File d'attente</h1>
+            <p className="ph__sub">{subtitle}</p>
+          </div>
+        </div>
+      </header>
+
+      <div
+        className="phone-content"
+        style={{ padding: '0 24px 24px', maxWidth: 600, margin: '0 auto' }}
+      >
+        {/* Bandeau état réseau */}
       <div
         role="status"
         aria-live="polite"
@@ -247,7 +259,10 @@ export const SynchronisationV70: React.FC = () => {
         </div>
       )}
 
-      <Section label={totalPending > 0 ? 'Actions en attente' : 'Aucune action en attente'}>
+      <section className="section">
+        <div className="section__label">
+          {totalPending > 0 ? 'Actions en attente' : 'Aucune action en attente'}
+        </div>
         {totalPending === 0 ? (
           <div
             style={{
@@ -363,10 +378,13 @@ export const SynchronisationV70: React.FC = () => {
             })}
           </ul>
         )}
-      </Section>
+      </section>
 
       {/* Archive */}
-      <Section label={archive.length > 0 ? `Erreurs définitives (${archive.length})` : 'Aucune erreur définitive'}>
+      <section className="section">
+        <div className="section__label">
+          {archive.length > 0 ? `Erreurs définitives (${archive.length})` : 'Aucune erreur définitive'}
+        </div>
         {archive.length === 0 ? (
           <p style={{ color: 'var(--pt-muted)', fontSize: 13, marginTop: 8 }}>
             Pas d'action abandonnée. Les retries se sont tous résolus.
@@ -435,13 +453,14 @@ export const SynchronisationV70: React.FC = () => {
             </button>
           </>
         )}
-      </Section>
+      </section>
 
       {/* Lien diag */}
       <div style={{ marginTop: 24, fontSize: 11, color: 'var(--pt-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
         <span>Stockage local : Capacitor Preferences</span>
         <ChevronRight size={12} aria-hidden />
         <span>5 retries max · backoff 1s/5s/30s/5min/30min</span>
+      </div>
       </div>
     </div>
   );

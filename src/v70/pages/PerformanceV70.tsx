@@ -1,30 +1,24 @@
 /**
  * V70 — Page /performance (archétype 2 Hub)
  *
- * Réplique pixel-perfect mockup `docs/v70/v70-mockup.html` lignes 1295-1397.
- *
- * Sections :
- *  1. PageHeader 'Pilotage · Mai 2026' / 'Performance'
- *  2. TabsMini (Vue / KPIs / Finances / Prévisions)
- *  3. ISSE hero (Card hero + Tooltip term="isse")
- *  4. EduCard explication ISSE
- *  5. Indicateurs techniques (4 KPIs, Tooltips mortalite/iem)
- *  6. Finances (Marge mensuelle + Pill "Owner") — UI ouverte à tous V70,
- *     RLS différé V71 (décision B Christophe).
- *  7. Top performances (2 ListItem bandes + EntityAvatar)
- *
- * Phase 3D V70 — stubs data, Phase F branchera perfKpiAnalyzer.
+ * V77 namespace `.pt-screen` (uniformisation A5 vague 3) :
+ *  1. Header `.ph.ph--primary` (eyebrow "Suivi technique" / h1 "Performance" /
+ *     sub dynamique par tab)
+ *  2. Pills `.pills` (Vue / KPIs / Finances / Prévisions)
+ *  3. Vue : score-billboard + kpis-strip 4 indicateurs synthèse + ISSE hero +
+ *     EduCard ISSE + KPIs détaillés + Finances teaser + Top performances
+ *  4. KPIs : liste détaillée seulement (pas de score billboard — A5 dédup)
+ *  5. Finances : teaser + accès `/pilotage/finances/details` (FinancesView)
+ *  6. Prévisions : mises-bas / sorties abattoir (buildForecastEvents)
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { TrendingUp, Download, Trophy, Medal } from 'lucide-react';
-import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
 import { Button } from '../components/ds/Button';
 import { Pill } from '../components/ds/Pill';
-import { TabsMini } from '../components/ds/TabsMini';
 import { ListItem } from '../components/ds/ListItem';
 import { Tooltip } from '../components/v70/Tooltip';
 import { EduCard } from '../components/v70/EduCard';
@@ -193,7 +187,7 @@ export const PerformanceV70: React.FC = () => {
     } as const;
     return (
       <div
-        className="phone-content"
+        className="pt-screen phone-content"
         style={{ padding: 24, maxWidth: 600, margin: '0 auto', position: 'relative', minHeight: '100%' }}
         data-testid="performance-loading-skeleton"
       >
@@ -207,29 +201,50 @@ export const PerformanceV70: React.FC = () => {
     );
   }
 
+  const tabSubtitle: Record<PerfTab, string> = {
+    vue: 'L’année en chiffres. Sans détour.',
+    kpis: 'Indicateurs techniques détaillés.',
+    finances: 'Marge mensuelle et accès au détail.',
+    previsions: 'Mises-bas et sorties prévues à 90 jours.',
+  };
+
+  const tabs: { value: PerfTab; label: string }[] = [
+    { value: 'vue', label: 'Vue' },
+    { value: 'kpis', label: 'KPIs' },
+    { value: 'finances', label: 'Finances' },
+    { value: 'previsions', label: 'Prévisions' },
+  ];
+
   return (
     <div
-      className="phone-content"
+      className="pt-screen phone-content"
       style={{ padding: 24, maxWidth: 600, margin: '0 auto', minHeight: '100%' }}
     >
       <MariusGreeting pageContext="performance" />
 
-      <PageHeader
-        eyebrow={`Pilotage · ${new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).replace(/^./, c => c.toUpperCase())}`}
-        title="Performance"
-        subtitle="L’année en chiffres. Sans détour."
-      />
+      <header className="ph ph--primary">
+        <div className="ph__row">
+          <div>
+            <div className="ph__eyebrow">Suivi technique</div>
+            <h1 className="ph__h1">Performance</h1>
+            <p className="ph__sub">{tabSubtitle[tab]}</p>
+          </div>
+        </div>
+      </header>
 
-      <TabsMini
-        value={tab}
-        onChange={handleTabChange}
-        options={[
-          { value: 'vue', label: 'Vue' },
-          { value: 'kpis', label: 'KPIs' },
-          { value: 'finances', label: 'Finances' },
-          { value: 'previsions', label: 'Prévisions' },
-        ]}
-      />
+      <div className="pills" style={{ marginBottom: 14 }}>
+        {tabs.map((t) => (
+          <button
+            key={t.value}
+            type="button"
+            className={`pill${tab === t.value ? ' is-active' : ''}`}
+            onClick={() => handleTabChange(t.value)}
+            aria-pressed={tab === t.value}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
 
       {pdfHint && (
         <div
@@ -268,10 +283,31 @@ export const PerformanceV70: React.FC = () => {
               <div className="score-pond">{scoreGlobal.detail}</div>
             </div>
           </div>
+
+          <div className="kpis-strip" aria-label="Indicateurs clés du troupeau">
+            <div className="kpi">
+              <div className="kpi__label">ISSE</div>
+              <div className="kpi__val">{fmt(kpis?.sevresParTruieAn ?? null, 1)}</div>
+            </div>
+            <div className="kpi">
+              <div className="kpi__label">Taux MB</div>
+              <div className="kpi__val">{fmt(kpis?.tauxMBPct ?? null, 0, '%')}</div>
+            </div>
+            <div className="kpi">
+              <div className="kpi__label">NV moy.</div>
+              <div className="kpi__val">{fmt(kpis?.moyNV ?? null, 1)}</div>
+            </div>
+            <div className="kpi">
+              <div className="kpi__label">IEM j</div>
+              <div className="kpi__val">{fmt(kpis?.iemMoyJours ?? null, 0)}</div>
+            </div>
+          </div>
         </section>
       )}
 
-      {/* ISSE hero (toujours visible : repère métier principal) */}
+      {/* ISSE hero — onglet Vue uniquement (KPIs n'expose plus le score
+          mais la liste détaillée des indicateurs, pas de duplication). */}
+      {tab === 'vue' && (
       <Card variant="hero">
         <div className="hero-row">
           <div
@@ -294,10 +330,14 @@ export const PerformanceV70: React.FC = () => {
           </div>
           <div style={{ textAlign: 'right' }}>
             {(() => {
-              // F-32 V75-n — ISSE n'a de sens qu'avec ≥ 1 cycle clos (au moins
-              // une bande avec dateSevrageReelle). Sinon on affiche "—" pour
-              // éviter de montrer "0.0" qui ressemble à une perf catastrophique.
-              const aCycleClos = (kpis?.nbSevrés12m ?? 0) > 0;
+              // F-32 V75-n — ISSE n'a de sens qu'avec ≥ 1 cycle clos. On
+              // ajoute (V77 a) un seuil minimal de portées historiques pour
+              // éviter "ISSE 0.0" sur une ferme en démarrage qui n'a pas
+              // encore eu un sevrage complet.
+              const nbSevres = kpis?.nbSevrés12m ?? 0;
+              const nbPortees = kpis?.nbPortees12m ?? 0;
+              const isseAn = kpis?.sevresParTruieAn ?? 0;
+              const aCycleClos = nbSevres > 0 && isseAn > 0 && nbPortees >= 3;
               return (
                 <>
                   <div
@@ -305,14 +345,16 @@ export const PerformanceV70: React.FC = () => {
                       fontFamily: 'var(--pt-font-display, sans-serif)',
                       fontSize: 32,
                       fontWeight: 900,
-                      color: 'var(--pt-success)',
+                      color: aCycleClos ? 'var(--pt-success)' : 'var(--pt-muted)',
                       lineHeight: 1,
                     }}
                   >
-                    {aCycleClos ? fmt(kpis?.sevresParTruieAn ?? null, 1) : '—'}
+                    {aCycleClos ? fmt(isseAn, 1) : '—'}
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--pt-muted)' }}>
-                    {aCycleClos ? 'vs réf. 12.0' : 'Aucun cycle clos pour le moment'}
+                    {aCycleClos
+                      ? 'vs réf. 12.0'
+                      : 'Premières performances visibles après le 1er sevrage complet'}
                   </div>
                 </>
               );
@@ -320,19 +362,24 @@ export const PerformanceV70: React.FC = () => {
           </div>
         </div>
       </Card>
+      )}
 
-      {/* Edu card ISSE — visible en Vue + KPIs */}
+      {/* Edu card ISSE — visible en Vue uniquement (le tab KPIs n'expose plus
+          l'ISSE qui est désormais le repère du tab Vue). */}
       {/* V75-q (F-30) — on retire l'effet d'épellation I/S/S (lettres en gras
           isolées) qui ralentissait la lecture pour un éleveur novice : le sigle
           est maintenant énoncé en clair une seule fois en intro. */}
-      {(tab === 'vue' || tab === 'kpis') && (
+      {tab === 'vue' && (
         <EduCard label="Qu’est-ce que l’ISSE ?">
           Indice Sevré-Saillie : nombre moyen de porcelets sevrés par truie par cycle.
           Référence métier : <strong>&gt;12 = excellent, 10-12 = bon, &lt;10 = à améliorer</strong>.
         </EduCard>
       )}
 
-      {/* KPIs grid — visible en Vue + KPIs */}
+      {/* KPIs grid — visible en Vue + KPIs (V77 b — duplicate ISSE retirée
+          du tab KPIs ; la liste détaillée reste exposée sur les deux onglets,
+          car elle complète le score billboard en Vue et constitue le cœur du
+          tab KPIs). */}
       {(tab === 'vue' || tab === 'kpis') && (
       <Section label="Indicateurs techniques">
         <Card>
@@ -450,7 +497,7 @@ export const PerformanceV70: React.FC = () => {
           <Section label="Prochaines mises-bas (90 jours)">
             <Card>
               {forecasts.mises.length === 0 ? (
-                <div style={{ padding: '12px 0', textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
+                <div className="empty-state" style={{ padding: '12px 0', textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
                   Aucune mise-bas prévue. Enregistre une saillie pour générer la prévision (saillie + 115 j).
                 </div>
               ) : (
@@ -476,7 +523,7 @@ export const PerformanceV70: React.FC = () => {
           <Section label="Sorties abattoir prévues (90 jours)">
             <Card>
               {forecasts.sorties.length === 0 ? (
-                <div style={{ padding: '12px 0', textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
+                <div className="empty-state" style={{ padding: '12px 0', textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
                   Aucune sortie abattoir prévue dans la fenêtre.
                 </div>
               ) : (
@@ -560,7 +607,7 @@ export const PerformanceV70: React.FC = () => {
       {advancedMode && (
         <Section label="Tableau détaillé (Mode avancé)">
           {bandesData.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--pt-muted)', fontSize: 13 }}>
+            <div className="empty-state" style={{ textAlign: 'center', padding: '20px 0', color: 'var(--pt-muted)', fontSize: 13 }}>
               Données disponibles après le 1er cycle complet
             </div>
           ) : (

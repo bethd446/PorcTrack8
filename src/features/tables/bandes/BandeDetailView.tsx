@@ -337,7 +337,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
   // `bande` undefined via narrowing local.
   if (!bande?.id) {
     return (
-      <div className="agritech-root p-10 text-center flex flex-col items-center justify-center min-h-[60vh] gap-4">
+      <div className="pt-screen p-10 text-center flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <p className="text-[14px] uppercase text-text-1">Bande introuvable</p>
         <Button
           variant="primary"
@@ -351,7 +351,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
   }
 
   return (
-    <div className="agritech-root h-full flex flex-col">
+    <div className="pt-screen h-full flex flex-col">
       <TopBarSync
         crumbs={[]}
         onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
@@ -1079,7 +1079,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
           </div>
         </div>
 
-        <IonModal isOpen={!!editRow} onDidDismiss={() => setEditRow(null)} className="premium-modal">
+        <IonModal isOpen={!!editRow} onDidDismiss={() => setEditRow(null)}>
           {editRow && meta && (
             <TableRowEdit
               meta={meta}

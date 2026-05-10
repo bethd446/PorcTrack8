@@ -16,7 +16,6 @@ import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, CalendarDays, CheckCircle2, Info, ClipboardList, Play, ChevronRight } from 'lucide-react';
 import { useFarm, useMeta } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
-import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
 import { Button } from '../components/ds/Button';
@@ -152,22 +151,23 @@ export const TodayV70: React.FC = () => {
   const hints = useFarmContextHints();
 
   return (
-    <div
-      className="phone-content"
-      style={{ padding: 24, maxWidth: 600, margin: '0 auto', minHeight: '100%' }}
-    >
+    <div className="pt-screen">
       <MariusGreeting />
 
-      <PageHeader
-        eyebrow={dateLabel}
-        title="Aujourd’hui"
-        subtitle={
-          showSkeletons
+      <header className="ph--primary">
+        <div className="eyebrow">{dateLabel}</div>
+        <h1>Aujourd’hui</h1>
+        <div className="sub">
+          {showSkeletons
             ? `Bonjour ${userName}`
-            : `Bonjour ${userName} — ${alerts.length} priorités`
-        }
-      />
+            : `Bonjour ${userName} — ${alerts.length} priorités`}
+        </div>
+      </header>
 
+      <div
+        className="phone-content"
+        style={{ padding: 24, maxWidth: 600, margin: '0 auto', minHeight: '100%' }}
+      >
       {/* V71 — Carte pédagogique contextuelle (encyclopédie liée à l'état ferme) */}
       {hints.length > 0 && <HintCard hint={hints[0]} />}
 
@@ -323,6 +323,7 @@ export const TodayV70: React.FC = () => {
           </Button>
         </Card>
       </Section>
+      </div>
     </div>
   );
 };

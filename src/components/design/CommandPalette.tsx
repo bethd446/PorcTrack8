@@ -58,7 +58,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onOpenChange }) =
             <BellRing size={14} />
             Alertes
           </CommandItem>
-          <CommandItem onSelect={() => go('/audit')}>
+          <CommandItem onSelect={() => go('/controle')}>
             <CheckSquare size={14} />
             Audit du jour
           </CommandItem>
@@ -182,7 +182,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onOpenChange }) =
 
         <CommandGroup heading="Actions">
           {['Saillie', 'Mise-bas', 'Pesée', 'Mortalité', 'Note'].map((a) => (
-            <CommandItem key={`action-${a}`} onSelect={() => go('/audit')}>
+            <CommandItem key={`action-${a}`} onSelect={() => go('/alerts')}>
               <Plus size={14} />
               {a}
               <CommandShortcut>Action rapide</CommandShortcut>

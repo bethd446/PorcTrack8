@@ -1,26 +1,24 @@
 /**
- * RapportFinancierView — /pilotage/finances/rapport
+ * RapportFinancierView — /pilotage/rapport
  * ══════════════════════════════════════════════════════════════════════════
- * Sous-écran de détail financier (variante EMPILÉE de Claude Design v1).
- * Accessible depuis /pilotage/rapports ET depuis /pilotage/finances (HubTile).
+ * Refonte V77 (2026-05-10) : namespace .pt-screen + header .ph--primary
+ * + .kpi-billboard (3 KPIs) + tableau .dt (mensuel) + bar-stack 6 mois
+ * + boutons export .btn-secondary--lg (stubs toast "Bientôt disponible").
  *
- * Structure :
- *   1. Header + back (retour selon chemin d'entrée)
- *   2. KPI synthèse 6 mois (total CA · moy. mois · top bande)
- *   3. Graphique barres empilées CA par bande × 6 mois
- *   4. Liste top bandes (N=6) classées par CA cumulé
- *   5. Bouton Export PDF (placeholder, désactivé)
+ * Logique métier préservée :
+ *   - financesAnalyzer (formatMontant, dateToPeriode) inchangé
+ *   - Stack 6 mois par bande (extraction depuis libellé/bandeId)
+ *   - Top bandes par CA cumulé
+ *   - KPIs : Marge brute · Revenus · Coûts (synthèse 6 mois)
  */
 
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
-import { Download, TrendingUp, Trophy, BarChart3 } from 'lucide-react';
+import { ChevronLeft, FileDown, FileText } from 'lucide-react';
 
-import { KpiCard, SectionDivider, Chip } from '../../components/agritech';
-import { Button } from '@/design-system';
-import { PageHeader } from '../../v70/components/ds/PageHeader';
 import { useFarm } from '../../context/FarmContext';
+import { useToast } from '../../context/ToastContext';
 import {
   formatMontant,
   dateToPeriode,
@@ -30,6 +28,10 @@ import type { FinanceEntry } from '../../types/farm';
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 const MOIS_SHORT = ['JAN', 'FÉV', 'MAR', 'AVR', 'MAI', 'JUN', 'JUL', 'AOÛ', 'SEP', 'OCT', 'NOV', 'DÉC'];
+const MOIS_LONG = [
+  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
+];
 
 function periodeKey(d: Date): string {
   const y = d.getFullYear();
@@ -40,6 +42,13 @@ function periodeKey(d: Date): string {
 function monthShort(key: string): string {
   const mm = Number(key.slice(5, 7));
   return Number.isFinite(mm) && mm >= 1 && mm <= 12 ? MOIS_SHORT[mm - 1] : '—';
+}
+
+function monthLongLabel(key: string): string {
+  const yyyy = key.slice(0, 4);
+  const mm = Number(key.slice(5, 7));
+  if (!Number.isFinite(mm) || mm < 1 || mm > 12) return '—';
+  return `${MOIS_LONG[mm - 1]} ${yyyy}`;
 }
 
 function last6MonthsKeys(now: Date = new Date()): string[] {
@@ -66,55 +75,59 @@ function extractBandeId(entry: FinanceEntry): string {
 
 const RapportFinancierView: React.FC = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const { finances, currency } = useFarm();
   const entries = finances as FinanceEntry[];
 
   const keys = useMemo(() => last6MonthsKeys(), []);
+  const periodLabel = useMemo(() => {
+    if (keys.length === 0) return '6 derniers mois';
+    const first = monthLongLabel(keys[0]);
+    const last = monthLongLabel(keys[keys.length - 1]);
+    return `${first} → ${last}`;
+  }, [keys]);
 
-  // Stacked data : pour chaque mois, liste des bandes avec leur CA
-  const stackData = useMemo(() => {
+  // Synthèse mensuelle : revenus / coûts / marge par mois
+  const monthly = useMemo(() => {
     return keys.map((k) => {
-      const monthEntries = entries.filter(
-        (e) => e.type === 'REVENU' && dateToPeriode(e.date) === k,
-      );
+      const revenus = entries
+        .filter((e) => e.type === 'REVENU' && dateToPeriode(e.date) === k)
+        .reduce((s, e) => s + e.montant, 0);
+      const couts = entries
+        .filter((e) => e.type === 'DEPENSE' && dateToPeriode(e.date) === k)
+        .reduce((s, e) => s + e.montant, 0);
       const byBande = new Map<string, number>();
-      for (const e of monthEntries) {
+      for (const e of entries) {
+        if (e.type !== 'REVENU' || dateToPeriode(e.date) !== k) continue;
         const id = extractBandeId(e);
         byBande.set(id, (byBande.get(id) ?? 0) + e.montant);
       }
       const bandes = Array.from(byBande.entries())
         .map(([id, v]) => ({ id, v }))
         .sort((a, b) => b.v - a.v);
-      const total = bandes.reduce((s, b) => s + b.v, 0);
-      return { periode: k, label: monthShort(k), total, bandes };
+      return {
+        periode: k,
+        label: monthShort(k),
+        labelLong: monthLongLabel(k),
+        revenus,
+        couts,
+        marge: revenus - couts,
+        bandes,
+      };
     });
   }, [entries, keys]);
 
-  // KPI synthèse
-  const { totalCa, moyMois, topBandeLabel, topBandeCa } = useMemo(() => {
-    const totals = stackData.map((m) => m.total);
-    const total = totals.reduce((s, v) => s + v, 0);
-    const moy = stackData.length > 0 ? Math.round(total / stackData.length) : 0;
+  // KPI synthèse : Marge brute · Revenus · Coûts (cumul 6 mois)
+  const totals = useMemo(() => {
+    const revenus = monthly.reduce((s, m) => s + m.revenus, 0);
+    const couts = monthly.reduce((s, m) => s + m.couts, 0);
+    return { revenus, couts, marge: revenus - couts };
+  }, [monthly]);
 
-    const byBande = new Map<string, number>();
-    for (const m of stackData) {
-      for (const b of m.bandes) {
-        byBande.set(b.id, (byBande.get(b.id) ?? 0) + b.v);
-      }
-    }
-    const top = [...byBande.entries()].sort((a, b) => b[1] - a[1])[0];
-    return {
-      totalCa: total,
-      moyMois: moy,
-      topBandeLabel: top?.[0] ?? '—',
-      topBandeCa: top?.[1] ?? 0,
-    };
-  }, [stackData]);
-
-  // Liste top bandes (cumul 6 mois)
+  // Top bandes (cumul 6 mois)
   const topBandes = useMemo(() => {
     const byBande = new Map<string, number>();
-    for (const m of stackData) {
+    for (const m of monthly) {
       for (const b of m.bandes) {
         byBande.set(b.id, (byBande.get(b.id) ?? 0) + b.v);
       }
@@ -123,187 +136,340 @@ const RapportFinancierView: React.FC = () => {
       .map(([id, v]) => ({ id, v }))
       .sort((a, b) => b.v - a.v)
       .slice(0, 6);
-  }, [stackData]);
+  }, [monthly]);
 
-  const maxMonthTotal = Math.max(1, ...stackData.map((m) => m.total)) * 1.1;
-  const hasData = stackData.some((m) => m.total > 0);
+  const maxMonthTotal = Math.max(1, ...monthly.map((m) => m.revenus)) * 1.1;
+  const hasData = monthly.some((m) => m.revenus > 0 || m.couts > 0);
+
+  const handleExportPdf = (): void => {
+    showToast('Export PDF · Bientôt disponible', 'info', 2200);
+  };
+  const handleExportCsv = (): void => {
+    showToast('Export CSV · Bientôt disponible', 'info', 2200);
+  };
 
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
-        <div
-          className="phone-content px-4 pt-5 pb-32 flex flex-col gap-5"
-          style={{ maxWidth: 1100, margin: '0 auto', minHeight: '100%' }}
-        >
-          <PageHeader
-            eyebrow="Pilotage · Rapport"
-            title="Rapport financier"
-            subtitle="Synthèse économique"
-            onBack={() => navigate(-1)}
-          />
-
-            {/* ── KPI synthèse ────────────────────────────────────────── */}
-            <div className="grid grid-cols-3 gap-2.5">
-              <KpiCard
-                label="Total CA 6 mois"
-                value={formatMontant(totalCa, currency)}
-                icon={<TrendingUp size={14} aria-hidden="true" />}
-                tone="success"
-              />
-              <KpiCard
-                label="Moy. mois"
-                value={formatMontant(moyMois, currency)}
-                icon={<BarChart3 size={14} aria-hidden="true" />}
-              />
-              <KpiCard
-                label={`Top · ${topBandeLabel}`}
-                value={formatMontant(topBandeCa, currency)}
-                icon={<Trophy size={14} aria-hidden="true" />}
-                tone="warning"
-              />
-            </div>
-
-            {/* ── Stacked bar CA par bande × 6 mois ───────────────────── */}
-            <section aria-label="CA mensuel empilé par bande">
-              <SectionDivider label="CA mensuel · empilé par bande" />
-              {hasData ? (
-                <StackedBars
-                  data={stackData}
-                  maxTotal={maxMonthTotal}
-                  currency={currency}
-                />
-              ) : (
-                <div className="card-dense text-center py-8 mt-3">
-                  <p className="text-[11px] text-text-2">
-                    Aucune vente enregistrée sur les 6 derniers mois.
-                  </p>
-                </div>
-              )}
-            </section>
-
-            {/* ── Top bandes ──────────────────────────────────────────── */}
-            {topBandes.length > 0 ? (
-              <section aria-label="Top bandes par CA cumulé">
-                <SectionDivider label={`Top bandes · cumul ${topBandes.length}`} />
-                <ul role="list" className="card-dense !p-0 overflow-hidden">
-                  {topBandes.map((b, idx) => {
-                    const pct = totalCa > 0 ? Math.round((b.v / totalCa) * 100) : 0;
-                    return (
-                      <li
-                        key={b.id}
-                        className="flex items-center gap-3 px-3 py-3 border-b border-border last:border-b-0"
-                      >
-                        <span className="text-[11px] text-text-2 w-5">
-                          #{idx + 1}
-                        </span>
-                        <span className="ft-code text-[13px] font-semibold text-text-0 flex-1 min-w-0 truncate">
-                          {b.id}
-                        </span>
-                        <Chip label={`${pct}%`} tone="accent" size="xs" />
-                        <span className="text-[13px] font-semibold text-accent tabular-nums whitespace-nowrap">
-                          {formatMontant(b.v, currency)}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
-            ) : null}
-
-            {/* ── Export PDF (placeholder) ────────────────────────────── */}
-            <Button
+        <div className="pt-screen" style={{ paddingBottom: 120 }}>
+          <header className="ph--primary">
+            <button
               type="button"
-              variant="secondary"
-              disabled
-              className="card-dense pressable flex items-center justify-center gap-2 !py-3 opacity-60 cursor-not-allowed"
-              aria-label="Export PDF · bientôt disponible"
-              style={{ borderRadius: 'var(--ds-radius-card, 16px)', textTransform: 'none', height: 'auto' }}
+              className="back"
+              aria-label="Retour"
+              onClick={() => navigate(-1)}
             >
-              <Download size={16} aria-hidden="true" />
-              <span className="ft-heading text-[13px] uppercase tracking-wide">
-                Export PDF · bientôt
-              </span>
-            </Button>
+              <ChevronLeft size={18} strokeWidth={1.8} aria-hidden />
+            </button>
+            <div className="eyebrow">Pilotage</div>
+            <h1>Rapport financier</h1>
+            <div className="sub">{periodLabel}</div>
+          </header>
+
+          <div
+            className="phone-content"
+            style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}
+          >
+            {!hasData ? (
+              <div className="empty" style={{ marginTop: 16 }}>
+                <div
+                  style={{
+                    fontFamily: 'var(--pt-font-display)',
+                    fontWeight: 900,
+                    fontSize: 22,
+                    textTransform: 'uppercase',
+                    letterSpacing: '-0.01em',
+                    color: 'var(--pt-ink)',
+                  }}
+                >
+                  Aucune donnée financière
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--pt-muted)' }}>
+                  Ajoute des transactions pour générer un rapport sur les 6 derniers mois.
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* ── KPI billboard 3 colonnes ─────────────────────────── */}
+                <div
+                  className="kpi-billboard"
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: 10,
+                    marginBottom: 20,
+                  }}
+                >
+                  <div className="kpi-billboard__cell">
+                    <div className="kpi-billboard__label">Marge brute</div>
+                    <div
+                      className={`kpi-billboard__val ${totals.marge >= 0 ? 'amount--positive' : 'amount--negative'}`}
+                    >
+                      {totals.marge >= 0 ? '+' : '−'}
+                      {formatMontant(Math.abs(totals.marge), currency)}
+                    </div>
+                  </div>
+                  <div className="kpi-billboard__cell">
+                    <div className="kpi-billboard__label">Revenus</div>
+                    <div className="kpi-billboard__val amount--positive">
+                      +{formatMontant(totals.revenus, currency)}
+                    </div>
+                  </div>
+                  <div className="kpi-billboard__cell">
+                    <div className="kpi-billboard__label">Coûts</div>
+                    <div className="kpi-billboard__val amount--negative">
+                      −{formatMontant(totals.couts, currency)}
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Bar-stack 6 mois (CA par bande) ───────────────────── */}
+                <div
+                  className="section__label"
+                  style={{
+                    fontFamily: 'var(--pt-font-mono)',
+                    fontSize: 10.5,
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.12em',
+                    color: 'var(--pt-subtle)',
+                    marginTop: 4,
+                    marginBottom: 10,
+                  }}
+                >
+                  CA mensuel · empilé par bande
+                </div>
+                <div
+                  className="bar-stack"
+                  style={{
+                    padding: 16,
+                    background: 'var(--pt-bg)',
+                    border: '1px solid var(--pt-line)',
+                    borderRadius: 14,
+                    marginBottom: 20,
+                  }}
+                >
+                  <div
+                    className="bar-stack__bars"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-end',
+                      gap: 6,
+                      height: 140,
+                      borderBottom: '1px solid var(--pt-line)',
+                      paddingBottom: 2,
+                    }}
+                  >
+                    {monthly.map((m, i) => {
+                      const isLast = i === monthly.length - 1;
+                      return (
+                        <div
+                          key={m.periode}
+                          style={{
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'flex-end',
+                            height: '100%',
+                            gap: 2,
+                          }}
+                        >
+                          <span
+                            className="num"
+                            style={{
+                              fontFamily: 'var(--pt-font-mono)',
+                              fontSize: 9,
+                              color: isLast ? 'var(--pt-accent)' : 'var(--pt-subtle)',
+                              marginBottom: 2,
+                            }}
+                          >
+                            {m.revenus > 0 ? `${Math.round(m.revenus / 1000)}k` : '—'}
+                          </span>
+                          <div
+                            style={{
+                              width: '70%',
+                              display: 'flex',
+                              flexDirection: 'column-reverse',
+                              gap: 1,
+                            }}
+                          >
+                            {m.bandes.map((b, j) => {
+                              const h = (b.v / maxMonthTotal) * 110;
+                              const opacity = isLast ? 1 : 0.55 + j * 0.12;
+                              return (
+                                <div
+                                  key={b.id + j}
+                                  title={`${b.id} · ${formatMontant(b.v, currency)}`}
+                                  style={{
+                                    height: `${Math.max(2, h)}px`,
+                                    background: 'var(--pt-primary)',
+                                    opacity: Math.min(1, opacity),
+                                    borderRadius: j === m.bandes.length - 1 ? '3px 3px 0 0' : 0,
+                                  }}
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                    {monthly.map((m, i) => {
+                      const isLast = i === monthly.length - 1;
+                      return (
+                        <div
+                          key={m.periode}
+                          style={{
+                            flex: 1,
+                            textAlign: 'center',
+                            fontFamily: 'var(--pt-font-mono)',
+                            fontSize: 10,
+                            letterSpacing: '0.06em',
+                            color: isLast ? 'var(--pt-accent)' : 'var(--pt-subtle)',
+                            fontWeight: isLast ? 700 : 500,
+                          }}
+                        >
+                          {m.label}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* ── Table mensuelle .dt ──────────────────────────────── */}
+                <div
+                  className="section__label"
+                  style={{
+                    fontFamily: 'var(--pt-font-mono)',
+                    fontSize: 10.5,
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.12em',
+                    color: 'var(--pt-subtle)',
+                    marginTop: 4,
+                    marginBottom: 10,
+                  }}
+                >
+                  Détail mensuel
+                </div>
+                <table className="dt" style={{ marginBottom: 20 }}>
+                  <thead>
+                    <tr>
+                      <th>Mois</th>
+                      <th className="num-r">Revenus</th>
+                      <th className="num-r">Coûts</th>
+                      <th className="num-r">Marge</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {monthly.map((m) => (
+                      <tr key={m.periode}>
+                        <td>{m.label}</td>
+                        <td className="num-r">
+                          <span className="amount--positive">
+                            +{formatMontant(m.revenus, currency)}
+                          </span>
+                        </td>
+                        <td className="num-r">
+                          <span className="amount--negative">
+                            −{formatMontant(m.couts, currency)}
+                          </span>
+                        </td>
+                        <td className="num-r">
+                          <span
+                            className={m.marge >= 0 ? 'amount--positive' : 'amount--negative'}
+                          >
+                            {m.marge >= 0 ? '+' : '−'}
+                            {formatMontant(Math.abs(m.marge), currency)}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {/* ── Table cumul / annuel — Top bandes .dt ────────────── */}
+                {topBandes.length > 0 ? (
+                  <>
+                    <div
+                      className="section__label"
+                      style={{
+                        fontFamily: 'var(--pt-font-mono)',
+                        fontSize: 10.5,
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.12em',
+                        color: 'var(--pt-subtle)',
+                        marginTop: 4,
+                        marginBottom: 10,
+                      }}
+                    >
+                      Cumul {keys.length} mois · top bandes
+                    </div>
+                    <table className="dt" style={{ marginBottom: 24 }}>
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Bande</th>
+                          <th className="num-r">CA cumulé</th>
+                          <th className="num-r">Part</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {topBandes.map((b, idx) => {
+                          const pct = totals.revenus > 0
+                            ? Math.round((b.v / totals.revenus) * 100)
+                            : 0;
+                          return (
+                            <tr key={b.id}>
+                              <td>{idx + 1}</td>
+                              <td>{b.id}</td>
+                              <td className="num-r">
+                                <span className="amount--positive">
+                                  +{formatMontant(b.v, currency)}
+                                </span>
+                              </td>
+                              <td className="num-r">{pct}%</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </>
+                ) : null}
+
+                {/* ── Actions export ───────────────────────────────────── */}
+                <div
+                  className="actions-stack"
+                  style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
+                >
+                  <button
+                    type="button"
+                    className="btn-secondary--lg"
+                    onClick={handleExportPdf}
+                    aria-label="Exporter le rapport en PDF"
+                  >
+                    <FileDown size={18} strokeWidth={1.6} aria-hidden />
+                    Exporter PDF
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary--lg"
+                    onClick={handleExportCsv}
+                    aria-label="Exporter le rapport en CSV"
+                  >
+                    <FileText size={18} strokeWidth={1.6} aria-hidden />
+                    Exporter CSV
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </IonContent>
     </IonPage>
-  );
-};
-
-// ─── StackedBars ────────────────────────────────────────────────────────────
-
-interface StackedBarsProps {
-  data: ReadonlyArray<{
-    periode: string;
-    label: string;
-    total: number;
-    bandes: ReadonlyArray<{ id: string; v: number }>;
-  }>;
-  maxTotal: number;
-  currency: 'FCFA' | 'EUR';
-}
-
-const StackedBars: React.FC<StackedBarsProps> = ({ data, maxTotal, currency }) => {
-  const H = 140;
-  const isLast = (i: number) => i === data.length - 1;
-
-  return (
-    <div className="card-dense mt-3">
-      <div
-        className="flex items-end gap-1.5"
-        style={{
-          height: H,
-          borderBottom: '1px solid var(--border)',
-          paddingBottom: 2,
-        }}
-      >
-        {data.map((m, i) => (
-          <div
-            key={m.periode}
-            className="flex-1 flex flex-col items-center justify-end gap-0.5 h-full"
-          >
-            <span
-              className={`text-[9px] tabular-nums mb-1 ${
-                isLast(i) ? 'text-accent' : 'text-text-2'
-              }`}
-            >
-              {m.total > 0 ? `${Math.round(m.total / 1000)}k` : '—'}
-            </span>
-            <div className="w-[70%] flex flex-col-reverse gap-[1px]">
-              {m.bandes.map((b, j) => {
-                const h = (b.v / maxTotal) * (H - 28);
-                const opacity = isLast(i) ? 1 : 0.55 + j * 0.15;
-                return (
-                  <div
-                    key={b.id + j}
-                    title={`${b.id} · ${formatMontant(b.v, currency)}`}
-                    style={{
-                      height: `${Math.max(2, h)}px`,
-                      background: 'var(--accent)',
-                      opacity,
-                      borderRadius: j === m.bandes.length - 1 ? '3px 3px 0 0' : 0,
-                    }}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="flex gap-1.5 mt-1.5">
-        {data.map((m, i) => (
-          <div key={m.periode} className="flex-1 text-center">
-            <span
-              className={`text-[10px] ${
-                isLast(i) ? 'text-accent font-semibold' : 'text-text-2'
-              }`}
-            >
-              {m.label}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
   );
 };
 

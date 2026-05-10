@@ -1,22 +1,20 @@
 /**
  * V70 — ReproV70 (page /reproduction, archétype Hub)
  *
- * Référence pixel-perfect : docs/v70/v70-mockup.html lignes 1178-1293
+ * V77 — Refonte uniforme namespace `.pt-screen` (header `.ph--primary`,
+ * pills, sections `.section__label`, empty-state, cycles V77).
  *
- * Phase 3C : page Hub Reproduction — TabsMini 4 sub-tabs (Agenda/En cours/
- * À venir/Historique), KPIs Repro, EduCard 115j gestation, CycleTimeline V2
- * (V45 ré-export) avec 4 étapes Saillie→Écho→Gestation→MB, agenda 7 jours,
- * empty state éducatif vers encyclopédie. FAB ajout saillie.
- *
- * Décision : CycleTimeline API V45 ({label, day, done?, target?}), pas la
- * forme {label, date, status} du brief — adapté au composant existant.
+ * Fix critique (F-28b) — tab "En cours" liste désormais TOUS les cycles
+ * vivants : truies "Pleine" (gestation), "En maternité" (lactation), et
+ * "En attente saillie" récemment saillies (attente écho). Avant, on
+ * itérait uniquement sur les bandes (portées réalisées), ce qui ratait
+ * les ~28 truies pleines et les saillies en attente d'écho.
  */
 import React, { useEffect, useMemo, useState, lazy, Suspense } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Archive, BookOpen } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
 import { safeDate } from '../../lib/truieHelpers';
-import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
 import { TabsMini } from '../components/ds/TabsMini';
@@ -25,14 +23,17 @@ import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { EduCard } from '../components/v70/EduCard';
 import { EmptyEdu } from '../components/v70/EmptyEdu';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
-import { formatBandeName } from '../lib';
+import type { Truie, Saillie, BandePorcelets } from '../../types/farm';
 
 const GESTATION_JOURS = 115;
+const SEVRAGE_JOURS_POST_MB = 28;
+const ECHO_JOUR = 28;
 
 const QuickSaillieForm = lazy(() => import('../../components/forms/QuickSaillieForm'));
 const QuickMiseBasForm = lazy(() => import('../../components/forms/QuickMiseBasForm'));
 
 type ReproTab = 'agenda' | 'en-cours' | 'a-venir' | 'historique';
+type CyclePhase = 'attente-echo' | 'gestation' | 'maternite';
 
 interface UpcomingItem {
   badge: string;
@@ -42,12 +43,34 @@ interface UpcomingItem {
   to: string;
 }
 
+interface Cycle {
+  key: string;
+  truieCode: string;
+  truieId?: string;
+  bandeId?: string;
+  phase: CyclePhase;
+  dayInPhase: number;
+  daysRemaining: number;
+  phaseTotal: number;
+  currentDay: number;
+}
 
 const VALID_TABS: ReproTab[] = ['agenda', 'en-cours', 'a-venir', 'historique'];
 
-
 const isReproTab = (v: string | null): v is ReproTab =>
   v !== null && (VALID_TABS as string[]).includes(v);
+
+const isPleine = (t: Truie) => /pleine|gestante|gestation/i.test(t.statut ?? '');
+const isMaternite = (t: Truie) => /maternit[eé]|allaitante|allaitement/i.test(t.statut ?? '');
+const isAttenteSaillie = (t: Truie) => /attente saillie|vide|sevr[eé]e/i.test(t.statut ?? '');
+
+const parseDateLoose = (raw?: string): Date | null => {
+  if (!raw) return null;
+  const safe = safeDate(raw);
+  if (safe) return safe;
+  const d = new Date(raw);
+  return isNaN(d.getTime()) ? null : d;
+};
 
 export const ReproV70: React.FC = () => {
   const navigate = useNavigate();
@@ -55,36 +78,31 @@ export const ReproV70: React.FC = () => {
 
   // V71.1 — KPIs live (étaient hardcodés 28/11/6/3)
   const kpis = useMemo(() => {
-    const pleines = truies.filter(t => /pleine|gestante|gestation/i.test(t.statut ?? '')).length;
-    const materni = truies.filter(t => /maternit[eé]|allaitante|allaitement/i.test(t.statut ?? '')).length;
-    const vides = truies.filter(t => /attente saillie|vide|sevr[eé]e/i.test(t.statut ?? '')).length;
-    // MB prévues dans les 7 prochains jours : bandes avec dateMB dans la fenêtre
+    const pleines = truies.filter(isPleine).length;
+    const materni = truies.filter(isMaternite).length;
+    const vides = truies.filter(isAttenteSaillie).length;
     const now = new Date();
     const in7days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     const mbProches = bandes.filter(b => {
       if (!b.dateMB) return false;
-      const d = new Date(b.dateMB);
-      return !isNaN(d.getTime()) && d >= now && d <= in7days;
+      const d = parseDateLoose(b.dateMB);
+      return d !== null && d >= now && d <= in7days;
     }).length;
     return { pleines, materni, vides, mbProches };
   }, [truies, bandes]);
 
-  // V71.3 — bande "active" pour CycleTimeline (tab Agenda) : on choisit la
-  // bande dont la date MB (réalisée ou prévue) est la plus proche dans le
-  // futur. Sinon la plus récente passée. Calcul du jour de cycle = today -
-  // (dateMB - 115j).
+  // V71.3 — bande "active" pour CycleTimeline (tab Agenda)
   const cycleBande = useMemo(() => {
     const now = new Date();
-    let chosen: { bande: typeof bandes[number]; dateMB: Date; currentDay: number } | null = null;
+    let chosen: { bande: BandePorcelets; dateMB: Date; currentDay: number } | null = null;
     for (const b of bandes) {
-      const d = safeDate(b.dateMB);
+      const d = parseDateLoose(b.dateMB);
       if (!d) continue;
       const dateSaillie = new Date(d.getTime() - GESTATION_JOURS * 86400000);
       const currentDay = Math.max(
         0,
         Math.min(GESTATION_JOURS, Math.floor((now.getTime() - dateSaillie.getTime()) / 86400000)),
       );
-      // Préférer une bande pour laquelle on est encore en gestation (current < 115)
       if (!chosen) {
         chosen = { bande: b, dateMB: d, currentDay };
         continue;
@@ -94,7 +112,6 @@ export const ReproV70: React.FC = () => {
       if (candidateInCycle && !chosenInCycle) {
         chosen = { bande: b, dateMB: d, currentDay };
       } else if (candidateInCycle && chosenInCycle) {
-        // Garder celle dont la MB est la plus proche
         if (d.getTime() < chosen.dateMB.getTime()) {
           chosen = { bande: b, dateMB: d, currentDay };
         }
@@ -103,41 +120,148 @@ export const ReproV70: React.FC = () => {
     return chosen;
   }, [bandes]);
 
-  // V75-o B.1 (F-28) — TOUS les cycles actifs pour tab "En cours" : bandes en
-  // gestation (today < dateMB) OU en maternité (dateMB ≤ today < dateMB+28j).
-  // Avant : tab "En cours" affichait 1 seul cycle (cycleBande), ne reflétait
-  // pas les 11 truies en MATERNITÉ visibles dans Élevage.
-  const SEVRAGE_JOURS_POST_MB = 28;
-  const cyclesEnCours = useMemo(() => {
+  // V77 F-28b — TOUS les cycles vivants : ATTENTE ÉCHO + GESTATION + MATERNITÉ.
+  // Avant : 3 cycles (uniquement bandes avec dateMB). Maintenant : tous les
+  // animaux en reproduction active.
+  //
+  // Sources :
+  //   - Saillies récentes (≤27j, écho non confirmée) → ATTENTE ÉCHO
+  //   - Truies "Pleine" → GESTATION (date depuis dateMBPrevue - 115j si dispo,
+  //     sinon dernière saillie connue, sinon ~mid-gestation par défaut)
+  //   - Truies "En maternité" → MATERNITÉ (date depuis bande la plus récente
+  //     liée à la truie ; sinon depuis aujourd'hui = J0 lactation)
+  const cyclesEnCours = useMemo<Cycle[]>(() => {
     const now = new Date();
-    type Cycle = {
-      bande: typeof bandes[number];
-      dateMB: Date;
-      currentDay: number;
-      phase: 'gestation' | 'maternite';
-    };
     const list: Cycle[] = [];
-    for (const b of bandes) {
-      const d = safeDate(b.dateMB);
-      if (!d) continue;
-      const dateSaillie = new Date(d.getTime() - GESTATION_JOURS * 86400000);
-      const dateSevrage = new Date(d.getTime() + SEVRAGE_JOURS_POST_MB * 86400000);
-      // Filtre : exclure les bandes dont la maternité est terminée (sevrées).
-      if (now > dateSevrage) continue;
-      const currentDay = Math.max(
-        0,
-        Math.floor((now.getTime() - dateSaillie.getTime()) / 86400000),
-      );
-      const phase: 'gestation' | 'maternite' = now < d ? 'gestation' : 'maternite';
-      list.push({ bande: b, dateMB: d, currentDay, phase });
+    const seen = new Set<string>(); // dédoublonnage par truieId
+
+    // Index : dernière saillie connue par truieId (la plus récente)
+    const lastSaillieByTruie = new Map<string, Saillie>();
+    for (const s of saillies) {
+      if (!s.truieId) continue;
+      const dS = parseDateLoose(s.dateSaillie);
+      if (!dS) continue;
+      const prev = lastSaillieByTruie.get(s.truieId);
+      if (!prev) {
+        lastSaillieByTruie.set(s.truieId, s);
+      } else {
+        const dPrev = parseDateLoose(prev.dateSaillie);
+        if (!dPrev || dS.getTime() > dPrev.getTime()) {
+          lastSaillieByTruie.set(s.truieId, s);
+        }
+      }
     }
-    // Tri : gestation d'abord (par MB la plus proche), puis maternité.
+
+    // Index : bande la plus récente (par dateMB la plus récente) par truie
+    const bandeByTruie = new Map<string, BandePorcelets>();
+    for (const b of bandes) {
+      if (!b.truie) continue;
+      const d = parseDateLoose(b.dateMB);
+      if (!d) continue;
+      const prev = bandeByTruie.get(b.truie);
+      if (!prev) {
+        bandeByTruie.set(b.truie, b);
+      } else {
+        const dPrev = parseDateLoose(prev.dateMB);
+        if (!dPrev || d.getTime() > dPrev.getTime()) {
+          bandeByTruie.set(b.truie, b);
+        }
+      }
+    }
+
+    // 1) MATERNITÉ — truies "En maternité"
+    for (const t of truies) {
+      if (!isMaternite(t)) continue;
+      const code = t.displayId || t.id;
+      if (seen.has(t.id)) continue;
+      const bande = bandeByTruie.get(t.displayId) || bandeByTruie.get(t.id);
+      const dateMB = bande ? parseDateLoose(bande.dateMB) : null;
+      const dayInPhase = dateMB
+        ? Math.max(0, Math.min(SEVRAGE_JOURS_POST_MB, Math.floor((now.getTime() - dateMB.getTime()) / 86400000)))
+        : 0;
+      list.push({
+        key: `mater-${t.id}`,
+        truieCode: code,
+        truieId: t.id,
+        bandeId: bande?.id,
+        phase: 'maternite',
+        dayInPhase,
+        daysRemaining: Math.max(0, SEVRAGE_JOURS_POST_MB - dayInPhase),
+        phaseTotal: SEVRAGE_JOURS_POST_MB,
+        currentDay: GESTATION_JOURS + dayInPhase,
+      });
+      seen.add(t.id);
+    }
+
+    // 2) GESTATION — truies "Pleine"
+    for (const t of truies) {
+      if (!isPleine(t)) continue;
+      if (seen.has(t.id)) continue;
+      const code = t.displayId || t.id;
+      // Date saillie : priorité dernière saillie, fallback dateMBPrevue - 115j
+      const lastSaillie = lastSaillieByTruie.get(t.id) || lastSaillieByTruie.get(t.displayId);
+      let dateSaillie: Date | null = lastSaillie ? parseDateLoose(lastSaillie.dateSaillie) : null;
+      if (!dateSaillie && t.dateMBPrevue) {
+        const dMB = parseDateLoose(t.dateMBPrevue);
+        if (dMB) dateSaillie = new Date(dMB.getTime() - GESTATION_JOURS * 86400000);
+      }
+      const currentDay = dateSaillie
+        ? Math.max(ECHO_JOUR + 1, Math.min(GESTATION_JOURS - 1, Math.floor((now.getTime() - dateSaillie.getTime()) / 86400000)))
+        : Math.floor(GESTATION_JOURS / 2);
+      const dayInPhase = Math.max(0, currentDay - ECHO_JOUR);
+      const phaseTotal = GESTATION_JOURS - ECHO_JOUR;
+      list.push({
+        key: `gest-${t.id}`,
+        truieCode: code,
+        truieId: t.id,
+        phase: 'gestation',
+        dayInPhase,
+        daysRemaining: Math.max(0, phaseTotal - dayInPhase),
+        phaseTotal,
+        currentDay,
+      });
+      seen.add(t.id);
+    }
+
+    // 3) ATTENTE ÉCHO — saillies récentes (≤27j) sur truies non déjà rangées
+    for (const s of saillies) {
+      if (!s.truieId) continue;
+      const dS = parseDateLoose(s.dateSaillie);
+      if (!dS) continue;
+      const days = Math.floor((now.getTime() - dS.getTime()) / 86400000);
+      if (days < 0 || days >= ECHO_JOUR) continue;
+      // Saillie échec / confirmée non pertinente : on garde uniquement les
+      // saillies "fraîches" en attente d'écho (statut neutre ou EN_ATTENTE).
+      if (s.statut && /echec|ech[eé]c|abandon/i.test(s.statut)) continue;
+      const truie = truies.find(t => t.id === s.truieId || t.displayId === s.truieId);
+      const key = truie?.id ?? s.truieId;
+      if (seen.has(key)) continue;
+      list.push({
+        key: `echo-${key}`,
+        truieCode: truie?.displayId || s.truieBoucle || s.truieId,
+        truieId: key,
+        phase: 'attente-echo',
+        dayInPhase: days,
+        daysRemaining: Math.max(0, ECHO_JOUR - days),
+        phaseTotal: ECHO_JOUR,
+        currentDay: days,
+      });
+      seen.add(key);
+    }
+
+    // Tri : attente-echo → gestation → maternite ; à phase égale, jours
+    // restants croissants (urgence en haut).
+    const phaseOrder: Record<CyclePhase, number> = {
+      'attente-echo': 0,
+      gestation: 1,
+      maternite: 2,
+    };
     list.sort((a, b) => {
-      if (a.phase !== b.phase) return a.phase === 'gestation' ? -1 : 1;
-      return a.dateMB.getTime() - b.dateMB.getTime();
+      if (a.phase !== b.phase) return phaseOrder[a.phase] - phaseOrder[b.phase];
+      return a.daysRemaining - b.daysRemaining;
     });
     return list;
-  }, [bandes]);
+  }, [truies, bandes, saillies]);
 
   const upcomingItems = useMemo((): UpcomingItem[] => {
     if (!bandes.length && !saillies.length) return [];
@@ -146,8 +270,8 @@ export const ReproV70: React.FC = () => {
     const items: UpcomingItem[] = [];
     bandes.forEach(b => {
       if (!b.dateMB) return;
-      const d = new Date(b.dateMB);
-      if (isNaN(d.getTime()) || d < now || d > in7) return;
+      const d = parseDateLoose(b.dateMB);
+      if (!d || d < now || d > in7) return;
       const diffDays = Math.ceil((d.getTime() - now.getTime()) / 86400000);
       items.push({
         badge: diffDays <= 0 ? 'AUJ' : diffDays === 1 ? 'DEM' : `+${diffDays}J`,
@@ -158,8 +282,8 @@ export const ReproV70: React.FC = () => {
       });
     });
     bandes.filter(b => b.statut === 'Sous mère' && b.dateSevragePrevue).forEach(b => {
-      const d = new Date(b.dateSevragePrevue!);
-      if (isNaN(d.getTime()) || d < now || d > in7) return;
+      const d = parseDateLoose(b.dateSevragePrevue!);
+      if (!d || d < now || d > in7) return;
       const diffDays = Math.ceil((d.getTime() - now.getTime()) / 86400000);
       items.push({
         badge: `+${Math.max(0, diffDays)}J`,
@@ -171,8 +295,8 @@ export const ReproV70: React.FC = () => {
     });
     saillies.slice(0, 5).forEach(s => {
       if (!s.dateSaillie) return;
-      const ds = new Date(s.dateSaillie);
-      if (isNaN(ds.getTime())) return;
+      const ds = parseDateLoose(s.dateSaillie);
+      if (!ds) return;
       const echoDate = new Date(ds.getTime() + 28 * 86400000);
       if (echoDate < now || echoDate > in7) return;
       const diffDays = Math.ceil((echoDate.getTime() - now.getTime()) / 86400000);
@@ -187,16 +311,12 @@ export const ReproV70: React.FC = () => {
     return items.slice(0, 4);
   }, [bandes, saillies]);
 
-  // V71 FIX #4 — initial tab depuis URL (?tab=...) pour deep-links legacy
-  // (/cycles/maternite → /reproduction?tab=en-cours&phase=maternite, etc.).
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab: ReproTab = isReproTab(searchParams.get('tab'))
     ? (searchParams.get('tab') as ReproTab)
     : 'agenda';
   const [tab, setTab] = useState<ReproTab>(initialTab);
 
-  // Sync state ← URL : nécessaire pour deep-links directs (QR code, copier-coller)
-  // et navigation programmatique (Navigate replace, history.pushState).
   useEffect(() => {
     const urlTab = searchParams.get('tab');
     if (isReproTab(urlTab) && urlTab !== tab) {
@@ -207,7 +327,6 @@ export const ReproV70: React.FC = () => {
 
   const handleTabChange = (v: string) => {
     setTab(v as ReproTab);
-    // Synchronise l'URL pour permettre partage / bookmark.
     const next = new URLSearchParams(searchParams);
     next.set('tab', v);
     setSearchParams(next, { replace: true });
@@ -216,39 +335,23 @@ export const ReproV70: React.FC = () => {
   const [saillieOpen, setSaillieOpen] = useState(false);
   const [miseBasOpen, setMiseBasOpen] = useState(false);
 
-  // V76 — filtre chips horizontaux pour le tab "En cours" (mockup v76)
-  type ChipFilter = 'all' | 'saillie' | 'gestation' | 'maternite' | 'postsev';
+  // Chips filtres "En cours" : aligné sur les 3 phases vivantes (V77 F-28b)
+  type ChipFilter = 'all' | 'attente-echo' | 'gestation' | 'maternite';
   const [chipFilter, setChipFilter] = useState<ChipFilter>('all');
 
-  // Phase métier dérivée pour filtrage chips (saillie / gestation / maternite / postsev).
-  // Saillie : J0..J27 (avant écho). Gestation : J28..J114. Maternité : J115..J142.
-  // Post-sevrage : J143+ (cyclesEnCours coupe déjà à dateMB+28j, donc rare ici).
-  const phaseOf = (currentDay: number): ChipFilter => {
-    if (currentDay < 28) return 'saillie';
-    if (currentDay < GESTATION_JOURS) return 'gestation';
-    if (currentDay < GESTATION_JOURS + SEVRAGE_JOURS_POST_MB) return 'maternite';
-    return 'postsev';
-  };
-
   const chipCounts = useMemo(() => {
-    const counts = { saillie: 0, gestation: 0, maternite: 0, postsev: 0 };
+    const counts = { 'attente-echo': 0, gestation: 0, maternite: 0 };
     for (const c of cyclesEnCours) {
-      counts[phaseOf(c.currentDay)]++;
+      counts[c.phase]++;
     }
     return counts;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cyclesEnCours]);
 
   const cyclesFiltered = useMemo(() => {
     if (chipFilter === 'all') return cyclesEnCours;
-    return cyclesEnCours.filter(c => phaseOf(c.currentDay) === chipFilter);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return cyclesEnCours.filter(c => c.phase === chipFilter);
   }, [cyclesEnCours, chipFilter]);
 
-  // V75-u — Brancher le FAB extended contextuel MISE-BAS dispatché par
-  // App.tsx > SaisirFABMount (CustomEvent 'pt-fab-action' avec
-  // detail.action === 'add_birth'). Sans ce listener, le bouton MISE-BAS
-  // était silencieusement no-op.
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<{ action?: string }>).detail;
@@ -262,15 +365,22 @@ export const ReproV70: React.FC = () => {
     return () => window.removeEventListener('pt-fab-action', handler);
   }, []);
 
+  const totalActifs = cyclesEnCours.length;
+  const subtitleParts = [
+    `${kpis.pleines} pleines`,
+    `${kpis.materni} en maternité`,
+    `${chipCounts['attente-echo']} en attente écho`,
+  ];
+
   return (
-    <div className="phone-content" style={{ padding: '24px 24px 168px', maxWidth: 600, margin: '0 auto' }}>
+    <div className="pt-screen phone-content" style={{ paddingBottom: 168, maxWidth: 600, margin: '0 auto' }}>
       <MariusGreeting pageContext="reproduction" />
 
-      <PageHeader
-        eyebrow="Cycle vivant"
-        title="Reproduction"
-        subtitle="Saillie → écho J28 → mise-bas J115 → sevrage J143."
-      />
+      <header className="ph ph--primary">
+        <div className="eyebrow">GTTT · Cycle vivant</div>
+        <h1>Reproduction</h1>
+        <p className="sub">{subtitleParts.join(' · ')} — {totalActifs} cycle{totalActifs > 1 ? 's' : ''} actif{totalActifs > 1 ? 's' : ''}.</p>
+      </header>
 
       <TabsMini
         value={tab}
@@ -305,11 +415,12 @@ export const ReproV70: React.FC = () => {
       {tab === 'agenda' && (
         <>
           <EduCard label="Le saviez-vous ?">
-            Le cycle de gestation d’une truie dure <strong>115 jours</strong>. L’échographie à <strong>J28</strong> permet de confirmer la gestation et planifier la mise-bas.
+            Le cycle de gestation d'une truie dure <strong>115 jours</strong>. L'échographie à <strong>J28</strong> permet de confirmer la gestation et planifier la mise-bas.
           </EduCard>
 
           {cycleBande ? (
-            <Section label={`Cycle ${cycleBande.bande.idPortee || cycleBande.bande.id}`}>
+            <section className="section">
+              <div className="section__label">Cycle {cycleBande.bande.idPortee || cycleBande.bande.id}</div>
               <Card>
                 <CycleTimeline
                   currentDay={cycleBande.currentDay}
@@ -321,18 +432,20 @@ export const ReproV70: React.FC = () => {
                   ]}
                 />
               </Card>
-            </Section>
+            </section>
           ) : (
-            <Section label="Cycle reproduction">
+            <section className="section">
+              <div className="section__label">Cycle reproduction</div>
               <Card>
                 <div style={{ padding: 16, textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
                   Aucune bande en cycle. Crée une saillie pour démarrer un cycle.
                 </div>
               </Card>
-            </Section>
+            </section>
           )}
 
-          <Section label="7 prochains jours">
+          <section className="section">
+            <div className="section__label">7 prochains jours</div>
             <Card>
               {upcomingItems.length === 0 ? (
                 <div style={{ padding: '12px 0', textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
@@ -358,171 +471,131 @@ export const ReproV70: React.FC = () => {
                 </button>
               ))}
             </Card>
-          </Section>
+          </section>
         </>
       )}
 
       {tab === 'en-cours' && (
         <>
-          <div className="chips" role="tablist" aria-label="Filtre par phase de cycle">
+          <div className="pills" role="tablist" aria-label="Filtre par phase de cycle">
             <button
               type="button"
-              className="chip"
+              className={`pill${chipFilter === 'all' ? ' is-active' : ''}`}
               aria-pressed={chipFilter === 'all'}
               onClick={() => setChipFilter('all')}
             >
-              Toutes <span className="num">{cyclesEnCours.length}</span>
+              Toutes ({cyclesEnCours.length})
             </button>
             <button
               type="button"
-              className="chip"
-              aria-pressed={chipFilter === 'saillie'}
-              onClick={() => setChipFilter('saillie')}
+              className={`pill${chipFilter === 'attente-echo' ? ' is-active' : ''}`}
+              aria-pressed={chipFilter === 'attente-echo'}
+              onClick={() => setChipFilter('attente-echo')}
             >
-              Saillie {chipCounts.saillie > 0 && <span className="num">{chipCounts.saillie}</span>}
+              Attente écho ({chipCounts['attente-echo']})
             </button>
             <button
               type="button"
-              className="chip"
+              className={`pill${chipFilter === 'gestation' ? ' is-active' : ''}`}
               aria-pressed={chipFilter === 'gestation'}
               onClick={() => setChipFilter('gestation')}
             >
-              Gestation {chipCounts.gestation > 0 && <span className="num">{chipCounts.gestation}</span>}
+              Gestation ({chipCounts.gestation})
             </button>
             <button
               type="button"
-              className="chip"
+              className={`pill${chipFilter === 'maternite' ? ' is-active' : ''}`}
               aria-pressed={chipFilter === 'maternite'}
               onClick={() => setChipFilter('maternite')}
             >
-              Maternité {chipCounts.maternite > 0 && <span className="num">{chipCounts.maternite}</span>}
-            </button>
-            <button
-              type="button"
-              className="chip"
-              aria-pressed={chipFilter === 'postsev'}
-              onClick={() => setChipFilter('postsev')}
-            >
-              Post-sev. {chipCounts.postsev > 0 && <span className="num">{chipCounts.postsev}</span>}
+              Maternité ({chipCounts.maternite})
             </button>
           </div>
 
-          <Section label={`${cyclesFiltered.length} cycle${cyclesFiltered.length > 1 ? 's' : ''} actif${cyclesFiltered.length > 1 ? 's' : ''}`}>
+          <section className="section">
+            <div className="section__label">
+              {cyclesFiltered.length} cycle{cyclesFiltered.length > 1 ? 's' : ''} {chipFilter === 'all' ? 'actif' + (cyclesFiltered.length > 1 ? 's' : '') : ''}
+            </div>
             {cyclesEnCours.length === 0 ? (
-              <Card>
-                <div style={{ padding: 16, textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
-                  Aucune bande en cycle. Crée une saillie pour démarrer un cycle.
+              <div className="empty-state">
+                <div className="empty-state__title">Aucun cycle en cours</div>
+                <div className="empty-state__sub">
+                  Aucune truie pleine, en maternité ou en attente d'écho. Crée une saillie pour démarrer un cycle.
                 </div>
-              </Card>
+              </div>
             ) : cyclesFiltered.length === 0 ? (
-              <Card>
-                <div style={{ padding: 16, textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
-                  Aucun cycle dans cette phase.
-                </div>
-              </Card>
+              <div className="empty-state">
+                <div className="empty-state__sub">Aucun cycle dans cette phase.</div>
+              </div>
             ) : (
               cyclesFiltered.map(c => {
-                const phase = phaseOf(c.currentDay);
-                const inGestation = c.phase === 'gestation';
-                const dayCapped = Math.min(c.currentDay, GESTATION_JOURS);
-                // Progress sur le rail (0 → 100%) :
-                // - Saillie/Gestation : 0..60% sur 0..115j
-                // - Maternité (J115..J143) : 60..100% sur 28j
-                let progressPercent: number;
-                if (inGestation) {
-                  progressPercent = Math.max(6, Math.min(60, (dayCapped / GESTATION_JOURS) * 60));
-                } else {
-                  const daysLactation = Math.min(SEVRAGE_JOURS_POST_MB, c.currentDay - GESTATION_JOURS);
-                  progressPercent = 60 + (daysLactation / SEVRAGE_JOURS_POST_MB) * 40;
-                }
                 const phaseLabel =
-                  phase === 'saillie' ? 'Saillie' :
-                  phase === 'gestation' ? 'Gestation' :
-                  phase === 'maternite' ? 'Maternité' :
-                  'Post-sev.';
-                const pillVariant: 'soft' | 'info' | 'warm' | 'success' =
-                  phase === 'saillie' ? 'soft' :
-                  phase === 'gestation' ? 'info' :
-                  phase === 'maternite' ? 'warm' :
-                  'success';
-                const dayLabel = inGestation
-                  ? `J${dayCapped}/${GESTATION_JOURS}`
-                  : `J+${c.currentDay - GESTATION_JOURS} lactation`;
-                const statutLabel = c.bande.truie ? `${c.bande.truie}` : 'Bande';
-                const titleText = formatBandeName({
-                  id: c.bande.id,
-                  idPortee: c.bande.idPortee,
-                  truieMere: c.bande.truie,
-                  dateMB: c.bande.dateMB,
-                }, { compact: true });
-
-                // Étapes : Saillie / É28 / FŒT (J60) / MB (J115) / SEV (J143)
-                const isCurStep = (stepDay: number, nextDay: number) =>
-                  c.currentDay >= stepDay && c.currentDay < nextDay;
-                const curS = isCurStep(0, 28) ? 'cur' : '';
-                const curE = isCurStep(28, 60) ? 'cur' : '';
-                const curF = isCurStep(60, GESTATION_JOURS) ? 'cur' : '';
-                const curMB = isCurStep(GESTATION_JOURS, GESTATION_JOURS + SEVRAGE_JOURS_POST_MB) ? 'cur' : '';
-                const curSev = c.currentDay >= GESTATION_JOURS + SEVRAGE_JOURS_POST_MB ? 'cur' : '';
-
-                // Dots done si l'étape est dépassée. now sur l'étape courante.
-                const dotS = c.currentDay >= 0 ? 'done' : '';
-                const dotE = c.currentDay >= 28 ? 'done' : (curS ? 'now' : '');
-                const dotF = c.currentDay >= 60 ? 'done' : (curE ? 'now' : '');
-                const dotMB = c.currentDay >= GESTATION_JOURS ? 'done' : (curF ? 'now' : '');
-                const dotSev = curSev ? 'done' : (curMB ? 'now' : '');
-
-                const shortBande = (c.bande.idPortee || c.bande.id).slice(-5);
+                  c.phase === 'attente-echo' ? 'Attente écho' :
+                  c.phase === 'gestation' ? 'Gestation' :
+                  'Maternité';
+                const progressPercent = Math.max(4, Math.min(100, (c.dayInPhase / Math.max(1, c.phaseTotal)) * 100));
+                const dayLabel =
+                  c.phase === 'attente-echo'
+                    ? `J${c.dayInPhase}/${ECHO_JOUR}`
+                    : c.phase === 'gestation'
+                      ? `J${c.currentDay}/${GESTATION_JOURS}`
+                      : `J+${c.dayInPhase} lactation`;
+                const remainingLabel =
+                  c.daysRemaining === 0
+                    ? 'Aujourd\'hui'
+                    : `${c.daysRemaining}j restants`;
+                const shortCode = (c.truieCode || c.truieId || '').slice(-5);
+                const targetRoute = c.bandeId
+                  ? `/troupeau/bandes/${c.bandeId}`
+                  : c.truieId
+                    ? `/troupeau/truies/${c.truieId}`
+                    : '/troupeau';
 
                 return (
                   <a
-                    key={c.bande.id}
+                    key={c.key}
                     className="cycle-card"
-                    href={`#bande-${c.bande.id}`}
+                    href={`#cycle-${c.key}`}
                     onClick={(e) => {
                       e.preventDefault();
-                      navigate(`/troupeau/bandes/${c.bande.id}`);
+                      navigate(targetRoute);
                     }}
-                    aria-label={`Cycle ${titleText} — voir détail`}
+                    aria-label={`Cycle ${c.truieCode} — ${phaseLabel} — voir détail`}
+                    style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}
                   >
-                    <div className="cycle-card__head">
-                      <EntityAvatar species="bande" size="md" shortCode={shortBande} />
-                      <div className="cycle-card__main">
-                        <div className="cycle-card__title">{titleText}</div>
-                        <div className="cycle-card__sub">{statutLabel} · {dayLabel}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                      <EntityAvatar species="truie" size="md" shortCode={shortCode} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="cycle-card__phase">{c.truieCode} · {phaseLabel}</div>
+                        <div className="cycle-card__days">{dayLabel}</div>
                       </div>
-                      <span className={`pill pill-${pillVariant}`}>{phaseLabel}</span>
+                      <div style={{ fontFamily: 'var(--ff-mono, monospace)', fontSize: 11, color: 'var(--pt-muted)', textAlign: 'right' }}>
+                        {remainingLabel}
+                      </div>
                     </div>
-                    <div className="cycle-mini">
-                      <div className="cycle-mini__line"></div>
-                      <div className="cycle-mini__line-done" style={{ width: `${progressPercent}%` }}></div>
-                      <div className={`cycle-mini__dot ${dotS}`} style={{ left: '6px' }}></div>
-                      <div className={`cycle-mini__dot ${dotE}`} style={{ left: '25%' }}></div>
-                      <div className={`cycle-mini__dot ${dotF}`} style={{ left: '50%' }}></div>
-                      <div className={`cycle-mini__dot ${dotMB}`} style={{ left: '75%' }}></div>
-                      <div className={`cycle-mini__dot ${dotSev}`} style={{ left: 'calc(100% - 6px)', transform: 'translateX(-100%)' }}></div>
-                    </div>
-                    <div className="cycle-mini__labels">
-                      <span className={curS}>S</span>
-                      <span className={curE}>É28</span>
-                      <span className={curF}>FŒT</span>
-                      <span className={curMB}>MB</span>
-                      <span className={curSev}>SEV</span>
+                    <div className="cycle-card__progress">
+                      <span style={{ width: `${progressPercent}%` }} />
                     </div>
                   </a>
                 );
               })
             )}
-          </Section>
+          </section>
+
+          {/* FAB primary "+ SAILLIE" stylé V77.
+              Note : le FAB global (App.tsx > SaisirFABMount > usePageFab) rend
+              déjà un bouton sur /reproduction qui dispatche 'add_saillie'. On
+              ne double pas l'élément. Cf. design-system/hooks/usePageFab.ts:56. */}
         </>
       )}
 
       {tab === 'a-venir' && (
-        <Section label="Événements à venir (7 jours)">
+        <section className="section">
+          <div className="section__label">Événements à venir (7 jours)</div>
           <Card>
             {upcomingItems.length === 0 ? (
-              <div style={{ padding: '12px 0', textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
-                Aucun événement dans les 7 prochains jours
+              <div className="empty-state" style={{ padding: 12 }}>
+                <div className="empty-state__sub">Aucun événement dans les 7 prochains jours</div>
               </div>
             ) : upcomingItems.map((item) => (
               <button
@@ -544,46 +617,48 @@ export const ReproV70: React.FC = () => {
               </button>
             ))}
           </Card>
-        </Section>
+        </section>
       )}
 
       {tab === 'historique' && (
-        <Section label="Bandes passées">
-          <Card>
-            <div style={{ padding: '16px 8px', textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <Archive size={14} strokeWidth={1.5} aria-hidden="true" />
-                Historique des bandes terminées
-              </span>
-              <div style={{ marginTop: 8, fontSize: 11 }}>
-                Voir toutes les bandes (actives + historique) sur l’onglet{' '}
-                <button
-                  type="button"
-                  onClick={() => navigate('/troupeau?view=bandes')}
-                  style={{ marginLeft: 4, background: 'none', border: 'none', color: 'var(--pt-primary)', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}
-                >
-                  Élevage › Bandes
-                </button>
-              </div>
+        <section className="section">
+          <div className="section__label">Bandes passées</div>
+          <div className="empty-state">
+            <div className="empty-state__icon">
+              <Archive size={28} strokeWidth={1.5} aria-hidden="true" />
             </div>
-          </Card>
-        </Section>
+            <div className="empty-state__title">Historique des bandes</div>
+            <div className="empty-state__sub">
+              Voir toutes les bandes (actives et passées) sur l'onglet Élevage › Bandes.
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/troupeau?view=bandes')}
+              className="pill is-active"
+              style={{ cursor: 'pointer' }}
+            >
+              Ouvrir Élevage › Bandes
+            </button>
+          </div>
+        </section>
       )}
 
-      <EmptyEdu
-        icon={
-          <BookOpen
-            size={20}
-            strokeWidth={1.5}
-            aria-hidden="true"
-            style={{ color: 'var(--pt-muted)' }}
-          />
-        }
-        title="Comprendre les cycles"
-        description="Cycle de vie, ISSE, biosécurité. À lire entre deux tournées."
-        ctaLabel="Encyclopédie"
-        onCtaClick={() => navigate('/reglages/encyclopedie')}
-      />
+      <Section label="">
+        <EmptyEdu
+          icon={
+            <BookOpen
+              size={20}
+              strokeWidth={1.5}
+              aria-hidden="true"
+              style={{ color: 'var(--pt-muted)' }}
+            />
+          }
+          title="Comprendre les cycles"
+          description="Cycle de vie, ISSE, biosécurité. À lire entre deux tournées."
+          ctaLabel="Encyclopédie"
+          onCtaClick={() => navigate('/reglages/encyclopedie')}
+        />
+      </Section>
 
       <Suspense fallback={null}>
         <QuickSaillieForm isOpen={saillieOpen} onClose={() => setSaillieOpen(false)} />

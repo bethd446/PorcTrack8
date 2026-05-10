@@ -487,7 +487,7 @@ const ChecklistFlow: React.FC = () => {
                 <Button variant="primary" fullWidth onClick={() => navigate('/')}>
                   Retour au cockpit
                 </Button>
-                <Button variant="secondary" fullWidth onClick={() => navigate('/audit')}>
+                <Button variant="secondary" fullWidth onClick={() => navigate('/alerts')}>
                   Voir les alertes d'audit
                 </Button>
               </div>

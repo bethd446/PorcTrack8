@@ -213,6 +213,7 @@ const PorceletDetailView: React.FC = () => {
       <IonContent fullscreen className="ion-no-padding">
         <div
           data-testid="porcelet-detail-view"
+          className="pt-screen"
           style={{
             background: 'var(--pt-bg, var(--bg-app))',
             minHeight: '100%',

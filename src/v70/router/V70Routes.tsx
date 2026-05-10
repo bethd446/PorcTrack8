@@ -8,7 +8,9 @@
  */
 import React, { Suspense, useCallback } from 'react';
 import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { differenceInCalendarDays } from 'date-fns';
 import { useFarm } from '../../context/FarmContext';
+import { safeDate } from '../../lib/truieHelpers';
 import { useEntityWithRetry } from '../../hooks/useEntityWithRetry';
 import { SpinnerCenter, EntityNotFoundCard } from '../components/v70/EntityNotFoundGuard';
 import { BottomNavV70 } from '../components/v70/BottomNav';
@@ -112,13 +114,17 @@ const BandeDetailRouteV70: React.FC = () => {
   if (guard.state === 'not-found') return <EntityNotFoundCard label="bande" onBack={handleClose} />;
 
   const bandeReady = guard.entity;
+  const dateMBParsed = safeDate(bandeReady.dateMB);
+  const ageDays = dateMBParsed
+    ? Math.max(0, differenceInCalendarDays(new Date(), dateMBParsed))
+    : null;
   const aggregated = {
     id: bandeReady.id,
     count: 1,
     truie: bandeReady.truie ?? null,
     boucleMere: bandeReady.boucleMere ?? null,
     dateMB: bandeReady.dateMB ?? null,
-    age: null,
+    age: ageDays,
     nv: bandeReady.nv ?? 0,
     morts: bandeReady.morts ?? 0,
     vivants: bandeReady.vivants ?? bandeReady.nv ?? 0,
@@ -186,6 +192,8 @@ export const V70Routes: React.FC = () => (
           <Route path="/reglages/systeme" element={<SettingsPage />} />
           <Route path="/protocoles" element={<ProtocolsView />} />
           <Route path="/alerts" element={<AlertsView />} />
+          {/* V77 — /audit fusionné dans /alerts (doublon sémantique supprimé) */}
+          <Route path="/audit" element={<Navigate to="/alerts" replace />} />
 
           {/* Ressources */}
           <Route path="/ressources" element={<RessourcesHub />} />

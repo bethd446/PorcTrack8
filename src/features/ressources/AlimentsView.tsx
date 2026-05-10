@@ -12,7 +12,7 @@ import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import {
-  Wheat, ExternalLink, Settings, Plus, AlertOctagon,
+  Wheat, ExternalLink, Settings, Plus, AlertOctagon, ChevronLeft,
 } from 'lucide-react';
 import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
@@ -20,7 +20,6 @@ import { AppToast, useAppToast } from '../../components/agritech';
 import { useFarm, useMeta } from '../../context/FarmContext';
 import { Section } from '../../v70/components/ds/Section';
 import { Pill, type PillVariant } from '../../v70/components/ds/Pill';
-import { PageHeader } from '../../v70/components/ds/PageHeader';
 import {
   updateProduitAliment,
   listFournisseurs,
@@ -364,223 +363,215 @@ const AlimentsView: React.FC = () => {
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
-        <div className="phone-content" style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
-          <PageHeader
-            eyebrow="Stocks · Aliments"
-            title="Aliments"
-            subtitle={subtitle}
-            onBack={() => navigate('/ressources')}
-          />
-
-          <div className="kpis-strip">
-            <div className="kpi">
-              <div className="kpi__label">Total kg</div>
-              <div className="kpi__val num">{stats.totalKg}</div>
-            </div>
-            <div className="kpi">
-              <div className="kpi__label">OK</div>
-              <div className="kpi__val num" style={{ color: 'var(--pt-success)' }}>{stats.ok}</div>
-            </div>
-            <div className="kpi">
-              <div className="kpi__label">Bas</div>
-              <div className="kpi__val num" style={{ color: 'var(--pt-warning)' }}>{stats.bas}</div>
-            </div>
-            <div className="kpi">
-              <div className="kpi__label">Rupture</div>
-              <div className="kpi__val num" style={{ color: 'var(--pt-danger)' }}>{stats.rupture}</div>
-            </div>
-          </div>
-
-          {stats.rupture > 0 && (
-            <div
-              role="alert"
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 10,
-                padding: '12px 14px',
-                background: 'var(--pt-rose-bg)',
-                color: 'var(--pt-rose-ink)',
-                borderRadius: 12,
-                margin: '8px 0 12px',
-              }}
-            >
-              <AlertOctagon size={18} aria-hidden style={{ flexShrink: 0, marginTop: 2 }} />
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 700, fontSize: 14, textTransform: 'uppercase' }}>
-                  {stats.rupture} matière{stats.rupture > 1 ? 's' : ''} en rupture
-                </div>
-                <div style={{ fontSize: 12, marginTop: 2 }}>
-                  Commander d’urgence — production à l’arrêt si non réapprovisionné.
-                </div>
-              </div>
-            </div>
-          )}
-
-          {whatsappReady && groupedOrderUrl && (
-            <a
-              href={groupedOrderUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Commander ${stocksAOrdonner.length} produits via WhatsApp`}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 10,
-                padding: '12px 16px',
-                borderRadius: 12,
-                background: 'var(--pt-primary)',
-                color: 'white',
-                textDecoration: 'none',
-                fontFamily: 'var(--pt-font-display)',
-                fontWeight: 800,
-                fontSize: 13,
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-                marginBottom: 12,
-                minHeight: 44,
-              }}
-            >
-              <span>Commander {stocksAOrdonner.length} produits via WhatsApp</span>
-              <ExternalLink size={14} aria-hidden />
-            </a>
-          )}
-
-          {!whatsappReady && stocksAOrdonner.length > 0 && (
+        <div className="pt-screen">
+          <header className="ph--primary">
             <button
               type="button"
-              onClick={() => navigate('/reglages')}
-              aria-label="Configurer le numéro WhatsApp dans les Réglages"
+              className="back"
+              aria-label="Retour à Ressources"
+              onClick={() => navigate('/ressources')}
               style={{
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
-                gap: 8,
-                padding: '10px 14px',
-                borderRadius: 12,
-                background: 'transparent',
-                border: '1px dashed var(--pt-line-strong)',
-                color: 'var(--pt-muted)',
-                fontFamily: 'var(--pt-font-mono)',
-                fontSize: 12,
-                textAlign: 'left',
-                marginBottom: 12,
-                width: '100%',
-                minHeight: 44,
-                cursor: 'pointer',
-              }}
-            >
-              <Settings size={13} aria-hidden />
-              Numéro WhatsApp non configuré · Régler dans Réglages
-            </button>
-          )}
-
-          <nav
-            role="tablist"
-            aria-label="Type d’aliment"
-            style={{
-              display: 'flex',
-              gap: 8,
-              marginBottom: 12,
-            }}
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tab === 'sacs'}
-              onClick={() => setTab('sacs')}
-              style={{
-                flex: 1,
-                padding: '10px 14px',
-                borderRadius: 999,
-                border: '1px solid var(--pt-line-strong)',
-                background: tab === 'sacs' ? 'var(--pt-ink)' : 'transparent',
-                color: tab === 'sacs' ? 'var(--pt-warm)' : 'var(--pt-muted)',
+                gap: 4,
+                background: 'none',
+                border: 'none',
+                padding: '4px 0',
+                marginBottom: 8,
+                color: 'rgba(245, 233, 216, 0.7)',
                 fontFamily: 'var(--pt-font-mono)',
                 fontSize: 11,
-                fontWeight: 600,
+                fontWeight: 500,
+                letterSpacing: '0.08em',
                 textTransform: 'uppercase',
-                letterSpacing: '0.10em',
                 cursor: 'pointer',
                 minHeight: 44,
               }}
             >
-              Sacs prêts <span className="num" style={{ marginLeft: 4, opacity: 0.7 }}>{partition.sacs.length}</span>
+              <ChevronLeft size={14} strokeWidth={1.75} aria-hidden />
+              Retour
             </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tab === 'matieres'}
-              onClick={() => setTab('matieres')}
-              style={{
-                flex: 1,
-                padding: '10px 14px',
-                borderRadius: 999,
-                border: '1px solid var(--pt-line-strong)',
-                background: tab === 'matieres' ? 'var(--pt-ink)' : 'transparent',
-                color: tab === 'matieres' ? 'var(--pt-warm)' : 'var(--pt-muted)',
-                fontFamily: 'var(--pt-font-mono)',
-                fontSize: 11,
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                letterSpacing: '0.10em',
-                cursor: 'pointer',
-                minHeight: 44,
-              }}
-            >
-              Matières prem. <span className="num" style={{ marginLeft: 4, opacity: 0.7 }}>{partition.matieres.length}</span>
-            </button>
-          </nav>
+            <div className="eyebrow">Stocks · Aliments</div>
+            <h1>Aliments</h1>
+            <div className="sub">{subtitle}</div>
+          </header>
 
-          {isEmptyAll ? (
-            <div className="empty">
-              <Wheat size={48} strokeWidth={1.25} color="var(--pt-subtle)" aria-hidden />
-              <div style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 900, fontSize: 22, textTransform: 'uppercase', letterSpacing: '-0.01em' }}>
-                Aucun aliment
+          <div className="phone-content" style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
+            <div className="kpis-strip">
+              <div className="kpi">
+                <div className="kpi__label">Total kg</div>
+                <div className="kpi__val num">{stats.totalKg}</div>
               </div>
-              <div style={{ fontSize: 13, color: 'var(--pt-muted)' }}>
-                Ajoute ton premier aliment pour commencer le suivi.
+              <div className="kpi">
+                <div className="kpi__label">OK</div>
+                <div className="kpi__val num" style={{ color: 'var(--pt-success)' }}>{stats.ok}</div>
               </div>
+              <div className="kpi">
+                <div className="kpi__label">Bas</div>
+                <div className="kpi__val num" style={{ color: 'var(--pt-warning)' }}>{stats.bas}</div>
+              </div>
+              <div className="kpi">
+                <div className="kpi__label">Rupture</div>
+                <div className="kpi__val num" style={{ color: 'var(--pt-danger)' }}>{stats.rupture}</div>
+              </div>
+            </div>
+
+            {stats.rupture > 0 && (
+              <div
+                role="alert"
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 10,
+                  padding: '12px 14px',
+                  background: 'var(--pt-rose-bg)',
+                  color: 'var(--pt-rose-ink)',
+                  borderRadius: 12,
+                  margin: '8px 0 12px',
+                }}
+              >
+                <AlertOctagon size={18} aria-hidden style={{ flexShrink: 0, marginTop: 2 }} />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 700, fontSize: 14, textTransform: 'uppercase' }}>
+                    {stats.rupture} matière{stats.rupture > 1 ? 's' : ''} en rupture
+                  </div>
+                  <div style={{ fontSize: 12, marginTop: 2 }}>
+                    Commander d’urgence — production à l’arrêt si non réapprovisionné.
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {whatsappReady && groupedOrderUrl && (
+              <a
+                href={groupedOrderUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Commander ${stocksAOrdonner.length} produits via WhatsApp`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 10,
+                  padding: '12px 16px',
+                  borderRadius: 12,
+                  background: 'var(--pt-primary)',
+                  color: 'white',
+                  textDecoration: 'none',
+                  fontFamily: 'var(--pt-font-display)',
+                  fontWeight: 800,
+                  fontSize: 13,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  marginBottom: 12,
+                  minHeight: 44,
+                }}
+              >
+                <span>Commander {stocksAOrdonner.length} produits via WhatsApp</span>
+                <ExternalLink size={14} aria-hidden />
+              </a>
+            )}
+
+            {!whatsappReady && stocksAOrdonner.length > 0 && (
               <button
                 type="button"
-                className="btn--primary"
-                onClick={() => setAddOpen(true)}
-                style={{ marginTop: 8, padding: '12px 20px', minHeight: 44 }}
+                onClick={() => navigate('/reglages')}
+                aria-label="Configurer le numéro WhatsApp dans les Réglages"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '10px 14px',
+                  borderRadius: 12,
+                  background: 'transparent',
+                  border: '1px dashed var(--pt-line-strong)',
+                  color: 'var(--pt-muted)',
+                  fontFamily: 'var(--pt-font-mono)',
+                  fontSize: 12,
+                  textAlign: 'left',
+                  marginBottom: 12,
+                  width: '100%',
+                  minHeight: 44,
+                  cursor: 'pointer',
+                }}
               >
-                <Plus size={14} aria-hidden /> Nouvelle entrée
+                <Settings size={13} aria-hidden />
+                Numéro WhatsApp non configuré · Régler dans Réglages
+              </button>
+            )}
+
+            <div className="pills" role="tablist" aria-label="Type d’aliment">
+              <button
+                type="button"
+                role="tab"
+                className="pill"
+                aria-pressed={tab === 'sacs'}
+                aria-selected={tab === 'sacs'}
+                onClick={() => setTab('sacs')}
+              >
+                Sacs prêts <span className="num">{partition.sacs.length}</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                className="pill"
+                aria-pressed={tab === 'matieres'}
+                aria-selected={tab === 'matieres'}
+                onClick={() => setTab('matieres')}
+              >
+                Matières prem. <span className="num">{partition.matieres.length}</span>
               </button>
             </div>
-          ) : (
-            <Section label={`${items.length} aliment${items.length > 1 ? 's' : ''}`}>
-              {items.length === 0 ? (
-                <div className="empty">
-                  <Wheat size={40} strokeWidth={1.25} color="var(--pt-subtle)" aria-hidden />
-                  <div style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 900, fontSize: 18, textTransform: 'uppercase' }}>
-                    Aucun élément
-                  </div>
-                  <div style={{ fontSize: 13, color: 'var(--pt-muted)' }}>
-                    Aucun aliment dans cette catégorie.
-                  </div>
+
+            {isEmptyAll ? (
+              <div className="empty-state">
+                <div className="empty-state__illu" aria-hidden>
+                  <Wheat size={48} strokeWidth={1.25} />
                 </div>
-              ) : (
-                items.map((item) => (
-                  <AlimentRow
-                    key={item.id || item.libelle}
-                    item={item}
-                    cheptel={cheptel}
-                    fournisseurs={fournisseurs}
-                    farmName={FARM_NAME}
-                    onRefresh={refreshData}
-                  />
-                ))
-              )}
-            </Section>
-          )}
+                <div className="empty-state__title">Aucun aliment</div>
+                <div className="empty-state__sub">
+                  Ajoute ton premier aliment pour commencer le suivi.
+                </div>
+                <button
+                  type="button"
+                  className="btn--primary empty-state__cta"
+                  onClick={() => setAddOpen(true)}
+                >
+                  <Plus size={14} aria-hidden /> Nouvelle entrée
+                </button>
+              </div>
+            ) : (
+              <Section label={`${items.length} aliment${items.length > 1 ? 's' : ''}`}>
+                {items.length === 0 ? (
+                  <div className="empty-state">
+                    <div className="empty-state__illu" aria-hidden>
+                      <Wheat size={40} strokeWidth={1.25} />
+                    </div>
+                    <div className="empty-state__title">Aucun élément</div>
+                    <div className="empty-state__sub">
+                      Aucun aliment dans cette catégorie.
+                    </div>
+                  </div>
+                ) : (
+                  items.map((item) => (
+                    <AlimentRow
+                      key={item.id || item.libelle}
+                      item={item}
+                      cheptel={cheptel}
+                      fournisseurs={fournisseurs}
+                      farmName={FARM_NAME}
+                      onRefresh={refreshData}
+                    />
+                  ))
+                )}
+              </Section>
+            )}
+          </div>
         </div>
 
         <button
           type="button"
-          className="fab"
+          className="fab--v77"
           onClick={() => setAddOpen(true)}
           aria-label="Nouvelle entrée"
         >

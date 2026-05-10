@@ -192,15 +192,38 @@ export default function OnboardingV2Wizard() {
     }
   };
 
+  const stepLabels: Record<number, string> = {
+    1: 'Type d’élevage',
+    2: 'Cheptel actuel',
+    3: 'Races présentes',
+    4: 'Infrastructure',
+    5: 'Confirmation',
+  };
+
   return (
     <IonPage>
       <IonContent fullscreen>
-        <div className="phone-content" style={{ padding: '24px 24px 168px', maxWidth: 720, margin: '0 auto' }}>
-          <PageHeader
-            eyebrow={`Étape ${step} / 5`}
-            title="Bienvenue sur PorcTrack"
-            subtitle="2 minutes pour configurer ton élevage. Marius t'accompagne dès la première saisie."
-          />
+        <div className="pt-screen">
+          <header className="ph ph--primary">
+            <div className="ph__row">
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="ph__eyebrow">Configuration · {stepLabels[step]}</div>
+                <h1 className="ph__h1">Bienvenue sur PorcTrack</h1>
+                <p className="ph__sub">
+                  2 minutes pour configurer ton élevage. Marius t&apos;accompagne dès la première saisie.
+                </p>
+              </div>
+            </div>
+            <div style={{ marginTop: 14 }}>
+              <span className="step-pill">Étape {step} / 5</span>
+            </div>
+          </header>
+          <div className="phone-content" style={{ padding: '8px 24px 168px', maxWidth: 720, margin: '0 auto' }}>
+            <PageHeader
+              eyebrow={`Étape ${step} / 5`}
+              title={stepLabels[step]}
+              subtitle="Renseigne les infos demandées. Tu pourras les modifier ensuite depuis Réglages."
+            />
 
           {/* ÉTAPE 1 : Type d'élevage */}
           {step === 1 && (
@@ -361,6 +384,7 @@ export default function OnboardingV2Wizard() {
             {step < 5 ? (
               <Button
                 variant="primary"
+                className="btn-primary--lg"
                 onClick={() => setStep((s) => s + 1)}
                 disabled={!canNext}
                 ariaLabel="Suivant"
@@ -371,6 +395,7 @@ export default function OnboardingV2Wizard() {
             ) : (
               <Button
                 variant="primary"
+                className="btn-primary--lg"
                 onClick={handleSubmit}
                 disabled={submitting}
                 ariaLabel="Créer mon élevage"
@@ -387,6 +412,7 @@ export default function OnboardingV2Wizard() {
                 )}
               </Button>
             )}
+          </div>
           </div>
         </div>
       </IonContent>

@@ -13,7 +13,6 @@
 import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Boxes, Home, Sprout, Eye, Edit3, Scale, LogOut, Search } from 'lucide-react';
-import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
 import { TabsMini } from '../components/ds/TabsMini';
@@ -40,6 +39,7 @@ const QuickAddVerratForm = lazy(() => import('../../components/forms/QuickAddVer
 const QuickAddBandeForm = lazy(() => import('../../components/forms/QuickAddBandeForm'));
 const QuickAddPorceletForm = lazy(() => import('../../components/forms/QuickAddPorceletForm'));
 const QuickAddLogeForm = lazy(() => import('../../components/forms/QuickAddLogeForm'));
+const LogesViewV77 = lazy(() => import('../../features/troupeau/LogesViewV77'));
 
 type AnimalTab = 'truies' | 'verrats' | 'porcelets' | 'bandes' | 'loges';
 type AnimalFilter = 'all' | 'pleines' | 'maternite' | 'vides' | 'a-vendre';
@@ -341,19 +341,33 @@ const AnimalsV70Inner: React.FC = () => {
     return list;
   }, [baseList, filter, search, tab]);
 
+  // V77 — sub dynamique avec compteurs live par tab actif.
+  // Décision A Christophe (V75-c) : H1 reste "Élevage" — alignement nav=h1.
+  const tabSub: Record<AnimalTab, string> = {
+    truies: `${counts.truies} truies · ${counts.truiesPleines} pleines · ${counts.truiesMater} en maternité`,
+    verrats: `${counts.verrats} verrats actifs`,
+    porcelets: `${counts.porcelets} porcelets en croissance`,
+    bandes: `${counts.bandes} bandes actives`,
+    loges: 'Suivi par bande · occupation par loge',
+  };
+
   return (
-    <div className="phone-content" style={{ padding: '24px 24px 168px', maxWidth: 600, margin: '0 auto' }}>
+    <div className="pt-screen phone-content" style={{ padding: '24px 24px 168px', maxWidth: 600, margin: '0 auto' }}>
       <MariusGreeting pageContext="élevage" />
 
-      <PageHeader
-        eyebrow={
-          farmLoading && truies.length === 0 && bandes.length === 0
-            ? 'Élevage'
-            : `Élevage · ${counts.totalAnimaux} animaux`
-        }
-        title="Élevage"
-        subtitle="Truies, verrats, porcelets, bandes, loges"
-      />
+      <header className="ph ph--primary">
+        <div className="ph__row">
+          <div>
+            <div className="ph__eyebrow">
+              {farmLoading && truies.length === 0 && bandes.length === 0
+                ? 'Cheptel'
+                : `Cheptel · ${counts.totalAnimaux} animaux`}
+            </div>
+            <h1 className="ph__h1">Élevage</h1>
+            <p className="ph__sub">{tabSub[tab]}</p>
+          </div>
+        </div>
+      </header>
 
       <TabsMini
         value={tab}
@@ -367,70 +381,72 @@ const AnimalsV70Inner: React.FC = () => {
         ]}
       />
 
-      <Card>
-        <div style={{ padding: '4px 4px 4px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Search size={16} aria-hidden="true" style={{ color: 'var(--pt-muted)', flexShrink: 0 }} />
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={`Rechercher ${baseList[0]?.id ?? '...'}`}
-            style={{
-              width: '100%',
-              border: 'none',
-              outline: 'none',
-              fontSize: 13,
-              background: 'transparent',
-              fontFamily: 'inherit',
-              padding: '8px 10px 8px 0',
-            }}
-            aria-label="Rechercher un animal"
-          />
-        </div>
-      </Card>
+      {tab !== 'loges' && (
+        <Card>
+          <div style={{ padding: '4px 4px 4px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Search size={16} aria-hidden="true" style={{ color: 'var(--pt-muted)', flexShrink: 0 }} />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={`Rechercher ${baseList[0]?.id ?? '...'}`}
+              style={{
+                width: '100%',
+                border: 'none',
+                outline: 'none',
+                fontSize: 13,
+                background: 'transparent',
+                fontFamily: 'inherit',
+                padding: '8px 10px 8px 0',
+              }}
+              aria-label="Rechercher un animal"
+            />
+          </div>
+        </Card>
+      )}
 
       {/* Filtres pertinents pour Truies uniquement (pleines/maternité/vides) */}
       {tab === 'truies' && (
-        <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap', marginTop: 14 }}>
+        <div className="pills" style={{ marginBottom: 14, marginTop: 14 }}>
           <button
             type="button"
+            className={`pill${filter === 'all' ? ' is-active' : ''}`}
             onClick={() => setFilter('all')}
-            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
             aria-pressed={filter === 'all'}
           >
-            <Pill variant={filter === 'all' ? 'primary' : 'ghost'}>{`Toutes (${counts.truies})`}</Pill>
+            {`Toutes (${counts.truies})`}
           </button>
           <button
             type="button"
+            className={`pill${filter === 'pleines' ? ' is-active' : ''}`}
             onClick={() => setFilter('pleines')}
-            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
             aria-pressed={filter === 'pleines'}
           >
-            <Pill variant={filter === 'pleines' ? 'primary' : 'ghost'}>{`Pleines (${counts.truiesPleines})`}</Pill>
+            {`Pleines (${counts.truiesPleines})`}
           </button>
           <button
             type="button"
+            className={`pill${filter === 'maternite' ? ' is-active' : ''}`}
             onClick={() => setFilter('maternite')}
-            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
             aria-pressed={filter === 'maternite'}
           >
-            <Pill variant={filter === 'maternite' ? 'primary' : 'ghost'}>{`Maternité (${counts.truiesMater})`}</Pill>
+            {`Maternité (${counts.truiesMater})`}
           </button>
           <button
             type="button"
+            className={`pill${filter === 'vides' ? ' is-active' : ''}`}
             onClick={() => setFilter('vides')}
-            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
             aria-pressed={filter === 'vides'}
           >
-            <Pill variant={filter === 'vides' ? 'primary' : 'ghost'}>{`Vides (${counts.truiesVides})`}</Pill>
+            {`Vides (${counts.truiesVides})`}
           </button>
           <button
             type="button"
+            className={`pill${filter === 'a-vendre' ? ' is-active' : ''}`}
             onClick={() => setFilter('a-vendre')}
-            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
             aria-pressed={filter === 'a-vendre'}
           >
-            <Pill variant={filter === 'a-vendre' ? 'primary' : 'ghost'}>{`À vendre (${counts.truiesAVendre})`}</Pill>
+            {`À vendre (${counts.truiesAVendre})`}
           </button>
           {/* V75-n F-17 — tri truies */}
           <select
@@ -482,6 +498,11 @@ const AnimalsV70Inner: React.FC = () => {
         </div>
       )}
 
+      {tab === 'loges' ? (
+        <Suspense fallback={<ListingSkeleton count={3} />}>
+          <LogesViewV77 onCreateClick={() => setAddOpen(true)} />
+        </Suspense>
+      ) : (
       <Section label={sectionLabel[tab]}>
         {tab === 'porcelets' ? (
           (() => {
@@ -574,7 +595,7 @@ const AnimalsV70Inner: React.FC = () => {
                 };
             const { Icon, iconColor, title, desc } = emptyCopy;
             return (
-              <div className="empty" data-testid={`empty-state-${tab}`}>
+              <div className="empty-state empty" data-testid={`empty-state-${tab}`}>
                 <Icon size={48} strokeWidth={1.25} color={iconColor} aria-hidden />
                 <div
                   style={{
@@ -629,11 +650,12 @@ const AnimalsV70Inner: React.FC = () => {
           ))
         )}
       </Section>
+      )}
 
-      {!(filteredList.length === 0 && !search.trim()) && (
+      {(tab === 'loges' || !(filteredList.length === 0 && !search.trim())) && (
         <button
           type="button"
-          className="fab"
+          className="fab--v77 fab"
           aria-label={fabLabel[tab]}
           onClick={() => setAddOpen(true)}
           style={{

@@ -50,81 +50,85 @@ interface WizardHeaderProps {
   hideSkip?: boolean;
 }
 
-const WizardHeader: React.FC<WizardHeaderProps> = ({ step, onSkip, hideSkip }) => (
-  <div style={{ flexShrink: 0 }}>
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '14px 20px 8px',
-      }}
-    >
+const STEP_TITLES: Record<Step, { eyebrow: string; title: string }> = {
+  1: { eyebrow: 'Premier démarrage', title: 'Bienvenue' },
+  2: { eyebrow: 'Moteur d’alertes', title: 'Alertes' },
+  3: { eyebrow: 'Mini-form', title: 'Première truie' },
+  4: { eyebrow: 'Cycle vivant', title: 'Saillie · J0' },
+  5: { eyebrow: 'Tableau de bord', title: 'Tes KPIs' },
+};
+
+const WizardHeader: React.FC<WizardHeaderProps> = ({ step, onSkip, hideSkip }) => {
+  const meta = STEP_TITLES[step];
+  return (
+    <header className="ph ph--primary" style={{ flexShrink: 0 }}>
+      <div className="ph__row">
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="ph__eyebrow">{meta.eyebrow}</div>
+          <h1 className="ph__h1">{meta.title}</h1>
+        </div>
+        <button
+          type="button"
+          onClick={onSkip}
+          className="iconbtn"
+          style={{
+            visibility: hideSkip ? 'hidden' : 'visible',
+            width: 'auto',
+            padding: '0 10px',
+            gap: 4,
+            fontFamily: 'var(--pt-font-mono)',
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+          }}
+        >
+          Passer <X size={12} strokeWidth={2} />
+        </button>
+      </div>
       <div
         style={{
-          fontFamily: 'var(--pt-font-mono)',
-          fontSize: 11,
-          fontWeight: 600,
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-          color: 'var(--pt-muted)',
-        }}
-      >
-        Étape <b style={{ color: 'var(--pt-ink)' }}>{step}</b> / {TOTAL_STEPS}
-      </div>
-      <button
-        type="button"
-        onClick={onSkip}
-        style={{
-          visibility: hideSkip ? 'hidden' : 'visible',
-          background: 'transparent',
-          border: 'none',
-          fontFamily: 'var(--pt-font-mono)',
-          fontSize: 11,
-          fontWeight: 600,
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-          color: 'var(--pt-subtle)',
-          cursor: 'pointer',
-          padding: '4px 8px',
-          display: 'inline-flex',
+          display: 'flex',
+          gap: 6,
+          marginTop: 14,
           alignItems: 'center',
-          gap: 4,
         }}
       >
-        Skip <X size={12} strokeWidth={2} />
-      </button>
-    </div>
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(5, 1fr)',
-        gap: 4,
-        padding: '0 20px 12px',
-      }}
-    >
-      {Array.from({ length: TOTAL_STEPS }, (_, i) => {
-        const idx = i + 1;
-        const isDone = idx < step;
-        const isNow = idx === step;
-        return (
-          <div
-            key={idx}
-            style={{
-              height: 3,
-              borderRadius: 99,
-              background: isDone
-                ? 'var(--pt-primary)'
-                : isNow
-                  ? 'var(--pt-accent)'
-                  : 'var(--pt-line-strong)',
-            }}
-          />
-        );
-      })}
-    </div>
-  </div>
-);
+        <span className="step-pill">
+          Étape {step} / {TOTAL_STEPS}
+        </span>
+        <div
+          style={{
+            flex: 1,
+            display: 'grid',
+            gridTemplateColumns: `repeat(${TOTAL_STEPS}, 1fr)`,
+            gap: 4,
+          }}
+        >
+          {Array.from({ length: TOTAL_STEPS }, (_, i) => {
+            const idx = i + 1;
+            const isDone = idx < step;
+            const isNow = idx === step;
+            return (
+              <div
+                key={idx}
+                style={{
+                  height: 3,
+                  borderRadius: 99,
+                  background: isDone
+                    ? 'var(--pt-warm)'
+                    : isNow
+                      ? 'var(--pt-accent-light)'
+                      : 'rgba(245, 233, 216, 0.2)',
+                }}
+              />
+            );
+          })}
+        </div>
+      </div>
+    </header>
+  );
+};
 
 interface WizardFooterProps {
   step: Step;
@@ -163,13 +167,8 @@ const WizardFooter: React.FC<WizardFooterProps> = ({ step, onPrev, onNext, isLas
     </button>
     <button
       type="button"
+      className="btn-primary--lg"
       onClick={onNext}
-      style={{
-        ...wizBtnStyle,
-        background: 'var(--pt-primary)',
-        color: 'var(--pt-warm)',
-        border: 'none',
-      }}
     >
       {isLast ? (
         <>
@@ -305,6 +304,7 @@ interface AlertCatProps {
 
 const AlertCat: React.FC<AlertCatProps> = ({ icon, bg, count, title, examples }) => (
   <div
+    className="fact"
     style={{
       background: bg,
       borderRadius: 14,
@@ -767,6 +767,7 @@ export const OnboardingEduPage: React.FC<OnboardingEduPageProps> = ({ onComplete
 
   return (
     <div
+      className="pt-screen"
       style={{
         minHeight: '100vh',
         display: 'flex',

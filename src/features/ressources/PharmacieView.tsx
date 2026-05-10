@@ -11,7 +11,7 @@ import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import {
-  Stethoscope, Plus, ExternalLink, Settings, AlertOctagon,
+  Stethoscope, Plus, ExternalLink, Settings, AlertOctagon, ChevronLeft,
 } from 'lucide-react';
 import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
@@ -27,7 +27,6 @@ import {
 } from '../../utils/whatsappOrder';
 import { Section } from '../../v70/components/ds/Section';
 import { Pill, type PillVariant } from '../../v70/components/ds/Pill';
-import { PageHeader } from '../../v70/components/ds/PageHeader';
 
 type PharmacieTab = 'vaccins' | 'antibio' | 'vermifuges' | 'autres';
 type ResourceTreatment = 'urgent' | 'normal' | 'resolu';
@@ -316,205 +315,207 @@ const PharmacieView: React.FC = () => {
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
-        <div className="phone-content" style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
-          <PageHeader
-            eyebrow="Stocks · Vétérinaire"
-            title="Pharmacie"
-            subtitle={subtitle}
-            onBack={() => navigate('/ressources')}
-          />
-
-          <div className="kpis-strip">
-            <div className="kpi">
-              <div className="kpi__label">Produits</div>
-              <div className="kpi__val num">{stats.total}</div>
-            </div>
-            <div className="kpi">
-              <div className="kpi__label">Vaccins</div>
-              <div className="kpi__val num">{stats.vaccinsCount}</div>
-            </div>
-            <div className="kpi">
-              <div className="kpi__label">Antibio</div>
-              <div className="kpi__val num">{stats.antibioCount}</div>
-            </div>
-            <div className="kpi">
-              <div className="kpi__label">Rupture</div>
-              <div className="kpi__val num" style={{ color: 'var(--pt-danger)' }}>{stats.rupture}</div>
-            </div>
-          </div>
-
-          {stats.rupture > 0 && (
-            <div
-              role="alert"
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 10,
-                padding: '12px 14px',
-                background: 'var(--pt-rose-bg)',
-                color: 'var(--pt-rose-ink)',
-                borderRadius: 12,
-                margin: '8px 0 12px',
-              }}
-            >
-              <AlertOctagon size={18} aria-hidden style={{ flexShrink: 0, marginTop: 2 }} />
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 700, fontSize: 14, textTransform: 'uppercase' }}>
-                  {stats.rupture} produit{stats.rupture > 1 ? 's' : ''} en rupture
-                </div>
-                <div style={{ fontSize: 12, marginTop: 2 }}>
-                  Commander d’urgence pour ne pas interrompre les traitements.
-                </div>
-              </div>
-            </div>
-          )}
-
-          {whatsappReady && groupedOrderUrl && (
-            <a
-              href={groupedOrderUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Commander ${stocksAOrdonner.length} produits via WhatsApp`}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 10,
-                padding: '12px 16px',
-                borderRadius: 12,
-                background: 'var(--pt-primary)',
-                color: 'white',
-                textDecoration: 'none',
-                fontFamily: 'var(--pt-font-display)',
-                fontWeight: 800,
-                fontSize: 13,
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-                marginBottom: 12,
-                minHeight: 44,
-              }}
-            >
-              <span>Commander {stocksAOrdonner.length} produits via WhatsApp</span>
-              <ExternalLink size={14} aria-hidden />
-            </a>
-          )}
-
-          {!whatsappReady && stocksAOrdonner.length > 0 && (
+        <div className="pt-screen">
+          <header className="ph--primary">
             <button
               type="button"
-              onClick={() => navigate('/reglages')}
-              aria-label="Configurer le numéro WhatsApp dans les Réglages"
+              className="back"
+              aria-label="Retour à Ressources"
+              onClick={() => navigate('/ressources')}
               style={{
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
-                gap: 8,
-                padding: '10px 14px',
-                borderRadius: 12,
-                background: 'transparent',
-                border: '1px dashed var(--pt-line-strong)',
-                color: 'var(--pt-muted)',
+                gap: 4,
+                background: 'none',
+                border: 'none',
+                padding: '4px 0',
+                marginBottom: 8,
+                color: 'rgba(245, 233, 216, 0.7)',
                 fontFamily: 'var(--pt-font-mono)',
-                fontSize: 12,
-                textAlign: 'left',
-                marginBottom: 12,
-                width: '100%',
-                minHeight: 44,
+                fontSize: 11,
+                fontWeight: 500,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
                 cursor: 'pointer',
+                minHeight: 44,
               }}
             >
-              <Settings size={13} aria-hidden />
-              Numéro WhatsApp non configuré · Régler dans Réglages
+              <ChevronLeft size={14} strokeWidth={1.75} aria-hidden />
+              Retour
             </button>
-          )}
+            <div className="eyebrow">Stocks · Vétérinaire</div>
+            <h1>Pharmacie</h1>
+            <div className="sub">{subtitle}</div>
+          </header>
 
-          <nav
-            role="tablist"
-            aria-label="Catégorie pharmacie"
-            style={{
-              display: 'flex',
-              gap: 6,
-              marginBottom: 12,
-              overflowX: 'auto',
-              scrollbarWidth: 'none',
-            }}
-          >
-            {tabs.map((t) => (
-              <button
-                key={t.value}
-                type="button"
-                role="tab"
-                aria-selected={tab === t.value}
-                aria-label={`${t.label} · ${t.count}`}
-                onClick={() => setTab(t.value)}
+          <div className="phone-content" style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
+            <div className="kpis-strip">
+              <div className="kpi">
+                <div className="kpi__label">Produits</div>
+                <div className="kpi__val num">{stats.total}</div>
+              </div>
+              <div className="kpi">
+                <div className="kpi__label">Vaccins</div>
+                <div className="kpi__val num">{stats.vaccinsCount}</div>
+              </div>
+              <div className="kpi">
+                <div className="kpi__label">Antibio</div>
+                <div className="kpi__val num">{stats.antibioCount}</div>
+              </div>
+              <div className="kpi">
+                <div className="kpi__label">Rupture</div>
+                <div className="kpi__val num" style={{ color: 'var(--pt-danger)' }}>{stats.rupture}</div>
+              </div>
+            </div>
+
+            {stats.rupture > 0 && (
+              <div
+                role="alert"
                 style={{
-                  flex: '1 1 0',
-                  minWidth: 0,
-                  padding: '10px 12px',
-                  borderRadius: 999,
-                  border: '1px solid var(--pt-line-strong)',
-                  background: tab === t.value ? 'var(--pt-ink)' : 'transparent',
-                  color: tab === t.value ? 'var(--pt-warm)' : 'var(--pt-muted)',
-                  fontFamily: 'var(--pt-font-mono)',
-                  fontSize: 11,
-                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 10,
+                  padding: '12px 14px',
+                  background: 'var(--pt-rose-bg)',
+                  color: 'var(--pt-rose-ink)',
+                  borderRadius: 12,
+                  margin: '8px 0 12px',
+                }}
+              >
+                <AlertOctagon size={18} aria-hidden style={{ flexShrink: 0, marginTop: 2 }} />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 700, fontSize: 14, textTransform: 'uppercase' }}>
+                    {stats.rupture} produit{stats.rupture > 1 ? 's' : ''} en rupture
+                  </div>
+                  <div style={{ fontSize: 12, marginTop: 2 }}>
+                    Commander d’urgence pour ne pas interrompre les traitements.
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {whatsappReady && groupedOrderUrl && (
+              <a
+                href={groupedOrderUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Commander ${stocksAOrdonner.length} produits via WhatsApp`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 10,
+                  padding: '12px 16px',
+                  borderRadius: 12,
+                  background: 'var(--pt-primary)',
+                  color: 'white',
+                  textDecoration: 'none',
+                  fontFamily: 'var(--pt-font-display)',
+                  fontWeight: 800,
+                  fontSize: 13,
                   textTransform: 'uppercase',
-                  letterSpacing: '0.10em',
-                  cursor: 'pointer',
+                  letterSpacing: '0.04em',
+                  marginBottom: 12,
                   minHeight: 44,
                 }}
               >
-                {t.label} <span className="num" style={{ marginLeft: 4, opacity: 0.7 }}>{t.count}</span>
-              </button>
-            ))}
-          </nav>
+                <span>Commander {stocksAOrdonner.length} produits via WhatsApp</span>
+                <ExternalLink size={14} aria-hidden />
+              </a>
+            )}
 
-          {isEmpty ? (
-            <div className="empty">
-              <Stethoscope size={48} strokeWidth={1.25} color="var(--pt-subtle)" aria-hidden />
-              <div style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 900, fontSize: 22, textTransform: 'uppercase', letterSpacing: '-0.01em' }}>
-                Pharmacie vide
-              </div>
-              <div style={{ fontSize: 13, color: 'var(--pt-muted)' }}>
-                Renseigne ton premier produit vétérinaire pour suivre les stocks.
-              </div>
+            {!whatsappReady && stocksAOrdonner.length > 0 && (
               <button
                 type="button"
-                className="btn--primary"
-                onClick={() => setAddOpen(true)}
-                style={{ marginTop: 8, padding: '12px 20px', minHeight: 44 }}
+                onClick={() => navigate('/reglages')}
+                aria-label="Configurer le numéro WhatsApp dans les Réglages"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '10px 14px',
+                  borderRadius: 12,
+                  background: 'transparent',
+                  border: '1px dashed var(--pt-line-strong)',
+                  color: 'var(--pt-muted)',
+                  fontFamily: 'var(--pt-font-mono)',
+                  fontSize: 12,
+                  textAlign: 'left',
+                  marginBottom: 12,
+                  width: '100%',
+                  minHeight: 44,
+                  cursor: 'pointer',
+                }}
               >
-                <Plus size={14} aria-hidden /> Nouveau produit
+                <Settings size={13} aria-hidden />
+                Numéro WhatsApp non configuré · Régler dans Réglages
               </button>
+            )}
+
+            <div className="pills" role="tablist" aria-label="Catégorie pharmacie">
+              {tabs.map((t) => (
+                <button
+                  key={t.value}
+                  type="button"
+                  role="tab"
+                  className="pill"
+                  aria-pressed={tab === t.value}
+                  aria-selected={tab === t.value}
+                  aria-label={`${t.label} · ${t.count}`}
+                  onClick={() => setTab(t.value)}
+                >
+                  {t.label} <span className="num">{t.count}</span>
+                </button>
+              ))}
             </div>
-          ) : (
-            <Section label={`${items.length} produit${items.length > 1 ? 's' : ''}`}>
-              {items.length === 0 ? (
-                <div className="empty">
-                  <Stethoscope size={40} strokeWidth={1.25} color="var(--pt-subtle)" aria-hidden />
-                  <div style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 900, fontSize: 18, textTransform: 'uppercase' }}>
-                    Aucun élément
-                  </div>
-                  <div style={{ fontSize: 13, color: 'var(--pt-muted)' }}>
-                    Aucun produit dans cette catégorie.
-                  </div>
+
+            {isEmpty ? (
+              <div className="empty-state">
+                <div className="empty-state__illu" aria-hidden>
+                  <Stethoscope size={48} strokeWidth={1.25} />
                 </div>
-              ) : (
-                items.map((item) => (
-                  <VetoRow
-                    key={item.id || item.produit}
-                    item={item}
-                    farmName={FARM_NAME}
-                    onRefresh={refreshData}
-                  />
-                ))
-              )}
-            </Section>
-          )}
+                <div className="empty-state__title">Pharmacie vide</div>
+                <div className="empty-state__sub">
+                  Renseigne ton premier produit vétérinaire pour suivre les stocks.
+                </div>
+                <button
+                  type="button"
+                  className="btn--primary empty-state__cta"
+                  onClick={() => setAddOpen(true)}
+                >
+                  <Plus size={14} aria-hidden /> Nouveau produit
+                </button>
+              </div>
+            ) : (
+              <Section label={`${items.length} produit${items.length > 1 ? 's' : ''}`}>
+                {items.length === 0 ? (
+                  <div className="empty-state">
+                    <div className="empty-state__illu" aria-hidden>
+                      <Stethoscope size={40} strokeWidth={1.25} />
+                    </div>
+                    <div className="empty-state__title">Aucun élément</div>
+                    <div className="empty-state__sub">
+                      Aucun produit dans cette catégorie.
+                    </div>
+                  </div>
+                ) : (
+                  items.map((item) => (
+                    <VetoRow
+                      key={item.id || item.produit}
+                      item={item}
+                      farmName={FARM_NAME}
+                      onRefresh={refreshData}
+                    />
+                  ))
+                )}
+              </Section>
+            )}
+          </div>
         </div>
 
         <button
           type="button"
-          className="fab"
+          className="fab--v77"
           onClick={() => setAddOpen(true)}
           aria-label="Nouveau produit"
         >

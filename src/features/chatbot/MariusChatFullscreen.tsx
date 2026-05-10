@@ -419,9 +419,14 @@ export const MariusChatFullscreen: React.FC = () => {
 
   const inputHasContent = (input.trim().length > 0) && !loading;
 
+  const headerSubtitle = offline
+    ? 'Hors-ligne'
+    : 'Assistant IA · ton élevage en temps réel';
+
   if (!isMariusConfigured) {
     return (
       <div
+        className="pt-screen"
         style={{
           minHeight: '100vh',
           background: 'var(--pt-bg)',
@@ -429,41 +434,21 @@ export const MariusChatFullscreen: React.FC = () => {
           flexDirection: 'column',
         }}
       >
-        <header
-          style={{
-            padding: '14px 16px',
-            borderBottom: '1px solid var(--pt-line)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            background: 'var(--pt-bg)',
-          }}
-        >
-          <button
-            type="button"
-            onClick={handleClose}
-            aria-label="Fermer"
-            style={{
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'var(--pt-muted)',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <X size={18} />
-          </button>
-          <div
-            style={{
-              fontFamily: 'var(--pt-font-display)',
-              fontWeight: 900,
-              fontSize: 18,
-              textTransform: 'uppercase',
-              color: 'var(--pt-ink)',
-            }}
-          >
-            Marius
+        <header className="ph ph--primary">
+          <div className="ph__row">
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="ph__eyebrow">Assistant IA</div>
+              <h1 className="ph__h1">Marius</h1>
+              <p className="ph__sub">Hors-ligne</p>
+            </div>
+            <button
+              type="button"
+              className="iconbtn"
+              onClick={handleClose}
+              aria-label="Fermer"
+            >
+              <X size={16} />
+            </button>
           </div>
         </header>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -475,6 +460,7 @@ export const MariusChatFullscreen: React.FC = () => {
 
   return (
     <div
+      className="pt-screen"
       style={{
         minHeight: '100vh',
         background: 'var(--pt-bg)',
@@ -483,79 +469,23 @@ export const MariusChatFullscreen: React.FC = () => {
       }}
     >
       <header
-        style={{
-          padding: '14px 16px',
-          borderBottom: '1px solid var(--pt-line)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          position: 'sticky',
-          top: 0,
-          background: 'var(--pt-bg)',
-          zIndex: 10,
-        }}
+        className="ph ph--primary"
+        style={{ position: 'sticky', top: 0, zIndex: 10 }}
       >
-        <button
-          type="button"
-          onClick={handleClose}
-          aria-label="Fermer Marius"
-          style={{
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            color: 'var(--pt-muted)',
-            display: 'flex',
-            alignItems: 'center',
-            padding: 4,
-          }}
-        >
-          <X size={18} />
-        </button>
-        <div
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 99,
-            background: 'var(--pt-accent)',
-            color: 'var(--pt-warm)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontFamily: 'var(--pt-font-display)',
-            fontWeight: 900,
-            fontSize: 18,
-          }}
-          aria-hidden
-        >
-          M
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontFamily: 'var(--pt-font-display)',
-              fontWeight: 900,
-              textTransform: 'uppercase',
-              fontSize: 18,
-              color: 'var(--pt-ink)',
-              lineHeight: 1,
-            }}
-          >
-            Marius
+        <div className="ph__row">
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="ph__eyebrow">Assistant IA</div>
+            <h1 className="ph__h1">Marius</h1>
+            <p className="ph__sub">{headerSubtitle}</p>
           </div>
-          <div
-            style={{
-              fontFamily: 'var(--pt-font-mono)',
-              fontSize: 10,
-              color: 'var(--pt-subtle)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.14em',
-              marginTop: 3,
-            }}
+          <button
+            type="button"
+            className="iconbtn"
+            onClick={handleClose}
+            aria-label="Fermer Marius"
           >
-            {offline
-              ? 'Hors-ligne'
-              : 'Assistant IA · ton élevage en temps réel'}
-          </div>
+            <X size={16} />
+          </button>
         </div>
       </header>
 
@@ -580,7 +510,7 @@ export const MariusChatFullscreen: React.FC = () => {
           >
             {messages.length === 0 && (
               <div
-                className="bubble bubble--marius"
+                className="alert-card--info"
                 style={{ alignSelf: 'flex-start' }}
               >
                 <h4>Bonjour {(userName || 'éleveur').split(' ')[0]}</h4>
@@ -610,18 +540,21 @@ export const MariusChatFullscreen: React.FC = () => {
                   </div>
                 );
               }
+              if (m.role === 'user') {
+                return (
+                  <div key={m.id} className="bubble" style={{ alignSelf: 'flex-end' }}>
+                    {m.content}
+                  </div>
+                );
+              }
               return (
-                <div key={m.id} className={`bubble bubble--${m.role === 'user' ? 'user' : 'marius'}`}>
-                  {m.content
-                    ? m.role === 'assistant'
-                      ? renderMarkdown(m.content)
-                      : m.content
-                    : null}
+                <div key={m.id} className="alert-card--info" style={{ alignSelf: 'flex-start' }}>
+                  {m.content ? renderMarkdown(m.content) : null}
                 </div>
               );
             })}
             {loading && !streaming && (
-              <div className="bubble bubble--marius" aria-label="Marius rédige">
+              <div className="alert-card--info" aria-label="Marius rédige" style={{ alignSelf: 'flex-start' }}>
                 <span style={{ display: 'inline-flex', gap: 4 }}>
                   <span
                     style={{

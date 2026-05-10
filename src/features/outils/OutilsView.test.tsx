@@ -101,11 +101,11 @@ describe('OutilsView V33', () => {
     expect(navigateMock).toHaveBeenCalledWith('/alerts');
   });
 
-  it('navigates to /audit when clicking "Audit du jour"', () => {
+  it('navigates to /controle when clicking "Audit du jour" (V77 — /audit fusionné dans /alerts, checklist contrôle journalier conservée)', () => {
     usePilotageMock.mockReturnValue({ alerts: [], alertesServeur: [] });
     renderView();
     fireEvent.click(screen.getByLabelText('Audit du jour'));
-    expect(navigateMock).toHaveBeenCalledWith('/audit');
+    expect(navigateMock).toHaveBeenCalledWith('/controle');
   });
 
   it('navigates to /sante when clicking "Journal santé"', () => {

@@ -501,6 +501,7 @@ const TruieDetailView: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
         <div
+          className="pt-screen"
           style={{
             background: 'var(--bg-app)',
             minHeight: '100%',

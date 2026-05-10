@@ -240,7 +240,6 @@ const TABS: NavTabDef[] = [
       '/outils',
       '/alerts',
       '/alertes',
-      '/audit',
       '/controle',
       '/sante',
       '/protocoles',

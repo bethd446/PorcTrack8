@@ -1,8 +1,9 @@
 /**
  * V70 — Page Réglages (route /reglages)
  *
- * Phase 3E : profil + ToggleAdvancedMode + sections configuration + Apprendre.
- * Référence pixel-perfect : docs/v70/v70-mockup.html lignes 1399-1490.
+ * V77 — uniformisation namespace `.pt-screen` + header `.ph--primary`
+ * (cohérent avec /performance, /finances, /animals). Cards sections via
+ * `.section` + `.section__label`, navigation via `.card-link`.
  *
  * Sous-routes (montées dans V70Routes) :
  * - /reglages/encyclopedie → EncyclopediaPage
@@ -25,8 +26,6 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { PageHeader } from '../components/ds/PageHeader';
-import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
 import { ToggleAdvancedMode } from '../components/v70/ToggleAdvancedMode';
 import { NotifCategoriesSwitches } from '../components/v70/NotifCategoriesSwitches';
@@ -37,11 +36,6 @@ import { useOfflineQueue } from '../../hooks/useOfflineQueue';
 import { titleCase } from '../lib';
 import { ARTICLES as ENCYCLOPEDIA_ARTICLES } from './EncyclopediaPage';
 
-/**
- * V76 — Pattern card-link issu du mockup Claude Design (reglages-pilotage v76).
- * Icône carrée colorée + titre mono + sub muted + chevron. Utilisé pour les
- * lignes de navigation Configuration / Apprendre sur l'écran Réglages racine.
- */
 interface SettingsRowProps {
   title: string;
   subtitle: string;
@@ -70,10 +64,6 @@ export const ReglagesV70: React.FC = () => {
   const { pendingCount, errorCount } = useOfflineQueue();
   const [presentAlert] = useIonAlert();
 
-  // V75-v P2#8 — remplace `window.confirm()` natif (laid, hors design system)
-  // par un IonAlert stylisé, cohérent avec le pattern handleReformer
-  // (TruieDetailView). Garde la même UX : annulation par défaut, action
-  // destructive explicite, focus sur "Annuler".
   const handleSignOut = useCallback(() => {
     void presentAlert({
       header: 'Se déconnecter ?',
@@ -98,9 +88,6 @@ export const ReglagesV70: React.FC = () => {
     });
   }, [presentAlert, signOut, navigate]);
 
-  // V71.1 — données live profile (étaient hardcodées "Christophe / Owner · Ferme audit test")
-  // V75-q B-1 (F-34) / V75-v P2#1 : Title Case sur displayName ET farmLabel (le QA voit
-  // "OWNER · audit final" — le "audit final" vient de l'email, pas du full_name).
   const displayName = titleCase(profile?.full_name?.trim()) || 'Éleveur';
   const initial = displayName.charAt(0).toUpperCase();
   const farmLabelRaw = (profile?.email?.split('@')[0] ?? 'ma-ferme').replace(/[._-]+/g, ' ');
@@ -108,165 +95,167 @@ export const ReglagesV70: React.FC = () => {
   const roleLabel = role || 'Utilisateur';
 
   return (
-    <div
-      className="phone-content"
-      style={{ padding: 24, maxWidth: 600, margin: '0 auto', minHeight: '100%' }}
-    >
-      <MariusGreeting pageContext="configuration" />
-
-      <PageHeader
-        eyebrow="Configuration"
-        title="Réglages"
-        subtitle="Profil, ferme, équipe, ressources"
-      />
-
-      <div style={{ marginBottom: 12 }}>
-        <FarmSwitcher />
-      </div>
-
-      <Card variant="hero">
-        <div className="hero-row">
-          <div
-            className="avatar avatar-lg"
-            style={{
-              background: 'var(--pt-primary)',
-              color: 'white',
-              fontSize: 32,
-              fontWeight: 700,
-            }}
-          >
-            {initial}
-          </div>
-          <div className="hero-info">
-            <div className="hero-title-text">{displayName}</div>
-            <div className="hero-sub">{`${roleLabel} · ${farmLabel}`}</div>
+    <div className="pt-screen">
+      <header className="ph ph--primary">
+        <div className="ph__row">
+          <div>
+            <div className="ph__eyebrow">Configuration</div>
+            <h1 className="ph__h1">Réglages</h1>
+            <p className="ph__sub">Profil, ferme, équipe, ressources</p>
           </div>
         </div>
-      </Card>
+      </header>
 
-      <Section label="Mode d’affichage">
-        <ToggleAdvancedMode />
-      </Section>
+      <div
+        className="phone-content"
+        style={{ padding: '0 24px 24px', maxWidth: 600, margin: '0 auto' }}
+      >
+        <MariusGreeting pageContext="configuration" />
 
-      <Section label="Notifications">
-        <PushNotifToggle />
-        <NotifCategoriesSwitches />
-      </Section>
+        <div style={{ marginBottom: 12 }}>
+          <FarmSwitcher />
+        </div>
 
-      <Section label="Synchronisation">
-        <SettingsRow
-          title={pendingCount === 0 ? 'Tout est synchronisé' : `${pendingCount} action${pendingCount > 1 ? 's' : ''} en attente`}
-          subtitle={
-            errorCount > 0
-              ? `${errorCount} erreur${errorCount > 1 ? 's' : ''} · voir la file pour relancer`
-              : 'File offline · retry automatique au retour réseau'
-          }
-          Icon={CloudUpload}
-          onClick={() => navigate('/reglages/sync')}
-        />
-      </Section>
+        <Card variant="hero">
+          <div className="hero-row">
+            <div
+              className="avatar avatar-lg"
+              style={{
+                background: 'var(--pt-primary)',
+                color: 'white',
+                fontSize: 32,
+                fontWeight: 700,
+              }}
+            >
+              {initial}
+            </div>
+            <div className="hero-info">
+              <div className="hero-title-text">{displayName}</div>
+              <div className="hero-sub">{`${roleLabel} · ${farmLabel}`}</div>
+            </div>
+          </div>
+        </Card>
 
-      <Section label="Configuration">
-        <SettingsRow
-          title="Ma ferme"
-          subtitle="Identité, secteur, devise"
-          Icon={Home}
-          onClick={() => navigate('/reglages/ma-ferme')}
-        />
-        <SettingsRow
-          title="Mon équipe"
-          subtitle="Rôles, accès, invitations"
-          Icon={Users}
-          onClick={() => navigate('/reglages/mon-equipe')}
-        />
-        <SettingsRow
-          title="Ressources & stocks"
-          subtitle="Aliments, vétérinaire, fournisseurs"
-          Icon={Wheat}
-          onClick={() => navigate('/ressources')}
-        />
-        <SettingsRow
-          title="Protocoles santé"
-          subtitle="SOPs, vaccins, traitements"
-          Icon={ClipboardList}
-          onClick={() => navigate('/protocoles')}
-        />
-      </Section>
+        <section className="section">
+          <div className="section__label">Mode d’affichage</div>
+          <ToggleAdvancedMode />
+        </section>
 
-      <Section label="Apprendre">
-        <SettingsRow
-          title="Encyclopédie porcine"
-          subtitle={`${ENCYCLOPEDIA_ARTICLES.length} articles · cycles, santé, économie`}
-          Icon={BookOpen}
-          onClick={() => navigate('/reglages/encyclopedie')}
-        />
-        <SettingsRow
-          title="Refaire le tutoriel"
-          subtitle="2 min · découverte de l’app"
-          Icon={GraduationCap}
-          onClick={() => navigate('/reglages/onboarding')}
-        />
-        <SettingsRow
-          title="Aide & support"
-          subtitle="support@porctrack.tech · réponse sous 24h"
-          Icon={LifeBuoy}
-          onClick={() => {
-            window.location.href =
-              'mailto:support@porctrack.tech?subject=Support%20PorcTrack';
-          }}
-        />
-      </Section>
+        <section className="section">
+          <div className="section__label">Notifications</div>
+          <PushNotifToggle />
+          <NotifCategoriesSwitches />
+        </section>
 
-      {/* SECTION DÉCONNEXION — visible et accessible (V70 P1.7) */}
-      <section style={{ marginTop: 24, marginBottom: 32 }}>
-        <button
-          type="button"
-          onClick={handleSignOut}
-          aria-label="Se déconnecter de PorcTrack"
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: '14px 16px',
-            background: 'var(--bg-surface)',
-            border: '1px solid var(--line)',
-            borderRadius: 16,
-            cursor: 'pointer',
-            transition: 'background 200ms ease, border-color 200ms ease',
-            fontFamily: 'var(--pt-font-body)',
-            fontSize: 15,
-            color: 'var(--ink)',
-            textAlign: 'left',
-          }}
-          className="hover:bg-[var(--bg-surface-2)] hover:border-[var(--color-danger,#a4453d)]"
-        >
-          <span
-            aria-hidden
+        <section className="section">
+          <div className="section__label">Synchronisation</div>
+          <SettingsRow
+            title={pendingCount === 0 ? 'Tout est synchronisé' : `${pendingCount} action${pendingCount > 1 ? 's' : ''} en attente`}
+            subtitle={
+              errorCount > 0
+                ? `${errorCount} erreur${errorCount > 1 ? 's' : ''} · voir la file pour relancer`
+                : 'File offline · retry automatique au retour réseau'
+            }
+            Icon={CloudUpload}
+            onClick={() => navigate('/reglages/sync')}
+          />
+        </section>
+
+        <section className="section">
+          <div className="section__label">Configuration</div>
+          <SettingsRow
+            title="Ma ferme"
+            subtitle="Identité, secteur, devise"
+            Icon={Home}
+            onClick={() => navigate('/reglages/ma-ferme')}
+          />
+          <SettingsRow
+            title="Mon équipe"
+            subtitle="Rôles, accès, invitations"
+            Icon={Users}
+            onClick={() => navigate('/reglages/mon-equipe')}
+          />
+          <SettingsRow
+            title="Ressources & stocks"
+            subtitle="Aliments, vétérinaire, fournisseurs"
+            Icon={Wheat}
+            onClick={() => navigate('/ressources')}
+          />
+          <SettingsRow
+            title="Protocoles santé"
+            subtitle="SOPs, vaccins, traitements"
+            Icon={ClipboardList}
+            onClick={() => navigate('/protocoles')}
+          />
+        </section>
+
+        <section className="section">
+          <div className="section__label">Apprendre</div>
+          <SettingsRow
+            title="Encyclopédie porcine"
+            subtitle={`${ENCYCLOPEDIA_ARTICLES.length} articles · cycles, santé, économie`}
+            Icon={BookOpen}
+            onClick={() => navigate('/reglages/encyclopedie')}
+          />
+          <SettingsRow
+            title="Refaire le tutoriel"
+            subtitle="2 min · découverte de l’app"
+            Icon={GraduationCap}
+            onClick={() => navigate('/reglages/onboarding')}
+          />
+          <SettingsRow
+            title="Aide & support"
+            subtitle="support@porctrack.tech · réponse sous 24h"
+            Icon={LifeBuoy}
+            onClick={() => {
+              window.location.href =
+                'mailto:support@porctrack.tech?subject=Support%20PorcTrack';
+            }}
+          />
+        </section>
+
+        <section className="section" style={{ marginTop: 24, marginBottom: 32 }}>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            aria-label="Se déconnecter de PorcTrack"
+            className="btn-secondary--lg"
             style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              background: 'rgba(164, 69, 61, 0.08)',
-              display: 'inline-flex',
+              width: '100%',
+              display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
+              gap: 12,
+              textAlign: 'left',
+              justifyContent: 'flex-start',
             }}
           >
-            <LogOut size={18} color="var(--color-danger, #a4453d)" />
-          </span>
-          <span style={{ flex: 1 }}>
-            <span style={{ display: 'block', fontWeight: 600, color: 'var(--ink)' }}>
-              Se déconnecter
+            <span
+              aria-hidden
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                background: 'rgba(164, 69, 61, 0.08)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <LogOut size={18} color="var(--color-danger, #a4453d)" />
             </span>
-            <span style={{ display: 'block', fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
-              Quitter votre session PorcTrack
+            <span style={{ flex: 1 }}>
+              <span style={{ display: 'block', fontWeight: 600, color: 'var(--ink)' }}>
+                Se déconnecter
+              </span>
+              <span style={{ display: 'block', fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
+                Quitter votre session PorcTrack
+              </span>
             </span>
-          </span>
-          <ChevronRight size={18} color="var(--muted)" aria-hidden />
-        </button>
-      </section>
+            <ChevronRight size={18} color="var(--muted)" aria-hidden />
+          </button>
+        </section>
+      </div>
     </div>
   );
 };

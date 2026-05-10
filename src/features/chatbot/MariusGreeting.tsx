@@ -20,11 +20,13 @@ export const MariusGreeting: React.FC<MariusGreetingProps> = ({ onClick, pageCon
 
   const handleFullscreen = (e: React.MouseEvent) => {
     e.stopPropagation();
+    window.dispatchEvent(new Event('close-chatbot'));
     navigate('/marius');
   };
 
   return (
     <div
+      className="pt-screen"
       style={{
         display: 'flex',
         alignItems: 'stretch',

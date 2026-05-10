@@ -34,6 +34,13 @@ export interface ScoreGlobal {
 }
 
 const SEUIL_CYCLES_MIN = 5;
+/**
+ * Seuil minimal de portées historiques pour considérer qu'il existe au moins
+ * un cycle complet (saillie → sevrage). Sous ce seuil OU si l'ISSE annualisée
+ * est nulle, on reste en EN_CONSTRUCTION : éviter qu'une ferme en démarrage
+ * voie un "D Critique 19/100" alors qu'aucun sevrage n'a encore eu lieu.
+ */
+const SEUIL_PORTEES_HISTORIQUES = 3;
 
 /** Mappe une valeur observée vs cible et tolérance vers un score 0-100. */
 function scoreFromTarget(value: number | null, target: number, tolerance: number): number {
@@ -85,12 +92,23 @@ export function computeScoreGlobal(kpis: GlobalKpis | null | undefined): ScoreGl
   }
 
   const cyclesClos = kpis.nbPortees12m ?? 0;
-  if (cyclesClos < SEUIL_CYCLES_MIN) {
+  const isseAnnuel = kpis.sevresParTruieAn ?? 0;
+  // ISSE = 0 ou trop peu de portées historiques → empty state explicite,
+  // pas de note D Critique sur une ferme qui n'a pas encore eu de sevrage.
+  if (
+    cyclesClos < SEUIL_CYCLES_MIN ||
+    isseAnnuel === 0 ||
+    cyclesClos < SEUIL_PORTEES_HISTORIQUES
+  ) {
+    const seuilAffiche = Math.max(SEUIL_CYCLES_MIN, SEUIL_PORTEES_HISTORIQUES);
     return {
       score: 0,
       level: 'EN_CONSTRUCTION',
       label: 'En construction',
-      detail: `${cyclesClos}/${SEUIL_CYCLES_MIN} cycles nécessaires`,
+      detail:
+        isseAnnuel === 0
+          ? 'En attente du 1er sevrage complet'
+          : `${cyclesClos}/${seuilAffiche} cycles nécessaires`,
     };
   }
 
