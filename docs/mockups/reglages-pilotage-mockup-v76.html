@@ -1,0 +1,2224 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PorcTrack 8 — Réglages + Pilotage v76</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  :root{
+    --pt-primary:#2D4A1F;--pt-primary-deep:#1f3414;--pt-primary-light:#4a7a2f;
+    --pt-warm:#F5E9D8;--pt-warm-deep:#E8D5B5;
+    --pt-accent:#B8703D;--pt-accent-light:#D89968;
+    --pt-bg:#FAF7F0;--pt-bg-app:#F1ECE0;
+    --pt-ink:#1a1a1a;--pt-muted:#6b6357;--pt-subtle:#a39888;
+    --pt-success:#4a7a2f;--pt-warning:#c08a3d;--pt-danger:#a4453d;--pt-info:#4a6e8a;
+    --pt-line:rgba(26,26,26,0.08);--pt-line-strong:rgba(26,26,26,0.16);
+    --pt-truie-bg:#F4D4D4;--pt-truie-fg:#8B4744;
+    --pt-verrat-bg:#C8D6E5;--pt-verrat-fg:#3B5266;
+    --pt-porcelet-bg:#F5E9D8;--pt-porcelet-fg:#8B6E3D;
+    --pt-bande-bg:#D4DFC8;--pt-bande-fg:#3D5C2C;
+    --pt-loge-bg:#E8D5B5;--pt-loge-fg:#6b4f2c;
+    --pt-font-display:'Big Shoulders Display',sans-serif;
+    --pt-font-body:'Instrument Sans',sans-serif;
+    --pt-font-mono:'JetBrains Mono',monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--pt-bg-app);color:var(--pt-ink);font-family:var(--pt-font-body);font-size:14px;line-height:1.4;-webkit-font-smoothing:antialiased}
+  .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+  .eyebrow{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle)}
+
+  /* TOP NAV */
+  .top-nav{position:sticky;top:0;z-index:50;background:var(--pt-ink);color:var(--pt-warm);border-bottom:1px solid rgba(245,233,216,0.08)}
+  .top-nav__inner{max-width:1240px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+  .top-nav__brand{display:flex;align-items:center;gap:10px;font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:20px;letter-spacing:-0.01em}
+  .top-nav__brand-mark{width:28px;height:28px;border-radius:6px;background:var(--pt-accent);color:var(--pt-warm);display:flex;align-items:center;justify-content:center;font-family:var(--pt-font-mono);font-weight:600;font-size:12px}
+  .top-nav__divider{height:18px;width:1px;background:rgba(245,233,216,0.18)}
+  .top-nav__meta{font-family:var(--pt-font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-subtle)}
+  .top-nav__links{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+  .top-nav__link{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-warm);text-decoration:none;padding:8px 10px;border-radius:6px;border:1px solid transparent}
+  .top-nav__link:hover{border-color:rgba(245,233,216,0.18);background:rgba(245,233,216,0.04)}
+  .top-nav__link .num{color:var(--pt-subtle);margin-left:6px}
+
+  .shell{max-width:1240px;margin:0 auto;padding:32px 24px 80px}
+  .doc-header{padding:56px 0 28px;border-bottom:1px solid var(--pt-line);margin-bottom:40px}
+  .doc-header .eyebrow{margin-bottom:14px}
+  .doc-header h1{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:64px;letter-spacing:-0.01em;line-height:.92;margin:0}
+  .doc-header p{margin:18px 0 0;color:var(--pt-muted);max-width:64ch;font-size:15px}
+
+  /* FRAME GRID */
+  .section-title{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:34px;letter-spacing:-0.01em;line-height:.92;margin:64px 0 6px}
+  .sub-hint{font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--pt-subtle);margin:0 0 28px}
+  .frames{display:grid;grid-template-columns:repeat(auto-fill,minmax(390px,1fr));gap:48px 32px}
+  .frame-wrap{display:flex;flex-direction:column;gap:14px}
+  .frame-wrap > .eyebrow{display:flex;gap:12px;align-items:center}
+  .frame-wrap > .eyebrow::after{content:"";flex:1;height:1px;background:var(--pt-line)}
+  .frame{width:390px;border-radius:36px;background:var(--pt-bg);border:1px solid var(--pt-line-strong);overflow:hidden;position:relative;display:flex;flex-direction:column}
+
+  /* STATUS BAR */
+  .stbar{display:flex;justify-content:space-between;align-items:center;padding:10px 22px 4px;font-family:var(--pt-font-mono);font-size:12px;font-weight:600;color:var(--pt-ink)}
+  .stbar__icons{display:flex;gap:6px;align-items:center}
+  .stbar__icons svg{width:14px;height:14px;stroke:var(--pt-ink)}
+  .stbar--primary{background:var(--pt-primary);color:var(--pt-warm)}
+  .stbar--primary svg{stroke:var(--pt-warm)!important}
+
+  /* PAGE HEADER */
+  .ph{padding:14px 20px 12px}
+  .backbtn{display:inline-flex;align-items:center;gap:6px;font-family:var(--pt-font-mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-muted);background:transparent;border:none;padding:0;margin-bottom:10px;cursor:pointer;text-decoration:none}
+  .backbtn svg{width:14px;height:14px}
+  .ph__crumb{display:flex;align-items:center;gap:6px;font-family:var(--pt-font-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-subtle);margin-bottom:10px}
+  .ph__crumb a{color:var(--pt-subtle);text-decoration:none}
+  .ph__crumb svg{width:10px;height:10px;color:var(--pt-line-strong)}
+  .ph__crumb b{color:var(--pt-ink);font-weight:600}
+  .ph__row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .ph__h1{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;letter-spacing:-0.01em;line-height:.92;font-size:38px;margin:0}
+  .ph__sub{margin:8px 0 0;color:var(--pt-muted);font-size:13px;line-height:1.45}
+  .ph__sub b{color:var(--pt-ink);font-weight:600}
+  .iconbtn{width:36px;height:36px;border-radius:10px;border:1px solid var(--pt-line-strong);background:transparent;display:flex;align-items:center;justify-content:center;color:var(--pt-ink);cursor:pointer;flex-shrink:0}
+  .iconbtn svg{width:16px;height:16px}
+  .iconbtn--marius{background:var(--pt-ink);color:var(--pt-warm);border-color:var(--pt-ink);font-family:var(--pt-font-mono);font-weight:600;font-size:11px}
+
+  .ph--primary{background:var(--pt-primary);color:var(--pt-warm);padding:14px 20px 22px}
+  .ph--primary .ph__crumb,.ph--primary .backbtn{color:rgba(245,233,216,0.6)}
+  .ph--primary .ph__crumb a,.ph--primary .backbtn{color:rgba(245,233,216,0.6)}
+  .ph--primary .ph__crumb b{color:var(--pt-warm)}
+  .ph--primary .ph__crumb svg{color:rgba(245,233,216,0.4)}
+  .ph--primary .ph__sub{color:rgba(245,233,216,0.7)}
+  .ph--primary .ph__sub b{color:var(--pt-warm)}
+  .ph--primary .iconbtn{color:var(--pt-warm);border-color:rgba(245,233,216,0.2)}
+
+  /* SUB TABS */
+  .subtabs{display:flex;gap:0;border-bottom:1px solid var(--pt-line);padding:0 12px;overflow-x:auto;scrollbar-width:none;background:var(--pt-bg)}
+  .subtabs::-webkit-scrollbar{display:none}
+  .subtab{flex:0 0 auto;padding:14px 12px;font-family:var(--pt-font-mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-subtle);border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;display:flex;gap:8px;align-items:baseline}
+  .subtab .num{color:inherit}
+  .subtab[aria-current="true"]{color:var(--pt-ink);border-bottom-color:var(--pt-primary)}
+
+  /* CHIPS */
+  .chips{display:flex;gap:6px;padding:12px 20px 4px;overflow-x:auto;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;padding:6px 12px;border-radius:999px;border:1px solid var(--pt-line-strong);font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--pt-muted);background:transparent;cursor:pointer;display:flex;gap:6px;align-items:center}
+  .chip .num{color:var(--pt-subtle)}
+  .chip[aria-pressed="true"]{background:var(--pt-ink);border-color:var(--pt-ink);color:var(--pt-warm)}
+  .chip[aria-pressed="true"] .num{color:var(--pt-warm-deep)}
+
+  /* BODY */
+  .body{padding:18px 20px 22px;display:flex;flex-direction:column;gap:22px}
+  .body--snug{padding:14px 20px 22px;gap:18px}
+
+  /* SECTION HEAD */
+  .sec__head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .sec__head .eyebrow{flex:0 0 auto}
+  .sec__head::after{content:"";flex:1;height:1px;background:var(--pt-line)}
+  .sec__head .pill{flex:0 0 auto}
+
+  /* CARD */
+  .card{background:var(--pt-warm);border:1px solid var(--pt-line);border-radius:14px;padding:14px 16px}
+  .card--bg{background:var(--pt-bg)}
+  .card--ink{background:var(--pt-ink);color:var(--pt-warm);border-color:var(--pt-ink)}
+  .card--ink .eyebrow{color:var(--pt-accent-light)}
+  .card-link{display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;cursor:pointer}
+  .card-link__icon{width:40px;height:40px;border-radius:10px;background:var(--pt-bg-app);display:flex;align-items:center;justify-content:center;color:var(--pt-primary);flex-shrink:0;border:1px solid var(--pt-line)}
+  .card-link__icon svg{width:18px;height:18px}
+  .card-link__main{flex:1;min-width:0}
+  .card-link__title{font-family:var(--pt-font-mono);font-weight:600;font-size:13px;color:var(--pt-ink);letter-spacing:.02em}
+  .card-link__sub{font-size:12px;color:var(--pt-muted);margin-top:2px}
+  .card-link__count{font-family:var(--pt-font-mono);font-weight:600;font-size:11px;color:var(--pt-subtle);letter-spacing:.12em;text-transform:uppercase;margin-right:2px}
+  .card-link__chev{color:var(--pt-subtle)}
+  .card-link__chev svg{width:16px;height:16px}
+
+  /* PILLS */
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;font-family:var(--pt-font-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;border:1px solid transparent;white-space:nowrap}
+  .pill::before{content:"";width:5px;height:5px;border-radius:999px;background:currentColor}
+  .pill--success{background:rgba(74,122,47,.12);color:var(--pt-success);border-color:rgba(74,122,47,.22)}
+  .pill--warm{background:rgba(184,112,61,.14);color:var(--pt-accent);border-color:rgba(184,112,61,.24)}
+  .pill--warning{background:rgba(192,138,61,.14);color:var(--pt-warning);border-color:rgba(192,138,61,.24)}
+  .pill--danger{background:rgba(164,69,61,.12);color:var(--pt-danger);border-color:rgba(164,69,61,.24)}
+  .pill--info{background:rgba(74,110,138,.12);color:var(--pt-info);border-color:rgba(74,110,138,.22)}
+  .pill--soft{background:rgba(26,26,26,.06);color:var(--pt-muted);border-color:var(--pt-line-strong)}
+  .pill--ghost{background:transparent;color:var(--pt-muted);border-color:var(--pt-line-strong)}
+  .pill--no-dot::before{display:none}
+
+  /* AVATAR */
+  .av{border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--pt-font-mono);font-weight:600;flex-shrink:0;border:1px solid rgba(26,26,26,0.06)}
+  .av--sm{width:24px;height:24px;font-size:9px;border-radius:6px}
+  .av--md{width:36px;height:36px;font-size:11px;border-radius:8px}
+  .av--lg{width:48px;height:48px;font-size:13px}
+  .av--xl{width:96px;height:96px;font-size:22px;border-radius:18px}
+  .av--truie{background:var(--pt-truie-bg);color:var(--pt-truie-fg)}
+  .av--verrat{background:var(--pt-verrat-bg);color:var(--pt-verrat-fg)}
+  .av--porcelet{background:var(--pt-porcelet-bg);color:var(--pt-porcelet-fg)}
+  .av--bande{background:var(--pt-bande-bg);color:var(--pt-bande-fg)}
+  .av--loge{background:var(--pt-loge-bg);color:var(--pt-loge-fg)}
+  .av--owner{background:var(--pt-primary);color:var(--pt-warm);border-color:var(--pt-primary)}
+  .av--worker{background:var(--pt-warm-deep);color:var(--pt-ink)}
+
+  /* KPIS */
+  .kpis{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--pt-line);border-radius:14px;background:var(--pt-bg);overflow:hidden}
+  .kpis--4{grid-template-columns:repeat(4,1fr)}
+  .kpis--3{grid-template-columns:repeat(3,1fr)}
+  .kpis .stat{padding:14px 14px;border-right:1px solid var(--pt-line);border-bottom:1px solid var(--pt-line)}
+  .kpis--2-cols .stat:nth-child(2n){border-right:none}
+  .kpis--2-cols .stat:nth-last-child(-n+2){border-bottom:none}
+  .kpis--3 .stat{border-bottom:none}
+  .kpis--3 .stat:last-child,.kpis--4 .stat:last-child{border-right:none}
+  .kpis--4 .stat{border-bottom:none;padding:12px 10px}
+  .stat__label{font-family:var(--pt-font-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-subtle)}
+  .stat__val{margin-top:6px;font-family:var(--pt-font-display);font-weight:900;font-size:32px;line-height:.95;letter-spacing:-0.01em;color:var(--pt-ink);font-variant-numeric:tabular-nums}
+  .stat__val--md{font-size:24px}
+  .stat__val small{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;margin-left:4px;color:var(--pt-muted);letter-spacing:.06em}
+  .stat__sub{margin-top:4px;font-size:11.5px;color:var(--pt-muted);font-variant-numeric:tabular-nums}
+  .stat__sub--up{color:var(--pt-success)}
+  .stat__sub--down{color:var(--pt-danger)}
+
+  /* BOTTOM NAV */
+  .botnav{position:sticky;bottom:0;background:var(--pt-bg);border-top:1px solid var(--pt-line);padding:8px 0 14px;display:grid;grid-template-columns:repeat(5,1fr)}
+  .botnav__item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;color:var(--pt-subtle);font-family:var(--pt-font-mono);font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;text-decoration:none;position:relative}
+  .botnav__item svg{width:20px;height:20px;stroke-width:1.6}
+  .botnav__item[aria-current="true"]{color:var(--pt-primary)}
+  .botnav__item[aria-current="true"] svg{stroke-width:2}
+  .botnav__badge{position:absolute;top:2px;right:calc(50% - 18px);background:var(--pt-danger);color:var(--pt-warm);font-family:var(--pt-font-mono);font-size:9px;font-weight:600;letter-spacing:0;padding:1px 5px;border-radius:99px;line-height:1.2}
+
+  /* FAB */
+  .fab{position:absolute;right:18px;bottom:84px;background:var(--pt-primary);color:var(--pt-warm);border:none;border-radius:14px;padding:14px 18px;font-family:var(--pt-font-mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;display:flex;align-items:center;gap:8px;cursor:pointer}
+  .fab svg{width:14px;height:14px}
+
+  /* TOGGLE row */
+  .togglerow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--pt-line)}
+  .togglerow:last-child{border-bottom:none}
+  .togglerow__main{flex:1;min-width:0}
+  .togglerow__title{font-family:var(--pt-font-body);font-weight:600;font-size:13px;color:var(--pt-ink)}
+  .togglerow__sub{font-size:11.5px;color:var(--pt-muted);margin-top:2px}
+  .toggle{position:relative;width:42px;height:24px;border-radius:99px;background:var(--pt-line-strong);cursor:pointer;flex-shrink:0;transition:background .15s}
+  .toggle::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:99px;background:var(--pt-bg);transition:transform .15s}
+  .toggle[aria-checked="true"]{background:var(--pt-primary)}
+  .toggle[aria-checked="true"]::after{transform:translateX(18px)}
+
+  /* KV / Form */
+  .kv{display:grid;grid-template-columns:1fr auto;gap:8px 14px;font-size:13px}
+  .kv dt{font-family:var(--pt-font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--pt-subtle);font-weight:600}
+  .kv dd{margin:0;text-align:right;color:var(--pt-ink);font-weight:500;font-variant-numeric:tabular-nums;font-family:var(--pt-font-mono);font-size:12px}
+  .kv dd em{font-style:normal;color:var(--pt-muted);font-weight:400}
+
+  .formfield{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+  .formfield label{font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-subtle)}
+  .formfield input,.formfield select{font-family:var(--pt-font-body);font-size:14px;padding:11px 12px;border:1px solid var(--pt-line-strong);border-radius:10px;background:var(--pt-bg);color:var(--pt-ink);outline:none}
+  .formfield input:focus{border-color:var(--pt-primary)}
+  .formfield input[readonly]{background:var(--pt-bg-app);color:var(--pt-muted);font-family:var(--pt-font-mono);font-size:13px}
+  .formfield .hint{font-size:11.5px;color:var(--pt-muted)}
+
+  /* BTN */
+  .actions{display:grid;grid-template-columns:1fr auto auto;gap:6px;padding:12px 16px;border-top:1px solid var(--pt-line);background:var(--pt-bg);position:sticky;bottom:0}
+  .actions--2{grid-template-columns:1fr 1fr}
+  .actions--1{grid-template-columns:1fr}
+  .btn{border:none;font-family:var(--pt-font-mono);font-weight:600;text-transform:uppercase;letter-spacing:.14em;font-size:11px;padding:12px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+  .btn svg{width:13px;height:13px}
+  .btn--primary{background:var(--pt-primary);color:var(--pt-warm)}
+  .btn--secondary{background:transparent;color:var(--pt-ink);border:1px solid var(--pt-line-strong)}
+  .btn--danger-ghost{background:transparent;color:var(--pt-danger);border:1px solid rgba(164,69,61,.3)}
+  .btn--ink{background:var(--pt-ink);color:var(--pt-warm)}
+  .btn--block{width:100%;padding:14px}
+
+  .meta-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:var(--pt-font-mono);font-size:11px;color:var(--pt-muted);font-weight:500}
+  .meta-line .dot{width:3px;height:3px;border-radius:99px;background:var(--pt-line-strong)}
+
+  /* MARIUS */
+  .marius{background:var(--pt-ink);color:var(--pt-warm);border-radius:14px;padding:16px}
+  .marius__head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .marius__head .eyebrow{color:var(--pt-accent-light)}
+  .marius__mark{width:24px;height:24px;border-radius:6px;background:var(--pt-accent);display:flex;align-items:center;justify-content:center;font-family:var(--pt-font-mono);font-weight:600;font-size:10px;color:var(--pt-warm)}
+  .marius ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .marius li{font-size:12.5px;line-height:1.5;color:var(--pt-warm);padding-left:18px;position:relative}
+  .marius li::before{content:"";position:absolute;left:0;top:7px;width:8px;height:1px;background:var(--pt-accent)}
+  .marius li b{color:var(--pt-warm);font-weight:600}
+  .marius li em{font-style:normal;color:rgba(245,233,216,0.6);font-family:var(--pt-font-mono);font-size:11px}
+
+  /* ACTIVITY ROWS */
+  .row{display:grid;grid-template-columns:auto 1fr auto auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--pt-line);text-decoration:none;color:inherit}
+  .row:last-child{border-bottom:none}
+  .row__main{min-width:0}
+  .row__title{display:flex;align-items:center;gap:8px;font-family:var(--pt-font-mono);font-weight:600;font-size:13px;color:var(--pt-ink)}
+  .row__title .name{font-family:var(--pt-font-body);font-weight:600;color:var(--pt-muted)}
+  .row__sub{margin-top:3px;font-size:12px;color:var(--pt-muted);font-variant-numeric:tabular-nums}
+  .row__sub b{color:var(--pt-ink);font-weight:600}
+  .row__chev{color:var(--pt-subtle);display:flex}
+  .row__chev svg{width:16px;height:16px}
+
+  /* TODAY hero */
+  .today-priority{
+    background:var(--pt-warm);border:1px solid var(--pt-line-strong);
+    border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px;
+  }
+  .today-priority__head{display:flex;justify-content:space-between;align-items:baseline}
+  .priority-line{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:10px 0;border-top:1px dashed var(--pt-line-strong);text-decoration:none;color:inherit;cursor:pointer}
+  .priority-line:first-of-type{border-top:1px solid var(--pt-line-strong)}
+  .priority-line__icon{width:32px;height:32px;border-radius:9px;background:var(--pt-bg);display:flex;align-items:center;justify-content:center;color:var(--pt-primary);border:1px solid var(--pt-line)}
+  .priority-line__icon svg{width:15px;height:15px}
+  .priority-line.crit .priority-line__icon{background:var(--pt-danger);color:var(--pt-warm);border-color:var(--pt-danger)}
+  .priority-line.warm .priority-line__icon{background:var(--pt-accent);color:var(--pt-warm);border-color:var(--pt-accent)}
+  .priority-line__main{min-width:0}
+  .priority-line__title{font-size:13.5px;color:var(--pt-ink);font-weight:600;line-height:1.3}
+  .priority-line__sub{font-family:var(--pt-font-mono);font-size:11px;color:var(--pt-muted);margin-top:2px;font-variant-numeric:tabular-nums}
+
+  /* SCORE billboard */
+  .score-billboard{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;padding:18px;background:var(--pt-warm);border:1px solid var(--pt-line);border-radius:18px}
+  .score-letter{font-family:var(--pt-font-display);font-weight:900;font-size:140px;line-height:.85;color:var(--pt-primary);letter-spacing:-0.04em}
+  .score-meta{display:flex;flex-direction:column;gap:8px;min-width:0}
+  .score-num{font-family:var(--pt-font-mono);font-weight:600;font-size:13px;color:var(--pt-ink);font-variant-numeric:tabular-nums}
+  .score-label{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:22px;letter-spacing:-0.01em;line-height:.95;color:var(--pt-ink);margin:0}
+  .score-pond{font-family:var(--pt-font-mono);font-size:10.5px;color:var(--pt-muted);text-transform:uppercase;letter-spacing:.1em;line-height:1.5}
+
+  /* MINIPLOT / BAR CHART */
+  .miniplot{width:100%;height:100px;display:block}
+  .miniplot polyline{fill:none;stroke:var(--pt-primary);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .miniplot .area{fill:rgba(45,74,31,0.10);stroke:none}
+  .miniplot .axis{stroke:var(--pt-line);stroke-dasharray:2 4}
+  .miniplot text{font-family:var(--pt-font-mono);font-size:9px;fill:var(--pt-subtle)}
+
+  .barchart{width:100%;display:block}
+  .barchart rect{fill:var(--pt-primary)}
+  .barchart rect.now{fill:var(--pt-accent)}
+  .barchart text{font-family:var(--pt-font-mono);font-size:8.5px;fill:var(--pt-subtle)}
+
+  /* DATA TABLE */
+  .dt{width:100%;border-collapse:collapse;font-family:var(--pt-font-mono);font-size:11px}
+  .dt thead th{text-align:left;padding:8px 6px;font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--pt-subtle);border-bottom:1px solid var(--pt-line-strong);white-space:nowrap}
+  .dt tbody td{padding:10px 6px;border-bottom:1px dashed var(--pt-line);color:var(--pt-ink);font-weight:500;font-variant-numeric:tabular-nums}
+  .dt tbody tr:last-child td{border-bottom:none}
+  .dt .num-r{text-align:right}
+
+  /* Alerte card */
+  .alert-card{border:1px solid var(--pt-line-strong);border-radius:14px;background:var(--pt-bg);padding:14px;display:flex;flex-direction:column;gap:10px;border-left-width:4px}
+  .alert-card.crit{border-left-color:var(--pt-danger)}
+  .alert-card.high{border-left-color:var(--pt-warning)}
+  .alert-card.norm{border-left-color:var(--pt-info)}
+  .alert-card__head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .alert-card__title{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:18px;letter-spacing:-0.005em;line-height:1;color:var(--pt-ink);margin:0}
+  .alert-card__rule{font-family:var(--pt-font-mono);font-size:11px;color:var(--pt-muted);line-height:1.5}
+  .alert-card__rule b{color:var(--pt-ink);font-weight:600}
+  .alert-card__foot{display:flex;justify-content:space-between;align-items:center;font-family:var(--pt-font-mono);font-size:10.5px;color:var(--pt-subtle);text-transform:uppercase;letter-spacing:.1em;font-weight:600}
+  .alert-card__actions{display:flex;gap:6px}
+  .alert-card__actions .btn{padding:8px 12px}
+
+  /* CYCLE rail (re-used) */
+  .cycle{background:var(--pt-warm);border:1px solid var(--pt-line);border-radius:14px;padding:16px}
+  .cycle__rail{position:relative;height:36px;margin:14px 0 8px}
+  .cycle__line{position:absolute;left:0;right:0;top:18px;height:2px;background:var(--pt-line-strong)}
+  .cycle__line-done{position:absolute;left:0;top:18px;height:2px;background:var(--pt-primary)}
+  .cycle__node{position:absolute;top:6px;width:24px;height:24px;border-radius:8px;transform:translateX(-50%);background:var(--pt-bg);border:2px solid var(--pt-line-strong);display:flex;align-items:center;justify-content:center;font-family:var(--pt-font-mono);font-weight:600;font-size:9px;color:var(--pt-muted)}
+  .cycle__node.done{background:var(--pt-primary);border-color:var(--pt-primary);color:var(--pt-warm)}
+  .cycle__node.now{background:var(--pt-accent);border-color:var(--pt-accent);color:var(--pt-warm);box-shadow:0 0 0 4px rgba(184,112,61,0.18)}
+  .cycle__labels{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;font-family:var(--pt-font-mono);font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--pt-subtle);text-align:center}
+  .cycle__labels b{display:block;color:var(--pt-ink);font-size:11px;letter-spacing:0;text-transform:none;font-family:var(--pt-font-body);font-weight:600;margin-top:3px}
+
+  /* SEARCH */
+  .search{display:flex;align-items:center;gap:10px;border:1px solid var(--pt-line-strong);border-radius:12px;padding:10px 14px;background:var(--pt-bg);margin:0 20px 4px}
+  .search svg{width:14px;height:14px;color:var(--pt-subtle);flex-shrink:0}
+  .search input{flex:1;border:none;background:transparent;outline:none;font-family:var(--pt-font-body);font-size:13.5px;color:var(--pt-ink)}
+  .search input::placeholder{color:var(--pt-subtle)}
+
+  /* BANNER */
+  .banner{background:var(--pt-warm-deep);border:1px solid var(--pt-line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+  .banner__title{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:18px;letter-spacing:-0.005em;line-height:1;color:var(--pt-ink)}
+  .banner__sub{font-size:12.5px;color:var(--pt-muted);line-height:1.45}
+  .banner__actions{display:flex;gap:8px}
+
+  /* ARTICLE typography */
+  .article-body{padding:18px 20px 22px;font-family:var(--pt-font-body)}
+  .article-body h2{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:22px;letter-spacing:-0.01em;margin:24px 0 8px;color:var(--pt-ink)}
+  .article-body h2:first-child{margin-top:0}
+  .article-body h3{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle);margin:18px 0 8px}
+  .article-body p{margin:0 0 10px;font-size:13.5px;line-height:1.6;color:var(--pt-ink)}
+  .article-body blockquote{margin:14px 0;padding:12px 14px;background:var(--pt-warm);border-left:3px solid var(--pt-accent);border-radius:0 10px 10px 0;font-size:13px;color:var(--pt-ink);line-height:1.5}
+  .article-body ol{padding-left:22px;font-size:13.5px;line-height:1.6}
+  .article-body ol li{margin-bottom:4px}
+  .article-body code{font-family:var(--pt-font-mono);background:var(--pt-bg-app);border:1px solid var(--pt-line);padding:1px 6px;border-radius:5px;font-size:12px;color:var(--pt-ink)}
+  .article-body pre{font-family:var(--pt-font-mono);background:var(--pt-ink);color:var(--pt-warm);padding:12px 14px;border-radius:10px;font-size:11.5px;line-height:1.5;overflow:auto}
+  .article-body pre b{color:var(--pt-accent-light);font-weight:600}
+
+  /* SYNC sync state */
+  .sync-state{display:grid;grid-template-columns:48px 1fr;gap:14px;align-items:center;padding:18px;border-radius:14px;background:var(--pt-warm);border:1px solid var(--pt-line)}
+  .sync-state__icon{width:48px;height:48px;border-radius:12px;background:var(--pt-primary);color:var(--pt-warm);display:flex;align-items:center;justify-content:center}
+  .sync-state__icon svg{width:24px;height:24px}
+  .sync-state.warn .sync-state__icon{background:var(--pt-warning);color:var(--pt-warm)}
+  .sync-state__title{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:22px;letter-spacing:-0.005em;line-height:1;margin:0}
+  .sync-state__sub{font-family:var(--pt-font-mono);font-size:11px;color:var(--pt-muted);margin-top:4px;letter-spacing:.04em}
+
+  /* Decisions */
+  .decisions{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+  .decision{border:1px solid var(--pt-line);background:var(--pt-bg);border-radius:14px;padding:18px}
+  .decision h4{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:18px;letter-spacing:-0.01em;margin:8px 0 6px}
+  .decision p{margin:0;color:var(--pt-muted);font-size:13px;line-height:1.5}
+  .decision .num-tag{font-family:var(--pt-font-mono);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-accent)}
+  .decision--ink{background:var(--pt-ink);color:var(--pt-warm);border-color:var(--pt-ink)}
+  .decision--ink p{color:rgba(245,233,216,0.7)}
+  .decision--ink .num-tag{color:var(--pt-accent-light)}
+
+  h3.section-rule{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle);margin:0 0 12px;display:flex;align-items:center;gap:10px}
+  h3.section-rule::after{content:"";flex:1;height:1px;background:var(--pt-line)}
+
+  @media (max-width:640px){
+    .frames{grid-template-columns:1fr;justify-content:center}
+    .frame{width:100%;max-width:390px}
+  }
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="top-nav__inner">
+    <div class="top-nav__brand"><span class="top-nav__brand-mark">P8</span>PorcTrack&nbsp;8</div>
+    <div class="top-nav__divider"></div>
+    <div class="top-nav__meta">Réglages + Pilotage · v76</div>
+    <div class="top-nav__links">
+      <a class="top-nav__link" href="#reglages">Réglages <span class="num">9</span></a>
+      <a class="top-nav__link" href="#pilotage">Pilotage <span class="num">7</span></a>
+      <a class="top-nav__link" href="#bonus">Bonus</a>
+      <a class="top-nav__link" href="#notes">Notes</a>
+      <a class="top-nav__link" href="elevage-mockup-v76.html">← Élevage v76</a>
+    </div>
+  </div>
+</nav>
+
+<div class="shell">
+
+  <header class="doc-header">
+    <div class="eyebrow">Mockup interne · suite v76 · cohérence cross-rubriques</div>
+    <h1>Réglages —<br>+ pilotage</h1>
+    <p>Suite de <code style="font-family:var(--pt-font-mono);font-size:13px;color:var(--pt-accent)">elevage-mockup-v76.html</code>. Mêmes tokens, mêmes patterns, même densité métier. 9 écrans Réglages (Yao + Aïssa) + 7 écrans Pilotage (Today, Performance × 4 sous-tabs, Alertes, Rapport financier). Un éleveur qui passe d'Élevage à Réglages doit sentir qu'il est dans la même app, sans rupture.</p>
+  </header>
+
+  <!-- ============================== -->
+  <!-- A · RÉGLAGES                    -->
+  <!-- ============================== -->
+  <h2 class="section-title" id="reglages">A. Réglages</h2>
+  <p class="sub-hint">9 écrans · /reglages et sous-pages</p>
+
+  <div class="frames">
+
+    <!-- A.1 — Réglages hub -->
+    <div class="frame-wrap">
+      <span class="eyebrow">A.1 · Réglages hub <span style="color:var(--pt-ink)">— racine BottomNav</span></span>
+      <div class="frame" id="reglages-hub">
+        <div class="stbar"><span class="num">06:42</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <header class="ph">
+          <div class="ph__row">
+            <div>
+              <div class="eyebrow" style="margin-bottom:6px">Configuration</div>
+              <h1 class="ph__h1">Réglages</h1>
+            </div>
+            <button class="iconbtn"><i data-lucide="search"></i></button>
+          </div>
+          <p class="ph__sub">Profil, ferme, équipe, ressources</p>
+        </header>
+
+        <div class="body body--snug">
+
+          <!-- Profil card -->
+          <div class="card" style="display:flex;gap:14px;align-items:center">
+            <span class="av av--lg av--owner">YK</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:22px;letter-spacing:-0.005em;line-height:1;color:var(--pt-ink)">Yao Kouassi</div>
+              <div class="meta-line" style="margin-top:4px"><span>yao@porctrack.test</span></div>
+              <div style="margin-top:6px"><span class="pill pill--success">Owner · ferme principale</span></div>
+            </div>
+          </div>
+
+          <!-- Mode avancé -->
+          <section>
+            <h3 class="section-rule">Préférences</h3>
+            <div class="card" style="padding:4px 16px">
+              <div class="togglerow">
+                <div class="togglerow__main">
+                  <div class="togglerow__title">Mode avancé</div>
+                  <div class="togglerow__sub">Active les DataTables, exports CSV, formulaires détaillés</div>
+                </div>
+                <div class="toggle" aria-checked="true" role="switch"></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Notifications -->
+          <section>
+            <h3 class="section-rule">Notifications</h3>
+            <div class="card" style="padding:4px 16px">
+              <div class="togglerow">
+                <div class="togglerow__main">
+                  <div class="togglerow__title">App fermée</div>
+                  <div class="togglerow__sub">Notifs push lorsque l'app est en arrière-plan</div>
+                </div>
+                <div class="toggle" aria-checked="false" role="switch"></div>
+              </div>
+              <div class="togglerow">
+                <div class="togglerow__main">
+                  <div class="togglerow__title">Rappels mise-bas</div>
+                  <div class="togglerow__sub">J−3, J−1, jour J</div>
+                </div>
+                <div class="toggle" aria-checked="true" role="switch"></div>
+              </div>
+              <div class="togglerow">
+                <div class="togglerow__main">
+                  <div class="togglerow__title">Stocks critiques</div>
+                  <div class="togglerow__sub">Aliment ou véto en rupture</div>
+                </div>
+                <div class="toggle" aria-checked="true" role="switch"></div>
+              </div>
+              <div class="togglerow">
+                <div class="togglerow__main">
+                  <div class="togglerow__title">Cycles repro</div>
+                  <div class="togglerow__sub">Sevrage, retour chaleur, écho J28</div>
+                </div>
+                <div class="toggle" aria-checked="true" role="switch"></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Sync -->
+          <section>
+            <a class="card" href="#reglages-sync" style="display:flex;gap:14px;align-items:center;text-decoration:none;color:inherit">
+              <div style="width:40px;height:40px;border-radius:10px;background:var(--pt-warning);color:var(--pt-warm);display:flex;align-items:center;justify-content:center">
+                <i data-lucide="cloud-off" style="width:18px;height:18px"></i>
+              </div>
+              <div style="flex:1">
+                <div style="font-family:var(--pt-font-mono);font-weight:600;font-size:13px;color:var(--pt-ink)">Synchronisation</div>
+                <div style="font-size:12px;color:var(--pt-muted);margin-top:2px"><b class="num">12 actions</b> en attente · dernière sync il y a 2h</div>
+              </div>
+              <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--pt-subtle)"></i>
+            </a>
+          </section>
+
+          <!-- Configuration links -->
+          <section>
+            <h3 class="section-rule">Configuration</h3>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <a class="card card-link" href="#reglages-maferme">
+                <div class="card-link__icon"><i data-lucide="warehouse"></i></div>
+                <div class="card-link__main">
+                  <div class="card-link__title">Ma ferme</div>
+                  <div class="card-link__sub">PorcTrack Yamoussoukro · FERM-DA7B5A</div>
+                </div>
+                <span class="card-link__chev"><i data-lucide="chevron-right"></i></span>
+              </a>
+              <a class="card card-link" href="#reglages-monequipe">
+                <div class="card-link__icon"><i data-lucide="users"></i></div>
+                <div class="card-link__main">
+                  <div class="card-link__title">Mon équipe</div>
+                  <div class="card-link__sub">2 membres · 1 owner · 1 worker</div>
+                </div>
+                <span class="card-link__count num">2</span>
+                <span class="card-link__chev"><i data-lucide="chevron-right"></i></span>
+              </a>
+              <a class="card card-link" href="#reglages-ressources-hub">
+                <div class="card-link__icon"><i data-lucide="package"></i></div>
+                <div class="card-link__main">
+                  <div class="card-link__title">Ressources & stocks</div>
+                  <div class="card-link__sub">Aliments, pharmacie, fournisseurs</div>
+                </div>
+                <span class="card-link__count num">42</span>
+                <span class="card-link__chev"><i data-lucide="chevron-right"></i></span>
+              </a>
+              <a class="card card-link" href="#reglages-protocoles">
+                <div class="card-link__icon"><i data-lucide="clipboard-list"></i></div>
+                <div class="card-link__main">
+                  <div class="card-link__title">Protocoles santé</div>
+                  <div class="card-link__sub">Cycles, terrain, biosécurité, rations</div>
+                </div>
+                <span class="card-link__chev"><i data-lucide="chevron-right"></i></span>
+              </a>
+            </div>
+          </section>
+
+          <!-- Apprendre -->
+          <section>
+            <h3 class="section-rule">Apprendre</h3>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <a class="card card-link" href="#reglages-encyclopedie-liste">
+                <div class="card-link__icon"><i data-lucide="book-open"></i></div>
+                <div class="card-link__main">
+                  <div class="card-link__title">Encyclopédie porcine</div>
+                  <div class="card-link__sub">10 articles · cycles, santé, économie</div>
+                </div>
+                <span class="card-link__chev"><i data-lucide="chevron-right"></i></span>
+              </a>
+              <a class="card card-link" href="#">
+                <div class="card-link__icon"><i data-lucide="play-circle"></i></div>
+                <div class="card-link__main">
+                  <div class="card-link__title">Tutoriel guidé</div>
+                  <div class="card-link__sub">Reprendre l'onboarding · 4/5 étapes</div>
+                </div>
+                <span class="card-link__chev"><i data-lucide="chevron-right"></i></span>
+              </a>
+              <a class="card card-link" href="#">
+                <div class="card-link__icon"><i data-lucide="life-buoy"></i></div>
+                <div class="card-link__main">
+                  <div class="card-link__title">Aide & support</div>
+                  <div class="card-link__sub">WhatsApp · email · FAQ</div>
+                </div>
+                <span class="card-link__chev"><i data-lucide="chevron-right"></i></span>
+              </a>
+            </div>
+          </section>
+
+          <!-- Logout -->
+          <button class="btn btn--secondary btn--block" style="margin-top:8px"><i data-lucide="log-out"></i> Se déconnecter</button>
+
+          <div style="text-align:center" class="meta-line">
+            <span>PorcTrack v76.0.2</span><span class="dot"></span><span>build 2026.05.10</span>
+          </div>
+
+        </div>
+
+        <nav class="botnav">
+          <a class="botnav__item" href="#today"><i data-lucide="home"></i>Aujourd'hui</a>
+          <a class="botnav__item" href="elevage-mockup-v76.html"><i data-lucide="piggy-bank"></i>Élevage</a>
+          <a class="botnav__item" href="#"><i data-lucide="heart"></i>Repro</a>
+          <a class="botnav__item" href="#performance-vue"><i data-lucide="bar-chart-3"></i>Performance</a>
+          <a class="botnav__item" aria-current="true" href="#reglages-hub"><i data-lucide="settings"></i>Réglages</a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- A.2 — Ma ferme -->
+    <div class="frame-wrap">
+      <span class="eyebrow">A.2 · Ma ferme</span>
+      <div class="frame" id="reglages-maferme">
+        <div class="stbar"><span class="num">06:44</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <header class="ph">
+          <a class="backbtn" href="#reglages-hub"><i data-lucide="chevron-left"></i> Retour</a>
+          <div class="ph__crumb"><a href="#reglages-hub">Réglages</a><i data-lucide="chevron-right"></i><b>Ma ferme</b></div>
+          <div class="ph__row">
+            <div>
+              <div class="eyebrow" style="margin-bottom:6px">Configuration</div>
+              <h1 class="ph__h1">Ma ferme</h1>
+            </div>
+          </div>
+          <p class="ph__sub">Identité, secteur, devise</p>
+        </header>
+
+        <div class="body body--snug">
+
+          <section>
+            <h3 class="section-rule">Identité</h3>
+            <div class="card">
+              <dl class="kv">
+                <dt>Nom</dt><dd>PorcTrack Yamoussoukro</dd>
+                <dt>Code ferme</dt><dd>FERM-DA7B5A</dd>
+                <dt>Propriétaire</dt><dd>Yao Kouassi</dd>
+                <dt>Créée le</dt><dd>14/03/2024</dd>
+              </dl>
+            </div>
+          </section>
+
+          <section>
+            <h3 class="section-rule">Localisation</h3>
+            <div class="card">
+              <dl class="kv">
+                <dt>Pays</dt><dd>Côte d'Ivoire</dd>
+                <dt>Région</dt><dd>Yamoussoukro · Bélier</dd>
+                <dt>Secteur</dt><dd>Naisseur-engraisseur</dd>
+                <dt>Devise</dt><dd>FCFA <em>(XOF)</em></dd>
+              </dl>
+            </div>
+          </section>
+
+          <section>
+            <h3 class="section-rule">Bilan troupeau</h3>
+            <div class="kpis kpis--3">
+              <div class="stat">
+                <div class="stat__label">Truies</div>
+                <div class="stat__val stat__val--md num">50</div>
+                <div class="stat__sub">28 pleines</div>
+              </div>
+              <div class="stat">
+                <div class="stat__label">Verrats</div>
+                <div class="stat__val stat__val--md num">3</div>
+                <div class="stat__sub">tous actifs</div>
+              </div>
+              <div class="stat">
+                <div class="stat__label">Bandes</div>
+                <div class="stat__val stat__val--md num">6</div>
+                <div class="stat__sub">92 porcelets</div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+        <div class="actions actions--1">
+          <a class="btn btn--primary" href="#reglages-maferme-edit"><i data-lucide="pencil"></i> Modifier la ferme</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- A.2.bis — Ma ferme édition -->
+    <div class="frame-wrap">
+      <span class="eyebrow">A.2.bis · Ma ferme · édition <span style="color:var(--pt-ink)">— formulaire plein écran</span></span>
+      <div class="frame" id="reglages-maferme-edit">
+        <div class="stbar"><span class="num">06:46</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <header class="ph">
+          <a class="backbtn" href="#reglages-maferme"><i data-lucide="chevron-left"></i> Retour</a>
+          <div class="ph__crumb"><a href="#reglages-hub">Réglages</a><i data-lucide="chevron-right"></i><a href="#reglages-maferme">Ma ferme</a><i data-lucide="chevron-right"></i><b>Modifier</b></div>
+          <h1 class="ph__h1">Modifier</h1>
+          <p class="ph__sub">Identité, localisation et devise. Le code ferme et le propriétaire ne sont pas modifiables.</p>
+        </header>
+
+        <div class="body body--snug">
+
+          <section>
+            <h3 class="section-rule">Identité</h3>
+            <div class="formfield">
+              <label>Nom de la ferme</label>
+              <input type="text" value="PorcTrack Yamoussoukro" />
+            </div>
+            <div class="formfield">
+              <label>Code ferme · lecture seule</label>
+              <input type="text" value="FERM-DA7B5A" readonly />
+              <span class="hint">Généré automatiquement à la création.</span>
+            </div>
+            <div class="formfield">
+              <label>Propriétaire · lecture seule</label>
+              <input type="text" value="Yao Kouassi (yao@porctrack.test)" readonly />
+              <span class="hint">Transférer la propriété → Aide & support.</span>
+            </div>
+          </section>
+
+          <section>
+            <h3 class="section-rule">Localisation</h3>
+            <div class="formfield">
+              <label>Pays</label>
+              <select>
+                <option>🇨🇮 Côte d'Ivoire (CI)</option>
+                <option>🇸🇳 Sénégal (SN)</option>
+                <option>🇲🇱 Mali (ML)</option>
+                <option>🇧🇫 Burkina Faso (BF)</option>
+              </select>
+            </div>
+            <div class="formfield">
+              <label>Région · ville</label>
+              <input type="text" value="Yamoussoukro · Bélier" />
+            </div>
+            <div class="formfield">
+              <label>Secteur</label>
+              <input type="text" value="Naisseur-engraisseur" />
+              <span class="hint">Texte libre — naisseur, engraisseur, naisseur-engraisseur, autre.</span>
+            </div>
+            <div class="formfield">
+              <label>Devise · auto</label>
+              <input type="text" value="FCFA (XOF)" readonly />
+              <span class="hint">Dérivée du pays sélectionné.</span>
+            </div>
+          </section>
+
+        </div>
+
+        <div class="actions actions--2">
+          <button class="btn btn--secondary"><i data-lucide="x"></i> Annuler</button>
+          <button class="btn btn--primary"><i data-lucide="check"></i> Enregistrer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- A.3 — Mon équipe -->
+    <div class="frame-wrap">
+      <span class="eyebrow">A.3 · Mon équipe</span>
+      <div class="frame" id="reglages-monequipe">
+        <div class="stbar"><span class="num">06:48</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <header class="ph">
+          <a class="backbtn" href="#reglages-hub"><i data-lucide="chevron-left"></i> Retour</a>
+          <div class="ph__crumb"><a href="#reglages-hub">Réglages</a><i data-lucide="chevron-right"></i><b>Mon équipe</b></div>
+          <div class="ph__row">
+            <div>
+              <div class="eyebrow" style="margin-bottom:6px">Configuration</div>
+              <h1 class="ph__h1">Mon équipe</h1>
+            </div>
+            <button class="iconbtn"><i data-lucide="user-plus"></i></button>
+          </div>
+          <p class="ph__sub"><b class="num">2 membres</b> · 1 owner · 1 worker en attente</p>
+        </header>
+
+        <div class="body body--snug">
+          <section>
+            <h3 class="section-rule">Stats</h3>
+            <div class="kpis kpis--3">
+              <div class="stat"><div class="stat__label">Membres</div><div class="stat__val stat__val--md num">2</div><div class="stat__sub">total</div></div>
+              <div class="stat"><div class="stat__label">Owners</div><div class="stat__val stat__val--md num">1</div><div class="stat__sub">propriétaire</div></div>
+              <div class="stat"><div class="stat__label">Porchers</div><div class="stat__val stat__val--md num">1</div><div class="stat__sub">en attente</div></div>
+            </div>
+          </section>
+
+          <section>
+            <h3 class="section-rule">Membres</h3>
+            <div class="card" style="padding:0 16px">
+              <div class="row">
+                <span class="av av--md av--owner">YK</span>
+                <div class="row__main">
+                  <div class="row__title"><span>Yao Kouassi</span><span class="name">· (you)</span></div>
+                  <div class="row__sub">yao@porctrack.test · admin depuis 14/03/24</div>
+                </div>
+                <span class="pill pill--success">Owner</span>
+                <button class="iconbtn" style="width:28px;height:28px;border:none"><i data-lucide="more-horizontal"></i></button>
+              </div>
+              <div class="row">
+                <span class="av av--md av--worker">AD</span>
+                <div class="row__main">
+                  <div class="row__title"><span>Aïssa Diabaté</span></div>
+                  <div class="row__sub">aissa.d@coop-bouake.test · invitée 02/05</div>
+                </div>
+                <span class="pill pill--warning">En attente</span>
+                <button class="iconbtn" style="width:28px;height:28px;border:none"><i data-lucide="more-horizontal"></i></button>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <h3 class="section-rule">Console admin</h3>
+            <a class="card card-link" href="#" style="margin-bottom:8px">
+              <div class="card-link__icon"><i data-lucide="key"></i></div>
+              <div class="card-link__main">
+                <div class="card-link__title">Rôles & permissions</div>
+                <div class="card-link__sub">Owner · Worker · droits de lecture/écriture par module</div>
+              </div>
+              <span class="card-link__chev"><i data-lucide="chevron-right"></i></span>
+            </a>
+            <a class="card card-link" href="#">
+              <div class="card-link__icon"><i data-lucide="history"></i></div>
+              <div class="card-link__main">
+                <div class="card-link__title">Journal d'activité</div>
+                <div class="card-link__sub">214 actions · 30 derniers jours</div>
+              </div>
+              <span class="card-link__chev"><i data-lucide="chevron-right"></i></span>
+            </a>
+          </section>
+        </div>
+
+        <div class="actions actions--1">
+          <button class="btn btn--primary"><i data-lucide="user-plus"></i> Inviter un membre</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- A.4 — Ressources hub -->
+    <div class="frame-wrap">
+      <span class="eyebrow">A.4 · Ressources hub</span>
+      <div class="frame" id="reglages-ressources-hub">
+        <div class="stbar"><span class="num">06:50</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <header class="ph">
+          <a class="backbtn" href="#reglages-hub"><i data-lucide="chevron-left"></i> Retour</a>
+          <div class="ph__crumb"><a href="#reglages-hub">Réglages</a><i data-lucide="chevron-right"></i><b>Ressources</b></div>
+          <div class="ph__row">
+            <div>
+              <div class="eyebrow" style="margin-bottom:6px">Stocks</div>
+              <h1 class="ph__h1">Ressources</h1>
+            </div>
+            <button class="iconbtn"><i data-lucide="search"></i></button>
+          </div>
+          <p class="ph__sub">Aliments, pharmacie, fournisseurs · <b>2 ruptures</b></p>
+        </header>
+
+        <div class="body body--snug">
+
+          <section>
+            <h3 class="section-rule">Vue d'ensemble</h3>
+            <div class="kpis kpis--4">
+              <div class="stat"><div class="stat__label">Total</div><div class="stat__val stat__val--md num">42</div><div class="stat__sub">articles</div></div>
+              <div class="stat"><div class="stat__label">Stock OK</div><div class="stat__val stat__val--md num" style="color:var(--pt-success)">36</div><div class="stat__sub">86%</div></div>
+              <div class="stat"><div class="stat__label">Bas</div><div class="stat__val stat__val--md num" style="color:var(--pt-warning)">4</div><div class="stat__sub">à racheter</div></div>
+              <div class="stat"><div class="stat__label">Rupture</div><div class="stat__val stat__val--md num" style="color:var(--pt-danger)">2</div><div class="stat__sub">urgent</div></div>
+            </div>
+          </section>
+
+          <section>
+            <h3 class="section-rule">Catégories</h3>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <a class="card card-link" href="#">
+                <div class="card-link__icon"><i data-lucide="wheat"></i></div>
+                <div class="card-link__main">
+                  <div class="card-link__title">Aliments</div>
+                  <div class="card-link__sub">Truie pleine, lactation, post-sevrage… · <b style="color:var(--pt-danger)">1 rupture</b></div>
+                </div>
+                <span class="card-link__count num">14</span>
+                <span class="card-link__chev"><i data-lucide="chevron-right"></i></span>
+              </a>
+              <a class="card card-link" href="#">
+                <div class="card-link__icon"><i data-lucide="pill"></i></div>
+                <div class="card-link__main">
+                  <div class="card-link__title">Pharmacie</div>
+                  <div class="card-link__sub">Vermifuges, antibiotiques, vaccins · <b style="color:var(--pt-warning)">3 stocks bas</b></div>
+                </div>
+                <span class="card-link__count num">21</span>
+                <span class="card-link__chev"><i data-lucide="chevron-right"></i></span>
+              </a>
+              <a class="card card-link" href="#">
+                <div class="card-link__icon"><i data-lucide="flask-conical"></i></div>
+                <div class="card-link__main">
+                  <div class="card-link__title">Formules d'aliment</div>
+                  <div class="card-link__sub">Recettes maison · Truie 3,2 kg/j · etc.</div>
+                </div>
+                <span class="card-link__count num">5</span>
+                <span class="card-link__chev"><i data-lucide="chevron-right"></i></span>
+              </a>
+              <a class="card card-link" href="#">
+                <div class="card-link__icon"><i data-lucide="utensils-crossed"></i></div>
+                <div class="card-link__main">
+                  <div class="card-link__title">Plan d'alimentation</div>
+                  <div class="card-link__sub">Rations par phase · besoin journalier</div>
+                </div>
+                <span class="card-link__count num">7</span>
+                <span class="card-link__chev"><i data-lucide="chevron-right"></i></span>
+              </a>
+              <a class="card card-link" href="#">
+                <div class="card-link__icon"><i data-lucide="truck"></i></div>
+                <div class="card-link__main">
+                  <div class="card-link__title">Fournisseurs</div>
+                  <div class="card-link__sub">Sipra, AgroVet Bouaké, autres</div>
+                </div>
+                <span class="card-link__count num">4</span>
+                <span class="card-link__chev"><i data-lucide="chevron-right"></i></span>
+              </a>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- A.5 — Protocoles -->
+    <div class="frame-wrap">
+      <span class="eyebrow">A.5 · Protocoles santé</span>
+      <div class="frame" id="reglages-protocoles">
+        <div class="stbar"><span class="num">06:52</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <header class="ph">
+          <a class="backbtn" href="#reglages-hub"><i data-lucide="chevron-left"></i> Retour</a>
+          <div class="ph__crumb"><a href="#reglages-hub">Réglages</a><i data-lucide="chevron-right"></i><b>Protocoles</b></div>
+          <div class="ph__row">
+            <div>
+              <div class="eyebrow" style="margin-bottom:6px">Réglages · Protocoles</div>
+              <h1 class="ph__h1">Protocoles</h1>
+            </div>
+          </div>
+          <p class="ph__sub">Procédures et SOP par phase d'élevage</p>
+        </header>
+
+        <nav class="subtabs">
+          <div class="subtab" aria-current="true">Cycle <span class="num">5</span></div>
+          <div class="subtab">Terrain <span class="num">8</span></div>
+          <div class="subtab">Biosécurité <span class="num">4</span></div>
+          <div class="subtab">Rations <span class="num">7</span></div>
+          <div class="subtab">Listes <span class="num">3</span></div>
+        </nav>
+
+        <div class="body body--snug">
+
+          <section>
+            <div class="sec__head"><span class="eyebrow">Phases d'élevage</span></div>
+            <div class="cycle">
+              <div class="cycle__rail">
+                <div class="cycle__line"></div>
+                <div class="cycle__line-done" style="width:30%"></div>
+                <div class="cycle__node done" style="left:0%">N</div>
+                <div class="cycle__node done" style="left:25%">28</div>
+                <div class="cycle__node now" style="left:50%">70</div>
+                <div class="cycle__node" style="left:75%">120</div>
+                <div class="cycle__node" style="left:100%">↑</div>
+              </div>
+              <div class="cycle__labels">
+                <div>NAISSANCE<b>J0–J21</b></div>
+                <div>POST-SEV.<b>J28</b></div>
+                <div>CROISSANCE<b>J70</b></div>
+                <div>ENGRAIS.<b>J120</b></div>
+                <div>FINITION<b>J180</b></div>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <div class="sec__head"><span class="eyebrow">Détail phases</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+                  <div style="font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:18px;letter-spacing:-0.005em;line-height:1">Naissance · J0–J21</div>
+                  <span class="pill pill--warm pill--no-dot">21 j</span>
+                </div>
+                <dl class="kv">
+                  <dt>Objectif</dt><dd>≥ 11 sevrés · 7 kg</dd>
+                  <dt>Surveill.</dt><dd>2× / j · J1, J3, J7</dd>
+                  <dt>Aliment</dt><dd>Lactation 6 kg/j</dd>
+                  <dt>Vaccin</dt><dd>Fer J1 · Mycoplasme J28</dd>
+                </dl>
+              </div>
+              <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+                  <div style="font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:18px;letter-spacing:-0.005em;line-height:1">Post-sevrage · J28</div>
+                  <span class="pill pill--info pill--no-dot">7 j</span>
+                </div>
+                <dl class="kv">
+                  <dt>Objectif</dt><dd>GMQ &gt; 350 g/j</dd>
+                  <dt>Surveill.</dt><dd>1× / j · pesée J35</dd>
+                  <dt>Aliment</dt><dd>Pré-démarrage 0,8 kg/j</dd>
+                  <dt>Vaccin</dt><dd>Circo · J35</dd>
+                </dl>
+              </div>
+              <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+                  <div style="font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:18px;letter-spacing:-0.005em;line-height:1">Croissance · J70</div>
+                  <span class="pill pill--success pill--no-dot">50 j</span>
+                </div>
+                <dl class="kv">
+                  <dt>Objectif</dt><dd>GMQ 700 g/j · 60 kg</dd>
+                  <dt>Surveill.</dt><dd>Pesée J70 · J120</dd>
+                  <dt>Aliment</dt><dd>Croissance 2,1 kg/j</dd>
+                </dl>
+              </div>
+              <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+                  <div style="font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:18px;letter-spacing:-0.005em;line-height:1">Engraissement · J120</div>
+                  <span class="pill pill--soft pill--no-dot">60 j</span>
+                </div>
+                <dl class="kv">
+                  <dt>Objectif</dt><dd>IC ≤ 2,7 · 100 kg</dd>
+                  <dt>Surveill.</dt><dd>Pesée J150 · biosécurité</dd>
+                  <dt>Aliment</dt><dd>Finition 2,8 kg/j</dd>
+                </dl>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- A.6 — Encyclopédie liste -->
+    <div class="frame-wrap">
+      <span class="eyebrow">A.6 · Encyclopédie · liste</span>
+      <div class="frame" id="reglages-encyclopedie-liste">
+        <div class="stbar"><span class="num">06:54</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <header class="ph">
+          <a class="backbtn" href="#reglages-hub"><i data-lucide="chevron-left"></i> Retour</a>
+          <div class="ph__crumb"><a href="#reglages-hub">Réglages</a><i data-lucide="chevron-right"></i><b>Encyclopédie</b></div>
+          <div class="eyebrow" style="margin-bottom:6px">Configuration · Aide</div>
+          <h1 class="ph__h1">Encyclopédie<br>porcine</h1>
+          <p class="ph__sub"><b class="num">10 articles</b> · cycles, santé, économie, alimentation</p>
+        </header>
+
+        <div class="search">
+          <i data-lucide="search"></i>
+          <input type="text" placeholder="Rechercher un article…" />
+        </div>
+
+        <div class="body body--snug" style="padding-top:14px">
+          <a class="row" href="#reglages-encyclopedie-article" style="border-bottom:1px solid var(--pt-line);padding:12px 0">
+            <span class="av av--md av--bande">CY</span>
+            <div class="row__main">
+              <div class="row__title"><span>Comprendre l'ISSE</span></div>
+              <div class="row__sub">Cycles · niveau intermédiaire · 5 min</div>
+            </div>
+            <span class="pill pill--success pill--no-dot num">5 min</span>
+            <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+          </a>
+          <a class="row" href="#" style="border-bottom:1px solid var(--pt-line);padding:12px 0">
+            <span class="av av--md av--truie">CY</span>
+            <div class="row__main">
+              <div class="row__title"><span>Cycle de la truie</span></div>
+              <div class="row__sub">Cycles · niveau débutant · 8 min</div>
+            </div>
+            <span class="pill pill--soft pill--no-dot num">8 min</span>
+            <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+          </a>
+          <a class="row" href="#" style="border-bottom:1px solid var(--pt-line);padding:12px 0">
+            <span class="av av--md av--porcelet">SA</span>
+            <div class="row__main">
+              <div class="row__title"><span>Vaccins porcelets</span></div>
+              <div class="row__sub">Santé · niveau intermédiaire · 6 min</div>
+            </div>
+            <span class="pill pill--soft pill--no-dot num">6 min</span>
+            <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+          </a>
+          <a class="row" href="#" style="border-bottom:1px solid var(--pt-line);padding:12px 0">
+            <span class="av av--md av--verrat">EC</span>
+            <div class="row__main">
+              <div class="row__title"><span>Calculer ta marge brute</span></div>
+              <div class="row__sub">Économie · niveau avancé · 12 min</div>
+            </div>
+            <span class="pill pill--soft pill--no-dot num">12 min</span>
+            <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+          </a>
+          <a class="row" href="#" style="border-bottom:1px solid var(--pt-line);padding:12px 0">
+            <span class="av av--md av--bande">AL</span>
+            <div class="row__main">
+              <div class="row__title"><span>Rations en climat tropical</span></div>
+              <div class="row__sub">Alimentation · niveau intermédiaire · 7 min</div>
+            </div>
+            <span class="pill pill--soft pill--no-dot num">7 min</span>
+            <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+          </a>
+          <a class="row" href="#" style="padding:12px 0">
+            <span class="av av--md av--loge">BI</span>
+            <div class="row__main">
+              <div class="row__title"><span>Biosécurité de base</span></div>
+              <div class="row__sub">Santé · niveau débutant · 4 min</div>
+            </div>
+            <span class="pill pill--soft pill--no-dot num">4 min</span>
+            <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- A.6.bis — Encyclopédie article -->
+    <div class="frame-wrap">
+      <span class="eyebrow">A.6.bis · Article ouvert <span style="color:var(--pt-ink)">— lecture longue</span></span>
+      <div class="frame" id="reglages-encyclopedie-article">
+        <div class="stbar"><span class="num">06:56</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <header class="ph">
+          <a class="backbtn" href="#reglages-encyclopedie-liste"><i data-lucide="chevron-left"></i> Retour</a>
+          <div class="ph__crumb"><a href="#reglages-encyclopedie-liste">Encyclopédie</a><i data-lucide="chevron-right"></i><b>ISSE</b></div>
+          <div class="eyebrow" style="margin-bottom:6px">Cycles · 5 min · intermédiaire</div>
+          <h1 class="ph__h1">Comprendre<br>l'ISSE</h1>
+        </header>
+
+        <div class="article-body">
+          <h3>Définition</h3>
+          <p>L'<b>ISSE</b> (Indicateur Synthétique de Sevrage par truie et par an) est la mesure clé de la productivité d'une truie. Il combine la fertilité, la prolificité et la viabilité des porcelets jusqu'au sevrage.</p>
+
+          <pre><b>ISSE = (NV moyens / portée) × portées par an × (1 − mortalité)</b></pre>
+
+          <h2>Lecture des valeurs</h2>
+          <ol>
+            <li>ISSE &lt; 9 : truie sous-performante, candidate à la réforme</li>
+            <li>ISSE 9 – 11 : moyenne ouest-africaine, marge à exploiter</li>
+            <li>ISSE 11 – 12 : bonne truie, à conserver</li>
+            <li>ISSE &gt; 12 : <b>excellente</b>, à utiliser comme noyau de sélection</li>
+          </ol>
+
+          <blockquote>« Une truie à ISSE 12,5 produit 25% de marge brute en plus qu'une truie à ISSE 10, à coût d'aliment équivalent. »</blockquote>
+
+          <h2>Calcul sur ton troupeau</h2>
+          <p>Sur les 4 dernières portées de <code>T-031</code>, tu as 47 NV cumulés et 31 sevrés. Avec 2,1 portées/an :</p>
+          <pre>ISSE T-031 = (47/4) × 2,1 × (31/47) ≈ <b>11,8</b></pre>
+
+          <h3>Comment l'améliorer</h3>
+          <p>3 leviers : (1) raccourcir l'intervalle sevrage-saillie, (2) baisser la mortalité allaitement sous 8%, (3) trier les truies sous ISSE 9 à la 5ᵉ portée.</p>
+
+          <div style="margin-top:18px;padding:12px;background:var(--pt-bg-app);border-radius:10px;display:flex;gap:10px;align-items:center">
+            <i data-lucide="bookmark" style="width:16px;height:16px;color:var(--pt-accent)"></i>
+            <span class="meta-line" style="flex:1;font-size:11.5px">Article #1 · 5 min de lecture · mis à jour 02/05</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- A.7 — Sync -->
+    <div class="frame-wrap">
+      <span class="eyebrow">A.7 · Synchronisation</span>
+      <div class="frame" id="reglages-sync">
+        <div class="stbar"><span class="num">06:58</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <header class="ph">
+          <a class="backbtn" href="#reglages-hub"><i data-lucide="chevron-left"></i> Retour</a>
+          <div class="ph__crumb"><a href="#reglages-hub">Réglages</a><i data-lucide="chevron-right"></i><b>Sync</b></div>
+          <div class="eyebrow" style="margin-bottom:6px">Configuration · Sync</div>
+          <h1 class="ph__h1">Synchro</h1>
+          <p class="ph__sub">État local et serveur · 12 actions en attente</p>
+        </header>
+
+        <div class="body body--snug">
+
+          <section>
+            <div class="sync-state warn">
+              <div class="sync-state__icon"><i data-lucide="cloud-off"></i></div>
+              <div>
+                <h2 class="sync-state__title">12 en attente</h2>
+                <div class="sync-state__sub">0 erreur · dernière sync il y a 2h08</div>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <h3 class="section-rule">À synchroniser</h3>
+            <div class="card" style="padding:0 12px">
+              <table class="dt">
+                <thead>
+                  <tr>
+                    <th>Date</th><th>Action</th><th>Table</th><th class="num-r">État</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>06:42</td><td>Pesée portée</td><td>portees</td><td class="num-r"><span class="pill pill--warning pill--no-dot">⏱</span></td></tr>
+                  <tr><td>06:21</td><td>MAJ T-031</td><td>truies</td><td class="num-r"><span class="pill pill--warning pill--no-dot">⏱</span></td></tr>
+                  <tr><td>05:58</td><td>Évènement santé</td><td>events</td><td class="num-r"><span class="pill pill--warning pill--no-dot">⏱</span></td></tr>
+                  <tr><td>04:30</td><td>Vaccin CR-12</td><td>events</td><td class="num-r"><span class="pill pill--warning pill--no-dot">⏱</span></td></tr>
+                  <tr><td>09/05</td><td>Saillie T-001</td><td>saillies</td><td class="num-r"><span class="pill pill--success pill--no-dot">+</span></td></tr>
+                  <tr><td>09/05</td><td>+ 8 autres…</td><td>—</td><td class="num-r">—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section>
+            <h3 class="section-rule">Actions globales</h3>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <button class="btn btn--primary"><i data-lucide="cloud-upload"></i> Synchroniser maintenant</button>
+              <button class="btn btn--secondary"><i data-lucide="trash-2"></i> Vider le cache local</button>
+            </div>
+          </section>
+
+          <section>
+            <div class="card card--bg">
+              <dl class="kv">
+                <dt>Cache local</dt><dd>14,2 Mo</dd>
+                <dt>Dernière sync OK</dt><dd>04:34 · 09/05</dd>
+                <dt>Prochaine auto</dt><dd>dans 8 min</dd>
+              </dl>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ============================== -->
+  <!-- B · PILOTAGE                    -->
+  <!-- ============================== -->
+  <h2 class="section-title" id="pilotage">B. Pilotage</h2>
+  <p class="sub-hint">7 écrans · Today · Performance × 4 · Alertes · Rapport</p>
+
+  <div class="frames">
+
+    <!-- B.1 — Today -->
+    <div class="frame-wrap">
+      <span class="eyebrow">B.1 · Aujourd'hui <span style="color:var(--pt-ink)">— hub central</span></span>
+      <div class="frame" id="today">
+        <div class="stbar"><span class="num">06:12</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <header class="ph">
+          <div class="ph__row">
+            <div>
+              <div class="eyebrow" style="margin-bottom:6px">Dimanche 10 mai 2026</div>
+              <h1 class="ph__h1">Bonjour<br>Yao</h1>
+            </div>
+            <button class="iconbtn iconbtn--marius" title="Marius"><span style="font-family:var(--pt-font-mono);font-weight:600">M</span></button>
+          </div>
+          <p class="ph__sub"><b>3 critiques</b> · 4 à traiter avant 10h · ferme PorcTrack Yamoussoukro</p>
+        </header>
+
+        <div class="body body--snug">
+
+          <!-- À traiter -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">À traiter ce matin</span><span class="pill pill--danger num">3 crit.</span></div>
+            <div class="today-priority">
+              <a class="priority-line crit" href="#alertes">
+                <div class="priority-line__icon"><i data-lucide="alert-triangle"></i></div>
+                <div class="priority-line__main">
+                  <div class="priority-line__title">T-018 · réforme zootechnique urgente</div>
+                  <div class="priority-line__sub">3 portées · ISSE 7,2 · MB ratée 22/04</div>
+                </div>
+                <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--pt-subtle)"></i>
+              </a>
+              <a class="priority-line crit" href="#">
+                <div class="priority-line__icon"><i data-lucide="package-x"></i></div>
+                <div class="priority-line__main">
+                  <div class="priority-line__title">Stock aliment lactation &lt; 2 j</div>
+                  <div class="priority-line__sub">Reste 240 kg · besoin 130 kg/j · Sipra</div>
+                </div>
+                <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--pt-subtle)"></i>
+              </a>
+              <a class="priority-line crit" href="#">
+                <div class="priority-line__icon"><i data-lucide="baby"></i></div>
+                <div class="priority-line__main">
+                  <div class="priority-line__title">R14 · portée orpheline T-031</div>
+                  <div class="priority-line__sub">CR-14 · 1,9 kg · à adopter ou compléter biberon</div>
+                </div>
+                <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--pt-subtle)"></i>
+              </a>
+              <a class="priority-line warm" href="#">
+                <div class="priority-line__icon"><i data-lucide="calendar-days"></i></div>
+                <div class="priority-line__main">
+                  <div class="priority-line__title">T-026 · mise-bas dans 2 jours</div>
+                  <div class="priority-line__sub">Préparer M-04 · désinfection programmée</div>
+                </div>
+                <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--pt-subtle)"></i>
+              </a>
+            </div>
+          </section>
+
+          <!-- Banner -->
+          <section>
+            <div class="banner">
+              <div>
+                <div class="eyebrow" style="margin-bottom:4px">Conseil</div>
+                <div class="banner__title">Active les rappels<br>mise-bas</div>
+              </div>
+              <div class="banner__sub">2 truies vont mettre bas cette semaine. Reçois une alerte J−3, J−1 et le jour J.</div>
+              <div class="banner__actions">
+                <button class="btn btn--primary"><i data-lucide="bell"></i> Activer</button>
+                <button class="btn btn--secondary">Plus tard</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Mon élevage -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Mon élevage</span></div>
+            <div class="kpis kpis--4">
+              <div class="stat"><div class="stat__label">Truies</div><div class="stat__val stat__val--md num">50</div><div class="stat__sub">28 plein.</div></div>
+              <div class="stat"><div class="stat__label">Verrats</div><div class="stat__val stat__val--md num">3</div><div class="stat__sub">actifs</div></div>
+              <div class="stat"><div class="stat__label">Porcelets</div><div class="stat__val stat__val--md num">92</div><div class="stat__sub">4 phases</div></div>
+              <div class="stat"><div class="stat__label">Bandes</div><div class="stat__val stat__val--md num">6</div><div class="stat__sub">actives</div></div>
+            </div>
+          </section>
+
+          <!-- Tournée du jour -->
+          <section>
+            <div class="card card--ink">
+              <div class="eyebrow" style="margin-bottom:6px">Tournée du matin</div>
+              <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:10px">
+                <div>
+                  <div style="font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:32px;letter-spacing:-0.01em;line-height:.95">12 points</div>
+                  <div class="meta-line" style="color:rgba(245,233,216,0.6);margin-top:4px">
+                    <span>biosécurité</span><span class="dot"></span>
+                    <span>alimentation</span><span class="dot"></span>
+                    <span>santé</span>
+                  </div>
+                </div>
+                <div style="font-family:var(--pt-font-mono);font-size:11px;color:var(--pt-accent-light);text-align:right;letter-spacing:.04em">~22 min<br>est. à pied</div>
+              </div>
+              <button class="btn btn--ink" style="background:var(--pt-accent);color:var(--pt-warm);width:100%">
+                <i data-lucide="play"></i> Démarrer la tournée
+              </button>
+            </div>
+          </section>
+
+          <!-- Le saviez-vous -->
+          <section>
+            <a class="card card-link" href="#reglages-encyclopedie-article">
+              <div class="card-link__icon"><i data-lucide="lightbulb"></i></div>
+              <div class="card-link__main">
+                <div class="card-link__title">Le saviez-vous ?</div>
+                <div class="card-link__sub">Une truie à ISSE 12,5 produit 25% de marge en plus qu'une truie à ISSE 10.</div>
+              </div>
+              <span class="card-link__chev"><i data-lucide="chevron-right"></i></span>
+            </a>
+          </section>
+
+        </div>
+
+        <nav class="botnav">
+          <a class="botnav__item" aria-current="true" href="#today"><i data-lucide="home"></i>Aujourd'hui<span class="botnav__badge">3</span></a>
+          <a class="botnav__item" href="elevage-mockup-v76.html"><i data-lucide="piggy-bank"></i>Élevage</a>
+          <a class="botnav__item" href="#"><i data-lucide="heart"></i>Repro</a>
+          <a class="botnav__item" href="#performance-vue"><i data-lucide="bar-chart-3"></i>Performance</a>
+          <a class="botnav__item" href="#reglages-hub"><i data-lucide="settings"></i>Réglages</a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- B.2 — Performance vue -->
+    <div class="frame-wrap">
+      <span class="eyebrow">B.2 · Performance · Vue</span>
+      <div class="frame" id="performance-vue">
+        <div class="stbar"><span class="num">07:02</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <header class="ph">
+          <div class="ph__row">
+            <div>
+              <div class="eyebrow" style="margin-bottom:6px">Pilotage · Mai 2026</div>
+              <h1 class="ph__h1">Performance</h1>
+            </div>
+            <button class="iconbtn"><i data-lucide="calendar"></i></button>
+          </div>
+          <p class="ph__sub">L'année en chiffres. Sans détour.</p>
+        </header>
+
+        <nav class="subtabs">
+          <div class="subtab" aria-current="true">Vue</div>
+          <div class="subtab">KPIs</div>
+          <div class="subtab">Finances</div>
+          <div class="subtab">Prévisions</div>
+        </nav>
+
+        <div class="body body--snug">
+
+          <!-- Score billboard -->
+          <section>
+            <div class="score-billboard">
+              <div class="score-letter">C</div>
+              <div class="score-meta">
+                <div class="score-num"><span class="num">64</span> / 100 · Bon</div>
+                <h2 class="score-label">Score global<br>du troupeau</h2>
+                <div class="score-pond">ISSE 50% · Taux MB 30%<br>NV 10% · Mortalité 10%<br>5 cycles</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ISSE -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">ISSE moyen</span></div>
+            <div class="card" style="display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center">
+              <div>
+                <div style="font-family:var(--pt-font-display);font-weight:900;font-size:60px;letter-spacing:-0.02em;line-height:.85;color:var(--pt-primary);font-variant-numeric:tabular-nums">11,4</div>
+                <div class="eyebrow" style="margin-top:4px">référence ≥ 12,0</div>
+              </div>
+              <div style="font-size:12.5px;color:var(--pt-muted);line-height:1.5">Marge de progression <b style="color:var(--pt-ink)">+0,6 pt</b> pour atteindre l'excellence ouest-africaine. Lever d'abord la mortalité allaitement.</div>
+            </div>
+          </section>
+
+          <!-- KPIs techniques -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Indicateurs techniques</span></div>
+            <div class="kpis kpis--2-cols">
+              <div class="stat"><div class="stat__label">Taux MB</div><div class="stat__val num">86<small>%</small></div><div class="stat__sub stat__sub--up">+2 vs avril</div></div>
+              <div class="stat"><div class="stat__label">NV / portée</div><div class="stat__val num">12,4</div><div class="stat__sub">42 portées</div></div>
+              <div class="stat"><div class="stat__label">Mortalité allait.</div><div class="stat__val num">8,2<small>%</small></div><div class="stat__sub stat__sub--down">cible &lt; 7%</div></div>
+              <div class="stat"><div class="stat__label">GMQ post-sev.</div><div class="stat__val num">412<small>g/j</small></div><div class="stat__sub">25 porcs</div></div>
+              <div class="stat"><div class="stat__label">IEM</div><div class="stat__val num">5,8</div><div class="stat__sub">int. mises-bas</div></div>
+              <div class="stat"><div class="stat__label">IC engrais.</div><div class="stat__val num">2,7</div><div class="stat__sub">kg / kg</div></div>
+            </div>
+          </section>
+
+          <!-- Finances mini -->
+          <section>
+            <a class="card card-link" href="#performance-finances">
+              <div class="card-link__icon"><i data-lucide="banknote"></i></div>
+              <div class="card-link__main">
+                <div class="card-link__title num">+575 000 FCFA</div>
+                <div class="card-link__sub">Marge nette mai · <b style="color:var(--pt-success)">+18%</b> vs avril</div>
+              </div>
+              <span class="card-link__chev"><i data-lucide="chevron-right"></i></span>
+            </a>
+            <button class="btn btn--secondary btn--block" style="margin-top:8px"><i data-lucide="file-text"></i> Exporter rapport PDF</button>
+          </section>
+
+          <!-- Top performances -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Top performances · 12 mois</span></div>
+            <div class="card" style="padding:0 16px">
+              <div class="row">
+                <span class="av av--md av--bande">B3</span>
+                <div class="row__main">
+                  <div class="row__title"><span>B-AUDIT-PS</span><span class="name">· T-032</span></div>
+                  <div class="row__sub">25 NV · GMQ 478 g · mort. 4%</div>
+                </div>
+                <span class="pill pill--success num">14,8</span>
+                <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+              </div>
+              <div class="row">
+                <span class="av av--md av--bande">B5</span>
+                <div class="row__main">
+                  <div class="row__title"><span>B-AUDIT-CR</span></div>
+                  <div class="row__sub">30 NV · IC 2,5 · J70+</div>
+                </div>
+                <span class="pill pill--success num">13,2</span>
+                <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+              </div>
+              <div class="row">
+                <span class="av av--md av--bande">B6</span>
+                <div class="row__main">
+                  <div class="row__title"><span>26-T1-01</span><span class="name">· T-001</span></div>
+                  <div class="row__sub">11 NV · sevrés J28</div>
+                </div>
+                <span class="pill pill--success num">12,1</span>
+                <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+        <nav class="botnav">
+          <a class="botnav__item" href="#today"><i data-lucide="home"></i>Aujourd'hui</a>
+          <a class="botnav__item" href="elevage-mockup-v76.html"><i data-lucide="piggy-bank"></i>Élevage</a>
+          <a class="botnav__item" href="#"><i data-lucide="heart"></i>Repro</a>
+          <a class="botnav__item" aria-current="true" href="#performance-vue"><i data-lucide="bar-chart-3"></i>Performance</a>
+          <a class="botnav__item" href="#reglages-hub"><i data-lucide="settings"></i>Réglages</a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- B.3 — Performance KPIs -->
+    <div class="frame-wrap">
+      <span class="eyebrow">B.3 · Performance · KPIs <span style="color:var(--pt-ink)">— mode avancé · DataTable</span></span>
+      <div class="frame" id="performance-kpis">
+        <div class="stbar"><span class="num">07:04</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <header class="ph">
+          <div class="ph__row">
+            <div>
+              <div class="eyebrow" style="margin-bottom:6px">Pilotage · Mai 2026</div>
+              <h1 class="ph__h1">Performance</h1>
+            </div>
+            <button class="iconbtn"><i data-lucide="download"></i></button>
+          </div>
+          <p class="ph__sub">DataTable · 6 bandes · trier &amp; exporter</p>
+        </header>
+
+        <nav class="subtabs">
+          <div class="subtab">Vue</div>
+          <div class="subtab" aria-current="true">KPIs</div>
+          <div class="subtab">Finances</div>
+          <div class="subtab">Prévisions</div>
+        </nav>
+
+        <div class="chips">
+          <button class="chip" aria-pressed="true">Toutes <span class="num">6</span></button>
+          <button class="chip">Maternité <span class="num">2</span></button>
+          <button class="chip">Sevrage <span class="num">1</span></button>
+          <button class="chip">Post-sev <span class="num">1</span></button>
+          <button class="chip">Croiss. <span class="num">2</span></button>
+        </div>
+
+        <div class="body body--snug">
+
+          <section>
+            <div class="sec__head">
+              <span class="eyebrow">Performance par bande</span>
+              <span class="pill pill--soft pill--no-dot"><i data-lucide="download" style="width:11px;height:11px"></i> CSV</span>
+            </div>
+            <div class="card card--bg" style="padding:6px 10px">
+              <table class="dt">
+                <thead>
+                  <tr>
+                    <th>Bande</th>
+                    <th class="num-r">ISSE</th>
+                    <th class="num-r">MB</th>
+                    <th class="num-r">NV</th>
+                    <th class="num-r">Mort.</th>
+                    <th class="num-r">Marge</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td><b>B-PS</b></td><td class="num-r" style="color:var(--pt-success)"><b>14,8</b></td><td class="num-r">98%</td><td class="num-r">25</td><td class="num-r">4%</td><td class="num-r">+212</td></tr>
+                  <tr><td><b>B-CR</b></td><td class="num-r"><b>13,2</b></td><td class="num-r">94%</td><td class="num-r">30</td><td class="num-r">6%</td><td class="num-r">+188</td></tr>
+                  <tr><td><b>26-T1</b></td><td class="num-r">12,1</td><td class="num-r">88%</td><td class="num-r">11</td><td class="num-r">9%</td><td class="num-r">+96</td></tr>
+                  <tr><td><b>26-T16</b></td><td class="num-r">11,2</td><td class="num-r">86%</td><td class="num-r">10</td><td class="num-r">9%</td><td class="num-r">+72</td></tr>
+                  <tr><td><b>Mai 26</b></td><td class="num-r">9,6</td><td class="num-r">78%</td><td class="num-r">5</td><td class="num-r"><span style="color:var(--pt-warning)">12%</span></td><td class="num-r">+18</td></tr>
+                  <tr><td><b>B-MB</b></td><td class="num-r" style="color:var(--pt-danger)">8,4</td><td class="num-r">82%</td><td class="num-r">11</td><td class="num-r"><span style="color:var(--pt-danger)">15%</span></td><td class="num-r">−5</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="meta-line" style="margin-top:8px"><span>Marge en kFCFA / cycle</span><span class="dot"></span><span>Tri par ISSE ↓</span></div>
+          </section>
+
+          <section>
+            <div class="marius">
+              <div class="marius__head">
+                <span class="marius__mark">M</span>
+                <span class="eyebrow" style="color:var(--pt-accent-light)">Lecture Marius · IA</span>
+              </div>
+              <ul>
+                <li>Bande <b>B-MB</b> · mortalité 15% — <em>contrôler ventilation M-01</em></li>
+                <li>Top 2 bandes (B-PS · B-CR) génèrent <b>54%</b> de la marge cycle</li>
+                <li>Trie les truies sous ISSE 9 à la 5ᵉ portée pour <b>+1,2 ISSE</b> moyen</li>
+              </ul>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- B.4 — Performance Finances -->
+    <div class="frame-wrap">
+      <span class="eyebrow">B.4 · Performance · Finances</span>
+      <div class="frame" id="performance-finances">
+        <div class="stbar"><span class="num">07:06</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <header class="ph">
+          <div class="ph__row">
+            <div>
+              <div class="eyebrow" style="margin-bottom:6px">Pilotage · Mai 2026</div>
+              <h1 class="ph__h1">Finances</h1>
+            </div>
+            <button class="iconbtn"><i data-lucide="calendar"></i></button>
+          </div>
+          <p class="ph__sub">Marge mensuelle FCFA · 12 mois roulants</p>
+        </header>
+
+        <nav class="subtabs">
+          <div class="subtab">Vue</div>
+          <div class="subtab">KPIs</div>
+          <div class="subtab" aria-current="true">Finances</div>
+          <div class="subtab">Prévisions</div>
+        </nav>
+
+        <div class="body body--snug">
+
+          <!-- Marge billboard -->
+          <section>
+            <div class="card" style="padding:18px">
+              <div class="eyebrow" style="margin-bottom:6px">Marge nette · mai 2026</div>
+              <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:14px">
+                <div style="font-family:var(--pt-font-display);font-weight:900;font-size:48px;letter-spacing:-0.01em;line-height:.9;font-variant-numeric:tabular-nums;color:var(--pt-ink)">+575<small style="font-family:var(--pt-font-mono);font-weight:600;font-size:14px;color:var(--pt-muted);margin-left:4px">k FCFA</small></div>
+                <div style="font-family:var(--pt-font-mono);font-weight:600;font-size:14px;color:var(--pt-success);display:flex;align-items:center;gap:4px"><i data-lucide="trending-up" style="width:14px;height:14px"></i>+18%</div>
+              </div>
+              <div class="meta-line" style="margin-top:8px">vs avril 487 kFCFA · vs mars 432 kFCFA</div>
+            </div>
+          </section>
+
+          <!-- Bar chart 12 mois -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Évolution · 12 mois</span></div>
+            <div class="card card--bg">
+              <svg class="barchart" viewBox="0 0 320 120" preserveAspectRatio="none">
+                <line x1="0" y1="100" x2="320" y2="100" stroke="rgba(26,26,26,0.08)"/>
+                <g>
+                  <rect x="6" y="68" width="18" height="32"/><text x="9" y="115">J</text>
+                  <rect x="32" y="62" width="18" height="38"/><text x="35" y="115">J</text>
+                  <rect x="58" y="55" width="18" height="45"/><text x="61" y="115">A</text>
+                  <rect x="84" y="58" width="18" height="42"/><text x="87" y="115">S</text>
+                  <rect x="110" y="50" width="18" height="50"/><text x="113" y="115">O</text>
+                  <rect x="136" y="46" width="18" height="54"/><text x="139" y="115">N</text>
+                  <rect x="162" y="38" width="18" height="62"/><text x="165" y="115">D</text>
+                  <rect x="188" y="42" width="18" height="58"/><text x="191" y="115">J</text>
+                  <rect x="214" y="34" width="18" height="66"/><text x="217" y="115">F</text>
+                  <rect x="240" y="40" width="18" height="60"/><text x="243" y="115">M</text>
+                  <rect x="266" y="32" width="18" height="68"/><text x="269" y="115">A</text>
+                  <rect class="now" x="292" y="22" width="18" height="78"/><text x="295" y="115" style="fill:var(--pt-accent)">M</text>
+                </g>
+              </svg>
+              <div class="meta-line" style="margin-top:6px"><span>min 215k</span><span class="dot"></span><span>max <b style="color:var(--pt-accent)">575k</b></span></div>
+            </div>
+          </section>
+
+          <!-- Détail KPIs -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Détail mai 2026</span></div>
+            <div class="kpis kpis--3">
+              <div class="stat"><div class="stat__label">Revenus</div><div class="stat__val stat__val--md num">1 845</div><div class="stat__sub">k FCFA</div></div>
+              <div class="stat"><div class="stat__label">Charges</div><div class="stat__val stat__val--md num">1 270</div><div class="stat__sub">k FCFA</div></div>
+              <div class="stat"><div class="stat__label">Marge</div><div class="stat__val stat__val--md num" style="color:var(--pt-success)">+575</div><div class="stat__sub">k FCFA</div></div>
+            </div>
+          </section>
+
+          <a class="btn btn--primary btn--block" href="#pilotage-rapport"><i data-lucide="file-text"></i> Rapport financier complet</a>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- B.5 — Performance Prévisions -->
+    <div class="frame-wrap">
+      <span class="eyebrow">B.5 · Performance · Prévisions</span>
+      <div class="frame" id="performance-previsions">
+        <div class="stbar"><span class="num">07:08</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <header class="ph">
+          <div class="ph__row">
+            <div>
+              <div class="eyebrow" style="margin-bottom:6px">Pilotage · 90 jours</div>
+              <h1 class="ph__h1">Prévisions</h1>
+            </div>
+          </div>
+          <p class="ph__sub">Mises-bas, porcelets attendus, sorties</p>
+        </header>
+
+        <nav class="subtabs">
+          <div class="subtab">Vue</div>
+          <div class="subtab">KPIs</div>
+          <div class="subtab">Finances</div>
+          <div class="subtab" aria-current="true">Prévisions</div>
+        </nav>
+
+        <div class="body body--snug">
+
+          <!-- EduCard -->
+          <section>
+            <div class="card card--bg" style="display:flex;gap:12px;align-items:flex-start">
+              <div style="width:36px;height:36px;border-radius:10px;background:var(--pt-primary);color:var(--pt-warm);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <i data-lucide="trending-up" style="width:18px;height:18px"></i>
+              </div>
+              <div>
+                <div class="eyebrow" style="margin-bottom:4px">Lecture prévisions</div>
+                <div style="font-size:12.5px;color:var(--pt-ink);line-height:1.5">À 90 jours, ton troupeau est <b>équilibré</b>. 4 mises-bas attendues, ~61 porcelets en flux entrant, aucune sortie programmée — pense à dégager M-04 d'ici 12/05.</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Mises-bas attendues -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Mises-bas · 90 j</span><span class="pill pill--soft num">4 truies</span></div>
+            <div class="card" style="padding:0 16px">
+              <div class="row">
+                <span class="av av--md av--truie">T26</span>
+                <div class="row__main">
+                  <div class="row__title"><span>T-026</span><span class="name">· Awoulaba</span></div>
+                  <div class="row__sub">J113 · M-04 · MB <b>12/05</b></div>
+                </div>
+                <span class="pill pill--warning">J−2</span>
+                <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+              </div>
+              <div class="row">
+                <span class="av av--md av--truie">T22</span>
+                <div class="row__main">
+                  <div class="row__title"><span>T-022</span></div>
+                  <div class="row__sub">J112 · attente M · MB <b>13/05</b></div>
+                </div>
+                <span class="pill pill--warning">J−3</span>
+                <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+              </div>
+              <div class="row">
+                <span class="av av--md av--truie">T05</span>
+                <div class="row__main">
+                  <div class="row__title"><span>T-005</span></div>
+                  <div class="row__sub">J108 · MB <b>17/05</b></div>
+                </div>
+                <span class="pill pill--soft">J−7</span>
+                <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+              </div>
+              <div class="row">
+                <span class="av av--md av--truie">T09</span>
+                <div class="row__main">
+                  <div class="row__title"><span>T-009</span></div>
+                  <div class="row__sub">J107 · MB <b>18/05</b></div>
+                </div>
+                <span class="pill pill--soft">J−8</span>
+                <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Total porcelets attendus -->
+          <section>
+            <div class="card" style="padding:18px">
+              <div class="eyebrow" style="margin-bottom:6px">Porcelets attendus · 90 j</div>
+              <div style="font-family:var(--pt-font-display);font-weight:900;font-size:60px;letter-spacing:-0.02em;line-height:.85;color:var(--pt-primary);font-variant-numeric:tabular-nums">~61</div>
+              <div class="meta-line" style="margin-top:8px"><span>Base ISSE 11,4 × 4 truies × 1,35 portée</span></div>
+            </div>
+          </section>
+
+          <!-- Sorties abattoir -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Sorties abattoir · 90 j</span></div>
+            <div class="card card--bg" style="text-align:center;padding:22px 16px">
+              <div class="eyebrow" style="margin-bottom:6px">Aucune fenêtre 0–90 j</div>
+              <div style="font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:22px;letter-spacing:-0.005em;line-height:1">Prochaine cohorte<br>fin août 2026</div>
+              <div class="meta-line" style="margin-top:10px;justify-content:center">Bande B-AUDIT-CR · ~110 jours</div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- B.6 — Alertes -->
+    <div class="frame-wrap">
+      <span class="eyebrow">B.6 · Alertes <span style="color:var(--pt-ink)">— hub priorité</span></span>
+      <div class="frame" id="alertes">
+        <div class="stbar"><span class="num">07:10</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <header class="ph">
+          <a class="backbtn" href="#today"><i data-lucide="chevron-left"></i> Retour</a>
+          <div class="ph__crumb"><a href="#today">Aujourd'hui</a><i data-lucide="chevron-right"></i><b>Alertes</b></div>
+          <div class="ph__row">
+            <div>
+              <div class="eyebrow" style="margin-bottom:6px">Pilotage · Alertes</div>
+              <h1 class="ph__h1">Alertes<br>actives</h1>
+            </div>
+          </div>
+          <p class="ph__sub"><b class="num">12 alertes</b> · <b style="color:var(--pt-danger)">3 critiques</b> · 4 hautes · 5 normales</p>
+        </header>
+
+        <div class="chips">
+          <button class="chip" aria-pressed="true">Toutes <span class="num">12</span></button>
+          <button class="chip">Critique <span class="num">3</span></button>
+          <button class="chip">Haute <span class="num">4</span></button>
+          <button class="chip">Stocks <span class="num">2</span></button>
+          <button class="chip">Repro <span class="num">5</span></button>
+          <button class="chip">Mortalité <span class="num">2</span></button>
+        </div>
+
+        <div class="body body--snug">
+
+          <section>
+            <div class="sec__head"><span class="eyebrow">Critique · 3</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div class="alert-card crit">
+                <div class="alert-card__head">
+                  <h3 class="alert-card__title">T-018 · réforme zootechnique</h3>
+                  <span class="pill pill--danger">Critique</span>
+                </div>
+                <div class="alert-card__rule">Règle <b>R-RF-02</b> · 3 portées sous ISSE 8 · MB ratée 22/04</div>
+                <div class="alert-card__foot">
+                  <span>09/05 · 18:42</span>
+                  <div class="alert-card__actions">
+                    <button class="btn btn--secondary">Ignorer</button>
+                    <button class="btn btn--primary">Voir</button>
+                  </div>
+                </div>
+              </div>
+              <div class="alert-card crit">
+                <div class="alert-card__head">
+                  <h3 class="alert-card__title">Stock aliment lactation &lt; 2 j</h3>
+                  <span class="pill pill--danger">Critique</span>
+                </div>
+                <div class="alert-card__rule">Règle <b>R-ST-01</b> · 240 kg restant · 130 kg/j consommé</div>
+                <div class="alert-card__foot">
+                  <span>10/05 · 06:08</span>
+                  <div class="alert-card__actions">
+                    <button class="btn btn--secondary">−24h</button>
+                    <button class="btn btn--primary">Commander</button>
+                  </div>
+                </div>
+              </div>
+              <div class="alert-card crit">
+                <div class="alert-card__head">
+                  <h3 class="alert-card__title">CR-14 · portée orpheline T-031</h3>
+                  <span class="pill pill--danger">Critique</span>
+                </div>
+                <div class="alert-card__rule">Règle <b>R14</b> · poids 1,9 kg · GMQ 180 g · &lt; seuil J5</div>
+                <div class="alert-card__foot">
+                  <span>10/05 · 06:12</span>
+                  <div class="alert-card__actions">
+                    <button class="btn btn--secondary">−24h</button>
+                    <button class="btn btn--primary">Voir</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <div class="sec__head"><span class="eyebrow">Haute · 4</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div class="alert-card high">
+                <div class="alert-card__head">
+                  <h3 class="alert-card__title">T-026 · mise-bas J−2</h3>
+                  <span class="pill pill--warning">Haute</span>
+                </div>
+                <div class="alert-card__rule">Règle <b>R-MB-01</b> · J113 gestation · M-04 à préparer</div>
+                <div class="alert-card__foot"><span>10/05 · 05:00</span><div class="alert-card__actions"><button class="btn btn--secondary">−24h</button><button class="btn btn--primary">Voir</button></div></div>
+              </div>
+              <div class="alert-card high">
+                <div class="alert-card__head">
+                  <h3 class="alert-card__title">T-005 · retour chaleur attendu</h3>
+                  <span class="pill pill--warning">Haute</span>
+                </div>
+                <div class="alert-card__rule">Règle <b>R-RC-01</b> · sevrage 06/05 · pic chaleur 10–12/05</div>
+                <div class="alert-card__foot"><span>09/05 · 22:00</span><div class="alert-card__actions"><button class="btn btn--secondary">−24h</button><button class="btn btn--primary">Voir</button></div></div>
+              </div>
+              <div class="alert-card high">
+                <div class="alert-card__head">
+                  <h3 class="alert-card__title">R10 · surdensité engraissement</h3>
+                  <span class="pill pill--warning">Haute</span>
+                </div>
+                <div class="alert-card__rule">Règle <b>R-LO-03</b> · CR-02 · 0,72 m²/porc &lt; 0,8 m² requis</div>
+                <div class="alert-card__foot"><span>09/05 · 14:30</span><div class="alert-card__actions"><button class="btn btn--secondary">−24h</button><button class="btn btn--primary">Voir</button></div></div>
+              </div>
+              <div class="alert-card high">
+                <div class="alert-card__head">
+                  <h3 class="alert-card__title">R5b · stock vermifuge bas</h3>
+                  <span class="pill pill--warning">Haute</span>
+                </div>
+                <div class="alert-card__rule">Règle <b>R-ST-02</b> · 14 doses · besoin 22 doses pour cycle</div>
+                <div class="alert-card__foot"><span>08/05 · 09:12</span><div class="alert-card__actions"><button class="btn btn--secondary">−24h</button><button class="btn btn--primary">Voir</button></div></div>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <div class="sec__head"><span class="eyebrow">Normale · 5</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div class="alert-card norm">
+                <div class="alert-card__head">
+                  <h3 class="alert-card__title">5 sevrages dans 7 jours</h3>
+                  <span class="pill pill--info">Normale</span>
+                </div>
+                <div class="alert-card__rule">Règle <b>R-CY-04</b> · planning J28 · 5 portées concernées</div>
+                <div class="alert-card__foot"><span>09/05 · 06:00</span><div class="alert-card__actions"><button class="btn btn--secondary">−24h</button><button class="btn btn--primary">Voir</button></div></div>
+              </div>
+              <div class="alert-card norm">
+                <div class="alert-card__head">
+                  <h3 class="alert-card__title">3 échos planifiées</h3>
+                  <span class="pill pill--info">Normale</span>
+                </div>
+                <div class="alert-card__rule">Règle <b>R-CY-02</b> · J28 saillies · T-007, T-019, T-024</div>
+                <div class="alert-card__foot"><span>09/05 · 06:00</span><div class="alert-card__actions"><button class="btn btn--secondary">−24h</button><button class="btn btn--primary">Voir</button></div></div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+        <div class="actions actions--2">
+          <button class="btn btn--secondary"><i data-lucide="bell-off"></i> Tout ignorer 24h</button>
+          <button class="btn btn--primary"><i data-lucide="check-check"></i> Tout traiter</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- B.7 — Rapport financier -->
+    <div class="frame-wrap">
+      <span class="eyebrow">B.7 · Rapport financier</span>
+      <div class="frame" id="pilotage-rapport">
+        <div class="stbar stbar--primary"><span class="num">07:14</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <header class="ph ph--primary">
+          <a class="backbtn" href="#performance-finances"><i data-lucide="chevron-left"></i> Retour</a>
+          <div class="ph__crumb"><a href="#performance-finances">Performance</a><i data-lucide="chevron-right"></i><a href="#performance-finances">Finances</a><i data-lucide="chevron-right"></i><b>Rapport</b></div>
+          <div class="ph__row">
+            <div>
+              <div class="eyebrow" style="color:var(--pt-accent-light);margin-bottom:6px">Pilotage · Rapport</div>
+              <h1 class="ph__h1">Mai<br>2026</h1>
+            </div>
+            <button class="iconbtn"><i data-lucide="file-text"></i></button>
+          </div>
+          <p class="ph__sub">Synthèse financière · 12 mois roulants</p>
+        </header>
+
+        <div class="chips" style="padding-top:14px">
+          <button class="chip" aria-pressed="true">Mai 2026</button>
+          <button class="chip">Q2 2026</button>
+          <button class="chip">12 mois</button>
+          <button class="chip">Annuel</button>
+        </div>
+
+        <div class="body body--snug">
+
+          <section>
+            <div class="sec__head"><span class="eyebrow">Synthèse mai 2026</span></div>
+            <div class="kpis kpis--3">
+              <div class="stat"><div class="stat__label">Marge brute</div><div class="stat__val stat__val--md num">+712</div><div class="stat__sub">k FCFA</div></div>
+              <div class="stat"><div class="stat__label">Marge nette</div><div class="stat__val stat__val--md num" style="color:var(--pt-success)">+575</div><div class="stat__sub">+18%</div></div>
+              <div class="stat"><div class="stat__label">Taux marge</div><div class="stat__val stat__val--md num">31<small>%</small></div><div class="stat__sub">vs 27% avr</div></div>
+            </div>
+          </section>
+
+          <section>
+            <div class="sec__head"><span class="eyebrow">Détail par catégorie</span></div>
+            <div class="card" style="padding:14px 16px">
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-family:var(--pt-font-mono);font-size:11.5px;font-weight:600;margin-bottom:4px"><span>Aliment</span><span class="num">990 k · 78%</span></div>
+                  <div style="height:6px;border-radius:99px;background:var(--pt-bg-app);overflow:hidden"><div style="width:78%;height:100%;background:var(--pt-primary)"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-family:var(--pt-font-mono);font-size:11.5px;font-weight:600;margin-bottom:4px"><span>Vétérinaire</span><span class="num">152 k · 12%</span></div>
+                  <div style="height:6px;border-radius:99px;background:var(--pt-bg-app);overflow:hidden"><div style="width:12%;height:100%;background:var(--pt-accent)"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-family:var(--pt-font-mono);font-size:11.5px;font-weight:600;margin-bottom:4px"><span>Énergie · eau</span><span class="num">75 k · 6%</span></div>
+                  <div style="height:6px;border-radius:99px;background:var(--pt-bg-app);overflow:hidden"><div style="width:6%;height:100%;background:var(--pt-info)"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-family:var(--pt-font-mono);font-size:11.5px;font-weight:600;margin-bottom:4px"><span>Autres</span><span class="num">53 k · 4%</span></div>
+                  <div style="height:6px;border-radius:99px;background:var(--pt-bg-app);overflow:hidden"><div style="width:4%;height:100%;background:var(--pt-muted)"></div></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <div class="sec__head"><span class="eyebrow">Mois par mois · 12 derniers</span></div>
+            <div class="card card--bg" style="padding:6px 10px">
+              <table class="dt">
+                <thead><tr><th>Mois</th><th class="num-r">Rev.</th><th class="num-r">Charg.</th><th class="num-r">Marge</th><th class="num-r">%</th></tr></thead>
+                <tbody>
+                  <tr style="background:rgba(184,112,61,0.06)"><td><b>Mai 26</b></td><td class="num-r">1 845</td><td class="num-r">1 270</td><td class="num-r" style="color:var(--pt-success)"><b>+575</b></td><td class="num-r">31%</td></tr>
+                  <tr><td>Avril</td><td class="num-r">1 690</td><td class="num-r">1 203</td><td class="num-r">+487</td><td class="num-r">29%</td></tr>
+                  <tr><td>Mars</td><td class="num-r">1 580</td><td class="num-r">1 148</td><td class="num-r">+432</td><td class="num-r">27%</td></tr>
+                  <tr><td>Février</td><td class="num-r">1 410</td><td class="num-r">1 098</td><td class="num-r">+312</td><td class="num-r">22%</td></tr>
+                  <tr><td>Janvier</td><td class="num-r">1 320</td><td class="num-r">1 042</td><td class="num-r">+278</td><td class="num-r">21%</td></tr>
+                  <tr><td>Déc 25</td><td class="num-r">1 405</td><td class="num-r">1 064</td><td class="num-r">+341</td><td class="num-r">24%</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+        </div>
+
+        <div class="actions actions--2">
+          <button class="btn btn--secondary"><i data-lucide="share-2"></i> Partager</button>
+          <button class="btn btn--primary"><i data-lucide="download"></i> Export PDF</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ============================== -->
+  <!-- BONUS                           -->
+  <!-- ============================== -->
+  <h2 class="section-title" id="bonus">Bonus</h2>
+  <p class="sub-hint">Aïssa multi-fermes · alerte détail · mode avancé</p>
+
+  <div class="frames">
+
+    <!-- BONUS 1 — Aïssa coopérative multi-fermes -->
+    <div class="frame-wrap">
+      <span class="eyebrow">Bonus 1 · Aïssa OWNER multi-fermes <span style="color:var(--pt-ink)">— sélecteur ferme + KPIs consolidés</span></span>
+      <div class="frame">
+        <div class="stbar"><span class="num">07:18</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <header class="ph">
+          <div class="ph__row">
+            <div>
+              <div class="eyebrow" style="margin-bottom:6px">Coopérative Bouaké · Owner</div>
+              <h1 class="ph__h1">Réglages</h1>
+            </div>
+            <button class="iconbtn"><i data-lucide="search"></i></button>
+          </div>
+          <p class="ph__sub">4 fermes supervisées · vue consolidée</p>
+        </header>
+
+        <div class="chips" style="padding-bottom:8px">
+          <button class="chip" aria-pressed="true">Toutes <span class="num">4</span></button>
+          <button class="chip">Yamoussoukro</button>
+          <button class="chip">Bouaké N</button>
+          <button class="chip">Bouaké S</button>
+          <button class="chip">Daloa</button>
+        </div>
+
+        <div class="body body--snug">
+
+          <!-- Profil Aïssa -->
+          <div class="card" style="display:flex;gap:14px;align-items:center">
+            <span class="av av--lg av--owner">AD</span>
+            <div style="flex:1">
+              <div style="font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:22px;letter-spacing:-0.005em;line-height:1">Aïssa Diabaté</div>
+              <div class="meta-line" style="margin-top:4px"><span>aissa.d@coop-bouake.test</span></div>
+              <div style="margin-top:6px"><span class="pill pill--success">Owner · 4 fermes</span></div>
+            </div>
+          </div>
+
+          <!-- Switch ferme -->
+          <section>
+            <h3 class="section-rule">Mes fermes · 4</h3>
+            <div class="card" style="padding:0 16px">
+              <div class="row">
+                <span class="av av--md av--worker">YK</span>
+                <div class="row__main">
+                  <div class="row__title"><span>FERM-DA7B5A</span><span class="name">· Yamoussoukro</span></div>
+                  <div class="row__sub">50 truies · 92 porcelets · ISSE 11,4</div>
+                </div>
+                <span class="pill pill--success">Active</span>
+                <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+              </div>
+              <div class="row">
+                <span class="av av--md av--bande">BN</span>
+                <div class="row__main">
+                  <div class="row__title"><span>FERM-A3F8C1</span><span class="name">· Bouaké N.</span></div>
+                  <div class="row__sub">28 truies · 54 porcelets · ISSE 10,2</div>
+                </div>
+                <span class="pill pill--warning">Attention</span>
+                <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+              </div>
+              <div class="row">
+                <span class="av av--md av--bande">BS</span>
+                <div class="row__main">
+                  <div class="row__title"><span>FERM-9E2D11</span><span class="name">· Bouaké S.</span></div>
+                  <div class="row__sub">35 truies · 71 porcelets · ISSE 12,1</div>
+                </div>
+                <span class="pill pill--success">Active</span>
+                <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+              </div>
+              <div class="row">
+                <span class="av av--md av--loge">DL</span>
+                <div class="row__main">
+                  <div class="row__title"><span>FERM-7B4509</span><span class="name">· Daloa</span></div>
+                  <div class="row__sub">42 truies · 88 porcelets · ISSE 11,8</div>
+                </div>
+                <span class="pill pill--success">Active</span>
+                <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+              </div>
+            </div>
+          </section>
+
+          <!-- KPIs consolidés -->
+          <section>
+            <h3 class="section-rule">Consolidé · 4 fermes</h3>
+            <div class="kpis kpis--2-cols">
+              <div class="stat"><div class="stat__label">Truies cumul.</div><div class="stat__val num">155</div><div class="stat__sub">sur 4 sites</div></div>
+              <div class="stat"><div class="stat__label">Porcelets</div><div class="stat__val num">305</div><div class="stat__sub">12 phases</div></div>
+              <div class="stat"><div class="stat__label">ISSE moyen pondéré</div><div class="stat__val num">11,4</div><div class="stat__sub">cible &gt; 12</div></div>
+              <div class="stat"><div class="stat__label">Marge mai</div><div class="stat__val num">+1,8</div><div class="stat__sub">M FCFA</div></div>
+            </div>
+          </section>
+
+          <section>
+            <div class="marius">
+              <div class="marius__head">
+                <span class="marius__mark">M</span>
+                <span class="eyebrow" style="color:var(--pt-accent-light)">Lecture coopérative</span>
+              </div>
+              <ul>
+                <li><b>Bouaké N.</b> · ISSE 10,2 — visite terrain prioritaire</li>
+                <li><b>Bouaké S.</b> · ISSE 12,1 — utiliser comme ferme école pour formation</li>
+                <li>Coopérative produit <b>305 porcelets</b> · capacité abattoir Korhogo OK</li>
+              </ul>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- BONUS 2 — Alerte détail -->
+    <div class="frame-wrap">
+      <span class="eyebrow">Bonus 2 · Alerte critique · fiche</span>
+      <div class="frame">
+        <div class="stbar stbar--primary"><span class="num">07:20</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <header class="ph ph--primary" style="background:var(--pt-danger)">
+          <a class="backbtn" href="#alertes" style="color:rgba(245,233,216,0.7)"><i data-lucide="chevron-left"></i> Retour</a>
+          <div class="ph__crumb"><a href="#alertes">Alertes</a><i data-lucide="chevron-right"></i><b>R-RF-02</b></div>
+          <div class="ph__row">
+            <div>
+              <div class="eyebrow" style="color:rgba(245,233,216,0.85);margin-bottom:6px">Critique · réforme zoo.</div>
+              <h1 class="ph__h1">T-018</h1>
+            </div>
+            <button class="iconbtn" style="border-color:rgba(245,233,216,0.3);color:var(--pt-warm)"><i data-lucide="more-horizontal"></i></button>
+          </div>
+          <p class="ph__sub">Règle R-RF-02 déclenchée · 3 portées sous ISSE 8</p>
+        </header>
+
+        <div class="body body--snug">
+
+          <section>
+            <div class="sec__head"><span class="eyebrow">Règle déclenchée</span></div>
+            <div class="card">
+              <dl class="kv">
+                <dt>Code</dt><dd>R-RF-02</dd>
+                <dt>Catégorie</dt><dd>Réforme zoo.</dd>
+                <dt>Sévérité</dt><dd><span class="pill pill--danger">Critique</span></dd>
+                <dt>Déclenchée</dt><dd>09/05 · 18:42</dd>
+              </dl>
+            </div>
+          </section>
+
+          <section>
+            <div class="sec__head"><span class="eyebrow">Valeurs observées</span></div>
+            <div class="kpis kpis--2-cols">
+              <div class="stat"><div class="stat__label">ISSE moyen 3 dern.</div><div class="stat__val stat__val--md num" style="color:var(--pt-danger)">7,2</div><div class="stat__sub">seuil 9,0</div></div>
+              <div class="stat"><div class="stat__label">MB ratée</div><div class="stat__val stat__val--md num">22/04</div><div class="stat__sub">retour chal. 0</div></div>
+              <div class="stat"><div class="stat__label">Parité</div><div class="stat__val stat__val--md num">8</div><div class="stat__sub">au-delà optim.</div></div>
+              <div class="stat"><div class="stat__label">Coût aliment 12m</div><div class="stat__val stat__val--md num">−84</div><div class="stat__sub">k FCFA déficit</div></div>
+            </div>
+          </section>
+
+          <section>
+            <div class="marius">
+              <div class="marius__head">
+                <span class="marius__mark">M</span>
+                <span class="eyebrow" style="color:var(--pt-accent-light)">Recommandation Marius</span>
+              </div>
+              <ul>
+                <li><b>Réforme à valider</b> · économie aliment ~28 k FCFA/mois</li>
+                <li>T-018 occupe G-04 — libérer pour T-024 retour saillie</li>
+                <li>Vente abattoir Korhogo · ~120 k FCFA estimés</li>
+                <li>Sortie possible <b>11/05</b> · transport Bouaké programmé</li>
+              </ul>
+            </div>
+          </section>
+
+          <section>
+            <div class="sec__head"><span class="eyebrow">Animal concerné</span></div>
+            <a class="card" href="elevage-mockup-v76.html#fiche-truie" style="display:flex;gap:12px;align-items:center;text-decoration:none;color:inherit">
+              <span class="av av--lg av--truie">T18</span>
+              <div style="flex:1">
+                <div style="font-family:var(--pt-font-mono);font-weight:600;font-size:14px">T-018</div>
+                <div style="font-size:12px;color:var(--pt-muted);margin-top:2px">Vide · parité 8 · loge G-04 · 264 kg</div>
+              </div>
+              <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--pt-subtle)"></i>
+            </a>
+          </section>
+
+        </div>
+
+        <div class="actions">
+          <button class="btn btn--primary"><i data-lucide="check"></i> Marquer traitée</button>
+          <button class="btn btn--secondary" title="Repousser 24h"><i data-lucide="clock"></i></button>
+          <button class="btn btn--danger-ghost" title="Voir l'animal"><i data-lucide="external-link"></i></button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ============================== -->
+  <!-- NOTES                           -->
+  <!-- ============================== -->
+  <h2 class="section-title" id="notes">Notes design</h2>
+  <p class="sub-hint">3 décisions tranchées · 2 hésitations · cohérence cross-rubriques</p>
+
+  <h3 class="section-rule">3 décisions design fortes</h3>
+  <div class="decisions" style="margin-bottom:32px">
+    <div class="decision decision--ink">
+      <div class="num-tag">01 · Today</div>
+      <h4>Liste d'actions priorisées, pas hero metric</h4>
+      <p>Yao à 6h12 ne veut pas voir « 17 truies — Tu fais tout ». Il veut savoir <b>quoi faire avant 10h</b>. Le hero est devenu une liste « À traiter ce matin » avec 3 critiques visuellement clouées par un border-left rouge et un icon-pill `crit`. Le compteur d'élevage descend en sous-section, pas en vedette.</p>
+    </div>
+    <div class="decision">
+      <div class="num-tag">02 · Performance</div>
+      <h4>Score billboard A/B/C/D + lettre énorme</h4>
+      <p>Une lettre Big Shoulders 140px en `--pt-primary` dit ce qu'un graphe 12 mois ne dit pas en 1 seconde : « tu es à C, pas à B ». Le détail (pondérations, sub-num) reste à droite, dense, lisible. Le graphe d'évolution est repoussé sous-tab Finances pour le mode analytique. C'est <b>le drapeau du troupeau</b>, pas un KPI parmi d'autres.</p>
+    </div>
+    <div class="decision">
+      <div class="num-tag">03 · Réglages racine</div>
+      <h4>Cards-link icône+titre+sub+count, pas list 1-niveau</h4>
+      <p>Le legacy était un menu plat. Pour rester dans le DNA Élevage (lignes 3-niveaux), j'ai uniformisé en cards-link avec icône Lucide en bg-app + count à droite (`42` ressources, `2` membres). Ça bourdonne moins en 2026 que des illustrations grand format, et ça réutilise EXACTEMENT le même atome qu'à l'écran Today (« Le saviez-vous ? ») et Hub Ressources.</p>
+    </div>
+  </div>
+
+  <h3 class="section-rule">2 zones d'hésitation</h3>
+  <div class="decisions" style="margin-bottom:32px">
+    <div class="decision">
+      <div class="num-tag">Hésité · Alertes</div>
+      <h4>Timeline chrono ou groupes par sévérité ?</h4>
+      <p>Tenté timeline (chrono inversé) → noyait les critiques sous le bruit normal. Choisi <b>groupes par sévérité</b> (Critique → Haute → Normale) avec border-left coloré. Risque : si Yao a 50 alertes Normale, il scroll à perte. Mitigé par chips de filtre en haut + bouton « Tout ignorer 24h » sticky.</p>
+    </div>
+    <div class="decision">
+      <div class="num-tag">Hésité · Edit ferme</div>
+      <h4>Bottom sheet ou page plein écran ?</h4>
+      <p>Bottom sheet → moderne mobile mais gauche-droite tactile inégal sur Android low-end. Page plein écran → ChevronLeft + Retour cohérent avec partout ailleurs (cohérence > modernité). Choisi page plein écran. La sticky bottom action bar (Annuler / Enregistrer) compense la friction de navigation. Risque écarté : un bottom sheet chic sur Chrome 4G qui rame.</p>
+    </div>
+  </div>
+
+  <h3 class="section-rule">Cohérence cross-rubriques</h3>
+  <div class="decisions">
+    <div class="decision">
+      <div class="num-tag">Tokens</div>
+      <h4>Aucune dérive</h4>
+      <p>13 tokens `--pt-*` + 5 paires avatars + `--pt-loge-bg`/`--pt-loge-fg` (introduits dans Élevage v76, repris ici). Aucune nouvelle couleur.</p>
+    </div>
+    <div class="decision">
+      <div class="num-tag">Patterns</div>
+      <h4>4 patterns clés réutilisés</h4>
+      <p>PageHeader (+ variant primary), cards-link, kpis-grid (2/3/4 cols), cycle-rail 5 nœuds. Le rail réapparaît dans Protocoles (5 phases d'élevage) — même atome, contexte métier différent.</p>
+    </div>
+    <div class="decision decision--ink">
+      <div class="num-tag">Effort dev</div>
+      <h4>+9 j sur l'estimation Élevage</h4>
+      <p>Réglages 5 j (formulaires, toggles, sync state) · Performance + Today 4 j (score billboard, bar chart 12 mois, alertes priorisées). Total cumulé Élevage + Réglages + Pilotage : <b>~23 j / 1 dev</b>, hors backend.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+  document.querySelectorAll('.subtabs').forEach(group=>{
+    group.querySelectorAll('.subtab').forEach(t=>{
+      t.addEventListener('click',()=>{
+        group.querySelectorAll('[aria-current]').forEach(o=>o.setAttribute('aria-current','false'));
+        t.setAttribute('aria-current','true');
+      });
+    });
+  });
+  document.querySelectorAll('.chips').forEach(group=>{
+    group.querySelectorAll('.chip').forEach(c=>{
+      c.addEventListener('click',()=>{
+        group.querySelectorAll('.chip').forEach(o=>o.setAttribute('aria-pressed','false'));
+        c.setAttribute('aria-pressed','true');
+      });
+    });
+  });
+  document.querySelectorAll('.toggle').forEach(t=>{
+    t.addEventListener('click',()=>{
+      const v = t.getAttribute('aria-checked')==='true';
+      t.setAttribute('aria-checked', v?'false':'true');
+    });
+  });
+</script>
+</body>
+</html>

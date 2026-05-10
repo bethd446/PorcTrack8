@@ -13,7 +13,7 @@
  */
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, Play, ChevronRight } from 'lucide-react';
+import { AlertTriangle, CalendarDays, Info, ClipboardList, Play, ChevronRight } from 'lucide-react';
 import { useFarm, useMeta } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../components/ds/PageHeader';
@@ -289,138 +289,36 @@ export const TodayV70: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div
-            role="list"
-            aria-label="Registre des alertes à traiter"
-            style={{
-              borderTop: '1px solid var(--pt-line)',
-              borderBottom: '1px solid var(--pt-line)',
-            }}
-          >
-            {alerts.map((alert, idx) => {
-              const handleActivate = () => navigate(alert.to);
-              const isDanger = alert.variant === 'danger';
-              const seq = String(idx + 1).padStart(2, '0');
-              // Espacement vertical varié selon la priorité : danger plus dense,
-              // warning standard, info plus aéré (anti-grille uniforme).
-              const padTop =
-                alert.variant === 'danger' ? 10 : alert.variant === 'warning' ? 12 : 14;
-              const padBottom = padTop;
+          <div role="list" aria-label="Registre des alertes à traiter">
+            {alerts.map((alert) => {
+              const variantClass =
+                alert.variant === 'danger' ? 'crit' : alert.variant === 'warning' ? 'warm' : 'info';
+              const Icon =
+                alert.variant === 'danger'
+                  ? AlertTriangle
+                  : alert.variant === 'warning'
+                    ? CalendarDays
+                    : Info;
               return (
-                <div
+                <button
                   key={alert.id}
+                  type="button"
                   role="listitem"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: 14,
-                    padding: `${padTop}px 0 ${padBottom}px`,
-                    borderBottom:
-                      idx < alerts.length - 1 ? '1px solid var(--pt-line)' : 'none',
-                  }}
+                  className={`priority-line ${variantClass}`}
+                  onClick={() => navigate(alert.to)}
+                  aria-label={`${alert.title} — ${alert.tag} — ouvrir le détail`}
                 >
-                  {/* Numérotation manuscrite-style à gauche */}
-                  <div
-                    aria-hidden
-                    style={{
-                      fontFamily: "'Big Shoulders Display', sans-serif",
-                      fontSize: 18,
-                      fontWeight: 700,
-                      lineHeight: 1,
-                      color: 'var(--pt-muted)',
-                      letterSpacing: '-0.02em',
-                      minWidth: 26,
-                      paddingTop: 2,
-                      opacity: 0.7,
-                    }}
-                  >
-                    {seq}.
-                  </div>
-
-                  {/* Corps cliquable (titre + méta) */}
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={handleActivate}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleActivate();
-                      }
-                    }}
-                    aria-label={`${alert.title} — ouvrir le détail`}
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 2,
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'baseline',
-                        gap: 8,
-                        flexWrap: 'wrap',
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontFamily: "'Big Shoulders Display', sans-serif",
-                          fontSize: 15,
-                          fontWeight: 700,
-                          color: 'var(--pt-ink)',
-                          letterSpacing: '0.005em',
-                          lineHeight: 1.2,
-                        }}
-                      >
-                        {alert.title}
-                      </span>
-                      <span
-                        style={{
-                          fontFamily: 'InstrumentSans, system-ui, sans-serif',
-                          fontSize: 10,
-                          fontWeight: 600,
-                          letterSpacing: '0.08em',
-                          textTransform: 'uppercase',
-                          color: isDanger ? 'var(--pt-danger)' : 'var(--pt-muted)',
-                        }}
-                      >
-                        {isDanger ? '• ' : ''}
-                        {alert.tag}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: 'InstrumentSans, system-ui, sans-serif',
-                        fontSize: 12,
-                        color: 'var(--pt-muted)',
-                        lineHeight: 1.35,
-                      }}
-                    >
-                      {alert.meta}
-                    </div>
-                  </div>
-
-                  {/* V75-o-a (F-6) : 1 seule zone tappable. Le chevron à droite
-                      n'est plus un bouton dupliqué mais un indicateur visuel
-                      non interactif. L'acquittement passera en sprint séparé
-                      via long-press ou menu contextuel. */}
-                  <div
-                    aria-hidden
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      paddingTop: 2,
-                      flexShrink: 0,
-                      color: 'var(--pt-muted)',
-                    }}
-                  >
-                    <ChevronRight size={16} strokeWidth={1.8} />
-                  </div>
-                </div>
+                  <span className="priority-line__icon" aria-hidden>
+                    <Icon size={15} strokeWidth={1.75} />
+                  </span>
+                  <span className="priority-line__main">
+                    <span className="priority-line__title">{alert.title}</span>
+                    <span className="priority-line__sub">
+                      {alert.tag} · {alert.meta}
+                    </span>
+                  </span>
+                  <ChevronRight className="priority-line__chev" aria-hidden />
+                </button>
               );
             })}
           </div>

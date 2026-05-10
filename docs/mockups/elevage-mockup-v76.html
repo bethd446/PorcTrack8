@@ -1,0 +1,2488 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PorcTrack 8 — Élevage v76</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  :root{
+    --pt-primary:#2D4A1F;
+    --pt-primary-deep:#1f3414;
+    --pt-primary-light:#4a7a2f;
+    --pt-warm:#F5E9D8;
+    --pt-warm-deep:#E8D5B5;
+    --pt-accent:#B8703D;
+    --pt-accent-light:#D89968;
+    --pt-bg:#FAF7F0;
+    --pt-bg-app:#F1ECE0;
+    --pt-ink:#1a1a1a;
+    --pt-muted:#6b6357;
+    --pt-subtle:#a39888;
+    --pt-success:#4a7a2f;
+    --pt-warning:#c08a3d;
+    --pt-danger:#a4453d;
+    --pt-info:#4a6e8a;
+    --pt-line:rgba(26,26,26,0.08);
+    --pt-line-strong:rgba(26,26,26,0.16);
+
+    --pt-truie-bg:#F4D4D4; --pt-truie-fg:#8B4744;
+    --pt-verrat-bg:#C8D6E5; --pt-verrat-fg:#3B5266;
+    --pt-porcelet-bg:#F5E9D8; --pt-porcelet-fg:#8B6E3D;
+    --pt-bande-bg:#D4DFC8; --pt-bande-fg:#3D5C2C;
+    --pt-loge-bg:#E8D5B5; --pt-loge-fg:#6b4f2c;
+
+    --pt-font-display:'Big Shoulders Display',sans-serif;
+    --pt-font-body:'Instrument Sans',sans-serif;
+    --pt-font-mono:'JetBrains Mono',monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--pt-bg-app);
+    color:var(--pt-ink);
+    font-family:var(--pt-font-body);
+    font-size:14px;line-height:1.4;
+    -webkit-font-smoothing:antialiased;
+    font-feature-settings:"ss01","cv01";
+  }
+  .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+  .eyebrow{
+    font-family:var(--pt-font-mono);
+    font-size:11px;font-weight:600;
+    letter-spacing:.14em;text-transform:uppercase;
+    color:var(--pt-subtle);
+  }
+  .eyebrow--ink{color:var(--pt-ink)}
+  .eyebrow--cream{color:var(--pt-warm)}
+  .eyebrow--accent{color:var(--pt-accent)}
+  h1.display,h2.display{
+    font-family:var(--pt-font-display);
+    font-weight:900;text-transform:uppercase;
+    letter-spacing:-0.01em;line-height:.92;margin:0;
+  }
+  h1.display{font-size:38px}
+  h2.display{font-size:26px}
+  h3.section{
+    font-family:var(--pt-font-mono);
+    font-size:11px;font-weight:600;
+    letter-spacing:.14em;text-transform:uppercase;
+    color:var(--pt-subtle);
+    margin:0 0 12px 0;
+    display:flex;align-items:center;gap:10px;
+  }
+  h3.section::after{
+    content:"";flex:1;height:1px;background:var(--pt-line);
+  }
+  /* ───── Site shell (utility) ───── */
+  .shell{
+    max-width:1240px;margin:0 auto;padding:32px 24px 80px;
+  }
+  .top-nav{
+    position:sticky;top:0;z-index:50;
+    background:var(--pt-ink);color:var(--pt-warm);
+    border-bottom:1px solid rgba(245,233,216,0.08);
+  }
+  .top-nav__inner{
+    max-width:1240px;margin:0 auto;
+    padding:14px 24px;
+    display:flex;align-items:center;gap:24px;flex-wrap:wrap;
+  }
+  .top-nav__brand{
+    display:flex;align-items:center;gap:10px;
+    font-family:var(--pt-font-display);
+    font-weight:900;text-transform:uppercase;
+    font-size:20px;letter-spacing:-0.01em;
+  }
+  .top-nav__brand-mark{
+    width:28px;height:28px;border-radius:6px;
+    background:var(--pt-accent);color:var(--pt-warm);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--pt-font-mono);font-weight:600;font-size:12px;
+  }
+  .top-nav__divider{
+    height:18px;width:1px;background:rgba(245,233,216,0.18);
+  }
+  .top-nav__meta{
+    font-family:var(--pt-font-mono);font-size:11px;
+    text-transform:uppercase;letter-spacing:.14em;
+    color:var(--pt-subtle);
+  }
+  .top-nav__links{
+    display:flex;gap:4px;flex-wrap:wrap;margin-left:auto;
+  }
+  .top-nav__link{
+    font-family:var(--pt-font-mono);font-size:11px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.14em;
+    color:var(--pt-warm);text-decoration:none;
+    padding:8px 10px;border-radius:6px;
+    border:1px solid transparent;
+  }
+  .top-nav__link:hover{border-color:rgba(245,233,216,0.18);background:rgba(245,233,216,0.04)}
+  .top-nav__link .num{color:var(--pt-subtle);margin-left:6px}
+
+  .doc-header{
+    padding:56px 0 28px;
+    border-bottom:1px solid var(--pt-line);
+    margin-bottom:40px;
+  }
+  .doc-header .eyebrow{margin-bottom:14px;display:flex;gap:10px;align-items:center}
+  .doc-header h1{font-size:64px}
+  .doc-header p{
+    margin:18px 0 0;color:var(--pt-muted);max-width:64ch;font-size:15px;
+  }
+
+  /* ───── Phone frame ───── */
+  .frames{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(390px,1fr));
+    gap:48px 32px;
+  }
+  .frames--single{grid-template-columns:390px;justify-content:start}
+  .frame{
+    width:390px;
+    border-radius:36px;
+    background:var(--pt-bg);
+    border:1px solid var(--pt-line-strong);
+    overflow:hidden;
+    position:relative;
+    box-shadow:0 1px 0 rgba(26,26,26,0.04);
+    display:flex;flex-direction:column;
+  }
+  .frame__caption{
+    grid-column:1/-1;
+    display:flex;align-items:baseline;gap:12px;
+    margin-bottom:-12px;padding-top:8px;
+  }
+  .frame-wrap{display:flex;flex-direction:column;gap:14px}
+  .frame-wrap > .eyebrow{display:flex;gap:12px;align-items:center}
+  .frame-wrap > .eyebrow::after{content:"";flex:1;height:1px;background:var(--pt-line)}
+  .frame-wrap__title{
+    font-family:var(--pt-font-display);
+    font-weight:900;text-transform:uppercase;
+    font-size:20px;letter-spacing:-0.01em;color:var(--pt-ink);
+  }
+
+  /* status bar */
+  .stbar{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 22px 4px;
+    font-family:var(--pt-font-mono);font-size:12px;font-weight:600;
+    color:var(--pt-ink);
+  }
+  .stbar__icons{display:flex;gap:6px;align-items:center}
+  .stbar__icons svg{width:14px;height:14px;stroke:var(--pt-ink)}
+
+  /* page header inside frame */
+  .ph{
+    padding:14px 20px 12px;
+  }
+  .ph__crumb{
+    display:flex;align-items:center;gap:6px;
+    font-family:var(--pt-font-mono);font-size:10px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.14em;
+    color:var(--pt-subtle);margin-bottom:10px;
+  }
+  .ph__crumb a{color:var(--pt-subtle);text-decoration:none}
+  .ph__crumb svg{width:10px;height:10px;color:var(--pt-line-strong)}
+  .ph__crumb b{color:var(--pt-ink);font-weight:600}
+  .ph__row{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+  }
+  .ph__eyebrow{margin-bottom:6px}
+  .ph__h1{
+    font-family:var(--pt-font-display);font-weight:900;
+    text-transform:uppercase;letter-spacing:-0.01em;line-height:.92;
+    font-size:38px;
+  }
+  .ph__sub{
+    margin-top:8px;color:var(--pt-muted);font-size:13px;line-height:1.45;
+  }
+  .ph__sub b{color:var(--pt-ink);font-weight:600}
+  .iconbtn{
+    width:36px;height:36px;border-radius:10px;
+    border:1px solid var(--pt-line-strong);
+    background:transparent;display:flex;align-items:center;justify-content:center;
+    color:var(--pt-ink);cursor:pointer;
+  }
+  .iconbtn svg{width:16px;height:16px}
+
+  /* sub tabs (page top tabs) */
+  .subtabs{
+    display:flex;gap:0;
+    border-bottom:1px solid var(--pt-line);
+    padding:0 12px;overflow-x:auto;scrollbar-width:none;
+  }
+  .subtabs::-webkit-scrollbar{display:none}
+  .subtab{
+    flex:0 0 auto;
+    padding:14px 12px;
+    font-family:var(--pt-font-mono);font-size:11px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.14em;
+    color:var(--pt-subtle);border-bottom:2px solid transparent;
+    margin-bottom:-1px;cursor:pointer;display:flex;gap:8px;align-items:baseline;
+  }
+  .subtab .num{color:inherit;font-weight:600}
+  .subtab[aria-current="true"]{
+    color:var(--pt-ink);border-bottom-color:var(--pt-primary);
+  }
+
+  /* Filters chips */
+  .chips{
+    display:flex;gap:6px;padding:12px 20px 4px;overflow-x:auto;scrollbar-width:none;
+  }
+  .chips::-webkit-scrollbar{display:none}
+  .chip{
+    flex:0 0 auto;padding:6px 12px;border-radius:999px;
+    border:1px solid var(--pt-line-strong);
+    font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.12em;color:var(--pt-muted);
+    background:transparent;cursor:pointer;display:flex;gap:6px;align-items:center;
+  }
+  .chip .num{color:var(--pt-subtle)}
+  .chip[aria-pressed="true"]{
+    background:var(--pt-ink);border-color:var(--pt-ink);color:var(--pt-warm);
+  }
+  .chip[aria-pressed="true"] .num{color:var(--pt-warm-deep)}
+
+  /* meta strip */
+  .metastrip{
+    padding:8px 20px 10px;
+    display:flex;justify-content:space-between;align-items:center;
+    font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.14em;color:var(--pt-subtle);
+    border-bottom:1px solid var(--pt-line);
+  }
+  .metastrip .sortbtn{
+    display:flex;align-items:center;gap:6px;color:var(--pt-ink);
+    background:transparent;border:none;font:inherit;letter-spacing:inherit;
+    text-transform:inherit;cursor:pointer;
+  }
+  .metastrip .sortbtn svg{width:12px;height:12px}
+
+  /* List rows */
+  .list{display:flex;flex-direction:column}
+  .row{
+    display:grid;grid-template-columns:auto 1fr auto auto;
+    gap:12px;align-items:center;
+    padding:12px 20px;
+    border-bottom:1px solid var(--pt-line);
+    text-decoration:none;color:inherit;
+  }
+  .row__main{min-width:0}
+  .row__title{
+    display:flex;align-items:center;gap:8px;
+    font-family:var(--pt-font-mono);font-weight:600;font-size:13px;
+    color:var(--pt-ink);
+  }
+  .row__title .name{font-family:var(--pt-font-body);font-weight:600;color:var(--pt-muted)}
+  .row__sub{
+    margin-top:3px;font-size:12px;color:var(--pt-muted);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+  }
+  .row__sub b{color:var(--pt-ink);font-weight:600}
+  .row__chev{color:var(--pt-subtle);display:flex}
+  .row__chev svg{width:16px;height:16px}
+
+  /* Avatar */
+  .av{
+    border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--pt-font-mono);font-weight:600;
+    flex-shrink:0;
+    border:1px solid rgba(26,26,26,0.06);
+  }
+  .av--sm{width:24px;height:24px;font-size:9px;border-radius:6px}
+  .av--md{width:36px;height:36px;font-size:11px;border-radius:8px}
+  .av--lg{width:48px;height:48px;font-size:13px}
+  .av--xl{width:96px;height:96px;font-size:22px;border-radius:18px}
+  .av--truie{background:var(--pt-truie-bg);color:var(--pt-truie-fg)}
+  .av--verrat{background:var(--pt-verrat-bg);color:var(--pt-verrat-fg)}
+  .av--porcelet{background:var(--pt-porcelet-bg);color:var(--pt-porcelet-fg)}
+  .av--bande{background:var(--pt-bande-bg);color:var(--pt-bande-fg)}
+  .av--loge{background:var(--pt-loge-bg);color:var(--pt-loge-fg)}
+
+  /* Pills */
+  .pill{
+    display:inline-flex;align-items:center;gap:5px;
+    padding:3px 8px;border-radius:999px;
+    font-family:var(--pt-font-mono);font-size:10px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.12em;
+    border:1px solid transparent;white-space:nowrap;
+  }
+  .pill::before{
+    content:"";width:5px;height:5px;border-radius:999px;background:currentColor;
+  }
+  .pill--success{background:rgba(74,122,47,.12);color:var(--pt-success);border-color:rgba(74,122,47,.22)}
+  .pill--warm{background:rgba(184,112,61,.14);color:var(--pt-accent);border-color:rgba(184,112,61,.24)}
+  .pill--warning{background:rgba(192,138,61,.14);color:var(--pt-warning);border-color:rgba(192,138,61,.24)}
+  .pill--danger{background:rgba(164,69,61,.12);color:var(--pt-danger);border-color:rgba(164,69,61,.24)}
+  .pill--info{background:rgba(74,110,138,.12);color:var(--pt-info);border-color:rgba(74,110,138,.22)}
+  .pill--soft{background:rgba(26,26,26,.06);color:var(--pt-muted);border-color:var(--pt-line-strong)}
+  .pill--ghost{background:transparent;color:var(--pt-muted);border-color:var(--pt-line-strong)}
+  .pill--no-dot::before{display:none}
+
+  /* Card */
+  .card{
+    background:var(--pt-warm);
+    border:1px solid var(--pt-line);
+    border-radius:14px;
+    padding:14px 16px;
+  }
+  .card--bg{background:var(--pt-bg)}
+  .card--ink{background:var(--pt-ink);color:var(--pt-warm);border-color:var(--pt-ink)}
+  .card--ink .eyebrow{color:var(--pt-subtle)}
+  .card--ink .stat__val{color:var(--pt-warm)}
+
+  /* KPI Stack */
+  .kpis{
+    display:grid;grid-template-columns:1fr 1fr;
+    border:1px solid var(--pt-line);border-radius:14px;
+    background:var(--pt-bg);overflow:hidden;
+  }
+  .kpis .stat{
+    padding:14px 16px;border-right:1px solid var(--pt-line);border-bottom:1px solid var(--pt-line);
+  }
+  .kpis .stat:nth-child(2n){border-right:none}
+  .kpis .stat:nth-last-child(-n+2){border-bottom:none}
+  .stat__label{
+    font-family:var(--pt-font-mono);font-size:10px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.14em;color:var(--pt-subtle);
+  }
+  .stat__val{
+    margin-top:6px;
+    font-family:var(--pt-font-display);font-weight:900;
+    font-size:32px;line-height:.95;letter-spacing:-0.01em;
+    color:var(--pt-ink);
+    font-variant-numeric:tabular-nums;
+  }
+  .stat__val small{
+    font-family:var(--pt-font-mono);font-size:11px;font-weight:600;
+    margin-left:4px;color:var(--pt-muted);letter-spacing:.06em;
+  }
+  .stat__sub{
+    margin-top:4px;font-size:11.5px;color:var(--pt-muted);
+    font-variant-numeric:tabular-nums;
+  }
+
+  /* Bottom nav */
+  .botnav{
+    position:sticky;bottom:0;
+    background:var(--pt-bg);
+    border-top:1px solid var(--pt-line);
+    padding:8px 0 14px;
+    display:grid;grid-template-columns:repeat(5,1fr);
+  }
+  .botnav__item{
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    padding:6px 0;color:var(--pt-subtle);
+    font-family:var(--pt-font-mono);font-size:9.5px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.12em;
+    text-decoration:none;
+  }
+  .botnav__item svg{width:20px;height:20px;stroke-width:1.6}
+  .botnav__item[aria-current="true"]{color:var(--pt-primary)}
+  .botnav__item[aria-current="true"] svg{stroke-width:2}
+
+  /* FAB */
+  .fab{
+    position:absolute;right:18px;bottom:84px;
+    background:var(--pt-primary);color:var(--pt-warm);
+    border:none;border-radius:14px;padding:14px 18px;
+    font-family:var(--pt-font-mono);font-size:11px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.14em;
+    display:flex;align-items:center;gap:8px;
+    cursor:pointer;
+    box-shadow:0 8px 0 -4px rgba(45,74,31,0.12);
+  }
+  .fab svg{width:14px;height:14px}
+
+  /* Detail header — primary background */
+  .ph--primary{
+    background:var(--pt-primary);color:var(--pt-warm);
+    padding:14px 20px 22px;
+  }
+  .ph--primary .ph__crumb{color:rgba(245,233,216,0.5)}
+  .ph--primary .ph__crumb b{color:var(--pt-warm)}
+  .ph--primary .ph__crumb svg{color:rgba(245,233,216,0.4)}
+  .ph--primary .ph__sub{color:rgba(245,233,216,0.7)}
+  .ph--primary .ph__sub b{color:var(--pt-warm)}
+  .ph--primary .iconbtn{color:var(--pt-warm);border-color:rgba(245,233,216,0.2)}
+
+  .id-strip{
+    display:flex;align-items:center;gap:14px;margin-top:14px;
+  }
+  .id-strip .av--xl{
+    box-shadow:0 0 0 4px rgba(245,233,216,0.08);
+  }
+  .id-strip__meta{
+    display:flex;flex-direction:column;gap:6px;
+    font-family:var(--pt-font-mono);font-size:11px;
+    color:rgba(245,233,216,0.7);
+  }
+  .id-strip__meta b{color:var(--pt-warm)}
+  .id-strip__row{display:flex;gap:10px;flex-wrap:wrap}
+
+  /* Tabs (detail page) */
+  .tabs{
+    display:flex;gap:0;
+    background:var(--pt-bg);
+    border-bottom:1px solid var(--pt-line);
+    padding:0 12px;overflow-x:auto;scrollbar-width:none;
+    position:sticky;top:0;z-index:5;
+  }
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{
+    flex:0 0 auto;padding:12px 12px;
+    font-family:var(--pt-font-mono);font-size:11px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.14em;color:var(--pt-subtle);
+    border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;
+  }
+  .tab[aria-current="true"]{color:var(--pt-ink);border-bottom-color:var(--pt-primary)}
+
+  /* Body container */
+  .body{padding:18px 20px 22px;display:flex;flex-direction:column;gap:22px}
+  .body--snug{padding:14px 20px 22px;gap:18px}
+
+  /* Sections inside detail */
+  .sec__head{
+    display:flex;align-items:center;gap:10px;
+    margin-bottom:10px;
+  }
+  .sec__head .eyebrow{flex:0 0 auto}
+  .sec__head::after{content:"";flex:1;height:1px;background:var(--pt-line)}
+  .sec__head .pill{flex:0 0 auto}
+
+  /* KV list */
+  .kv{
+    display:grid;grid-template-columns:1fr auto;gap:8px 14px;
+    font-size:13px;
+  }
+  .kv dt{
+    font-family:var(--pt-font-mono);font-size:11px;
+    text-transform:uppercase;letter-spacing:.12em;color:var(--pt-subtle);font-weight:600;
+  }
+  .kv dd{
+    margin:0;text-align:right;color:var(--pt-ink);font-weight:500;
+    font-variant-numeric:tabular-nums;
+    font-family:var(--pt-font-mono);font-size:12px;
+  }
+  .kv dd em{font-style:normal;color:var(--pt-muted);font-weight:400}
+
+  /* Cycle timeline */
+  .cycle{
+    background:var(--pt-warm);border:1px solid var(--pt-line);
+    border-radius:14px;padding:16px;
+  }
+  .cycle__rail{
+    position:relative;height:36px;margin:14px 0 8px;
+  }
+  .cycle__line{
+    position:absolute;left:0;right:0;top:18px;height:2px;background:var(--pt-line-strong);
+  }
+  .cycle__line-done{
+    position:absolute;left:0;top:18px;height:2px;background:var(--pt-primary);
+  }
+  .cycle__node{
+    position:absolute;top:6px;width:24px;height:24px;border-radius:8px;
+    transform:translateX(-50%);
+    background:var(--pt-bg);border:2px solid var(--pt-line-strong);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--pt-font-mono);font-weight:600;font-size:9px;color:var(--pt-muted);
+  }
+  .cycle__node.done{background:var(--pt-primary);border-color:var(--pt-primary);color:var(--pt-warm)}
+  .cycle__node.now{background:var(--pt-accent);border-color:var(--pt-accent);color:var(--pt-warm);
+    box-shadow:0 0 0 4px rgba(184,112,61,0.18)}
+  .cycle__labels{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:4px;
+    font-family:var(--pt-font-mono);font-size:9.5px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.1em;color:var(--pt-subtle);
+    text-align:center;
+  }
+  .cycle__labels b{display:block;color:var(--pt-ink);font-size:11px;letter-spacing:0;text-transform:none;font-family:var(--pt-font-body);font-weight:600;margin-top:3px}
+
+  /* Lineage */
+  .lineage{
+    display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:center;
+  }
+  .lineage__cell{
+    border:1px solid var(--pt-line);border-radius:10px;padding:8px;
+    background:var(--pt-bg);text-align:center;font-size:11px;
+  }
+  .lineage__cell .av{margin:0 auto 6px}
+  .lineage__cell .label{
+    font-family:var(--pt-font-mono);font-size:9.5px;
+    text-transform:uppercase;letter-spacing:.12em;color:var(--pt-subtle);
+  }
+  .lineage__cell .id{font-family:var(--pt-font-mono);font-weight:600;font-size:12px;color:var(--pt-ink)}
+  .lineage__cell.center{background:var(--pt-warm);border-color:var(--pt-line-strong)}
+  .lineage__connector{
+    height:1px;background:var(--pt-line-strong);
+  }
+
+  /* Activity timeline */
+  .activity{
+    display:flex;flex-direction:column;
+  }
+  .activity__row{
+    display:grid;grid-template-columns:auto 1fr auto;gap:12px;
+    padding:10px 0;border-bottom:1px dashed var(--pt-line);
+    align-items:flex-start;
+  }
+  .activity__row:last-child{border-bottom:none}
+  .activity__date{
+    font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;
+    color:var(--pt-subtle);letter-spacing:.06em;
+    min-width:50px;
+  }
+  .activity__icon{
+    width:26px;height:26px;border-radius:8px;
+    background:var(--pt-bg);border:1px solid var(--pt-line);
+    display:flex;align-items:center;justify-content:center;color:var(--pt-muted);
+  }
+  .activity__icon svg{width:13px;height:13px}
+  .activity__icon.ev{background:var(--pt-primary);border-color:var(--pt-primary);color:var(--pt-warm)}
+  .activity__body{font-size:12.5px;color:var(--pt-ink);line-height:1.4}
+  .activity__body em{font-style:normal;color:var(--pt-muted);font-family:var(--pt-font-mono);font-size:11px}
+
+  /* Marius read */
+  .marius{
+    background:var(--pt-ink);color:var(--pt-warm);
+    border-radius:14px;padding:16px;
+  }
+  .marius__head{
+    display:flex;align-items:center;gap:10px;margin-bottom:10px;
+  }
+  .marius__head .eyebrow{color:var(--pt-accent-light)}
+  .marius__mark{
+    width:24px;height:24px;border-radius:6px;background:var(--pt-accent);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--pt-font-mono);font-weight:600;font-size:10px;color:var(--pt-warm);
+  }
+  .marius ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .marius li{
+    font-size:12.5px;line-height:1.5;color:var(--pt-warm);
+    padding-left:18px;position:relative;
+  }
+  .marius li::before{
+    content:"";position:absolute;left:0;top:7px;width:8px;height:1px;background:var(--pt-accent);
+  }
+  .marius li b{color:var(--pt-warm);font-weight:600}
+  .marius li em{font-style:normal;color:rgba(245,233,216,0.6);font-family:var(--pt-font-mono);font-size:11px;letter-spacing:.04em}
+
+  /* Footer actions */
+  .actions{
+    display:grid;grid-template-columns:1fr auto auto;gap:6px;
+    padding:12px 16px;border-top:1px solid var(--pt-line);
+    background:var(--pt-bg);
+    position:sticky;bottom:0;
+  }
+  .btn{
+    border:none;font-family:var(--pt-font-mono);font-weight:600;
+    text-transform:uppercase;letter-spacing:.14em;font-size:11px;
+    padding:12px 14px;border-radius:10px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .btn svg{width:13px;height:13px}
+  .btn--primary{background:var(--pt-primary);color:var(--pt-warm)}
+  .btn--secondary{background:transparent;color:var(--pt-ink);border:1px solid var(--pt-line-strong)}
+  .btn--danger-ghost{background:transparent;color:var(--pt-danger);border:1px solid rgba(164,69,61,.3)}
+  .btn--ink{background:var(--pt-ink);color:var(--pt-warm)}
+
+  /* Group header (porcelets bandes collapsible) */
+  .group{
+    border-bottom:1px solid var(--pt-line);
+  }
+  .group__head{
+    display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;
+    align-items:center;
+    padding:12px 20px;background:var(--pt-bg-app);
+    cursor:pointer;
+  }
+  .group__title{
+    font-family:var(--pt-font-mono);font-weight:600;font-size:12px;color:var(--pt-ink);
+    letter-spacing:.04em;
+  }
+  .group__title small{font-family:var(--pt-font-body);font-weight:400;color:var(--pt-muted);margin-left:6px;letter-spacing:0}
+  .group__count{
+    font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.14em;color:var(--pt-subtle);
+  }
+  .group__chev svg{width:14px;height:14px;color:var(--pt-subtle)}
+
+  /* Loges grid */
+  .loges-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;
+    padding:14px 20px;
+  }
+  .loge-card{
+    background:var(--pt-warm);border:1px solid var(--pt-line);
+    border-radius:12px;padding:12px;cursor:pointer;
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .loge-card__head{
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .loge-card__code{
+    font-family:var(--pt-font-mono);font-weight:600;font-size:13px;color:var(--pt-ink);
+  }
+  .loge-card__type{
+    font-family:var(--pt-font-mono);font-size:9.5px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.12em;color:var(--pt-subtle);
+  }
+  .loge-card__bar{
+    height:6px;border-radius:99px;background:var(--pt-bg-app);overflow:hidden;
+  }
+  .loge-card__fill{
+    height:100%;background:var(--pt-primary);
+  }
+  .loge-card__meta{
+    display:flex;justify-content:space-between;
+    font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;color:var(--pt-muted);
+  }
+  .loge-card__meta b{color:var(--pt-ink)}
+  .loge-card.full .loge-card__fill{background:var(--pt-danger)}
+  .loge-card.empty{background:var(--pt-bg);}
+  .loge-card.empty .loge-card__fill{background:var(--pt-line-strong)}
+
+  /* Mini chart */
+  .miniplot{
+    width:100%;height:100px;margin:8px 0;display:block;
+  }
+  .miniplot polyline{fill:none;stroke:var(--pt-primary);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .miniplot .area{fill:rgba(45,74,31,0.10);stroke:none}
+  .miniplot .axis{stroke:var(--pt-line);stroke-dasharray:2 4}
+  .miniplot .pt{fill:var(--pt-primary)}
+  .miniplot .pt-now{fill:var(--pt-accent)}
+  .miniplot text{font-family:var(--pt-font-mono);font-size:9px;fill:var(--pt-subtle)}
+
+  /* Data table */
+  .dt{
+    width:100%;border-collapse:collapse;
+    font-family:var(--pt-font-mono);font-size:11px;
+  }
+  .dt thead th{
+    text-align:left;padding:8px 6px;
+    font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;
+    color:var(--pt-subtle);border-bottom:1px solid var(--pt-line-strong);
+  }
+  .dt tbody td{
+    padding:10px 6px;border-bottom:1px dashed var(--pt-line);
+    color:var(--pt-ink);font-weight:500;
+    font-variant-numeric:tabular-nums;
+  }
+  .dt tbody tr:last-child td{border-bottom:none}
+  .dt .num-r{text-align:right}
+
+  /* Empty state */
+  .empty{
+    padding:30px 20px;display:flex;flex-direction:column;align-items:center;
+    text-align:center;gap:14px;
+  }
+  .empty__title{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:24px;letter-spacing:-0.01em}
+  .empty__copy{color:var(--pt-muted);font-size:13px;max-width:30ch;line-height:1.5}
+  .empty__rule{
+    width:60%;height:1px;background:var(--pt-line-strong);margin:6px auto;
+  }
+
+  /* journal note */
+  .note{
+    background:var(--pt-bg);border:1px solid var(--pt-line);
+    border-left:3px solid var(--pt-accent);
+    padding:10px 12px;border-radius:0 10px 10px 0;
+    font-size:12.5px;color:var(--pt-ink);line-height:1.5;
+  }
+  .note__date{
+    font-family:var(--pt-font-mono);font-size:10px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.12em;color:var(--pt-subtle);
+    margin-bottom:4px;
+  }
+
+  /* WEAVE ─ ondulé separator */
+  .weave{
+    display:block;width:100%;height:6px;color:var(--pt-line-strong);
+  }
+
+  /* design-system showcase */
+  .system-block{
+    background:var(--pt-bg);border:1px solid var(--pt-line);
+    border-radius:18px;padding:24px;margin-bottom:24px;
+  }
+  .system-block h3{margin-top:0}
+  .swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+  .swatch{
+    border:1px solid var(--pt-line);border-radius:10px;overflow:hidden;background:var(--pt-bg);
+  }
+  .swatch__chip{height:70px}
+  .swatch__meta{padding:8px 10px;font-family:var(--pt-font-mono);font-size:11px}
+  .swatch__name{font-weight:600;color:var(--pt-ink)}
+  .swatch__hex{color:var(--pt-muted);font-size:10.5px;letter-spacing:.04em}
+
+  .typescale{display:flex;flex-direction:column;gap:12px}
+  .typescale__row{
+    display:grid;grid-template-columns:130px 1fr;gap:18px;align-items:baseline;
+    border-bottom:1px dashed var(--pt-line);padding-bottom:10px;
+  }
+  .typescale__row:last-child{border-bottom:none}
+  .typescale__label{
+    font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.12em;color:var(--pt-subtle);
+  }
+
+  .pill-grid,.av-grid{display:flex;flex-wrap:wrap;gap:10px}
+  .av-grid{align-items:flex-end}
+
+  /* Decisions block */
+  .decisions{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;
+  }
+  .decision{
+    border:1px solid var(--pt-line);background:var(--pt-bg);
+    border-radius:14px;padding:18px;
+  }
+  .decision h4{
+    font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;
+    font-size:18px;letter-spacing:-0.01em;margin:8px 0 6px;
+  }
+  .decision p{margin:0 0 0;color:var(--pt-muted);font-size:13px;line-height:1.5}
+  .decision .num-tag{
+    font-family:var(--pt-font-mono);font-size:10px;font-weight:600;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--pt-accent);
+  }
+  .decision--ink{background:var(--pt-ink);color:var(--pt-warm);border-color:var(--pt-ink)}
+  .decision--ink p{color:rgba(245,233,216,0.7)}
+  .decision--ink .num-tag{color:var(--pt-accent-light)}
+
+  /* small util */
+  .sub-hint{
+    font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.12em;color:var(--pt-subtle);
+  }
+  .stack{display:flex;flex-direction:column;gap:14px}
+  .row-flex{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .meta-line{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    font-family:var(--pt-font-mono);font-size:11px;color:var(--pt-muted);font-weight:500;
+  }
+  .meta-line .dot{width:3px;height:3px;border-radius:99px;background:var(--pt-line-strong)}
+
+  @media (max-width:640px){
+    .frames{grid-template-columns:1fr;justify-content:center}
+    .frame{width:100%;max-width:390px}
+    .doc-header h1{font-size:42px}
+    .top-nav__links{gap:0}
+  }
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="top-nav__inner">
+    <div class="top-nav__brand">
+      <span class="top-nav__brand-mark">P8</span>
+      PorcTrack&nbsp;8
+    </div>
+    <div class="top-nav__divider"></div>
+    <div class="top-nav__meta">Élevage · v76 · mockup</div>
+    <div class="top-nav__links">
+      <a class="top-nav__link" href="#listes">Listes <span class="num">5</span></a>
+      <a class="top-nav__link" href="#fiches">Fiches <span class="num">5</span></a>
+      <a class="top-nav__link" href="#system">System</a>
+      <a class="top-nav__link" href="#notes">Notes design</a>
+    </div>
+  </div>
+</nav>
+
+<div class="shell">
+
+  <header class="doc-header">
+    <div class="eyebrow">Mockup interne · Yamoussoukro · 06h12</div>
+    <h1 class="display">Élevage —<br>cahier&nbsp;de&nbsp;troupeau</h1>
+    <p>Refonte de la rubrique Élevage de PorcTrack 8 pour Yao, naisseur-engraisseur de 50 truies. 10 écrans : 5 listes (Truies, Verrats, Porcelets, Bandes, Loges) + 5 fiches détail. DNA "Terrain Vivant" : vert forêt, ambre cuit, ivoire, Big Shoulders + Instrument Sans + JetBrains Mono. Données réelles du compte audit. Pas de glassmorphism, pas d'emoji, pas de copy SaaS. Densité métier assumée.</p>
+  </header>
+
+  <!-- ============================================== -->
+  <!-- A. LISTES                                       -->
+  <!-- ============================================== -->
+  <h2 class="display" id="listes" style="font-size:34px;margin-bottom:6px">A. Listes — /troupeau</h2>
+  <p class="sub-hint" style="margin:0 0 28px">5 sous-onglets · BottomNav 5 tabs · FAB Ajouter</p>
+
+  <div class="frames">
+
+    <!-- ===== A1 · TRUIES ===== -->
+    <div class="frame-wrap">
+      <span class="eyebrow">A1 · Liste Truies <span style="color:var(--pt-ink)">— 50 animaux</span></span>
+      <div class="frame" id="liste-truies">
+        <div class="stbar">
+          <span class="num">06:12</span>
+          <div class="stbar__icons">
+            <i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i>
+          </div>
+        </div>
+        <header class="ph">
+          <div class="ph__row">
+            <div>
+              <div class="ph__eyebrow eyebrow">Élevage · 50 animaux</div>
+              <h1 class="ph__h1">Troupeau</h1>
+            </div>
+            <button class="iconbtn" aria-label="Recherche"><i data-lucide="search"></i></button>
+          </div>
+          <p class="ph__sub"><b class="num">28 pleines</b> · <b class="num">11 maternité</b> · <span class="num">6 vides</span> · <span class="num">5 à sortir</span></p>
+        </header>
+
+        <nav class="subtabs" role="tablist">
+          <div class="subtab" aria-current="false">Loges <span class="num">12</span></div>
+          <div class="subtab" aria-current="true">Truies <span class="num">50</span></div>
+          <div class="subtab" aria-current="false">Verrats <span class="num">3</span></div>
+          <div class="subtab" aria-current="false">Bandes <span class="num">6</span></div>
+          <div class="subtab" aria-current="false">Porcelets <span class="num">92</span></div>
+        </nav>
+
+        <div class="chips">
+          <button class="chip" aria-pressed="true">Toutes <span class="num">50</span></button>
+          <button class="chip">Pleines <span class="num">28</span></button>
+          <button class="chip">Maternité <span class="num">11</span></button>
+          <button class="chip">Vides <span class="num">6</span></button>
+          <button class="chip">À sortir <span class="num">5</span></button>
+        </div>
+
+        <div class="metastrip">
+          <span>Tri · MB prévue ↑</span>
+          <button class="sortbtn">Filtrer <i data-lucide="sliders-horizontal"></i></button>
+        </div>
+
+        <div class="list">
+          <a class="row" href="#fiche-truie">
+            <span class="av av--md av--truie">T26</span>
+            <div class="row__main">
+              <div class="row__title"><span>T-026</span><span class="name">· Awoulaba</span></div>
+              <div class="row__sub"><b>Pleine</b> · J113 gestation · MB <b>12/05</b> · loge G-04</div>
+            </div>
+            <span class="pill pill--success">Pleine</span>
+            <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+          </a>
+          <a class="row" href="#fiche-truie">
+            <span class="av av--md av--truie">T16</span>
+            <div class="row__main">
+              <div class="row__title"><span>T-016</span><span class="name">· Bahié</span></div>
+              <div class="row__sub"><b>Maternité</b> · J7 lactation · 10 vivants · M-03</div>
+            </div>
+            <span class="pill pill--warm">Maternité</span>
+            <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+          </a>
+          <a class="row" href="#fiche-truie">
+            <span class="av av--md av--truie">T31</span>
+            <div class="row__main">
+              <div class="row__title"><span>T-031</span><span class="name">· Mâ Rose</span></div>
+              <div class="row__sub"><b>Allaitante</b> · parité 4 · ISSE 11.8 · J34</div>
+            </div>
+            <span class="pill pill--warm">Allaitante</span>
+            <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+          </a>
+          <a class="row" href="#">
+            <span class="av av--md av--truie">T01</span>
+            <div class="row__main">
+              <div class="row__title"><span>T-001</span><span class="name">· Adjoa</span></div>
+              <div class="row__sub"><b>Vide</b> · à saillir · dernière MB 12/01/2026</div>
+            </div>
+            <span class="pill pill--warning">À saillir</span>
+            <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+          </a>
+          <a class="row" href="#">
+            <span class="av av--md av--truie">T46</span>
+            <div class="row__main">
+              <div class="row__title"><span>T-046</span><span class="name">· N'Da</span></div>
+              <div class="row__sub">Réforme · 0 portée · achetée 11/2024</div>
+            </div>
+            <span class="pill pill--danger">Réforme</span>
+            <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+          </a>
+          <a class="row" href="#">
+            <span class="av av--md av--truie">T50</span>
+            <div class="row__main">
+              <div class="row__title"><span>T-050</span><span class="name">· Akissi</span></div>
+              <div class="row__sub">Réforme · parité 7 · prod. insuffisante</div>
+            </div>
+            <span class="pill pill--danger">Réforme</span>
+            <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+          </a>
+          <a class="row" href="#">
+            <span class="av av--md av--truie">T07</span>
+            <div class="row__main">
+              <div class="row__title"><span>T-007</span><span class="name">· Tchélé</span></div>
+              <div class="row__sub"><b>Pleine</b> · J88 gestation · MB <b>06/06</b></div>
+            </div>
+            <span class="pill pill--success">Pleine</span>
+            <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+          </a>
+        </div>
+
+        <button class="fab"><i data-lucide="plus"></i> Ajouter une truie</button>
+
+        <nav class="botnav" aria-label="Navigation principale">
+          <a class="botnav__item" href="#"><i data-lucide="home"></i>Aujourd'hui</a>
+          <a class="botnav__item" aria-current="true" href="#listes"><i data-lucide="piggy-bank"></i>Élevage</a>
+          <a class="botnav__item" href="#"><i data-lucide="heart"></i>Repro</a>
+          <a class="botnav__item" href="#"><i data-lucide="bar-chart-3"></i>Performance</a>
+          <a class="botnav__item" href="#"><i data-lucide="settings"></i>Réglages</a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- ===== A2 · VERRATS ===== -->
+    <div class="frame-wrap">
+      <span class="eyebrow">A2 · Liste Verrats <span style="color:var(--pt-ink)">— 3 animaux</span></span>
+      <div class="frame" id="liste-verrats">
+        <div class="stbar">
+          <span class="num">06:14</span>
+          <div class="stbar__icons">
+            <i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i>
+          </div>
+        </div>
+        <header class="ph">
+          <div class="ph__row">
+            <div>
+              <div class="ph__eyebrow eyebrow">Élevage · 3 animaux</div>
+              <h1 class="ph__h1">Verrats</h1>
+            </div>
+            <button class="iconbtn" aria-label="Recherche"><i data-lucide="search"></i></button>
+          </div>
+          <p class="ph__sub"><b class="num">3 actifs</b> · taux fécondation moyen <b class="num">91%</b> · 174 saillies cumulées</p>
+        </header>
+
+        <nav class="subtabs" role="tablist">
+          <div class="subtab" aria-current="false">Loges</div>
+          <div class="subtab" aria-current="false">Truies <span class="num">50</span></div>
+          <div class="subtab" aria-current="true">Verrats <span class="num">3</span></div>
+          <div class="subtab" aria-current="false">Bandes <span class="num">6</span></div>
+          <div class="subtab" aria-current="false">Porcelets</div>
+        </nav>
+
+        <div class="chips">
+          <button class="chip" aria-pressed="true">Tous <span class="num">3</span></button>
+          <button class="chip">Actifs <span class="num">3</span></button>
+          <button class="chip">Réforme <span class="num">0</span></button>
+        </div>
+
+        <div class="metastrip">
+          <span>Tri · Saillies ↓</span>
+          <button class="sortbtn">Filtrer <i data-lucide="sliders-horizontal"></i></button>
+        </div>
+
+        <div class="list">
+          <a class="row" href="#fiche-verrat">
+            <span class="av av--md av--verrat">V01</span>
+            <div class="row__main">
+              <div class="row__title"><span>V-001</span><span class="name">· Babin</span></div>
+              <div class="row__sub"><b>Actif</b> · 87 saillies · fécondation <b>89%</b> · ration 2,4 kg/j</div>
+            </div>
+            <span class="pill pill--success">Actif</span>
+            <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+          </a>
+          <a class="row" href="#">
+            <span class="av av--md av--verrat">V02</span>
+            <div class="row__main">
+              <div class="row__title"><span>V-002</span><span class="name">· Konan</span></div>
+              <div class="row__sub"><b>Actif</b> · 64 saillies · fécondation <b>91%</b> · ration 2,2 kg/j</div>
+            </div>
+            <span class="pill pill--success">Actif</span>
+            <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+          </a>
+          <a class="row" href="#">
+            <span class="av av--md av--verrat">V03</span>
+            <div class="row__main">
+              <div class="row__title"><span>V-003</span><span class="name">· Sékou</span></div>
+              <div class="row__sub"><b>Actif</b> · 23 saillies · fécondation <b>94%</b> · arrivé 10/2025</div>
+            </div>
+            <span class="pill pill--success">Actif</span>
+            <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+          </a>
+        </div>
+
+        <div style="padding:24px 20px 0">
+          <div class="card" style="display:flex;gap:14px;align-items:flex-start">
+            <i data-lucide="info" style="width:18px;height:18px;color:var(--pt-accent);flex-shrink:0;margin-top:2px"></i>
+            <div>
+              <div class="eyebrow" style="margin-bottom:4px">Charge verrats</div>
+              <p style="margin:0;font-size:12.5px;color:var(--pt-ink);line-height:1.5">Avec 50 truies actives, vise <b class="num">1 verrat / 18 truies</b>. Tu es à 1/16 — bon ratio. Pense à anticiper Babin qui termine sa 3ᵉ saison.</p>
+            </div>
+          </div>
+        </div>
+
+        <button class="fab"><i data-lucide="plus"></i> Ajouter un verrat</button>
+
+        <nav class="botnav">
+          <a class="botnav__item" href="#"><i data-lucide="home"></i>Aujourd'hui</a>
+          <a class="botnav__item" aria-current="true" href="#"><i data-lucide="piggy-bank"></i>Élevage</a>
+          <a class="botnav__item" href="#"><i data-lucide="heart"></i>Repro</a>
+          <a class="botnav__item" href="#"><i data-lucide="bar-chart-3"></i>Performance</a>
+          <a class="botnav__item" href="#"><i data-lucide="settings"></i>Réglages</a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- ===== A3 · PORCELETS ===== -->
+    <div class="frame-wrap">
+      <span class="eyebrow">A3 · Liste Porcelets <span style="color:var(--pt-ink)">— 92 animaux, groupés par bande</span></span>
+      <div class="frame" id="liste-porcelets">
+        <div class="stbar">
+          <span class="num">06:15</span>
+          <div class="stbar__icons">
+            <i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i>
+          </div>
+        </div>
+        <header class="ph">
+          <div class="ph__row">
+            <div>
+              <div class="ph__eyebrow eyebrow">Élevage · 92 animaux</div>
+              <h1 class="ph__h1">Porcelets</h1>
+            </div>
+            <button class="iconbtn" aria-label="Recherche"><i data-lucide="search"></i></button>
+          </div>
+          <p class="ph__sub"><b class="num">25 sous mère</b> · <b class="num">25 post-sevrage</b> · <span class="num">30 croissance</span> · <span class="num">12 finition</span></p>
+        </header>
+
+        <nav class="subtabs">
+          <div class="subtab">Loges</div>
+          <div class="subtab">Truies <span class="num">50</span></div>
+          <div class="subtab">Verrats <span class="num">3</span></div>
+          <div class="subtab">Bandes <span class="num">6</span></div>
+          <div class="subtab" aria-current="true">Porcelets <span class="num">92</span></div>
+        </nav>
+
+        <div class="chips">
+          <button class="chip" aria-pressed="true">Toutes phases</button>
+          <button class="chip">Sous mère <span class="num">25</span></button>
+          <button class="chip">Post-sev. <span class="num">25</span></button>
+          <button class="chip">Croissance <span class="num">30</span></button>
+          <button class="chip">Finition <span class="num">12</span></button>
+        </div>
+
+        <div class="list">
+          <div class="group">
+            <div class="group__head">
+              <span class="av av--md av--bande">B7</span>
+              <div class="group__title">26-T16-01<small>Mère T-016 · J7 lactation</small></div>
+              <span class="pill pill--warm">Sous mère</span>
+              <span class="group__chev"><i data-lucide="chevron-down"></i></span>
+            </div>
+            <a class="row" href="#fiche-porcelet">
+              <span class="av av--md av--porcelet">CR12</span>
+              <div class="row__main">
+                <div class="row__title"><span>CR-12</span><span class="name">· ♀ · ordre 1/10</span></div>
+                <div class="row__sub">Né 03/05 · poids actuel <b>2,8 kg</b> · GMQ <b>340 g</b></div>
+              </div>
+              <span class="pill pill--success">OK</span>
+              <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+            </a>
+            <a class="row" href="#">
+              <span class="av av--md av--porcelet">CR13</span>
+              <div class="row__main">
+                <div class="row__title"><span>CR-13</span><span class="name">· ♂ · ordre 2/10</span></div>
+                <div class="row__sub">Né 03/05 · poids <b>3,1 kg</b> · GMQ <b>380 g</b></div>
+              </div>
+              <span class="pill pill--success">OK</span>
+              <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+            </a>
+            <a class="row" href="#">
+              <span class="av av--md av--porcelet">CR14</span>
+              <div class="row__main">
+                <div class="row__title"><span>CR-14</span><span class="name">· ♀ · ordre 3/10</span></div>
+                <div class="row__sub">Né 03/05 · poids <b>1,9 kg</b> · GMQ <b>180 g</b> · retard</div>
+              </div>
+              <span class="pill pill--warning">Retard</span>
+              <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+            </a>
+          </div>
+          <div class="group">
+            <div class="group__head">
+              <span class="av av--md av--bande">B6</span>
+              <div class="group__title">26-T1-01<small>Mère T-001 · J28 sevrage</small></div>
+              <span class="pill pill--soft">11 porcelets</span>
+              <span class="group__chev"><i data-lucide="chevron-down"></i></span>
+            </div>
+          </div>
+          <div class="group">
+            <div class="group__head">
+              <span class="av av--md av--bande">PS</span>
+              <div class="group__title">B-AUDIT-PS<small>Mère T-032 · J37 post-sevrage</small></div>
+              <span class="pill pill--soft">25 porcelets</span>
+              <span class="group__chev"><i data-lucide="chevron-down"></i></span>
+            </div>
+          </div>
+          <div class="group">
+            <div class="group__head">
+              <span class="av av--md av--bande">CR</span>
+              <div class="group__title">B-AUDIT-CR<small>Croissance · J70+</small></div>
+              <span class="pill pill--soft">30 porcelets</span>
+              <span class="group__chev"><i data-lucide="chevron-down"></i></span>
+            </div>
+          </div>
+        </div>
+
+        <button class="fab"><i data-lucide="plus"></i> Ajouter porcelet</button>
+
+        <nav class="botnav">
+          <a class="botnav__item" href="#"><i data-lucide="home"></i>Aujourd'hui</a>
+          <a class="botnav__item" aria-current="true" href="#"><i data-lucide="piggy-bank"></i>Élevage</a>
+          <a class="botnav__item" href="#"><i data-lucide="heart"></i>Repro</a>
+          <a class="botnav__item" href="#"><i data-lucide="bar-chart-3"></i>Performance</a>
+          <a class="botnav__item" href="#"><i data-lucide="settings"></i>Réglages</a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- ===== A4 · BANDES ===== -->
+    <div class="frame-wrap">
+      <span class="eyebrow">A4 · Liste Bandes <span style="color:var(--pt-ink)">— 6 actives</span></span>
+      <div class="frame" id="liste-bandes">
+        <div class="stbar">
+          <span class="num">06:17</span>
+          <div class="stbar__icons">
+            <i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i>
+          </div>
+        </div>
+        <header class="ph">
+          <div class="ph__row">
+            <div>
+              <div class="ph__eyebrow eyebrow">Élevage · 6 bandes</div>
+              <h1 class="ph__h1">Bandes</h1>
+            </div>
+            <button class="iconbtn"><i data-lucide="search"></i></button>
+          </div>
+          <p class="ph__sub"><b class="num">92 vivants</b> · mortalité allait. <b class="num">8,2%</b> · GMQ post-sev. <b class="num">412 g</b></p>
+        </header>
+
+        <nav class="subtabs">
+          <div class="subtab">Loges</div>
+          <div class="subtab">Truies <span class="num">50</span></div>
+          <div class="subtab">Verrats <span class="num">3</span></div>
+          <div class="subtab" aria-current="true">Bandes <span class="num">6</span></div>
+          <div class="subtab">Porcelets <span class="num">92</span></div>
+        </nav>
+
+        <div class="metastrip">
+          <span>Tri · MB ↓</span>
+          <button class="sortbtn">Effectif <i data-lucide="chevrons-up-down"></i></button>
+        </div>
+
+        <div class="list">
+          <a class="row" href="#fiche-bande">
+            <span class="av av--md av--bande">B7</span>
+            <div class="row__main">
+              <div class="row__title"><span>26-T16-01</span><span class="name">· Mère T-016</span></div>
+              <div class="row__sub">MB <b>03/05</b> · 10 NV · J7 sous mère · M-03</div>
+            </div>
+            <span class="pill pill--warm">Sous mère</span>
+            <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+          </a>
+          <a class="row" href="#">
+            <span class="av av--md av--bande">B6</span>
+            <div class="row__main">
+              <div class="row__title"><span>26-T1-01</span><span class="name">· Mère T-001</span></div>
+              <div class="row__sub">MB <b>03/05</b> · 11 NV · J28 sevré</div>
+            </div>
+            <span class="pill pill--info">Sevrage</span>
+            <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+          </a>
+          <a class="row" href="#">
+            <span class="av av--md av--bande">B5</span>
+            <div class="row__main">
+              <div class="row__title"><span>Mai 2026</span><span class="name">· T-001 · adoption</span></div>
+              <div class="row__sub">MB <b>03/05</b> · 5 NV · J7 sous mère</div>
+            </div>
+            <span class="pill pill--warm">Sous mère</span>
+            <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+          </a>
+          <a class="row" href="#">
+            <span class="av av--md av--bande">B4</span>
+            <div class="row__main">
+              <div class="row__title"><span>B-AUDIT-MB</span><span class="name">· Mère T-031</span></div>
+              <div class="row__sub">MB <b>06/04</b> · 11 NV · J34 en cours</div>
+            </div>
+            <span class="pill pill--warm">Maternité</span>
+            <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+          </a>
+          <a class="row" href="#">
+            <span class="av av--md av--bande">B3</span>
+            <div class="row__main">
+              <div class="row__title"><span>B-AUDIT-PS</span><span class="name">· Mère T-032</span></div>
+              <div class="row__sub">MB <b>03/04</b> · 25 NV · J37 post-sevrage</div>
+            </div>
+            <span class="pill pill--info">Post-sev.</span>
+            <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+          </a>
+          <a class="row" href="#">
+            <span class="av av--md av--bande">B2</span>
+            <div class="row__main">
+              <div class="row__title"><span>B-AUDIT-CR</span><span class="name">· Croissance</span></div>
+              <div class="row__sub">30 NV · J70+ · GMQ <b>520 g</b></div>
+            </div>
+            <span class="pill pill--success">Croissance</span>
+            <span class="row__chev"><i data-lucide="chevron-right"></i></span>
+          </a>
+        </div>
+
+        <button class="fab"><i data-lucide="plus"></i> Démarrer une bande</button>
+
+        <nav class="botnav">
+          <a class="botnav__item" href="#"><i data-lucide="home"></i>Aujourd'hui</a>
+          <a class="botnav__item" aria-current="true" href="#"><i data-lucide="piggy-bank"></i>Élevage</a>
+          <a class="botnav__item" href="#"><i data-lucide="heart"></i>Repro</a>
+          <a class="botnav__item" href="#"><i data-lucide="bar-chart-3"></i>Performance</a>
+          <a class="botnav__item" href="#"><i data-lucide="settings"></i>Réglages</a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- ===== A5 · LOGES ===== -->
+    <div class="frame-wrap">
+      <span class="eyebrow">A5 · Liste Loges <span style="color:var(--pt-ink)">— grille capacité / occupation</span></span>
+      <div class="frame" id="liste-loges">
+        <div class="stbar">
+          <span class="num">06:18</span>
+          <div class="stbar__icons">
+            <i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i>
+          </div>
+        </div>
+        <header class="ph">
+          <div class="ph__row">
+            <div>
+              <div class="ph__eyebrow eyebrow">Élevage · 12 loges</div>
+              <h1 class="ph__h1">Loges</h1>
+            </div>
+            <button class="iconbtn"><i data-lucide="layout-grid"></i></button>
+          </div>
+          <p class="ph__sub"><b class="num">142 places</b> · occupation <b class="num">76%</b> · 2 vides — prêtes pour rotation</p>
+        </header>
+
+        <nav class="subtabs">
+          <div class="subtab" aria-current="true">Loges <span class="num">12</span></div>
+          <div class="subtab">Truies</div>
+          <div class="subtab">Verrats</div>
+          <div class="subtab">Bandes</div>
+          <div class="subtab">Porcelets</div>
+        </nav>
+
+        <div class="chips">
+          <button class="chip" aria-pressed="true">Toutes</button>
+          <button class="chip">Maternité <span class="num">4</span></button>
+          <button class="chip">Gestation <span class="num">3</span></button>
+          <button class="chip">Sevrage <span class="num">2</span></button>
+          <button class="chip">Croissance <span class="num">3</span></button>
+        </div>
+
+        <div class="loges-grid">
+          <div class="loge-card" onclick="window.location.hash='#fiche-loge'">
+            <div class="loge-card__head">
+              <span class="loge-card__code">M-03</span>
+              <span class="pill pill--warm pill--no-dot">MAT</span>
+            </div>
+            <div class="loge-card__bar"><div class="loge-card__fill" style="width:90%"></div></div>
+            <div class="loge-card__meta"><span><b class="num">11</b>/12 places</span><span>J7</span></div>
+          </div>
+          <div class="loge-card">
+            <div class="loge-card__head">
+              <span class="loge-card__code">M-01</span>
+              <span class="pill pill--warm pill--no-dot">MAT</span>
+            </div>
+            <div class="loge-card__bar"><div class="loge-card__fill" style="width:84%"></div></div>
+            <div class="loge-card__meta"><span><b class="num">10</b>/12 places</span><span>J34</span></div>
+          </div>
+          <div class="loge-card">
+            <div class="loge-card__head">
+              <span class="loge-card__code">M-02</span>
+              <span class="pill pill--warm pill--no-dot">MAT</span>
+            </div>
+            <div class="loge-card__bar"><div class="loge-card__fill" style="width:42%"></div></div>
+            <div class="loge-card__meta"><span><b class="num">5</b>/12 places</span><span>J7</span></div>
+          </div>
+          <div class="loge-card empty">
+            <div class="loge-card__head">
+              <span class="loge-card__code">M-04</span>
+              <span class="pill pill--ghost pill--no-dot">VIDE</span>
+            </div>
+            <div class="loge-card__bar"><div class="loge-card__fill" style="width:0%"></div></div>
+            <div class="loge-card__meta"><span><b class="num">0</b>/12 places</span><span>désinf.</span></div>
+          </div>
+          <div class="loge-card">
+            <div class="loge-card__head">
+              <span class="loge-card__code">G-04</span>
+              <span class="pill pill--info pill--no-dot">GEST</span>
+            </div>
+            <div class="loge-card__bar"><div class="loge-card__fill" style="width:75%"></div></div>
+            <div class="loge-card__meta"><span><b class="num">9</b>/12 truies</span><span>—</span></div>
+          </div>
+          <div class="loge-card full">
+            <div class="loge-card__head">
+              <span class="loge-card__code">PS-01</span>
+              <span class="pill pill--info pill--no-dot">SEV</span>
+            </div>
+            <div class="loge-card__bar"><div class="loge-card__fill" style="width:100%"></div></div>
+            <div class="loge-card__meta"><span><b class="num">25</b>/25 places</span><span>complet</span></div>
+          </div>
+          <div class="loge-card">
+            <div class="loge-card__head">
+              <span class="loge-card__code">CR-01</span>
+              <span class="pill pill--success pill--no-dot">CR</span>
+            </div>
+            <div class="loge-card__bar"><div class="loge-card__fill" style="width:60%"></div></div>
+            <div class="loge-card__meta"><span><b class="num">18</b>/30 places</span><span>—</span></div>
+          </div>
+          <div class="loge-card">
+            <div class="loge-card__head">
+              <span class="loge-card__code">CR-02</span>
+              <span class="pill pill--success pill--no-dot">CR</span>
+            </div>
+            <div class="loge-card__bar"><div class="loge-card__fill" style="width:40%"></div></div>
+            <div class="loge-card__meta"><span><b class="num">12</b>/30 places</span><span>—</span></div>
+          </div>
+        </div>
+
+        <button class="fab"><i data-lucide="plus"></i> Ajouter une loge</button>
+
+        <nav class="botnav">
+          <a class="botnav__item" href="#"><i data-lucide="home"></i>Aujourd'hui</a>
+          <a class="botnav__item" aria-current="true" href="#"><i data-lucide="piggy-bank"></i>Élevage</a>
+          <a class="botnav__item" href="#"><i data-lucide="heart"></i>Repro</a>
+          <a class="botnav__item" href="#"><i data-lucide="bar-chart-3"></i>Performance</a>
+          <a class="botnav__item" href="#"><i data-lucide="settings"></i>Réglages</a>
+        </nav>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ============================================== -->
+  <!-- B. FICHES                                       -->
+  <!-- ============================================== -->
+  <h2 class="display" id="fiches" style="font-size:34px;margin:64px 0 6px">B. Fiches détail</h2>
+  <p class="sub-hint" style="margin:0 0 28px">5 templates · header + breadcrumb + tabs + sections + actions footer</p>
+
+  <div class="frames">
+
+    <!-- ===== B1 · FICHE TRUIE ===== -->
+    <div class="frame-wrap">
+      <span class="eyebrow">B1 · Fiche Truie T-031 <span style="color:var(--pt-ink)">— Vue d'ensemble</span></span>
+      <div class="frame" id="fiche-truie">
+        <div class="stbar" style="background:var(--pt-primary);color:var(--pt-warm)">
+          <span class="num">06:20</span>
+          <div class="stbar__icons">
+            <i data-lucide="signal" style="stroke:var(--pt-warm)"></i>
+            <i data-lucide="wifi" style="stroke:var(--pt-warm)"></i>
+            <i data-lucide="battery-medium" style="stroke:var(--pt-warm)"></i>
+          </div>
+        </div>
+
+        <header class="ph ph--primary">
+          <div class="ph__crumb">
+            <a href="#liste-truies">Élevage</a><i data-lucide="chevron-right"></i>
+            <a href="#liste-truies">Truies</a><i data-lucide="chevron-right"></i>
+            <b>T-031</b>
+          </div>
+          <div class="ph__row">
+            <div>
+              <div class="eyebrow ph__eyebrow" style="color:var(--pt-accent-light)">Élevage · Truie</div>
+              <h1 class="ph__h1">T-031</h1>
+            </div>
+            <button class="iconbtn"><i data-lucide="more-horizontal"></i></button>
+          </div>
+          <p class="ph__sub"><b>Mâ Rose</b> · Allaitante · parité 4 · 4 portées · ISSE 11,8</p>
+
+          <div class="id-strip">
+            <span class="av av--xl av--truie">T31</span>
+            <div class="id-strip__meta">
+              <div class="id-strip__row">
+                <span class="pill pill--warm">Allaitante</span>
+                <span class="pill pill--ghost" style="color:rgba(245,233,216,0.8);border-color:rgba(245,233,216,0.3)">M-01 · J34</span>
+              </div>
+              <div>Boucle <b class="num">CI-031-22</b></div>
+              <div>Née <b class="num">14/06/2022</b> · 224 kg</div>
+            </div>
+          </div>
+        </header>
+
+        <nav class="tabs">
+          <div class="tab" aria-current="true">Vue d'ensemble</div>
+          <div class="tab">Reproduction</div>
+          <div class="tab">Santé</div>
+          <div class="tab">Historique</div>
+        </nav>
+
+        <div class="body">
+
+          <!-- Lignée -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Lignée</span></div>
+            <div class="lineage">
+              <div class="lineage__cell">
+                <span class="av av--md av--truie">T05</span>
+                <div class="label">Mère</div>
+                <div class="id">T-005</div>
+              </div>
+              <div class="lineage__cell center">
+                <span class="av av--md av--truie">T31</span>
+                <div class="label">Sujet</div>
+                <div class="id">T-031</div>
+              </div>
+              <div class="lineage__cell">
+                <span class="av av--md av--bande">×4</span>
+                <div class="label">Portées</div>
+                <div class="id num">39 NV</div>
+              </div>
+            </div>
+            <div style="margin-top:8px;text-align:center" class="sub-hint">Père V-001 · Babin</div>
+          </section>
+
+          <!-- Performance -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Performance économique</span></div>
+            <div class="kpis">
+              <div class="stat">
+                <div class="stat__label">Portées</div>
+                <div class="stat__val num">4</div>
+                <div class="stat__sub">Carrière</div>
+              </div>
+              <div class="stat">
+                <div class="stat__label">NV moyens</div>
+                <div class="stat__val num">11,8<small>/portée</small></div>
+                <div class="stat__sub">+0,3 vs 2025</div>
+              </div>
+              <div class="stat">
+                <div class="stat__label">Aliment cumulé</div>
+                <div class="stat__val num">2,4<small>t</small></div>
+                <div class="stat__sub">depuis 2022</div>
+              </div>
+              <div class="stat">
+                <div class="stat__label">Marge estim.</div>
+                <div class="stat__val num">+418<small>k FCFA</small></div>
+                <div class="stat__sub">Brute / carrière</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Cycle vivant -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Cycle vivant — portée 4</span><span class="pill pill--warm">J34 lactation</span></div>
+            <div class="cycle">
+              <div class="meta-line">
+                <span>Saillie 14/12/25</span><span class="dot"></span>
+                <span>MB 06/04/26</span><span class="dot"></span>
+                <span>Sevrage prévu 23/05</span>
+              </div>
+              <div class="cycle__rail">
+                <div class="cycle__line"></div>
+                <div class="cycle__line-done" style="width:70%"></div>
+                <div class="cycle__node done" style="left:0%">S</div>
+                <div class="cycle__node done" style="left:25%">28</div>
+                <div class="cycle__node done" style="left:50%">MB</div>
+                <div class="cycle__node now" style="left:70%">J34</div>
+                <div class="cycle__node" style="left:100%">SV</div>
+              </div>
+              <div class="cycle__labels">
+                <div>SAILLIE<b>14/12</b></div>
+                <div>ÉCHO J28<b>11/01</b></div>
+                <div>MISE-BAS<b>06/04</b></div>
+                <div>EN COURS<b>09/05</b></div>
+                <div>SEVRAGE<b>23/05</b></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Identité -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Identité</span></div>
+            <div class="card">
+              <dl class="kv">
+                <dt>Code</dt><dd>T-031</dd>
+                <dt>Boucle</dt><dd>CI-031-22</dd>
+                <dt>Loge</dt><dd>M-01 · maternité</dd>
+                <dt>Naissance</dt><dd>14/06/2022 <em>(3 ans 11 mois)</em></dd>
+                <dt>Parité</dt><dd>4ᵉ portée</dd>
+                <dt>Père / Mère</dt><dd>V-001 / T-005</dd>
+                <dt>Race</dt><dd>Large White × Landrace</dd>
+              </dl>
+            </div>
+          </section>
+
+          <!-- Lecture Marius -->
+          <section>
+            <div class="marius">
+              <div class="marius__head">
+                <span class="marius__mark">M</span>
+                <span class="eyebrow eyebrow--accent">Lecture Marius · IA</span>
+              </div>
+              <ul>
+                <li><b>ISSE 11,8</b> place T-031 dans le quartile haut de ton troupeau. <em>Garde-la</em>.</li>
+                <li>Lactation J34 — la portée approche du <b>seuil de sevrage</b>. Pèse demain matin.</li>
+                <li>Sa portée 3 a perdu 1 porcelet en J3 par écrasement. <em>Vérifie le tapis chauffant ce soir</em>.</li>
+                <li>Prochaine saillie idéale : <b>5 jours après sevrage</b> — soit ≈ 28/05. V-002 dispo.</li>
+              </ul>
+            </div>
+          </section>
+
+          <!-- Activité récente -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Dernière activité</span></div>
+            <div class="activity">
+              <div class="activity__row">
+                <div class="activity__date">09/05</div>
+                <div class="activity__icon"><i data-lucide="thermometer"></i></div>
+                <div class="activity__body">Température normale 38,9°C <em>· Yao</em></div>
+              </div>
+              <div class="activity__row">
+                <div class="activity__date">07/05</div>
+                <div class="activity__icon ev"><i data-lucide="scale"></i></div>
+                <div class="activity__body">Pesée portée — moy <b>3,2 kg</b> <em>· Yao</em></div>
+              </div>
+              <div class="activity__row">
+                <div class="activity__date">06/04</div>
+                <div class="activity__icon ev"><i data-lucide="baby"></i></div>
+                <div class="activity__body">Mise-bas · 11 NV (10 vivants, 1 mort-né) <em>· portée 4</em></div>
+              </div>
+              <div class="activity__row">
+                <div class="activity__date">11/01</div>
+                <div class="activity__icon"><i data-lucide="activity"></i></div>
+                <div class="activity__body">Écho J28 — confirmée pleine</div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+        <div class="actions">
+          <button class="btn btn--primary"><i data-lucide="plus"></i> Évènement</button>
+          <button class="btn btn--secondary"><i data-lucide="pencil"></i></button>
+          <button class="btn btn--danger-ghost"><i data-lucide="log-out"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== B2 · FICHE VERRAT ===== -->
+    <div class="frame-wrap">
+      <span class="eyebrow">B2 · Fiche Verrat V-001 <span style="color:var(--pt-ink)">— tab Saillies</span></span>
+      <div class="frame" id="fiche-verrat">
+        <div class="stbar" style="background:var(--pt-primary);color:var(--pt-warm)">
+          <span class="num">06:24</span>
+          <div class="stbar__icons">
+            <i data-lucide="signal" style="stroke:var(--pt-warm)"></i>
+            <i data-lucide="wifi" style="stroke:var(--pt-warm)"></i>
+            <i data-lucide="battery-medium" style="stroke:var(--pt-warm)"></i>
+          </div>
+        </div>
+
+        <header class="ph ph--primary">
+          <div class="ph__crumb">
+            <a href="#liste-verrats">Élevage</a><i data-lucide="chevron-right"></i>
+            <a href="#liste-verrats">Verrats</a><i data-lucide="chevron-right"></i>
+            <b>V-001</b>
+          </div>
+          <div class="ph__row">
+            <div>
+              <div class="eyebrow ph__eyebrow" style="color:var(--pt-accent-light)">Élevage · Verrat</div>
+              <h1 class="ph__h1">V-001</h1>
+            </div>
+            <button class="iconbtn"><i data-lucide="more-horizontal"></i></button>
+          </div>
+          <p class="ph__sub"><b>Babin</b> · Actif · 87 saillies · fécondation 89%</p>
+
+          <div class="id-strip">
+            <span class="av av--xl av--verrat">V01</span>
+            <div class="id-strip__meta">
+              <div class="id-strip__row">
+                <span class="pill pill--success">Actif</span>
+                <span class="pill pill--ghost" style="color:rgba(245,233,216,0.8);border-color:rgba(245,233,216,0.3)">V-LOGE-01</span>
+              </div>
+              <div>Boucle <b class="num">CI-V01-22</b> · Origine ferme N'Da</div>
+              <div>Né <b class="num">02/01/2022</b> · 318 kg</div>
+            </div>
+          </div>
+        </header>
+
+        <nav class="tabs">
+          <div class="tab">Vue d'ensemble</div>
+          <div class="tab" aria-current="true">Saillies <span class="num">87</span></div>
+          <div class="tab">Santé</div>
+          <div class="tab">Lignée</div>
+        </nav>
+
+        <div class="body">
+
+          <!-- Reproduction KPIs -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Reproduction · 12 derniers mois</span></div>
+            <div class="kpis">
+              <div class="stat">
+                <div class="stat__label">Saillies</div>
+                <div class="stat__val num">42</div>
+                <div class="stat__sub">vs 38 en 2024</div>
+              </div>
+              <div class="stat">
+                <div class="stat__label">Fécondation</div>
+                <div class="stat__val num">89<small>%</small></div>
+                <div class="stat__sub">+2 pts</div>
+              </div>
+              <div class="stat">
+                <div class="stat__label">NV / portée</div>
+                <div class="stat__val num">11,4</div>
+                <div class="stat__sub">progénitures</div>
+              </div>
+              <div class="stat">
+                <div class="stat__label">Ration</div>
+                <div class="stat__val num">2,4<small>kg/j</small></div>
+                <div class="stat__sub">verrat actif</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Saillies table -->
+          <section>
+            <div class="sec__head">
+              <span class="eyebrow">Journal saillies</span>
+              <span class="pill pill--soft num">87 cumul.</span>
+            </div>
+            <div class="card card--bg" style="padding:8px 12px">
+              <table class="dt">
+                <thead>
+                  <tr>
+                    <th>Date</th><th>Truie</th><th class="num-r">Écho J28</th><th class="num-r">MB</th><th class="num-r">NV</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>14/12/25</td><td>T-031</td><td class="num-r"><span class="pill pill--success pill--no-dot">+</span></td><td class="num-r">06/04</td><td class="num-r"><b>11</b></td></tr>
+                  <tr><td>02/12/25</td><td>T-016</td><td class="num-r"><span class="pill pill--success pill--no-dot">+</span></td><td class="num-r">25/03</td><td class="num-r"><b>10</b></td></tr>
+                  <tr><td>22/11/25</td><td>T-022</td><td class="num-r"><span class="pill pill--danger pill--no-dot">−</span></td><td class="num-r">—</td><td class="num-r">—</td></tr>
+                  <tr><td>15/11/25</td><td>T-008</td><td class="num-r"><span class="pill pill--success pill--no-dot">+</span></td><td class="num-r">10/03</td><td class="num-r"><b>13</b></td></tr>
+                  <tr><td>08/11/25</td><td>T-004</td><td class="num-r"><span class="pill pill--success pill--no-dot">+</span></td><td class="num-r">02/03</td><td class="num-r"><b>9</b></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div style="margin-top:8px" class="sub-hint">Voir les 82 saillies précédentes →</div>
+          </section>
+
+          <!-- Journal terrain -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Journal terrain</span></div>
+            <div class="stack">
+              <div class="note">
+                <div class="note__date">07/05/2026 · Yao</div>
+                Babin un peu calme ce matin. Couleur peau OK, appétit normal. Surveiller demain — il termine sa 3ᵉ saison de monte.
+              </div>
+              <div class="note">
+                <div class="note__date">22/04/2026 · Yao</div>
+                Vermifuge ivermectine 0,3 mg/kg, voie SC. Prochain rappel 22/10/2026.
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn--primary"><i data-lucide="plus"></i> Saisir saillie</button>
+          <button class="btn btn--secondary"><i data-lucide="pencil"></i></button>
+          <button class="btn btn--danger-ghost"><i data-lucide="log-out"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== B3 · FICHE PORCELET ===== -->
+    <div class="frame-wrap">
+      <span class="eyebrow">B3 · Fiche Porcelet CR-12 <span style="color:var(--pt-ink)">— from scratch</span></span>
+      <div class="frame" id="fiche-porcelet">
+        <div class="stbar" style="background:var(--pt-primary);color:var(--pt-warm)">
+          <span class="num">06:28</span>
+          <div class="stbar__icons">
+            <i data-lucide="signal" style="stroke:var(--pt-warm)"></i>
+            <i data-lucide="wifi" style="stroke:var(--pt-warm)"></i>
+            <i data-lucide="battery-medium" style="stroke:var(--pt-warm)"></i>
+          </div>
+        </div>
+
+        <header class="ph ph--primary">
+          <div class="ph__crumb">
+            <a href="#liste-porcelets">Élevage</a><i data-lucide="chevron-right"></i>
+            <a href="#liste-porcelets">Porcelets</a><i data-lucide="chevron-right"></i>
+            <b>CR-12</b>
+          </div>
+          <div class="ph__row">
+            <div>
+              <div class="eyebrow ph__eyebrow" style="color:var(--pt-accent-light)">Élevage · Porcelet</div>
+              <h1 class="ph__h1">CR-12</h1>
+            </div>
+            <button class="iconbtn"><i data-lucide="more-horizontal"></i></button>
+          </div>
+          <p class="ph__sub">Bande <b>26-T16-01</b> · ♀ · sous mère J7 · <b>2,8 kg</b></p>
+
+          <div class="id-strip">
+            <span class="av av--xl av--porcelet">CR12</span>
+            <div class="id-strip__meta">
+              <div class="id-strip__row">
+                <span class="pill pill--warm">Sous mère</span>
+                <span class="pill pill--success">GMQ 340 g</span>
+              </div>
+              <div>Mère <b class="num">T-016</b> · Père V-001</div>
+              <div>Né <b class="num">03/05/2026</b> · ordre 1/10</div>
+            </div>
+          </div>
+        </header>
+
+        <nav class="tabs">
+          <div class="tab" aria-current="true">Vue d'ensemble</div>
+          <div class="tab">Pesées <span class="num">3</span></div>
+          <div class="tab">Santé</div>
+        </nav>
+
+        <div class="body">
+
+          <!-- Croissance graph -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Croissance — pesées</span><span class="pill pill--success">GMQ 340 g/j</span></div>
+            <div class="card card--bg">
+              <svg class="miniplot" viewBox="0 0 320 100" preserveAspectRatio="none">
+                <line class="axis" x1="0" y1="80" x2="320" y2="80"/>
+                <line class="axis" x1="0" y1="50" x2="320" y2="50"/>
+                <line class="axis" x1="0" y1="20" x2="320" y2="20"/>
+                <polyline class="area" points="20,72 110,55 200,38 280,22 280,80 20,80"/>
+                <polyline points="20,72 110,55 200,38 280,22"/>
+                <circle class="pt" cx="20" cy="72" r="3"/>
+                <circle class="pt" cx="110" cy="55" r="3"/>
+                <circle class="pt" cx="200" cy="38" r="3"/>
+                <circle class="pt-now" cx="280" cy="22" r="4"/>
+                <text x="20" y="95">J0</text>
+                <text x="100" y="95">J3</text>
+                <text x="190" y="95">J5</text>
+                <text x="270" y="95">J7</text>
+              </svg>
+              <div class="meta-line" style="margin-top:6px">
+                <span>1,4 kg <em style="color:var(--pt-subtle)">naissance</em></span><span class="dot"></span>
+                <span>1,9 kg J3</span><span class="dot"></span>
+                <span>2,4 kg J5</span><span class="dot"></span>
+                <span style="color:var(--pt-accent)"><b>2,8 kg J7</b></span>
+              </div>
+              <div class="sub-hint" style="margin-top:8px">Prochain seuil — sevrage à 7 kg vers J28</div>
+            </div>
+          </section>
+
+          <!-- Identité -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Identité</span></div>
+            <div class="card">
+              <dl class="kv">
+                <dt>Code</dt><dd>CR-12</dd>
+                <dt>Bande</dt><dd>26-T16-01</dd>
+                <dt>Mère</dt><dd>T-016 · Bahié</dd>
+                <dt>Père</dt><dd>V-001 · Babin</dd>
+                <dt>Sexe</dt><dd>Femelle</dd>
+                <dt>Naissance</dt><dd>03/05/2026 <em>(J7)</em></dd>
+                <dt>Ordre / portée</dt><dd>1 / 10</dd>
+                <dt>Loge</dt><dd>M-03</dd>
+              </dl>
+            </div>
+          </section>
+
+          <!-- Santé -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Santé · vaccins · traitements</span></div>
+            <div class="activity">
+              <div class="activity__row">
+                <div class="activity__date">04/05</div>
+                <div class="activity__icon ev"><i data-lucide="syringe"></i></div>
+                <div class="activity__body">Fer dextran 200 mg · J1 <em>· Yao</em></div>
+              </div>
+              <div class="activity__row">
+                <div class="activity__date">11/05</div>
+                <div class="activity__icon"><i data-lucide="alert-triangle"></i></div>
+                <div class="activity__body">À prévoir — coupe queue + caudectomie <em>· J8 prog.</em></div>
+              </div>
+              <div class="activity__row">
+                <div class="activity__date">31/05</div>
+                <div class="activity__icon"><i data-lucide="syringe"></i></div>
+                <div class="activity__body">Vaccin mycoplasme à <b>J28</b> <em>· planifié</em></div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+        <div class="actions">
+          <button class="btn btn--primary"><i data-lucide="scale"></i> Peser</button>
+          <button class="btn btn--secondary"><i data-lucide="syringe"></i></button>
+          <button class="btn btn--danger-ghost"><i data-lucide="x-circle"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== B4 · FICHE BANDE ===== -->
+    <div class="frame-wrap">
+      <span class="eyebrow">B4 · Fiche Bande 26-T16-01 <span style="color:var(--pt-ink)">— cycle bande 5 phases</span></span>
+      <div class="frame" id="fiche-bande">
+        <div class="stbar" style="background:var(--pt-primary);color:var(--pt-warm)">
+          <span class="num">06:32</span>
+          <div class="stbar__icons">
+            <i data-lucide="signal" style="stroke:var(--pt-warm)"></i>
+            <i data-lucide="wifi" style="stroke:var(--pt-warm)"></i>
+            <i data-lucide="battery-medium" style="stroke:var(--pt-warm)"></i>
+          </div>
+        </div>
+
+        <header class="ph ph--primary">
+          <div class="ph__crumb">
+            <a href="#liste-bandes">Élevage</a><i data-lucide="chevron-right"></i>
+            <a href="#liste-bandes">Bandes</a><i data-lucide="chevron-right"></i>
+            <b>26-T16-01</b>
+          </div>
+          <div class="ph__row">
+            <div>
+              <div class="eyebrow ph__eyebrow" style="color:var(--pt-accent-light)">Élevage · Bande</div>
+              <h1 class="ph__h1">26-T16-01</h1>
+            </div>
+            <button class="iconbtn"><i data-lucide="more-horizontal"></i></button>
+          </div>
+          <p class="ph__sub">Mai 2026 · Mère <b>T-016</b> · 10 vivants / 11 NV · J7</p>
+
+          <div class="id-strip">
+            <span class="av av--xl av--bande">B7</span>
+            <div class="id-strip__meta">
+              <div class="id-strip__row">
+                <span class="pill pill--warm">Sous mère</span>
+                <span class="pill pill--ghost" style="color:rgba(245,233,216,0.8);border-color:rgba(245,233,216,0.3)">M-03 · J7</span>
+              </div>
+              <div>MB <b class="num">03/05/2026</b></div>
+              <div>Sevrage prévu <b class="num">31/05</b> · J28</div>
+            </div>
+          </div>
+        </header>
+
+        <nav class="tabs">
+          <div class="tab" aria-current="true">Vue d'ensemble</div>
+          <div class="tab">Détails <span class="num">10</span></div>
+          <div class="tab">Santé</div>
+          <div class="tab">Notes</div>
+        </nav>
+
+        <div class="body">
+
+          <!-- Cycle bande -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Cycle bande · 5 phases</span></div>
+            <div class="cycle">
+              <div class="cycle__rail">
+                <div class="cycle__line"></div>
+                <div class="cycle__line-done" style="width:14%"></div>
+                <div class="cycle__node now" style="left:7%">7</div>
+                <div class="cycle__node" style="left:25%">21</div>
+                <div class="cycle__node" style="left:50%">28</div>
+                <div class="cycle__node" style="left:75%">70</div>
+                <div class="cycle__node" style="left:100%">↑</div>
+              </div>
+              <div class="cycle__labels">
+                <div>MATERNITÉ<b>J0–J21</b></div>
+                <div>SEVRAGE<b>J21</b></div>
+                <div>POST-SEV<b>J28</b></div>
+                <div>CROISSANCE<b>J70</b></div>
+                <div>ENGRAIS.<b>J150+</b></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Performances -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Performances</span></div>
+            <div class="kpis">
+              <div class="stat">
+                <div class="stat__label">Vivants</div>
+                <div class="stat__val num">10<small>/11</small></div>
+                <div class="stat__sub">−1 mort-né</div>
+              </div>
+              <div class="stat">
+                <div class="stat__label">Mortalité</div>
+                <div class="stat__val num">9,1<small>%</small></div>
+                <div class="stat__sub">vs 8,2 troup.</div>
+              </div>
+              <div class="stat">
+                <div class="stat__label">Poids moy</div>
+                <div class="stat__val num">2,8<small>kg</small></div>
+                <div class="stat__sub">+1,4 vs naissance</div>
+              </div>
+              <div class="stat">
+                <div class="stat__label">Alertes santé</div>
+                <div class="stat__val num">1</div>
+                <div class="stat__sub">CR-14 · retard</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Pesées -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Pesée moyenne · GMQ par phase</span></div>
+            <div class="card card--bg">
+              <svg class="miniplot" viewBox="0 0 320 100" preserveAspectRatio="none">
+                <line class="axis" x1="0" y1="80" x2="320" y2="80"/>
+                <line class="axis" x1="0" y1="40" x2="320" y2="40"/>
+                <polyline class="area" points="20,75 90,62 160,50 230,32 280,30 280,80 20,80"/>
+                <polyline points="20,75 90,62 160,50 230,32 280,30"/>
+                <circle class="pt" cx="20" cy="75" r="3"/>
+                <circle class="pt" cx="90" cy="62" r="3"/>
+                <circle class="pt" cx="160" cy="50" r="3"/>
+                <circle class="pt-now" cx="230" cy="32" r="4"/>
+                <circle class="pt" cx="280" cy="30" r="3" opacity=".4"/>
+                <text x="15" y="95">J0</text>
+                <text x="80" y="95">J2</text>
+                <text x="155" y="95">J4</text>
+                <text x="220" y="95">J7 (now)</text>
+              </svg>
+            </div>
+          </section>
+
+          <!-- Mère & adoption -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Mère · bande sœur</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <a class="card" href="#fiche-truie" style="text-decoration:none;color:inherit">
+                <div class="sub-hint" style="margin-bottom:6px">Mère</div>
+                <div style="display:flex;gap:10px;align-items:center">
+                  <span class="av av--md av--truie">T16</span>
+                  <div>
+                    <div style="font-family:var(--pt-font-mono);font-weight:600;font-size:13px">T-016</div>
+                    <div style="font-size:11.5px;color:var(--pt-muted)">Bahié · ISSE 11,4</div>
+                  </div>
+                </div>
+              </a>
+              <a class="card" href="#" style="text-decoration:none;color:inherit">
+                <div class="sub-hint" style="margin-bottom:6px">Bande sœur</div>
+                <div style="display:flex;gap:10px;align-items:center">
+                  <span class="av av--md av--bande">B5</span>
+                  <div>
+                    <div style="font-family:var(--pt-font-mono);font-weight:600;font-size:13px">Mai 2026</div>
+                    <div style="font-size:11.5px;color:var(--pt-muted)">Adopt. T-001 · 5 NV</div>
+                  </div>
+                </div>
+              </a>
+            </div>
+          </section>
+
+        </div>
+
+        <div class="actions">
+          <button class="btn btn--primary"><i data-lucide="check-square"></i> Daily check</button>
+          <button class="btn btn--secondary"><i data-lucide="scale"></i></button>
+          <button class="btn btn--danger-ghost"><i data-lucide="archive"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== B5 · FICHE LOGE ===== -->
+    <div class="frame-wrap">
+      <span class="eyebrow">B5 · Fiche Loge M-03 <span style="color:var(--pt-ink)">— maternité</span></span>
+      <div class="frame" id="fiche-loge">
+        <div class="stbar" style="background:var(--pt-primary);color:var(--pt-warm)">
+          <span class="num">06:36</span>
+          <div class="stbar__icons">
+            <i data-lucide="signal" style="stroke:var(--pt-warm)"></i>
+            <i data-lucide="wifi" style="stroke:var(--pt-warm)"></i>
+            <i data-lucide="battery-medium" style="stroke:var(--pt-warm)"></i>
+          </div>
+        </div>
+
+        <header class="ph ph--primary">
+          <div class="ph__crumb">
+            <a href="#liste-loges">Élevage</a><i data-lucide="chevron-right"></i>
+            <a href="#liste-loges">Loges</a><i data-lucide="chevron-right"></i>
+            <b>M-03</b>
+          </div>
+          <div class="ph__row">
+            <div>
+              <div class="eyebrow ph__eyebrow" style="color:var(--pt-accent-light)">Élevage · Loge</div>
+              <h1 class="ph__h1">M-03</h1>
+            </div>
+            <button class="iconbtn"><i data-lucide="more-horizontal"></i></button>
+          </div>
+          <p class="ph__sub">Maternité · 11 / 12 places · ventilée · 2 truies + portée</p>
+
+          <div class="id-strip">
+            <span class="av av--xl av--loge">M3</span>
+            <div class="id-strip__meta">
+              <div class="id-strip__row">
+                <span class="pill pill--warm">Maternité</span>
+                <span class="pill pill--ghost" style="color:rgba(245,233,216,0.8);border-color:rgba(245,233,216,0.3)">90% occupée</span>
+              </div>
+              <div>Capacité <b class="num">12</b> places · ventil. mécanique</div>
+              <div>Désinf. <b class="num">28/04/2026</b> (J11)</div>
+            </div>
+          </div>
+        </header>
+
+        <nav class="tabs">
+          <div class="tab" aria-current="true">Vue d'ensemble</div>
+          <div class="tab">Occupation</div>
+          <div class="tab">Santé</div>
+        </nav>
+
+        <div class="body">
+
+          <!-- Identité loge -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Identité</span></div>
+            <div class="card">
+              <dl class="kv">
+                <dt>Code</dt><dd>M-03</dd>
+                <dt>Type</dt><dd>Maternité</dd>
+                <dt>Capacité</dt><dd>12 places</dd>
+                <dt>Surface</dt><dd>14,4 m² · 4 cases</dd>
+                <dt>Ventilation</dt><dd>Mécanique · 2 extracteurs</dd>
+                <dt>État</dt><dd><span class="pill pill--success">OK</span></dd>
+              </dl>
+            </div>
+          </section>
+
+          <!-- Occupation -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Occupation</span><span class="pill pill--soft num">90%</span></div>
+            <div class="stack">
+              <a class="card" href="#fiche-truie" style="display:flex;gap:12px;align-items:center;text-decoration:none;color:inherit">
+                <span class="av av--md av--truie">T16</span>
+                <div style="flex:1">
+                  <div style="font-family:var(--pt-font-mono);font-weight:600;font-size:13px">T-016 · Bahié</div>
+                  <div style="font-size:11.5px;color:var(--pt-muted)">Allaitante · J7 · entrée 02/05</div>
+                </div>
+                <span class="pill pill--warm">Mère</span>
+              </a>
+              <a class="card" href="#fiche-bande" style="display:flex;gap:12px;align-items:center;text-decoration:none;color:inherit">
+                <span class="av av--md av--bande">B7</span>
+                <div style="flex:1">
+                  <div style="font-family:var(--pt-font-mono);font-weight:600;font-size:13px">26-T16-01</div>
+                  <div style="font-size:11.5px;color:var(--pt-muted)">10 porcelets · J7 · poids moy 2,8 kg</div>
+                </div>
+                <span class="pill pill--success num">10</span>
+              </a>
+            </div>
+          </section>
+
+          <!-- Rotation -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Rotation prévue</span></div>
+            <div class="card card--ink">
+              <div class="eyebrow" style="margin-bottom:6px">Sevrage · 31/05/2026</div>
+              <div style="font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:24px;letter-spacing:-0.01em;line-height:1">Dans 22 jours</div>
+              <p style="margin:8px 0 0;color:rgba(245,233,216,0.7);font-size:12.5px;line-height:1.5">T-016 retournera en gestation · porcelets vers PS-01. Programme désinfection 31/05 — 02/06.</p>
+            </div>
+          </section>
+
+          <!-- Historique rotations -->
+          <section>
+            <div class="sec__head"><span class="eyebrow">Historique rotations</span></div>
+            <div class="activity">
+              <div class="activity__row">
+                <div class="activity__date">02/05</div>
+                <div class="activity__icon ev"><i data-lucide="log-in"></i></div>
+                <div class="activity__body">Entrée T-016 + portée 26-T16-01</div>
+              </div>
+              <div class="activity__row">
+                <div class="activity__date">28/04</div>
+                <div class="activity__icon"><i data-lucide="spray-can"></i></div>
+                <div class="activity__body">Désinfection complète + chaulage</div>
+              </div>
+              <div class="activity__row">
+                <div class="activity__date">26/04</div>
+                <div class="activity__icon"><i data-lucide="log-out"></i></div>
+                <div class="activity__body">Sortie T-008 + portée — 11 sevrés</div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+        <div class="actions">
+          <button class="btn btn--primary"><i data-lucide="arrow-left-right"></i> Déplacer</button>
+          <button class="btn btn--secondary"><i data-lucide="spray-can"></i></button>
+          <button class="btn btn--danger-ghost"><i data-lucide="alert-triangle"></i></button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ============================================== -->
+  <!-- B+ Variante avancée fiche truie                  -->
+  <!-- ============================================== -->
+  <h2 class="display" style="font-size:34px;margin:64px 0 6px">Bonus — fiche truie · mode avancé</h2>
+  <p class="sub-hint" style="margin:0 0 28px">DataTable des 4 dernières portées · exportable CSV</p>
+
+  <div class="frames frames--single">
+    <div class="frame-wrap">
+      <span class="eyebrow">B1' · T-031 · onglet Reproduction <span style="color:var(--pt-ink)">— vue tableau</span></span>
+      <div class="frame">
+        <div class="stbar" style="background:var(--pt-primary);color:var(--pt-warm)">
+          <span class="num">06:40</span>
+          <div class="stbar__icons">
+            <i data-lucide="signal" style="stroke:var(--pt-warm)"></i>
+            <i data-lucide="wifi" style="stroke:var(--pt-warm)"></i>
+            <i data-lucide="battery-medium" style="stroke:var(--pt-warm)"></i>
+          </div>
+        </div>
+
+        <header class="ph ph--primary">
+          <div class="ph__crumb">
+            <a href="#fiche-truie">Élevage</a><i data-lucide="chevron-right"></i>
+            <a href="#fiche-truie">Truies</a><i data-lucide="chevron-right"></i>
+            <b>T-031 · Repro</b>
+          </div>
+          <div class="ph__row">
+            <div>
+              <div class="eyebrow ph__eyebrow" style="color:var(--pt-accent-light)">Élevage · Truie</div>
+              <h1 class="ph__h1">T-031</h1>
+            </div>
+            <button class="iconbtn"><i data-lucide="more-horizontal"></i></button>
+          </div>
+          <p class="ph__sub"><b>Mâ Rose</b> · 4 portées · NV moyen 11,8 · ISSE 11,8</p>
+        </header>
+
+        <nav class="tabs">
+          <div class="tab">Vue d'ensemble</div>
+          <div class="tab" aria-current="true">Reproduction</div>
+          <div class="tab">Santé</div>
+          <div class="tab">Historique</div>
+        </nav>
+
+        <div class="body">
+
+          <section>
+            <div class="sec__head">
+              <span class="eyebrow">Carrière reproductive · 4 portées</span>
+              <span class="pill pill--soft"><i data-lucide="download" style="width:11px;height:11px"></i> CSV</span>
+            </div>
+            <div class="card card--bg" style="padding:6px 10px">
+              <table class="dt">
+                <thead>
+                  <tr>
+                    <th>P.</th>
+                    <th>Saillie</th>
+                    <th class="num-r">Écho</th>
+                    <th class="num-r">MB</th>
+                    <th class="num-r">NV</th>
+                    <th class="num-r">NS</th>
+                    <th class="num-r">SV</th>
+                    <th class="num-r">NSv</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><b>1</b></td>
+                    <td>09/03/23</td>
+                    <td class="num-r">+</td>
+                    <td class="num-r">02/07/23</td>
+                    <td class="num-r">10</td>
+                    <td class="num-r">10</td>
+                    <td class="num-r">30/07</td>
+                    <td class="num-r">9</td>
+                  </tr>
+                  <tr>
+                    <td><b>2</b></td>
+                    <td>22/08/23</td>
+                    <td class="num-r">+</td>
+                    <td class="num-r">15/12/23</td>
+                    <td class="num-r">12</td>
+                    <td class="num-r">12</td>
+                    <td class="num-r">12/01</td>
+                    <td class="num-r">11</td>
+                  </tr>
+                  <tr>
+                    <td><b>3</b></td>
+                    <td>28/03/24</td>
+                    <td class="num-r">+</td>
+                    <td class="num-r">21/07/24</td>
+                    <td class="num-r">14</td>
+                    <td class="num-r"><span style="color:var(--pt-danger)">13</span></td>
+                    <td class="num-r">18/08</td>
+                    <td class="num-r">11</td>
+                  </tr>
+                  <tr style="background:rgba(184,112,61,0.06)">
+                    <td><b>4</b></td>
+                    <td>14/12/25</td>
+                    <td class="num-r">+</td>
+                    <td class="num-r">06/04/26</td>
+                    <td class="num-r">11</td>
+                    <td class="num-r">11</td>
+                    <td class="num-r"><em style="color:var(--pt-accent)">23/05</em></td>
+                    <td class="num-r"><em style="color:var(--pt-accent)">…</em></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="meta-line" style="margin-top:8px">
+              <span>NV total <b>47</b></span><span class="dot"></span>
+              <span>Sevrés <b>31</b> / 45 nés-vifs précédents</span><span class="dot"></span>
+              <span>Taux 68,9%</span>
+            </div>
+          </section>
+
+          <section>
+            <div class="sec__head"><span class="eyebrow">Aperçu carrière</span></div>
+            <div class="card card--bg">
+              <svg class="miniplot" viewBox="0 0 320 110" preserveAspectRatio="none" style="height:110px">
+                <line class="axis" x1="0" y1="90" x2="320" y2="90"/>
+                <line class="axis" x1="0" y1="55" x2="320" y2="55"/>
+                <line class="axis" x1="0" y1="20" x2="320" y2="20"/>
+                <polyline class="area" points="35,72 130,42 220,18 285,55 285,90 35,90"/>
+                <polyline points="35,72 130,42 220,18 285,55"/>
+                <circle class="pt" cx="35" cy="72" r="4"/>
+                <circle class="pt" cx="130" cy="42" r="4"/>
+                <circle class="pt" cx="220" cy="18" r="4"/>
+                <circle class="pt-now" cx="285" cy="55" r="5"/>
+                <text x="30" y="105">P1·10</text>
+                <text x="120" y="105">P2·12</text>
+                <text x="210" y="105">P3·14</text>
+                <text x="270" y="105">P4·11</text>
+              </svg>
+            </div>
+          </section>
+
+        </div>
+
+        <div class="actions">
+          <button class="btn btn--primary"><i data-lucide="plus"></i> Évènement repro</button>
+          <button class="btn btn--secondary"><i data-lucide="download"></i></button>
+          <button class="btn btn--danger-ghost"><i data-lucide="log-out"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================== -->
+  <!-- C. SYSTEM                                       -->
+  <!-- ============================================== -->
+  <h2 class="display" id="system" style="font-size:34px;margin:80px 0 6px">C. Système — garde-fou</h2>
+  <p class="sub-hint" style="margin:0 0 28px">Tokens · échelle typographique · pills · avatars</p>
+
+  <div class="system-block">
+    <h3 class="section">Palette · 13 tokens canoniques</h3>
+    <div class="swatches">
+      <div class="swatch"><div class="swatch__chip" style="background:#2D4A1F"></div><div class="swatch__meta"><div class="swatch__name">--pt-primary</div><div class="swatch__hex">#2D4A1F</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:#1f3414"></div><div class="swatch__meta"><div class="swatch__name">--pt-primary-deep</div><div class="swatch__hex">#1F3414</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:#4a7a2f"></div><div class="swatch__meta"><div class="swatch__name">--pt-primary-light</div><div class="swatch__hex">#4A7A2F</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:#F5E9D8"></div><div class="swatch__meta"><div class="swatch__name">--pt-warm</div><div class="swatch__hex">#F5E9D8</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:#E8D5B5"></div><div class="swatch__meta"><div class="swatch__name">--pt-warm-deep</div><div class="swatch__hex">#E8D5B5</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:#B8703D"></div><div class="swatch__meta"><div class="swatch__name">--pt-accent</div><div class="swatch__hex">#B8703D</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:#FAF7F0"></div><div class="swatch__meta"><div class="swatch__name">--pt-bg</div><div class="swatch__hex">#FAF7F0</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:#F1ECE0"></div><div class="swatch__meta"><div class="swatch__name">--pt-bg-app</div><div class="swatch__hex">#F1ECE0</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:#1a1a1a"></div><div class="swatch__meta"><div class="swatch__name">--pt-ink</div><div class="swatch__hex">#1A1A1A</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:#6b6357"></div><div class="swatch__meta"><div class="swatch__name">--pt-muted</div><div class="swatch__hex">#6B6357</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:#a39888"></div><div class="swatch__meta"><div class="swatch__name">--pt-subtle</div><div class="swatch__hex">#A39888</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:#c08a3d"></div><div class="swatch__meta"><div class="swatch__name">--pt-warning</div><div class="swatch__hex">#C08A3D</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:#a4453d"></div><div class="swatch__meta"><div class="swatch__name">--pt-danger</div><div class="swatch__hex">#A4453D</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:#4a6e8a"></div><div class="swatch__meta"><div class="swatch__name">--pt-info</div><div class="swatch__hex">#4A6E8A</div></div></div>
+    </div>
+  </div>
+
+  <div class="system-block">
+    <h3 class="section">Typographie · 3 fonts</h3>
+    <div class="typescale">
+      <div class="typescale__row">
+        <div class="typescale__label">Display H1<br>BS 900 / 38</div>
+        <div style="font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:42px;letter-spacing:-0.01em;line-height:1">Cahier de troupeau</div>
+      </div>
+      <div class="typescale__row">
+        <div class="typescale__label">Display H2<br>BS 900 / 26</div>
+        <div style="font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:26px;letter-spacing:-0.01em">Reproduction</div>
+      </div>
+      <div class="typescale__row">
+        <div class="typescale__label">Body<br>IS 400 / 14</div>
+        <div style="font-family:var(--pt-font-body);font-size:14px;color:var(--pt-ink)">Yao ouvre PorcTrack à 6h12, après une nuit blanche en maternité M-03. Il a besoin de voir d'un coup d'œil quelles truies vont mettre bas dans 2 jours.</div>
+      </div>
+      <div class="typescale__row">
+        <div class="typescale__label">Eyebrow<br>JBM 600 / 11 · 0.14</div>
+        <div class="eyebrow" style="font-size:12px">Élevage · 50 animaux · Yamoussoukro</div>
+      </div>
+      <div class="typescale__row">
+        <div class="typescale__label">Mono<br>JBM 400 · tabular</div>
+        <div style="font-family:var(--pt-font-mono);font-size:14px;font-variant-numeric:tabular-nums">T-031 · 06/04/2026 · J34 · 11 NV · 224 kg</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="system-block">
+    <h3 class="section">Pills · 7 variants sémantiques</h3>
+    <div class="pill-grid">
+      <span class="pill pill--success">success · Pleine</span>
+      <span class="pill pill--warm">warm · Maternité</span>
+      <span class="pill pill--warning">warning · À saillir</span>
+      <span class="pill pill--danger">danger · Réforme</span>
+      <span class="pill pill--info">info · Auto</span>
+      <span class="pill pill--soft">soft · 24 places</span>
+      <span class="pill pill--ghost">ghost · filtre off</span>
+    </div>
+  </div>
+
+  <div class="system-block">
+    <h3 class="section">Avatars · 5 espèces × 4 tailles</h3>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="av-grid">
+        <span class="av av--sm av--truie">T1</span>
+        <span class="av av--md av--truie">T31</span>
+        <span class="av av--lg av--truie">T31</span>
+        <span class="av av--xl av--truie">T31</span>
+        <span class="sub-hint" style="align-self:center;margin-left:8px">Truie · rosé soutenu</span>
+      </div>
+      <div class="av-grid">
+        <span class="av av--sm av--verrat">V1</span>
+        <span class="av av--md av--verrat">V01</span>
+        <span class="av av--lg av--verrat">V01</span>
+        <span class="av av--xl av--verrat">V01</span>
+        <span class="sub-hint" style="align-self:center;margin-left:8px">Verrat · bleu acier</span>
+      </div>
+      <div class="av-grid">
+        <span class="av av--sm av--porcelet">P1</span>
+        <span class="av av--md av--porcelet">CR12</span>
+        <span class="av av--lg av--porcelet">CR12</span>
+        <span class="av av--xl av--porcelet">CR12</span>
+        <span class="sub-hint" style="align-self:center;margin-left:8px">Porcelet · warm clay</span>
+      </div>
+      <div class="av-grid">
+        <span class="av av--sm av--bande">B7</span>
+        <span class="av av--md av--bande">B7</span>
+        <span class="av av--lg av--bande">B7</span>
+        <span class="av av--xl av--bande">B7</span>
+        <span class="sub-hint" style="align-self:center;margin-left:8px">Bande · vert céleri</span>
+      </div>
+      <div class="av-grid">
+        <span class="av av--sm av--loge">M3</span>
+        <span class="av av--md av--loge">M3</span>
+        <span class="av av--lg av--loge">M3</span>
+        <span class="av av--xl av--loge">M3</span>
+        <span class="sub-hint" style="align-self:center;margin-left:8px">Loge · warm-deep</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="system-block">
+    <h3 class="section">Empty state · skeleton</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+      <div style="border:1px solid var(--pt-line);border-radius:14px;background:var(--pt-bg);overflow:hidden">
+        <div class="empty">
+          <div class="eyebrow">Aucun verrat en réforme</div>
+          <div class="empty__rule"></div>
+          <div class="empty__title">Rien à sortir<br>aujourd'hui</div>
+          <p class="empty__copy">Tes 3 verrats sont actifs et productifs. Babin entre dans sa 3ᵉ saison — surveille-le.</p>
+          <button class="btn btn--ink"><i data-lucide="plus"></i> Ajouter un verrat</button>
+        </div>
+      </div>
+      <div style="border:1px solid var(--pt-line);border-radius:14px;background:var(--pt-bg);padding:16px">
+        <div class="eyebrow" style="margin-bottom:14px">Skeleton — cascade en blocs</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:grid;grid-template-columns:36px 1fr 60px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--pt-line)">
+            <div style="width:36px;height:36px;background:var(--pt-line);border-radius:8px"></div>
+            <div><div style="height:10px;background:var(--pt-line-strong);border-radius:4px;width:60%"></div><div style="height:8px;background:var(--pt-line);border-radius:4px;width:80%;margin-top:6px"></div></div>
+            <div style="height:18px;background:var(--pt-line);border-radius:99px"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:36px 1fr 60px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--pt-line);opacity:.6">
+            <div style="width:36px;height:36px;background:var(--pt-line);border-radius:8px"></div>
+            <div><div style="height:10px;background:var(--pt-line-strong);border-radius:4px;width:50%"></div><div style="height:8px;background:var(--pt-line);border-radius:4px;width:70%;margin-top:6px"></div></div>
+            <div style="height:18px;background:var(--pt-line);border-radius:99px"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:36px 1fr 60px;gap:10px;align-items:center;padding:8px 0;opacity:.3">
+            <div style="width:36px;height:36px;background:var(--pt-line);border-radius:8px"></div>
+            <div><div style="height:10px;background:var(--pt-line-strong);border-radius:4px;width:40%"></div><div style="height:8px;background:var(--pt-line);border-radius:4px;width:65%;margin-top:6px"></div></div>
+            <div style="height:18px;background:var(--pt-line);border-radius:99px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================== -->
+  <!-- D. Notes design                                 -->
+  <!-- ============================================== -->
+  <h2 class="display" id="notes" style="font-size:34px;margin:80px 0 6px">D. Notes design</h2>
+  <p class="sub-hint" style="margin:0 0 28px">Décisions tranchées · zones d'hésitation · effort dev</p>
+
+  <h3 class="section">3 décisions design fortes</h3>
+  <div class="decisions" style="margin-bottom:32px">
+    <div class="decision decision--ink">
+      <div class="num-tag">01 · Layout</div>
+      <h4>Le header de fiche est sombre (--pt-primary), pas crème</h4>
+      <p>Sur Android Chrome 4G à 6h, l'éleveur scrolle vite. Un bandeau primary opaque + avatar XL crée un point d'ancrage visuel immédiat — l'identité de la bête est lisible avant le contenu. Ça reprend la signature des cahiers d'éleveur cartonnés (couverture sombre, papier ivoire à l'intérieur).</p>
+    </div>
+    <div class="decision">
+      <div class="num-tag">02 · Densité</div>
+      <h4>Lignes de liste à 3 niveaux, pas 2</h4>
+      <p>Avatar + titre code+nom + sous-titre métier (parité, jour de cycle, loge). Yao doit pouvoir scanner 50 truies en 4 secondes : le code mono fixe l'œil, le sous-titre numérique en tabular-nums fournit la donnée actionnable, le pill confirme le statut. Un dashboard à cards ferait perdre ce rythme.</p>
+    </div>
+    <div class="decision">
+      <div class="num-tag">03 · Cycle</div>
+      <h4>Timeline 5 nœuds à la place d'un graphique</h4>
+      <p>Le cycle d'une truie se lit en 5 étapes (Saillie → Écho → MB → En cours → Sevrage). Pas besoin de courbe. Une rail avec nœuds nommés et le curseur ambre sur la position courante suffit — ça raconte sans expliquer, même à un éleveur sans formation analytique. Ça fait écho au cycle bande, donc cohérence métier.</p>
+    </div>
+  </div>
+
+  <h3 class="section">2 zones d'hésitation</h3>
+  <div class="decisions" style="margin-bottom:32px">
+    <div class="decision">
+      <div class="num-tag">Hésité · BottomNav</div>
+      <h4>Maintenir 5 tabs ou en faire 4 + drawer ?</h4>
+      <p>Sur 390px, 5 tabs en mono uppercase tiennent à peine. Tenté à 4 (Aujourd'hui / Élevage / Repro / +) avec Performance + Réglages dans un drawer. Écarté : Yao a explicitement besoin de Performance accessible en 1 tap d'après l'audit. Je garde 5 mais réduis le label à 9.5px et serre les marges.</p>
+    </div>
+    <div class="decision">
+      <div class="num-tag">Hésité · Marius</div>
+      <h4>Bloc IA en card cream ou en card sombre ?</h4>
+      <p>Card cream avec eyebrow accent → cohérent avec le reste, mais dilue. Card sombre (--pt-ink) avec accent ambre → tranchée, signe la fonction "lecture", se distingue d'un commentaire humain. Tranché sombre. Risque : si Marius parle trop souvent, l'écran devient lourd. Mitigé en limitant à 4 bullets max.</p>
+    </div>
+  </div>
+
+  <h3 class="section">Effort dev · port React/Ionic Capacitor</h3>
+  <div class="decisions">
+    <div class="decision">
+      <div class="num-tag">5 jours</div>
+      <h4>Tokens + composants atomiques</h4>
+      <p>Variables CSS, EntityAvatar (5×4), Pill (7 variants), PageHeader (variant primary + crumb), Tabs/SubTabs, BottomNav, FAB, Cycle rail, KV, KPIs grid. Tout en React + CSS modules.</p>
+    </div>
+    <div class="decision">
+      <div class="num-tag">4 jours</div>
+      <h4>5 listes · routes /troupeau/*</h4>
+      <p>Filtres, tri, groupes collapsibles porcelets, grille loges. État partagé via React Query + Capacitor SQLite.</p>
+    </div>
+    <div class="decision">
+      <div class="num-tag">5 jours</div>
+      <h4>5 fiches détail · tabs dynamiques</h4>
+      <p>Templates partagés, variations par espèce. Mini-graphes en Recharts ou SVG natif. Bloc Marius branché sur un endpoint stub.</p>
+    </div>
+    <div class="decision decision--ink">
+      <div class="num-tag">Total · 14 j</div>
+      <h4>~3 semaines à 1 dev</h4>
+      <p>Hors backend (RPC GTTT, calcul ISSE/GMQ), hors tests E2E, hors a11y audit. Prévoir +3 j pour QA terrain Côte d'Ivoire (Android low-end, mode offline).</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Init Lucide
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+  // Tabs / subtabs interactivity (purely visual within a frame)
+  document.querySelectorAll('.tabs, .subtabs').forEach(group=>{
+    group.querySelectorAll('.tab, .subtab').forEach(t=>{
+      t.addEventListener('click',()=>{
+        group.querySelectorAll('[aria-current]').forEach(o=>o.setAttribute('aria-current','false'));
+        t.setAttribute('aria-current','true');
+      });
+    });
+  });
+  // Chips
+  document.querySelectorAll('.chips').forEach(group=>{
+    group.querySelectorAll('.chip').forEach(c=>{
+      c.addEventListener('click',()=>{
+        group.querySelectorAll('.chip').forEach(o=>o.setAttribute('aria-pressed','false'));
+        c.setAttribute('aria-pressed','true');
+      });
+    });
+  });
+</script>
+</body>
+</html>

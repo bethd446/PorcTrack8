@@ -649,3 +649,228 @@
   line-height: 1.5;
   margin-bottom: 12px;
 }
+
+/* ========================================================================== */
+/* V76 — Patterns issus du mockup Claude Design (elevage + reglages-pilotage). */
+/* card-link · priority-line · score-billboard.                                */
+/* ========================================================================== */
+
+/* card-link : ligne de navigation icône+titre+sub+chevron, fond cream/bg.    */
+.card-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--pt-bg);
+  border: 1px solid var(--pt-line);
+  border-radius: 14px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.card-link + .card-link {
+  margin-top: 8px;
+}
+
+.card-link__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--pt-bg-app);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pt-primary);
+  flex-shrink: 0;
+  border: 1px solid var(--pt-line);
+}
+
+.card-link__icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.card-link__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-link__title {
+  font-family: var(--pt-font-mono);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--pt-ink);
+  letter-spacing: 0.02em;
+}
+
+.card-link__sub {
+  font-size: 12px;
+  color: var(--pt-muted);
+  margin-top: 2px;
+}
+
+.card-link__count {
+  font-family: var(--pt-font-mono);
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--pt-subtle);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-right: 2px;
+}
+
+.card-link__chev {
+  color: var(--pt-subtle);
+  display: inline-flex;
+  align-items: center;
+}
+
+.card-link__chev svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* priority-line : ligne d'action prioritaire (Today). icône carrée colorée
+   selon sévérité, titre + sous-titre métier en mono tabular-nums. Border-top
+   dashed entre items, full border solide sur le premier. */
+.priority-line {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px dashed var(--pt-line-strong);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  background: transparent;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+}
+
+.priority-line:first-of-type {
+  border-top: 1px solid var(--pt-line-strong);
+}
+
+.priority-line__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--pt-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pt-primary);
+  border: 1px solid var(--pt-line);
+}
+
+.priority-line__icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.priority-line.crit .priority-line__icon {
+  background: var(--pt-danger);
+  color: var(--pt-warm);
+  border-color: var(--pt-danger);
+}
+
+.priority-line.warm .priority-line__icon {
+  background: var(--pt-accent);
+  color: var(--pt-warm);
+  border-color: var(--pt-accent);
+}
+
+.priority-line.info .priority-line__icon {
+  background: var(--pt-info);
+  color: var(--pt-warm);
+  border-color: var(--pt-info);
+}
+
+.priority-line__main {
+  min-width: 0;
+}
+
+.priority-line__title {
+  font-size: 13.5px;
+  color: var(--pt-ink);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.priority-line__sub {
+  font-family: var(--pt-font-mono);
+  font-size: 11px;
+  color: var(--pt-muted);
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.priority-line__chev {
+  width: 16px;
+  height: 16px;
+  color: var(--pt-subtle);
+}
+
+/* score-billboard : carte score global Performance (lettre A/B/C/D 140px). */
+.score-billboard {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 18px;
+  align-items: center;
+  padding: 18px;
+  background: var(--pt-warm);
+  border: 1px solid var(--pt-line);
+  border-radius: 18px;
+}
+
+.score-letter {
+  font-family: var(--pt-font-display);
+  font-weight: 900;
+  font-size: 140px;
+  line-height: 0.85;
+  color: var(--pt-primary);
+  letter-spacing: -0.04em;
+}
+
+.score-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.score-num {
+  font-family: var(--pt-font-mono);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--pt-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.score-label {
+  font-family: var(--pt-font-display);
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 22px;
+  letter-spacing: -0.01em;
+  line-height: 0.95;
+  color: var(--pt-ink);
+  margin: 0;
+}
+
+.score-pond {
+  font-family: var(--pt-font-mono);
+  font-size: 10.5px;
+  color: var(--pt-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  line-height: 1.5;
+}
