@@ -399,8 +399,8 @@ const AlimentsView: React.FC = () => {
                 alignItems: 'flex-start',
                 gap: 10,
                 padding: '12px 14px',
-                background: '#f0c4be',
-                color: '#6b1d18',
+                background: 'var(--pt-rose-bg)',
+                color: 'var(--pt-rose-ink)',
                 borderRadius: 12,
                 margin: '8px 0 12px',
               }}

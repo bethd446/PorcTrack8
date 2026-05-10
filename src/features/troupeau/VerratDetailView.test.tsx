@@ -153,7 +153,7 @@ describe('VerratDetailView', () => {
     const heading = screen.getByRole('heading', { level: 1 });
     expect(heading.textContent).toContain('Verrat introuvable');
     expect(document.body.textContent).toMatch(
-      /ce verrat n'existe pas/i,
+      /ce verrat n[’']existe pas/i,
     );
   });
 

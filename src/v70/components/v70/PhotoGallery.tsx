@@ -291,7 +291,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
               alignItems: 'center',
               gap: 8,
               cursor: 'pointer',
-              fontFamily: "'BigShoulders', system-ui, sans-serif",
+              fontFamily: 'var(--pt-font-display)',
               fontWeight: 600,
               textTransform: 'uppercase',
               fontSize: 12,
@@ -310,7 +310,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
               left: 16,
               color: 'rgba(255,255,255,0.7)',
               fontSize: 11,
-              fontFamily: "'DMMono', monospace",
+              fontFamily: 'var(--pt-font-mono)',
             }}
           >
             {lightboxIdx + 1} / {photos.length}
@@ -347,7 +347,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
           >
             <h3
               style={{
-                fontFamily: "'BigShoulders', system-ui, sans-serif",
+                fontFamily: 'var(--pt-font-display)',
                 fontWeight: 700,
                 textTransform: 'uppercase',
                 fontSize: 15,

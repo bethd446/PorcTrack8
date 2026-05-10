@@ -48,7 +48,7 @@ const PhaseBanner: React.FC<PhaseBannerProps> = ({ src, alt, label }) => (
         position: 'absolute',
         left: 18,
         bottom: 14,
-        color: '#fff',
+        color: 'var(--pt-bg)',
         fontFamily: 'var(--font-heading)',
         fontWeight: 700,
         fontSize: 18,

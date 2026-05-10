@@ -12,7 +12,7 @@
  */
 import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Boxes, Home, Sprout, Eye, Edit3, Scale, LogOut } from 'lucide-react';
+import { Boxes, Home, Sprout, Eye, Edit3, Scale, LogOut, Search } from 'lucide-react';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
@@ -368,12 +368,13 @@ const AnimalsV70Inner: React.FC = () => {
       />
 
       <Card>
-        <div style={{ padding: 4 }}>
+        <div style={{ padding: '4px 4px 4px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Search size={16} aria-hidden="true" style={{ color: 'var(--pt-muted)', flexShrink: 0 }} />
           <input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={`🔍  Rechercher ${baseList[0]?.id ?? '...'}`}
+            placeholder={`Rechercher ${baseList[0]?.id ?? '...'}`}
             style={{
               width: '100%',
               border: 'none',
@@ -381,7 +382,7 @@ const AnimalsV70Inner: React.FC = () => {
               fontSize: 13,
               background: 'transparent',
               fontFamily: 'inherit',
-              padding: '8px 10px',
+              padding: '8px 10px 8px 0',
             }}
             aria-label="Rechercher un animal"
           />
@@ -440,7 +441,7 @@ const AnimalsV70Inner: React.FC = () => {
               marginLeft: 'auto',
               padding: '6px 12px',
               borderRadius: 999,
-              fontFamily: 'var(--font-body, inherit)',
+              fontFamily: 'var(--pt-font-body)',
               fontSize: 12,
               border: '1px solid var(--pt-line)',
               background: 'var(--pt-bg)',
@@ -466,7 +467,7 @@ const AnimalsV70Inner: React.FC = () => {
             style={{
               padding: '6px 12px',
               borderRadius: 999,
-              fontFamily: 'var(--font-body, inherit)',
+              fontFamily: 'var(--pt-font-body)',
               fontSize: 12,
               border: '1px solid var(--pt-line)',
               background: 'var(--pt-bg)',

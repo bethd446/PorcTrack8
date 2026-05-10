@@ -62,7 +62,7 @@ export const TodayV70: React.FC = () => {
         variant: diffDays <= 1 ? 'danger' : 'warning',
         tag: diffDays <= 0 ? 'Urgent' : `J-${diffDays}`,
         title: `Mise-bas${b.truie ? ` — ${b.truie}` : ''}`,
-        meta: `${b.idPortee || b.id} · dans ${diffDays <= 0 ? "aujourd'hui" : `${diffDays}j`}`,
+        meta: `${b.idPortee || b.id} · dans ${diffDays <= 0 ? 'aujourd’hui' : `${diffDays}j`}`,
         to: b.truie ? `/troupeau/truies/${b.truie}` : `/troupeau/bandes/${b.id}`,
       });
     });
@@ -160,7 +160,7 @@ export const TodayV70: React.FC = () => {
 
       <PageHeader
         eyebrow={dateLabel}
-        title="Aujourd'hui"
+        title="Aujourd’hui"
         subtitle={
           showSkeletons
             ? `Bonjour ${userName}`
@@ -185,7 +185,7 @@ export const TodayV70: React.FC = () => {
                 {(() => {
                   const d = new Date(heroMiseBas.dateMB!);
                   const diff = Math.ceil((d.getTime() - Date.now()) / 86400000);
-                  return diff <= 0 ? "aujourd'hui" : diff === 1 ? 'demain' : `dans ${diff}j`;
+                  return diff <= 0 ? 'aujourd’hui' : diff === 1 ? 'demain' : `dans ${diff}j`;
                 })()}
               </div>
             </div>

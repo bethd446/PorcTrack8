@@ -175,7 +175,7 @@ const TroupeauLogesListView: React.FC = () => {
             borderRadius: 20,
             overflow: 'hidden',
             aspectRatio: '4 / 3',
-            background: '#f5efe2',
+            background: 'var(--pt-warm)',
           }}
         >
           <picture>
@@ -209,7 +209,7 @@ const TroupeauLogesListView: React.FC = () => {
               gap: 12,
             }}
           >
-            <div style={{ color: '#fff' }}>
+            <div style={{ color: 'var(--pt-bg)' }}>
               <div
                 style={{
                   fontFamily: 'var(--pt-font-display, var(--font-heading))',

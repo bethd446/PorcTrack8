@@ -88,7 +88,7 @@ export const PorceletGroup: React.FC<PorceletGroupProps> = ({
           <span
             style={{
               flex: 1,
-              fontFamily: 'var(--font-heading)',
+              fontFamily: 'var(--pt-font-display)',
               fontWeight: 700,
               fontSize: 14,
               letterSpacing: '0.02em',
@@ -100,7 +100,7 @@ export const PorceletGroup: React.FC<PorceletGroupProps> = ({
           </span>
           <span
             style={{
-              fontFamily: 'var(--font-mono, monospace)',
+              fontFamily: 'var(--pt-font-mono)',
               fontSize: 12,
               fontVariantNumeric: 'tabular-nums',
               color: 'var(--pt-muted)',
@@ -155,7 +155,7 @@ export const PorceletGroup: React.FC<PorceletGroupProps> = ({
                 <span aria-hidden="true" style={{ color: 'var(--pt-muted)' }}>↳</span>
                 <span
                   style={{
-                    fontFamily: 'var(--font-mono, monospace)',
+                    fontFamily: 'var(--pt-font-mono)',
                     fontVariantNumeric: 'tabular-nums',
                     color: 'var(--pt-ink)',
                     minWidth: 90,

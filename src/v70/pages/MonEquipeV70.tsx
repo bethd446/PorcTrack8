@@ -27,13 +27,15 @@ interface TeamMember {
   full_name: string | null;
 }
 
+// V76: roles colors — couleurs sémantiques métier dérivées des tokens DNA.
+// Tokens utilisés : --pt-primary (Owner), --pt-amber-ink (Porcher), reste = teintes spécifiques rôles non couvertes par les tokens globaux.
 const ROLE_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-  OWNER:    { label: 'Owner',    color: '#2d4a1f', bg: '#cce0bf' },
-  ADMIN:    { label: 'Admin',    color: '#6b4910', bg: '#f4dcb6' },
-  PORCHER:  { label: 'Porcher',  color: '#92400e', bg: 'rgba(244, 162, 97, 0.18)' },
-  WORKER:   { label: 'Porcher',  color: '#92400e', bg: 'rgba(244, 162, 97, 0.18)' },
-  ASSISTANT:{ label: 'Assistant',color: '#1f2937', bg: 'rgba(31, 41, 55, 0.08)' },
-  GERANT:   { label: 'Gérant',   color: '#1f2937', bg: 'rgba(31, 41, 55, 0.08)' },
+  OWNER:    { label: 'Owner',    color: 'var(--pt-primary)',    bg: '#cce0bf' },
+  ADMIN:    { label: 'Admin',    color: '#6b4910',              bg: '#f4dcb6' },
+  PORCHER:  { label: 'Porcher',  color: 'var(--pt-amber-ink)',  bg: 'rgba(244, 162, 97, 0.18)' },
+  WORKER:   { label: 'Porcher',  color: 'var(--pt-amber-ink)',  bg: 'rgba(244, 162, 97, 0.18)' },
+  ASSISTANT:{ label: 'Assistant',color: '#1f2937',              bg: 'rgba(31, 41, 55, 0.08)' },
+  GERANT:   { label: 'Gérant',   color: '#1f2937',              bg: 'rgba(31, 41, 55, 0.08)' },
 };
 
 function getRoleStyle(role: string) {
@@ -46,7 +48,7 @@ function initialOf(member: TeamMember): string {
 }
 
 const ROLE_OPTIONS: Array<{ value: FarmRole; title: string; subtitle: string }> = [
-  { value: 'PORCHER', title: 'Porcher',  subtitle: 'Saisie terrain · pas d\'accès finances' },
+  { value: 'PORCHER', title: 'Porcher',  subtitle: 'Saisie terrain · pas d’accès finances' },
   { value: 'ADMIN',   title: 'Admin',    subtitle: 'Gestion ferme + équipe' },
   { value: 'OWNER',   title: 'Owner',    subtitle: 'Tous droits, y compris finances' },
 ];
@@ -98,7 +100,7 @@ const InviteSheet: React.FC<InviteSheetProps> = ({ isOpen, onClose, onInvited, c
       }
       if (!profileRow?.id) {
         showToast(
-          "Cet utilisateur n'est pas encore inscrit sur PorcTrack. Demande-lui de créer un compte d'abord.",
+          'Cet utilisateur n’est pas encore inscrit sur PorcTrack. Demande-lui de créer un compte d’abord.',
           'error',
           4500,
         );
@@ -166,7 +168,7 @@ const InviteSheet: React.FC<InviteSheetProps> = ({ isOpen, onClose, onInvited, c
               borderRadius: 12,
               border: '1px solid var(--pt-line, rgba(26,26,26,0.16))',
               background: 'var(--bg-surface, #ffffff)',
-              fontFamily: 'var(--font-body)',
+              fontFamily: 'var(--pt-font-body)',
               fontSize: 15,
               color: 'var(--pt-ink, #1a1a1a)',
             }}
@@ -218,7 +220,7 @@ const InviteSheet: React.FC<InviteSheetProps> = ({ isOpen, onClose, onInvited, c
                     <span
                       style={{
                         display: 'block',
-                        fontFamily: 'var(--font-heading)',
+                        fontFamily: 'var(--pt-font-display)',
                         fontWeight: 700,
                         fontSize: 13,
                         letterSpacing: '0.04em',
@@ -265,14 +267,14 @@ const InviteSheet: React.FC<InviteSheetProps> = ({ isOpen, onClose, onInvited, c
             border: 'none',
             borderRadius: 16,
             cursor: submitting ? 'not-allowed' : 'pointer',
-            fontFamily: 'var(--font-heading)',
+            fontFamily: 'var(--pt-font-display)',
             fontWeight: 700,
             fontSize: 14,
             letterSpacing: '0.06em',
             textTransform: 'uppercase',
           }}
         >
-          {submitting ? 'Envoi…' : "Envoyer l'invitation"}
+          {submitting ? 'Envoi…' : 'Envoyer l’invitation'}
         </button>
       </form>
     </BottomSheet>
@@ -311,7 +313,7 @@ export const MonEquipeV70: React.FC = () => {
         .eq('farm_id', currentFarmId);
       if (!mounted) return;
       if (fetchErr || !Array.isArray(rows)) {
-        setError("Impossible de charger l'équipe.");
+        setError('Impossible de charger l’équipe.');
         setMembers([]);
         setLoading(false);
         return;
@@ -408,7 +410,7 @@ export const MonEquipeV70: React.FC = () => {
               <div
                 style={{
                   fontSize: 28,
-                  fontFamily: 'var(--font-heading)',
+                  fontFamily: 'var(--pt-font-display)',
                   fontWeight: 700,
                   color: 'var(--ink)',
                 }}
@@ -449,7 +451,7 @@ export const MonEquipeV70: React.FC = () => {
               border: 'none',
               borderRadius: 16,
               cursor: 'pointer',
-              fontFamily: 'var(--font-heading)',
+              fontFamily: 'var(--pt-font-display)',
               fontWeight: 700,
               fontSize: 14,
               letterSpacing: '0.06em',
@@ -500,7 +502,7 @@ export const MonEquipeV70: React.FC = () => {
               border: '1px solid var(--line)',
               borderRadius: 16,
               fontSize: 13,
-              color: '#a4453d',
+              color: 'var(--pt-danger)',
               textAlign: 'center',
             }}
           >
@@ -553,7 +555,7 @@ export const MonEquipeV70: React.FC = () => {
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontFamily: 'var(--font-heading)',
+                  fontFamily: 'var(--pt-font-display)',
                   fontWeight: 700,
                   fontSize: 16,
                   flexShrink: 0,
@@ -618,7 +620,7 @@ export const MonEquipeV70: React.FC = () => {
         <button
           type="button"
           onClick={() => navigate('/admin')}
-          aria-label="Modifier l'équipe"
+          aria-label="Modifier l’équipe"
           style={{
             width: '100%',
             display: 'flex',
@@ -630,7 +632,7 @@ export const MonEquipeV70: React.FC = () => {
             border: 'none',
             borderRadius: 16,
             cursor: 'pointer',
-            fontFamily: 'var(--font-heading)',
+            fontFamily: 'var(--pt-font-display)',
             fontWeight: 700,
             fontSize: 15,
             letterSpacing: 0.4,
@@ -638,7 +640,7 @@ export const MonEquipeV70: React.FC = () => {
             justifyContent: 'center',
           }}
         >
-          Modifier l'équipe
+          Modifier l’équipe
           <ChevronRight size={18} aria-hidden />
         </button>
       </section>

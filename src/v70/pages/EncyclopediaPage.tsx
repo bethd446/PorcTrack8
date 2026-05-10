@@ -7,6 +7,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { Search } from 'lucide-react';
 import { EncyclopediaArticle } from '../components/v70/EncyclopediaArticle';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
@@ -29,7 +30,7 @@ export const ARTICLES: ArticleEntry[] = [
   },
   {
     slug: '02-isse-optimisation',
-    title: "Comprendre l'ISSE et l'optimiser",
+    title: 'Comprendre l’ISSE et l’optimiser',
     category: 'Économique',
     level: 'intermédiaire',
   },
@@ -140,11 +141,21 @@ export const EncyclopediaPage: React.FC = () => {
       />
 
       {/* V71 Phase 4.5 — recherche full-text accent-insensible */}
-      <div className="card" style={{ marginBottom: 12, padding: 4 }}>
+      <div
+        className="card"
+        style={{
+          marginBottom: 12,
+          padding: '4px 4px 4px 10px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+        }}
+      >
+        <Search size={16} aria-hidden="true" style={{ color: 'var(--pt-muted)', flexShrink: 0 }} />
         <input
           type="search"
-          aria-label="Rechercher dans l'encyclopédie"
-          placeholder="🔍 Rechercher un article..."
+          aria-label="Rechercher dans l’encyclopédie"
+          placeholder="Rechercher un article..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{
@@ -154,7 +165,7 @@ export const EncyclopediaPage: React.FC = () => {
             fontSize: 13,
             background: 'transparent',
             fontFamily: 'inherit',
-            padding: '8px 12px',
+            padding: '8px 12px 8px 0',
           }}
         />
       </div>

@@ -217,7 +217,7 @@ export const PerformanceV70: React.FC = () => {
       <PageHeader
         eyebrow={`Pilotage · ${new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).replace(/^./, c => c.toUpperCase())}`}
         title="Performance"
-        subtitle="L'année en chiffres. Sans détour."
+        subtitle="L’année en chiffres. Sans détour."
       />
 
       <TabsMini
@@ -238,7 +238,7 @@ export const PerformanceV70: React.FC = () => {
         >
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
             <Download size={14} strokeWidth={1.5} aria-hidden="true" />
-            Aperçu PDF prêt — utilise « Enregistrer au format PDF » dans la fenêtre d'impression
+            Aperçu PDF prêt — utilise « Enregistrer au format PDF » dans la fenêtre d’impression
           </span>
         </div>
       )}
@@ -326,7 +326,7 @@ export const PerformanceV70: React.FC = () => {
           isolées) qui ralentissait la lecture pour un éleveur novice : le sigle
           est maintenant énoncé en clair une seule fois en intro. */}
       {(tab === 'vue' || tab === 'kpis') && (
-        <EduCard label="Qu'est-ce que l'ISSE ?">
+        <EduCard label="Qu’est-ce que l’ISSE ?">
           Indice Sevré-Saillie : nombre moyen de porcelets sevrés par truie par cycle.
           Référence métier : <strong>&gt;12 = excellent, 10-12 = bon, &lt;10 = à améliorer</strong>.
         </EduCard>
@@ -435,7 +435,7 @@ export const PerformanceV70: React.FC = () => {
       {tab === 'previsions' && (
         <>
           <EduCard
-            label="Prévisions d'élevage"
+            label="Prévisions d’élevage"
             icon={
               <TrendingUp
                 size={14}

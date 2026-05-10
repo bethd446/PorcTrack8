@@ -351,7 +351,7 @@ const TruieDetailView: React.FC = () => {
   const showMiseBasCTA = isPleine && daysUntilMB !== null && daysUntilMB >= -5 && daysUntilMB <= 3;
   const miseBasCTALabel = (() => {
     if (daysUntilMB === null) return '';
-    if (daysUntilMB === 0) return `${truie.displayId} doit mettre bas aujourd'hui`;
+    if (daysUntilMB === 0) return `${truie.displayId} doit mettre bas aujourd’hui`;
     if (daysUntilMB > 0) return `${truie.displayId} doit mettre bas dans ${daysUntilMB}j`;
     return `${truie.displayId} a dépassé la date prévue (+${Math.abs(daysUntilMB)}j)`;
   })();
@@ -626,7 +626,7 @@ const TruieDetailView: React.FC = () => {
               value={activeTab}
               onChange={(v) => setActiveTab(v as typeof activeTab)}
               options={[
-                { value: 'overview', label: "VUE D'ENSEMBLE" },
+                { value: 'overview', label: 'VUE D’ENSEMBLE' },
                 { value: 'reproduction', label: 'REPRODUCTION', count: sowSaillies.length || undefined },
                 { value: 'sante', label: 'SANTÉ', count: healthLogs.length || undefined },
                 { value: 'historique', label: 'HISTORIQUE' },
@@ -653,7 +653,7 @@ const TruieDetailView: React.FC = () => {
                 {showRetourChaleur && (
                   <div style={{ marginTop: 14 }}>
                     <DecisionBinaire
-                      title="Action requise aujourd'hui"
+                      title="Action requise aujourd’hui"
                       subtitle={`${truie.nom ?? truie.displayId} est dans la fenêtre où elle peut revenir en chaleur. Présente le verrat ce matin et fais le test du dos.`}
                       hint="Si retour : la truie repasse au statut « En attente saillie ». Si pas de chaleur : nouveau check à J21, puis échographie à J28."
                       confirmLabel="Pas de chaleur"
@@ -1202,7 +1202,7 @@ const TruieDetailView: React.FC = () => {
               />
               <div style={{ marginTop: 16 }}>
                 <Button variant="secondary" size="sm" onClick={() => setTreeOpen(false)}>
-                  Fermer l'arbre
+                  Fermer l’arbre
                 </Button>
               </div>
             </div>

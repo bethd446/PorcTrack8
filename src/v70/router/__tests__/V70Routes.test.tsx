@@ -49,7 +49,7 @@ describe('V70Routes — Phase 2', () => {
       </MemoryRouter>,
     );
     // P3A : page TodayV70 réelle livrée → h1 "Aujourd'hui" simple (sans "V70 Phase 3")
-    expect(screen.getByRole('heading', { level: 1, name: /aujourd'hui/i })).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 1, name: /aujourd[’']hui/i })).toBeTruthy();
   });
 
   it('rend BottomNav avec 5 onglets', () => {

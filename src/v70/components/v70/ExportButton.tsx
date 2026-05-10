@@ -5,6 +5,7 @@
  * téléchargement via Blob + <a download>.
  */
 import React from 'react';
+import { Download } from 'lucide-react';
 
 export interface ExportButtonProps {
   data: Array<Record<string, unknown>>;
@@ -52,8 +53,10 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
       className="btn btn-secondary btn-sm"
       onClick={handleClick}
       disabled={data.length === 0}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
     >
-      📥 {label}
+      <Download size={16} aria-hidden="true" />
+      {label}
     </button>
   );
 };

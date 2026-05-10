@@ -303,7 +303,7 @@ export const ReproV70: React.FC = () => {
       {tab === 'agenda' && (
         <>
           <EduCard label="Le saviez-vous ?">
-            Le cycle de gestation d'une truie dure <strong>115 jours</strong>. L'échographie à <strong>J28</strong> permet de confirmer la gestation et planifier la mise-bas.
+            Le cycle de gestation d’une truie dure <strong>115 jours</strong>. L’échographie à <strong>J28</strong> permet de confirmer la gestation et planifier la mise-bas.
           </EduCard>
 
           {cycleBande ? (
@@ -554,7 +554,7 @@ export const ReproV70: React.FC = () => {
                 Historique des bandes terminées
               </span>
               <div style={{ marginTop: 8, fontSize: 11 }}>
-                Voir toutes les bandes (actives + historique) sur l'onglet{' '}
+                Voir toutes les bandes (actives + historique) sur l’onglet{' '}
                 <button
                   type="button"
                   onClick={() => navigate('/troupeau?view=bandes')}

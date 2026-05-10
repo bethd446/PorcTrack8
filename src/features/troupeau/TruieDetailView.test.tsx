@@ -259,13 +259,10 @@ describe('TruieDetailView', () => {
     expect(within(identite).getByText(/Code · Boucle/i)).toBeDefined();
   });
 
-  it.skip(
-    "section « Reproduction » affiche la date de mise-bas prévue au format FR",
-    // SKIP: feature retirée v6 — la section "Reproduction en cours" ne s'affiche
-    // qu'avec une saillie active (lastSaillie). dateMBPrevue n'est plus rendue
-    // directement. À reprendre en feature follow-up si besoin.
-    () => {},
-  );
+  // V76 P2-5 cleanup — tests skip retirés (features supprimées en v6, cf. decisions.md) :
+  //   - "Reproduction" date MB (section retirée, gérée via SowHero)
+  //   - 4 quick-actions (remplacées par CTA SowHero + MariusFAB)
+  //   - "Sevrer" / "Confirmer MB" / "Détecter chaleur" (gérés via DecisionBinaire ou Marius)
 
   it('truie introuvable : affiche « Truie introuvable » + message', () => {
     renderAt('/troupeau/truies/T99');
@@ -285,29 +282,7 @@ describe('TruieDetailView', () => {
     expect(editBtn.tagName).toBe('BUTTON');
   });
 
-  it.skip(
-    'affiche les 4 actions rapides (Soin · Pesée · Saillie · Note)',
-    // SKIP: feature retirée v6 — les 4 quick-actions ont été remplacées par
-    // les CTA du SowHero (Nouvel évènement / Imprimer) + le MariusFAB.
-    () => {},
-  );
-
   // ── Actions métier contextuelles ─────────────────────────────────────────
-
-  it.skip(
-    'MATERNITE : affiche le bouton « Sevrer » dans Actions métier',
-    // SKIP: feature retirée v6 — le bouton "Sevrer" n'existe plus dans Actions
-    // métier. Le sevrage se gère via "Nouvel évènement" / Marius. À reprendre
-    // en feature follow-up.
-    () => {},
-  );
-
-  it.skip(
-    'PLEINE : affiche le bouton « Confirmer MB » dans Actions métier',
-    // SKIP: feature retirée v6 — "Confirmer MB" ne figure plus dans Actions
-    // métier. Action gérée par DecisionBinaire en fenêtre de retour chaleur.
-    () => {},
-  );
 
   it('SURVEILLANCE : bouton « Sortir cette truie » avec confirm dialog', () => {
     // Simule l'appui sur « Confirmer » en appelant le handler du bouton destructif.
@@ -350,13 +325,6 @@ describe('TruieDetailView', () => {
 
     presentAlertMock.mockReset();
   });
-
-  it.skip(
-    'VIDE : affiche le bouton « Détecter chaleur » qui met à jour le statut',
-    // SKIP: feature retirée v6 — "Détecter chaleur" n'existe plus dans Actions
-    // métier. La détection se fait via "Nouvel évènement" sur le SowHero.
-    () => {},
-  );
 
   // ── CTA « Éditer la fiche » + highlight ────────────────────────
 

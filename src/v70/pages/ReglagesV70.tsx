@@ -144,7 +144,7 @@ export const ReglagesV70: React.FC = () => {
         </div>
       </Card>
 
-      <Section label="Mode d'affichage">
+      <Section label="Mode d’affichage">
         <ToggleAdvancedMode />
       </Section>
 
@@ -202,7 +202,7 @@ export const ReglagesV70: React.FC = () => {
         />
         <SettingsRow
           title="Refaire le tutoriel"
-          subtitle="2 min · découverte de l'app"
+          subtitle="2 min · découverte de l’app"
           Icon={GraduationCap}
           onClick={() => navigate('/reglages/onboarding')}
         />
@@ -234,7 +234,7 @@ export const ReglagesV70: React.FC = () => {
             borderRadius: 16,
             cursor: 'pointer',
             transition: 'background 200ms ease, border-color 200ms ease',
-            fontFamily: 'var(--font-body)',
+            fontFamily: 'var(--pt-font-body)',
             fontSize: 15,
             color: 'var(--ink)',
             textAlign: 'left',

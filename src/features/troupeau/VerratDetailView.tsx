@@ -151,7 +151,7 @@ const VerratDetailView: React.FC = () => {
             >
               <EntityNotFoundCard
                 label="verrat"
-                message="Ce verrat n'existe pas ou plus dans votre exploitation."
+                message="Ce verrat n’existe pas ou plus dans votre exploitation."
                 onBack={() => window.history.back()}
               />
             </div>
@@ -273,7 +273,7 @@ const VerratDetailView: React.FC = () => {
               value={activeTab}
               onChange={(v) => setActiveTab(v as VerratTabId)}
               options={[
-                { value: 'overview', label: "VUE D'ENSEMBLE" },
+                { value: 'overview', label: 'VUE D’ENSEMBLE' },
                 { value: 'saillies', label: 'SAILLIES', count: saillesVerrat.length || undefined },
                 { value: 'sante', label: 'SANTÉ', count: soins.length || undefined },
                 { value: 'lignee', label: 'LIGNÉE' },
@@ -559,7 +559,7 @@ const VerratDetailView: React.FC = () => {
               <SectionDivider label="Lignée" />
               <div className="card-dense text-center py-6 mt-3">
                 <p className="text-[12px] text-text-2 max-w-xs mx-auto">
-                  Données de lignée à venir. L'origine et la boucle sont visibles dans l'onglet « Vue d'ensemble ».
+                  Données de lignée à venir. L’origine et la boucle sont visibles dans l’onglet « Vue d’ensemble ».
                 </p>
               </div>
             </section>

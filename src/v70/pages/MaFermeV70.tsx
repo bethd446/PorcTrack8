@@ -49,7 +49,7 @@ const InfoCard: React.FC<InfoCardProps> = ({ label, value, hint }) => (
     <div
       style={{
         fontSize: 18,
-        fontFamily: 'var(--font-heading)',
+        fontFamily: 'var(--pt-font-display)',
         fontWeight: 700,
         color: 'var(--ink)',
         lineHeight: 1.3,
@@ -123,7 +123,7 @@ export const MaFermeV70: React.FC = () => {
         <InfoCard
           label="Code"
           value={
-            <span style={{ fontFamily: 'var(--font-body)', fontSize: 15, letterSpacing: 0.4 }}>
+            <span style={{ fontFamily: 'var(--pt-font-body)', fontSize: 15, letterSpacing: 0.4 }}>
               {farmShortId}
             </span>
           }
@@ -182,7 +182,7 @@ export const MaFermeV70: React.FC = () => {
             <div
               style={{
                 fontSize: 28,
-                fontFamily: 'var(--font-heading)',
+                fontFamily: 'var(--pt-font-display)',
                 fontWeight: 700,
                 color: 'var(--ink)',
               }}
@@ -213,7 +213,7 @@ export const MaFermeV70: React.FC = () => {
             <div
               style={{
                 fontSize: 28,
-                fontFamily: 'var(--font-heading)',
+                fontFamily: 'var(--pt-font-display)',
                 fontWeight: 700,
                 color: 'var(--ink)',
               }}
@@ -244,7 +244,7 @@ export const MaFermeV70: React.FC = () => {
             <div
               style={{
                 fontSize: 28,
-                fontFamily: 'var(--font-heading)',
+                fontFamily: 'var(--pt-font-display)',
                 fontWeight: 700,
                 color: 'var(--ink)',
               }}
@@ -270,7 +270,7 @@ export const MaFermeV70: React.FC = () => {
         <button
           type="button"
           onClick={() => navigate('/reglages/systeme')}
-          aria-label="Modifier l'identité de la ferme"
+          aria-label="Modifier l’identité de la ferme"
           style={{
             width: '100%',
             display: 'flex',
@@ -282,7 +282,7 @@ export const MaFermeV70: React.FC = () => {
             border: 'none',
             borderRadius: 16,
             cursor: 'pointer',
-            fontFamily: 'var(--font-heading)',
+            fontFamily: 'var(--pt-font-display)',
             fontWeight: 700,
             fontSize: 15,
             letterSpacing: 0.4,

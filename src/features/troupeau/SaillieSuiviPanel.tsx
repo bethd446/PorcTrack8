@@ -272,7 +272,7 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
     setSaving(true);
     try {
       await enqueueUpdate('saillies', saillie.id, { statut: 'Confirmée' });
-      setToast(`Gestation confirmée · suivi jusqu'à MB ${formatFrShort(dateMBPrevue)}`);
+      setToast(`Gestation confirmée · suivi jusqu’à MB ${formatFrShort(dateMBPrevue)}`);
       try {
         await refreshData();
       } catch (err) {
@@ -345,7 +345,7 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
           err,
         );
         setToast(
-          '⚠ Saillie marquée Non confirmée mais statut truie non mis à jour — ressayez',
+          'Attention : Saillie marquée Non confirmée mais statut truie non mis à jour — ressayez',
         );
         throw err;
       }
@@ -365,7 +365,7 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
     } catch (err) {
       // Ne pas écraser un toast déjà posé par le catch interne du 2e patch.
       setToast(prev =>
-        prev.startsWith('⚠ Saillie marquée')
+        prev.startsWith('Attention : Saillie marquée')
           ? prev
           : err instanceof Error
             ? `Erreur : ${err.message}`
@@ -804,8 +804,8 @@ const ConfirmBody: React.FC<ConfirmBodyProps> = ({
   const explain = isDanger
     ? 'La saillie sera marquée « Non confirmée ». La truie repassera en attente de saillie — une alerte chaleur post-sevrage sera générée au prochain refresh.'
     : presumed
-      ? `Aucun retour chaleur observé depuis J+${jour ?? '—'}. La gestation est considérée acquise. Le suivi continuera jusqu'à la mise-bas.`
-      : 'La saillie sera confirmée. La truie reste en gestation jusqu\'à la date de mise-bas prévue.';
+      ? `Aucun retour chaleur observé depuis J+${jour ?? '—'}. La gestation est considérée acquise. Le suivi continuera jusqu’à la mise-bas.`
+      : 'La saillie sera confirmée. La truie reste en gestation jusqu’à la date de mise-bas prévue.';
 
   return (
     <div className="flex flex-col gap-5" aria-busy={saving}>

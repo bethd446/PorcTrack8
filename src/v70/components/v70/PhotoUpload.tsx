@@ -179,7 +179,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
         )}
         <span
           style={{
-            fontFamily: "'BigShoulders', system-ui, sans-serif",
+            fontFamily: 'var(--pt-font-display)',
             fontWeight: 600,
             textTransform: 'uppercase',
             letterSpacing: '0.05em',

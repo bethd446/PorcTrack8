@@ -863,7 +863,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                                 {p.boucle}
                               </span>
                               <span className="text-[10px] text-text-2 uppercase">
-                                {p.sexe === 'M' ? '♂' : p.sexe === 'F' ? '♀' : '?'}
+                                {p.sexe === 'M' ? 'M' : p.sexe === 'F' ? 'F' : '?'}
                               </span>
                               {p.poidsCourantKg != null ? (
                                 <span className="text-[11px] tabular-nums text-text-1">

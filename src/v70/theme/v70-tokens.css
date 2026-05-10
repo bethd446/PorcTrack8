@@ -41,4 +41,12 @@
   --pt-porcelet-fg: #8B6E3D;
   --pt-bande-bg: #D4DFC8;
   --pt-bande-fg: #3D5C2C;
+
+  /* === SÉMANTIQUES SECONDAIRES (V76 — utilisées hors theming principal) === */
+  --pt-rose-bg: #f0c4be;
+  --pt-rose-ink: #6b1d18;
+  --pt-amber-ink: #92400e;
+  --pt-emerald-ink: #065f46;
+  --pt-emerald-bg: #ecfdf5;
+  --pt-crimson-ink: #9f1239;
 }

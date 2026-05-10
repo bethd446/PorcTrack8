@@ -88,14 +88,14 @@ function statusForItem(it: QueueItem): ItemStatus {
     const wait = Math.max(0, Math.ceil((it.nextAttemptAt - Date.now()) / 1000));
     return {
       label: `Retry ${it.tries}/5 dans ${wait < 60 ? `${wait}s` : `${Math.ceil(wait / 60)}min`}`,
-      color: '#92400e',
-      bg: '#fef3c7',
+      color: 'var(--pt-amber-ink)',
+      bg: '#fef3c7', // V76: pas de token équivalent (warning bg pâle)
     };
   }
   return {
     label: `Retry ${it.tries}/5`,
-    color: '#92400e',
-    bg: '#fef3c7',
+    color: 'var(--pt-amber-ink)',
+    bg: '#fef3c7', // V76: pas de token équivalent (warning bg pâle)
   };
 }
 
@@ -209,14 +209,14 @@ export const SynchronisationV70: React.FC = () => {
           border: `1px solid ${online ? 'var(--pt-line)' : '#fde68a'}`,
           fontFamily: 'var(--pt-font-body)',
           fontSize: 13,
-          color: online ? 'var(--pt-ink)' : '#92400e',
+          color: online ? 'var(--pt-ink)' : 'var(--pt-amber-ink)',
           marginBottom: 16,
         }}
       >
         {online ? (
           <Cloud size={16} aria-hidden color="var(--pt-primary, #064e3b)" />
         ) : (
-          <CloudOff size={16} aria-hidden color="#92400e" />
+          <CloudOff size={16} aria-hidden color="var(--pt-amber-ink)" />
         )}
         <span>
           {online ? 'Réseau disponible' : 'Hors ligne — la file se drainera au retour réseau'}
@@ -256,9 +256,9 @@ export const SynchronisationV70: React.FC = () => {
               gap: 10,
               padding: '16px 14px',
               borderRadius: 12,
-              background: '#ecfdf5',
-              border: '1px solid #a7f3d0',
-              color: '#065f46',
+              background: 'var(--pt-emerald-bg)',
+              border: '1px solid #a7f3d0', // V76: pas de token équivalent (emerald-200 border)
+              color: 'var(--pt-emerald-ink)',
               fontSize: 13,
             }}
           >
@@ -323,7 +323,7 @@ export const SynchronisationV70: React.FC = () => {
                         style={{
                           marginTop: 4,
                           fontSize: 11,
-                          color: '#9f1239',
+                          color: 'var(--pt-crimson-ink)',
                           fontFamily: 'var(--pt-font-mono, monospace)',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -388,7 +388,7 @@ export const SynchronisationV70: React.FC = () => {
                       alignItems: 'center',
                       gap: 8,
                       fontSize: 13,
-                      color: '#9f1239',
+                      color: 'var(--pt-crimson-ink)',
                       fontFamily: 'var(--pt-font-display)',
                       fontWeight: 700,
                     }}
@@ -410,7 +410,7 @@ export const SynchronisationV70: React.FC = () => {
                       style={{
                         marginTop: 4,
                         fontSize: 11,
-                        color: '#9f1239',
+                        color: 'var(--pt-crimson-ink)',
                         fontFamily: 'var(--pt-font-mono, monospace)',
                         wordBreak: 'break-word',
                       }}
@@ -473,7 +473,7 @@ function btnDangerStyle(disabled: boolean): React.CSSProperties {
     padding: '10px 14px',
     borderRadius: 10,
     background: 'transparent',
-    color: '#9f1239',
+    color: 'var(--pt-crimson-ink)',
     border: '1px solid #fecdd3',
     fontFamily: 'var(--pt-font-body)',
     fontSize: 13,

@@ -46,7 +46,7 @@ describe('TodayV70 — Phase 3 archétype Dashboard', () => {
         <TodayV70 />
       </MemoryRouter>,
     );
-    expect(screen.getByRole('heading', { level: 1, name: /aujourd'hui/i })).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 1, name: /aujourd[’']hui/i })).toBeTruthy();
   });
 
   it('rend les 4 sections obligatoires', () => {
