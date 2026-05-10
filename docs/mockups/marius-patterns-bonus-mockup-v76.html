@@ -1,0 +1,1205 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PorcTrack 8 — Marius + Patterns + Bonus v76 (3c · final)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  :root{
+    --pt-primary:#2D4A1F;--pt-primary-deep:#1f3414;--pt-primary-light:#4a7a2f;
+    --pt-warm:#F5E9D8;--pt-warm-deep:#E8D5B5;
+    --pt-accent:#B8703D;--pt-accent-light:#D89968;
+    --pt-bg:#FAF7F0;--pt-bg-app:#F1ECE0;
+    --pt-ink:#1a1a1a;--pt-muted:#6b6357;--pt-subtle:#a39888;
+    --pt-success:#4a7a2f;--pt-warning:#c08a3d;--pt-danger:#a4453d;--pt-info:#4a6e8a;
+    --pt-line:rgba(26,26,26,0.08);--pt-line-strong:rgba(26,26,26,0.16);
+    --pt-truie-bg:#F4D4D4;--pt-truie-fg:#8B4744;
+    --pt-verrat-bg:#C8D6E5;--pt-verrat-fg:#3B5266;
+    --pt-porcelet-bg:#F5E9D8;--pt-porcelet-fg:#8B6E3D;
+    --pt-bande-bg:#D4DFC8;--pt-bande-fg:#3D5C2C;
+    --pt-loge-bg:#E8D5B5;--pt-loge-fg:#6b4f2c;
+    --pt-font-display:'Big Shoulders Display',sans-serif;
+    --pt-font-body:'Instrument Sans',sans-serif;
+    --pt-font-mono:'JetBrains Mono',monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--pt-bg-app);color:var(--pt-ink);font-family:var(--pt-font-body);font-size:14px;line-height:1.4;-webkit-font-smoothing:antialiased}
+  .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+  .eyebrow{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle)}
+
+  /* TOP NAV (doc) */
+  .top-nav{position:sticky;top:0;z-index:50;background:var(--pt-ink);color:var(--pt-warm);border-bottom:1px solid rgba(245,233,216,0.08)}
+  .top-nav__inner{max-width:1240px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+  .top-nav__brand{display:flex;align-items:center;gap:10px;font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:20px;letter-spacing:-0.01em}
+  .top-nav__brand-mark{width:28px;height:28px;border-radius:6px;background:var(--pt-accent);color:var(--pt-warm);display:flex;align-items:center;justify-content:center;font-family:var(--pt-font-mono);font-weight:600;font-size:12px}
+  .top-nav__divider{height:18px;width:1px;background:rgba(245,233,216,0.18)}
+  .top-nav__meta{font-family:var(--pt-font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-subtle)}
+  .top-nav__links{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+  .top-nav__link{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-warm);text-decoration:none;padding:8px 10px;border-radius:6px;border:1px solid transparent}
+  .top-nav__link:hover{border-color:rgba(245,233,216,0.18);background:rgba(245,233,216,0.04)}
+  .top-nav__link .num{color:var(--pt-subtle);margin-left:6px}
+
+  .shell{max-width:1240px;margin:0 auto;padding:32px 24px 80px}
+  .doc-header{padding:48px 0 24px;border-bottom:1px solid var(--pt-line);margin-bottom:36px}
+  .doc-header .eyebrow{margin-bottom:14px}
+  .doc-header h1{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:60px;letter-spacing:-0.01em;line-height:.92;margin:0}
+  .doc-header p{margin:18px 0 0;color:var(--pt-muted);max-width:64ch;font-size:15px}
+
+  .section-title{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:34px;letter-spacing:-0.01em;line-height:.92;margin:56px 0 6px}
+  .sub-hint{font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--pt-subtle);margin:0 0 28px}
+  h3.section-rule{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle);margin:36px 0 14px;display:flex;align-items:center;gap:10px}
+  h3.section-rule::after{content:"";flex:1;height:1px;background:var(--pt-line)}
+
+  .frames{display:grid;grid-template-columns:repeat(auto-fill,minmax(390px,1fr));gap:48px 32px;align-items:start}
+  .frames--2{display:grid;grid-template-columns:repeat(auto-fill,minmax(390px,1fr));gap:48px 32px;align-items:start}
+  .frames--3{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:32px 24px;align-items:start}
+  .frame-wrap{display:flex;flex-direction:column;gap:14px}
+  .frame-wrap > .eyebrow{display:flex;gap:12px;align-items:center}
+  .frame-wrap > .eyebrow::after{content:"";flex:1;height:1px;background:var(--pt-line)}
+  .frame{width:390px;height:844px;border-radius:36px;background:var(--pt-bg);border:1px solid var(--pt-line-strong);overflow:hidden;position:relative;display:flex;flex-direction:column}
+  .frame--auto{height:auto;min-height:420px}
+  .frame--sm{height:520px}
+
+  .stbar{display:flex;justify-content:space-between;align-items:center;padding:10px 22px 4px;font-family:var(--pt-font-mono);font-size:12px;font-weight:600;color:var(--pt-ink);flex-shrink:0}
+  .stbar__icons{display:flex;gap:6px;align-items:center}
+  .stbar__icons svg{width:14px;height:14px;stroke:var(--pt-ink)}
+  .stbar--ink{color:var(--pt-warm);background:var(--pt-ink)}
+  .stbar--ink .stbar__icons svg{stroke:var(--pt-warm)}
+
+  /* PILL */
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;font-family:var(--pt-font-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;border:1px solid transparent;white-space:nowrap}
+  .pill::before{content:"";width:5px;height:5px;border-radius:999px;background:currentColor}
+  .pill--success{background:rgba(74,122,47,.12);color:var(--pt-success);border-color:rgba(74,122,47,.22)}
+  .pill--warm{background:rgba(184,112,61,.14);color:var(--pt-accent);border-color:rgba(184,112,61,.24)}
+  .pill--warning{background:rgba(192,138,61,.14);color:var(--pt-warning);border-color:rgba(192,138,61,.24)}
+  .pill--danger{background:rgba(164,69,61,.12);color:var(--pt-danger);border-color:rgba(164,69,61,.24)}
+  .pill--info{background:rgba(74,110,138,.12);color:var(--pt-info);border-color:rgba(74,110,138,.22)}
+  .pill--soft{background:rgba(26,26,26,.06);color:var(--pt-muted);border-color:var(--pt-line-strong)}
+  .pill--no-dot::before{display:none}
+
+  .av{border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--pt-font-mono);font-weight:600;flex-shrink:0;border:1px solid rgba(26,26,26,0.06)}
+  .av--sm{width:24px;height:24px;font-size:9px;border-radius:6px}
+  .av--md{width:36px;height:36px;font-size:11px;border-radius:8px}
+  .av--lg{width:48px;height:48px;font-size:13px;border-radius:10px}
+  .av--truie{background:var(--pt-truie-bg);color:var(--pt-truie-fg)}
+  .av--verrat{background:var(--pt-verrat-bg);color:var(--pt-verrat-fg)}
+  .av--bande{background:var(--pt-bande-bg);color:var(--pt-bande-fg)}
+  .av--porc{background:var(--pt-porcelet-bg);color:var(--pt-porcelet-fg)}
+
+  .btn{border:none;font-family:var(--pt-font-mono);font-weight:600;text-transform:uppercase;letter-spacing:.14em;font-size:11px;padding:13px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;line-height:1}
+  .btn svg{width:13px;height:13px}
+  .btn--primary{background:var(--pt-primary);color:var(--pt-warm)}
+  .btn--accent{background:var(--pt-accent);color:var(--pt-warm)}
+  .btn--danger{background:var(--pt-danger);color:var(--pt-warm)}
+  .btn--cream{background:var(--pt-warm);color:var(--pt-ink)}
+  .btn--ghost{background:transparent;color:var(--pt-muted);border:1px solid var(--pt-line-strong)}
+  .btn--ghost-cream{background:transparent;color:var(--pt-warm);border:1px solid rgba(245,233,216,0.32)}
+  .btn--sm{padding:9px 11px;font-size:10px}
+
+  /* ============ MARIUS ============ */
+  .marius-head{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--pt-line);background:var(--pt-bg);flex-shrink:0}
+  .marius-head__back{width:32px;height:32px;border-radius:8px;border:1px solid var(--pt-line-strong);background:transparent;display:flex;align-items:center;justify-content:center;color:var(--pt-ink);cursor:pointer}
+  .marius-head__back svg{width:14px;height:14px}
+  .marius-avatar{width:36px;height:36px;border-radius:99px;background:var(--pt-accent);color:var(--pt-warm);display:flex;align-items:center;justify-content:center;font-family:var(--pt-font-display);font-weight:900;font-size:18px;letter-spacing:-0.02em;flex-shrink:0}
+  .marius-head__main{flex:1;min-width:0}
+  .marius-head__title{font-family:var(--pt-font-display);font-weight:900;font-size:18px;text-transform:uppercase;letter-spacing:-0.005em;line-height:1;color:var(--pt-ink)}
+  .marius-head__sub{font-family:var(--pt-font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--pt-subtle);margin-top:3px;display:flex;align-items:center;gap:6px}
+  .marius-head__dot{width:6px;height:6px;border-radius:99px;background:var(--pt-success);box-shadow:0 0 0 3px rgba(74,122,47,0.18)}
+  .marius-head__close{width:32px;height:32px;border-radius:8px;border:1px solid var(--pt-line-strong);background:transparent;display:flex;align-items:center;justify-content:center;color:var(--pt-ink);cursor:pointer}
+  .marius-head__close svg{width:14px;height:14px}
+
+  .chat{flex:1;overflow-y:auto;padding:18px 18px 12px;display:flex;flex-direction:column;gap:12px;background:var(--pt-bg-app)}
+  .chat__ts{align-self:center;font-family:var(--pt-font-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-subtle);padding:6px 10px;background:transparent;margin-top:6px}
+  .bubble{max-width:80%;padding:11px 13px;border-radius:14px;font-size:13.5px;line-height:1.45}
+  .bubble--user{align-self:flex-end;background:var(--pt-accent);color:var(--pt-warm);border-bottom-right-radius:6px;font-family:var(--pt-font-body)}
+  .bubble--marius{align-self:flex-start;background:var(--pt-bg);color:var(--pt-ink);border:1px solid var(--pt-line);border-bottom-left-radius:6px}
+  .bubble--marius h4{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:14px;letter-spacing:-0.005em;margin:0 0 6px;color:var(--pt-primary)}
+  .bubble--marius ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+  .bubble--marius li{padding-left:14px;position:relative;font-size:13px;line-height:1.5}
+  .bubble--marius li::before{content:"";width:5px;height:5px;border-radius:99px;background:var(--pt-accent);position:absolute;left:2px;top:8px}
+  .bubble--marius b{color:var(--pt-primary);font-weight:600}
+  .bubble--marius code{font-family:var(--pt-font-mono);font-size:12px;font-weight:600;color:var(--pt-accent);background:rgba(184,112,61,.08);padding:1px 5px;border-radius:4px}
+  .bubble--marius p{margin:0 0 6px}
+  .bubble--marius p:last-child{margin-bottom:0}
+  .typing{align-self:flex-start;display:flex;gap:4px;padding:13px 14px;background:var(--pt-bg);border:1px solid var(--pt-line);border-radius:14px;border-bottom-left-radius:6px}
+  .typing span{width:6px;height:6px;border-radius:99px;background:var(--pt-subtle);animation:tdot 1.2s infinite ease-in-out}
+  .typing span:nth-child(2){animation-delay:.18s}
+  .typing span:nth-child(3){animation-delay:.36s}
+  @keyframes tdot{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+
+  .suggestions{padding:8px 18px 6px;display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0;background:var(--pt-bg-app)}
+  .suggestion{font-family:var(--pt-font-mono);font-size:11px;font-weight:500;color:var(--pt-ink);background:var(--pt-bg);border:1px solid var(--pt-line-strong);border-radius:99px;padding:7px 11px;cursor:pointer;white-space:nowrap}
+  .suggestion:hover{background:var(--pt-warm);border-color:var(--pt-accent)}
+
+  .composer{padding:10px 14px 14px;border-top:1px solid var(--pt-line);background:var(--pt-bg);flex-shrink:0;display:flex;align-items:flex-end;gap:8px}
+  .composer__field{flex:1;background:var(--pt-bg-app);border:1px solid var(--pt-line-strong);border-radius:14px;padding:10px 12px;font-family:var(--pt-font-body);font-size:13.5px;color:var(--pt-ink);min-height:42px;max-height:120px;display:flex;align-items:center}
+  .composer__field[contenteditable]:empty::before{content:"Demande à Marius…";color:var(--pt-subtle)}
+  .composer__send{width:42px;height:42px;border-radius:99px;background:var(--pt-accent);color:var(--pt-warm);border:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer}
+  .composer__send svg{width:16px;height:16px}
+  .composer__send[disabled]{opacity:.4;background:var(--pt-subtle);cursor:not-allowed}
+
+  /* card--ink */
+  .card-ink{background:var(--pt-ink);color:var(--pt-warm);border-radius:14px;padding:16px 18px;border:1px solid var(--pt-ink)}
+  .card-ink .eyebrow{color:var(--pt-accent-light)}
+  .card-ink h3{font-family:var(--pt-font-display);font-weight:900;font-size:18px;text-transform:uppercase;letter-spacing:-0.005em;line-height:1.05;margin:8px 0 8px;color:var(--pt-warm)}
+  .card-ink ul{margin:6px 0 12px;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+  .card-ink li{padding-left:14px;position:relative;font-size:13px;line-height:1.5;color:rgba(245,233,216,0.88)}
+  .card-ink li::before{content:"";width:5px;height:5px;border-radius:99px;background:var(--pt-accent-light);position:absolute;left:2px;top:8px}
+  .card-ink li b{color:var(--pt-warm);font-weight:600}
+  .card-ink__cta{display:inline-flex;align-items:center;gap:6px;font-family:var(--pt-font-mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-accent-light);text-decoration:none;padding-top:4px;border-top:1px solid rgba(245,233,216,0.12);margin-top:6px;width:100%;justify-content:space-between}
+  .card-ink__cta svg{width:13px;height:13px}
+  .card-ink__head{display:flex;align-items:flex-start;gap:12px}
+  .card-ink__head .marius-avatar{margin-top:0}
+  .card-ink__head-text{flex:1}
+  .card-ink__sub{font-size:13px;color:rgba(245,233,216,0.72);line-height:1.5;margin:6px 0 0}
+
+  .preview-doc{padding:14px 18px;background:var(--pt-bg);flex:1;overflow:auto;display:flex;flex-direction:column;gap:14px}
+  .preview-doc__pe{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle)}
+  .preview-doc__h1{font-family:var(--pt-font-display);font-weight:900;font-size:34px;text-transform:uppercase;letter-spacing:-0.01em;line-height:.95;margin:0;color:var(--pt-ink)}
+
+  /* ============ SKELETONS ============ */
+  .sk{background:var(--pt-line);border-radius:6px;animation:skp 1.6s ease-in-out infinite}
+  .sk--strong{background:var(--pt-line-strong)}
+  @keyframes skp{0%,100%{opacity:.4}50%{opacity:.85}}
+  .sk-list{padding:14px 16px;background:var(--pt-bg);border:1px solid var(--pt-line);border-radius:14px;display:flex;flex-direction:column;gap:14px}
+  .sk-list__row{display:flex;align-items:center;gap:12px}
+  .sk-list__row .sk-icon{width:38px;height:38px;border-radius:10px;flex-shrink:0}
+  .sk-list__row .sk-lines{flex:1;display:flex;flex-direction:column;gap:6px}
+  .sk-list__row .sk-l1{height:11px;width:70%;border-radius:4px}
+  .sk-list__row .sk-l2{height:9px;width:45%;border-radius:4px}
+  .sk-list__row .sk-pill{width:48px;height:18px;border-radius:99px}
+  .sk-list__row:nth-child(2){animation-delay:.08s}
+  .sk-list__row:nth-child(3){animation-delay:.16s}
+  .sk-list__row:nth-child(4){animation-delay:.24s}
+
+  .sk-card{padding:14px 16px;background:var(--pt-bg);border:1px solid var(--pt-line);border-radius:14px;display:flex;align-items:center;gap:14px}
+  .sk-card .sk-i{width:42px;height:42px;border-radius:12px;flex-shrink:0}
+  .sk-card .sk-m{flex:1;display:flex;flex-direction:column;gap:7px}
+  .sk-card .sk-t{height:12px;width:55%;border-radius:4px}
+  .sk-card .sk-s{height:10px;width:80%;border-radius:4px}
+  .sk-card .sk-c{width:14px;height:14px;border-radius:4px;opacity:.5}
+
+  .sk-profil{padding:18px;background:var(--pt-bg);border:1px solid var(--pt-line);border-radius:14px;display:flex;align-items:center;gap:14px}
+  .sk-profil .sk-av{width:64px;height:64px;border-radius:99px;flex-shrink:0}
+  .sk-profil .sk-m{flex:1;display:flex;flex-direction:column;gap:8px}
+  .sk-profil .sk-t1{height:18px;width:60%;border-radius:5px}
+  .sk-profil .sk-t2{height:11px;width:80%;border-radius:4px}
+  .sk-profil .sk-t3{height:11px;width:50%;border-radius:4px}
+
+  .sk-chart{padding:18px 16px;background:var(--pt-bg);border:1px solid var(--pt-line);border-radius:14px}
+  .sk-chart__head{display:flex;justify-content:space-between;margin-bottom:14px}
+  .sk-chart__h{height:11px;width:40%;border-radius:4px}
+  .sk-chart__h2{height:11px;width:18%;border-radius:4px}
+  .sk-chart__bars{display:flex;align-items:flex-end;gap:8px;height:120px}
+  .sk-chart__bars span{flex:1;background:var(--pt-line);border-radius:6px 6px 0 0;animation:skp 1.6s ease-in-out infinite}
+  .sk-chart__bars span:nth-child(1){height:50%;animation-delay:0s}
+  .sk-chart__bars span:nth-child(2){height:72%;animation-delay:.08s}
+  .sk-chart__bars span:nth-child(3){height:38%;animation-delay:.16s}
+  .sk-chart__bars span:nth-child(4){height:84%;animation-delay:.24s}
+  .sk-chart__bars span:nth-child(5){height:60%;animation-delay:.32s}
+  .sk-chart__bars span:nth-child(6){height:92%;animation-delay:.40s}
+  .sk-chart__bars span:nth-child(7){height:46%;animation-delay:.48s}
+  .sk-chart__bars span:nth-child(8){height:78%;animation-delay:.56s}
+
+  /* ============ EMPTY ============ */
+  .empty{padding:32px 22px;background:var(--pt-bg);border:1px solid var(--pt-line);border-radius:14px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;min-height:280px;justify-content:center}
+  .empty__illus{width:72px;height:72px;border-radius:18px;background:var(--pt-warm);display:flex;align-items:center;justify-content:center;color:var(--pt-subtle);margin-bottom:6px}
+  .empty__illus svg{width:30px;height:30px}
+  .empty__illus--success{background:rgba(74,122,47,.1);color:var(--pt-success)}
+  .empty__illus--lineart{background:transparent;color:var(--pt-primary)}
+  .empty__illus--lineart svg{width:64px;height:64px}
+  .empty__title{font-family:var(--pt-font-display);font-weight:900;font-size:20px;text-transform:uppercase;letter-spacing:-0.005em;line-height:1.05;color:var(--pt-ink);margin:0}
+  .empty__sub{font-size:13px;color:var(--pt-muted);line-height:1.45;max-width:30ch;margin:0}
+  .empty__cta{margin-top:8px}
+
+  /* ============ ERRORS ============ */
+  .err{padding:20px;border-radius:14px;display:flex;flex-direction:column;gap:10px}
+  .err--ink{background:var(--pt-ink);color:var(--pt-warm)}
+  .err--cream{background:var(--pt-warm);border:1px solid var(--pt-line-strong)}
+  .err__head{display:flex;align-items:center;gap:12px}
+  .err__icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .err__icon svg{width:20px;height:20px}
+  .err--ink .err__icon{background:rgba(245,233,216,0.1);color:var(--pt-accent-light)}
+  .err--cream .err__icon{background:var(--pt-bg);color:var(--pt-muted)}
+  .err__title{font-family:var(--pt-font-display);font-weight:900;font-size:18px;text-transform:uppercase;letter-spacing:-0.005em;color:inherit;margin:0;line-height:1}
+  .err__sub{font-size:13px;line-height:1.5;margin:0}
+  .err--ink .err__sub{color:rgba(245,233,216,0.72)}
+  .err--cream .err__sub{color:var(--pt-muted)}
+  .err__actions{display:flex;gap:8px;margin-top:4px}
+
+  /* ============ TOAST ============ */
+  .toast{padding:11px 14px;border-radius:12px;display:flex;align-items:center;gap:10px;color:var(--pt-warm)}
+  .toast--success{background:var(--pt-success)}
+  .toast--warning{background:var(--pt-warning)}
+  .toast--error{background:var(--pt-danger)}
+  .toast__icon{width:24px;height:24px;border-radius:7px;background:rgba(245,233,216,0.18);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .toast__icon svg{width:13px;height:13px}
+  .toast__text{flex:1;font-size:13px;line-height:1.35}
+  .toast__text b{font-family:var(--pt-font-mono);font-weight:600}
+  .toast__close{background:transparent;border:none;color:rgba(245,233,216,0.7);width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+  .toast__close svg{width:13px;height:13px}
+
+  /* ============ DIALOG ============ */
+  .dialog{position:relative;background:rgba(20,20,20,0.55);height:100%;display:flex;align-items:center;justify-content:center;padding:0 22px}
+  .dialog__bg{position:absolute;inset:0;display:flex;flex-direction:column;color:var(--pt-muted);background:var(--pt-bg);opacity:.5;filter:blur(0.5px)}
+  .dialog__bg .ph{padding:14px 22px}
+  .dialog__bg .ph h1{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:34px;letter-spacing:-0.01em;line-height:.95;margin:0;color:var(--pt-ink)}
+  .dialog__bg .pe{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle);margin-bottom:6px}
+  .dialog__card{position:relative;background:var(--pt-bg);border-radius:18px;border:1px solid var(--pt-line-strong);padding:22px;width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px}
+  .dialog__title{font-family:var(--pt-font-display);font-weight:900;font-size:22px;text-transform:uppercase;letter-spacing:-0.005em;line-height:1;color:var(--pt-ink);margin:0}
+  .dialog__body{font-size:13.5px;color:var(--pt-muted);line-height:1.5;margin:0}
+  .dialog__body b{color:var(--pt-ink);font-weight:600}
+  .dialog__foot{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+
+  /* ============ LONG-PRESS ============ */
+  .lp-back{position:relative;background:rgba(20,20,20,0.45);height:100%;display:flex;flex-direction:column;justify-content:flex-end}
+  .lp-bg{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--pt-bg);opacity:.55;filter:blur(0.4px);padding:14px 18px;gap:8px}
+  .lp-bg .ph{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:24px;letter-spacing:-0.01em;color:var(--pt-ink)}
+  .lp-bg .pe{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle)}
+  .lp-sheet{position:relative;background:var(--pt-bg);border-top-left-radius:24px;border-top-right-radius:24px;border:1px solid var(--pt-line-strong);border-bottom:none;display:flex;flex-direction:column}
+  .lp-sheet__handle{width:40px;height:4px;border-radius:99px;background:var(--pt-subtle);margin:8px auto 0;opacity:.6}
+  .lp-sheet__head{padding:14px 20px 12px;border-bottom:1px solid var(--pt-line);display:flex;align-items:center;gap:12px}
+  .lp-sheet__head-main{flex:1;min-width:0}
+  .lp-sheet__title{font-family:var(--pt-font-display);font-weight:900;font-size:22px;text-transform:uppercase;letter-spacing:-0.005em;line-height:1;color:var(--pt-ink);margin:6px 0 0}
+  .lp-sheet__actions{display:flex;flex-direction:column}
+  .lp-action{display:flex;align-items:center;gap:14px;padding:13px 20px;border:none;background:transparent;cursor:pointer;text-align:left;font-family:var(--pt-font-body);font-size:14px;color:var(--pt-ink);border-bottom:1px solid var(--pt-line)}
+  .lp-action:hover{background:var(--pt-warm)}
+  .lp-action svg{width:17px;height:17px;color:var(--pt-primary)}
+  .lp-action--danger{color:var(--pt-danger)}
+  .lp-action--danger svg{color:var(--pt-danger)}
+  .lp-cancel{padding:14px 20px;font-family:var(--pt-font-mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-muted);background:var(--pt-bg-app);border:none;cursor:pointer;text-align:center}
+
+  /* ============ TOPBAR DESKTOP demo ============ */
+  .desktop-frame{background:var(--pt-bg-app);border:1px solid var(--pt-line-strong);border-radius:18px;overflow:hidden;width:100%}
+  .desktop-frame__chrome{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--pt-warm-deep);border-bottom:1px solid var(--pt-line)}
+  .desktop-frame__chrome span{width:11px;height:11px;border-radius:99px;background:var(--pt-subtle);opacity:.5}
+  .desktop-frame__chrome span:nth-child(1){background:#cf6b5d;opacity:.6}
+  .desktop-frame__chrome span:nth-child(2){background:#d6a64a;opacity:.6}
+  .desktop-frame__chrome span:nth-child(3){background:var(--pt-primary-light);opacity:.6}
+  .desktop-frame__url{flex:1;background:var(--pt-bg);border-radius:6px;padding:4px 10px;font-family:var(--pt-font-mono);font-size:11px;color:var(--pt-subtle);margin-left:8px}
+  .pt-topnav{background:var(--pt-ink);color:var(--pt-warm);padding:14px 28px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;border-bottom:1px solid rgba(245,233,216,0.06)}
+  .pt-topnav__brand{display:flex;align-items:center;gap:10px;font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:18px;letter-spacing:-0.005em}
+  .pt-topnav__mark{width:26px;height:26px;border-radius:6px;background:var(--pt-accent);color:var(--pt-warm);display:flex;align-items:center;justify-content:center;font-family:var(--pt-font-mono);font-weight:600;font-size:11px}
+  .pt-topnav__divider{width:1px;height:18px;background:rgba(245,233,216,0.18)}
+  .pt-topnav__farm{display:inline-flex;align-items:center;gap:6px;font-family:var(--pt-font-mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;background:rgba(245,233,216,0.06);padding:5px 9px;border-radius:6px;border:1px solid rgba(245,233,216,0.12)}
+  .pt-topnav__farm svg{width:12px;height:12px;color:var(--pt-accent-light)}
+  .pt-topnav__links{display:flex;gap:2px;margin-left:6px}
+  .pt-topnav__link{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:rgba(245,233,216,0.7);padding:7px 11px;border-radius:6px;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+  .pt-topnav__link:hover{background:rgba(245,233,216,0.06);color:var(--pt-warm)}
+  .pt-topnav__link.active{color:var(--pt-warm);background:rgba(245,233,216,0.08)}
+  .pt-topnav__link .badge{font-size:9px;background:var(--pt-danger);color:var(--pt-warm);padding:1px 5px;border-radius:99px;letter-spacing:.05em}
+  .pt-topnav__spacer{flex:1}
+  .pt-topnav__marius{width:34px;height:34px;border-radius:99px;background:var(--pt-accent);color:var(--pt-warm);display:flex;align-items:center;justify-content:center;font-family:var(--pt-font-display);font-weight:900;font-size:16px;cursor:pointer}
+
+  .desktop-body{padding:32px 36px;background:var(--pt-bg-app);min-height:280px}
+  .desktop-body__pe{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle)}
+  .desktop-body__h1{font-family:var(--pt-font-display);font-weight:900;font-size:48px;text-transform:uppercase;letter-spacing:-0.01em;line-height:.95;margin:8px 0 22px;color:var(--pt-ink)}
+  .desktop-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .desktop-kpi{background:var(--pt-bg);border:1px solid var(--pt-line);border-radius:14px;padding:14px 16px}
+  .desktop-kpi__lab{font-family:var(--pt-font-mono);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle);margin-bottom:6px}
+  .desktop-kpi__v{font-family:var(--pt-font-display);font-weight:900;font-size:34px;letter-spacing:-0.01em;line-height:1;color:var(--pt-ink)}
+  .desktop-kpi__sub{font-family:var(--pt-font-mono);font-size:11px;color:var(--pt-muted);margin-top:4px;font-variant-numeric:tabular-nums}
+
+  /* AÏSSA ferme switcher */
+  .farm-chips{display:flex;gap:6px;overflow-x:auto;padding:14px 18px 6px;flex-shrink:0;border-bottom:1px solid var(--pt-line);background:var(--pt-bg)}
+  .farm-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:99px;background:var(--pt-bg);border:1px solid var(--pt-line-strong);font-family:var(--pt-font-mono);font-size:11px;font-weight:600;color:var(--pt-muted);text-transform:uppercase;letter-spacing:.1em;white-space:nowrap;cursor:pointer}
+  .farm-chip[aria-checked="true"]{background:var(--pt-ink);color:var(--pt-warm);border-color:var(--pt-ink)}
+  .farm-chip .num{color:var(--pt-accent-light);margin-left:2px;font-weight:600}
+  .farm-chip[aria-checked="true"] .num{color:var(--pt-accent-light)}
+  .farm-chip:not([aria-checked="true"]) .num{color:var(--pt-subtle)}
+
+  .body-pad{padding:14px 18px;display:flex;flex-direction:column;gap:14px;overflow:auto;flex:1}
+  .pe-h{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle)}
+  .h1-h{font-family:var(--pt-font-display);font-weight:900;font-size:32px;text-transform:uppercase;letter-spacing:-0.01em;line-height:.95;color:var(--pt-ink);margin:6px 0 0}
+  .sub-h{font-size:13px;color:var(--pt-muted)}
+
+  .kpis2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .kpi{background:var(--pt-warm);border:1px solid var(--pt-line);border-radius:12px;padding:11px 13px}
+  .kpi__lab{font-family:var(--pt-font-mono);font-size:9.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle)}
+  .kpi__v{font-family:var(--pt-font-display);font-weight:900;font-size:24px;letter-spacing:-0.005em;line-height:1;color:var(--pt-ink);margin-top:4px;font-variant-numeric:tabular-nums}
+  .kpi__sub{font-family:var(--pt-font-mono);font-size:10px;color:var(--pt-muted);margin-top:3px;font-variant-numeric:tabular-nums}
+
+  /* ============ DATATABLE ============ */
+  .dt-toolbar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--pt-line);gap:8px;flex-wrap:wrap}
+  .dt-chips{display:flex;gap:5px;flex-wrap:wrap}
+  .dt-chip{font-family:var(--pt-font-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--pt-muted);background:var(--pt-bg);border:1px solid var(--pt-line-strong);border-radius:99px;padding:5px 9px;cursor:pointer}
+  .dt-chip[aria-checked="true"]{background:var(--pt-primary);color:var(--pt-warm);border-color:var(--pt-primary)}
+  .dt-export{font-family:var(--pt-font-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-ink);background:transparent;border:1px solid var(--pt-line-strong);border-radius:8px;padding:7px 10px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+  .dt-export svg{width:12px;height:12px}
+
+  .dt-card{background:var(--pt-bg);border:1px solid var(--pt-line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+  .dt-card__head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--pt-line);padding-bottom:6px}
+  .dt-card__id{font-family:var(--pt-font-display);font-weight:900;font-size:18px;text-transform:uppercase;letter-spacing:-0.005em;line-height:1;color:var(--pt-ink)}
+  .dt-card__date{font-family:var(--pt-font-mono);font-size:10.5px;color:var(--pt-subtle);text-transform:uppercase;letter-spacing:.12em}
+  .dt-kv{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+  .dt-kv > div{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--pt-font-mono);font-size:11.5px}
+  .dt-kv .k{color:var(--pt-subtle);text-transform:uppercase;font-size:9.5px;letter-spacing:.12em;font-weight:600}
+  .dt-kv .v{color:var(--pt-ink);font-weight:600;font-variant-numeric:tabular-nums}
+
+  .dt-table{width:100%;border-collapse:separate;border-spacing:0;font-family:var(--pt-font-body);font-size:13px}
+  .dt-table thead th{font-family:var(--pt-font-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-subtle);text-align:left;padding:10px 12px;border-bottom:1px solid var(--pt-line-strong);background:var(--pt-bg-app);position:sticky;top:0}
+  .dt-table thead th .sort{display:inline-flex;align-items:center;gap:4px;cursor:pointer}
+  .dt-table thead th .sort svg{width:11px;height:11px;opacity:.5}
+  .dt-table tbody td{padding:11px 12px;border-bottom:1px solid var(--pt-line);color:var(--pt-ink);font-variant-numeric:tabular-nums}
+  .dt-table tbody td.code{font-family:var(--pt-font-mono);font-weight:600;font-size:12.5px}
+  .dt-table tbody tr:hover{background:var(--pt-warm)}
+  .dt-pag{padding:10px 16px;display:flex;justify-content:space-between;align-items:center;font-family:var(--pt-font-mono);font-size:11px;color:var(--pt-muted);text-transform:uppercase;letter-spacing:.12em;border-top:1px solid var(--pt-line)}
+
+  /* notes */
+  .decisions{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+  .decision{border:1px solid var(--pt-line);background:var(--pt-bg);border-radius:14px;padding:18px}
+  .decision h4{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:18px;letter-spacing:-0.01em;margin:8px 0 6px}
+  .decision p{margin:0;color:var(--pt-muted);font-size:13px;line-height:1.5}
+  .decision .num-tag{font-family:var(--pt-font-mono);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-accent)}
+  .decision--ink{background:var(--pt-ink);color:var(--pt-warm);border-color:var(--pt-ink)}
+  .decision--ink p{color:rgba(245,233,216,0.7)}
+  .decision--ink .num-tag{color:var(--pt-accent-light)}
+  .decision code{font-family:var(--pt-font-mono);font-size:11px;background:rgba(184,112,61,.08);color:var(--pt-accent);padding:1px 5px;border-radius:4px}
+  .decision--ink code{background:rgba(245,233,216,0.1);color:var(--pt-accent-light)}
+
+  .closer{margin-top:48px;padding:28px;background:var(--pt-ink);color:var(--pt-warm);border-radius:18px}
+  .closer .eyebrow{color:var(--pt-accent-light)}
+  .closer h2{font-family:var(--pt-font-display);font-weight:900;font-size:34px;text-transform:uppercase;letter-spacing:-0.01em;line-height:.95;margin:12px 0 16px}
+  .closer p{margin:0 0 12px;color:rgba(245,233,216,0.78);max-width:60ch;font-size:14px;line-height:1.6}
+  .closer ul{margin:0;padding:0 0 0 20px;color:rgba(245,233,216,0.85);font-size:13.5px;line-height:1.7}
+  .closer ul b{color:var(--pt-warm);font-weight:600}
+  .closer code{font-family:var(--pt-font-mono);font-size:12px;color:var(--pt-accent-light)}
+
+  @media (max-width:640px){
+    .frames,.frames--2,.frames--3{grid-template-columns:1fr;justify-content:center}
+    .frame{width:100%;max-width:390px}
+    .desktop-grid{grid-template-columns:1fr 1fr}
+  }
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="top-nav__inner">
+    <div class="top-nav__brand"><span class="top-nav__brand-mark">P8</span>PorcTrack&nbsp;8</div>
+    <div class="top-nav__divider"></div>
+    <div class="top-nav__meta">Marius + Patterns + Bonus · v76 · 3c · final</div>
+    <div class="top-nav__links">
+      <a class="top-nav__link" href="#marius">Marius <span class="num">3</span></a>
+      <a class="top-nav__link" href="#patterns">Patterns <span class="num">6</span></a>
+      <a class="top-nav__link" href="#bonus">Bonus <span class="num">3</span></a>
+      <a class="top-nav__link" href="#notes">Notes</a>
+      <a class="top-nav__link" href="elevage-mockup-v76.html">← Élevage</a>
+      <a class="top-nav__link" href="reglages-pilotage-mockup-v76.html">← Réglages</a>
+      <a class="top-nav__link" href="ressources-reproduction-mockup-v76.html">← Repro</a>
+      <a class="top-nav__link" href="onboarding-modals-mockup-v76.html">← Onboarding</a>
+    </div>
+  </div>
+</nav>
+
+<div class="shell">
+
+  <header class="doc-header">
+    <div class="eyebrow">Sprint v76 · 3c · 12 livrables · final</div>
+    <h1>Marius<br>+ patterns<br>+ bonus</h1>
+    <p>Dernier mockup de la série. Marius IA en chat fullscreen, greeting card et offline state. Patterns transverses (skeletons · empty · errors · toasts · dialogs · long-press). Bonus desktop : TopBar, sélecteur Aïssa multi-fermes, DataTable mode avancé.</p>
+  </header>
+
+  <!-- ============ E. MARIUS ============ -->
+  <h2 class="section-title" id="marius">E. Marius IA</h2>
+  <p class="sub-hint">Chat fullscreen · greeting embedded · offline state</p>
+
+  <div class="frames">
+
+    <!-- E.1 fullscreen -->
+    <div class="frame-wrap">
+      <span class="eyebrow">E.1 · Chat fullscreen · /marius</span>
+      <div class="frame" id="marius-fullscreen">
+        <div class="stbar"><span class="num">06:42</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="marius-head">
+          <button class="marius-head__back" title="Retour"><i data-lucide="chevron-left"></i></button>
+          <div class="marius-avatar">M</div>
+          <div class="marius-head__main">
+            <div class="marius-head__title">Marius</div>
+            <div class="marius-head__sub"><span class="marius-head__dot"></span>Assistant IA · en ligne</div>
+          </div>
+          <button class="marius-head__close" title="Fermer"><i data-lucide="x"></i></button>
+        </div>
+
+        <div class="chat">
+          <div class="chat__ts">Aujourd'hui · 06:42</div>
+
+          <div class="bubble bubble--user">Bonjour Marius. Quelles truies surveiller en priorité ce matin ?</div>
+
+          <div class="bubble bubble--marius">
+            <h4>3 priorités · 22 min de tournée</h4>
+            <ul>
+              <li><b>T-026</b> · J113 gestation, MB prévue dans <b>2 jours</b>. Vérifier la mamelle, préparer la loge <code>M-04</code>.</li>
+              <li><b>T-031</b> · J34 lactation, sevrage dans <b>3 jours</b>. ISSE en cours <b>11.0</b>, 11 vivants restants.</li>
+              <li><b>T-018</b> · réforme zootechnique : 3 portées, ISSE <b>7.2</b>. À sortir cette semaine.</li>
+            </ul>
+          </div>
+
+          <div class="bubble bubble--user">Pourquoi mortalité allaitement haute en avril ?</div>
+
+          <div class="bubble bubble--marius">
+            <p><b>Mortalité avril : 8.2%</b> (médiane 5.5%). Trois causes croisées :</p>
+            <ul>
+              <li>Bande <code>B-AUDIT-MB</code> (T-031) : 1 écrasement J3, 1 hypothermie J5.</li>
+              <li>Maternité <code>M-02</code> au-dessus du seuil (29°C ressenti, alerte R09).</li>
+              <li>Pas de pesée portée &lt; J7 sur 2 bandes — impossible de détecter les retards précoces.</li>
+            </ul>
+            <p>Reco : enquêter <code>M-02</code> ventilation et caler la pesée J3 systématique.</p>
+          </div>
+
+          <div class="typing"><span></span><span></span><span></span></div>
+        </div>
+
+        <div class="suggestions">
+          <span class="suggestion">T-026 prête pour MB ?</span>
+          <span class="suggestion">Plan d'aliment mai</span>
+          <span class="suggestion">Stock véto à risque ?</span>
+        </div>
+
+        <div class="composer">
+          <div class="composer__field" contenteditable="true">Et pour T-026, quelle préparation maternité ?</div>
+          <button class="composer__send" title="Envoyer"><i data-lucide="arrow-up"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- E.2 greeting embedded -->
+    <div class="frame-wrap">
+      <span class="eyebrow">E.2 · Greeting card · embedded Today</span>
+      <div class="frame" id="marius-greeting">
+        <div class="stbar"><span class="num">06:14</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="preview-doc">
+          <div>
+            <div class="preview-doc__pe">Aujourd'hui · 10 mai 2026</div>
+            <h1 class="preview-doc__h1">Bonjour, Yao</h1>
+          </div>
+
+          <div class="card-ink">
+            <div class="card-ink__head">
+              <div class="marius-avatar">M</div>
+              <div class="card-ink__head-text">
+                <div class="eyebrow">Marius · Lecture</div>
+                <h3>3 priorités critiques ce matin</h3>
+              </div>
+            </div>
+            <ul>
+              <li><b>T-018</b> · réforme zootechnique : à sortir cette semaine (3 portées · ISSE <b>7.2</b>)</li>
+              <li>Stock aliment lactation <b>&lt; 2 j</b> — 240 kg restants pour 130 kg/j</li>
+              <li><b>R14 portée orpheline</b> T-031 — adopter ou compléter biberon</li>
+            </ul>
+            <p style="margin:8px 0 0;font-size:12.5px;color:rgba(245,233,216,0.7);font-style:italic">Tournée matin recommandée : 22 min, focus maternité.</p>
+            <a class="card-ink__cta" href="#"><span>Continuer la conversation</span> <i data-lucide="arrow-right"></i></a>
+          </div>
+
+          <div class="card-ink" style="background:var(--pt-bg);color:var(--pt-ink);border:1px solid var(--pt-line)">
+            <div class="card-ink__head">
+              <div class="marius-avatar" style="background:var(--pt-warm-deep);color:var(--pt-accent)">M</div>
+              <div class="card-ink__head-text">
+                <div class="eyebrow" style="color:var(--pt-accent)">Marius · Fiche T-046</div>
+                <h3 style="color:var(--pt-ink)">Truie en réforme — à sortir du cheptel</h3>
+              </div>
+            </div>
+            <p class="card-ink__sub" style="color:var(--pt-muted)">Marquer comme sortie depuis le bouton ci-dessous (vente, abattoir ou mortalité). Aucune saillie historique sur 12 mois, productivité insuffisante.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- E.3 offline -->
+    <div class="frame-wrap">
+      <span class="eyebrow">E.3 · Offline state · API down</span>
+      <div class="frame" id="marius-offline">
+        <div class="stbar"><span class="num">06:48</span><div class="stbar__icons"><i data-lucide="signal-low"></i><i data-lucide="wifi-off"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="marius-head">
+          <button class="marius-head__back"><i data-lucide="chevron-left"></i></button>
+          <div class="marius-avatar" style="background:var(--pt-subtle)">M</div>
+          <div class="marius-head__main">
+            <div class="marius-head__title">Marius</div>
+            <div class="marius-head__sub" style="color:var(--pt-muted)"><span class="marius-head__dot" style="background:var(--pt-subtle);box-shadow:0 0 0 3px rgba(163,152,136,0.2)"></span>Hors-ligne</div>
+          </div>
+          <button class="marius-head__close"><i data-lucide="x"></i></button>
+        </div>
+        <div class="preview-doc" style="display:flex;align-items:center;justify-content:center;gap:18px;padding:24px">
+          <div class="card-ink" style="width:100%">
+            <div style="width:56px;height:56px;border-radius:14px;background:rgba(245,233,216,0.1);display:flex;align-items:center;justify-content:center;margin-bottom:14px">
+              <i data-lucide="cloud-off" style="width:28px;height:28px;color:var(--pt-accent-light)"></i>
+            </div>
+            <div class="eyebrow">Marius · Indisponible</div>
+            <h3>Marius est temporairement injoignable</h3>
+            <p style="margin:0;font-size:13.5px;color:rgba(245,233,216,0.78);line-height:1.5">Reconnecte-toi à internet ou réessaie dans quelques minutes. Tes données restent enregistrées localement.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">
+              <button class="btn btn--cream"><i data-lucide="refresh-cw"></i> Réessayer</button>
+              <button class="btn btn--ghost-cream">Continuer sans</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ F. PATTERNS TRANSVERSES ============ -->
+  <h2 class="section-title" id="patterns">F. Patterns transverses</h2>
+  <p class="sub-hint">Skeletons · empty · errors · toasts · dialogs · long-press</p>
+
+  <h3 class="section-rule">F.1 · Skeleton loading · 4 patterns</h3>
+  <div class="frames--3">
+    <div class="frame-wrap">
+      <span class="eyebrow">List-item · cascade 80ms</span>
+      <div class="frame frame--auto" style="width:100%">
+        <div class="body-pad" style="padding:18px">
+          <div class="sk-list">
+            <div class="sk-list__row"><div class="sk sk--strong sk-icon"></div><div class="sk-lines"><div class="sk sk--strong sk-l1"></div><div class="sk sk-l2"></div></div><div class="sk sk-pill"></div></div>
+            <div class="sk-list__row"><div class="sk sk--strong sk-icon"></div><div class="sk-lines"><div class="sk sk--strong sk-l1" style="width:62%"></div><div class="sk sk-l2" style="width:55%"></div></div><div class="sk sk-pill"></div></div>
+            <div class="sk-list__row"><div class="sk sk--strong sk-icon"></div><div class="sk-lines"><div class="sk sk--strong sk-l1" style="width:78%"></div><div class="sk sk-l2" style="width:35%"></div></div><div class="sk sk-pill"></div></div>
+            <div class="sk-list__row"><div class="sk sk--strong sk-icon"></div><div class="sk-lines"><div class="sk sk--strong sk-l1" style="width:50%"></div><div class="sk sk-l2" style="width:60%"></div></div><div class="sk sk-pill"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="frame-wrap">
+      <span class="eyebrow">Card-link · réglages</span>
+      <div class="frame frame--auto" style="width:100%">
+        <div class="body-pad" style="padding:18px;gap:8px">
+          <div class="sk-card"><div class="sk sk--strong sk-i"></div><div class="sk-m"><div class="sk sk--strong sk-t"></div><div class="sk sk-s"></div></div><div class="sk sk-c"></div></div>
+          <div class="sk-card"><div class="sk sk--strong sk-i"></div><div class="sk-m"><div class="sk sk--strong sk-t" style="width:65%"></div><div class="sk sk-s" style="width:72%"></div></div><div class="sk sk-c"></div></div>
+          <div class="sk-card"><div class="sk sk--strong sk-i"></div><div class="sk-m"><div class="sk sk--strong sk-t" style="width:48%"></div><div class="sk sk-s" style="width:88%"></div></div><div class="sk sk-c"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="frame-wrap">
+      <span class="eyebrow">Card profil · fiche détail</span>
+      <div class="frame frame--auto" style="width:100%">
+        <div class="body-pad" style="padding:18px">
+          <div class="sk-profil">
+            <div class="sk sk--strong sk-av"></div>
+            <div class="sk-m">
+              <div class="sk sk--strong sk-t1"></div>
+              <div class="sk sk-t2"></div>
+              <div class="sk sk-t3"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="frame-wrap">
+      <span class="eyebrow">Chart bar · perf</span>
+      <div class="frame frame--auto" style="width:100%">
+        <div class="body-pad" style="padding:18px">
+          <div class="sk-chart">
+            <div class="sk-chart__head"><div class="sk sk--strong sk-chart__h"></div><div class="sk sk-chart__h2"></div></div>
+            <div class="sk-chart__bars"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="section-rule">F.2 · Empty states · 8 variants</h3>
+  <div class="frames--3">
+    <div class="empty">
+      <div class="empty__illus"><i data-lucide="sprout"></i></div>
+      <h4 class="empty__title">Aucune truie</h4>
+      <p class="empty__sub">Ajoute ta première truie pour démarrer le suivi.</p>
+      <button class="btn btn--primary btn--sm empty__cta"><i data-lucide="plus"></i> Ajouter une truie</button>
+    </div>
+    <div class="empty">
+      <div class="empty__illus empty__illus--lineart">
+        <svg viewBox="0 0 80 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 30 Q14 12 32 11 Q50 10 62 18 Q72 26 70 38 Q68 46 60 46 L20 46 Q12 46 14 38 Z"/><path d="M58 18 L62 12 L66 18"/><ellipse cx="72" cy="32" rx="3.5" ry="4.5"/><path d="M22 46 L22 56"/><path d="M30 46 L30 56"/><path d="M48 46 L48 56"/><path d="M58 46 L58 56"/><circle cx="60" cy="22" r=".7" fill="currentColor"/></svg>
+      </div>
+      <h4 class="empty__title">Aucune bande active</h4>
+      <p class="empty__sub">Crée ta première bande pour suivre les naissances.</p>
+      <button class="btn btn--primary btn--sm empty__cta"><i data-lucide="plus"></i> Nouvelle bande</button>
+    </div>
+    <div class="empty">
+      <div class="empty__illus"><i data-lucide="home"></i></div>
+      <h4 class="empty__title">Aucune loge</h4>
+      <p class="empty__sub">Ajoute tes loges pour activer le suivi par bande.</p>
+      <button class="btn btn--primary btn--sm empty__cta"><i data-lucide="plus"></i> Nouvelle loge</button>
+    </div>
+    <div class="empty">
+      <div class="empty__illus empty__illus--lineart">
+        <svg viewBox="0 0 80 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="20" cy="40" r="9"/><circle cx="40" cy="38" r="10"/><circle cx="60" cy="42" r="9"/><circle cx="18" cy="38" r=".8" fill="currentColor"/><circle cx="38" cy="36" r=".8" fill="currentColor"/><circle cx="58" cy="40" r=".8" fill="currentColor"/><path d="M14 50 L14 58"/><path d="M26 50 L26 58"/><path d="M36 50 L36 58"/><path d="M44 50 L44 58"/><path d="M54 50 L54 58"/><path d="M66 52 L66 58"/></svg>
+      </div>
+      <h4 class="empty__title">Aucun porcelet</h4>
+      <p class="empty__sub">Les porcelets apparaîtront automatiquement après mise-bas.</p>
+    </div>
+    <div class="empty">
+      <div class="empty__illus empty__illus--success"><i data-lucide="check-circle"></i></div>
+      <h4 class="empty__title">Carnet vide</h4>
+      <p class="empty__sub">Toutes les alertes sont traitées. Bonne tournée.</p>
+    </div>
+    <div class="empty">
+      <div class="empty__illus"><i data-lucide="banknote"></i></div>
+      <h4 class="empty__title">Aucune transaction</h4>
+      <p class="empty__sub">Saisis ta première vente ou achat pour démarrer le rapport financier.</p>
+      <button class="btn btn--primary btn--sm empty__cta"><i data-lucide="plus"></i> Saisir transaction</button>
+    </div>
+    <div class="empty">
+      <div class="empty__illus"><i data-lucide="building-2"></i></div>
+      <h4 class="empty__title">Aucun fournisseur</h4>
+      <p class="empty__sub">Ajoute Sipra, ton vétérinaire, ou tout fournisseur récurrent.</p>
+      <button class="btn btn--primary btn--sm empty__cta"><i data-lucide="plus"></i> Nouveau fournisseur</button>
+    </div>
+    <div class="empty">
+      <div class="empty__illus"><i data-lucide="clipboard-list"></i></div>
+      <h4 class="empty__title">Aucun protocole personnalisé</h4>
+      <p class="empty__sub">Les protocoles standards sont déjà disponibles dans Réglages.</p>
+      <button class="btn btn--ghost btn--sm empty__cta">Voir Réglages</button>
+    </div>
+  </div>
+
+  <h3 class="section-rule">F.3 · Error states · 4 variants</h3>
+  <div class="frames--2">
+    <div class="frame-wrap">
+      <span class="eyebrow">Réseau · ConnectionError</span>
+      <div style="background:var(--pt-bg);border:1px solid var(--pt-line);border-radius:14px;padding:0;overflow:hidden">
+        <div class="err err--ink" style="border-radius:0">
+          <div class="err__head">
+            <div class="err__icon"><i data-lucide="wifi-off"></i></div>
+            <h4 class="err__title">Hors-ligne</h4>
+          </div>
+          <p class="err__sub">Tes saisies seront synchronisées au retour réseau. PorcTrack continue de tourner localement.</p>
+          <div class="err__actions">
+            <button class="btn btn--cream btn--sm"><i data-lucide="refresh-cw"></i> Réessayer maintenant</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="frame-wrap">
+      <span class="eyebrow">404 · entité introuvable</span>
+      <div class="err err--cream">
+        <div class="eyebrow">Élevage · Truies</div>
+        <h4 class="err__title">Cette truie n'existe plus</h4>
+        <p class="err__sub">Elle a peut-être été supprimée ou marquée sortie. Reviens à la liste pour retrouver tes animaux actifs.</p>
+        <div class="err__actions">
+          <button class="btn btn--primary btn--sm"><i data-lucide="arrow-left"></i> Retour à la liste</button>
+        </div>
+      </div>
+    </div>
+    <div class="frame-wrap">
+      <span class="eyebrow">403 · RLS Supabase</span>
+      <div class="err err--cream">
+        <div class="err__head">
+          <div class="err__icon"><i data-lucide="lock"></i></div>
+          <h4 class="err__title">Donnée réservée au propriétaire</h4>
+        </div>
+        <p class="err__sub">Les finances détaillées de la ferme sont visibles uniquement par le rôle <b>OWNER</b>. Demande à Yao Kouassi pour accéder.</p>
+        <div class="err__actions">
+          <button class="btn btn--ghost btn--sm">Demander accès</button>
+        </div>
+      </div>
+    </div>
+    <div class="frame-wrap">
+      <span class="eyebrow">500 · server error</span>
+      <div class="err err--ink">
+        <div class="err__head">
+          <div class="err__icon"><i data-lucide="alert-octagon"></i></div>
+          <h4 class="err__title">Erreur côté serveur</h4>
+        </div>
+        <p class="err__sub">Réessaie dans quelques minutes. Si le problème persiste, contacte <b>support@porctrack.tech</b>.</p>
+        <div class="err__actions">
+          <button class="btn btn--cream btn--sm"><i data-lucide="refresh-cw"></i> Réessayer</button>
+          <button class="btn btn--ghost-cream btn--sm"><span class="marius-avatar" style="width:16px;height:16px;font-size:10px">M</span> Demander à Marius</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="section-rule">F.4 · Toast notifications · 3 variants</h3>
+  <div class="frames--3">
+    <div class="frame-wrap">
+      <span class="eyebrow">Success · auto-dismiss 4s</span>
+      <div class="toast toast--success">
+        <div class="toast__icon"><i data-lucide="check-circle"></i></div>
+        <div class="toast__text">Truie <b>T-051</b> ajoutée — bienvenue dans le troupeau.</div>
+        <button class="toast__close"><i data-lucide="x"></i></button>
+      </div>
+    </div>
+    <div class="frame-wrap">
+      <span class="eyebrow">Warning · réseau faible</span>
+      <div class="toast toast--warning">
+        <div class="toast__icon"><i data-lucide="alert-triangle"></i></div>
+        <div class="toast__text">Synchronisation différée — réseau faible. <b>3 saisies</b> en attente.</div>
+        <button class="toast__close"><i data-lucide="x"></i></button>
+      </div>
+    </div>
+    <div class="frame-wrap">
+      <span class="eyebrow">Error · échec sauvegarde</span>
+      <div class="toast toast--error">
+        <div class="toast__icon"><i data-lucide="alert-octagon"></i></div>
+        <div class="toast__text">Échec sauvegarde pesée <b>CR-12</b>. <b>Réessayer</b> ou vérifier le réseau.</div>
+        <button class="toast__close"><i data-lucide="x"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="section-rule">F.5 · Confirmation dialogs · 4 variants (modal centré)</h3>
+  <div class="frames--2">
+    <div class="frame-wrap">
+      <span class="eyebrow">Déconnexion</span>
+      <div class="frame frame--sm">
+        <div class="stbar"><span class="num">19:42</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="dialog">
+          <div class="dialog__bg"><div class="ph"><div class="pe">Réglages</div><h1>Réglages</h1></div></div>
+          <div class="dialog__card">
+            <h3 class="dialog__title">Se déconnecter ?</h3>
+            <p class="dialog__body">Tu reviendras à l'écran de connexion. <b>Tes données restent sauvegardées</b> et tu les retrouveras à la prochaine session.</p>
+            <div class="dialog__foot">
+              <button class="btn btn--ghost">Annuler</button>
+              <button class="btn btn--danger">Se déconnecter</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="frame-wrap">
+      <span class="eyebrow">Suppression bande</span>
+      <div class="frame frame--sm">
+        <div class="stbar"><span class="num">19:44</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="dialog">
+          <div class="dialog__bg"><div class="ph"><div class="pe">Élevage · Bandes</div><h1>Bandes</h1></div></div>
+          <div class="dialog__card">
+            <h3 class="dialog__title">Supprimer cette bande ?</h3>
+            <p class="dialog__body">Bande <b>Mai 2026 · T-016</b>. <b>25 porcelets</b> seront aussi supprimés. Action irréversible.</p>
+            <div class="dialog__foot">
+              <button class="btn btn--ghost">Annuler</button>
+              <button class="btn btn--danger">Supprimer définitivement</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="frame-wrap">
+      <span class="eyebrow">Marquage mortalité</span>
+      <div class="frame frame--sm">
+        <div class="stbar"><span class="num">11:18</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="dialog">
+          <div class="dialog__bg"><div class="ph"><div class="pe">Élevage · T-018</div><h1>T-018</h1></div></div>
+          <div class="dialog__card">
+            <h3 class="dialog__title">Marquer T-018 comme morte ?</h3>
+            <p class="dialog__body">La bande de la truie sera fermée automatiquement. Date du décès = <b>aujourd'hui 10/05/2026</b>.</p>
+            <div class="dialog__foot">
+              <button class="btn btn--ghost">Annuler</button>
+              <button class="btn btn--danger">Confirmer décès</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="frame-wrap">
+      <span class="eyebrow">Réforme truie</span>
+      <div class="frame frame--sm">
+        <div class="stbar"><span class="num">11:20</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="dialog">
+          <div class="dialog__bg"><div class="ph"><div class="pe">Élevage · T-046</div><h1>T-046</h1></div></div>
+          <div class="dialog__card">
+            <h3 class="dialog__title">Marquer T-046 en réforme ?</h3>
+            <p class="dialog__body">Productivité insuffisante : <b>3 portées</b>, ISSE <b>7.2</b>. Reco Marius : sortir cette semaine.</p>
+            <div class="dialog__foot">
+              <button class="btn btn--ghost">Annuler</button>
+              <button class="btn btn--danger">Confirmer réforme</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="section-rule">F.6 · Long press actions · 2 variants</h3>
+  <div class="frames--2">
+    <div class="frame-wrap">
+      <span class="eyebrow">Porcelet · CR-12 · 4.8 kg</span>
+      <div class="frame">
+        <div class="stbar"><span class="num">08:24</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="lp-back">
+          <div class="lp-bg">
+            <div class="pe">Élevage · Porcelets</div>
+            <div class="ph">Porcelets</div>
+          </div>
+          <div class="lp-sheet">
+            <div class="lp-sheet__handle"></div>
+            <div class="lp-sheet__head">
+              <span class="av av--lg av--porc">CR12</span>
+              <div class="lp-sheet__head-main">
+                <div class="eyebrow">Porcelet · Mai 2026</div>
+                <div class="lp-sheet__title">CR-12 · 4,8 kg</div>
+                <div style="margin-top:4px"><span class="pill pill--warm pill--no-dot">Sous mère J7</span></div>
+              </div>
+            </div>
+            <div class="lp-sheet__actions">
+              <button class="lp-action"><i data-lucide="scale"></i> Peser</button>
+              <button class="lp-action lp-action--danger"><i data-lucide="x-circle"></i> Marquer mortalité</button>
+              <button class="lp-action"><i data-lucide="banknote"></i> Marquer vendu</button>
+              <button class="lp-action"><i data-lucide="pencil"></i> Modifier</button>
+              <button class="lp-action"><i data-lucide="chevron-right"></i> Voir fiche</button>
+            </div>
+            <button class="lp-cancel">Annuler</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="frame-wrap">
+      <span class="eyebrow">Truie · T-031 · Mâ Rose</span>
+      <div class="frame">
+        <div class="stbar"><span class="num">08:26</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="lp-back">
+          <div class="lp-bg">
+            <div class="pe">Élevage · Truies</div>
+            <div class="ph">Truies</div>
+          </div>
+          <div class="lp-sheet">
+            <div class="lp-sheet__handle"></div>
+            <div class="lp-sheet__head">
+              <span class="av av--lg av--truie">T31</span>
+              <div class="lp-sheet__head-main">
+                <div class="eyebrow">Truie · CI-031-22</div>
+                <div class="lp-sheet__title">T-031 · Mâ Rose</div>
+                <div style="margin-top:4px"><span class="pill pill--warm pill--no-dot">Allaitante J34</span></div>
+              </div>
+            </div>
+            <div class="lp-sheet__actions">
+              <button class="lp-action"><i data-lucide="plus-circle"></i> Saisir évènement</button>
+              <button class="lp-action"><i data-lucide="scale"></i> Peser portée</button>
+              <button class="lp-action lp-action--danger"><i data-lucide="log-out"></i> Marquer sortie</button>
+              <button class="lp-action"><i data-lucide="pencil"></i> Modifier</button>
+              <button class="lp-action"><i data-lucide="chevron-right"></i> Voir fiche</button>
+            </div>
+            <button class="lp-cancel">Annuler</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============ G. BONUS ============ -->
+  <h2 class="section-title" id="bonus">G. Bonus</h2>
+  <p class="sub-hint">TopBar desktop · sélecteur Aïssa multi-fermes · DataTable mode avancé</p>
+
+  <h3 class="section-rule">G.1 · TopBar tablet/desktop · ≥ 1024px</h3>
+  <div class="desktop-frame" id="topbar-desktop" style="margin-bottom:32px">
+    <div class="desktop-frame__chrome">
+      <span></span><span></span><span></span>
+      <div class="desktop-frame__url">app.porctrack.tech / aujourdhui</div>
+    </div>
+    <nav class="pt-topnav">
+      <div class="pt-topnav__brand"><span class="pt-topnav__mark">P8</span> PorcTrack 8</div>
+      <div class="pt-topnav__divider"></div>
+      <span class="pt-topnav__farm"><i data-lucide="map-pin"></i> Yamoussoukro · 50 truies</span>
+      <div class="pt-topnav__links">
+        <a class="pt-topnav__link active" href="#">Aujourd'hui <span class="badge num">3</span></a>
+        <a class="pt-topnav__link" href="#">Élevage</a>
+        <a class="pt-topnav__link" href="#">Reproduction</a>
+        <a class="pt-topnav__link" href="#">Performance</a>
+        <a class="pt-topnav__link" href="#">Réglages</a>
+      </div>
+      <div class="pt-topnav__spacer"></div>
+      <button class="pt-topnav__marius" title="Ouvrir Marius">M</button>
+    </nav>
+    <div class="desktop-body">
+      <div class="desktop-body__pe">Aujourd'hui · 10 mai 2026 · Yamoussoukro</div>
+      <h2 class="desktop-body__h1">Bonjour, Yao</h2>
+      <div class="desktop-grid">
+        <div class="desktop-kpi"><div class="desktop-kpi__lab">Truies</div><div class="desktop-kpi__v num">50</div><div class="desktop-kpi__sub">28 pleines · 11 maternité · 6 vides · 5 à sortir</div></div>
+        <div class="desktop-kpi"><div class="desktop-kpi__lab">Verrats actifs</div><div class="desktop-kpi__v num">3</div><div class="desktop-kpi__sub">Fécondation moy. 91%</div></div>
+        <div class="desktop-kpi"><div class="desktop-kpi__lab">Bandes actives</div><div class="desktop-kpi__v num">6</div><div class="desktop-kpi__sub">92 porcelets répartis</div></div>
+        <div class="desktop-kpi"><div class="desktop-kpi__lab">ISSE moyen</div><div class="desktop-kpi__v num">11,4</div><div class="desktop-kpi__sub">Cible &gt; 12 · Taux MB 86%</div></div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="section-rule">G.2 · Aïssa coopérative · sélecteur multi-fermes</h3>
+  <div class="frames--2" style="margin-bottom:32px">
+    <div class="frame-wrap">
+      <span class="eyebrow">Scope · Ferme A · Bouaké-Nord</span>
+      <div class="frame" id="aissa-cooperative">
+        <div class="stbar"><span class="num">06:52</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="farm-chips">
+          <button class="farm-chip" aria-checked="true">Ferme A <span class="num">10</span></button>
+          <button class="farm-chip">Ferme B <span class="num">24</span></button>
+          <button class="farm-chip">Ferme C <span class="num">8</span></button>
+          <button class="farm-chip">Ferme D <span class="num">15</span></button>
+          <button class="farm-chip">Toutes <span class="num">57</span></button>
+        </div>
+        <div class="body-pad">
+          <div>
+            <div class="pe-h">Aujourd'hui · ferme a · bouaké-nord</div>
+            <div class="h1-h">Bonjour, Aïssa</div>
+            <div class="sub-h" style="margin-top:6px">Tu superviser <b>Ferme A</b> · 10 truies · 1 verrat · 2 bandes</div>
+          </div>
+          <div class="kpis2">
+            <div class="kpi"><div class="kpi__lab">Truies</div><div class="kpi__v num">10</div><div class="kpi__sub">6 pleines · 3 mat. · 1 vide</div></div>
+            <div class="kpi"><div class="kpi__lab">Bandes</div><div class="kpi__v num">2</div><div class="kpi__sub">14 + 11 porcelets</div></div>
+            <div class="kpi"><div class="kpi__lab">ISSE</div><div class="kpi__v num">10,9</div><div class="kpi__sub">−0,5 vs moy. coop.</div></div>
+            <div class="kpi"><div class="kpi__lab">Mortalité</div><div class="kpi__v num">9,1%</div><div class="kpi__sub">+1,3 pts vs cible</div></div>
+          </div>
+          <div class="card-ink">
+            <div class="card-ink__head">
+              <div class="marius-avatar">M</div>
+              <div class="card-ink__head-text">
+                <div class="eyebrow">Marius · Lecture ferme A</div>
+                <h3 style="margin:6px 0">Mortalité allaitement à surveiller</h3>
+              </div>
+            </div>
+            <ul>
+              <li>Bande <code>FA-26-03</code> : 2 écrasements en 4 jours</li>
+              <li>Suggestion : enquête maternité <code>FA-M-02</code></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="frame-wrap">
+      <span class="eyebrow">Scope · Toutes les fermes · consolidé</span>
+      <div class="frame">
+        <div class="stbar"><span class="num">06:54</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="farm-chips">
+          <button class="farm-chip">Ferme A <span class="num">10</span></button>
+          <button class="farm-chip">Ferme B <span class="num">24</span></button>
+          <button class="farm-chip">Ferme C <span class="num">8</span></button>
+          <button class="farm-chip">Ferme D <span class="num">15</span></button>
+          <button class="farm-chip" aria-checked="true">Toutes <span class="num">57</span></button>
+        </div>
+        <div class="body-pad">
+          <div>
+            <div class="pe-h">Coopérative · 4 fermes · consolidé</div>
+            <div class="h1-h">Vue coopérative</div>
+            <div class="sub-h" style="margin-top:6px">57 truies · 4 verrats · 11 bandes · 142 porcelets</div>
+          </div>
+          <div class="kpis2">
+            <div class="kpi"><div class="kpi__lab">Truies</div><div class="kpi__v num">57</div><div class="kpi__sub">Réparties sur 4 fermes</div></div>
+            <div class="kpi"><div class="kpi__lab">Porcelets</div><div class="kpi__v num">142</div><div class="kpi__sub">11 bandes actives</div></div>
+            <div class="kpi"><div class="kpi__lab">ISSE coop.</div><div class="kpi__v num">11,4</div><div class="kpi__sub">Cible coop. &gt; 11,5</div></div>
+            <div class="kpi"><div class="kpi__lab">Marge mens.</div><div class="kpi__v num">+2,1M</div><div class="kpi__sub">FCFA · avril 2026</div></div>
+          </div>
+          <div class="card" style="background:var(--pt-warm);border:1px solid var(--pt-line);border-radius:14px;padding:14px">
+            <div class="eyebrow" style="margin-bottom:8px">Classement performance</div>
+            <div style="display:flex;flex-direction:column;gap:6px;font-family:var(--pt-font-mono);font-size:12px;color:var(--pt-ink);font-variant-numeric:tabular-nums">
+              <div style="display:flex;justify-content:space-between"><span>Ferme B · Korhogo</span><span>ISSE 12,1 · A</span></div>
+              <div style="display:flex;justify-content:space-between"><span>Ferme D · Daloa</span><span>ISSE 11,8 · B</span></div>
+              <div style="display:flex;justify-content:space-between"><span>Ferme A · Bouaké-N.</span><span>ISSE 10,9 · B</span></div>
+              <div style="display:flex;justify-content:space-between;color:var(--pt-danger)"><span>Ferme C · San-Pédro</span><span>ISSE 9,4 · C</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="section-rule">G.3 · DataTable mode avancé · responsive</h3>
+
+  <div style="margin-bottom:18px">
+    <span class="eyebrow" style="display:flex;gap:12px;align-items:center;margin-bottom:12px">Desktop ≥ 1024px · table HTML · sticky header · sort · export CSV<span style="flex:1;height:1px;background:var(--pt-line)"></span></span>
+    <div style="background:var(--pt-bg);border:1px solid var(--pt-line);border-radius:14px;overflow:hidden" id="datatable">
+      <div class="dt-toolbar">
+        <div>
+          <div class="eyebrow">Repro · Historique</div>
+          <div style="font-family:var(--pt-font-display);font-weight:900;font-size:24px;text-transform:uppercase;letter-spacing:-0.005em;line-height:1;margin-top:4px">4 dernières portées · T-031</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="dt-chips">
+            <button class="dt-chip" aria-checked="true">2026</button>
+            <button class="dt-chip">2025</button>
+            <button class="dt-chip">2024</button>
+          </div>
+          <button class="dt-export"><i data-lucide="download"></i> Export CSV</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="dt-table">
+          <thead>
+            <tr>
+              <th><span class="sort">Saillie <i data-lucide="chevrons-up-down"></i></span></th>
+              <th>Verrat</th>
+              <th><span class="sort">Écho J28 <i data-lucide="chevrons-up-down"></i></span></th>
+              <th><span class="sort">MB <i data-lucide="chevrons-up-down"></i></span></th>
+              <th>NV</th>
+              <th>NS naissance</th>
+              <th>Sevrage</th>
+              <th>NS sevrés</th>
+              <th>ISSE</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="code">17/01/2026</td><td>V-001</td><td>+ 14/02</td><td>06/04/2026</td><td>11</td><td>0</td><td>04/05/2026</td><td>10</td><td>10,0</td></tr>
+            <tr><td class="code">22/08/2025</td><td>V-002</td><td>+ 19/09</td><td>13/12/2025</td><td>13</td><td>1</td><td>10/01/2026</td><td>12</td><td>12,0</td></tr>
+            <tr><td class="code">14/03/2025</td><td>V-001</td><td>+ 11/04</td><td>06/07/2025</td><td>12</td><td>0</td><td>03/08/2025</td><td>11</td><td>11,0</td></tr>
+            <tr><td class="code">02/10/2024</td><td>V-001</td><td>+ 30/10</td><td>25/01/2025</td><td>10</td><td>2</td><td>22/02/2025</td><td>9</td><td>9,0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="dt-pag">
+        <span>4 sur 4 portées · Page 1 / 1</span>
+        <span>25 / page</span>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <span class="eyebrow" style="display:flex;gap:12px;align-items:center;margin-bottom:12px">Mobile &lt; 1024px · cards stackées<span style="flex:1;height:1px;background:var(--pt-line)"></span></span>
+    <div class="frames">
+      <div class="frame-wrap">
+        <span class="eyebrow">Repro historique mobile · 4 portées</span>
+        <div class="frame">
+          <div class="stbar"><span class="num">14:32</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+          <div class="dt-toolbar" style="border-bottom:1px solid var(--pt-line)">
+            <div>
+              <div class="eyebrow">Repro · Historique</div>
+              <div style="font-family:var(--pt-font-display);font-weight:900;font-size:20px;text-transform:uppercase;line-height:1;margin-top:4px">T-031 · 4 portées</div>
+            </div>
+            <button class="dt-export"><i data-lucide="download"></i> CSV</button>
+          </div>
+          <div class="body-pad" style="padding:14px 16px">
+            <div class="dt-chips">
+              <button class="dt-chip" aria-checked="true">2026</button>
+              <button class="dt-chip">2025</button>
+              <button class="dt-chip">2024</button>
+              <button class="dt-chip">Tout</button>
+            </div>
+
+            <div class="dt-card">
+              <div class="dt-card__head"><div class="dt-card__id">P-04 · 2026</div><div class="dt-card__date">MB 06/04</div></div>
+              <div class="dt-kv">
+                <div><span class="k">Saillie</span><span class="v">17/01</span></div>
+                <div><span class="k">Verrat</span><span class="v">V-001</span></div>
+                <div><span class="k">Écho J28</span><span class="v">+ 14/02</span></div>
+                <div><span class="k">NV</span><span class="v">11</span></div>
+                <div><span class="k">Sevrage</span><span class="v">04/05</span></div>
+                <div><span class="k">NS sevrés</span><span class="v">10</span></div>
+                <div><span class="k">ISSE</span><span class="v">10,0</span></div>
+                <div><span class="k">Statut</span><span class="v"><span class="pill pill--success pill--no-dot">Sevré</span></span></div>
+              </div>
+            </div>
+
+            <div class="dt-card">
+              <div class="dt-card__head"><div class="dt-card__id">P-03 · 2025</div><div class="dt-card__date">MB 13/12</div></div>
+              <div class="dt-kv">
+                <div><span class="k">Saillie</span><span class="v">22/08</span></div>
+                <div><span class="k">Verrat</span><span class="v">V-002</span></div>
+                <div><span class="k">Écho J28</span><span class="v">+ 19/09</span></div>
+                <div><span class="k">NV</span><span class="v">13</span></div>
+                <div><span class="k">Sevrage</span><span class="v">10/01</span></div>
+                <div><span class="k">NS sevrés</span><span class="v">12</span></div>
+                <div><span class="k">ISSE</span><span class="v">12,0</span></div>
+                <div><span class="k">Statut</span><span class="v"><span class="pill pill--success pill--no-dot">Sevré</span></span></div>
+              </div>
+            </div>
+
+            <div class="dt-card">
+              <div class="dt-card__head"><div class="dt-card__id">P-02 · 2025</div><div class="dt-card__date">MB 06/07</div></div>
+              <div class="dt-kv">
+                <div><span class="k">Saillie</span><span class="v">14/03</span></div>
+                <div><span class="k">Verrat</span><span class="v">V-001</span></div>
+                <div><span class="k">NV</span><span class="v">12</span></div>
+                <div><span class="k">NS sevrés</span><span class="v">11</span></div>
+                <div><span class="k">ISSE</span><span class="v">11,0</span></div>
+                <div><span class="k">Statut</span><span class="v"><span class="pill pill--success pill--no-dot">Sevré</span></span></div>
+              </div>
+            </div>
+
+            <div class="dt-pag" style="border-top:1px solid var(--pt-line);margin-top:6px;padding:10px 0">
+              <span>3 sur 4</span>
+              <span>Voir tout →</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============ NOTES ============ -->
+  <h2 class="section-title" id="notes">Notes design · décisions · effort</h2>
+  <p class="sub-hint">3 décisions tranchées · 2 hésitations · récap série v76</p>
+
+  <h3 class="section-rule">3 décisions design fortes</h3>
+  <div class="decisions" style="margin-bottom:32px">
+    <div class="decision decision--ink">
+      <div class="num-tag">01 · Marius</div>
+      <h4>Bulles colorées · pas typo pure</h4>
+      <p>Bulle utilisateur fond <code>--pt-accent</code> opaque cream, bulle Marius fond <code>--pt-bg</code> ink. Typo pure (alignement seul) testée mais perd la lisibilité sur message long. Markdown render minimal Marius : titres mono, listes à puces ambre, <code>code inline</code> ambre. Évite le mimétisme ChatGPT — style cahier d'éleveur.</p>
+    </div>
+    <div class="decision">
+      <div class="num-tag">02 · Long press</div>
+      <h4>Action sheet bottom · pas inline expansion</h4>
+      <p>Inline expansion testée — casse le rythme de la liste et masque la ligne longue après. Sheet bottom avec header eyebrow + entité + 4-5 actions verticales = pattern unifié avec quick-add modals. Touch targets 48px, dernière action <code>Voir fiche</code> sert de fallback navigation.</p>
+    </div>
+    <div class="decision">
+      <div class="num-tag">03 · DataTable</div>
+      <h4>Cards stackées mobile · table desktop</h4>
+      <p>Pas de horizontal scroll forcé sur mobile : illisible avec 9 colonnes. Cards stackées avec eyebrow + KV grid 2 cols = densité mobile correcte. Desktop ≥1024px reprend la table HTML traditionnelle avec sort + export CSV. Toggle "Mode avancé" dans Réglages, pas par défaut.</p>
+    </div>
+  </div>
+
+  <h3 class="section-rule">2 zones d'hésitation</h3>
+  <div class="decisions" style="margin-bottom:32px">
+    <div class="decision">
+      <div class="num-tag">Hésité · Toast</div>
+      <h4>Stack 3 max ou LIFO 1 visible ?</h4>
+      <p>Stack vertical 3 max permettrait plus de feedback en saisie rapide (pesée groupée 50 porcelets). Choisi : <b>LIFO 1 visible</b> + auto-dismiss 4s + queue silencieuse. Yao en pesée bat la cadence ≥1 toast/seconde — 3 stack se chevauchent visuellement et masquent le BottomNav. La queue laisse passer le dernier toast pertinent ; le précédent disparaît avant que l'œil ait le temps de le manquer.</p>
+    </div>
+    <div class="decision">
+      <div class="num-tag">Hésité · Empty porcelets</div>
+      <h4>CTA "Voir bandes en gestation" ou message neutre ?</h4>
+      <p>CTA contextuel aurait été utile pour Aïssa qui débugge. Choisi : <b>message neutre sans CTA</b>. Les porcelets sont une conséquence métier (apparaissent après MB), pas un objet à créer manuellement. Le CTA "Ajouter porcelet" existe en quick-add D.4 pour les rares cas d'import — il n'a pas vocation à être promu en empty state.</p>
+    </div>
+  </div>
+
+  <h3 class="section-rule">Effort dev · React/Ionic Capacitor</h3>
+  <div class="decisions" style="margin-bottom:24px">
+    <div class="decision">
+      <div class="num-tag">Marius IA</div>
+      <h4>~6 j · chat + greeting + offline</h4>
+      <p>Stream SSE OpenAI-compat <code>/chat</code> sur api.porctrack.tech, parsing markdown léger (marked.js limité au strict nécessaire), composant <code>&lt;MariusGreeting variant="today|fiche" /&gt;</code> partagé, gestion offline avec retry + détection navigator.onLine. Hors prompt engineering Mistral-7B Q4 et eval qualité réponses.</p>
+    </div>
+    <div class="decision">
+      <div class="num-tag">Patterns transverses</div>
+      <h4>~5 j · 6 patterns × variants</h4>
+      <p>Skeletons (1j), Empty (1j × 8 variants registry), Errors (1j incluant ErrorBoundary RLS-aware), Toasts (0.5j + queue manager), Dialogs (0.5j custom IonAlert), Long-press (1j hook + sheet bottom partagé). Composants utilisables sur tous les écrans.</p>
+    </div>
+    <div class="decision">
+      <div class="num-tag">Bonus desktop</div>
+      <h4>~3 j · TopBar + Aïssa + DataTable</h4>
+      <p>TopBar tablet/desktop (1j layout responsive), sélecteur Aïssa multi-fermes (1j scope context React + chips scrollables), DataTable responsive table↔cards (1j composant générique avec config colonnes + tri + CSV).</p>
+    </div>
+  </div>
+
+
+  <!-- ============ CLOSER ============ -->
+  <div class="closer">
+    <div class="eyebrow">Conclusion · série v76</div>
+    <h2>DNA Terrain Vivant verrouillé</h2>
+    <p><b>4 mockups livrés · 50+ écrans · system blocks complets.</b> Élevage (10 écrans + system) → Réglages-Pilotage (16 écrans + Aïssa + Alert) → Ressources-Repro (9 écrans) → Onboarding-Modals (5 + 6×2 = 17 écrans) → Marius-Patterns-Bonus (3 + 6 + 3 = 12 patterns/écrans).</p>
+    <p><b>Effort dev cumulé estimé · ~55 j / 1 dev React/Ionic Capacitor</b> (14 j Élevage + 9 j Réglages-Pilot + 9 j Ressources-Repro + 9 j Onboarding-Modals + 14 j Marius-Patterns-Bonus). Hors backend Supabase, prompt engineering Marius, traduction baoulé/dioula et QA terrain Yamoussoukro.</p>
+    <p style="margin-top:18px"><b>Top 3 wins pour le produit final :</b></p>
+    <ul>
+      <li><b>Marius greeting embedded</b> sur Today + fiches détail — l'IA devient invisible parce qu'elle est partout, en lecture courte (3-4 bullets), zéro friction. Différenciateur fort vs concurrence GTTT US.</li>
+      <li><b>Cycle vivant rail 5 nœuds</b> — patron unifié truie + bande + onboarding C.1/C.4. Yao comprend en 2 secondes où en est chaque animal sans connaître la nomenclature ISSE.</li>
+      <li><b>Sheets quick-add</b> avec autocomplete truie partagé + cycle preview live. Yao tape 20 fois/jour : c'est ici que se gagne ou se perd la bataille de la donnée propre.</li>
+    </ul>
+    <p style="margin-top:18px;color:rgba(245,233,216,0.6);font-style:italic;font-size:13px">Bon code. À l'implémentation maintenant — tu as tout en main pour aligner toute l'app sur le DNA Terrain Vivant en une seule passe.</p>
+  </div>
+
+</div>
+
+<script>
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+  document.querySelectorAll('.farm-chips, .dt-chips').forEach(group=>{
+    group.querySelectorAll('button').forEach(c=>{
+      c.addEventListener('click',()=>{
+        group.querySelectorAll('button').forEach(o=>o.removeAttribute('aria-checked'));
+        c.setAttribute('aria-checked','true');
+      });
+    });
+  });
+</script>
+</body>
+</html>
