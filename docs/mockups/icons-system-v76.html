@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PorcTrack 8 — Icon system v76</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  :root{
+    --pt-primary:#2D4A1F;--pt-warm:#F5E9D8;--pt-warm-deep:#E8D5B5;
+    --pt-accent:#B8703D;--pt-accent-light:#D89968;
+    --pt-bg:#FAF7F0;--pt-bg-app:#F1ECE0;
+    --pt-ink:#1a1a1a;--pt-muted:#6b6357;--pt-subtle:#a39888;
+    --pt-success:#4a7a2f;--pt-warning:#c08a3d;--pt-danger:#a4453d;--pt-info:#4a6e8a;
+    --pt-line:rgba(26,26,26,0.08);--pt-line-strong:rgba(26,26,26,0.16);
+    --pt-truie-bg:#F4D4D4;--pt-truie-fg:#8B4744;
+    --pt-verrat-bg:#C8D6E5;--pt-verrat-fg:#3B5266;
+    --pt-porcelet-bg:#F5E9D8;--pt-porcelet-fg:#8B6E3D;
+    --pt-bande-bg:#D4DFC8;--pt-bande-fg:#3D5C2C;
+    --pt-loge-bg:#E8D5B5;--pt-loge-fg:#6b4f2c;
+    --pt-font-display:'Big Shoulders Display',sans-serif;
+    --pt-font-body:'Instrument Sans',sans-serif;
+    --pt-font-mono:'JetBrains Mono',monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--pt-bg-app);color:var(--pt-ink);font-family:var(--pt-font-body);font-size:14px;line-height:1.4;-webkit-font-smoothing:antialiased}
+  .eyebrow{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle)}
+
+  .top-nav{position:sticky;top:0;z-index:50;background:var(--pt-ink);color:var(--pt-warm);border-bottom:1px solid rgba(245,233,216,0.08)}
+  .top-nav__inner{max-width:1320px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+  .top-nav__brand{display:flex;align-items:center;gap:10px;font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:20px;letter-spacing:-0.01em}
+  .top-nav__brand-mark{width:28px;height:28px;border-radius:6px;background:var(--pt-accent);color:var(--pt-warm);display:flex;align-items:center;justify-content:center;font-family:var(--pt-font-mono);font-weight:600;font-size:12px}
+  .top-nav__divider{height:18px;width:1px;background:rgba(245,233,216,0.18)}
+  .top-nav__meta{font-family:var(--pt-font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-subtle)}
+  .top-nav__links{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+  .top-nav__link{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-warm);text-decoration:none;padding:8px 10px;border-radius:6px;border:1px solid transparent}
+  .top-nav__link:hover{border-color:rgba(245,233,216,0.18)}
+
+  .shell{max-width:1320px;margin:0 auto;padding:32px 24px 80px}
+  .doc-header{padding:36px 0 26px;border-bottom:1px solid var(--pt-line);margin-bottom:32px}
+  .doc-header h1{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:60px;letter-spacing:-0.01em;line-height:.92;margin:14px 0 0}
+  .doc-header p{margin:18px 0 0;color:var(--pt-muted);max-width:64ch;font-size:15px}
+
+  .section-title{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:30px;letter-spacing:-0.01em;line-height:.95;margin:48px 0 4px}
+  .sub-hint{font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle);margin:0 0 22px}
+
+  /* Icon grid */
+  .igrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .icard{display:flex;flex-direction:column;align-items:center;gap:10px;padding:18px 14px 12px;background:var(--pt-bg);border:1px solid var(--pt-line);border-radius:14px;text-align:center;transition:transform .15s ease,border-color .15s ease}
+  .icard:hover{border-color:var(--pt-accent);transform:translateY(-1px);background:var(--pt-warm)}
+  .icard__box{width:48px;height:48px;border-radius:12px;background:var(--pt-warm);color:var(--pt-primary);display:flex;align-items:center;justify-content:center}
+  .icard__box svg{width:22px;height:22px;stroke-width:2}
+  .icard__name{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;color:var(--pt-ink);word-break:break-word;overflow-wrap:anywhere}
+  .icard__use{font-family:var(--pt-font-mono);font-size:9.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--pt-subtle);line-height:1.3}
+
+  /* Variants */
+  .icard--accent .icard__box{background:rgba(184,112,61,.12);color:var(--pt-accent)}
+  .icard--success .icard__box{background:rgba(74,122,47,.12);color:var(--pt-success)}
+  .icard--danger .icard__box{background:rgba(164,69,61,.12);color:var(--pt-danger)}
+  .icard--warning .icard__box{background:rgba(192,138,61,.14);color:var(--pt-warning)}
+  .icard--info .icard__box{background:rgba(74,110,138,.12);color:var(--pt-info)}
+  .icard--ink .icard__box{background:var(--pt-ink);color:var(--pt-warm)}
+  .icard--truie .icard__box{background:var(--pt-truie-bg);color:var(--pt-truie-fg)}
+  .icard--verrat .icard__box{background:var(--pt-verrat-bg);color:var(--pt-verrat-fg)}
+  .icard--bande .icard__box{background:var(--pt-bande-bg);color:var(--pt-bande-fg)}
+  .icard--loge .icard__box{background:var(--pt-loge-bg);color:var(--pt-loge-fg)}
+  .icard--porc .icard__box{background:var(--pt-porcelet-bg);color:var(--pt-porcelet-fg)}
+
+  /* Sizes section */
+  .sizes-row{display:flex;gap:24px;align-items:flex-end;padding:22px 26px;background:var(--pt-bg);border:1px solid var(--pt-line);border-radius:14px}
+  .size-cell{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--pt-primary)}
+  .size-cell__sw{display:flex;align-items:center;justify-content:center}
+  .size-cell__label{font-family:var(--pt-font-mono);font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--pt-subtle)}
+  .size-cell__use{font-size:11px;color:var(--pt-muted);font-family:var(--pt-font-body)}
+
+  /* Usage rules */
+  .rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+  .rule{padding:16px 18px;border:1px solid var(--pt-line-strong);border-radius:14px;background:var(--pt-bg)}
+  .rule h3{font-family:var(--pt-font-display);font-weight:900;font-size:18px;text-transform:uppercase;letter-spacing:-0.005em;margin:0 0 8px;color:var(--pt-ink)}
+  .rule p{margin:0;font-size:13px;color:var(--pt-muted);line-height:1.5}
+  .rule code{font-family:var(--pt-font-mono);font-size:11.5px;font-weight:600;color:var(--pt-accent);background:rgba(184,112,61,.08);padding:1px 5px;border-radius:4px}
+  .rule--do{border-left:4px solid var(--pt-success)}
+  .rule--dont{border-left:4px solid var(--pt-danger)}
+
+  /* Code snippet */
+  .snippet{background:var(--pt-ink);color:var(--pt-warm);padding:14px 16px;border-radius:12px;font-family:var(--pt-font-mono);font-size:12.5px;line-height:1.6;overflow-x:auto;border:1px solid var(--pt-ink)}
+  .snippet .tag{color:var(--pt-accent-light)}
+  .snippet .attr{color:#c8d6e5}
+  .snippet .val{color:#d4dfc8}
+  .snippet .com{color:rgba(245,233,216,0.5)}
+
+  /* Brand mark hero */
+  .brand-hero{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center;padding:28px 28px;background:var(--pt-warm);border:1px solid var(--pt-line-strong);border-radius:16px}
+  .brand-mark-xl{width:96px;height:96px;border-radius:20px;background:var(--pt-accent);color:var(--pt-warm);display:flex;align-items:center;justify-content:center;font-family:var(--pt-font-display);font-weight:900;font-size:46px;letter-spacing:-0.04em;flex-shrink:0}
+  .brand-hero h2{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:32px;letter-spacing:-0.01em;line-height:.95;margin:0;color:var(--pt-ink)}
+  .brand-hero p{margin:8px 0 0;color:var(--pt-muted);font-size:14px;line-height:1.5}
+
+  /* Avatar entities */
+  .av{border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--pt-font-mono);font-weight:600;flex-shrink:0;border:1px solid rgba(26,26,26,0.06)}
+  .av--lg{width:56px;height:56px;font-size:14px;border-radius:12px}
+  .av--truie{background:var(--pt-truie-bg);color:var(--pt-truie-fg)}
+  .av--verrat{background:var(--pt-verrat-bg);color:var(--pt-verrat-fg)}
+  .av--bande{background:var(--pt-bande-bg);color:var(--pt-bande-fg)}
+  .av--loge{background:var(--pt-loge-bg);color:var(--pt-loge-fg)}
+  .av--porc{background:var(--pt-porcelet-bg);color:var(--pt-porcelet-fg)}
+
+  .av-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+  .av-card{display:flex;align-items:center;gap:14px;padding:14px;background:var(--pt-bg);border:1px solid var(--pt-line);border-radius:14px}
+  .av-card__main b{font-family:var(--pt-font-display);font-weight:900;font-size:14px;text-transform:uppercase;letter-spacing:-0.005em;display:block;color:var(--pt-ink);line-height:1}
+  .av-card__main span{font-family:var(--pt-font-mono);font-size:9.5px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:var(--pt-subtle);margin-top:4px;display:block}
+
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="top-nav__inner">
+    <div class="top-nav__brand"><span class="top-nav__brand-mark">P8</span><span>PorcTrack</span></div>
+    <span class="top-nav__divider"></span>
+    <span class="top-nav__meta">v76 · Icon system · 87 icônes</span>
+    <div class="top-nav__links">
+      <a class="top-nav__link" href="#brand">Brand</a>
+      <a class="top-nav__link" href="#nav">Nav</a>
+      <a class="top-nav__link" href="#status">Status</a>
+      <a class="top-nav__link" href="#auth">Auth</a>
+      <a class="top-nav__link" href="#actions">Actions</a>
+      <a class="top-nav__link" href="#repro">Repro</a>
+      <a class="top-nav__link" href="#perf">Perf</a>
+      <a class="top-nav__link" href="#stocks">Stocks</a>
+      <a class="top-nav__link" href="#photo">Photo</a>
+      <a class="top-nav__link" href="#gestures">Gestures</a>
+      <a class="top-nav__link" href="#alerts">Alerts</a>
+      <a class="top-nav__link" href="#sizes">Sizes</a>
+      <a class="top-nav__link" href="#rules">Règles</a>
+    </div>
+  </div>
+</nav>
+
+<main class="shell">
+
+  <header class="doc-header">
+    <div class="eyebrow">Design system · Icônes · v76</div>
+    <h1>Icon system PorcTrack 8</h1>
+    <p>87 icônes Lucide retenues pour la série v76, regroupées par contexte d'usage. Stroke 2 px, taille 13–22 px selon contexte. <b>Aucun emoji</b> — entités élevage rendues par avatars colorés (pas d'icônes), réservé aux actions / nav / sémantique.</p>
+  </header>
+
+  <!-- BRAND -->
+  <h2 id="brand" class="section-title">Brand mark</h2>
+  <p class="sub-hint">Pas d'icône logo · monogramme P8 mono uppercase</p>
+  <div class="brand-hero">
+    <div class="brand-mark-xl">P8</div>
+    <div>
+      <h2>Brand mark = monogramme</h2>
+      <p>Le mark <b>P8</b> en JetBrains Mono 900 sur carré accent (radius 6→20 px selon échelle). Pas de pictogramme animal — l'imagerie cochon est réservée aux placeholder photo. Tailles : 28 px (TopNav) · 36 px (auth header) · 96 px (splash).</p>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <h2 id="nav" class="section-title">Bottom nav · 5 onglets</h2>
+  <p class="sub-hint">Lucide stroke 2 · 18 px · état actif primary</p>
+  <div class="igrid">
+    <div class="icard"><div class="icard__box"><i data-lucide="warehouse"></i></div><div class="icard__name">warehouse</div><div class="icard__use">Élevage · onglet 1</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="repeat"></i></div><div class="icard__name">repeat</div><div class="icard__use">Reproduction · onglet 2</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="sun"></i></div><div class="icard__name">sun</div><div class="icard__use">Today · onglet 3 · centre</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="line-chart"></i></div><div class="icard__name">line-chart</div><div class="icard__use">Pilotage · onglet 4</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="settings-2"></i></div><div class="icard__name">settings-2</div><div class="icard__use">Réglages · onglet 5</div></div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <h2 id="status" class="section-title">Status bar mobile</h2>
+  <p class="sub-hint">14 px · même couleur que le texte stbar</p>
+  <div class="igrid">
+    <div class="icard"><div class="icard__box"><i data-lucide="signal"></i></div><div class="icard__name">signal</div><div class="icard__use">4G · plein</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="signal-low"></i></div><div class="icard__name">signal-low</div><div class="icard__use">3G fluctuant</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="signal-zero"></i></div><div class="icard__name">signal-zero</div><div class="icard__use">offline · pas de réseau</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="wifi"></i></div><div class="icard__name">wifi</div><div class="icard__use">WiFi connecté</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="wifi-off"></i></div><div class="icard__name">wifi-off</div><div class="icard__use">WiFi désactivé</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="battery-medium"></i></div><div class="icard__name">battery-medium</div><div class="icard__use">batterie 50%</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="battery-low"></i></div><div class="icard__name">battery-low</div><div class="icard__use">batterie &lt; 20%</div></div>
+  </div>
+
+  <!-- AUTH -->
+  <h2 id="auth" class="section-title">Auth · forms · validation</h2>
+  <p class="sub-hint">15 px dans inputs · 38 px dans hero icon</p>
+  <div class="igrid">
+    <div class="icard"><div class="icard__box"><i data-lucide="mail"></i></div><div class="icard__name">mail</div><div class="icard__use">field email · hero confirm</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="lock"></i></div><div class="icard__name">lock</div><div class="icard__use">field mot de passe</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="eye"></i></div><div class="icard__name">eye</div><div class="icard__use">toggle pwd · masqué</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="eye-off"></i></div><div class="icard__name">eye-off</div><div class="icard__use">toggle pwd · visible</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="user"></i></div><div class="icard__name">user</div><div class="icard__use">field nom complet</div></div>
+    <div class="icard icard--success"><div class="icard__box"><i data-lucide="check-circle"></i></div><div class="icard__name">check-circle</div><div class="icard__use">email envoyé succès</div></div>
+    <div class="icard icard--success"><div class="icard__box"><i data-lucide="check-circle-2"></i></div><div class="icard__name">check-circle-2</div><div class="icard__use">compte activé</div></div>
+    <div class="icard icard--warning"><div class="icard__box"><i data-lucide="alert-triangle"></i></div><div class="icard__name">alert-triangle</div><div class="icard__use">erreur identifiants</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="loader-2"></i></div><div class="icard__name">loader-2</div><div class="icard__use">loading · spin 1 s</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="rotate-cw"></i></div><div class="icard__name">rotate-cw</div><div class="icard__use">renvoyer le lien</div></div>
+  </div>
+
+  <!-- ACTIONS -->
+  <h2 id="actions" class="section-title">Actions transverses</h2>
+  <p class="sub-hint">11–14 px dans btn · 16 px en standalone</p>
+  <div class="igrid">
+    <div class="icard"><div class="icard__box"><i data-lucide="plus"></i></div><div class="icard__name">plus</div><div class="icard__use">FAB · ajouter · chip add</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="x"></i></div><div class="icard__name">x</div><div class="icard__use">close · fermer sheet</div></div>
+    <div class="icard icard--success"><div class="icard__box"><i data-lucide="check"></i></div><div class="icard__name">check</div><div class="icard__use">confirmer · checkbox</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="search"></i></div><div class="icard__name">search</div><div class="icard__use">rechercher liste</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="filter"></i></div><div class="icard__name">filter</div><div class="icard__use">filtrer liste</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="sliders-horizontal"></i></div><div class="icard__name">sliders-horizontal</div><div class="icard__use">tri · filtres avancés</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="more-horizontal"></i></div><div class="icard__name">more-horizontal</div><div class="icard__use">menu inline · long-press</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="more-vertical"></i></div><div class="icard__name">more-vertical</div><div class="icard__use">menu kebab fiche</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="pencil"></i></div><div class="icard__name">pencil</div><div class="icard__use">modifier · swipe edit</div></div>
+    <div class="icard icard--danger"><div class="icard__box"><i data-lucide="trash-2"></i></div><div class="icard__name">trash-2</div><div class="icard__use">supprimer · swipe delete</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="copy"></i></div><div class="icard__name">copy</div><div class="icard__use">dupliquer fiche</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="share-2"></i></div><div class="icard__name">share-2</div><div class="icard__use">partager rapport</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="download"></i></div><div class="icard__name">download</div><div class="icard__use">PWA install · export PDF</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="upload"></i></div><div class="icard__name">upload</div><div class="icard__use">import CSV · sync sortie</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="chevron-left"></i></div><div class="icard__name">chevron-left</div><div class="icard__use">retour · refaire</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="chevron-right"></i></div><div class="icard__name">chevron-right</div><div class="icard__use">card-link · drill</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="chevron-down"></i></div><div class="icard__name">chevron-down</div><div class="icard__use">select · accordéon</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="arrow-left"></i></div><div class="icard__name">arrow-left</div><div class="icard__use">retour login</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="arrow-right"></i></div><div class="icard__name">arrow-right</div><div class="icard__use">CTA continuer</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="arrow-down"></i></div><div class="icard__name">arrow-down</div><div class="icard__use">pull-to-refresh</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="rotate-ccw"></i></div><div class="icard__name">rotate-ccw</div><div class="icard__use">flip caméra · annuler</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="grip-vertical"></i></div><div class="icard__name">grip-vertical</div><div class="icard__use">drag handle reorder</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="send"></i></div><div class="icard__name">send</div><div class="icard__use">composer Marius</div></div>
+  </div>
+
+  <!-- REPRO -->
+  <h2 id="repro" class="section-title">Reproduction · cycle</h2>
+  <p class="sub-hint">Cycle truie · saillie · gestation · MB · lactation · sevrage</p>
+  <div class="igrid">
+    <div class="icard icard--truie"><div class="icard__box"><i data-lucide="heart"></i></div><div class="icard__name">heart</div><div class="icard__use">saillie · chaleurs</div></div>
+    <div class="icard icard--truie"><div class="icard__box"><i data-lucide="baby"></i></div><div class="icard__name">baby</div><div class="icard__use">mise-bas · porcelet né</div></div>
+    <div class="icard icard--porc"><div class="icard__box"><i data-lucide="milk"></i></div><div class="icard__name">milk</div><div class="icard__use">lactation · tétée</div></div>
+    <div class="icard icard--bande"><div class="icard__box"><i data-lucide="scissors"></i></div><div class="icard__name">scissors</div><div class="icard__use">sevrage · coupe ombilical</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="repeat"></i></div><div class="icard__name">repeat</div><div class="icard__use">cycle · retour chaleur</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="calendar"></i></div><div class="icard__name">calendar</div><div class="icard__use">planning · MB attendue</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="calendar-check"></i></div><div class="icard__name">calendar-check</div><div class="icard__use">événement validé</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="calendar-clock"></i></div><div class="icard__name">calendar-clock</div><div class="icard__use">à venir · J−3</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="clock"></i></div><div class="icard__name">clock</div><div class="icard__use">durée gestation</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="syringe"></i></div><div class="icard__name">syringe</div><div class="icard__use">protocole vaccinal</div></div>
+    <div class="icard icard--verrat"><div class="icard__box"><i data-lucide="dna"></i></div><div class="icard__name">dna</div><div class="icard__use">génétique verrat</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="git-branch"></i></div><div class="icard__name">git-branch</div><div class="icard__use">filiation · arbre</div></div>
+  </div>
+
+  <!-- PERF -->
+  <h2 id="perf" class="section-title">Performance · pilotage</h2>
+  <p class="sub-hint">KPIs · tendances · alertes</p>
+  <div class="igrid">
+    <div class="icard"><div class="icard__box"><i data-lucide="line-chart"></i></div><div class="icard__name">line-chart</div><div class="icard__use">tendance ISSE</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="bar-chart-3"></i></div><div class="icard__name">bar-chart-3</div><div class="icard__use">KPIs comparés</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="pie-chart"></i></div><div class="icard__name">pie-chart</div><div class="icard__use">répartition truies</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="activity"></i></div><div class="icard__name">activity</div><div class="icard__use">santé troupeau</div></div>
+    <div class="icard icard--success"><div class="icard__box"><i data-lucide="trending-up"></i></div><div class="icard__name">trending-up</div><div class="icard__use">progression positive</div></div>
+    <div class="icard icard--danger"><div class="icard__box"><i data-lucide="trending-down"></i></div><div class="icard__name">trending-down</div><div class="icard__use">baisse perf</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="target"></i></div><div class="icard__name">target</div><div class="icard__use">objectif · cible</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="trophy"></i></div><div class="icard__name">trophy</div><div class="icard__use">classement A · top</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="medal"></i></div><div class="icard__name">medal</div><div class="icard__use">badge ferme A</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="banknote"></i></div><div class="icard__name">banknote</div><div class="icard__use">finances · CFA</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="coins"></i></div><div class="icard__name">coins</div><div class="icard__use">coût aliment / kg</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="receipt"></i></div><div class="icard__name">receipt</div><div class="icard__use">rapport · ventes</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="file-text"></i></div><div class="icard__name">file-text</div><div class="icard__use">document · rapport</div></div>
+  </div>
+
+  <!-- STOCKS / RESSOURCES -->
+  <h2 id="stocks" class="section-title">Ressources · stocks · ferme</h2>
+  <p class="sub-hint">Aliment · loges · équipe · protocoles</p>
+  <div class="igrid">
+    <div class="icard icard--loge"><div class="icard__box"><i data-lucide="warehouse"></i></div><div class="icard__name">warehouse</div><div class="icard__use">ferme · loge</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="package"></i></div><div class="icard__name">package</div><div class="icard__use">stock aliment</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="package-2"></i></div><div class="icard__name">package-2</div><div class="icard__use">livraison · sac</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="boxes"></i></div><div class="icard__name">boxes</div><div class="icard__use">inventaire</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="wheat"></i></div><div class="icard__name">wheat</div><div class="icard__use">formule · maïs/soja</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="droplet"></i></div><div class="icard__name">droplet</div><div class="icard__use">eau · abreuvoir</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="thermometer"></i></div><div class="icard__name">thermometer</div><div class="icard__use">température loge</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="users"></i></div><div class="icard__name">users</div><div class="icard__use">équipe · coopérative</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="user-plus"></i></div><div class="icard__name">user-plus</div><div class="icard__use">inviter membre</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="user-cog"></i></div><div class="icard__name">user-cog</div><div class="icard__use">rôle · permissions</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="building-2"></i></div><div class="icard__name">building-2</div><div class="icard__use">multi-fermes Aïssa</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="map-pin"></i></div><div class="icard__name">map-pin</div><div class="icard__use">localisation ferme</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="book-open"></i></div><div class="icard__name">book-open</div><div class="icard__use">encyclopédie</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="clipboard-list"></i></div><div class="icard__name">clipboard-list</div><div class="icard__use">protocole · checklist</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="truck"></i></div><div class="icard__name">truck</div><div class="icard__use">fournisseur · transport</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="cloud"></i></div><div class="icard__name">cloud</div><div class="icard__use">sync cloud</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="cloud-off"></i></div><div class="icard__name">cloud-off</div><div class="icard__use">offline · queue local</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="refresh-cw"></i></div><div class="icard__name">refresh-cw</div><div class="icard__use">forcer sync</div></div>
+  </div>
+
+  <!-- PHOTO -->
+  <h2 id="photo" class="section-title">Photo · caméra · médias</h2>
+  <p class="sub-hint">Workflow Capacitor Camera + Crop</p>
+  <div class="igrid">
+    <div class="icard"><div class="icard__box"><i data-lucide="camera"></i></div><div class="icard__name">camera</div><div class="icard__use">source caméra</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="image"></i></div><div class="icard__name">image</div><div class="icard__use">photo placeholder</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="image-plus"></i></div><div class="icard__name">image-plus</div><div class="icard__use">source galerie</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="images"></i></div><div class="icard__name">images</div><div class="icard__use">pellicule · 12 photos</div></div>
+    <div class="icard icard--warning"><div class="icard__box"><i data-lucide="zap"></i></div><div class="icard__name">zap</div><div class="icard__use">flash on</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="zap-off"></i></div><div class="icard__name">zap-off</div><div class="icard__use">flash off</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="crop"></i></div><div class="icard__name">crop</div><div class="icard__use">recadrer 4:3</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="tag"></i></div><div class="icard__name">tag</div><div class="icard__use">tag photo · chip</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="paperclip"></i></div><div class="icard__name">paperclip</div><div class="icard__use">attache · composer</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="mic"></i></div><div class="icard__name">mic</div><div class="icard__use">vocal Marius</div></div>
+  </div>
+
+  <!-- ALERTS / NOTIFS -->
+  <h2 id="alerts" class="section-title">Alertes · notifs · OS prompts</h2>
+  <p class="sub-hint">Sémantique success/warning/danger/info</p>
+  <div class="igrid">
+    <div class="icard icard--accent"><div class="icard__box"><i data-lucide="bell"></i></div><div class="icard__name">bell</div><div class="icard__use">push permission</div></div>
+    <div class="icard icard--warning"><div class="icard__box"><i data-lucide="bell-off"></i></div><div class="icard__name">bell-off</div><div class="icard__use">rappels désactivés</div></div>
+    <div class="icard icard--warning"><div class="icard__box"><i data-lucide="bell-ring"></i></div><div class="icard__name">bell-ring</div><div class="icard__use">notification active</div></div>
+    <div class="icard icard--info"><div class="icard__box"><i data-lucide="info"></i></div><div class="icard__name">info</div><div class="icard__use">info contextuelle</div></div>
+    <div class="icard icard--warning"><div class="icard__box"><i data-lucide="alert-triangle"></i></div><div class="icard__name">alert-triangle</div><div class="icard__use">avertissement</div></div>
+    <div class="icard icard--danger"><div class="icard__box"><i data-lucide="alert-octagon"></i></div><div class="icard__name">alert-octagon</div><div class="icard__use">critique · stock 0</div></div>
+    <div class="icard icard--danger"><div class="icard__box"><i data-lucide="alert-circle"></i></div><div class="icard__name">alert-circle</div><div class="icard__use">erreur form</div></div>
+    <div class="icard icard--success"><div class="icard__box"><i data-lucide="check-circle"></i></div><div class="icard__name">check-circle</div><div class="icard__use">action validée</div></div>
+    <div class="icard"><div class="icard__box"><i data-lucide="message-circle"></i></div><div class="icard__name">message-circle</div><div class="icard__use">Marius FAB</div></div>
+    <div class="icard icard--accent"><div class="icard__box"><i data-lucide="sparkles"></i></div><div class="icard__name">sparkles</div><div class="icard__use">Marius IA · suggestion</div></div>
+  </div>
+
+  <!-- ENTITÉS -->
+  <h2 class="section-title">Entités élevage · pas d'icônes</h2>
+  <p class="sub-hint">Avatars colorés mono · code court · couleur métier</p>
+  <div class="av-grid">
+    <div class="av-card"><div class="av av--lg av--truie">T31</div><div class="av-card__main"><b>Truie</b><span>rose · T-031</span></div></div>
+    <div class="av-card"><div class="av av--lg av--verrat">V03</div><div class="av-card__main"><b>Verrat</b><span>bleu · V-03</span></div></div>
+    <div class="av-card"><div class="av av--lg av--bande">M26</div><div class="av-card__main"><b>Bande</b><span>vert · Mai 26</span></div></div>
+    <div class="av-card"><div class="av av--lg av--loge">M01</div><div class="av-card__main"><b>Loge</b><span>beige · M-01</span></div></div>
+    <div class="av-card"><div class="av av--lg av--porc">P12</div><div class="av-card__main"><b>Porcelet</b><span>cream · P-012</span></div></div>
+  </div>
+
+  <!-- SIZES -->
+  <h2 id="sizes" class="section-title">Échelle · tailles d'affichage</h2>
+  <p class="sub-hint">stroke-width 2 constant · taille seule varie</p>
+  <div class="sizes-row">
+    <div class="size-cell"><div class="size-cell__sw"><i data-lucide="bell" style="width:11px;height:11px"></i></div><div class="size-cell__label">11 px</div><div class="size-cell__use">btn--sm · pill</div></div>
+    <div class="size-cell"><div class="size-cell__sw"><i data-lucide="bell" style="width:13px;height:13px"></i></div><div class="size-cell__label">13 px</div><div class="size-cell__use">btn standard</div></div>
+    <div class="size-cell"><div class="size-cell__sw"><i data-lucide="bell" style="width:14px;height:14px"></i></div><div class="size-cell__label">14 px</div><div class="size-cell__use">stbar · sheet close</div></div>
+    <div class="size-cell"><div class="size-cell__sw"><i data-lucide="bell" style="width:16px;height:16px"></i></div><div class="size-cell__label">16 px</div><div class="size-cell__use">field input · cam</div></div>
+    <div class="size-cell"><div class="size-cell__sw"><i data-lucide="bell" style="width:18px;height:18px"></i></div><div class="size-cell__label">18 px</div><div class="size-cell__use">BottomNav · bullet</div></div>
+    <div class="size-cell"><div class="size-cell__sw"><i data-lucide="bell" style="width:22px;height:22px"></i></div><div class="size-cell__label">22 px</div><div class="size-cell__use">source-card · empty</div></div>
+    <div class="size-cell"><div class="size-cell__sw"><i data-lucide="bell" style="width:30px;height:30px"></i></div><div class="size-cell__label">30 px</div><div class="size-cell__use">empty illus</div></div>
+    <div class="size-cell"><div class="size-cell__sw"><i data-lucide="bell" style="width:38px;height:38px"></i></div><div class="size-cell__label">38 px</div><div class="size-cell__use">hero auth · OS card</div></div>
+  </div>
+
+  <!-- RULES -->
+  <h2 id="rules" class="section-title">Règles d'usage</h2>
+  <p class="sub-hint">5 do · 4 don't · code snippet officiel</p>
+
+  <div class="rules" style="margin-bottom:18px">
+    <div class="rule rule--do"><h3>✓ Stroke 2 constant</h3><p>Tous les SVG Lucide en <code>stroke-width:2</code>. Ne jamais alléger en 1.5 — perd la lisibilité sous 16 px à bras tendu sur Android budget.</p></div>
+    <div class="rule rule--do"><h3>✓ Couleur = currentColor</h3><p>Les icônes héritent <code>color</code> du parent. Permet de basculer success/warning/danger sans dupliquer le SVG.</p></div>
+    <div class="rule rule--do"><h3>✓ Carré-fond pour actions clés</h3><p>Bouton ou source : icône dans un carré <code>radius 10–14 px</code>, fond warm + couleur primary. Donne du poids visuel.</p></div>
+    <div class="rule rule--do"><h3>✓ Pair sémantique</h3><p>Toujours préférer la paire success/danger Lucide existante (<code>check-circle</code> ↔ <code>alert-octagon</code>) plutôt que d'inventer.</p></div>
+    <div class="rule rule--do"><h3>✓ Loader-2 = spin 1 s</h3><p>Une seule animation pour tous les loadings : <code>animation:spin 1s linear infinite</code>. Pas de variantes par contexte.</p></div>
+    <div class="rule rule--dont"><h3>✗ Pas d'emoji</h3><p>🐷🍼📊 interdits. Anti-AI feel. Yao perçoit l'emoji comme jouet — pas un outil de travail. Lucide stroke uniquement.</p></div>
+    <div class="rule rule--dont"><h3>✗ Pas d'icône d'entité</h3><p>Truies, verrats, porcelets, bandes, loges = <b>avatars colorés</b> avec code court mono (T31, V03, M01). Pas de pictogramme animal.</p></div>
+    <div class="rule rule--dont"><h3>✗ Pas de fill</h3><p>Lucide est outline-only. Si besoin de "rempli" sémantique (état actif), passe par fond plein du conteneur, pas par <code>fill</code> du SVG.</p></div>
+    <div class="rule rule--dont"><h3>✗ Pas de gradient</h3><p>Aucun <code>linearGradient</code> dans les SVG. Couleur unique héritée. Anti-AI feel.</p></div>
+  </div>
+
+  <h3 class="section-title" style="font-size:22px;margin-top:32px">Snippet officiel</h3>
+  <p class="sub-hint">Inclusion via Lucide UMD · 1 ligne head + auto-render</p>
+  <div class="snippet">
+<span class="com">&lt;!-- 1. dans le &lt;head&gt; --&gt;</span><br>
+<span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="val">"https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"</span><span class="tag">&gt;&lt;/script&gt;</span><br><br>
+<span class="com">&lt;!-- 2. dans le HTML --&gt;</span><br>
+<span class="tag">&lt;i</span> <span class="attr">data-lucide</span>=<span class="val">"bell"</span><span class="tag">&gt;&lt;/i&gt;</span><br>
+<span class="tag">&lt;i</span> <span class="attr">data-lucide</span>=<span class="val">"check-circle"</span> <span class="attr">style</span>=<span class="val">"width:18px;height:18px"</span><span class="tag">&gt;&lt;/i&gt;</span><br><br>
+<span class="com">&lt;!-- 3. en fin de &lt;body&gt; --&gt;</span><br>
+<span class="tag">&lt;script&gt;</span> <span class="attr">if</span>(window.lucide) lucide.createIcons(); <span class="tag">&lt;/script&gt;</span>
+  </div>
+
+  <p style="margin-top:18px;font-size:13px;color:var(--pt-muted);line-height:1.5"><b style="color:var(--pt-ink)">Total v76</b> · 87 icônes Lucide · 11 catégories · stroke 2 px · couleur héritée · zéro emoji · zéro icône d'entité élevage. Compatible direct avec les 5 mockups de la série.</p>
+
+</main>
+
+<script>
+  if(window.lucide){lucide.createIcons();}
+</script>
+
+</body>
+</html>

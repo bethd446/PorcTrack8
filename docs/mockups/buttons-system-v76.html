@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PorcTrack 8 — Button system v76</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  :root{
+    --pt-primary:#2D4A1F;--pt-primary-hover:#243d18;--pt-primary-active:#1c3013;
+    --pt-warm:#F5E9D8;--pt-warm-deep:#E8D5B5;
+    --pt-accent:#B8703D;--pt-accent-hover:#a8632f;--pt-accent-active:#965528;
+    --pt-bg:#FAF7F0;--pt-bg-app:#F1ECE0;
+    --pt-ink:#1a1a1a;--pt-muted:#6b6357;--pt-subtle:#a39888;
+    --pt-success:#4a7a2f;--pt-warning:#c08a3d;--pt-danger:#a4453d;--pt-danger-hover:#8a3a33;--pt-info:#4a6e8a;
+    --pt-line:rgba(26,26,26,0.08);--pt-line-strong:rgba(26,26,26,0.16);
+    --pt-font-display:'Big Shoulders Display',sans-serif;
+    --pt-font-body:'Instrument Sans',sans-serif;
+    --pt-font-mono:'JetBrains Mono',monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--pt-bg-app);color:var(--pt-ink);font-family:var(--pt-font-body);font-size:14px;line-height:1.4;-webkit-font-smoothing:antialiased}
+  .eyebrow{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle)}
+
+  /* ============== TOP NAV ============== */
+  .top-nav{position:sticky;top:0;z-index:50;background:var(--pt-ink);color:var(--pt-warm);border-bottom:1px solid rgba(245,233,216,0.08)}
+  .top-nav__inner{max-width:1320px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+  .top-nav__brand{display:flex;align-items:center;gap:10px;font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:20px;letter-spacing:-0.01em}
+  .top-nav__brand-mark{width:28px;height:28px;border-radius:6px;background:var(--pt-accent);color:var(--pt-warm);display:flex;align-items:center;justify-content:center;font-family:var(--pt-font-mono);font-weight:600;font-size:12px}
+  .top-nav__divider{height:18px;width:1px;background:rgba(245,233,216,0.18)}
+  .top-nav__meta{font-family:var(--pt-font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-subtle)}
+  .top-nav__links{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+  .top-nav__link{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-warm);text-decoration:none;padding:8px 10px;border-radius:6px;border:1px solid transparent}
+  .top-nav__link:hover{border-color:rgba(245,233,216,0.18)}
+
+  .shell{max-width:1320px;margin:0 auto;padding:32px 24px 80px}
+  .doc-header{padding:36px 0 26px;border-bottom:1px solid var(--pt-line);margin-bottom:32px}
+  .doc-header h1{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:60px;letter-spacing:-0.01em;line-height:.92;margin:14px 0 0}
+  .doc-header p{margin:18px 0 0;color:var(--pt-muted);max-width:64ch;font-size:15px}
+
+  .section-title{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:30px;letter-spacing:-0.01em;line-height:.95;margin:48px 0 4px}
+  .sub-hint{font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle);margin:0 0 22px}
+
+  /* ============== BUTTON BASE ============== */
+  .btn{
+    appearance:none;border:none;cursor:pointer;
+    font-family:var(--pt-font-body);font-weight:600;
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    transition:background .12s ease,border-color .12s ease,color .12s ease,transform .08s ease;
+    white-space:nowrap;text-decoration:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .btn:active{transform:translateY(1px)}
+  .btn[disabled],.btn--disabled{cursor:not-allowed;opacity:.4;pointer-events:none}
+  .btn svg{stroke-width:2;flex-shrink:0}
+
+  /* ============== HIERARCHY ============== */
+  .btn--primary{background:var(--pt-primary);color:var(--pt-warm)}
+  .btn--primary:hover{background:var(--pt-primary-hover)}
+  .btn--primary:active{background:var(--pt-primary-active)}
+
+  .btn--accent{background:var(--pt-accent);color:var(--pt-warm)}
+  .btn--accent:hover{background:var(--pt-accent-hover)}
+  .btn--accent:active{background:var(--pt-accent-active)}
+
+  .btn--secondary{background:var(--pt-bg);color:var(--pt-ink);border:1px solid var(--pt-line-strong)}
+  .btn--secondary:hover{background:var(--pt-warm);border-color:var(--pt-ink)}
+  .btn--secondary:active{background:var(--pt-warm-deep)}
+
+  .btn--ghost{background:transparent;color:var(--pt-ink)}
+  .btn--ghost:hover{background:rgba(26,26,26,.06)}
+  .btn--ghost:active{background:rgba(26,26,26,.1)}
+
+  .btn--danger{background:var(--pt-danger);color:var(--pt-warm)}
+  .btn--danger:hover{background:var(--pt-danger-hover)}
+
+  .btn--link{background:transparent;color:var(--pt-accent);padding:0;border-radius:0;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;font-weight:600}
+  .btn--link:hover{color:var(--pt-accent-hover);text-decoration-thickness:2px}
+
+  /* ============== SIZES ============== */
+  .btn--sm{font-size:12px;padding:7px 12px;border-radius:8px;gap:6px}
+  .btn--sm svg{width:13px;height:13px}
+  .btn--md{font-size:13.5px;padding:10px 16px;border-radius:10px}
+  .btn--md svg{width:14px;height:14px}
+  .btn--lg{font-size:14.5px;padding:13px 20px;border-radius:12px}
+  .btn--lg svg{width:16px;height:16px}
+  .btn--xl{font-size:16px;padding:16px 24px;border-radius:14px}
+  .btn--xl svg{width:18px;height:18px}
+
+  .btn--block{width:100%}
+
+  /* Icon-only square */
+  .btn--icon-sm{padding:7px;width:30px;height:30px;border-radius:8px}
+  .btn--icon-md{padding:10px;width:38px;height:38px;border-radius:10px}
+  .btn--icon-lg{padding:13px;width:46px;height:46px;border-radius:12px}
+
+  /* Loading */
+  .btn--loading{position:relative;color:transparent !important;pointer-events:none}
+  .btn--loading::after{content:"";position:absolute;width:16px;height:16px;border:2px solid currentColor;border-radius:50%;border-right-color:transparent;color:var(--pt-warm);animation:btn-spin .8s linear infinite;left:50%;top:50%;margin:-8px 0 0 -8px;opacity:.9}
+  .btn--secondary.btn--loading::after,.btn--ghost.btn--loading::after{color:var(--pt-ink)}
+  @keyframes btn-spin{to{transform:rotate(360deg)}}
+
+  /* ============== FAB ============== */
+  .fab{
+    width:56px;height:56px;border-radius:50%;background:var(--pt-accent);color:var(--pt-warm);
+    display:inline-flex;align-items:center;justify-content:center;border:none;cursor:pointer;
+    box-shadow:0 6px 20px -4px rgba(184,112,61,.45),0 2px 6px -1px rgba(26,26,26,.18);
+    transition:all .15s ease;
+  }
+  .fab:hover{background:var(--pt-accent-hover);transform:translateY(-1px);box-shadow:0 8px 24px -4px rgba(184,112,61,.55),0 3px 8px -1px rgba(26,26,26,.2)}
+  .fab:active{transform:translateY(1px);box-shadow:0 4px 12px -4px rgba(184,112,61,.4)}
+  .fab svg{width:22px;height:22px;stroke-width:2}
+  .fab--marius{background:var(--pt-ink);color:var(--pt-warm)}
+  .fab--marius:hover{background:#2c2c2c}
+  .fab--mini{width:46px;height:46px}
+  .fab--mini svg{width:18px;height:18px}
+
+  /* ============== SEGMENTED ============== */
+  .seg{display:inline-flex;background:var(--pt-warm);border:1px solid var(--pt-line);border-radius:10px;padding:3px;gap:2px}
+  .seg__opt{
+    appearance:none;border:none;cursor:pointer;background:transparent;
+    font-family:var(--pt-font-body);font-size:13px;font-weight:600;color:var(--pt-muted);
+    padding:7px 14px;border-radius:8px;transition:all .12s ease;
+  }
+  .seg__opt:hover{color:var(--pt-ink)}
+  .seg__opt--active{background:var(--pt-bg);color:var(--pt-ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+
+  /* ============== CHIP ============== */
+  .chip{
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--pt-bg);color:var(--pt-ink);
+    border:1px solid var(--pt-line-strong);
+    border-radius:999px;padding:6px 12px;
+    font-family:var(--pt-font-body);font-size:12.5px;font-weight:500;
+    cursor:pointer;transition:all .12s ease;
+  }
+  .chip:hover{background:var(--pt-warm);border-color:var(--pt-ink)}
+  .chip--active{background:var(--pt-ink);color:var(--pt-warm);border-color:var(--pt-ink)}
+  .chip--add{border-style:dashed;color:var(--pt-muted)}
+  .chip--add:hover{color:var(--pt-ink);border-style:solid}
+  .chip svg{width:12px;height:12px;stroke-width:2.2}
+
+  /* ============== SOURCE CARD (photo picker) ============== */
+  .src-card{
+    appearance:none;border:1px solid var(--pt-line-strong);background:var(--pt-bg);
+    border-radius:14px;padding:18px 16px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:10px;
+    font-family:var(--pt-font-body);color:var(--pt-ink);
+    transition:all .15s ease;width:140px;
+  }
+  .src-card:hover{background:var(--pt-warm);border-color:var(--pt-accent);transform:translateY(-1px)}
+  .src-card__icon{width:48px;height:48px;border-radius:12px;background:var(--pt-warm);color:var(--pt-primary);display:flex;align-items:center;justify-content:center}
+  .src-card__icon svg{width:22px;height:22px;stroke-width:2}
+  .src-card__label{font-size:13.5px;font-weight:600}
+  .src-card__hint{font-family:var(--pt-font-mono);font-size:9.5px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:var(--pt-subtle)}
+
+  /* ============== SWIPE ACTION ============== */
+  .swipe-row{display:flex;background:var(--pt-bg);border:1px solid var(--pt-line);border-radius:14px;overflow:hidden}
+  .swipe-row__body{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:3px;background:var(--pt-bg)}
+  .swipe-row__body b{font-family:var(--pt-font-display);font-weight:900;font-size:14px;text-transform:uppercase;color:var(--pt-ink);line-height:1}
+  .swipe-row__body span{font-family:var(--pt-font-mono);font-size:10px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:var(--pt-subtle)}
+  .swipe-action{
+    appearance:none;border:none;cursor:pointer;
+    width:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+    color:var(--pt-warm);font-family:var(--pt-font-body);font-size:11px;font-weight:600;
+  }
+  .swipe-action svg{width:16px;height:16px;stroke-width:2}
+  .swipe-action--edit{background:var(--pt-info)}
+  .swipe-action--delete{background:var(--pt-danger)}
+  .swipe-action:active{filter:brightness(.92)}
+
+  /* ============== SHEET CLOSE ============== */
+  .sheet-close{
+    appearance:none;border:1px solid var(--pt-line);background:var(--pt-bg);cursor:pointer;
+    width:36px;height:36px;border-radius:10px;
+    display:inline-flex;align-items:center;justify-content:center;
+    color:var(--pt-muted);transition:all .12s ease;
+  }
+  .sheet-close:hover{color:var(--pt-ink);border-color:var(--pt-ink-muted);background:var(--pt-warm)}
+  .sheet-close svg{width:14px;height:14px;stroke-width:2.2}
+
+  /* ============== STICKY FOOTER ============== */
+  .sticky-demo{
+    background:var(--pt-bg);border:1px solid var(--pt-line);border-radius:18px;
+    padding:14px 16px;display:flex;gap:10px;align-items:center;
+    box-shadow:0 -4px 20px -8px rgba(0,0,0,.08) inset;
+  }
+  .sticky-demo .btn{flex:1}
+  .sticky-demo--mobile{max-width:380px}
+
+  /* ============== LAYOUT GRIDS ============== */
+  .stack-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+  .demo-card{
+    background:var(--pt-bg);border:1px solid var(--pt-line);border-radius:14px;padding:18px 18px 16px;
+    display:flex;flex-direction:column;gap:14px;
+  }
+  .demo-card__head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .demo-card__name{font-family:var(--pt-font-display);font-weight:900;font-size:15px;text-transform:uppercase;color:var(--pt-ink);letter-spacing:-0.005em;line-height:1}
+  .demo-card__hint{font-family:var(--pt-font-mono);font-size:9.5px;font-weight:500;letter-spacing:.10em;text-transform:uppercase;color:var(--pt-subtle)}
+  .demo-card__body{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .demo-card__body--col{flex-direction:column;align-items:flex-start}
+  .demo-card__body--center{justify-content:center;padding:8px 0}
+  .demo-card__meta{font-family:var(--pt-font-mono);font-size:10.5px;color:var(--pt-muted);line-height:1.5;border-top:1px dashed var(--pt-line);padding-top:10px;margin-top:auto}
+  .demo-card__meta code{color:var(--pt-accent);font-weight:600}
+
+  /* ============== SIZE TABLE ============== */
+  .size-table{display:grid;grid-template-columns:auto auto auto auto auto;gap:0;background:var(--pt-bg);border:1px solid var(--pt-line);border-radius:14px;overflow:hidden}
+  .size-table > div{padding:14px 18px;border-bottom:1px solid var(--pt-line);display:flex;align-items:center}
+  .size-table > div:nth-child(-n+5){background:var(--pt-warm);font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;letter-spacing:.10em;text-transform:uppercase;color:var(--pt-muted)}
+  .size-table > div:nth-last-child(-n+5){border-bottom:none}
+
+  /* ============== STATES BAR ============== */
+  .state-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0;background:var(--pt-bg);border:1px solid var(--pt-line);border-radius:14px;overflow:hidden}
+  .state-cell{padding:24px 20px;display:flex;flex-direction:column;align-items:center;gap:14px;border-right:1px solid var(--pt-line);border-bottom:1px solid var(--pt-line)}
+  .state-cell:last-child{border-right:none}
+  .state-cell__label{font-family:var(--pt-font-mono);font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--pt-subtle)}
+
+  /* ============== RULES ============== */
+  .rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+  .rule{padding:16px 18px;border:1px solid var(--pt-line-strong);border-radius:14px;background:var(--pt-bg)}
+  .rule h3{font-family:var(--pt-font-display);font-weight:900;font-size:18px;text-transform:uppercase;letter-spacing:-0.005em;margin:0 0 8px;color:var(--pt-ink)}
+  .rule p{margin:0;font-size:13px;color:var(--pt-muted);line-height:1.5}
+  .rule code{font-family:var(--pt-font-mono);font-size:11.5px;font-weight:600;color:var(--pt-accent);background:rgba(184,112,61,.08);padding:1px 5px;border-radius:4px}
+  .rule--do{border-left:4px solid var(--pt-success)}
+  .rule--dont{border-left:4px solid var(--pt-danger)}
+
+  /* ============== SNIPPET ============== */
+  .snippet{background:var(--pt-ink);color:var(--pt-warm);padding:14px 16px;border-radius:12px;font-family:var(--pt-font-mono);font-size:12.5px;line-height:1.6;overflow-x:auto;border:1px solid var(--pt-ink)}
+  .snippet .tag{color:var(--pt-accent-light,#D89968)}
+  .snippet .attr{color:#c8d6e5}
+  .snippet .val{color:#d4dfc8}
+  .snippet .com{color:rgba(245,233,216,0.5)}
+
+  /* ============== HERO ============== */
+  .brand-hero{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center;padding:28px;background:var(--pt-warm);border:1px solid var(--pt-line-strong);border-radius:16px}
+  .brand-hero h2{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:32px;letter-spacing:-0.01em;line-height:.95;margin:0;color:var(--pt-ink)}
+  .brand-hero p{margin:8px 0 0;color:var(--pt-muted);font-size:14px;line-height:1.5}
+  .brand-hero__demo{display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+
+  /* table column widths */
+  .size-table > div:nth-child(5n+1){min-width:90px}
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="top-nav__inner">
+    <div class="top-nav__brand"><span class="top-nav__brand-mark">P8</span><span>PorcTrack</span></div>
+    <span class="top-nav__divider"></span>
+    <span class="top-nav__meta">v76 · Button system · 14 patterns</span>
+    <div class="top-nav__links">
+      <a class="top-nav__link" href="#hierarchy">Hierarchy</a>
+      <a class="top-nav__link" href="#sizes">Sizes</a>
+      <a class="top-nav__link" href="#variants">Variants</a>
+      <a class="top-nav__link" href="#states">States</a>
+      <a class="top-nav__link" href="#patterns">Patterns</a>
+      <a class="top-nav__link" href="#rules">Règles</a>
+    </div>
+  </div>
+</nav>
+
+<main class="shell">
+
+  <header class="doc-header">
+    <div class="eyebrow">Design system · Boutons · v76</div>
+    <h1>Button system PorcTrack 8</h1>
+    <p>14 patterns boutons couvrant les 5 mockups v76. Hauteur min 44 px sur les cibles primaires (Yao bras tendu, Android budget). Hiérarchie 5 niveaux, 4 tailles, 6 états, 7 patterns spéciaux. Police Instrument Sans 600.</p>
+  </header>
+
+  <!-- HERO -->
+  <div class="brand-hero">
+    <div class="brand-hero__demo">
+      <button class="btn btn--primary btn--lg" type="button"><i data-lucide="check"></i>Enregistrer la truie</button>
+      <button class="btn btn--secondary btn--lg" type="button">Annuler</button>
+    </div>
+    <div>
+      <h2>Pair primaire / secondaire</h2>
+      <p>Pattern dominant de la série : un CTA <b>primary</b> (action métier) + un <b>secondary</b> (échappatoire). Toujours côte-à-côte dans le footer sticky des sheets quick-add. Labels complets — <b>jamais "OK / Annuler"</b>.</p>
+    </div>
+  </div>
+
+  <!-- ============== HIERARCHY ============== -->
+  <h2 id="hierarchy" class="section-title">Hiérarchie · 6 niveaux</h2>
+  <p class="sub-hint">Primary · Accent · Secondary · Ghost · Danger · Link</p>
+
+  <div class="stack-grid">
+    <div class="demo-card">
+      <div class="demo-card__head"><div class="demo-card__name">Primary</div><div class="demo-card__hint">CTA métier</div></div>
+      <div class="demo-card__body"><button class="btn btn--primary btn--md" type="button"><i data-lucide="check"></i>Valider la saillie</button></div>
+      <div class="demo-card__meta">bg <code>--pt-primary</code> · texte <code>--pt-warm</code><br>1 par écran max · action métier centrale</div>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-card__head"><div class="demo-card__name">Accent</div><div class="demo-card__hint">CTA proactif</div></div>
+      <div class="demo-card__body"><button class="btn btn--accent btn--md" type="button"><i data-lucide="plus"></i>Ajouter une truie</button></div>
+      <div class="demo-card__meta">bg <code>--pt-accent</code> · FAB · onboarding<br>"vivant", proche du quick-add</div>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-card__head"><div class="demo-card__name">Secondary</div><div class="demo-card__hint">échappatoire</div></div>
+      <div class="demo-card__body"><button class="btn btn--secondary btn--md" type="button">Annuler</button></div>
+      <div class="demo-card__meta">bg <code>--pt-bg</code> · border <code>--pt-line-strong</code><br>toujours pair avec un primary</div>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-card__head"><div class="demo-card__name">Ghost</div><div class="demo-card__hint">action mineure</div></div>
+      <div class="demo-card__body"><button class="btn btn--ghost btn--md" type="button"><i data-lucide="more-horizontal"></i>Voir plus</button></div>
+      <div class="demo-card__meta">bg <code>transparent</code> · pas de border<br>actions dans toolbars / cellules</div>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-card__head"><div class="demo-card__name">Danger</div><div class="demo-card__hint">destructif</div></div>
+      <div class="demo-card__body"><button class="btn btn--danger btn--md" type="button"><i data-lucide="trash-2"></i>Supprimer la fiche</button></div>
+      <div class="demo-card__meta">bg <code>--pt-danger</code> · confirm dialog<br>jamais en primary par défaut</div>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-card__head"><div class="demo-card__name">Link</div><div class="demo-card__hint">inline texte</div></div>
+      <div class="demo-card__body"><button class="btn btn--link" type="button">Mot de passe oublié&nbsp;?</button></div>
+      <div class="demo-card__meta">color <code>--pt-accent</code> · underline 1→2 px<br>réservé aux flux auth / aide</div>
+    </div>
+  </div>
+
+  <!-- ============== SIZES ============== -->
+  <h2 id="sizes" class="section-title">Tailles · 4 échelles</h2>
+  <p class="sub-hint">SM 30 · MD 38 · LG 46 · XL 52 px hauteur</p>
+
+  <div class="size-table">
+    <div>Taille</div><div>Bouton</div><div>Hauteur</div><div>Texte / icône</div><div>Usage</div>
+
+    <div><code style="font-family:var(--pt-font-mono);font-size:11px;font-weight:600;color:var(--pt-accent)">SM</code></div>
+    <div><button class="btn btn--primary btn--sm" type="button"><i data-lucide="plus"></i>Ajouter</button></div>
+    <div style="font-family:var(--pt-font-mono);font-size:11.5px;color:var(--pt-muted)">~30 px</div>
+    <div style="font-family:var(--pt-font-mono);font-size:11.5px;color:var(--pt-muted)">12 / 13 px</div>
+    <div style="font-size:12.5px;color:var(--pt-muted)">tags photo · chip add · toolbar inline</div>
+
+    <div><code style="font-family:var(--pt-font-mono);font-size:11px;font-weight:600;color:var(--pt-accent)">MD</code></div>
+    <div><button class="btn btn--primary btn--md" type="button"><i data-lucide="check"></i>Valider</button></div>
+    <div style="font-family:var(--pt-font-mono);font-size:11.5px;color:var(--pt-muted)">~38 px</div>
+    <div style="font-family:var(--pt-font-mono);font-size:11.5px;color:var(--pt-muted)">13.5 / 14 px</div>
+    <div style="font-size:12.5px;color:var(--pt-muted)">défaut desktop · TopBar · sheets desktop</div>
+
+    <div><code style="font-family:var(--pt-font-mono);font-size:11px;font-weight:600;color:var(--pt-accent)">LG</code></div>
+    <div><button class="btn btn--primary btn--lg" type="button"><i data-lucide="check"></i>Enregistrer la saillie</button></div>
+    <div style="font-family:var(--pt-font-mono);font-size:11.5px;color:var(--pt-muted)">~46 px</div>
+    <div style="font-family:var(--pt-font-mono);font-size:11.5px;color:var(--pt-muted)">14.5 / 16 px</div>
+    <div style="font-size:12.5px;color:var(--pt-muted)">défaut mobile · sticky footer sheets</div>
+
+    <div><code style="font-family:var(--pt-font-mono);font-size:11px;font-weight:600;color:var(--pt-accent)">XL</code></div>
+    <div><button class="btn btn--accent btn--xl" type="button"><i data-lucide="arrow-right"></i>Continuer</button></div>
+    <div style="font-family:var(--pt-font-mono);font-size:11.5px;color:var(--pt-muted)">~52 px</div>
+    <div style="font-family:var(--pt-font-mono);font-size:11.5px;color:var(--pt-muted)">16 / 18 px</div>
+    <div style="font-size:12.5px;color:var(--pt-muted)">onboarding splash · auth submit</div>
+  </div>
+
+  <!-- ============== VARIANTS ============== -->
+  <h2 id="variants" class="section-title">Variantes · structure</h2>
+  <p class="sub-hint">Icon + label · icon-only · full-width · loading</p>
+
+  <div class="stack-grid">
+    <div class="demo-card">
+      <div class="demo-card__head"><div class="demo-card__name">Icon + label</div><div class="demo-card__hint">défaut métier</div></div>
+      <div class="demo-card__body demo-card__body--col">
+        <button class="btn btn--primary btn--md" type="button"><i data-lucide="check"></i>Enregistrer</button>
+        <button class="btn btn--secondary btn--md" type="button"><i data-lucide="arrow-left"></i>Retour</button>
+        <button class="btn btn--accent btn--md" type="button"><i data-lucide="plus"></i>Nouvelle saillie</button>
+      </div>
+      <div class="demo-card__meta">icône à gauche · gap <code>8px</code> · stroke 2</div>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-card__head"><div class="demo-card__name">Icon-only</div><div class="demo-card__hint">carré · toolbars</div></div>
+      <div class="demo-card__body">
+        <button class="btn btn--secondary btn--icon-md" type="button" aria-label="Modifier"><i data-lucide="pencil"></i></button>
+        <button class="btn btn--ghost btn--icon-md" type="button" aria-label="Plus"><i data-lucide="more-vertical"></i></button>
+        <button class="btn btn--primary btn--icon-md" type="button" aria-label="Confirmer"><i data-lucide="check"></i></button>
+        <button class="btn btn--danger btn--icon-md" type="button" aria-label="Supprimer"><i data-lucide="trash-2"></i></button>
+      </div>
+      <div class="demo-card__meta">carré · <code>aria-label</code> obligatoire · 30/38/46 px</div>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-card__head"><div class="demo-card__name">Full-width</div><div class="demo-card__hint">sticky footer</div></div>
+      <div class="demo-card__body demo-card__body--col">
+        <button class="btn btn--primary btn--lg btn--block" type="button"><i data-lucide="check"></i>Valider la mise-bas</button>
+        <button class="btn btn--secondary btn--lg btn--block" type="button">Annuler</button>
+      </div>
+      <div class="demo-card__meta">CTA mobile · classe <code>btn--block</code></div>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-card__head"><div class="demo-card__name">Loading</div><div class="demo-card__hint">async</div></div>
+      <div class="demo-card__body demo-card__body--col">
+        <button class="btn btn--primary btn--md btn--loading" type="button">Connexion en cours…</button>
+        <button class="btn btn--secondary btn--md btn--loading" type="button">Sync en cours…</button>
+      </div>
+      <div class="demo-card__meta">spinner 16 px · texte transparent · click bloqué</div>
+    </div>
+  </div>
+
+  <!-- ============== STATES ============== -->
+  <h2 id="states" class="section-title">États · primary</h2>
+  <p class="sub-hint">Default · Hover · Active · Focus · Disabled · Loading</p>
+
+  <div class="state-row" style="grid-template-columns:repeat(6,1fr)">
+    <div class="state-cell">
+      <button class="btn btn--primary btn--md" type="button">Enregistrer</button>
+      <div class="state-cell__label">Default</div>
+    </div>
+    <div class="state-cell">
+      <button class="btn btn--primary btn--md" type="button" style="background:var(--pt-primary-hover)">Enregistrer</button>
+      <div class="state-cell__label">Hover</div>
+    </div>
+    <div class="state-cell">
+      <button class="btn btn--primary btn--md" type="button" style="background:var(--pt-primary-active);transform:translateY(1px)">Enregistrer</button>
+      <div class="state-cell__label">Active</div>
+    </div>
+    <div class="state-cell">
+      <button class="btn btn--primary btn--md" type="button" style="outline:2px solid var(--pt-accent);outline-offset:2px">Enregistrer</button>
+      <div class="state-cell__label">Focus</div>
+    </div>
+    <div class="state-cell">
+      <button class="btn btn--primary btn--md" type="button" disabled>Enregistrer</button>
+      <div class="state-cell__label">Disabled</div>
+    </div>
+    <div class="state-cell">
+      <button class="btn btn--primary btn--md btn--loading" type="button">Enregistrer</button>
+      <div class="state-cell__label">Loading</div>
+    </div>
+  </div>
+
+  <!-- ============== PATTERNS ============== -->
+  <h2 id="patterns" class="section-title">Patterns spéciaux</h2>
+  <p class="sub-hint">FAB · Segmented · Chip · Source card · Swipe action · Sheet close · Sticky CTA</p>
+
+  <div class="stack-grid">
+
+    <div class="demo-card">
+      <div class="demo-card__head"><div class="demo-card__name">FAB · principal</div><div class="demo-card__hint">56 px · accent</div></div>
+      <div class="demo-card__body demo-card__body--center" style="gap:18px">
+        <button class="fab" type="button" aria-label="Quick-add"><i data-lucide="plus"></i></button>
+        <button class="fab fab--marius" type="button" aria-label="Marius"><i data-lucide="sparkles"></i></button>
+        <button class="fab fab--mini" type="button" aria-label="Add"><i data-lucide="plus"></i></button>
+      </div>
+      <div class="demo-card__meta">bottom-right · <code>56 / 46 px</code> · ombre portée<br>FAB Marius en ink ; FAB add en accent</div>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-card__head"><div class="demo-card__name">Segmented</div><div class="demo-card__hint">2-3 options</div></div>
+      <div class="demo-card__body demo-card__body--col">
+        <div class="seg" role="tablist">
+          <button class="seg__opt seg__opt--active" type="button">Truies</button>
+          <button class="seg__opt" type="button">Verrats</button>
+          <button class="seg__opt" type="button">Bandes</button>
+        </div>
+        <div class="seg" role="tablist">
+          <button class="seg__opt" type="button">7 j</button>
+          <button class="seg__opt seg__opt--active" type="button">30 j</button>
+        </div>
+      </div>
+      <div class="demo-card__meta">filtre listes · range temporel<br>fond warm · pill blanc actif</div>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-card__head"><div class="demo-card__name">Chip</div><div class="demo-card__hint">tag · filtre multi</div></div>
+      <div class="demo-card__body">
+        <button class="chip chip--active" type="button"><i data-lucide="check"></i>Saine</button>
+        <button class="chip" type="button">À surveiller</button>
+        <button class="chip" type="button">Boiteuse</button>
+        <button class="chip chip--add" type="button"><i data-lucide="plus"></i>Tag</button>
+      </div>
+      <div class="demo-card__meta">pill border · état actif inversé<br><code>chip--add</code> dashed pour ajouter</div>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-card__head"><div class="demo-card__name">Source card</div><div class="demo-card__hint">photo picker</div></div>
+      <div class="demo-card__body" style="gap:12px">
+        <button class="src-card" type="button">
+          <span class="src-card__icon"><i data-lucide="camera"></i></span>
+          <span class="src-card__label">Caméra</span>
+          <span class="src-card__hint">Prendre photo</span>
+        </button>
+        <button class="src-card" type="button">
+          <span class="src-card__icon"><i data-lucide="image-plus"></i></span>
+          <span class="src-card__label">Galerie</span>
+          <span class="src-card__hint">Importer</span>
+        </button>
+      </div>
+      <div class="demo-card__meta">tap-large · 140 px · radius 14 px<br>réservé sheet "ajouter photo"</div>
+    </div>
+
+    <div class="demo-card" style="grid-column:span 2">
+      <div class="demo-card__head"><div class="demo-card__name">Swipe action</div><div class="demo-card__hint">geste liste</div></div>
+      <div class="demo-card__body" style="display:block">
+        <div class="swipe-row">
+          <div class="swipe-row__body"><b>Truie T-031</b><span>Bande mai 26 · MB attendue J−3</span></div>
+          <button class="swipe-action swipe-action--edit" type="button"><i data-lucide="pencil"></i>Modifier</button>
+          <button class="swipe-action swipe-action--delete" type="button"><i data-lucide="trash-2"></i>Supprimer</button>
+        </div>
+      </div>
+      <div class="demo-card__meta">révélé après swipe gauche · 74 px largeur · couleur info / danger · label vertical</div>
+    </div>
+
+    <div class="demo-card">
+      <div class="demo-card__head"><div class="demo-card__name">Sheet close</div><div class="demo-card__hint">dismiss modal</div></div>
+      <div class="demo-card__body demo-card__body--center" style="gap:14px">
+        <button class="sheet-close" type="button" aria-label="Fermer"><i data-lucide="x"></i></button>
+        <button class="btn btn--ghost btn--icon-md" type="button" aria-label="Fermer"><i data-lucide="x"></i></button>
+      </div>
+      <div class="demo-card__meta">en haut-droite des sheets · 36 px<br>variant border ou ghost selon fond</div>
+    </div>
+
+    <div class="demo-card" style="grid-column:span 2">
+      <div class="demo-card__head"><div class="demo-card__name">Sticky CTA mobile</div><div class="demo-card__hint">footer sheet</div></div>
+      <div class="demo-card__body" style="display:block">
+        <div class="sticky-demo sticky-demo--mobile">
+          <button class="btn btn--secondary btn--lg" type="button">Annuler</button>
+          <button class="btn btn--primary btn--lg" style="flex:2" type="button"><i data-lucide="check"></i>Enregistrer</button>
+        </div>
+      </div>
+      <div class="demo-card__meta">2 boutons LG côte-à-côte · primary <code>flex:2</code> dominant<br>fixed bottom · safe-area inset · ombre interne</div>
+    </div>
+
+  </div>
+
+  <!-- ============== RULES ============== -->
+  <h2 id="rules" class="section-title">Règles d'usage</h2>
+  <p class="sub-hint">5 do · 5 don't · snippet officiel</p>
+
+  <div class="rules" style="margin-bottom:18px">
+    <div class="rule rule--do"><h3>✓ 1 primary par écran</h3><p>Une seule action métier dominante. Si 2 actions semblent égales, choisir laquelle promouvoir et passer l'autre en <code>secondary</code> ou <code>ghost</code>.</p></div>
+    <div class="rule rule--do"><h3>✓ Hauteur ≥ 44 px sur mobile</h3><p>Cibles tactiles primaires en <code>btn--lg</code> (46 px) min. Yao bras tendu, terrain humide, gants : pas de cible sous 44 px.</p></div>
+    <div class="rule rule--do"><h3>✓ Labels complets</h3><p><code>"Enregistrer la saillie"</code>, <code>"Valider la mise-bas"</code>. Jamais <code>"OK"</code>, <code>"Confirmer"</code>, <code>"Submit"</code>. Le verbe + l'objet métier.</p></div>
+    <div class="rule rule--do"><h3>✓ Icône à gauche</h3><p>Toujours avant le texte, gap <code>8 px</code>, stroke 2 px, taille proportionnelle (13/14/16/18 selon SM/MD/LG/XL).</p></div>
+    <div class="rule rule--do"><h3>✓ Loading non-cliquable</h3><p>Spinner remplace le texte (transparent), <code>pointer-events:none</code>, on garde la même largeur pour pas faire sauter le layout.</p></div>
+
+    <div class="rule rule--dont"><h3>✗ Pas de gradient</h3><p>Aucun <code>linear-gradient</code> sur fond bouton. Anti-AI feel. Couleur unie, ombre <code>0 6px 20px</code> max sur le FAB.</p></div>
+    <div class="rule rule--dont"><h3>✗ Pas de border-radius full</h3><p><code>border-radius:50%</code> réservé au FAB. Pas de pill <code>9999px</code> sur les boutons standards — radius 8/10/12/14 selon taille.</p></div>
+    <div class="rule rule--dont"><h3>✗ Pas de uppercase forcé</h3><p>Casse normale. L'uppercase est réservé aux titres display + labels mono. Un bouton uppercase a l'air d'un placard.</p></div>
+    <div class="rule rule--dont"><h3>✗ Pas de danger en primary</h3><p>Une suppression part d'un bouton secondary/ghost rouge ou d'un swipe. Le confirm dialog peut promouvoir le danger en primary, jamais avant.</p></div>
+    <div class="rule rule--dont"><h3>✗ Pas de "Annuler" seul</h3><p>Un secondary <code>"Annuler"</code> n'apparaît que pair avec un primary. Si annuler est l'unique action → utiliser <code>sheet-close</code> (×).</p></div>
+  </div>
+
+  <h3 class="section-title" style="font-size:22px;margin-top:32px">Snippet officiel</h3>
+  <p class="sub-hint">Composition par classes · pas de framework</p>
+  <div class="snippet">
+<span class="com">&lt;!-- Primary CTA mobile --&gt;</span><br>
+<span class="tag">&lt;button</span> <span class="attr">type</span>=<span class="val">"button"</span> <span class="attr">class</span>=<span class="val">"btn btn--primary btn--lg btn--block"</span><span class="tag">&gt;</span><br>
+&nbsp;&nbsp;<span class="tag">&lt;i</span> <span class="attr">data-lucide</span>=<span class="val">"check"</span><span class="tag">&gt;&lt;/i&gt;</span>Enregistrer la saillie<br>
+<span class="tag">&lt;/button&gt;</span><br><br>
+<span class="com">&lt;!-- Pair sticky footer --&gt;</span><br>
+<span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="val">"sticky-demo"</span><span class="tag">&gt;</span><br>
+&nbsp;&nbsp;<span class="tag">&lt;button</span> <span class="attr">class</span>=<span class="val">"btn btn--secondary btn--lg"</span><span class="tag">&gt;</span>Annuler<span class="tag">&lt;/button&gt;</span><br>
+&nbsp;&nbsp;<span class="tag">&lt;button</span> <span class="attr">class</span>=<span class="val">"btn btn--primary btn--lg"</span> <span class="attr">style</span>=<span class="val">"flex:2"</span><span class="tag">&gt;</span>Valider<span class="tag">&lt;/button&gt;</span><br>
+<span class="tag">&lt;/div&gt;</span><br><br>
+<span class="com">&lt;!-- FAB --&gt;</span><br>
+<span class="tag">&lt;button</span> <span class="attr">class</span>=<span class="val">"fab"</span> <span class="attr">aria-label</span>=<span class="val">"Quick-add"</span><span class="tag">&gt;</span><br>
+&nbsp;&nbsp;<span class="tag">&lt;i</span> <span class="attr">data-lucide</span>=<span class="val">"plus"</span><span class="tag">&gt;&lt;/i&gt;</span><br>
+<span class="tag">&lt;/button&gt;</span><br><br>
+<span class="com">&lt;!-- Loading state --&gt;</span><br>
+<span class="tag">&lt;button</span> <span class="attr">class</span>=<span class="val">"btn btn--primary btn--md btn--loading"</span><span class="tag">&gt;</span>Connexion…<span class="tag">&lt;/button&gt;</span>
+  </div>
+
+  <p style="margin-top:18px;font-size:13px;color:var(--pt-muted);line-height:1.5"><b style="color:var(--pt-ink)">Total v76</b> · 6 niveaux hiérarchie · 4 tailles · 6 états · 7 patterns spéciaux = 14 boutons réutilisables. Min height 44 px sur primary mobile · zéro gradient · zéro uppercase · labels métier complets.</p>
+
+</main>
+
+<script>
+  if(window.lucide){lucide.createIcons();}
+</script>
+
+</body>
+</html>
