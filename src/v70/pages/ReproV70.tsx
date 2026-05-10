@@ -20,8 +20,8 @@ import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
 import { TabsMini } from '../components/ds/TabsMini';
-import { StatsGrid, Stat } from '../components/ds/StatsGrid';
 import { CycleTimeline } from '../components/ds/CycleTimeline';
+import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { EduCard } from '../components/v70/EduCard';
 import { EmptyEdu } from '../components/v70/EmptyEdu';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
@@ -216,6 +216,35 @@ export const ReproV70: React.FC = () => {
   const [saillieOpen, setSaillieOpen] = useState(false);
   const [miseBasOpen, setMiseBasOpen] = useState(false);
 
+  // V76 — filtre chips horizontaux pour le tab "En cours" (mockup v76)
+  type ChipFilter = 'all' | 'saillie' | 'gestation' | 'maternite' | 'postsev';
+  const [chipFilter, setChipFilter] = useState<ChipFilter>('all');
+
+  // Phase métier dérivée pour filtrage chips (saillie / gestation / maternite / postsev).
+  // Saillie : J0..J27 (avant écho). Gestation : J28..J114. Maternité : J115..J142.
+  // Post-sevrage : J143+ (cyclesEnCours coupe déjà à dateMB+28j, donc rare ici).
+  const phaseOf = (currentDay: number): ChipFilter => {
+    if (currentDay < 28) return 'saillie';
+    if (currentDay < GESTATION_JOURS) return 'gestation';
+    if (currentDay < GESTATION_JOURS + SEVRAGE_JOURS_POST_MB) return 'maternite';
+    return 'postsev';
+  };
+
+  const chipCounts = useMemo(() => {
+    const counts = { saillie: 0, gestation: 0, maternite: 0, postsev: 0 };
+    for (const c of cyclesEnCours) {
+      counts[phaseOf(c.currentDay)]++;
+    }
+    return counts;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cyclesEnCours]);
+
+  const cyclesFiltered = useMemo(() => {
+    if (chipFilter === 'all') return cyclesEnCours;
+    return cyclesEnCours.filter(c => phaseOf(c.currentDay) === chipFilter);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cyclesEnCours, chipFilter]);
+
   // V75-u — Brancher le FAB extended contextuel MISE-BAS dispatché par
   // App.tsx > SaisirFABMount (CustomEvent 'pt-fab-action' avec
   // detail.action === 'add_birth'). Sans ce listener, le bouton MISE-BAS
@@ -252,12 +281,24 @@ export const ReproV70: React.FC = () => {
         ]}
       />
 
-      <StatsGrid cols={4}>
-        <Stat value={kpis.pleines} label="Pleines" />
-        <Stat value={kpis.materni} label="Maternité" />
-        <Stat value={kpis.vides} label="Vides" />
-        <Stat value={kpis.mbProches} label="MB 7j" />
-      </StatsGrid>
+      <div className="kpis-strip">
+        <div className="kpi">
+          <div className="kpi__label">Pleines</div>
+          <div className="kpi__val num">{kpis.pleines}</div>
+        </div>
+        <div className="kpi">
+          <div className="kpi__label">Maternité</div>
+          <div className="kpi__val num">{kpis.materni}</div>
+        </div>
+        <div className="kpi">
+          <div className="kpi__label">Vides</div>
+          <div className="kpi__val num">{kpis.vides}</div>
+        </div>
+        <div className="kpi">
+          <div className="kpi__label">MB 7j</div>
+          <div className="kpi__val num">{kpis.mbProches}</div>
+        </div>
+      </div>
 
       {tab === 'agenda' && (
         <>
@@ -320,57 +361,158 @@ export const ReproV70: React.FC = () => {
       )}
 
       {tab === 'en-cours' && (
-        <Section label={`${cyclesEnCours.length} cycle${cyclesEnCours.length > 1 ? 's' : ''} actif${cyclesEnCours.length > 1 ? 's' : ''}`}>
-          {cyclesEnCours.length === 0 ? (
-            <Card>
-              <div style={{ padding: 16, textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
-                Aucune bande en cycle. Crée une saillie pour démarrer un cycle.
-              </div>
-            </Card>
-          ) : (
-            cyclesEnCours.map(c => {
-              const inGestation = c.phase === 'gestation';
-              const dayCapped = Math.min(c.currentDay, GESTATION_JOURS);
-              return (
-                <Card key={c.bande.id}>
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/troupeau/bandes/${c.bande.id}`)}
-                    style={{ background: 'none', border: 'none', padding: 0, width: '100%', textAlign: 'left', cursor: 'pointer' }}
-                    aria-label={`Cycle ${c.bande.idPortee || c.bande.id} — voir détail`}
+        <>
+          <div className="chips" role="tablist" aria-label="Filtre par phase de cycle">
+            <button
+              type="button"
+              className="chip"
+              aria-pressed={chipFilter === 'all'}
+              onClick={() => setChipFilter('all')}
+            >
+              Toutes <span className="num">{cyclesEnCours.length}</span>
+            </button>
+            <button
+              type="button"
+              className="chip"
+              aria-pressed={chipFilter === 'saillie'}
+              onClick={() => setChipFilter('saillie')}
+            >
+              Saillie {chipCounts.saillie > 0 && <span className="num">{chipCounts.saillie}</span>}
+            </button>
+            <button
+              type="button"
+              className="chip"
+              aria-pressed={chipFilter === 'gestation'}
+              onClick={() => setChipFilter('gestation')}
+            >
+              Gestation {chipCounts.gestation > 0 && <span className="num">{chipCounts.gestation}</span>}
+            </button>
+            <button
+              type="button"
+              className="chip"
+              aria-pressed={chipFilter === 'maternite'}
+              onClick={() => setChipFilter('maternite')}
+            >
+              Maternité {chipCounts.maternite > 0 && <span className="num">{chipCounts.maternite}</span>}
+            </button>
+            <button
+              type="button"
+              className="chip"
+              aria-pressed={chipFilter === 'postsev'}
+              onClick={() => setChipFilter('postsev')}
+            >
+              Post-sev. {chipCounts.postsev > 0 && <span className="num">{chipCounts.postsev}</span>}
+            </button>
+          </div>
+
+          <Section label={`${cyclesFiltered.length} cycle${cyclesFiltered.length > 1 ? 's' : ''} actif${cyclesFiltered.length > 1 ? 's' : ''}`}>
+            {cyclesEnCours.length === 0 ? (
+              <Card>
+                <div style={{ padding: 16, textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
+                  Aucune bande en cycle. Crée une saillie pour démarrer un cycle.
+                </div>
+              </Card>
+            ) : cyclesFiltered.length === 0 ? (
+              <Card>
+                <div style={{ padding: 16, textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
+                  Aucun cycle dans cette phase.
+                </div>
+              </Card>
+            ) : (
+              cyclesFiltered.map(c => {
+                const phase = phaseOf(c.currentDay);
+                const inGestation = c.phase === 'gestation';
+                const dayCapped = Math.min(c.currentDay, GESTATION_JOURS);
+                // Progress sur le rail (0 → 100%) :
+                // - Saillie/Gestation : 0..60% sur 0..115j
+                // - Maternité (J115..J143) : 60..100% sur 28j
+                let progressPercent: number;
+                if (inGestation) {
+                  progressPercent = Math.max(6, Math.min(60, (dayCapped / GESTATION_JOURS) * 60));
+                } else {
+                  const daysLactation = Math.min(SEVRAGE_JOURS_POST_MB, c.currentDay - GESTATION_JOURS);
+                  progressPercent = 60 + (daysLactation / SEVRAGE_JOURS_POST_MB) * 40;
+                }
+                const phaseLabel =
+                  phase === 'saillie' ? 'Saillie' :
+                  phase === 'gestation' ? 'Gestation' :
+                  phase === 'maternite' ? 'Maternité' :
+                  'Post-sev.';
+                const pillVariant: 'soft' | 'info' | 'warm' | 'success' =
+                  phase === 'saillie' ? 'soft' :
+                  phase === 'gestation' ? 'info' :
+                  phase === 'maternite' ? 'warm' :
+                  'success';
+                const dayLabel = inGestation
+                  ? `J${dayCapped}/${GESTATION_JOURS}`
+                  : `J+${c.currentDay - GESTATION_JOURS} lactation`;
+                const statutLabel = c.bande.truie ? `${c.bande.truie}` : 'Bande';
+                const titleText = formatBandeName({
+                  id: c.bande.id,
+                  idPortee: c.bande.idPortee,
+                  truieMere: c.bande.truie,
+                  dateMB: c.bande.dateMB,
+                }, { compact: true });
+
+                // Étapes : Saillie / É28 / FŒT (J60) / MB (J115) / SEV (J143)
+                const isCurStep = (stepDay: number, nextDay: number) =>
+                  c.currentDay >= stepDay && c.currentDay < nextDay;
+                const curS = isCurStep(0, 28) ? 'cur' : '';
+                const curE = isCurStep(28, 60) ? 'cur' : '';
+                const curF = isCurStep(60, GESTATION_JOURS) ? 'cur' : '';
+                const curMB = isCurStep(GESTATION_JOURS, GESTATION_JOURS + SEVRAGE_JOURS_POST_MB) ? 'cur' : '';
+                const curSev = c.currentDay >= GESTATION_JOURS + SEVRAGE_JOURS_POST_MB ? 'cur' : '';
+
+                // Dots done si l'étape est dépassée. now sur l'étape courante.
+                const dotS = c.currentDay >= 0 ? 'done' : '';
+                const dotE = c.currentDay >= 28 ? 'done' : (curS ? 'now' : '');
+                const dotF = c.currentDay >= 60 ? 'done' : (curE ? 'now' : '');
+                const dotMB = c.currentDay >= GESTATION_JOURS ? 'done' : (curF ? 'now' : '');
+                const dotSev = curSev ? 'done' : (curMB ? 'now' : '');
+
+                const shortBande = (c.bande.idPortee || c.bande.id).slice(-5);
+
+                return (
+                  <a
+                    key={c.bande.id}
+                    className="cycle-card"
+                    href={`#bande-${c.bande.id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate(`/troupeau/bandes/${c.bande.id}`);
+                    }}
+                    aria-label={`Cycle ${titleText} — voir détail`}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12, gap: 12 }}>
-                      <strong style={{ fontSize: 14 }}>
-                        {formatBandeName({
-                          id: c.bande.id,
-                          idPortee: c.bande.idPortee,
-                          truieMere: c.bande.truie,
-                          dateMB: c.bande.dateMB,
-                        }, { compact: true })}
-                      </strong>
-                      <span style={{ fontSize: 11, color: 'var(--pt-muted)', whiteSpace: 'nowrap' }}>
-                        {inGestation ? `J${dayCapped}/${GESTATION_JOURS}` : `Maternité · J+${c.currentDay - GESTATION_JOURS}`}
-                      </span>
+                    <div className="cycle-card__head">
+                      <EntityAvatar species="bande" size="md" shortCode={shortBande} />
+                      <div className="cycle-card__main">
+                        <div className="cycle-card__title">{titleText}</div>
+                        <div className="cycle-card__sub">{statutLabel} · {dayLabel}</div>
+                      </div>
+                      <span className={`pill pill-${pillVariant}`}>{phaseLabel}</span>
                     </div>
-                    <CycleTimeline
-                      currentDay={inGestation ? dayCapped : GESTATION_JOURS}
-                      totalDays={GESTATION_JOURS}
-                      steps={[
-                        { label: 'Saillie', day: 0, done: true },
-                        { label: 'Écho', day: 28, done: dayCapped >= 28 },
-                        { label: 'Mise-bas', day: GESTATION_JOURS, done: !inGestation, target: true },
-                      ]}
-                    />
-                    <div style={{ marginTop: 12, fontSize: 11, color: 'var(--pt-muted)' }}>
-                      {c.bande.truie ? `${c.bande.truie} · ` : ''}
-                      MB {inGestation ? 'prévue' : 'réalisée'} le {c.dateMB.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
+                    <div className="cycle-mini">
+                      <div className="cycle-mini__line"></div>
+                      <div className="cycle-mini__line-done" style={{ width: `${progressPercent}%` }}></div>
+                      <div className={`cycle-mini__dot ${dotS}`} style={{ left: '6px' }}></div>
+                      <div className={`cycle-mini__dot ${dotE}`} style={{ left: '25%' }}></div>
+                      <div className={`cycle-mini__dot ${dotF}`} style={{ left: '50%' }}></div>
+                      <div className={`cycle-mini__dot ${dotMB}`} style={{ left: '75%' }}></div>
+                      <div className={`cycle-mini__dot ${dotSev}`} style={{ left: 'calc(100% - 6px)', transform: 'translateX(-100%)' }}></div>
                     </div>
-                  </button>
-                </Card>
-              );
-            })
-          )}
-        </Section>
+                    <div className="cycle-mini__labels">
+                      <span className={curS}>S</span>
+                      <span className={curE}>É28</span>
+                      <span className={curF}>FŒT</span>
+                      <span className={curMB}>MB</span>
+                      <span className={curSev}>SEV</span>
+                    </div>
+                  </a>
+                );
+              })
+            )}
+          </Section>
+        </>
       )}
 
       {tab === 'a-venir' && (

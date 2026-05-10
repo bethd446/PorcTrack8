@@ -10,7 +10,7 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, RefreshCw, Trash2, AlertTriangle, CheckCircle2, ChevronRight, Cloud, CloudOff } from 'lucide-react';
+import { RefreshCw, Trash2, AlertTriangle, CheckCircle2, ChevronRight, Cloud, CloudOff } from 'lucide-react';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
 import {
@@ -184,29 +184,10 @@ export const SynchronisationV70: React.FC = () => {
       className="phone-content"
       style={{ padding: 24, maxWidth: 600, margin: '0 auto', minHeight: '100%' }}
     >
-      <button
-        type="button"
-        onClick={() => navigate(-1)}
-        aria-label="Retour"
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 6,
-          background: 'transparent',
-          border: 'none',
-          color: 'var(--pt-muted)',
-          fontSize: 13,
-          padding: '4px 0',
-          marginBottom: 8,
-          cursor: 'pointer',
-        }}
-      >
-        <ArrowLeft size={16} aria-hidden /> Retour
-      </button>
-
       <PageHeader
         eyebrow="Synchronisation"
         title="File d'attente"
+        onBack={() => navigate(-1)}
         subtitle={
           totalPending === 0
             ? 'Tout est synchronisé.'

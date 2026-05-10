@@ -1,20 +1,38 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { IonPage, IonContent } from '@ionic/react';
-import { ArrowRight, Mail, CheckCircle2, Loader2 } from 'lucide-react';
+import {
+  ArrowRight,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  Eye,
+  EyeOff,
+  Loader2,
+  Lock,
+  Mail,
+  User,
+  Warehouse,
+} from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
 import { getAuthRedirectURL } from '../../lib/authRedirect';
-import Eyebrow from '../design/Eyebrow';
-import { Button } from '@/design-system';
-
-const FONT_DISPLAY = 'var(--font-heading)';
-const FONT_BODY = 'var(--font-body)';
-
-type Mode = 'magic' | 'password';
 
 type AuthError = { message?: string; status?: number; code?: string };
 
 const RESEND_COOLDOWN_S = 60;
+
+const COUNTRIES: ReadonlyArray<{ code: string; flag: string; name: string }> = [
+  { code: 'CI', flag: '🇨🇮', name: 'Côte d’Ivoire' },
+  { code: 'SN', flag: '🇸🇳', name: 'Sénégal' },
+  { code: 'BF', flag: '🇧🇫', name: 'Burkina Faso' },
+  { code: 'ML', flag: '🇲🇱', name: 'Mali' },
+  { code: 'BJ', flag: '🇧🇯', name: 'Bénin' },
+  { code: 'TG', flag: '🇹🇬', name: 'Togo' },
+  { code: 'GN', flag: '🇬🇳', name: 'Guinée' },
+  { code: 'NE', flag: '🇳🇪', name: 'Niger' },
+  { code: 'CM', flag: '🇨🇲', name: 'Cameroun' },
+  { code: 'FR', flag: '🇫🇷', name: 'France' },
+];
 
 function validateEmailShape(raw: string): string | null {
   const value = raw.trim();
@@ -40,7 +58,7 @@ function mapSupabaseAuthError(err: AuthError, email: string): string {
     const domain = extractDomain(email) || 'inconnu';
     return [
       'Domaine email non reconnu.',
-      `Le service email n'a pas pu valider ton domaine (${domain}).`,
+      `Le service email n’a pas pu valider ton domaine (${domain}).`,
       'Utilise plutôt un email standard (gmail.com, outlook.com, ton-domaine.fr, etc.) ou contacte-nous si tu as une adresse pro non standard.',
     ].join('\n');
   }
@@ -53,18 +71,39 @@ function mapSupabaseAuthError(err: AuthError, email: string): string {
   return msg || 'Une erreur est survenue. Réessaie dans un instant.';
 }
 
+function passwordStrength(p: string): { score: 0 | 1 | 2 | 3 | 4; label: string; color: string } {
+  if (!p) return { score: 0, label: '', color: 'var(--pt-subtle)' };
+  let score = 0;
+  if (p.length >= 8) score++;
+  if (/[A-Z]/.test(p)) score++;
+  if (/[0-9]/.test(p)) score++;
+  if (/[^A-Za-z0-9]/.test(p) || p.length >= 12) score++;
+  const s = Math.min(4, score) as 0 | 1 | 2 | 3 | 4;
+  const labels: Record<typeof s, { label: string; color: string }> = {
+    0: { label: '', color: 'var(--pt-subtle)' },
+    1: { label: `Force faible · ${p.length} caractères`, color: 'var(--pt-warm-deep)' },
+    2: { label: `Force moyenne · ${p.length} caractères`, color: 'var(--pt-accent)' },
+    3: { label: `Force bonne · ${p.length} caractères`, color: 'var(--pt-primary-light)' },
+    4: { label: `Force fort · ${p.length} caractères`, color: 'var(--pt-success)' },
+  };
+  return { score: s, ...labels[s] };
+}
+
 export default function Signup() {
-  const [mode, setMode] = useState<Mode>('magic');
+  const navigate = useNavigate();
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [farmName, setFarmName] = useState('');
+  const [country, setCountry] = useState<string>('CI');
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendNotice, setResendNotice] = useState<string | null>(null);
-
-  // theme-day est désormais forcé globalement dans main.tsx (refonte v6 light).
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -73,6 +112,15 @@ export default function Signup() {
     }, 1000);
     return () => window.clearInterval(id);
   }, [resendCooldown]);
+
+  const strength = passwordStrength(password);
+
+  const canSubmit =
+    fullName.trim().length > 0 &&
+    email.trim().length > 0 &&
+    password.length >= 8 &&
+    acceptTerms &&
+    !loading;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,19 +131,34 @@ export default function Signup() {
       setError(shapeError);
       return;
     }
+    if (password.length < 8) {
+      setError('Le mot de passe doit contenir au moins 8 caractères.');
+      return;
+    }
+    if (!acceptTerms) {
+      setError('Tu dois accepter les conditions d’utilisation pour continuer.');
+      return;
+    }
 
     setLoading(true);
     const redirectTo = getAuthRedirectURL('/auth/callback');
-    const { error: err } =
-      mode === 'magic'
-        ? await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } })
-        : await supabase.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo } });
+    const { error: err } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectTo,
+        data: {
+          full_name: fullName.trim(),
+          farm_name: farmName.trim(),
+          country,
+        },
+      },
+    });
     setLoading(false);
 
     if (err) {
       const e2 = err as AuthError;
       console.error('[Signup] Supabase auth error', {
-        mode,
         message: e2.message,
         status: e2.status,
         code: e2.code,
@@ -120,11 +183,6 @@ export default function Signup() {
     setResendLoading(false);
     if (err) {
       const e2 = err as AuthError;
-      console.error('[Signup] Supabase resend error', {
-        message: e2.message,
-        status: e2.status,
-        code: e2.code,
-      });
       setResendNotice(mapSupabaseAuthError(e2, email));
       return;
     }
@@ -132,457 +190,262 @@ export default function Signup() {
     setResendCooldown(RESEND_COOLDOWN_S);
   };
 
+  if (sent) {
+    return (
+      <IonPage>
+        <IonContent fullscreen scrollY={true}>
+          <div data-public-page className="auth-shell">
+            <header className="auth-brand">
+              <span className="auth-brand__mark">P8</span>
+              <div className="auth-brand__main">
+                <span className="auth-brand__name">PorcTrack 8</span>
+                <span className="auth-brand__meta">Cahier de troupeau · Côte d’Ivoire</span>
+              </div>
+            </header>
+
+            <div className="auth-hero-icon" aria-hidden>
+              <Mail strokeWidth={2} />
+            </div>
+            <h1 className="auth-hero-h1">Confirme ton email</h1>
+            <p className="auth-hero-sub">
+              On t’a envoyé un lien à <b>{email}</b>. Clique dessus pour activer ton compte.
+            </p>
+
+            <button
+              type="button"
+              className="btn--ghost btn--lg btn--full"
+              onClick={handleResend}
+              disabled={resendCooldown > 0 || resendLoading}
+              aria-busy={resendLoading}
+            >
+              {resendLoading && <Loader2 size={16} strokeWidth={2} className="animate-spin" aria-hidden="true" />}
+              {resendLoading
+                ? 'Envoi…'
+                : resendCooldown > 0
+                ? `Renvoyer le lien (${resendCooldown}s)`
+                : 'Renvoyer le lien'}
+            </button>
+            {resendNotice && <div className="resend-counter">{resendNotice}</div>}
+
+            <button
+              type="button"
+              className="auth-link-ghost"
+              onClick={() => {
+                setSent(false);
+                setResendCooldown(0);
+                setResendNotice(null);
+              }}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', marginTop: 'auto' }}
+            >
+              ← Changer d’email
+            </button>
+          </div>
+        </IonContent>
+      </IonPage>
+    );
+  }
+
   return (
     <IonPage>
       <IonContent fullscreen scrollY={true}>
-    <div
-      data-public-page
-      style={{
-        minHeight: '100%',
-        width: '100%',
-        backgroundColor: 'var(--bg-app)',
-        backgroundImage:
-          "linear-gradient(180deg, rgba(250,247,240,0.55) 0%, rgba(250,247,240,0.35) 35%, rgba(250,247,240,0.85) 100%), url('/images/auth/auth-signup-bg.webp')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        color: 'var(--ink)',
-        fontFamily: FONT_BODY,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      {/* Header minimaliste */}
-      <header
-        style={{
-          background: 'var(--bg-surface)',
-          borderBottom: '1px solid var(--line)',
-        }}
-      >
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 md:px-8">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2"
-            style={{
-              fontFamily: FONT_DISPLAY,
-              fontWeight: 700,
-              fontSize: 18,
-              color: 'var(--ink)',
-              letterSpacing: '-0.01em',
-            }}
-          >
-            <span
-              aria-hidden
-              style={{
-                width: 28,
-                height: 28,
-                background: 'var(--color-accent-500)',
-                borderRadius: 8,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--bg-surface)',
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0Z" />
-                <path d="M12 3v9l5 3" />
-              </svg>
-            </span>
-            <span className="uppercase tracking-wide">PorcTrack</span>
-          </Link>
+        <div data-public-page className="auth-shell" style={{ overflowY: 'auto' }}>
+          <header className="auth-brand">
+            <span className="auth-brand__mark">P8</span>
+            <div className="auth-brand__main">
+              <span className="auth-brand__name">PorcTrack 8</span>
+              <span className="auth-brand__meta">Cahier de troupeau · Côte d’Ivoire</span>
+            </div>
+          </header>
 
-          <Link
-            to="/login"
-            className="inline-flex items-center px-3"
-            style={{
-              fontSize: 11,
-              letterSpacing: '0.10em',
-              textTransform: 'uppercase',
-              color: 'var(--muted)',
-              minHeight: 44,
-            }}
-          >
-            Se connecter
-          </Link>
-        </div>
-      </header>
+          <h1 className="auth-h1">Créer un compte</h1>
+          <p className="auth-sub">Démarre ton suivi de troupeau.</p>
 
-      <main
-        className="mx-auto w-full max-w-md px-5 py-12 md:py-20"
-        style={{ flex: 1, display: 'flex', alignItems: 'center' }}
-      >
-        <div style={{ width: '100%' }}>
-          <Eyebrow dotColor="amber">Rejoignez PorcTrack</Eyebrow>
+          <form className="auth-form" onSubmit={submit} noValidate>
+            <div className="field field--icon">
+              <label className="field__label" htmlFor="signup-name">
+                Nom complet <span className="req">REQUIS</span>
+              </label>
+              <span className="field__icon" aria-hidden>
+                <User size={16} strokeWidth={2} />
+              </span>
+              <input
+                id="signup-name"
+                name="name"
+                type="text"
+                className="field__input"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                autoComplete="name"
+                placeholder="Yao Kouassi"
+                required
+              />
+            </div>
 
-          <h1
-            style={{
-              fontFamily: FONT_DISPLAY,
-              fontWeight: 700,
-              fontSize: 'clamp(32px, 5vw, 40px)',
-              lineHeight: 1.0,
-              letterSpacing: '-0.025em',
-              color: 'var(--ink)',
-              margin: '14px 0 10px',
-            }}
-          >
-            Démarrez avec votre ferme.
-          </h1>
+            <div className="field field--icon">
+              <label className="field__label" htmlFor="signup-email">
+                Email <span className="req">REQUIS</span>
+              </label>
+              <span className="field__icon" aria-hidden>
+                <Mail size={16} strokeWidth={2} />
+              </span>
+              <input
+                id="signup-email"
+                name="email"
+                type="email"
+                className="field__input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                placeholder="yao@porctrack.test"
+                required
+              />
+            </div>
 
-          <p
-            style={{
-              fontFamily: FONT_BODY,
-              fontSize: 15,
-              lineHeight: 1.55,
-              color: 'var(--ink-soft)',
-              margin: '0 0 28px',
-            }}
-          >
-            2 minutes pour créer votre compte. Marius vous accompagne dès la première saisie.
-          </p>
-
-          <div
-            style={{
-              background: 'var(--bg-surface)',
-              borderRadius: 'var(--radius-card)',
-              border: '1px solid var(--line)',
-              boxShadow: 'var(--shadow-card)',
-              padding: '28px 24px',
-            }}
-          >
-            {sent ? (
-              <div
-                style={{
-                  background: 'var(--color-accent-100)',
-                  border: '1px solid var(--color-accent-500)',
-                  borderRadius: 'var(--radius-card)',
-                  padding: '18px 18px',
-                  display: 'flex',
-                  gap: 12,
-                  alignItems: 'flex-start',
-                }}
+            <div className="field field--icon">
+              <label className="field__label" htmlFor="signup-password">
+                Mot de passe <span className="req">REQUIS</span>
+              </label>
+              <span className="field__icon" aria-hidden>
+                <Lock size={16} strokeWidth={2} />
+              </span>
+              <input
+                id="signup-password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                className="field__input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                placeholder="8 caractères min."
+                required
+                minLength={8}
+              />
+              <button
+                type="button"
+                className="field__btn"
+                aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                onClick={() => setShowPassword((v) => !v)}
               >
-                <CheckCircle2 size={20} strokeWidth={2} style={{ color: 'var(--color-accent-600)', flexShrink: 0, marginTop: 2 }} />
-                <div style={{ flex: 1 }}>
-                  <div
-                    style={{
-                      fontFamily: FONT_DISPLAY,
-                      fontWeight: 700,
-                      fontSize: 18,
-                      color: 'var(--ink)',
-                      lineHeight: 1.2,
-                      marginBottom: 6,
-                    }}
-                  >
-                    Email envoyé.
+                {showPassword ? <EyeOff size={16} strokeWidth={2} /> : <Eye size={16} strokeWidth={2} />}
+              </button>
+              {password.length > 0 && (
+                <>
+                  <div className={`pwd-strength s${strength.score}`} aria-hidden>
+                    <span />
+                    <span />
+                    <span />
+                    <span />
                   </div>
-                  <p
-                    style={{
-                      fontFamily: FONT_BODY,
-                      fontSize: 14,
-                      lineHeight: 1.5,
-                      color: 'var(--ink-soft)',
-                      margin: 0,
-                    }}
-                  >
-                    Vérifiez votre boîte mail à <strong style={{ color: 'var(--ink)' }}>{email}</strong> (et le dossier spam si besoin).
-                  </p>
-                  <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="small"
-                      onClick={handleResend}
-                      disabled={resendCooldown > 0 || resendLoading}
-                      aria-busy={resendLoading}
-                      style={{
-                        background: 'transparent',
-                        border: '1px solid var(--color-accent-500)',
-                        cursor: resendCooldown > 0 || resendLoading ? 'not-allowed' : 'pointer',
-                        opacity: resendCooldown > 0 || resendLoading ? 0.6 : 1,
-                        fontSize: 11,
-                        letterSpacing: '0.10em',
-                        color: 'var(--color-accent-600)',
-                        minHeight: 36,
-                        padding: '6px 12px',
-                        borderRadius: 'var(--radius-card)',
-                        fontWeight: 500,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        height: 'auto',
-                      }}
-                    >
-                      {resendLoading && (
-                        <Loader2 size={14} strokeWidth={2} className="animate-spin" aria-hidden="true" />
-                      )}
-                      {resendLoading
-                        ? 'Envoi en cours…'
-                        : resendCooldown > 0
-                          ? `Renvoyer le lien (${resendCooldown}s)`
-                          : 'Renvoyer le lien'}
-                    </Button>
-                    {resendNotice && (
-                      <span
-                        style={{
-                          fontFamily: FONT_BODY,
-                          fontSize: 12,
-                          color: 'var(--ink-soft)',
-                        }}
-                      >
-                        {resendNotice}
-                      </span>
-                    )}
+                  <div className="pwd-strength__label" style={{ color: strength.color }}>
+                    {strength.label}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="field field--icon">
+              <label className="field__label" htmlFor="signup-farm">
+                Nom de la ferme
+              </label>
+              <span className="field__icon" aria-hidden>
+                <Warehouse size={16} strokeWidth={2} />
+              </span>
+              <input
+                id="signup-farm"
+                name="farm"
+                type="text"
+                className="field__input"
+                value={farmName}
+                onChange={(e) => setFarmName(e.target.value)}
+                placeholder="Ferme Yamoussoukro"
+              />
+            </div>
+
+            <div className="field">
+              <label className="field__label" htmlFor="signup-country">
+                Pays
+              </label>
+              <div style={{ position: 'relative' }}>
+                <select
+                  id="signup-country"
+                  name="country"
+                  className="country-select"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                >
+                  {COUNTRIES.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.flag} {c.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  strokeWidth={2}
+                  aria-hidden
+                  style={{
+                    position: 'absolute',
+                    right: 12,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'var(--pt-subtle)',
+                    pointerEvents: 'none',
+                  }}
+                />
+              </div>
+            </div>
+
+            <label className="checkbox-row" style={{ marginTop: 6 }}>
+              <input
+                type="checkbox"
+                checked={acceptTerms}
+                onChange={(e) => setAcceptTerms(e.target.checked)}
+                style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+              />
+              <span className={`checkbox-row__box${acceptTerms ? ' checked' : ''}`} aria-hidden>
+                {acceptTerms && <Check strokeWidth={3} />}
+              </span>
+              <span>
+                J’accepte les <Link to="/cgu">conditions d’utilisation</Link> et la{' '}
+                <Link to="/privacy">politique de confidentialité</Link>.
+              </span>
+            </label>
+
+            {error && (
+              <div role="alert" className="alert-card">
+                <span className="alert-card__icon" aria-hidden>
+                  <CheckCircle2 size={18} strokeWidth={2} />
+                </span>
+                <div>
+                  <div className="alert-card__title">Inscription impossible</div>
+                  <div className="alert-card__text" style={{ whiteSpace: 'pre-line' }}>
+                    {error}
                   </div>
                 </div>
               </div>
-            ) : (
-              <>
-                <form
-                  onSubmit={submit}
-                  className="space-y-4"
-                >
-                  <Field
-                    label="Email"
-                    type="email"
-                    value={email}
-                    onChange={setEmail}
-                    autoComplete="email"
-                    placeholder="vous@exemple.com"
-                    required
-                  />
-
-                  {mode === 'password' && (
-                    <Field
-                      label="Mot de passe"
-                      type="password"
-                      value={password}
-                      onChange={setPassword}
-                      autoComplete="new-password"
-                      placeholder="8 caractères minimum"
-                      required
-                      minLength={8}
-                    />
-                  )}
-
-                  {error && (
-                    <div
-                      role="alert"
-                      style={{
-                        background: 'var(--color-pig-soft)',
-                        color: 'var(--color-pig-deep)',
-                        border: '1px solid var(--color-pig)',
-                        borderRadius: 'var(--radius-card)',
-                        padding: '10px 14px',
-                        fontFamily: FONT_BODY,
-                        fontSize: 13,
-                        lineHeight: 1.45,
-                        whiteSpace: 'pre-line',
-                      }}
-                    >
-                      {error}
-                    </div>
-                  )}
-
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="lg"
-                    disabled={loading}
-                    style={{ width: '100%', marginTop: 4 }}
-                    aria-busy={loading}
-                  >
-                    {loading
-                      ? <Loader2 size={16} strokeWidth={2} className="animate-spin" aria-hidden="true" />
-                      : null}
-                    {loading
-                      ? 'Envoi en cours…'
-                      : mode === 'magic'
-                        ? 'Recevoir le lien magique'
-                        : 'Créer mon compte'}
-                    {!loading && (mode === 'magic' ? <Mail size={16} strokeWidth={2} /> : <ArrowRight size={16} strokeWidth={2} />)}
-                  </Button>
-                </form>
-
-                <div style={{ textAlign: 'center', marginTop: 14 }}>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="small"
-                    onClick={() => setMode(mode === 'magic' ? 'password' : 'magic')}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontSize: 11,
-                      letterSpacing: '0.10em',
-                      color: 'var(--color-accent-600)',
-                      minHeight: 44,
-                      padding: '0 8px',
-                      fontWeight: 500,
-                      height: 'auto',
-                      borderRadius: 0,
-                    }}
-                  >
-                    {mode === 'magic'
-                      ? '› Utiliser un mot de passe'
-                      : '› Utiliser un lien magique'}
-                  </Button>
-                </div>
-              </>
             )}
 
-            <p
-              style={{
-                fontFamily: FONT_BODY,
-                fontSize: 12,
-                lineHeight: 1.5,
-                color: 'var(--muted)',
-                textAlign: 'center',
-                margin: '18px 0 0',
-                paddingTop: 18,
-                borderTop: '1px solid var(--line)',
-              }}
+            <button
+              type="submit"
+              className="primary-cta-block"
+              disabled={!canSubmit}
+              aria-busy={loading}
+              style={{ marginTop: 6 }}
             >
-              En vous inscrivant, vous acceptez nos{' '}
-              <Link to="/cgu" style={{ color: 'var(--color-accent-600)', textDecoration: 'none' }}>
-                CGU
-              </Link>{' '}
-              et notre{' '}
-              <Link to="/privacy" style={{ color: 'var(--color-accent-600)', textDecoration: 'none' }}>
-                Confidentialité
-              </Link>
-              .
-            </p>
-          </div>
+              {loading && <Loader2 size={16} strokeWidth={2} className="animate-spin" aria-hidden="true" />}
+              {loading ? 'Création…' : 'Créer mon compte'}
+              {!loading && <ArrowRight size={16} strokeWidth={2} />}
+            </button>
+          </form>
 
-          <p
-            style={{
-              fontFamily: FONT_BODY,
-              fontSize: 14,
-              lineHeight: 1.5,
-              color: 'var(--ink-soft)',
-              textAlign: 'center',
-              margin: '20px 0 0',
-            }}
-          >
+          <p className="auth-foot" style={{ paddingTop: 18 }}>
             Déjà un compte ?{' '}
-            <Link
-              to="/login"
-              style={{
-                color: 'var(--color-accent-600)',
-                fontWeight: 600,
-                textDecoration: 'none',
-              }}
-            >
-              Se connecter
+            <Link to="/login" onClick={() => navigate('/login')}>
+              Se connecter →
             </Link>
           </p>
         </div>
-      </main>
-
-      <footer
-        style={{
-          background: 'var(--bg-surface)',
-          borderTop: '1px solid var(--line)',
-        }}
-      >
-        <div
-          className="mx-auto flex max-w-6xl flex-col items-start gap-3 px-5 py-6 md:flex-row md:items-center md:justify-between md:px-8"
-          style={{
-            fontSize: 11,
-            letterSpacing: '0.06em',
-            color: 'var(--muted)',
-          }}
-        >
-          <Link
-            to="/"
-            className="uppercase"
-            style={{ color: 'var(--muted)', minHeight: 44, display: 'inline-flex', alignItems: 'center' }}
-          >
-            ← Retour
-          </Link>
-          <nav className="flex flex-wrap gap-5">
-            <Link
-              to="/privacy"
-              className="uppercase"
-              style={{ color: 'var(--muted)', minHeight: 44, display: 'inline-flex', alignItems: 'center' }}
-            >
-              Confidentialité
-            </Link>
-            <Link
-              to="/cgu"
-              className="uppercase"
-              style={{ color: 'var(--muted)', minHeight: 44, display: 'inline-flex', alignItems: 'center' }}
-            >
-              CGU
-            </Link>
-          </nav>
-        </div>
-      </footer>
-    </div>
       </IonContent>
     </IonPage>
-  );
-}
-
-interface FieldProps {
-  label: string;
-  type: string;
-  value: string;
-  onChange: (v: string) => void;
-  autoComplete?: string;
-  placeholder?: string;
-  required?: boolean;
-  minLength?: number;
-}
-
-function Field({ label, type, value, onChange, autoComplete, placeholder, required, minLength }: FieldProps) {
-  return (
-    <label style={{ display: 'block' }}>
-      <span
-        style={{
-          display: 'block',
-          fontSize: 10,
-          letterSpacing: '0.16em',
-          textTransform: 'uppercase',
-          color: 'var(--muted)',
-          marginBottom: 6,
-          fontWeight: 500,
-        }}
-      >
-        {label}
-      </span>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        autoComplete={autoComplete}
-        placeholder={placeholder}
-        required={required}
-        minLength={minLength}
-        style={{
-          width: '100%',
-          minHeight: 44,
-          padding: '10px 14px',
-          fontFamily: FONT_BODY,
-          fontSize: 15,
-          color: 'var(--ink)',
-          background: 'var(--bg-surface-2)',
-          border: '1px solid var(--line)',
-          borderRadius: 'var(--radius-card)',
-          outline: 'none',
-          transition: 'border-color 160ms var(--ease-emil), background 160ms var(--ease-emil)',
-        }}
-        onFocus={(e) => {
-          e.currentTarget.style.borderColor = 'var(--color-accent-500)';
-          e.currentTarget.style.background = 'var(--bg-surface)';
-        }}
-        onBlur={(e) => {
-          e.currentTarget.style.borderColor = 'var(--line)';
-          e.currentTarget.style.background = 'var(--bg-surface-2)';
-        }}
-      />
-    </label>
   );
 }

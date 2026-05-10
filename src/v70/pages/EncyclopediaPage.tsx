@@ -6,7 +6,7 @@
  * V71 Phase 4.5 : recherche full-text titre + catégorie + niveau.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { EncyclopediaArticle } from '../components/v70/EncyclopediaArticle';
 import { PageHeader } from '../components/ds/PageHeader';
 import { Section } from '../components/ds/Section';
@@ -92,6 +92,7 @@ function normalize(s: string): string {
 
 export const EncyclopediaPage: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [selected, setSelected] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
@@ -135,6 +136,7 @@ export const EncyclopediaPage: React.FC = () => {
         eyebrow="Configuration · Aide"
         title="Encyclopédie porcine"
         subtitle={`${ARTICLES.length} articles · Cycles, santé, économie, alimentation`}
+        onBack={() => navigate('/reglages')}
       />
 
       {/* V71 Phase 4.5 — recherche full-text accent-insensible */}

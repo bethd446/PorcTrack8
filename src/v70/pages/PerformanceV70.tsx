@@ -37,7 +37,7 @@ import { computeGlobalKpis } from '../../services/perfKpiAnalyzer';
 import { buildForecastEvents } from '../../utils/forecastEvents';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 import { formatBandeName, formatDateFr } from '../lib';
-import { computeScoreGlobal } from '../lib/scoreGlobal';
+import { computeScoreGlobal, levelLabelOf } from '../lib/scoreGlobal';
 
 type PerfTab = 'vue' | 'kpis' | 'finances' | 'previsions';
 
@@ -244,66 +244,31 @@ export const PerformanceV70: React.FC = () => {
       )}
 
       {/* V75-o B.2 (F-31) — Score global troupeau (Vue uniquement) : synthèse
-          A/B/C/D des 4 KPIs principaux. Avant : pas de vue d'ensemble, KPIs en
-          silos. Affiche "—" + progression si < 5 cycles clos. */}
+          A/B/C/D des 4 KPIs principaux. V76 — billboard pattern (lettre 140px
+          Big Shoulders + meta mono), classes CSS dans v70-global.css. Affiche
+          "—" + "En attente" si pas de données ou < 5 cycles clos. */}
       {tab === 'vue' && (
-        <div
-          style={{
-            background: 'var(--pt-warm, #faf6ef)',
-            padding: 24,
-            borderRadius: 16,
-            marginBottom: 16,
-            border: '1px solid var(--pt-line, #e8e3d8)',
-          }}
-        >
-          <div
-            className="ft-heading"
-            style={{
-              fontSize: 10,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: 'var(--pt-muted)',
-              fontWeight: 700,
-              marginBottom: 8,
-            }}
-          >
-            Score global
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'baseline',
-              gap: 12,
-              marginBottom: 4,
-            }}
-          >
-            <span
-              style={{
-                fontFamily: 'var(--pt-font-display, sans-serif)',
-                fontSize: 56,
-                fontWeight: 900,
-                lineHeight: 1,
-                color:
-                  scoreGlobal.level === 'A'
-                    ? 'var(--pt-success)'
-                    : scoreGlobal.level === 'B'
-                      ? 'var(--pt-primary)'
-                      : scoreGlobal.level === 'C'
-                        ? 'var(--pt-accent)'
-                        : scoreGlobal.level === 'D'
-                          ? 'var(--pt-danger, #c0392b)'
-                          : 'var(--pt-muted)',
-              }}
+        <section style={{ marginTop: 12, marginBottom: 16 }}>
+          <div className="score-billboard">
+            <div
+              className="score-letter"
               aria-label={`Niveau ${scoreGlobal.level === 'EN_CONSTRUCTION' ? 'En construction' : scoreGlobal.level}`}
             >
               {scoreGlobal.level === 'EN_CONSTRUCTION' ? '—' : scoreGlobal.level}
-            </span>
-            <span style={{ fontSize: 14, color: 'var(--pt-muted)' }}>{scoreGlobal.label}</span>
+            </div>
+            <div className="score-meta">
+              <div className="score-num">
+                {scoreGlobal.level === 'EN_CONSTRUCTION'
+                  ? '0 / 100 · En attente'
+                  : `${scoreGlobal.score} / 100 · ${levelLabelOf(scoreGlobal.level)}`}
+              </div>
+              <h2 className="score-label">
+                Score global<br />du troupeau
+              </h2>
+              <div className="score-pond">{scoreGlobal.detail}</div>
+            </div>
           </div>
-          <div style={{ fontSize: 11, color: 'var(--pt-muted)', marginTop: 4 }}>
-            {scoreGlobal.detail}
-          </div>
-        </div>
+        </section>
       )}
 
       {/* ISSE hero (toujours visible : repère métier principal) */}

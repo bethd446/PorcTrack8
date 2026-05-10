@@ -1,18 +1,28 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { IonPage, IonContent } from '@ionic/react';
+import { ArrowRight, CheckCircle2, Loader2, Mail } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
-import Eyebrow from '../design/Eyebrow';
-import { Button } from '@/design-system';
 
-const FONT_DISPLAY = 'var(--font-heading)';
-const FONT_BODY = 'var(--font-body)';
+type Phase = 'processing' | 'confirmed' | 'error';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [phase, setPhase] = useState<Phase>('processing');
   const [error, setError] = useState<string | null>(null);
 
+  // Si l'URL inclut ?status=confirmed (variante mockup H.4b), on affiche
+  // directement le hero "Compte activé" sans rappeler getSession.
+  const params = new URLSearchParams(location.search);
+  const explicitConfirmed = params.get('status') === 'confirmed';
+
   useEffect(() => {
+    if (explicitConfirmed) {
+      setPhase('confirmed');
+      return;
+    }
+
     let cancelled = false;
 
     const handle = async () => {
@@ -36,7 +46,10 @@ export default function AuthCallback() {
           }, 800);
         }
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : String(e));
+          setPhase('error');
+        }
       }
     };
 
@@ -45,104 +58,74 @@ export default function AuthCallback() {
     return () => {
       cancelled = true;
     };
-  }, [navigate]);
+  }, [navigate, explicitConfirmed]);
 
   return (
     <IonPage>
       <IonContent fullscreen scrollY={true}>
-        <div
-          data-public-page
-          style={{
-            minHeight: '100%',
-            width: '100%',
-            background: 'var(--bg-app)',
-            color: 'var(--ink)',
-            fontFamily: FONT_BODY,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '24px',
-          }}
-        >
-          <div
-            style={{
-              width: '100%',
-              maxWidth: 420,
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--line)',
-              borderRadius: 'var(--radius-card)',
-              boxShadow: 'var(--shadow-card)',
-              padding: '28px 24px',
-              textAlign: 'center',
-            }}
-          >
-            {error ? (
-              <>
-                <Eyebrow dotColor="pig">Erreur d'authentification</Eyebrow>
-                <h1
-                  style={{
-                    fontFamily: FONT_DISPLAY,
-                    fontWeight: 700,
-                    fontSize: 'clamp(24px, 4vw, 30px)',
-                    lineHeight: 1.05,
-                    letterSpacing: '-0.02em',
-                    color: 'var(--ink)',
-                    margin: '14px 0 10px',
-                  }}
-                >
-                  Connexion impossible.
-                </h1>
-                <p
-                  style={{
-                    fontFamily: FONT_BODY,
-                    fontSize: 14,
-                    lineHeight: 1.5,
-                    color: 'var(--ink-soft)',
-                    margin: '0 0 22px',
-                    wordBreak: 'break-word',
-                  }}
-                >
-                  {error}
-                </p>
-                <Button
-                  variant="primary"
-                  size="lg"
-                  onClick={() => (window.location.href = '/login')}
-                  style={{ width: '100%' }}
-                >
-                  Retour à la connexion
-                </Button>
-              </>
-            ) : (
-              <>
-                <Eyebrow dotColor="accent">Authentification</Eyebrow>
-                <h1
-                  style={{
-                    fontFamily: FONT_DISPLAY,
-                    fontWeight: 700,
-                    fontSize: 'clamp(24px, 4vw, 30px)',
-                    lineHeight: 1.05,
-                    letterSpacing: '-0.02em',
-                    color: 'var(--ink)',
-                    margin: '14px 0 10px',
-                  }}
-                >
-                  Connexion en cours.
-                </h1>
-                <p
-                  style={{
-                    fontSize: 11,
-                    letterSpacing: '0.16em',
-                    textTransform: 'uppercase',
-                    color: 'var(--muted)',
-                    margin: 0,
-                  }}
-                >
-                  Patientez un instant…
-                </p>
-              </>
-            )}
-          </div>
+        <div data-public-page className="auth-shell">
+          <header className="auth-brand">
+            <span className="auth-brand__mark">P8</span>
+            <div className="auth-brand__main">
+              <span className="auth-brand__name">PorcTrack 8</span>
+              <span className="auth-brand__meta">Cahier de troupeau · Côte d’Ivoire</span>
+            </div>
+          </header>
+
+          {phase === 'processing' && (
+            <>
+              <div className="auth-hero-icon" aria-hidden>
+                <Mail strokeWidth={2} />
+              </div>
+              <h1 className="auth-hero-h1">Confirme ton email</h1>
+              <p className="auth-hero-sub">
+                Connexion en cours. Si rien ne se passe, vérifie le lien dans ta boîte mail.
+              </p>
+              <p className="resend-counter" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+                <Loader2 size={14} strokeWidth={2} className="animate-spin" aria-hidden="true" />
+                Patiente un instant…
+              </p>
+            </>
+          )}
+
+          {phase === 'confirmed' && (
+            <>
+              <div className="auth-hero-icon auth-hero-icon--success" aria-hidden>
+                <CheckCircle2 strokeWidth={2} />
+              </div>
+              <h1 className="auth-hero-h1">Compte activé</h1>
+              <p className="auth-hero-sub">
+                Bienvenue sur PorcTrack. On t’emmène à ton cahier de troupeau.
+              </p>
+              <button
+                type="button"
+                className="primary-cta-block"
+                onClick={() => navigate('/today', { replace: true })}
+              >
+                Continuer vers PorcTrack
+                <ArrowRight size={16} strokeWidth={2} />
+              </button>
+            </>
+          )}
+
+          {phase === 'error' && (
+            <>
+              <h1 className="auth-h1">Connexion impossible</h1>
+              <p className="auth-sub" style={{ wordBreak: 'break-word' }}>
+                {error ?? 'Une erreur est survenue lors de la confirmation.'}
+              </p>
+              <button
+                type="button"
+                className="primary-cta-block"
+                onClick={() => {
+                  window.location.href = '/login';
+                }}
+              >
+                Retour à la connexion
+                <ArrowRight size={16} strokeWidth={2} />
+              </button>
+            </>
+          )}
         </div>
       </IonContent>
     </IonPage>
