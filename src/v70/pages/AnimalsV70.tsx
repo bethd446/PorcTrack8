@@ -669,22 +669,24 @@ export const AnimalsV70: React.FC = () => {
         )}
       </Section>
 
-      <button
-        type="button"
-        className="fab"
-        aria-label={fabLabel[tab]}
-        onClick={() => setAddOpen(true)}
-        style={{
-          background: 'var(--pt-primary)',
-          border: 'none',
-          color: 'white',
-          fontSize: 28,
-          fontWeight: 700,
-          cursor: 'pointer',
-        }}
-      >
-        +
-      </button>
+      {!(filteredList.length === 0 && !search.trim()) && (
+        <button
+          type="button"
+          className="fab"
+          aria-label={fabLabel[tab]}
+          onClick={() => setAddOpen(true)}
+          style={{
+            background: 'var(--pt-primary)',
+            border: 'none',
+            color: 'white',
+            fontSize: 28,
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          +
+        </button>
+      )}
 
       <Suspense fallback={null}>
         {tab === 'truies' && <QuickAddTruieForm isOpen={addOpen} onClose={() => setAddOpen(false)} />}

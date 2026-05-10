@@ -283,6 +283,7 @@ export function Tabs(props: {
           key={opt.value}
           role="tab"
           aria-selected={props.value === opt.value}
+          aria-label={opt.count !== undefined ? `${opt.label} · ${opt.count}` : undefined}
           className={`pt-tab ${props.value === opt.value ? 'pt-tab--active' : ''}`}
           onClick={() => props.onChange(opt.value)}
         >

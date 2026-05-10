@@ -158,7 +158,7 @@ const ProtocolsView: React.FC = () => {
           subtitle: 'Repérage & saillies',
           bullets: [
             'Contact fence-line matin et soir (7h et 17h)',
-            "Test d'immobilité en présence verrat",
+            "Test d’immobilité en présence verrat",
             'Saillies : J0 + J1 (double saillie si <5 verrats/semaine)',
           ],
         },
@@ -193,7 +193,7 @@ const ProtocolsView: React.FC = () => {
           id: 3,
           title: 'Lutte contre les nuisibles',
           content:
-            "Vérification hebdomadaire des postes d'appâtage. Nettoyage des abords.",
+            "Vérification hebdomadaire des postes d’appâtage. Nettoyage des abords.",
           priority: 'MOYENNE',
         },
       ],
@@ -263,7 +263,7 @@ const ProtocolsView: React.FC = () => {
         <AgritechLayout withNav={true}>
           <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
             <PageHeader
-              eyebrow="OUTILS · PROTOCOLES"
+              eyebrow="RÉGLAGES · PROTOCOLES"
               title="Protocoles"
               subtitle="Procédures et SOP"
             />
@@ -291,7 +291,7 @@ const ProtocolsView: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="ft-heading text-[14px] uppercase text-text-0 leading-tight">Système Naisseur-Engraisseur</h4>
-                    <p className="text-[10px] text-text-2 uppercase tracking-wider mt-0.5">De la naissance à l'abattage</p>
+                    <p className="text-[10px] text-text-2 uppercase tracking-wider mt-0.5">De la naissance à l’abattage</p>
                   </div>
                 </div>
 
