@@ -1,0 +1,1296 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PorcTrack 8 — Onboarding + Modals v76 (3b)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  :root{
+    --pt-primary:#2D4A1F;--pt-primary-deep:#1f3414;--pt-primary-light:#4a7a2f;
+    --pt-warm:#F5E9D8;--pt-warm-deep:#E8D5B5;
+    --pt-accent:#B8703D;--pt-accent-light:#D89968;
+    --pt-bg:#FAF7F0;--pt-bg-app:#F1ECE0;
+    --pt-ink:#1a1a1a;--pt-muted:#6b6357;--pt-subtle:#a39888;
+    --pt-success:#4a7a2f;--pt-warning:#c08a3d;--pt-danger:#a4453d;--pt-info:#4a6e8a;
+    --pt-line:rgba(26,26,26,0.08);--pt-line-strong:rgba(26,26,26,0.16);
+    --pt-truie-bg:#F4D4D4;--pt-truie-fg:#8B4744;
+    --pt-verrat-bg:#C8D6E5;--pt-verrat-fg:#3B5266;
+    --pt-porcelet-bg:#F5E9D8;--pt-porcelet-fg:#8B6E3D;
+    --pt-bande-bg:#D4DFC8;--pt-bande-fg:#3D5C2C;
+    --pt-loge-bg:#E8D5B5;--pt-loge-fg:#6b4f2c;
+    --pt-font-display:'Big Shoulders Display',sans-serif;
+    --pt-font-body:'Instrument Sans',sans-serif;
+    --pt-font-mono:'JetBrains Mono',monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--pt-bg-app);color:var(--pt-ink);font-family:var(--pt-font-body);font-size:14px;line-height:1.4;-webkit-font-smoothing:antialiased}
+  .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+  .eyebrow{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle)}
+
+  /* TOP NAV */
+  .top-nav{position:sticky;top:0;z-index:50;background:var(--pt-ink);color:var(--pt-warm);border-bottom:1px solid rgba(245,233,216,0.08)}
+  .top-nav__inner{max-width:1240px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+  .top-nav__brand{display:flex;align-items:center;gap:10px;font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:20px;letter-spacing:-0.01em}
+  .top-nav__brand-mark{width:28px;height:28px;border-radius:6px;background:var(--pt-accent);color:var(--pt-warm);display:flex;align-items:center;justify-content:center;font-family:var(--pt-font-mono);font-weight:600;font-size:12px}
+  .top-nav__divider{height:18px;width:1px;background:rgba(245,233,216,0.18)}
+  .top-nav__meta{font-family:var(--pt-font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-subtle)}
+  .top-nav__links{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+  .top-nav__link{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-warm);text-decoration:none;padding:8px 10px;border-radius:6px;border:1px solid transparent}
+  .top-nav__link:hover{border-color:rgba(245,233,216,0.18);background:rgba(245,233,216,0.04)}
+  .top-nav__link .num{color:var(--pt-subtle);margin-left:6px}
+
+  .shell{max-width:1240px;margin:0 auto;padding:32px 24px 80px}
+  .doc-header{padding:48px 0 24px;border-bottom:1px solid var(--pt-line);margin-bottom:36px}
+  .doc-header .eyebrow{margin-bottom:14px}
+  .doc-header h1{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:60px;letter-spacing:-0.01em;line-height:.92;margin:0}
+  .doc-header p{margin:18px 0 0;color:var(--pt-muted);max-width:64ch;font-size:15px}
+
+  .section-title{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:34px;letter-spacing:-0.01em;line-height:.92;margin:56px 0 6px}
+  .sub-hint{font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--pt-subtle);margin:0 0 28px}
+
+  .frames{display:grid;grid-template-columns:repeat(auto-fill,minmax(390px,1fr));gap:48px 32px}
+  .frames--pair{display:grid;grid-template-columns:repeat(auto-fill,minmax(390px,1fr));gap:48px 32px}
+  .frame-wrap{display:flex;flex-direction:column;gap:14px}
+  .frame-wrap > .eyebrow{display:flex;gap:12px;align-items:center}
+  .frame-wrap > .eyebrow::after{content:"";flex:1;height:1px;background:var(--pt-line)}
+  .frame{width:390px;height:844px;border-radius:36px;background:var(--pt-bg);border:1px solid var(--pt-line-strong);overflow:hidden;position:relative;display:flex;flex-direction:column}
+
+  /* STATUS BAR */
+  .stbar{display:flex;justify-content:space-between;align-items:center;padding:10px 22px 4px;font-family:var(--pt-font-mono);font-size:12px;font-weight:600;color:var(--pt-ink);flex-shrink:0}
+  .stbar__icons{display:flex;gap:6px;align-items:center}
+  .stbar__icons svg{width:14px;height:14px;stroke:var(--pt-ink)}
+
+  /* WIZARD */
+  .wiz{display:flex;flex-direction:column;flex:1;min-height:0}
+  .wiz__top{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;flex-shrink:0}
+  .wiz__step{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-subtle)}
+  .wiz__step b{color:var(--pt-ink);font-weight:600}
+  .wiz__skip{background:transparent;border:none;font-family:var(--pt-font-mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--pt-subtle);cursor:pointer;padding:6px 4px}
+  .wiz__progress{padding:0 22px;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;flex-shrink:0}
+  .wiz__bar{height:3px;border-radius:99px;background:var(--pt-line)}
+  .wiz__bar.done{background:var(--pt-primary)}
+  .wiz__bar.now{background:var(--pt-accent)}
+  .wiz__body{flex:1;overflow-y:auto;padding:24px 22px 16px;display:flex;flex-direction:column;gap:20px}
+  .wiz__title{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:30px;letter-spacing:-0.01em;line-height:.95;color:var(--pt-ink);margin:0}
+  .wiz__title b{color:var(--pt-primary)}
+  .wiz__sub{font-size:13.5px;color:var(--pt-muted);line-height:1.5;margin:0;max-width:34ch}
+  .wiz__foot{display:grid;grid-template-columns:auto 1fr;gap:8px;padding:14px 18px;border-top:1px solid var(--pt-line);background:var(--pt-bg);flex-shrink:0}
+
+  /* WIZ illustration */
+  .illus{margin:4px auto 0;width:200px;height:150px;display:flex;align-items:center;justify-content:center;color:var(--pt-primary)}
+  .illus svg.silhouette{width:100%;height:100%}
+
+  /* CYCLE rail (re-used) */
+  .cycle{background:var(--pt-warm);border:1px solid var(--pt-line);border-radius:14px;padding:14px}
+  .cycle__rail{position:relative;height:30px;margin:10px 0 6px}
+  .cycle__line{position:absolute;left:0;right:0;top:14px;height:2px;background:var(--pt-line-strong)}
+  .cycle__line-done{position:absolute;left:0;top:14px;height:2px;background:var(--pt-primary)}
+  .cycle__node{position:absolute;top:4px;width:22px;height:22px;border-radius:8px;transform:translateX(-50%);background:var(--pt-bg);border:2px solid var(--pt-line-strong);display:flex;align-items:center;justify-content:center;font-family:var(--pt-font-mono);font-weight:600;font-size:9px;color:var(--pt-muted)}
+  .cycle__node.done{background:var(--pt-primary);border-color:var(--pt-primary);color:var(--pt-warm)}
+  .cycle__node.now{background:var(--pt-accent);border-color:var(--pt-accent);color:var(--pt-warm);box-shadow:0 0 0 4px rgba(184,112,61,0.18)}
+  .cycle__labels{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;font-family:var(--pt-font-mono);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--pt-subtle);text-align:center}
+  .cycle__labels b{display:block;color:var(--pt-ink);font-size:10px;letter-spacing:0;text-transform:none;font-family:var(--pt-font-body);font-weight:600;margin-top:2px}
+
+  /* 2x2 cards (alertes catégories) */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .alert-cat{background:var(--pt-warm);border:1px solid var(--pt-line);border-radius:14px;padding:12px}
+  .alert-cat__icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--pt-ink)}
+  .alert-cat__icon svg{width:16px;height:16px}
+  .alert-cat--repro .alert-cat__icon{background:var(--pt-truie-bg);color:var(--pt-truie-fg)}
+  .alert-cat--sante .alert-cat__icon{background:var(--pt-warm-deep);color:var(--pt-accent)}
+  .alert-cat--stock .alert-cat__icon{background:var(--pt-loge-bg);color:var(--pt-loge-fg)}
+  .alert-cat--perf .alert-cat__icon{background:var(--pt-bande-bg);color:var(--pt-bande-fg)}
+  .alert-cat__title{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:15px;letter-spacing:-0.005em;line-height:1;margin:10px 0 4px;color:var(--pt-ink)}
+  .alert-cat__count{font-family:var(--pt-font-mono);font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--pt-accent)}
+  .alert-cat__ex{font-family:var(--pt-font-mono);font-size:10.5px;color:var(--pt-muted);font-style:italic;margin-top:6px;line-height:1.4}
+
+  /* FORM */
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field__label{font-family:var(--pt-font-mono);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--pt-subtle);display:flex;justify-content:space-between;align-items:baseline}
+  .field__label .req{color:var(--pt-danger);font-size:9px}
+  .field__label .hint{font-family:var(--pt-font-mono);font-size:10px;color:var(--pt-subtle);font-weight:500;text-transform:none;letter-spacing:0}
+  .field__input{font-family:var(--pt-font-body);font-size:14px;padding:11px 12px;border-radius:10px;border:1px solid var(--pt-line-strong);background:var(--pt-bg);color:var(--pt-ink);width:100%}
+  .field__input::placeholder{color:var(--pt-subtle)}
+  .field__input.mono{font-family:var(--pt-font-mono);font-weight:600;font-variant-numeric:tabular-nums}
+  .field__input--ghost{background:transparent;border-color:var(--pt-line);color:var(--pt-subtle)}
+  .field__input.filled{border-color:var(--pt-primary);background:var(--pt-bg)}
+
+  .radio-chips{display:flex;gap:6px;flex-wrap:wrap}
+  .radio-chip{flex:1;min-width:30%;padding:10px 8px;border-radius:10px;border:1px solid var(--pt-line-strong);background:var(--pt-bg);text-align:center;font-family:var(--pt-font-mono);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--pt-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+  .radio-chip svg{width:12px;height:12px}
+  .radio-chip[aria-checked="true"]{background:var(--pt-primary);color:var(--pt-warm);border-color:var(--pt-primary)}
+
+  .stepper{display:flex;align-items:center;gap:6px;background:var(--pt-bg);border:1px solid var(--pt-line-strong);border-radius:10px;padding:4px}
+  .stepper button{width:30px;height:30px;border-radius:7px;border:none;background:transparent;color:var(--pt-ink);cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .stepper button svg{width:14px;height:14px}
+  .stepper input{flex:1;border:none;background:transparent;text-align:center;font-family:var(--pt-font-mono);font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--pt-ink);padding:0;width:100%;-moz-appearance:textfield}
+  .stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .stepper-label{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;color:var(--pt-muted);padding:0 8px}
+
+  .field--inline{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+  /* AUTOCOMPLETE */
+  .ac{position:relative}
+  .ac__results{margin-top:6px;border:1px solid var(--pt-line);border-radius:10px;background:var(--pt-bg);overflow:hidden}
+  .ac__opt{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--pt-line);cursor:pointer}
+  .ac__opt:last-child{border-bottom:none}
+  .ac__opt:hover,.ac__opt[aria-selected="true"]{background:var(--pt-warm)}
+  .ac__opt .av{width:28px;height:28px;font-size:10px;border-radius:6px}
+  .ac__opt .main{flex:1;min-width:0}
+  .ac__opt .title{font-family:var(--pt-font-mono);font-weight:600;font-size:12px;color:var(--pt-ink)}
+  .ac__opt .sub{font-size:10.5px;color:var(--pt-muted);font-family:var(--pt-font-mono)}
+  .ac__opt .pill{flex-shrink:0}
+
+  /* PILL (re-used) */
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;font-family:var(--pt-font-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;border:1px solid transparent;white-space:nowrap}
+  .pill::before{content:"";width:5px;height:5px;border-radius:999px;background:currentColor}
+  .pill--success{background:rgba(74,122,47,.12);color:var(--pt-success);border-color:rgba(74,122,47,.22)}
+  .pill--warm{background:rgba(184,112,61,.14);color:var(--pt-accent);border-color:rgba(184,112,61,.24)}
+  .pill--soft{background:rgba(26,26,26,.06);color:var(--pt-muted);border-color:var(--pt-line-strong)}
+  .pill--no-dot::before{display:none}
+
+  .av{border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--pt-font-mono);font-weight:600;flex-shrink:0;border:1px solid rgba(26,26,26,0.06)}
+  .av--md{width:36px;height:36px;font-size:11px;border-radius:8px}
+  .av--lg{width:48px;height:48px;font-size:13px;border-radius:10px}
+  .av--truie{background:var(--pt-truie-bg);color:var(--pt-truie-fg)}
+  .av--verrat{background:var(--pt-verrat-bg);color:var(--pt-verrat-fg)}
+  .av--bande{background:var(--pt-bande-bg);color:var(--pt-bande-fg)}
+
+  .btn{border:none;font-family:var(--pt-font-mono);font-weight:600;text-transform:uppercase;letter-spacing:.14em;font-size:11px;padding:13px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;line-height:1}
+  .btn svg{width:13px;height:13px}
+  .btn--primary{background:var(--pt-primary);color:var(--pt-warm)}
+  .btn--ghost{background:transparent;color:var(--pt-muted);border:1px solid var(--pt-line-strong)}
+  .btn[disabled]{opacity:0.4;cursor:not-allowed}
+
+  /* TOAST */
+  .toast{margin-top:4px;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--pt-ink);color:var(--pt-warm);border:1px solid var(--pt-ink)}
+  .toast--success{background:var(--pt-primary);border-color:var(--pt-primary)}
+  .toast__icon{width:22px;height:22px;border-radius:6px;background:rgba(245,233,216,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .toast__icon svg{width:12px;height:12px}
+  .toast__text{flex:1;font-size:12.5px;line-height:1.35}
+  .toast__text b{font-family:var(--pt-font-mono);font-weight:600}
+
+  /* mini list right after C.3 add */
+  .mini-list{background:var(--pt-warm);border:1px solid var(--pt-line);border-radius:14px;padding:12px}
+  .mini-list__head{font-family:var(--pt-font-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--pt-subtle);margin-bottom:10px;display:flex;justify-content:space-between}
+  .mini-list__row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--pt-line)}
+  .mini-list__row:first-of-type{border-top:none}
+  .mini-list__row .main{flex:1;min-width:0}
+  .mini-list__row .t{font-family:var(--pt-font-mono);font-weight:600;font-size:12.5px;color:var(--pt-ink)}
+  .mini-list__row .s{font-size:11px;color:var(--pt-muted)}
+
+  /* Score billboard mini (C.5) */
+  .score-mini{background:var(--pt-warm);border:1px solid var(--pt-line);border-radius:14px;padding:18px 18px 14px;display:flex;align-items:flex-start;gap:14px}
+  .score-mini__letter{font-family:var(--pt-font-display);font-weight:900;font-size:80px;letter-spacing:-0.04em;line-height:.85;color:var(--pt-primary)}
+  .score-mini__main{flex:1;padding-top:6px}
+  .score-mini__row{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--pt-font-mono);font-size:12px;color:var(--pt-ink);font-variant-numeric:tabular-nums;border-bottom:1px dashed var(--pt-line);padding:6px 0}
+  .score-mini__row:last-child{border-bottom:none}
+  .score-mini__row .lab{color:var(--pt-subtle);font-size:10.5px;text-transform:uppercase;letter-spacing:.12em}
+  .score-mini__row .v{font-weight:600}
+
+  /* card-link reused */
+  .card{background:var(--pt-warm);border:1px solid var(--pt-line);border-radius:14px;padding:14px 16px}
+  .card-link{display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;cursor:pointer}
+  .card-link__icon{width:40px;height:40px;border-radius:10px;background:var(--pt-bg);display:flex;align-items:center;justify-content:center;color:var(--pt-primary);flex-shrink:0;border:1px solid var(--pt-line)}
+  .card-link__icon svg{width:18px;height:18px}
+  .card-link__main{flex:1;min-width:0}
+  .card-link__title{font-family:var(--pt-font-mono);font-weight:600;font-size:13px;color:var(--pt-ink);letter-spacing:.02em}
+  .card-link__sub{font-size:12px;color:var(--pt-muted);margin-top:2px}
+  .card-link__chev{color:var(--pt-subtle)}
+  .card-link__chev svg{width:16px;height:16px}
+
+  /* MOCK fiche truie compact (C.4) */
+  .mock-fiche{background:var(--pt-warm);border:1px solid var(--pt-line);border-radius:14px;padding:14px}
+  .mock-fiche__head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  .mock-fiche__id{font-family:var(--pt-font-display);font-weight:900;font-size:24px;line-height:.9;color:var(--pt-ink);letter-spacing:-0.005em}
+  .mock-fiche__sub{font-size:11px;color:var(--pt-muted);font-family:var(--pt-font-mono);margin-top:2px}
+  .add-evt{display:flex;align-items:center;justify-content:space-between;padding:11px 12px;border:1px dashed var(--pt-line-strong);border-radius:10px;cursor:pointer;font-family:var(--pt-font-mono);font-size:12px;font-weight:600;color:var(--pt-ink);background:var(--pt-bg)}
+  .add-evt svg{width:14px;height:14px;color:var(--pt-primary)}
+
+  /* MODAL canvas (sheet) */
+  .canvas{position:relative;background:var(--pt-bg);height:100%;display:flex;flex-direction:column}
+  .canvas__back{flex:1;background:rgba(20,20,20,0.45);position:relative;overflow:hidden}
+  .canvas__bg-page{position:absolute;inset:0;display:flex;flex-direction:column;color:var(--pt-muted);background:var(--pt-bg);opacity:0.5;filter:blur(0.5px)}
+  .canvas__bg-page .ph{padding:14px 22px}
+  .canvas__bg-page .ph h1{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:34px;letter-spacing:-0.01em;line-height:.95;margin:0;color:var(--pt-ink)}
+  .canvas__bg-page .pe{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle);margin-bottom:6px}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:var(--pt-bg);border-top-left-radius:24px;border-top-right-radius:24px;box-shadow:0 -10px 30px rgba(0,0,0,0.18);max-height:90%;display:flex;flex-direction:column;border:1px solid var(--pt-line-strong);border-bottom:none}
+  .sheet__handle{width:40px;height:4px;border-radius:99px;background:var(--pt-subtle);margin:8px auto 6px;flex-shrink:0;opacity:.6}
+  .sheet__head{padding:6px 18px 8px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;border-bottom:1px solid var(--pt-line);flex-shrink:0}
+  .sheet__head h2{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:24px;letter-spacing:-0.01em;line-height:.95;margin:6px 0 0;color:var(--pt-ink)}
+  .sheet__head .eyebrow{margin-top:0}
+  .sheet__close{width:32px;height:32px;border-radius:8px;border:1px solid var(--pt-line-strong);background:transparent;color:var(--pt-ink);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .sheet__close svg{width:14px;height:14px}
+  .sheet__body{padding:14px 18px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;flex:1}
+  .sheet__foot{padding:12px 16px;display:grid;grid-template-columns:auto 1fr;gap:8px;border-top:1px solid var(--pt-line);background:var(--pt-bg);flex-shrink:0}
+
+  /* Cycle preview block (D.6) */
+  .cycle-prev{background:var(--pt-ink);color:var(--pt-warm);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px}
+  .cycle-prev .eyebrow{color:var(--pt-accent-light)}
+  .cycle-prev__row{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--pt-font-mono);font-size:12px;border-bottom:1px dashed rgba(245,233,216,0.18);padding:5px 0}
+  .cycle-prev__row:last-child{border-bottom:none}
+  .cycle-prev__row .lab{color:rgba(245,233,216,0.6);text-transform:uppercase;font-size:10px;letter-spacing:.12em}
+  .cycle-prev__row .v{font-weight:600;color:var(--pt-warm);font-variant-numeric:tabular-nums}
+  .cycle-prev__row .v small{color:var(--pt-accent-light);margin-right:6px;font-weight:600;letter-spacing:.06em}
+
+  /* Field block group with separator label */
+  .grp__label{font-family:var(--pt-font-mono);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle);display:flex;align-items:center;gap:8px;margin-top:4px}
+  .grp__label::after{content:"";flex:1;height:1px;background:var(--pt-line)}
+
+  /* Decisions */
+  .decisions{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+  .decision{border:1px solid var(--pt-line);background:var(--pt-bg);border-radius:14px;padding:18px}
+  .decision h4{font-family:var(--pt-font-display);font-weight:900;text-transform:uppercase;font-size:18px;letter-spacing:-0.01em;margin:8px 0 6px}
+  .decision p{margin:0;color:var(--pt-muted);font-size:13px;line-height:1.5}
+  .decision .num-tag{font-family:var(--pt-font-mono);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-accent)}
+  .decision--ink{background:var(--pt-ink);color:var(--pt-warm);border-color:var(--pt-ink)}
+  .decision--ink p{color:rgba(245,233,216,0.7)}
+  .decision--ink .num-tag{color:var(--pt-accent-light)}
+  h3.section-rule{font-family:var(--pt-font-mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-subtle);margin:0 0 12px;display:flex;align-items:center;gap:10px}
+  h3.section-rule::after{content:"";flex:1;height:1px;background:var(--pt-line)}
+
+  @media (max-width:640px){
+    .frames,.frames--pair{grid-template-columns:1fr;justify-content:center}
+    .frame{width:100%;max-width:390px}
+  }
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="top-nav__inner">
+    <div class="top-nav__brand"><span class="top-nav__brand-mark">P8</span>PorcTrack&nbsp;8</div>
+    <div class="top-nav__divider"></div>
+    <div class="top-nav__meta">Onboarding + Modals · v76 · 3b</div>
+    <div class="top-nav__links">
+      <a class="top-nav__link" href="#onboarding">Onboarding <span class="num">5</span></a>
+      <a class="top-nav__link" href="#modals">Modals <span class="num">6</span></a>
+      <a class="top-nav__link" href="#notes">Notes</a>
+      <a class="top-nav__link" href="elevage-mockup-v76.html">← Élevage</a>
+      <a class="top-nav__link" href="reglages-pilotage-mockup-v76.html">← Réglages+Pilot</a>
+      <a class="top-nav__link" href="ressources-reproduction-mockup-v76.html">← Ressources+Repro</a>
+    </div>
+  </div>
+</nav>
+
+<div class="shell">
+
+  <header class="doc-header">
+    <div class="eyebrow">Sprint v76 · 3b · 11 livrables</div>
+    <h1>Onboarding<br>+ modals</h1>
+    <p>Wizard 5 étapes plein écran (première connexion + rejouable) et 6 sheets bottom quick-add (Truie · Verrat · Bande · Porcelet · Loge · Saillie/MB). Chaque modal en double : état vide + état rempli avec données réelles.</p>
+  </header>
+
+  <h2 class="section-title" id="onboarding">C. Onboarding wizard</h2>
+  <p class="sub-hint">5 étapes plein écran · skip top-right · navigation Précédent / Continuer</p>
+
+  <div class="frames">
+
+    <!-- C.1 — Bienvenue -->
+    <div class="frame-wrap">
+      <span class="eyebrow">C.1 · Étape 1/5 · Bienvenue</span>
+      <div class="frame" id="onboarding-1">
+        <div class="stbar"><span class="num">06:14</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="wiz">
+          <div class="wiz__top">
+            <div class="wiz__step">Étape <b>1</b> / 5</div>
+            <button class="wiz__skip">Skip ×</button>
+          </div>
+          <div class="wiz__progress">
+            <div class="wiz__bar now"></div><div class="wiz__bar"></div><div class="wiz__bar"></div><div class="wiz__bar"></div><div class="wiz__bar"></div>
+          </div>
+          <div class="wiz__body">
+            <div class="eyebrow">Premier démarrage · Yamoussoukro</div>
+            <h1 class="wiz__title">Bienvenue dans <b>PorcTrack 8</b></h1>
+            <p class="wiz__sub">L'app GTTT pour les naisseurs-engraisseurs d'Afrique de l'Ouest. Une fois configurée, tu n'oublies plus rien — chaque saillie, chaque mise-bas, chaque sevrage suivi à la journée.</p>
+
+            <div class="illus" aria-hidden="true">
+              <svg viewBox="0 0 200 160" class="silhouette" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M40 70 Q40 40 80 38 Q120 36 145 50 Q170 65 168 90 Q165 110 150 112 L52 112 Q38 110 40 90 Z" />
+                <path d="M138 50 L150 38 L156 52" />
+                <ellipse cx="170" cy="76" rx="8" ry="10" />
+                <circle cx="167" cy="74" r="1.2" fill="currentColor"/>
+                <circle cx="173" cy="74" r="1.2" fill="currentColor"/>
+                <circle cx="148" cy="62" r="1.6" fill="currentColor"/>
+                <path d="M62 112 L62 134" />
+                <path d="M82 112 L82 134" />
+                <path d="M118 112 L118 134" />
+                <path d="M142 112 L142 134" />
+                <path d="M40 78 Q24 76 28 64 Q34 56 40 64" />
+                <path d="M70 138 q4 -10 16 -10 q12 0 14 10" />
+                <circle cx="86" cy="132" r="1.4" fill="currentColor"/>
+                <path d="M104 138 q4 -10 16 -10 q12 0 14 10" />
+                <circle cx="120" cy="132" r="1.4" fill="currentColor"/>
+                <path d="M138 138 q4 -10 16 -10 q12 0 14 10" />
+                <circle cx="154" cy="132" r="1.4" fill="currentColor"/>
+              </svg>
+            </div>
+
+            <div class="cycle">
+              <div class="eyebrow" style="margin-bottom:4px">Cycle truie · 143 jours</div>
+              <div class="cycle__rail">
+                <div class="cycle__line"></div>
+                <div class="cycle__line-done" style="width:0%"></div>
+                <div class="cycle__node" style="left:0%">S</div>
+                <div class="cycle__node" style="left:25%">28</div>
+                <div class="cycle__node" style="left:50%">90</div>
+                <div class="cycle__node" style="left:80%">115</div>
+                <div class="cycle__node" style="left:100%">143</div>
+              </div>
+              <div class="cycle__labels">
+                <div>SAILLIE<b>J0</b></div>
+                <div>ÉCHO<b>J28</b></div>
+                <div>FŒTAL<b>J90</b></div>
+                <div>MB<b>J115</b></div>
+                <div>SEVR.<b>J143</b></div>
+              </div>
+            </div>
+
+          </div>
+          <div class="wiz__foot">
+            <button class="btn btn--ghost" disabled><i data-lucide="chevron-left"></i> Précédent</button>
+            <button class="btn btn--primary">Continuer <i data-lucide="arrow-right"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- C.2 — Alertes -->
+    <div class="frame-wrap">
+      <span class="eyebrow">C.2 · Étape 2/5 · Alertes biologiques</span>
+      <div class="frame" id="onboarding-2">
+        <div class="stbar"><span class="num">06:15</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="wiz">
+          <div class="wiz__top">
+            <div class="wiz__step">Étape <b>2</b> / 5</div>
+            <button class="wiz__skip">Skip ×</button>
+          </div>
+          <div class="wiz__progress">
+            <div class="wiz__bar done"></div><div class="wiz__bar now"></div><div class="wiz__bar"></div><div class="wiz__bar"></div><div class="wiz__bar"></div>
+          </div>
+          <div class="wiz__body">
+            <div class="eyebrow">Moteur d'alertes · 14 règles métier</div>
+            <h1 class="wiz__title"><b>14 alertes</b> veillent sur ton élevage</h1>
+            <p class="wiz__sub">PorcTrack analyse ton troupeau en continu. Quand une mise-bas approche, qu'un stock chute ou qu'une truie traîne, tu reçois un ping. Pas de spam — uniquement ce qui mérite ton attention.</p>
+
+            <div class="grid2">
+              <div class="alert-cat alert-cat--repro">
+                <div class="alert-cat__icon"><i data-lucide="heart"></i></div>
+                <div class="alert-cat__count">5 règles</div>
+                <h3 class="alert-cat__title">Reproduction</h3>
+                <div class="alert-cat__ex">Mise-bas imminente · Sevrage dû · Retour chaleur</div>
+              </div>
+              <div class="alert-cat alert-cat--sante">
+                <div class="alert-cat__icon"><i data-lucide="stethoscope"></i></div>
+                <div class="alert-cat__count">3 règles</div>
+                <h3 class="alert-cat__title">Santé</h3>
+                <div class="alert-cat__ex">Mortalité anormale · Portée orpheline · Pesée manquante</div>
+              </div>
+              <div class="alert-cat alert-cat--stock">
+                <div class="alert-cat__icon"><i data-lucide="package"></i></div>
+                <div class="alert-cat__count">3 règles</div>
+                <h3 class="alert-cat__title">Stock</h3>
+                <div class="alert-cat__ex">Aliment &lt;2j · Véto bas · Vermifuge rupture</div>
+              </div>
+              <div class="alert-cat alert-cat--perf">
+                <div class="alert-cat__icon"><i data-lucide="trending-up"></i></div>
+                <div class="alert-cat__count">3 règles</div>
+                <h3 class="alert-cat__title">Performance</h3>
+                <div class="alert-cat__ex">Réforme zootechnique · Surdensité · Prêt abattoir</div>
+              </div>
+            </div>
+
+            <div class="card" style="display:flex;align-items:flex-start;gap:10px;background:var(--pt-warm-deep)">
+              <i data-lucide="bell" style="width:18px;height:18px;color:var(--pt-accent);flex-shrink:0;margin-top:2px"></i>
+              <div style="flex:1;font-size:12.5px;color:var(--pt-ink);line-height:1.45">Tu peux ajuster chaque seuil dans <b>Réglages › Alertes</b>. Par défaut, on respecte les usages naisseur-engraisseur Côte d'Ivoire.</div>
+            </div>
+
+          </div>
+          <div class="wiz__foot">
+            <button class="btn btn--ghost"><i data-lucide="chevron-left"></i> Précédent</button>
+            <button class="btn btn--primary">Continuer <i data-lucide="arrow-right"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- C.3 — Première truie -->
+    <div class="frame-wrap">
+      <span class="eyebrow">C.3 · Étape 3/5 · Première truie</span>
+      <div class="frame" id="onboarding-3">
+        <div class="stbar"><span class="num">06:17</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="wiz">
+          <div class="wiz__top">
+            <div class="wiz__step">Étape <b>3</b> / 5</div>
+            <button class="wiz__skip">Skip ×</button>
+          </div>
+          <div class="wiz__progress">
+            <div class="wiz__bar done"></div><div class="wiz__bar done"></div><div class="wiz__bar now"></div><div class="wiz__bar"></div><div class="wiz__bar"></div>
+          </div>
+          <div class="wiz__body">
+            <div class="eyebrow">Mini-form · teaser éducatif</div>
+            <h1 class="wiz__title">Tu commences avec <b>une truie</b></h1>
+            <p class="wiz__sub">Code, boucle, statut. C'est tout ce qu'il faut pour démarrer. Tu ajouteras les autres ensuite — une à une, ou par import CSV.</p>
+
+            <div class="field">
+              <label class="field__label">Code de la truie <span class="hint">auto · modifiable</span></label>
+              <input class="field__input mono filled" value="T-001" />
+            </div>
+            <div class="field">
+              <label class="field__label">Boucle officielle <span class="req">requis</span></label>
+              <input class="field__input mono" placeholder="CI-001-26" />
+            </div>
+            <div class="field">
+              <label class="field__label">Statut</label>
+              <div class="radio-chips">
+                <button class="radio-chip" aria-checked="true">Vide</button>
+                <button class="radio-chip">Pleine</button>
+                <button class="radio-chip">Maternité</button>
+              </div>
+            </div>
+
+            <div class="mini-list">
+              <div class="mini-list__head"><span>Ton troupeau · 1 truie</span><span>Aperçu</span></div>
+              <div class="mini-list__row">
+                <span class="av av--md av--truie">T01</span>
+                <div class="main">
+                  <div class="t">T-001 <span style="color:var(--pt-muted);font-weight:500;margin-left:4px">CI-001-26</span></div>
+                  <div class="s">Vide · née 14/03/2024 · parité 0</div>
+                </div>
+                <span class="pill pill--soft pill--no-dot">Vide</span>
+              </div>
+            </div>
+
+            <div class="toast toast--success">
+              <div class="toast__icon"><i data-lucide="check"></i></div>
+              <div class="toast__text">Première truie ajoutée — bienvenue, <b>T-001</b>.</div>
+            </div>
+
+          </div>
+          <div class="wiz__foot">
+            <button class="btn btn--ghost"><i data-lucide="chevron-left"></i> Précédent</button>
+            <button class="btn btn--primary">Continuer <i data-lucide="arrow-right"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- C.4 — Saillie -->
+    <div class="frame-wrap">
+      <span class="eyebrow">C.4 · Étape 4/5 · Saillie</span>
+      <div class="frame" id="onboarding-4">
+        <div class="stbar"><span class="num">06:19</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="wiz">
+          <div class="wiz__top">
+            <div class="wiz__step">Étape <b>4</b> / 5</div>
+            <button class="wiz__skip">Skip ×</button>
+          </div>
+          <div class="wiz__progress">
+            <div class="wiz__bar done"></div><div class="wiz__bar done"></div><div class="wiz__bar done"></div><div class="wiz__bar now"></div><div class="wiz__bar"></div>
+          </div>
+          <div class="wiz__body">
+            <div class="eyebrow">Cycle vivant · démo</div>
+            <h1 class="wiz__title">Saillie = <b>J0</b> du cycle</h1>
+            <p class="wiz__sub">Tu notes la saillie aujourd'hui, PorcTrack calcule pour toi écho J28, mise-bas J115, sevrage J143.</p>
+
+            <div class="mock-fiche">
+              <div class="mock-fiche__head">
+                <span class="av av--lg av--truie">T01</span>
+                <div>
+                  <div class="mock-fiche__id">T-001</div>
+                  <div class="mock-fiche__sub">Vide · parité 0 · CI-001-26</div>
+                </div>
+              </div>
+              <div class="add-evt">
+                <span><i data-lucide="plus" style="margin-right:6px"></i> Saisir un évènement</span>
+                <span style="color:var(--pt-subtle)">Saillie · Écho · MB</span>
+              </div>
+            </div>
+
+            <div class="field--inline">
+              <div class="field">
+                <label class="field__label">Verrat</label>
+                <input class="field__input mono filled" value="V-001" />
+              </div>
+              <div class="field">
+                <label class="field__label">Date saillie</label>
+                <input class="field__input mono filled" type="date" value="2026-05-10" />
+              </div>
+            </div>
+
+            <div class="cycle">
+              <div class="eyebrow" style="margin-bottom:4px">Cycle calculé · auto</div>
+              <div class="cycle__rail">
+                <div class="cycle__line"></div>
+                <div class="cycle__line-done" style="width:6%"></div>
+                <div class="cycle__node now" style="left:0%">S</div>
+                <div class="cycle__node" style="left:25%">28</div>
+                <div class="cycle__node" style="left:50%">90</div>
+                <div class="cycle__node" style="left:80%">115</div>
+                <div class="cycle__node" style="left:100%">143</div>
+              </div>
+              <div class="cycle__labels">
+                <div>SAILLIE<b>10/05</b></div>
+                <div>ÉCHO<b>07/06</b></div>
+                <div>FŒTAL<b>08/08</b></div>
+                <div>MB<b>02/09</b></div>
+                <div>SEVR.<b>30/09</b></div>
+              </div>
+            </div>
+
+            <div class="toast toast--success">
+              <div class="toast__icon"><i data-lucide="check"></i></div>
+              <div class="toast__text">Cycle démarré · MB prévue <b>02/09/2026</b> — rappel à J−3.</div>
+            </div>
+
+          </div>
+          <div class="wiz__foot">
+            <button class="btn btn--ghost"><i data-lucide="chevron-left"></i> Précédent</button>
+            <button class="btn btn--primary">Continuer <i data-lucide="arrow-right"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- C.5 — KPIs -->
+    <div class="frame-wrap">
+      <span class="eyebrow">C.5 · Étape 5/5 · Tes KPIs</span>
+      <div class="frame" id="onboarding-5">
+        <div class="stbar"><span class="num">06:20</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="wiz">
+          <div class="wiz__top">
+            <div class="wiz__step">Étape <b>5</b> / 5</div>
+            <button class="wiz__skip" style="visibility:hidden">Skip ×</button>
+          </div>
+          <div class="wiz__progress">
+            <div class="wiz__bar done"></div><div class="wiz__bar done"></div><div class="wiz__bar done"></div><div class="wiz__bar done"></div><div class="wiz__bar now"></div>
+          </div>
+          <div class="wiz__body">
+            <div class="eyebrow">Tableau de bord · score billboard</div>
+            <h1 class="wiz__title"><b>ISSE, GMQ, marge.</b><br>Ton tableau de bord en un coup d'œil.</h1>
+            <p class="wiz__sub">À tout moment, tu sais où en est ton élevage. La note synthétise quatre indicateurs métiers et te dit si tu es au-dessus ou en-dessous des standards.</p>
+
+            <div class="score-mini">
+              <div class="score-mini__letter">B</div>
+              <div class="score-mini__main">
+                <div class="score-mini__row"><span class="lab">Score</span><span class="v"><span class="num">64</span><small style="color:var(--pt-muted);font-weight:500"> / 100</small></span></div>
+                <div class="score-mini__row"><span class="lab">ISSE</span><span class="v num">11,4</span></div>
+                <div class="score-mini__row"><span class="lab">GMQ post-sev.</span><span class="v num">412 g</span></div>
+                <div class="score-mini__row"><span class="lab">Marge</span><span class="v num">+575 k FCFA</span></div>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <a class="card card-link" href="#">
+                <div class="card-link__icon"><i data-lucide="heart"></i></div>
+                <div class="card-link__main">
+                  <div class="card-link__title">Comprendre l'ISSE</div>
+                  <div class="card-link__sub">Indice sevré-saillie · cible &gt;12</div>
+                </div>
+                <span class="card-link__chev"><i data-lucide="chevron-right"></i></span>
+              </a>
+              <a class="card card-link" href="#">
+                <div class="card-link__icon"><i data-lucide="banknote"></i></div>
+                <div class="card-link__main">
+                  <div class="card-link__title">Comprendre la marge</div>
+                  <div class="card-link__sub">Calcul live · FCFA · prix Sipra</div>
+                </div>
+                <span class="card-link__chev"><i data-lucide="chevron-right"></i></span>
+              </a>
+              <a class="card card-link" href="#">
+                <div class="card-link__icon"><i data-lucide="log-out"></i></div>
+                <div class="card-link__main">
+                  <div class="card-link__title">Comprendre la réforme</div>
+                  <div class="card-link__sub">Quand sortir une truie improductive</div>
+                </div>
+                <span class="card-link__chev"><i data-lucide="chevron-right"></i></span>
+              </a>
+            </div>
+
+          </div>
+          <div class="wiz__foot">
+            <button class="btn btn--ghost"><i data-lucide="chevron-left"></i> Précédent</button>
+            <button class="btn btn--primary"><i data-lucide="check"></i> Voir mon élevage</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <h2 class="section-title" id="modals">D. Modals quick-add</h2>
+  <p class="sub-hint">Sheet bottom · drag handle · backdrop sombre · 6 modals × état vide / rempli</p>
+
+  <!-- D.1 Truie -->
+  <h3 class="section-rule">D.1 · Quick add Truie</h3>
+  <div class="frames--pair" style="margin-bottom:48px">
+    <div class="frame-wrap">
+      <span class="eyebrow">État vide · default</span>
+      <div class="frame" id="modal-truie">
+        <div class="stbar"><span class="num">07:32</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="canvas">
+          <div class="canvas__back">
+            <div class="canvas__bg-page"><div class="ph"><div class="pe">Élevage · Truies</div><h1>Truies</h1></div></div>
+            <div class="sheet">
+              <div class="sheet__handle"></div>
+              <div class="sheet__head">
+                <div><div class="eyebrow">Nouvelle truie</div><h2>Ajouter une truie</h2></div>
+                <button class="sheet__close"><i data-lucide="x"></i></button>
+              </div>
+              <div class="sheet__body">
+                <div class="grp__label">Identité</div>
+                <div class="field"><label class="field__label">Code <span class="hint">auto T-051</span></label><input class="field__input mono" placeholder="T-051" /></div>
+                <div class="field"><label class="field__label">Boucle officielle <span class="req">requis</span></label><input class="field__input mono" placeholder="CI-051-26" /></div>
+                <div class="field">
+                  <label class="field__label">Statut</label>
+                  <div class="radio-chips">
+                    <button class="radio-chip">Vide</button>
+                    <button class="radio-chip">Pleine</button>
+                    <button class="radio-chip">Materni.</button>
+                  </div>
+                </div>
+                <div class="grp__label">Origine</div>
+                <div class="field"><label class="field__label">Date naissance</label><input class="field__input mono field__input--ghost" type="date" /></div>
+                <div class="field"><label class="field__label">Loge actuelle</label><input class="field__input field__input--ghost" placeholder="— sélectionner —" readonly /></div>
+                <div class="field"><label class="field__label">Truie mère <span class="hint">optionnel</span></label><input class="field__input field__input--ghost" placeholder="Rechercher T-…" /></div>
+              </div>
+              <div class="sheet__foot">
+                <button class="btn btn--ghost">Annuler</button>
+                <button class="btn btn--primary" disabled>Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="frame-wrap">
+      <span class="eyebrow">État rempli · T-051 · CI-051-26</span>
+      <div class="frame">
+        <div class="stbar"><span class="num">07:34</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="canvas">
+          <div class="canvas__back">
+            <div class="canvas__bg-page"><div class="ph"><div class="pe">Élevage · Truies</div><h1>Truies</h1></div></div>
+            <div class="sheet">
+              <div class="sheet__handle"></div>
+              <div class="sheet__head">
+                <div><div class="eyebrow">Nouvelle truie</div><h2>Ajouter une truie</h2></div>
+                <button class="sheet__close"><i data-lucide="x"></i></button>
+              </div>
+              <div class="sheet__body">
+                <div class="grp__label">Identité</div>
+                <div class="field"><label class="field__label">Code</label><input class="field__input mono filled" value="T-051" /></div>
+                <div class="field"><label class="field__label">Boucle officielle</label><input class="field__input mono filled" value="CI-051-26" /></div>
+                <div class="field">
+                  <label class="field__label">Statut</label>
+                  <div class="radio-chips">
+                    <button class="radio-chip" aria-checked="true">Vide</button>
+                    <button class="radio-chip">Pleine</button>
+                    <button class="radio-chip">Materni.</button>
+                  </div>
+                </div>
+                <div class="grp__label">Origine</div>
+                <div class="field"><label class="field__label">Date naissance</label><input class="field__input mono filled" type="date" value="2024-03-14" /></div>
+                <div class="field"><label class="field__label">Loge actuelle</label><input class="field__input mono filled" value="G-02 · Gestation" readonly /></div>
+                <div class="field">
+                  <label class="field__label">Truie mère</label>
+                  <div class="ac">
+                    <input class="field__input mono filled" value="T-005" />
+                    <div class="ac__results">
+                      <div class="ac__opt" aria-selected="true">
+                        <span class="av av--md av--truie">T05</span>
+                        <div class="main"><div class="title">T-005 · CI-005-24</div><div class="sub">Pleine · parité 3</div></div>
+                        <span class="pill pill--success pill--no-dot">Sélec.</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="field"><label class="field__label">Verrat origine</label><input class="field__input mono filled" value="V-001 · Pietrain" readonly /></div>
+              </div>
+              <div class="sheet__foot">
+                <button class="btn btn--ghost">Annuler</button>
+                <button class="btn btn--primary"><i data-lucide="check"></i> Enregistrer la truie</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- D.2 Verrat -->
+  <h3 class="section-rule">D.2 · Quick add Verrat</h3>
+  <div class="frames--pair" style="margin-bottom:48px">
+    <div class="frame-wrap">
+      <span class="eyebrow">État vide</span>
+      <div class="frame" id="modal-verrat">
+        <div class="stbar"><span class="num">07:36</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="canvas">
+          <div class="canvas__back">
+            <div class="canvas__bg-page"><div class="ph"><div class="pe">Élevage · Verrats</div><h1>Verrats</h1></div></div>
+            <div class="sheet">
+              <div class="sheet__handle"></div>
+              <div class="sheet__head">
+                <div><div class="eyebrow">Nouveau verrat</div><h2>Ajouter un verrat</h2></div>
+                <button class="sheet__close"><i data-lucide="x"></i></button>
+              </div>
+              <div class="sheet__body">
+                <div class="grp__label">Identité</div>
+                <div class="field"><label class="field__label">Code <span class="hint">auto V-004</span></label><input class="field__input mono" placeholder="V-004" /></div>
+                <div class="field"><label class="field__label">Boucle <span class="req">requis</span></label><input class="field__input mono" placeholder="CI-V04-26" /></div>
+                <div class="field"><label class="field__label">Date naissance</label><input class="field__input mono field__input--ghost" type="date" /></div>
+                <div class="grp__label">Génétique &amp; ration</div>
+                <div class="field"><label class="field__label">Origine / lignée</label><input class="field__input field__input--ghost" placeholder="Pietrain · INERA Bouaké" /></div>
+                <div class="field">
+                  <label class="field__label">Ration <span class="hint">kg / jour</span></label>
+                  <div class="stepper"><button><i data-lucide="minus"></i></button><input value="2.4" /><span class="stepper-label">kg/j</span><button><i data-lucide="plus"></i></button></div>
+                </div>
+              </div>
+              <div class="sheet__foot">
+                <button class="btn btn--ghost">Annuler</button>
+                <button class="btn btn--primary" disabled>Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="frame-wrap">
+      <span class="eyebrow">État rempli · V-004 · Pietrain INERA</span>
+      <div class="frame">
+        <div class="stbar"><span class="num">07:38</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="canvas">
+          <div class="canvas__back">
+            <div class="canvas__bg-page"><div class="ph"><div class="pe">Élevage · Verrats</div><h1>Verrats</h1></div></div>
+            <div class="sheet">
+              <div class="sheet__handle"></div>
+              <div class="sheet__head">
+                <div><div class="eyebrow">Nouveau verrat</div><h2>Ajouter un verrat</h2></div>
+                <button class="sheet__close"><i data-lucide="x"></i></button>
+              </div>
+              <div class="sheet__body">
+                <div class="grp__label">Identité</div>
+                <div class="field"><label class="field__label">Code</label><input class="field__input mono filled" value="V-004" /></div>
+                <div class="field"><label class="field__label">Boucle</label><input class="field__input mono filled" value="CI-V04-26" /></div>
+                <div class="field"><label class="field__label">Date naissance</label><input class="field__input mono filled" type="date" value="2024-02-02" /></div>
+                <div class="grp__label">Génétique &amp; ration</div>
+                <div class="field"><label class="field__label">Origine / lignée</label><input class="field__input filled" value="Pietrain · INERA Bouaké" /></div>
+                <div class="field">
+                  <label class="field__label">Ration <span class="hint">kg / jour</span></label>
+                  <div class="stepper"><button><i data-lucide="minus"></i></button><input value="2.4" /><span class="stepper-label">kg/j</span><button><i data-lucide="plus"></i></button></div>
+                </div>
+                <div class="card" style="background:var(--pt-bg);display:flex;align-items:center;gap:8px;padding:8px 12px">
+                  <i data-lucide="info" style="width:14px;height:14px;color:var(--pt-info);flex-shrink:0"></i>
+                  <div style="font-family:var(--pt-font-mono);font-size:11px;color:var(--pt-muted)">Ration médiane élevage : <b style="color:var(--pt-ink)">2,4 kg/j</b></div>
+                </div>
+              </div>
+              <div class="sheet__foot">
+                <button class="btn btn--ghost">Annuler</button>
+                <button class="btn btn--primary"><i data-lucide="check"></i> Enregistrer le verrat</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- D.3 Bande -->
+  <h3 class="section-rule">D.3 · Quick add Bande</h3>
+  <div class="frames--pair" style="margin-bottom:48px">
+    <div class="frame-wrap">
+      <span class="eyebrow">État vide</span>
+      <div class="frame" id="modal-bande">
+        <div class="stbar"><span class="num">07:40</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="canvas">
+          <div class="canvas__back">
+            <div class="canvas__bg-page"><div class="ph"><div class="pe">Élevage · Bandes</div><h1>Bandes</h1></div></div>
+            <div class="sheet">
+              <div class="sheet__handle"></div>
+              <div class="sheet__head">
+                <div><div class="eyebrow">Nouvelle bande</div><h2>Ajouter une bande</h2></div>
+                <button class="sheet__close"><i data-lucide="x"></i></button>
+              </div>
+              <div class="sheet__body">
+                <div class="grp__label">Truie mère</div>
+                <div class="field"><label class="field__label">Truie en gestation J100+ <span class="req">requis</span></label><input class="field__input field__input--ghost" placeholder="Rechercher T-… (3 dispo)" /></div>
+                <div class="grp__label">Mise-bas</div>
+                <div class="field--inline">
+                  <div class="field"><label class="field__label">Date MB</label><input class="field__input mono field__input--ghost" type="date" /></div>
+                  <div class="field">
+                    <label class="field__label">NV vivants</label>
+                    <div class="stepper"><button><i data-lucide="minus"></i></button><input placeholder="0" /><span class="stepper-label">NV</span><button><i data-lucide="plus"></i></button></div>
+                  </div>
+                </div>
+                <div class="field">
+                  <label class="field__label">Mort-nés <span class="hint">optionnel</span></label>
+                  <div class="stepper"><button><i data-lucide="minus"></i></button><input placeholder="0" /><span class="stepper-label">MN</span><button><i data-lucide="plus"></i></button></div>
+                </div>
+                <div class="field"><label class="field__label">Identifiant portée <span class="hint">aperçu auto</span></label><input class="field__input mono field__input--ghost" placeholder="Mai 2026 · M-—" readonly /></div>
+              </div>
+              <div class="sheet__foot">
+                <button class="btn btn--ghost">Annuler</button>
+                <button class="btn btn--primary" disabled>Créer la bande</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="frame-wrap">
+      <span class="eyebrow">État rempli · T-026 · 12 NV · M-04</span>
+      <div class="frame">
+        <div class="stbar"><span class="num">07:42</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="canvas">
+          <div class="canvas__back">
+            <div class="canvas__bg-page"><div class="ph"><div class="pe">Élevage · Bandes</div><h1>Bandes</h1></div></div>
+            <div class="sheet">
+              <div class="sheet__handle"></div>
+              <div class="sheet__head">
+                <div><div class="eyebrow">Nouvelle bande</div><h2>Ajouter une bande</h2></div>
+                <button class="sheet__close"><i data-lucide="x"></i></button>
+              </div>
+              <div class="sheet__body">
+                <div class="grp__label">Truie mère</div>
+                <div class="field">
+                  <label class="field__label">Truie en gestation J100+</label>
+                  <div class="ac">
+                    <input class="field__input mono filled" value="T-026" />
+                    <div class="ac__results">
+                      <div class="ac__opt" aria-selected="true">
+                        <span class="av av--md av--truie">T26</span>
+                        <div class="main"><div class="title">T-026 · Awoulaba</div><div class="sub">J113 · saillie 17/01 · M-04</div></div>
+                        <span class="pill pill--warm pill--no-dot">J113</span>
+                      </div>
+                      <div class="ac__opt">
+                        <span class="av av--md av--truie">T22</span>
+                        <div class="main"><div class="title">T-022 · CI-022-24</div><div class="sub">J112 · saillie 18/01 · M-02</div></div>
+                      </div>
+                      <div class="ac__opt">
+                        <span class="av av--md av--truie">T05</span>
+                        <div class="main"><div class="title">T-005 · CI-005-24</div><div class="sub">J108 · saillie 22/01</div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="grp__label">Mise-bas</div>
+                <div class="field--inline">
+                  <div class="field"><label class="field__label">Date MB</label><input class="field__input mono filled" type="date" value="2026-05-12" /></div>
+                  <div class="field">
+                    <label class="field__label">NV vivants</label>
+                    <div class="stepper"><button><i data-lucide="minus"></i></button><input value="12" /><span class="stepper-label">NV</span><button><i data-lucide="plus"></i></button></div>
+                  </div>
+                </div>
+                <div class="field">
+                  <label class="field__label">Mort-nés</label>
+                  <div class="stepper"><button><i data-lucide="minus"></i></button><input value="1" /><span class="stepper-label">MN</span><button><i data-lucide="plus"></i></button></div>
+                </div>
+                <div class="field"><label class="field__label">Identifiant portée <span class="hint">généré</span></label><input class="field__input mono filled" value="Mai 2026 · M-04" readonly /></div>
+              </div>
+              <div class="sheet__foot">
+                <button class="btn btn--ghost">Annuler</button>
+                <button class="btn btn--primary"><i data-lucide="check"></i> Créer la bande</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- D.4 Porcelet -->
+  <h3 class="section-rule">D.4 · Quick add Porcelet</h3>
+  <div class="frames--pair" style="margin-bottom:48px">
+    <div class="frame-wrap">
+      <span class="eyebrow">État vide</span>
+      <div class="frame" id="modal-porcelet">
+        <div class="stbar"><span class="num">07:46</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="canvas">
+          <div class="canvas__back">
+            <div class="canvas__bg-page"><div class="ph"><div class="pe">Élevage · Porcelets</div><h1>Porcelets</h1></div></div>
+            <div class="sheet">
+              <div class="sheet__handle"></div>
+              <div class="sheet__head">
+                <div><div class="eyebrow">Nouveau porcelet</div><h2>Ajouter un porcelet</h2></div>
+                <button class="sheet__close"><i data-lucide="x"></i></button>
+              </div>
+              <div class="sheet__body">
+                <div class="grp__label">Bande &amp; identité</div>
+                <div class="field"><label class="field__label">Bande <span class="req">requis</span></label><input class="field__input field__input--ghost" placeholder="— sélectionner —" readonly /></div>
+                <div class="field"><label class="field__label">Boucle</label><input class="field__input mono" placeholder="CR-13" /></div>
+                <div class="field">
+                  <label class="field__label">Sexe</label>
+                  <div class="radio-chips">
+                    <button class="radio-chip">Mâle</button>
+                    <button class="radio-chip">Femelle</button>
+                    <button class="radio-chip">Inconnu</button>
+                  </div>
+                </div>
+                <div class="grp__label">Pesée naissance</div>
+                <div class="field">
+                  <label class="field__label">Poids <span class="hint">kg</span></label>
+                  <div class="stepper"><button><i data-lucide="minus"></i></button><input placeholder="1.4" /><span class="stepper-label">kg</span><button><i data-lucide="plus"></i></button></div>
+                </div>
+              </div>
+              <div class="sheet__foot">
+                <button class="btn btn--ghost">Annuler</button>
+                <button class="btn btn--primary" disabled>Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="frame-wrap">
+      <span class="eyebrow">État rempli · CR-13 · Mai 2026</span>
+      <div class="frame">
+        <div class="stbar"><span class="num">07:48</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="canvas">
+          <div class="canvas__back">
+            <div class="canvas__bg-page"><div class="ph"><div class="pe">Élevage · Porcelets</div><h1>Porcelets</h1></div></div>
+            <div class="sheet">
+              <div class="sheet__handle"></div>
+              <div class="sheet__head">
+                <div><div class="eyebrow">Nouveau porcelet</div><h2>Ajouter un porcelet</h2></div>
+                <button class="sheet__close"><i data-lucide="x"></i></button>
+              </div>
+              <div class="sheet__body">
+                <div class="grp__label">Bande &amp; identité</div>
+                <div class="field">
+                  <label class="field__label">Bande</label>
+                  <div class="card-link" style="border:1px solid var(--pt-line);background:var(--pt-warm);padding:10px 12px;border-radius:10px">
+                    <span class="av av--md av--bande">B26</span>
+                    <div class="card-link__main">
+                      <div class="card-link__title">Mai 2026 · T-026</div>
+                      <div class="card-link__sub">MB 12/05 · 12 NV · M-04</div>
+                    </div>
+                    <i data-lucide="chevron-down" style="width:16px;height:16px;color:var(--pt-subtle)"></i>
+                  </div>
+                </div>
+                <div class="field"><label class="field__label">Boucle</label><input class="field__input mono filled" value="CR-13" /></div>
+                <div class="field">
+                  <label class="field__label">Sexe</label>
+                  <div class="radio-chips">
+                    <button class="radio-chip">Mâle</button>
+                    <button class="radio-chip" aria-checked="true">Femelle</button>
+                    <button class="radio-chip">Inconnu</button>
+                  </div>
+                </div>
+                <div class="grp__label">Pesée naissance</div>
+                <div class="field">
+                  <label class="field__label">Poids <span class="hint">kg</span></label>
+                  <div class="stepper"><button><i data-lucide="minus"></i></button><input value="1.45" /><span class="stepper-label">kg</span><button><i data-lucide="plus"></i></button></div>
+                </div>
+                <div class="card" style="background:var(--pt-bg);display:flex;align-items:center;gap:8px;padding:8px 12px">
+                  <i data-lucide="info" style="width:14px;height:14px;color:var(--pt-info);flex-shrink:0"></i>
+                  <div style="font-family:var(--pt-font-mono);font-size:11px;color:var(--pt-muted)">Médiane Mai 2026 : <b style="color:var(--pt-ink)">1,42 kg</b> · ordre <b style="color:var(--pt-ink)">11/12</b></div>
+                </div>
+              </div>
+              <div class="sheet__foot">
+                <button class="btn btn--ghost">Annuler</button>
+                <button class="btn btn--primary"><i data-lucide="check"></i> Enregistrer le porcelet</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- D.5 Loge -->
+  <h3 class="section-rule">D.5 · Quick add Loge</h3>
+  <div class="frames--pair" style="margin-bottom:48px">
+    <div class="frame-wrap">
+      <span class="eyebrow">État vide</span>
+      <div class="frame" id="modal-loge">
+        <div class="stbar"><span class="num">07:50</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="canvas">
+          <div class="canvas__back">
+            <div class="canvas__bg-page"><div class="ph"><div class="pe">Élevage · Loges</div><h1>Loges</h1></div></div>
+            <div class="sheet">
+              <div class="sheet__handle"></div>
+              <div class="sheet__head">
+                <div><div class="eyebrow">Nouvelle loge</div><h2>Ajouter une loge</h2></div>
+                <button class="sheet__close"><i data-lucide="x"></i></button>
+              </div>
+              <div class="sheet__body">
+                <div class="grp__label">Type</div>
+                <div class="field">
+                  <label class="field__label">Catégorie</label>
+                  <div class="radio-chips">
+                    <button class="radio-chip">Maternité</button>
+                    <button class="radio-chip">Post-sev.</button>
+                    <button class="radio-chip">Engrais.</button>
+                  </div>
+                </div>
+                <div class="grp__label">Code &amp; capacité</div>
+                <div class="field"><label class="field__label">Code <span class="hint">auto selon type</span></label><input class="field__input mono field__input--ghost" placeholder="—" /></div>
+                <div class="field">
+                  <label class="field__label">Capacité max</label>
+                  <div class="stepper"><button><i data-lucide="minus"></i></button><input placeholder="0" /><span class="stepper-label">animaux</span><button><i data-lucide="plus"></i></button></div>
+                </div>
+                <div class="field"><label class="field__label">Position <span class="hint">libre</span></label><input class="field__input field__input--ghost" placeholder="ex. bâtiment A · case 4" /></div>
+              </div>
+              <div class="sheet__foot">
+                <button class="btn btn--ghost">Annuler</button>
+                <button class="btn btn--primary" disabled>Enregistrer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="frame-wrap">
+      <span class="eyebrow">État rempli · M-04 · Maternité 12 places</span>
+      <div class="frame">
+        <div class="stbar"><span class="num">07:52</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="canvas">
+          <div class="canvas__back">
+            <div class="canvas__bg-page"><div class="ph"><div class="pe">Élevage · Loges</div><h1>Loges</h1></div></div>
+            <div class="sheet">
+              <div class="sheet__handle"></div>
+              <div class="sheet__head">
+                <div><div class="eyebrow">Nouvelle loge</div><h2>Ajouter une loge</h2></div>
+                <button class="sheet__close"><i data-lucide="x"></i></button>
+              </div>
+              <div class="sheet__body">
+                <div class="grp__label">Type</div>
+                <div class="field">
+                  <label class="field__label">Catégorie</label>
+                  <div class="radio-chips">
+                    <button class="radio-chip" aria-checked="true">Maternité</button>
+                    <button class="radio-chip">Post-sev.</button>
+                    <button class="radio-chip">Engrais.</button>
+                  </div>
+                </div>
+                <div class="grp__label">Code &amp; capacité</div>
+                <div class="field"><label class="field__label">Code</label><input class="field__input mono filled" value="M-04" /></div>
+                <div class="field">
+                  <label class="field__label">Capacité max</label>
+                  <div class="stepper"><button><i data-lucide="minus"></i></button><input value="12" /><span class="stepper-label">animaux</span><button><i data-lucide="plus"></i></button></div>
+                </div>
+                <div class="field"><label class="field__label">Position</label><input class="field__input filled" value="Bâtiment A · case 4 · ventil. nord" /></div>
+                <div class="card" style="background:var(--pt-bg);display:flex;align-items:center;gap:8px;padding:8px 12px">
+                  <i data-lucide="info" style="width:14px;height:14px;color:var(--pt-info);flex-shrink:0"></i>
+                  <div style="font-family:var(--pt-font-mono);font-size:11px;color:var(--pt-muted)">Code <b style="color:var(--pt-ink)">M-04</b> suit les loges <b style="color:var(--pt-ink)">M-01 → M-03</b>.</div>
+                </div>
+              </div>
+              <div class="sheet__foot">
+                <button class="btn btn--ghost">Annuler</button>
+                <button class="btn btn--primary"><i data-lucide="check"></i> Enregistrer la loge</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- D.6 Saillie + MB -->
+  <h3 class="section-rule">D.6 · Quick saillie + Quick mise-bas</h3>
+  <div class="frames--pair">
+    <div class="frame-wrap">
+      <span class="eyebrow">Saillie · rempli · T-013 → V-002</span>
+      <div class="frame" id="modal-saillie-mb">
+        <div class="stbar"><span class="num">07:55</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="canvas">
+          <div class="canvas__back">
+            <div class="canvas__bg-page"><div class="ph"><div class="pe">Repro · Agenda</div><h1>Repro</h1></div></div>
+            <div class="sheet">
+              <div class="sheet__handle"></div>
+              <div class="sheet__head">
+                <div><div class="eyebrow">Nouvelle saillie</div><h2>Saisir une saillie</h2></div>
+                <button class="sheet__close"><i data-lucide="x"></i></button>
+              </div>
+              <div class="sheet__body">
+                <div class="grp__label">Acteurs</div>
+                <div class="field">
+                  <label class="field__label">Truie en chaleur <span class="req">requis</span></label>
+                  <div class="ac">
+                    <input class="field__input mono filled" value="T-013" />
+                    <div class="ac__results">
+                      <div class="ac__opt" aria-selected="true">
+                        <span class="av av--md av--truie">T13</span>
+                        <div class="main"><div class="title">T-013 · CI-013-24</div><div class="sub">Vide · sevrée 05/05 · J+5</div></div>
+                        <span class="pill pill--success pill--no-dot">Sélec.</span>
+                      </div>
+                      <div class="ac__opt">
+                        <span class="av av--md av--truie">T24</span>
+                        <div class="main"><div class="title">T-024 · CI-024-24</div><div class="sub">Vide · retour chaleur</div></div>
+                      </div>
+                      <div class="ac__opt">
+                        <span class="av av--md av--truie">T40</span>
+                        <div class="main"><div class="title">T-040 · CI-040-24</div><div class="sub">Vide · sevrée 10/05</div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="field--inline">
+                  <div class="field"><label class="field__label">Verrat</label><input class="field__input mono filled" value="V-002 · Pietrain" readonly /></div>
+                  <div class="field"><label class="field__label">Date saillie</label><input class="field__input mono filled" type="date" value="2026-05-10" /></div>
+                </div>
+                <div class="cycle-prev">
+                  <div class="eyebrow">Cycle prévu · auto</div>
+                  <div class="cycle-prev__row"><span class="lab">Écho</span><span class="v"><small>J28</small>07/06/2026</span></div>
+                  <div class="cycle-prev__row"><span class="lab">Mise-bas</span><span class="v"><small>J115</small>02/09/2026</span></div>
+                  <div class="cycle-prev__row"><span class="lab">Sevrage</span><span class="v"><small>J143</small>30/09/2026</span></div>
+                </div>
+              </div>
+              <div class="sheet__foot">
+                <button class="btn btn--ghost">Annuler</button>
+                <button class="btn btn--primary"><i data-lucide="check"></i> Démarrer le cycle</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="frame-wrap">
+      <span class="eyebrow">Mise-bas · rempli · T-026 · 12 NV</span>
+      <div class="frame">
+        <div class="stbar"><span class="num">07:58</span><div class="stbar__icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-medium"></i></div></div>
+        <div class="canvas">
+          <div class="canvas__back">
+            <div class="canvas__bg-page"><div class="ph"><div class="pe">Repro · Agenda</div><h1>Repro</h1></div></div>
+            <div class="sheet">
+              <div class="sheet__handle"></div>
+              <div class="sheet__head">
+                <div><div class="eyebrow">Nouvelle mise-bas</div><h2>Saisir une mise-bas</h2></div>
+                <button class="sheet__close"><i data-lucide="x"></i></button>
+              </div>
+              <div class="sheet__body">
+                <div class="grp__label">Truie</div>
+                <div class="field">
+                  <label class="field__label">Truie en gestation J110+</label>
+                  <div class="ac">
+                    <input class="field__input mono filled" value="T-026" />
+                    <div class="ac__results">
+                      <div class="ac__opt" aria-selected="true">
+                        <span class="av av--md av--truie">T26</span>
+                        <div class="main"><div class="title">T-026 · Awoulaba</div><div class="sub">J116 · saillie 17/01 · prévu 12/05</div></div>
+                        <span class="pill pill--warm pill--no-dot">J116</span>
+                      </div>
+                      <div class="ac__opt">
+                        <span class="av av--md av--truie">T22</span>
+                        <div class="main"><div class="title">T-022</div><div class="sub">J112 · prévu 13/05</div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="grp__label">Mise-bas</div>
+                <div class="field--inline">
+                  <div class="field"><label class="field__label">Date MB</label><input class="field__input mono filled" type="date" value="2026-05-12" /></div>
+                  <div class="field">
+                    <label class="field__label">NV vivants</label>
+                    <div class="stepper"><button><i data-lucide="minus"></i></button><input value="12" /><span class="stepper-label">NV</span><button><i data-lucide="plus"></i></button></div>
+                  </div>
+                </div>
+                <div class="field--inline">
+                  <div class="field">
+                    <label class="field__label">Morts naissance</label>
+                    <div class="stepper"><button><i data-lucide="minus"></i></button><input value="1" /><span class="stepper-label">M</span><button><i data-lucide="plus"></i></button></div>
+                  </div>
+                  <div class="field">
+                    <label class="field__label">Mort-nés</label>
+                    <div class="stepper"><button><i data-lucide="minus"></i></button><input value="0" /><span class="stepper-label">MN</span><button><i data-lucide="plus"></i></button></div>
+                  </div>
+                </div>
+                <div class="card" style="background:var(--pt-bg);font-family:var(--pt-font-mono);font-size:11.5px;color:var(--pt-muted);line-height:1.5">
+                  <b style="color:var(--pt-ink)">Saillie liée</b> · 17/01/2026 · V-001<br>
+                  <b style="color:var(--pt-ink)">Cycle réel</b> · 116 j · cohérent (115 ± 3 j)
+                </div>
+              </div>
+              <div class="sheet__foot">
+                <button class="btn btn--ghost">Annuler</button>
+                <button class="btn btn--primary"><i data-lucide="check"></i> Enregistrer la mise-bas</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <h2 class="section-title" id="notes">Notes design</h2>
+  <p class="sub-hint">3 décisions · 2 hésitations · effort dev</p>
+
+  <h3 class="section-rule">3 décisions design fortes</h3>
+  <div class="decisions" style="margin-bottom:32px">
+    <div class="decision decision--ink">
+      <div class="num-tag">01 · Onboarding</div>
+      <h4>Slide-X plein écran · pas stack scrollable</h4>
+      <p>Wizard 5 étapes plein écran, animation slide horizontale entre étapes, progress 5 barres en haut. Stack scrollable aurait dilué l'engagement et caché l'avancement. Skip top-right discret, sans confirmation — la friction est l'inverse de ce qu'on veut au démarrage. Skip total et non step-by-step : pas de clics répétés.</p>
+    </div>
+    <div class="decision">
+      <div class="num-tag">02 · Modals</div>
+      <h4>Sticky footer 2 boutons · pas FAB</h4>
+      <p>Sticky footer Annuler ghost + Action primary. FAB écarté : il flotte au-dessus du contenu et masque la dernière ligne de form. Sticky footer = touch target garanti 48px, label complet ("Enregistrer la truie", pas juste un check), bouton Annuler symétrique. Pattern réutilisable pour tous les sheets.</p>
+    </div>
+    <div class="decision">
+      <div class="num-tag">03 · Datepicker · Autocomplete</div>
+      <h4>Natif HTML5 + autocomplete custom 3 résultats</h4>
+      <p>Datepicker = input type="date" natif Android Chrome, supérieur au custom V70 sur mobile (calendrier OS, locale auto). Autocomplete custom : 3 résultats max visibles, avatar coloré + code mono + sub métier (J113 · saillie 17/01) — bien plus utile qu'une liste alphabétique pour 50 truies.</p>
+    </div>
+  </div>
+
+  <h3 class="section-rule">2 zones d'hésitation</h3>
+  <div class="decisions" style="margin-bottom:32px">
+    <div class="decision">
+      <div class="num-tag">Hésité · Onboarding C.4</div>
+      <h4>Saillie réelle ou simulation ?</h4>
+      <p>Tenté : la saillie de C.4 écrit vraiment T-001 + cycle dans Supabase pour que Yao retrouve son cycle après onboarding. Risque : si Yao skip après C.4, la donnée orpheline pollue son élevage. Choisi : <b>simulation pure</b>, animation cycle qui se peuple visuellement, toast success — mais aucune écriture DB. C.5 redirige vers /today qui montre l'état réel (vide pour un nouveau compte).</p>
+    </div>
+    <div class="decision">
+      <div class="num-tag">Hésité · Modal Bande</div>
+      <h4>Truie mère en autocomplete ou chip-list ?</h4>
+      <p>Chip-list (3 truies J100+ visibles d'office) aurait économisé un tap. Mais 3 truies ≠ règle : à terme une ferme à 50 truies aura 6-8 J100+ simultanées. Autocomplete avec input pré-focusé + 3 suggestions filtrées dès l'ouverture = compatible 3 truies (zéro frappe) ET 8 truies (1-2 frappes). Pattern unique pour toutes les fermes.</p>
+    </div>
+  </div>
+
+  <h3 class="section-rule">Effort dev · React/Ionic Capacitor</h3>
+  <div class="decisions">
+    <div class="decision">
+      <div class="num-tag">Onboarding wizard</div>
+      <h4>~4 j · 5 étapes</h4>
+      <p>Component <code style="font-family:var(--pt-font-mono);font-size:11px">&lt;OnboardingWizard /&gt;</code> avec slide animation, 5 routes ou 1 route + state. Le mock-form C.3/C.4 n'écrit pas en DB — pure UI. Inclut illustration silhouette truie SVG inline (réutilisable). Hors traduction baoulé/dioula.</p>
+    </div>
+    <div class="decision">
+      <div class="num-tag">Sheets quick-add</div>
+      <h4>~5 j · 6 modals + autocomplete</h4>
+      <p>1 j base sheet drag-handle (Ionic IonModal breakpoints=[0, 0.9]) + 4 j × form fields. <code style="font-family:var(--pt-font-mono);font-size:11px">&lt;TruieAutocomplete /&gt;</code> et <code style="font-family:var(--pt-font-mono);font-size:11px">&lt;BandeAutocomplete /&gt;</code> = composants partagés. Stepper numérique = atom déjà existant. Cycle preview de D.6 réutilise le pattern <code style="font-family:var(--pt-font-mono);font-size:11px">.cycle-prev</code> direct.</p>
+    </div>
+    <div class="decision decision--ink">
+      <div class="num-tag">Cumul 4 mockups</div>
+      <h4>~41 j / 1 dev</h4>
+      <p>14 j Élevage + 9 j Réglages-Pilot + 9 j Ressources-Repro + 9 j Onboarding-Modals. Hors backend Supabase (auth, RLS, triggers cycle), QA terrain Yamoussoukro, traduction. <b>Top 3 priorités cette passe</b> : (1) sheets quick-add — ce que Yao tape 20 fois/jour, (2) onboarding C.4 saillie — fondation du cycle vivant, (3) autocomplete truie — composant partagé qui débloque saillie + bande + MB.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+  document.querySelectorAll('.radio-chips').forEach(group=>{
+    group.querySelectorAll('.radio-chip').forEach(c=>{
+      c.addEventListener('click',()=>{
+        group.querySelectorAll('.radio-chip').forEach(o=>o.removeAttribute('aria-checked'));
+        c.setAttribute('aria-checked','true');
+      });
+    });
+  });
+</script>
+</body>
+</html>
