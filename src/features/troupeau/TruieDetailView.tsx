@@ -279,6 +279,13 @@ const TruieDetailView: React.FC = () => {
     [truie, refreshData],
   );
 
+  // ── V75-o C · F-12 — Performance économique (réforme decision aid) ────────
+  // Doit être appelé AVANT les early returns (rules-of-hooks).
+  const perfEco = useMemo(
+    () => truie ? computeTruiePerformanceEco(truie, bandes) : null,
+    [truie, bandes],
+  );
+
   // ── État non trouvé / loading (V74 défense-en-profondeur) ─────────────────
   // useEntityWithRetry doit être appelé inconditionnellement (rules-of-hooks).
 
@@ -348,12 +355,6 @@ const TruieDetailView: React.FC = () => {
     if (daysUntilMB > 0) return `${truie.displayId} doit mettre bas dans ${daysUntilMB}j`;
     return `${truie.displayId} a dépassé la date prévue (+${Math.abs(daysUntilMB)}j)`;
   })();
-
-  // ── V75-o C · F-12 — Performance économique (réforme decision aid) ────────
-  const perfEco = useMemo(
-    () => computeTruiePerformanceEco(truie, bandes),
-    [truie, bandes],
-  );
 
   // ── Vitales : empty state si jamais saillie ───────────────────────────────
   const pariteVal = truie.nbPortees ?? historique.length;
