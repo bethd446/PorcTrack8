@@ -1,15 +1,15 @@
 /* eslint-disable react-refresh/only-export-components */
+/**
+ * QuickMiseBasForm — Saisie d'une mise-bas (Sprint 5 v76)
+ * ════════════════════════════════════════════════════════════════════════
+ * Sheet bottom v76 · Truie autocomplete (gestation J110+) · Date MB ·
+ * NV/Morts/Mort-nés stepper · pré-rempli auto si saillie liée trouvée.
+ */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Baby, Check, CheckCircle2 } from 'lucide-react';
+import { IonModal } from '@ionic/react';
+import { Check, Minus, Plus, X } from 'lucide-react';
 
-import { AppToast, BottomSheet, useAppToast } from '../agritech';
-import {
-  Button,
-  FormField,
-  Input,
-  Section,
-  Textarea,
-} from '@/design-system';
+import { AppToast, useAppToast } from '../agritech';
 import {
   insertBatch,
   updateSowByCode,
@@ -35,7 +35,6 @@ import {
   validateDatePresentOrPast,
   validateEffectif,
 } from '../../lib/validation/farmValidators';
-import MiseBasTruieField from './quickMiseBas/MiseBasTruieField';
 
 export {
   MISE_BAS_BOUNDS,
@@ -61,108 +60,35 @@ export interface QuickMiseBasFormProps {
 }
 
 const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
-  isOpen,
-  onClose,
-  defaultTruieId,
-  onSuccess,
+  isOpen, onClose, defaultTruieId, onSuccess,
 }) => {
   const { truies, verrats, bandes, refreshData } = useFarm();
 
-  const truiesEligibles = useMemo<Truie[]>(() => {
-    return truies.filter(t => {
-      const c = normaliseStatut(t.statut);
-      return c === 'MATERNITE' || c === 'PLEINE' || c === 'SURVEILLANCE';
-    });
-  }, [truies]);
+  const truiesEligibles = useMemo<Truie[]>(() => truies.filter(t => {
+    const c = normaliseStatut(t.statut);
+    return c === 'MATERNITE' || c === 'PLEINE' || c === 'SURVEILLANCE';
+  }), [truies]);
 
   const [truieId, setTruieId] = useState<string>(defaultTruieId ?? '');
+  const [truieQuery, setTruieQuery] = useState<string>(defaultTruieId ?? '');
   const [dateIso, setDateIso] = useState<string>(todayIsoLocal());
   const [heure, setHeure] = useState<string>(nowHoursMinutes());
   const [nesVivants, setNesVivants] = useState<string>('');
   const [mortsNes, setMortsNes] = useState<string>('0');
-  const [nesTotaux, setNesTotaux] = useState<string>('');
-  const [nesTotauxEditedManually, setNesTotauxEditedManually] = useState(false);
-  const [poidsMoyen, setPoidsMoyen] = useState<string>('');
-  const [notes, setNotes] = useState<string>('');
-  const [nbMales, setNbMales] = useState<string>('');
-  const [nbFemelles, setNbFemelles] = useState<string>('');
-  const [nbFemellesEditedManually, setNbFemellesEditedManually] = useState(false);
+  const [mortsNaissance, setMortsNaissance] = useState<string>('0');
   const [errors, setErrors] = useState<MiseBasValidationErrors>({});
   const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
   const { show: showToast, toastProps } = useAppToast();
-  const [lastSaillie, setLastSaillie] = useState<LastSaillieResolved | null>(
-    null,
-  );
+  const [lastSaillie, setLastSaillie] = useState<LastSaillieResolved | null>(null);
   const [saillieLoading, setSaillieLoading] = useState(false);
   const [saillieResolved, setSaillieResolved] = useState(false);
 
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Auto-suggestion totaux = vivants + morts-nés tant que l'utilisateur
-  // n'a pas saisi explicitement la valeur.
-  const [lastAutoInputs, setLastAutoInputs] = useState<{ nesVivants: string; mortsNes: string }>({
-    nesVivants,
-    mortsNes,
-  });
-  if (
-    !nesTotauxEditedManually &&
-    (lastAutoInputs.nesVivants !== nesVivants || lastAutoInputs.mortsNes !== mortsNes)
-  ) {
-    setLastAutoInputs({ nesVivants, mortsNes });
-    const v = parseInt(nesVivants, 10);
-    const m = parseInt(mortsNes, 10);
-    if (Number.isFinite(v) && Number.isFinite(m)) {
-      setNesTotaux(String(v + m));
-    } else if (Number.isFinite(v)) {
-      setNesTotaux(String(v));
-    }
-  }
-
-  // Auto-suggestion femelles = nv - males si l'utilisateur n'a pas saisi
-  // explicitement le nb de femelles.
-  const [lastAutoSex, setLastAutoSex] = useState<{ nbMales: string; nesVivants: string }>({
-    nbMales,
-    nesVivants,
-  });
-  if (
-    !nbFemellesEditedManually &&
-    (lastAutoSex.nbMales !== nbMales || lastAutoSex.nesVivants !== nesVivants)
-  ) {
-    setLastAutoSex({ nbMales, nesVivants });
-    const m = parseInt(nbMales, 10);
-    const v = parseInt(nesVivants, 10);
-    if (Number.isFinite(m) && Number.isFinite(v) && v - m >= 0) {
-      setNbFemelles(String(v - m));
-    } else if (nbMales === '') {
-      setNbFemelles('');
-    }
-  }
-
   const suggestedIdPortee = useMemo(() => {
     if (!truieId) return '';
     return suggestIdPortee(truieId, bandes);
   }, [truieId, bandes]);
-
-  const detectedBoarLabel = useMemo<string | null>(() => {
-    if (!lastSaillie) return null;
-    const code = lastSaillie.boar_code_id;
-    if (!code) return null;
-    const v = verrats.find(
-      x => x.displayId === code || x.id === lastSaillie.boar_id,
-    );
-    return v?.nom ? `${code} (${v.nom})` : code;
-  }, [lastSaillie, verrats]);
-
-  const saillieEcartJours = useMemo<number | null>(() => {
-    if (!lastSaillie?.date_saillie || !dateIso) return null;
-    const ds = new Date(lastSaillie.date_saillie);
-    const dm = new Date(dateIso);
-    if (!Number.isFinite(ds.getTime()) || !Number.isFinite(dm.getTime())) {
-      return null;
-    }
-    return Math.round((dm.getTime() - ds.getTime()) / 86400000);
-  }, [lastSaillie, dateIso]);
 
   const [idPortee, setIdPortee] = useState<string>(suggestedIdPortee);
   const [idPorteeEditedManually, setIdPorteeEditedManually] = useState(false);
@@ -174,175 +100,141 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
   }
 
   const [lastOpenKey, setLastOpenKey] = useState<{ isOpen: boolean; defaultTruieId: string | undefined }>({
-    isOpen,
-    defaultTruieId,
+    isOpen, defaultTruieId,
   });
   if (lastOpenKey.isOpen !== isOpen || lastOpenKey.defaultTruieId !== defaultTruieId) {
     setLastOpenKey({ isOpen, defaultTruieId });
     if (isOpen) {
       setTruieId(defaultTruieId ?? '');
+      setTruieQuery(defaultTruieId ?? '');
       setDateIso(todayIsoLocal());
       setHeure(nowHoursMinutes());
-      setNesVivants('');
-      setMortsNes('0');
-      setNesTotaux('');
-      setNesTotauxEditedManually(false);
-      setPoidsMoyen('');
-      setNotes('');
-      setNbMales('');
-      setNbFemelles('');
-      setNbFemellesEditedManually(false);
+      setNesVivants(''); setMortsNes('0'); setMortsNaissance('0');
       setIdPorteeEditedManually(false);
-      setErrors({});
-      setSuccess(false);
-      setSaving(false);
-      setLastSaillie(null);
-      setSaillieResolved(false);
-      setSaillieLoading(false);
+      setErrors({}); setSaving(false);
+      setLastSaillie(null); setSaillieResolved(false); setSaillieLoading(false);
     }
   }
 
   useEffect(() => {
     return () => {
-      if (closeTimerRef.current) {
-        clearTimeout(closeTimerRef.current);
-        closeTimerRef.current = null;
-      }
+      if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
     };
   }, []);
 
-  // Résolution auto de la saillie source dès que truie + date sont posées.
   useEffect(() => {
     if (!isOpen) return;
     if (!truieId || !dateIso) {
-      setLastSaillie(null);
-      setSaillieResolved(false);
-      return;
+      setLastSaillie(null); setSaillieResolved(false); return;
     }
     let cancelled = false;
     setSaillieLoading(true);
     setSaillieResolved(false);
     findLastSaillieForTruie(truieId, new Date(dateIso))
-      .then(res => {
-        if (cancelled) return;
-        setLastSaillie(res);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setLastSaillie(null);
-      })
-      .finally(() => {
-        if (cancelled) return;
-        setSaillieLoading(false);
-        setSaillieResolved(true);
-      });
-    return () => {
-      cancelled = true;
-    };
+      .then(res => { if (!cancelled) setLastSaillie(res); })
+      .catch(() => { if (!cancelled) setLastSaillie(null); })
+      .finally(() => { if (!cancelled) { setSaillieLoading(false); setSaillieResolved(true); } });
+    return () => { cancelled = true; };
   }, [isOpen, truieId, dateIso]);
 
   const handleClose = useCallback(() => {
     if (saving) return;
-    if (closeTimerRef.current) {
-      clearTimeout(closeTimerRef.current);
-      closeTimerRef.current = null;
-    }
+    if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
     onClose();
   }, [onClose, saving]);
-
   useEscapeKey(isOpen && !saving, handleClose);
-  const firstFieldRef = useFocusFirstInput<HTMLSelectElement>(
-    isOpen && !success,
-  ) as unknown as React.RefObject<HTMLSelectElement>;
+  const firstFieldRef = useFocusFirstInput<HTMLInputElement>(isOpen);
 
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
-    e.preventDefault();
+  const truieSuggestions = useMemo<Truie[]>(() => {
+    const q = truieQuery.trim().toLowerCase();
+    if (!q) return truiesEligibles.slice(0, 6);
+    return truiesEligibles.filter(t => {
+      const id = (t.displayId || t.id || '').toLowerCase();
+      const b = (t.boucle || '').toLowerCase();
+      return id.includes(q) || b.includes(q);
+    }).slice(0, 6);
+  }, [truiesEligibles, truieQuery]);
+
+  const adjustNumber = (
+    setter: React.Dispatch<React.SetStateAction<string>>,
+    cur: string, delta: number, min = 0, max = 25,
+  ): void => {
+    const c = parseInt(cur || '0', 10) || 0;
+    const next = Math.max(min, Math.min(max, c + delta));
+    setter(String(next));
+  };
+
+  const detectedBoarLabel = useMemo<string | null>(() => {
+    if (!lastSaillie) return null;
+    const code = lastSaillie.boar_code_id;
+    if (!code) return null;
+    const v = verrats.find(x => x.displayId === code || x.id === lastSaillie.boar_id);
+    return v?.nom ? `${code} (${v.nom})` : code;
+  }, [lastSaillie, verrats]);
+
+  const saillieEcartJours = useMemo<number | null>(() => {
+    if (!lastSaillie?.date_saillie || !dateIso) return null;
+    const ds = new Date(lastSaillie.date_saillie);
+    const dm = new Date(dateIso);
+    if (!Number.isFinite(ds.getTime()) || !Number.isFinite(dm.getTime())) return null;
+    return Math.round((dm.getTime() - ds.getTime()) / 86400000);
+  }, [lastSaillie, dateIso]);
+
+  const selectTruie = (t: Truie): void => {
+    const code = t.displayId || t.id;
+    setTruieId(code);
+    setTruieQuery(code);
+  };
+
+  const isValid = !!truieId && !!nesVivants && !!dateIso;
+
+  const handleSubmit = async (e?: React.FormEvent | React.MouseEvent): Promise<void> => {
+    if (e) e.preventDefault();
+    const v = parseInt(nesVivants, 10) || 0;
+    const mn = parseInt(mortsNes, 10) || 0;
+    const nesTotaux = String(v + mn);
     const draft: MiseBasDraft = {
-      truieId,
-      idPortee,
-      dateIso,
-      heure,
-      nesVivants,
-      mortsNes,
-      nesTotaux,
-      poidsMoyen,
-      notes,
-      nbMales,
-      nbFemelles,
+      truieId, idPortee, dateIso, heure, nesVivants, mortsNes,
+      nesTotaux, poidsMoyen: '', notes: '',
+      nbMales: '', nbFemelles: '',
     };
     const result = validateMiseBas(draft);
-    if (!result.ok || !result.normalized) {
-      setErrors(result.errors);
-      return;
-    }
-    // RT4 Volet 2 : Fail-Fast — date MB ne peut pas être dans le futur,
-    // effectif positif borné. Défense en profondeur sur la couche métier.
+    if (!result.ok || !result.normalized) { setErrors(result.errors); return; }
     const failFast: MiseBasValidationErrors = {};
     const dr = validateDatePresentOrPast(dateIso, 'dateIso');
     if (!dr.ok) failFast.dateIso = dr.errors[0].message;
-    const ef = validateEffectif(result.normalized.nesTotaux, {
-      max: 50,
-      field: 'nesTotaux',
-    });
+    const ef = validateEffectif(result.normalized.nesTotaux, { max: 50, field: 'nesTotaux' });
     if (!ef.ok) failFast.nesTotaux = ef.errors[0].message;
-    if (Object.keys(failFast).length > 0) {
-      setErrors(failFast);
-      return;
-    }
-    setErrors({});
-
-    setSaving(true);
+    if (Object.keys(failFast).length > 0) { setErrors(failFast); return; }
+    setErrors({}); setSaving(true);
     try {
       const sowId = await resolveSowIdByCode(truieId);
-      const vivants = Math.max(
-        0,
-        result.normalized.nesTotaux - result.normalized.mortsNes,
-      );
-      // Résolution finale du verrat : préférer la saillie auto-détectée,
-      // sinon retomber sur une résolution synchrone (au cas où le useEffect
-      // n'aurait pas eu le temps de finir).
+      const vivants = Math.max(0, result.normalized.nesTotaux - result.normalized.mortsNes);
       let boarUuid: string | null = lastSaillie?.boar_id ?? null;
       if (!boarUuid && lastSaillie?.boar_code_id) {
         boarUuid = await resolveBoarIdByCode(lastSaillie.boar_code_id);
       }
+      const mortsNaissanceN = parseInt(mortsNaissance || '0', 10) || 0;
+      const noteParts: string[] = [];
+      if (heure) noteParts.push(`MB ${heure}`);
+      if (mortsNaissanceN > 0) noteParts.push(`Morts naissance: ${mortsNaissanceN}`);
+      const finalNotes = noteParts.join(' · ');
       await insertBatch({
         code_id: idPortee,
         sow_id: sowId,
         boar_id: boarUuid,
-        date_mise_bas: result.normalized.dateMbSheets
-          .split('/')
-          .reverse()
-          .join('-'),
-        date_sevrage_prevue: result.normalized.dateSevragePrevue
-          .split('/')
-          .reverse()
-          .join('-'),
+        date_mise_bas: result.normalized.dateMbSheets.split('/').reverse().join('-'),
+        date_sevrage_prevue: result.normalized.dateSevragePrevue.split('/').reverse().join('-'),
         porcelets_nes_total: result.normalized.nesTotaux,
         porcelets_nes_vivants: vivants,
         nb_mort_nes: result.normalized.mortsNes,
-        ...(result.normalized.nbMales !== undefined
-          ? { nb_males_naissance: result.normalized.nbMales }
-          : {}),
-        ...(result.normalized.nbFemelles !== undefined
-          ? { nb_femelles_naissance: result.normalized.nbFemelles }
-          : {}),
-        poids_portee_naissance_kg:
-          result.normalized.poidsMoyen !== undefined
-            ? result.normalized.poidsMoyen * vivants
-            : null,
-        // FIX V23-AUDIT-2 : batches.poids_initial_kg NOT NULL CHECK >0 <=200.
-        // Sans cette ligne le INSERT échouait avec 23502 sur toute MB où
-        // l'éleveur n'avait pas saisi le poids moyen (champ marqué "optionnel"
-        // dans le form). Cible métier : porcelet ≈ 1.4 kg à la naissance.
-        poids_initial_kg: result.normalized.poidsMoyen ?? 1.4,
+        poids_initial_kg: 1.4,
         statut: 'Sous mère',
         phase: 'maternite',
-        notes: heure ? `MB ${heure} · ${notes}`.trim() : notes,
+        notes: finalNotes,
       } as Parameters<typeof insertBatch>[0]);
       await updateSowByCode(truieId, { statut: 'Maternité' });
       const online = typeof navigator !== 'undefined' && navigator.onLine;
-
-      setSuccess(true);
       showToast(
         online
           ? `Mise-bas enregistrée. Portée ${idPortee} créée automatiquement.`
@@ -350,405 +242,122 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
         online ? 'success' : 'info',
         { duration: 2400 },
       );
-
-      try {
-        await refreshData(true);
-      } catch {
-        /* noop */
-      }
-
+      try { await refreshData(true); } catch { /* noop */ }
       if (onSuccess) onSuccess();
-
-      closeTimerRef.current = setTimeout(() => {
-        closeTimerRef.current = null;
-        setSuccess(false);
-        onClose();
-      }, 1500);
+      closeTimerRef.current = setTimeout(() => { closeTimerRef.current = null; onClose(); }, 1500);
     } catch (err) {
-      console.error('[QuickMiseBasForm] enregistrement local échoué:', err);
       showToast(
-        err instanceof Error
-          ? `Erreur : ${err.message}`
-          : 'Erreur enregistrement local',
-        'error',
-        { duration: 2400 },
+        err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement local',
+        'error', { duration: 2400 },
       );
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
-  const displayTruie = (t: Truie): string => {
-    const parts = [t.displayId];
-    if (t.boucle) parts.push(`B.${t.boucle}`);
-    if (t.nom) parts.push(t.nom);
-    return parts.join(' · ');
-  };
+  const errMsg = (msg?: string): React.ReactNode =>
+    msg ? <span role="alert" style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 11, color: 'var(--pt-danger)' }}>{msg}</span> : null;
 
   return (
     <>
-      <BottomSheet
-        isOpen={isOpen}
-        onClose={handleClose}
-        title="Saisir mise-bas"
-        height="full"
-      >
-        {success ? (
-          <div
-            className="flex flex-col items-center justify-center py-20 animate-scale-in"
-            role="status"
-            aria-live="polite"
-          >
-            <CheckCircle2
-              size={64}
-              className="text-accent mb-4"
-              aria-hidden="true"
-              strokeWidth={1.5}
-            />
-            <p className="agritech-heading text-[18px] uppercase tracking-wide">
-              Portée créée
-            </p>
-            <p className="mt-2 ft-code text-[12px] uppercase tracking-wide text-text-2 tabular-nums">
-              {idPortee}
-            </p>
-          </div>
-        ) : (
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-5"
-            noValidate
-            aria-label="Saisie d'une mise-bas"
-          >
-            <div className="flex items-center gap-3">
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
-                <Baby size={18} aria-hidden="true" />
-              </div>
+      <IonModal isOpen={isOpen} onDidDismiss={handleClose} className="agritech-bottom-sheet pt-sheet-modal" aria-label="Saisir une mise-bas">
+        <div className="ion-page" style={{ position: 'relative', overflow: 'auto' }}>
+          <form className="sheet" onSubmit={handleSubmit} noValidate aria-label="Saisie d'une mise-bas" style={{ position: 'relative', height: '100%', maxHeight: '100%' }}>
+            <div className="sheet__handle" />
+            <header className="sheet__head">
               <div>
-                <p className="text-mono-label text-text-1">
-                  Nouvelle portée née sous la mère
-                </p>
-                <p className="text-mono-micro text-text-2 mt-0.5">
-                  La truie passera automatiquement en Maternité
-                </p>
+                <div className="eyebrow">Nouvelle mise-bas</div>
+                <h2>Saisir une mise-bas</h2>
               </div>
-            </div>
-
-            {/* ── INFORMATIONS PRINCIPALES ───────────────────────────── */}
-            <Section label="INFORMATIONS PRINCIPALES" />
-
-            <MiseBasTruieField
-              truies={truiesEligibles}
-              truieId={truieId}
-              setTruieId={setTruieId}
-              saving={saving}
-              error={errors.truieId}
-              selectRef={firstFieldRef}
-              displayTruie={displayTruie}
-            />
-
-            {truieId ? (
-              <div
-                role="status"
-                aria-live="polite"
-                data-testid="saillie-detected"
-                className={[
-                  'rounded-md border px-3 py-2',
-                  'text-mono-label',
-                  saillieLoading
-                    ? 'border-border bg-bg-1 text-text-2'
-                    : lastSaillie
-                      ? 'border-accent/40 bg-accent/5 text-text-1'
-                      : saillieResolved
-                        ? 'border-amber/60 bg-amber/5 text-text-1'
-                        : 'border-border bg-bg-1 text-text-2',
-                ].join(' ')}
-              >
-                {saillieLoading ? (
-                  <span>Recherche de la saillie source…</span>
-                ) : lastSaillie ? (
-                  <span>
-                    Saillie détectée : {truieId} ×{' '}
-                    {detectedBoarLabel ?? '—'} le{' '}
-                    {lastSaillie.date_saillie
-                      .split('-')
-                      .reverse()
-                      .join('/')}
-                    {saillieEcartJours !== null
-                      ? ` (J+${saillieEcartJours})`
-                      : ''}
-                  </span>
-                ) : saillieResolved ? (
-                  <span>
-                    Aucune saillie historique trouvée. Le verrat père sera
-                    vide — vous pourrez le compléter plus tard.
-                  </span>
+              <button type="button" className="sheet__close" onClick={handleClose} aria-label="Fermer" disabled={saving}>
+                <X size={14} aria-hidden="true" />
+              </button>
+            </header>
+            <div className="sheet__body">
+              <div className="field">
+                <label className="field__label" htmlFor="mb-truie">TRUIE EN GESTATION J110+ <span className="req">requis</span></label>
+                <input id="mb-truie" ref={firstFieldRef} className={`field__input mono${truieId ? ' filled' : ' field__input--ghost'}`} type="text" aria-label="Truie en gestation" aria-required="true" aria-invalid={!!errors.truieId} placeholder="Rechercher T-…" value={truieQuery} onChange={e => { setTruieQuery(e.target.value); if (e.target.value === '') setTruieId(''); }} disabled={saving} autoComplete="off" />
+                {truieSuggestions.length > 0 && truieQuery !== truieId ? (
+                  <div role="listbox" style={{ marginTop: 4, border: '1px solid var(--pt-line)', borderRadius: 10, background: 'var(--pt-bg)', maxHeight: 200, overflowY: 'auto' }}>
+                    {truieSuggestions.map(t => (
+                      <button key={t.id} type="button" role="option" aria-selected={false} onClick={() => selectTruie(t)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: 'transparent', border: 'none', fontFamily: 'var(--pt-font-mono)', fontSize: 12, color: 'var(--pt-ink)', cursor: 'pointer', minHeight: 44 }}>
+                        {t.displayId || t.id}{t.nom ? ` · ${t.nom}` : ''}{t.boucle ? ` (${t.boucle})` : ''}
+                      </button>
+                    ))}
+                  </div>
                 ) : null}
+                {errMsg(errors.truieId)}
               </div>
-            ) : null}
 
-            <FormField
-              label="ID portée"
-              required
-              hint="Format YY-T{N}-SEQ (ex: 26-T7-01)"
-              error={errors.idPortee}
-            >
-              <Input
-                id="mb-id-portee"
-                type="text"
-                maxLength={20}
-                autoCapitalize="characters"
-                aria-label="Identifiant de la portée (auto-suggéré)"
-                aria-required="true"
-                aria-invalid={!!errors.idPortee}
-                invalid={!!errors.idPortee}
-                placeholder="26-T7-01"
-                value={idPortee}
-                onChange={e => {
-                  setIdPortee(e.target.value);
-                  setIdPorteeEditedManually(true);
-                }}
-                disabled={saving || !truieId}
-                autoComplete="off"
-                className="ft-code uppercase"
-              />
-            </FormField>
+              {truieId ? (
+                <div role="status" aria-live="polite" data-testid="saillie-detected" style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid var(--pt-line)', background: 'var(--pt-bg)', fontFamily: 'var(--pt-font-mono)', fontSize: 11.5, color: 'var(--pt-muted)', lineHeight: 1.5 }}>
+                  {saillieLoading ? (
+                    <span>Recherche de la saillie source…</span>
+                  ) : lastSaillie ? (
+                    <>
+                      <b style={{ color: 'var(--pt-ink)' }}>Saillie liée</b> · {lastSaillie.date_saillie.split('-').reverse().join('/')}
+                      {detectedBoarLabel ? ` · ${detectedBoarLabel}` : ''}
+                      {saillieEcartJours !== null ? <><br/><b style={{ color: 'var(--pt-ink)' }}>Cycle réel</b> · {saillieEcartJours} j · {saillieEcartJours >= 112 && saillieEcartJours <= 118 ? 'cohérent (115 ± 3 j)' : 'à vérifier'}</> : null}
+                    </>
+                  ) : saillieResolved ? (
+                    <span>Aucune saillie historique trouvée. Le verrat père sera vide.</span>
+                  ) : null}
+                </div>
+              ) : null}
 
-            <div className="grid grid-cols-2 gap-3">
-              <FormField label="Date MB" required error={errors.dateIso}>
-                <Input
-                  id="mb-date"
-                  type="date"
-                  aria-label="Date de mise-bas"
-                  aria-invalid={!!errors.dateIso}
-                  invalid={!!errors.dateIso}
-                  value={dateIso}
-                  onChange={e => setDateIso(e.target.value)}
-                  disabled={saving}
-                />
-              </FormField>
-              <FormField label="Heure">
-                <Input
-                  id="mb-heure"
-                  type="time"
-                  aria-label="Heure de mise-bas"
-                  value={heure}
-                  onChange={e => setHeure(e.target.value)}
-                  disabled={saving}
-                />
-              </FormField>
+              <div className="field--inline">
+                <div className="field">
+                  <label className="field__label" htmlFor="mb-date">DATE MB <span className="req">requis</span></label>
+                  <input id="mb-date" className={`field__input mono${dateIso ? ' filled' : ' field__input--ghost'}`} type="date" aria-label="Date de mise-bas" aria-required="true" aria-invalid={!!errors.dateIso} value={dateIso} onChange={e => setDateIso(e.target.value)} disabled={saving} />
+                  {errMsg(errors.dateIso)}
+                </div>
+                <div className="field">
+                  <label className="field__label" htmlFor="mb-nv">NV VIVANTS <span className="req">requis</span></label>
+                  <div className="stepper">
+                    <button type="button" onClick={() => adjustNumber(setNesVivants, nesVivants, -1)} aria-label="Diminuer NV" disabled={saving}><Minus size={14} aria-hidden="true" /></button>
+                    <input id="mb-nv" type="number" inputMode="numeric" min={0} max={MISE_BAS_BOUNDS.maxNes} step={1} aria-label="Nombre de porcelets nés vivants" aria-required="true" aria-invalid={!!errors.nesVivants} placeholder="0" value={nesVivants} onChange={e => setNesVivants(e.target.value)} disabled={saving} />
+                    <span className="stepper-label">NV</span>
+                    <button type="button" onClick={() => adjustNumber(setNesVivants, nesVivants, 1)} aria-label="Augmenter NV" disabled={saving}><Plus size={14} aria-hidden="true" /></button>
+                  </div>
+                  {errMsg(errors.nesVivants)}
+                </div>
+              </div>
+
+              <div className="field--inline">
+                <div className="field">
+                  <label className="field__label" htmlFor="mb-morts-naiss">MORTS NAISSANCE</label>
+                  <div className="stepper">
+                    <button type="button" onClick={() => adjustNumber(setMortsNaissance, mortsNaissance, -1)} aria-label="Diminuer morts naissance" disabled={saving}><Minus size={14} aria-hidden="true" /></button>
+                    <input id="mb-morts-naiss" type="number" inputMode="numeric" min={0} max={25} step={1} aria-label="Morts à la naissance" placeholder="0" value={mortsNaissance} onChange={e => setMortsNaissance(e.target.value)} disabled={saving} />
+                    <span className="stepper-label">M</span>
+                    <button type="button" onClick={() => adjustNumber(setMortsNaissance, mortsNaissance, 1)} aria-label="Augmenter morts naissance" disabled={saving}><Plus size={14} aria-hidden="true" /></button>
+                  </div>
+                </div>
+                <div className="field">
+                  <label className="field__label" htmlFor="mb-mn">MORT-NÉS</label>
+                  <div className="stepper">
+                    <button type="button" onClick={() => adjustNumber(setMortsNes, mortsNes, -1)} aria-label="Diminuer mort-nés" disabled={saving}><Minus size={14} aria-hidden="true" /></button>
+                    <input id="mb-mn" type="number" inputMode="numeric" min={0} max={MISE_BAS_BOUNDS.maxNes} step={1} aria-label="Nombre de porcelets morts-nés" aria-invalid={!!errors.mortsNes} placeholder="0" value={mortsNes} onChange={e => setMortsNes(e.target.value)} disabled={saving} />
+                    <span className="stepper-label">MN</span>
+                    <button type="button" onClick={() => adjustNumber(setMortsNes, mortsNes, 1)} aria-label="Augmenter mort-nés" disabled={saving}><Plus size={14} aria-hidden="true" /></button>
+                  </div>
+                  {errMsg(errors.mortsNes)}
+                </div>
+              </div>
+
+              <div className="field">
+                <label className="field__label" htmlFor="mb-id-portee">IDENTIFIANT PORTÉE <span className="hint">auto</span></label>
+                <input id="mb-id-portee" className={`field__input mono${idPortee ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={20} autoCapitalize="characters" aria-label="Identifiant de la portée" aria-required="true" aria-invalid={!!errors.idPortee} placeholder="26-T7-01" value={idPortee} onChange={e => { setIdPortee(e.target.value); setIdPorteeEditedManually(true); }} disabled={saving || !truieId} autoComplete="off" />
+                {errMsg(errors.idPortee)}
+              </div>
             </div>
-
-            {/* ── PORTÉE ─────────────────────────────────────────────── */}
-            <Section label="PORTÉE" />
-
-            <div className="grid grid-cols-3 gap-3">
-              <FormField
-                label="Nés vivants"
-                required
-                error={errors.nesVivants}
-              >
-                <Input
-                  id="mb-nv"
-                  type="number"
-                  inputMode="numeric"
-                  min={MISE_BAS_BOUNDS.minNes}
-                  max={MISE_BAS_BOUNDS.maxNes}
-                  step={1}
-                  aria-label="Nombre de porcelets nés vivants"
-                  aria-required="true"
-                  aria-invalid={!!errors.nesVivants}
-                  invalid={!!errors.nesVivants}
-                  placeholder="0"
-                  value={nesVivants}
-                  onChange={e => setNesVivants(e.target.value)}
-                  disabled={saving}
-                  className="text-center font-mono tabular-nums text-[18px] font-bold"
-                />
-              </FormField>
-              <FormField label="Morts-nés" error={errors.mortsNes}>
-                <Input
-                  id="mb-mn"
-                  type="number"
-                  inputMode="numeric"
-                  min={MISE_BAS_BOUNDS.minNes}
-                  max={MISE_BAS_BOUNDS.maxNes}
-                  step={1}
-                  aria-label="Nombre de porcelets morts-nés"
-                  aria-invalid={!!errors.mortsNes}
-                  invalid={!!errors.mortsNes}
-                  placeholder="0"
-                  value={mortsNes}
-                  onChange={e => setMortsNes(e.target.value)}
-                  disabled={saving}
-                  className="text-center font-mono tabular-nums text-[18px] font-bold"
-                />
-              </FormField>
-              <FormField
-                label="Nés totaux"
-                hint="= vivants + morts-nés"
-                error={errors.nesTotaux}
-              >
-                <Input
-                  id="mb-nt"
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  max={MISE_BAS_BOUNDS.maxNesTotaux}
-                  step={1}
-                  aria-label="Nombre total de porcelets nés (vivants + morts-nés)"
-                  aria-invalid={!!errors.nesTotaux}
-                  invalid={!!errors.nesTotaux}
-                  placeholder="0"
-                  value={nesTotaux}
-                  onChange={e => {
-                    setNesTotaux(e.target.value);
-                    setNesTotauxEditedManually(true);
-                  }}
-                  disabled={saving}
-                  className="text-center font-mono tabular-nums text-[18px] font-bold"
-                />
-              </FormField>
-            </div>
-
-            {errors.coherence ? (
-              <p role="alert" className="text-[11px]" style={{ color: 'var(--pt-danger)' }}>
-                {errors.coherence}
-              </p>
-            ) : null}
-
-            <FormField
-              label="Poids moyen porcelet (kg)"
-              hint={`${MISE_BAS_BOUNDS.minPoids} à ${MISE_BAS_BOUNDS.maxPoids} kg · optionnel`}
-              error={errors.poidsMoyen}
-            >
-              <Input
-                id="mb-poids"
-                type="number"
-                inputMode="decimal"
-                min={MISE_BAS_BOUNDS.minPoids}
-                max={MISE_BAS_BOUNDS.maxPoids}
-                step={0.1}
-                aria-label="Poids moyen d'un porcelet en kg (optionnel)"
-                aria-invalid={!!errors.poidsMoyen}
-                invalid={!!errors.poidsMoyen}
-                placeholder="1.4"
-                value={poidsMoyen}
-                onChange={e => setPoidsMoyen(e.target.value)}
-                disabled={saving}
-                className="font-mono tabular-nums"
-              />
-            </FormField>
-
-            <div className="grid grid-cols-2 gap-3">
-              <FormField
-                label="Mâles"
-                hint="optionnel"
-                error={errors.nbMales}
-              >
-                <Input
-                  id="mb-males"
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  max={25}
-                  step={1}
-                  aria-label="Nombre de porcelets mâles"
-                  aria-invalid={!!errors.nbMales}
-                  invalid={!!errors.nbMales}
-                  placeholder="—"
-                  value={nbMales}
-                  onChange={e => setNbMales(e.target.value)}
-                  disabled={saving}
-                  className="font-mono tabular-nums"
-                />
-              </FormField>
-              <FormField
-                label="Femelles"
-                hint="auto = vivants − mâles"
-                error={errors.nbFemelles}
-              >
-                <Input
-                  id="mb-femelles"
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  max={25}
-                  step={1}
-                  aria-label="Nombre de porcelets femelles"
-                  aria-invalid={!!errors.nbFemelles}
-                  invalid={!!errors.nbFemelles}
-                  placeholder="—"
-                  value={nbFemelles}
-                  onChange={e => {
-                    setNbFemelles(e.target.value);
-                    setNbFemellesEditedManually(true);
-                  }}
-                  disabled={saving}
-                  className="font-mono tabular-nums"
-                />
-              </FormField>
-            </div>
-
-            {errors.sexRatio ? (
-              <p role="alert" className="text-[11px]" style={{ color: 'var(--pt-danger)' }}>
-                {errors.sexRatio}
-              </p>
-            ) : null}
-
-            {/* ── NOTES ──────────────────────────────────────────────── */}
-            <Section label="NOTES" />
-
-            <FormField
-              label="Notes"
-              hint={`${notes.length}/${MISE_BAS_BOUNDS.maxNotes} · optionnel`}
-              error={errors.notes}
-            >
-              <Textarea
-                id="mb-notes"
-                aria-label="Notes de mise-bas (optionnel)"
-                aria-invalid={!!errors.notes}
-                placeholder="Ex: MB sans assistance, portée homogène"
-                value={notes}
-                onChange={e => setNotes(e.target.value)}
-                disabled={saving}
-                maxLength={MISE_BAS_BOUNDS.maxNotes}
-                style={{
-                  minHeight: 88,
-                  borderColor: errors.notes ? 'var(--pt-danger)' : undefined,
-                }}
-              />
-            </FormField>
-
-            <div className="flex gap-3 justify-end pt-3 border-t border-border">
-              <Button
-                variant="secondary"
-                onClick={handleClose}
-                disabled={saving}
-                ariaLabel="Annuler et fermer"
-              >
-                ANNULER
-              </Button>
-              <Button
-                variant="primary"
-                type="submit"
-                disabled={saving || !truieId || truiesEligibles.length === 0}
-                ariaLabel="Enregistrer la mise-bas"
-                aria-busy={saving}
-              >
-                {saving ? (
-                  <span className="animate-pulse">Enregistrement…</span>
-                ) : (
-                  <span className="inline-flex items-center gap-2">
-                    <Check size={16} aria-hidden="true" />
-                    VALIDER
-                  </span>
-                )}
-              </Button>
-            </div>
+            <footer className="sheet__foot">
+              <button type="button" className="btn btn--ghost" onClick={handleClose} disabled={saving} aria-label="Annuler et fermer">Annuler</button>
+              <button type="submit" className="btn btn--primary" disabled={saving || !isValid || truiesEligibles.length === 0} aria-busy={saving} aria-label="Enregistrer la mise-bas">
+                {saving ? 'Enregistrement…' : <><Check size={14} aria-hidden="true" /> Enregistrer la mise-bas</>}
+              </button>
+            </footer>
           </form>
-        )}
-      </BottomSheet>
-
+        </div>
+      </IonModal>
       <AppToast {...toastProps} />
     </>
   );

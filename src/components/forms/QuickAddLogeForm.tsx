@@ -1,34 +1,17 @@
 /**
- * QuickAddLogeForm — Création rapide d'une loge (V24)
+ * QuickAddLogeForm — Création rapide d'une loge (Sprint 5 v76)
  * ════════════════════════════════════════════════════════════════════════
- * Form minimal pour ajouter une loge depuis QuickEditBandeForm (sélecteur
- * "+ Nouvelle loge"). V6-C enrichira ce formulaire (page admin /troupeau/loges).
- *
- * Champs : numéro (text required) · type (select 9 valeurs) · bâtiment (opt)
- * · capacité (0..500 opt) · notes (opt). Submit → `createLoge(...)`.
+ * Sheet bottom v76 · Type radio-chips · Code auto-gen · Capacité stepper ·
+ * Position libre.
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { IonToast } from '@ionic/react';
-import { Plus, Save } from 'lucide-react';
+import { IonModal, IonToast } from '@ionic/react';
+import { Check, Minus, Plus, X } from 'lucide-react';
 
-import { BottomSheet } from '../agritech';
-import { FormField, Input, Select, Textarea, Button } from '@/design-system';
 import { createLoge, listLoges } from '../../services/supabaseWrites';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import type { Loge, LogeType } from '../../types/farm';
-
-const LOGE_TYPES: { value: LogeType; label: string }[] = [
-  { value: 'MATERNITE', label: 'Maternité' },
-  { value: 'POST_SEVRAGE', label: 'Post-sevrage' },
-  { value: 'CROISSANCE', label: 'Croissance' },
-  { value: 'ENGRAISSEMENT', label: 'Engraissement' },
-  { value: 'FINITION', label: 'Finition' },
-  { value: 'GESTANTE', label: 'Gestante' },
-  { value: 'VERRAT', label: 'Verrat' },
-  { value: 'INFIRMERIE', label: 'Infirmerie' },
-  { value: 'AUTRE', label: 'Autre' },
-];
 
 interface QuickAddLogeFormProps {
   isOpen: boolean;
@@ -36,246 +19,163 @@ interface QuickAddLogeFormProps {
   onSuccess?: (loge: Loge) => void;
 }
 
-const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({
-  isOpen,
-  onClose,
-  onSuccess,
-}) => {
-  const [numero, setNumero] = useState('');
-  const [type, setType] = useState<LogeType>('MATERNITE');
-  const [batiment, setBatiment] = useState('');
-  const [capaciteMax, setCapaciteMax] = useState('');
-  const [notes, setNotes] = useState('');
+type ChipType = 'MATERNITE' | 'POST_SEVRAGE' | 'ENGRAISSEMENT';
+const TYPE_CHOICES: ReadonlyArray<{ value: ChipType; label: string; prefix: string }> = [
+  { value: 'MATERNITE', label: 'Maternité', prefix: 'M' },
+  { value: 'POST_SEVRAGE', label: 'Post-sev.', prefix: 'PS' },
+  { value: 'ENGRAISSEMENT', label: 'Engrais.', prefix: 'E' },
+];
+
+const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({ isOpen, onClose, onSuccess }) => {
+  const [type, setType] = useState<ChipType>('MATERNITE');
+  const [code, setCode] = useState('');
+  const [codeManuallyEdited, setCodeManuallyEdited] = useState(false);
+  const [capacite, setCapacite] = useState<string>('12');
+  const [position, setPosition] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState('');
-  const [existingNumeros, setExistingNumeros] = useState<Set<string>>(new Set());
+  const [existingLoges, setExistingLoges] = useState<Loge[]>([]);
 
-  // V25 — Charge les numéros existants pour vérifier l'unicité côté UI.
   useEffect(() => {
     if (!isOpen) return;
     let cancelled = false;
     listLoges()
-      .then(rows => {
-        if (cancelled) return;
-        setExistingNumeros(
-          new Set(rows.filter(l => l.active).map(l => l.numero.trim().toLowerCase())),
-        );
-      })
-      .catch(() => {
-        if (!cancelled) setExistingNumeros(new Set());
-      });
-    return () => {
-      cancelled = true;
-    };
+      .then(rows => { if (!cancelled) setExistingLoges(rows.filter(l => l.active)); })
+      .catch(() => { if (!cancelled) setExistingLoges([]); });
+    return () => { cancelled = true; };
   }, [isOpen]);
+
+  const suggestCode = useCallback((t: ChipType): string => {
+    const prefix = TYPE_CHOICES.find(c => c.value === t)?.prefix ?? 'X';
+    const re = new RegExp(`^${prefix}-(\\d+)$`, 'i');
+    let max = 0;
+    for (const l of existingLoges) {
+      const m = (l.numero || '').match(re);
+      if (m) { const n = parseInt(m[1], 10); if (n > max) max = n; }
+    }
+    return `${prefix}-${String(max + 1).padStart(2, '0')}`;
+  }, [existingLoges]);
 
   const [lastOpen, setLastOpen] = useState(isOpen);
   if (lastOpen !== isOpen) {
     setLastOpen(isOpen);
     if (isOpen) {
-      setNumero('');
-      setType('MATERNITE');
-      setBatiment('');
-      setCapaciteMax('');
-      setNotes('');
-      setErrors({});
-      setSaving(false);
+      setType('MATERNITE'); setCode(''); setCodeManuallyEdited(false);
+      setCapacite('12'); setPosition(''); setErrors({}); setSaving(false);
     }
   }
 
-  const handleClose = useCallback(() => {
-    if (saving) return;
-    onClose();
-  }, [onClose, saving]);
+  useEffect(() => {
+    if (!isOpen) return;
+    if (codeManuallyEdited) return;
+    setCode(suggestCode(type));
+  }, [isOpen, type, suggestCode, codeManuallyEdited]);
 
+  const handleClose = useCallback(() => { if (!saving) onClose(); }, [onClose, saving]);
   useEscapeKey(isOpen && !saving, handleClose);
-  const firstFieldRef = useFocusFirstInput<HTMLInputElement>(isOpen);
+  const firstFieldRef = useFocusFirstInput<HTMLButtonElement>(isOpen);
+
+  const adjustCapacite = (delta: number): void => {
+    const cur = parseInt(capacite || '0', 10) || 0;
+    const next = Math.max(0, Math.min(500, cur + delta));
+    setCapacite(String(next));
+  };
 
   const validate = (): Record<string, string> => {
     const errs: Record<string, string> = {};
-    const trimmed = numero.trim();
-    if (!trimmed) errs.numero = 'Numéro requis';
+    const trimmed = code.trim();
+    if (!trimmed) errs.numero = 'Code requis';
     else if (trimmed.length > 20) errs.numero = 'Maximum 20 caractères';
-    else if (existingNumeros.has(trimmed.toLowerCase())) {
-      errs.numero = `Numéro "${trimmed}" déjà utilisé`;
+    else if (existingLoges.some(l => l.numero.trim().toLowerCase() === trimmed.toLowerCase())) {
+      errs.numero = `Code "${trimmed}" déjà utilisé`;
     }
-    if (capaciteMax) {
-      const n = Number(capaciteMax);
-      if (!Number.isFinite(n) || n < 0 || n > 500) {
-        errs.capaciteMax = 'Capacité 0..500';
-      }
+    if (capacite) {
+      const n = Number(capacite);
+      if (!Number.isFinite(n) || n < 0 || n > 500) errs.capaciteMax = 'Capacité 0..500';
     }
     return errs;
   };
 
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
-    e.preventDefault();
+  const isValid = !!code.trim();
+
+  const handleSubmit = async (e?: React.FormEvent | React.MouseEvent): Promise<void> => {
+    if (e) e.preventDefault();
     const errs = validate();
-    if (Object.keys(errs).length > 0) {
-      setErrors(errs);
-      return;
-    }
-    setErrors({});
-    setSaving(true);
+    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+    setErrors({}); setSaving(true);
     try {
       const created = await createLoge({
-        numero: numero.trim(),
-        type,
-        batiment: batiment.trim() || undefined,
-        capaciteMax: capaciteMax ? Number(capaciteMax) : undefined,
-        notes: notes.trim() || undefined,
+        numero: code.trim(),
+        type: type as LogeType,
+        batiment: position.trim() || undefined,
+        capaciteMax: capacite ? Number(capacite) : undefined,
       });
       setToast('Loge créée');
       onSuccess?.(created);
       onClose();
     } catch (err) {
-      setToast(
-        err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement',
-      );
-    } finally {
-      setSaving(false);
-    }
+      setToast(err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement');
+    } finally { setSaving(false); }
   };
+
+  const errMsg = (msg?: string): React.ReactNode =>
+    msg ? <span role="alert" style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 11, color: 'var(--pt-danger)' }}>{msg}</span> : null;
 
   return (
     <>
-      <BottomSheet
-        isOpen={isOpen}
-        onClose={handleClose}
-        title="Nouvelle loge"
-        height="full"
-      >
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-5"
-          noValidate
-          aria-label="Création loge"
-        >
-          <div className="flex items-center gap-3">
-            <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
-              <Plus size={18} aria-hidden="true" />
+      <IonModal isOpen={isOpen} onDidDismiss={handleClose} className="agritech-bottom-sheet pt-sheet-modal" aria-label="Ajouter une loge">
+        <div className="ion-page" style={{ position: 'relative', overflow: 'auto' }}>
+          <form className="sheet" onSubmit={handleSubmit} noValidate aria-label="Création d'une loge" style={{ position: 'relative', height: '100%', maxHeight: '100%' }}>
+            <div className="sheet__handle" />
+            <header className="sheet__head">
+              <div>
+                <div className="eyebrow">Nouvelle loge</div>
+                <h2>Ajouter une loge</h2>
+              </div>
+              <button type="button" className="sheet__close" onClick={handleClose} aria-label="Fermer" disabled={saving}>
+                <X size={14} aria-hidden="true" />
+              </button>
+            </header>
+            <div className="sheet__body">
+              <div className="field">
+                <label className="field__label">CATÉGORIE</label>
+                <div className="radio-chips" role="radiogroup" aria-label="Catégorie">
+                  {TYPE_CHOICES.map((t, i) => (
+                    <button key={t.value} ref={i === 0 ? firstFieldRef : undefined} type="button" className="radio-chip" role="radio" aria-checked={type === t.value} onClick={() => { setType(t.value); setCodeManuallyEdited(false); }} disabled={saving}>{t.label}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="field">
+                <label className="field__label" htmlFor="add-loge-code">CODE <span className="hint">auto selon type</span></label>
+                <input id="add-loge-code" className={`field__input mono${code ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={20} aria-label="Code de la loge" aria-required="true" aria-invalid={!!errors.numero} placeholder="M-04" value={code} onChange={e => { setCode(e.target.value); setCodeManuallyEdited(true); }} disabled={saving} autoComplete="off" />
+                {errMsg(errors.numero)}
+              </div>
+              <div className="field">
+                <label className="field__label" htmlFor="add-loge-capacite">CAPACITÉ MAX</label>
+                <div className="stepper">
+                  <button type="button" onClick={() => adjustCapacite(-1)} aria-label="Diminuer capacité" disabled={saving}><Minus size={14} aria-hidden="true" /></button>
+                  <input id="add-loge-capacite" type="number" inputMode="numeric" min={0} max={500} step={1} aria-label="Capacité max" aria-invalid={!!errors.capaciteMax} placeholder="0" value={capacite} onChange={e => setCapacite(e.target.value)} disabled={saving} />
+                  <span className="stepper-label">animaux</span>
+                  <button type="button" onClick={() => adjustCapacite(1)} aria-label="Augmenter capacité" disabled={saving}><Plus size={14} aria-hidden="true" /></button>
+                </div>
+                {errMsg(errors.capaciteMax)}
+              </div>
+              <div className="field">
+                <label className="field__label" htmlFor="add-loge-position">POSITION <span className="hint">libre</span></label>
+                <input id="add-loge-position" className={`field__input${position ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={50} aria-label="Position" placeholder="ex. bâtiment A · case 4" value={position} onChange={e => setPosition(e.target.value)} disabled={saving} autoComplete="off" />
+              </div>
             </div>
-            <div>
-              <p className="text-mono-label text-text-1">
-                Ajouter une loge
-              </p>
-              <p className="text-[12px] text-text-2 mt-0.5">
-                Numéro libre · type · capacité optionnelle
-              </p>
-            </div>
-          </div>
-
-          <FormField label="Numéro" required error={errors.numero}>
-            <Input
-              id="add-loge-numero"
-              ref={firstFieldRef}
-              type="text"
-              aria-label="Numéro de la loge"
-              maxLength={20}
-              aria-invalid={!!errors.numero}
-              aria-describedby={errors.numero ? 'add-loge-numero-error' : undefined}
-              className="ft-code uppercase tracking-wide"
-              placeholder="Ex: M-01"
-              value={numero}
-              onChange={e => setNumero(e.target.value)}
-              autoComplete="off"
-              spellCheck={false}
-              invalid={!!errors.numero}
-            />
-          </FormField>
-
-          <FormField label="Type" required>
-            <Select
-              id="add-loge-type"
-              aria-label="Type de loge"
-              value={type}
-              onChange={e => setType(e.target.value as LogeType)}
-            >
-              {LOGE_TYPES.map(t => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </Select>
-          </FormField>
-
-          <FormField label="Bâtiment" hint="optionnel">
-            <Input
-              id="add-loge-batiment"
-              type="text"
-              aria-label="Bâtiment"
-              maxLength={30}
-              placeholder="Ex: Bât. A"
-              value={batiment}
-              onChange={e => setBatiment(e.target.value)}
-              autoComplete="off"
-            />
-          </FormField>
-
-          <FormField label="Capacité max" hint="optionnel (0-500)" error={errors.capaciteMax}>
-            <Input
-              id="add-loge-capacite"
-              type="number"
-              aria-label="Capacité max"
-              inputMode="numeric"
-              min={0}
-              max={500}
-              step={1}
-              aria-invalid={!!errors.capaciteMax}
-              aria-describedby={
-                errors.capaciteMax ? 'add-loge-capacite-error' : undefined
-              }
-              placeholder="0"
-              value={capaciteMax}
-              onChange={e => setCapaciteMax(e.target.value)}
-              invalid={!!errors.capaciteMax}
-            />
-          </FormField>
-
-          <FormField label="Notes" hint="optionnel">
-            <Textarea
-              id="add-loge-notes"
-              aria-label="Notes"
-              maxLength={200}
-              placeholder="Observations…"
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-            />
-          </FormField>
-
-          <div className="flex gap-3 justify-end pt-2 border-t border-border">
-            <Button
-              variant="secondary"
-              onClick={handleClose}
-              disabled={saving}
-            >
-              Annuler
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={saving}
-              aria-busy={saving}
-            >
-              {saving ? 'Création…' : (
-                <span className="inline-flex items-center gap-2">
-                  Créer la loge
-                  <Save size={14} aria-hidden="true" />
-                </span>
-              )}
-            </Button>
-          </div>
-        </form>
-      </BottomSheet>
-
-      <IonToast
-        isOpen={toast !== ''}
-        message={toast}
-        duration={1800}
-        onDidDismiss={() => setToast('')}
-        position="bottom"
-      />
+            <footer className="sheet__foot">
+              <button type="button" className="btn btn--ghost" onClick={handleClose} disabled={saving} aria-label="Annuler et fermer">Annuler</button>
+              <button type="submit" className="btn btn--primary" disabled={saving || !isValid} aria-busy={saving} aria-label="Créer la loge">
+                {saving ? 'Création…' : <><Check size={14} aria-hidden="true" /> Enregistrer la loge</>}
+              </button>
+            </footer>
+          </form>
+        </div>
+      </IonModal>
+      <IonToast isOpen={toast !== ''} message={toast} duration={1800} onDidDismiss={() => setToast('')} position="bottom" />
     </>
   );
 };

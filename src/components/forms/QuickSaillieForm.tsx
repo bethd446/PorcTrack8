@@ -1,5 +1,17 @@
-import React, { useState } from 'react';
-import { Heart, Check, CheckCircle2 } from 'lucide-react';
+/**
+ * QuickSaillieForm — Saisie d'une saillie (Sprint 5 v76)
+ * ════════════════════════════════════════════════════════════════════════
+ * Sheet bottom v76 · Truie radio-chips (vides + chaleur) · Verrat radio-chips ·
+ * Date saillie · Preview cycle (J28 écho · J115 MB · J143 sevrage).
+ *
+ * Les radios Truie/Verrat conservent l'API a11y native (role=radio,
+ * aria-checked, label "Sélectionner la truie X" / "le verrat X") car les
+ * tests s'y appuient.
+ */
+import React, { useCallback, useMemo, useState } from 'react';
+import { IonModal } from '@ionic/react';
+import { Check, X } from 'lucide-react';
+
 import { useFarm } from '../../context/FarmContext';
 import { useToast } from '../../context/ToastContext';
 import {
@@ -7,13 +19,15 @@ import {
   resolveSowIdByCode,
   resolveBoarIdByCode,
 } from '../../services/supabaseWrites';
-import { BottomSheet } from '../agritech';
-import { Button, FormField, Input, Section } from '@/design-system';
 import { normaliseStatut } from '../../lib/truieStatut';
+import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
+import { GESTATION_DAYS } from '../../constants';
+import { addDaysIso } from './quickEditSaillieValidation';
 
-// Saisie d'une saillie passée jusqu'à 60 jours en arrière (cas terrain :
-// éleveur qui rentre des saillies du carnet papier).
 const SAILLIE_BACKDATE_MAX_DAYS = 60;
+const SEVRAGE_DAYS = 28;
+const ECHO_DAYS = 28;
+
 const todayISO = (): string => new Date().toISOString().slice(0, 10);
 const minDateISO = (days: number): string => {
   const d = new Date();
@@ -21,19 +35,15 @@ const minDateISO = (days: number): string => {
   return d.toISOString().slice(0, 10);
 };
 
-/**
- * QuickSaillieForm — Modal rapide pour enregistrer une saillie
- *
- * V44 archétype 5 : BottomSheet + Section + FormField DS.
- * Les radiogroups Truie/Verrat conservent l'API a11y native (role=radio,
- * aria-checked, label "Sélectionner la truie X" / "le verrat X") car les
- * tests s'y appuient et le DS ne fournit pas encore de RadioGroup.
- */
+const formatFr = (iso: string): string => {
+  if (!iso) return '—';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+};
 
 interface QuickSaillieFormProps {
   isOpen: boolean;
   onClose: () => void;
-  /** Pré-sélectionne une truie (displayId) à l'ouverture (depuis la fiche truie). */
   defaultTruieDisplayId?: string;
 }
 
@@ -43,30 +53,41 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
   const [selectedTruie, setSelectedTruie] = useState(defaultTruieDisplayId ?? '');
   const [selectedVerrat, setSelectedVerrat] = useState('');
   const [dateSaillie, setDateSaillie] = useState<string>(todayISO);
+  const [saving, setSaving] = useState(false);
 
   const [lastOpenKey, setLastOpenKey] = useState<{ isOpen: boolean; defaultTruieDisplayId: string | undefined }>({
-    isOpen,
-    defaultTruieDisplayId,
+    isOpen, defaultTruieDisplayId,
   });
   if (lastOpenKey.isOpen !== isOpen || lastOpenKey.defaultTruieDisplayId !== defaultTruieDisplayId) {
     setLastOpenKey({ isOpen, defaultTruieDisplayId });
     if (isOpen) {
       setDateSaillie(todayISO());
-      if (defaultTruieDisplayId) {
-        setSelectedTruie(defaultTruieDisplayId);
-      }
+      if (defaultTruieDisplayId) setSelectedTruie(defaultTruieDisplayId);
+      else setSelectedTruie('');
+      setSelectedVerrat('');
+      setSaving(false);
     }
   }
-  const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
 
-  // Truies disponibles pour saillie : celles en VIDE (en attente saillie / post-sevrage)
-  // ou toute truie qui n'est ni en gestation ni en maternité (hors REFORME).
-  const truiesDisponibles = truies.filter(t => {
+  const truiesDisponibles = useMemo(() => truies.filter(t => {
     const c = normaliseStatut(t.statut);
     if (c === 'VIDE') return true;
     return c !== 'PLEINE' && c !== 'MATERNITE' && c !== 'REFORME';
-  });
+  }), [truies]);
+
+  const handleClose = useCallback(() => {
+    if (saving) return;
+    setSelectedTruie('');
+    setSelectedVerrat('');
+    setDateSaillie(todayISO());
+    onClose();
+  }, [onClose, saving]);
+  useEscapeKey(isOpen && !saving, handleClose);
+  const firstFieldRef = useFocusFirstInput<HTMLInputElement>(isOpen);
+
+  const dateEcho = useMemo(() => addDaysIso(dateSaillie, ECHO_DAYS), [dateSaillie]);
+  const dateMb = useMemo(() => addDaysIso(dateSaillie, GESTATION_DAYS), [dateSaillie]);
+  const dateSevrage = useMemo(() => addDaysIso(dateMb, SEVRAGE_DAYS), [dateMb]);
 
   const handleSave = async (): Promise<void> => {
     if (!selectedTruie || !selectedVerrat) return;
@@ -90,202 +111,140 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
       });
       try { await refreshData(true); } catch { /* noop */ }
       showToast(`Saillie enregistrée · ${selectedTruie} × ${selectedVerrat}`, 'success');
-      setSuccess(true);
       setTimeout(() => {
-        setSuccess(false);
         setSelectedTruie('');
         setSelectedVerrat('');
         setDateSaillie(todayISO());
         onClose();
       }, 1500);
     } catch (e) {
-      console.error('Erreur enregistrement saillie:', e);
-      const msg = (e as Error)?.message ?? 'Erreur lors de l\'enregistrement de la saillie';
+      const msg = (e as Error)?.message ?? "Erreur lors de l'enregistrement de la saillie";
       showToast(msg, 'error', 4000);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleClose = (): void => {
-    setSelectedTruie('');
-    setSelectedVerrat('');
-    setDateSaillie(todayISO());
-    setSuccess(false);
-    onClose();
-  };
-
-  const radioBtnClasses = (isSelected: boolean): string => [
-    'pressable inline-flex items-center justify-center',
-    'h-9 px-3 rounded-md border',
-    'text-[12px] uppercase tracking-wide tabular-nums',
-    'transition-colors duration-[160ms]',
-    'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-    isSelected
-      ? 'bg-accent text-bg-0 border-accent font-semibold'
-      : 'bg-bg-0 text-text-1 border-border hover:border-text-2',
-  ].join(' ');
+  const isValid = !!selectedTruie && !!selectedVerrat;
 
   return (
-    <BottomSheet
-      isOpen={isOpen}
-      onClose={handleClose}
-      title="Enregistrer une saillie"
-      height="full"
-    >
-      {success ? (
-        /* ── Success state ───────────────────────────────────────────── */
-        <div
-          className="flex flex-col items-center justify-center py-20 animate-scale-in"
-          role="status"
-          aria-live="polite"
-        >
-          <CheckCircle2
-            size={64}
-            className="text-accent mb-4"
-            aria-hidden="true"
-            strokeWidth={1.5}
-          />
-          <p className="agritech-heading text-[18px] uppercase tracking-wide">
-            Saillie enregistrée
-          </p>
-          <p className="mt-2 text-[12px] uppercase tracking-wide text-text-2">
-            {selectedTruie} × {selectedVerrat}
-          </p>
-        </div>
-      ) : (
-        /* ── Form ────────────────────────────────────────────────────── */
-        <div className="space-y-6">
-          {/* Header description */}
-          <div className="flex items-center gap-3">
-            <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
-              <Heart size={18} aria-hidden="true" />
+    <IonModal isOpen={isOpen} onDidDismiss={handleClose} className="agritech-bottom-sheet pt-sheet-modal" aria-label="Saisir une saillie">
+      <div className="ion-page" style={{ position: 'relative', overflow: 'auto' }}>
+        <div className="sheet" style={{ position: 'relative', height: '100%', maxHeight: '100%' }}>
+          <div className="sheet__handle" />
+          <header className="sheet__head">
+            <div>
+              <div className="eyebrow">Nouvelle saillie</div>
+              <h2>Saisir une saillie</h2>
             </div>
-            <p className="text-mono-label text-text-1">
-              Sélectionnez la truie et le verrat
-            </p>
-          </div>
-
-          {/* ═══ Section Couple ═════════════════════════════════════════ */}
-          <Section label="INFORMATIONS PRINCIPALES" />
-
-          {/* ── Truie selection ───────────────────────────────────────── */}
-          <FormField label="Truie" required>
-            {truiesDisponibles.length > 0 ? (
-              <div
-                className="flex flex-wrap gap-2"
-                role="radiogroup"
-                aria-label="Truie"
-              >
-                {truiesDisponibles.map(t => {
-                  const isSelected = selectedTruie === t.displayId;
-                  return (
+            <button type="button" className="sheet__close" onClick={handleClose} aria-label="Fermer" disabled={saving}>
+              <X size={14} aria-hidden="true" />
+            </button>
+          </header>
+          <div className="sheet__body">
+            <div className="field">
+              <label className="field__label">TRUIE EN CHALEUR <span className="req">requis</span></label>
+              {truiesDisponibles.length > 0 ? (
+                <div className="radio-chips" role="radiogroup" aria-label="Truie">
+                  {truiesDisponibles.map(t => (
                     <button
                       key={t.id}
                       type="button"
+                      className="radio-chip"
                       role="radio"
-                      aria-checked={isSelected}
+                      aria-checked={selectedTruie === t.displayId}
                       aria-label={`Sélectionner la truie ${t.displayId}`}
                       onClick={() => setSelectedTruie(t.displayId)}
-                      className={radioBtnClasses(isSelected)}
+                      disabled={saving}
                     >
                       {t.displayId}
                     </button>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-mono-label text-text-2">
-                Aucune truie disponible
-              </p>
-            )}
-          </FormField>
-
-          {/* ── Date saillie (par défaut aujourd'hui, modifiable jusqu'à
-                 60 j en arrière pour rétro-saisie carnet papier) ────────── */}
-          <FormField
-            label="Date de saillie"
-            required
-            hint={dateSaillie !== todayISO() ? 'Saillie rétro-saisie' : undefined}
-          >
-            <Input
-              type="date"
-              aria-label="Date de saillie"
-              value={dateSaillie}
-              min={minDateISO(SAILLIE_BACKDATE_MAX_DAYS)}
-              max={todayISO()}
-              onChange={e => setDateSaillie(e.target.value)}
-            />
-          </FormField>
-
-          {/* ── Verrat selection ──────────────────────────────────────── */}
-          <FormField label="Verrat" required>
-            {verrats.length > 0 ? (
-              <div
-                className="flex flex-wrap gap-2"
-                role="radiogroup"
-                aria-label="Verrat"
-              >
-                {verrats.map(v => {
-                  const isSelected = selectedVerrat === v.displayId;
-                  return (
-                    <button
-                      key={v.id}
-                      type="button"
-                      role="radio"
-                      aria-checked={isSelected}
-                      aria-label={`Sélectionner le verrat ${v.displayId}`}
-                      onClick={() => setSelectedVerrat(v.displayId)}
-                      className={radioBtnClasses(isSelected)}
-                    >
-                      {v.displayId}
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-mono-label text-text-2">
-                Aucun verrat actif
-              </p>
-            )}
-          </FormField>
-
-          {/* ── Actions ───────────────────────────────────────────────── */}
-          <div className="flex gap-3 justify-end pt-2 border-t border-border">
-            <Button
-              variant="ghost"
-              onClick={handleClose}
-              disabled={saving}
-              ariaLabel="Annuler et fermer"
-            >
-              Annuler
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleSave}
-              disabled={!selectedTruie || !selectedVerrat || saving}
-              aria-busy={saving}
-              ariaLabel="Confirmer la saillie"
-            >
-              {saving ? (
-                <span className="animate-pulse">Enregistrement…</span>
+                  ))}
+                </div>
               ) : (
-                <span className="inline-flex items-center gap-2">
-                  <Check size={16} aria-hidden="true" />
-                  Confirmer la saillie
-                </span>
+                <p style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 12, color: 'var(--pt-subtle)', margin: 0 }}>
+                  Aucune truie disponible
+                </p>
               )}
-            </Button>
-          </div>
+            </div>
 
-          {selectedTruie && selectedVerrat && (
-            <p className="text-center text-mono-label text-text-2 tabular-nums">
-              {selectedTruie} × {selectedVerrat} · {new Date(dateSaillie).toLocaleDateString('fr-FR')}
-            </p>
-          )}
+            <div className="field--inline">
+              <div className="field">
+                <label className="field__label">VERRAT <span className="req">requis</span></label>
+                {verrats.length > 0 ? (
+                  <div className="radio-chips" role="radiogroup" aria-label="Verrat">
+                    {verrats.map(v => (
+                      <button
+                        key={v.id}
+                        type="button"
+                        className="radio-chip"
+                        role="radio"
+                        aria-checked={selectedVerrat === v.displayId}
+                        aria-label={`Sélectionner le verrat ${v.displayId}`}
+                        onClick={() => setSelectedVerrat(v.displayId)}
+                        disabled={saving}
+                      >
+                        {v.displayId}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 12, color: 'var(--pt-subtle)', margin: 0 }}>
+                    Aucun verrat actif
+                  </p>
+                )}
+              </div>
+
+              <div className="field">
+                <label className="field__label" htmlFor="saillie-date">DATE SAILLIE</label>
+                <input
+                  id="saillie-date"
+                  ref={firstFieldRef}
+                  className={`field__input mono${dateSaillie ? ' filled' : ' field__input--ghost'}`}
+                  type="date"
+                  aria-label="Date de saillie"
+                  value={dateSaillie}
+                  min={minDateISO(SAILLIE_BACKDATE_MAX_DAYS)}
+                  max={todayISO()}
+                  onChange={e => setDateSaillie(e.target.value)}
+                  disabled={saving}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginTop: 4, padding: '12px 14px', border: '1px solid var(--pt-line)', borderRadius: 12, background: 'var(--pt-bg)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="eyebrow" style={{ marginBottom: 2 }}>Cycle prévu · auto</div>
+              {[
+                { lab: 'Écho', day: `J${ECHO_DAYS}`, iso: dateEcho },
+                { lab: 'Mise-bas', day: `J${GESTATION_DAYS}`, iso: dateMb },
+                { lab: 'Sevrage', day: `J${GESTATION_DAYS + SEVRAGE_DAYS}`, iso: dateSevrage },
+              ].map(row => (
+                <div key={row.lab} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontFamily: 'var(--pt-font-mono)', fontSize: 12, color: 'var(--pt-ink)' }}>
+                  <span style={{ color: 'var(--pt-subtle)' }}>{row.lab}</span>
+                  <span>
+                    <small style={{ color: 'var(--pt-subtle)', marginRight: 8 }}>{row.day}</small>
+                    {formatFr(row.iso)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <footer className="sheet__foot">
+            <button type="button" className="btn btn--ghost" onClick={handleClose} disabled={saving} aria-label="Annuler et fermer">Annuler</button>
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={handleSave}
+              disabled={!isValid || saving}
+              aria-busy={saving}
+              aria-label="Confirmer la saillie"
+            >
+              {saving ? 'Enregistrement…' : <><Check size={14} aria-hidden="true" /> Confirmer la saillie</>}
+            </button>
+          </footer>
         </div>
-      )}
-    </BottomSheet>
+      </div>
+    </IonModal>
   );
 };
 

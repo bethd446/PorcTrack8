@@ -1,34 +1,37 @@
+/**
+ * AlimentsView — /ressources/aliments
+ * ══════════════════════════════════════════════════════════════════════════
+ * V70 natif (mockup ressources-reproduction-mockup-v76.html#ressources-aliments).
+ * Liste 3-niveaux (icone + main + count/pill) avec stockbar visuelle, KPIs
+ * strip 4 colonnes (Total kg / OK / Bas / Rupture) et tabs Sacs prêts /
+ * Matières premières. Logique métier (autonomie, edits inline, commande
+ * WhatsApp) préservée.
+ */
+
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import {
-  Package,
-  AlertOctagon,
-  Wheat,
-  FlaskConical,
-  Box,
-  ExternalLink,
-  Settings,
+  Wheat, ExternalLink, Settings, Plus, AlertOctagon,
 } from 'lucide-react';
-import AgritechLayout from '../../components/AgritechLayout';
 import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
 import { AppToast, useAppToast } from '../../components/agritech';
-import EmptyState from '../../components/design/EmptyState';
 import { useFarm, useMeta } from '../../context/FarmContext';
-import {
-  Button,
-  Card,
-  Fab,
-  Search,
-  Section,
-  Tabs,
-  Tag,
-} from '@/design-system';
+import { Section } from '../../v70/components/ds/Section';
+import { Pill, type PillVariant } from '../../v70/components/ds/Pill';
 import { PageHeader } from '../../v70/components/ds/PageHeader';
-import PhaseBanner from '../cycles/PhaseBanner';
-import { updateProduitAliment } from '../../services/supabaseWrites';
-import type { StockAliment, StockStatut, Truie, Verrat, BandePorcelets } from '../../types/farm';
+import {
+  updateProduitAliment,
+  listFournisseurs,
+  type FournisseurRow,
+} from '../../services/supabaseWrites';
+import type {
+  StockAliment,
+  Truie,
+  Verrat,
+  BandePorcelets,
+} from '../../types/farm';
 import QuickAddAlimentForm from '../../components/forms/QuickAddAlimentForm';
 import { projectStockDuration, formatJoursRestants } from '../../utils/stockProjection';
 import {
@@ -38,7 +41,17 @@ import {
   hasWhatsAppSupport,
   type OrderItem,
 } from '../../utils/whatsappOrder';
-import { listFournisseurs, type FournisseurRow } from '../../services/supabaseWrites';
+
+type AlimentTab = 'sacs' | 'matieres';
+type ResourceTreatment = 'urgent' | 'normal' | 'resolu';
+
+function classifyTreatment(item: StockAliment): ResourceTreatment {
+  const stock = item.stockActuel ?? 0;
+  const seuil = item.seuilAlerte ?? 0;
+  if (stock === 0 || /rupt/i.test(item.statutStock ?? '')) return 'urgent';
+  if (stock < seuil) return 'normal';
+  return 'resolu';
+}
 
 function manqueKgOf(item: StockAliment): number {
   const stock = item.stockActuel ?? 0;
@@ -54,317 +67,175 @@ function needsOrder(item: StockAliment): boolean {
   return seuil > 0 && stock < seuil;
 }
 
-/**
- * AlimentsView — stock aliments structuré par catégorie métier.
- *
- * V44 archétype 3 — liste pure : Tabs catégorie + Search + Sections + Tag DS.
- * Les KPI stock ont été déplacés dans le hub Ressources (anti-doublon).
- *
- * Sections : Matières premières / Concentrés / Autres — triées RUPTURE → BAS
- * → OK puis alphabétique FR. Édition inline (stock, seuil, notes) préservée
- * via AlimentEditableRow custom (le DS ListItem ne supporte pas les champs
- * éditables multiples).
- */
-
-type AlimentCategorie = 'MATIERE_PREMIERE' | 'CONCENTRE' | 'AUTRE';
-type CategoryFilter = 'all' | AlimentCategorie;
-type ResourceTreatment = 'urgent' | 'normal' | 'resolu';
-
-function classifyTreatment(item: StockAliment): ResourceTreatment {
-  const stock = item.stockActuel ?? 0;
-  const seuil = item.seuilAlerte ?? 0;
-  if (stock === 0 || /rupt/i.test(item.statutStock ?? '')) return 'urgent';
-  if (stock < seuil) return 'normal';
-  return 'resolu';
+function isMatierePremiere(item: StockAliment): boolean {
+  const s = `${item.libelle} ${item.id ?? ''}`.toLowerCase();
+  return /ma[iï]s|tourteau|soja|son\b|orge|\bbl[eé]\b|coquille|huile|coton/.test(s);
 }
 
-interface TreatmentVisual {
-  borderLeft: string;
-  dot: string;
-  label: string;
-}
+const STATUT_PRIORITY: Record<string, number> = { RUPTURE: 0, BAS: 1, OK: 2 };
 
-function getTreatmentVisual(t: ResourceTreatment): TreatmentVisual {
-  if (t === 'urgent') {
-    return {
-      borderLeft: '3px solid var(--color-pig)',
-      dot: 'var(--color-pig)',
-      label: 'Rupture',
-    };
-  }
-  if (t === 'normal') {
-    return {
-      borderLeft: '3px solid var(--color-amber-pork)',
-      dot: 'var(--color-amber-pork)',
-      label: 'Stock bas',
-    };
-  }
-  return {
-    borderLeft: '3px solid transparent',
-    dot: 'var(--color-accent-500)',
-    label: 'OK',
-  };
-}
-
-/**
- * Classifie un aliment via regex sur son libellé (et fallback sur son ID).
- *
- * Matières premières : maïs, tourteau de soja, son de blé/riz, orge, blé.
- * Concentrés       : KPC, Romelko, Vitafaf, Mycofix, AMV, lysine, méthionine,
- *                    phytase, prémix, vitamine.
- * Autres           : aliments composés déjà formulés (TRUIE-GEST, PORCELET…)
- *                    et tout ce qui ne matche pas.
- */
-function categoriserAliment(libelle: string, id?: string): AlimentCategorie {
-  const s = `${libelle} ${id ?? ''}`.toLowerCase();
-  if (
-    /ma[iï]s|tourteau.*soja|soja.*tourteau|son.*bl[eé]|son.*riz|orge|\bbl[eé]\b/i.test(
-      s
-    )
-  ) {
-    return 'MATIERE_PREMIERE';
-  }
-  if (
-    /kpc|romelko|vitafaf|mycofix|\bamv\b|lysine|m[eé]thionine|phytase|pr[eé]mix|vitamine/i.test(
-      s
-    )
-  ) {
-    return 'CONCENTRE';
-  }
-  return 'AUTRE';
-}
-
-const STATUT_PRIORITY: Record<string, number> = {
-  RUPTURE: 0,
-  BAS: 1,
-  OK: 2,
-};
-
-function priorityOf(statut: StockStatut | undefined): number {
-  if (!statut) return 3;
-  return STATUT_PRIORITY[statut] ?? 3;
-}
-
-type TagVariant = 'default' | 'primary' | 'accent' | 'soft' | 'danger' | 'warning' | 'success';
-
-function tagVariantForStatut(statut: StockStatut | undefined): TagVariant {
-  if (statut === 'RUPTURE') return 'danger';
-  if (statut === 'BAS') return 'warning';
-  if (statut === 'OK') return 'success';
-  return 'default';
-}
-
-function labelForStatut(statut: StockStatut | undefined): string {
-  if (!statut) return '—';
-  return String(statut);
-}
-
-function sortAliments(items: StockAliment[]): StockAliment[] {
+function sortByTreatment(items: StockAliment[]): StockAliment[] {
   return [...items].sort((a, b) => {
-    const diff = priorityOf(a.statutStock) - priorityOf(b.statutStock);
-    if (diff !== 0) return diff;
-    return a.libelle.localeCompare(b.libelle, 'fr');
+    const pa = STATUT_PRIORITY[a.statutStock ?? ''] ?? 3;
+    const pb = STATUT_PRIORITY[b.statutStock ?? ''] ?? 3;
+    if (pa !== pb) return pa - pb;
+    return (a.libelle || a.id).localeCompare(b.libelle || b.id, 'fr');
   });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Sous-section liste (Section DS + Card DS contenant les rows éditables)
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface AlimentSectionProps {
-  title: string;
-  emptyIcon: React.ReactNode;
-  emptyTitle: string;
-  emptyDescription: string;
-  emptyAction?: { label: string; onClick: () => void };
-  items: StockAliment[];
-  onSelect: (item: StockAliment) => void;
-  onRefresh: () => Promise<void>;
-  cheptel: { truies: Truie[]; verrats: Verrat[]; bandes: BandePorcelets[] };
-  fournisseurs?: FournisseurRow[];
-  farmName: string;
+function pillForTreatment(t: ResourceTreatment): { variant: PillVariant; label: string } {
+  if (t === 'urgent') return { variant: 'danger', label: 'Rupture' };
+  if (t === 'normal') return { variant: 'warning', label: 'Bas' };
+  return { variant: 'success', label: 'OK' };
 }
 
-const AlimentSection: React.FC<AlimentSectionProps> = ({
-  title,
-  emptyIcon,
-  emptyTitle,
-  emptyDescription,
-  emptyAction,
-  items,
-  onSelect,
-  onRefresh,
-  cheptel,
-  fournisseurs,
-  farmName,
-}) => {
-  const isEmpty = items.length === 0;
-  return (
-    <section role="region" aria-label={title}>
-      <Section label={`${title} · ${items.length}`} />
-      {isEmpty ? (
-        <Card compact>
-          <div
-            className="flex flex-col items-center justify-center py-8 px-6 text-center"
-            role="status"
-            aria-label={`${title} — ${emptyTitle}`}
-          >
-            <div className="w-14 h-14 rounded-2xl bg-bg-1 border border-border flex items-center justify-center mb-3 text-text-2">
-              {emptyIcon}
-            </div>
-            <h4 className="ft-heading text-text-0 text-[15px] mb-1.5 uppercase tracking-wide">
-              {emptyTitle}
-            </h4>
-            <p className="text-text-2 text-[12px] max-w-xs leading-relaxed">
-              {emptyDescription}
-            </p>
-            {emptyAction ? (
-              <Button
-                variant="primary"
-                size="small"
-                onClick={emptyAction.onClick}
-                className="mt-4"
-              >
-                {emptyAction.label}
-              </Button>
-            ) : null}
-          </div>
-        </Card>
-      ) : (
-        <Card compact className="!p-0 overflow-hidden">
-          {items.map(item => (
-            <AlimentEditableRow
-              key={item.id || item.libelle}
-              item={item}
-              onRefresh={onRefresh}
-              onSelect={onSelect}
-              cheptel={cheptel}
-              fournisseurs={fournisseurs}
-              farmName={farmName}
-            />
-          ))}
-        </Card>
-      )}
-    </section>
-  );
-};
+function stockbarClass(t: ResourceTreatment): string {
+  if (t === 'urgent') return 'stockbar danger';
+  if (t === 'normal') return 'stockbar warn';
+  return 'stockbar';
+}
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Editable row : stock_actuel / seuil_alerte / notes inline
-// ─────────────────────────────────────────────────────────────────────────────
+function stockPercent(item: StockAliment): number {
+  const stock = item.stockActuel ?? 0;
+  const seuil = item.seuilAlerte ?? 0;
+  if (stock <= 0) return 0;
+  if (seuil <= 0) return 100;
+  return Math.max(0, Math.min(100, Math.round((stock / (seuil * 2.5)) * 100)));
+}
 
-interface AlimentEditableRowProps {
+interface AlimentRowProps {
   item: StockAliment;
-  onRefresh: () => Promise<void>;
-  onSelect: (item: StockAliment) => void;
   cheptel: { truies: Truie[]; verrats: Verrat[]; bandes: BandePorcelets[] };
-  fournisseurs?: FournisseurRow[];
-  /** Nom de la ferme courante (lu depuis useMeta().nomFerme dans le parent). */
+  fournisseurs: FournisseurRow[];
   farmName: string;
+  onRefresh: () => Promise<void>;
 }
 
-const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
-  item,
-  onRefresh,
-  cheptel,
-  fournisseurs,
-  farmName,
+const AlimentRow: React.FC<AlimentRowProps> = ({
+  item, cheptel, fournisseurs, farmName, onRefresh,
 }) => {
-  const projection = projectStockDuration(item, cheptel);
   const treatment = classifyTreatment(item);
-  const visual = getTreatmentVisual(treatment);
-  const isUrgent = treatment === 'urgent';
+  const pill = pillForTreatment(treatment);
+  const projection = projectStockDuration(item, cheptel);
+  const percent = stockPercent(item);
+
+  const subParts: string[] = [];
+  if (projection.joursRestants != null) {
+    subParts.push(formatJoursRestants(projection.joursRestants));
+  }
+  subParts.push(`${item.stockActuel ?? 0} ${item.unite} restants · seuil ${item.seuilAlerte ?? 0}`);
+
+  const orderUrl = (() => {
+    if (!needsOrder(item)) return null;
+    const f = item.fournisseurId
+      ? fournisseurs.find((x) => x.id === item.fournisseurId)
+      : undefined;
+    if (f) {
+      return buildSupplierOrderURL({
+        fournisseur: { nom: f.nom, whatsapp_number: f.whatsapp_number },
+        produit: item.libelle || item.id,
+        qteKg: manqueKgOf(item),
+        farmName,
+      });
+    }
+    return buildSingleItemOrderURL(
+      item.libelle || item.id,
+      manqueKgOf(item),
+      item.unite,
+      farmName,
+    );
+  })();
+
+  const valueColor =
+    treatment === 'urgent'
+      ? 'var(--pt-danger)'
+      : treatment === 'normal'
+        ? 'var(--pt-warning)'
+        : 'var(--pt-ink)';
+
   return (
     <div
-      className="flex flex-col gap-1.5 px-3 py-3 border-b border-border last:border-b-0"
-      style={{ borderLeft: visual.borderLeft }}
+      className="card-link"
+      style={{
+        alignItems: 'flex-start',
+        gap: 12,
+        padding: '14px 16px',
+        flexDirection: 'column',
+      }}
     >
-      <div className="flex items-center gap-3">
-        <div className="min-w-0 flex-1">
-          <div
-            className="flex items-center gap-1.5 mb-0.5"
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 9.5,
-              letterSpacing: '0.10em',
-              textTransform: 'uppercase',
-              color: isUrgent ? 'var(--color-pig-deep)' : 'var(--muted)',
-            }}
-          >
-            <span
-              aria-hidden="true"
-              style={{
-                width: 5,
-                height: 5,
-                borderRadius: 999,
-                background: visual.dot,
-                display: 'inline-block',
-              }}
-            />
-            <span>{visual.label}</span>
-          </div>
-          <div
-            className="truncate text-text-0"
-            style={{
-              fontSize: isUrgent ? 15 : 14,
-              fontWeight: isUrgent ? 700 : 500,
-            }}
-          >
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, width: '100%' }}>
+        <div className="card-link__icon" aria-hidden>
+          <Wheat size={18} />
+        </div>
+        <div className="card-link__main">
+          <div className="card-link__title" style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 700, fontSize: 15, textTransform: 'none', letterSpacing: 0 }}>
             {item.libelle || item.id}
           </div>
-          {projection.joursRestants != null && (
-            <div
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 11,
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                marginTop: 2,
-                color:
-                  projection.joursRestants < 7
-                    ? 'var(--color-pig)'
-                    : projection.joursRestants < 14
-                      ? 'var(--amber-pork-deep)'
-                      : 'var(--muted)',
-              }}
-            >
-              {formatJoursRestants(projection.joursRestants)}
-            </div>
-          )}
+          <div className="card-link__sub" style={{ marginTop: 2 }}>
+            {subParts.join(' · ')}
+          </div>
+          <div className={stockbarClass(treatment)} style={{ marginTop: 6, width: '100%' }}>
+            <span style={{ width: `${percent}%` }} />
+          </div>
         </div>
-        <div className="shrink-0 flex items-center gap-1 text-[12px] tabular-nums text-text-1">
-          <EditableNumber
-            value={item.stockActuel ?? null}
-            min={0}
-            step={1}
-            ariaLabel={`Modifier le stock actuel de ${item.libelle || item.id}`}
-            onSave={async (v) => {
-              const res = await updateProduitAliment(item.id, { stock_actuel: v });
-              if (res.success) await onRefresh();
-              return res;
+        <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, minWidth: 84 }}>
+          <div
+            className="num"
+            style={{
+              fontFamily: 'var(--pt-font-display)',
+              fontWeight: 900,
+              fontSize: 18,
+              lineHeight: 1,
+              color: valueColor,
             }}
-          />
-          <span className="text-text-2">/</span>
-          <EditableNumber
-            value={item.seuilAlerte ?? null}
-            min={0}
-            step={1}
-            ariaLabel={`Modifier le seuil d'alerte de ${item.libelle || item.id}`}
-            onSave={async (v) => {
-              const res = await updateProduitAliment(item.id, { seuil_alerte: v });
-              if (res.success) await onRefresh();
-              return res;
-            }}
-          />
-          <span className="text-text-2 ml-0.5">{item.unite}</span>
-        </div>
-        <div className="shrink-0">
-          <Tag variant={tagVariantForStatut(item.statutStock)} dot>
-            {labelForStatut(item.statutStock)}
-          </Tag>
+          >
+            {item.stockActuel ?? 0}
+            <small style={{ fontSize: 10, marginLeft: 2, fontWeight: 600 }}>{item.unite}</small>
+          </div>
+          <Pill variant={pill.variant}>{pill.label}</Pill>
         </div>
       </div>
-      <div className="text-[11px] text-text-2 pl-0.5">
+
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 8,
+          alignItems: 'center',
+          fontFamily: 'var(--pt-font-mono)',
+          fontSize: 11,
+          color: 'var(--pt-muted)',
+          width: '100%',
+        }}
+      >
+        <span style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>Stock</span>
+        <EditableNumber
+          value={item.stockActuel ?? null}
+          min={0}
+          step={1}
+          ariaLabel={`Modifier le stock actuel de ${item.libelle || item.id}`}
+          onSave={async (v) => {
+            const res = await updateProduitAliment(item.id, { stock_actuel: v });
+            if (res.success) await onRefresh();
+            return res;
+          }}
+        />
+        <span aria-hidden>/</span>
+        <EditableNumber
+          value={item.seuilAlerte ?? null}
+          min={0}
+          step={1}
+          ariaLabel={`Modifier le seuil d'alerte de ${item.libelle || item.id}`}
+          onSave={async (v) => {
+            const res = await updateProduitAliment(item.id, { seuil_alerte: v });
+            if (res.success) await onRefresh();
+            return res;
+          }}
+        />
+        <span>{item.unite}</span>
+      </div>
+
+      <div style={{ width: '100%', fontSize: 12, color: 'var(--pt-muted)' }}>
         <EditableText
           value={item.notes ?? null}
           maxLength={200}
@@ -377,65 +248,39 @@ const AlimentEditableRow: React.FC<AlimentEditableRowProps> = ({
           }}
         />
       </div>
-      {needsOrder(item) && (() => {
-        // V21-D1 : si fournisseur préféré configuré, on cible son WhatsApp.
-        const f = item.fournisseurId
-          ? fournisseurs?.find(x => x.id === item.fournisseurId)
-          : undefined;
-        const supplierUrl = f
-          ? buildSupplierOrderURL({
-              fournisseur: { nom: f.nom, whatsapp_number: f.whatsapp_number },
-              produit: item.libelle || item.id,
-              qteKg: manqueKgOf(item),
-              farmName,
-            })
-          : null;
-        const url =
-          supplierUrl ??
-          buildSingleItemOrderURL(
-            item.libelle || item.id,
-            manqueKgOf(item),
-            item.unite,
-            farmName,
-          );
-        if (!url) return null;
-        return (
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`Commander ${item.libelle || item.id} via WhatsApp`}
-            className="pressable"
-            style={{
-              alignSelf: 'flex-start',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '6px 12px',
-              borderRadius: 9999,
-              background: isUrgent ? 'var(--color-pig)' : 'var(--color-accent-500)',
-              color: 'white',
-              fontSize: 11,
-              fontFamily: 'var(--font-mono)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              textDecoration: 'none',
-              fontWeight: 600,
-              marginTop: 4,
-            }}
-          >
-            Commander
-            <ExternalLink size={12} aria-hidden="true" />
-          </a>
-        );
-      })()}
+
+      {orderUrl && (
+        <a
+          href={orderUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Commander ${item.libelle || item.id} via WhatsApp`}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '8px 14px',
+            borderRadius: 999,
+            background:
+              treatment === 'urgent' ? 'var(--pt-danger)' : 'var(--pt-primary)',
+            color: 'white',
+            fontFamily: 'var(--pt-font-mono)',
+            fontSize: 11,
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            textDecoration: 'none',
+            minHeight: 36,
+            alignSelf: 'flex-start',
+          }}
+        >
+          Commander
+          <ExternalLink size={12} aria-hidden />
+        </a>
+      )}
     </div>
   );
 };
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Main
-// ─────────────────────────────────────────────────────────────────────────────
 
 const AlimentsView: React.FC = () => {
   const navigate = useNavigate();
@@ -445,19 +290,45 @@ const AlimentsView: React.FC = () => {
   const { toastProps } = useAppToast();
   const [addOpen, setAddOpen] = useState(false);
   const [fournisseurs, setFournisseurs] = useState<FournisseurRow[]>([]);
-  const [filter, setFilter] = useState<CategoryFilter>('all');
-  const [query, setQuery] = useState('');
+  const [tab, setTab] = useState<AlimentTab>('sacs');
   const whatsappReady = hasWhatsAppSupport();
 
   React.useEffect(() => {
     let active = true;
-    void listFournisseurs().then(list => {
+    void listFournisseurs().then((list) => {
       if (active) setFournisseurs(list);
     });
     return () => {
       active = false;
     };
   }, []);
+
+  const partition = useMemo(() => {
+    const sacs: StockAliment[] = [];
+    const matieres: StockAliment[] = [];
+    for (const it of stockAliment) {
+      if (isMatierePremiere(it)) matieres.push(it);
+      else sacs.push(it);
+    }
+    return {
+      sacs: sortByTreatment(sacs),
+      matieres: sortByTreatment(matieres),
+    };
+  }, [stockAliment]);
+
+  const stats = useMemo(() => {
+    const totalKg = stockAliment.reduce((sum, it) => sum + (it.stockActuel ?? 0), 0);
+    let ok = 0;
+    let bas = 0;
+    let rupture = 0;
+    for (const it of stockAliment) {
+      const t = classifyTreatment(it);
+      if (t === 'urgent') rupture += 1;
+      else if (t === 'normal') bas += 1;
+      else ok += 1;
+    }
+    return { totalKg, ok, bas, rupture };
+  }, [stockAliment]);
 
   const stocksAOrdonner = useMemo<OrderItem[]>(
     () =>
@@ -479,238 +350,242 @@ const AlimentsView: React.FC = () => {
     [stocksAOrdonner, FARM_NAME],
   );
 
-  const grouped = useMemo(() => {
-    const matieres: StockAliment[] = [];
-    const concentres: StockAliment[] = [];
-    const autres: StockAliment[] = [];
-    const q = query.trim().toLowerCase();
+  const items = tab === 'sacs' ? partition.sacs : partition.matieres;
+  const subInfo: string[] = [];
+  if (stats.rupture > 0) subInfo.push(`${stats.rupture} rupture${stats.rupture > 1 ? 's' : ''}`);
+  if (stats.bas > 0) subInfo.push(`${stats.bas} stock${stats.bas > 1 ? 's' : ''} bas`);
+  const subtitle =
+    subInfo.length > 0
+      ? `Stock matières premières + sacs prêts · ${subInfo.join(' · ')}`
+      : 'Stock matières premières + sacs prêts';
 
-    for (const item of stockAliment) {
-      if (q && !(item.libelle || item.id).toLowerCase().includes(q)) continue;
-      const cat = categoriserAliment(item.libelle, item.id);
-      if (cat === 'MATIERE_PREMIERE') matieres.push(item);
-      else if (cat === 'CONCENTRE') concentres.push(item);
-      else autres.push(item);
-    }
-
-    return {
-      matieres: sortAliments(matieres),
-      concentres: sortAliments(concentres),
-      autres: sortAliments(autres),
-    };
-  }, [stockAliment, query]);
-
-  const counts = useMemo(() => ({
-    all: grouped.matieres.length + grouped.concentres.length + grouped.autres.length,
-    MATIERE_PREMIERE: grouped.matieres.length,
-    CONCENTRE: grouped.concentres.length,
-    AUTRE: grouped.autres.length,
-  }), [grouped]);
-
-  const ruptureCount = useMemo(
-    () => stockAliment.filter(s => s.statutStock === 'RUPTURE').length,
-    [stockAliment],
-  );
-
-  const handleSelect = (_item: StockAliment) => {
-    // Placeholder — édition stock arrivera dans un prochain sprint.
-  };
-
-  const isEmpty = stockAliment.length === 0;
-  const totalFiltered = counts.all;
-  const showMatieres = (filter === 'all' || filter === 'MATIERE_PREMIERE') && grouped.matieres.length > 0;
-  const showConcentres = (filter === 'all' || filter === 'CONCENTRE') && grouped.concentres.length > 0;
-  const showAutres = (filter === 'all' || filter === 'AUTRE') && grouped.autres.length > 0;
-  const noMatch = !isEmpty && totalFiltered === 0;
+  const isEmptyAll = stockAliment.length === 0;
 
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
-        <AgritechLayout>
-          <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <PageHeader
-              eyebrow="STOCKS · ALIMENTS"
-              title="Aliments"
-              subtitle="Stocks et consommation"
-            />
-            <PhaseBanner
-              src="/images/ambiance-stock.webp"
-              alt=""
-              label="STOCKS ALIMENTS"
-            />
+        <div className="phone-content" style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
+          <PageHeader
+            eyebrow="Stocks · Aliments"
+            title="Aliments"
+            subtitle={subtitle}
+            onBack={() => navigate('/ressources')}
+          />
 
-            {/* ── Filtres + recherche dans une Card DS ──────────────── */}
-            {!isEmpty && (
-              <Card compact>
-                <div className="flex flex-col gap-3">
-                  <Tabs
-                    value={filter}
-                    onChange={v => setFilter(v as CategoryFilter)}
-                    options={[
-                      { value: 'all', label: 'Tous', count: counts.all },
-                      { value: 'MATIERE_PREMIERE', label: 'Matières', count: counts.MATIERE_PREMIERE },
-                      { value: 'CONCENTRE', label: 'Concentrés', count: counts.CONCENTRE },
-                      { value: 'AUTRE', label: 'Autres', count: counts.AUTRE },
-                    ]}
-                    ariaLabel="Filtrer les aliments par catégorie"
-                  />
-                  <Search
-                    value={query}
-                    onChange={e => setQuery(e.target.value)}
-                    onClear={() => setQuery('')}
-                    placeholder="Rechercher un aliment…"
-                    aria-label="Rechercher un aliment"
-                  />
+          <div className="kpis-strip">
+            <div className="kpi">
+              <div className="kpi__label">Total kg</div>
+              <div className="kpi__val num">{stats.totalKg}</div>
+            </div>
+            <div className="kpi">
+              <div className="kpi__label">OK</div>
+              <div className="kpi__val num" style={{ color: 'var(--pt-success)' }}>{stats.ok}</div>
+            </div>
+            <div className="kpi">
+              <div className="kpi__label">Bas</div>
+              <div className="kpi__val num" style={{ color: 'var(--pt-warning)' }}>{stats.bas}</div>
+            </div>
+            <div className="kpi">
+              <div className="kpi__label">Rupture</div>
+              <div className="kpi__val num" style={{ color: 'var(--pt-danger)' }}>{stats.rupture}</div>
+            </div>
+          </div>
+
+          {stats.rupture > 0 && (
+            <div
+              role="alert"
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 10,
+                padding: '12px 14px',
+                background: '#f0c4be',
+                color: '#6b1d18',
+                borderRadius: 12,
+                margin: '8px 0 12px',
+              }}
+            >
+              <AlertOctagon size={18} aria-hidden style={{ flexShrink: 0, marginTop: 2 }} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 700, fontSize: 14, textTransform: 'uppercase' }}>
+                  {stats.rupture} matière{stats.rupture > 1 ? 's' : ''} en rupture
                 </div>
-              </Card>
-            )}
+                <div style={{ fontSize: 12, marginTop: 2 }}>
+                  Commander d’urgence — production à l’arrêt si non réapprovisionné.
+                </div>
+              </div>
+            </div>
+          )}
 
-            {/* ── Action groupée Commander ──────────────────────── */}
-            {whatsappReady && groupedOrderUrl ? (
-              <a
-                href={groupedOrderUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`Commander ${stocksAOrdonner.length} produits via WhatsApp`}
-                className="pressable"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 10,
-                  padding: '12px 16px',
-                  borderRadius: 12,
-                  background: 'var(--color-accent-500)',
-                  color: 'var(--bg-surface)',
-                  textDecoration: 'none',
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 14,
-                  fontWeight: 700,
-                  letterSpacing: '0.04em',
-                  textTransform: 'uppercase',
-                  boxShadow: '0 2px 6px rgba(6,78,59,0.18)',
-                }}
+          {whatsappReady && groupedOrderUrl && (
+            <a
+              href={groupedOrderUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Commander ${stocksAOrdonner.length} produits via WhatsApp`}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 10,
+                padding: '12px 16px',
+                borderRadius: 12,
+                background: 'var(--pt-primary)',
+                color: 'white',
+                textDecoration: 'none',
+                fontFamily: 'var(--pt-font-display)',
+                fontWeight: 800,
+                fontSize: 13,
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                marginBottom: 12,
+                minHeight: 44,
+              }}
+            >
+              <span>Commander {stocksAOrdonner.length} produits via WhatsApp</span>
+              <ExternalLink size={14} aria-hidden />
+            </a>
+          )}
+
+          {!whatsappReady && stocksAOrdonner.length > 0 && (
+            <button
+              type="button"
+              onClick={() => navigate('/reglages')}
+              aria-label="Configurer le numéro WhatsApp dans les Réglages"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 14px',
+                borderRadius: 12,
+                background: 'transparent',
+                border: '1px dashed var(--pt-line-strong)',
+                color: 'var(--pt-muted)',
+                fontFamily: 'var(--pt-font-mono)',
+                fontSize: 12,
+                textAlign: 'left',
+                marginBottom: 12,
+                width: '100%',
+                minHeight: 44,
+                cursor: 'pointer',
+              }}
+            >
+              <Settings size={13} aria-hidden />
+              Numéro WhatsApp non configuré · Régler dans Réglages
+            </button>
+          )}
+
+          <nav
+            role="tablist"
+            aria-label="Type d’aliment"
+            style={{
+              display: 'flex',
+              gap: 8,
+              marginBottom: 12,
+            }}
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'sacs'}
+              onClick={() => setTab('sacs')}
+              style={{
+                flex: 1,
+                padding: '10px 14px',
+                borderRadius: 999,
+                border: '1px solid var(--pt-line-strong)',
+                background: tab === 'sacs' ? 'var(--pt-ink)' : 'transparent',
+                color: tab === 'sacs' ? 'var(--pt-warm)' : 'var(--pt-muted)',
+                fontFamily: 'var(--pt-font-mono)',
+                fontSize: 11,
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.10em',
+                cursor: 'pointer',
+                minHeight: 44,
+              }}
+            >
+              Sacs prêts <span className="num" style={{ marginLeft: 4, opacity: 0.7 }}>{partition.sacs.length}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'matieres'}
+              onClick={() => setTab('matieres')}
+              style={{
+                flex: 1,
+                padding: '10px 14px',
+                borderRadius: 999,
+                border: '1px solid var(--pt-line-strong)',
+                background: tab === 'matieres' ? 'var(--pt-ink)' : 'transparent',
+                color: tab === 'matieres' ? 'var(--pt-warm)' : 'var(--pt-muted)',
+                fontFamily: 'var(--pt-font-mono)',
+                fontSize: 11,
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.10em',
+                cursor: 'pointer',
+                minHeight: 44,
+              }}
+            >
+              Matières prem. <span className="num" style={{ marginLeft: 4, opacity: 0.7 }}>{partition.matieres.length}</span>
+            </button>
+          </nav>
+
+          {isEmptyAll ? (
+            <div className="empty">
+              <Wheat size={48} strokeWidth={1.25} color="var(--pt-subtle)" aria-hidden />
+              <div style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 900, fontSize: 22, textTransform: 'uppercase', letterSpacing: '-0.01em' }}>
+                Aucun aliment
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--pt-muted)' }}>
+                Ajoute ton premier aliment pour commencer le suivi.
+              </div>
+              <button
+                type="button"
+                className="btn--primary"
+                onClick={() => setAddOpen(true)}
+                style={{ marginTop: 8, padding: '12px 20px', minHeight: 44 }}
               >
-                <span>
-                  Commander {stocksAOrdonner.length} produits via WhatsApp
-                </span>
-                <ExternalLink size={14} aria-hidden="true" />
-              </a>
-            ) : null}
-
-            {!whatsappReady && stocksAOrdonner.length > 0 ? (
-              <Button
-                variant="ghost"
-                onClick={() => navigate('/more')}
-                ariaLabel="Configurer le numéro WhatsApp dans les Réglages"
-              >
-                <Settings size={13} aria-hidden="true" />
-                <span>Numéro WhatsApp non configuré · Régler dans Réglages</span>
-              </Button>
-            ) : null}
-
-            {/* ── Bannière alerte rupture ─────────────────────────── */}
-            {ruptureCount > 0 ? (
-              <Card compact danger>
-                <div className="flex items-start gap-3" role="alert" aria-label="Alerte rupture stock">
-                  <AlertOctagon
-                    size={18}
-                    className="shrink-0 text-red mt-0.5"
-                    aria-hidden="true"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[13px] font-semibold text-text-0">
-                      {ruptureCount} matière{ruptureCount > 1 ? 's' : ''} en rupture
-                    </div>
-                    <div className="mt-0.5 text-[11px] text-text-2">
-                      Commander d'urgence — production à l'arrêt si non réapprovisionné.
-                    </div>
+                <Plus size={14} aria-hidden /> Nouvelle entrée
+              </button>
+            </div>
+          ) : (
+            <Section label={`${items.length} aliment${items.length > 1 ? 's' : ''}`}>
+              {items.length === 0 ? (
+                <div className="empty">
+                  <Wheat size={40} strokeWidth={1.25} color="var(--pt-subtle)" aria-hidden />
+                  <div style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 900, fontSize: 18, textTransform: 'uppercase' }}>
+                    Aucun élément
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--pt-muted)' }}>
+                    Aucun aliment dans cette catégorie.
                   </div>
                 </div>
-              </Card>
-            ) : null}
-
-            {/* ── Empty state global ──────────────────────────────── */}
-            {isEmpty ? (
-              <EmptyState
-                icon={<Package size={32} aria-hidden="true" />}
-                title="Stock aliments vide"
-                description="Aucun aliment enregistré. Ajoute ton 1er aliment via le bouton +."
-                action={
-                  <Button
-                    variant="primary"
-                    onClick={() => setAddOpen(true)}
-                  >
-                    Ajouter un aliment
-                  </Button>
-                }
-              />
-            ) : noMatch ? (
-              <EmptyState
-                icon={<Package size={32} aria-hidden="true" />}
-                title="Aucun aliment trouvé"
-                description={query ? `Aucun résultat pour « ${query} »` : 'Aucun aliment dans cette catégorie.'}
-              />
-            ) : (
-              <>
-                {showMatieres ? (
-                  <AlimentSection
-                    title="Matières premières"
-                    emptyIcon={<Wheat size={32} />}
-                    emptyTitle="Aucune matière première"
-                    emptyDescription="Ajoute maïs, tourteau de soja ou son de blé"
-                    items={grouped.matieres}
-                    onSelect={handleSelect}
-                    onRefresh={refreshData}
+              ) : (
+                items.map((item) => (
+                  <AlimentRow
+                    key={item.id || item.libelle}
+                    item={item}
                     cheptel={cheptel}
                     fournisseurs={fournisseurs}
                     farmName={FARM_NAME}
-                  />
-                ) : null}
-
-                {showConcentres ? (
-                  <AlimentSection
-                    title="Concentrés & compléments"
-                    emptyIcon={<FlaskConical size={32} />}
-                    emptyTitle="Aucun concentré"
-                    emptyDescription="Ajoute KPC, Mycofix, Lysine…"
-                    emptyAction={{
-                      label: 'Ajouter un aliment',
-                      onClick: () => setAddOpen(true),
-                    }}
-                    items={grouped.concentres}
-                    onSelect={handleSelect}
                     onRefresh={refreshData}
-                    cheptel={cheptel}
-                    fournisseurs={fournisseurs}
-                    farmName={FARM_NAME}
                   />
-                ) : null}
+                ))
+              )}
+            </Section>
+          )}
+        </div>
 
-                {showAutres ? (
-                  <AlimentSection
-                    title="Autres aliments"
-                    emptyIcon={<Box size={32} />}
-                    emptyTitle="Aucun autre aliment"
-                    emptyDescription="Les aliments composés (TRUIE-GEST, PORCELET…) apparaîtront ici."
-                    items={grouped.autres}
-                    onSelect={handleSelect}
-                    onRefresh={refreshData}
-                    cheptel={cheptel}
-                    farmName={FARM_NAME}
-                  />
-                ) : null}
-              </>
-            )}
-          </div>
-        </AgritechLayout>
-
-        {/* ── FAB DS — Ajouter un aliment ─────────────────────────── */}
-        <Fab
-          label="Aliment"
-          ariaLabel="Ajouter un nouvel aliment"
+        <button
+          type="button"
+          className="fab"
           onClick={() => setAddOpen(true)}
-        />
+          aria-label="Nouvelle entrée"
+        >
+          <Plus size={22} aria-hidden />
+        </button>
 
         <QuickAddAlimentForm
           isOpen={addOpen}

@@ -1,19 +1,30 @@
+/**
+ * FormulesView — /ressources/aliments/formules
+ * ══════════════════════════════════════════════════════════════════════════
+ * V70 natif (mockup ressources-reproduction-mockup-v76.html#ressources-formules).
+ * Liste de cartes formule avec composition (matière + %) en mono tabular-nums,
+ * pill phase ciblée. Calculateur de masse en haut + chips phase. CTA
+ * « Plan d’alimentation » en bas.
+ */
+
 import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
-import { ClipboardList, Calculator, AlertTriangle } from 'lucide-react';
-import AgritechLayout from '../../components/AgritechLayout';
-import EmptyState from '../../components/design/EmptyState';
+import {
+  Calculator, AlertTriangle, Pencil, Plus, FlaskConical, ChevronRight,
+} from 'lucide-react';
 import {
   PHASE_LABELS,
   PHASE_TONES,
   type FormuleAliment,
+  type PhaseCode,
 } from '../../config/aliments';
 import { calculerRation, type CalculResult } from '../../services/rationCalculator';
 import { useFarm } from '../../context/FarmContext';
-import { Button, Card, FormField, Input, Section, Tabs, Tag } from '@/design-system';
+import { Section } from '../../v70/components/ds/Section';
+import { Pill, type PillVariant } from '../../v70/components/ds/Pill';
 import { PageHeader } from '../../v70/components/ds/PageHeader';
 
-/** Presets quantité — 100 kg (sac), 500 kg, 1 tonne, 2 tonnes. */
 const PRESETS_KG: ReadonlyArray<{ label: string; value: number }> = [
   { label: '100 kg', value: 100 },
   { label: '500 kg', value: 500 },
@@ -21,153 +32,230 @@ const PRESETS_KG: ReadonlyArray<{ label: string; value: number }> = [
   { label: '2 tonnes', value: 2000 },
 ];
 
-type TagVariant = 'default' | 'primary' | 'accent' | 'soft' | 'danger' | 'warning' | 'success';
-
-/** Mappe un PHASE_TONE legacy → variant Tag DS. */
-function phaseTagVariant(code: keyof typeof PHASE_TONES): TagVariant {
+function pillVariantForPhase(code: PhaseCode): PillVariant {
   switch (PHASE_TONES[code]) {
     case 'amber':
       return 'warning';
     case 'accent':
-      return 'accent';
-    case 'blue':
       return 'soft';
+    case 'blue':
+      return 'info';
     case 'gold':
-      return 'primary';
+      return 'warm';
     default:
-      return 'default';
+      return 'ghost';
   }
 }
 
-/** Formate un kg ingrédient : entier → sans décimale, sinon 1 décimale. */
 function formatKg(n: number): string {
   if (!isFinite(n)) return '—';
   if (n === 0) return '0';
   return Number.isInteger(n) ? `${n}` : n.toFixed(1);
 }
 
-/** Bloc une formule — header + tables ingrédients / additifs (Card DS). */
-const FormuleCard: React.FC<{
+interface FormuleCardProps {
   formule: FormuleAliment;
   calcul: CalculResult;
-}> = ({ formule, calcul }) => {
+}
+
+const FormuleCard: React.FC<FormuleCardProps> = ({ formule, calcul }) => {
   return (
-    <Card compact>
-      <div className="flex flex-col gap-3">
-        {/* Header phase */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <div className="agritech-heading text-[16px] uppercase leading-tight truncate">
-              {formule.nom}
-            </div>
-            <div className="mt-1 text-[11px] text-text-2">
-              {formule.phase} · {formule.poidsRange}
-            </div>
-          </div>
-          <Tag variant={phaseTagVariant(formule.code)}>
-            {PHASE_LABELS[formule.code]}
-          </Tag>
-        </div>
-
-        {/* Ingrédients */}
-        <div>
-          <div className="kpi-label mb-1.5">Ingrédients</div>
-          <div
-            className="overflow-hidden rounded-md border border-border"
-            role="table"
-            aria-label={`Ingrédients ${formule.nom}`}
+    <article
+      className="card"
+      style={{
+        padding: 16,
+        marginBottom: 10,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+        <div style={{ minWidth: 0 }}>
+          <h3
+            style={{
+              fontFamily: 'var(--pt-font-display)',
+              fontWeight: 900,
+              fontSize: 18,
+              textTransform: 'uppercase',
+              letterSpacing: '-0.005em',
+              lineHeight: 1.05,
+              margin: 0,
+              color: 'var(--pt-ink)',
+            }}
           >
-            <div
-              className="grid grid-cols-[1fr_auto_auto] gap-x-3 px-3 py-1.5 bg-bg-2 text-[10px] uppercase tracking-wider text-text-2"
-              role="row"
-            >
-              <span role="columnheader">Nom</span>
-              <span role="columnheader" className="text-right">%</span>
-              <span role="columnheader" className="text-right min-w-[56px]">kg</span>
-            </div>
-            {calcul.ingredients.map((ing) => (
-              <div
-                key={ing.nom}
-                role="row"
-                className="grid grid-cols-[1fr_auto_auto] gap-x-3 px-3 py-2 text-[13px] border-t border-border first:border-t-0"
-              >
-                <span role="cell" className="text-text-1 truncate">
-                  {ing.nom}
-                </span>
-                <span role="cell" className="tabular-nums text-right text-text-2">
-                  {ing.pourcent}
-                </span>
-                <span role="cell" className="tabular-nums text-right text-text-0 font-semibold min-w-[56px]">
-                  {formatKg(ing.kg)}
-                </span>
-              </div>
-            ))}
+            {formule.nom}
+          </h3>
+          <div
+            style={{
+              fontSize: 12,
+              color: 'var(--pt-muted)',
+              marginTop: 4,
+            }}
+          >
+            {formule.phase} · {formule.poidsRange}
           </div>
         </div>
+        <Pill variant={pillVariantForPhase(formule.code)}>
+          {PHASE_LABELS[formule.code] ?? formule.code}
+        </Pill>
+      </div>
 
-        {/* Additifs */}
-        {formule.additifs.length > 0 && (
-          <div>
-            <div className="kpi-label mb-1.5">Additifs</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {calcul.ingredients.map((ing) => (
+          <div key={ing.nom} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <div
-              className="overflow-hidden rounded-md border border-border"
-              role="table"
-              aria-label={`Additifs ${formule.nom}`}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'baseline',
+                fontFamily: 'var(--pt-font-mono)',
+                fontSize: 12,
+                color: 'var(--pt-ink)',
+              }}
             >
-              <div
-                className="grid grid-cols-[1fr_auto_auto] gap-x-3 px-3 py-1.5 bg-bg-2 text-[10px] uppercase tracking-wider text-text-2"
-                role="row"
-              >
-                <span role="columnheader">Nom</span>
-                <span role="columnheader" className="text-right">Dose réf.</span>
-                <span role="columnheader" className="text-right min-w-[72px]">Quantité</span>
-              </div>
-              {calcul.additifs.map((add) => (
-                <div
-                  key={add.nom}
-                  role="row"
-                  className="grid grid-cols-[1fr_auto_auto] gap-x-3 px-3 py-2 text-[13px] border-t border-border first:border-t-0"
-                >
-                  <span role="cell" className="text-text-1 truncate">
-                    {add.nom}
-                  </span>
-                  <span role="cell" className="tabular-nums text-right text-text-2">
-                    {add.doseRef}
-                  </span>
-                  <span role="cell" className="tabular-nums text-right text-text-0 font-semibold min-w-[72px]">
-                    {add.quantiteAffiche}
-                  </span>
-                </div>
-              ))}
+              <span style={{ fontWeight: 600 }}>{ing.nom}</span>
+              <span className="num" style={{ color: 'var(--pt-muted)' }}>
+                {ing.pourcent}% · <b style={{ color: 'var(--pt-ink)' }}>{formatKg(ing.kg)} kg</b>
+              </span>
+            </div>
+            <div
+              style={{
+                height: 4,
+                background: 'var(--pt-bg-app)',
+                borderRadius: 99,
+                overflow: 'hidden',
+              }}
+              aria-hidden
+            >
+              <span
+                style={{
+                  display: 'block',
+                  height: '100%',
+                  width: `${Math.max(0, Math.min(100, ing.pourcent))}%`,
+                  background: 'var(--pt-primary)',
+                }}
+              />
             </div>
           </div>
-        )}
-
-        {/* Warnings éventuels (formule corrompue) */}
-        {calcul.warnings.length > 0 && (
-          <div className="flex items-center gap-2 text-[12px] text-amber" role="alert">
-            <AlertTriangle size={14} aria-hidden="true" />
-            <span>{calcul.warnings[0]}</span>
-          </div>
-        )}
+        ))}
       </div>
-    </Card>
+
+      {calcul.additifs.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+            paddingTop: 8,
+            borderTop: '1px solid var(--pt-line)',
+          }}
+        >
+          <div
+            style={{
+              fontFamily: 'var(--pt-font-mono)',
+              fontSize: 10,
+              color: 'var(--pt-subtle)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.10em',
+            }}
+          >
+            Additifs
+          </div>
+          {calcul.additifs.map((add) => (
+            <div
+              key={add.nom}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                fontFamily: 'var(--pt-font-mono)',
+                fontSize: 12,
+                color: 'var(--pt-muted)',
+              }}
+            >
+              <span>{add.nom}</span>
+              <span className="num">
+                {add.doseRef} · <b style={{ color: 'var(--pt-ink)' }}>{add.quantiteAffiche}</b>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {calcul.warnings.length > 0 && (
+        <div
+          role="alert"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            color: 'var(--pt-warning)',
+            fontSize: 12,
+          }}
+        >
+          <AlertTriangle size={14} aria-hidden />
+          <span>{calcul.warnings[0]}</span>
+        </div>
+      )}
+
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingTop: 8,
+          borderTop: '1px solid var(--pt-line)',
+        }}
+      >
+        <div
+          className="num"
+          style={{
+            fontFamily: 'var(--pt-font-display)',
+            fontWeight: 900,
+            fontSize: 22,
+            color: 'var(--pt-accent)',
+            letterSpacing: '-0.005em',
+          }}
+        >
+          {formatKg(calcul.masseTotaleKg)}
+          <small style={{ fontSize: 11, fontWeight: 600, marginLeft: 4, color: 'var(--pt-muted)' }}>
+            kg total
+          </small>
+        </div>
+        <button
+          type="button"
+          aria-label={`Modifier ${formule.nom}`}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '8px 14px',
+            borderRadius: 12,
+            background: 'transparent',
+            border: '1px solid var(--pt-line-strong)',
+            color: 'var(--pt-muted)',
+            fontFamily: 'var(--pt-font-mono)',
+            fontSize: 11,
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.10em',
+            cursor: 'pointer',
+            minHeight: 36,
+          }}
+        >
+          <Pencil size={12} aria-hidden /> Modifier
+        </button>
+      </div>
+    </article>
   );
 };
 
-/**
- * FormulesView — 5 formules aliment validées + calculateur masse.
- *
- * V44 archétype 3 — Tabs DS (filtre phase) + Card DS pour le calculateur,
- * Section DS pour le label de section, Tag DS pour la phase. Logique
- * `calculerRation` intacte (1 useMemo par formule).
- */
 const FormulesView: React.FC = () => {
+  const navigate = useNavigate();
   const [masseKg, setMasseKg] = useState<number>(1000);
   const [filter, setFilter] = useState<string>('all');
   const { alimentFormules } = useFarm();
 
-  // Calcul réactif des formules — recalcul si masse OU formules changent.
   const calculs = useMemo(
     () =>
       alimentFormules.map((f) => ({
@@ -178,17 +266,21 @@ const FormulesView: React.FC = () => {
   );
 
   const filterOptions = useMemo(() => {
-    const opts: Array<{ value: string; label: string }> = [
-      { value: 'all', label: 'Toutes' },
+    const opts: Array<{ value: string; label: string; count: number }> = [
+      { value: 'all', label: 'Toutes', count: alimentFormules.length },
     ];
     for (const f of alimentFormules) {
-      opts.push({ value: f.code, label: PHASE_LABELS[f.code] ?? f.code });
+      opts.push({
+        value: f.code,
+        label: PHASE_LABELS[f.code] ?? f.code,
+        count: 1,
+      });
     }
     return opts;
   }, [alimentFormules]);
 
   const filteredCalculs = useMemo(
-    () => (filter === 'all' ? calculs : calculs.filter(c => c.formule.code === filter)),
+    () => (filter === 'all' ? calculs : calculs.filter((c) => c.formule.code === filter)),
     [calculs, filter],
   );
 
@@ -201,128 +293,184 @@ const FormulesView: React.FC = () => {
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
-        <AgritechLayout>
-          <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <PageHeader
-              eyebrow="ALIMENTS · FORMULES"
-              title="Formules"
-              subtitle="Compositions alimentaires"
+        <div className="phone-content" style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
+          <PageHeader
+            eyebrow="Stocks · Formules"
+            title="Formules"
+            subtitle={`${alimentFormules.length} recette${alimentFormules.length > 1 ? 's' : ''} par phase de cycle`}
+            onBack={() => navigate('/ressources')}
+          />
+
+          <div
+            className="card"
+            style={{
+              padding: 16,
+              marginBottom: 12,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                fontFamily: 'var(--pt-font-display)',
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                fontSize: 14,
+                letterSpacing: '0.04em',
+              }}
+            >
+              <Calculator size={16} aria-hidden style={{ color: 'var(--pt-accent)' }} />
+              Calculateur
+            </div>
+            <label
+              htmlFor="masse-aliment"
+              style={{
+                fontFamily: 'var(--pt-font-mono)',
+                fontSize: 11,
+                color: 'var(--pt-muted)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+              }}
+            >
+              Quantité d’aliment à préparer (kg)
+            </label>
+            <input
+              id="masse-aliment"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              step={50}
+              value={masseKg}
+              onChange={handleMasseChange}
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                borderRadius: 12,
+                border: '1px solid var(--pt-line-strong)',
+                background: 'var(--pt-bg)',
+                fontFamily: 'var(--pt-font-mono)',
+                fontSize: 14,
+                fontWeight: 600,
+                color: 'var(--pt-ink)',
+                minHeight: 44,
+              }}
             />
-
-            {/* ── Calculateur (Card DS) ────────────────────────────── */}
-            <Card compact>
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                  <Calculator size={16} className="text-accent" aria-hidden="true" />
-                  <span className="agritech-heading text-[15px] uppercase">
-                    Calculateur
-                  </span>
-                </div>
-
-                <FormField
-                  label="Quantité d'aliment à préparer (kg)"
-                  hint="Les quantités ci-dessous se recalculent automatiquement."
-                >
-                  <Input
-                    id="masse-aliment"
-                    type="number"
-                    inputMode="numeric"
-                    min={0}
-                    step={50}
-                    value={masseKg}
-                    onChange={handleMasseChange}
-                  />
-                </FormField>
-
-                <div
-                  className="flex flex-wrap gap-2"
-                  role="group"
-                  aria-label="Préréglages de masse"
-                >
-                  {PRESETS_KG.map((p) => {
-                    const active = masseKg === p.value;
-                    return (
-                      <Button
-                        key={p.value}
-                        variant={active ? 'primary' : 'secondary'}
-                        size="small"
-                        onClick={() => setMasseKg(p.value)}
-                        aria-pressed={active}
-                      >
-                        {p.label}
-                      </Button>
-                    );
-                  })}
-                </div>
-              </div>
-            </Card>
-
-            {/* ── Tabs DS — filtre phase ────────────────────────────── */}
-            {alimentFormules.length > 0 && (
-              <Card compact>
-                <Tabs
-                  value={filter}
-                  onChange={setFilter}
-                  options={filterOptions}
-                  ariaLabel="Filtrer les formules par phase"
-                />
-              </Card>
-            )}
-
-            {/* ── Section liste formules ────────────────────────────── */}
-            <Section label={`${filteredCalculs.length} formule${filteredCalculs.length > 1 ? 's' : ''}`} />
-
-            {alimentFormules.length === 0 ? (
-              <EmptyState
-                icon={<ClipboardList size={32} aria-hidden="true" />}
-                title="Aucune formule"
-                description="Ajoute l'onglet ALIMENT_FORMULES dans Sheets, ou utilise les formules de démo."
-              />
-            ) : filteredCalculs.length === 0 ? (
-              <EmptyState
-                icon={<ClipboardList size={32} aria-hidden="true" />}
-                title="Aucune formule dans ce filtre"
-                description="Sélectionne « Toutes » pour voir toutes les formules disponibles."
-              />
-            ) : (
-              <div
-                className="flex flex-col gap-3"
-                aria-live="polite"
-                aria-atomic="false"
-              >
-                {filteredCalculs.map(({ formule, calcul }) => (
-                  <FormuleCard
-                    key={formule.code}
-                    formule={formule}
-                    calcul={calcul}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* ── Footer — lien vers Plan Alimentation ─────────────── */}
-            <Card compact>
-              <div className="flex items-start gap-2">
-                <ClipboardList
-                  size={16}
-                  className="mt-0.5 text-accent shrink-0"
-                  aria-hidden="true"
-                />
-                <p className="text-[12px] text-text-2 leading-relaxed">
-                  Pour les rations journalières par catégorie et la couverture
-                  des stocks, voir{' '}
-                  <a
-                    href="/ressources/aliments/plan"
-                    className="text-accent underline underline-offset-2"
+            <div
+              role="group"
+              aria-label="Préréglages de masse"
+              style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}
+            >
+              {PRESETS_KG.map((p) => {
+                const active = masseKg === p.value;
+                return (
+                  <button
+                    key={p.value}
+                    type="button"
+                    onClick={() => setMasseKg(p.value)}
+                    aria-pressed={active}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: 999,
+                      border: '1px solid var(--pt-line-strong)',
+                      background: active ? 'var(--pt-ink)' : 'transparent',
+                      color: active ? 'var(--pt-warm)' : 'var(--pt-muted)',
+                      fontFamily: 'var(--pt-font-mono)',
+                      fontSize: 11,
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.10em',
+                      cursor: 'pointer',
+                      minHeight: 36,
+                    }}
                   >
-                    Plan Alimentation
-                  </a>
-                  .
-                </p>
-              </div>
-            </Card>
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+            <p style={{ fontSize: 12, color: 'var(--pt-muted)', margin: 0 }}>
+              Les quantités ci-dessous se recalculent automatiquement.
+            </p>
           </div>
-        </AgritechLayout>
+
+          {alimentFormules.length > 0 && (
+            <div className="chips" style={{ marginBottom: 4 }}>
+              {filterOptions.map((opt) => {
+                const active = filter === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className="chip"
+                    aria-pressed={active}
+                    onClick={() => setFilter(opt.value)}
+                  >
+                    {opt.label}
+                    {opt.value !== 'all' && (
+                      <span className="num">{opt.count}</span>
+                    )}
+                    {opt.value === 'all' && (
+                      <span className="num">{alimentFormules.length}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          <Section
+            label={`${filteredCalculs.length} formule${filteredCalculs.length > 1 ? 's' : ''}`}
+          >
+            {alimentFormules.length === 0 ? (
+              <div className="empty">
+                <FlaskConical size={48} strokeWidth={1.25} color="var(--pt-subtle)" aria-hidden />
+                <div style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 900, fontSize: 22, textTransform: 'uppercase', letterSpacing: '-0.01em' }}>
+                  Aucune formule
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--pt-muted)' }}>
+                  Charge l’onglet ALIMENT_FORMULES côté Sheets, ou ajoute une formule de démo.
+                </div>
+              </div>
+            ) : filteredCalculs.length === 0 ? (
+              <div className="empty">
+                <FlaskConical size={40} strokeWidth={1.25} color="var(--pt-subtle)" aria-hidden />
+                <div style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 900, fontSize: 18, textTransform: 'uppercase' }}>
+                  Aucune formule dans ce filtre
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--pt-muted)' }}>
+                  Sélectionne « Toutes » pour voir toutes les formules disponibles.
+                </div>
+              </div>
+            ) : (
+              filteredCalculs.map(({ formule, calcul }) => (
+                <FormuleCard key={formule.code} formule={formule} calcul={calcul} />
+              ))
+            )}
+          </Section>
+
+          <button
+            type="button"
+            className="card-link"
+            style={{ borderStyle: 'dashed', marginTop: 4 }}
+            onClick={() => navigate('/ressources/aliments/plan')}
+            aria-label="Voir le plan d’alimentation"
+          >
+            <div className="card-link__icon" aria-hidden>
+              <Plus size={18} />
+            </div>
+            <div className="card-link__main">
+              <div className="card-link__title">Plan d’alimentation</div>
+              <div className="card-link__sub">
+                Couverture des stocks et rations journalières par catégorie.
+              </div>
+            </div>
+            <span className="card-link__chev"><ChevronRight aria-hidden /></span>
+          </button>
+        </div>
       </IonContent>
     </IonPage>
   );

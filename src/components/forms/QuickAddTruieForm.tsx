@@ -1,47 +1,34 @@
 /**
- * QuickAddTruieForm — Création rapide d'une nouvelle truie
+ * QuickAddTruieForm — Création rapide d'une truie (Sprint 5 v76)
  * ════════════════════════════════════════════════════════════════════════
- * BottomSheet : 5 champs rapides (ID auto-suggéré · Boucle · Nom · Stade ·
- * Ration). Submit → `enqueueAppendRow('SUIVI_TRUIES_REPRODUCTION', [...])`
- * avec l'ordre canonique des colonnes (cf. `docs/SHEETS_SCHEMA_TARGET.md`
- * + `mapTruie` dans `src/mappers/index.ts`) :
+ * Sheet bottom v76 · Code mono auto-gen · Boucle · Statut radio-chips ·
+ * Date naissance · Loge select · Truie mère autocomplete · Verrat origine.
  *
- *   ID · Nom · Boucle · Statut · Stade · Nb Portées · Dernière portée NV ·
- *   Date MB prévue · Ration kg/j · Notes
- *
- * - ID auto-suggéré = "T" + max(id numérique existant) + 1 (fallback "T20")
- * - Validation :
- *     · ID format /^T\d+$/i (insensible casse)
- *     · Boucle non vide (trim)
- *     · Ration 0..10
- * - Toast online/offline + refreshData() au succès
- *
- * Compagnon tests : QuickAddTruieForm.test.tsx
- *
- * Exports nommés (utilisés par les tests, logique pure) :
- *   - validateAddTruie()
- *   - buildAddTruieRow()
- *   - suggestNextTruieId()
+ * Compagnon tests : QuickAddTruieForm.test.tsx (logique pure node env).
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
-import { Plus, Save } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { IonModal } from '@ionic/react';
+import { Check, X } from 'lucide-react';
 
-import { AppToast, BottomSheet, useAppToast } from '../agritech';
-import { FormField, Input, Button, Segment } from '@/design-system';
-import { insertSow } from '../../services/supabaseWrites';
+import { AppToast, useAppToast } from '../agritech';
+import { insertSow, listLoges } from '../../services/supabaseWrites';
 import { enqueueInsert, isOnline } from '../../services/offlineQueue';
 import { useFarm } from '../../context/FarmContext';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import {
-  STADES,
   suggestNextTruieId,
   validateAddTruie,
   type AddTruieValidation,
-  type StadeChoice,
 } from './quickAddTruieLogic';
+import type { Truie, Loge } from '../../types/farm';
 
-// ─── Composant ───────────────────────────────────────────────────────────────
+type StatutChoice = 'Vide' | 'Pleine' | 'Maternité';
+const STATUT_CHOICES: ReadonlyArray<{ key: StatutChoice; label: string; storeAs: string }> = [
+  { key: 'Vide', label: 'Vide', storeAs: 'En attente saillie' },
+  { key: 'Pleine', label: 'Pleine', storeAs: 'Pleine' },
+  { key: 'Maternité', label: 'Materni.', storeAs: 'En maternité' },
+];
 
 interface QuickAddTruieFormProps {
   isOpen: boolean;
@@ -49,248 +36,176 @@ interface QuickAddTruieFormProps {
   onSuccess?: () => void;
 }
 
-const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({
-  isOpen,
-  onClose,
-  onSuccess,
-}) => {
-  const { truies, refreshData } = useFarm();
-
+const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({ isOpen, onClose, onSuccess }) => {
+  const { truies, verrats, refreshData } = useFarm();
   const suggestedId = useMemo(() => suggestNextTruieId(truies), [truies]);
-
-  const [id, setId] = useState<string>(suggestedId);
+  const [code, setCode] = useState<string>(suggestedId);
   const [boucle, setBoucle] = useState<string>('');
-  const [nom, setNom] = useState<string>('');
-  const [stade, setStade] = useState<StadeChoice>('Adulte');
-  const [ration, setRation] = useState<string>('3.0');
+  const [statut, setStatut] = useState<StatutChoice>('Vide');
+  const [dateNaissance, setDateNaissance] = useState<string>('');
+  const [logeId, setLogeId] = useState<string>('');
+  const [truieMereQuery, setTruieMereQuery] = useState<string>('');
+  const [truieMereId, setTruieMereId] = useState<string>('');
+  const [verratOrigineId, setVerratOrigineId] = useState<string>('');
   const [errors, setErrors] = useState<AddTruieValidation['errors']>({});
   const [saving, setSaving] = useState(false);
   const { show: showToast, toastProps } = useAppToast();
+  const [loges, setLoges] = useState<Loge[]>([]);
 
-  // Reset à l'ouverture (render-time sync)
-  const [lastKey, setLastKey] = useState<{ isOpen: boolean; suggestedId: string }>({
-    isOpen,
-    suggestedId,
-  });
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    listLoges()
+      .then(rows => { if (!cancelled) setLoges(rows.filter(l => l.active)); })
+      .catch(() => { if (!cancelled) setLoges([]); });
+    return () => { cancelled = true; };
+  }, [isOpen]);
+
+  const [lastKey, setLastKey] = useState<{ isOpen: boolean; suggestedId: string }>({ isOpen, suggestedId });
   if (lastKey.isOpen !== isOpen || lastKey.suggestedId !== suggestedId) {
     setLastKey({ isOpen, suggestedId });
     if (isOpen) {
-      setId(suggestedId);
-      setBoucle('');
-      setNom('');
-      setStade('Adulte');
-      setRation('3.0');
-      setErrors({});
-      setSaving(false);
+      setCode(suggestedId); setBoucle(''); setStatut('Vide'); setDateNaissance('');
+      setLogeId(''); setTruieMereQuery(''); setTruieMereId(''); setVerratOrigineId('');
+      setErrors({}); setSaving(false);
     }
   }
 
-  const handleClose = useCallback(() => {
-    if (saving) return;
-    onClose();
-  }, [onClose, saving]);
-
-  // A11y : Esc ferme + focus auto
+  const handleClose = useCallback(() => { if (!saving) onClose(); }, [onClose, saving]);
   useEscapeKey(isOpen && !saving, handleClose);
   const firstFieldRef = useFocusFirstInput<HTMLInputElement>(isOpen);
 
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
-    e.preventDefault();
-    const result = validateAddTruie({ id, boucle, nom, stade, ration });
-    if (!result.ok || !result.row) {
-      setErrors(result.errors);
-      return;
-    }
-    setErrors({});
-    setSaving(true);
+  const truieMereSuggestions = useMemo<Truie[]>(() => {
+    const q = truieMereQuery.trim().toLowerCase();
+    if (!q) return [];
+    return truies.filter(t => {
+      const id = (t.displayId || t.id || '').toLowerCase();
+      const b = (t.boucle || '').toLowerCase();
+      return id.includes(q) || b.includes(q);
+    }).slice(0, 6);
+  }, [truies, truieMereQuery]);
+
+  const selectMere = (t: Truie): void => {
+    const c = t.displayId || t.id;
+    setTruieMereId(c);
+    setTruieMereQuery(c);
+  };
+
+  const isValid = !!code.trim() && !!boucle.trim();
+
+  const handleSubmit = async (e?: React.FormEvent | React.MouseEvent): Promise<void> => {
+    if (e) e.preventDefault();
+    const result = validateAddTruie({ id: code, boucle, nom: '', stade: 'Adulte', ration: '3.0' });
+    if (!result.ok || !result.row) { setErrors(result.errors); return; }
+    setErrors({}); setSaving(true);
     try {
       const row = result.row;
-      const sowValues = {
+      const sowValues: Record<string, unknown> = {
         code_id: row[0] as string,
         name: (row[1] as string) || null,
         boucle: (row[2] as string) || null,
-        statut: row[3] as string,
+        statut: STATUT_CHOICES.find(s => s.key === statut)?.storeAs ?? row[3],
         nb_portees: row[5] as number,
         ration_kg_j: row[8] as number,
       };
-      // E3 : offline-aware. Online → insert direct. Offline → queue + flush
-      // automatique au reconnect (cf. installOnlineFlushListener).
+      if (dateNaissance) sowValues.date_naissance = dateNaissance;
+      if (logeId) sowValues.loge_id = logeId;
+      if (truieMereId) sowValues.mere_code_id = truieMereId;
+      if (verratOrigineId) sowValues.pere_code_id = verratOrigineId;
       const online = isOnline();
-      if (online) {
-        await insertSow(sowValues);
-      } else {
-        await enqueueInsert('sows', sowValues);
-      }
-      showToast(
-        online ? 'Truie ajoutée' : 'Truie en file · sync auto',
-        online ? 'success' : 'info',
-        { duration: 1800 },
-      );
-      try {
-        await refreshData(true);
-      } catch {
-        /* noop */
-      }
+      if (online) await insertSow(sowValues as Parameters<typeof insertSow>[0]);
+      else await enqueueInsert('sows', sowValues);
+      showToast(online ? 'Truie ajoutée' : 'Truie en file · sync auto', online ? 'success' : 'info', { duration: 1800 });
+      try { await refreshData(true); } catch { /* noop */ }
       if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
-      showToast(
-        err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement',
-        'error',
-        { duration: 1800 },
-      );
-    } finally {
-      setSaving(false);
-    }
+      showToast(err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement', 'error', { duration: 1800 });
+    } finally { setSaving(false); }
   };
+
+  const errMsg = (msg?: string): React.ReactNode =>
+    msg ? <span role="alert" style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 11, color: 'var(--pt-danger)' }}>{msg}</span> : null;
 
   return (
     <>
-      <BottomSheet
-        isOpen={isOpen}
-        onClose={handleClose}
-        title="Nouvelle truie"
-        height="full"
-      >
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-5"
-          noValidate
-          aria-label="Création d'une nouvelle truie"
-        >
-          {/* Header */}
-          <div className="flex items-center gap-3">
-            <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
-              <Plus size={18} aria-hidden="true" />
+      <IonModal isOpen={isOpen} onDidDismiss={handleClose} className="agritech-bottom-sheet pt-sheet-modal" aria-label="Ajouter une truie">
+        <div className="ion-page" style={{ position: 'relative', overflow: 'auto' }}>
+          <form className="sheet" onSubmit={handleSubmit} noValidate aria-label="Création d'une truie" style={{ position: 'relative', height: '100%', maxHeight: '100%' }}>
+            <div className="sheet__handle" />
+            <header className="sheet__head">
+              <div>
+                <div className="eyebrow">Nouvelle truie</div>
+                <h2>Ajouter une truie</h2>
+              </div>
+              <button type="button" className="sheet__close" onClick={handleClose} aria-label="Fermer" disabled={saving}>
+                <X size={14} aria-hidden="true" />
+              </button>
+            </header>
+            <div className="sheet__body">
+              <div className="field">
+                <label className="field__label" htmlFor="add-truie-code">CODE <span className="hint">auto-généré</span></label>
+                <input id="add-truie-code" ref={firstFieldRef} className={`field__input mono${code ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={10} autoCapitalize="characters" aria-label="Code de la truie" aria-required="true" aria-invalid={!!errors.id} placeholder="T-051" value={code} onChange={e => setCode(e.target.value)} disabled={saving} autoComplete="off" />
+                {errMsg(errors.id)}
+              </div>
+              <div className="field">
+                <label className="field__label" htmlFor="add-truie-boucle">BOUCLE OFFICIELLE <span className="req">requis</span></label>
+                <input id="add-truie-boucle" className={`field__input mono${boucle ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={20} aria-label="Numéro de boucle" aria-required="true" aria-invalid={!!errors.boucle} placeholder="CI-051-26" value={boucle} onChange={e => setBoucle(e.target.value)} disabled={saving} autoComplete="off" />
+                {errMsg(errors.boucle)}
+              </div>
+              <div className="field">
+                <label className="field__label">STATUT</label>
+                <div className="radio-chips" role="radiogroup" aria-label="Statut">
+                  {STATUT_CHOICES.map(s => (
+                    <button key={s.key} type="button" className="radio-chip" role="radio" aria-checked={statut === s.key} onClick={() => setStatut(s.key)} disabled={saving}>{s.label}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="field">
+                <label className="field__label" htmlFor="add-truie-naissance">DATE NAISSANCE</label>
+                <input id="add-truie-naissance" className={`field__input mono${dateNaissance ? ' filled' : ' field__input--ghost'}`} type="date" aria-label="Date de naissance" value={dateNaissance} onChange={e => setDateNaissance(e.target.value)} disabled={saving} />
+              </div>
+              {loges.length > 0 ? (
+                <div className="field">
+                  <label className="field__label" htmlFor="add-truie-loge">LOGE ACTUELLE</label>
+                  <select id="add-truie-loge" className={`field__input${logeId ? ' mono filled' : ' field__input--ghost'}`} aria-label="Loge actuelle" value={logeId} onChange={e => setLogeId(e.target.value)} disabled={saving}>
+                    <option value="">— Sélectionner —</option>
+                    {loges.map(l => <option key={l.id} value={l.id}>{l.numero}{l.type ? ` · ${l.type}` : ''}</option>)}
+                  </select>
+                </div>
+              ) : null}
+              <div className="field">
+                <label className="field__label" htmlFor="add-truie-mere">TRUIE MÈRE <span className="hint">optionnel</span></label>
+                <input id="add-truie-mere" className={`field__input mono${truieMereId ? ' filled' : ' field__input--ghost'}`} type="text" aria-label="Truie mère" placeholder="Rechercher T-…" value={truieMereQuery} onChange={e => { setTruieMereQuery(e.target.value); if (e.target.value === '') setTruieMereId(''); }} disabled={saving} autoComplete="off" />
+                {truieMereSuggestions.length > 0 && truieMereQuery !== truieMereId ? (
+                  <div role="listbox" style={{ marginTop: 4, border: '1px solid var(--pt-line)', borderRadius: 10, background: 'var(--pt-bg)', maxHeight: 200, overflowY: 'auto' }}>
+                    {truieMereSuggestions.map(t => (
+                      <button key={t.id} type="button" role="option" aria-selected={false} onClick={() => selectMere(t)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: 'transparent', border: 'none', fontFamily: 'var(--pt-font-mono)', fontSize: 12, color: 'var(--pt-ink)', cursor: 'pointer', minHeight: 44 }}>
+                        {t.displayId || t.id}{t.nom ? ` · ${t.nom}` : ''}{t.boucle ? ` (${t.boucle})` : ''}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+              {verrats.length > 0 ? (
+                <div className="field">
+                  <label className="field__label" htmlFor="add-truie-verrat">VERRAT ORIGINE <span className="hint">optionnel</span></label>
+                  <select id="add-truie-verrat" className={`field__input${verratOrigineId ? ' mono filled' : ' field__input--ghost'}`} aria-label="Verrat origine" value={verratOrigineId} onChange={e => setVerratOrigineId(e.target.value)} disabled={saving}>
+                    <option value="">— Aucun —</option>
+                    {verrats.map(v => <option key={v.id} value={v.displayId || v.id}>{v.displayId || v.id}{v.nom ? ` · ${v.nom}` : ''}</option>)}
+                  </select>
+                </div>
+              ) : null}
             </div>
-            <p className="text-mono-label text-text-1">
-              Ajouter une truie au troupeau
-            </p>
-          </div>
-
-          <FormField
-            label="ID"
-            hint={errors.id ? undefined : 'Format T suivi de chiffres (ex: T20)'}
-            error={errors.id}
-          >
-            <Input
-              id="add-truie-id"
-              ref={firstFieldRef}
-              type="text"
-              maxLength={10}
-              autoCapitalize="characters"
-              aria-label="Identifiant de la truie"
-              aria-required="true"
-              aria-invalid={!!errors.id}
-              aria-describedby={
-                errors.id ? 'add-truie-id-error' : 'add-truie-id-hint'
-              }
-              className="ft-code uppercase tabular-nums"
-              placeholder="T20"
-              value={id}
-              onChange={e => setId(e.target.value)}
-              disabled={saving}
-              autoComplete="off"
-              invalid={!!errors.id}
-            />
-          </FormField>
-
-          <FormField label="Boucle" required error={errors.boucle}>
-            <Input
-              id="add-truie-boucle"
-              type="text"
-              maxLength={20}
-              aria-label="Numéro de boucle de la truie"
-              aria-required="true"
-              aria-invalid={!!errors.boucle}
-              aria-describedby={errors.boucle ? 'add-truie-boucle-error' : undefined}
-              className="ft-code tabular-nums"
-              placeholder="FR-12345"
-              value={boucle}
-              onChange={e => setBoucle(e.target.value)}
-              disabled={saving}
-              autoComplete="off"
-              invalid={!!errors.boucle}
-            />
-          </FormField>
-
-          <FormField label="Nom" hint="optionnel">
-            <Input
-              id="add-truie-nom"
-              type="text"
-              maxLength={30}
-              aria-label="Nom de la truie"
-              placeholder="Ex: Berthe"
-              value={nom}
-              onChange={e => setNom(e.target.value)}
-              disabled={saving}
-              autoComplete="off"
-            />
-          </FormField>
-
-          <FormField label="Stade">
-            <Segment<StadeChoice>
-              value={stade}
-              onChange={v => setStade(v)}
-              options={STADES.map(s => ({ value: s, label: s }))}
-              ariaLabel="Stade physiologique"
-            />
-          </FormField>
-
-          <FormField
-            label="Ration (kg/j)"
-            hint={errors.ration ? undefined : '0 à 10 kg/j · défaut 3.0'}
-            error={errors.ration}
-          >
-            <Input
-              id="add-truie-ration"
-              type="number"
-              inputMode="decimal"
-              min={0}
-              max={10}
-              step={0.1}
-              aria-label="Ration alimentaire en kilogrammes par jour"
-              aria-required="true"
-              aria-invalid={!!errors.ration}
-              aria-describedby={
-                errors.ration ? 'add-truie-ration-error' : 'add-truie-ration-hint'
-              }
-              className="text-[22px] tabular-nums text-center font-semibold"
-              placeholder="3.0"
-              value={ration}
-              onChange={e => setRation(e.target.value)}
-              disabled={saving}
-              invalid={!!errors.ration}
-            />
-          </FormField>
-
-          <div className="flex gap-3 justify-end pt-2 border-t border-border">
-            <Button
-              variant="ghost"
-              onClick={handleClose}
-              disabled={saving}
-              ariaLabel="Annuler et fermer"
-            >
-              Annuler
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={saving}
-              aria-busy={saving}
-              ariaLabel="Ajouter la truie au troupeau"
-            >
-              {saving ? 'Enregistrement…' : (
-                <span className="inline-flex items-center gap-2">
-                  Ajouter
-                  <Save size={14} aria-hidden="true" />
-                </span>
-              )}
-            </Button>
-          </div>
-        </form>
-      </BottomSheet>
-
+            <footer className="sheet__foot">
+              <button type="button" className="btn btn--ghost" onClick={handleClose} disabled={saving} aria-label="Annuler et fermer">Annuler</button>
+              <button type="submit" className="btn btn--primary" disabled={saving || !isValid} aria-busy={saving} aria-label="Ajouter la truie au troupeau">
+                {saving ? 'Enregistrement…' : <><Check size={14} aria-hidden="true" /> Enregistrer la truie</>}
+              </button>
+            </footer>
+          </form>
+        </div>
+      </IonModal>
       <AppToast {...toastProps} />
     </>
   );
