@@ -46,7 +46,7 @@ function renderInline(text: string): React.ReactNode {
       kind = 'code';
     }
     if (kind === null) {
-      parts.push(<React.Fragment key={key++}>{remaining}</React.Fragment>);
+      parts.push(<React.Fragment key={key}>{remaining}</React.Fragment>);
       break;
     }
     if (firstIdx > 0) {

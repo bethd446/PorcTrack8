@@ -1249,7 +1249,7 @@ function sectionStyle(): React.CSSProperties {
 
 function formatFcfa(n: number): string {
   // Espaces fines comme séparateurs de milliers (lecture éleveur).
-  return Math.round(n).toLocaleString('fr-FR').replace(/ | /g, ' ');
+  return Math.round(n).toLocaleString('fr-FR').replace(/[\u202F\u00A0]/g, ' ');
 }
 
 function PerfCell({

@@ -300,12 +300,10 @@ const PREFIX_TO_CATEGORY: Record<string, NotifCategoryKey> = {
 export function isWebSupported(): boolean {
   if (typeof navigator === 'undefined' || typeof window === 'undefined') return false;
   if (Capacitor.isNativePlatform()) return false;
-  return (
-    'Notification' in window &&
-    'serviceWorker' in navigator &&
-    'showNotification' in (window as unknown as { ServiceWorkerRegistration?: { prototype?: object } })
-      .ServiceWorkerRegistration?.prototype
-  );
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return false;
+  const swrProto = (window as unknown as { ServiceWorkerRegistration?: { prototype?: object } })
+    .ServiceWorkerRegistration?.prototype;
+  return swrProto != null && 'showNotification' in swrProto;
 }
 
 /**

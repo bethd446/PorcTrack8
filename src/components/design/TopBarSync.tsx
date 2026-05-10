@@ -50,9 +50,11 @@ function useFarmRoleBadge(): { nomFerme: string; currentRole: FarmRole } | null 
   let currentRole: FarmRole | null = null;
   let nomFerme = '';
   try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks -- safe accessor : AuthProvider absent en tests legacy (cf. JSDoc)
     currentRole = useAuth().currentRole;
   } catch { /* AuthProvider absent en test */ }
   try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks -- safe accessor : FarmProvider absent en tests legacy (cf. JSDoc)
     nomFerme = useFarm().nomFerme;
   } catch { /* FarmProvider absent en test */ }
   if (!currentRole || !nomFerme) return null;

@@ -6,7 +6,7 @@
  */
 import sharp from 'sharp';
 import { readdir, stat } from 'node:fs/promises';
-import { join, basename, dirname } from 'node:path';
+import { join } from 'node:path';
 
 const ROOT = new URL('../public/images/v73/', import.meta.url).pathname;
 
@@ -79,7 +79,6 @@ async function process(rel, spec) {
 }
 
 console.log('=== Compression V73 (sharp + mozjpeg) ===');
-let total = 0;
 for (const [rel, spec] of Object.entries(SPEC)) {
   await process(rel, spec);
 }
