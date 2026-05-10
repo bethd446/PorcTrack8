@@ -16,9 +16,9 @@
  */
 
 import React, { useMemo, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { IonContent, IonModal, IonPage, IonToast, useIonAlert } from '@ionic/react';
-import { Pencil, Printer } from 'lucide-react';
+import { ChevronRight, MoreHorizontal, Pencil, Printer } from 'lucide-react';
 
 import { useFarm } from '../../context/FarmContext';
 import { useEntityWithRetry } from '../../hooks/useEntityWithRetry';
@@ -38,8 +38,8 @@ import QuickConfirmSortieForm, {
 import TruieEventActionSheet, { type TruieEventAction } from '../../components/forms/TruieEventActionSheet';
 
 import Chip from '../../components/design/Chip';
-import SowHero, { type SowHeroChip } from '../../components/design/SowHero';
-import { Tabs, Button, Card, Tag, PageHeader, Section, safeDisplay } from '@/design-system';
+import { type SowHeroChip } from '../../components/design/SowHero';
+import { Tabs, Button, Tag, Section, safeDisplay } from '@/design-system';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import EditTruieWizard from '../../components/forms/EditTruieWizard';
 import ReproTracker, { type ReproStage } from '../../components/design/ReproTracker';
@@ -507,34 +507,49 @@ const TruieDetailView: React.FC = () => {
             paddingBottom: 168,
           }}
         >
-          {/* TopBar synchro (composant partagé) */}
+          {/* TopBar synchro — breadcrumb désormais dans le header .ph--primary */}
           <TopBarSync
-            crumbs={[
-              { label: 'Élevage', href: '/troupeau' },
-              { label: 'Truies', href: '/troupeau?view=truies' },
-              `${truie.displayId}${truie.nom ? ` · ${truie.nom}` : ''}`,
-            ]}
+            crumbs={[]}
             onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
           />
 
-          <div style={{ padding: '16px 22px 24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-            {/* V41 Phase C1 — Header sobre via PageHeader (eyebrow + h1 + subtitle 1 ligne) */}
-            {/* V71 lisibilité : subtitle enrichi avec phase repro + J post-saillie pour donner le contexte d'un coup d'œil */}
-            <PageHeader
-              eyebrow="Élevage · Truie"
-              title={safeDisplay(truie.displayId)}
-              subtitle={(() => {
-                const parts: string[] = [];
+          {/* V76 — Header cahier d'éleveur : --pt-primary opaque, ancre visuelle de la fiche */}
+          <header className="ph ph--primary">
+            <div className="ph__crumb">
+              <Link to="/troupeau">Élevage</Link>
+              <ChevronRight aria-hidden />
+              <Link to="/troupeau?view=truies">Truies</Link>
+              <ChevronRight aria-hidden />
+              <b>{safeDisplay(truie.displayId)}</b>
+            </div>
+            <div className="ph__row">
+              <div>
+                <div className="ph__eyebrow">Élevage · Truie</div>
+                <h1 className="ph__h1">{safeDisplay(truie.displayId)}</h1>
+              </div>
+              <button
+                type="button"
+                className="iconbtn"
+                onClick={() => setEventSheetOpen(true)}
+                aria-label="Ouvrir les actions"
+              >
+                <MoreHorizontal aria-hidden />
+              </button>
+            </div>
+            <p className="ph__sub">
+              {(() => {
+                const nom = (truie.nom && truie.nom.trim()) || (truie.boucle && truie.boucle.trim()) || null;
+                const parts: React.ReactNode[] = [];
+                if (nom) parts.push(<b key="nom">{nom}</b>);
                 if (truie.statut) parts.push(labelStatutTruie(truie.statut));
                 if (cycleData) parts.push(`J${cycleData.dayPost} post-saillie`);
                 else if (truie.nbPortees != null) parts.push(`${truie.nbPortees} portée${truie.nbPortees > 1 ? 's' : ''}`);
-                return parts.length > 0 ? parts.join(' · ') : undefined;
+                if (truie.race) parts.push(truie.race);
+                return parts.flatMap((p, i) => i === 0 ? [<React.Fragment key={`s-${i}`}>{p}</React.Fragment>] : [' · ', <React.Fragment key={`s-${i}`}>{p}</React.Fragment>]);
               })()}
-            />
-
-            {/* V45 P3A — Hero compact archétype 4 : EntityAvatar xl + tags + actions inline */}
-            <Card>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', minHeight: 96 }}>
+            </p>
+            <div className="id-strip">
+              <span data-av-xl>
                 <EntityAvatar
                   species="truie"
                   photoUrl={truie.photoUrl}
@@ -542,31 +557,37 @@ const TruieDetailView: React.FC = () => {
                   shortCode={truie.displayId}
                   useV73Defaults
                 />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 200 }}>
-                  <div style={{ fontFamily: 'var(--pt-font-display)', fontSize: 18, fontWeight: 700, color: 'var(--pt-text)' }}>
-                    {safeDisplay(
-                      (truie.nom && truie.nom.trim()) || (truie.boucle && truie.boucle.trim()) || truie.displayId,
-                    )}
-                    {truie.race ? <span style={{ fontFamily: 'var(--pt-font-body)', fontSize: 13, fontWeight: 400, color: 'var(--pt-text-muted)', marginLeft: 8 }}>— {truie.race}</span> : null}
-                  </div>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    {heroChips.map((c, i) => (
-                      <span key={`${c.label}-${i}`}>
-                        <Tag variant={c.tone === 'amber' ? 'warning' : c.tone === 'green' ? 'primary' : c.tone === 'pig' ? 'accent' : c.tone === 'terre' ? 'soft' : 'default'}>{c.label}</Tag>
-                      </span>
-                    ))}
-                  </div>
+              </span>
+              <div className="id-strip__meta">
+                <div className="id-strip__row">
+                  {heroChips.map((c, i) => (
+                    <span key={`${c.label}-${i}`}>
+                      <Tag variant={c.tone === 'amber' ? 'warning' : c.tone === 'green' ? 'primary' : c.tone === 'pig' ? 'accent' : c.tone === 'terre' ? 'soft' : 'default'}>{c.label}</Tag>
+                    </span>
+                  ))}
                 </div>
-                <div style={{ display: 'flex', gap: 8, marginLeft: 'auto', flexShrink: 0, flexWrap: 'wrap' }}>
-                  <Button variant="primary" size="sm" onClick={() => setEventSheetOpen(true)}>
-                    + Saisir évènement
-                  </Button>
-                  <Button variant="secondary" size="sm" onClick={() => setEditWizardOpen(true)}>
-                    <Pencil size={14} strokeWidth={2} aria-hidden /> Modifier
-                  </Button>
-                </div>
+                {truie.boucle ? <div>Boucle <b>{truie.boucle}</b></div> : null}
+                {truie.dateNaissance || truie.poids != null ? (
+                  <div>
+                    {truie.dateNaissance ? <>Née <b>{formatDate(truie.dateNaissance)}</b></> : null}
+                    {truie.dateNaissance && truie.poids != null ? ' · ' : null}
+                    {truie.poids != null ? <>{truie.poids} kg</> : null}
+                  </div>
+                ) : null}
               </div>
-            </Card>
+            </div>
+          </header>
+
+          <div style={{ padding: '0 22px 24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {/* Actions principales déplacées sous le header (V76) */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <Button variant="primary" size="sm" onClick={() => setEventSheetOpen(true)}>
+                + Saisir évènement
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => setEditWizardOpen(true)}>
+                <Pencil size={14} strokeWidth={2} aria-hidden /> Modifier
+              </Button>
+            </div>
 
             {/* CTA Mise-bas imminente : J-3 → J+5 si truie Pleine */}
             {/* min-height réservé pour éviter CLS quand la section apparaît après chargement */}

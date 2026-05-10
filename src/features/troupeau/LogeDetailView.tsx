@@ -1,17 +1,18 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   IonContent,
   IonPage,
   IonToast,
   useIonAlert,
 } from '@ionic/react';
-import { Home, ChevronLeft, Pencil, Archive, Users, ArrowLeftRight } from 'lucide-react';
+import { Home, ChevronLeft, ChevronRight, MoreHorizontal, Pencil, Archive, Users, ArrowLeftRight } from 'lucide-react';
 
 import EmptyState from '../../components/design/EmptyState';
 import TopBarSync from '../../components/design/TopBarSync';
 import { AnimalListItem, Chip, SectionDivider } from '../../components/agritech';
-import { Button, PageHeader } from '@/design-system';
+import { Button } from '@/design-system';
+import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import PhotoUpload from '../../v70/components/v70/PhotoUpload';
 import PhotoGallery from '../../v70/components/v70/PhotoGallery';
 
@@ -204,47 +205,79 @@ const LogeDetailView: React.FC = () => {
           }}
         >
           <TopBarSync
-            crumbs={['Élevage', 'Loges', loge.numero]}
+            crumbs={[]}
             onMariusClick={() => {
               const evt = new CustomEvent('open-chatbot');
               window.dispatchEvent(evt);
             }}
           />
 
+          {/* V76 — Header cahier d'éleveur : --pt-primary opaque */}
+          <header className="ph ph--primary">
+            <div className="ph__crumb">
+              <Link to="/troupeau">Élevage</Link>
+              <ChevronRight aria-hidden />
+              <Link to="/troupeau?view=loges">Loges</Link>
+              <ChevronRight aria-hidden />
+              <b>{loge.numero}</b>
+            </div>
+            <div className="ph__row">
+              <div>
+                <div className="ph__eyebrow">Élevage · Loge</div>
+                <h1 className="ph__h1">{loge.numero}</h1>
+              </div>
+              <button
+                type="button"
+                className="iconbtn"
+                onClick={() => navigate('/troupeau?view=loges')}
+                aria-label="Ouvrir les actions"
+              >
+                <MoreHorizontal aria-hidden />
+              </button>
+            </div>
+            <p className="ph__sub">
+              <b>{LOGE_TYPE_LABELS[loge.type]}</b>
+              {loge.batiment ? <> · Bâtiment <b>{loge.batiment}</b></> : null}
+              {' · '}Occupation <b>{occupationLabel}</b>
+            </p>
+            <div className="id-strip">
+              <span data-av-xl>
+                <EntityAvatar
+                  species="bande"
+                  size="xl"
+                  shortCode={loge.numero}
+                />
+              </span>
+              <div className="id-strip__meta">
+                <div className="id-strip__row">
+                  <span className="pill pill--warm pill--no-dot">{LOGE_TYPE_LABELS[loge.type]}</span>
+                  {loge.batiment ? (
+                    <span className="pill pill--ghost pill--no-dot">Bât. {loge.batiment}</span>
+                  ) : null}
+                </div>
+                <div>Capacité <b>{loge.capaciteMax ?? '—'}</b></div>
+                <div>Occupation <b>{occupationLabel}</b></div>
+              </div>
+            </div>
+          </header>
+
           <div
-            className="px-4 pt-5 pb-44 flex flex-col gap-5"
+            className="px-4 pt-1 pb-44 flex flex-col gap-5"
             style={{ maxWidth: 1100, margin: '0 auto' }}
             data-testid="loge-detail-view"
           >
-            {/* ── Hero ──────────────────────────────────────────────── */}
-            <PageHeader
-              eyebrow="ÉLEVAGE · LOGE"
-              title={loge.numero}
-              subtitle="Détail occupation et historique"
-            />
-            <div className="flex items-start justify-between gap-3 flex-wrap">
-              <div className="flex flex-col gap-1 min-w-0">
-                <span className="text-[11px] uppercase tracking-wide text-text-2">
-                  {LOGE_TYPE_LABELS[loge.type]}
-                  {loge.batiment ? ` · Bâtiment ${loge.batiment}` : ''}
-                </span>
-                <span className="text-[12px] text-text-1 tabular-nums">
-                  Capacité {loge.capaciteMax ?? '—'} · Occupation {occupationLabel}
-                </span>
-                {loge.notes ? (
-                  <p className="mt-1 text-[12px] text-text-1">{loge.notes}</p>
-                ) : null}
-              </div>
-              <div className="flex gap-2 shrink-0">
-                <Button variant="secondary" size="small" onClick={() => navigate('/troupeau?view=loges')}>
-                  <Pencil size={13} aria-hidden="true" />
-                  Modifier
-                </Button>
-                <Button variant="danger" size="small" onClick={handleDeactivate} data-testid="deactivate-button">
-                  <Archive size={13} aria-hidden="true" />
-                  Désactiver
-                </Button>
-              </div>
+            {loge.notes ? (
+              <p className="text-[12px] text-text-1">{loge.notes}</p>
+            ) : null}
+            <div className="flex gap-2 shrink-0 flex-wrap">
+              <Button variant="secondary" size="small" onClick={() => navigate('/troupeau?view=loges')}>
+                <Pencil size={13} aria-hidden="true" />
+                Modifier
+              </Button>
+              <Button variant="danger" size="small" onClick={handleDeactivate} data-testid="deactivate-button">
+                <Archive size={13} aria-hidden="true" />
+                Désactiver
+              </Button>
             </div>
 
             {/* ── Occupation actuelle ──────────────────────────────── */}

@@ -1,20 +1,18 @@
 /**
- * QuickAddBandeForm — Création manuelle d'une bande historique
+ * QuickAddBandeForm — Création manuelle d'une bande (Sprint 5 v76)
  * ════════════════════════════════════════════════════════════════════════
- * BottomSheet : ID portée auto-suggéré · Truie mère · Verrat père · Date MB ·
- * Nés vivants · Morts-nés (+ M/F optionnels) · Statut · Loge · Notes.
+ * Sheet bottom v76 · Truie mère (autocomplete) · Date MB · NV/MN steppers
+ * · ID portée auto-suggéré (aperçu mensuel "Mai 2026 · M-04").
  *
- * NB : 99% des bandes sont auto-créées via la mise-bas (Agent B). Ce form
- * sert uniquement à importer une bande historique (ex: animaux antérieurs
- * à l'app). Submit → `insertBatch()` (Supabase) avec auto-injection du
- * `farm_id` via `runInsert`.
+ * NB : 99% des bandes sont auto-créées via la mise-bas. Ce form sert à
+ * importer une bande historique.
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { Plus, Save } from 'lucide-react';
+import { IonModal } from '@ionic/react';
+import { Check, Minus, Plus, X } from 'lucide-react';
 
-import { AppToast, BottomSheet, useAppToast } from '../agritech';
-import { FormField, Input, Select, Textarea, Button, Segment } from '@/design-system';
+import { AppToast, useAppToast } from '../agritech';
 import {
   insertBatch,
   resolveSowIdByCode,
@@ -23,7 +21,6 @@ import {
 import { useFarm } from '../../context/FarmContext';
 import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
 import {
-  BANDE_STATUTS_INITIAUX,
   suggestNextIdPortee,
   validateAddBande,
   type AddBandeValidation,
@@ -34,8 +31,8 @@ import {
   validateDatePresentOrPast,
   validateEffectif,
 } from '../../lib/validation/farmValidators';
-
-// ─── Composant ───────────────────────────────────────────────────────────────
+import type { Truie } from '../../types/farm';
+import { formatDateFr } from '../../v70/lib/formatters';
 
 interface QuickAddBandeFormProps {
   isOpen: boolean;
@@ -43,58 +40,36 @@ interface QuickAddBandeFormProps {
   onSuccess?: () => void;
 }
 
-const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
-  isOpen,
-  onClose,
-  onSuccess,
-}) => {
+const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({ isOpen, onClose, onSuccess }) => {
   const { truies, verrats, bandes, refreshData } = useFarm();
 
   const [idPortee, setIdPortee] = useState<string>('');
   const [truieId, setTruieId] = useState<string>('');
+  const [truieQuery, setTruieQuery] = useState<string>('');
   const [verratId, setVerratId] = useState<string>('');
-  const [dateMb, setDateMb] = useState<string>('');
+  const [dateMb, setDateMb] = useState<string>(new Date().toISOString().slice(0, 10));
   const [nesVivants, setNesVivants] = useState<string>('');
   const [mortsNes, setMortsNes] = useState<string>('');
-  const [mortsNesMales, setMortsNesMales] = useState<string>('');
-  const [mortsNesFemelles, setMortsNesFemelles] = useState<string>('');
-  const [statut, setStatut] = useState<BandeStatutInitial>('Sous mère');
-  const [poidsKg, setPoidsKg] = useState<string>('');
-  const [loge, setLoge] = useState<string>('');
-  const [notes, setNotes] = useState<string>('');
+  const [statut] = useState<BandeStatutInitial>('Sous mère');
   const [errors, setErrors] = useState<AddBandeValidation['errors']>({});
   const [saving, setSaving] = useState(false);
   const { show: showToast, toastProps } = useAppToast();
 
-  // Auto-suggest ID portée dès qu'une truie est sélectionnée
   const suggestedId = useMemo(() => {
     if (!truieId) return '';
     return suggestNextIdPortee(truieId, bandes);
   }, [truieId, bandes]);
 
-  // Reset à l'ouverture
   const [lastOpen, setLastOpen] = useState<boolean>(isOpen);
   if (lastOpen !== isOpen) {
     setLastOpen(isOpen);
     if (isOpen) {
-      setIdPortee('');
-      setTruieId('');
-      setVerratId('');
-      setDateMb('');
-      setNesVivants('');
-      setMortsNes('');
-      setMortsNesMales('');
-      setMortsNesFemelles('');
-      setStatut('Sous mère');
-      setPoidsKg('');
-      setLoge('');
-      setNotes('');
-      setErrors({});
-      setSaving(false);
+      setIdPortee(''); setTruieId(''); setTruieQuery(''); setVerratId('');
+      setDateMb(new Date().toISOString().slice(0, 10)); setNesVivants(''); setMortsNes('');
+      setErrors({}); setSaving(false);
     }
   }
 
-  // Synchronise l'ID suggéré quand truieId change (sans écraser une saisie manuelle)
   const [lastSuggested, setLastSuggested] = useState<string>('');
   if (suggestedId !== lastSuggested) {
     setLastSuggested(suggestedId);
@@ -103,52 +78,68 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
     }
   }
 
-  const handleClose = useCallback(() => {
-    if (saving) return;
-    onClose();
-  }, [onClose, saving]);
-
+  const handleClose = useCallback(() => { if (!saving) onClose(); }, [onClose, saving]);
   useEscapeKey(isOpen && !saving, handleClose);
-  const firstFieldRef = useFocusFirstInput<HTMLSelectElement>(isOpen);
+  const firstFieldRef = useFocusFirstInput<HTMLInputElement>(isOpen);
 
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
-    e.preventDefault();
+  const truieSuggestions = useMemo<Truie[]>(() => {
+    const q = truieQuery.trim().toLowerCase();
+    if (!q) return [];
+    return truies
+      .filter(t => {
+        const code = (t.displayId || t.id || '').toLowerCase();
+        const b = (t.boucle || '').toLowerCase();
+        return code.includes(q) || b.includes(q);
+      })
+      .slice(0, 6);
+  }, [truies, truieQuery]);
+
+  const adjustNumber = (
+    setter: React.Dispatch<React.SetStateAction<string>>,
+    cur: string, delta: number, min = 0, max = 25,
+  ): void => {
+    const c = parseInt(cur || '0', 10) || 0;
+    const next = Math.max(min, Math.min(max, c + delta));
+    setter(String(next));
+  };
+
+  const idPorteeMonthlyPreview = useMemo(() => {
+    if (!dateMb) return '';
+    const d = new Date(dateMb);
+    if (isNaN(d.getTime())) return '';
+    const month = d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    const monthCap = month.charAt(0).toUpperCase() + month.slice(1);
+    const seq = idPortee.match(/-(\d+)$/)?.[1] || '—';
+    return `${monthCap} · M-${seq}`;
+  }, [dateMb, idPortee]);
+
+  const isValid = !!truieId.trim() && !!nesVivants.trim() && !!dateMb;
+
+  const selectTruieMere = (t: Truie): void => {
+    const code = t.displayId || t.id;
+    setTruieId(code);
+    setTruieQuery(code);
+  };
+
+  const handleSubmit = async (e?: React.FormEvent | React.MouseEvent): Promise<void> => {
+    if (e) e.preventDefault();
     const result = validateAddBande({
-      idPortee,
-      truieId,
-      verratId,
-      dateMb,
-      nesVivants,
-      mortsNes,
-      mortsNesMales,
-      mortsNesFemelles,
-      statut,
-      poidsKg,
-      loge,
-      notes,
+      idPortee, truieId, verratId, dateMb, nesVivants, mortsNes,
+      mortsNesMales: '', mortsNesFemelles: '', statut,
+      poidsKg: '1.4', loge: '', notes: '',
     });
     if (!result.ok || !result.values) {
       setErrors(result.errors);
       return;
     }
-    // RT4 Volet 2 : Fail-Fast farm validators en complément (sécurité défense
-    // en profondeur). Bornes plus larges que la logique métier locale, mais
-    // attrapent NaN/dates futures si la regex de validateAddBande passe.
     const failFast: AddBandeValidation['errors'] = {};
     if (result.values.date_mise_bas) {
       const dr = validateDatePresentOrPast(result.values.date_mise_bas, 'dateMb');
       if (!dr.ok) failFast.dateMb = dr.errors[0].message;
     }
-    const ef = validateEffectif(result.values.porcelets_nes_vivants, {
-      max: 25,
-      field: 'nesVivants',
-    });
+    const ef = validateEffectif(result.values.porcelets_nes_vivants, { max: 25, field: 'nesVivants' });
     if (!ef.ok) failFast.nesVivants = ef.errors[0].message;
-    const pr = validatePoidsKg(result.values.poids_initial_kg, {
-      min: 0.5,
-      max: 50,
-      field: 'poidsKg',
-    });
+    const pr = validatePoidsKg(result.values.poids_initial_kg, { min: 0.5, max: 50, field: 'poidsKg' });
     if (!pr.ok) failFast.poidsKg = pr.errors[0].message;
     if (Object.keys(failFast).length > 0) {
       setErrors(failFast);
@@ -158,13 +149,8 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
     setSaving(true);
     try {
       const sowUuid = await resolveSowIdByCode(result.values.sow_code_id);
-      if (!sowUuid) {
-        throw new Error(`Truie ${result.values.sow_code_id} introuvable`);
-      }
-      const boarUuid = result.values.boar_code_id
-        ? await resolveBoarIdByCode(result.values.boar_code_id)
-        : null;
-
+      if (!sowUuid) throw new Error(`Truie ${result.values.sow_code_id} introuvable`);
+      const boarUuid = result.values.boar_code_id ? await resolveBoarIdByCode(result.values.boar_code_id) : null;
       await insertBatch({
         code_id: result.values.code_id,
         sow_id: sowUuid,
@@ -176,324 +162,110 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({
         statut: result.values.statut,
         loge: result.values.loge,
         notes: result.values.notes,
-        // Colonne V23 (NOT NULL) — type Database pas encore régénéré.
         poids_initial_kg: result.values.poids_initial_kg,
       } as Parameters<typeof insertBatch>[0]);
-      const online =
-        typeof navigator !== 'undefined' && navigator.onLine;
-      showToast(
-        online ? 'Bande ajoutée' : 'Bande en file · sync auto',
-        online ? 'success' : 'info',
-        { duration: 1800 },
-      );
-      try {
-        await refreshData(true);
-      } catch {
-        /* noop */
-      }
+      const online = typeof navigator !== 'undefined' && navigator.onLine;
+      showToast(online ? 'Bande créée' : 'Bande en file · sync auto', online ? 'success' : 'info', { duration: 1800 });
+      try { await refreshData(true); } catch { /* noop */ }
       if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
-      showToast(
-        err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement',
-        'error',
-        { duration: 1800 },
-      );
+      showToast(err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement', 'error', { duration: 1800 });
     } finally {
       setSaving(false);
     }
   };
 
+  const errMsg = (msg?: string): React.ReactNode =>
+    msg ? <span role="alert" style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 11, color: 'var(--pt-danger)' }}>{msg}</span> : null;
+
   return (
     <>
-      <BottomSheet
-        isOpen={isOpen}
-        onClose={handleClose}
-        title="Bande historique"
-        height="full"
-      >
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-5"
-          noValidate
-          aria-label="Création d'une bande historique"
-        >
-          {/* Header */}
-          <div className="flex items-center gap-3">
-            <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
-              <Plus size={18} aria-hidden="true" />
-            </div>
-            <div>
-              <p className="text-mono-label text-text-1">
-                Importer une bande historique
-              </p>
-              <p className="text-mono-micro text-text-2 mt-0.5">
-                Pour les portées antérieures à l'application
-              </p>
-            </div>
-          </div>
-
-          {/* Truie mère */}
-          <FormField label="Truie mère" required error={errors.truieId}>
-            <Select
-              id="add-bande-truie"
-              ref={firstFieldRef}
-              aria-required="true"
-              aria-invalid={!!errors.truieId}
-              aria-describedby={errors.truieId ? 'add-bande-truie-error' : undefined}
-              value={truieId}
-              onChange={e => setTruieId(e.target.value)}
-              disabled={saving}
-            >
-              <option value="">— Sélectionner une truie —</option>
-              {truies.map(t => (
-                <option key={t.id} value={t.displayId || t.id}>
-                  {t.displayId || t.id}{t.nom ? ` · ${t.nom}` : ''}{t.boucle ? ` (${t.boucle})` : ''}
-                </option>
-              ))}
-            </Select>
-          </FormField>
-
-          {/* Verrat père */}
-          <FormField label="Verrat père" hint="optionnel" error={errors.verratId}>
-            <Select
-              id="add-bande-verrat"
-              aria-invalid={!!errors.verratId}
-              value={verratId}
-              onChange={e => setVerratId(e.target.value)}
-              disabled={saving}
-            >
-              <option value="">— Aucun —</option>
-              {verrats.map(v => (
-                <option key={v.id} value={v.displayId || v.id}>
-                  {v.displayId || v.id}{v.nom ? ` · ${v.nom}` : ''}
-                </option>
-              ))}
-            </Select>
-          </FormField>
-
-          {/* ID portée */}
-          <FormField
-            label="ID portée"
-            required
-            hint={`auto-suggéré · Format YY-T<n>-NN (ex: 26-T1-01)`}
-            error={errors.idPortee}
-          >
-            <Input
-              id="add-bande-id"
-              type="text"
-              maxLength={30}
-              autoCapitalize="characters"
-              aria-required="true"
-              aria-invalid={!!errors.idPortee}
-              aria-describedby={errors.idPortee ? 'add-bande-id-error' : 'add-bande-id-hint'}
-              className="ft-code uppercase"
-              placeholder="26-T1-01"
-              value={idPortee}
-              onChange={e => setIdPortee(e.target.value)}
-              disabled={saving}
-              autoComplete="off"
-            />
-          </FormField>
-
-          {/* Date mise-bas */}
-          <FormField label="Date de mise-bas" error={errors.dateMb}>
-            <Input
-              id="add-bande-date-mb"
-              type="date"
-              aria-invalid={!!errors.dateMb}
-              value={dateMb}
-              onChange={e => setDateMb(e.target.value)}
-              disabled={saving}
-            />
-          </FormField>
-
-          {/* Nés vivants + morts-nés */}
-          <div className="grid grid-cols-2 gap-3">
-            <FormField label="Nés vivants" required error={errors.nesVivants}>
-              <Input
-                id="add-bande-nv"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={25}
-                step={1}
-                aria-required="true"
-                aria-invalid={!!errors.nesVivants}
-                aria-describedby={errors.nesVivants ? 'add-bande-nv-error' : undefined}
-                className="font-mono tabular-nums text-center"
-                value={nesVivants}
-                onChange={e => setNesVivants(e.target.value)}
-                disabled={saving}
-              />
-            </FormField>
-            <FormField label="Morts-nés" error={errors.mortsNes}>
-              <Input
-                id="add-bande-mn"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={25}
-                step={1}
-                aria-invalid={!!errors.mortsNes}
-                className="font-mono tabular-nums text-center"
-                placeholder="0"
-                value={mortsNes}
-                onChange={e => setMortsNes(e.target.value)}
-                disabled={saving}
-              />
-            </FormField>
-          </div>
-
-          {/* Mort-nés mâles / femelles */}
-          <div className="grid grid-cols-2 gap-3">
-            <FormField label="Mort-nés ♂" hint="optionnel" error={errors.mortsNesMales}>
-              <Input
-                id="add-bande-mn-m"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={25}
-                step={1}
-                aria-invalid={!!errors.mortsNesMales}
-                className="font-mono tabular-nums text-center"
-                placeholder="0"
-                value={mortsNesMales}
-                onChange={e => setMortsNesMales(e.target.value)}
-                disabled={saving}
-              />
-            </FormField>
-            <FormField label="Mort-nés ♀" hint="optionnel" error={errors.mortsNesFemelles}>
-              <Input
-                id="add-bande-mn-f"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={25}
-                step={1}
-                aria-invalid={!!errors.mortsNesFemelles}
-                className="font-mono tabular-nums text-center"
-                placeholder="0"
-                value={mortsNesFemelles}
-                onChange={e => setMortsNesFemelles(e.target.value)}
-                disabled={saving}
-              />
-            </FormField>
-          </div>
-
-          {errors.coherence ? (
-            <p role="alert" className="text-[11px] text-red">
-              {errors.coherence}
-            </p>
-          ) : null}
-
-          {/* Statut */}
-          <FormField label="Statut initial">
-            <Segment<BandeStatutInitial>
-              value={statut}
-              onChange={v => setStatut(v)}
-              options={BANDE_STATUTS_INITIAUX.map(s => ({ value: s, label: s }))}
-              ariaLabel="Statut initial de la bande"
-            />
-          </FormField>
-
-          {/* Poids moyen au sevrage / naissance */}
-          <FormField
-            label="Poids moyen sevrage (kg)"
-            required={statut === 'Sevrés'}
-            hint={statut === 'Sevrés' ? '5-7 kg cible' : 'défaut naissance 1.4 kg · 5-7 kg cible'}
-            error={errors.poidsKg}
-          >
-            <Input
-              id="add-bande-poids"
-              type="number"
-              inputMode="decimal"
-              step={0.1}
-              min={0.5}
-              max={50}
-              aria-required={statut === 'Sevrés'}
-              aria-invalid={!!errors.poidsKg}
-              aria-describedby={errors.poidsKg ? 'add-bande-poids-error' : undefined}
-              className="font-mono tabular-nums text-center"
-              placeholder={statut === 'Sevrés' ? '6.0' : '1.4'}
-              value={poidsKg}
-              onChange={e => setPoidsKg(e.target.value)}
-              disabled={saving}
-            />
-            {!errors.poidsKg && (() => {
-              const p = parseFloat(poidsKg.replace(',', '.'));
-              if (!Number.isFinite(p) || poidsKg.trim() === '') return null;
-              if (statut === 'Sevrés' && (p < 4 || p > 10)) {
-                return (
-                  <span
-                    role="status"
-                    className="inline-flex items-center mt-1 px-2 h-6 rounded-full bg-amber-100 border border-amber-300 text-mono-micro text-amber-900"
-                  >
-                    Hors plage cible 5-7 kg
+      <IonModal isOpen={isOpen} onDidDismiss={handleClose} className="agritech-bottom-sheet pt-sheet-modal" aria-label="Ajouter une bande">
+        <div className="ion-page" style={{ position: 'relative', overflow: 'auto' }}>
+          <form className="sheet" onSubmit={handleSubmit} noValidate aria-label="Création d'une bande" style={{ position: 'relative', height: '100%', maxHeight: '100%' }}>
+            <div className="sheet__handle" />
+            <header className="sheet__head">
+              <div>
+                <div className="eyebrow">Nouvelle bande</div>
+                <h2>Ajouter une bande</h2>
+              </div>
+              <button type="button" className="sheet__close" onClick={handleClose} aria-label="Fermer" disabled={saving}>
+                <X size={14} aria-hidden="true" />
+              </button>
+            </header>
+            <div className="sheet__body">
+              <div className="field">
+                <label className="field__label" htmlFor="add-bande-truie">TRUIE MÈRE <span className="req">requis</span></label>
+                <input id="add-bande-truie" ref={firstFieldRef} className={`field__input mono${truieId ? ' filled' : ' field__input--ghost'}`} type="text" aria-label="Truie mère (autocomplete)" aria-required="true" aria-invalid={!!errors.truieId} placeholder="Rechercher T-…" value={truieQuery} onChange={e => { setTruieQuery(e.target.value); if (e.target.value === '') setTruieId(''); }} disabled={saving} autoComplete="off" />
+                {truieSuggestions.length > 0 && truieQuery !== truieId ? (
+                  <div role="listbox" style={{ marginTop: 4, border: '1px solid var(--pt-line)', borderRadius: 10, background: 'var(--pt-bg)', maxHeight: 200, overflowY: 'auto' }}>
+                    {truieSuggestions.map(t => (
+                      <button key={t.id} type="button" role="option" aria-selected={false} onClick={() => selectTruieMere(t)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: 'transparent', border: 'none', fontFamily: 'var(--pt-font-mono)', fontSize: 12, color: 'var(--pt-ink)', cursor: 'pointer', minHeight: 44 }}>
+                        {t.displayId || t.id}{t.nom ? ` · ${t.nom}` : ''}{t.boucle ? ` (${t.boucle})` : ''}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+                {errMsg(errors.truieId)}
+              </div>
+              {verrats.length > 0 ? (
+                <div className="field">
+                  <label className="field__label" htmlFor="add-bande-verrat">VERRAT PÈRE <span className="hint">optionnel</span></label>
+                  <select id="add-bande-verrat" className={`field__input${verratId ? ' mono filled' : ' field__input--ghost'}`} aria-label="Verrat père" value={verratId} onChange={e => setVerratId(e.target.value)} disabled={saving}>
+                    <option value="">— Aucun —</option>
+                    {verrats.map(v => <option key={v.id} value={v.displayId || v.id}>{v.displayId || v.id}{v.nom ? ` · ${v.nom}` : ''}</option>)}
+                  </select>
+                </div>
+              ) : null}
+              <div className="field--inline">
+                <div className="field">
+                  <label className="field__label" htmlFor="add-bande-date-mb">DATE MB <span className="req">requis</span></label>
+                  <input id="add-bande-date-mb" className={`field__input mono${dateMb ? ' filled' : ' field__input--ghost'}`} type="date" aria-label="Date de mise-bas" aria-required="true" aria-invalid={!!errors.dateMb} value={dateMb} onChange={e => setDateMb(e.target.value)} disabled={saving} />
+                  {errMsg(errors.dateMb)}
+                </div>
+                <div className="field">
+                  <label className="field__label" htmlFor="add-bande-nv">NV VIVANTS <span className="req">requis</span></label>
+                  <div className="stepper">
+                    <button type="button" onClick={() => adjustNumber(setNesVivants, nesVivants, -1)} aria-label="Diminuer NV" disabled={saving}><Minus size={14} aria-hidden="true" /></button>
+                    <input id="add-bande-nv" type="number" inputMode="numeric" min={0} max={25} step={1} aria-label="Nombre de porcelets nés vivants" aria-required="true" aria-invalid={!!errors.nesVivants} placeholder="0" value={nesVivants} onChange={e => setNesVivants(e.target.value)} disabled={saving} />
+                    <span className="stepper-label">NV</span>
+                    <button type="button" onClick={() => adjustNumber(setNesVivants, nesVivants, 1)} aria-label="Augmenter NV" disabled={saving}><Plus size={14} aria-hidden="true" /></button>
+                  </div>
+                  {errMsg(errors.nesVivants)}
+                </div>
+              </div>
+              <div className="field">
+                <label className="field__label" htmlFor="add-bande-mn">MORTS-NÉS <span className="hint">optionnel</span></label>
+                <div className="stepper">
+                  <button type="button" onClick={() => adjustNumber(setMortsNes, mortsNes, -1)} aria-label="Diminuer mort-nés" disabled={saving}><Minus size={14} aria-hidden="true" /></button>
+                  <input id="add-bande-mn" type="number" inputMode="numeric" min={0} max={25} step={1} aria-label="Mort-nés" aria-invalid={!!errors.mortsNes} placeholder="0" value={mortsNes} onChange={e => setMortsNes(e.target.value)} disabled={saving} />
+                  <span className="stepper-label">MN</span>
+                  <button type="button" onClick={() => adjustNumber(setMortsNes, mortsNes, 1)} aria-label="Augmenter mort-nés" disabled={saving}><Plus size={14} aria-hidden="true" /></button>
+                </div>
+                {errMsg(errors.mortsNes)}
+              </div>
+              <div className="field">
+                <label className="field__label" htmlFor="add-bande-id">IDENTIFIANT PORTÉE <span className="hint">aperçu auto</span></label>
+                <input id="add-bande-id" className={`field__input mono${idPortee ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={30} aria-label="Identifiant de la portée" aria-invalid={!!errors.idPortee} placeholder="Mai 2026 · M-—" value={idPorteeMonthlyPreview || idPortee} readOnly />
+                {dateMb ? (
+                  <span style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 10.5, color: 'var(--pt-subtle)' }}>
+                    Code interne : {idPortee || '—'} · MB {formatDateFr(dateMb)}
                   </span>
-                );
-              }
-              return null;
-            })()}
-          </FormField>
-
-          {/* Loge actuelle */}
-          <FormField label="Loge actuelle" error={errors.loge}>
-            <Input
-              id="add-bande-loge"
-              type="text"
-              maxLength={30}
-              aria-invalid={!!errors.loge}
-              placeholder="Ex: M1, P-Sev 2"
-              value={loge}
-              onChange={e => setLoge(e.target.value)}
-              disabled={saving}
-              autoComplete="off"
-            />
-          </FormField>
-
-          {/* Notes */}
-          <FormField label="Notes" error={errors.notes}>
-            <Textarea
-              id="add-bande-notes"
-              rows={3}
-              maxLength={300}
-              aria-invalid={!!errors.notes}
-              placeholder="Origine, contexte, observations…"
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              disabled={saving}
-            />
-          </FormField>
-
-          {/* Actions */}
-          <div className="flex gap-3 justify-end pt-2 border-t border-border">
-            <Button
-              variant="ghost"
-              onClick={handleClose}
-              disabled={saving}
-              ariaLabel="Annuler et fermer"
-            >
-              Annuler
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={saving}
-              ariaLabel="Ajouter la bande historique"
-              aria-busy={saving}
-            >
-              {saving ? 'Enregistrement…' : (
-                <span className="inline-flex items-center gap-2">
-                  Ajouter
-                  <Save size={14} aria-hidden="true" />
-                </span>
-              )}
-            </Button>
-          </div>
-        </form>
-      </BottomSheet>
-
+                ) : null}
+                {errMsg(errors.idPortee)}
+              </div>
+              {errors.coherence ? <span role="alert" style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 11, color: 'var(--pt-danger)' }}>{errors.coherence}</span> : null}
+            </div>
+            <footer className="sheet__foot">
+              <button type="button" className="btn btn--ghost" onClick={handleClose} disabled={saving} aria-label="Annuler et fermer">Annuler</button>
+              <button type="submit" className="btn btn--primary" disabled={saving || !isValid} aria-busy={saving} aria-label="Créer la bande">
+                {saving ? 'Enregistrement…' : <><Check size={14} aria-hidden="true" /> Créer la bande</>}
+              </button>
+            </footer>
+          </form>
+        </div>
+      </IonModal>
       <AppToast {...toastProps} />
     </>
   );

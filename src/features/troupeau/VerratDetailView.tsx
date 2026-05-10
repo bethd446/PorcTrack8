@@ -16,10 +16,10 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { IonContent, IonPage, IonToast } from '@ionic/react';
 import {
-  Syringe, Scale, Heart, FileText, Pencil,
+  Syringe, Scale, Heart, FileText, Pencil, ChevronRight, MoreHorizontal,
 } from 'lucide-react';
 
 import TopBarSync from '../../components/design/TopBarSync';
@@ -29,7 +29,7 @@ import NotesTimeline from '../../components/design/NotesTimeline';
 import PhotoUpload from '../../v70/components/v70/PhotoUpload';
 import PhotoGallery from '../../v70/components/v70/PhotoGallery';
 import { SectionDivider, BottomSheet, type ChipTone } from '../../components/agritech';
-import { Button, Card, PageHeader, Section, Tabs, Tag } from '@/design-system';
+import { Button, Section, Tabs, Tag } from '@/design-system';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { useFarm } from '../../context/FarmContext';
 import { useEntityWithRetry } from '../../hooks/useEntityWithRetry';
@@ -194,37 +194,45 @@ const VerratDetailView: React.FC = () => {
           }}
         >
           <TopBarSync
-            crumbs={[
-              { label: 'Élevage', href: '/troupeau' },
-              { label: 'Verrats', href: '/troupeau?view=verrats' },
-              displayId,
-            ]}
+            crumbs={[]}
             onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
           />
 
-          <div
-            role="main"
-            aria-label={`Détail verrat ${displayId}`}
-            className="px-4 pt-5 pb-44 flex flex-col gap-5"
-            style={{ maxWidth: 1100, margin: '0 auto' }}
-          >
-            {/* V45 P3B — Pattern archétype 4 : PageHeader + Card hero compact
-                (EntityAvatar xl + tag statut + actions inline). Remplace
-                AnimalHero custom V43 C3 pour uniformiser avec TruieDetail.
-                V71 lisibilité : subtitle ajouté (statut + nb saillies). */}
-            <PageHeader
-              eyebrow="Élevage · Verrat"
-              title={title}
-              subtitle={(() => {
-                const parts: string[] = [];
+          {/* V76 — Header cahier d'éleveur : --pt-primary opaque */}
+          <header className="ph ph--primary">
+            <div className="ph__crumb">
+              <Link to="/troupeau">Élevage</Link>
+              <ChevronRight aria-hidden />
+              <Link to="/troupeau?view=verrats">Verrats</Link>
+              <ChevronRight aria-hidden />
+              <b>{displayId}</b>
+            </div>
+            <div className="ph__row">
+              <div>
+                <div className="ph__eyebrow">Élevage · Verrat</div>
+                <h1 className="ph__h1">{title}</h1>
+              </div>
+              <button
+                type="button"
+                className="iconbtn"
+                onClick={() => setSheet('saillie')}
+                aria-label="Ouvrir les actions"
+              >
+                <MoreHorizontal aria-hidden />
+              </button>
+            </div>
+            <p className="ph__sub">
+              {(() => {
+                const parts: React.ReactNode[] = [];
+                if (verrat.nom) parts.push(<b key="nom">{verrat.nom}</b>);
                 if (verrat.statut) parts.push(verrat.statut);
                 if (saillesVerrat.length > 0) parts.push(`${saillesVerrat.length} saillie${saillesVerrat.length > 1 ? 's' : ''}`);
-                return parts.length > 0 ? parts.join(' · ') : undefined;
+                if (verrat.origine) parts.push(`Origine ${verrat.origine}`);
+                return parts.flatMap((p, i) => i === 0 ? [<React.Fragment key={`s-${i}`}>{p}</React.Fragment>] : [' · ', <React.Fragment key={`s-${i}`}>{p}</React.Fragment>]);
               })()}
-            />
-
-            <Card>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            </p>
+            <div className="id-strip">
+              <span data-av-xl>
                 <EntityAvatar
                   species="verrat"
                   photoUrl={verrat.photoUrl}
@@ -232,29 +240,32 @@ const VerratDetailView: React.FC = () => {
                   shortCode={displayId}
                   useV73Defaults
                 />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 160 }}>
-                  <div style={{ fontFamily: 'var(--pt-font-display)', fontSize: 18, fontWeight: 700, color: 'var(--pt-text)' }}>
-                    {verrat.nom ?? displayId}
-                    {verrat.origine ? (
-                      <span style={{ fontFamily: 'var(--pt-font-body)', fontSize: 13, fontWeight: 400, color: 'var(--pt-text-muted)', marginLeft: 8 }}>
-                        — Origine {verrat.origine}
-                      </span>
-                    ) : null}
-                  </div>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    <Tag variant={tagVariant}>{verrat.statut || '—'}</Tag>
-                  </div>
+              </span>
+              <div className="id-strip__meta">
+                <div className="id-strip__row">
+                  <Tag variant={tagVariant}>{verrat.statut || '—'}</Tag>
                 </div>
-                <div style={{ display: 'flex', gap: 8, marginLeft: 'auto', flexShrink: 0, flexWrap: 'wrap' }}>
-                  <Button variant="primary" size="sm" onClick={() => setSheet('saillie')}>
-                    + Saisir évènement
-                  </Button>
-                  <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)}>
-                    <Pencil size={14} strokeWidth={2} aria-hidden /> Modifier
-                  </Button>
-                </div>
+                {verrat.boucle ? <div>Boucle <b>{verrat.boucle}</b></div> : null}
+                {verrat.dateNaissance ? <div>Né <b>{formatDate(verrat.dateNaissance)}</b></div> : null}
               </div>
-            </Card>
+            </div>
+          </header>
+
+          <div
+            role="main"
+            aria-label={`Détail verrat ${displayId}`}
+            className="px-4 pt-1 pb-44 flex flex-col gap-5"
+            style={{ maxWidth: 1100, margin: '0 auto' }}
+          >
+            {/* Actions principales déplacées sous le header (V76) */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <Button variant="primary" size="sm" onClick={() => setSheet('saillie')}>
+                + Saisir évènement
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)}>
+                <Pencil size={14} strokeWidth={2} aria-hidden /> Modifier
+              </Button>
+            </div>
 
             {/* V45 PHASE 4 — Onglets uniformisés (VUE D'ENSEMBLE · SAILLIES · SANTÉ · LIGNÉE) */}
             <Tabs

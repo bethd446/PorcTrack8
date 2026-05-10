@@ -1,13 +1,13 @@
 /**
- * AlertsView — Refonte v6 « Terrain Vivant » (2026-04-30)
+ * AlertsView — Refonte V70 (Sprint Legacy 1, 2026-05-10)
  * ══════════════════════════════════════════════════════════════════
- * Light surface (--bg-app), tokens v6, KpiCard sparklines, Section DS,
- * TopBarSync, TimelineVerticale-like row markers. V44 — élimination Eyebrow legacy.
+ * Pattern V70 natif : phone-content + PageHeader + chips + alert-card
+ * (variantes crit/high/norm). Plus d'AgritechLayout / KpiCardV6 / TopBarSync.
  *
  * Logique métier préservée :
- *   - useFarm/usePilotage/useMeta inchangés
- *   - getPendingConfirmations + ConfirmationModal inchangés
- *   - alertEngine (FarmAlert) + alertesServeur (Sheets) inchangés
+ *   - useFarm/usePilotage/useTroupeau/useMeta inchangés
+ *   - alertEngine (FarmAlert) + alertesServeur inchangés
+ *   - dismissAlert / getPendingConfirmations / ConfirmationModal inchangés
  */
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
@@ -16,10 +16,7 @@ import {
   IonRefresher, IonRefresherContent,
   IonToast,
 } from '@ionic/react';
-import {
-  Bell, Heart, Package, Layers, Box,
-  CheckCircle2, Clock, Server, AlertOctagon, X,
-} from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -29,12 +26,7 @@ import { useMeta } from '../../context/FarmContext';
 import { usePilotage } from '../../context/PilotageContext';
 import { useTroupeau } from '../../context/TroupeauContext';
 import { resolveAlertSubject, isAlertSubjectOrphan } from '../../utils/alertSubject';
-import AgritechLayout from '../../components/AgritechLayout';
-import KpiCardV6 from '../../components/design/KpiCard';
-import EmptyState from '../../components/design/EmptyState';
-import TopBarSync from '../../components/design/TopBarSync';
-import AlertCard from '../../components/agritech/AlertCard';
-import { Button, PageHeader, Section } from '@/design-system';
+import { PageHeader, Section } from '@/design-system';
 import { type FarmAlert, type AlertPriority, type AlertCategory } from '../../services/alertEngine';
 import { dismissAlert } from '../../services/alertDismissals';
 import { getPendingConfirmations, type PendingConfirmation } from '../../services/confirmationQueue';
@@ -42,27 +34,8 @@ import { ConfirmationModal } from '../../components/ConfirmationModal';
 import type { AlerteServeur } from '../../types/farm';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Treatment hierarchy — urgent / normal / resolu
+// Types & helpers
 // ─────────────────────────────────────────────────────────────────────────────
-
-type AlertTreatment = 'urgent' | 'normal' | 'resolu';
-
-interface ClassifiableAlert {
-  priority: AlertPriority;
-  acknowledged?: boolean;
-}
-
-function classifyAlertTreatment(alert: ClassifiableAlert): AlertTreatment {
-  if (alert.priority === 'CRITIQUE' || alert.priority === 'HAUTE') return 'urgent';
-  if (alert.priority === 'INFO' || alert.acknowledged) return 'resolu';
-  return 'normal';
-}
-
-const TREATMENT_ORDER: Record<AlertTreatment, number> = {
-  urgent: 0,
-  normal: 1,
-  resolu: 2,
-};
 
 interface DisplayAlert {
   id: string;
@@ -75,6 +48,26 @@ interface DisplayAlert {
   requiresAction?: boolean;
   acknowledged?: boolean;
   groupedIds?: string[];
+}
+
+function severityClass(priority: AlertPriority): 'crit' | 'high' | 'norm' {
+  if (priority === 'CRITIQUE') return 'crit';
+  if (priority === 'HAUTE') return 'high';
+  return 'norm';
+}
+
+function severityLabel(priority: AlertPriority): string {
+  if (priority === 'CRITIQUE') return 'Critique';
+  if (priority === 'HAUTE') return 'Haute';
+  if (priority === 'NORMALE') return 'Normale';
+  return 'Info';
+}
+
+function severityColor(priority: AlertPriority): string {
+  if (priority === 'CRITIQUE') return 'var(--pt-danger)';
+  if (priority === 'HAUTE') return 'var(--pt-warning)';
+  if (priority === 'NORMALE') return 'var(--pt-info)';
+  return 'var(--pt-muted)';
 }
 
 function groupStockAlerts(alerts: FarmAlert[]): DisplayAlert[] {
@@ -141,20 +134,20 @@ function groupStockAlerts(alerts: FarmAlert[]): DisplayAlert[] {
 // Filter chips
 // ─────────────────────────────────────────────────────────────────────────────
 
-type FilterId = 'ALL' | AlertCategory;
+type FilterId = 'ALL' | AlertCategory | 'CRIT' | 'HIGH';
 
 interface FilterDef {
   id: FilterId;
   label: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
 }
 
 const FILTERS: FilterDef[] = [
-  { id: 'ALL',    label: 'Toutes',  icon: Bell },
-  { id: 'REPRO',  label: 'Repro',   icon: Heart },
-  { id: 'SANTE',  label: 'Santé',   icon: Package },
-  { id: 'BANDES', label: 'Bandes',  icon: Layers },
-  { id: 'STOCK',  label: 'Stock',   icon: Box },
+  { id: 'ALL',    label: 'Toutes' },
+  { id: 'CRIT',   label: 'Critique' },
+  { id: 'HIGH',   label: 'Haute' },
+  { id: 'STOCK',  label: 'Stocks' },
+  { id: 'REPRO',  label: 'Repro' },
+  { id: 'SANTE',  label: 'Mortalité' },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -274,245 +267,6 @@ const formatAlertServeurMessage = (a: AlerteServeur): FormattedAlerte => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AlertRow — 3 treatments visuels (urgent / normal / resolu)
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface AlertRowProps {
-  treatment: AlertTreatment;
-  priority: AlertPriority;
-  title: string;
-  description: string;
-  categoryLabel: string;
-  metaLabel?: string;
-  timeAgo?: string;
-  serverTag?: boolean;
-  actionLabel?: string;
-  onClick?: () => void;
-  onDismiss?: () => void;
-  ariaRole?: 'alert' | 'listitem';
-}
-
-const TREATMENT_DOT: Record<AlertTreatment, string> = {
-  urgent: 'var(--color-pig-deep)',
-  normal: 'var(--color-amber-pork-deep)',
-  resolu: 'var(--muted)',
-};
-
-const AlertRow: React.FC<AlertRowProps> = ({
-  treatment,
-  priority,
-  title,
-  description,
-  categoryLabel,
-  metaLabel,
-  timeAgo,
-  serverTag,
-  actionLabel,
-  onClick,
-  onDismiss,
-  ariaRole = 'listitem',
-}) => {
-  const interactive = typeof onClick === 'function';
-  const hasDismiss = typeof onDismiss === 'function';
-  // Si on a un dismiss button, on ne peut pas wrapper en <button> (boutons
-  // imbriqués invalides). On utilise un <div> avec onClick à la place.
-  const Wrapper: 'button' | 'div' = hasDismiss ? 'div' : (interactive ? 'button' : 'div');
-
-  const isUrgent = treatment === 'urgent';
-  const isResolu = treatment === 'resolu';
-
-  const background = isResolu ? 'var(--bg-surface-2)' : 'var(--bg-surface)';
-  const border = isUrgent
-    ? '1px solid var(--color-pig-soft)'
-    : isResolu
-      ? '1px solid var(--line-2)'
-      : '1px solid var(--line)';
-  const titleSize = isUrgent ? 16 : 14;
-  const titleWeight = 600;
-  const dotColor = TREATMENT_DOT[treatment];
-
-  const wrapperProps: React.HTMLAttributes<HTMLElement> & { type?: 'button' } = hasDismiss
-    ? { onClick: interactive ? onClick : undefined }
-    : (interactive ? { type: 'button', onClick } : {});
-
-  return (
-    <Wrapper
-      {...wrapperProps}
-      role={ariaRole}
-      className="pressable"
-      style={{
-        position: 'relative',
-        background,
-        borderRadius: 12,
-        border,
-        boxShadow: isResolu ? 'none' : '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-        padding: '14px 16px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 6,
-        width: '100%',
-        textAlign: 'left',
-        cursor: interactive ? 'pointer' : 'default',
-        transition: 'transform 160ms var(--ease-emil)',
-        opacity: isResolu ? 0.65 : 1,
-      }}
-    >
-      {hasDismiss && !isResolu && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="small"
-          onClick={(e) => {
-            e?.stopPropagation();
-            onDismiss?.();
-          }}
-          aria-label="Ignorer cette alerte pour 30 jours"
-          className="pressable"
-          style={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            width: 28,
-            height: 28,
-            borderRadius: '50%',
-            border: 'none',
-            background: 'transparent',
-            color: 'var(--muted)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            padding: 0,
-          }}
-        >
-          <X size={14} aria-hidden="true" />
-        </Button>
-      )}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <span
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            color: dotColor,
-            fontFamily: 'var(--font-mono)',
-            fontSize: 10,
-            letterSpacing: '0.10em',
-            textTransform: 'uppercase',
-            fontWeight: 600,
-          }}
-        >
-          <span
-            aria-hidden="true"
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: '50%',
-              background: dotColor,
-              flexShrink: 0,
-            }}
-          />
-          {priority} · {categoryLabel}
-        </span>
-        {serverTag && (
-          <span
-            style={{
-              color: 'var(--color-secondary-deep)',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              letterSpacing: '0.10em',
-              textTransform: 'uppercase',
-              fontWeight: 500,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-            }}
-          >
-            <Server size={10} aria-hidden="true" />
-            Serveur
-          </span>
-        )}
-        {metaLabel && (
-          <span
-            style={{
-              marginLeft: 'auto',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 11,
-              color: 'var(--muted)',
-              fontVariantNumeric: 'tabular-nums',
-            }}
-          >
-            {metaLabel}
-          </span>
-        )}
-      </div>
-
-      <h3
-        style={{
-          fontFamily: 'var(--font-heading)',
-          fontSize: titleSize,
-          fontWeight: titleWeight,
-          color: 'var(--ink)',
-          letterSpacing: '-0.005em',
-          lineHeight: 1.3,
-          margin: 0,
-        }}
-      >
-        {title}
-      </h3>
-
-      <p
-        style={{
-          fontFamily: 'var(--font-body)',
-          fontSize: 13,
-          color: 'var(--ink-soft)',
-          lineHeight: 1.5,
-          margin: 0,
-        }}
-      >
-        {description}
-      </p>
-
-      {(timeAgo || (actionLabel && !isResolu)) && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
-          {timeAgo ? (
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                fontFamily: 'var(--font-mono)',
-                fontSize: 10,
-                color: 'var(--muted)',
-                letterSpacing: '0.04em',
-              }}
-            >
-              <Clock size={11} aria-hidden="true" />
-              {timeAgo}
-            </span>
-          ) : <span />}
-          {actionLabel && !isResolu && (
-            <span
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 10,
-                color: isUrgent ? 'var(--color-accent-500)' : 'var(--muted)',
-                fontWeight: 600,
-                letterSpacing: '0.10em',
-                textTransform: 'uppercase',
-              }}
-              aria-label="Action requise"
-            >
-              {actionLabel} ›
-            </span>
-          )}
-        </div>
-      )}
-    </Wrapper>
-  );
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
 // AlertsView — main component
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -530,19 +284,6 @@ const AlertsView: React.FC = () => {
     show: false, message: '',
   });
 
-  const handleDismiss = useCallback(async (alertId: string) => {
-    if (!user) return;
-    try {
-      await dismissAlert(user.id, alertId, 'manual');
-      setDismissToast({ show: true, message: 'Alerte ignorée pour 30 jours' });
-      await recomputeAlerts();
-    } catch (e) {
-      console.warn('[AlertsView] dismiss failed', e);
-      setDismissToast({ show: true, message: 'Erreur lors de l\'ignorance' });
-    }
-  }, [user, recomputeAlerts]);
-
-  // Sprint E1 : acquittement uniforme "OK ✓" via AlertCard.
   const handleAcknowledge = useCallback(async (alertId: string) => {
     if (!user) return;
     try {
@@ -551,7 +292,7 @@ const AlertsView: React.FC = () => {
       await recomputeAlerts();
     } catch (e) {
       console.warn('[AlertsView] acknowledge failed', e);
-      setDismissToast({ show: true, message: 'Erreur lors de l\'acquittement' });
+      setDismissToast({ show: true, message: 'Erreur lors de l’acquittement' });
     }
   }, [user, recomputeAlerts]);
 
@@ -568,33 +309,28 @@ const AlertsView: React.FC = () => {
     return () => { cancelled = true; };
   }, [alerts]);
 
-  // V36-A — Filtre les alertes orphelines (subject supprimé) pour ne pas
-  // afficher d'identifiants techniques sans contexte (BUG-2).
+  // Filtre les alertes orphelines (subject supprimé) pour ne pas afficher
+  // d'identifiants techniques sans contexte (BUG-2).
   const liveAlerts = useMemo(
     () => alerts.filter(a => !isAlertSubjectOrphan(a.subjectId, a.category, lookup)),
     [alerts, lookup],
   );
 
-  // ── Summary counts ────────────────────────────────────────────────────────
+  // Comptes par sévérité (header)
   const summary = useMemo(() => ({
+    total: liveAlerts.length,
     critique: liveAlerts.filter(a => a.priority === 'CRITIQUE').length,
     haute:    liveAlerts.filter(a => a.priority === 'HAUTE').length,
-    normale:  liveAlerts.filter(a => a.priority === 'NORMALE').length,
-    info:     liveAlerts.filter(a => a.priority === 'INFO').length,
+    normale:  liveAlerts.filter(a => a.priority === 'NORMALE' || a.priority === 'INFO').length,
   }), [liveAlerts]);
 
-  // ── Category counts ──────────────────────────────────────────────────────
-  const categoryCounts = useMemo(() => {
-    const counts: Record<FilterId, number> = {
-      ALL: liveAlerts.length,
-      REPRO: 0, SANTE: 0, BANDES: 0, STOCK: 0, PLANNING: 0,
-    };
-    for (const a of liveAlerts) counts[a.category] = (counts[a.category] ?? 0) + 1;
-    return counts;
-  }, [liveAlerts]);
-
   const filteredAlerts = useMemo<DisplayAlert[]>(() => {
-    const base = activeFilter === 'ALL' ? liveAlerts : liveAlerts.filter(a => a.category === activeFilter);
+    let base: FarmAlert[];
+    if (activeFilter === 'ALL') base = liveAlerts;
+    else if (activeFilter === 'CRIT') base = liveAlerts.filter(a => a.priority === 'CRITIQUE');
+    else if (activeFilter === 'HIGH') base = liveAlerts.filter(a => a.priority === 'HAUTE');
+    else base = liveAlerts.filter(a => a.category === activeFilter);
+
     const grouped = activeFilter === 'STOCK' ? base.map<DisplayAlert>(a => ({
       id: a.id,
       priority: a.priority,
@@ -606,506 +342,315 @@ const AlertsView: React.FC = () => {
       requiresAction: a.requiresAction,
       acknowledged: false,
     })) : groupStockAlerts(base);
+
+    const priorityRank: Record<AlertPriority, number> = {
+      CRITIQUE: 0, HAUTE: 1, NORMALE: 2, INFO: 3,
+    };
     return [...grouped].sort((a, b) => {
-      const ta = TREATMENT_ORDER[classifyAlertTreatment(a)];
-      const tb = TREATMENT_ORDER[classifyAlertTreatment(b)];
-      if (ta !== tb) return ta - tb;
+      const pa = priorityRank[a.priority] ?? 9;
+      const pb = priorityRank[b.priority] ?? 9;
+      if (pa !== pb) return pa - pb;
       const da = a.createdAt ? a.createdAt.getTime() : 0;
       const db = b.createdAt ? b.createdAt.getTime() : 0;
       return db - da;
     });
   }, [liveAlerts, activeFilter]);
 
-  const handleAction = useCallback((alert: FarmAlert) => {
-    if (!alert.requiresAction) return;
-    const confirm = pendingConfirmations.find(p => p.alertId === alert.id);
-    if (confirm) {
-      setSelectedAlert({ alert, confirmId: confirm.id });
+  const handleViewAlert = useCallback((alert: DisplayAlert) => {
+    if (alert.groupedIds) {
+      navigate('/ressources?filter=stock-bas');
+      return;
     }
-  }, [pendingConfirmations]);
-
-  const hasPendingForAlert = useCallback(
-    (alertId: string) => pendingConfirmations.some(p => p.alertId === alertId),
-    [pendingConfirmations],
-  );
+    const original = alerts.find(a => a.id === alert.id);
+    if (!original) return;
+    if (original.requiresAction) {
+      const confirm = pendingConfirmations.find(p => p.alertId === original.id);
+      if (confirm) {
+        setSelectedAlert({ alert: original, confirmId: confirm.id });
+        return;
+      }
+    }
+    // Fallback route par catégorie
+    if (alert.category === 'STOCK') {
+      navigate('/ressources?filter=stock-bas');
+      return;
+    }
+    if (alert.category === 'BANDES') {
+      const subj = original.subjectId;
+      if (subj && bandes.some(b => b.id === subj || b.idPortee === subj)) {
+        const bande = bandes.find(b => b.id === subj || b.idPortee === subj);
+        navigate(`/troupeau/bandes/${bande?.id ?? subj}`);
+        return;
+      }
+      navigate('/troupeau?view=bandes');
+      return;
+    }
+    if (alert.category === 'REPRO') {
+      const subj = original.subjectId;
+      if (subj && truies.some(t => t.id === subj || t.displayId === subj)) {
+        const truie = truies.find(t => t.id === subj || t.displayId === subj);
+        navigate(`/troupeau/truies/${truie?.id ?? subj}`);
+        return;
+      }
+      navigate('/troupeau');
+    }
+  }, [alerts, pendingConfirmations, bandes, truies, navigate]);
 
   const showEmpty = alerts.length === 0 && alertesServeur.length === 0;
 
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
-        <AgritechLayout>
-          <IonRefresher
-            slot="fixed"
-            onIonRefresh={(e) => refreshData()
-              .then(loadConfirmations)
-              .then(() => e.detail.complete())
-            }
-          >
-            <IonRefresherContent />
-          </IonRefresher>
+        <IonRefresher
+          slot="fixed"
+          onIonRefresh={(e) => refreshData()
+            .then(loadConfirmations)
+            .then(() => e.detail.complete())
+          }
+        >
+          <IonRefresherContent />
+        </IonRefresher>
 
-          <TopBarSync
-            crumbs={[{ label: 'Outils', href: '/outils' }, 'Alertes']}
-            onMariusClick={() => {
-              const evt = new CustomEvent('open-chatbot');
-              window.dispatchEvent(evt);
-            }}
+        <div
+          className="phone-content"
+          style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}
+        >
+          <PageHeader
+            eyebrow={`Pilotage · ${summary.total} alerte${summary.total > 1 ? 's' : ''}`}
+            title="Alertes"
+            subtitle={`${summary.critique} critique${summary.critique > 1 ? 's' : ''} · ${summary.haute} haute${summary.haute > 1 ? 's' : ''} · ${summary.normale} normale${summary.normale > 1 ? 's' : ''}`}
           />
 
-          <div className="px-4 pt-5 pb-32 flex flex-col gap-5" style={{ maxWidth: 1100, margin: '0 auto' }}>
-            {/* ── En-tête ───────────────────────────────────────────── */}
-            <PageHeader
-              eyebrow="Outils · Alertes"
-              title="Alertes"
-              subtitle="Suivi des alertes en cours"
+          {/* ── Filter chips ──────────────────────────────────────────── */}
+          <div className="chips" role="tablist" aria-label="Filtres alertes" style={{ marginBottom: 12 }}>
+            {FILTERS.map(f => {
+              const active = activeFilter === f.id;
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  role="tab"
+                  className="chip"
+                  aria-pressed={active}
+                  aria-selected={active}
+                  onClick={() => setActiveFilter(f.id)}
+                >
+                  {f.label}
+                  {f.id === 'ALL' && (
+                    <span className="num">{summary.total}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* ── Alertes locales ───────────────────────────────────────── */}
+          {alerts.length > 0 && (
+            <Section
+              label={`${filteredAlerts.length} alerte${filteredAlerts.length > 1 ? 's' : ''}`}
             />
+          )}
 
-            {/* ── 4 KPI cards ───────────────────────────────────────── */}
-            <section
-              aria-label="Résumé des alertes locales"
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                gap: 10,
-              }}
-            >
-              <KpiCardV6
-                label="Critique"
-                value={summary.critique}
-                trend={summary.critique > 0 ? 'À traiter' : 'Aucune'}
-                trendDir={summary.critique > 0 ? 'down' : 'up'}
-                accentColor="var(--color-danger)"
-              />
-              <KpiCardV6
-                label="Haute"
-                value={summary.haute}
-                trend={summary.haute > 0 ? 'Surveiller' : 'Aucune'}
-                trendDir={summary.haute > 0 ? 'down' : 'up'}
-                accentColor="var(--color-pig)"
-              />
-              <KpiCardV6
-                label="Normale"
-                value={summary.normale}
-                trend="Sous contrôle"
-                accentColor="var(--amber-pork)"
-              />
-              <KpiCardV6
-                label="Info"
-                value={summary.info}
-                trend="Pour mémoire"
-                accentColor="var(--color-info)"
-              />
-            </section>
+          {alerts.length > 0 && filteredAlerts.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+              {filteredAlerts.map(alert => {
+                const sev = severityClass(alert.priority);
+                const sevLabel = severityLabel(alert.priority);
+                const sevColor = severityColor(alert.priority);
+                const isGrouped = !!alert.groupedIds;
+                const original = isGrouped ? null : alerts.find(a => a.id === alert.id) ?? null;
+                const title = original
+                  ? resolveAlertSubject(original.title, lookup)
+                  : alert.title;
+                const detail = original
+                  ? resolveAlertSubject(original.message, lookup)
+                  : alert.message;
+                const ruleLabel = `${alert.category}`;
+                const timeAgo = alert.createdAt
+                  ? formatDistanceToNow(alert.createdAt, { addSuffix: true, locale: fr })
+                  : '';
 
-            {/* ── Filter chips ──────────────────────────────────────── */}
-            <div
-              role="tablist"
-              aria-label="Filtres par catégorie"
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 8,
-              }}
-            >
-              {FILTERS.map(f => {
-                const count = categoryCounts[f.id] ?? 0;
-                const active = activeFilter === f.id;
-                const Icon = f.icon;
                 return (
-                  <Button
-                    key={f.id}
-                    type="button"
-                    variant={active ? 'primary' : 'secondary'}
-                    size="small"
-                    role="tab"
-                    aria-selected={active}
-                    aria-label={`Filtrer ${f.label} — ${count} alerte${count > 1 ? 's' : ''}`}
-                    onClick={() => setActiveFilter(f.id)}
-                    className="pressable"
-                    style={{
-                      minHeight: 44,
-                      padding: '8px 14px',
-                      borderRadius: 'var(--radius-pill)',
-                      background: active ? 'var(--color-accent-500)' : 'var(--bg-surface)',
-                      color: active ? 'var(--bg-surface)' : 'var(--ink-soft)',
-                      border: `1px solid ${active ? 'var(--color-accent-500)' : 'var(--line)'}`,
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 11,
-                      letterSpacing: '0.10em',
-                      textTransform: 'uppercase',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      transition: 'transform 160ms var(--ease-emil), background 200ms var(--ease-emil)',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 8,
-                    }}
+                  <article
+                    key={alert.id}
+                    className={`alert-card ${sev}`}
+                    role={alert.priority === 'CRITIQUE' ? 'alert' : 'listitem'}
+                    onClick={() => handleViewAlert(alert)}
+                    style={{ cursor: 'pointer' }}
                   >
-                    <Icon size={13} aria-hidden="true" />
-                    <span>{f.label}</span>
-                    <span style={{ opacity: 0.7, fontSize: 10 }}>{count}</span>
-                  </Button>
+                    <div className="alert-card__head">
+                      <h3 className="alert-card__title">{title}</h3>
+                      <span className="eyebrow" style={{ color: sevColor, flexShrink: 0 }}>
+                        {sevLabel}
+                      </span>
+                    </div>
+                    <div
+                      className="num"
+                      style={{
+                        fontFamily: 'var(--pt-font-mono)',
+                        fontSize: 11,
+                        color: 'var(--pt-muted)',
+                      }}
+                    >
+                      {ruleLabel}{timeAgo ? ` · ${timeAgo}` : ''}
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--pt-muted)', marginTop: 4 }}>
+                      {detail}
+                    </div>
+                    {!isGrouped && original && (
+                      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                        <button
+                          type="button"
+                          className="btn-ghost-sm"
+                          data-testid="alert-card-ack"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void handleAcknowledge(original.id);
+                          }}
+                        >
+                          Ignorer
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-primary-sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewAlert(alert);
+                          }}
+                        >
+                          Voir
+                        </button>
+                      </div>
+                    )}
+                    {isGrouped && (
+                      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                        <button
+                          type="button"
+                          className="btn-primary-sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate('/ressources?filter=stock-bas');
+                          }}
+                        >
+                          Voir le détail
+                        </button>
+                      </div>
+                    )}
+                  </article>
                 );
               })}
             </div>
+          )}
 
-            {/* ── Empty state ───────────────────────────────────────── */}
-            {showEmpty && (
-              <div
-                style={{
-                  position: 'relative',
-                  borderRadius: 20,
-                  overflow: 'hidden',
-                  aspectRatio: '4 / 3',
-                  margin: '12px 0',
-                  background: '#f5efe2',
-                }}
-              >
-                <picture>
-                  <source
-                    srcSet="/images/v73/empty-states/aucune-alerte.webp"
-                    type="image/webp"
-                  />
-                  <img
-                    src="/images/v73/empty-states/aucune-alerte.jpg"
-                    alt="Couloir bâtiment porcin calme, cochons distants"
-                    loading="lazy"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                  />
-                </picture>
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background:
-                      'linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.55) 100%)',
-                    display: 'flex',
-                    alignItems: 'flex-end',
-                    padding: '20px 22px',
-                  }}
-                >
-                  <div style={{ color: '#fff' }}>
-                    <div
-                      style={{
-                        fontFamily: 'var(--pt-font-display)',
-                        fontWeight: 700,
-                        fontSize: 18,
-                        lineHeight: 1.1,
-                        marginBottom: 4,
-                      }}
+          {/* ── Alertes serveur ───────────────────────────────────────── */}
+          {alertesServeur.length > 0 && (
+            <>
+              <Section label={`Serveur · ${alertesServeur.length}`} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                {alertesServeur.map((a, i) => {
+                  const formatted = formatAlertServeurMessage(a);
+                  const actionTrimmed = a.actionRequise?.trim() ?? '';
+                  const actionIsJson = actionTrimmed.startsWith('{') && actionTrimmed.endsWith('}');
+                  const description =
+                    !actionIsJson && actionTrimmed.length > 0
+                      ? `${formatted.description} — ${actionTrimmed}`
+                      : formatted.description;
+                  const sev = severityClass(a.priorite);
+                  const sevLabel = severityLabel(a.priorite);
+                  const sevColor = severityColor(a.priorite);
+                  return (
+                    <article
+                      key={`srv-${i}-${a.sujet}-${a.date}`}
+                      className={`alert-card ${sev}`}
+                      role={a.priorite === 'CRITIQUE' ? 'alert' : 'listitem'}
                     >
-                      Aucune alerte active
-                    </div>
-                    <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)' }}>
-                      Ton élevage tourne bien.
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ── Section Serveur ───────────────────────────────────── */}
-            {alertesServeur.length > 0 && (
-              <section aria-label="Alertes serveur">
-                <Section label={`SERVEUR · ${alertesServeur.length}`} />
-                <ul
-                  style={{
-                    listStyle: 'none',
-                    padding: 0,
-                    margin: '12px 0 0',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 10,
-                  }}
-                  aria-label="Liste alertes serveur"
-                >
-                  {alertesServeur.map((a, i) => {
-                    const formatted = formatAlertServeurMessage(a);
-                    const actionTrimmed = a.actionRequise?.trim() ?? '';
-                    const actionIsJson = actionTrimmed.startsWith('{') && actionTrimmed.endsWith('}');
-                    const description =
-                      !actionIsJson && actionTrimmed.length > 0
-                        ? `${formatted.description} — ${actionTrimmed}`
-                        : formatted.description;
-                    const treatment = classifyAlertTreatment({ priority: a.priorite });
-                    return (
-                      <li key={`srv-${i}-${a.sujet}-${a.date}`}>
-                        <AlertRow
-                          treatment={treatment}
-                          priority={a.priorite}
-                          title={formatted.title}
-                          description={description}
-                          categoryLabel={a.categorie}
-                          metaLabel={a.date || undefined}
-                          serverTag
-                          ariaRole={a.priorite === 'CRITIQUE' ? 'alert' : 'listitem'}
-                        />
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
-            )}
-
-            {/* ── Section Locales ───────────────────────────────────── */}
-            {alerts.length > 0 && (
-              <section aria-label="Alertes locales GTTT">
-                <div className="flex items-center gap-2">
-                  <div style={{ flex: 1 }}>
-                    <Section label={`LOCALES · ${filteredAlerts.length}`} variant="accent" />
-                  </div>
-                  {activeFilter !== 'ALL' && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="small"
-                      onClick={() => setActiveFilter('ALL')}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--color-accent-500)',
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: 10,
-                        letterSpacing: '0.10em',
-                        textTransform: 'uppercase',
-                        cursor: 'pointer',
-                        padding: 0,
-                        flexShrink: 0,
-                      }}
-                    >
-                      Effacer filtre
-                    </Button>
-                  )}
-                </div>
-                {filteredAlerts.length === 0 ? (
-                  <div
-                    style={{
-                      marginTop: 12,
-                      background: 'var(--bg-surface)',
-                      borderRadius: 12,
-                      padding: '32px',
-                      textAlign: 'center',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 8,
-                    }}
-                  >
-                    <AlertOctagon size={22} color="var(--muted)" aria-hidden="true" />
-                    <p
-                      style={{
-                        fontFamily: 'var(--font-body)',
-                        fontSize: 13,
-                        color: 'var(--muted)',
-                        margin: 0,
-                      }}
-                    >
-                      Aucune alerte dans cette catégorie.
-                    </p>
-                  </div>
-                ) : (
-                  <ul
-                    style={{
-                      listStyle: 'none',
-                      padding: 0,
-                      margin: '12px 0 0',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 10,
-                    }}
-                    aria-label="Liste alertes locales"
-                  >
-                    {filteredAlerts.map(alert => {
-                      const isGrouped = !!alert.groupedIds;
-                      const hasConfirm = !isGrouped && hasPendingForAlert(alert.id);
-                      const treatment = classifyAlertTreatment(alert);
-                      const originalAlert = isGrouped ? null : alerts.find(a => a.id === alert.id) ?? null;
-
-                      // Route fallback par catégorie (BUG #1 utilisateur — cards non cliquables).
-                      const fallbackRoute = ((): string | null => {
-                        if (alert.category === 'STOCK') return '/ressources?filter=stock-bas';
-                        const subj = originalAlert?.subjectId;
-                        if (alert.category === 'BANDES') {
-                          if (subj && bandes.some(b => b.id === subj || b.idPortee === subj)) {
-                            const bande = bandes.find(b => b.id === subj || b.idPortee === subj);
-                            return `/troupeau/bandes/${bande?.id ?? subj}`;
-                          }
-                          return '/troupeau?view=bandes';
-                        }
-                        if (alert.category === 'REPRO') {
-                          if (subj && truies.some(t => t.id === subj || t.displayId === subj)) {
-                            const truie = truies.find(t => t.id === subj || t.displayId === subj);
-                            return `/troupeau/truies/${truie?.id ?? subj}`;
-                          }
-                          return '/troupeau';
-                        }
-                        return null;
-                      })();
-
-                      // Sprint E1 — alertes locales individuelles (non groupées) :
-                      // utilisent AlertCard avec bouton "OK ✓" d'acquittement uniforme.
-                      if (!isGrouped && originalAlert) {
-                        const onAction = originalAlert.requiresAction && hasConfirm
-                          ? () => handleAction(originalAlert)
-                          : fallbackRoute
-                            ? () => navigate(fallbackRoute)
-                            : undefined;
-
-                        const actionLabel = originalAlert.requiresAction && hasConfirm
-                          ? 'Action requise'
-                          : originalAlert.requiresAction
-                            ? "Voir l'alerte"
-                            : fallbackRoute
-                              ? 'Ouvrir'
-                              : undefined;
-
-                        const resolvedAlert: FarmAlert = {
-                          ...originalAlert,
-                          title: resolveAlertSubject(originalAlert.title, lookup),
-                          message: resolveAlertSubject(originalAlert.message, lookup),
-                        };
-
-                        return (
-                          <li key={alert.id} data-alert-id={alert.id}>
-                            <AlertCard
-                              alert={resolvedAlert}
-                              onAcknowledge={(id) => void handleAcknowledge(id)}
-                              onAction={onAction}
-                              actionLabel={actionLabel}
-                            />
-                          </li>
-                        );
-                      }
-
-                      // Groupes (stock fusionné) : conserve AlertRow custom (multi-cibles).
-                      const onClick = (): void => {
-                        navigate('/ressources?filter=stock-bas');
-                      };
-
-                      return (
-                        <li key={alert.id}>
-                          <AlertRow
-                            treatment={treatment}
-                            priority={alert.priority}
-                            title={alert.title}
-                            description={alert.message}
-                            categoryLabel={alert.category}
-                            metaLabel={`${alert.groupedIds?.length ?? 0} entrées`}
-                            actionLabel="Voir le détail des stocks"
-                            onClick={onClick}
-                            ariaRole={alert.priority === 'CRITIQUE' ? 'alert' : 'listitem'}
-                          />
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </section>
-            )}
-
-            {/* ── En attente de confirmation ────────────────────────── */}
-            {pendingConfirmations.length > 0 && (
-              <section aria-label="Actions en attente de confirmation">
-                <Section label={`EN ATTENTE · ${pendingConfirmations.length}`} />
-                <ul
-                  style={{
-                    listStyle: 'none',
-                    padding: 0,
-                    margin: '12px 0 0',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 10,
-                  }}
-                  aria-label="Actions à confirmer"
-                >
-                  {pendingConfirmations.map(pc => (
-                    <li key={pc.id}>
+                      <div className="alert-card__head">
+                        <h3 className="alert-card__title">{formatted.title}</h3>
+                        <span className="eyebrow" style={{ color: sevColor, flexShrink: 0 }}>
+                          {sevLabel}
+                        </span>
+                      </div>
                       <div
+                        className="num"
                         style={{
-                          background: 'var(--bg-surface)',
-                          borderRadius: 12,
-                          boxShadow: '0 1px 2px rgba(17,24,39,0.04), 0 1px 3px rgba(17,24,39,0.06)',
-                          padding: '14px 16px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 6,
+                          fontFamily: 'var(--pt-font-mono)',
+                          fontSize: 11,
+                          color: 'var(--pt-muted)',
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span
-                            style={{
-                              background: 'var(--color-amber-pork-soft)',
-                              color: 'var(--color-amber-pork-deep)',
-                              padding: '3px 9px',
-                              borderRadius: 'var(--radius-pill)',
-                              fontFamily: 'var(--font-mono)',
-                              fontSize: 10,
-                              letterSpacing: '0.10em',
-                              textTransform: 'uppercase',
-                              fontWeight: 600,
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 6,
-                            }}
-                          >
-                            <span
-                              aria-hidden="true"
-                              style={{
-                                width: 6,
-                                height: 6,
-                                borderRadius: '50%',
-                                background: 'var(--color-amber-pork-deep)',
-                                flexShrink: 0,
-                              }}
-                            />
-                            À confirmer
-                          </span>
-                          <span
-                            style={{
-                              marginLeft: 'auto',
-                              fontFamily: 'var(--font-mono)',
-                              fontSize: 11,
-                              color: 'var(--muted)',
-                            }}
-                          >
-                            {formatDistanceToNow(new Date(pc.createdAt), {
-                              addSuffix: true,
-                              locale: fr,
-                            })}
-                          </span>
-                        </div>
-                        <h3
-                          style={{
-                            fontFamily: 'var(--font-heading)',
-                            fontSize: 17,
-                            fontWeight: 600,
-                            color: 'var(--ink)',
-                            margin: '2px 0 0',
-                            letterSpacing: '-0.005em',
-                          }}
-                        >
-                          {resolveAlertSubject(pc.alertTitle, lookup)}
-                        </h3>
-                        <p
-                          style={{
-                            fontFamily: 'var(--font-body)',
-                            fontSize: 13,
-                            color: 'var(--ink-soft)',
-                            lineHeight: 1.5,
-                            margin: 0,
-                          }}
-                        >
-                          {resolveAlertSubject(pc.alertMessage, lookup)}
-                        </p>
+                        Serveur{a.date ? ` · ${a.date}` : ''}
                       </div>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-          </div>
-        </AgritechLayout>
+                      <div style={{ fontSize: 13, color: 'var(--pt-muted)', marginTop: 4 }}>
+                        {description}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* ── En attente de confirmation ────────────────────────────── */}
+          {pendingConfirmations.length > 0 && (
+            <>
+              <Section label={`En attente · ${pendingConfirmations.length}`} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                {pendingConfirmations.map(pc => (
+                  <article key={pc.id} className="alert-card high">
+                    <div className="alert-card__head">
+                      <h3 className="alert-card__title">
+                        {resolveAlertSubject(pc.alertTitle, lookup)}
+                      </h3>
+                      <span className="eyebrow" style={{ color: 'var(--pt-warning)', flexShrink: 0 }}>
+                        À confirmer
+                      </span>
+                    </div>
+                    <div
+                      className="num"
+                      style={{
+                        fontFamily: 'var(--pt-font-mono)',
+                        fontSize: 11,
+                        color: 'var(--pt-muted)',
+                      }}
+                    >
+                      {formatDistanceToNow(new Date(pc.createdAt), {
+                        addSuffix: true,
+                        locale: fr,
+                      })}
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--pt-muted)', marginTop: 4 }}>
+                      {resolveAlertSubject(pc.alertMessage, lookup)}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* ── Empty state ───────────────────────────────────────────── */}
+          {(showEmpty || (alerts.length > 0 && filteredAlerts.length === 0)) && (
+            <div className="empty">
+              <CheckCircle2 size={48} strokeWidth={1.25} color="var(--pt-success)" aria-hidden="true" />
+              <div
+                style={{
+                  fontFamily: 'var(--pt-font-display)',
+                  fontWeight: 900,
+                  fontSize: 22,
+                  textTransform: 'uppercase',
+                  letterSpacing: '-0.01em',
+                  color: 'var(--pt-ink)',
+                }}
+              >
+                {showEmpty ? 'Carnet vide' : 'Aucune alerte dans ce filtre'}
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--pt-muted)' }}>
+                {showEmpty
+                  ? 'Toutes les alertes sont traitées. Bonne tournée.'
+                  : 'Change de filtre ou reviens plus tard.'}
+              </div>
+            </div>
+          )}
+        </div>
 
         <ConfirmationModal
           isOpen={!!selectedAlert}

@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { IonContent, IonModal, IonSpinner } from '@ionic/react';
 import {
   AlertCircle, Activity, ClipboardList, ChevronRight,
   Stethoscope, TrendingUp, CalendarClock, CheckCircle2,
-  Edit3, Home, MapPin, Move, Tag, Plus, ClipboardCheck, Split,
+  Edit3, Home, MapPin, Move, Tag, Plus, ClipboardCheck, Split, MoreHorizontal,
 } from 'lucide-react';
 import PhotoUpload from '../../../v70/components/v70/PhotoUpload';
 import PhotoGallery from '../../../v70/components/v70/PhotoGallery';
@@ -33,7 +33,7 @@ import {
   listPorceletsByBatch,
   type BandeLogeEffective,
 } from '../../../services/supabaseWrites';
-import { useNoUUID, Button, Card, PageHeader, Tabs, Tag as DsTag, CycleTimeline } from '@/design-system';
+import { useNoUUID, Button, Tabs, CycleTimeline } from '@/design-system';
 import { EntityAvatar } from '../../../components/ds/EntityAvatar';
 import {
   getRecommendedHealthLogs,
@@ -353,86 +353,96 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
   return (
     <div className="agritech-root h-full flex flex-col">
       <TopBarSync
-        crumbs={['Élevage', 'Bandes', portéeLabel]}
+        crumbs={[]}
         onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
       />
 
       <IonContent className="ion-no-padding">
         <div
-          className="px-4 pt-5 pb-44 flex flex-col gap-5"
-          style={{ maxWidth: 1100, margin: '0 auto' }}
+          className="flex flex-col"
+          style={{ maxWidth: 1100, margin: '0 auto', paddingBottom: 176 }}
           data-testid="bande-detail-view"
         >
-          {/* V71 lisibilité : subtitle enrichi (statut + jour + nb vivants) au lieu d'un placeholder générique. */}
-          <PageHeader
-            eyebrow="Élevage · Bande"
-            title={portéeLabel}
-            subtitle={(() => {
-              const parts: string[] = [];
-              if (bande.status) parts.push(String(bande.status));
-              if (bande.age != null) parts.push(`J${bande.age}`);
-              if (vivantsActifs > 0) parts.push(`${vivantsActifs} vivants`);
-              return parts.length > 0 ? parts.join(' · ') : 'Suivi de la bande';
-            })()}
-          />
-
-          {/* V45 P3C — Hero compact archétype 4 : EntityAvatar + tags + actions */}
-          <Card>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-              <EntityAvatar
-                species="bande"
-                photoUrl={bandeTyped?.photoUrl}
-                size="xl"
-                shortCode={bandeTyped?.idPortee ?? portéeLabel}
-              />
-              <div style={{ flex: 1, minWidth: 200, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ fontFamily: 'var(--pt-font-display)', fontSize: 18, fontWeight: 700, color: 'var(--pt-text)' }}>
-                  Bande {portéeLabel}
-                  {bandeTyped?.dateMB ? (
-                    <span style={{ fontFamily: 'var(--pt-font-body)', fontSize: 13, fontWeight: 400, color: 'var(--pt-text-muted)', marginLeft: 8 }}>
-                      — MB {formatDateFr(String(bandeTyped.dateMB))}
-                    </span>
-                  ) : null}
-                </div>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {bandeTyped?.statut ? (
-                    <DsTag variant={(() => {
-                      const s = String(bandeTyped.statut).toUpperCase();
-                      if (s.includes('SEVR')) return 'accent';
-                      if (s.includes('SOUS')) return 'primary';
-                      if (s.includes('CROIS') || s.includes('FINIT') || s.includes('ENGRA')) return 'soft';
-                      return 'default';
-                    })() as 'default' | 'primary' | 'accent' | 'soft'}>
-                      {bandeTyped.statut}
-                    </DsTag>
-                  ) : null}
-                  {vivantsActifs > 0 ? <DsTag variant="soft">{vivantsActifs} vivants</DsTag> : null}
-                  {bande.age != null ? (
-                    <DsTag variant="default">{bande.age} j</DsTag>
-                  ) : null}
-                </div>
+          {/* V76 — Header cahier d'éleveur : --pt-primary opaque */}
+          <header className="ph ph--primary">
+            <div className="ph__crumb">
+              <Link to="/troupeau">Élevage</Link>
+              <ChevronRight aria-hidden />
+              <Link to="/troupeau?view=bandes">Bandes</Link>
+              <ChevronRight aria-hidden />
+              <b>{portéeLabel}</b>
+            </div>
+            <div className="ph__row">
+              <div>
+                <div className="ph__eyebrow">Élevage · Bande</div>
+                <h1 className="ph__h1">{portéeLabel}</h1>
               </div>
-              <div style={{ display: 'flex', gap: 8, marginLeft: 'auto', flexShrink: 0, flexWrap: 'wrap' }}>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => setActiveTab('sante')}
-                  ariaLabel="Saisir un évènement"
-                >
-                  + Saisir évènement
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setEditBandeOpen(true)}
-                  ariaLabel="Modifier la bande"
-                  disabled={!bandeTyped}
-                >
-                  Modifier
-                </Button>
+              <button
+                type="button"
+                className="iconbtn"
+                onClick={() => setEditBandeOpen(true)}
+                aria-label="Ouvrir les actions"
+                disabled={!bandeTyped}
+              >
+                <MoreHorizontal aria-hidden />
+              </button>
+            </div>
+            <p className="ph__sub">
+              {(() => {
+                const parts: React.ReactNode[] = [];
+                if (bandeTyped?.dateMB) parts.push(<>MB <b>{formatDateFr(String(bandeTyped.dateMB))}</b></>);
+                if (bande.status) parts.push(String(bande.status));
+                if (bande.age != null) parts.push(`J${bande.age}`);
+                if (vivantsActifs > 0) parts.push(`${vivantsActifs} vivants`);
+                if (parts.length === 0) parts.push('Suivi de la bande');
+                return parts.flatMap((p, i) => i === 0 ? [<React.Fragment key={`s-${i}`}>{p}</React.Fragment>] : [' · ', <React.Fragment key={`s-${i}`}>{p}</React.Fragment>]);
+              })()}
+            </p>
+            <div className="id-strip">
+              <span data-av-xl>
+                <EntityAvatar
+                  species="bande"
+                  photoUrl={bandeTyped?.photoUrl}
+                  size="xl"
+                  shortCode={bandeTyped?.idPortee ?? portéeLabel}
+                />
+              </span>
+              <div className="id-strip__meta">
+                <div className="id-strip__row">
+                  {bandeTyped?.statut ? (
+                    <span className="pill pill--warm pill--no-dot">{bandeTyped.statut}</span>
+                  ) : null}
+                  {bande.age != null ? (
+                    <span className="pill pill--ghost pill--no-dot">{bande.age} j</span>
+                  ) : null}
+                </div>
+                {vivantsActifs > 0 ? <div>Vivants <b>{vivantsActifs}</b></div> : null}
+                {currentLoge ? <div>Loge <b>{currentLoge.numero}</b></div> : null}
               </div>
             </div>
-          </Card>
+          </header>
+
+          <div className="px-4 pt-1 flex flex-col gap-5">
+            {/* Actions principales déplacées sous le header (V76) */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setActiveTab('sante')}
+                ariaLabel="Saisir un évènement"
+              >
+                + Saisir évènement
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setEditBandeOpen(true)}
+                ariaLabel="Modifier la bande"
+                disabled={!bandeTyped}
+              >
+                Modifier
+              </Button>
+            </div>
 
           {/* V45 PHASE 4 — Onglets uniformisés UPPERCASE (sémantique préservée) */}
           <Tabs
@@ -1066,6 +1076,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
               />
             </div>
           )}
+          </div>
         </div>
 
         <IonModal isOpen={!!editRow} onDidDismiss={() => setEditRow(null)} className="premium-modal">

@@ -2718,3 +2718,266 @@
   justify-content: center;
   margin: 8px 0 22px;
 }
+
+/* ===== V76 DetailHeader pattern .ph--primary (cahier d'éleveur) ===== */
+.ph {
+  padding: 14px 20px 22px;
+}
+
+.ph--primary {
+  background: var(--pt-primary);
+  color: var(--pt-warm);
+  margin: 0 0 16px;
+  border-radius: 0 0 18px 18px;
+}
+
+.ph__crumb {
+  font-family: var(--pt-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(245, 233, 216, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.ph__crumb a {
+  color: rgba(245, 233, 216, 0.5);
+  text-decoration: none;
+}
+
+.ph__crumb a:hover {
+  color: var(--pt-warm);
+}
+
+.ph__crumb b {
+  color: var(--pt-warm);
+  font-weight: 600;
+}
+
+.ph__crumb svg {
+  color: rgba(245, 233, 216, 0.4);
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.ph__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.ph__eyebrow {
+  font-family: var(--pt-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pt-accent-light);
+  margin-bottom: 4px;
+}
+
+.ph__h1 {
+  font-family: var(--pt-font-display);
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 36px;
+  letter-spacing: -0.01em;
+  line-height: 0.92;
+  color: var(--pt-warm);
+  margin: 0;
+}
+
+.ph__sub {
+  font-size: 13px;
+  color: rgba(245, 233, 216, 0.7);
+  margin: 8px 0 0;
+  line-height: 1.45;
+}
+
+.ph__sub b {
+  color: var(--pt-warm);
+  font-weight: 600;
+}
+
+.ph--primary .iconbtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(245, 233, 216, 0.2);
+  background: transparent;
+  color: var(--pt-warm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ph--primary .iconbtn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.id-strip {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.id-strip > [data-av-xl] {
+  box-shadow: 0 0 0 4px rgba(245, 233, 216, 0.08);
+  border-radius: 20px;
+}
+
+.id-strip__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: var(--pt-font-mono);
+  font-size: 11px;
+  color: rgba(245, 233, 216, 0.7);
+}
+
+.id-strip__meta b {
+  color: var(--pt-warm);
+}
+
+.id-strip__row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ph--primary .pill--warm {
+  background: rgba(184, 112, 61, 0.22);
+  color: var(--pt-warm);
+  border: 1px solid rgba(184, 112, 61, 0.32);
+}
+
+.ph--primary .pill--ghost {
+  background: transparent;
+  color: rgba(245, 233, 216, 0.85);
+  border: 1px solid rgba(245, 233, 216, 0.3);
+}
+
+/* ========================================================================== */
+/* V76 — Patterns refonte AlertsView + FinancesView (Sprint Legacy 1)         */
+/* ========================================================================== */
+
+/* alert-card variantes pilotage : extension du pattern auth (variantes
+   crit/high/norm avec border-left coloré). Le bloc auth de base reste
+   utilisé tel quel quand la card n'a pas de variante. */
+.alert-card.crit,
+.alert-card.high,
+.alert-card.norm {
+  display: block;
+  background: var(--pt-bg);
+  border: 1px solid var(--pt-line);
+  border-left-width: 4px;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 0;
+}
+
+.alert-card.crit {
+  border-left-color: var(--pt-danger);
+}
+
+.alert-card.high {
+  border-left-color: var(--pt-warning);
+}
+
+.alert-card.norm {
+  border-left-color: var(--pt-info);
+}
+
+.alert-card.crit:hover,
+.alert-card.high:hover,
+.alert-card.norm:hover {
+  border-color: var(--pt-line-strong);
+}
+
+.alert-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.alert-card.crit .alert-card__title,
+.alert-card.high .alert-card__title,
+.alert-card.norm .alert-card__title {
+  font-family: var(--pt-font-body);
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--pt-ink);
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* btn-ghost-sm / btn-primary-sm : boutons compacts pour actions in-card. */
+.btn-ghost-sm,
+.btn-primary-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-family: var(--pt-font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+  min-height: 32px;
+}
+
+.btn-ghost-sm {
+  background: transparent;
+  color: var(--pt-muted);
+  border: 1px solid var(--pt-line-strong);
+}
+
+.btn-ghost-sm:hover {
+  color: var(--pt-ink);
+  border-color: var(--pt-ink);
+}
+
+.btn-primary-sm {
+  background: var(--pt-primary);
+  color: var(--pt-warm);
+  border: 1px solid var(--pt-primary);
+}
+
+.btn-primary-sm:hover {
+  background: var(--pt-primary-deep);
+  border-color: var(--pt-primary-deep);
+}
+
+/* num : utilitaire chiffres tabulaires (réutilisé alerts/finances). */
+.num {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+/* eyebrow utilitaire : libellé court UPPERCASE letter-spacing (severity). */
+.eyebrow {
+  font-family: var(--pt-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pt-muted);
+}

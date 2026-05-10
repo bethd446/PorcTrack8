@@ -1,53 +1,38 @@
 /**
- * FinancesView — /pilotage/finances
- * ══════════════════════════════════════════════════════════════════════════
- * Refonte Claude Design v1 (2026-04-20) : variante SYNTHÈSE retenue.
+ * FinancesView — Refonte V70 (Sprint Legacy 1, 2026-05-10)
+ * ════════════════════════════════════════════════════════════════════════════
+ * Pattern V70 natif (mockup B.4) : phone-content + PageHeader + score-billboard
+ * marge mensuelle + kpis-strip 3 KPIs + bar chart 12 mois SVG + card-link
+ * vers le rapport détaillé. Plus d'AgritechLayout / KpiCardV6 / TopBarSync.
  *
- * Structure :
- *   1. Header + period toggle (3 chips : mois / précédent / année)
- *   2. KPI 2×2 (CA · Dépenses · Marge · Trésorerie cumulée)
- *   3. Bloc A : Sparkline CA 6 derniers mois + 3 dernières ventes
- *   4. Bloc B : Donut ventilation dépenses + liste % par catégorie
- *   5. Transactions récentes (8 dernières, lignes directionnelles ↙/↗)
- *   6. HubTile gold → /pilotage/finances/rapport (variante EMPILÉE + export PDF)
- *
- * Données : FarmContext.finances (FinanceEntry[]) + financesAnalyzer.
+ * Logique métier préservée :
+ *   - useFarm.finances + useFarm.currency inchangés
+ *   - financesAnalyzer (summarizeByPeriode / summarizeAll / dateToPeriode /
+ *     formatMontant) inchangé
+ *   - Trésorerie cumul = somme tous revenus - dépenses depuis le début
+ *     (label "Trésorerie cumul (depuis début)" préservé pour test V8)
  */
 
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   IonContent, IonPage, IonRefresher, IonRefresherContent,
 } from '@ionic/react';
-import {
-  ArrowUpRight, ArrowDownLeft,
-  ChevronRight, BarChart3, Coins, Plus, MoreVertical,
-  Pencil, Trash2,
-} from 'lucide-react';
+import { ChevronRight, FileText, Plus } from 'lucide-react';
 
-import AgritechLayout from '../../components/AgritechLayout';
-import TopBarSync from '../../components/design/TopBarSync';
-import { default as KpiCardV6 } from '../../components/design/KpiCard';
-import { Chip, SectionDivider } from '../../components/agritech';
-import { Button, PageHeader } from '@/design-system';
+import { PageHeader, Section } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import {
   summarizeByPeriode,
   summarizeAll,
   formatMontant,
-  categorieToTone,
   dateToPeriode,
 } from '../../services/financesAnalyzer';
 import type { Currency } from '../../lib/currency';
 import type { FinanceEntry } from '../../types/farm';
 import QuickAddTransactionForm from '../../components/forms/QuickAddTransactionForm';
-import QuickEditTransactionForm, {
-  type FinanceEntryWithId,
-} from '../../components/forms/QuickEditTransactionForm';
 
-// ─── Période ─────────────────────────────────────────────────────────────────
-
-type PeriodeKey = 'mois' | 'prec' | 'annee';
+// ─── Période & helpers ───────────────────────────────────────────────────────
 
 function periodeKeyFromDate(d: Date): string {
   const y = d.getFullYear();
@@ -60,31 +45,29 @@ function previousMonthKey(now: Date = new Date()): string {
   return periodeKeyFromDate(d);
 }
 
-function yearKeyPrefix(now: Date = new Date()): string {
-  return String(now.getFullYear());
-}
+const MOIS_LONG = [
+  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
+];
 
-function parseDateFr(s: string): number {
-  if (!s) return 0;
-  const parts = s.split('/');
-  if (parts.length !== 3) return 0;
-  const [dd, mm, yyyy] = parts.map(Number);
-  if (!Number.isFinite(dd) || !Number.isFinite(mm) || !Number.isFinite(yyyy)) return 0;
-  return new Date(yyyy, mm - 1, dd).getTime();
-}
-
-/** Libellé court pour la sparkline : "AVR", "MAR", … */
 const MOIS_SHORT = ['JAN', 'FÉV', 'MAR', 'AVR', 'MAI', 'JUN', 'JUL', 'AOÛ', 'SEP', 'OCT', 'NOV', 'DÉC'];
+
+function monthLongLabel(periodeKey: string): string {
+  const yyyy = periodeKey.slice(0, 4);
+  const mm = Number(periodeKey.slice(5, 7));
+  if (!Number.isFinite(mm) || mm < 1 || mm > 12) return '—';
+  return `${MOIS_LONG[mm - 1]} ${yyyy}`;
+}
 
 function monthShortLabel(periodeKey: string): string {
   const mm = Number(periodeKey.slice(5, 7));
   return Number.isFinite(mm) && mm >= 1 && mm <= 12 ? MOIS_SHORT[mm - 1] : '—';
 }
 
-/** 6 derniers mois (chronologique, plus ancien → récent). */
-function last6MonthsKeys(now: Date = new Date()): string[] {
+/** 12 derniers mois (chronologique, plus ancien → récent). */
+function last12MonthsKeys(now: Date = new Date()): string[] {
   const keys: string[] = [];
-  for (let i = 5; i >= 0; i--) {
+  for (let i = 11; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     keys.push(periodeKeyFromDate(d));
   }
@@ -93,144 +76,68 @@ function last6MonthsKeys(now: Date = new Date()): string[] {
 
 // ─── Composant principal ─────────────────────────────────────────────────────
 
-/**
- * Extrait un identifiant stable depuis une FinanceEntry. La feuille Sheets
- * expose une colonne `ID` (première colonne) mais le type `FinanceEntry` ne
- * l'embarque pas explicitement — on la lit depuis `raw[0]` si le shape de la
- * ligne correspond (FIN-*, TX-*, UUID, numérique). Si aucun ID identifiable
- * n'est présent, la fonction renvoie `null` et l'UI masque le menu d'édition
- * pour cette ligne (on n'émet pas d'update sans clé de ligne valide).
- */
-function extractFinanceId(entry: FinanceEntry): string | null {
-  const raw = entry.raw;
-  if (Array.isArray(raw) && raw.length > 0) {
-    const first = raw[0];
-    if (typeof first === 'string' || typeof first === 'number') {
-      const s = String(first).trim();
-      if (/^(FIN|TX|T|F)[-_]?\w+/i.test(s) || /^[a-f0-9-]{8,}$/i.test(s)) {
-        return s;
-      }
-    }
-  }
-  return null;
-}
-
 const FinancesView: React.FC = () => {
   const navigate = useNavigate();
   const { finances, refreshData, currency: farmCurrency } = useFarm();
-  const [periode, setPeriode] = useState<PeriodeKey>('mois');
   const [addOpen, setAddOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<FinanceEntryWithId | null>(null);
 
   const entries = finances as FinanceEntry[];
-
-  // Devise : source de vérité unique = pays de la ferme (`useMeta().currency`).
-  // Plus de detect ligne par ligne — Vague 4 cleanup, fix #10/#15.
   const currency: Currency = farmCurrency;
 
-  // Filtre selon la période sélectionnée
-  const filteredEntries = useMemo<FinanceEntry[]>(() => {
-    const now = new Date();
-    if (periode === 'mois') {
-      const key = periodeKeyFromDate(now);
-      return entries.filter((e) => dateToPeriode(e.date) === key);
-    }
-    if (periode === 'prec') {
-      const key = previousMonthKey(now);
-      return entries.filter((e) => dateToPeriode(e.date) === key);
-    }
-    const prefix = yearKeyPrefix(now);
-    return entries.filter((e) => dateToPeriode(e.date).startsWith(prefix));
-  }, [entries, periode]);
+  const now = new Date();
+  const currentMonthKey = periodeKeyFromDate(now);
+  const currentMonthLabel = monthLongLabel(currentMonthKey);
 
-  const summary = useMemo(() => {
-    if (periode === 'mois') return summarizeByPeriode(entries, periodeKeyFromDate(new Date()));
-    if (periode === 'prec') return summarizeByPeriode(entries, previousMonthKey());
-    return summarizeAll(filteredEntries);
-  }, [entries, filteredEntries, periode]);
+  // Synthèse mois en cours (revenus / charges / marge)
+  const summary = useMemo(
+    () => summarizeByPeriode(entries, currentMonthKey),
+    [entries, currentMonthKey],
+  );
 
-  // Trésorerie cumulée = somme tous revenus - toutes dépenses depuis le début
+  // Synthèse mois précédent → calcul deltaPct
+  const summaryPrev = useMemo(
+    () => summarizeByPeriode(entries, previousMonthKey(now)),
+    [entries, now],
+  );
+
+  const revenus = summary.totalRevenus;
+  const charges = summary.totalDepenses;
+  const marge = summary.margeNette;
+  const margePrev = summaryPrev.margeNette;
+
+  const deltaPct = useMemo<number | null>(() => {
+    if (margePrev === 0) return null;
+    return Math.round(((marge - margePrev) / Math.abs(margePrev)) * 100);
+  }, [marge, margePrev]);
+
+  // Trésorerie cumulée (test V8 : label "Trésorerie cumul (depuis début)")
   const tresorerieCumul = useMemo(() => {
     const all = summarizeAll(entries);
     return all.totalRevenus - all.totalDepenses;
   }, [entries]);
 
-  // Compteur de mois consécutifs en solde négatif (depuis le mois courant en
-  // remontant) — utilisé pour expliciter pourquoi la trésorerie cumul est < 0.
-  const moisNegatifs = useMemo(() => {
-    if (tresorerieCumul >= 0) return 0;
-    const now = new Date();
-    let cumul = 0;
-    // On reconstruit la trésorerie en partant du début de l'historique pour
-    // identifier le 1er mois où le cumul passe en négatif.
-    const sorted = [...entries].sort(
-      (a, b) => parseDateFr(a.date) - parseDateFr(b.date),
-    );
-    let firstNegativeKey: string | null = null;
-    for (const e of sorted) {
-      cumul += e.type === 'REVENU' ? e.montant : -e.montant;
-      if (cumul < 0 && !firstNegativeKey) {
-        firstNegativeKey = dateToPeriode(e.date);
-      }
-    }
-    if (!firstNegativeKey) return 0;
-    const [fy, fm] = firstNegativeKey.split('-').map(Number);
-    if (!Number.isFinite(fy) || !Number.isFinite(fm)) return 0;
-    const count =
-      (now.getFullYear() - fy) * 12 + (now.getMonth() + 1 - fm) + 1;
-    return Math.max(1, count);
-  }, [entries, tresorerieCumul]);
-
-  // Sparkline : CA par mois (6 derniers)
-  const sparkData = useMemo(() => {
-    const keys = last6MonthsKeys();
-    return keys.map((k) => {
+  // Bar chart 12 mois (marge nette mensuelle)
+  const monthly = useMemo(() => {
+    const keys = last12MonthsKeys(now);
+    return keys.map((k, i) => {
       const s = summarizeByPeriode(entries, k);
-      return { periode: k, label: monthShortLabel(k), ca: s.totalRevenus };
+      return {
+        key: k,
+        label: monthShortLabel(k),
+        marge: s.margeNette,
+        idx: i,
+      };
     });
-  }, [entries]);
+  }, [entries, now]);
 
-  // 3 dernières ventes (type REVENU) dans la période filtrée
-  const recentVentes = useMemo<FinanceEntry[]>(() => {
-    return [...filteredEntries]
-      .filter((e) => e.type === 'REVENU')
-      .sort((a, b) => parseDateFr(b.date) - parseDateFr(a.date))
-      .slice(0, 3);
-  }, [filteredEntries]);
+  const currentMonthIdx = monthly.length - 1;
+  const firstMonthLabel = monthly[0]?.label ?? '—';
+  const lastMonthLabel = monthly[currentMonthIdx]?.label ?? '—';
 
-  // Ventilation dépenses par catégorie (pour donut)
-  const depensesParCat = useMemo(() => {
-    const entries = Object.entries(summary.parCategorie) as Array<
-      [string, { depenses: number; revenus: number }]
-    >;
-    const rows = entries
-      .map(([cat, v]) => ({ cat, montant: v.depenses }))
-      .filter((r) => r.montant > 0)
-      .sort((a, b) => b.montant - a.montant);
-    const total = rows.reduce((s, r) => s + r.montant, 0);
-    return { rows, total };
-  }, [summary]);
-
-  // Top 8 transactions récentes (date desc)
-  const recentMovements = useMemo<FinanceEntry[]>(() => {
-    return [...filteredEntries]
-      .sort((a, b) => parseDateFr(b.date) - parseDateFr(a.date))
-      .slice(0, 8);
-  }, [filteredEntries]);
+  // Échelle pour le SVG : hauteur positive et négative
+  const margeMax = Math.max(1, ...monthly.map(m => Math.abs(m.marge)));
 
   const hasData = entries.length > 0;
-  const deltaCaPct = useMemo(() => {
-    if (sparkData.length < 2) return null;
-    const last = sparkData[sparkData.length - 1].ca;
-    const prev = sparkData[sparkData.length - 2].ca;
-    if (prev === 0) return null;
-    return Math.round(((last - prev) / prev) * 100);
-  }, [sparkData]);
-
-  const margeTone: 'success' | 'critical' | 'default' =
-    summary.margeNette > 0 ? 'success'
-    : summary.margeNette < 0 ? 'critical'
-    : 'default';
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -245,247 +152,282 @@ const FinancesView: React.FC = () => {
           <IonRefresherContent />
         </IonRefresher>
 
-        <AgritechLayout>
-          <TopBarSync
-            crumbs={['Pilotage', 'Finances']}
-            onMariusClick={() => window.dispatchEvent(new CustomEvent('open-chatbot'))}
+        <div
+          className="phone-content"
+          style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}
+        >
+          <PageHeader
+            eyebrow="Pilotage · Finances"
+            title="Finances"
+            subtitle={`Marge mensuelle ${currentMonthLabel}`}
           />
 
-          <div
-            className="px-4 pt-5 pb-32 flex flex-col gap-5"
-            style={{ maxWidth: 1100, margin: '0 auto' }}
-          >
-            <PageHeader
-              eyebrow="Pilotage · Finances"
-              title="Finances"
-              subtitle="Suivi des dépenses et marges"
-            />
-
-            {/* ── Period toggle (3 chips) ─────────────────────────────── */}
-            <div role="tablist" aria-label="Période" className="flex gap-1.5">
-              {[
-                { k: 'mois' as const, l: 'Mois en cours' },
-                { k: 'prec' as const, l: 'Mois préc.' },
-                { k: 'annee' as const, l: 'Année' },
-              ].map((p) => {
-                const on = periode === p.k;
-                return (
-                  <Button
-                    key={p.k}
-                    type="button"
-                    variant={on ? 'primary' : 'secondary'}
-                    size="small"
-                    role="tab"
-                    aria-selected={on}
-                    onClick={() => setPeriode(p.k)}
-                    className={`pressable flex-1 py-2.5 font-mono text-[10px] font-semibold uppercase tracking-wide border transition-colors ${
-                      on
-                        ? 'bg-bg-2 border-accent text-accent'
-                        : 'bg-transparent border-border text-text-1 hover:text-text-0'
-                    }`}
-                    style={{ borderRadius: '0.375rem' }}
-                  >
-                    {p.l}
-                  </Button>
-                );
-              })}
+          {!hasData ? (
+            <div className="empty" style={{ marginTop: 16 }}>
+              <div
+                style={{
+                  fontFamily: 'var(--pt-font-display)',
+                  fontWeight: 900,
+                  fontSize: 22,
+                  textTransform: 'uppercase',
+                  letterSpacing: '-0.01em',
+                  color: 'var(--pt-ink)',
+                }}
+              >
+                Aucune transaction
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--pt-muted)' }}>
+                Ajoute ta première vente ou dépense pour suivre ta marge.
+              </div>
             </div>
-
-            {/* ── Empty state global ──────────────────────────────────── */}
-            {!hasData ? (
-              <EmptyFinances />
-            ) : (
-              <>
-                {/* ── KPI 2×2 ──────────────────────────────────────────── */}
+          ) : (
+            <>
+              {/* ── Big marge mensuelle ──────────────────────────────── */}
+              <Section label="Marge nette du mois" />
+              <div
+                className="card"
+                style={{
+                  padding: 22,
+                  marginTop: 8,
+                  marginBottom: 16,
+                  background: 'var(--pt-bg)',
+                  border: '1px solid var(--pt-line)',
+                  borderRadius: 14,
+                }}
+              >
                 <div
-                  role="group"
-                  aria-label="Résumé finances"
-                  className="grid grid-cols-2 gap-2.5"
-                >
-                  <KpiCardV6
-                    label="Chiffre d'affaires"
-                    value={formatMontant(summary.totalRevenus, currency)}
-                  />
-                  <KpiCardV6
-                    label="Dépenses"
-                    value={formatMontant(summary.totalDepenses, currency)}
-                    accentColor="var(--amber-pork)"
-                  />
-                  <KpiCardV6
-                    label="Marge nette"
-                    value={formatMontant(summary.margeNette, currency)}
-                    accentColor={
-                      margeTone === 'critical'
-                        ? 'var(--color-danger)'
-                        : margeTone === 'success'
-                          ? undefined
-                          : undefined
-                    }
-                  />
-                  <KpiCardV6
-                    label="Trésorerie cumul (depuis début)"
-                    value={formatMontant(tresorerieCumul, currency)}
-                    accentColor={tresorerieCumul >= 0 ? undefined : 'pig'}
-                    tone={tresorerieCumul < 0 ? 'critical' : undefined}
-                    trend={
-                      tresorerieCumul < 0
-                        ? `⚠ ATTENTION · solde négatif${moisNegatifs > 0 ? ` depuis ${moisNegatifs} mois` : ''}`
-                        : undefined
-                    }
-                    polarity="higher-better"
-                    trendDir={tresorerieCumul < 0 ? 'down' : 'neutral'}
-                    ariaLabel={
-                      tresorerieCumul < 0
-                        ? `Trésorerie cumul (depuis début) ${formatMontant(tresorerieCumul, currency)} — ATTENTION : solde négatif${moisNegatifs > 0 ? ` depuis ${moisNegatifs} mois` : ''}`
-                        : undefined
-                    }
-                  />
-                </div>
-
-                {/* ── Banner : mois courant vide mais historique présent ── */}
-                {periode === 'mois' && filteredEntries.length === 0 && entries.length > 0 ? (
-                  <div
-                    role="status"
-                    aria-live="polite"
-                    className="card-dense"
-                    style={{
-                      padding: '12px 14px',
-                      background: 'color-mix(in srgb, var(--amber) 8%, var(--bg-2))',
-                      borderColor: 'color-mix(in srgb, var(--amber) 30%, var(--border))',
-                    }}
-                  >
-                    <div className="ft-heading text-[12px] uppercase tracking-wide text-text-0">
-                      Aucune transaction ce mois
-                    </div>
-                    <div className="font-mono text-[11px] text-text-2 mt-1">
-                      {entries.length} transaction{entries.length > 1 ? 's' : ''} dans l'historique. Voir
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="small"
-                        onClick={() => setPeriode('prec')}
-                        className="font-semibold text-accent ml-1 underline-offset-2 hover:underline"
-                        style={{ padding: 0, textTransform: 'none', borderRadius: 0, height: 'auto' }}
-                      >
-                        Mois préc.
-                      </Button>
-                      <span className="text-text-2 mx-1">ou</span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="small"
-                        onClick={() => setPeriode('annee')}
-                        className="font-semibold text-accent underline-offset-2 hover:underline"
-                        style={{ padding: 0, textTransform: 'none', borderRadius: 0, height: 'auto' }}
-                      >
-                        Année
-                      </Button>
-                      .
-                    </div>
-                  </div>
-                ) : null}
-
-                {/* ── Bloc A : CA 6 mois + 3 ventes (variante SYNTHÈSE) ── */}
-                <section aria-label="Chiffre d'affaires 6 mois">
-                  <SectionDivider label="Chiffre d'affaires · 6 mois" />
-                  <SparkCa
-                    data={sparkData}
-                    currency={currency}
-                    deltaPct={deltaCaPct}
-                    recentVentes={recentVentes}
-                  />
-                </section>
-
-                {/* ── Bloc B : Donut ventilation dépenses ─────────────── */}
-                {depensesParCat.rows.length > 0 ? (
-                  <section aria-label="Ventilation dépenses">
-                    <SectionDivider label="Ventilation dépenses" />
-                    <DonutVentilation
-                      rows={depensesParCat.rows}
-                      total={depensesParCat.total}
-                      currency={currency}
-                    />
-                  </section>
-                ) : null}
-
-                {/* ── Transactions récentes ───────────────────────────── */}
-                {recentMovements.length > 0 ? (
-                  <section aria-label="Transactions récentes">
-                    <SectionDivider
-                      label={`Dernières transactions · ${recentMovements.length}`}
-                    />
-                    <ul role="list" className="card-dense !p-0 overflow-hidden">
-                      {recentMovements.map((e, idx) => {
-                        const id = extractFinanceId(e);
-                        return (
-                          <TransactionRow
-                            key={`${id ?? e.date}-${e.libelle}-${idx}`}
-                            entry={e}
-                            currency={currency}
-                            onEdit={
-                              id
-                                ? () => setEditTarget({ ...e, id })
-                                : undefined
-                            }
-                          />
-                        );
-                      })}
-                    </ul>
-                  </section>
-                ) : null}
-
-                {/* ── HubTile → Rapport financier ─────────────────────── */}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => navigate('/pilotage/finances/rapport')}
-                  className="pressable card-dense flex items-center gap-3.5 !p-4 border-gold/40 bg-bg-2"
                   style={{
-                    borderColor: 'color-mix(in srgb, var(--gold) 40%, var(--border))',
-                    background: 'color-mix(in srgb, var(--gold) 5%, var(--bg-2))',
-                    borderRadius: 'var(--ds-radius-card, 16px)',
-                    textTransform: 'none',
-                    height: 'auto',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'baseline',
+                    gap: 12,
                   }}
                 >
+                  <div style={{ minWidth: 0 }}>
+                    <div
+                      className="num"
+                      style={{
+                        fontFamily: 'var(--pt-font-display)',
+                        fontWeight: 900,
+                        fontSize: 36,
+                        color: marge >= 0 ? 'var(--pt-success)' : 'var(--pt-danger)',
+                        letterSpacing: '-0.01em',
+                        lineHeight: 1,
+                      }}
+                    >
+                      {marge >= 0 ? '+' : ''}{formatMontant(marge, currency)}
+                    </div>
+                    <div className="eyebrow" style={{ marginTop: 6 }}>
+                      {currentMonthLabel}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    {deltaPct !== null ? (
+                      <div
+                        className="num"
+                        style={{
+                          fontFamily: 'var(--pt-font-mono)',
+                          fontSize: 13,
+                          color: deltaPct >= 0 ? 'var(--pt-success)' : 'var(--pt-danger)',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {deltaPct >= 0 ? '↑ +' : '↓ '}{Math.abs(deltaPct)}%
+                      </div>
+                    ) : (
+                      <div
+                        className="num"
+                        style={{
+                          fontFamily: 'var(--pt-font-mono)',
+                          fontSize: 13,
+                          color: 'var(--pt-muted)',
+                        }}
+                      >
+                        —
+                      </div>
+                    )}
+                    <div style={{ fontSize: 11, color: 'var(--pt-muted)', marginTop: 2 }}>
+                      vs mois passé
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── 3 KPIs revenus / charges / marge ─────────────────── */}
+              <Section label="Détail" />
+              <div
+                className="kpis-strip"
+                style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}
+              >
+                <div className="kpi">
+                  <div className="kpi__label">Revenus</div>
+                  <div className="kpi__val num">{formatMontant(revenus, currency)}</div>
+                </div>
+                <div className="kpi">
+                  <div className="kpi__label">Charges</div>
+                  <div className="kpi__val num">{formatMontant(charges, currency)}</div>
+                </div>
+                <div className="kpi">
+                  <div className="kpi__label">Marge</div>
                   <div
-                    className="w-11 h-11 rounded-[10px] bg-bg-1 flex items-center justify-center shrink-0"
+                    className="kpi__val num"
                     style={{
-                      border: '1px solid color-mix(in srgb, var(--gold) 40%, var(--border))',
-                      color: 'var(--gold)',
+                      color: marge >= 0 ? 'var(--pt-success)' : 'var(--pt-danger)',
                     }}
                   >
-                    <BarChart3 size={20} aria-hidden="true" />
+                    {formatMontant(marge, currency)}
                   </div>
-                  <div className="flex-1 min-w-0 text-left">
-                    <div className="ft-heading text-[15px] text-text-0 leading-tight">
-                      Rapport financier
-                    </div>
-                    <div className="font-mono text-[11px] text-text-2 mt-1">
-                      Détail CA par bande · 6 mois · export PDF
-                    </div>
-                  </div>
-                  <ChevronRight size={18} style={{ color: 'var(--gold)' }} aria-hidden="true" />
-                </Button>
-              </>
-            )}
-          </div>
-        </AgritechLayout>
+                </div>
+              </div>
+
+              {/* ── Trésorerie cumul (label test V8) ─────────────────── */}
+              <Section label="Trésorerie cumul (depuis début)" />
+              <div
+                className="card"
+                style={{
+                  padding: 16,
+                  marginTop: 8,
+                  marginBottom: 16,
+                  background: 'var(--pt-bg)',
+                  border: '1px solid var(--pt-line)',
+                  borderRadius: 14,
+                }}
+              >
+                <div
+                  className="num"
+                  style={{
+                    fontFamily: 'var(--pt-font-display)',
+                    fontWeight: 900,
+                    fontSize: 24,
+                    color: tresorerieCumul >= 0 ? 'var(--pt-ink)' : 'var(--pt-danger)',
+                    letterSpacing: '-0.01em',
+                  }}
+                >
+                  {formatMontant(tresorerieCumul, currency)}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--pt-muted)', marginTop: 4 }}>
+                  Solde net depuis le début de l’historique
+                </div>
+              </div>
+
+              {/* ── Bar chart 12 mois ────────────────────────────────── */}
+              <Section label="Évolution 12 mois" />
+              <div
+                className="card"
+                style={{
+                  padding: 16,
+                  marginTop: 8,
+                  marginBottom: 16,
+                  background: 'var(--pt-bg)',
+                  border: '1px solid var(--pt-line)',
+                  borderRadius: 14,
+                }}
+              >
+                <svg
+                  viewBox="0 0 360 100"
+                  style={{ width: '100%', height: 100, display: 'block' }}
+                  preserveAspectRatio="none"
+                  aria-label="Marge nette des 12 derniers mois"
+                >
+                  {/* Ligne de zéro centrée verticalement */}
+                  <line
+                    x1={0}
+                    x2={360}
+                    y1={50}
+                    y2={50}
+                    stroke="var(--pt-line)"
+                    strokeWidth={1}
+                    strokeDasharray="2 3"
+                  />
+                  {monthly.map((m, i) => {
+                    const barHeight = (Math.abs(m.marge) / margeMax) * 45;
+                    const isCurrent = i === currentMonthIdx;
+                    const isPositive = m.marge >= 0;
+                    const x = i * 30 + 3;
+                    const y = isPositive ? 50 - barHeight : 50;
+                    const fill = isCurrent
+                      ? 'var(--pt-accent)'
+                      : isPositive
+                        ? 'var(--pt-primary)'
+                        : 'var(--pt-danger)';
+                    return (
+                      <rect
+                        key={m.key}
+                        x={x}
+                        y={y}
+                        width={24}
+                        height={Math.max(2, barHeight)}
+                        fill={fill}
+                        rx={2}
+                      />
+                    );
+                  })}
+                </svg>
+                <div
+                  style={{
+                    fontFamily: 'var(--pt-font-mono)',
+                    fontSize: 9,
+                    color: 'var(--pt-subtle)',
+                    marginTop: 6,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  <span>{firstMonthLabel}</span>
+                  <span>{lastMonthLabel}</span>
+                </div>
+              </div>
+
+              {/* ── Card-link vers rapport détaillé ──────────────────── */}
+              <button
+                type="button"
+                className="card-link"
+                onClick={() => navigate('/pilotage/rapport')}
+                aria-label="Ouvrir le rapport financier détaillé"
+              >
+                <div className="card-link__icon">
+                  <FileText size={18} aria-hidden="true" />
+                </div>
+                <div className="card-link__main">
+                  <div className="card-link__title">Rapport détaillé</div>
+                  <div className="card-link__sub">Détail par catégorie · 12 mois</div>
+                </div>
+                <span className="card-link__chev">
+                  <ChevronRight size={16} aria-hidden="true" />
+                </span>
+              </button>
+            </>
+          )}
+        </div>
 
         {/* ── FAB Nouvelle transaction ──────────────────────────────── */}
-        <Button
+        <button
           type="button"
-          variant="primary"
           onClick={() => setAddOpen(true)}
           aria-label="Nouvelle transaction"
-          className="pressable fixed z-40 right-4 bottom-24 inline-flex h-14 w-14 items-center justify-center bg-accent text-bg-0 shadow-lg hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)', borderRadius: '9999px', height: '3.5rem', width: '3.5rem' }}
+          style={{
+            position: 'fixed',
+            right: 20,
+            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)',
+            zIndex: 40,
+            width: 56,
+            height: 56,
+            borderRadius: '50%',
+            background: 'var(--pt-primary)',
+            color: 'var(--pt-warm)',
+            border: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 6px 18px rgba(17,24,39,0.12)',
+          }}
         >
           <Plus size={24} strokeWidth={2.4} aria-hidden="true" />
-        </Button>
+        </button>
       </IonContent>
 
-      {/* ── Forms ─────────────────────────────────────────────────── */}
       <QuickAddTransactionForm
         isOpen={addOpen}
         onClose={() => setAddOpen(false)}
@@ -493,418 +435,7 @@ const FinancesView: React.FC = () => {
           void refreshData();
         }}
       />
-      {editTarget ? (
-        <QuickEditTransactionForm
-          isOpen={editTarget !== null}
-          onClose={() => setEditTarget(null)}
-          transaction={editTarget}
-          onSuccess={() => {
-            void refreshData();
-          }}
-        />
-      ) : null}
     </IonPage>
-  );
-};
-
-// ─── Sous-composants ─────────────────────────────────────────────────────────
-
-const EmptyFinances: React.FC = () => (
-  <div className="card-dense text-center py-10 animate-fade-in-up" role="status">
-    <div className="inline-flex w-12 h-12 rounded-xl bg-bg-1 border border-border items-center justify-center text-text-2 mb-3">
-      <Coins size={22} aria-hidden="true" />
-    </div>
-    <h3 className="ft-heading text-[14px] uppercase text-text-0">
-      Aucune transaction ce mois
-    </h3>
-    <p className="font-mono text-[11px] text-text-2 mt-2">
-      Appuie sur + pour enregistrer ta première vente ou dépense.
-    </p>
-  </div>
-);
-
-interface SparkCaProps {
-  data: ReadonlyArray<{ periode: string; label: string; ca: number }>;
-  currency: Currency;
-  deltaPct: number | null;
-  recentVentes: readonly FinanceEntry[];
-}
-
-const SparkCa: React.FC<SparkCaProps> = ({ data, currency, deltaPct, recentVentes }) => {
-  const W = 300, H = 70;
-  const vals = data.map((d) => d.ca);
-  const min = Math.min(...vals, 0);
-  const max = Math.max(...vals, 1);
-  const lastCa = vals[vals.length - 1] ?? 0;
-  const lastLabel = data[data.length - 1]?.label ?? '—';
-  const totalCa = vals.reduce((s, v) => s + v, 0);
-  const allEmpty = totalCa === 0;
-
-  const pts = data.map((d, i) => {
-    const x = (i / Math.max(1, data.length - 1)) * W;
-    const y = H - ((d.ca - min) / Math.max(1, max - min)) * (H - 6) - 3;
-    return [x, y] as const;
-  });
-  const line = pts.map((p) => p.join(',')).join(' ');
-  const area = pts.length > 0
-    ? `M 0,${H} L ${pts.map((p) => p.join(',')).join(' L ')} L ${W},${H} Z`
-    : '';
-  const last = pts[pts.length - 1] ?? [0, H];
-
-  if (allEmpty) {
-    return (
-      <div className="card-dense mt-3 text-center py-6" role="status" aria-live="polite">
-        <div className="kpi-label text-[10px] mb-1">Aucune transaction sur 6 mois</div>
-        <div className="font-mono text-[11px] text-text-2">
-          Aucune donnée à afficher pour la période.
-        </div>
-        <div className="flex justify-between mt-4">
-          {data.map((d) => (
-            <span key={d.periode} className="font-mono text-[9px] tracking-wide text-text-2">
-              {d.label}
-            </span>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="card-dense mt-3">
-      <div className="flex items-baseline justify-between gap-4">
-        <div className="min-w-0">
-          <div className="kpi-label text-[10px]">{lastLabel}</div>
-          <div className="font-mono tabular-nums text-[26px] font-bold text-accent mt-1 leading-none tracking-tight">
-            {lastCa === 0 ? 'Aucune transaction' : formatMontant(lastCa, currency)}
-          </div>
-          {deltaPct !== null ? (
-            <div className="font-mono text-[10px] text-text-2 mt-1.5">
-              {deltaPct >= 0 ? '+' : ''}{deltaPct}% vs {data[data.length - 2]?.label}
-            </div>
-          ) : null}
-        </div>
-        <svg
-          width={W * 0.55}
-          height={H}
-          viewBox={`0 0 ${W} ${H}`}
-          preserveAspectRatio="none"
-          aria-hidden="true"
-          className="shrink-0"
-        >
-          <defs>
-            <linearGradient id="spark-ca" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          {area ? <path d={area} fill="url(#spark-ca)" /> : null}
-          {line ? (
-            <polyline
-              points={line}
-              fill="none"
-              stroke="var(--accent)"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          ) : null}
-          <circle
-            cx={last[0]}
-            cy={last[1]}
-            r="4"
-            fill="var(--accent)"
-            stroke="var(--bg-2)"
-            strokeWidth="2"
-          />
-        </svg>
-      </div>
-      <div className="flex justify-between mt-2">
-        {data.map((d, i) => (
-          <span
-            key={d.periode}
-            className={`font-mono text-[9px] tracking-wide ${
-              i === data.length - 1 ? 'text-accent font-semibold' : 'text-text-2'
-            }`}
-          >
-            {d.label}
-          </span>
-        ))}
-      </div>
-      {recentVentes.length > 0 ? (
-        <>
-          <div className="hairline my-3.5" />
-          <div className="kpi-label text-[10px] mb-2">
-            {recentVentes.length} dernière{recentVentes.length > 1 ? 's' : ''} vente{recentVentes.length > 1 ? 's' : ''}
-          </div>
-          <div className="flex flex-col gap-2">
-            {recentVentes.map((v, i) => (
-              <div key={`${v.date}-${i}`} className="flex justify-between items-baseline">
-                <div className="min-w-0 flex-1">
-                  <span className="font-mono text-[11px] font-semibold text-text-0 truncate">
-                    {v.libelle || '(sans libellé)'}
-                  </span>
-                  <span className="font-mono text-[10px] text-text-2 ml-1.5">· {v.date || '—'}</span>
-                </div>
-                <span className="font-mono text-[12px] font-semibold text-accent tabular-nums whitespace-nowrap">
-                  +{formatMontant(v.montant, currency)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </>
-      ) : null}
-    </div>
-  );
-};
-
-interface DonutVentilationProps {
-  rows: ReadonlyArray<{ cat: string; montant: number }>;
-  total: number;
-  currency: Currency;
-}
-
-/** Couleur CSS-var pour chaque tone pied de liste donut. */
-function toneVarFor(cat: string): string {
-  const tone = categorieToTone(cat);
-  const map: Record<string, string> = {
-    accent: 'var(--accent)',
-    amber: 'var(--amber)',
-    red: 'var(--coral)',
-    blue: 'var(--blue)',
-    default: 'var(--teal)',
-  };
-  return map[tone] ?? 'var(--text-2)';
-}
-
-const DonutVentilation: React.FC<DonutVentilationProps> = ({ rows, total, currency }) => {
-  const size = 96, stroke = 14;
-  const r = (size - stroke) / 2;
-  const C = 2 * Math.PI * r;
-  const { arcs } = rows.reduce(
-    (acc, row) => {
-      const len = (row.montant / total) * C;
-      const arc = (
-        <circle
-          key={row.cat}
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke={toneVarFor(row.cat)}
-          strokeWidth={stroke}
-          strokeDasharray={`${len} ${C - len}`}
-          strokeDashoffset={-acc.offset}
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-          strokeLinecap="butt"
-        />
-      );
-      return {
-        offset: acc.offset + len,
-        arcs: [...acc.arcs, arc],
-      };
-    },
-    { offset: 0, arcs: [] as React.ReactNode[] },
-  );
-
-  return (
-    <div className="card-dense mt-3">
-      <div className="flex gap-4 items-center">
-        <svg
-          width={size}
-          height={size}
-          viewBox={`0 0 ${size} ${size}`}
-          aria-hidden="true"
-          className="shrink-0"
-        >
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={r}
-            fill="none"
-            stroke="var(--bg-1)"
-            strokeWidth={stroke}
-          />
-          {arcs}
-          <text
-            x={size / 2}
-            y={size / 2 - 4}
-            textAnchor="middle"
-            fill="var(--text-2)"
-            fontFamily="var(--font-mono)"
-            fontSize="8"
-            letterSpacing="0.06em"
-          >
-            TOTAL
-          </text>
-          <text
-            x={size / 2}
-            y={size / 2 + 12}
-            textAnchor="middle"
-            fill="var(--text-0)"
-            fontFamily="var(--font-mono)"
-            fontSize="12"
-            fontWeight="700"
-          >
-            {Math.round(total / 1000)}k
-          </text>
-        </svg>
-        <ul className="flex-1 flex flex-col gap-2.5 min-w-0">
-          {rows.map((row) => {
-            const pct = Math.round((row.montant / total) * 100);
-            return (
-              <li key={row.cat} className="flex items-center gap-2">
-                <span
-                  className="w-2 h-2 rounded-sm shrink-0"
-                  style={{ background: toneVarFor(row.cat) }}
-                  aria-hidden="true"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="text-[12px] text-text-0 font-medium truncate">
-                    {row.cat}
-                  </div>
-                  <div className="font-mono text-[10px] text-text-2 tabular-nums">
-                    {formatMontant(row.montant, currency)}
-                  </div>
-                </div>
-                <Chip label={`${pct}%`} tone="default" size="xs" />
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    </div>
-  );
-};
-
-interface TransactionRowProps {
-  entry: FinanceEntry;
-  currency: Currency;
-  onEdit?: () => void;
-}
-
-const TransactionRow: React.FC<TransactionRowProps> = ({ entry, currency, onEdit }) => {
-  const isIn = entry.type === 'REVENU';
-  const tone = categorieToTone(entry.categorie);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-
-  // Fermeture au clic extérieur / Esc
-  React.useEffect(() => {
-    if (!menuOpen) return;
-    const handleClick = (e: MouseEvent): void => {
-      if (!menuRef.current) return;
-      if (!menuRef.current.contains(e.target as Node)) setMenuOpen(false);
-    };
-    const handleKey = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') setMenuOpen(false);
-    };
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('keydown', handleKey);
-    return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('keydown', handleKey);
-    };
-  }, [menuOpen]);
-
-  const handleEdit = (): void => {
-    setMenuOpen(false);
-    onEdit?.();
-  };
-
-  return (
-    <li className="flex items-center gap-3 px-3 py-3 border-b border-border last:border-b-0">
-      <div
-        className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-        style={{
-          background: isIn
-            ? 'color-mix(in srgb, var(--accent) 12%, var(--bg-1))'
-            : 'color-mix(in srgb, var(--amber) 10%, var(--bg-1))',
-          border: `1px solid ${
-            isIn
-              ? 'color-mix(in srgb, var(--accent) 40%, var(--border))'
-              : 'color-mix(in srgb, var(--amber) 40%, var(--border))'
-          }`,
-          color: isIn ? 'var(--accent)' : 'var(--amber)',
-        }}
-      >
-        {isIn
-          ? <ArrowDownLeft size={16} strokeWidth={2.2} aria-hidden="true" />
-          : <ArrowUpRight size={16} strokeWidth={2.2} aria-hidden="true" />}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-baseline gap-1.5 flex-wrap">
-          <span className="text-[13px] font-medium text-text-0 truncate">
-            {entry.categorie || 'DIVERS'}
-          </span>
-          <span className="font-mono text-[10px] text-text-2 tabular-nums">· {entry.date || '—'}</span>
-          <Chip label={tone.toUpperCase()} tone={tone} size="xs" />
-        </div>
-        <div className="text-[11px] text-text-2 mt-0.5 truncate">
-          {entry.libelle || '(sans libellé)'}
-        </div>
-      </div>
-      <div className="text-right shrink-0">
-        <span
-          className={`font-mono text-[13px] font-semibold tabular-nums whitespace-nowrap ${
-            isIn ? 'text-accent' : 'text-amber'
-          }`}
-        >
-          {isIn ? '+' : '−'}{formatMontant(entry.montant, currency)}
-        </span>
-      </div>
-
-      {/* Menu kebab — visible uniquement si on a un ID exploitable */}
-      {onEdit ? (
-        <div ref={menuRef} className="relative shrink-0">
-          <Button
-            type="button"
-            variant="ghost"
-            size="small"
-            onClick={() => setMenuOpen(v => !v)}
-            aria-haspopup="menu"
-            aria-expanded={menuOpen}
-            aria-label="Actions sur la transaction"
-            className="pressable inline-flex h-8 w-8 items-center justify-center text-text-2 hover:text-text-0 hover:bg-bg-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-            style={{ borderRadius: '0.375rem', height: '2rem', width: '2rem', padding: 0 }}
-          >
-            <MoreVertical size={16} aria-hidden="true" />
-          </Button>
-          {menuOpen ? (
-            <div
-              role="menu"
-              className="absolute right-0 top-9 z-20 min-w-[160px] rounded-md border border-border bg-bg-2 shadow-lg overflow-hidden"
-            >
-              <Button
-                type="button"
-                variant="ghost"
-                size="small"
-                role="menuitem"
-                onClick={handleEdit}
-                className="pressable flex w-full items-center gap-2 px-3 py-2.5 text-left font-mono text-[12px] uppercase tracking-wide text-text-0 hover:bg-bg-1"
-                style={{ borderRadius: 0, justifyContent: 'flex-start', height: 'auto' }}
-              >
-                <Pencil size={14} aria-hidden="true" />
-                Modifier
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="small"
-                role="menuitem"
-                disabled
-                aria-disabled="true"
-                title="Suppression serveur non implémentée (GAS delete_row_by_id)"
-                className="flex w-full items-center gap-2 px-3 py-2.5 text-left font-mono text-[12px] uppercase tracking-wide text-text-2 opacity-50 cursor-not-allowed border-t border-border"
-                style={{ borderRadius: 0, justifyContent: 'flex-start', height: 'auto' }}
-              >
-                <Trash2 size={14} aria-hidden="true" />
-                Supprimer
-              </Button>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-    </li>
   );
 };
 
