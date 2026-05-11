@@ -10,77 +10,18 @@ import {
   Bug,
   ShieldCheck,
 } from 'lucide-react';
+import { PROTOCOLS, type ProtocolCategory } from './protocolsData';
 
-type CategoryKey =
-  | 'all'
-  | 'vaccins'
-  | 'traitements'
-  | 'deparasitage'
-  | 'biosecurite'
-  | 'reproduction'
-  | 'urgences';
+type CategoryKey = 'all' | ProtocolCategory;
 
-interface ProtocolEntry {
-  id: string;
-  category: Exclude<CategoryKey, 'all'>;
-  section: 'Vaccins recommandés' | 'Traitements courants' | 'Biosécurité';
-  title: string;
-  subtitle: string;
-  badge?: string;
-}
-
-const PROTOCOLS: ProtocolEntry[] = [
-  {
-    id: 'vacc-mycoplasma',
-    category: 'vaccins',
-    section: 'Vaccins recommandés',
-    title: 'Vaccin Mycoplasma J35',
-    subtitle: 'Porcelets · Voie IM · Délai 0j',
-  },
-  {
-    id: 'vacc-parvo',
-    category: 'vaccins',
-    section: 'Vaccins recommandés',
-    title: 'Vaccin Parvo J60',
-    subtitle: 'Cochettes · Avant 1ère saillie · Voie IM',
-  },
-  {
-    id: 'vacc-aujeszky',
-    category: 'vaccins',
-    section: 'Vaccins recommandés',
-    title: 'Vaccin Aujeszky J90',
-    subtitle: 'Truies · Trimestriel · Voie IM',
-    badge: 'Révision conseillée',
-  },
-  {
-    id: 'trait-ecoli',
-    category: 'traitements',
-    section: 'Traitements courants',
-    title: 'Antibio E.coli porcelets',
-    subtitle: 'J3 à J5 post-naissance · 3 jours',
-  },
-  {
-    id: 'trait-ivermectine',
-    category: 'deparasitage',
-    section: 'Traitements courants',
-    title: 'Antiparasitaire Ivermectine',
-    subtitle: 'Truies · J85 gestation · 1 dose',
-  },
-  {
-    id: 'bio-pediluve',
-    category: 'biosecurite',
-    section: 'Biosécurité',
-    title: 'Pédiluve entrée porcherie',
-    subtitle: 'Quotidien · Crésyl 2% renouvelé 7j',
-  },
-  {
-    id: 'bio-quarantaine',
-    category: 'biosecurite',
-    section: 'Biosécurité',
-    title: 'Quarantaine entrée animaux',
-    subtitle: '21 jours minimum · Lot isolé',
-  },
-];
+const SECTION_BY_CATEGORY: Record<ProtocolCategory, string> = {
+  vaccins: 'Vaccins recommandés',
+  traitements: 'Traitements courants',
+  deparasitage: 'Traitements courants',
+  biosecurite: 'Biosécurité',
+  reproduction: 'Reproduction',
+  urgences: 'Urgences',
+};
 
 const CATEGORIES: { key: CategoryKey; label: string }[] = [
   { key: 'all', label: 'Tous' },
@@ -92,7 +33,7 @@ const CATEGORIES: { key: CategoryKey; label: string }[] = [
   { key: 'urgences', label: 'Urgences' },
 ];
 
-function categoryIcon(cat: ProtocolEntry['category']) {
+function categoryIcon(cat: ProtocolCategory) {
   switch (cat) {
     case 'vaccins':
       return { Component: Syringe, className: 'icon-vaccins' };
@@ -117,11 +58,12 @@ const ProtocolsView: React.FC = () => {
 
   const grouped = useMemo(() => {
     const list = active === 'all' ? PROTOCOLS : PROTOCOLS.filter((p) => p.category === active);
-    const map = new Map<string, ProtocolEntry[]>();
+    const map = new Map<string, typeof PROTOCOLS>();
     for (const p of list) {
-      const arr = map.get(p.section) ?? [];
+      const section = SECTION_BY_CATEGORY[p.category];
+      const arr = map.get(section) ?? [];
       arr.push(p);
-      map.set(p.section, arr);
+      map.set(section, arr);
     }
     return Array.from(map.entries());
   }, [active]);
