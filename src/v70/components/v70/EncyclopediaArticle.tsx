@@ -157,7 +157,7 @@ export const EncyclopediaArticle: React.FC<EncyclopediaArticleProps> = ({
         {onBack && (
           <button
             type="button"
-            className="btn--ghost btn--block"
+            className="btn btn--ghost btn--block"
             onClick={onBack}
           >
             <ChevronLeft size={18} strokeWidth={2} />
@@ -261,7 +261,7 @@ export const EncyclopediaArticle: React.FC<EncyclopediaArticleProps> = ({
       </article>
 
       <div className="cta-sticky">
-        <button type="button" className="btn--primary btn--block">
+        <button type="button" className="btn btn--primary btn--block">
           <Check size={18} strokeWidth={2} aria-hidden="true" />
           Marquer comme lu
         </button>

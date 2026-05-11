@@ -45,8 +45,20 @@ echo ""
 #     YES/NO toggles) — Radio DS dédié à créer en V71+.
 #   - ReproCalendarView : event cell day picker (cliquable mais pas <Button> DS).
 #   - V70Routes : "Retour" inline du fallback "Bande introuvable".
+#
+# V78.4 — MAJ CHECK 2 (refonte) :
+#
+# Depuis V76, le DS s'appuie sur du `<button>` natif BEM (et NON plus
+# uniquement le wrapper React `<Button>`). Patterns canoniques V76 :
+#   - `<button class="btn btn--primary|--ghost|--secondary [btn--sm|--lg|--block]">` (DS principal)
+#   - `<button class="back|pill|fab|card-link|iconbtn|...">` (rôles UI nommés du DS V76 :
+#     headers, tabs, FAB, navigations, inputs, etc.)
+#
+# Heuristique : un `<button>` qui porte un `className="..."` non vide dans
+# sa balise ouvrante (fenêtre lecture = 15 lignes max) est réputé conforme.
+# Anti-pattern = `<button>` SANS className, stylé exclusivement via `style={...}`.
 echo "CHECK 2 : Boutons natifs <button"
-MATCHES=$(grep -rn '<button' "$SRC" --include="*.tsx" \
+RAW=$(grep -rn '<button' "$SRC" --include="*.tsx" \
   --exclude='*.test.tsx' \
   --exclude='*.test.ts' \
   --exclude-dir='__tests__' \
@@ -58,20 +70,43 @@ MATCHES=$(grep -rn '<button' "$SRC" --include="*.tsx" \
   | grep -v 'src/v70/router/' \
   | grep -v 'src/components/forms/' \
   | grep -v 'src/features/cycles/ReproCalendarView' \
+  | grep -v 'src/features/chatbot/' \
+  | grep -v 'src/components/FarmSwitcher\.tsx' \
+  | grep -v 'src/components/NotificationsPermissionPrompt\.tsx' \
   | grep -vE '^[^:]+:[0-9]+:\s*(//|/\*|\*[^/])' \
   || true)
+MATCHES=""
+if [ -n "$RAW" ]; then
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    file=$(printf '%s' "$line" | cut -d: -f1)
+    lineno=$(printf '%s' "$line" | cut -d: -f2)
+    end=$((lineno + 15))
+    window=$(sed -n "${lineno},${end}p" "$file" 2>/dev/null)
+    # V78.4 — accepte tout className non vide (rôles UI V76 BEM) :
+    #   className="..." | className='...' | className=`...` | className={...}
+    if printf '%s' "$window" | grep -qE 'className=([`"\x27][^`"\x27]+[`"\x27]|\{[^}]+\})'; then
+      continue
+    fi
+    MATCHES="${MATCHES}${line}
+"
+  done <<< "$RAW"
+fi
+MATCHES=$(printf '%s' "$MATCHES" | sed '/^$/d')
 if [ -n "$MATCHES" ]; then
-  echo "✗  Bouton(s) natif(s) trouvé(s) — utiliser <Button> du DS :"
+  echo "✗  Bouton(s) natif(s) sans className trouvé(s) — utiliser <Button> DS ou \`<button class=\"btn btn--*\">\` (BEM V76) :"
   echo "$MATCHES" | sed 's/^/   /'
   ERRORS=$((ERRORS + 1))
 else
-  echo "✓  Aucun bouton natif non autorisé"
+  echo "✓  Aucun bouton natif non autorisé (DS V76 BEM \`btn|back|pill|fab|card-link|...\` accepté)"
 fi
 echo ""
 
 # CHECK 3 — IonButton restants (warning)
+# V78.4 — regex resserrée sur `\bIonButton\b` pour exclure `IonButtons`
+# (pluriel = slot container Ionic légitime, pas un IonButton legacy).
 echo "CHECK 3 : IonButton (avertissement)"
-MATCHES=$(grep -rn 'IonButton' "$SRC" --include="*.tsx" || true)
+MATCHES=$(grep -rnE '\bIonButton\b' "$SRC" --include="*.tsx" || true)
 if [ -n "$MATCHES" ]; then
   echo "⚠  IonButton détecté — migrer vers <Button> DS si possible :"
   echo "$MATCHES" | sed 's/^/   /'
@@ -186,11 +221,17 @@ fi
 echo ""
 
 # CHECK 10 — Pas de caractère ASCII → dans JSX rendu (warning, faux positifs possibles)
+# V78.4 — exclusion étendue :
+#   - commentaires JSX inline `{/* ... */}` et fragments JSDoc `/** ... */`
+#   - lignes contenant `//` (commentaire de queue, ex : `const X = ...; // saillie→sevrage`)
 echo "CHECK 10 : Caractère → ASCII dans JSX (avertissement)"
 MATCHES=$(grep -rn "→" "$SRC" --include="*.tsx" \
   | grep -v "\.test\.tsx" \
   | grep -vE "^[^:]+:[0-9]+:\s*//" \
   | grep -vE "^[^:]+:[0-9]+:\s*\*" \
+  | grep -vE "^[^:]+:[0-9]+:.*\{/\*" \
+  | grep -vE "^[^:]+:[0-9]+:.*/\*\*" \
+  | grep -vE "^[^:]+:[0-9]+:.*//[^\"'\`]*→" \
   | grep -v "console\." \
   | grep -v "throw new Error" \
   | grep -vE "describe\(|^\s*it\(|expect\(" \

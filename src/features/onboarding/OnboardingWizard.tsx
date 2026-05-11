@@ -28,16 +28,16 @@ import { Button } from '@/design-system';
    ───────────────────────────────────────────────────────────────────────────
    Étapes :
      1. Bienvenue
-     2. Nom de la ferme        → nom_ferme
-     3. Localisation           → secteur + pays
-     4. Type de production     → typeProd (radio, 3 choix)
-     5. Races (skip si Engraisseur seul)  → races jsonb[]
-     6. Élevage truies (skip si Engraisseur seul) → effectif_truies_initial
-     7. Élevage verrats        → effectif_verrats_initial
-     8. Objectif porcelets/an  → objectif_porcelets_an
-     9. Notes de démarrage     → notes_demarrage
-    10. Loges (V24)            → quantités par type + numérotation libre
-    11. Bandes existantes (V27)→ liste de bandes en cours (optionnel)
+     2. Nom de la ferme        -> nom_ferme
+     3. Localisation           -> secteur + pays
+     4. Type de production     -> typeProd (radio, 3 choix)
+     5. Races (skip si Engraisseur seul)  -> races jsonb[]
+     6. Élevage truies (skip si Engraisseur seul) -> effectif_truies_initial
+     7. Élevage verrats        -> effectif_verrats_initial
+     8. Objectif porcelets/an  -> objectif_porcelets_an
+     9. Notes de démarrage     -> notes_demarrage
+    10. Loges (V24)            -> quantités par type + numérotation libre
+    11. Bandes existantes (V27)-> liste de bandes en cours (optionnel)
     12. Récap + persistance Supabase + INSERT loges + INSERT batches PENDING
 
    Persistance progressive : `kvSet('onboarding_draft', JSON)` à chaque étape.

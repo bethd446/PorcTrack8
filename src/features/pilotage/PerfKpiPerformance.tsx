@@ -35,7 +35,7 @@ const PerfKpiPerformance: React.FC<PerfKpiPerformanceProps> = ({
       <StatsGrid cols={3}>
         <Stat
           value={isseMoyJours !== null ? `${formatNum(isseMoyJours)} j` : '—'}
-          label="Sevrage → saillie"
+          label="Sevrage › saillie"
           tone={isseTone}
         />
         <Stat

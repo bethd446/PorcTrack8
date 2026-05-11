@@ -35,9 +35,9 @@ const crumbHref = (c: Crumb): string | undefined =>
  * vues. Migration globale différée (~25 consumers).
  */
 const ROLE_PILL_STYLE: Record<FarmRole, { label: string; bg: string; fg: string }> = {
-  OWNER:   { label: 'Owner',   bg: '#cce0bf',             fg: '#2d4a1f' },
-  ADMIN:   { label: 'Admin',   bg: '#f4dcb6',             fg: '#6b4910' },
-  PORCHER: { label: 'Porcher', bg: 'rgba(26,26,26,0.06)', fg: 'var(--ink, #1a1a1a)' },
+  OWNER:   { label: 'Owner',   bg: 'var(--pt-role-owner-bg)', fg: 'var(--pt-role-owner-fg)' },
+  ADMIN:   { label: 'Admin',   bg: 'var(--pt-role-admin-bg)', fg: 'var(--pt-role-admin-fg)' },
+  PORCHER: { label: 'Porcher', bg: 'rgba(26,26,26,0.06)',     fg: 'var(--ink, #1a1a1a)' },
 };
 
 /**

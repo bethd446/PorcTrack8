@@ -205,7 +205,7 @@ export const MaFermeV70: React.FC = () => {
             type="button"
             onClick={() => navigate('/reglages/systeme')}
             aria-label="Modifier l’identité de la ferme"
-            className="btn--primary btn--block"
+            className="btn btn--primary btn--block"
           >
             Modifier la ferme
             <ChevronRight size={18} aria-hidden />

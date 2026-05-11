@@ -140,9 +140,9 @@ const QuickAddPorceletForm: React.FC<QuickAddPorceletFormProps> = ({
                 <label className="label--v77" htmlFor="add-porcelet-boucle">BOUCLE</label>
                 <input id="add-porcelet-boucle" className={`field__input mono${boucle ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={15} autoCapitalize="characters" aria-label="Boucle" aria-required="true" aria-invalid={!!errors.boucle} placeholder="CR-13" value={boucle} onChange={e => setBoucle(e.target.value)} disabled={saving} autoComplete="off" />
                 {duplicate ? (
-                  <div role="status" aria-live="polite" data-testid="add-porcelet-dup-warning" style={{ marginTop: 6, padding: '6px 10px', border: '1px solid #fcd34d', background: '#fffbeb', borderRadius: 8, display: 'flex', gap: 6, alignItems: 'flex-start' }}>
-                    <AlertTriangle size={12} aria-hidden="true" style={{ marginTop: 2, color: '#92400e', flexShrink: 0 }} />
-                    <span style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 11, color: '#92400e' }}>
+                  <div role="status" aria-live="polite" data-testid="add-porcelet-dup-warning" style={{ marginTop: 6, padding: '6px 10px', border: '1px solid var(--pt-warn-border-pale)', background: 'var(--pt-warn-bg-pale)', borderRadius: 8, display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+                    <AlertTriangle size={12} aria-hidden="true" style={{ marginTop: 2, color: 'var(--pt-amber-ink)', flexShrink: 0 }} />
+                    <span style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 11, color: 'var(--pt-amber-ink)' }}>
                       Cette boucle existe déjà : "{duplicate.boucle}" (sexe {duplicate.sexe})
                       {(() => {
                         const code = resolveBatchCodeId ? resolveBatchCodeId(duplicate.batchId) : undefined;

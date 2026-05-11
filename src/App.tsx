@@ -74,7 +74,7 @@ const OnboardingWizard = React.lazy(() => import(/* webpackChunkName: "onboardin
 const SuspenseFallback = () => (
   <div
     className="flex flex-col items-center justify-center h-screen"
-    style={{ background: '#fdfaf3' }}
+    style={{ background: 'var(--pt-bg-app)' }}
   >
     <div className="animate-pulse-soft flex flex-col items-center gap-5">
       <picture>

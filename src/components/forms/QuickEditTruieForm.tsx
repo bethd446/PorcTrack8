@@ -31,7 +31,7 @@ import PhotoUploader from './PhotoUploader';
                       Date MB prévue
      • Notes
 
-   Seule la Boucle est obligatoire. Submit → updateSow(id, patch) avec
+   Seule la Boucle est obligatoire. Submit -> updateSow(id, patch) avec
    patch diff snake_case (uniquement les champs modifiés).
    ═════════════════════════════════════════════════════════════════════════ */
 
@@ -389,7 +389,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
             <FormField
               label="Code interne"
               required
-              hint="Tu peux changer le préfixe (T → K, etc.) — code interne unique pour ta ferme · 3-15 lettres/chiffres/tirets"
+              hint="Tu peux changer le préfixe (T › K, etc.) — code interne unique pour ta ferme · 3-15 lettres/chiffres/tirets"
               error={errors.codeId}
             >
               <Input

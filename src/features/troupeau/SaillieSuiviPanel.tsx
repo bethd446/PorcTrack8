@@ -488,7 +488,7 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
               range={`J18-J24 · pic J21`}
               dates={
                 fenetreChaleur.start && fenetreChaleur.end
-                  ? `${formatFrShort(fenetreChaleur.start)} → ${formatFrShort(fenetreChaleur.end)}`
+                  ? `${formatFrShort(fenetreChaleur.start)} › ${formatFrShort(fenetreChaleur.end)}`
                   : '—'
               }
             />
@@ -499,7 +499,7 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
               range="J25-J35"
               dates={
                 fenetreEcho.start && fenetreEcho.end
-                  ? `${formatFrShort(fenetreEcho.start)} → ${formatFrShort(fenetreEcho.end)}`
+                  ? `${formatFrShort(fenetreEcho.start)} › ${formatFrShort(fenetreEcho.end)}`
                   : '—'
               }
             />

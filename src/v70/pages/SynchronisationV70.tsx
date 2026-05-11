@@ -91,19 +91,19 @@ function statusForItem(it: QueueItem): ItemStatus {
     return {
       label: `Retry ${it.tries}/5 dans ${wait < 60 ? `${wait}s` : `${Math.ceil(wait / 60)}min`}`,
       color: 'var(--pt-amber-ink)',
-      bg: '#fef3c7', // V76: pas de token équivalent (warning bg pâle)
+      bg: 'var(--pt-warn-bg-soft)',
     };
   }
   return {
     label: `Retry ${it.tries}/5`,
     color: 'var(--pt-amber-ink)',
-    bg: '#fef3c7',
+    bg: 'var(--pt-warn-bg-soft)',
   };
 }
 
 const dangerBtnOverride: React.CSSProperties = {
   color: 'var(--pt-crimson-ink)',
-  borderColor: '#fecdd3',
+  borderColor: 'var(--pt-danger-bg-soft)',
 };
 
 const retryChipStyle = (disabled: boolean): React.CSSProperties => ({
@@ -241,8 +241,8 @@ export const SynchronisationV70: React.FC = () => {
             gap: 10,
             padding: '12px 14px',
             borderRadius: 12,
-            background: online ? 'var(--pt-bg-app)' : '#fef3c7',
-            border: `1px solid ${online ? 'var(--pt-line)' : '#fde68a'}`,
+            background: online ? 'var(--pt-bg-app)' : 'var(--pt-warn-bg-soft)',
+            border: `1px solid ${online ? 'var(--pt-line)' : 'var(--pt-warn-border-soft)'}`,
             fontFamily: 'var(--pt-font-body)',
             fontSize: 13,
             color: online ? 'var(--pt-ink)' : 'var(--pt-amber-ink)',
@@ -267,7 +267,7 @@ export const SynchronisationV70: React.FC = () => {
               onClick={handleRetryAll}
               disabled={busy || !online}
               aria-label="Tout retry maintenant"
-              className="btn--primary btn--sm"
+              className="btn btn--primary btn--sm"
             >
               <RefreshCw size={14} aria-hidden /> Tout retry
             </button>
@@ -276,7 +276,7 @@ export const SynchronisationV70: React.FC = () => {
               onClick={handleClearQueue}
               disabled={busy}
               aria-label="Vider la file"
-              className="btn--ghost btn--sm"
+              className="btn btn--ghost btn--sm"
               style={dangerBtnOverride}
             >
               <Trash2 size={14} aria-hidden /> Vider la file
@@ -297,7 +297,7 @@ export const SynchronisationV70: React.FC = () => {
                 padding: '16px 14px',
                 borderRadius: 12,
                 background: 'var(--pt-emerald-bg)',
-                border: '1px solid #a7f3d0',
+                border: '1px solid var(--pt-success-border-soft)',
                 color: 'var(--pt-emerald-ink)',
                 fontSize: 13,
               }}
@@ -458,7 +458,7 @@ export const SynchronisationV70: React.FC = () => {
                 onClick={handleClearArchive}
                 disabled={busy}
                 aria-label="Effacer l'historique des erreurs"
-                className="btn--ghost btn--sm"
+                className="btn btn--ghost btn--sm"
                 style={{ ...dangerBtnOverride, marginTop: 12 }}
               >
                 <Trash2 size={14} aria-hidden /> Effacer l'historique

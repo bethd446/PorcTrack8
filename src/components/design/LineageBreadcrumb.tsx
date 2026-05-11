@@ -136,7 +136,7 @@ const LineageBreadcrumb: React.FC<Props> = ({ nodes, treeHref, onTreeClick }) =>
                     fontWeight: 500,
                   }}
                 >
-                  {'→'}
+                  {'›'}
                 </span>
               )}
             </span>

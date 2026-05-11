@@ -58,7 +58,7 @@ const PerfKpiProduction: React.FC<PerfKpiProductionProps> = ({
         <Stat value={formatNum(moyNV)} label="NV moyen" />
         <Stat
           value={`${formatNum(tauxMortaliteNaissanceSevrage)} %`}
-          label="Mort. naiss → sevrage"
+          label="Mort. naiss › sevrage"
           tone={tauxMortaliteNaissanceSevrage > 15 ? 'danger' : 'default'}
         />
         <Stat

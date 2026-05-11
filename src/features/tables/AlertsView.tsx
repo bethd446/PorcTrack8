@@ -200,7 +200,10 @@ interface FilterDef {
 const FILTERS: FilterDef[] = [
   { id: 'ALL',    label: 'Toutes' },
   { id: 'CRIT',   label: 'Critique' },
-  { id: 'HIGH',   label: 'Haute' },
+  {
+    id: 'HIGH',
+    label: 'Haute',
+  },
   { id: 'STOCK',  label: 'Stocks' },
   { id: 'REPRO',  label: 'Repro' },
   { id: 'SANTE',  label: 'Mortalité' },

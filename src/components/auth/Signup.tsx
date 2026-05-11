@@ -212,7 +212,7 @@ export default function Signup() {
 
               <button
                 type="button"
-                className="btn--ghost btn--lg btn--block"
+                className="btn btn--ghost btn--lg btn--block"
                 onClick={handleResend}
                 disabled={resendCooldown > 0 || resendLoading}
                 aria-busy={resendLoading}
@@ -440,7 +440,7 @@ export default function Signup() {
             <p className="auth-foot" style={{ paddingTop: 18 }}>
               Déjà un compte ?{' '}
               <Link to="/login" className="auth-link-ghost" onClick={() => navigate('/login')}>
-                Se connecter →
+                Se connecter ›
               </Link>
             </p>
           </div>

@@ -107,7 +107,7 @@ export default function Login() {
                     <button
                       type="button"
                       onClick={switchToLogin}
-                      className="btn--ghost btn--sm"
+                      className="btn btn--ghost btn--sm"
                       style={{ display: 'inline-flex' }}
                     >
                       <ArrowLeft size={14} strokeWidth={2} />
@@ -227,7 +227,7 @@ export default function Login() {
                 <div className="auth-divider">— ou —</div>
                 <p className="auth-foot">
                   Pas encore de compte ?{' '}
-                  <Link to="/signup" className="auth-link-ghost">S’inscrire →</Link>
+                  <Link to="/signup" className="auth-link-ghost">S’inscrire ›</Link>
                 </p>
               </>
             )}

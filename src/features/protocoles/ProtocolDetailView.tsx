@@ -48,7 +48,7 @@ const ProtocolDetailView: React.FC = () => {
             <div className="actions-stack">
               <button
                 type="button"
-                className="btn--ghost"
+                className="btn btn--ghost"
                 onClick={() => navigate('/protocoles')}
               >
                 Retour aux protocoles
@@ -147,7 +147,7 @@ const ProtocolDetailView: React.FC = () => {
           <div className="actions-stack">
             <button
               type="button"
-              className="btn--primary"
+              className="btn btn--primary"
               onClick={() => setSheetOpen(true)}
             >
               <Check size={18} strokeWidth={2} aria-hidden />
@@ -155,7 +155,7 @@ const ProtocolDetailView: React.FC = () => {
             </button>
             <button
               type="button"
-              className="btn--ghost"
+              className="btn btn--ghost"
               onClick={handleExport}
             >
               <FileDown size={18} strokeWidth={2} aria-hidden />

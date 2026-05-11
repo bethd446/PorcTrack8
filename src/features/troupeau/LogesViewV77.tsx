@@ -172,6 +172,7 @@ const LogesViewV77: React.FC<LogesViewV77Props> = ({ onCreateClick }) => {
               onClick={() => setFilter(opt.value)}
               role="tab"
               aria-selected={active}
+              className="pill-wrapper"
               style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
             >
               <Pill variant={active ? 'primary' : 'ghost'}>{opt.label}</Pill>
@@ -222,6 +223,7 @@ const LogesViewV77: React.FC<LogesViewV77Props> = ({ onCreateClick }) => {
             type="button"
             onClick={handleOpenAdd}
             aria-label="Créer une loge"
+            className="btn btn--primary"
             style={{
               marginTop: 6,
               background: 'var(--pt-primary)',

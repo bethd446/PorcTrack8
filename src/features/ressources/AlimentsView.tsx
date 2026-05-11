@@ -257,7 +257,7 @@ const AlimentRow: React.FC<AlimentRowProps> = ({
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`Commander ${item.libelle || item.id} via WhatsApp`}
-          className="btn--primary"
+          className="btn btn--primary"
           style={{
             padding: '8px 14px',
             borderRadius: 999,
@@ -416,7 +416,7 @@ const AlimentsView: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`Commander ${stocksAOrdonner.length} produits via WhatsApp`}
-                className="btn--primary"
+                className="btn btn--primary"
                 style={{
                   width: '100%',
                   justifyContent: 'space-between',
@@ -436,7 +436,7 @@ const AlimentsView: React.FC = () => {
                 type="button"
                 onClick={() => navigate('/reglages')}
                 aria-label="Configurer le numéro WhatsApp dans les Réglages"
-                className="btn--ghost"
+                className="btn btn--ghost"
                 style={{
                   width: '100%',
                   justifyContent: 'flex-start',
@@ -482,7 +482,7 @@ const AlimentsView: React.FC = () => {
                 </div>
                 <button
                   type="button"
-                  className="btn--primary"
+                  className="btn btn--primary"
                   onClick={() => setAddOpen(true)}
                   style={{ padding: '12px 20px', minHeight: 44 }}
                 >

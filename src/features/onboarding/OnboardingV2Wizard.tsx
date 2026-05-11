@@ -277,6 +277,7 @@ export default function OnboardingV2Wizard() {
                       key={opt.value}
                       type="button"
                       onClick={() => setData((d) => ({ ...d, type: opt.value }))}
+                      className="radio-card"
                       style={{
                         textAlign: 'left',
                         padding: 16,

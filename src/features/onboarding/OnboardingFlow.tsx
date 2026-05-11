@@ -9,7 +9,7 @@ import { Button } from '@/design-system';
    OnboardingFlow — premier lancement (5 étapes plein-écran skippables)
    ─────────────────────────────────────────────────────────────────────────
    Collecte minimale et bienveillante : nom, rôle, téléphone.
-   Chaque étape peut être passée. En sortie → `kvSet('onboarding_done','1')`
+   Chaque étape peut être passée. En sortie -> `kvSet('onboarding_done','1')`
    et `onComplete()` pour unmount le wrapper dans `App.tsx`.
 
    Accessibility :
@@ -277,7 +277,7 @@ const StepDone: React.FC<StepDoneProps> = ({ onEnter }) => (
         Prêt !
       </h1>
       <p className="text-[14px] text-text-1 max-w-sm leading-relaxed">
-        Vous pouvez commencer. Les paramètres sont dans <span className="font-semibold text-text-0">Plus → Réglages</span>.
+        Vous pouvez commencer. Les paramètres sont dans <span className="font-semibold text-text-0">Plus › Réglages</span>.
       </p>
     </div>
     <div className="pt-4">

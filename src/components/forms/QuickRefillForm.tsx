@@ -33,7 +33,7 @@ import {
    Persist :
      - UPDATE STOCK_ALIMENTS|STOCK_VETO : { STOCK_ACTUEL, STATUT_STOCK }
      - APPEND FINANCES : [DATE, CATEGORIE, LIBELLE, MONTANT, TYPE, NOTES]
-       (uniquement si prix unitaire fourni → montant > 0)
+       (uniquement si prix unitaire fourni -> montant > 0)
    ═════════════════════════════════════════════════════════════════════════ */
 
 interface QuickRefillFormProps {

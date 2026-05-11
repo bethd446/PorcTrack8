@@ -303,7 +303,7 @@ export const EncyclopediaPage: React.FC = () => {
           </div>
           <button
             type="button"
-            className="btn--ghost btn--block"
+            className="btn btn--ghost btn--block"
             onClick={() => navigate('/marius')}
           >
             <MessageSquare size={18} strokeWidth={2} />
@@ -380,8 +380,8 @@ export const EncyclopediaPage: React.FC = () => {
             </section>
           ))}
 
-          <button type="button" className="btn--ghost btn--block" onClick={() => navigate('/marius')}>
-            Suggérer un article →
+          <button type="button" className="btn btn--ghost btn--block" onClick={() => navigate('/marius')}>
+            Suggérer un article ›
           </button>
         </>
       )}

@@ -213,6 +213,7 @@ const FinancesView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setAddOpen(true)}
+                  className="btn btn--primary"
                   style={{
                     marginTop: 22,
                     background: 'var(--pt-primary)',

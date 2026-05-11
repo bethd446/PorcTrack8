@@ -122,7 +122,7 @@ export function SceneHero() {
             fontSize: 11,
             letterSpacing: '0.20em',
             textTransform: 'uppercase',
-            color: '#fff',
+            color: 'white',
             opacity: 0.85,
             marginBottom: 24,
           }}
@@ -141,7 +141,7 @@ export function SceneHero() {
             textTransform: 'uppercase',
             maxWidth: 1100,
             margin: 0,
-            color: '#fff',
+            color: 'white',
             textShadow: '0 2px 24px rgba(26,26,26,0.35)',
             willChange: 'transform, opacity',
           }}
@@ -214,7 +214,7 @@ export function SceneHero() {
               textTransform: 'uppercase',
               padding: '18px 36px',
               background: 'transparent',
-              color: '#fff',
+              color: 'white',
               border: '1.5px solid rgba(255,255,255,0.55)',
               borderRadius: 999,
               textDecoration: 'none',

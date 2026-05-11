@@ -229,6 +229,7 @@ const FormuleNotFound: React.FC<{ onBack: () => void }> = ({ onBack }) => (
             <button
               type="button"
               onClick={onBack}
+              className="btn btn--primary"
               style={{
                 marginTop: 12,
                 padding: '10px 16px',

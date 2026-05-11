@@ -348,7 +348,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
           });
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
-          failures.push(`Source ${src.code}→${dst.codeId} : ${msg}`);
+          failures.push(`Source ${src.code}›${dst.codeId} : ${msg}`);
           console.warn('[multi-sevrage] addBatchSource failed', src.code, e);
         }
       }
@@ -371,7 +371,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
     setSuccess(true);
     setToast({
       open: true,
-      message: `Sevrage groupé · ${selectedSources.length}→${destinations.length} bandes`,
+      message: `Sevrage groupé · ${selectedSources.length}›${destinations.length} bandes`,
     });
     try {
       await refreshData(true);
@@ -427,7 +427,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
             href="/reglages/encyclopedie?slug=05-sevrage-timing-conditions"
             style={{ fontSize: 11, color: 'var(--color-accent, #c2662b)', textDecoration: 'underline' }}
           >
-            En savoir plus →
+            En savoir plus ›
           </a>
         </div>
       </aside>
@@ -616,7 +616,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
           Étape 3 / 3 — Confirmation
         </p>
         <p className="mt-1 font-heading text-[16px] uppercase tracking-wide tabular-nums">
-          {selectedSources.length} portées → {destinations.length} bandes
+          {selectedSources.length} portées › {destinations.length} bandes
         </p>
       </div>
 

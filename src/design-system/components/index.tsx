@@ -714,20 +714,26 @@ export const AlertRow: React.FC<AlertRowProps> = ({ name, primary, detail, secon
 // ============================================================
 // FAB
 // ============================================================
-export function Fab({ children = '+', label, onClick, ariaLabel = 'Ajouter' }: {
+// V78.4 : alignement sur la classe `.fab` canonique V76 (rond 56x56,
+// accent orange, cf. v70-global.css). La prop `label` reste accept e
+// pour compat des call-sites, mais n'est plus rendue visuellement —
+// elle alimente uniquement `aria-label` (prioritaire sur `ariaLabel`).
+// La variante `marius` applique `.fab--marius` (ink).
+export function Fab({ children = '+', label, onClick, ariaLabel = 'Ajouter', variant }: {
   children?: React.ReactNode;
   label?: string;
   onClick?: () => void;
   ariaLabel?: string;
+  variant?: 'marius';
 }) {
+  const className = `fab${variant === 'marius' ? ' fab--marius' : ''}`;
   return (
     <button
-      className={`pt-fab ${label ? 'pt-fab--extended' : ''}`}
+      className={className}
       onClick={onClick}
-      aria-label={ariaLabel}
+      aria-label={label ?? ariaLabel}
     >
       <span>{children}</span>
-      {label && <span>{label}</span>}
     </button>
   );
 }

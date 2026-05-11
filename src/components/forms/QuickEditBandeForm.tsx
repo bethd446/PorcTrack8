@@ -36,7 +36,7 @@ import QuickAddLogeForm from './QuickAddLogeForm';
      - Statut (select)
      - Notes (textarea 300 chars)
 
-   Submit → updateBatchByCode(bande.id, patch) avec clés snake_case
+   Submit -> updateBatchByCode(bande.id, patch) avec clés snake_case
    (date_mb, nv, morts, vivants, date_sevrage_prevue, date_sevrage_reelle,
    nb_males, nb_femelles, date_separation, loge_engraissement, statut,
    notes, truie, boucle_mere).
@@ -456,7 +456,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
             <FormField
               label="Code interne"
               required
-              hint="Tu peux changer le préfixe (B → P, etc.) — code interne unique pour ta ferme · 3-15 lettres/chiffres/tirets"
+              hint="Tu peux changer le préfixe (B › P, etc.) — code interne unique pour ta ferme · 3-15 lettres/chiffres/tirets"
               error={errors.codeId}
             >
               <Input

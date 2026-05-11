@@ -214,7 +214,7 @@ const QuickSplitBandeForm: React.FC<QuickSplitBandeFormProps> = ({
         newBatchPayload: draft as any,
       });
       showToast(
-        `Split OK · ${res.movedCount} porcelets → ${res.newCodeId}` +
+        `Split OK · ${res.movedCount} porcelets › ${res.newCodeId}` +
           (res.sourceArchivedAsRecap ? ' · source archivée' : ''),
         'success',
         { duration: 2400 },

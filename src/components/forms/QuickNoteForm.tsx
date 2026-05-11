@@ -319,7 +319,7 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
                   height: 24,
                   borderRadius: 999,
                   background: 'rgba(0,0,0,0.7)',
-                  color: '#fff',
+                  color: 'white',
                   border: 'none',
                   cursor: 'pointer',
                 }}

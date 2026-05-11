@@ -125,7 +125,7 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
                 href="/reglages/encyclopedie?slug=05-sevrage-timing-conditions"
                 style={{ fontSize: 10, color: 'var(--color-accent, #c2662b)', textDecoration: 'underline' }}
               >
-                En savoir plus →
+                En savoir plus ›
               </a>
             </div>
           </aside>

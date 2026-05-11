@@ -54,4 +54,39 @@
   --pt-amber-bg: #FEF3C7;
   --pt-ink-soft: #3A3A3A;
   --pt-accent-deep: #8B5028;
+
+  /* === V78.4 — RÔLES TEAM (FarmSwitcher / TopBarSync / MonEquipe) === */
+  --pt-role-owner-bg: #cce0bf;
+  --pt-role-owner-fg: #2d4a1f;
+  --pt-role-admin-bg: #f4dcb6;
+  --pt-role-admin-fg: #6b4910;
+  --pt-role-porcher-bg: rgba(244, 162, 97, 0.18);
+  --pt-role-porcher-fg: #92400e;
+  --pt-role-gerant-bg: rgba(31, 41, 55, 0.08);
+  --pt-role-gerant-fg: #1f2937;
+  --pt-role-assistant-bg: rgba(31, 41, 55, 0.08);
+  --pt-role-assistant-fg: #1f2937;
+
+  /* === V78.4 — CATÉGORIES FOURNISSEURS === */
+  --pt-cat-aliment-bg: #cce0bf;
+  --pt-cat-aliment-fg: #2d4a1f;
+  --pt-cat-veto-bg: #cdd9e3;
+  --pt-cat-veto-fg: #2c4356;
+  --pt-cat-genetique-bg: #f4dcb6;
+  --pt-cat-genetique-fg: #6b4910;
+
+  /* === V78.4 — BANNIÈRES SÉMANTIQUES SOFT (status banners, retry chips) === */
+  --pt-warn-bg-soft: #fef3c7;
+  --pt-warn-border-soft: #fde68a;
+  --pt-danger-bg-soft: #fecdd3;
+  --pt-success-bg-soft: #e9f6ec;
+  --pt-success-border-soft: #a7f3d0;
+  --pt-success-ink-deep: #0f5132;
+
+  /* === V78.4 — DUPLICATE WARNING (QuickAddPorcelet) === */
+  --pt-warn-bg-pale: #fffbeb;
+  --pt-warn-border-pale: #fcd34d;
+
+  /* === V78.4 — BRAND WHATSAPP (constante externe) === */
+  --pt-brand-whatsapp: #25D366;
 }

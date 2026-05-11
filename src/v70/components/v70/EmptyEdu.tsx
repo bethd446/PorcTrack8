@@ -45,7 +45,7 @@ export const EmptyEdu: React.FC<EmptyEduProps> = ({
         className="btn btn--secondary btn--sm"
         onClick={onCtaClick}
       >
-        → {ctaLabel}
+        › {ctaLabel}
       </button>
     )}
   </div>

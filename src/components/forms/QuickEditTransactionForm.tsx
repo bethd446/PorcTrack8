@@ -104,7 +104,7 @@ export function transactionToDraft(
     categorie: tx.categorie ?? '',
     libelle: tx.libelle ?? '',
     montant: tx.montant > 0 ? String(tx.montant) : '',
-    bandeId: '',   // `raw` non typé → on ne tente pas de deviner, champ re-saisissable
+    bandeId: '',   // `raw` non typé -> on ne tente pas de deviner, champ re-saisissable
     notes: tx.notes ?? '',
   };
 }

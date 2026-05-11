@@ -48,11 +48,11 @@ interface CategoryPill {
 function categoryPill(c: FournisseurCategorie): CategoryPill {
   switch (c) {
     case 'ALIMENT':
-      return { label: 'Aliment', bg: '#cce0bf', fg: '#2d4a1f' };
+      return { label: 'Aliment', bg: 'var(--pt-cat-aliment-bg)', fg: 'var(--pt-cat-aliment-fg)' };
     case 'PHARMACIE':
-      return { label: 'Véto', bg: '#cdd9e3', fg: '#2c4356' };
+      return { label: 'Véto', bg: 'var(--pt-cat-veto-bg)', fg: 'var(--pt-cat-veto-fg)' };
     case 'GENETIQUE':
-      return { label: 'Génét.', bg: '#f4dcb6', fg: '#6b4910' };
+      return { label: 'Génét.', bg: 'var(--pt-cat-genetique-bg)', fg: 'var(--pt-cat-genetique-fg)' };
     case 'EQUIPEMENT':
       return { label: 'Équip.', bg: 'var(--pt-warm)', fg: 'var(--pt-ink)' };
     case 'AUTRE':

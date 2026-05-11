@@ -223,7 +223,7 @@ export const ProtocolApplicationSheet: React.FC<ProtocolApplicationSheetProps> =
 
             <button
               type="button"
-              className="btn--primary"
+              className="btn btn--primary"
               onClick={handleSubmit}
             >
               <Save size={18} strokeWidth={2} aria-hidden />

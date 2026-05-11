@@ -29,7 +29,7 @@ const FAQ: ReadonlyArray<FaqEntry> = [
   {
     question: 'Comment ajouter une truie ?',
     answer:
-      "Ouvre Élevage → onglet Truies → bouton +. Renseigne la boucle, le numéro et le statut, puis valide.",
+      "Ouvre Élevage › onglet Truies › bouton +. Renseigne la boucle, le numéro et le statut, puis valide.",
   },
   {
     question: 'Comment fonctionnent les alertes ?',
@@ -244,7 +244,7 @@ const AideView: React.FC = () => {
                     Contact non configuré. Demandez à votre gérant de renseigner
                     le numéro WhatsApp dans{' '}
                     <span style={{ fontWeight: 600, color: 'var(--ink)' }}>
-                      Plus → Réglages → Contact support
+                      Plus › Réglages › Contact support
                     </span>
                     .
                   </p>

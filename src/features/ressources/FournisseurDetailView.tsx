@@ -33,11 +33,11 @@ interface PillStyle {
 function pillStyle(c: FournisseurCategorie): PillStyle {
   switch (c) {
     case 'ALIMENT':
-      return { bg: '#cce0bf', fg: '#2d4a1f' };
+      return { bg: 'var(--pt-cat-aliment-bg)', fg: 'var(--pt-cat-aliment-fg)' };
     case 'PHARMACIE':
-      return { bg: '#cdd9e3', fg: '#2c4356' };
+      return { bg: 'var(--pt-cat-veto-bg)', fg: 'var(--pt-cat-veto-fg)' };
     case 'GENETIQUE':
-      return { bg: '#f4dcb6', fg: '#6b4910' };
+      return { bg: 'var(--pt-cat-genetique-bg)', fg: 'var(--pt-cat-genetique-fg)' };
     case 'EQUIPEMENT':
     case 'AUTRE':
     default:
@@ -231,13 +231,13 @@ const FournisseurDetailView: React.FC = () => {
               rel="noopener noreferrer"
               aria-label="Discuter sur WhatsApp"
               style={{
-                background: '#e9f6ec',
-                borderColor: '#25D366',
+                background: 'var(--pt-success-bg-soft)',
+                borderColor: 'var(--pt-brand-whatsapp)',
               }}
             >
               <div
                 className="contact-row__icon"
-                style={{ background: '#25D366', color: 'white' }}
+                style={{ background: 'var(--pt-brand-whatsapp)', color: 'white' }}
               >
                 <MessageCircle size={16} strokeWidth={2} aria-hidden />
               </div>
@@ -248,7 +248,7 @@ const FournisseurDetailView: React.FC = () => {
                     fontSize: 10,
                     letterSpacing: '0.12em',
                     textTransform: 'uppercase',
-                    color: '#0f5132',
+                    color: 'var(--pt-success-ink-deep)',
                     marginBottom: 2,
                   }}
                 >

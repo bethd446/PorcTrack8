@@ -232,7 +232,7 @@ export const TodayV70: React.FC = () => {
                 : `/troupeau/bandes/${heroMiseBas.id}`,
             )}
           >
-            → Voir {heroMiseBas.truie ?? heroMiseBas.idPortee}
+            › Voir {heroMiseBas.truie ?? heroMiseBas.idPortee}
           </Button>
         </Card>
       )}

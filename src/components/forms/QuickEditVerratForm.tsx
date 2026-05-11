@@ -35,7 +35,7 @@ import PhotoUploader from './PhotoUploader';
      - Statut       : Actif · Réforme · Mort · Quarantaine
      - Notes        : textarea max 200 chars
 
-   Submit → updateBoarByCode(verrat.id, patch) avec clés snake_case
+   Submit -> updateBoarByCode(verrat.id, patch) avec clés snake_case
    (nom, boucle, origine, alimentation, ration_kg_j, statut, notes).
    Le patch est PARTIEL : seuls les champs modifiés sont envoyés.
    ═════════════════════════════════════════════════════════════════════════ */
@@ -347,7 +347,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
             <FormField
               label="Code interne"
               required
-              hint="Tu peux changer le préfixe (V → K, etc.) — code interne unique pour ta ferme · 3-15 lettres/chiffres/tirets"
+              hint="Tu peux changer le préfixe (V › K, etc.) — code interne unique pour ta ferme · 3-15 lettres/chiffres/tirets"
               error={errors.codeId}
             >
               <Input

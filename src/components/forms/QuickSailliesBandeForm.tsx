@@ -373,7 +373,7 @@ const QuickSailliesBandeForm: React.FC<QuickSailliesBandeFormProps> = ({
                   <label className="label--v77">
                     1 OU 2 VERRATS <span className="req">requis</span>
                     {selectedVerratIds.length === 2 ? (
-                      <span className="hint"> · round-robin : T1 → V1, T2 → V2…</span>
+                      <span className="hint"> · round-robin : T1 › V1, T2 › V2…</span>
                     ) : null}
                   </label>
                   {verratsActifs.length === 0 ? (

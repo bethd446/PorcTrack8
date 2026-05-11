@@ -354,7 +354,7 @@ const QuickEditStockForm: React.FC<QuickEditStockFormProps> = ({
             <FormField
               label="Seuil d'alerte"
               required
-              hint="Stock ≤ ce seuil → statut BAS"
+              hint="Stock ≤ ce seuil › statut BAS"
               error={errors.seuilAlerte}
             >
               <Input

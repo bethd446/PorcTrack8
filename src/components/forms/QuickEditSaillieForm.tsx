@@ -28,7 +28,7 @@ import { useEscapeKey, useFocusFirstInput } from './useFormA11y';
      - Statut         : Active · Confirmée · Non confirmée · Avortement · Archivée
      - Notes          : textarea max 200 chars
 
-   Submit → write Supabase direct sur la table `saillies` (clés snake_case).
+   Submit -> write Supabase direct sur la table `saillies` (clés snake_case).
    Patch PARTIEL : seuls les champs modifiés sont envoyés.
    ═════════════════════════════════════════════════════════════════════════ */
 

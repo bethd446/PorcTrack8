@@ -30,18 +30,18 @@ interface TeamMember {
   full_name: string | null;
 }
 
-// V76: roles colors — couleurs sémantiques métier dérivées des tokens DNA.
+// V78.4: roles colors — tokenisés sur var(--pt-role-*).
 const ROLE_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-  OWNER:    { label: 'Owner',    color: 'var(--pt-primary)',    bg: '#cce0bf' },
-  ADMIN:    { label: 'Admin',    color: '#6b4910',              bg: '#f4dcb6' },
-  PORCHER:  { label: 'Porcher',  color: 'var(--pt-amber-ink)',  bg: 'rgba(244, 162, 97, 0.18)' },
-  WORKER:   { label: 'Porcher',  color: 'var(--pt-amber-ink)',  bg: 'rgba(244, 162, 97, 0.18)' },
-  ASSISTANT:{ label: 'Assistant',color: '#1f2937',              bg: 'rgba(31, 41, 55, 0.08)' },
-  GERANT:   { label: 'Gérant',   color: '#1f2937',              bg: 'rgba(31, 41, 55, 0.08)' },
+  OWNER:    { label: 'Owner',    color: 'var(--pt-role-owner-fg)',     bg: 'var(--pt-role-owner-bg)' },
+  ADMIN:    { label: 'Admin',    color: 'var(--pt-role-admin-fg)',     bg: 'var(--pt-role-admin-bg)' },
+  PORCHER:  { label: 'Porcher',  color: 'var(--pt-role-porcher-fg)',   bg: 'var(--pt-role-porcher-bg)' },
+  WORKER:   { label: 'Porcher',  color: 'var(--pt-role-porcher-fg)',   bg: 'var(--pt-role-porcher-bg)' },
+  ASSISTANT:{ label: 'Assistant',color: 'var(--pt-role-assistant-fg)', bg: 'var(--pt-role-assistant-bg)' },
+  GERANT:   { label: 'Gérant',   color: 'var(--pt-role-gerant-fg)',    bg: 'var(--pt-role-gerant-bg)' },
 };
 
 function getRoleStyle(role: string) {
-  return ROLE_LABELS[role] ?? { label: role || 'Membre', color: '#1f2937', bg: 'rgba(31, 41, 55, 0.08)' };
+  return ROLE_LABELS[role] ?? { label: role || 'Membre', color: 'var(--pt-role-gerant-fg)', bg: 'var(--pt-role-gerant-bg)' };
 }
 
 function initialOf(member: TeamMember): string {
@@ -352,7 +352,7 @@ const InviteSheet: React.FC<InviteSheetProps> = ({ isOpen, onClose, onInvited, c
         <button
           type="submit"
           disabled={submitting || !email.trim()}
-          className="btn--primary btn--block"
+          className="btn btn--primary btn--block"
         >
           {submitting ? 'Envoi…' : 'Envoyer l’invitation'}
         </button>
@@ -495,7 +495,7 @@ export const MonEquipeV70: React.FC = () => {
               type="button"
               onClick={() => setInviteOpen(true)}
               aria-label="Inviter un membre dans la ferme"
-              className="btn--primary btn--block"
+              className="btn btn--primary btn--block"
             >
               <UserPlus size={18} aria-hidden />
               Inviter un membre
@@ -549,7 +549,7 @@ export const MonEquipeV70: React.FC = () => {
             type="button"
             onClick={() => navigate('/admin')}
             aria-label="Modifier l’équipe"
-            className="btn--primary btn--block"
+            className="btn btn--primary btn--block"
           >
             Modifier l’équipe
             <ChevronRight size={18} aria-hidden />

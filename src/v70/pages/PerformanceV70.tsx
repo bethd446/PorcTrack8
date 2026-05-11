@@ -453,7 +453,7 @@ export const PerformanceV70: React.FC = () => {
           </div>
           <div className="kv-row">
             <span className="kv-key">
-              <Tooltip term="mortalite">Mortalité naiss.→sevrage</Tooltip>
+              <Tooltip term="mortalite">Mortalité naiss. › sevrage</Tooltip>
             </span>
             <span className="kv-val">{fmt(kpis?.tauxMortaliteNaissanceSevrage ?? null, 1, ' %')}</span>
           </div>
