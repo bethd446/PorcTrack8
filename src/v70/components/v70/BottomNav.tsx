@@ -9,10 +9,12 @@
  */
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Sun, Warehouse, Repeat, LineChart, Settings2 } from 'lucide-react';
+import { Sun, Warehouse, Repeat, LineChart, Settings2, Layers } from 'lucide-react';
+import { useFarmProfile } from '../../../hooks/useFarmProfile';
+import { hasReproduction, hasEngraissement } from '../../../lib/farmProfile';
 
 interface NavTabV70 {
-  id: 'today' | 'animals' | 'repro' | 'perf' | 'settings';
+  id: 'today' | 'animals' | 'repro' | 'lots' | 'perf' | 'settings';
   href: string;
   icon: React.ReactNode;
   label: string;
@@ -23,6 +25,10 @@ const TABS_V70: NavTabV70[] = [
   { id: 'today',    href: '/today',         icon: <Sun size={20} strokeWidth={2} aria-hidden />,        label: "Aujourd'hui", match: ['/today'] },
   { id: 'animals',  href: '/troupeau',      icon: <Warehouse size={20} strokeWidth={2} aria-hidden />,  label: 'Élevage',     match: ['/troupeau'] },
   { id: 'repro',    href: '/reproduction',  icon: <Repeat size={20} strokeWidth={2} aria-hidden />,     label: 'Repro',       match: ['/reproduction', '/cycles'] },
+  // V80 P0 #1 — Tab LOTS pour profil engraisseur (page livrée par A5).
+  // Visible UNIQUEMENT pour `profil === 'engraisseur'` (cf. filtrage dans
+  // BottomNavV70 ci-dessous). Sinon REPRO occupe le slot 3.
+  { id: 'lots',     href: '/engraissement', icon: <Layers size={20} strokeWidth={2} aria-hidden />,     label: 'Lots',        match: ['/engraissement', '/lots'] },
   { id: 'perf',     href: '/performance',   icon: <LineChart size={20} strokeWidth={2} aria-hidden />,  label: 'Performance', match: ['/performance', '/pilotage'] },
   { id: 'settings', href: '/reglages',      icon: <Settings2 size={20} strokeWidth={2} aria-hidden />,  label: 'Réglages',    match: ['/reglages', '/more', '/admin', '/aide', '/ressources', '/fournisseurs', '/protocoles'] },
 ];
@@ -56,10 +62,33 @@ export const BottomNavV70: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const activeId = resolveActiveTab(location.pathname);
+  const profil = useFarmProfile();
+
+  // V80 P0 #1 — Filtrage profil-aware :
+  //   naisseur      → REPRO (LOTS masqué)
+  //   engraisseur   → LOTS (REPRO masqué)
+  //   cycle_complet → REPRO (superset historique — LOTS masqué pour rester
+  //                   à 5 onglets, la page /engraissement reste atteignable
+  //                   via Repro/FAB).
+  const visibleTabs = React.useMemo(() => {
+    return TABS_V70.filter((t) => {
+      if (t.id === 'repro' && !hasReproduction(profil)) return false;
+      if (t.id === 'lots') {
+        if (profil !== 'engraisseur') return false;
+        if (!hasEngraissement(profil)) return false;
+      }
+      return true;
+    });
+  }, [profil]);
 
   return (
-    <nav className="bottom-nav" role="tablist" aria-label="Navigation principale V70">
-      {TABS_V70.map((tab) => {
+    <nav
+      className="bottom-nav"
+      role="tablist"
+      aria-label="Navigation principale V70"
+      data-pt-profil={profil}
+    >
+      {visibleTabs.map((tab) => {
         const active = tab.id === activeId;
         return (
           <button

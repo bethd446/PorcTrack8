@@ -89,4 +89,13 @@
 
   /* === V78.4 — BRAND WHATSAPP (constante externe) === */
   --pt-brand-whatsapp: #25D366;
+
+  /* === V80 — tokens manquants (migration hex→tokens) === */
+  --pt-info-bg: #cdd9e3;
+  --pt-info-fg: #2c4356;
+  --pt-info-icon-bg: #DBEAFE;
+  --pt-info-icon-fg: #1E40AF;
+  --pt-danger-hover: #8a3a33;
+  --pt-ink-hover: #2c2c2c;
+  --pt-warn-border: #FCD34D;
 }

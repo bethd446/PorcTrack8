@@ -37,7 +37,7 @@ import QuickConfirmSortieForm, {
 } from '../../components/forms/QuickConfirmSortieForm';
 import TruieEventActionSheet, { type TruieEventAction } from '../../components/forms/TruieEventActionSheet';
 
-import Chip from '../../components/design/Chip';
+import Chip from '../../components/agritech/Chip';
 import { type SowHeroChip } from '../../components/design/SowHero';
 import { Tabs, Button, Tag, Section, safeDisplay } from '@/design-system';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
@@ -1439,9 +1439,10 @@ const SaillieRow: React.FC<{ saillie: Saillie; num: number; last: boolean }> = (
         </small>
       </div>
       <div style={{ textAlign: 'right' }}>
-        <Chip tone={tone === 'return' ? 'pig' : tone === 'pending' ? 'amber' : 'green'}>
-          {saillie.statut ?? 'En cours'}
-        </Chip>
+        <Chip
+          label={saillie.statut ?? 'En cours'}
+          tone={tone === 'return' ? 'coral' : tone === 'pending' ? 'amber' : 'accent'}
+        />
       </div>
     </div>
   );

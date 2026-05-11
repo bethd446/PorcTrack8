@@ -8,7 +8,7 @@ import {
 } from '@ionic/react';
 import { Home, ChevronLeft, ChevronRight, MoreHorizontal, Pencil, Archive, Users, ArrowLeftRight } from 'lucide-react';
 
-import EmptyState from '../../components/design/EmptyState';
+import { EmptyState } from '../../v70/components/v70/EmptyState';
 import TopBarSync from '../../components/design/TopBarSync';
 import { AnimalListItem, Chip, SectionDivider } from '../../components/agritech';
 import { Button } from '@/design-system';
@@ -177,7 +177,7 @@ const LogeDetailView: React.FC = () => {
         <IonContent className="ion-no-padding">
             <div className="px-4 pt-5 pb-44" style={{ maxWidth: 1100, margin: '0 auto' }}>
               <EmptyState
-                icon={<Home size={30} aria-hidden="true" />}
+                iconNode={<Home size={30} aria-hidden="true" />}
                 title="Loge introuvable"
                 description="Cette loge n'existe pas ou a été désactivée."
                 action={

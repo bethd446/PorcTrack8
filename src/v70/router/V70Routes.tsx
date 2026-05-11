@@ -27,6 +27,11 @@ import { EncyclopediaPage } from '../pages/EncyclopediaPage';
 import { OnboardingEduPage } from '../pages/OnboardingEduPage';
 import { SynchronisationV70 } from '../pages/SynchronisationV70';
 
+// V80 P0 #2 — page Engraissement (lots / pesées hebdo / GMQ / mortalité).
+const EngraissementV70 = React.lazy(() =>
+  import('../pages/EngraissementV70').then((m) => ({ default: m.EngraissementV70 })),
+);
+
 // Pages détail legacy réutilisées dans le shell V70 — câblage Option B
 // (refonte fiches détail dédiées V70 = chantier V71+).
 const TruieDetailView = React.lazy(() =>
@@ -183,6 +188,10 @@ export const V70Routes: React.FC = () => (
 
           <Route path="/reproduction/*" element={<V70ErrorBoundary pageName="Reproduction"><ReproV70 /></V70ErrorBoundary>} />
           <Route path="/performance/*" element={<V70ErrorBoundary pageName="Performance"><PerformanceV70 /></V70ErrorBoundary>} />
+
+          {/* V80 P0 #2 — Module Engraissement (lots, pesées, GMQ, mortalité). */}
+          <Route path="/engraissement" element={<V70ErrorBoundary pageName="Engraissement"><EngraissementV70 /></V70ErrorBoundary>} />
+          <Route path="/lots" element={<Navigate to="/engraissement" replace />} />
 
           <Route path="/reglages" element={<V70ErrorBoundary pageName="Reglages"><ReglagesV70 /></V70ErrorBoundary>} />
           <Route path="/reglages/ma-ferme" element={<V70ErrorBoundary pageName="Ma ferme"><MaFermeV70 /></V70ErrorBoundary>} />

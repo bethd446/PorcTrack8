@@ -21,7 +21,7 @@ import {
   SectionDivider,
   type ChipTone,
 } from '../../components/agritech';
-import EmptyStateShared from '../../components/design/EmptyState';
+import { EmptyState as EmptyStateShared } from '../../v70/components/v70/EmptyState';
 import ListingSkeleton from '../../components/design/ListingSkeleton';
 import { Tag, Segment, Chip as DsChip, Button } from '../../design-system';
 import { useMeta } from '../../context/FarmContext';
@@ -383,7 +383,7 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
       ) : filtered.length === 0 ? (
         <EmptyStateShared
           size="sm"
-          icon={<Users size={20} aria-hidden="true" />}
+          iconNode={<Users size={20} aria-hidden="true" />}
           title={searchText.trim().length > 0 ? 'Aucun résultat' : 'Aucune truie'}
           description={
             searchText.trim().length > 0

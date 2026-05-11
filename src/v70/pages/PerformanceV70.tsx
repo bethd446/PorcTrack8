@@ -27,6 +27,8 @@ import { ExportButton } from '../components/v70/ExportButton';
 import { useUIPreferences } from '../context/UIPreferencesContext';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { useFarm, useMeta } from '../../context/FarmContext';
+import { useFarmProfile } from '../../hooks/useFarmProfile';
+import { hasEngraissement, hasReproduction } from '../../lib/farmProfile';
 import { computeGlobalKpis } from '../../services/perfKpiAnalyzer';
 import { buildForecastEvents } from '../../utils/forecastEvents';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
@@ -85,6 +87,10 @@ export const PerformanceV70: React.FC = () => {
   const finances = ((farm as { finances?: unknown }).finances ?? []) as FinanceEntry[];
   const currency = ((farm as { currency?: 'FCFA' }).currency ?? 'FCFA');
   const { loading: farmLoading } = useMeta();
+  // V80 P0 #1 — KPIs strip + score adaptés au profil ferme.
+  const profil = useFarmProfile();
+  const showRepro = hasReproduction(profil);
+  const showEng = hasEngraissement(profil);
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab: PerfTab = isPerfTab(searchParams.get('tab'))
     ? (searchParams.get('tab') as PerfTab)
@@ -117,7 +123,8 @@ export const PerformanceV70: React.FC = () => {
   }, [truies, bandes, saillies]);
 
   // V75-o B.2 (F-31) — Score global synthèse 4 KPIs.
-  const scoreGlobal = useMemo(() => computeScoreGlobal(kpis), [kpis]);
+  // V80 — pondération adaptée au profil (engraisseur → placeholder GMQ/IC).
+  const scoreGlobal = useMemo(() => computeScoreGlobal(kpis, profil), [kpis, profil]);
 
   // V75-o B.3 (F-33) — Top performances trié par nés vivants à la naissance
   // (critère explicite affiché en sous-label). Avant : `bandes.slice(0, 2)`
@@ -344,45 +351,79 @@ export const PerformanceV70: React.FC = () => {
             </div>
           </div>
 
-          <div className="kpis-strip" aria-label="Indicateurs clés du troupeau">
-            <div className="kpi">
-              <div className="kpi__label">ISSE j</div>
-              <div
-                className="kpi__val"
-                title={kpis?.isseMoyJours == null ? '3 paires sevrage→saillie valides requises' : undefined}
-              >
-                {fmt(kpis?.isseMoyJours ?? null, 1)}
+          {/* V80 P0 #1 — Strip KPI adapté au profil :
+              - naisseur / cycle_complet : ISSE / Taux MB / NV / IEM (historique)
+              - engraisseur : GMQ / IC / Mortalité / Marge brute (placeholders
+                "—" + tooltip "Module Engraissement à venir" tant que A5 pas livré) */}
+          {profil === 'engraisseur' ? (
+            <div
+              className="kpis-strip"
+              aria-label="Indicateurs clés engraissement"
+              data-pt-strip="engraisseur"
+            >
+              <div className="kpi">
+                <div className="kpi__label">GMQ g/j</div>
+                <div className="kpi__val" title="Module Engraissement à venir">—</div>
+              </div>
+              <div className="kpi">
+                <div className="kpi__label">IC kg/kg</div>
+                <div className="kpi__val" title="Module Engraissement à venir">—</div>
+              </div>
+              <div className="kpi">
+                <div className="kpi__label">Mortalité</div>
+                <div className="kpi__val" title="Module Engraissement à venir">—</div>
+              </div>
+              <div className="kpi">
+                <div className="kpi__label">Marge brute</div>
+                <div className="kpi__val" title="Module Engraissement à venir">—</div>
               </div>
             </div>
-            <div className="kpi">
-              <div className="kpi__label">Taux MB</div>
-              <div
-                className="kpi__val"
-                title={kpis?.tauxMBPct == null ? '5 saillies matures (>115j) requises' : undefined}
-              >
-                {fmt(kpis?.tauxMBPct ?? null, 0, '%')}
+          ) : (
+            <div
+              className="kpis-strip"
+              aria-label="Indicateurs clés du troupeau"
+              data-pt-strip={profil}
+            >
+              <div className="kpi">
+                <div className="kpi__label">ISSE j</div>
+                <div
+                  className="kpi__val"
+                  title={kpis?.isseMoyJours == null ? '3 paires sevrage→saillie valides requises' : undefined}
+                >
+                  {fmt(kpis?.isseMoyJours ?? null, 1)}
+                </div>
+              </div>
+              <div className="kpi">
+                <div className="kpi__label">Taux MB</div>
+                <div
+                  className="kpi__val"
+                  title={kpis?.tauxMBPct == null ? '5 saillies matures (>115j) requises' : undefined}
+                >
+                  {fmt(kpis?.tauxMBPct ?? null, 0, '%')}
+                </div>
+              </div>
+              <div className="kpi">
+                <div className="kpi__label">NV moy.</div>
+                <div className="kpi__val">{fmt(kpis?.moyNV ?? null, 1)}</div>
+              </div>
+              <div className="kpi">
+                <div className="kpi__label">IEM j</div>
+                <div
+                  className="kpi__val"
+                  title={kpis?.iemMoyJours == null ? 'Au moins 2 mises-bas datées pour la même truie requises' : undefined}
+                >
+                  {fmt(kpis?.iemMoyJours ?? null, 0)}
+                </div>
               </div>
             </div>
-            <div className="kpi">
-              <div className="kpi__label">NV moy.</div>
-              <div className="kpi__val">{fmt(kpis?.moyNV ?? null, 1)}</div>
-            </div>
-            <div className="kpi">
-              <div className="kpi__label">IEM j</div>
-              <div
-                className="kpi__val"
-                title={kpis?.iemMoyJours == null ? 'Au moins 2 mises-bas datées pour la même truie requises' : undefined}
-              >
-                {fmt(kpis?.iemMoyJours ?? null, 0)}
-              </div>
-            </div>
-          </div>
+          )}
         </section>
       )}
 
       {/* ISSE hero — onglet Vue uniquement (KPIs n'expose plus le score
-          mais la liste détaillée des indicateurs, pas de duplication). */}
-      {tab === 'vue' && (
+          mais la liste détaillée des indicateurs, pas de duplication).
+          V80 — masqué pour profil engraisseur (ISSE = KPI naisseur). */}
+      {tab === 'vue' && showRepro && (
       <Card variant="hero">
         <div className="hero-row">
           <div
@@ -435,59 +476,94 @@ export const PerformanceV70: React.FC = () => {
       </Card>
       )}
 
-      {/* Edu card ISSE — visible en Vue uniquement (le tab KPIs n'expose plus
-          l'ISSE qui est désormais le repère du tab Vue). */}
-      {/* V75-q (F-30) — on retire l'effet d'épellation I/S/S (lettres en gras
-          isolées) qui ralentissait la lecture pour un éleveur novice : le sigle
-          est maintenant énoncé en clair une seule fois en intro. */}
-      {tab === 'vue' && (
+      {/* Edu card ISSE — visible en Vue uniquement.
+          V80 — masquée pour profil engraisseur. */}
+      {tab === 'vue' && showRepro && (
         <EduCard label="Qu’est-ce que l’ISSE ?">
           Intervalle Sevrage-Saillie : nombre de jours entre le sevrage d'une truie et sa saillie suivante.
           Référence métier : <strong>5–8 j = excellent, 9–14 j = bon, &gt;14 j = à améliorer</strong>.
         </EduCard>
       )}
 
+      {/* V80 — EduCard engraisseur : placeholder informatif tant que A5 n'a
+          pas livré GMQ/IC live. */}
+      {tab === 'vue' && profil === 'engraisseur' && (
+        <EduCard label="Module Engraissement à venir">
+          GMQ (gain moyen quotidien) et IC (indice consommation) seront calculés
+          automatiquement dès que le module <strong>Engraissement</strong> sera en place :
+          pesées hebdo + conso aliment par lot. Pour l&apos;instant, enregistre tes pesées et
+          consos pour préparer le démarrage.
+        </EduCard>
+      )}
+
       {/* KPIs grid — visible en Vue + KPIs (V77 b — duplicate ISSE retirée
           du tab KPIs ; la liste détaillée reste exposée sur les deux onglets,
           car elle complète le score billboard en Vue et constitue le cœur du
-          tab KPIs). */}
+          tab KPIs).
+          V80 P0 #1 — Lignes filtrées selon profil :
+            - lignes repro (Taux MB, NV, Mortalité naiss-sevrage, IEM) : naisseur + cycle_complet
+            - lignes engraissement (IC, GMQ, Mortalité eng, Marge) : engraisseur + cycle_complet */}
       {(tab === 'vue' || tab === 'kpis') && (
       <Section label="Indicateurs techniques">
         <Card>
-          <div className="kv-row">
-            <span className="kv-key">Taux mise-bas</span>
-            <span className="kv-val">{fmt(kpis?.tauxMBPct ?? null, 0, ' %')}</span>
-          </div>
-          <div className="kv-row">
-            <span className="kv-key">Nés vivants/portée</span>
-            <span className="kv-val">{fmt(kpis?.moyNV ?? null, 1)}</span>
-          </div>
-          <div className="kv-row">
-            <span className="kv-key">
-              <Tooltip term="mortalite">Mortalité naiss. › sevrage</Tooltip>
-            </span>
-            <span className="kv-val">{fmt(kpis?.tauxMortaliteNaissanceSevrage ?? null, 1, ' %')}</span>
-          </div>
-          <div className="kv-row">
-            <span className="kv-key">
-              <Tooltip term="iem">IEM moyen</Tooltip>
-            </span>
-            <span className="kv-val">{fmt(kpis?.iemMoyJours ?? null, 0, ' j')}</span>
-          </div>
-          <div
-            className="kv-row"
-            title="Indice de consommation = kg aliment / kg gain poids vif. Référence métier 2.5-3.0."
-          >
-            <span className="kv-key">IC moyen (post-sevrage)</span>
-            <span className="kv-val">
-              {kpis?.icMoyenReel != null && kpis.icMoyenReel > 0
-                ? `${kpis.icMoyenReel.toFixed(2)} kg/kg`
-                : '—'}
-              <span style={{ color: 'var(--pt-muted)', fontSize: 11, marginLeft: 8 }}>
-                réf. 2.5-3.0
-              </span>
-            </span>
-          </div>
+          {showRepro && (
+            <>
+              <div className="kv-row">
+                <span className="kv-key">Taux mise-bas</span>
+                <span className="kv-val">{fmt(kpis?.tauxMBPct ?? null, 0, ' %')}</span>
+              </div>
+              <div className="kv-row">
+                <span className="kv-key">Nés vivants/portée</span>
+                <span className="kv-val">{fmt(kpis?.moyNV ?? null, 1)}</span>
+              </div>
+              <div className="kv-row">
+                <span className="kv-key">
+                  <Tooltip term="mortalite">Mortalité naiss. › sevrage</Tooltip>
+                </span>
+                <span className="kv-val">{fmt(kpis?.tauxMortaliteNaissanceSevrage ?? null, 1, ' %')}</span>
+              </div>
+              <div className="kv-row">
+                <span className="kv-key">
+                  <Tooltip term="iem">IEM moyen</Tooltip>
+                </span>
+                <span className="kv-val">{fmt(kpis?.iemMoyJours ?? null, 0, ' j')}</span>
+              </div>
+            </>
+          )}
+          {showEng && (
+            <>
+              <div
+                className="kv-row"
+                title="Indice de consommation = kg aliment / kg gain poids vif. Référence métier 2.5-3.0."
+              >
+                <span className="kv-key">IC moyen (post-sevrage)</span>
+                <span className="kv-val">
+                  {kpis?.icMoyenReel != null && kpis.icMoyenReel > 0
+                    ? `${kpis.icMoyenReel.toFixed(2)} kg/kg`
+                    : '—'}
+                  <span style={{ color: 'var(--pt-muted)', fontSize: 11, marginLeft: 8 }}>
+                    réf. 2.5-3.0
+                  </span>
+                </span>
+              </div>
+              {profil === 'engraisseur' && (
+                <>
+                  <div className="kv-row" title="Module Engraissement à venir">
+                    <span className="kv-key">GMQ moyen (croissance)</span>
+                    <span className="kv-val">—</span>
+                  </div>
+                  <div className="kv-row" title="Module Engraissement à venir">
+                    <span className="kv-key">Mortalité engraissement</span>
+                    <span className="kv-val">—</span>
+                  </div>
+                  <div className="kv-row" title="Module Engraissement à venir">
+                    <span className="kv-key">Marge brute / lot</span>
+                    <span className="kv-val">—</span>
+                  </div>
+                </>
+              )}
+            </>
+          )}
         </Card>
       </Section>
       )}

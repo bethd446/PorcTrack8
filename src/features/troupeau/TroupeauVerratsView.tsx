@@ -9,7 +9,7 @@ import {
   type ChipTone,
 } from '../../components/agritech';
 import { Button } from '@/design-system';
-import EmptyState from '../../components/design/EmptyState';
+import { EmptyState } from '../../v70/components/v70/EmptyState';
 import ListingSkeleton from '../../components/design/ListingSkeleton';
 import QuickAddVerratForm from '../../components/forms/QuickAddVerratForm';
 import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
@@ -191,7 +191,7 @@ const TroupeauVerratsView: React.FC<TroupeauVerratsViewProps> = ({ searchText, s
         <ListingSkeleton count={3} />
       ) : verrats.length === 0 ? (
         <EmptyState
-          icon={<EntityAvatar species="verrat" size="sm" />}
+          iconNode={<EntityAvatar species="verrat" size="sm" />}
           title="Aucun verrat enregistré"
           description="Les verrats de la ferme apparaîtront ici dès qu'ils seront saisis dans la feuille VERRATS."
         />

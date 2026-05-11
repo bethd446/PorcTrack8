@@ -127,7 +127,10 @@ interface MetaContextType {
   recomputeAlerts: () => Promise<void>;
 }
 
-const MetaContext = createContext<MetaContextType | undefined>(undefined);
+// V80 — export du context pour permettre aux hooks lookup-direct (sans
+// throw hors-provider) d'y accéder en lecture optionnelle, p.ex.
+// `useFarmProfile` qui doit tolérer un rendu de composant isolé (tests).
+export const MetaContext = createContext<MetaContextType | undefined>(undefined);
 
 interface FarmIdentity {
   nomFerme: string;

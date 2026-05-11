@@ -8,7 +8,7 @@ import { buildWhatsappUrl, getSupportWhatsapp } from '../../services/supportCont
 
 const FONT_DISPLAY = 'var(--font-heading)';
 const FONT_BODY = 'var(--font-body)';
-const WHATSAPP_BRAND = '#25D366';
+const WHATSAPP_BRAND = 'var(--pt-brand-whatsapp)';
 
 interface FaqEntry {
   question: string;

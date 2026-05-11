@@ -169,7 +169,7 @@ const FournisseurDetailView: React.FC = () => {
                       borderRadius: 999,
                       background: pill.bg,
                       color: pill.fg,
-                      fontFamily: 'var(--ff-mono, JetBrains Mono, monospace)',
+                      fontFamily: 'var(--ff-mono)',
                       fontSize: 10,
                       letterSpacing: '0.08em',
                       textTransform: 'uppercase',
@@ -210,7 +210,7 @@ const FournisseurDetailView: React.FC = () => {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    fontFamily: 'var(--ff-mono, JetBrains Mono, monospace)',
+                    fontFamily: 'var(--ff-mono)',
                     fontSize: 10,
                     letterSpacing: '0.12em',
                     textTransform: 'uppercase',
@@ -244,7 +244,7 @@ const FournisseurDetailView: React.FC = () => {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    fontFamily: 'var(--ff-mono, JetBrains Mono, monospace)',
+                    fontFamily: 'var(--ff-mono)',
                     fontSize: 10,
                     letterSpacing: '0.12em',
                     textTransform: 'uppercase',
@@ -266,7 +266,7 @@ const FournisseurDetailView: React.FC = () => {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div
                     style={{
-                      fontFamily: 'var(--ff-mono, JetBrains Mono, monospace)',
+                      fontFamily: 'var(--ff-mono)',
                       fontSize: 10,
                       letterSpacing: '0.12em',
                       textTransform: 'uppercase',
@@ -294,7 +294,7 @@ const FournisseurDetailView: React.FC = () => {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    fontFamily: 'var(--ff-mono, JetBrains Mono, monospace)',
+                    fontFamily: 'var(--ff-mono)',
                     fontSize: 10,
                     letterSpacing: '0.12em',
                     textTransform: 'uppercase',
@@ -306,7 +306,7 @@ const FournisseurDetailView: React.FC = () => {
                 </div>
                 <div
                   className="contact-row__value"
-                  style={{ fontFamily: 'var(--ff-body, Instrument Sans, sans-serif)' }}
+                  style={{ fontFamily: 'var(--ff-body)' }}
                 >
                   {f.adresse} · {f.ville}
                 </div>
@@ -327,7 +327,7 @@ const FournisseurDetailView: React.FC = () => {
                   borderRadius: 14,
                   textAlign: 'center',
                   color: 'var(--pt-muted)',
-                  fontFamily: 'var(--ff-body, Instrument Sans, sans-serif)',
+                  fontFamily: 'var(--ff-body)',
                   fontSize: 13,
                 }}
               >
@@ -352,7 +352,7 @@ const FournisseurDetailView: React.FC = () => {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div
                       style={{
-                        fontFamily: 'var(--ff-body, Instrument Sans, sans-serif)',
+                        fontFamily: 'var(--ff-body)',
                         fontSize: 14,
                         color: 'var(--pt-ink)',
                         marginBottom: 4,
@@ -363,7 +363,7 @@ const FournisseurDetailView: React.FC = () => {
                     </div>
                     <div
                       style={{
-                        fontFamily: 'var(--ff-mono, JetBrains Mono, monospace)',
+                        fontFamily: 'var(--ff-mono)',
                         fontSize: 11,
                         color: 'var(--pt-muted)',
                         letterSpacing: '0.06em',
@@ -374,7 +374,7 @@ const FournisseurDetailView: React.FC = () => {
                   </div>
                   <div
                     style={{
-                      fontFamily: 'var(--ff-mono, JetBrains Mono, monospace)',
+                      fontFamily: 'var(--ff-mono)',
                       fontSize: 13,
                       fontWeight: 600,
                       color: 'var(--pt-ink)',
@@ -397,7 +397,7 @@ const FournisseurDetailView: React.FC = () => {
                 background: 'var(--pt-warm)',
                 border: '1px solid var(--pt-warm-deep)',
                 borderRadius: 14,
-                fontFamily: 'var(--ff-body, Instrument Sans, sans-serif)',
+                fontFamily: 'var(--ff-body)',
                 fontSize: 14,
                 lineHeight: 1.55,
                 color: 'var(--pt-ink)',

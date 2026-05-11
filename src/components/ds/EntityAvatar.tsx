@@ -17,10 +17,10 @@ const SIZE_PX: Record<AvatarSize, number> = { sm: 32, md: 48, lg: 64, xl: 96 };
 const RADIUS_PX: Record<AvatarSize, number> = { sm: 12, md: 12, lg: 16, xl: 20 };
 
 const PALETTE: Record<EntitySpecies, { bg: string; fg: string }> = {
-  truie:    { bg: '#F4D4D4', fg: '#8B4744' },
-  verrat:   { bg: '#C8D6E5', fg: '#3B5266' },
-  porcelet: { bg: '#F5E9D8', fg: '#8B6E3D' },
-  bande:    { bg: '#D4DFC8', fg: '#3D5C2C' },
+  truie:    { bg: 'var(--pt-truie-bg)', fg: 'var(--pt-truie-fg)' },
+  verrat:   { bg: 'var(--pt-verrat-bg)', fg: 'var(--pt-verrat-fg)' },
+  porcelet: { bg: 'var(--pt-porcelet-bg)', fg: 'var(--pt-porcelet-fg)' },
+  bande:    { bg: 'var(--pt-bande-bg)', fg: 'var(--pt-bande-fg)' },
 };
 
 const V73_PORTRAIT: Partial<Record<EntitySpecies, string>> = {

@@ -255,7 +255,7 @@ const FournisseursView: React.FC = () => {
                             borderRadius: 999,
                             background: pill.bg,
                             color: pill.fg,
-                            fontFamily: 'var(--ff-mono, JetBrains Mono, monospace)',
+                            fontFamily: 'var(--ff-mono)',
                             fontSize: 10,
                             letterSpacing: '0.08em',
                             textTransform: 'uppercase',
@@ -276,7 +276,7 @@ const FournisseursView: React.FC = () => {
                         <Stars value={f.note} />
                         <span
                           style={{
-                            fontFamily: 'var(--ff-mono, JetBrains Mono, monospace)',
+                            fontFamily: 'var(--ff-mono)',
                             fontSize: 11,
                             color: 'var(--pt-muted)',
                             letterSpacing: '0.06em',

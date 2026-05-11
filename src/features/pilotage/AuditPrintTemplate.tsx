@@ -5,12 +5,12 @@ interface AuditPrintTemplateProps {
   data: AuditSnapshot;
 }
 
-const PRINT_INK = '#111827';
-const PRINT_INK_SOFT = '#374151';
-const PRINT_SURFACE_2 = '#F7F5F0';
-const PRINT_LINE = '#e5e7eb';
-const PRINT_ACCENT = '#2d5a1b';
-const PRINT_PIG = '#c2662b';
+const PRINT_INK = 'var(--pt-ink)';
+const PRINT_INK_SOFT = 'var(--pt-muted)';
+const PRINT_SURFACE_2 = 'var(--pt-warm)';
+const PRINT_LINE = 'var(--pt-line-strong)';
+const PRINT_ACCENT = 'var(--pt-primary)';
+const PRINT_PIG = 'var(--pt-accent-deep)';
 
 const FONT_DISPLAY = 'var(--font-heading)';
 const FONT_BODY = 'var(--font-body)';
@@ -59,7 +59,7 @@ const AuditPrintTemplate: React.FC<AuditPrintTemplateProps> = ({ data }) => {
       className="hidden print:block"
       style={{
         padding: 40,
-        background: '#ffffff',
+        background: 'var(--pt-bg)',
         color: PRINT_INK,
         fontFamily: FONT_BODY,
         lineHeight: 1.5,

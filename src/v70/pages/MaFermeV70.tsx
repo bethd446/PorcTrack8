@@ -18,9 +18,16 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useFarm } from '../../context/FarmContext';
+import { useFarm, useMeta } from '../../context/FarmContext';
 import { fetchFarm, type FarmInfo } from '../../services/settingsService';
 import FarmSwitcher from '../../components/FarmSwitcher';
+import { useFarmProfile } from '../../hooks/useFarmProfile';
+import {
+  FARM_PROFILES,
+  setFarmProfile,
+  type FarmProfile,
+} from '../../lib/farmProfile';
+import { useToast } from '../../context/ToastContext';
 
 const infoCardStyle: React.CSSProperties = {
   background: 'var(--bg-surface)',
@@ -111,8 +118,28 @@ export const MaFermeV70: React.FC = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { nomFerme, pays, currency, truies, verrats, bandes } = useFarm();
+  const { currentFarmId } = useMeta();
+  const profil = useFarmProfile();
+  const { showToast } = useToast();
+  const [savingProfil, setSavingProfil] = useState(false);
 
   const [farm, setFarm] = useState<FarmInfo | null>(null);
+
+  const handleSetProfil = async (next: FarmProfile) => {
+    if (!currentFarmId || savingProfil || next === profil) return;
+    setSavingProfil(true);
+    try {
+      await setFarmProfile(currentFarmId, next);
+      const label = FARM_PROFILES.find((p) => p.value === next)?.label ?? next;
+      showToast(`Type d'élevage : ${label}`, 'success', 2500);
+      // Reload léger pour rafraîchir le hook (qui re-fetch metadata au mount).
+      window.location.reload();
+    } catch (err) {
+      console.error('setFarmProfile failed', err);
+      showToast((err as Error).message ?? 'Erreur — réessaie', 'error', 4000);
+      setSavingProfil(false);
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -189,6 +216,52 @@ export const MaFermeV70: React.FC = () => {
             value={currency || 'FCFA'}
             hint="Devise plateforme — FCFA"
           />
+        </section>
+
+        {/* V80 P0 #1 — Type d'élevage : permet de switcher le profil après
+            onboarding (impacte bottom-nav, KPIs Performance et FAB). */}
+        <section className="section">
+          <div className="section__label">Type d&apos;élevage</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {FARM_PROFILES.map((opt) => {
+              const selected = opt.value === profil;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => void handleSetProfil(opt.value)}
+                  disabled={savingProfil}
+                  data-pt-profile-card={opt.value}
+                  aria-pressed={selected}
+                  style={{
+                    textAlign: 'left',
+                    padding: 14,
+                    borderRadius: 12,
+                    border: selected
+                      ? '2px solid var(--pt-primary)'
+                      : '1px solid var(--pt-line-strong)',
+                    background: selected ? 'var(--pt-warm)' : 'var(--bg-surface)',
+                    cursor: savingProfil ? 'wait' : 'pointer',
+                    display: 'flex',
+                    gap: 12,
+                    alignItems: 'flex-start',
+                    opacity: savingProfil && !selected ? 0.5 : 1,
+                  }}
+                >
+                  <span aria-hidden style={{ fontSize: 22, lineHeight: 1, marginTop: 2 }}>
+                    {opt.emoji}
+                  </span>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>{opt.label}</div>
+                    <div style={{ fontSize: 12, color: 'var(--pt-muted)' }}>{opt.description}</div>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <p style={{ fontSize: 11, color: 'var(--pt-muted)', marginTop: 8 }}>
+            Le changement adapte le bottom-nav, les KPIs Performance et le FAB Saisir.
+          </p>
         </section>
 
         <section className="section">

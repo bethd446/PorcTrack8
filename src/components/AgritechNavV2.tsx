@@ -13,11 +13,14 @@ import {
   LineChart,
   Wrench,
   Settings2,
+  Layers,
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { usePilotage } from '../context/PilotageContext';
+import { useFarmProfile } from '../hooks/useFarmProfile';
+import { hasReproduction, hasEngraissement } from '../lib/farmProfile';
 import { cn } from '../lib/utils';
 import { inferModuleFromPath, getModuleTone } from '../lib/moduleColor';
 import { BottomSheet } from './agritech';
@@ -184,7 +187,7 @@ export const QuickActionsProvider: React.FC<{ children: React.ReactNode }> = ({
 
 /* ── Tabs definition ─────────────────────────────────────────────────────── */
 
-type TabId = 'today' | 'elevage' | 'repro' | 'perf' | 'outils' | 'more';
+type TabId = 'today' | 'elevage' | 'repro' | 'perf' | 'outils' | 'more' | 'lots';
 
 interface NavTabDef {
   id: TabId;
@@ -227,6 +230,15 @@ const TABS: NavTabDef[] = [
     // rattachées au tab Repro. Le longest-prefix match préserve les sous-routes
     // explicites.
     match: ['/reproduction', '/cycles', '/cycles/repro', '/cycles/maternite'],
+  },
+  // V80 P0 #1 — Tab LOTS pour profil engraisseur (route /engraissement
+  // livrée par l'agent A5). Filtré dans visibleTabs : engraisseur seulement.
+  {
+    id: 'lots',
+    path: '/engraissement',
+    label: 'Lots',
+    Icon: Layers,
+    match: ['/engraissement', '/lots'],
   },
   // V33 — Onglet Outils : tout ce qui était dans Plus mais qui est un outil
   // métier (alertes, audit, journal santé, protocoles, stocks, fournisseurs).
@@ -390,15 +402,28 @@ const AgritechNavV2: React.FC = () => {
   const navigate = useNavigate();
   const { isOwner } = useAuth();
   const { alerts, alertesServeur } = usePilotage();
+  const profil = useFarmProfile();
 
   const activeTabId = resolveActiveTab(location.pathname);
   // RT4 : déduit le module courant pour colorer l'underline de la tab active.
   const moduleAccent = getModuleTone(inferModuleFromPath(location.pathname)).fg;
 
-  const visibleTabs = useMemo(
-    () => TABS.filter((t) => !t.ownerOnly || isOwner),
-    [isOwner]
-  );
+  // V80 P0 #1 — Filtrage par profil ferme :
+  //  - naisseur       : REPRO (pas LOTS)
+  //  - engraisseur    : LOTS (pas REPRO)
+  //  - cycle_complet  : REPRO (superset historique — LOTS masqué pour rester
+  //    à 5 onglets ; la page /engraissement reste atteignable côté Repro/FAB)
+  const visibleTabs = useMemo(() => {
+    return TABS.filter((t) => {
+      if (t.ownerOnly && !isOwner) return false;
+      if (t.id === 'repro' && !hasReproduction(profil)) return false;
+      if (t.id === 'lots') {
+        if (profil !== 'engraisseur') return false;
+        if (!hasEngraissement(profil)) return false;
+      }
+      return true;
+    });
+  }, [isOwner, profil]);
 
   const todayBadgeCount = useMemo(() => {
     const local = alerts.filter(

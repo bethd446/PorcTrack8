@@ -532,7 +532,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
                     form.setValue('subjectType', e.detail.value as SubjectType);
                     setQuery('');
                   }}
-                  className="premium-segment"
+                  className="pt-segment"
                   style={{ borderRadius: 12, border: '1px solid var(--pt-line)', background: 'var(--pt-bg)' }}
                 >
                   <IonSegmentButton value="BANDE"><IonLabel className="text-[11px]">Bandes</IonLabel></IonSegmentButton>

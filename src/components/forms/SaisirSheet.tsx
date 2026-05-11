@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 
 import { useQuickActions, type QuickActionKind } from '../AgritechNavV2';
+import { useFarmProfile } from '../../hooks/useFarmProfile';
+import { hasReproduction, hasEngraissement, type FarmProfile } from '../../lib/farmProfile';
 
 export interface SaisirSheetProps {
   isOpen: boolean;
@@ -31,22 +33,33 @@ interface ActionDef {
   Icon: React.ComponentType<{ size?: number; strokeWidth?: number; 'aria-hidden'?: boolean }>;
   tone: 'accent' | 'amber' | 'red' | 'default';
   separator?: boolean;
+  /** V80 — quels profils voient cette action ? Absence = tous. */
+  profilesAllow?: FarmProfile[];
 }
 
 const ACTIONS: ActionDef[] = [
-  { kind: 'saillie', title: 'Saillie', hint: 'Truie × verrat', Icon: Heart, tone: 'accent' },
-  { kind: 'echographie', title: 'Écho', hint: 'J28 gestation', Icon: Stethoscope, tone: 'accent' },
-  { kind: 'misebas', title: 'Mise-bas', hint: 'Nés + morts-nés', Icon: Baby, tone: 'accent' },
-  { kind: 'sevrage', title: 'Sevrage', hint: 'Bande + porcelets', Icon: Milk, tone: 'default' },
+  // Repro (cf. PLAN_PROFIL_MULTI §5.2)
+  { kind: 'saillie', title: 'Saillie', hint: 'Truie × verrat', Icon: Heart, tone: 'accent', profilesAllow: ['naisseur', 'cycle_complet'] },
+  { kind: 'echographie', title: 'Écho', hint: 'J28 gestation', Icon: Stethoscope, tone: 'accent', profilesAllow: ['naisseur', 'cycle_complet'] },
+  { kind: 'misebas', title: 'Mise-bas', hint: 'Nés + morts-nés', Icon: Baby, tone: 'accent', profilesAllow: ['naisseur', 'cycle_complet'] },
+  { kind: 'sevrage', title: 'Sevrage', hint: 'Bande + porcelets', Icon: Milk, tone: 'default', profilesAllow: ['naisseur', 'cycle_complet'] },
+  // Mortalité transverse
   { kind: 'mortalite', title: 'Mortalité', hint: 'Animal + cause', Icon: AlertOctagon, tone: 'red' },
-  { kind: 'adoption', title: 'Adoption', hint: 'Transfert mat.', Icon: Repeat, tone: 'default' },
+  { kind: 'adoption', title: 'Adoption', hint: 'Transfert mat.', Icon: Repeat, tone: 'default', profilesAllow: ['naisseur', 'cycle_complet'] },
+  // Pesée + conso = transverses
   { kind: 'pesee', title: 'Pesée', hint: 'Poids moyen', Icon: Scale, tone: 'amber' },
   { kind: 'conso', title: 'Conso', hint: 'Aliment livré', Icon: Wheat, tone: 'amber' },
-  { kind: 'tripoids', title: 'Tri poids', hint: 'Eng. / finition', Icon: Layers, tone: 'amber' },
+  // Tri poids = engraissement
+  { kind: 'tripoids', title: 'Tri poids', hint: 'Eng. / finition', Icon: Layers, tone: 'amber', profilesAllow: ['engraisseur', 'cycle_complet'] },
   { kind: 'soin', title: 'Soin', hint: 'Traitement véto', Icon: Syringe, tone: 'accent' },
   { kind: 'note', title: 'Note', hint: 'Observation', Icon: FileText, tone: 'default' },
   { kind: 'marius', title: 'Marius', hint: 'Assistant IA', Icon: Sparkles, tone: 'amber', separator: true },
 ];
+
+/** V80 — applique le filtrage par profil sur la liste d'actions. */
+function filterActionsByProfile(actions: ActionDef[], profil: FarmProfile): ActionDef[] {
+  return actions.filter((a) => !a.profilesAllow || a.profilesAllow.includes(profil));
+}
 
 const TONE_BG: Record<ActionDef['tone'], string> = {
   default: 'var(--pt-warm, #F1ECE0)',
@@ -64,6 +77,17 @@ const TONE_FG: Record<ActionDef['tone'], string> = {
 
 const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
   const { openAction } = useQuickActions();
+  const profil = useFarmProfile();
+  const visibleActions = React.useMemo(
+    () => filterActionsByProfile(ACTIONS, profil),
+    [profil],
+  );
+  const cycleCount = React.useMemo(
+    () => visibleActions.filter((a) => !a.separator).length,
+    [visibleActions],
+  );
+  const reproCovered = hasReproduction(profil);
+  const engCovered = hasEngraissement(profil);
   const sheetRef = useRef<HTMLDivElement>(null);
   const previousActiveRef = useRef<Element | null>(null);
 
@@ -128,6 +152,9 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
       role="dialog"
       aria-modal="true"
       aria-labelledby="saisir-sheet-title"
+      data-pt-profil={profil}
+      data-pt-repro={reproCovered ? 'on' : 'off'}
+      data-pt-eng={engCovered ? 'on' : 'off'}
       className="pt-screen fixed inset-0 z-[1100] flex items-end justify-center"
     >
       {/* V43.4 — Overlay = div avec onClick (pas un bouton). Le seul vrai
@@ -165,7 +192,7 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
           Que veux-tu saisir ?
         </h2>
         <div className="sheet__sub" style={{ padding: '0 20px 12px' }}>
-          12 actions terrain · cycle GTTT
+          {cycleCount} action{cycleCount > 1 ? 's' : ''} terrain · cycle GTTT
         </div>
 
         <div
@@ -211,7 +238,7 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
             minHeight: 0,
           }}
         >
-          {ACTIONS.map(({ kind, title, hint, Icon, tone, separator }) => (
+          {visibleActions.map(({ kind, title, hint, Icon, tone, separator }) => (
             <button
               key={kind}
               type="button"
@@ -265,7 +292,7 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
                 <span
                   className="saisir-sheet__item-title"
                   style={{
-                    fontFamily: 'var(--ff-mono, "JetBrains Mono", monospace)',
+                    fontFamily: 'var(--ff-mono)',
                     fontSize: 12,
                     fontWeight: 600,
                     letterSpacing: '0.08em',
@@ -280,7 +307,7 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
                   <span
                     className="saisir-sheet__item-hint"
                     style={{
-                      fontFamily: 'var(--ff-mono, "JetBrains Mono", monospace)',
+                      fontFamily: 'var(--ff-mono)',
                       fontSize: 10.5,
                       fontWeight: 500,
                       letterSpacing: '0.04em',

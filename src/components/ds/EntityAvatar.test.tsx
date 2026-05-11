@@ -94,8 +94,9 @@ describe('EntityAvatar', () => {
   it('applique la couleur de fond correspondant à l’espèce', () => {
     const { container } = render(<EntityAvatar species="verrat" />);
     const wrapper = container.querySelector('div[role="img"]') as HTMLElement;
-    // background-color RGB equivalent of #C8D6E5
-    expect(wrapper.style.background.toLowerCase()).toContain('rgb(200, 214, 229)');
+    // V80 — migration hex → tokens CSS. jsdom ne résout pas var(--pt-*),
+    // on teste donc la référence au token plutôt que la valeur RGB résolue.
+    expect(wrapper.style.background.toLowerCase()).toContain('var(--pt-verrat-bg');
   });
 
   it('expose role="img" + aria-label avec shortCode', () => {

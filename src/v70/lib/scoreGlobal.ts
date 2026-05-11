@@ -20,6 +20,7 @@
  * fiabiliser le score). Évite de noter "D critique" un éleveur en démarrage.
  */
 import type { GlobalKpis } from '../../services/perfKpiAnalyzer';
+import type { FarmProfile } from '../../lib/farmProfile';
 
 export type ScoreLevel = 'A' | 'B' | 'C' | 'D' | 'EN_CONSTRUCTION';
 
@@ -81,13 +82,27 @@ function levelLabel(level: ScoreLevel): string {
   }
 }
 
-export function computeScoreGlobal(kpis: GlobalKpis | null | undefined): ScoreGlobal {
+export function computeScoreGlobal(
+  kpis: GlobalKpis | null | undefined,
+  profil: FarmProfile = 'cycle_complet',
+): ScoreGlobal {
   if (!kpis) {
     return {
       score: 0,
       level: 'EN_CONSTRUCTION',
       label: 'En construction',
       detail: 'Données insuffisantes',
+    };
+  }
+
+  // V80 — Engraisseur : pas de KPIs ISSE/TauxMB pertinents. Tant que A5
+  // n'a pas livré GMQ/IC live, on affiche EN_CONSTRUCTION (placeholder).
+  if (profil === 'engraisseur') {
+    return {
+      score: 0,
+      level: 'EN_CONSTRUCTION',
+      label: 'En construction',
+      detail: 'Module Engraissement à venir (GMQ / IC)',
     };
   }
 

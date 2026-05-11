@@ -49,8 +49,32 @@ _(format : `[A-X] fichier — démarré HH:MM — ETA Xmin`)_
 
 Marquer ici chaque agent qui complete son scope.
 
-- [ ] A1 theme-unification
-- [ ] A2 typo-canon
-- [ ] A3 component-dedup
-- [ ] A4 onboarding-profil
-- [ ] A5 engraissement-module
+- [x] A1 theme-unification ✅ 2026-05-12 — hex→tokens 0 résiduel, .premium-* 0 résiduel, tsc=0, build OK, 2055/2056 (+4 tests A4/A5 baseline)
+- [x] A2 typo-canon — 14 fichiers nettoyés (preload DMMono ajouté, 27 migrations `var(--ff-mono)`→`var(--pt-font-mono)` initiales). **⚠️ A2 a laissé 72 résiduels** `var(--ff-{mono|body|display}, ...)` orphelins (alias non défini → fallback Courier system). **Patch orchestrateur 2026-05-12 01:42** : 27 ff-mono + 26 ff-body + 19 ff-display tous migrés vers `var(--pt-font-*)`. 0 résiduel fonctionnel. tsc=0.
+- [x] A3 component-dedup — 3 fichiers supprimés (design/Chip, design/EmptyState, design/KpiCard) + v70/EmptyState enrichie + AgritechNavV2 imports corrigés (A4 oubli) — tsc OK + build OK
+- [x] A4 onboarding-profil — `src/lib/farmProfile.ts` (124L) + `src/hooks/useFarmProfile.ts` (60L) + tests (107L+62L) + migration `v80_farm_profile_default` appliquée (8 fermes set `cycle_complet`) + `MetaContext` export + `OnboardingV2Wizard` 3 profils + `AgritechNavV2` LOTS adaptatif + `SaisirSheet` actions filtrées + `PerformanceV70` strip+score profil-aware + `scoreGlobal` engraisseur placeholder + `MaFermeV70` section "Type d'élevage". tsc=0, build OK, 2051/2052 tests (1 fail EntityAvatar pré-existant)
+- [x] A5 engraissement-module — 3 tables DB + repo + page + 3 modales + 20 tests verts (tsc OK + build OK)
+
+## ⚠️ Divergence DNA — A2 typo-canon (session-critique)
+
+**Date** : 2026-05-12 00:49
+
+A2 a annoncé suppression JetBrains Mono. Audit confirme :
+- Décision V71 dans `v70-global.css` : `V71 typo-lock : InstrumentSans + tabular-nums (était JetBrains Mono)` → JetBrains abandonnée
+- `tokens.css` : `--pt-font-mono: 'InstrumentSans', ...` (pas JetBrains)
+- **Cible canonique réelle V71+ = 2 fonts** : Big Shoulders + InstrumentSans (+ DMMono pour sub-text V77.1 = à statuer)
+
+**Blueprint §4.2 OBSOLÈTE** : à corriger post-convergence.
+
+### Action A2 RESTANTE (non bloquante mais à fixer avant tag v3.4.0)
+
+`rg "JetBrains Mono" src/v70/theme/` → ~20 lignes `var(--ff-mono, 'JetBrains Mono', monospace)` dans `v70-global.css`.
+
+→ Remplacer par `var(--pt-font-mono)` (qui pointe vers InstrumentSans).
+
+Sinon : si `--ff-mono` non défini ailleurs, fallback browser = monospace générique (Courier) → rendu dégradé sur kpis/IDs.
+
+### Action blueprint
+Mettre à jour §4.2 :
+- Retirer JetBrains Mono
+- Statuer DMMono (canon V77.1 sub-text OU legacy à virer)
