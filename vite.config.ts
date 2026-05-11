@@ -77,6 +77,20 @@ export default defineConfig(() => {
           navigateFallbackDenylist: [/^\/assets\//, /\.(js|css|map|woff2|png|svg|ico)$/],
           globPatterns: ['**/*.{js,css,html,ico,svg,png,woff2}'],
           runtimeCaching: [
+            // AUDIT-A2 P0 : revalide index.html via le réseau (timeout 3s)
+            // avant fallback cache. Élimine la fenêtre où un onglet ouvert
+            // garde un vieux HTML pointant vers des chunks supprimés au
+            // prochain build (cause racine des "Failed to fetch dynamically
+            // imported module").
+            {
+              urlPattern: ({ request }: { request: Request }) => request.mode === 'navigate',
+              handler: 'NetworkFirst' as const,
+              options: {
+                cacheName: 'pages',
+                networkTimeoutSeconds: 3,
+                expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 },
+              },
+            },
             {
               urlPattern: /^https:\/\/jcritwravdwefwqwyjvk\.supabase\.co\/.*/,
               handler: 'NetworkFirst',

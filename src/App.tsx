@@ -28,6 +28,7 @@ import { FarmProvider } from './context/FarmContext';
 import { usePageFabConfig, Fab } from './design-system';
 import { AuthProvider } from './context/AuthContext';
 import SupabaseProtectedRoute from './components/auth/ProtectedRoute';
+import { RootErrorBoundary } from './components/RootErrorBoundary';
 import PorceletsReorgGate from './components/auth/PorceletsReorgGate';
 import OnboardingV2Gate from './components/auth/OnboardingV2Gate';
 import Login from './components/auth/Login';
@@ -259,12 +260,14 @@ const AppContent = () => {
 
 export default function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <FarmProvider>
-          <AppContent />
-        </FarmProvider>
-      </AuthProvider>
-    </Router>
+    <RootErrorBoundary>
+      <Router>
+        <AuthProvider>
+          <FarmProvider>
+            <AppContent />
+          </FarmProvider>
+        </AuthProvider>
+      </Router>
+    </RootErrorBoundary>
   );
 }

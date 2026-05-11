@@ -3,6 +3,29 @@ import { createRoot } from 'react-dom/client';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
+
+// Anti-stale-chunk : après un deploy, l'index.html en mémoire d'un onglet
+// ouvert référence des chunks lazy renommés/supprimés côté serveur (ex.
+// `QuickAddTruieForm-CVPZLqLG.js` → 404). Vite émet `vite:preloadError`,
+// on force un reload du document pour récupérer le nouvel index.html.
+// sessionStorage flag = anti-boucle si le bundle distant est vraiment cassé.
+if (typeof window !== 'undefined') {
+  const RELOAD_KEY = 'pt:chunk-error-reloaded';
+  window.addEventListener('vite:preloadError', (event) => {
+    if (sessionStorage.getItem(RELOAD_KEY)) {
+      // eslint-disable-next-line no-console
+      console.error('[PWA] Chunk preload error after reload', event);
+      return;
+    }
+    sessionStorage.setItem(RELOAD_KEY, '1');
+    event.preventDefault();
+    window.location.reload();
+  });
+  // Reset après 30s : si l'app a démarré sans crash, l'incident est clos.
+  window.setTimeout(() => {
+    sessionStorage.removeItem(RELOAD_KEY);
+  }, 30000);
+}
 import { addIcons } from 'ionicons';
 import {
   informationCircle,
