@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { X, Send } from 'lucide-react';
-import { Button } from '@/design-system';
+import { ArrowUp, X, Maximize2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { MARIUS_SYSTEM_PROMPT } from './mariusSystemPrompt';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
@@ -30,6 +30,8 @@ const VPS_API_KEY = import.meta.env.VITE_MARIUS_API_KEY as string | undefined;
 export const isMariusConfigured: boolean = Boolean(
   MISTRAL_API_KEY || (VPS_API_BASE && VPS_API_KEY),
 );
+
+const ORB_SRC = '/images/v73/marius/orb-emeraude.webp';
 
 function warnMixedContent(): void {
   if (typeof window === 'undefined' || !VPS_API_BASE) return;
@@ -98,8 +100,6 @@ async function callMariusAPI(
  * Activé via :
  *   - URL : `?marius_debug=1`
  *   - kvStore : `pt:marius_debug = '1'`
- * En debug, le bloc CONTEXTE FERME injecté dans la dernière requête est
- * affiché en bas du chat (texte gris, mono).
  */
 function isMariusDebug(): boolean {
   if (typeof window === 'undefined') return false;
@@ -113,19 +113,43 @@ function isMariusDebug(): boolean {
 }
 
 /**
- * Rendu markdown ultra-light pour les réponses Marius (F-29 V75-n).
- * Avant : `**Priorité absolue**` et `\n` étaient affichés bruts.
- * Supporte : paragraphes, listes (- ou *), gras (**xxx**).
- * Tolère le streaming partiel (`**Prio` sans fermeture rendu tel quel).
+ * Rendu markdown ultra-light pour les réponses Marius.
+ * Supporte : paragraphes, listes (- ou *), **gras**, `code inline`.
+ * Tolère le streaming partiel.
  */
 function renderInline(text: string): React.ReactNode {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((part, i) => {
-    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
-      return <strong key={i}>{part.slice(2, -2)}</strong>;
+  const parts: React.ReactNode[] = [];
+  let remaining = text;
+  let key = 0;
+  while (remaining.length > 0) {
+    const boldMatch = remaining.match(/\*\*([^*]+)\*\*/);
+    const codeMatch = remaining.match(/`([^`]+)`/);
+    let firstIdx = Number.POSITIVE_INFINITY;
+    let kind: 'bold' | 'code' | null = null;
+    if (boldMatch && boldMatch.index !== undefined && boldMatch.index < firstIdx) {
+      firstIdx = boldMatch.index;
+      kind = 'bold';
     }
-    return <React.Fragment key={i}>{part}</React.Fragment>;
-  });
+    if (codeMatch && codeMatch.index !== undefined && codeMatch.index < firstIdx) {
+      firstIdx = codeMatch.index;
+      kind = 'code';
+    }
+    if (kind === null) {
+      parts.push(<React.Fragment key={key}>{remaining}</React.Fragment>);
+      break;
+    }
+    if (firstIdx > 0) {
+      parts.push(<React.Fragment key={key++}>{remaining.slice(0, firstIdx)}</React.Fragment>);
+    }
+    if (kind === 'bold' && boldMatch) {
+      parts.push(<b key={key++}>{boldMatch[1]}</b>);
+      remaining = remaining.slice(firstIdx + boldMatch[0].length);
+    } else if (kind === 'code' && codeMatch) {
+      parts.push(<code key={key++}>{codeMatch[1]}</code>);
+      remaining = remaining.slice(firstIdx + codeMatch[0].length);
+    }
+  }
+  return <>{parts}</>;
 }
 
 function renderMariusMarkdown(text: string): React.ReactNode {
@@ -136,16 +160,16 @@ function renderMariusMarkdown(text: string): React.ReactNode {
   const flushList = () => {
     if (currentList.length === 0) return;
     elements.push(
-      <ul key={`ul-${elements.length}`} style={{ margin: '4px 0 8px 18px', padding: 0 }}>
+      <ul key={`ul-${elements.length}`}>
         {currentList.map((item, i) => (
-          <li key={i} style={{ marginBottom: 4 }}>{renderInline(item)}</li>
+          <li key={i}>{renderInline(item)}</li>
         ))}
       </ul>,
     );
     currentList = [];
   };
 
-  lines.forEach(line => {
+  lines.forEach((line) => {
     const trimmed = line.trimStart();
     const isItem = /^[-*]\s+/.test(trimmed);
     if (isItem) {
@@ -154,11 +178,7 @@ function renderMariusMarkdown(text: string): React.ReactNode {
       flushList();
     } else {
       flushList();
-      elements.push(
-        <p key={`p-${elements.length}`} style={{ margin: '0 0 8px 0' }}>
-          {renderInline(trimmed)}
-        </p>,
-      );
+      elements.push(<p key={`p-${elements.length}`}>{renderInline(trimmed)}</p>);
     }
   });
   flushList();
@@ -166,7 +186,131 @@ function renderMariusMarkdown(text: string): React.ReactNode {
   return <>{elements}</>;
 }
 
+// ---- Styles inline alignés sur le mockup v76 (.marius-head / .marius-avatar
+//      / .typing). Classes inexistantes côté CSS → inline (mission interdit
+//      de toucher au CSS). Tailles compactées pour le format flyout.
+
+const flyoutStyle: React.CSSProperties = {
+  position: 'fixed',
+  bottom: 80,
+  right: 16,
+  zIndex: 50,
+  width: 340,
+  maxHeight: 540,
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'hidden',
+  borderRadius: 18,
+  background: 'var(--pt-bg)',
+  border: '1px solid var(--pt-line-strong)',
+  boxShadow: '0 24px 48px rgba(20,20,20,0.18), 0 8px 24px rgba(20,20,20,0.10)',
+};
+
+const headStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 12,
+  padding: '12px 14px',
+  borderBottom: '1px solid var(--pt-line)',
+  background: 'var(--pt-bg)',
+  flexShrink: 0,
+};
+
+const headBtnStyle: React.CSSProperties = {
+  width: 30,
+  height: 30,
+  borderRadius: 8,
+  border: '1px solid var(--pt-line-strong)',
+  background: 'transparent',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: 'var(--pt-ink)',
+  cursor: 'pointer',
+  flexShrink: 0,
+  padding: 0,
+};
+
+const orbStyle: React.CSSProperties = {
+  width: 36,
+  height: 36,
+  borderRadius: '50%',
+  objectFit: 'cover',
+  flexShrink: 0,
+  boxShadow: '0 0 12px rgba(52, 211, 153, 0.5)',
+};
+
+const headTitleStyle: React.CSSProperties = {
+  fontFamily: 'var(--pt-font-display)',
+  fontWeight: 900,
+  fontSize: 16,
+  textTransform: 'uppercase',
+  letterSpacing: '-0.005em',
+  lineHeight: 1,
+  color: 'var(--pt-ink)',
+};
+
+const headSubStyle: React.CSSProperties = {
+  fontFamily: 'var(--pt-font-mono)',
+  fontSize: 10,
+  textTransform: 'uppercase',
+  letterSpacing: '0.12em',
+  color: 'var(--pt-subtle)',
+  marginTop: 3,
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
+};
+
+const headDotStyle: React.CSSProperties = {
+  width: 6,
+  height: 6,
+  borderRadius: 99,
+  background: 'var(--pt-success)',
+  boxShadow: '0 0 0 3px rgba(74,122,47,0.18)',
+};
+
+const chatStyle: React.CSSProperties = {
+  flex: 1,
+  overflowY: 'auto',
+  padding: '14px 14px 10px',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 10,
+  background: 'var(--pt-bg-app)',
+  minHeight: 200,
+};
+
+const typingStyle: React.CSSProperties = {
+  alignSelf: 'flex-start',
+  display: 'flex',
+  gap: 4,
+  padding: '13px 14px',
+  background: 'var(--pt-bg)',
+  border: '1px solid var(--pt-line)',
+  borderRadius: 14,
+  borderBottomLeftRadius: 6,
+};
+
+const tdotStyle = (delay: number): React.CSSProperties => ({
+  width: 6,
+  height: 6,
+  borderRadius: 99,
+  background: 'var(--pt-subtle)',
+  animation: `tdot 1.2s infinite ease-in-out`,
+  animationDelay: `${delay}s`,
+});
+
+const TypingDots: React.FC = () => (
+  <div style={typingStyle} aria-label="Marius rédige">
+    <span style={tdotStyle(0)} />
+    <span style={tdotStyle(0.18)} />
+    <span style={tdotStyle(0.36)} />
+  </div>
+);
+
 export const ChatbotWidget: React.FC = () => {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -198,9 +342,7 @@ export const ChatbotWidget: React.FC = () => {
     };
   }, []);
 
-  // V72 — Suggestions DYNAMIQUES dérivées du snapshot ferme (mise-bas
-  // imminente, stocks rupture, retour chaleur, écho, etc.). Fallback
-  // général si la ferme est calme.
+  // V72 — Suggestions DYNAMIQUES dérivées du snapshot ferme.
   const suggestions = useMemo(
     () =>
       buildMariusSuggestions({
@@ -214,7 +356,17 @@ export const ChatbotWidget: React.FC = () => {
         alerts: farm.alerts,
         saillies: farm.saillies,
       }),
-    [farm.nomFerme, farm.pays, farm.truies, farm.verrats, farm.bandes, farm.stockAliment, farm.stockVeto, farm.alerts, farm.saillies],
+    [
+      farm.nomFerme,
+      farm.pays,
+      farm.truies,
+      farm.verrats,
+      farm.bandes,
+      farm.stockAliment,
+      farm.stockVeto,
+      farm.alerts,
+      farm.saillies,
+    ],
   );
 
   useEffect(() => {
@@ -233,7 +385,7 @@ export const ChatbotWidget: React.FC = () => {
   }, []);
 
   const appendToLastAssistant = useCallback((delta: string) => {
-    setMessages(prev => {
+    setMessages((prev) => {
       const next = [...prev];
       const last = next[next.length - 1];
       if (last && last.role === 'assistant') {
@@ -248,7 +400,7 @@ export const ChatbotWidget: React.FC = () => {
     if (!text || loading) return;
 
     if (!isMariusConfigured) {
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
         { role: 'system', content: 'Marius n\'est pas configuré sur cette instance.' },
       ]);
@@ -259,7 +411,7 @@ export const ChatbotWidget: React.FC = () => {
     const controller = new AbortController();
     abortRef.current = controller;
 
-    setMessages(prev => [
+    setMessages((prev) => [
       ...prev,
       { role: 'user', content: text },
       { role: 'assistant', content: '' },
@@ -269,11 +421,8 @@ export const ChatbotWidget: React.FC = () => {
     setStreaming(false);
 
     try {
-      // Marius RAG MVP — préfixe le user message avec un bloc CONTEXTE FERME
-      // (truies critiques, bandes, stocks, alertes) pour que la réponse soit
-      // ancrée sur les données réelles de la ferme courante. L'UI continue
-      // d'afficher le texte original (cf. setMessages plus haut), seul l'API
-      // call reçoit la version enrichie.
+      // Marius RAG — préfixe le user message avec un bloc CONTEXTE FERME pour
+      // ancrer la réponse sur les données réelles. L'UI affiche l'original.
       const snapshot: FarmSnapshot = {
         nomFerme: farm.nomFerme,
         pays: farm.pays,
@@ -335,22 +484,18 @@ export const ChatbotWidget: React.FC = () => {
                   finish_reason?: string | null;
                 }>;
               };
-              // 1. Format OpenAI/llama-server : choices[0].delta.content (streaming)
               const openaiDelta = parsed.choices?.[0]?.delta?.content;
               if (typeof openaiDelta === 'string') {
                 chunk = openaiDelta;
               } else if (typeof parsed.content === 'string') {
-                // 2. Format simple : { content: "..." }
                 chunk = parsed.content;
               } else if (parsed.choices?.[0]?.finish_reason) {
-                // Pas de delta sur les events de fin (finish_reason set sans content) → skip
                 continue;
               } else {
-                // Autre payload non reconnu — skip pour éviter d'afficher du JSON brut
                 continue;
               }
             } catch {
-              // Texte brut hors JSON, on l'utilise tel quel
+              // Texte brut hors JSON
             }
             if (firstChunk) {
               setStreaming(true);
@@ -362,9 +507,6 @@ export const ChatbotWidget: React.FC = () => {
       }
     } catch (err) {
       if ((err as { name?: string }).name === 'AbortError') return;
-      // V75-t : message d'erreur clair selon le type de panne (429 quota,
-      // CORS/network, autre). Aide l'éleveur à comprendre que ce n'est pas
-      // forcément sa connexion.
       const errMsg = (err as { message?: string }).message ?? '';
       const status = (err as { status?: number }).status;
       let userMsg = 'Marius est temporairement indisponible. Réessaye dans quelques minutes.';
@@ -375,7 +517,7 @@ export const ChatbotWidget: React.FC = () => {
       }
       // eslint-disable-next-line no-console
       console.error('[Marius] erreur réponse', { status, errMsg, err });
-      setMessages(prev => {
+      setMessages((prev) => {
         const next = [...prev];
         if (next.length > 0 && next[next.length - 1].role === 'assistant' && !next[next.length - 1].content) {
           next.pop();
@@ -399,81 +541,59 @@ export const ChatbotWidget: React.FC = () => {
     setOpen(false);
   };
 
-  if (!isMariusConfigured) {
-    return null;
-  }
+  const handleFullscreen = () => {
+    abortRef.current?.abort();
+    setOpen(false);
+    navigate('/marius');
+  };
 
-  // FAB séparé retiré (V19 Sprint 1) — ouverture via SaisirSheet "Demander à
-  // Marius" qui dispatch l'event 'open-chatbot' (handler dans le useEffect
-  // ci-dessus). Le widget rend uniquement le panel quand open === true.
-  if (!open) {
-    return null;
-  }
+  if (!isMariusConfigured) return null;
+  if (!open) return null;
 
   return (
-    <div
-      role="dialog"
-      aria-label="Conversation avec Marius"
-      className="pt-screen fixed bottom-20 right-4 z-50 w-[340px] max-h-[520px]
-                 rounded-2xl shadow-2xl flex flex-col overflow-hidden
-                 border border-[var(--color-accent-100)]"
-      style={{ background: 'var(--bg-surface)' }}
-    >
-      <header className="ph ph--primary" style={{ margin: 0, borderRadius: 0 }}>
-        <div className="ph__row" style={{ alignItems: 'center', gap: 12 }}>
-          <img
-            src="/images/v73/marius/orb-emeraude.webp"
-            alt=""
-            aria-hidden
-            width={36}
-            height={36}
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: '50%',
-              objectFit: 'cover',
-              flexShrink: 0,
-              boxShadow: '0 0 12px rgba(52, 211, 153, 0.55)',
-            }}
-          />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="ph__eyebrow">Assistant IA</div>
-            <h1 className="ph__h1" style={{ fontSize: 18 }}>Marius</h1>
+    <div role="dialog" aria-label="Conversation avec Marius" style={flyoutStyle}>
+      <div style={headStyle}>
+        <img src={ORB_SRC} alt="" aria-hidden width={36} height={36} style={orbStyle} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={headTitleStyle}>Marius</div>
+          <div style={headSubStyle}>
+            <span style={headDotStyle} />
+            Assistant IA · en ligne
           </div>
-          <Button variant="ghost" size="small" onClick={handleClose} ariaLabel="Fermer la conversation">
-            <X size={18} />
-          </Button>
         </div>
-      </header>
+        <button
+          type="button"
+          onClick={handleFullscreen}
+          style={headBtnStyle}
+          aria-label="Continuer la conversation en plein écran"
+          title="Plein écran"
+        >
+          <Maximize2 size={13} />
+        </button>
+        <button
+          type="button"
+          onClick={handleClose}
+          style={headBtnStyle}
+          aria-label="Fermer la conversation"
+          title="Fermer"
+        >
+          <X size={14} />
+        </button>
+      </div>
 
-      <div
-        aria-live="polite"
-        className="flex-1 overflow-y-auto px-3 py-3 min-h-[200px]"
-        style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
-      >
+      <div aria-live="polite" style={chatStyle}>
         {messages.length === 0 && (
           <>
             <div className="bubble bubble--marius">
-              <p style={{ margin: 0 }}>
-                Bonjour, je suis Marius.
-                <br />
-                Pose-moi une question sur ton élevage.
-              </p>
+              <h4>Bonjour {(userName || 'éleveur').split(' ')[0]}</h4>
+              <p>Pose-moi une question sur ton élevage.</p>
             </div>
-            <div
-              className="pills"
-              style={{
-                padding: '4px 0 2px',
-                margin: 0,
-                flexWrap: 'wrap',
-                overflowX: 'visible',
-              }}
-            >
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', padding: '4px 0 2px' }}>
               {suggestions.map((s) => (
                 <button
                   key={s.id}
                   type="button"
-                  className="pill"
+                  className="suggestion"
                   onClick={() => {
                     setInput(s.question);
                     setTimeout(() => formRef.current?.requestSubmit(), 0);
@@ -494,8 +614,9 @@ export const ChatbotWidget: React.FC = () => {
                   alignSelf: 'center',
                   fontSize: 12,
                   color: 'var(--pt-muted)',
-                  background: 'var(--pt-bg-app)',
-                  borderRadius: 8,
+                  background: 'var(--pt-bg)',
+                  border: '1px solid var(--pt-line)',
+                  borderRadius: 10,
                   padding: '6px 10px',
                   maxWidth: '90%',
                   textAlign: 'center',
@@ -514,57 +635,18 @@ export const ChatbotWidget: React.FC = () => {
           }
           return (
             <div key={i} className="bubble bubble--marius">
-              {m.content
-                ? renderMariusMarkdown(m.content)
-                : loading && !streaming
-                  ? 'Marius reflechit…'
-                  : ''}
+              {m.content ? renderMariusMarkdown(m.content) : null}
             </div>
           );
         })}
-        {loading && !streaming && (
-          <div className="bubble bubble--marius" aria-label="Marius rédige">
-            <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: 99,
-                  background: 'var(--pt-muted)',
-                  animation: 'tdot 1.2s infinite',
-                  animationDelay: '0s',
-                }}
-              />
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: 99,
-                  background: 'var(--pt-muted)',
-                  animation: 'tdot 1.2s infinite',
-                  animationDelay: '0.15s',
-                }}
-              />
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: 99,
-                  background: 'var(--pt-muted)',
-                  animation: 'tdot 1.2s infinite',
-                  animationDelay: '0.3s',
-                }}
-              />
-            </span>
-          </div>
-        )}
+        {loading && !streaming && <TypingDots />}
         {debugEnabled && lastInjectedContext && (
           <details
             className="mt-3 mx-1 text-[10px] rounded-lg p-2 ft-code"
             style={{
-              background: 'var(--bg-surface-2)',
-              color: 'var(--muted)',
-              border: '1px dashed var(--line)',
+              background: 'var(--pt-bg)',
+              color: 'var(--pt-muted)',
+              border: '1px dashed var(--pt-line)',
             }}
           >
             <summary className="cursor-pointer select-none">
@@ -579,33 +661,32 @@ export const ChatbotWidget: React.FC = () => {
       <form
         ref={formRef}
         onSubmit={handleSubmit}
-        className="flex items-center gap-2 px-3 py-2 border-t"
-        style={{ borderColor: 'var(--line)' }}
+        className="composer"
+        style={{ padding: '10px 14px 12px' }}
       >
         <input
           ref={inputRef}
           value={input}
-          onChange={e => setInput(e.target.value)}
-          placeholder="Posez votre question…"
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Demande à Marius…"
           aria-label="Votre question pour Marius"
           disabled={loading}
-          className="flex-1 text-sm rounded-full px-3 py-2 border outline-none
-                     focus:border-[var(--color-accent-500)]"
-          style={{ background: 'var(--bg-surface-2)', borderColor: 'var(--line)' }}
+          className="composer__field"
+          style={{
+            outline: 'none',
+            fontFamily: 'var(--pt-font-body)',
+            fontSize: 13.5,
+          }}
         />
-        <Button
+        <button
           type="submit"
-          variant="primary"
-          size="small"
           disabled={loading || !input.trim()}
           aria-label="Envoyer"
-          className="w-9 h-9 rounded-full bg-[var(--color-accent-500)] text-white
-                     flex items-center justify-center
-                     disabled:opacity-40 hover:bg-[var(--color-accent-600)]
-                     transition-colors"
+          title="Envoyer"
+          className="composer__send"
         >
-          <Send size={15} />
-        </Button>
+          <ArrowUp size={16} />
+        </button>
       </form>
     </div>
   );

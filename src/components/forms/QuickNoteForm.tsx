@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { IonSpinner, IonToast } from '@ionic/react';
 import { Send, ClipboardList, Mic, MicOff, X, Camera, Loader2 } from 'lucide-react';
 import { insertNote } from '../../services/supabaseWrites';
-import { Button, Textarea } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -11,7 +10,7 @@ import { uploadAnimalPhoto, deleteAnimalPhoto, PhotoUploadError } from '../../se
 import { useVoiceDictation } from '../../services/voiceDictation';
 
 /**
- * QuickNoteForm — Saisie rapide d'une note terrain enrichie (V21).
+ * QuickNoteForm — Saisie rapide d'une note terrain enrichie (V21 · V78 sheet V77).
  *
  * Sections :
  *   1. Sujet (lecture seule)
@@ -21,6 +20,11 @@ import { useVoiceDictation } from '../../services/voiceDictation';
  *   5. Note libre (max 500 caractères)
  *
  * La validation requiert au minimum : note OU photo OU audio.
+ *
+ * NOTE : ce composant est embarqué dans un BottomSheet/IonModal fourni par
+ * le parent (AgritechNavV2, VerratDetailView, BandeDetailView). Il ne porte
+ * donc PAS son propre wrapper sheet — il fournit juste le markup V77 du
+ * corps (header `step-pill`, fields `label--v77`, CTA `.btn--primary`).
  */
 interface QuickNoteFormProps {
   subjectType: 'BANDE' | 'TRUIE' | 'VERRAT';
@@ -228,235 +232,251 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
   const submitDisabled = loading || (!note.trim() && !photoUrl);
 
   return (
-    <div className="card-dense !p-5">
-      {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 mb-4">
-        <div className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-bg-2 text-accent">
+    <form onSubmit={handleSubmit}>
+      {/* ── Header eyebrow + sujet ────────────────────────────────────── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+        <div
+          className="inline-flex items-center justify-center"
+          style={{
+            height: 32,
+            width: 32,
+            borderRadius: 10,
+            background: 'var(--pt-bg)',
+            color: 'var(--pt-primary)',
+            flex: '0 0 auto',
+          }}
+        >
           <ClipboardList size={16} aria-hidden="true" />
         </div>
-        <h3 className="text-[11px] font-bold uppercase tracking-wide text-text-1">
-          Saisie rapide note
-        </h3>
+        <div>
+          <div className="eyebrow">Saisie rapide note</div>
+          <div style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 12, color: 'var(--pt-ink)' }}>
+            {subjectType} · {subjectId}
+          </div>
+        </div>
       </div>
 
-      {/* ── Form ────────────────────────────────────────────────────────── */}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* 1 · Sujet */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <label className="block text-mono-label text-text-2">
-              Sujet
-            </label>
-            <div
-              className={[
-                'inline-flex items-center h-9 w-full px-3 rounded-md',
-                'bg-bg-0 border border-border',
-                'ft-code text-[12px] uppercase tracking-wide text-text-1 tabular-nums truncate',
-              ].join(' ')}
-              aria-label={`Sujet ${subjectType} ${subjectId}`}
-            >
-              {subjectType} · {subjectId}
-            </div>
-          </div>
+      <div className="step-pill">Étape 1 / 3 · Identification</div>
 
-          <div className="space-y-1.5">
-            <label className="block text-mono-label text-text-2">
-              Auteur
-            </label>
-            <div
-              className={[
-                'inline-flex items-center h-9 w-full px-3 rounded-md',
-                'bg-bg-0 border border-border',
-                'text-[12px] uppercase tracking-wide text-text-1 truncate',
-              ].join(' ')}
-              aria-label={`Auteur ${author}`}
-            >
-              {author}
-            </div>
-          </div>
+      {/* 1 · Sujet (lecture seule) */}
+      <div className="field--inline">
+        <div className="field">
+          <label className="label--v77">SUJET</label>
+          <input
+            type="text"
+            className="field__input mono filled"
+            value={`${subjectType} · ${subjectId}`}
+            readOnly
+            aria-label={`Sujet ${subjectType} ${subjectId}`}
+          />
         </div>
+        <div className="field">
+          <label className="label--v77">AUTEUR</label>
+          <input
+            type="text"
+            className="field__input mono filled"
+            value={author}
+            readOnly
+            aria-label={`Auteur ${author}`}
+          />
+        </div>
+      </div>
 
-        {/* 2 · Photo */}
-        <div className="space-y-1.5">
-          <label className="block text-mono-label text-text-2">
-            Photo (optionnelle)
-          </label>
-          <div className="flex items-start gap-3">
-            {photoUrl ? (
-              <div className="relative w-[96px] h-[96px] rounded-2xl overflow-hidden border border-border bg-bg-app">
-                <img src={photoUrl} alt="Photo note" className="w-full h-full object-cover" />
-                <button
-                  type="button"
-                  onClick={handleRemovePhoto}
-                  aria-label="Retirer la photo"
-                  disabled={photoBusy !== null}
-                  className="absolute top-1 right-1 inline-flex items-center justify-center w-6 h-6 rounded-full bg-black/70 text-white"
-                >
-                  {photoBusy === 'delete' ? (
-                    <Loader2 size={12} className="animate-spin" aria-hidden="true" />
-                  ) : (
-                    <X size={12} aria-hidden="true" />
-                  )}
-                </button>
-              </div>
-            ) : (
+      <div className="step-pill">Étape 2 / 3 · Média & tags</div>
+
+      {/* 2 · Photo */}
+      <div className="field">
+        <label className="label--v77">
+          PHOTO <span className="hint">optionnel</span>
+        </label>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+          {photoUrl ? (
+            <div
+              style={{
+                position: 'relative',
+                width: 96,
+                height: 96,
+                borderRadius: 16,
+                overflow: 'hidden',
+                border: '1px solid var(--pt-line)',
+                background: 'var(--pt-bg)',
+              }}
+            >
+              <img src={photoUrl} alt="Photo note" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               <button
                 type="button"
-                onClick={handlePickPhoto}
-                disabled={photoBusy !== null || loading}
-                aria-label="Ajouter une photo"
-                className={[
-                  'pressable inline-flex items-center gap-2 px-3 h-9 rounded-md',
-                  'bg-bg-0 border border-border text-text-1',
-                  'text-mono-label',
-                  'hover:border-text-2 transition-colors duration-[160ms]',
-                  photoBusy !== null ? 'opacity-50 cursor-not-allowed' : '',
-                ].join(' ')}
+                onClick={handleRemovePhoto}
+                aria-label="Retirer la photo"
+                disabled={photoBusy !== null}
+                style={{
+                  position: 'absolute',
+                  top: 4,
+                  right: 4,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 24,
+                  height: 24,
+                  borderRadius: 999,
+                  background: 'rgba(0,0,0,0.7)',
+                  color: '#fff',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
               >
-                {photoBusy === 'upload' ? (
-                  <Loader2 size={13} className="animate-spin" aria-hidden="true" />
+                {photoBusy === 'delete' ? (
+                  <Loader2 size={12} className="animate-spin" aria-hidden="true" />
                 ) : (
-                  <Camera size={13} aria-hidden="true" />
+                  <X size={12} aria-hidden="true" />
                 )}
-                Ajouter une photo
               </button>
-            )}
-            {photoError ? (
-              <p role="alert" className="text-[10px] text-red max-w-[180px]">
-                {photoError}
-              </p>
-            ) : null}
-          </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="sr-only"
-            onChange={handlePhotoFile}
-            aria-hidden="true"
-            tabIndex={-1}
-          />
-        </div>
-
-        {/* 3 · Tags */}
-        <div className="space-y-1.5">
-          <label className="block text-mono-label text-text-2">
-            Tags (optionnels)
-          </label>
-          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Tags note">
-            {NOTE_TAGS.map(tag => {
-              const active = tags.includes(tag.id);
-              return (
-                <button
-                  type="button"
-                  key={tag.id}
-                  onClick={() => toggleTag(tag.id)}
-                  aria-pressed={active}
-                  aria-label={`Tag ${tag.label}`}
-                  className={[
-                    'pressable inline-flex items-center px-2.5 h-7 rounded-full border',
-                    'text-mono-micro',
-                    'transition-colors duration-[160ms]',
-                    active
-                      ? tag.activeClass
-                      : 'bg-bg-0 border-border text-text-2 hover:border-text-2',
-                  ].join(' ')}
-                >
-                  {tag.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* 4 · Dictée + 5 · Note libre */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <label
-              htmlFor="quick-note-text"
-              className="block text-mono-label text-text-2"
-            >
-              Observation
-            </label>
+            </div>
+          ) : (
             <button
               type="button"
-              onClick={dictation.isListening ? handleStopDictation : handleStartDictation}
-              disabled={!dictation.isSupported || loading}
-              aria-label={dictation.isListening ? 'Arrêter la dictée' : 'Démarrer la dictée'}
-              aria-pressed={dictation.isListening}
-              title={
-                !dictation.isSupported
-                  ? 'Dictée non supportée sur ce navigateur'
-                  : dictation.isListening
-                    ? 'Arrêter la dictée'
-                    : 'Dictée vocale'
-              }
-              className={[
-                'pressable inline-flex items-center gap-1.5 px-2 h-7 rounded-md',
-                'text-mono-micro',
-                'transition-colors duration-[160ms]',
-                dictation.isListening
-                  ? 'bg-red text-bg-0 border border-red animate-pulse'
-                  : 'bg-bg-0 border border-border text-text-1 hover:border-text-2',
-                !dictation.isSupported || loading ? 'opacity-40 cursor-not-allowed' : '',
-              ].join(' ')}
+              onClick={handlePickPhoto}
+              disabled={photoBusy !== null || loading}
+              aria-label="Ajouter une photo"
+              className="btn btn--ghost"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
             >
-              {dictation.isListening ? (
-                <>
-                  <MicOff size={11} aria-hidden="true" />
-                  Écoute…
-                </>
+              {photoBusy === 'upload' ? (
+                <Loader2 size={13} className="animate-spin" aria-hidden="true" />
               ) : (
-                <>
-                  <Mic size={11} aria-hidden="true" />
-                  Dicter
-                </>
+                <Camera size={13} aria-hidden="true" />
               )}
+              Ajouter une photo
             </button>
-          </div>
-          <Textarea
-            id="quick-note-text"
-            aria-label="Note terrain"
-            aria-invalid={!!errors.note}
-            aria-describedby={errors.note ? 'quick-note-error' : undefined}
-            maxLength={MAX_NOTE_LEN}
-            placeholder="Écris ton observation ici…"
-            value={note}
-            onChange={e => setNote(e.target.value)}
-            disabled={loading}
-          />
-          <div className="flex items-center justify-between">
-            {errors.note ? (
-              <p id="quick-note-error" role="alert" className="text-[11px] text-red">
-                {errors.note}
-              </p>
-            ) : (
-              <span />
-            )}
-            <span className="text-[10px] text-text-2 tabular-nums">
-              {note.length}/{MAX_NOTE_LEN}
-            </span>
-          </div>
-        </div>
-
-        <Button
-          variant="primary"
-          fullWidth
-          type="submit"
-          disabled={submitDisabled}
-          ariaLabel="Enregistrer la note"
-        >
-          {loading ? (
-            <IonSpinner name="bubbles" className="w-5 h-5" aria-hidden="true" />
-          ) : (
-            <span className="inline-flex items-center gap-2">
-              Enregistrer note
-              <Send size={14} className="flex-shrink-0" aria-hidden="true" />
-            </span>
           )}
-        </Button>
-      </form>
+          {photoError ? (
+            <p role="alert" style={{ fontSize: 10, color: 'var(--pt-danger)', maxWidth: 180, margin: 0 }}>
+              {photoError}
+            </p>
+          ) : null}
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}
+          onChange={handlePhotoFile}
+          aria-hidden="true"
+          tabIndex={-1}
+        />
+      </div>
+
+      {/* 3 · Tags */}
+      <div className="field">
+        <label className="label--v77">
+          TAGS <span className="hint">optionnel</span>
+        </label>
+        <div className="radio-chips--cards" role="group" aria-label="Tags note">
+          {NOTE_TAGS.map(tag => {
+            const active = tags.includes(tag.id);
+            return (
+              <button
+                type="button"
+                key={tag.id}
+                onClick={() => toggleTag(tag.id)}
+                aria-pressed={active}
+                aria-label={`Tag ${tag.label}`}
+                className={`radio-chip--card${active ? ' is-selected' : ''}`}
+              >
+                <div className="radio-chip__code">{tag.label}</div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="step-pill">Étape 3 / 3 · Observation</div>
+
+      {/* 4 · Dictée + 5 · Note libre */}
+      <div className="field">
+        <label className="label--v77" htmlFor="quick-note-text" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span>OBSERVATION</span>
+          <button
+            type="button"
+            onClick={dictation.isListening ? handleStopDictation : handleStartDictation}
+            disabled={!dictation.isSupported || loading}
+            aria-label={dictation.isListening ? 'Arrêter la dictée' : 'Démarrer la dictée'}
+            aria-pressed={dictation.isListening}
+            title={
+              !dictation.isSupported
+                ? 'Dictée non supportée sur ce navigateur'
+                : dictation.isListening
+                  ? 'Arrêter la dictée'
+                  : 'Dictée vocale'
+            }
+            className={dictation.isListening ? 'btn btn--primary' : 'btn btn--ghost'}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '4px 8px',
+              fontSize: 10,
+              height: 28,
+              opacity: !dictation.isSupported || loading ? 0.4 : 1,
+              cursor: !dictation.isSupported || loading ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {dictation.isListening ? (
+              <>
+                <MicOff size={11} aria-hidden="true" />
+                Écoute…
+              </>
+            ) : (
+              <>
+                <Mic size={11} aria-hidden="true" />
+                Dicter
+              </>
+            )}
+          </button>
+        </label>
+        <textarea
+          id="quick-note-text"
+          className="field__input"
+          style={{ minHeight: 96, resize: 'vertical' }}
+          aria-label="Note terrain"
+          aria-invalid={!!errors.note}
+          aria-describedby={errors.note ? 'quick-note-error' : undefined}
+          maxLength={MAX_NOTE_LEN}
+          placeholder="Écris ton observation ici…"
+          value={note}
+          onChange={e => setNote(e.target.value)}
+          disabled={loading}
+        />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+          {errors.note ? (
+            <p id="quick-note-error" role="alert" style={{ fontSize: 11, color: 'var(--pt-danger)', margin: 0 }}>
+              {errors.note}
+            </p>
+          ) : (
+            <span />
+          )}
+          <span style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 10, color: 'var(--pt-subtle)' }}>
+            {note.length}/{MAX_NOTE_LEN}
+          </span>
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        className="btn btn--primary"
+        disabled={submitDisabled}
+        aria-label="Enregistrer la note"
+        style={{ width: '100%', marginTop: 12 }}
+      >
+        {loading ? (
+          <IonSpinner name="bubbles" style={{ width: 20, height: 20 }} aria-hidden="true" />
+        ) : (
+          <>
+            <Send size={14} aria-hidden="true" />
+            Enregistrer note
+          </>
+        )}
+      </button>
 
       <IonToast
         isOpen={toast.show}
@@ -465,7 +485,7 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
         onDidDismiss={() => setToast({ show: false, message: '' })}
         position="bottom"
       />
-    </div>
+    </form>
   );
 };
 

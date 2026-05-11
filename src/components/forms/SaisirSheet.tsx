@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 
 import { useQuickActions, type QuickActionKind } from '../AgritechNavV2';
-import { Button } from '@/design-system';
 
 export interface SaisirSheetProps {
   isOpen: boolean;
@@ -28,112 +27,39 @@ type ActionKind = QuickActionKind | 'marius';
 interface ActionDef {
   kind: ActionKind;
   title: string;
-  description: string;
+  hint?: string;
   Icon: React.ComponentType<{ size?: number; strokeWidth?: number; 'aria-hidden'?: boolean }>;
   tone: 'accent' | 'amber' | 'red' | 'default';
   separator?: boolean;
 }
 
 const ACTIONS: ActionDef[] = [
-  {
-    kind: 'saillie',
-    title: 'Saillie',
-    description: 'Truie × verrat à la date du jour',
-    Icon: Heart,
-    tone: 'accent',
-  },
-  {
-    kind: 'echographie',
-    title: 'Échographie',
-    description: 'Confirmer ou infirmer la gestation (J28)',
-    Icon: Stethoscope,
-    tone: 'accent',
-  },
-  {
-    kind: 'misebas',
-    title: 'Mise-bas',
-    description: 'Truie + nés vivants + morts-nés',
-    Icon: Baby,
-    tone: 'accent',
-  },
-  {
-    kind: 'sevrage',
-    title: 'Sevrage',
-    description: 'Bande + date + nb porcelets',
-    Icon: Milk,
-    tone: 'default',
-  },
-  {
-    kind: 'mortalite',
-    title: 'Mortalité',
-    description: 'Animal/bande + cause + date',
-    Icon: AlertOctagon,
-    tone: 'red',
-  },
-  {
-    kind: 'adoption',
-    title: 'Adoption',
-    description: 'Transfert porcelets entre bandes en maternité',
-    Icon: Repeat,
-    tone: 'default',
-  },
-  {
-    kind: 'pesee',
-    title: 'Pesée',
-    description: 'Bande + poids moyen + date',
-    Icon: Scale,
-    tone: 'amber',
-  },
-  {
-    kind: 'conso',
-    title: 'Conso aliment',
-    description: 'Quantité livrée à une bande ou truie',
-    Icon: Wheat,
-    tone: 'amber',
-  },
-  {
-    kind: 'tripoids',
-    title: 'Tri par poids',
-    description: 'Distribution engraissement / finition',
-    Icon: Layers,
-    tone: 'amber',
-  },
-  {
-    kind: 'soin',
-    title: 'Soin',
-    description: 'Traitement véto + animal',
-    Icon: Syringe,
-    tone: 'accent',
-  },
-  {
-    kind: 'note',
-    title: 'Note',
-    description: 'Observation libre',
-    Icon: FileText,
-    tone: 'default',
-  },
-  {
-    kind: 'marius',
-    title: 'Demander à Marius',
-    description: 'Assistant IA terrain',
-    Icon: Sparkles,
-    tone: 'amber',
-    separator: true,
-  },
+  { kind: 'saillie', title: 'Saillie', hint: 'Truie × verrat', Icon: Heart, tone: 'accent' },
+  { kind: 'echographie', title: 'Écho', hint: 'J28 gestation', Icon: Stethoscope, tone: 'accent' },
+  { kind: 'misebas', title: 'Mise-bas', hint: 'Nés + morts-nés', Icon: Baby, tone: 'accent' },
+  { kind: 'sevrage', title: 'Sevrage', hint: 'Bande + porcelets', Icon: Milk, tone: 'default' },
+  { kind: 'mortalite', title: 'Mortalité', hint: 'Animal + cause', Icon: AlertOctagon, tone: 'red' },
+  { kind: 'adoption', title: 'Adoption', hint: 'Transfert mat.', Icon: Repeat, tone: 'default' },
+  { kind: 'pesee', title: 'Pesée', hint: 'Poids moyen', Icon: Scale, tone: 'amber' },
+  { kind: 'conso', title: 'Conso', hint: 'Aliment livré', Icon: Wheat, tone: 'amber' },
+  { kind: 'tripoids', title: 'Tri poids', hint: 'Eng. / finition', Icon: Layers, tone: 'amber' },
+  { kind: 'soin', title: 'Soin', hint: 'Traitement véto', Icon: Syringe, tone: 'accent' },
+  { kind: 'note', title: 'Note', hint: 'Observation', Icon: FileText, tone: 'default' },
+  { kind: 'marius', title: 'Marius', hint: 'Assistant IA', Icon: Sparkles, tone: 'amber', separator: true },
 ];
 
 const TONE_BG: Record<ActionDef['tone'], string> = {
-  default: 'var(--pt-surface-alt)',
-  accent: 'color-mix(in srgb, var(--color-accent-500) 14%, transparent)',
-  amber: 'color-mix(in srgb, var(--amber-pork) 18%, transparent)',
-  red: 'color-mix(in srgb, var(--red) 14%, transparent)',
+  default: 'var(--pt-warm, #F1ECE0)',
+  accent: 'color-mix(in srgb, var(--pt-accent, #B97839) 16%, transparent)',
+  amber: 'color-mix(in srgb, var(--pt-amber-ink, #B45309) 18%, transparent)',
+  red: 'color-mix(in srgb, var(--pt-rose-ink, #B91C1C) 14%, transparent)',
 };
 
 const TONE_FG: Record<ActionDef['tone'], string> = {
-  default: 'var(--pt-text)',
-  accent: 'var(--color-accent-500)',
-  amber: 'var(--amber-pork)',
-  red: 'var(--red)',
+  default: 'var(--pt-ink, #1a1a1a)',
+  accent: 'var(--pt-accent-deep, #8B5A2B)',
+  amber: 'var(--pt-amber-ink, #B45309)',
+  red: 'var(--pt-rose-ink, #B91C1C)',
 };
 
 const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
@@ -188,8 +114,7 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
     // Ouvre le form cible AVANT de fermer le sheet : ainsi le state du
     // QuickActionsProvider est posé en synchrone, et la fermeture du sheet
     // (qui re-focus l'élément précédent) n'interfère pas avec le mount du
-    // form. L'ancien setTimeout perdait l'ouverture si le sheet était
-    // déjà unmount au moment du flush.
+    // form (bug C8 V16 — race condition).
     if (kind === 'marius') {
       window.dispatchEvent(new Event('open-chatbot'));
     } else {
@@ -203,119 +128,171 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
       role="dialog"
       aria-modal="true"
       aria-labelledby="saisir-sheet-title"
-      className="fixed inset-0 z-[1100] flex items-end justify-center"
+      className="pt-screen fixed inset-0 z-[1100] flex items-end justify-center"
     >
       {/* V43.4 — Overlay = div avec onClick (pas un bouton). Le seul vrai
-          bouton "Fermer" est le X dans la sheet ci-dessous (uid 245). */}
+          bouton "Fermer" est le X dans la sheet ci-dessous. */}
       <div
         aria-hidden="true"
         onClick={onClose}
         className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
       />
 
-
       <div
         ref={sheetRef}
-        className="relative w-full max-w-[520px] rounded-t-2xl shadow-2xl animate-fade-in-up"
+        className="relative w-full max-w-[520px] animate-fade-in-up"
         style={{
-          background: 'var(--bg-app)',
-          borderTop: '1px solid var(--pt-divider)',
+          background: 'var(--pt-bg, #FAF7F0)',
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+          borderTop: '1px solid var(--pt-line-strong, rgba(26,26,26,0.16))',
+          borderLeft: '1px solid var(--pt-line-strong, rgba(26,26,26,0.16))',
+          borderRight: '1px solid var(--pt-line-strong, rgba(26,26,26,0.16))',
+          boxShadow: '0 -10px 30px rgba(0,0,0,0.18)',
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
           paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)',
         }}
       >
-        <div className="flex items-center justify-between px-5 pt-4 pb-2">
-          <h2
-            id="saisir-sheet-title"
-            className="text-[22px] uppercase tracking-wide"
-            style={{
-              fontFamily: 'var(--font-heading)',
-              color: 'var(--pt-text)',
-              fontWeight: 700,
-            }}
-          >
-            Que veux-tu saisir ?
-          </h2>
-          <Button
+        <div className="sheet__handle" aria-hidden="true" />
+
+        <h2
+          id="saisir-sheet-title"
+          className="sheet__title"
+          style={{ padding: '0 20px 0', margin: 0 }}
+        >
+          Que veux-tu saisir ?
+        </h2>
+        <div className="sheet__sub" style={{ padding: '0 20px 12px' }}>
+          12 actions terrain · cycle GTTT
+        </div>
+
+        <div
+          style={{
+            position: 'absolute',
+            top: 18,
+            right: 16,
+          }}
+        >
+          <button
             type="button"
-            variant="ghost"
             data-saisir-close
             onClick={onClose}
             aria-label="Fermer"
-            className="inline-flex h-10 w-10 items-center justify-center active:scale-[0.94] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            className="pressable"
             style={{
-              background: 'var(--pt-surface-alt)',
-              color: 'var(--pt-text)',
-              outlineColor: 'var(--color-accent-500)',
-              transition: 'transform var(--duration-press) var(--ease-emil)',
-              borderRadius: '9999px',
-              height: '2.5rem',
-              width: '2.5rem',
-              padding: 0,
+              flexShrink: 0,
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              border: '1px solid var(--pt-line-strong, rgba(26,26,26,0.16))',
+              background: 'transparent',
+              color: 'var(--pt-ink, #1a1a1a)',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            <X size={18} aria-hidden="true" />
-          </Button>
+            <X size={14} aria-hidden="true" />
+          </button>
         </div>
 
-        <div className="px-4 pt-2 pb-2 space-y-2">
-          {ACTIONS.map(({ kind, title, description, Icon, tone, separator }) => (
-            <React.Fragment key={kind}>
-              {separator ? (
-                <div
-                  aria-hidden="true"
-                  className="my-2 h-px"
-                  style={{ background: 'var(--pt-divider)' }}
-                />
-              ) : null}
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => handlePick(kind)}
-                className="flex w-full items-center gap-3 px-4 py-4 text-left active:scale-[0.985] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+        <div
+          className="saisir-sheet__grid"
+          style={{
+            padding: '4px 16px 8px',
+            overflowY: 'auto',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: 10,
+            flex: 1,
+            minHeight: 0,
+          }}
+        >
+          {ACTIONS.map(({ kind, title, hint, Icon, tone, separator }) => (
+            <button
+              key={kind}
+              type="button"
+              onClick={() => handlePick(kind)}
+              data-saisir-item={kind}
+              className="saisir-sheet__item pressable"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                justifyContent: 'flex-start',
+                gap: 8,
+                padding: '14px 12px',
+                background: 'var(--pt-warm, #F1ECE0)',
+                border: '1px solid var(--pt-line, rgba(26,26,26,0.08))',
+                borderRadius: 14,
+                cursor: 'pointer',
+                textAlign: 'left',
+                minHeight: 104,
+                position: 'relative',
+                ...(separator
+                  ? {
+                      // Marius : item full-width sur la dernière ligne (visuellement
+                      // distinct comme "bonus" hors-cycle GTTT).
+                      gridColumn: '1 / -1',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      minHeight: 64,
+                      borderStyle: 'dashed',
+                    }
+                  : {}),
+              }}
+            >
+              <span
+                aria-hidden="true"
                 style={{
-                  background: 'var(--pt-surface)',
-                  border: '1px solid var(--pt-divider)',
-                  outlineColor: 'var(--color-accent-500)',
-                  transition: 'transform var(--duration-press) var(--ease-emil)',
-                  borderRadius: '14px',
-                  textTransform: 'none',
-                  height: 'auto',
-                  justifyContent: 'flex-start',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 40,
+                  height: 40,
+                  borderRadius: 10,
+                  background: TONE_BG[tone],
+                  color: TONE_FG[tone],
+                  flexShrink: 0,
                 }}
               >
+                <Icon size={20} strokeWidth={1.8} aria-hidden />
+              </span>
+              <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
                 <span
-                  aria-hidden="true"
-                  className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
-                  style={{ background: TONE_BG[tone], color: TONE_FG[tone] }}
+                  className="saisir-sheet__item-title"
+                  style={{
+                    fontFamily: 'var(--ff-mono, "JetBrains Mono", monospace)',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: 'var(--pt-ink, #1a1a1a)',
+                    lineHeight: 1.1,
+                  }}
                 >
-                  <Icon size={22} strokeWidth={1.8} aria-hidden />
+                  {title}
                 </span>
-                <span className="min-w-0 flex-1 whitespace-normal">
+                {hint ? (
                   <span
-                    className="saisir-sheet__title block leading-tight"
+                    className="saisir-sheet__item-hint"
                     style={{
-                      fontFamily: 'var(--ff-mono, var(--font-body))',
-                      color: 'var(--pt-text)',
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
+                      fontFamily: 'var(--ff-mono, "JetBrains Mono", monospace)',
+                      fontSize: 10.5,
+                      fontWeight: 500,
+                      letterSpacing: '0.04em',
+                      color: 'var(--pt-muted, #6b6357)',
+                      lineHeight: 1.2,
                     }}
                   >
-                    {title}
+                    {hint}
                   </span>
-                  <span
-                    className="mt-0.5 block text-[12px] leading-snug"
-                    style={{
-                      fontFamily: 'var(--font-body)',
-                      color: 'var(--pt-text-muted)',
-                    }}
-                  >
-                    {description}
-                  </span>
-                </span>
-              </Button>
-            </React.Fragment>
+                ) : null}
+              </span>
+            </button>
           ))}
         </div>
       </div>

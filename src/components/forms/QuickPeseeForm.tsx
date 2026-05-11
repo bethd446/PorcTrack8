@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
-import { useIonAlert, IonSegment, IonSegmentButton, IonLabel } from '@ionic/react';
-import { CheckCircle2, ChevronRight, ArrowLeft, AlertTriangle } from 'lucide-react';
+import { useIonAlert, IonModal, IonSegment, IonSegmentButton, IonLabel } from '@ionic/react';
+import { CheckCircle2, ChevronRight, ArrowLeft, AlertTriangle, X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -13,8 +13,6 @@ import {
   updateBoarByCode,
 } from '../../services/supabaseWrites';
 import { safeDate } from '../../lib/truieHelpers';
-import { BottomSheet, DataRow } from '../agritech';
-import { Button, Input as DSInput, Search as SearchInput, Section } from '@/design-system';
 import type { BandePorcelets, Truie, Verrat } from '../../types/farm';
 import { extractPeseesForBande } from '../../services/growthAnalyzer';
 import { markPeseeEffectuee } from '../../services/peseePlanifieesService';
@@ -33,12 +31,13 @@ import {
 } from '../ui/form';
 
 /* ═════════════════════════════════════════════════════════════════════════
-   QuickPeseeForm · Pesée rapide (Bande, Truie ou Verrat)
+   QuickPeseeForm · Pesée rapide (Bande, Truie ou Verrat) — V78 sheet V77
    ─────────────────────────────────────────────────────────────────────────
-   Flow 3 étapes :
+   Flow 4 étapes :
      1. Sélection type + sujet
      2. Saisie poids (+ nb/écart pour les bandes)
-     3. Confirmation
+     3. Récap (ancien/nouveau/écart/GMQ + plausibilité)
+     4. Succès
    Persist : NOTES_TERRAIN (5-col) + Update poids (si animal individuel)
    Validation : RHF + Zod (peseeSchema)
    ═════════════════════════════════════════════════════════════════════════ */
@@ -364,7 +363,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
   });
 
   // ── UI Helpers ───────────────────────────────────────────────────────
-  const subjectDisplay = (s: PeseeSubject) => {
+  const subjectDisplay = (s: PeseeSubject): string => {
     const sb = s as BandePorcelets;
     const sr = s as Truie | Verrat;
     if (subjectType === 'BANDE') {
@@ -487,298 +486,430 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
   }, [pendingValues]); // executeSubmit closure stable assez
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={handleClose} title="Pesée rapide" height="full">
-      <div role="dialog" className="space-y-5">
-        {/* Stepper (1=sélection, 2=saisie, 3=récap, 4=succès) */}
-        <div className="flex items-center justify-center gap-2">
-          {[1, 2, 3, 4].map(n => (
-            <span key={n} className={['h-1.5 rounded-full transition-all duration-[220ms]', n === step ? 'w-8 bg-accent' : n < step ? 'w-4 bg-accent/60' : 'w-4 bg-border'].join(' ')} />
-          ))}
-        </div>
+    <IonModal
+      isOpen={isOpen}
+      onDidDismiss={handleClose}
+      breakpoints={[0, 1]}
+      initialBreakpoint={1}
+      className="agritech-bottom-sheet pt-sheet-modal pt-screen"
+      aria-label="Pesée rapide"
+    >
+      <div className="ion-page pt-screen" style={{ position: 'relative', overflow: 'auto' }}>
+        <div className="sheet" role="dialog" style={{ position: 'relative', height: '100%', maxHeight: '100%' }}>
+          <span className="sheet__handle" />
 
-        {/* ÉTAPE 1 : Sélection */}
-        {step === 1 && (
-          <div className="space-y-4">
-            <IonSegment
-              value={subjectType}
-              onIonChange={e => {
-                form.setValue('subjectType', e.detail.value as SubjectType);
-                setQuery('');
-              }}
-              className="premium-segment bg-bg-1 border border-border rounded-md"
+          <header className="sheet__head">
+            <div>
+              <div className="eyebrow">Pesée rapide</div>
+              <h2 className="sheet__title">
+                {step === 1 && 'Choisir le sujet à peser'}
+                {step === 2 && 'Saisir la pesée'}
+                {step === 3 && 'Confirmer la pesée'}
+                {step === 4 && 'Pesée enregistrée'}
+              </h2>
+            </div>
+            <button
+              type="button"
+              className="sheet__close"
+              onClick={handleClose}
+              aria-label="Fermer"
+              disabled={saving}
             >
-              <IonSegmentButton value="BANDE"><IonLabel className="text-[11px]">Bandes</IonLabel></IonSegmentButton>
-              <IonSegmentButton value="TRUIE"><IonLabel className="text-[11px]">Truies</IonLabel></IonSegmentButton>
-              <IonSegmentButton value="VERRAT"><IonLabel className="text-[11px]">Verrats</IonLabel></IonSegmentButton>
-            </IonSegment>
+              <X size={14} aria-hidden="true" />
+            </button>
+          </header>
 
-            <SearchInput
-              aria-label="Rechercher un sujet à peser"
-              placeholder="ID, Nom, Boucle…"
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              onClear={() => setQuery('')}
-            />
+          <div className="sheet__body">
+            {/* Stepper (1=sélection, 2=saisie, 3=récap, 4=succès) */}
+            <div className="step-pill">Étape {step} / 4</div>
 
-            <ul className="card-dense !p-0 overflow-hidden max-h-[40vh] overflow-y-auto">
-              {filteredSubjects.map(s => (
-                <li key={s.id}>
-                  <DataRow
-                    primary={subjectDisplay(s)}
-                    secondary={subjectType === 'BANDE' ? `${(s as BandePorcelets).vivants || 0} vivants` : `Boucle: ${(s as Truie | Verrat).boucle || '—'}`}
-                    accessory={<ChevronRight size={14} className="text-text-2" />}
-                    onClick={() => handleSelect(s)}
+            {/* ÉTAPE 1 : Sélection */}
+            {step === 1 && (
+              <>
+                <IonSegment
+                  value={subjectType}
+                  onIonChange={e => {
+                    form.setValue('subjectType', e.detail.value as SubjectType);
+                    setQuery('');
+                  }}
+                  className="premium-segment"
+                  style={{ borderRadius: 12, border: '1px solid var(--pt-line)', background: 'var(--pt-bg)' }}
+                >
+                  <IonSegmentButton value="BANDE"><IonLabel className="text-[11px]">Bandes</IonLabel></IonSegmentButton>
+                  <IonSegmentButton value="TRUIE"><IonLabel className="text-[11px]">Truies</IonLabel></IonSegmentButton>
+                  <IonSegmentButton value="VERRAT"><IonLabel className="text-[11px]">Verrats</IonLabel></IonSegmentButton>
+                </IonSegment>
+
+                <div className="field">
+                  <label className="label--v77" htmlFor="pesee-search">
+                    RECHERCHE <span className="hint">optionnel</span>
+                  </label>
+                  <input
+                    id="pesee-search"
+                    className="field__input mono"
+                    type="search"
+                    aria-label="Rechercher un sujet à peser"
+                    placeholder="ID, Nom, Boucle…"
+                    value={query}
+                    onChange={e => setQuery(e.target.value)}
                   />
-                </li>
-              ))}
-              {filteredSubjects.length === 0 && <li className="p-4 text-center text-text-2 text-[11px]">Aucun résultat</li>}
-            </ul>
-          </div>
-        )}
-
-        {/* ÉTAPE 2 : Saisie */}
-        {step === 2 && selectedSubject && (
-          <Form {...form}>
-            <form onSubmit={onSubmit} className="space-y-5">
-              <div className="card-dense !p-3 flex items-center gap-3">
-                <Button type="button" variant="ghost" size="small" onClick={() => setStep(1)} className="pressable h-9 w-9 flex items-center justify-center rounded-md bg-bg-2 text-text-1"><ArrowLeft size={14} /></Button>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[10px] uppercase text-text-2">{subjectType}</div>
-                  <div className="truncate ft-code text-[13px] text-text-0">{subjectDisplay(selectedSubject)}</div>
                 </div>
-              </div>
 
-              <Section label="MESURES" />
-
-              {subjectType === 'BANDE' && (
-                <FormField
-                  control={form.control}
-                  name="nbPeses"
-                  render={({ field }) => (
-                    <FormItem className="space-y-1.5">
-                      <FormLabel className="block text-[11px] uppercase text-text-2">Nombre pesés</FormLabel>
-                      <FormControl>
-                        <DSInput
-                          type="text"
-                          inputMode="numeric"
-                          className="font-mono text-[20px]"
-                          value={field.value}
-                          onChange={e => field.onChange(e.target.value.replace(/[^\d]/g, ''))}
-                          onBlur={field.onBlur}
-                          name={field.name}
-                          ref={field.ref}
-                        />
-                      </FormControl>
-                      <FormMessage className="text-red text-[11px]" />
-                    </FormItem>
+                <div className="field">
+                  <label className="label--v77">
+                    SUJET <span className="req">requis</span>
+                  </label>
+                  {filteredSubjects.length === 0 ? (
+                    <p style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 12, color: 'var(--pt-subtle)', margin: 0 }}>
+                      Aucun résultat
+                    </p>
+                  ) : (
+                    <div className="radio-chips--cards" role="radiogroup" aria-label="Sujets à peser" style={{ maxHeight: '40vh', overflowY: 'auto' }}>
+                      {filteredSubjects.map(s => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          role="radio"
+                          aria-checked={false}
+                          aria-label={`Sélectionner ${subjectDisplay(s)}`}
+                          data-testid="data-row"
+                          onClick={() => handleSelect(s)}
+                          className="radio-chip--card"
+                          style={{ textAlign: 'left' }}
+                        >
+                          <div className="radio-chip__code">{subjectDisplay(s)}</div>
+                          <div className="radio-chip__sub" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                            <span>
+                              {subjectType === 'BANDE'
+                                ? `${(s as BandePorcelets).vivants || 0} vivants`
+                                : `Boucle: ${(s as Truie | Verrat).boucle || '—'}`}
+                            </span>
+                            <ChevronRight size={14} aria-hidden="true" style={{ color: 'var(--pt-subtle)' }} />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   )}
-                />
-              )}
+                </div>
+              </>
+            )}
 
-              <FormField
-                control={form.control}
-                name="poidsMoyen"
-                render={({ field }) => (
-                  <FormItem className="space-y-1.5">
-                    <FormLabel className="block text-[11px] uppercase text-text-2">
-                      Poids {subjectType === 'BANDE' ? 'moyen' : ''} (kg)
-                    </FormLabel>
-                    <FormControl>
-                      <DSInput
-                        type="text"
-                        inputMode="decimal"
-                        className="font-mono text-[28px] text-center"
-                        placeholder="0.0"
-                        value={field.value}
-                        onChange={e => field.onChange(e.target.value.replace(/[^\d.,]/g, ''))}
-                        onBlur={field.onBlur}
-                        name={field.name}
-                        ref={field.ref}
-                        autoFocus
-                      />
-                    </FormControl>
-                    <FormMessage className="text-red text-[11px]" />
-                  </FormItem>
-                )}
-              />
+            {/* ÉTAPE 2 : Saisie */}
+            {step === 2 && selectedSubject && (
+              <Form {...form}>
+                <form onSubmit={onSubmit}>
+                  <div className="calc-card" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <button
+                      type="button"
+                      onClick={() => setStep(1)}
+                      aria-label="Retour à la sélection"
+                      style={{
+                        height: 36,
+                        width: 36,
+                        borderRadius: 10,
+                        background: 'var(--pt-bg)',
+                        border: '1px solid var(--pt-line)',
+                        color: 'var(--pt-ink)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        flex: '0 0 auto',
+                      }}
+                    >
+                      <ArrowLeft size={14} />
+                    </button>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div className="eyebrow">{subjectType}</div>
+                      <div className="calc-card__big" style={{ fontSize: 14 }}>{subjectDisplay(selectedSubject)}</div>
+                    </div>
+                  </div>
 
-              {subjectType === 'BANDE' && (
-                <FormField
-                  control={form.control}
-                  name="ecartType"
-                  render={({ field }) => (
-                    <FormItem className="space-y-1.5">
-                      <FormLabel className="block text-[11px] uppercase text-text-2">
-                        Écart-type (kg) · <span className="text-text-2 normal-case">opt</span>
-                      </FormLabel>
-                      <FormControl>
-                        <DSInput
-                          type="text"
-                          inputMode="decimal"
-                          placeholder="0.0"
-                          value={field.value ?? ''}
-                          onChange={e => field.onChange(e.target.value.replace(/[^\d.,]/g, ''))}
-                          onBlur={field.onBlur}
-                          name={field.name}
-                          ref={field.ref}
-                        />
-                      </FormControl>
-                      <FormMessage className="text-red text-[11px]" />
-                    </FormItem>
+                  <div className="step-pill">Mesures</div>
+
+                  {subjectType === 'BANDE' && (
+                    <FormField
+                      control={form.control}
+                      name="nbPeses"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="field">
+                            <FormLabel asChild>
+                              <label className="label--v77" htmlFor="pesee-nb">
+                                NOMBRE PESÉS <span className="req">requis</span>
+                              </label>
+                            </FormLabel>
+                            <FormControl>
+                              <input
+                                id="pesee-nb"
+                                type="text"
+                                inputMode="numeric"
+                                className="field__input mono"
+                                style={{ fontSize: 20 }}
+                                value={field.value}
+                                onChange={e => field.onChange(e.target.value.replace(/[^\d]/g, ''))}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                                ref={field.ref}
+                              />
+                            </FormControl>
+                            <FormMessage className="text-red text-[11px]" />
+                          </div>
+                        </FormItem>
+                      )}
+                    />
                   )}
-                />
-              )}
 
-              <Section label="NOTES" />
+                  <FormField
+                    control={form.control}
+                    name="poidsMoyen"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="field">
+                          <FormLabel asChild>
+                            <label className="label--v77" htmlFor="pesee-poids">
+                              POIDS {subjectType === 'BANDE' ? 'MOYEN' : ''} (KG) <span className="req">requis</span>
+                            </label>
+                          </FormLabel>
+                          <FormControl>
+                            <input
+                              id="pesee-poids"
+                              type="text"
+                              inputMode="decimal"
+                              className="field__input mono"
+                              style={{ fontSize: 28, textAlign: 'center' }}
+                              placeholder="0.0"
+                              value={field.value}
+                              onChange={e => field.onChange(e.target.value.replace(/[^\d.,]/g, ''))}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
+                              autoFocus
+                            />
+                          </FormControl>
+                          <FormMessage className="text-red text-[11px]" />
+                        </div>
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="observation"
-                render={({ field }) => (
-                  <FormItem className="space-y-1.5">
-                    <FormLabel className="block text-[11px] uppercase text-text-2">
-                      Observation · <span className="text-text-2 normal-case">opt</span>
-                    </FormLabel>
-                    <FormControl>
-                      <textarea
-                        className="pt-field__input"
-                        style={{ borderRadius: 16, minHeight: 80, resize: 'vertical' }}
-                        placeholder="Note terrain…"
-                        value={field.value ?? ''}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        name={field.name}
-                        ref={field.ref}
-                      />
-                    </FormControl>
-                    <FormMessage className="text-red text-[11px]" />
-                  </FormItem>
-                )}
-              />
+                  {subjectType === 'BANDE' && (
+                    <FormField
+                      control={form.control}
+                      name="ecartType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="field">
+                            <FormLabel asChild>
+                              <label className="label--v77" htmlFor="pesee-ecart">
+                                ÉCART-TYPE (KG) <span className="hint">optionnel</span>
+                              </label>
+                            </FormLabel>
+                            <FormControl>
+                              <input
+                                id="pesee-ecart"
+                                type="text"
+                                inputMode="decimal"
+                                className="field__input mono"
+                                placeholder="0.0"
+                                value={field.value ?? ''}
+                                onChange={e => field.onChange(e.target.value.replace(/[^\d.,]/g, ''))}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                                ref={field.ref}
+                              />
+                            </FormControl>
+                            <FormMessage className="text-red text-[11px]" />
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  )}
 
-              <div className="flex gap-3 justify-end pt-2 border-t border-border">
-                <Button type="button" variant="secondary" onClick={handleClose}>Annuler</Button>
-                <Button type="submit" variant="primary" disabled={saving}>{saving ? 'Enregistrement…' : 'Enregistrer'}</Button>
-              </div>
-            </form>
-          </Form>
-        )}
+                  <div className="step-pill">Notes</div>
 
-        {/* ÉTAPE 3 : Récap & confirmation explicite */}
-        {step === 3 && selectedSubject && recapStats && (
-          <div data-testid="pesee-recap" className="space-y-4">
-            <div className="card-dense !p-3 flex items-center gap-3">
-              <Button
-                type="button"
-                variant="ghost"
-                size="small"
-                onClick={() => setStep(2)}
-                className="pressable h-9 w-9 flex items-center justify-center rounded-md bg-bg-2 text-text-1"
-                aria-label="Retour à la saisie"
-              >
-                <ArrowLeft size={14} />
-              </Button>
-              <div className="min-w-0 flex-1">
-                <div className="text-[10px] uppercase text-text-2">Récapitulatif · {subjectType}</div>
-                <div className="truncate ft-code text-[13px] text-text-0">{subjectDisplay(selectedSubject)}</div>
-              </div>
-            </div>
+                  <FormField
+                    control={form.control}
+                    name="observation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="field">
+                          <FormLabel asChild>
+                            <label className="label--v77" htmlFor="pesee-obs">
+                              OBSERVATION <span className="hint">optionnel</span>
+                            </label>
+                          </FormLabel>
+                          <FormControl>
+                            <textarea
+                              id="pesee-obs"
+                              className="field__input"
+                              style={{ minHeight: 80, resize: 'vertical' }}
+                              placeholder="Note terrain…"
+                              value={field.value ?? ''}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
+                            />
+                          </FormControl>
+                          <FormMessage className="text-red text-[11px]" />
+                        </div>
+                      </FormItem>
+                    )}
+                  />
 
-            {/* Anciens / nouveaux poids */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="card-dense !p-3">
-                <div className="text-[10px] uppercase text-text-2">Ancien poids</div>
-                <div className="ft-values text-[18px] text-text-0 mt-1" data-testid="recap-ancien-poids">
-                  {recapStats.ancienPoids !== null ? `${recapStats.ancienPoids} kg` : '—'}
+                  <footer className="sheet__foot" style={{ marginTop: 16 }}>
+                    <button type="button" className="btn btn--ghost" onClick={handleClose} disabled={saving}>
+                      Annuler
+                    </button>
+                    <button type="submit" className="btn btn--primary" disabled={saving}>
+                      {saving ? 'Enregistrement…' : 'Enregistrer'}
+                    </button>
+                  </footer>
+                </form>
+              </Form>
+            )}
+
+            {/* ÉTAPE 3 : Récap & confirmation explicite */}
+            {step === 3 && selectedSubject && recapStats && (
+              <div data-testid="pesee-recap">
+                <div className="calc-card" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <button
+                    type="button"
+                    onClick={() => setStep(2)}
+                    aria-label="Retour à la saisie"
+                    style={{
+                      height: 36,
+                      width: 36,
+                      borderRadius: 10,
+                      background: 'var(--pt-bg)',
+                      border: '1px solid var(--pt-line)',
+                      color: 'var(--pt-ink)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      flex: '0 0 auto',
+                    }}
+                  >
+                    <ArrowLeft size={14} />
+                  </button>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div className="eyebrow">Récapitulatif · {subjectType}</div>
+                    <div className="calc-card__big" style={{ fontSize: 14 }}>{subjectDisplay(selectedSubject)}</div>
+                  </div>
                 </div>
-                {recapStats.ancienneDate && (
-                  <div className="ft-code text-[10px] text-text-2 mt-0.5">{recapStats.ancienneDate}</div>
-                )}
-              </div>
-              <div className="card-dense !p-3">
-                <div className="text-[10px] uppercase text-text-2">Nouveau poids</div>
-                <div className="ft-values text-[18px] text-text-0 mt-1" data-testid="recap-nouveau-poids">
-                  {recapStats.nouveauPoids} kg
-                </div>
-              </div>
-            </div>
 
-            {/* Écarts (color coded) */}
-            {recapStats.ecartKg !== null && recapStats.ecartPct !== null && (
-              <div
-                className="card-dense !p-3"
-                data-testid="recap-ecart"
-                style={{
-                  borderLeft: `4px solid ${
-                    recapStats.couleur === 'vert' ? 'var(--pt-primary)'
-                    : recapStats.couleur === 'rouge' ? 'var(--pt-danger)'
-                    : recapStats.couleur === 'ambre' ? 'var(--pt-accent-deep)'
-                    : 'var(--pt-text-subtle)'
-                  }`,
-                }}
-              >
-                <div className="text-[10px] uppercase text-text-2">Écart</div>
-                <div className="ft-values text-[16px] text-text-0 mt-1">
-                  {recapStats.ecartKg > 0 ? '+' : ''}{recapStats.ecartKg} kg
-                  {' · '}
-                  <span data-testid="recap-ecart-pct">
-                    {recapStats.ecartPct > 0 ? '+' : ''}{recapStats.ecartPct}%
-                  </span>
+                {/* Anciens / nouveaux poids */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
+                  <div className="calc-card">
+                    <div className="eyebrow">Ancien poids</div>
+                    <div className="calc-card__big" data-testid="recap-ancien-poids">
+                      {recapStats.ancienPoids !== null ? `${recapStats.ancienPoids} kg` : '—'}
+                    </div>
+                    {recapStats.ancienneDate && (
+                      <div className="calc-card__hint">{recapStats.ancienneDate}</div>
+                    )}
+                  </div>
+                  <div className="calc-card">
+                    <div className="eyebrow">Nouveau poids</div>
+                    <div className="calc-card__big" data-testid="recap-nouveau-poids">
+                      {recapStats.nouveauPoids} kg
+                    </div>
+                  </div>
                 </div>
-                {recapStats.gmqGrammesParJour !== null && (
-                  <div className="text-[12px] text-text-2 mt-1" data-testid="recap-gmq">
-                    GMQ : {recapStats.gmqGrammesParJour} g/j ({recapStats.joursEcart}j)
+
+                {/* Écarts (color coded) */}
+                {recapStats.ecartKg !== null && recapStats.ecartPct !== null && (
+                  <div
+                    className="calc-card"
+                    data-testid="recap-ecart"
+                    style={{
+                      marginTop: 10,
+                      borderLeft: `4px solid ${
+                        recapStats.couleur === 'vert' ? 'var(--pt-primary)'
+                        : recapStats.couleur === 'rouge' ? 'var(--pt-danger)'
+                        : recapStats.couleur === 'ambre' ? 'var(--pt-accent-deep)'
+                        : 'var(--pt-subtle)'
+                      }`,
+                    }}
+                  >
+                    <div className="eyebrow">Écart</div>
+                    <div className="calc-card__big" style={{ fontSize: 16 }}>
+                      {recapStats.ecartKg > 0 ? '+' : ''}{recapStats.ecartKg} kg
+                      {' · '}
+                      <span data-testid="recap-ecart-pct">
+                        {recapStats.ecartPct > 0 ? '+' : ''}{recapStats.ecartPct}%
+                      </span>
+                    </div>
+                    {recapStats.gmqGrammesParJour !== null && (
+                      <div className="calc-card__hint" data-testid="recap-gmq">
+                        GMQ : {recapStats.gmqGrammesParJour} g/j ({recapStats.joursEcart}j)
+                      </div>
+                    )}
                   </div>
                 )}
+
+                {recapStats.anormal && (
+                  <div
+                    role="alert"
+                    data-testid="recap-warning"
+                    className="calc-card"
+                    style={{
+                      marginTop: 10,
+                      borderLeft: '4px solid var(--pt-danger)',
+                      background: 'rgba(220,38,38,0.06)',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 8,
+                    }}
+                  >
+                    <AlertTriangle size={16} aria-hidden="true" style={{ color: 'var(--pt-danger)', marginTop: 2, flex: '0 0 auto' }} />
+                    <div className="calc-card__hint" style={{ color: 'var(--pt-ink)' }}>
+                      Écart inhabituel — vérifie la pesée.
+                    </div>
+                  </div>
+                )}
+
+                <footer className="sheet__foot" style={{ marginTop: 16 }}>
+                  <button type="button" className="btn btn--ghost" onClick={() => setStep(2)}>
+                    Modifier
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--primary"
+                    onClick={() => { void handleConfirmRecap(); }}
+                    disabled={saving}
+                  >
+                    {saving ? 'Enregistrement…' : 'Confirmer le nouveau poids'}
+                  </button>
+                </footer>
               </div>
             )}
 
-            {recapStats.anormal && (
-              <div
-                role="alert"
-                data-testid="recap-warning"
-                className="card-dense !p-3 flex items-start gap-2"
-                style={{ borderLeft: '4px solid var(--pt-danger)', background: 'rgba(220,38,38,0.06)' }}
-              >
-                <AlertTriangle size={16} className="text-red mt-0.5" />
-                <div className="text-[12px] text-text-0">
-                  Écart inhabituel — vérifie la pesée.
-                </div>
+            {/* ÉTAPE 4 : Succès */}
+            {step === 4 && (
+              <div className="flex flex-col items-center justify-center py-16 animate-scale-in">
+                <CheckCircle2 size={64} aria-hidden="true" style={{ color: 'var(--pt-primary)', marginBottom: 16 }} strokeWidth={1.5} />
+                <p className="sheet__title" style={{ textAlign: 'center' }}>Pesée enregistrée</p>
+                {successSummary && (
+                  <p className="sheet__sub" style={{ textAlign: 'center', marginTop: 8, padding: '0 16px' }}>
+                    {successSummary}
+                  </p>
+                )}
+                <button type="button" className="btn btn--primary" onClick={handleClose} style={{ marginTop: 32 }}>
+                  OK
+                </button>
               </div>
             )}
-
-            <div className="flex gap-3 justify-end pt-2 border-t border-border">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setStep(2)}
-              >
-                Modifier
-              </Button>
-              <Button
-                type="button"
-                variant="primary"
-                onClick={() => { void handleConfirmRecap(); }}
-                disabled={saving}
-              >
-                {saving ? 'Enregistrement…' : 'Confirmer le nouveau poids'}
-              </Button>
-            </div>
           </div>
-        )}
-
-        {/* ÉTAPE 4 : Succès */}
-        {step === 4 && (
-          <div className="flex flex-col items-center justify-center py-16 animate-scale-in">
-            <CheckCircle2 size={64} className="text-accent mb-4" strokeWidth={1.5} />
-            <p className="agritech-heading text-[18px] uppercase">Pesée enregistrée</p>
-            {successSummary && <p className="mt-2 text-[12px] text-text-2 text-center px-4">{successSummary}</p>}
-            <Button type="button" variant="primary" onClick={handleClose} className="mt-8">OK</Button>
-          </div>
-        )}
+        </div>
       </div>
-    </BottomSheet>
+    </IonModal>
   );
 };
 
 export default QuickPeseeForm;
+
+// kvGet helper conservé pour audit V23 — non utilisé directement (UUID auth via user.id)
+void kvGet;

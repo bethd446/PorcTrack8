@@ -1,5 +1,5 @@
 /**
- * QuickSailliesBandeForm — Sprint 11
+ * QuickSailliesBandeForm — Sprint 11 · V78 sheet V77
  * ════════════════════════════════════════════════════════════════════════
  * Saisie de N saillies en bande sur 1 verrat (ou 2, alternés) à 1 date
  * commune. Workflow industriel : on synchronise le post-sevrage groupé
@@ -17,10 +17,9 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { Calendar, CheckCircle2, Users } from 'lucide-react';
+import { IonModal } from '@ionic/react';
+import { Calendar, CheckCircle2, Users, X } from 'lucide-react';
 
-import { BottomSheet } from '../agritech';
-import { Button, FormField, Input, Section, Textarea } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
 import { useToast } from '../../context/ToastContext';
 import {
@@ -230,242 +229,295 @@ const QuickSailliesBandeForm: React.FC<QuickSailliesBandeFormProps> = ({
   };
 
   return (
-    <BottomSheet
+    <IonModal
       isOpen={isOpen}
-      onClose={handleClose}
-      title="Saillies en bande"
-      height="full"
+      onDidDismiss={handleClose}
+      breakpoints={[0, 1]}
+      initialBreakpoint={1}
+      className="agritech-bottom-sheet pt-sheet-modal pt-screen"
+      aria-label="Saillies en bande"
     >
-      {success ? (
-        <div
-          className="flex flex-col items-center justify-center py-20 animate-scale-in"
-          role="status"
-          aria-live="polite"
-        >
-          <CheckCircle2
-            size={64}
-            className="text-accent mb-4"
-            aria-hidden="true"
-            strokeWidth={1.5}
-          />
-          <p className="agritech-heading text-[18px] uppercase tracking-wide">
-            {selectedTruieIds.length} saillies enregistrées
-          </p>
-          <p className="mt-2 text-[12px] uppercase tracking-wide text-text-2">
-            MB prévue {formatDateFr(dateMB)}
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {/* Eyebrow + header */}
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.14em] text-text-2 ft-code">
-              Saillies en bande
-            </p>
-            <p className="mt-1 font-heading text-[20px] uppercase tracking-wide">
-              Saillir plusieurs truies en lot
-            </p>
-            <p className="mt-2 text-[12px] text-text-2">
-              Pattern industriel : truies synchrones (post-sevrage groupé) saillies à la même date par 1-2 verrats.
-            </p>
-          </div>
+      <div className="ion-page pt-screen" style={{ position: 'relative', overflow: 'auto' }}>
+        <div className="sheet" style={{ position: 'relative', height: '100%', maxHeight: '100%' }}>
+          <span className="sheet__handle" />
 
-          <div className="flex items-center gap-3">
-            <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
-              <Users size={18} aria-hidden="true" />
-            </div>
-            <p className="text-mono-label text-text-1 tabular-nums">
-              {selectedTruieIds.length} truie{selectedTruieIds.length > 1 ? 's' : ''} sélectionnée{selectedTruieIds.length > 1 ? 's' : ''}
-              {selectedVerratIds.length > 0 ? ` × ${selectedVerratIds.length} verrat${selectedVerratIds.length > 1 ? 's' : ''}` : ''}
-            </p>
-          </div>
-
-          {/* ── Truies multi-select ────────────────────────────────────── */}
-          <Section label="TRUIES À SAILLIR" />
-
-          <FormField label="Sélection multiple" required>
-            {truiesEligibles.length === 0 ? (
-              <p className="text-mono-label text-text-2">
-                Aucune truie éligible (vide / chaleur).
-              </p>
-            ) : (
-              <ul
-                className="space-y-2"
-                aria-label="Liste truies éligibles"
-              >
-                {truiesEligibles.map(t => {
-                  const checked = selectedTruieIds.includes(t.displayId);
-                  const inputId = `bande-truie-${t.displayId}`;
-                  return (
-                    <li key={t.id}>
-                      <label
-                        htmlFor={inputId}
-                        className={[
-                          'flex cursor-pointer items-center gap-3',
-                          'min-h-[44px] rounded-md border bg-bg-0 px-3 py-2',
-                          checked
-                            ? 'border-accent bg-accent/10'
-                            : 'border-border hover:border-text-2',
-                        ].join(' ')}
-                        data-testid={`bande-truie-row-${t.displayId}`}
-                      >
-                        <input
-                          id={inputId}
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => toggleTruie(t.displayId)}
-                          className="h-5 w-5 accent-accent"
-                          aria-label={`Sélectionner truie ${t.displayId}`}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="ft-code tabular-nums text-[13px] text-text-0 truncate">
-                            {t.displayId}{t.nom ? ` · ${t.nom}` : ''}
-                          </p>
-                          <p className="text-[10px] uppercase tracking-wide text-text-2">
-                            {t.statut}
-                          </p>
-                        </div>
-                      </label>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </FormField>
-
-          {/* ── Verrats multi-select (max 2) ───────────────────────────── */}
-          <Section label="VERRAT(S)" />
-
-          <FormField
-            label="1 ou 2 verrats"
-            hint={selectedVerratIds.length === 2 ? 'Round-robin : truie 1 → V1, truie 2 → V2…' : undefined}
-            required
-          >
-            {verratsActifs.length === 0 ? (
-              <p className="text-mono-label text-text-2">
-                Aucun verrat actif.
-              </p>
-            ) : (
-              <div
-                className="flex flex-wrap gap-2"
-                aria-label="Sélectionner 1 ou 2 verrats"
-              >
-                {verratsActifs.map(v => {
-                  const isSel = selectedVerratIds.includes(v.displayId);
-                  const isCapped = !isSel && selectedVerratIds.length >= MAX_VERRATS;
-                  return (
-                    <button
-                      key={v.id}
-                      type="button"
-                      aria-pressed={isSel}
-                      aria-label={`Sélectionner verrat ${v.displayId}`}
-                      data-testid={`bande-verrat-${v.displayId}`}
-                      onClick={() => toggleVerrat(v.displayId)}
-                      disabled={isCapped}
-                      className={[
-                        'pressable inline-flex items-center justify-center',
-                        'min-h-[44px] px-3 rounded-md border',
-                        'ft-code text-[12px] uppercase tracking-wide tabular-nums',
-                        isSel
-                          ? 'bg-accent text-bg-0 border-accent font-semibold'
-                          : 'bg-bg-0 text-text-1 border-border hover:border-text-2',
-                        isCapped ? 'opacity-40 cursor-not-allowed' : '',
-                      ].join(' ')}
-                    >
-                      {v.displayId}
-                      {v.nom ? ` · ${v.nom}` : ''}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </FormField>
-
-          {/* ── Date saillie commune ───────────────────────────────────── */}
-          <Section label="DATE SAILLIE COMMUNE" />
-
-          <FormField label="Date" required>
-            <div className="flex items-center gap-2">
-              <Calendar size={16} aria-hidden="true" className="text-text-2" />
-              <Input
-                type="date"
-                aria-label="Date saillie commune"
-                value={dateIso}
-                max={todayISO()}
-                onChange={e => setDateIso(e.target.value)}
+          {success ? (
+            <div
+              className="flex flex-col items-center justify-center py-20 animate-scale-in"
+              role="status"
+              aria-live="polite"
+            >
+              <CheckCircle2
+                size={64}
+                className="text-accent mb-4"
+                aria-hidden="true"
+                strokeWidth={1.5}
               />
+              <p className="sheet__title" style={{ textAlign: 'center' }}>
+                {selectedTruieIds.length} saillies enregistrées
+              </p>
+              <p className="sheet__sub" style={{ textAlign: 'center', marginTop: 8 }}>
+                MB prévue {formatDateFr(dateMB)}
+              </p>
             </div>
-          </FormField>
+          ) : (
+            <>
+              <header className="sheet__head">
+                <div>
+                  <div className="eyebrow">Saillies en bande</div>
+                  <h2 className="sheet__title">Saillir plusieurs truies en lot</h2>
+                </div>
+                <button
+                  type="button"
+                  className="sheet__close"
+                  onClick={handleClose}
+                  aria-label="Fermer"
+                  disabled={saving}
+                >
+                  <X size={14} aria-hidden="true" />
+                </button>
+              </header>
 
-          {/* ── Preview cycle prévu ────────────────────────────────────── */}
-          <div
-            className="rounded-md border border-border bg-bg-0 p-3"
-            aria-label="Cycle prévu groupe"
-            data-testid="cycle-preview"
-          >
-            <p className="text-[11px] uppercase tracking-[0.14em] text-text-2 ft-code mb-2">
-              Cycle prévu groupe
-            </p>
-            <ul className="space-y-1">
-              <li className="flex items-baseline justify-between gap-2 ft-code text-[12px] tabular-nums">
-                <span className="text-text-1">Écho J{ECHO_DAYS}</span>
-                <span className="text-text-0">{formatDateFr(dateEcho)}</span>
-              </li>
-              <li className="flex items-baseline justify-between gap-2 ft-code text-[12px] tabular-nums">
-                <span className="text-text-1">MB attendues J{MB_DAYS}</span>
-                <span className="text-text-0">{formatDateFr(dateMB)}</span>
-              </li>
-              <li className="flex items-baseline justify-between gap-2 ft-code text-[12px] tabular-nums">
-                <span className="text-text-1">Sevrage prévu J{SEVRAGE_DAYS}</span>
-                <span className="text-text-0">{formatDateFr(dateSevrage)}</span>
-              </li>
-            </ul>
-          </div>
+              <div className="sheet__body">
+                <p className="sheet__sub">
+                  Pattern industriel : truies synchrones (post-sevrage groupé) saillies à la même date par 1-2 verrats.
+                </p>
 
-          {/* Notes */}
-          <FormField label="Notes" hint="optionnel">
-            <Textarea
-              placeholder="Ex: lot saillie semaine 18, post-sevrage du 14/04…"
-              maxLength={240}
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-            />
-          </FormField>
+                <div className="field--inline" style={{ alignItems: 'center', gap: 12 }}>
+                  <div
+                    className="inline-flex items-center justify-center"
+                    style={{
+                      height: 40,
+                      width: 40,
+                      borderRadius: 10,
+                      background: 'var(--pt-bg)',
+                      color: 'var(--pt-primary)',
+                      flex: '0 0 auto',
+                    }}
+                  >
+                    <Users size={18} aria-hidden="true" />
+                  </div>
+                  <p
+                    className="tabular-nums"
+                    style={{
+                      fontFamily: 'var(--pt-font-mono)',
+                      fontSize: 12,
+                      color: 'var(--pt-ink)',
+                      margin: 0,
+                    }}
+                  >
+                    {selectedTruieIds.length} truie{selectedTruieIds.length > 1 ? 's' : ''} sélectionnée{selectedTruieIds.length > 1 ? 's' : ''}
+                    {selectedVerratIds.length > 0 ? ` × ${selectedVerratIds.length} verrat${selectedVerratIds.length > 1 ? 's' : ''}` : ''}
+                  </p>
+                </div>
 
-          {/* Actions */}
-          <div className="flex gap-3 justify-end pt-2 border-t border-border">
-            <Button
-              variant="ghost"
-              onClick={handleClose}
-              disabled={saving}
-              ariaLabel="Annuler et fermer"
-            >
-              Annuler
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleSubmit}
-              disabled={
-                saving ||
-                selectedTruieIds.length < 1 ||
-                selectedVerratIds.length < 1
-              }
-              aria-busy={saving}
-              ariaLabel={`Enregistrer ${selectedTruieIds.length} saillies en bande`}
-            >
-              {saving ? (
-                <span className="animate-pulse">Enregistrement…</span>
-              ) : (
-                <span className="inline-flex items-center gap-2">
-                  <CheckCircle2 size={16} aria-hidden="true" />
-                  Enregistrer {selectedTruieIds.length} saillie{selectedTruieIds.length > 1 ? 's' : ''}
-                </span>
-              )}
-            </Button>
-          </div>
+                <div className="step-pill">Étape 1 / 4 · Truies à saillir</div>
+
+                <div className="field">
+                  <label className="label--v77">
+                    SÉLECTION MULTIPLE <span className="req">requis</span>
+                  </label>
+                  {truiesEligibles.length === 0 ? (
+                    <p
+                      style={{
+                        fontFamily: 'var(--pt-font-mono)',
+                        fontSize: 12,
+                        color: 'var(--pt-subtle)',
+                        margin: 0,
+                      }}
+                    >
+                      Aucune truie éligible (vide / chaleur).
+                    </p>
+                  ) : (
+                    <ul
+                      aria-label="Liste truies éligibles"
+                      style={{ listStyle: 'none', padding: 0, margin: 0 }}
+                    >
+                      {truiesEligibles.map(t => {
+                        const checked = selectedTruieIds.includes(t.displayId);
+                        const inputId = `bande-truie-${t.displayId}`;
+                        return (
+                          <li key={t.id} style={{ marginBottom: 8 }}>
+                            <label
+                              htmlFor={inputId}
+                              className={`radio-chip--card${checked ? ' is-selected' : ''}`}
+                              style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', width: '100%', textAlign: 'left' }}
+                              data-testid={`bande-truie-row-${t.displayId}`}
+                            >
+                              <input
+                                id={inputId}
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => toggleTruie(t.displayId)}
+                                style={{ height: 20, width: 20, accentColor: 'var(--pt-primary)' }}
+                                aria-label={`Sélectionner truie ${t.displayId}`}
+                                disabled={saving}
+                              />
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div className="radio-chip__code">
+                                  {t.displayId}{t.nom ? ` · ${t.nom}` : ''}
+                                </div>
+                                <div className="radio-chip__sub">{t.statut}</div>
+                              </div>
+                            </label>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+
+                <div className="step-pill">Étape 2 / 4 · Verrat(s)</div>
+
+                <div className="field">
+                  <label className="label--v77">
+                    1 OU 2 VERRATS <span className="req">requis</span>
+                    {selectedVerratIds.length === 2 ? (
+                      <span className="hint"> · round-robin : T1 → V1, T2 → V2…</span>
+                    ) : null}
+                  </label>
+                  {verratsActifs.length === 0 ? (
+                    <p
+                      style={{
+                        fontFamily: 'var(--pt-font-mono)',
+                        fontSize: 12,
+                        color: 'var(--pt-subtle)',
+                        margin: 0,
+                      }}
+                    >
+                      Aucun verrat actif.
+                    </p>
+                  ) : (
+                    <div
+                      className="radio-chips--cards"
+                      aria-label="Sélectionner 1 ou 2 verrats"
+                    >
+                      {verratsActifs.map(v => {
+                        const isSel = selectedVerratIds.includes(v.displayId);
+                        const isCapped = !isSel && selectedVerratIds.length >= MAX_VERRATS;
+                        return (
+                          <button
+                            key={v.id}
+                            type="button"
+                            aria-pressed={isSel}
+                            aria-label={`Sélectionner verrat ${v.displayId}`}
+                            data-testid={`bande-verrat-${v.displayId}`}
+                            onClick={() => toggleVerrat(v.displayId)}
+                            disabled={isCapped || saving}
+                            className={`radio-chip--card${isSel ? ' is-selected' : ''}`}
+                            style={isCapped ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
+                          >
+                            <div className="radio-chip__code">
+                              {v.displayId}{v.nom ? ` · ${v.nom}` : ''}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="step-pill">Étape 3 / 4 · Date saillie commune</div>
+
+                <div className="field">
+                  <label className="label--v77" htmlFor="saillies-date">
+                    DATE <span className="req">requis</span>
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      id="saillies-date"
+                      className={`field__input mono${dateIso ? ' filled' : ' field__input--ghost'}`}
+                      type="date"
+                      aria-label="Date saillie commune"
+                      value={dateIso}
+                      max={todayISO()}
+                      onChange={e => setDateIso(e.target.value)}
+                      disabled={saving}
+                    />
+                    <span aria-hidden="true" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--pt-subtle)', pointerEvents: 'none' }}>
+                      <Calendar size={16} />
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  className="calc-card"
+                  aria-label="Cycle prévu groupe"
+                  data-testid="cycle-preview"
+                >
+                  <div className="eyebrow" style={{ marginBottom: 8 }}>Cycle prévu groupe</div>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <li style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontFamily: 'var(--pt-font-mono)', fontSize: 12, color: 'var(--pt-ink)' }}>
+                      <span style={{ color: 'var(--pt-subtle)' }}>Écho J{ECHO_DAYS}</span>
+                      <span>{formatDateFr(dateEcho)}</span>
+                    </li>
+                    <li style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontFamily: 'var(--pt-font-mono)', fontSize: 12, color: 'var(--pt-ink)' }}>
+                      <span style={{ color: 'var(--pt-subtle)' }}>MB attendues J{MB_DAYS}</span>
+                      <span>{formatDateFr(dateMB)}</span>
+                    </li>
+                    <li style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontFamily: 'var(--pt-font-mono)', fontSize: 12, color: 'var(--pt-ink)' }}>
+                      <span style={{ color: 'var(--pt-subtle)' }}>Sevrage prévu J{SEVRAGE_DAYS}</span>
+                      <span>{formatDateFr(dateSevrage)}</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="step-pill">Étape 4 / 4 · Notes</div>
+
+                <div className="field">
+                  <label className="label--v77" htmlFor="saillies-notes">
+                    NOTES <span className="hint">optionnel</span>
+                  </label>
+                  <textarea
+                    id="saillies-notes"
+                    className="field__input"
+                    style={{ minHeight: 80, resize: 'vertical' }}
+                    placeholder="Ex: lot saillie semaine 18, post-sevrage du 14/04…"
+                    maxLength={240}
+                    value={notes}
+                    onChange={e => setNotes(e.target.value)}
+                    disabled={saving}
+                  />
+                </div>
+              </div>
+
+              <footer className="sheet__foot">
+                <button
+                  type="button"
+                  className="btn btn--ghost"
+                  onClick={handleClose}
+                  disabled={saving}
+                  aria-label="Annuler et fermer"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--primary"
+                  onClick={handleSubmit}
+                  disabled={
+                    saving ||
+                    selectedTruieIds.length < 1 ||
+                    selectedVerratIds.length < 1
+                  }
+                  aria-busy={saving}
+                  aria-label={`Enregistrer ${selectedTruieIds.length} saillies en bande`}
+                >
+                  {saving ? (
+                    'Enregistrement…'
+                  ) : (
+                    <>
+                      <CheckCircle2 size={14} aria-hidden="true" />
+                      Enregistrer {selectedTruieIds.length} saillie{selectedTruieIds.length > 1 ? 's' : ''}
+                    </>
+                  )}
+                </button>
+              </footer>
+            </>
+          )}
         </div>
-      )}
-    </BottomSheet>
+      </div>
+    </IonModal>
   );
 };
 

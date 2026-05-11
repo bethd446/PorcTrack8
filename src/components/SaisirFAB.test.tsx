@@ -41,26 +41,34 @@ describe('SaisirFAB — rendu', () => {
     expect(btn.getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('est position fixed bottom-right (style inline)', () => {
+  it('est position fixed bottom-right via classe .fab--v77 (V77)', () => {
     render(<SaisirFAB />);
     const btn = screen.getByRole('button', { name: 'Saisir un évènement métier' });
-    expect(btn.className).toContain('fixed');
-    // V31 : right inline style à 20 px
-    expect(btn.style.right).toBe('20px');
+    // V77 : la classe canonique .fab--v77 porte le position:fixed (cf.
+    // v70-global.css), l'inline style fournit uniquement les overrides
+    // contextuels (right, bottom safe-area).
+    expect(btn.className).toContain('fab--v77');
+    expect(btn.style.right).toBe('24px');
   });
 
-  it('utilise le token design system --pt-primary en background (V31)', () => {
+  it('utilise le token design system --pt-primary en background (V77)', () => {
     render(<SaisirFAB />);
     const btn = screen.getByRole('button', { name: 'Saisir un évènement métier' });
     expect(btn.style.background).toContain('var(--pt-primary)');
   });
 
-  it('est rond (border-radius 50%) et carré 56×56 (V31)', () => {
+  it('est un block carré 64×64 radius 20px (V77, pas cercle)', () => {
     render(<SaisirFAB />);
     const btn = screen.getByRole('button', { name: 'Saisir un évènement métier' });
-    expect(btn.style.borderRadius).toBe('50%');
-    expect(btn.style.width).toBe('56px');
-    expect(btn.style.height).toBe('56px');
+    expect(btn.style.borderRadius).toBe('20px');
+    expect(btn.style.width).toBe('64px');
+    expect(btn.style.height).toBe('64px');
+  });
+
+  it('est wrappé dans .pt-screen pour activer les tokens V77', () => {
+    const { container } = render(<SaisirFAB />);
+    const root = container.firstChild as HTMLElement;
+    expect(root.className).toContain('pt-screen');
   });
 
   it('porte data-pt="fab" pour neutraliser le reset Ionic', () => {

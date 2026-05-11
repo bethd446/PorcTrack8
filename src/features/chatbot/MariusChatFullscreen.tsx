@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowUp, X, CloudOff, RefreshCw } from 'lucide-react';
+import { ArrowUp, ChevronLeft, X, CloudOff, RefreshCw } from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
 import { useAuth } from '../../context/AuthContext';
 import { MARIUS_SYSTEM_PROMPT } from './mariusSystemPrompt';
@@ -19,16 +19,14 @@ interface ChatMessage {
 let __mid = 0;
 const newId = () => `m-${Date.now()}-${++__mid}`;
 
+const ORB_SRC = '/images/v73/marius/orb-emeraude.webp';
+
 /**
- * Rendu markdown ultra-light (pas de lib externe, suit la mission du Sprint 7) :
- *   - paragraphes
- *   - listes `- ...` ou `* ...`
- *   - **gras**
- *   - `code inline`
+ * Rendu markdown ultra-light :
+ *   - paragraphes, listes `- ...`, **gras**, `code inline`
  * Tolère le streaming partiel.
  */
 function renderInline(text: string): React.ReactNode {
-  // Split sur **bold** et `code` simultanément, conserver l'ordre.
   const parts: React.ReactNode[] = [];
   let remaining = text;
   let key = 0;
@@ -98,6 +96,129 @@ function renderMarkdown(text: string): React.ReactNode {
   return <>{blocks}</>;
 }
 
+// Styles inline alignés sur le mockup v76 (.marius-head / .marius-avatar /
+// .chat / .typing). Ces classes ne sont pas dans v70-global.css → on inline
+// ici (la mission interdit de toucher au CSS).
+
+const headStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 12,
+  padding: '14px 18px',
+  borderBottom: '1px solid var(--pt-line)',
+  background: 'var(--pt-bg)',
+  flexShrink: 0,
+  position: 'sticky',
+  top: 0,
+  zIndex: 10,
+};
+
+const headBtnStyle: React.CSSProperties = {
+  width: 32,
+  height: 32,
+  borderRadius: 8,
+  border: '1px solid var(--pt-line-strong)',
+  background: 'transparent',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: 'var(--pt-ink)',
+  cursor: 'pointer',
+  flexShrink: 0,
+  padding: 0,
+};
+
+const orbStyle: React.CSSProperties = {
+  width: 36,
+  height: 36,
+  borderRadius: '50%',
+  objectFit: 'cover',
+  flexShrink: 0,
+  boxShadow: '0 0 14px rgba(52, 211, 153, 0.55)',
+};
+
+const headTitleStyle: React.CSSProperties = {
+  fontFamily: 'var(--pt-font-display)',
+  fontWeight: 900,
+  fontSize: 18,
+  textTransform: 'uppercase',
+  letterSpacing: '-0.005em',
+  lineHeight: 1,
+  color: 'var(--pt-ink)',
+};
+
+const headSubStyle: React.CSSProperties = {
+  fontFamily: 'var(--pt-font-mono)',
+  fontSize: 10.5,
+  textTransform: 'uppercase',
+  letterSpacing: '0.12em',
+  color: 'var(--pt-subtle)',
+  marginTop: 3,
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
+};
+
+const headDotStyle = (online: boolean): React.CSSProperties => ({
+  width: 6,
+  height: 6,
+  borderRadius: 99,
+  background: online ? 'var(--pt-success)' : 'var(--pt-subtle)',
+  boxShadow: online
+    ? '0 0 0 3px rgba(74,122,47,0.18)'
+    : '0 0 0 3px rgba(163,152,136,0.2)',
+});
+
+const chatStyle: React.CSSProperties = {
+  flex: 1,
+  overflowY: 'auto',
+  padding: '18px 18px 12px',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 12,
+  background: 'var(--pt-bg-app)',
+};
+
+const chatTsStyle: React.CSSProperties = {
+  alignSelf: 'center',
+  fontFamily: 'var(--pt-font-mono)',
+  fontSize: 10,
+  fontWeight: 600,
+  textTransform: 'uppercase',
+  letterSpacing: '0.14em',
+  color: 'var(--pt-subtle)',
+  padding: '6px 10px',
+  marginTop: 6,
+};
+
+const typingStyle: React.CSSProperties = {
+  alignSelf: 'flex-start',
+  display: 'flex',
+  gap: 4,
+  padding: '13px 14px',
+  background: 'var(--pt-bg)',
+  border: '1px solid var(--pt-line)',
+  borderRadius: 14,
+  borderBottomLeftRadius: 6,
+};
+
+const tdotStyle = (delay: number): React.CSSProperties => ({
+  width: 6,
+  height: 6,
+  borderRadius: 99,
+  background: 'var(--pt-subtle)',
+  animation: `tdot 1.2s infinite ease-in-out`,
+  animationDelay: `${delay}s`,
+});
+
+const TypingDots: React.FC = () => (
+  <div style={typingStyle} aria-label="Marius rédige">
+    <span style={tdotStyle(0)} />
+    <span style={tdotStyle(0.18)} />
+    <span style={tdotStyle(0.36)} />
+  </div>
+);
+
 interface OfflineCardProps {
   onRetry: () => void;
   onClose: () => void;
@@ -110,10 +231,10 @@ const MariusOffline: React.FC<OfflineCardProps> = ({ onRetry, onClose }) => (
       padding: 24,
       display: 'flex',
       flexDirection: 'column',
-      alignItems: 'center',
-      textAlign: 'center',
+      alignItems: 'flex-start',
       gap: 12,
       margin: 16,
+      width: 'calc(100% - 32px)',
     }}
   >
     <div
@@ -125,6 +246,7 @@ const MariusOffline: React.FC<OfflineCardProps> = ({ onRetry, onClose }) => (
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        marginBottom: 4,
       }}
     >
       <CloudOff size={28} color="var(--pt-accent-light)" />
@@ -157,16 +279,15 @@ const MariusOffline: React.FC<OfflineCardProps> = ({ onRetry, onClose }) => (
     </h3>
     <p
       style={{
-        fontSize: 13,
+        fontSize: 13.5,
         color: 'rgba(245,233,216,0.78)',
         lineHeight: 1.5,
         margin: 0,
-        maxWidth: '32ch',
       }}
     >
       Reconnecte-toi à internet ou réessaie dans quelques minutes. Tes données restent enregistrées localement.
     </p>
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8, width: '100%' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 6, width: '100%' }}>
       <button
         type="button"
         onClick={onRetry}
@@ -197,7 +318,7 @@ const MariusOffline: React.FC<OfflineCardProps> = ({ onRetry, onClose }) => (
         style={{
           background: 'transparent',
           color: 'var(--pt-warm)',
-          border: '1px solid rgba(245,233,216,0.3)',
+          border: '1px solid rgba(245,233,216,0.32)',
           borderRadius: 10,
           padding: '10px 12px',
           fontFamily: 'var(--pt-font-mono)',
@@ -221,6 +342,12 @@ const FALLBACK_SUGGESTIONS = [
   'Plan d’aliment optimal mai ?',
 ];
 
+function formatTimestamp(d: Date): string {
+  const hh = d.getHours().toString().padStart(2, '0');
+  const mm = d.getMinutes().toString().padStart(2, '0');
+  return `Aujourd'hui · ${hh}:${mm}`;
+}
+
 export const MariusChatFullscreen: React.FC = () => {
   const navigate = useNavigate();
   const farm = useFarm();
@@ -231,13 +358,13 @@ export const MariusChatFullscreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [streaming, setStreaming] = useState(false);
   const [offline, setOffline] = useState(false);
+  const [openedAt] = useState(() => new Date());
 
   const fieldRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Suggestions dynamiques (mêmes règles que ChatbotWidget). Fallback sur les
-  // 4 questions fournies par la mission Sprint 7 si aucune règle métier ne sort.
+  // Suggestions dynamiques + fallback (mêmes règles que ChatbotWidget).
   const suggestions = useMemo(() => {
     const dyn = buildMariusSuggestions(
       {
@@ -270,11 +397,10 @@ export const MariusChatFullscreen: React.FC = () => {
     return () => abortRef.current?.abort();
   }, []);
 
-  // Auto-scroll vers le bas à chaque nouveau message.
   useEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [messages, streaming]);
+  }, [messages, streaming, loading]);
 
   const appendToLastAssistant = useCallback((delta: string) => {
     setMessages((prev) => {
@@ -372,7 +498,6 @@ export const MariusChatFullscreen: React.FC = () => {
         if ((err as { name?: string }).name === 'AbortError') return;
         // eslint-disable-next-line no-console
         console.error('[Marius] erreur', err);
-        // Retire la stub assistant vide.
         setMessages((prev) => {
           const next = [...prev];
           if (next.length > 0 && next[next.length - 1].role === 'assistant' && !next[next.length - 1].content) {
@@ -417,16 +542,46 @@ export const MariusChatFullscreen: React.FC = () => {
     setOffline(false);
   }, []);
 
-  const inputHasContent = (input.trim().length > 0) && !loading;
+  const inputHasContent = input.trim().length > 0 && !loading;
+  const online = !offline;
 
-  const headerSubtitle = offline
-    ? 'Hors-ligne'
-    : 'Assistant IA · ton élevage en temps réel';
+  // Pas de wrapper `.pt-screen` ici : `.pt-screen .bubble` (badge notif 22px)
+  // entre en collision avec `.bubble` (chat) côté CSS — mieux vaut un
+  // container neutre pour préserver les bubbles chat.
+  const renderHeader = (subtitle: string) => (
+    <div style={headStyle}>
+      <button
+        type="button"
+        onClick={handleClose}
+        style={headBtnStyle}
+        aria-label="Retour"
+        title="Retour"
+      >
+        <ChevronLeft size={14} />
+      </button>
+      <img src={ORB_SRC} alt="" aria-hidden width={36} height={36} style={orbStyle} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={headTitleStyle}>Marius</div>
+        <div style={headSubStyle}>
+          <span style={headDotStyle(online)} />
+          {subtitle}
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={handleClose}
+        style={headBtnStyle}
+        aria-label="Fermer Marius"
+        title="Fermer"
+      >
+        <X size={14} />
+      </button>
+    </div>
+  );
 
   if (!isMariusConfigured) {
     return (
       <div
-        className="pt-screen"
         style={{
           minHeight: '100vh',
           background: 'var(--pt-bg)',
@@ -434,33 +589,7 @@ export const MariusChatFullscreen: React.FC = () => {
           flexDirection: 'column',
         }}
       >
-        <header className="ph ph--primary">
-          <div className="ph__row" style={{ alignItems: 'center', gap: 14 }}>
-            <img
-              src="/images/v73/marius/orb-emeraude.webp"
-              alt=""
-              aria-hidden
-              width={48}
-              height={48}
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                objectFit: 'cover',
-                flexShrink: 0,
-                boxShadow: '0 0 18px rgba(52, 211, 153, 0.55)',
-              }}
-            />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="ph__eyebrow">Assistant IA</div>
-              <h1 className="ph__h1">Marius</h1>
-              <p className="ph__sub">Hors-ligne</p>
-            </div>
-            <button type="button" className="iconbtn" onClick={handleClose} aria-label="Fermer">
-              <X size={16} />
-            </button>
-          </div>
-        </header>
+        {renderHeader('Hors-ligne')}
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <MariusOffline onRetry={handleRetry} onClose={handleClose} />
         </div>
@@ -468,9 +597,10 @@ export const MariusChatFullscreen: React.FC = () => {
     );
   }
 
+  const headerSubtitle = offline ? 'Hors-ligne' : 'Assistant IA · en ligne';
+
   return (
     <div
-      className="pt-screen"
       style={{
         minHeight: '100vh',
         background: 'var(--pt-bg)',
@@ -478,38 +608,7 @@ export const MariusChatFullscreen: React.FC = () => {
         flexDirection: 'column',
       }}
     >
-      <header className="ph ph--primary" style={{ position: 'sticky', top: 0, zIndex: 10 }}>
-        <div className="ph__row" style={{ alignItems: 'center', gap: 14 }}>
-          <img
-            src="/images/v73/marius/orb-emeraude.webp"
-            alt=""
-            aria-hidden
-            width={48}
-            height={48}
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: '50%',
-              objectFit: 'cover',
-              flexShrink: 0,
-              boxShadow: '0 0 18px rgba(52, 211, 153, 0.55)',
-            }}
-          />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="ph__eyebrow">Assistant IA</div>
-            <h1 className="ph__h1">Marius</h1>
-            <p className="ph__sub">{headerSubtitle}</p>
-          </div>
-          <button
-            type="button"
-            className="iconbtn"
-            onClick={handleClose}
-            aria-label="Fermer Marius"
-          >
-            <X size={16} />
-          </button>
-        </div>
-      </header>
+      {renderHeader(headerSubtitle)}
 
       {offline ? (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -517,28 +616,19 @@ export const MariusChatFullscreen: React.FC = () => {
         </div>
       ) : (
         <>
-          <div
-            ref={scrollRef}
-            aria-live="polite"
-            style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12,
-              padding: 16,
-              paddingBottom: 24,
-              overflowY: 'auto',
-            }}
-          >
+          <div ref={scrollRef} aria-live="polite" style={chatStyle}>
+            <div style={chatTsStyle}>{formatTimestamp(openedAt)}</div>
+
             {messages.length === 0 && (
               <div className="bubble bubble--marius">
                 <h4>Bonjour {(userName || 'éleveur').split(' ')[0]}</h4>
                 <p>
-                  Pose-moi une question sur ton élevage. Je lis ton cheptel, tes bandes, tes stocks
-                  et tes alertes en temps réel.
+                  Pose-moi une question sur ton élevage. Je lis ton cheptel, tes bandes, tes
+                  stocks et tes alertes en temps réel.
                 </p>
               </div>
             )}
+
             {messages.map((m) => {
               if (m.role === 'system') {
                 return (
@@ -548,8 +638,9 @@ export const MariusChatFullscreen: React.FC = () => {
                       alignSelf: 'center',
                       fontSize: 12,
                       color: 'var(--pt-muted)',
-                      background: 'var(--pt-bg-app)',
-                      borderRadius: 8,
+                      background: 'var(--pt-bg)',
+                      border: '1px solid var(--pt-line)',
+                      borderRadius: 10,
                       padding: '6px 10px',
                       maxWidth: '90%',
                       textAlign: 'center',
@@ -572,42 +663,8 @@ export const MariusChatFullscreen: React.FC = () => {
                 </div>
               );
             })}
-            {loading && !streaming && (
-              <div className="bubble bubble--marius" aria-label="Marius rédige">
-                <span style={{ display: 'inline-flex', gap: 4 }}>
-                  <span
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: 99,
-                      background: 'var(--pt-muted)',
-                      animation: 'tdot 1.2s infinite',
-                      animationDelay: '0s',
-                    }}
-                  />
-                  <span
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: 99,
-                      background: 'var(--pt-muted)',
-                      animation: 'tdot 1.2s infinite',
-                      animationDelay: '0.15s',
-                    }}
-                  />
-                  <span
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: 99,
-                      background: 'var(--pt-muted)',
-                      animation: 'tdot 1.2s infinite',
-                      animationDelay: '0.3s',
-                    }}
-                  />
-                </span>
-              </div>
-            )}
+
+            {loading && !streaming && <TypingDots />}
           </div>
 
           {messages.length === 0 && (
@@ -625,7 +682,7 @@ export const MariusChatFullscreen: React.FC = () => {
             </div>
           )}
 
-          <div className="composer" style={{ position: 'sticky', bottom: 0 }}>
+          <div className="composer">
             <div
               ref={fieldRef}
               role="textbox"
@@ -643,6 +700,7 @@ export const MariusChatFullscreen: React.FC = () => {
               disabled={!inputHasContent}
               onClick={handleSend}
               aria-label="Envoyer"
+              title="Envoyer"
             >
               <ArrowUp size={16} />
             </button>

@@ -1,367 +1,303 @@
 /**
- * FournisseursView — /fournisseurs
+ * FournisseursView — /ressources/fournisseurs
  * ══════════════════════════════════════════════════════════════════════════
- * V70 natif (mockup ressources-reproduction-mockup-v76.html#ressources-fournisseurs).
- * Filtres chips (Tous / Aliment / Véto / Génétique / Matériel) + liste
- * card-link (Building2). FAB création. Suppression conservée via confirm.
+ * V78 vague 1 — Hub fournisseurs (mockup
+ * docs/mockups/ressources-reproduction-mockup-v76.html#ressources-fournisseurs).
+ *
+ * Namespace `.pt-screen` + header `.ph--primary`. Searchbar, pills catégorie
+ * (Tous / Aliment / Véto / Génétique / Équipement / Autre), liste card-link
+ * avec chip catégorie + stars + count commandes + dernier contact.
+ * Données statiques (`fournisseursData.ts`) — backend Supabase non câblé.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { IonContent, IonPage, IonToast, useIonAlert } from '@ionic/react';
+import React, { useMemo, useState } from 'react';
+import { IonContent, IonPage } from '@ionic/react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Plus, Building2, Trash2, ChevronRight, Search as SearchIcon,
+  Building2, ChevronLeft, ChevronRight, Star, X,
 } from 'lucide-react';
 
-import QuickAddFournisseurForm from '../../components/forms/QuickAddFournisseurForm';
-import { Section } from '../../v70/components/ds/Section';
-import { Pill, type PillVariant } from '../../v70/components/ds/Pill';
-import { PageHeader } from '../../v70/components/ds/PageHeader';
 import {
-  listFournisseurs,
-  deleteFournisseur,
-  type FournisseurRow,
-  type FournisseurType,
-} from '../../services/supabaseWrites';
+  FOURNISSEURS_STATIC,
+  type FournisseurCategorie,
+  type FournisseurStatic,
+} from './fournisseursData';
 
-type FilterKey = 'TOUS' | 'ALIMENT' | 'PHARMACIE' | 'GENETIQUE' | 'AUTRE';
+type FilterKey = 'TOUS' | FournisseurCategorie;
 
-interface TabDef {
-  value: FilterKey;
+interface FilterDef {
+  key: FilterKey;
   label: string;
 }
 
-const TABS: ReadonlyArray<TabDef> = [
-  { value: 'TOUS', label: 'Tous' },
-  { value: 'ALIMENT', label: 'Aliment' },
-  { value: 'PHARMACIE', label: 'Véto' },
-  { value: 'GENETIQUE', label: 'Génét.' },
-  { value: 'AUTRE', label: 'Matériel' },
+const FILTERS: ReadonlyArray<FilterDef> = [
+  { key: 'TOUS', label: 'Tous' },
+  { key: 'ALIMENT', label: 'Aliment' },
+  { key: 'PHARMACIE', label: 'Véto' },
+  { key: 'GENETIQUE', label: 'Génét.' },
+  { key: 'EQUIPEMENT', label: 'Équip.' },
+  { key: 'AUTRE', label: 'Autre' },
 ];
 
-function pillForType(type: FournisseurType | null): { variant: PillVariant; label: string } {
-  switch (type) {
+interface CategoryPill {
+  label: string;
+  bg: string;
+  fg: string;
+}
+
+function categoryPill(c: FournisseurCategorie): CategoryPill {
+  switch (c) {
     case 'ALIMENT':
-      return { variant: 'success', label: 'Aliment' };
+      return { label: 'Aliment', bg: '#cce0bf', fg: '#2d4a1f' };
     case 'PHARMACIE':
-      return { variant: 'info', label: 'Véto' };
+      return { label: 'Véto', bg: '#cdd9e3', fg: '#2c4356' };
     case 'GENETIQUE':
-      return { variant: 'warm', label: 'Génét.' };
+      return { label: 'Génét.', bg: '#f4dcb6', fg: '#6b4910' };
+    case 'EQUIPEMENT':
+      return { label: 'Équip.', bg: 'var(--pt-warm)', fg: 'var(--pt-ink)' };
     case 'AUTRE':
     default:
-      return { variant: 'soft', label: 'Matériel' };
+      return { label: 'Autre', bg: 'var(--pt-warm)', fg: 'var(--pt-ink)' };
   }
 }
 
-function matchesFilter(row: FournisseurRow, filter: FilterKey): boolean {
-  if (filter === 'TOUS') return true;
-  const type = row.type ?? 'AUTRE';
-  return type === filter;
+function formatDateShort(iso: string): string {
+  const d = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: 'short',
+  });
 }
 
-function matchesSearch(row: FournisseurRow, query: string): boolean {
-  if (!query.trim()) return true;
-  const q = query.trim().toLowerCase();
+interface StarsProps {
+  value: number;
+  size?: number;
+}
+
+const Stars: React.FC<StarsProps> = ({ value, size = 12 }) => {
+  const safe = Math.max(0, Math.min(5, Math.round(value)));
   return (
-    row.nom.toLowerCase().includes(q) ||
-    (row.whatsapp_number ?? '').toLowerCase().includes(q) ||
-    (row.email ?? '').toLowerCase().includes(q)
+    <span className="stars" aria-label={`Note ${safe} sur 5`}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star
+          key={i}
+          size={size}
+          strokeWidth={1.6}
+          fill={i <= safe ? 'currentColor' : 'transparent'}
+          className={i <= safe ? '' : 'stars__empty'}
+          aria-hidden
+        />
+      ))}
+    </span>
+  );
+};
+
+function matchesSearch(f: FournisseurStatic, q: string): boolean {
+  if (!q.trim()) return true;
+  const needle = q.trim().toLowerCase();
+  return (
+    f.nom.toLowerCase().includes(needle) ||
+    f.ville.toLowerCase().includes(needle) ||
+    f.telephone.toLowerCase().includes(needle) ||
+    (f.email ?? '').toLowerCase().includes(needle)
   );
 }
 
 const FournisseursView: React.FC = () => {
   const navigate = useNavigate();
-  const [rows, setRows] = useState<FournisseurRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [addOpen, setAddOpen] = useState(false);
-  const [toast, setToast] = useState('');
   const [filter, setFilter] = useState<FilterKey>('TOUS');
   const [query, setQuery] = useState('');
-  const [presentAlert] = useIonAlert();
-
-  const refresh = useCallback(async (signal?: { cancelled: boolean }) => {
-    setLoading(true);
-    try {
-      const list = await listFournisseurs();
-      if (signal?.cancelled) return;
-      setRows(list);
-    } finally {
-      if (!signal?.cancelled) setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const signal = { cancelled: false };
-    void refresh(signal);
-    return () => {
-      signal.cancelled = true;
-    };
-  }, [refresh]);
-
-  const handleDelete = useCallback(
-    (row: FournisseurRow) => {
-      presentAlert({
-        header: 'Supprimer ce fournisseur',
-        message: `Confirmer la suppression de ${row.nom} ?`,
-        buttons: [
-          { text: 'Annuler', role: 'cancel' },
-          {
-            text: 'Supprimer',
-            role: 'destructive',
-            handler: () => {
-              void (async () => {
-                try {
-                  await deleteFournisseur(row.id);
-                  setToast('Fournisseur supprimé');
-                  await refresh();
-                } catch (err) {
-                  setToast(
-                    err instanceof Error ? err.message : 'Erreur suppression',
-                  );
-                }
-              })();
-            },
-          },
-        ],
-      });
-    },
-    [presentAlert, refresh],
-  );
 
   const counts = useMemo(() => {
     const out: Record<FilterKey, number> = {
-      TOUS: rows.length,
+      TOUS: FOURNISSEURS_STATIC.length,
       ALIMENT: 0,
       PHARMACIE: 0,
       GENETIQUE: 0,
+      EQUIPEMENT: 0,
       AUTRE: 0,
     };
-    for (const r of rows) {
-      const type: FilterKey = (r.type as FilterKey) ?? 'AUTRE';
-      out[type] = (out[type] ?? 0) + 1;
+    for (const f of FOURNISSEURS_STATIC) {
+      out[f.categorie] += 1;
     }
     return out;
-  }, [rows]);
+  }, []);
 
   const filtered = useMemo(
-    () => rows.filter((r) => matchesFilter(r, filter) && matchesSearch(r, query)),
-    [rows, filter, query],
+    () =>
+      FOURNISSEURS_STATIC.filter(
+        (f) =>
+          (filter === 'TOUS' || f.categorie === filter) && matchesSearch(f, query),
+      ),
+    [filter, query],
   );
-
-  const isEmpty = !loading && rows.length === 0;
 
   return (
     <IonPage>
       <IonContent fullscreen className="ion-no-padding">
-        <div className="phone-content" style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
-          <PageHeader
-            eyebrow="Stocks · Fournisseurs"
-            title="Fournisseurs"
-            subtitle="Aliments · vétérinaire · génétique · matériel"
-            onBack={() => navigate('/ressources')}
-          />
+        <div className="pt-screen">
+          <header className="ph--primary">
+            <button
+              type="button"
+              className="back"
+              aria-label="Retour aux Ressources"
+              onClick={() => navigate('/ressources')}
+            >
+              <ChevronLeft size={18} strokeWidth={1.8} aria-hidden />
+            </button>
+            <div className="eyebrow">Stocks · Fournisseurs</div>
+            <h1>Fournisseurs</h1>
+            <div className="sub">Aliments · vétérinaire · génétique · matériel</div>
+          </header>
 
-          <div
-            style={{
-              position: 'relative',
-              marginBottom: 12,
-            }}
-          >
-            <SearchIcon
-              size={16}
-              aria-hidden
-              style={{
-                position: 'absolute',
-                left: 14,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: 'var(--pt-muted)',
-              }}
-            />
-            <input
-              type="search"
-              placeholder="Rechercher un fournisseur"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              aria-label="Rechercher un fournisseur"
-              style={{
-                width: '100%',
-                padding: '12px 14px 12px 38px',
-                borderRadius: 999,
-                border: '1px solid var(--pt-line-strong)',
-                background: 'var(--pt-bg)',
-                fontFamily: 'var(--pt-font-body)',
-                fontSize: 13,
-                color: 'var(--pt-ink)',
-                outline: 'none',
-                minHeight: 44,
-              }}
-            />
+          <div className="searchbar">
+            <div className="searchbar__wrap">
+              <input
+                className="searchbar__input"
+                type="search"
+                aria-label="Rechercher un fournisseur"
+                placeholder="Rechercher un fournisseur, une ville…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+              {query && (
+                <button
+                  type="button"
+                  className="searchbar__clear"
+                  aria-label="Effacer la recherche"
+                  onClick={() => setQuery('')}
+                >
+                  <X size={12} strokeWidth={2.2} aria-hidden />
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="chips" style={{ marginBottom: 4 }}>
-            {TABS.map((t) => {
-              const active = filter === t.value;
-              const count = counts[t.value] ?? 0;
+          <div className="pills" role="tablist" aria-label="Filtrer par catégorie">
+            {FILTERS.map((f) => {
+              const active = filter === f.key;
+              const count = counts[f.key] ?? 0;
               return (
                 <button
-                  key={t.value}
+                  key={f.key}
                   type="button"
-                  className="chip"
-                  aria-pressed={active}
-                  onClick={() => setFilter(t.value)}
+                  role="tab"
+                  aria-selected={active}
+                  className={`pill${active ? ' is-active' : ''}`}
+                  onClick={() => setFilter(f.key)}
                 >
-                  {t.label} <span className="num">{count}</span>
+                  {f.label} <span style={{ opacity: 0.6, marginLeft: 4 }}>{count}</span>
                 </button>
               );
             })}
           </div>
 
-          {loading ? (
-            <p
-              style={{
-                fontFamily: 'var(--pt-font-mono)',
-                fontSize: 12,
-                color: 'var(--pt-muted)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.10em',
-                marginTop: 16,
-              }}
-            >
-              Chargement…
-            </p>
-          ) : isEmpty ? (
-            <div className="empty">
-              <Building2 size={48} strokeWidth={1.25} color="var(--pt-subtle)" aria-hidden />
-              <div style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 900, fontSize: 22, textTransform: 'uppercase', letterSpacing: '-0.01em' }}>
-                Aucun fournisseur
-              </div>
-              <div style={{ fontSize: 13, color: 'var(--pt-muted)' }}>
-                Ajoute ton premier fournisseur pour commander en un clic.
-              </div>
-              <button
-                type="button"
-                className="btn--primary"
-                onClick={() => setAddOpen(true)}
-                style={{ marginTop: 8, padding: '12px 20px', minHeight: 44 }}
-              >
-                <Plus size={14} aria-hidden /> Nouveau fournisseur
-              </button>
+          <section className="section" aria-label="Liste des fournisseurs">
+            <div className="section__label">
+              {filtered.length} fournisseur{filtered.length > 1 ? 's' : ''}
             </div>
-          ) : (
-            <Section
-              label={`${filtered.length} fournisseur${filtered.length > 1 ? 's' : ''}`}
-            >
-              {filtered.length === 0 ? (
-                <div className="empty">
-                  <Building2 size={40} strokeWidth={1.25} color="var(--pt-subtle)" aria-hidden />
-                  <div style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 900, fontSize: 18, textTransform: 'uppercase' }}>
-                    Aucun résultat
-                  </div>
-                  <div style={{ fontSize: 13, color: 'var(--pt-muted)' }}>
-                    Aucun fournisseur ne correspond à ce filtre. Essaie « Tous ».
-                  </div>
-                </div>
-              ) : (
-                filtered.map((row) => {
-                  const typePill = pillForType(row.type);
-                  const subParts: string[] = [];
-                  subParts.push(typePill.label);
-                  if (row.whatsapp_number) subParts.push(row.whatsapp_number);
-                  if (row.email) subParts.push(row.email);
-                  return (
+
+            {filtered.length === 0 ? (
+              <div
+                style={{
+                  padding: '24px 16px',
+                  border: '1px dashed var(--pt-line)',
+                  borderRadius: 16,
+                  textAlign: 'center',
+                  color: 'var(--pt-muted)',
+                  fontFamily: 'var(--ff-body, Instrument Sans, sans-serif)',
+                  fontSize: 13,
+                }}
+              >
+                Aucun fournisseur ne correspond. Essaie « Tous ».
+              </div>
+            ) : (
+              filtered.map((f) => {
+                const pill = categoryPill(f.categorie);
+                const lastContact = formatDateShort(f.dernierContact);
+                const cmdCount = f.commandes.length;
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    className="card-link"
+                    onClick={() => navigate(`/ressources/fournisseurs/${f.id}`)}
+                    aria-label={`Ouvrir ${f.nom}`}
+                    style={{ alignItems: 'flex-start' }}
+                  >
                     <div
-                      key={row.id}
-                      className="card-link"
-                      style={{ alignItems: 'center', gap: 12, padding: '14px 16px' }}
+                      className="card-link__icon"
+                      style={{
+                        background: 'var(--pt-emerald-bg)',
+                        color: 'var(--pt-emerald-ink)',
+                      }}
+                      aria-hidden
                     >
-                      <div className="card-link__icon" aria-hidden>
-                        <Building2 size={18} />
-                      </div>
-                      <div className="card-link__main">
-                        <div className="card-link__title">{row.nom}</div>
-                        <div className="card-link__sub">{subParts.join(' · ')}</div>
-                      </div>
-                      <Pill variant={typePill.variant}>{typePill.label}</Pill>
-                      {row.is_default && (
-                        <Pill variant="accent">Défaut</Pill>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(row)}
-                        aria-label={`Supprimer ${row.nom}`}
+                      <Building2 size={18} />
+                    </div>
+                    <div className="card-link__main">
+                      <div
                         style={{
-                          width: 36,
-                          height: 36,
-                          minHeight: 36,
-                          borderRadius: 10,
-                          border: '1px solid var(--pt-line)',
-                          background: 'transparent',
-                          color: 'var(--pt-danger)',
-                          display: 'inline-flex',
+                          display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          flexShrink: 0,
+                          gap: 8,
+                          flexWrap: 'wrap',
+                          marginBottom: 4,
                         }}
                       >
-                        <Trash2 size={14} aria-hidden />
-                      </button>
-                      <span className="card-link__chev" aria-hidden>
-                        <ChevronRight />
-                      </span>
+                        <span className="card-link__title">{f.nom}</span>
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            padding: '2px 8px',
+                            borderRadius: 999,
+                            background: pill.bg,
+                            color: pill.fg,
+                            fontFamily: 'var(--ff-mono, JetBrains Mono, monospace)',
+                            fontSize: 10,
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {pill.label}
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          marginBottom: 4,
+                        }}
+                      >
+                        <Stars value={f.note} />
+                        <span
+                          style={{
+                            fontFamily: 'var(--ff-mono, JetBrains Mono, monospace)',
+                            fontSize: 11,
+                            color: 'var(--pt-muted)',
+                            letterSpacing: '0.06em',
+                          }}
+                        >
+                          {cmdCount} cmd · dernier contact {lastContact}
+                        </span>
+                      </div>
+                      <div className="card-link__sub">
+                        {f.ville} · {f.telephone}
+                      </div>
                     </div>
-                  );
-                })
-              )}
-            </Section>
-          )}
-
-          {!isEmpty && (
-            <button
-              type="button"
-              className="card-link"
-              style={{ borderStyle: 'dashed', marginTop: 4 }}
-              onClick={() => setAddOpen(true)}
-              aria-label="Ajouter un fournisseur"
-            >
-              <div className="card-link__icon" aria-hidden>
-                <Plus size={18} />
-              </div>
-              <div className="card-link__main">
-                <div className="card-link__title">Nouveau fournisseur</div>
-                <div className="card-link__sub">Ajouter un contact · catégorie au choix</div>
-              </div>
-              <span className="card-link__chev"><ChevronRight aria-hidden /></span>
-            </button>
-          )}
+                    <span className="card-link__chev" aria-hidden>
+                      <ChevronRight size={18} />
+                    </span>
+                  </button>
+                );
+              })
+            )}
+          </section>
         </div>
-
-        <button
-          type="button"
-          className="fab"
-          onClick={() => setAddOpen(true)}
-          aria-label="Nouveau fournisseur"
-        >
-          <Plus size={22} aria-hidden />
-        </button>
-
-        <QuickAddFournisseurForm
-          isOpen={addOpen}
-          onClose={() => setAddOpen(false)}
-          onSuccess={() => {
-            setToast('Fournisseur ajouté');
-            void refresh();
-          }}
-        />
-
-        <IonToast
-          isOpen={toast !== ''}
-          message={toast}
-          duration={1800}
-          onDidDismiss={() => setToast('')}
-          position="bottom"
-        />
       </IonContent>
     </IonPage>
   );

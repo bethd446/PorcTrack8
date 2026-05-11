@@ -1,19 +1,21 @@
 /**
  * RessourcesHub — /ressources
  * ══════════════════════════════════════════════════════════════════════════
- * V77 namespace (.pt-screen + .ph--primary). Hub navigation 2 sections
- * actives : Aliments, Pharmacie. KPIs strip globale (Total / OK / Bas /
- * Rupture) calculée sur l'union stockAliment + stockVeto.
- *
- * Note : Formules et Fournisseurs masqués (vague précédente).
+ * V77/V78 namespace (.pt-screen + .ph--primary). Hub navigation 4 sections
+ * actives : Aliments, Pharmacie, Formules (V78), Fournisseurs (V78 vague 1).
+ * KPIs strip globale (Total / OK / Bas / Rupture) calculée sur stockAliment
+ * + stockVeto.
  */
 
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage, IonRefresher, IonRefresherContent } from '@ionic/react';
 import {
-  Wheat, Stethoscope, ChevronRight, ChevronLeft,
+  Wheat, Stethoscope, FlaskConical, Building2, ChevronRight, ChevronLeft,
 } from 'lucide-react';
+
+import { FOURNISSEURS_STATIC } from '../ressources/fournisseursData';
+import { FORMULES } from '../ressources/formulesData';
 
 import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import { Section } from '../../v70/components/ds/Section';
@@ -132,6 +134,38 @@ const RessourcesHub: React.FC = () => {
                   <div className="card-link__title">Pharmacie</div>
                   <div className="card-link__sub">
                     {stockVeto.length} produit{stockVeto.length > 1 ? 's' : ''} · vaccins, antibiotiques, vermifuges
+                  </div>
+                </div>
+                <span className="card-link__chev"><ChevronRight aria-hidden /></span>
+              </button>
+
+              <button
+                type="button"
+                className="card-link"
+                onClick={() => navigate('/ressources/formules')}
+                aria-label="Ouvrir Formules d'aliment"
+              >
+                <div className="card-link__icon"><FlaskConical size={18} aria-hidden /></div>
+                <div className="card-link__main">
+                  <div className="card-link__title">Formules d'aliment</div>
+                  <div className="card-link__sub">
+                    {FORMULES.length} recette{FORMULES.length > 1 ? 's' : ''} · composition et coût par phase
+                  </div>
+                </div>
+                <span className="card-link__chev"><ChevronRight aria-hidden /></span>
+              </button>
+
+              <button
+                type="button"
+                className="card-link"
+                onClick={() => navigate('/ressources/fournisseurs')}
+                aria-label="Ouvrir Fournisseurs"
+              >
+                <div className="card-link__icon"><Building2 size={18} aria-hidden /></div>
+                <div className="card-link__main">
+                  <div className="card-link__title">Fournisseurs</div>
+                  <div className="card-link__sub">
+                    {FOURNISSEURS_STATIC.length} contact{FOURNISSEURS_STATIC.length > 1 ? 's' : ''} · aliment, vétérinaire, génétique, équipement
                   </div>
                 </div>
                 <span className="card-link__chev"><ChevronRight aria-hidden /></span>

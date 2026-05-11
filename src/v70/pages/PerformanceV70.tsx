@@ -14,7 +14,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { TrendingUp, Download, Trophy, Medal } from 'lucide-react';
+import { TrendingUp, TrendingDown, Download, Trophy, Medal, FileText, ChevronRight } from 'lucide-react';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
 import { Button } from '../components/ds/Button';
@@ -32,6 +32,31 @@ import { buildForecastEvents } from '../../utils/forecastEvents';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 import { formatBandeName, formatDateFr } from '../lib';
 import { computeScoreGlobal, levelLabelOf } from '../lib/scoreGlobal';
+import {
+  summarizeByPeriode,
+  formatMontant,
+} from '../../services/financesAnalyzer';
+import type { FinanceEntry } from '../../types/farm';
+
+const MINUS_PERF = '−'; // Unicode minus U+2212
+const MOIS_SHORT_INIT_PERF = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+const MOIS_LONG_PERF = [
+  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
+];
+function periodeKeyPerf(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`;
+}
+function last12MonthsKeysPerf(now: Date = new Date()): string[] {
+  const keys: string[] = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    keys.push(periodeKeyPerf(d));
+  }
+  return keys;
+}
 
 type PerfTab = 'vue' | 'kpis' | 'finances' | 'previsions';
 
@@ -55,7 +80,10 @@ const BANDES_COLUMNS: DataTableColumn<BandePerf>[] = [
 
 export const PerformanceV70: React.FC = () => {
   const navigate = useNavigate();
-  const { bandes, truies, saillies } = useFarm();
+  const farm = useFarm();
+  const { bandes, truies, saillies } = farm;
+  const finances = ((farm as { finances?: unknown }).finances ?? []) as FinanceEntry[];
+  const currency = ((farm as { currency?: 'FCFA' }).currency ?? 'FCFA');
   const { loading: farmLoading } = useMeta();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab: PerfTab = isPerfTab(searchParams.get('tab'))
@@ -135,6 +163,38 @@ export const PerformanceV70: React.FC = () => {
       : null;
     return { mises, sorties, totalPorceletsEstimes };
   }, [truies, bandes, saillies]);
+
+  // ── Finances mensuelles (mockup B.4) ──────────────────────────────────────
+  const financeMonthly = useMemo(() => {
+    const now = new Date();
+    const keys = last12MonthsKeysPerf(now);
+    const series = keys.map((k) => {
+      const s = summarizeByPeriode(finances, k);
+      const mm = Number(k.slice(5, 7));
+      return {
+        key: k,
+        initial: Number.isFinite(mm) ? MOIS_SHORT_INIT_PERF[mm - 1] : '?',
+        marge: s.margeNette,
+        revenus: s.totalRevenus,
+        charges: s.totalDepenses,
+      };
+    });
+    const currentKey = keys[keys.length - 1] ?? '';
+    const currentMm = Number(currentKey.slice(5, 7));
+    const monthLabel = Number.isFinite(currentMm) && currentMm >= 1 && currentMm <= 12
+      ? MOIS_LONG_PERF[currentMm - 1]
+      : '—';
+    const current = series[series.length - 1] ?? { marge: 0, revenus: 0, charges: 0, key: '', initial: '?' };
+    const prev = series[series.length - 2] ?? { marge: 0, revenus: 0, charges: 0, key: '', initial: '?' };
+    const deltaPct = prev.marge !== 0
+      ? Math.round(((current.marge - prev.marge) / Math.abs(prev.marge)) * 100)
+      : null;
+    return { series, monthLabel, current, prev, deltaPct };
+  }, [finances]);
+
+  const hasFinanceData = finances.length > 0;
+  const financeMargeMax = Math.max(1, ...financeMonthly.series.map((m) => Math.abs(m.marge)));
+  const currentFinanceIdx = financeMonthly.series.length - 1;
 
   const fmt = (n: number | null | undefined, digits = 1, suffix = ''): string =>
     n === null || n === undefined || !Number.isFinite(n) ? '—' : `${n.toFixed(digits)}${suffix}`;
@@ -421,60 +481,293 @@ export const PerformanceV70: React.FC = () => {
       </Section>
       )}
 
-      {/* Finances — visible en Vue + Finances */}
+      {/* Finances — visible en Vue + Finances (mockup B.4) */}
       {(tab === 'vue' || tab === 'finances') && (
       <Section label="Finances">
-        <Card>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 12,
-            }}
-          >
-            <div>
-              <div style={{ fontSize: 11, color: 'var(--pt-muted)', marginBottom: 4 }}>
-                Marge mensuelle <Pill variant="soft">Owner</Pill>
+        {!hasFinanceData ? (
+          <Card>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 12,
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--pt-muted)', marginBottom: 4 }}>
+                  Marge mensuelle <Pill variant="soft">Owner</Pill>
+                </div>
+                <div
+                  className="kpi-billboard"
+                  style={{
+                    fontFamily: 'var(--pt-font-display, sans-serif)',
+                    fontSize: 32,
+                    fontWeight: 900,
+                    color: 'var(--pt-muted)',
+                    lineHeight: 1,
+                  }}
+                >
+                  — FCFA
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--pt-muted)', marginTop: 4 }}>
+                  Aucune transaction · ajoute une vente pour démarrer
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => navigate('/pilotage/finances/details')}
+              >
+                Saisir une transaction
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handlePrintPdf}
+                disabled={pdfLoading}
+                aria-busy={pdfLoading}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <Download size={14} strokeWidth={1.5} aria-hidden="true" />
+                  {pdfLoading ? 'Génération…' : 'PDF'}
+                </span>
+              </Button>
+            </div>
+          </Card>
+        ) : (
+          <>
+            {/* KPI billboard marge nette mensuelle */}
+            <div
+              style={{
+                padding: 18,
+                background: 'var(--pt-warm, #FAF7F0)',
+                border: '1px solid var(--pt-line)',
+                borderRadius: 18,
+                marginBottom: 14,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 11,
+                  fontFamily: 'var(--pt-font-mono, monospace)',
+                  letterSpacing: '0.14em',
+                  textTransform: 'uppercase',
+                  color: 'var(--pt-subtle, #a39888)',
+                  marginBottom: 6,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                Marge mensuelle · {financeMonthly.monthLabel.toLowerCase()} <Pill variant="soft">Owner</Pill>
               </div>
               <div
                 style={{
-                  fontFamily: 'var(--pt-font-display, sans-serif)',
-                  fontSize: 22,
-                  fontWeight: 900,
-                  color: 'var(--pt-muted)',
-                  lineHeight: 1,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-end',
+                  gap: 14,
                 }}
               >
-                — FCFA
+                <div
+                  className={`kpi-billboard num ${financeMonthly.current.marge >= 0 ? 'amount--positive' : 'amount--negative'}`}
+                  style={{
+                    fontFamily: 'var(--pt-font-display, sans-serif)',
+                    fontWeight: 900,
+                    fontSize: 64,
+                    lineHeight: 0.9,
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  {financeMonthly.current.marge >= 0 ? '+' : MINUS_PERF}
+                  {formatMontant(Math.abs(financeMonthly.current.marge), currency)}
+                </div>
+                {financeMonthly.deltaPct !== null ? (
+                  <div
+                    className={`num ${financeMonthly.deltaPct >= 0 ? 'amount--positive' : 'amount--negative'}`}
+                    style={{
+                      fontFamily: 'var(--pt-font-mono, monospace)',
+                      fontWeight: 600,
+                      fontSize: 14,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      flexShrink: 0,
+                      paddingBottom: 4,
+                    }}
+                  >
+                    {financeMonthly.deltaPct >= 0
+                      ? <TrendingUp size={14} strokeWidth={2} aria-hidden />
+                      : <TrendingDown size={14} strokeWidth={2} aria-hidden />}
+                    {financeMonthly.deltaPct >= 0 ? '+' : MINUS_PERF}{Math.abs(financeMonthly.deltaPct)}%
+                  </div>
+                ) : null}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--pt-muted)', marginTop: 4 }}>
-                Calcul live · ouvre les détails
+              <div
+                style={{
+                  marginTop: 8,
+                  fontFamily: 'var(--pt-font-mono, monospace)',
+                  fontSize: 11,
+                  color: 'var(--pt-muted)',
+                }}
+              >
+                vs mois précédent {financeMonthly.prev.marge >= 0 ? '+' : MINUS_PERF}
+                {formatMontant(Math.abs(financeMonthly.prev.marge), currency)}
               </div>
             </div>
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => navigate('/pilotage/finances/details')}
+
+            {/* Bar chart 12 mois */}
+            <div
+              style={{
+                padding: 14,
+                background: 'var(--pt-bg, #FAF7F0)',
+                border: '1px solid var(--pt-line)',
+                borderRadius: 14,
+                marginBottom: 14,
+              }}
             >
-              Détails
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handlePrintPdf}
-              disabled={pdfLoading}
-              aria-busy={pdfLoading}
+              <svg
+                viewBox="0 0 320 120"
+                preserveAspectRatio="none"
+                aria-label="Marge nette des 12 derniers mois"
+                style={{ width: '100%', height: 120, display: 'block' }}
+              >
+                <line
+                  x1={0}
+                  x2={320}
+                  y1={100}
+                  y2={100}
+                  stroke="rgba(26,26,26,0.08)"
+                  strokeWidth={1}
+                />
+                {financeMonthly.series.map((m, i) => {
+                  const barH = (Math.abs(m.marge) / financeMargeMax) * 78;
+                  const isCurrent = i === currentFinanceIdx;
+                  const isPositive = m.marge >= 0;
+                  const x = i * 26 + 6;
+                  const y = isPositive ? 100 - barH : 100;
+                  const fill = isCurrent
+                    ? 'var(--pt-accent, #B8703D)'
+                    : isPositive
+                      ? 'var(--pt-primary, #2D4A1F)'
+                      : 'var(--pt-rose-ink, #a4453d)';
+                  return (
+                    <g key={m.key}>
+                      <rect
+                        x={x}
+                        y={y}
+                        width={18}
+                        height={Math.max(2, barH)}
+                        fill={fill}
+                      />
+                      <text
+                        x={x + 3}
+                        y={115}
+                        style={{
+                          fontFamily: 'var(--pt-font-mono, monospace)',
+                          fontSize: 8.5,
+                          fill: isCurrent
+                            ? 'var(--pt-accent, #B8703D)'
+                            : 'var(--pt-subtle, #a39888)',
+                        }}
+                      >
+                        {m.initial}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+
+            {/* KPIs Revenus / Charges / Marge */}
+            <div
+              className="kpis-strip"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: 0,
+                border: '1px solid var(--pt-line)',
+                borderRadius: 14,
+                background: 'var(--pt-bg, #FAF7F0)',
+                overflow: 'hidden',
+                marginBottom: 14,
+              }}
             >
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <Download size={14} strokeWidth={1.5} aria-hidden="true" />
-                {pdfLoading ? 'Génération…' : 'PDF'}
-              </span>
-            </Button>
-          </div>
-        </Card>
+              <div className="kpi" style={{ padding: 14, borderRight: '1px solid var(--pt-line)' }}>
+                <div className="kpi__label" style={{ fontFamily: 'var(--pt-font-mono, monospace)', fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--pt-subtle)' }}>Revenus</div>
+                <div className="kpi__val num amount--positive" style={{ fontFamily: 'var(--pt-font-display, sans-serif)', fontWeight: 900, fontSize: 24, lineHeight: 0.95, marginTop: 6 }}>
+                  +{formatMontant(financeMonthly.current.revenus, currency)}
+                </div>
+              </div>
+              <div className="kpi" style={{ padding: 14, borderRight: '1px solid var(--pt-line)' }}>
+                <div className="kpi__label" style={{ fontFamily: 'var(--pt-font-mono, monospace)', fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--pt-subtle)' }}>Charges</div>
+                <div className="kpi__val num amount--negative" style={{ fontFamily: 'var(--pt-font-display, sans-serif)', fontWeight: 900, fontSize: 24, lineHeight: 0.95, marginTop: 6 }}>
+                  {MINUS_PERF}{formatMontant(financeMonthly.current.charges, currency)}
+                </div>
+              </div>
+              <div className="kpi" style={{ padding: 14 }}>
+                <div className="kpi__label" style={{ fontFamily: 'var(--pt-font-mono, monospace)', fontSize: 10, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--pt-subtle)' }}>Marge</div>
+                <div className={`kpi__val num ${financeMonthly.current.marge >= 0 ? 'amount--positive' : 'amount--negative'}`} style={{ fontFamily: 'var(--pt-font-display, sans-serif)', fontWeight: 900, fontSize: 24, lineHeight: 0.95, marginTop: 6 }}>
+                  {financeMonthly.current.marge >= 0 ? '+' : MINUS_PERF}{formatMontant(Math.abs(financeMonthly.current.marge), currency)}
+                </div>
+              </div>
+            </div>
+
+            {/* Actions : Rapport complet + Détails + PDF */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <button
+                type="button"
+                className="card-link"
+                onClick={() => navigate('/pilotage/rapport')}
+                aria-label="Ouvrir le rapport financier complet"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 14,
+                  padding: 14,
+                  background: 'var(--pt-primary, #2D4A1F)',
+                  color: 'var(--pt-warm, #F5E9D8)',
+                  border: 'none',
+                  borderRadius: 14,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  fontFamily: 'inherit',
+                }}
+              >
+                <FileText size={18} strokeWidth={1.6} aria-hidden />
+                <span style={{ flex: 1, fontFamily: 'var(--pt-font-mono, monospace)', fontWeight: 600, fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                  Rapport financier complet
+                </span>
+                <ChevronRight size={16} aria-hidden />
+              </button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => navigate('/pilotage/finances/details')}
+                >
+                  Détails
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handlePrintPdf}
+                  disabled={pdfLoading}
+                  aria-busy={pdfLoading}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <Download size={14} strokeWidth={1.5} aria-hidden="true" />
+                    {pdfLoading ? 'Génération…' : 'PDF'}
+                  </span>
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
       </Section>
       )}
 

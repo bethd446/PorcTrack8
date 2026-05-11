@@ -77,6 +77,8 @@ vi.mock('../../utils/biologyValidators', () => ({
 
 vi.mock('@ionic/react', () => ({
   useIonAlert: () => [vi.fn()],
+  IonModal: ({ isOpen, children, 'aria-label': ariaLabel }: { isOpen: boolean; children: React.ReactNode; 'aria-label'?: string }) =>
+    isOpen ? <div role="dialog" aria-label={ariaLabel}>{children}</div> : null,
   IonSegment: ({ children, onIonChange, value }: { children: React.ReactNode; onIonChange?: (e: { detail: { value: string } }) => void; value?: string }) => (
     <div data-testid="segment" data-value={value} onClick={() => onIonChange?.({ detail: { value: 'BANDE' } })}>
       {children}
@@ -86,14 +88,6 @@ vi.mock('@ionic/react', () => ({
     <button data-value={value}>{children}</button>
   ),
   IonLabel: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
-}));
-
-vi.mock('../agritech', () => ({
-  BottomSheet: ({ isOpen, children }: { isOpen: boolean; children: React.ReactNode }) =>
-    isOpen ? <div role="dialog">{children}</div> : null,
-  DataRow: ({ primary, onClick }: { primary: string; onClick?: () => void }) => (
-    <div onClick={onClick} data-testid="data-row">{primary}</div>
-  ),
 }));
 
 import QuickPeseeForm from './QuickPeseeForm';

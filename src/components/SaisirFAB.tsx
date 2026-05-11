@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
 
 import SaisirSheet from './forms/SaisirSheet';
-import { Button } from '@/design-system';
 
 interface SaisirFABProps {
   className?: string;
@@ -10,19 +9,18 @@ interface SaisirFABProps {
 }
 
 /**
- * SaisirFAB — V31-FIX-PACK-01
+ * SaisirFAB — V77 (mockup onboarding-modals-v76 + constitution V77.1)
  * ════════════════════════════════════════════════════════════════════════════
- * FAB "Saisir évènement" rond (border-radius: 50%, ratio 1:1 strict).
- *
- * Spec V31 :
- *   - 56×56 carré → cercle parfait via border-radius 50%
- *   - Background var(--pt-primary) (vert forêt) + texte blanc
- *   - Ombre prononcée double couche (vert + neutre)
- *   - Position fixed bottom 80px (au-dessus de la nav Ionic) right 20px
+ * FAB "Saisir un évènement" canonique V77 :
+ *   - 64×64 carré radius 20px (block plat, pas cercle)
+ *   - Background var(--pt-primary) + texte blanc
+ *   - Shadow plate 0 4px 0 var(--pt-primary-deep) (style brutaliste V77)
+ *   - Position fixed bottom 80px (au-dessus de la nav Ionic) right 24px
  *   - z-index 1010 (au-dessus de la bottom nav et du contenu)
- *   - Icône Plus 24px centrée
+ *   - Active state : translateY(2px) + shadow 0 2px 0
+ *   - Wrapper `.pt-screen` requis pour activer les tokens scopés V77
  *
- * La présence est désormais contextuelle : voir `usePageFab()` + `App.tsx`.
+ * La présence est contextuelle : voir `usePageFab()` + `App.tsx`.
  * `hidden={true}` reste supporté pour les routes qui veulent le masquer en
  * dehors du hook (ex : modale plein écran).
  */
@@ -32,40 +30,34 @@ const SaisirFAB: React.FC<SaisirFABProps> = ({ className = '', hidden = false })
   if (hidden) return null;
 
   return (
-    <>
-      <Button
+    <div className="pt-screen">
+      <button
         type="button"
-        variant="primary"
         onClick={() => setOpen(true)}
         aria-label="Saisir un évènement métier"
         aria-haspopup="dialog"
         aria-expanded={open}
         data-pt="fab"
-        className={`pressable fixed flex items-center justify-center transition-transform hover:scale-105 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${className}`}
+        className={`fab--v77 pressable ${className}`}
         style={{
           bottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)',
-          right: 20,
-          width: 56,
-          height: 56,
-          borderRadius: '50%',
+          right: 24,
+          width: 64,
+          height: 64,
+          borderRadius: 20,
           background: 'var(--pt-primary)',
-          color: 'var(--pt-primary-text)',
+          color: 'white',
           border: 0,
           cursor: 'pointer',
           zIndex: 1010,
-          boxShadow:
-            '0 4px 16px rgba(45, 74, 31, 0.24), 0 2px 6px rgba(0, 0, 0, 0.08)',
-          transitionDuration: 'var(--duration-press, 160ms)',
-          transitionTimingFunction:
-            'var(--ease-emil, cubic-bezier(0.23,1,0.32,1))',
-          outlineColor: 'var(--pt-primary)',
+          boxShadow: '0 4px 0 var(--pt-primary-deep, #1F3315)',
         }}
       >
-        <Plus size={24} strokeWidth={2.4} aria-hidden="true" />
-      </Button>
+        <Plus size={26} strokeWidth={2.4} aria-hidden="true" />
+      </button>
 
       <SaisirSheet isOpen={open} onClose={() => setOpen(false)} />
-    </>
+    </div>
   );
 };
 
