@@ -128,6 +128,17 @@ const QuickNoteForm: React.FC<QuickNoteFormProps> = ({ subjectType, subjectId, o
     }
   }, [dictation.transcript, dictation.isListening, noteSnapshot]);
 
+  // Erreur de dictée → toast utilisateur + restauration du snapshot.
+  // Sur mobile (Android Chrome, Safari iOS), `no-speech` et `network` sont
+  // fréquents et silencieux côté UI sans ce feedback explicite.
+  useEffect(() => {
+    if (!dictation.errorMessage) return;
+    showToast(dictation.errorMessage, 'error', 3500);
+    if (noteSnapshot) setNote(noteSnapshot);
+    dictation.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dictation.errorMessage]);
+
   const handleStartDictation = (): void => {
     setNoteSnapshot(note);
     dictation.start();

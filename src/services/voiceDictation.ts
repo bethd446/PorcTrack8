@@ -64,7 +64,10 @@ export interface DictationState {
   isSupported: boolean;
   isListening: boolean;
   transcript: string;
+  /** Code brut Web Speech ('no-speech', 'not-allowed', 'network', ...). */
   error: string | null;
+  /** Message FR lisible utilisateur. null si pas d'erreur. */
+  errorMessage: string | null;
   start: () => void;
   stop: () => void;
   reset: () => void;
@@ -76,12 +79,37 @@ function getRecognitionCtor(): SpeechRecognitionCtor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
+/** Mappe les codes d'erreur Web Speech API vers messages FR utilisateur. */
+export function formatDictationError(code: string | null): string | null {
+  if (!code) return null;
+  switch (code) {
+    case 'no-speech':
+      return 'Aucune voix détectée — réessaie plus près du micro';
+    case 'audio-capture':
+      return 'Micro indisponible — vérifie le matériel';
+    case 'not-allowed':
+    case 'service-not-allowed':
+      return 'Micro non autorisé — active la permission dans le navigateur';
+    case 'network':
+      return 'Erreur réseau — la dictée nécessite une connexion';
+    case 'aborted':
+      return 'Dictée interrompue';
+    case 'language-not-supported':
+      return 'Langue non supportée par la dictée';
+    case 'bad-grammar':
+      return 'Erreur de grammaire dictée';
+    default:
+      return 'Erreur dictée — réessaie';
+  }
+}
+
 export function useVoiceDictation(lang = 'fr-FR'): DictationState {
   const Ctor = useMemo(() => getRecognitionCtor(), []);
   const isSupported = Ctor !== null;
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const errorMessage = useMemo(() => formatDictationError(error), [error]);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
   const stop = useCallback(() => {
@@ -119,8 +147,16 @@ export function useVoiceDictation(lang = 'fr-FR'): DictationState {
       setTranscript(acc);
     };
     r.onerror = (event: SpeechRecognitionErrorEvent) => {
-      setError(event.error || 'Erreur dictée');
+      // Sur Android Chrome, `no-speech` peut arriver sans onend → on force le
+      // cleanup pour éviter un état zombie (isListening figé à true).
+      setError(event.error || 'unknown');
       setIsListening(false);
+      try {
+        r.abort();
+      } catch {
+        /* noop */
+      }
+      recognitionRef.current = null;
     };
     r.onend = () => {
       setIsListening(false);
@@ -156,5 +192,5 @@ export function useVoiceDictation(lang = 'fr-FR'): DictationState {
     };
   }, []);
 
-  return { isSupported, isListening, transcript, error, start, stop, reset };
+  return { isSupported, isListening, transcript, error, errorMessage, start, stop, reset };
 }

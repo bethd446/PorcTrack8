@@ -250,9 +250,22 @@ const AnimalsV70Inner: React.FC = () => {
             const isMater = /maternité|maternite|allaitante|allaitement/.test(s);
             const isVide = /attente saillie|vide|sevrée|sevree/.test(s);
             const isAVendre = /réforme|reforme/.test(s);
+            // Sub-text contextuel — évite de doublonner la pill (PLEINE/MATERNITÉ/...).
+            // Parité + info temporelle (MB prévue / lactation / disponible).
+            const parite = typeof t.nbPortees === 'number' ? `Parité ${t.nbPortees}` : null;
+            const dateInfo = isPleine && t.dateMBPrevue
+              ? `MB prévue ${formatDateFr(t.dateMBPrevue)}`
+              : isMater
+                ? 'Lactation en cours'
+                : isVide
+                  ? 'Disponible saillie'
+                  : isAVendre
+                    ? 'À réformer'
+                    : null;
+            const status = [parite, dateInfo].filter(Boolean).join(' · ') || (t.statut ?? 'Truie active');
             return {
               id: t.displayId ?? t.id,
-              status: t.statut ?? 'Truie active',
+              status,
               statusLabel: isPleine ? 'Pleine' : isMater ? 'Maternité' : isVide ? 'Vide' : isAVendre ? 'À vendre' : (t.statut ?? 'Active'),
               pillVariant: (isPleine ? 'success' : isMater ? 'warm' : isVide ? 'warning' : isAVendre ? 'ghost' : 'info') as PillVariant,
             };
