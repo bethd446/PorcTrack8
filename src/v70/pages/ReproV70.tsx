@@ -483,7 +483,7 @@ export const ReproV70: React.FC = () => {
   return (
     <div
       className="pt-screen phone-content"
-      style={{ paddingBottom: 168, maxWidth: 600, margin: '0 auto' }}
+      style={{ paddingBottom: 200, maxWidth: 600, margin: '0 auto' }}
     >
       <MariusGreeting pageContext="reproduction" />
 

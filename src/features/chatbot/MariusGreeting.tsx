@@ -30,7 +30,7 @@ export const MariusGreeting: React.FC<MariusGreetingProps> = ({ onClick, pageCon
         display: 'flex',
         alignItems: 'stretch',
         gap: 8,
-        margin: '0 16px 12px',
+        margin: '0 16px 6px',
       }}
     >
       <button
@@ -40,15 +40,15 @@ export const MariusGreeting: React.FC<MariusGreetingProps> = ({ onClick, pageCon
           flex: 1,
           display: 'flex',
           alignItems: 'center',
-          gap: 12,
-          padding: '10px 14px',
+          gap: 10,
+          padding: '6px 12px',
           background: 'var(--pt-warm)',
           border: '1px solid var(--pt-line-strong)',
           borderRadius: 999,
           cursor: 'pointer',
           textAlign: 'left',
           transition: 'background 200ms ease, border-color 200ms ease',
-          minHeight: 56,
+          minHeight: 44,
         }}
         aria-label="Ouvrir l'assistant Marius"
       >
@@ -56,23 +56,23 @@ export const MariusGreeting: React.FC<MariusGreetingProps> = ({ onClick, pageCon
           src="/images/v73/marius/orb-emeraude.webp"
           alt=""
           aria-hidden="true"
-          width={36}
-          height={36}
+          width={28}
+          height={28}
           style={{
-            width: 36,
-            height: 36,
+            width: 28,
+            height: 28,
             borderRadius: '50%',
             objectFit: 'cover',
             flexShrink: 0,
-            boxShadow: '0 0 12px rgba(52, 211, 153, 0.5)',
+            boxShadow: '0 0 10px rgba(52, 211, 153, 0.5)',
           }}
         />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
           <span
             style={{
               fontFamily: 'var(--pt-font-mono)',
               fontWeight: 600,
-              fontSize: 10,
+              fontSize: 9.5,
               color: 'var(--pt-accent)',
               letterSpacing: '0.14em',
               textTransform: 'uppercase',
@@ -83,9 +83,9 @@ export const MariusGreeting: React.FC<MariusGreetingProps> = ({ onClick, pageCon
           </span>
           <span
             style={{
-              fontSize: 12.5,
+              fontSize: 12,
               color: 'var(--pt-ink)',
-              lineHeight: 1.3,
+              lineHeight: 1.25,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
@@ -105,7 +105,7 @@ export const MariusGreeting: React.FC<MariusGreetingProps> = ({ onClick, pageCon
           alignItems: 'center',
           justifyContent: 'center',
           width: 44,
-          minHeight: 56,
+          minHeight: 44,
           padding: 0,
           background: 'var(--pt-warm)',
           border: '1px solid var(--pt-line-strong)',

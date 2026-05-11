@@ -191,9 +191,7 @@ export const TodayV70: React.FC = () => {
         <div className="eyebrow">{dateLabel}</div>
         <h1>Aujourd’hui</h1>
         <div className="sub">
-          {showSkeletons
-            ? `Bonjour ${userName}`
-            : `Bonjour ${userName} — ${alerts.length} priorités`}
+          {`Bonjour ${userName}`}
         </div>
       </header>
 

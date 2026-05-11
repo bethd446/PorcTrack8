@@ -1117,8 +1117,11 @@
   font-size: 9.5px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   color: var(--pt-subtle);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .kpis-strip .kpi__val {
@@ -1226,7 +1229,8 @@
 }
 
 .field__input::placeholder {
-  color: var(--pt-subtle);
+  color: var(--pt-muted);
+  opacity: 0.85;
 }
 
 .field__input.mono {
@@ -2993,6 +2997,24 @@
   color: var(--pt-warm);
   margin: 0 0 16px;
   border-radius: 0 0 18px 18px;
+  position: relative;
+}
+
+/* Fondu subtil pour adoucir la transition vert → crème (anti-AI feel). */
+.ph--primary::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -10px;
+  height: 16px;
+  background: linear-gradient(
+    to bottom,
+    rgba(45, 74, 31, 0.10) 0%,
+    rgba(45, 74, 31, 0) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
 }
 
 .ph__crumb {
