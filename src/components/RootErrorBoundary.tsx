@@ -1,4 +1,5 @@
 import React from 'react';
+import { isChunkError, reloadForChunkError } from '../lib/chunkError';
 
 interface Props {
   children: React.ReactNode;
@@ -7,23 +8,6 @@ interface Props {
 interface State {
   hasError: boolean;
   error?: Error;
-}
-
-const CHUNK_ERROR_PATTERNS = [
-  'Failed to fetch dynamically imported module',
-  'ChunkLoadError',
-  'Loading chunk',
-  'Loading CSS chunk',
-];
-
-function isChunkError(error?: Error): boolean {
-  if (!error) return false;
-  const msg = error.message ?? '';
-  const name = error.name ?? '';
-  return (
-    name === 'ChunkLoadError' ||
-    CHUNK_ERROR_PATTERNS.some((p) => msg.includes(p))
-  );
 }
 
 /**
@@ -56,12 +40,7 @@ export class RootErrorBoundary extends React.Component<Props, State> {
   }
 
   handleReload = () => {
-    try {
-      sessionStorage.removeItem('pt:chunk-error-reloaded');
-    } catch {
-      // sessionStorage indisponible (mode privé strict) — on continue.
-    }
-    window.location.reload();
+    reloadForChunkError();
   };
 
   render(): React.ReactNode {

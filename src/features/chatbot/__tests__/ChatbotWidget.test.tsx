@@ -59,8 +59,16 @@ vi.mock('../../../context/AuthContext', () => ({
   }),
 }));
 
-// Force l'API key Mistral (sinon `isMariusConfigured = false` -> widget null).
-vi.stubEnv('VITE_MISTRAL_API_KEY', 'test-key');
+// Force l'API key Mistral AVANT tout import du widget. Les imports ESM sont
+// hoistés au top du module, donc un simple `vi.stubEnv(...)` placé avant
+// `import { ChatbotWidget }` s'exécute en réalité APRÈS l'import (et la
+// constante MISTRAL_API_KEY est alors résolue à `undefined` en CI où
+// .env.local n'existe pas, ce qui rend `isMariusConfigured = false` et le
+// widget retourne null → DOM vide). `vi.hoisted` garantit l'exécution avant
+// tous les imports.
+vi.hoisted(() => {
+  (import.meta.env as Record<string, string>).VITE_MISTRAL_API_KEY = 'test-key';
+});
 
 import { ChatbotWidget } from '../ChatbotWidget';
 
