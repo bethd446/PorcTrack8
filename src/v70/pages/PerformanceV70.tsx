@@ -347,11 +347,21 @@ export const PerformanceV70: React.FC = () => {
           <div className="kpis-strip" aria-label="Indicateurs clés du troupeau">
             <div className="kpi">
               <div className="kpi__label">ISSE j</div>
-              <div className="kpi__val">{fmt(kpis?.isseMoyJours ?? null, 1)}</div>
+              <div
+                className="kpi__val"
+                title={kpis?.isseMoyJours == null ? '3 paires sevrage→saillie valides requises' : undefined}
+              >
+                {fmt(kpis?.isseMoyJours ?? null, 1)}
+              </div>
             </div>
             <div className="kpi">
               <div className="kpi__label">Taux MB</div>
-              <div className="kpi__val">{fmt(kpis?.tauxMBPct ?? null, 0, '%')}</div>
+              <div
+                className="kpi__val"
+                title={kpis?.tauxMBPct == null ? '5 saillies matures (>115j) requises' : undefined}
+              >
+                {fmt(kpis?.tauxMBPct ?? null, 0, '%')}
+              </div>
             </div>
             <div className="kpi">
               <div className="kpi__label">NV moy.</div>
@@ -359,7 +369,12 @@ export const PerformanceV70: React.FC = () => {
             </div>
             <div className="kpi">
               <div className="kpi__label">IEM j</div>
-              <div className="kpi__val">{fmt(kpis?.iemMoyJours ?? null, 0)}</div>
+              <div
+                className="kpi__val"
+                title={kpis?.iemMoyJours == null ? 'Au moins 2 mises-bas datées pour la même truie requises' : undefined}
+              >
+                {fmt(kpis?.iemMoyJours ?? null, 0)}
+              </div>
             </div>
           </div>
         </section>

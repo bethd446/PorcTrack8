@@ -1114,10 +1114,10 @@
 
 .kpis-strip .kpi__label {
   font-family: var(--pt-font-mono);
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   color: var(--pt-subtle);
   white-space: nowrap;
   overflow: hidden;
@@ -3000,17 +3000,17 @@
   position: relative;
 }
 
-/* Fondu subtil pour adoucir la transition vert → crème (anti-AI feel). */
+/* Fondu pour adoucir la transition vert → crème (anti-AI feel). */
 .ph--primary::after {
   content: '';
   position: absolute;
   left: 0;
   right: 0;
-  bottom: -10px;
-  height: 16px;
+  bottom: -14px;
+  height: 20px;
   background: linear-gradient(
     to bottom,
-    rgba(45, 74, 31, 0.10) 0%,
+    rgba(45, 74, 31, 0.20) 0%,
     rgba(45, 74, 31, 0) 100%
   );
   pointer-events: none;
