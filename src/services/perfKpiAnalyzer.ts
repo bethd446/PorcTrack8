@@ -168,6 +168,14 @@ const ISSE_ELEVE_MIN_OCCURRENCES = 2;
 const IEM_MIN_J = 100;
 const IEM_MAX_J = 200;
 
+/** Durée gestation porcine (jours) — utilisée pour borner les saillies "matures" (qui ont eu le temps de produire une MB). */
+const GESTATION_J = 115;
+
+/** Seuils de fiabilité statistique — empêchent l'affichage de KPI calculés sur trop peu de signal. */
+const TAUX_MB_MIN_SAMPLE = 5;
+const TAUX_MB_CAP_PCT = 120;
+const ISSE_MIN_PAIRS = 3;
+
 // ─── KPI repro avancés (ISSE, IEM, taux MB, renouvellement) ─────────────────
 
 /**
@@ -241,7 +249,10 @@ export function computeISSEMoyen(
       n += 1;
     }
   }
-  return n > 0 ? round1(total / n) : null;
+  if (n < ISSE_MIN_PAIRS) return null;
+  const moy = round1(total / n);
+  if (moy > ISSE_FENETRE_MAX_J) return null;
+  return moy;
 }
 
 /**
@@ -314,6 +325,7 @@ export function computeTauxMB(
 ): number | null {
   const nowTs = today.getTime();
   const cutoff = nowTs - HORIZON_12M * 86_400_000;
+  const matureCutoff = nowTs - GESTATION_J * 86_400_000;
   let nbMB = 0;
   for (const b of bandes) {
     const ts = parseFr(b.dateMB);
@@ -322,10 +334,14 @@ export function computeTauxMB(
   let nbSaillies = 0;
   for (const s of saillies) {
     const ts = parseFr(s.dateSaillie);
-    if (ts >= cutoff && ts <= nowTs) nbSaillies += 1;
+    if (ts < cutoff || ts > matureCutoff) continue;
+    if (s.statut && s.statut.toUpperCase() === 'ECHEC') continue;
+    nbSaillies += 1;
   }
-  if (nbSaillies === 0) return null;
-  return round1((nbMB * 100) / nbSaillies);
+  if (nbSaillies < TAUX_MB_MIN_SAMPLE) return null;
+  const pct = round1((nbMB * 100) / nbSaillies);
+  if (pct > TAUX_MB_CAP_PCT) return null;
+  return pct;
 }
 
 /**

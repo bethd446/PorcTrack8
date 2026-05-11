@@ -829,6 +829,8 @@
 
 .priority-line__main {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .priority-line__title {
@@ -4060,15 +4062,6 @@
 }
 
 /* ---- PATTERNS TRANSVERSES (autres agents) ---- */
-.pt-screen .score-billboard {
-  font-family: var(--ff-display, 'Big Shoulders Display', sans-serif);
-  font-weight: 800;
-  font-size: clamp(80px, 28vw, 120px);
-  line-height: 0.85;
-  letter-spacing: -0.03em;
-  color: var(--pt-ink);
-  text-transform: uppercase;
-}
 .pt-screen .kpi-billboard {
   font-family: var(--ff-display, 'Big Shoulders Display', sans-serif);
   font-weight: 800;

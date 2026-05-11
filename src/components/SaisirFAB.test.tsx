@@ -54,10 +54,14 @@ describe('SaisirFAB — rendu', () => {
     expect(btn.style.right).toBe('24px');
   });
 
-  it('est wrappé dans .pt-screen pour activer les tokens V70+', () => {
+  it('ne wrappe pas son FAB dans un div en flow normal (sinon écrase v70-root)', () => {
+    // Garde anti-régression du fix /today blanche : le wrapper `.pt-screen` autour
+    // du FAB rend un frère de v70-root sous ion-app (flex column) qui écrase la
+    // zone visible à 112px. Le FAB est `position: fixed`, le wrapper est inutile.
     const { container } = render(<SaisirFAB />);
     const root = container.firstChild as HTMLElement;
-    expect(root.className).toContain('pt-screen');
+    expect(root?.tagName).toBe('BUTTON');
+    expect(root.getAttribute('data-pt')).toBe('fab');
   });
 
   it('porte data-pt="fab" pour neutraliser le reset Ionic', () => {

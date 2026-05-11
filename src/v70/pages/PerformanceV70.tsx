@@ -346,8 +346,8 @@ export const PerformanceV70: React.FC = () => {
 
           <div className="kpis-strip" aria-label="Indicateurs clés du troupeau">
             <div className="kpi">
-              <div className="kpi__label">ISSE</div>
-              <div className="kpi__val">{fmt(kpis?.sevresParTruieAn ?? null, 1)}</div>
+              <div className="kpi__label">ISSE j</div>
+              <div className="kpi__val">{fmt(kpis?.isseMoyJours ?? null, 1)}</div>
             </div>
             <div className="kpi">
               <div className="kpi__label">Taux MB</div>
@@ -390,14 +390,10 @@ export const PerformanceV70: React.FC = () => {
           </div>
           <div style={{ textAlign: 'right' }}>
             {(() => {
-              // F-32 V75-n — ISSE n'a de sens qu'avec ≥ 1 cycle clos. On
-              // ajoute (V77 a) un seuil minimal de portées historiques pour
-              // éviter "ISSE 0.0" sur une ferme en démarrage qui n'a pas
-              // encore eu un sevrage complet.
-              const nbSevres = kpis?.nbSevrés12m ?? 0;
-              const nbPortees = kpis?.nbPortees12m ?? 0;
-              const isseAn = kpis?.sevresParTruieAn ?? 0;
-              const aCycleClos = nbSevres > 0 && isseAn > 0 && nbPortees >= 3;
+              // ISSE (Intervalle Sevrage-Saillie, jours) — requiert au moins
+              // ISSE_MIN_PAIRS paires sevrage→saillie valides côté analyzer.
+              const isseJ = kpis?.isseMoyJours ?? null;
+              const aSignal = isseJ != null;
               return (
                 <>
                   <div
@@ -405,16 +401,16 @@ export const PerformanceV70: React.FC = () => {
                       fontFamily: 'var(--pt-font-display, sans-serif)',
                       fontSize: 32,
                       fontWeight: 900,
-                      color: aCycleClos ? 'var(--pt-success)' : 'var(--pt-muted)',
+                      color: aSignal ? 'var(--pt-success)' : 'var(--pt-muted)',
                       lineHeight: 1,
                     }}
                   >
-                    {aCycleClos ? fmt(isseAn, 1) : '—'}
+                    {aSignal ? fmt(isseJ, 1) : '—'}
                   </div>
                   <div style={{ fontSize: 10, color: 'var(--pt-muted)' }}>
-                    {aCycleClos
-                      ? 'vs réf. 12.0'
-                      : 'Premières performances visibles après le 1er sevrage complet'}
+                    {aSignal
+                      ? 'vs réf. 5–8 j'
+                      : 'Premières performances visibles après le 1er retour en chaleur sevrage→saillie'}
                   </div>
                 </>
               );
@@ -431,8 +427,8 @@ export const PerformanceV70: React.FC = () => {
           est maintenant énoncé en clair une seule fois en intro. */}
       {tab === 'vue' && (
         <EduCard label="Qu’est-ce que l’ISSE ?">
-          Indice Sevré-Saillie : nombre moyen de porcelets sevrés par truie par cycle.
-          Référence métier : <strong>&gt;12 = excellent, 10-12 = bon, &lt;10 = à améliorer</strong>.
+          Intervalle Sevrage-Saillie : nombre de jours entre le sevrage d'une truie et sa saillie suivante.
+          Référence métier : <strong>5–8 j = excellent, 9–14 j = bon, &gt;14 j = à améliorer</strong>.
         </EduCard>
       )}
 

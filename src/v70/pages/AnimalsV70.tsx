@@ -11,7 +11,7 @@
  * filter pills, liste truies stubs. FAB ajout (Phase F branchera contexte).
  */
 import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Boxes, Home, Eye, Edit3, Scale, LogOut, Search } from 'lucide-react';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
@@ -120,25 +120,30 @@ const AnimalsV70Inner: React.FC = () => {
   // faux empty state à craindre, le user voit toujours quelque chose.
   const tabBandesEmptyForLoading = useListingLoadingGuard(farmLoading, bandes.length);
 
-  // V75-u P1 #5 — Sync URL ?view= ↔ tab pour deep-links (ex: /troupeau?view=verrats
-  // depuis breadcrumb fiche détail). Sans cette synchro, naviguer directement vers
-  // /troupeau?view=verrats laissait l'onglet Truies sélectionné.
+  // Sync URL ↔ tab pour deep-links.
+  // Deux sources possibles (priorité query > path > défaut 'truies') :
+  //   1. ?view=verrats  (breadcrumb fiche détail)
+  //   2. /troupeau/verrats (lien externe, barre URL directe)
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab: AnimalTab = isAnimalTab(searchParams.get('view'))
-    ? (searchParams.get('view') as AnimalTab)
-    : 'truies';
-  const [tab, setTab] = useState<AnimalTab>(initialTab);
+  const { pathname } = useLocation();
 
-  // Sync state ← URL : nécessaire quand l'utilisateur arrive via un deep-link
-  // (QR code, copier-coller, navigate replace) ou via back navigation depuis
-  // une fiche détail dont le breadcrumb pointe vers /troupeau?view=...
+  const tabFromLocation = (): AnimalTab => {
+    const fromQuery = searchParams.get('view');
+    if (isAnimalTab(fromQuery)) return fromQuery;
+    const match = pathname.match(/^\/troupeau\/([^/]+)/);
+    const fromPath = match ? match[1] : null;
+    if (isAnimalTab(fromPath)) return fromPath;
+    return 'truies';
+  };
+
+  const [tab, setTab] = useState<AnimalTab>(tabFromLocation);
+
+  // Sync state ← URL au changement de location (deep-link, back navigation).
   useEffect(() => {
-    const urlTab = searchParams.get('view');
-    if (isAnimalTab(urlTab) && urlTab !== tab) {
-      setTab(urlTab);
-    }
+    const next = tabFromLocation();
+    if (next !== tab) setTab(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [pathname, searchParams]);
 
   const handleTabChange = (v: string) => {
     setTab(v as AnimalTab);
@@ -388,7 +393,7 @@ const AnimalsV70Inner: React.FC = () => {
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder={`Rechercher ${baseList[0]?.id ?? '...'}`}
+              placeholder={`Rechercher ${baseList[0]?.displayName ?? baseList[0]?.id ?? '...'}`}
               style={{
                 width: '100%',
                 border: 'none',

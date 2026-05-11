@@ -149,14 +149,21 @@ describe('computeGlobalKpis', () => {
   });
 
   it('intervalle sevrage → saillie calculé correctement', () => {
-    const truies: Truie[] = [makeTruie({ id: 'T01', boucle: 'B01' })];
+    // ISSE_MIN_PAIRS = 3 — 3 truies × 1 paire chacune.
+    const truies: Truie[] = [
+      makeTruie({ id: 'T01', boucle: 'B01' }),
+      makeTruie({ id: 'T02', boucle: 'B02' }),
+      makeTruie({ id: 'T03', boucle: 'B03' }),
+    ];
     const bandes: BandePorcelets[] = [
-      // sevrée le 01/02/2025
       makeBande({ truie: 'T01', dateMB: '10/01/2025', dateSevrageReelle: '01/02/2025', nv: 12, morts: 1, vivants: 11 }),
+      makeBande({ truie: 'T02', dateMB: '10/01/2025', dateSevrageReelle: '01/02/2025', nv: 12, morts: 1, vivants: 11 }),
+      makeBande({ truie: 'T03', dateMB: '10/01/2025', dateSevrageReelle: '01/02/2025', nv: 12, morts: 1, vivants: 11 }),
     ];
     const saillies: Saillie[] = [
-      // saillie 6 jours après le sevrage
       makeSaillie({ truieId: 'T01', dateSaillie: '07/02/2025' }),
+      makeSaillie({ truieId: 'T02', dateSaillie: '07/02/2025' }),
+      makeSaillie({ truieId: 'T03', dateSaillie: '07/02/2025' }),
     ];
     const kpis = computeGlobalKpis(truies, bandes, saillies, TODAY);
     expect(kpis.intervalSevrageSaillieMoyJours).toBeCloseTo(6, 0);
@@ -360,22 +367,29 @@ describe('computeISSEMoyen', () => {
   });
 
   it('filtre les paires aberrantes > 60j', () => {
+    // ISSE_MIN_PAIRS = 3 — 3 paires valides + 1 aberrante pour prouver le filtre.
     const truies: Truie[] = [
       makeTruie({ id: 'T01', boucle: 'B01' }),
       makeTruie({ id: 'T02', boucle: 'B02' }),
+      makeTruie({ id: 'T03', boucle: 'B03' }),
+      makeTruie({ id: 'T04', boucle: 'B04' }),
     ];
     const bandes: BandePorcelets[] = [
       makeBande({ truie: 'T01', dateMB: '10/01/2025', dateSevrageReelle: '01/02/2025' }),
       makeBande({ truie: 'T02', dateMB: '10/01/2025', dateSevrageReelle: '01/02/2025' }),
+      makeBande({ truie: 'T03', dateMB: '10/01/2025', dateSevrageReelle: '01/02/2025' }),
+      makeBande({ truie: 'T04', dateMB: '10/01/2025', dateSevrageReelle: '01/02/2025' }),
     ];
     const saillies: Saillie[] = [
-      // T01 : 5j (valide)
+      // 3 paires valides à 5j chacune.
       makeSaillie({ truieId: 'T01', dateSaillie: '06/02/2025' }),
-      // T02 : 90j (aberrant, filtré)
+      makeSaillie({ truieId: 'T03', dateSaillie: '06/02/2025' }),
+      makeSaillie({ truieId: 'T04', dateSaillie: '06/02/2025' }),
+      // T02 : 90j (aberrant, filtré par ISSE_FENETRE_MAX_J).
       makeSaillie({ truieId: 'T02', dateSaillie: '02/05/2025' }),
     ];
     const isse = computeISSEMoyen(truies, bandes, saillies);
-    expect(isse).toBeCloseTo(5, 1); // seulement T01 retenu
+    expect(isse).toBeCloseTo(5, 1);
   });
 });
 
@@ -412,23 +426,25 @@ describe('computeIEMMoyen', () => {
 });
 
 describe('computeTauxMB', () => {
-  it('10 saillies / 9 MB dans la fenêtre 12m → 90%', () => {
-    const mkDate = (i: number): string => {
-      // 10 dates uniques sur 2024-2025 (dans la fenêtre 12m avant 15/06/2025)
-      const days = ['01', '05', '10', '15', '20', '25'];
-      const months = ['08', '09', '10', '11', '12', '01', '02', '03', '04', '05'];
-      return `${days[i % days.length]}/${months[i]}/${i < 5 ? '2024' : '2025'}`;
-    };
-    const bandes: BandePorcelets[] = Array.from({ length: 9 }, (_, i) =>
-      makeBande({ id: `P${i}`, truie: 'T01', dateMB: mkDate(i) }),
+  it('10 saillies matures (avant matureCutoff) / 9 MB → 90%', () => {
+    // TODAY=15/06/2025, matureCutoff ≈ 19-21/02/2025. 10 saillies avant 01/02.
+    const saillieDates = [
+      '01/08/2024', '15/08/2024', '01/09/2024', '15/09/2024', '01/10/2024',
+      '15/10/2024', '01/11/2024', '15/11/2024', '01/12/2024', '01/01/2025',
+    ];
+    const mbDates = [
+      '01/11/2024', '15/11/2024', '01/12/2024', '15/12/2024', '15/01/2025',
+      '15/02/2025', '15/03/2025', '15/04/2025', '15/05/2025',
+    ];
+    const bandes: BandePorcelets[] = mbDates.map((d, i) =>
+      makeBande({ id: `P${i}`, truie: 'T01', dateMB: d }),
     );
-    const saillies: Saillie[] = Array.from({ length: 10 }, (_, i) => ({
+    const saillies: Saillie[] = saillieDates.map(d => ({
       truieId: 'T01',
-      dateSaillie: mkDate(i),
+      dateSaillie: d,
       verratId: 'V01',
     }));
-    const taux = computeTauxMB(bandes, saillies, TODAY);
-    expect(taux).toBeCloseTo(90, 1);
+    expect(computeTauxMB(bandes, saillies, TODAY)).toBeCloseTo(90, 1);
   });
 
   it('aucune saillie → null', () => {
@@ -465,31 +481,40 @@ describe('computeTauxRenouvellement', () => {
 
 describe('computeGlobalKpis — KPI repro avancés intégrés', () => {
   it('expose isseMoyJours, iemMoyJours, tauxMBPct, tauxRenouvellementPct', () => {
+    // Dataset enrichi : ISSE_MIN_PAIRS=3 et TAUX_MB_MIN_SAMPLE=5 saillies matures.
     const truies: Truie[] = [
       makeTruie({ id: 'T01', boucle: 'B01' }),
       makeTruie({ id: 'T02', boucle: 'B02' }),
+      makeTruie({ id: 'T03', boucle: 'B03' }),
+      makeTruie({ id: 'T04', boucle: 'B04' }),
+      makeTruie({ id: 'T05', boucle: 'B05' }),
     ];
     const bandes: BandePorcelets[] = [
       makeBande({ truie: 'T01', dateMB: '01/09/2024', dateSevrageReelle: '22/09/2024' }),
       makeBande({ truie: 'T01', dateMB: '26/01/2025', dateSevrageReelle: '16/02/2025' }),
-      makeBande({ truie: 'T02', dateMB: '01/03/2025' }),
+      makeBande({ truie: 'T02', dateMB: '01/09/2024', dateSevrageReelle: '22/09/2024' }),
+      makeBande({ truie: 'T03', dateMB: '01/10/2024', dateSevrageReelle: '22/10/2024' }),
+      makeBande({ truie: 'T04', dateMB: '01/11/2024', dateSevrageReelle: '22/11/2024' }),
     ];
     const saillies: Saillie[] = [
-      makeSaillie({ truieId: 'T01', dateSaillie: '28/09/2024' }), // ISSE 6j
-      makeSaillie({ truieId: 'T01', dateSaillie: '22/02/2025' }), // ISSE 6j
-      makeSaillie({ truieId: 'T02', dateSaillie: '15/11/2024' }),
+      makeSaillie({ truieId: 'T01', dateSaillie: '28/09/2024' }),
+      makeSaillie({ truieId: 'T01', dateSaillie: '22/02/2025' }),
+      makeSaillie({ truieId: 'T02', dateSaillie: '28/09/2024' }),
+      makeSaillie({ truieId: 'T03', dateSaillie: '28/10/2024' }),
+      makeSaillie({ truieId: 'T04', dateSaillie: '28/11/2024' }),
+      makeSaillie({ truieId: 'T05', dateSaillie: '15/11/2024' }),
     ];
     const kpis = computeGlobalKpis(truies, bandes, saillies, TODAY);
     expect(kpis.isseMoyJours).toBeCloseTo(6, 1);
     expect(kpis.iemMoyJours).not.toBeNull(); // T01 : 147j entre 01/09/24 et 26/01/25
     expect(kpis.iemMoyJours).toBeGreaterThan(100);
     expect(kpis.iemMoyJours).toBeLessThan(200);
-    // 3 MB / 3 saillies = 100%
+    // 5 MB / 5 saillies matures = 100%
     expect(kpis.tauxMBPct).toBeCloseTo(100, 1);
-    // 2 nouvelles sur 2 truies totales = 100%
-    expect(kpis.tauxRenouvellementPct).toBeCloseTo(100, 1);
-    expect(kpis.nbSaillies12m).toBe(3);
-    expect(kpis.nbMB12m).toBe(3);
+    // 4 truies avec MB sur 5 totales = 80%
+    expect(kpis.tauxRenouvellementPct).toBeCloseTo(80, 1);
+    expect(kpis.nbSaillies12m).toBe(6);
+    expect(kpis.nbMB12m).toBe(5);
     expect(kpis.nbTruiesAvecMBMultiples).toBe(1);
   });
 

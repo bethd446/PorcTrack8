@@ -15,7 +15,6 @@ interface SaisirFABProps {
  *   - Hérite des dimensions / radius / fond / shadow de `.fab`
  *   - Overrides contextuels inline : position fixed bottom safe-area, right 24,
  *     z-index 1010 (au-dessus de la bottom nav Ionic)
- *   - Wrapper `.pt-screen` conservé pour cohérence tokens V70+
  *
  * La présence est contextuelle : voir `usePageFab()` + `App.tsx`.
  * `hidden={true}` reste supporté pour les routes qui veulent le masquer en
@@ -27,7 +26,7 @@ const SaisirFAB: React.FC<SaisirFABProps> = ({ className = '', hidden = false })
   if (hidden) return null;
 
   return (
-    <div className="pt-screen">
+    <>
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -47,7 +46,7 @@ const SaisirFAB: React.FC<SaisirFABProps> = ({ className = '', hidden = false })
       </button>
 
       <SaisirSheet isOpen={open} onClose={() => setOpen(false)} />
-    </div>
+    </>
   );
 };
 
