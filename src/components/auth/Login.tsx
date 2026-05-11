@@ -186,7 +186,7 @@ export default function Login() {
 
                 <button
                   type="submit"
-                  className="btn-primary--lg"
+                  className="btn btn--primary btn--lg btn--block"
                   disabled={loading}
                   aria-busy={loading}
                 >

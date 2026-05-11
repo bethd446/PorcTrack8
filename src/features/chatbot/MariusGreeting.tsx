@@ -116,7 +116,7 @@ export const MariusGreeting: React.FC<MariusGreetingProps> = ({ onClick, pageCon
           transition: 'background 200ms ease, border-color 200ms ease',
         }}
       >
-        <Maximize2 size={16} strokeWidth={1.75} aria-hidden="true" />
+        <Maximize2 size={16} strokeWidth={2} aria-hidden="true" />
       </button>
     </div>
   );

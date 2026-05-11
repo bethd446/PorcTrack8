@@ -137,7 +137,7 @@ const ProtocolsView: React.FC = () => {
               aria-label="Retour"
               onClick={() => navigate(-1)}
             >
-              <ChevronLeft size={18} strokeWidth={1.8} />
+              <ChevronLeft size={18} strokeWidth={2} />
             </button>
             <div className="eyebrow">Santé &amp; biosécurité</div>
             <h1>Protocoles</h1>
@@ -185,7 +185,7 @@ const ProtocolsView: React.FC = () => {
                   >
                     {p.badge && <span className="card-link__badge">{p.badge}</span>}
                     <span className={`card-link__icon ${className}`} aria-hidden="true">
-                      <Icon size={20} strokeWidth={1.6} />
+                      <Icon size={20} strokeWidth={2} />
                     </span>
                     <div className="card-link__main">
                       <span className="card-link__title">{p.title}</span>
@@ -194,7 +194,7 @@ const ProtocolsView: React.FC = () => {
                     <ChevronRight
                       className="card-link__chev"
                       size={18}
-                      strokeWidth={1.6}
+                      strokeWidth={2}
                       aria-hidden="true"
                     />
                   </button>
@@ -205,11 +205,11 @@ const ProtocolsView: React.FC = () => {
 
           <button
             type="button"
-            className="fab--v77"
+            className="fab"
             aria-label="Ajouter un protocole"
             onClick={() => navigate('/protocoles/nouveau')}
           >
-            <Plus size={28} strokeWidth={1.8} />
+            <Plus size={22} strokeWidth={2} />
           </button>
         </div>
       </IonContent>

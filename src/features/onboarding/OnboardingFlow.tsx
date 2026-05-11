@@ -269,7 +269,7 @@ interface StepDoneProps {
 const StepDone: React.FC<StepDoneProps> = ({ onEnter }) => (
   <div className="flex-1 flex flex-col justify-between">
     <div className="flex-1 flex flex-col items-center justify-center text-center">
-      <CheckCircle2 size={64} className="text-accent mb-5" aria-hidden="true" />
+      <CheckCircle2 size={38} className="text-accent mb-5" aria-hidden="true" />
       <h1
         className="agritech-heading uppercase leading-none text-[28px] mb-3"
         style={{ letterSpacing: '0.02em' }}

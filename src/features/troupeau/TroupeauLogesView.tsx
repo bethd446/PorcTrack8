@@ -169,7 +169,7 @@ const TroupeauLogesView: React.FC = () => {
           aria-live="polite"
         >
           <Home
-            size={28}
+            size={30}
             aria-hidden="true"
             className="mx-auto mb-2"
             style={{ color: 'var(--text-2)' }}

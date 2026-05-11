@@ -163,16 +163,16 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
       >
         {isBusy ? (
           <Loader2
-            size={28}
-            strokeWidth={1.5}
+            size={30}
+            strokeWidth={2}
             className="animate-spin"
             style={{ color: 'var(--pt-primary)' }}
             aria-hidden="true"
           />
         ) : (
           <Camera
-            size={28}
-            strokeWidth={1.5}
+            size={30}
+            strokeWidth={2}
             style={{ color: 'var(--pt-muted)' }}
             aria-hidden="true"
           />

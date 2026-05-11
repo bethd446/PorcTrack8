@@ -21,7 +21,7 @@
  *  - Cards `.card-link` : numéro mono uppercase, type chip couleur,
  *    occupation X/Y mono + barre `.bar-progress`, statut Disponible/Pleine/
  *    Surdense.
- *  - FAB `.fab--v77` "+" → ouvre `QuickAddLogeForm` (form existant).
+ *  - FAB `.fab` "+" → ouvre `QuickAddLogeForm` (form existant).
  *
  * Tokens : `--pt-*` uniquement. Polices `var(--pt-font-*)`. Icônes lucide.
  */
@@ -196,7 +196,7 @@ const LogesViewV77: React.FC<LogesViewV77Props> = ({ onCreateClick }) => {
         </div>
       ) : totalActives === 0 ? (
         <div className="empty-state empty" data-testid="loges-empty-state">
-          <Home size={48} strokeWidth={1.25} color="var(--pt-subtle)" aria-hidden />
+          <Home size={38} strokeWidth={2} color="var(--pt-subtle)" aria-hidden />
           <div
             style={{
               fontFamily: 'var(--pt-font-display)',

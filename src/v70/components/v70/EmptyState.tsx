@@ -33,8 +33,8 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 }) => (
   <div className={className ? `empty ${className}` : 'empty'}>
     <Icon
-      size={48}
-      strokeWidth={1.25}
+      size={38}
+      strokeWidth={2}
       color={iconColor ?? 'var(--pt-subtle)'}
       aria-hidden="true"
     />
@@ -59,7 +59,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     {cta && (
       <button
         type="button"
-        className="btn btn-primary btn-sm"
+        className="btn btn--primary btn--sm"
         onClick={cta.onClick}
         style={{ marginTop: 4 }}
       >

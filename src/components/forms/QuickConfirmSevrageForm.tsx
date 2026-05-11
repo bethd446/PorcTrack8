@@ -7,6 +7,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
+import { Lightbulb } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
 import { FormField, Input, Button } from '@/design-system';
@@ -111,7 +112,7 @@ const QuickConfirmSevrageForm: React.FC<QuickConfirmSevrageFormProps> = ({
               alignItems: 'flex-start',
             }}
           >
-            <span style={{ fontSize: 16, lineHeight: 1 }} aria-hidden>💡</span>
+            <Lightbulb size={16} aria-hidden />
             <div style={{ flex: 1 }}>
               <strong style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Le saviez-vous ?

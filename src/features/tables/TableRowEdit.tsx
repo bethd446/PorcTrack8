@@ -323,7 +323,7 @@ const TableRowEdit: React.FC<TableRowEditProps> = ({ meta, header, rowData, onCl
             className="flex flex-col items-center justify-center gap-3 py-20 px-5 text-center"
             role="status"
           >
-            <AlertCircle size={32} className="text-amber" aria-hidden="true" />
+            <AlertCircle size={30} className="text-amber" aria-hidden="true" />
             <p className="text-[12px] uppercase tracking-wide text-text-1">
               Chargement du schéma de la table…
             </p>

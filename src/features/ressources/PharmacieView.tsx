@@ -318,7 +318,7 @@ const PharmacieView: React.FC = () => {
               aria-label="Retour à Ressources"
               onClick={() => navigate('/ressources')}
             >
-              <ChevronLeft size={18} strokeWidth={1.8} aria-hidden />
+              <ChevronLeft size={18} strokeWidth={2} aria-hidden />
             </button>
             <div className="eyebrow">Ressources · Pharmacie</div>
             <h1>Pharmacie</h1>
@@ -418,7 +418,7 @@ const PharmacieView: React.FC = () => {
             {isEmpty ? (
               <div className="empty-state">
                 <div className="empty-state__icon" aria-hidden>
-                  <Stethoscope size={48} strokeWidth={1.25} />
+                  <Stethoscope size={38} strokeWidth={2} />
                 </div>
                 <div className="empty-state__title">Pharmacie vide</div>
                 <div className="empty-state__sub">
@@ -438,7 +438,7 @@ const PharmacieView: React.FC = () => {
                 {items.length === 0 ? (
                   <div className="empty-state">
                     <div className="empty-state__icon" aria-hidden>
-                      <Stethoscope size={40} strokeWidth={1.25} />
+                      <Stethoscope size={40} strokeWidth={2} />
                     </div>
                     <div className="empty-state__title">Aucun élément</div>
                     <div className="empty-state__sub">
@@ -462,7 +462,7 @@ const PharmacieView: React.FC = () => {
 
         <button
           type="button"
-          className="fab--v77"
+          className="fab"
           onClick={() => setAddOpen(true)}
           aria-label="Nouveau produit"
         >

@@ -243,7 +243,7 @@ const FAB: React.FC<FABProps> = ({
             }}
             aria-hidden="true"
           >
-            {mainIcon ?? <Plus size={24} strokeWidth={2.5} />}
+            {mainIcon ?? <Plus size={22} strokeWidth={2.5} />}
           </span>
         </Button>
       </div>

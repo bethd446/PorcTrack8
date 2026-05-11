@@ -76,7 +76,7 @@ const RessourcesHub: React.FC = () => {
               aria-label="Retour aux Réglages"
               onClick={() => navigate('/reglages')}
             >
-              <ChevronLeft size={18} strokeWidth={1.8} aria-hidden />
+              <ChevronLeft size={18} strokeWidth={2} aria-hidden />
             </button>
             <div className="eyebrow">Ressources</div>
             <h1>Ressources</h1>

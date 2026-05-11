@@ -105,7 +105,7 @@ export default function ResetPassword() {
                 </p>
                 <button
                   type="button"
-                  className="btn-primary--lg"
+                  className="btn btn--primary btn--lg btn--block"
                   onClick={() => navigate('/login', { replace: true })}
                 >
                   <ArrowLeft size={16} strokeWidth={2} />
@@ -194,7 +194,7 @@ export default function ResetPassword() {
 
                   <button
                     type="submit"
-                    className="btn-primary--lg"
+                    className="btn btn--primary btn--lg btn--block"
                     disabled={loading}
                     aria-busy={loading}
                   >

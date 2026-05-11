@@ -50,7 +50,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
   return (
     <button
       type="button"
-      className="btn btn-secondary btn-sm"
+      className="btn btn--secondary btn--sm"
       onClick={handleClick}
       disabled={data.length === 0}
       style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}

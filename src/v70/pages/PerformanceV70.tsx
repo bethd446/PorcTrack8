@@ -312,7 +312,7 @@ export const PerformanceV70: React.FC = () => {
           style={{ background: 'var(--pt-success)', color: 'white', padding: '10px 14px', borderRadius: 12, marginBottom: 12, fontSize: 13, textAlign: 'center' }}
         >
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
-            <Download size={14} strokeWidth={1.5} aria-hidden="true" />
+            <Download size={14} strokeWidth={2} aria-hidden="true" />
             Aperçu PDF prêt — utilise « Enregistrer au format PDF » dans la fenêtre d’impression
           </span>
         </div>
@@ -380,7 +380,7 @@ export const PerformanceV70: React.FC = () => {
               color: 'white',
             }}
           >
-            <TrendingUp size={20} strokeWidth={1.5} aria-hidden="true" />
+            <TrendingUp size={20} strokeWidth={2} aria-hidden="true" />
           </div>
           <div className="hero-info">
             <div className="hero-title-text">ISSE moyen</div>
@@ -531,7 +531,7 @@ export const PerformanceV70: React.FC = () => {
                 aria-busy={pdfLoading}
               >
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <Download size={14} strokeWidth={1.5} aria-hidden="true" />
+                  <Download size={14} strokeWidth={2} aria-hidden="true" />
                   {pdfLoading ? 'Génération…' : 'PDF'}
                 </span>
               </Button>
@@ -641,7 +641,7 @@ export const PerformanceV70: React.FC = () => {
                   y1={100}
                   y2={100}
                   stroke="rgba(26,26,26,0.08)"
-                  strokeWidth={1}
+                  strokeWidth={2}
                 />
                 {financeMonthly.series.map((m, i) => {
                   const barH = (Math.abs(m.marge) / financeMargeMax) * 78;
@@ -738,7 +738,7 @@ export const PerformanceV70: React.FC = () => {
                   fontFamily: 'inherit',
                 }}
               >
-                <FileText size={18} strokeWidth={1.6} aria-hidden />
+                <FileText size={18} strokeWidth={2} aria-hidden />
                 <span style={{ flex: 1, fontFamily: 'var(--pt-font-mono, monospace)', fontWeight: 600, fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
                   Rapport financier complet
                 </span>
@@ -760,7 +760,7 @@ export const PerformanceV70: React.FC = () => {
                   aria-busy={pdfLoading}
                 >
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                    <Download size={14} strokeWidth={1.5} aria-hidden="true" />
+                    <Download size={14} strokeWidth={2} aria-hidden="true" />
                     {pdfLoading ? 'Génération…' : 'PDF'}
                   </span>
                 </Button>
@@ -779,7 +779,7 @@ export const PerformanceV70: React.FC = () => {
             icon={
               <TrendingUp
                 size={14}
-                strokeWidth={1.5}
+                strokeWidth={2}
                 aria-hidden="true"
                 style={{ color: 'var(--pt-muted)', flexShrink: 0 }}
               />
@@ -873,7 +873,7 @@ export const PerformanceV70: React.FC = () => {
                     }, { compact: true })}
                     <RankIcon
                       size={14}
-                      strokeWidth={1.5}
+                      strokeWidth={2}
                       aria-label={rankLabel}
                       style={{ color: rankColor, flexShrink: 0 }}
                     />

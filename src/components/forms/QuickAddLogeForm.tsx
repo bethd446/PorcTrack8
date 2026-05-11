@@ -168,7 +168,7 @@ const QuickAddLogeForm: React.FC<QuickAddLogeFormProps> = ({ isOpen, onClose, on
             </div>
             <footer className="sheet__foot">
               <button type="button" className="btn btn--ghost" onClick={handleClose} disabled={saving} aria-label="Annuler et fermer">Annuler</button>
-              <button type="submit" className="btn-primary--lg" disabled={saving || !isValid} aria-busy={saving} aria-label="Créer la loge">
+              <button type="submit" className="btn btn--primary btn--lg btn--block" disabled={saving || !isValid} aria-busy={saving} aria-label="Créer la loge">
                 {saving ? 'Création…' : <><Check size={14} aria-hidden="true" /> Enregistrer la loge</>}
               </button>
             </footer>

@@ -9,7 +9,7 @@
  *
  * V77.1 — polish visuel : InfoCard + StatTile partagent un style cohérent
  * (label mono uppercase, valeur display 800, hint muted). CTA bas via
- * `.btn--primary btn--full` (constitution V77.1, plus de variantes --lg).
+ * `.btn--primary btn--block` (constitution V77.1, plus de variantes --lg).
  *
  * L'édition réelle (formulaire farm, profil, mot de passe) reste pour
  * l'instant déléguée au legacy /reglages/systeme via le CTA bas de page.
@@ -146,7 +146,7 @@ export const MaFermeV70: React.FC = () => {
               className="iconbtn"
               style={{ marginBottom: 10 }}
             >
-              <ChevronLeft size={16} strokeWidth={1.8} aria-hidden />
+              <ChevronLeft size={16} strokeWidth={2} aria-hidden />
             </button>
             <div className="ph__eyebrow">Configuration</div>
             <h1 className="ph__h1">Ma ferme</h1>
@@ -205,7 +205,7 @@ export const MaFermeV70: React.FC = () => {
             type="button"
             onClick={() => navigate('/reglages/systeme')}
             aria-label="Modifier l’identité de la ferme"
-            className="btn--primary btn--full"
+            className="btn--primary btn--block"
           >
             Modifier la ferme
             <ChevronRight size={18} aria-hidden />

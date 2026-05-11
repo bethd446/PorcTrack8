@@ -83,8 +83,8 @@ export const Dialog: React.FC<DialogProps> = ({
 
   const actionClassName =
     actionVariant === 'danger'
-      ? 'btn btn-primary btn-sm'
-      : 'btn btn-primary btn-sm';
+      ? 'btn btn--primary btn--sm'
+      : 'btn btn--primary btn--sm';
   const actionStyle: React.CSSProperties =
     actionVariant === 'danger'
       ? { background: 'var(--pt-danger)', color: 'var(--pt-warm)' }
@@ -119,7 +119,7 @@ export const Dialog: React.FC<DialogProps> = ({
         >
           <button
             type="button"
-            className="btn btn-ghost btn-sm"
+            className="btn btn--ghost btn--sm"
             onClick={onDismiss}
           >
             {cancelLabel}

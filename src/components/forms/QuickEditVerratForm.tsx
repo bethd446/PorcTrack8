@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
-import { Edit3, Save } from 'lucide-react';
+import { AlertTriangle, Edit3, Save } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
 import { Button, FormField, Input, Select, Textarea } from '@/design-system';
@@ -572,7 +572,7 @@ const QuickEditVerratForm: React.FC<QuickEditVerratFormProps> = ({
                 data-testid="loge-conflict-warning"
                 className="rounded-md border border-red/40 bg-red/10 px-3 py-2 text-[11px] text-red"
               >
-                ⚠ {logeAssignmentResult.raison ?? 'Loge non éligible'}
+                <AlertTriangle size={14} className="inline-block" aria-hidden /> {logeAssignmentResult.raison ?? 'Loge non éligible'}
               </p>
             ) : null}
           </section>

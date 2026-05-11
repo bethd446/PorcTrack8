@@ -296,7 +296,7 @@ function UsersPanel({ users, loading, error, onUsersChange, onError, onInvite }:
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={COUNT_PILL_STYLE}>{users.length}</span>
           <Button variant="primary" size="sm" onClick={onInvite}>
-            <UserPlus size={14} strokeWidth={1.75} />
+            <UserPlus size={14} strokeWidth={2} />
             Ajouter un porcher
           </Button>
         </div>
@@ -661,7 +661,7 @@ function InviteOperatorModal({ isOpen, onClose, currentUserId, onInvited }: Invi
           )}
 
           <Button type="submit" variant="primary" size="md" disabled={submitting || !email}>
-            <UserPlus size={14} strokeWidth={1.75} />
+            <UserPlus size={14} strokeWidth={2} />
             {submitting ? 'Envoi...' : 'Envoyer l\'invitation'}
           </Button>
         </form>
@@ -709,7 +709,7 @@ function OnboardingHero({ onInvite }: OnboardingHeroProps) {
           marginBottom: 8,
         }}
       >
-        <Users size={36} strokeWidth={1.5} color="var(--color-accent-500)" />
+        <Users size={36} strokeWidth={2} color="var(--color-accent-500)" />
       </div>
 
       <h2
@@ -780,7 +780,7 @@ function OnboardingHero({ onInvite }: OnboardingHeroProps) {
       </ul>
 
       <Button variant="primary" size="md" onClick={onInvite}>
-        <UserPlus size={14} strokeWidth={1.75} />
+        <UserPlus size={14} strokeWidth={2} />
         Envoyer une invitation
       </Button>
 
@@ -928,7 +928,7 @@ export default function AdminDashboard() {
           />
         </div>
         <Button variant="ghost" size="sm" onClick={handleLogout}>
-          <LogOut size={14} strokeWidth={1.75} />
+          <LogOut size={14} strokeWidth={2} />
           Déconnexion
         </Button>
       </div>
@@ -1010,7 +1010,7 @@ export default function AdminDashboard() {
 
         <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 8 }}>
           <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
-            <ChevronLeft size={14} strokeWidth={1.75} />
+            <ChevronLeft size={14} strokeWidth={2} />
             Retour au dashboard élevage
           </Button>
         </div>

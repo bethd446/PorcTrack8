@@ -432,7 +432,7 @@ export default function OnboardingV2Wizard() {
             {step < 5 ? (
               <Button
                 variant="primary"
-                className="btn-primary--lg"
+                className="btn btn--primary btn--lg btn--block"
                 onClick={() => setStep((s) => s + 1)}
                 disabled={!canNext}
                 ariaLabel="Suivant"
@@ -443,7 +443,7 @@ export default function OnboardingV2Wizard() {
             ) : (
               <Button
                 variant="primary"
-                className="btn-primary--lg"
+                className="btn btn--primary btn--lg btn--block"
                 onClick={handleSubmit}
                 disabled={submitting}
                 ariaLabel="Créer mon élevage"

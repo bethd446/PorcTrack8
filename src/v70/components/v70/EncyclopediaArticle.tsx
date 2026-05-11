@@ -157,10 +157,10 @@ export const EncyclopediaArticle: React.FC<EncyclopediaArticleProps> = ({
         {onBack && (
           <button
             type="button"
-            className="btn--ghost btn--full"
+            className="btn--ghost btn--block"
             onClick={onBack}
           >
-            <ChevronLeft size={18} strokeWidth={1.8} />
+            <ChevronLeft size={18} strokeWidth={2} />
             Retour
           </button>
         )}
@@ -187,7 +187,7 @@ export const EncyclopediaArticle: React.FC<EncyclopediaArticleProps> = ({
       <header className="ph--minimal">
         {onBack && (
           <button type="button" className="back" aria-label="Retour" onClick={onBack}>
-            <ChevronLeft size={18} strokeWidth={1.8} />
+            <ChevronLeft size={18} strokeWidth={2} />
           </button>
         )}
         <div className="breadcrumb">{breadcrumb}</div>
@@ -226,7 +226,7 @@ export const EncyclopediaArticle: React.FC<EncyclopediaArticleProps> = ({
             return (
               <div key={i} className="fact">
                 <div className="fact__head">
-                  <Lightbulb size={14} strokeWidth={1.8} aria-hidden="true" />
+                  <Lightbulb size={14} strokeWidth={2} aria-hidden="true" />
                   Le saviez-vous&nbsp;?
                 </div>
                 <div className="fact__body" dangerouslySetInnerHTML={{ __html: b.html }} />
@@ -237,7 +237,7 @@ export const EncyclopediaArticle: React.FC<EncyclopediaArticleProps> = ({
             return (
               <div key={i} className="alert-card alert-card--danger">
                 <span className="alert-card__icon" aria-hidden="true">
-                  <AlertTriangle size={22} strokeWidth={1.6} />
+                  <AlertTriangle size={22} strokeWidth={2} />
                 </span>
                 <div>
                   <div className="alert-card__title">À retenir</div>
@@ -261,8 +261,8 @@ export const EncyclopediaArticle: React.FC<EncyclopediaArticleProps> = ({
       </article>
 
       <div className="cta-sticky">
-        <button type="button" className="btn--primary btn--full">
-          <Check size={18} strokeWidth={1.8} aria-hidden="true" />
+        <button type="button" className="btn--primary btn--block">
+          <Check size={18} strokeWidth={2} aria-hidden="true" />
           Marquer comme lu
         </button>
       </div>

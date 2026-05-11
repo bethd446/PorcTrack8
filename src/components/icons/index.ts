@@ -6,7 +6,5 @@ export { TruieIcon } from "./TruieIcon";
 export { VerratIcon } from "./VerratIcon";
 export { PorceletIcon } from "./PorceletIcon";
 export { BandeIcon } from "./BandeIcon";
-export { BalanceIcon } from "./BalanceIcon";
-export { SeringueIcon } from "./SeringueIcon";
 
 export type { AgritechIconProps } from "./TruieIcon";

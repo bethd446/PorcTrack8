@@ -210,7 +210,7 @@ export default function PendingValidationsView({ embedded, onChange }: PendingVa
             fontSize: 13,
           }}
         >
-          <Check size={28} strokeWidth={1.5} color="var(--color-accent-500)" />
+          <Check size={30} strokeWidth={2} color="var(--color-accent-500)" />
           <span>Aucune action en attente.</span>
         </div>
       )}
@@ -256,7 +256,7 @@ export default function PendingValidationsView({ embedded, onChange }: PendingVa
                     gap: 4,
                   }}
                 >
-                  <Clock size={11} strokeWidth={1.75} />
+                  <Clock size={11} strokeWidth={2} />
                   {formatRelative(item.saisi_le)}
                 </span>
               </div>
@@ -321,7 +321,7 @@ export default function PendingValidationsView({ embedded, onChange }: PendingVa
                     fontFamily: 'var(--font-mono)',
                   }}
                 >
-                  <Eye size={12} strokeWidth={1.75} />
+                  <Eye size={12} strokeWidth={2} />
                   Détails
                 </Button>
               </div>
@@ -371,7 +371,7 @@ export default function PendingValidationsView({ embedded, onChange }: PendingVa
           fontSize: 12,
         }}
       >
-        <AlertCircle size={14} strokeWidth={1.75} />
+        <AlertCircle size={14} strokeWidth={2} />
         <span style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 500 }}>
           Validation requise
         </span>

@@ -254,10 +254,10 @@ const QuickRefillForm: React.FC<QuickRefillFormProps> = ({
             aria-live="polite"
           >
             <CheckCircle2
-              size={64}
+              size={38}
               className="text-accent mb-4"
               aria-hidden="true"
-              strokeWidth={1.5}
+              strokeWidth={2}
             />
             <p className="agritech-heading text-[18px] uppercase tracking-wide">
               Réception enregistrée

@@ -156,7 +156,7 @@ const BandeCroissanceCard: React.FC<BandeCroissanceCardProps> = ({ bande, notes 
       {pesees.length === 0 ? (
         /* ── État vide : aucune pesée ─────────────────────────────────── */
         <div className="flex flex-col items-center justify-center py-8 text-center">
-          <Scale size={36} className="text-text-2 mb-3" aria-hidden="true" strokeWidth={1.5} />
+          <Scale size={36} className="text-text-2 mb-3" aria-hidden="true" strokeWidth={2} />
           <p className="text-[12px] text-text-1 uppercase tracking-wide">
             Aucune pesée enregistrée
           </p>

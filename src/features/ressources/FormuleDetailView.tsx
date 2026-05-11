@@ -178,13 +178,12 @@ const FormuleDetailHeader: React.FC<{ formule: Formule; onBack: () => void }> = 
 }) => (
   <header className="ph--primary">
     <button
-      data-pt-btn=""
       type="button"
       className="back"
       aria-label="Retour aux formules"
       onClick={onBack}
     >
-      <ChevronLeft size={18} strokeWidth={1.8} aria-hidden />
+      <ChevronLeft size={18} strokeWidth={2} aria-hidden />
     </button>
     <div className="eyebrow">Stocks · Formules</div>
     <h1>{formule.nom}</h1>
@@ -201,20 +200,19 @@ const FormuleNotFound: React.FC<{ onBack: () => void }> = ({ onBack }) => (
       <div className="pt-screen">
         <header className="ph--primary">
           <button
-            data-pt-btn=""
             type="button"
             className="back"
             aria-label="Retour aux formules"
             onClick={onBack}
           >
-            <ChevronLeft size={18} strokeWidth={1.8} aria-hidden />
+            <ChevronLeft size={18} strokeWidth={2} aria-hidden />
           </button>
           <div className="eyebrow">Stocks · Formules</div>
           <h1>Introuvable</h1>
         </header>
         <div className="phone-content" style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}>
           <div className="empty">
-            <FlaskConical size={40} strokeWidth={1.25} color="var(--pt-subtle)" aria-hidden />
+            <FlaskConical size={40} strokeWidth={2} color="var(--pt-subtle)" aria-hidden />
             <div
               style={{
                 fontFamily: 'var(--pt-font-display)',
@@ -229,7 +227,6 @@ const FormuleNotFound: React.FC<{ onBack: () => void }> = ({ onBack }) => (
               Cette recette n'existe plus ou n'a pas encore été enregistrée.
             </div>
             <button
-              data-pt-btn=""
               type="button"
               onClick={onBack}
               style={{

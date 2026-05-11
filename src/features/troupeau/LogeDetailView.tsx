@@ -177,7 +177,7 @@ const LogeDetailView: React.FC = () => {
         <IonContent className="ion-no-padding">
             <div className="px-4 pt-5 pb-44" style={{ maxWidth: 1100, margin: '0 auto' }}>
               <EmptyState
-                icon={<Home size={28} aria-hidden="true" />}
+                icon={<Home size={30} aria-hidden="true" />}
                 title="Loge introuvable"
                 description="Cette loge n'existe pas ou a été désactivée."
                 action={
@@ -291,7 +291,7 @@ const LogeDetailView: React.FC = () => {
                   data-testid="loge-empty-occupation"
                 >
                   <Users
-                    size={24}
+                    size={22}
                     aria-hidden="true"
                     className="mx-auto mb-2"
                     style={{ color: 'var(--muted)' }}

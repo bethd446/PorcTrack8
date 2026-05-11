@@ -21,7 +21,6 @@ import QuickSplitBandeForm from '../../../components/forms/QuickSplitBandeForm';
 import NotesTimeline from '../../../components/design/NotesTimeline';
 import TopBarSync from '../../../components/design/TopBarSync';
 import BandeCroissanceCard from '../../../components/bande/BandeCroissanceCard';
-import TruieIcon from '../../../components/icons/TruieIcon';
 import { useFarm } from '../../../context/FarmContext';
 import { formatDateFr } from '../../../v70/lib/formatters';
 import { getJournalSante, getNotesTerrain } from '../../../services/supabaseService';
@@ -572,7 +571,6 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <TruieIcon size={14} className="text-accent" />
                     <h4 className="kpi-label">Origine — Truies sources</h4>
                   </div>
                   <Button
@@ -598,7 +596,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                     {sources.map(s => (
                       <AnimalListItem
                         key={s.id}
-                        avatar={<TruieIcon size={20} />}
+                        avatar={<EntityAvatar species="truie" size="sm" shortCode={s.sowCode} />}
                         primary={
                           <span>
                             {s.sowCode}
@@ -917,7 +915,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                 ))
               ) : (
                 <div className="card-dense text-center py-10">
-                  <AlertCircle size={32} className="text-text-2 mb-2 mx-auto opacity-50" />
+                  <AlertCircle size={30} className="text-text-2 mb-2 mx-auto opacity-50" />
                   <p className="text-[11px] uppercase tracking-wide text-text-2">Aucune donnée brute</p>
                 </div>
               )}
@@ -998,7 +996,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                 </div>
               ) : filteredHealth.length === 0 ? (
                 <div className="card-dense text-center py-10">
-                  <Stethoscope size={32} className="text-text-2 mb-2 mx-auto opacity-50" />
+                  <Stethoscope size={30} className="text-text-2 mb-2 mx-auto opacity-50" />
                   <p className="text-[11px] uppercase tracking-wide text-text-2">Aucun soin pour cette portée</p>
                 </div>
               ) : (
@@ -1049,7 +1047,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                 </div>
               ) : filteredNotes.length === 0 ? (
                 <div className="card-dense text-center py-10">
-                  <ClipboardList size={32} className="text-text-2 mb-2 mx-auto opacity-50" />
+                  <ClipboardList size={30} className="text-text-2 mb-2 mx-auto opacity-50" />
                   <p className="text-[11px] uppercase tracking-wide text-text-2">Journal vide</p>
                 </div>
               ) : (

@@ -315,10 +315,10 @@ const QuickVenteForm: React.FC<QuickVenteFormProps> = ({
             aria-live="polite"
           >
             <CheckCircle2
-              size={64}
+              size={38}
               className="text-amber mb-4"
               aria-hidden="true"
-              strokeWidth={1.5}
+              strokeWidth={2}
             />
             <p className="agritech-heading text-[18px] uppercase tracking-wide">
               Vente enregistrée

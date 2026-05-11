@@ -11,7 +11,7 @@
  *   - liste transactions `.txn-row` (10 dernières) avec
  *     `.amount--positive` (+) / `.amount--negative` (−)
  *   - card-link Rapport financier détaillé
- *   - FAB `.fab--v77` Nouvelle transaction
+ *   - FAB `.fab` Nouvelle transaction
  *
  * Logique métier préservée :
  *   - useFarm().finances + useFarm().currency inchangés
@@ -175,13 +175,13 @@ const FinancesView: React.FC = () => {
 
         <div className="pt-screen" style={{ paddingBottom: 120 }}>
           <header className="ph--primary">
-            <button data-pt-btn=""
+            <button
               type="button"
               className="back"
               aria-label="Retour à Performance"
               onClick={() => navigate('/performance?tab=finances')}
             >
-              <ChevronLeft size={18} strokeWidth={1.8} aria-hidden />
+              <ChevronLeft size={18} strokeWidth={2} aria-hidden />
             </button>
             <div className="eyebrow">Pilotage · {currentMonthLabel}</div>
             <h1>Finances</h1>
@@ -350,7 +350,7 @@ const FinancesView: React.FC = () => {
                         y1={100}
                         y2={100}
                         stroke="rgba(26,26,26,0.08)"
-                        strokeWidth={1}
+                        strokeWidth={2}
                       />
                       {monthly.map((m, i) => {
                         const barH = (Math.abs(m.marge) / margeMax) * 78;
@@ -571,7 +571,6 @@ const FinancesView: React.FC = () => {
 
                 {/* ── Card-link vers rapport détaillé ──────────────────── */}
                 <button
-                  data-pt-btn=""
                   type="button"
                   className="card-link"
                   onClick={() => navigate('/pilotage/rapport')}
@@ -597,11 +596,11 @@ const FinancesView: React.FC = () => {
         {hasData ? (
           <button
             type="button"
-            className="fab--v77"
+            className="fab"
             onClick={() => setAddOpen(true)}
             aria-label="Nouvelle transaction"
           >
-            <Plus size={24} strokeWidth={2.4} aria-hidden="true" />
+            <Plus size={22} strokeWidth={2.4} aria-hidden="true" />
           </button>
         ) : null}
       </IonContent>

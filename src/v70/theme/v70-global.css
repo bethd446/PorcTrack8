@@ -550,25 +550,58 @@
   color: var(--pt-ink);
 }
 
-/* ===== FAB ===== */
+/* ===== FAB — canonique V76 ===== */
+/* 56x56, radius 50%, accent orange, position bottom 80px right 20px         */
+/* Distinct de .pt-screen .fab--v77 (legacy V77 conservé pour rétrocompat)   */
 .fab {
   position: absolute;
-  bottom: 88px;
-  right: 16px;
-  width: 48px;
-  height: 48px;
+  bottom: 80px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background: var(--pt-primary);
-  color: white;
-  display: flex;
+  background: var(--pt-accent);
+  color: var(--pt-warm, white);
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 22px;
-  box-shadow: 0 6px 16px rgba(45, 74, 31, 0.3);
+  border: none;
+  box-shadow: 0 4px 12px rgba(184, 112, 61, 0.3);
   cursor: pointer;
   z-index: 40;
-  border: none;
+  transition: background 150ms ease, transform 150ms ease, box-shadow 150ms ease;
 }
+
+.fab:hover {
+  background: var(--pt-accent-deep, #8B5028);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(184, 112, 61, 0.4);
+}
+
+.fab:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 8px rgba(184, 112, 61, 0.3);
+}
+
+.fab--marius {
+  background: var(--pt-ink);
+  color: var(--pt-warm, white);
+  box-shadow: 0 4px 12px rgba(26, 26, 26, 0.3);
+}
+
+.fab--marius:hover {
+  background: #2c2c2c;
+  box-shadow: 0 6px 16px rgba(26, 26, 26, 0.4);
+}
+
+.fab--mini {
+  width: 46px;
+  height: 46px;
+}
+
+/* === Note compat : l'ancien .fab (48px primary green) a été promu V76 === */
+/* (56px accent). Les usages voulant le look legacy → .pt-screen .fab--v77   */
 
 /* ===== BOTTOM NAV ===== */
 .bottom-nav {
@@ -2276,20 +2309,22 @@
 /* Sprint 9 V71 · Login + Signup + Reset + Confirm                            */
 /* ========================================================================== */
 
-/* btn-- : variants modernes utilisés par les écrans Auth v76                 */
+/* btn-- : variants canoniques V76 (buttons-system-v76.html)                  */
+/* V76: pas d'uppercase forcé, pas de letter-spacing fort, ff-body Instrument */
+/* Sans, font-weight 600, border-radius 14px sur les tailles principales.    */
 .btn--primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   background: var(--pt-primary);
-  color: white;
+  color: var(--pt-warm, white);
   border: 1px solid var(--pt-primary);
-  border-radius: 12px;
-  font-family: var(--pt-font-display);
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  border-radius: 14px;
+  font-family: var(--ff-body, 'Instrument Sans', system-ui, sans-serif);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
   cursor: pointer;
   transition: background 160ms ease, transform 80ms ease, opacity 160ms ease;
 }
@@ -2307,26 +2342,62 @@
   cursor: not-allowed;
 }
 
+.btn--secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--pt-bg, #FFFFFF);
+  color: var(--pt-ink);
+  border: 1px solid var(--pt-line-strong);
+  border-radius: 14px;
+  font-family: var(--ff-body, 'Instrument Sans', system-ui, sans-serif);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 80ms ease;
+}
+
+.btn--secondary:hover:not(:disabled) {
+  background: var(--pt-warm);
+  border-color: var(--pt-ink);
+}
+
+.btn--secondary:active:not(:disabled) {
+  background: var(--pt-warm-deep);
+  transform: scale(0.98);
+}
+
+.btn--secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .btn--ghost {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   background: transparent;
-  color: var(--pt-muted);
-  border: 1px solid var(--pt-line-strong);
-  border-radius: 12px;
-  font-family: var(--pt-font-mono);
+  color: var(--pt-ink);
+  border: 1px solid transparent;
+  border-radius: 14px;
+  font-family: var(--ff-body, 'Instrument Sans', system-ui, sans-serif);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.10em;
+  text-transform: none;
+  letter-spacing: normal;
   cursor: pointer;
   transition: background 160ms ease, color 160ms ease;
 }
 
 .btn--ghost:hover:not(:disabled) {
-  background: var(--pt-warm);
+  background: rgba(26, 26, 26, 0.06);
   color: var(--pt-ink);
+}
+
+.btn--ghost:active:not(:disabled) {
+  background: rgba(26, 26, 26, 0.1);
 }
 
 .btn--ghost:disabled {
@@ -2334,21 +2405,212 @@
   cursor: not-allowed;
 }
 
-.btn--lg {
-  padding: 14px 18px;
-  font-size: 14px;
-  min-height: 52px;
+/* Accent — CTA proactif (FAB-likeness, onboarding) */
+.btn--accent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--pt-accent);
+  color: var(--pt-warm, white);
+  border: 1px solid var(--pt-accent);
+  border-radius: 14px;
+  font-family: var(--ff-body, 'Instrument Sans', system-ui, sans-serif);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  cursor: pointer;
+  transition: background 160ms ease, transform 80ms ease, opacity 160ms ease;
 }
 
+.btn--accent:hover:not(:disabled) {
+  background: var(--pt-accent-deep, #8B5028);
+  border-color: var(--pt-accent-deep, #8B5028);
+}
+
+.btn--accent:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn--accent:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Danger — destructif, jamais primary par défaut */
+.btn--danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--pt-danger);
+  color: var(--pt-warm, white);
+  border: 1px solid var(--pt-danger);
+  border-radius: 14px;
+  font-family: var(--ff-body, 'Instrument Sans', system-ui, sans-serif);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  cursor: pointer;
+  transition: background 160ms ease, transform 80ms ease, opacity 160ms ease;
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: #8a3a33;
+  border-color: #8a3a33;
+}
+
+.btn--danger:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn--danger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Link — inline texte (flux auth / aide) */
+.btn--link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: transparent;
+  color: var(--pt-accent);
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  font-family: var(--ff-body, 'Instrument Sans', system-ui, sans-serif);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  cursor: pointer;
+  transition: color 160ms ease, text-decoration-thickness 160ms ease;
+}
+
+.btn--link:hover:not(:disabled) {
+  color: var(--pt-accent-deep, #8B5028);
+  text-decoration-thickness: 2px;
+}
+
+.btn--link:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ----- TAILLES V76 : SM 30 · MD 38 · LG 46 · XL 52 px ----- */
 .btn--sm {
-  padding: 6px 12px;
-  font-size: 11px;
-  min-height: 36px;
+  padding: 7px 12px;
+  font-size: 12px;
+  min-height: 30px;
+  height: 30px;
+  border-radius: 8px;
+  gap: 6px;
 }
 
+.btn--md {
+  padding: 10px 16px;
+  font-size: 13.5px;
+  min-height: 38px;
+  height: 38px;
+  border-radius: 10px;
+}
+
+.btn--lg {
+  padding: 13px 20px;
+  font-size: 14.5px;
+  min-height: 46px;
+  height: 46px;
+  border-radius: 12px;
+}
+
+.btn--xl {
+  padding: 16px 24px;
+  font-size: 16px;
+  min-height: 52px;
+  height: 52px;
+  border-radius: 14px;
+}
+
+/* Icon-only square — radius 12px, padding 0 (centré via flex parent .btn) */
+.btn--icon-sm {
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  min-height: 30px;
+  border-radius: 12px;
+  gap: 0;
+}
+
+.btn--icon-md {
+  padding: 0;
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+  border-radius: 12px;
+  gap: 0;
+}
+
+.btn--icon-lg {
+  padding: 0;
+  width: 46px;
+  height: 46px;
+  min-height: 46px;
+  border-radius: 12px;
+  gap: 0;
+}
+
+/* Block — full-width, canonique V76 */
+.btn--block {
+  width: 100%;
+}
+
+/* Loading — spinner, click bloqué, texte transparent */
+.btn--loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.btn--loading::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  border-right-color: transparent;
+  color: var(--pt-warm, white);
+  animation: btn-spin 0.8s linear infinite;
+  left: 50%;
+  top: 50%;
+  margin: -8px 0 0 -8px;
+  opacity: 0.9;
+}
+
+.btn--secondary.btn--loading::after,
+.btn--ghost.btn--loading::after {
+  color: var(--pt-ink);
+}
+
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* btn--full : alias rétrocompat V77.1 → équivalent de btn--block */
 .btn--full {
   width: 100%;
 }
+
+/* Alias rétrocompat V77 → mapping vers nouveau système V76                  */
+/* Évite de casser les 18 call-sites avant fin des replace-all des agents    */
+.btn-primary--lg { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--pt-primary); color: var(--pt-warm, white); border: 1px solid var(--pt-primary); border-radius: 12px; font-family: var(--ff-body, 'Instrument Sans', system-ui, sans-serif); font-weight: 600; text-transform: none; letter-spacing: normal; padding: 13px 20px; font-size: 14.5px; min-height: 46px; height: 46px; cursor: pointer; transition: background 160ms ease, transform 80ms ease, opacity 160ms ease; }
+.btn-secondary--lg { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--pt-bg, #FFFFFF); color: var(--pt-ink); border: 1px solid var(--pt-line-strong); border-radius: 12px; font-family: var(--ff-body, 'Instrument Sans', system-ui, sans-serif); font-weight: 600; text-transform: none; letter-spacing: normal; padding: 13px 20px; font-size: 14.5px; min-height: 46px; height: 46px; cursor: pointer; transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 80ms ease; }
 
 /* primary-cta-block : alias pour bouton CTA full-width (compatibilité brief) */
 .primary-cta-block {

@@ -255,7 +255,7 @@ export const TodayV70: React.FC = () => {
           </div>
         ) : alerts.length === 0 ? (
           <div data-testid="today-empty-state" className="empty">
-            <CheckCircle2 size={48} strokeWidth={1.25} color="var(--pt-success)" aria-hidden />
+            <CheckCircle2 size={38} strokeWidth={2} color="var(--pt-success)" aria-hidden />
             <div
               style={{
                 fontFamily: 'var(--pt-font-display)',
@@ -293,7 +293,7 @@ export const TodayV70: React.FC = () => {
                   aria-label={`${alert.title} — ${alert.tag} — ouvrir le détail`}
                 >
                   <span className="priority-line__icon" aria-hidden>
-                    <Icon size={15} strokeWidth={1.75} />
+                    <Icon size={14} strokeWidth={2} />
                   </span>
                   <span className="priority-line__main">
                     <span className="priority-line__title">{alert.title}</span>
@@ -337,7 +337,7 @@ export const TodayV70: React.FC = () => {
                 color: 'var(--pt-muted)',
               }}
             >
-              <ClipboardList size={18} strokeWidth={1.5} aria-hidden="true" />
+              <ClipboardList size={18} strokeWidth={2} aria-hidden="true" />
             </div>
             <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Tournée terrain</div>
             <div style={{ fontSize: 11, color: 'var(--pt-muted)' }}>

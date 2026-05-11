@@ -115,48 +115,68 @@ export function InsightCard({ title, children, className, style }: {
 }
 
 // ============================================================
-// BUTTON
+// BUTTON — V78 polish (BEM canonique V76, sans uppercase ni pill inline)
 // ============================================================
-type ButtonLegacyVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'destructive' | 'inverse';
-type ButtonLegacySize = 'small' | 'medium' | 'sm' | 'md' | 'lg';
+type ButtonLegacyVariant =
+  | 'primary'
+  | 'secondary'
+  | 'danger'
+  | 'ghost'
+  | 'accent'
+  | 'link'
+  | 'destructive'
+  | 'inverse';
+type ButtonLegacySize = 'small' | 'medium' | 'sm' | 'md' | 'lg' | 'xl';
 
 type ButtonProps = Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'type'> & {
   children: React.ReactNode;
   variant?: ButtonLegacyVariant;
   size?: ButtonLegacySize;
   fullWidth?: boolean;
+  iconOnly?: boolean;
   type?: 'button' | 'submit';
   ariaLabel?: string;
 };
 
+// Mapping legacy variants -> canonical V76 BEM variants.
+// destructive est un alias historique de danger ; inverse n'a pas d'équivalent
+// canonique strict -> fallback secondary (signalé : ancienne logique inline
+// supprimée, le rendu sera celui d'un secondary V76 standard).
+const VARIANT_MAP: Record<ButtonLegacyVariant, 'primary' | 'secondary' | 'ghost' | 'accent' | 'danger' | 'link'> = {
+  primary: 'primary',
+  secondary: 'secondary',
+  ghost: 'ghost',
+  accent: 'accent',
+  danger: 'danger',
+  link: 'link',
+  destructive: 'danger',
+  inverse: 'secondary',
+};
+
+const SIZE_MAP: Record<ButtonLegacySize, 'sm' | 'md' | 'lg' | 'xl'> = {
+  small: 'sm',
+  sm: 'sm',
+  medium: 'md',
+  md: 'md',
+  lg: 'lg',
+  xl: 'xl',
+};
+
 export function Button({
-  children, variant = 'primary', size = 'medium', fullWidth, onClick,
+  children, variant = 'primary', size = 'medium', fullWidth, iconOnly, onClick,
   type = 'button', disabled, ariaLabel, className, style,
   ...rest
 }: ButtonProps) {
-  const v: 'primary' | 'secondary' | 'danger' =
-    variant === 'ghost' ? 'secondary'
-    : variant === 'destructive' ? 'danger'
-    : variant === 'inverse' ? 'secondary'
-    : variant;
-  const isSmall = size === 'small' || size === 'sm';
-  const classes = ['pt-btn', `pt-btn--${v}`,
-    isSmall && 'pt-btn--small',
-    fullWidth && 'pt-btn--full',
-    variant === 'ghost' && 'pt-btn--ghost',
-    variant === 'inverse' && 'pt-btn--inverse',
+  const v = VARIANT_MAP[variant];
+  const s = SIZE_MAP[size];
+  const classes = [
+    'btn',
+    `btn--${v}`,
+    `btn--${s}`,
+    fullWidth && 'btn--block',
+    iconOnly && 'btn--icon-md',
     className,
   ].filter(Boolean).join(' ');
-  const ghostStyle: React.CSSProperties | undefined =
-    variant === 'ghost' ? { background: 'transparent', border: 'none' }
-    : variant === 'inverse' ? { background: 'var(--pt-surface)', color: 'var(--pt-primary)', border: '1.5px solid var(--pt-surface)' }
-    : undefined;
-  // data-pt="button" + inline borderRadius/textTransform : exposés pour la
-  // compat des tests V29/V30 (ces tests vérifient l'attribut/style direct).
-  const pillStyle: React.CSSProperties = {
-    borderRadius: 'var(--ds-radius-pill)',
-    textTransform: 'uppercase',
-  };
   const { 'aria-label': _restAriaLabel, ...passthrough } = rest;
   const ariaLabelFinal = ariaLabel ?? _restAriaLabel;
   return (
@@ -167,7 +187,7 @@ export function Button({
       disabled={disabled}
       aria-label={ariaLabelFinal}
       data-pt="button"
-      style={{ ...pillStyle, ...ghostStyle, ...style }}
+      style={style}
       {...passthrough}
     >
       {children}

@@ -164,7 +164,7 @@ const DesignSystemView: React.FC = () => {
                   <Box size={20} />
                 </IconBox>
                 <IconBox tone="accent" size={56}>
-                  <Truck size={24} />
+                  <Truck size={22} />
                 </IconBox>
               </Row>
             </Block>

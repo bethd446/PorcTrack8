@@ -228,7 +228,7 @@ const AideView: React.FC = () => {
                     gap: 10,
                   }}
                 >
-                  <Phone size={15} aria-hidden="true" />
+                  <Phone size={16} aria-hidden="true" />
                   Contacter via WhatsApp
                 </Button>
               ) : (

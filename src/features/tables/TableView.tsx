@@ -351,7 +351,7 @@ const TableView: React.FC<TableViewProps> = ({ tableKey }) => {
                     background: 'var(--color-pig-soft, color-mix(in srgb, var(--red) 12%, var(--bg-surface)))',
                   }}
                 >
-                  <AlertCircle size={28} className="text-red" aria-hidden="true" />
+                  <AlertCircle size={30} className="text-red" aria-hidden="true" />
                 </span>
                 <p
                   className="text-[14px] font-bold uppercase tracking-wide text-text-0"

@@ -15,7 +15,6 @@ import {
   Users,
 } from 'lucide-react';
 
-import { TruieIcon } from '../../components/icons';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import {
   AnimalListItem,
@@ -415,7 +414,7 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
                   className="!flex !flex-col !items-center !gap-1.5 !rounded-xl !bg-bg-1 !border !border-border !p-3 !aspect-square !justify-between !h-auto"
                   style={{ textTransform: 'none' }}
                 >
-                  <TruieIcon size={30} aria-hidden="true" />
+                  <EntityAvatar species="truie" size="sm" />
                   <div className="text-[14px] font-semibold text-text-0 tabular-nums">
                     {t.displayId || t.id}
                   </div>

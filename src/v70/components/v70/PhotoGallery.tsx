@@ -115,7 +115,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
         className="flex flex-col items-center justify-center gap-2 py-6"
         style={{ color: 'var(--pt-muted)' }}
       >
-        <ImageOff size={24} strokeWidth={1.5} aria-hidden="true" />
+        <ImageOff size={22} strokeWidth={2} aria-hidden="true" />
         <p style={{ fontSize: 12 }}>{emptyLabel}</p>
       </div>
     );

@@ -55,14 +55,14 @@ const SettingsRow: React.FC<SettingsRowProps> = ({ title, subtitle, Icon, onClic
     aria-label={`${title} — ${subtitle}`}
   >
     <span className="card-link__icon" aria-hidden>
-      <Icon size={18} strokeWidth={1.6} />
+      <Icon size={18} strokeWidth={2} />
     </span>
     <span className="card-link__main">
       <span className="card-link__title">{title}</span>
       <span className="card-link__sub">{subtitle}</span>
     </span>
     <span className="card-link__chev" aria-hidden>
-      <ChevronRight size={16} strokeWidth={1.6} />
+      <ChevronRight size={16} strokeWidth={2} />
     </span>
   </button>
 );
@@ -238,14 +238,14 @@ export const ReglagesV70: React.FC = () => {
               aria-hidden
               style={{ background: 'rgba(164, 69, 61, 0.08)' }}
             >
-              <LogOut size={18} strokeWidth={1.6} color="var(--pt-danger, #a4453d)" />
+              <LogOut size={18} strokeWidth={2} color="var(--pt-danger, #a4453d)" />
             </span>
             <span className="card-link__main">
               <span className="card-link__title">Se déconnecter</span>
               <span className="card-link__sub">Quitter votre session PorcTrack</span>
             </span>
             <span className="card-link__chev" aria-hidden>
-              <ChevronRight size={16} strokeWidth={1.6} />
+              <ChevronRight size={16} strokeWidth={2} />
             </span>
           </button>
         </section>

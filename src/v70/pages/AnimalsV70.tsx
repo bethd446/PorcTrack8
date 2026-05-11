@@ -12,7 +12,7 @@
  */
 import React, { useState, useEffect, lazy, Suspense, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Boxes, Home, Sprout, Eye, Edit3, Scale, LogOut, Search } from 'lucide-react';
+import { Boxes, Home, Eye, Edit3, Scale, LogOut, Search } from 'lucide-react';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
 import { TabsMini } from '../components/ds/TabsMini';
@@ -20,7 +20,6 @@ import { Pill, type PillVariant } from '../components/ds/Pill';
 import { ListItem } from '../components/ds/ListItem';
 import { PorceletGroup } from '../components/PorceletGroup';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
-import { PigSilhouette } from '../components/v70/icons/PigSilhouette';
 import {
   ToastProvider as V70ToastProvider,
   useToast as useV70Toast,
@@ -97,12 +96,12 @@ const STUBS_LOGES: AnimalStub[] = [
   { id: 'L-ENG-01', status: 'Engraissement · 28 cochons', statusLabel: 'Pleine', pillVariant: 'success' },
 ];
 
-const TAB_DATA: Record<AnimalTab, { stubs: AnimalStub[]; species: 'truie' | 'verrat' | 'porcelet' | 'bande'; sectionLabel: string; routePrefix: string; icon: React.ReactNode }> = {
-  truies: { stubs: STUBS_TRUIES, species: 'truie', sectionLabel: '50 truies', routePrefix: '/troupeau/truies/', icon: <PigSilhouette size={18} /> },
-  verrats: { stubs: STUBS_VERRATS, species: 'verrat', sectionLabel: '3 verrats', routePrefix: '/troupeau/verrats/', icon: <PigSilhouette size={18} /> },
-  porcelets: { stubs: STUBS_PORCELETS, species: 'porcelet', sectionLabel: '92 porcelets', routePrefix: '/troupeau/bandes/', icon: <PigSilhouette size={16} /> },
-  bandes: { stubs: STUBS_BANDES, species: 'bande', sectionLabel: '6 bandes actives', routePrefix: '/troupeau/bandes/', icon: <Boxes size={18} /> },
-  loges: { stubs: STUBS_LOGES, species: 'bande', sectionLabel: 'Loges', routePrefix: '/troupeau/loges/', icon: <Home size={18} /> },
+const TAB_DATA: Record<AnimalTab, { stubs: AnimalStub[]; species: 'truie' | 'verrat' | 'porcelet' | 'bande'; sectionLabel: string; routePrefix: string }> = {
+  truies: { stubs: STUBS_TRUIES, species: 'truie', sectionLabel: '50 truies', routePrefix: '/troupeau/truies/' },
+  verrats: { stubs: STUBS_VERRATS, species: 'verrat', sectionLabel: '3 verrats', routePrefix: '/troupeau/verrats/' },
+  porcelets: { stubs: STUBS_PORCELETS, species: 'porcelet', sectionLabel: '92 porcelets', routePrefix: '/troupeau/bandes/' },
+  bandes: { stubs: STUBS_BANDES, species: 'bande', sectionLabel: '6 bandes actives', routePrefix: '/troupeau/bandes/' },
+  loges: { stubs: STUBS_LOGES, species: 'bande', sectionLabel: 'Loges', routePrefix: '/troupeau/loges/' },
 };
 
 export const AnimalsV70: React.FC = () => (
@@ -559,44 +558,41 @@ const AnimalsV70Inner: React.FC = () => {
             // V76 — empty state DNA Terrain Vivant : icône Lucide grand format
             // + titre Big Shoulders + sub muted + CTA primary unique. Pattern
             // .empty (cf v70-global.css), conforme mockup 3c F.2.
-            const emptyCopy = tab === 'bandes'
+            // V78 — entités (truies/verrats/porcelets) représentées par
+            // EntityAvatar (audit A14 — pas d'icône d'entité custom).
+            const emptyCopy: { iconNode: React.ReactNode; title: string; desc: string } = tab === 'bandes'
               ? {
-                  Icon: Boxes,
-                  iconColor: 'var(--pt-bande-fg)',
+                  iconNode: <Boxes size={38} strokeWidth={2} color="var(--pt-bande-fg)" aria-hidden />,
                   title: 'Aucune bande active',
                   desc: 'Crée ta première bande pour suivre les naissances.',
                 }
               : tab === 'loges'
               ? {
-                  Icon: Home,
-                  iconColor: 'var(--pt-subtle)',
+                  iconNode: <Home size={38} strokeWidth={2} color="var(--pt-subtle)" aria-hidden />,
                   title: 'Aucune loge configurée',
                   desc: 'Ajoute tes loges pour activer le suivi par bande.',
                 }
               : tab === 'truies'
               ? {
-                  Icon: Sprout,
-                  iconColor: 'var(--pt-truie-fg)',
+                  iconNode: <EntityAvatar species="truie" size="lg" />,
                   title: 'Aucune truie',
                   desc: 'Ajoute ta première truie pour démarrer le suivi.',
                 }
               : tab === 'verrats'
               ? {
-                  Icon: PigSilhouette,
-                  iconColor: 'var(--pt-verrat-fg)',
+                  iconNode: <EntityAvatar species="verrat" size="lg" />,
                   title: 'Aucun verrat',
                   desc: 'Ajoute un verrat pour activer les saillies.',
                 }
               : {
-                  Icon: PigSilhouette,
-                  iconColor: 'var(--pt-porcelet-fg)',
+                  iconNode: <EntityAvatar species="porcelet" size="lg" />,
                   title: 'Aucun porcelet',
                   desc: 'Les porcelets apparaîtront automatiquement après mise-bas.',
                 };
-            const { Icon, iconColor, title, desc } = emptyCopy;
+            const { iconNode, title, desc } = emptyCopy;
             return (
               <div className="empty-state empty" data-testid={`empty-state-${tab}`}>
-                <Icon size={48} strokeWidth={1.25} color={iconColor} aria-hidden />
+                {iconNode}
                 <div
                   style={{
                     fontFamily: 'var(--pt-font-display)',
@@ -655,16 +651,12 @@ const AnimalsV70Inner: React.FC = () => {
       {(tab === 'loges' || !(filteredList.length === 0 && !search.trim())) && (
         <button
           type="button"
-          className="fab--v77 fab"
+          className="fab"
           aria-label={fabLabel[tab]}
           onClick={() => setAddOpen(true)}
           style={{
-            background: 'var(--pt-primary)',
-            border: 'none',
-            color: 'white',
             fontSize: 28,
             fontWeight: 700,
-            cursor: 'pointer',
           }}
         >
           +

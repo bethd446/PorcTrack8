@@ -87,7 +87,7 @@ export const LongPressSheet: React.FC<LongPressSheetProps> = ({
                   action.onClick();
                 }}
               >
-                <Icon size={17} strokeWidth={1.75} aria-hidden="true" />
+                <Icon size={18} strokeWidth={2} aria-hidden="true" />
                 <span>{action.label}</span>
               </button>
             );

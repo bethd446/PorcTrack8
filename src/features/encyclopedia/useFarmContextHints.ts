@@ -8,16 +8,25 @@
  * (cf. `EncyclopediaPage` — auto-sélection à l'arrivée).
  */
 import React, { useMemo } from 'react';
+import {
+  AlertTriangle,
+  Baby,
+  BookOpen,
+  ClipboardList,
+  Heart,
+  Lightbulb,
+  RefreshCw,
+  Wheat,
+} from 'lucide-react';
 import { useFarm } from '../../context/FarmContext';
 import { safeDate } from '../../lib/truieHelpers';
-import { PigSilhouette } from '../../v70/components/v70/icons/PigSilhouette';
 
 export interface FarmHint {
   id: string;
   level: 'info' | 'soon' | 'critical';
   /**
    * Glyphe ou icône affichée à côté du badge "Le saviez-vous ?".
-   * Accepte un emoji (string) ou un composant React (ex: <PigSilhouette />).
+   * Accepte un emoji (string) ou un composant Lucide React.
    */
   emoji: React.ReactNode;
   title: string;
@@ -66,7 +75,7 @@ export function useFarmContextHints(): FarmHint[] {
       hints.push({
         id: 'mise-bas-incoming',
         level: 'soon',
-        emoji: React.createElement(PigSilhouette, { size: 16 }),
+        emoji: React.createElement(Heart, { size: 16 }),
         title: `${proxMB.length} mise-bas attendue${proxMB.length > 1 ? 's' : ''} sous 7 jours`,
         body:
           "Préparez les loges maternité (lampe chauffante, paille sèche), vérifiez l'eau et anticipez les soins post-partum (oxytocine, antibiotique si besoin).",
@@ -92,7 +101,7 @@ export function useFarmContextHints(): FarmHint[] {
       hints.push({
         id: 'echo-window',
         level: 'soon',
-        emoji: '📋',
+        emoji: React.createElement(ClipboardList, { size: 16 }),
         title: `Fenêtre écho ouverte — ${echoWindow.length} truie${echoWindow.length > 1 ? 's' : ''}`,
         body:
           "C'est la période idéale (J25-J35 post-saillie) pour confirmer la gestation. Une écho ratée, c'est jusqu'à 90 jours de gaspillés.",
@@ -112,7 +121,7 @@ export function useFarmContextHints(): FarmHint[] {
       hints.push({
         id: 'sevrage-proche',
         level: 'info',
-        emoji: '🍼',
+        emoji: React.createElement(Baby, { size: 16 }),
         title: `${sevrageWindow.length} bande${sevrageWindow.length > 1 ? 's' : ''} bientôt sevrable${sevrageWindow.length > 1 ? 's' : ''}`,
         body:
           "Sevrer trop tôt fragilise les porcelets, trop tard alourdit la truie. J28 reste l'optimum métier — pesez avant transition pour fixer la phase suivante.",
@@ -124,49 +133,49 @@ export function useFarmContextHints(): FarmHint[] {
     if (hints.length === 0) {
       const dailyHints: Array<{ emoji: React.ReactNode; title: string; body: string; slug: string }> = [
         {
-          emoji: '💡',
+          emoji: React.createElement(Lightbulb, { size: 16 }),
           title: "L'ISSE, votre meilleur indicateur économique",
           body:
             "Indice Sevrés-Saillie : >12 = excellent, 10-12 = bon, <10 = à améliorer. Il pèse plus que le prix de l'aliment dans la marge finale.",
           slug: SLUGS.isse,
         },
         {
-          emoji: '📚',
+          emoji: React.createElement(BookOpen, { size: 16 }),
           title: 'Cycle gestation : 115 jours pile',
           body:
             "Fenêtre normale entre J113 et J117. Préparez la loge maternité 3 jours avant la date prévue, et surveillez la chute de température corporelle (-1°C, signe d'imminence).",
           slug: SLUGS.miseBas,
         },
         {
-          emoji: '⚠️',
+          emoji: React.createElement(AlertTriangle, { size: 16 }),
           title: 'Mortalité allaitement : 15 % = seuil critique',
           body:
             "Au-delà, agir vite : revoir température loge (28-32 °C porcelets), hygiène, écrasements (barres anti-écrasement), colostrum (2h post-MB obligatoire).",
           slug: SLUGS.mortalite,
         },
         {
-          emoji: React.createElement(PigSilhouette, { size: 16 }),
+          emoji: React.createElement(Baby, { size: 16 }),
           title: 'Sevrage à J28, pas avant',
           body:
             "Sevrage précoce = porcelets fragiles, truies sur-sollicitées, plus de soins. Sevrage trop tardif = perte d'ISSE. J28 reste le compromis métier dominant.",
           slug: SLUGS.sevrage,
         },
         {
-          emoji: '🌾',
+          emoji: React.createElement(Wheat, { size: 16 }),
           title: "L'aliment = 65-70 % du coût d'élevage",
           body:
             "Optimiser la formule (cassava, sons, tourteaux locaux) avant de chercher à pousser le prix de vente. C'est là que se joue la marge en climat tropical.",
           slug: SLUGS.coutsAlim,
         },
         {
-          emoji: '🔁',
+          emoji: React.createElement(RefreshCw, { size: 16 }),
           title: 'Réforme : pas plus de 6 portées en moyenne',
           body:
             "Au-delà, la prolificité chute. Décision basée sur 3 critères : NV en baisse 2 portées d'affilée, taux de sevrage <85 %, intervalle saillie-MB > 130 j.",
           slug: SLUGS.reforme,
         },
         {
-          emoji: '🤰',
+          emoji: React.createElement(Heart, { size: 16 }),
           title: 'Alimentation gestation : régime contrôlé',
           body:
             "Gestation = 2.2-2.5 kg/j. Trop = truie trop grasse à la MB (mortalité accrue, écrasements). Pas assez = porcelets nés faibles. Réservez l'ad libitum à la lactation.",

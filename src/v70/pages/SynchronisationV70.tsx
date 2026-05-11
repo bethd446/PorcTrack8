@@ -218,7 +218,7 @@ export const SynchronisationV70: React.FC = () => {
               className="iconbtn"
               style={{ marginBottom: 10 }}
             >
-              <ChevronLeft size={16} strokeWidth={1.8} aria-hidden />
+              <ChevronLeft size={16} strokeWidth={2} aria-hidden />
             </button>
             <div className="ph__eyebrow">Synchronisation</div>
             <h1 className="ph__h1">File d'attente</h1>

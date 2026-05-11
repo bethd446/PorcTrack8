@@ -41,31 +41,20 @@ describe('SaisirFAB — rendu', () => {
     expect(btn.getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('est position fixed bottom-right via classe .fab--v77 (V77)', () => {
+  it('porte la classe canonique .fab et est positionné fixed bottom-right (V78)', () => {
     render(<SaisirFAB />);
     const btn = screen.getByRole('button', { name: 'Saisir un évènement métier' });
-    // V77 : la classe canonique .fab--v77 porte le position:fixed (cf.
-    // v70-global.css), l'inline style fournit uniquement les overrides
-    // contextuels (right, bottom safe-area).
-    expect(btn.className).toContain('fab--v77');
+    // V78 : alignement sur `.fab` canonique (cf. v70-global.css). Les dims
+    // / radius / fond / shadow sont hérités du CSS ; l'inline style ne
+    // porte plus que les overrides contextuels (position fixed, right,
+    // bottom safe-area, z-index).
+    expect(btn.className).toContain('fab');
+    expect(btn.className).not.toContain('fab--v77');
+    expect(btn.style.position).toBe('fixed');
     expect(btn.style.right).toBe('24px');
   });
 
-  it('utilise le token design system --pt-primary en background (V77)', () => {
-    render(<SaisirFAB />);
-    const btn = screen.getByRole('button', { name: 'Saisir un évènement métier' });
-    expect(btn.style.background).toContain('var(--pt-primary)');
-  });
-
-  it('est un block carré 64×64 radius 20px (V77, pas cercle)', () => {
-    render(<SaisirFAB />);
-    const btn = screen.getByRole('button', { name: 'Saisir un évènement métier' });
-    expect(btn.style.borderRadius).toBe('20px');
-    expect(btn.style.width).toBe('64px');
-    expect(btn.style.height).toBe('64px');
-  });
-
-  it('est wrappé dans .pt-screen pour activer les tokens V77', () => {
+  it('est wrappé dans .pt-screen pour activer les tokens V70+', () => {
     const { container } = render(<SaisirFAB />);
     const root = container.firstChild as HTMLElement;
     expect(root.className).toContain('pt-screen');

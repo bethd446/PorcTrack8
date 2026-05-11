@@ -11,7 +11,7 @@
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { IonToast } from '@ionic/react';
-import { ArrowRight, Baby, CheckCircle2, Plus, Scale, X } from 'lucide-react';
+import { ArrowRight, Baby, CheckCircle2, Lightbulb, Plus, Scale, X } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
 import { Button } from '@/design-system';
@@ -413,7 +413,7 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
           alignItems: 'flex-start',
         }}
       >
-        <span style={{ fontSize: 18, lineHeight: 1 }} aria-hidden>💡</span>
+        <Lightbulb size={18} aria-hidden />
         <div style={{ flex: 1 }}>
           <strong style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Le saviez-vous ?
@@ -693,9 +693,9 @@ const MultiPorteeSevrageWizard: React.FC<MultiPorteeSevrageWizardProps> = ({
             aria-live="polite"
           >
             <CheckCircle2
-              size={64}
+              size={38}
               className="mb-4 text-accent"
-              strokeWidth={1.5}
+              strokeWidth={2}
               aria-hidden="true"
             />
             <p className="font-heading text-[18px] uppercase tracking-wide">

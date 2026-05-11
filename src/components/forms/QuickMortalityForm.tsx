@@ -575,7 +575,7 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
 
           {step === 3 && (
             <div className="flex flex-col items-center justify-center py-16 animate-scale-in text-center">
-              <CheckCircle2 size={64} className="text-coral mb-4" strokeWidth={1.5} />
+              <CheckCircle2 size={38} className="text-coral mb-4" strokeWidth={2} />
               <p className="agritech-heading text-[18px] uppercase">Mortalité enregistrée</p>
               <p className="mt-2 ft-code text-[12px] text-text-2">{subjectDisplay(selectedSubject)}</p>
               <div className="mt-6 p-4 rounded-xl border" style={{ background: 'color-mix(in srgb, var(--pt-danger) 10%, transparent)', borderColor: 'color-mix(in srgb, var(--pt-danger) 20%, transparent)' }}>

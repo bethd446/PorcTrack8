@@ -6,6 +6,7 @@
  *
  * Consommé par `ChecklistFlow.tsx` (sélecteur de tournée au démarrage).
  */
+import { Baby, Heart, Sunrise, Tag, type LucideIcon } from 'lucide-react';
 
 export type ChecklistTemplateKey =
   | 'GENERAL'
@@ -51,15 +52,15 @@ export const CHECKLIST_TEMPLATES: Record<ChecklistTemplateKey, ChecklistTemplate
 export interface ChecklistTemplateMeta {
   key: ChecklistTemplateKey;
   label: string;
-  emoji: string;
+  icon: LucideIcon;
   description: string;
 }
 
 export const CHECKLIST_TEMPLATES_META: ChecklistTemplateMeta[] = [
-  { key: 'GENERAL', label: 'Tournée générale', emoji: '🌅', description: 'Eau, aliment, comportement' },
-  { key: 'MISE_BAS', label: 'Tournée mise-bas', emoji: '🤰', description: 'Truies prêtes / porcelets' },
-  { key: 'SEVRAGE', label: 'Tournée sevrage', emoji: '🍼', description: 'Porcelets J28' },
-  { key: 'SORTIE_VENTE', label: 'Tournée sortie/vente', emoji: '🏷️', description: 'Engraissement' },
+  { key: 'GENERAL', label: 'Tournée générale', icon: Sunrise, description: 'Eau, aliment, comportement' },
+  { key: 'MISE_BAS', label: 'Tournée mise-bas', icon: Heart, description: 'Truies prêtes / porcelets' },
+  { key: 'SEVRAGE', label: 'Tournée sevrage', icon: Baby, description: 'Porcelets J28' },
+  { key: 'SORTIE_VENTE', label: 'Tournée sortie/vente', icon: Tag, description: 'Engraissement' },
 ];
 
 /**

@@ -63,7 +63,6 @@ interface FormuleListItemProps {
 const FormuleListItem: React.FC<FormuleListItemProps> = ({ formule, onClick }) => {
   return (
     <button
-      data-pt-btn=""
       type="button"
       onClick={onClick}
       aria-label={`Ouvrir la formule ${formule.nom}`}
@@ -169,13 +168,12 @@ const FormulesView: React.FC = () => {
         <div className="pt-screen">
           <header className="ph--primary">
             <button
-              data-pt-btn=""
               type="button"
               className="back"
               aria-label="Retour aux ressources"
               onClick={() => navigate('/ressources')}
             >
-              <ChevronLeft size={18} strokeWidth={1.8} aria-hidden />
+              <ChevronLeft size={18} strokeWidth={2} aria-hidden />
             </button>
             <div className="eyebrow">Stocks · Formules</div>
             <h1>Formules</h1>
@@ -193,7 +191,6 @@ const FormulesView: React.FC = () => {
                 const active = filter === opt.value;
                 return (
                   <button
-                    data-pt-btn=""
                     key={opt.value}
                     type="button"
                     className="chip"
@@ -212,7 +209,7 @@ const FormulesView: React.FC = () => {
             >
               {visible.length === 0 ? (
                 <div className="empty">
-                  <FlaskConical size={40} strokeWidth={1.25} color="var(--pt-subtle)" aria-hidden />
+                  <FlaskConical size={40} strokeWidth={2} color="var(--pt-subtle)" aria-hidden />
                   <div
                     style={{
                       fontFamily: 'var(--pt-font-display)',
@@ -239,7 +236,6 @@ const FormulesView: React.FC = () => {
             </Section>
 
             <button
-              data-pt-btn=""
               type="button"
               className="card-link"
               style={{ borderStyle: 'dashed', marginTop: 4 }}

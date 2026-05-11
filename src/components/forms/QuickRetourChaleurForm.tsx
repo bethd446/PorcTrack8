@@ -250,10 +250,10 @@ const QuickRetourChaleurForm: React.FC<QuickRetourChaleurFormProps> = ({
               aria-live="polite"
             >
               <CheckCircle2
-                size={64}
+                size={38}
                 className="text-accent mb-4"
                 aria-hidden="true"
-                strokeWidth={1.5}
+                strokeWidth={2}
               />
               <p className="sheet__title" style={{ textAlign: 'center' }}>
                 Retour chaleur enregistré

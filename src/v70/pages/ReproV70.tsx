@@ -809,7 +809,7 @@ export const ReproV70: React.FC = () => {
           <div className="section__label">Bandes passées</div>
           <div className="empty-state">
             <div className="empty-state__icon">
-              <Archive size={28} strokeWidth={1.5} aria-hidden="true" />
+              <Archive size={30} strokeWidth={2} aria-hidden="true" />
             </div>
             <div className="empty-state__title">Historique des bandes</div>
             <div className="empty-state__sub">
@@ -832,7 +832,7 @@ export const ReproV70: React.FC = () => {
           icon={
             <BookOpen
               size={20}
-              strokeWidth={1.5}
+              strokeWidth={2}
               aria-hidden="true"
               style={{ color: 'var(--pt-muted)' }}
             />

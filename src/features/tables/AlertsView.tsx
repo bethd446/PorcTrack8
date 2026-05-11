@@ -551,7 +551,7 @@ const AlertsView: React.FC = () => {
                       <div style={ACTIONS_ROW}>
                         <button
                           type="button"
-                          className="btn-ghost-sm"
+                          className="btn btn--ghost btn--sm"
                           data-testid="alert-card-ack"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -562,7 +562,7 @@ const AlertsView: React.FC = () => {
                         </button>
                         <button
                           type="button"
-                          className="btn-primary-sm"
+                          className="btn btn--primary btn--sm"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleViewAlert(alert);
@@ -576,7 +576,7 @@ const AlertsView: React.FC = () => {
                       <div style={ACTIONS_ROW}>
                         <button
                           type="button"
-                          className="btn-primary-sm"
+                          className="btn btn--primary btn--sm"
                           onClick={(e) => {
                             e.stopPropagation();
                             navigate('/ressources?filter=stock-bas');
@@ -666,7 +666,7 @@ const AlertsView: React.FC = () => {
           {/* ── Empty state ───────────────────────────────────────────── */}
           {(showEmpty || (alerts.length > 0 && filteredAlerts.length === 0)) && (
             <div className="empty-state">
-              <CheckCircle2 size={48} strokeWidth={1.25} color="var(--pt-success)" aria-hidden="true" />
+              <CheckCircle2 size={38} strokeWidth={2} color="var(--pt-success)" aria-hidden="true" />
               <div style={EMPTY_TITLE}>
                 {showEmpty ? 'Carnet vide' : 'Aucune alerte dans ce filtre'}
               </div>

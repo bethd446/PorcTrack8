@@ -369,7 +369,7 @@ const AlimentsView: React.FC = () => {
               aria-label="Retour à Ressources"
               onClick={() => navigate('/ressources')}
             >
-              <ChevronLeft size={18} strokeWidth={1.8} aria-hidden />
+              <ChevronLeft size={18} strokeWidth={2} aria-hidden />
             </button>
             <div className="eyebrow">Ressources · Aliments</div>
             <h1>Aliments</h1>
@@ -474,7 +474,7 @@ const AlimentsView: React.FC = () => {
             {isEmptyAll ? (
               <div className="empty-state">
                 <div className="empty-state__icon" aria-hidden>
-                  <Wheat size={48} strokeWidth={1.25} />
+                  <Wheat size={38} strokeWidth={2} />
                 </div>
                 <div className="empty-state__title">Aucun aliment</div>
                 <div className="empty-state__sub">
@@ -494,7 +494,7 @@ const AlimentsView: React.FC = () => {
                 {items.length === 0 ? (
                   <div className="empty-state">
                     <div className="empty-state__icon" aria-hidden>
-                      <Wheat size={40} strokeWidth={1.25} />
+                      <Wheat size={40} strokeWidth={2} />
                     </div>
                     <div className="empty-state__title">Aucun élément</div>
                     <div className="empty-state__sub">
@@ -520,7 +520,7 @@ const AlimentsView: React.FC = () => {
 
         <button
           type="button"
-          className="fab--v77"
+          className="fab"
           onClick={() => setAddOpen(true)}
           aria-label="Nouvelle entrée"
         >

@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useFarm, useMeta } from '../../context/FarmContext';
 import { AnimalListItem, SectionDivider, type ChipTone } from '../../components/agritech';
 import { Button } from '@/design-system';
-import { BandeIcon } from '../../components/icons';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import { listLoges } from '../../services/supabaseWrites';
 import ListingSkeleton from '../../components/design/ListingSkeleton';
@@ -278,7 +277,7 @@ const TroupeauPorceletsView: React.FC<TroupeauPorceletsViewProps> = ({
         <ListingSkeleton count={3} />
       ) : !hasAnyActive ? (
         <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-          <BandeIcon size={48} className="text-text-2" />
+          <EntityAvatar species="bande" size="md" />
           <p className="text-[14px] font-medium text-text-1">Aucune bande en cours</p>
         </div>
       ) : (

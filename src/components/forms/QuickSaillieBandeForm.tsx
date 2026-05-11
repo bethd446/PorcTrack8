@@ -412,9 +412,9 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
             aria-live="polite"
           >
             <CheckCircle2
-              size={64}
+              size={38}
               className="mb-4 text-accent"
-              strokeWidth={1.5}
+              strokeWidth={2}
               aria-hidden="true"
             />
             <p className="font-heading text-[18px] uppercase tracking-wide">

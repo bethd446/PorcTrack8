@@ -28,7 +28,7 @@ class BandesErrorBoundary extends React.Component<BandesEBProps, BandesEBState> 
     if (this.state.hasError) {
       return (
         <div className="agritech-root p-10 text-center space-y-6 flex flex-col items-center justify-center min-h-[60vh]">
-          <AlertTriangle size={48} className="text-red mb-4" />
+          <AlertTriangle size={38} className="text-red mb-4" />
           <h2 className="agritech-heading text-xl uppercase">Erreur d'affichage</h2>
           <p className="text-[12px] text-text-2 leading-relaxed max-w-xs">
             {this.state.error?.message || 'Une erreur critique est survenue dans le module Portées.'}

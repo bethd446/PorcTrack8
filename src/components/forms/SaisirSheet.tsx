@@ -259,7 +259,7 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
                   flexShrink: 0,
                 }}
               >
-                <Icon size={20} strokeWidth={1.8} aria-hidden />
+                <Icon size={20} strokeWidth={2} aria-hidden />
               </span>
               <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
                 <span

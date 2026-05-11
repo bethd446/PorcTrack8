@@ -32,10 +32,10 @@ const TAG_STYLE: Record<TimelineItemType, React.CSSProperties> = {
 };
 
 const ICONS: Record<TimelineItemType, React.ReactNode> = {
-  repro: <Activity size={8} color="var(--bg-surface)" />,
-  health: <Heart size={8} color="var(--bg-surface)" />,
-  weight: <Scale size={8} color="var(--bg-surface)" />,
-  note: <FileText size={8} color="var(--bg-surface)" />,
+  repro: <Activity size={11} color="var(--bg-surface)" />,
+  health: <Heart size={11} color="var(--bg-surface)" />,
+  weight: <Scale size={11} color="var(--bg-surface)" />,
+  note: <FileText size={11} color="var(--bg-surface)" />,
 };
 
 export default function TimelineVerticale({ items, className = '' }: TimelineVerticaleProps) {

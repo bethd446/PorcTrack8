@@ -384,7 +384,9 @@ const ChecklistFlow: React.FC = () => {
                 Quelle tournée fais-tu aujourd'hui ?
               </h2>
               <div className="space-y-2.5" role="list">
-                {CHECKLIST_TEMPLATES_META.map(meta => (
+                {CHECKLIST_TEMPLATES_META.map(meta => {
+                  const Icon = meta.icon;
+                  return (
                   <Button
                     key={meta.key}
                     variant="secondary"
@@ -395,7 +397,7 @@ const ChecklistFlow: React.FC = () => {
                     data-testid={`tpl-${meta.key}`}
                     className="!justify-start !text-left !px-4 !py-4 !rounded-md"
                   >
-                    <span className="text-[24px]" aria-hidden="true">{meta.emoji}</span>
+                    <Icon size={22} aria-hidden />
                     <span className="flex-1 min-w-0">
                       <span className="block text-[13px] font-bold uppercase tracking-wide text-text-0">
                         {meta.label}
@@ -405,7 +407,8 @@ const ChecklistFlow: React.FC = () => {
                       </span>
                     </span>
                   </Button>
-                ))}
+                  );
+                })}
 
                 <Button
                   variant="secondary"
@@ -518,7 +521,7 @@ const ChecklistFlow: React.FC = () => {
                 className="inline-flex h-16 w-16 items-center justify-center rounded-md bg-bg-1 border border-red/40 text-red mb-5"
                 aria-hidden="true"
               >
-                <AlertCircle size={32} />
+                <AlertCircle size={30} />
               </div>
               <h2 className="agritech-heading text-[20px] uppercase leading-none mb-2">
                 Erreur de chargement

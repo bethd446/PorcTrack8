@@ -362,8 +362,8 @@ const PorceletDetailView: React.FC = () => {
                         }}
                       >
                         <Scale
-                          size={48}
-                          strokeWidth={1.25}
+                          size={38}
+                          strokeWidth={2}
                           color="var(--pt-subtle, var(--text-2))"
                           aria-hidden
                         />

@@ -83,7 +83,7 @@ const Stars: React.FC<StarsProps> = ({ value, size = 12 }) => {
         <Star
           key={i}
           size={size}
-          strokeWidth={1.6}
+          strokeWidth={2}
           fill={i <= safe ? 'currentColor' : 'transparent'}
           className={i <= safe ? '' : 'stars__empty'}
           aria-hidden
@@ -144,7 +144,7 @@ const FournisseursView: React.FC = () => {
               aria-label="Retour aux Ressources"
               onClick={() => navigate('/ressources')}
             >
-              <ChevronLeft size={18} strokeWidth={1.8} aria-hidden />
+              <ChevronLeft size={18} strokeWidth={2} aria-hidden />
             </button>
             <div className="eyebrow">Stocks · Fournisseurs</div>
             <h1>Fournisseurs</h1>

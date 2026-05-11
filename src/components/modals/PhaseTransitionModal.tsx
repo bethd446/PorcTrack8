@@ -72,8 +72,8 @@ const PhaseTransitionModal: React.FC<PhaseTransitionModalProps> = ({
         {/* Header */}
         <div className="flex items-center gap-3">
           {critical
-            ? <AlertTriangle size={24} className="text-red shrink-0" />
-            : <Clock size={24} className="text-amber shrink-0" />
+            ? <AlertTriangle size={22} className="text-red shrink-0" />
+            : <Clock size={22} className="text-amber shrink-0" />
           }
           <div>
             <p className="ft-heading text-[11px] uppercase tracking-wider text-text-2">

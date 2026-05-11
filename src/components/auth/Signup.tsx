@@ -212,7 +212,7 @@ export default function Signup() {
 
               <button
                 type="button"
-                className="btn--ghost btn--lg btn--full"
+                className="btn--ghost btn--lg btn--block"
                 onClick={handleResend}
                 disabled={resendCooldown > 0 || resendLoading}
                 aria-busy={resendLoading}
@@ -426,7 +426,7 @@ export default function Signup() {
 
               <button
                 type="submit"
-                className="btn-primary--lg"
+                className="btn btn--primary btn--lg btn--block"
                 disabled={!canSubmit}
                 aria-busy={loading}
                 style={{ marginTop: 6 }}

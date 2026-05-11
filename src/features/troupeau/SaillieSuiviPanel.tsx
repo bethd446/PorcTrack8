@@ -406,7 +406,7 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
                   className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-bg-2 text-accent"
                   aria-hidden="true"
                 >
-                  <HeartPulse size={15} />
+                  <HeartPulse size={14} />
                 </span>
                 <h2 className="ft-heading text-[14px] uppercase tracking-wide text-text-0">
                   Saillie en cours
@@ -816,7 +816,7 @@ const ConfirmBody: React.FC<ConfirmBodyProps> = ({
           style={{ color: tone }}
           aria-hidden="true"
         >
-          <Icon size={24} />
+          <Icon size={22} />
         </span>
         <div className="min-w-0 flex-1">
           <h3 className="ft-heading text-[16px] uppercase tracking-wide text-text-0">

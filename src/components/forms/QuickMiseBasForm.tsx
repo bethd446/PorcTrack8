@@ -351,7 +351,7 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
             </div>
             <footer className="sheet__foot">
               <button type="button" className="btn btn--ghost" onClick={handleClose} disabled={saving} aria-label="Annuler et fermer">Annuler</button>
-              <button type="submit" className="btn-primary--lg" disabled={saving || !isValid || truiesEligibles.length === 0} aria-busy={saving} aria-label="Enregistrer la mise-bas">
+              <button type="submit" className="btn btn--primary btn--lg btn--block" disabled={saving || !isValid || truiesEligibles.length === 0} aria-busy={saving} aria-label="Enregistrer la mise-bas">
                 {saving ? 'Enregistrement…' : <><Check size={14} aria-hidden="true" /> Enregistrer la mise-bas</>}
               </button>
             </footer>

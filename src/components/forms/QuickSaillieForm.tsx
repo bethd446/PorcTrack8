@@ -233,7 +233,7 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
             <button type="button" className="btn btn--ghost" onClick={handleClose} disabled={saving} aria-label="Annuler et fermer">Annuler</button>
             <button
               type="button"
-              className="btn-primary--lg"
+              className="btn btn--primary btn--lg btn--block"
               onClick={handleSave}
               disabled={!isValid || saving}
               aria-busy={saving}

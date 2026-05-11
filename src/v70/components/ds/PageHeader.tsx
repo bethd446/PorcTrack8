@@ -60,7 +60,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             minHeight: 44,
           }}
         >
-          <ChevronLeft size={14} strokeWidth={1.75} aria-hidden />
+          <ChevronLeft size={14} strokeWidth={2} aria-hidden />
           {backLabel}
         </button>
       )}

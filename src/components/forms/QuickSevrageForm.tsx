@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Baby, Check, CheckCircle2 } from 'lucide-react';
+import { Baby, Check, CheckCircle2, Lightbulb } from 'lucide-react';
 
 import { AppToast, BottomSheet, useAppToast } from '../agritech';
 import { Button, Input, Section, Select } from '@/design-system';
@@ -182,10 +182,10 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
             aria-live="polite"
           >
             <CheckCircle2
-              size={64}
+              size={38}
               className="text-accent mb-4"
               aria-hidden="true"
-              strokeWidth={1.5}
+              strokeWidth={2}
             />
             <p className="font-heading text-[18px] uppercase tracking-wide">
               Sevrage enregistré
@@ -231,7 +231,7 @@ const QuickSevrageForm: React.FC<QuickSevrageFormProps> = ({
                 alignItems: 'flex-start',
               }}
             >
-              <span style={{ fontSize: 18, lineHeight: 1 }} aria-hidden>💡</span>
+              <Lightbulb size={18} aria-hidden />
               <div style={{ flex: 1 }}>
                 <strong style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   Le saviez-vous ?

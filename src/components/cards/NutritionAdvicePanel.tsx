@@ -181,7 +181,7 @@ export const NutritionAdvicePanel: React.FC<NutritionAdvicePanelProps> = ({
           </span>
         </div>
         <div className="flex flex-col items-center text-center py-6 gap-3">
-          <Scale size={32} className="text-text-2" aria-hidden="true" />
+          <Scale size={30} className="text-text-2" aria-hidden="true" />
           <p className="text-[13px] text-text-1 leading-snug max-w-[280px]">
             Pesée manquante — pèse la bande pour activer les conseils nutritionnels.
           </p>

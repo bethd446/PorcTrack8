@@ -72,7 +72,7 @@ export const NotificationsPermissionPrompt: React.FC = () => {
     >
       <Bell
         size={20}
-        strokeWidth={1.6}
+        strokeWidth={2}
         color="var(--pt-accent)"
         aria-hidden
         style={{ flexShrink: 0, marginTop: 2 }}
@@ -159,7 +159,7 @@ export const NotificationsPermissionPrompt: React.FC = () => {
           flexShrink: 0,
         }}
       >
-        <X size={16} strokeWidth={1.6} aria-hidden />
+        <X size={16} strokeWidth={2} aria-hidden />
       </button>
     </div>
   );

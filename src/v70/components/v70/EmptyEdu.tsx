@@ -22,7 +22,7 @@ export interface EmptyEduProps {
 const DEFAULT_ICON = (
   <BookOpen
     size={20}
-    strokeWidth={1.5}
+    strokeWidth={2}
     aria-hidden="true"
     style={{ color: 'var(--pt-muted)' }}
   />
@@ -42,7 +42,7 @@ export const EmptyEdu: React.FC<EmptyEduProps> = ({
     {ctaLabel && onCtaClick && (
       <button
         type="button"
-        className="btn btn-secondary btn-sm"
+        className="btn btn--secondary btn--sm"
         onClick={onCtaClick}
       >
         → {ctaLabel}

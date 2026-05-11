@@ -95,7 +95,7 @@ export default function AuthCallback() {
                 </p>
                 <button
                   type="button"
-                  className="btn-primary--lg"
+                  className="btn btn--primary btn--lg btn--block"
                   onClick={() => navigate('/today', { replace: true })}
                 >
                   Continuer vers PorcTrack
@@ -120,7 +120,7 @@ export default function AuthCallback() {
                 </div>
                 <button
                   type="button"
-                  className="btn-primary--lg"
+                  className="btn btn--primary btn--lg btn--block"
                   onClick={() => {
                     window.location.href = '/login';
                   }}

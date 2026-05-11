@@ -45,7 +45,7 @@ const PerfKpiOverview: React.FC<PerfKpiOverviewProps> = ({
         </StatsGrid>
       ) : (
         <Empty>
-          <TrendingUp size={32} aria-hidden="true" style={{ marginBottom: 8, color: 'var(--pt-text-subtle)' }} />
+          <TrendingUp size={30} aria-hidden="true" style={{ marginBottom: 8, color: 'var(--pt-text-subtle)' }} />
           <div>Saisie en cours.</div>
           <div style={{ fontSize: 12, color: 'var(--pt-text-subtle)', marginTop: 4 }}>
             Reviens dans 2-3 mois pour voir tes premières moyennes.

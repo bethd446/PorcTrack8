@@ -39,7 +39,7 @@ const ProtocolDetailView: React.FC = () => {
                 aria-label="Retour"
                 onClick={() => navigate(-1)}
               >
-                <ChevronLeft size={18} strokeWidth={1.8} aria-hidden />
+                <ChevronLeft size={18} strokeWidth={2} aria-hidden />
               </button>
               <div className="eyebrow">Protocole</div>
               <h1>Introuvable</h1>
@@ -75,7 +75,7 @@ const ProtocolDetailView: React.FC = () => {
               aria-label="Retour"
               onClick={() => navigate(-1)}
             >
-              <ChevronLeft size={18} strokeWidth={1.8} aria-hidden />
+              <ChevronLeft size={18} strokeWidth={2} aria-hidden />
             </button>
             <div className="eyebrow">{proto.eyebrow}</div>
             <h1>{proto.title}</h1>
@@ -86,7 +86,7 @@ const ProtocolDetailView: React.FC = () => {
             <div className="section__label">Indication</div>
             <div className="alert-card alert-card--info">
               <span className="alert-card__icon" aria-hidden>
-                <Crosshair size={22} strokeWidth={1.6} aria-hidden />
+                <Crosshair size={22} strokeWidth={2} aria-hidden />
               </span>
               <div>
                 <div className="alert-card__title">Cible thérapeutique</div>
@@ -134,7 +134,7 @@ const ProtocolDetailView: React.FC = () => {
             {proto.contreIndication && (
               <div className="alert-card alert-card--danger">
                 <span className="alert-card__icon" aria-hidden>
-                  <AlertTriangle size={22} strokeWidth={1.6} aria-hidden />
+                  <AlertTriangle size={22} strokeWidth={2} aria-hidden />
                 </span>
                 <div>
                   <div className="alert-card__title">Contre-indication</div>
@@ -150,7 +150,7 @@ const ProtocolDetailView: React.FC = () => {
               className="btn--primary"
               onClick={() => setSheetOpen(true)}
             >
-              <Check size={18} strokeWidth={1.8} aria-hidden />
+              <Check size={18} strokeWidth={2} aria-hidden />
               Marquer comme appliqué
             </button>
             <button
@@ -158,7 +158,7 @@ const ProtocolDetailView: React.FC = () => {
               className="btn--ghost"
               onClick={handleExport}
             >
-              <FileDown size={18} strokeWidth={1.6} aria-hidden />
+              <FileDown size={18} strokeWidth={2} aria-hidden />
               Exporter PDF
             </button>
           </div>

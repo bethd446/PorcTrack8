@@ -245,7 +245,7 @@ export const EncyclopediaPage: React.FC = () => {
           aria-label="Retour"
           onClick={() => navigate('/reglages')}
         >
-          <ChevronLeft size={18} strokeWidth={1.8} />
+          <ChevronLeft size={18} strokeWidth={2} />
         </button>
         <div className="eyebrow">Apprendre</div>
         <h1>Encyclopédie porcine</h1>
@@ -293,7 +293,7 @@ export const EncyclopediaPage: React.FC = () => {
       {filtered.length === 0 ? (
         <div className="empty-state" role="status">
           <div className="empty-state__icon" aria-hidden="true">
-            <SearchX size={44} strokeWidth={1.6} />
+            <SearchX size={44} strokeWidth={2} />
           </div>
           <div className="empty-state__title">Aucun résultat</div>
           <div className="empty-state__sub">
@@ -303,10 +303,10 @@ export const EncyclopediaPage: React.FC = () => {
           </div>
           <button
             type="button"
-            className="btn--ghost btn--full"
+            className="btn--ghost btn--block"
             onClick={() => navigate('/marius')}
           >
-            <MessageSquare size={18} strokeWidth={1.6} />
+            <MessageSquare size={18} strokeWidth={2} />
             Demander à Marius
           </button>
         </div>
@@ -325,7 +325,7 @@ export const EncyclopediaPage: React.FC = () => {
                 onClick={() => setSelected(a.slug)}
               >
                 <span className="card-link__thumb" aria-hidden="true">
-                  <Icon size={28} strokeWidth={1.4} />
+                  <Icon size={30} strokeWidth={2} />
                 </span>
                 <div className="card-link__main">
                   <span className="card-link__title">
@@ -338,7 +338,7 @@ export const EncyclopediaPage: React.FC = () => {
                 <ChevronRight
                   className="card-link__chev"
                   size={18}
-                  strokeWidth={1.6}
+                  strokeWidth={2}
                   aria-hidden="true"
                 />
               </button>
@@ -360,7 +360,7 @@ export const EncyclopediaPage: React.FC = () => {
                     onClick={() => setSelected(a.slug)}
                   >
                     <span className="card-link__thumb" aria-hidden="true">
-                      <Icon size={28} strokeWidth={1.4} />
+                      <Icon size={30} strokeWidth={2} />
                     </span>
                     <div className="card-link__main">
                       <span className="card-link__title">{a.title}</span>
@@ -371,7 +371,7 @@ export const EncyclopediaPage: React.FC = () => {
                     <ChevronRight
                       className="card-link__chev"
                       size={18}
-                      strokeWidth={1.6}
+                      strokeWidth={2}
                       aria-hidden="true"
                     />
                   </button>
@@ -380,7 +380,7 @@ export const EncyclopediaPage: React.FC = () => {
             </section>
           ))}
 
-          <button type="button" className="btn--ghost btn--full" onClick={() => navigate('/marius')}>
+          <button type="button" className="btn--ghost btn--block" onClick={() => navigate('/marius')}>
             Suggérer un article →
           </button>
         </>

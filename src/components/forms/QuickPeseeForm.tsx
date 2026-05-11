@@ -890,7 +890,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
             {/* ÉTAPE 4 : Succès */}
             {step === 4 && (
               <div className="flex flex-col items-center justify-center py-16 animate-scale-in">
-                <CheckCircle2 size={64} aria-hidden="true" style={{ color: 'var(--pt-primary)', marginBottom: 16 }} strokeWidth={1.5} />
+                <CheckCircle2 size={38} aria-hidden="true" style={{ color: 'var(--pt-primary)', marginBottom: 16 }} strokeWidth={2} />
                 <p className="sheet__title" style={{ textAlign: 'center' }}>Pesée enregistrée</p>
                 {successSummary && (
                   <p className="sheet__sub" style={{ textAlign: 'center', marginTop: 8, padding: '0 16px' }}>

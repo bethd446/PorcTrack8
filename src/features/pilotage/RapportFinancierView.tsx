@@ -193,13 +193,12 @@ const RapportFinancierView: React.FC = () => {
         <div className="pt-screen" style={{ paddingBottom: 140 }}>
           <header className="ph--primary">
             <button
-              data-pt-btn=""
               type="button"
               className="back"
               aria-label="Retour"
               onClick={() => navigate(-1)}
             >
-              <ChevronLeft size={18} strokeWidth={1.8} aria-hidden />
+              <ChevronLeft size={18} strokeWidth={2} aria-hidden />
             </button>
             <div className="eyebrow">Pilotage · Rapport</div>
             <h1>
@@ -662,33 +661,30 @@ const RapportFinancierView: React.FC = () => {
                   }}
                 >
                   <button
-                    data-pt-btn=""
                     type="button"
-                    className="btn-secondary--lg"
+                    className="btn btn--secondary btn--lg"
                     onClick={handleShare}
                     aria-label="Partager le rapport"
                   >
-                    <Share2 size={16} strokeWidth={1.6} aria-hidden />
+                    <Share2 size={16} strokeWidth={2} aria-hidden />
                     Partager
                   </button>
                   <button
-                    data-pt-btn=""
                     type="button"
-                    className="btn-secondary--lg"
+                    className="btn btn--secondary btn--lg"
                     onClick={handleExportCsv}
                     aria-label="Exporter le rapport en CSV"
                   >
-                    <FileText size={16} strokeWidth={1.6} aria-hidden />
+                    <FileText size={16} strokeWidth={2} aria-hidden />
                     CSV
                   </button>
                   <button
-                    data-pt-btn=""
                     type="button"
-                    className="btn-secondary--lg"
+                    className="btn btn--secondary btn--lg"
                     onClick={handleExportPdf}
                     aria-label="Exporter le rapport en PDF"
                   >
-                    <FileDown size={16} strokeWidth={1.6} aria-hidden />
+                    <FileDown size={16} strokeWidth={2} aria-hidden />
                     PDF
                   </button>
                 </div>

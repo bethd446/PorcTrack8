@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { IonToast } from '@ionic/react';
-import { Edit3, Plus, Save, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Edit3, Plus, Save, Trash2, X } from 'lucide-react';
 
 import { BottomSheet } from '../agritech';
 import { Button, FormField, Input, Select, Textarea } from '@/design-system';
@@ -756,7 +756,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                 role="status"
                 className="rounded-md border border-amber-deep/40 bg-amber-pork/10 px-3 py-2 text-[11px] text-amber-deep"
               >
-                ⚠ Total apportés ({totalApportes}) &gt; NV ({form.nv}).
+                <AlertTriangle size={14} className="inline-block" aria-hidden /> Total apportés ({totalApportes}) &gt; NV ({form.nv}).
                 Vérifie la cohérence (warning, pas blocage).
               </div>
             ) : null}
@@ -996,7 +996,13 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                       ? ` / capacité ${l.capaciteMax}`
                       : ''}
                     {own > 0 ? ` · cette bande +${own}` : ''}
-                    {over ? ' · ⚠ capacité dépassée (warning)' : ''}
+                    {over ? (
+                      <>
+                        {' · '}
+                        <AlertTriangle size={14} className="inline-block" aria-hidden />
+                        {' capacité dépassée (warning)'}
+                      </>
+                    ) : null}
                   </div>
                 );
               })()
@@ -1009,7 +1015,7 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
                 data-testid="loge-conflict-warning"
                 className="rounded-md border border-red/40 bg-red/10 px-3 py-2 text-[11px] text-red"
               >
-                ⚠ Loge {loges.find(l => l.id === selectedLogeId)?.numero ?? ''}
+                <AlertTriangle size={14} className="inline-block" aria-hidden /> Loge {loges.find(l => l.id === selectedLogeId)?.numero ?? ''}
                 {' '}occupée par{' '}
                 {logeConflict.kind === 'bande'
                   ? `bande ${logeConflict.label}`

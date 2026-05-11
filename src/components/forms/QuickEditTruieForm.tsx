@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Edit3, Save } from 'lucide-react';
+import { AlertTriangle, Edit3, Save } from 'lucide-react';
 
 import { AppToast, BottomSheet, useAppToast } from '../agritech';
 import { FormField, Input, Section, Select, Textarea, Button } from '@/design-system';
@@ -602,7 +602,7 @@ const QuickEditTruieForm: React.FC<QuickEditTruieFormProps> = ({
                   data-testid="loge-conflict-warning"
                   className="mt-1 rounded-md border border-red/40 bg-red/10 px-3 py-2 text-[11px] text-red"
                 >
-                  ⚠ {logeAssignmentResult.raison ?? 'Loge non éligible'}
+                  <AlertTriangle size={14} className="inline-block" aria-hidden /> {logeAssignmentResult.raison ?? 'Loge non éligible'}
                 </p>
               ) : null}
             </FormField>

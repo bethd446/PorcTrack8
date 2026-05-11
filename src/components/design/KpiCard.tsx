@@ -254,7 +254,7 @@ export default function KpiCard({
             d={buildSparkPath(spark!)}
             fill="none"
             stroke={sparkColor ?? (isAccent ? 'rgba(255,255,255,0.7)' : dotColor)}
-            strokeWidth={1.5}
+            strokeWidth={2}
             strokeLinecap="round"
           />
         </svg>

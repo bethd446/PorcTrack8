@@ -30,7 +30,7 @@ import {
   Plus,
   X,
 } from 'lucide-react';
-import { PigSilhouette } from '../components/v70/icons/PigSilhouette';
+import { EntityAvatar } from '../../components/ds/EntityAvatar';
 
 export interface OnboardingEduPageProps {
   onComplete?: () => void;
@@ -167,7 +167,7 @@ const WizardFooter: React.FC<WizardFooterProps> = ({ step, onPrev, onNext, isLas
     </button>
     <button
       type="button"
-      className="btn-primary--lg"
+      className="btn btn--primary btn--lg btn--block"
       onClick={onNext}
     >
       {isLast ? (
@@ -258,7 +258,7 @@ const Step1Welcome: React.FC = () => (
       }}
       aria-hidden="true"
     >
-      <PigSilhouette size={96} strokeWidth={1.25} />
+      <EntityAvatar species="truie" size="xl" />
     </div>
 
     <div
@@ -389,28 +389,28 @@ const Step2Alerts: React.FC = () => (
       }}
     >
       <AlertCat
-        icon={<Heart size={18} strokeWidth={1.75} />}
+        icon={<Heart size={18} strokeWidth={2} />}
         bg="var(--pt-truie-bg)"
         count="5 règles"
         title="Reproduction"
         examples="Mise-bas imminente · Sevrage dû · Retour chaleur"
       />
       <AlertCat
-        icon={<Stethoscope size={18} strokeWidth={1.75} />}
+        icon={<Stethoscope size={18} strokeWidth={2} />}
         bg="var(--pt-warm)"
         count="3 règles"
         title="Santé"
         examples="Mortalité anormale · Portée orpheline · Manque pesée"
       />
       <AlertCat
-        icon={<Package size={18} strokeWidth={1.75} />}
+        icon={<Package size={18} strokeWidth={2} />}
         bg="var(--pt-warm-deep)"
         count="3 règles"
         title="Stock"
         examples="Aliment <2j · Véto bas · Vermifuge rupture"
       />
       <AlertCat
-        icon={<TrendingUp size={18} strokeWidth={1.75} />}
+        icon={<TrendingUp size={18} strokeWidth={2} />}
         bg="var(--pt-bande-bg)"
         count="3 règles"
         title="Performance"
@@ -694,19 +694,19 @@ const Step5Kpis: React.FC<{ onLink: (slug: string) => void }> = ({ onLink }) => 
 
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <KpiLink
-        icon={<Heart size={18} strokeWidth={1.75} />}
+        icon={<Heart size={18} strokeWidth={2} />}
         title="Comprendre l’ISSE"
         sub="Indice Sevré-Saillie · cible >12"
         onClick={() => onLink('isse')}
       />
       <KpiLink
-        icon={<Banknote size={18} strokeWidth={1.75} />}
+        icon={<Banknote size={18} strokeWidth={2} />}
         title="Comprendre la marge"
         sub="Calcul live · FCFA"
         onClick={() => onLink('marge')}
       />
       <KpiLink
-        icon={<LogOut size={18} strokeWidth={1.75} />}
+        icon={<LogOut size={18} strokeWidth={2} />}
         title="Comprendre la réforme"
         sub="Quand sortir une truie improductive"
         onClick={() => onLink('reforme')}

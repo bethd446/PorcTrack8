@@ -9,7 +9,7 @@
  *
  * V77.1 — polish : KPI tiles et lignes membre extraits dans des styles
  * partagés (avatar 44px, nom mono 600, badge rôle pill mono). Boutons CTA
- * via `.btn--primary btn--full` (constitution V77.1 — pas de --lg).
+ * via `.btn--primary btn--block` (constitution V77.1 — pas de --lg).
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -352,7 +352,7 @@ const InviteSheet: React.FC<InviteSheetProps> = ({ isOpen, onClose, onInvited, c
         <button
           type="submit"
           disabled={submitting || !email.trim()}
-          className="btn--primary btn--full"
+          className="btn--primary btn--block"
         >
           {submitting ? 'Envoi…' : 'Envoyer l’invitation'}
         </button>
@@ -457,7 +457,7 @@ export const MonEquipeV70: React.FC = () => {
               className="iconbtn"
               style={{ marginBottom: 10 }}
             >
-              <ChevronLeft size={16} strokeWidth={1.8} aria-hidden />
+              <ChevronLeft size={16} strokeWidth={2} aria-hidden />
             </button>
             <div className="ph__eyebrow">Configuration · Équipe</div>
             <h1 className="ph__h1">Mon équipe</h1>
@@ -495,7 +495,7 @@ export const MonEquipeV70: React.FC = () => {
               type="button"
               onClick={() => setInviteOpen(true)}
               aria-label="Inviter un membre dans la ferme"
-              className="btn--primary btn--full"
+              className="btn--primary btn--block"
             >
               <UserPlus size={18} aria-hidden />
               Inviter un membre
@@ -549,7 +549,7 @@ export const MonEquipeV70: React.FC = () => {
             type="button"
             onClick={() => navigate('/admin')}
             aria-label="Modifier l’équipe"
-            className="btn--primary btn--full"
+            className="btn--primary btn--block"
           >
             Modifier l’équipe
             <ChevronRight size={18} aria-hidden />

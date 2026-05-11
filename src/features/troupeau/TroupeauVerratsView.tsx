@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, Plus, Search } from 'lucide-react';
 
-import { VerratIcon } from '../../components/icons';
 import { EntityAvatar } from '../../components/ds/EntityAvatar';
 import {
   AnimalListItem,
@@ -134,7 +133,7 @@ const TroupeauVerratsView: React.FC<TroupeauVerratsViewProps> = ({ searchText, s
           onClick={() => setAddOpen(true)}
           ariaLabel="Ajouter un verrat"
         >
-          <Plus size={15} aria-hidden="true" />
+          <Plus size={16} aria-hidden="true" />
           Ajouter un verrat
         </Button>
       </div>
@@ -192,7 +191,7 @@ const TroupeauVerratsView: React.FC<TroupeauVerratsViewProps> = ({ searchText, s
         <ListingSkeleton count={3} />
       ) : verrats.length === 0 ? (
         <EmptyState
-          icon={<VerratIcon size={32} />}
+          icon={<EntityAvatar species="verrat" size="sm" />}
           title="Aucun verrat enregistré"
           description="Les verrats de la ferme apparaîtront ici dès qu'ils seront saisis dans la feuille VERRATS."
         />

@@ -7,12 +7,12 @@ import React, {
 } from 'react';
 import { IonToast } from '@ionic/react';
 import {
-  Home,
-  PiggyBank,
-  Heart,
-  BarChart3,
+  Sun,
+  Warehouse,
+  Repeat,
+  LineChart,
   Wrench,
-  MoreHorizontal,
+  Settings2,
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -205,14 +205,14 @@ const TABS: NavTabDef[] = [
     id: 'today',
     path: '/today',
     label: 'Aujourd’hui',
-    Icon: Home,
+    Icon: Sun,
     match: ['/today'],
   },
   {
     id: 'elevage',
     path: '/troupeau',
     label: 'Élevage',
-    Icon: PiggyBank,
+    Icon: Warehouse,
     // V43.7 : retire /cheptel et /bandes (routes legacy n'existant plus,
     // toutes les vues élevage passent par /troupeau et ses sous-routes).
     match: ['/troupeau'],
@@ -221,7 +221,7 @@ const TABS: NavTabDef[] = [
     id: 'repro',
     path: REPRO_PATH,
     label: 'Repro',
-    Icon: Heart,
+    Icon: Repeat,
     // V43.7 : ajout de /cycles en match racine pour que toutes les sous-vues
     // (post-sevrage, croissance, finition, engraissement, sortie) restent
     // rattachées au tab Repro. Le longest-prefix match préserve les sous-routes
@@ -254,7 +254,7 @@ const TABS: NavTabDef[] = [
     id: 'perf',
     path: '/pilotage',
     label: 'Pilotage',
-    Icon: BarChart3,
+    Icon: LineChart,
     match: ['/pilotage'],
     ownerOnly: true,
   },
@@ -262,7 +262,7 @@ const TABS: NavTabDef[] = [
     id: 'more',
     path: '/more',
     label: 'Plus',
-    Icon: MoreHorizontal,
+    Icon: Settings2,
     match: [
       '/more',
       '/admin',
@@ -329,7 +329,7 @@ const NavTab: React.FC<NavTabProps> = ({ tab, isActive, onSelect, badgeCount, mo
       >
         <span className="relative inline-flex">
           <Icon
-            size={24}
+            size={22}
             strokeWidth={2}
             className="block transition-[color] duration-[180ms]"
             style={{ color: isActive ? ACCENT : 'var(--muted)' }}

@@ -198,13 +198,13 @@ export const ProtocolApplicationSheet: React.FC<ProtocolApplicationSheetProps> =
                 aria-label="Date d’application"
               />
               <span className="field__icon" aria-hidden>
-                <Calendar size={18} strokeWidth={1.6} aria-hidden />
+                <Calendar size={18} strokeWidth={2} aria-hidden />
               </span>
             </label>
             <button type="button" className="field--row">
               <span>{operatorName}</span>
               <span className="field__icon" aria-hidden>
-                <ChevronDown size={18} strokeWidth={1.6} aria-hidden />
+                <ChevronDown size={18} strokeWidth={2} aria-hidden />
               </span>
             </button>
 
@@ -216,7 +216,7 @@ export const ProtocolApplicationSheet: React.FC<ProtocolApplicationSheetProps> =
                 className="camera-placeholder"
                 aria-label="Ajouter une photo"
               >
-                <Camera size={26} strokeWidth={1.6} aria-hidden />
+                <Camera size={26} strokeWidth={2} aria-hidden />
               </button>
               <div className="camera-label">Ajouter une photo</div>
             </div>
@@ -226,7 +226,7 @@ export const ProtocolApplicationSheet: React.FC<ProtocolApplicationSheetProps> =
               className="btn--primary"
               onClick={handleSubmit}
             >
-              <Save size={18} strokeWidth={1.8} aria-hidden />
+              <Save size={18} strokeWidth={2} aria-hidden />
               Enregistrer l’application
             </button>
           </>

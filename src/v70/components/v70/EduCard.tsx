@@ -18,7 +18,7 @@ export interface EduCardProps {
 const DEFAULT_ICON = (
   <Lightbulb
     size={14}
-    strokeWidth={1.5}
+    strokeWidth={2}
     aria-hidden="true"
     style={{ color: 'var(--pt-muted)', flexShrink: 0 }}
   />

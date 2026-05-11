@@ -249,7 +249,7 @@ const MariusOffline: React.FC<OfflineCardProps> = ({ onRetry, onClose }) => (
         marginBottom: 4,
       }}
     >
-      <CloudOff size={28} color="var(--pt-accent-light)" />
+      <CloudOff size={30} color="var(--pt-accent-light)" />
     </div>
     <div
       className="eyebrow"

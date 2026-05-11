@@ -923,7 +923,7 @@ export default function PorceletsReorgWizard() {
             <Card>
               <div style={{ padding: 24, textAlign: 'center' }}>
                 <CheckCircle2
-                  size={32}
+                  size={30}
                   style={{ color: 'var(--pt-success)' }}
                   aria-hidden
                 />

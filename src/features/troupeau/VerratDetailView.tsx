@@ -479,7 +479,7 @@ const VerratDetailView: React.FC = () => {
                         className="flex items-start gap-3 px-3 py-3 border-b border-border last:border-b-0"
                       >
                         <div className="w-8 h-8 rounded-lg bg-bg-1 border border-border flex items-center justify-center shrink-0 mt-0.5 text-accent">
-                          <Heart size={15} aria-hidden="true" />
+                          <Heart size={14} aria-hidden="true" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-[13px] font-medium text-text-0 truncate">
@@ -531,9 +531,9 @@ const VerratDetailView: React.FC = () => {
                           }}
                         >
                           {soinTone === 'blue' ? (
-                            <Scale size={15} aria-hidden="true" />
+                            <Scale size={14} aria-hidden="true" />
                           ) : (
-                            <Syringe size={15} aria-hidden="true" />
+                            <Syringe size={14} aria-hidden="true" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">

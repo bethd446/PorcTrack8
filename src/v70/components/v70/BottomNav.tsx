@@ -9,8 +9,7 @@
  */
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Heart, BarChart3, Settings } from 'lucide-react';
-import { PigSilhouette } from './icons/PigSilhouette';
+import { Sun, Warehouse, Repeat, LineChart, Settings2 } from 'lucide-react';
 
 interface NavTabV70 {
   id: 'today' | 'animals' | 'repro' | 'perf' | 'settings';
@@ -21,11 +20,11 @@ interface NavTabV70 {
 }
 
 const TABS_V70: NavTabV70[] = [
-  { id: 'today',    href: '/today',         icon: <Home size={20} strokeWidth={1.75} aria-hidden />,       label: "Aujourd'hui", match: ['/today'] },
-  { id: 'animals',  href: '/troupeau',      icon: <PigSilhouette size={20} />,                              label: 'Élevage',     match: ['/troupeau'] },
-  { id: 'repro',    href: '/reproduction',  icon: <Heart size={20} strokeWidth={1.75} aria-hidden />,      label: 'Repro',       match: ['/reproduction', '/cycles'] },
-  { id: 'perf',     href: '/performance',   icon: <BarChart3 size={20} strokeWidth={1.75} aria-hidden />,  label: 'Performance', match: ['/performance', '/pilotage'] },
-  { id: 'settings', href: '/reglages',      icon: <Settings size={20} strokeWidth={1.75} aria-hidden />,   label: 'Réglages',    match: ['/reglages', '/more', '/admin', '/aide', '/ressources', '/fournisseurs', '/protocoles'] },
+  { id: 'today',    href: '/today',         icon: <Sun size={20} strokeWidth={2} aria-hidden />,        label: "Aujourd'hui", match: ['/today'] },
+  { id: 'animals',  href: '/troupeau',      icon: <Warehouse size={20} strokeWidth={2} aria-hidden />,  label: 'Élevage',     match: ['/troupeau'] },
+  { id: 'repro',    href: '/reproduction',  icon: <Repeat size={20} strokeWidth={2} aria-hidden />,     label: 'Repro',       match: ['/reproduction', '/cycles'] },
+  { id: 'perf',     href: '/performance',   icon: <LineChart size={20} strokeWidth={2} aria-hidden />,  label: 'Performance', match: ['/performance', '/pilotage'] },
+  { id: 'settings', href: '/reglages',      icon: <Settings2 size={20} strokeWidth={2} aria-hidden />,  label: 'Réglages',    match: ['/reglages', '/more', '/admin', '/aide', '/ressources', '/fournisseurs', '/protocoles'] },
 ];
 
 /**

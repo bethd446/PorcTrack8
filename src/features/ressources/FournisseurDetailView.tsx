@@ -76,7 +76,7 @@ const FournisseurDetailView: React.FC = () => {
                 aria-label="Retour aux fournisseurs"
                 onClick={() => navigate('/ressources/fournisseurs')}
               >
-                <ChevronLeft size={18} strokeWidth={1.8} aria-hidden />
+                <ChevronLeft size={18} strokeWidth={2} aria-hidden />
               </button>
               <div className="eyebrow">Fournisseur</div>
               <h1>Introuvable</h1>
@@ -85,7 +85,7 @@ const FournisseurDetailView: React.FC = () => {
             <div className="section">
               <button
                 type="button"
-                className="btn-primary"
+                className="btn btn--primary"
                 onClick={() => navigate('/ressources/fournisseurs')}
               >
                 Retour à la liste
@@ -122,7 +122,7 @@ const FournisseurDetailView: React.FC = () => {
               aria-label="Retour aux fournisseurs"
               onClick={() => navigate('/ressources/fournisseurs')}
             >
-              <ChevronLeft size={18} strokeWidth={1.8} aria-hidden />
+              <ChevronLeft size={18} strokeWidth={2} aria-hidden />
             </button>
 
             <div
@@ -148,7 +148,7 @@ const FournisseurDetailView: React.FC = () => {
                   border: '1px solid rgba(255,255,255,0.18)',
                 }}
               >
-                <Building2 size={36} strokeWidth={1.4} />
+                <Building2 size={36} strokeWidth={2} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="eyebrow">{categorieLabel}</div>
@@ -187,7 +187,7 @@ const FournisseurDetailView: React.FC = () => {
                       <Star
                         key={i}
                         size={14}
-                        strokeWidth={1.6}
+                        strokeWidth={2}
                         fill={i <= f.note ? 'currentColor' : 'transparent'}
                         className={i <= f.note ? '' : 'stars__empty'}
                         aria-hidden
@@ -205,7 +205,7 @@ const FournisseurDetailView: React.FC = () => {
 
             <a className="contact-row" href={telHref} aria-label={`Appeler ${f.telephone}`}>
               <div className="contact-row__icon">
-                <Phone size={16} strokeWidth={1.8} aria-hidden />
+                <Phone size={16} strokeWidth={2} aria-hidden />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
@@ -239,7 +239,7 @@ const FournisseurDetailView: React.FC = () => {
                 className="contact-row__icon"
                 style={{ background: '#25D366', color: 'white' }}
               >
-                <MessageCircle size={16} strokeWidth={1.8} aria-hidden />
+                <MessageCircle size={16} strokeWidth={2} aria-hidden />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
@@ -261,7 +261,7 @@ const FournisseurDetailView: React.FC = () => {
             {mailHref && (
               <a className="contact-row" href={mailHref} aria-label={`Envoyer un email à ${f.email}`}>
                 <div className="contact-row__icon">
-                  <Mail size={16} strokeWidth={1.8} aria-hidden />
+                  <Mail size={16} strokeWidth={2} aria-hidden />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div
@@ -289,7 +289,7 @@ const FournisseurDetailView: React.FC = () => {
               aria-label={`Voir ${f.adresse} sur la carte`}
             >
               <div className="contact-row__icon">
-                <MapPin size={16} strokeWidth={1.8} aria-hidden />
+                <MapPin size={16} strokeWidth={2} aria-hidden />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
@@ -409,25 +409,25 @@ const FournisseurDetailView: React.FC = () => {
 
           <div className="actions" style={{ marginTop: 8 }}>
             <a
-              className="btn-primary"
+              className="btn btn--primary"
               href={orderHref}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Passer une commande sur WhatsApp"
               style={{ textDecoration: 'none' }}
             >
-              <ShoppingCart size={18} strokeWidth={1.8} aria-hidden />
+              <ShoppingCart size={18} strokeWidth={2} aria-hidden />
               Passer une commande
             </a>
             <a
-              className="btn-secondary"
+              className="btn btn--secondary"
               href={waHref}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Envoyer un message WhatsApp"
               style={{ textDecoration: 'none' }}
             >
-              <Send size={16} strokeWidth={1.8} aria-hidden />
+              <Send size={16} strokeWidth={2} aria-hidden />
               Message rapide WhatsApp
             </a>
           </div>
