@@ -28,8 +28,17 @@ const TABS_V70: NavTabV70[] = [
   { id: 'settings', href: '/reglages',      icon: <Settings size={20} strokeWidth={1.75} aria-hidden />,   label: 'Réglages',    match: ['/reglages', '/more', '/admin', '/aide', '/ressources', '/fournisseurs', '/protocoles'] },
 ];
 
-function resolveActiveTab(pathname: string): NavTabV70['id'] {
-  let bestId: NavTabV70['id'] = 'today';
+/**
+ * Résout le tab actif à partir du pathname courant.
+ *
+ * Stratégie : longest-prefix match parmi les `match` déclarés par chaque tab.
+ * Retourne `null` si aucun tab ne matche : utile pour les routes hors-shell
+ * (ex: `/alerts`, `/controle`, `/protocoles`) où on ne veut PAS surligner
+ * "Aujourd'hui" par défaut (bug B7 — Christophe v76 ; fix vague 1 ciblait
+ * AgritechNavV2 mais le shell V70 monte BottomNavV70).
+ */
+export function resolveActiveTab(pathname: string): NavTabV70['id'] | null {
+  let bestId: NavTabV70['id'] | null = null;
   let bestLen = -1;
   for (const tab of TABS_V70) {
     for (const m of tab.match) {

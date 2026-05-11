@@ -62,6 +62,9 @@ const RessourcesHub = React.lazy(() =>
 const ProtocolsView = React.lazy(() =>
   import('../../features/protocoles/ProtocolsView').then((m) => ({ default: m.default })),
 );
+const ProtocolDetailView = React.lazy(() =>
+  import('../../features/protocoles/ProtocolDetailView').then((m) => ({ default: m.default })),
+);
 const AlimentsView = React.lazy(() =>
   import('../../features/ressources/AlimentsView').then((m) => ({ default: m.default })),
 );
@@ -71,11 +74,17 @@ const PharmacieView = React.lazy(() =>
 const FormulesView = React.lazy(() =>
   import('../../features/ressources/FormulesView').then((m) => ({ default: m.default })),
 );
+const FormuleDetailView = React.lazy(() =>
+  import('../../features/ressources/FormuleDetailView').then((m) => ({ default: m.default })),
+);
 const PlanAlimentationView = React.lazy(() =>
   import('../../features/ressources/PlanAlimentationView').then((m) => ({ default: m.default })),
 );
 const FournisseursView = React.lazy(() =>
   import('../../features/ressources/FournisseursView').then((m) => ({ default: m.default })),
+);
+const FournisseurDetailView = React.lazy(() =>
+  import('../../features/ressources/FournisseurDetailView').then((m) => ({ default: m.default })),
 );
 const AlertsView = React.lazy(() =>
   import('../../features/tables/AlertsView').then((m) => ({ default: m.default })),
@@ -191,6 +200,7 @@ export const V70Routes: React.FC = () => (
           <Route path="/controle" element={<ControleQuotidien />} />
           <Route path="/reglages/systeme" element={<SettingsPage />} />
           <Route path="/protocoles" element={<ProtocolsView />} />
+          <Route path="/protocoles/:id" element={<ProtocolDetailView />} />
           <Route path="/alerts" element={<AlertsView />} />
           {/* V77 — /audit fusionné dans /alerts (doublon sémantique supprimé) */}
           <Route path="/audit" element={<Navigate to="/alerts" replace />} />
@@ -200,8 +210,12 @@ export const V70Routes: React.FC = () => (
           <Route path="/ressources/aliments" element={<AlimentsView />} />
           <Route path="/ressources/aliments/plan" element={<PlanAlimentationView />} />
           <Route path="/ressources/aliments/formules" element={<FormulesView />} />
+          <Route path="/ressources/formules" element={<FormulesView />} />
+          <Route path="/ressources/formules/:id" element={<FormuleDetailView />} />
           <Route path="/ressources/pharmacie" element={<PharmacieView />} />
-          <Route path="/fournisseurs" element={<FournisseursView />} />
+          <Route path="/ressources/fournisseurs" element={<FournisseursView />} />
+          <Route path="/ressources/fournisseurs/:id" element={<FournisseurDetailView />} />
+          <Route path="/fournisseurs" element={<Navigate to="/ressources/fournisseurs" replace />} />
 
           {/* Pilotage détail (rapport, finances V70 réutilisent legacy) */}
           <Route path="/pilotage/finances/details" element={<FinancesView />} />

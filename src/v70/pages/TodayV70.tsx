@@ -40,21 +40,54 @@ interface AlertItem {
 
 export const TodayV70: React.FC = () => {
   const navigate = useNavigate();
-  const { truies, verrats, bandes } = useFarm();
+  const farm = useFarm();
+  const { truies, verrats, bandes } = farm;
+  const engineAlerts = farm.alerts ?? [];
   const { loading: farmLoading } = useMeta();
   const { profile } = useAuth();
 
   // V71.2 — alertes calculées depuis FarmContext (plus de mocks statiques)
+  // V75-B1 — fix résiduel : source MB = alertEngine R1 (truie.dateMBPrevue)
+  // au lieu de bande.dateMB. R1 capture T-022 (J+2) / T-026 (J+1) qui sont
+  // visibles dans /alerts mais pas dans Today tant qu'on reste sur bandes.
   const computedAlerts = useMemo((): AlertItem[] => {
     const result: AlertItem[] = [];
     const now = new Date();
-    const in7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const seenTruieIds = new Set<string>();
 
-    // MB prévues dans les 7 prochains jours
+    // 1. R1 Mise-Bas (J-3 à J+2, voire J+17 si retard) — source canonique alertEngine.
+    engineAlerts.forEach(a => {
+      if (a.category !== 'REPRO') return;
+      if (!a.title.startsWith('Mise-Bas')) return;
+      const offset = a.daysOffset ?? 0;
+      // offset < 0 : avance (ex. -2 → "J-2") | offset >= 0 : jour-même ou retard.
+      const isUrgent = a.priority === 'CRITIQUE' || offset >= 0;
+      const tag =
+        offset > 0
+          ? `J+${offset}`
+          : offset === 0
+            ? 'Aujourd’hui'
+            : `J${offset}`;
+      result.push({
+        id: a.id,
+        variant: isUrgent ? 'danger' : 'warning',
+        tag,
+        title: a.title,
+        meta: a.message,
+        to: `/troupeau/truies/${a.subjectId}`,
+      });
+      seenTruieIds.add(a.subjectId);
+    });
+
+    // 2. Fallback bandes.dateMB — couvre les bandes orphelines (sans truie liée)
+    //    ou les truies sans dateMBPrevue côté Truie. Évite la double-comptage R1.
     bandes.forEach(b => {
       if (!b.dateMB) return;
+      if (b.truie && seenTruieIds.has(b.truie)) return;
       const d = new Date(b.dateMB);
-      if (isNaN(d.getTime()) || d < now || d > in7) return;
+      if (isNaN(d.getTime())) return;
+      const in7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      if (d < now || d > in7) return;
       const diffDays = Math.ceil((d.getTime() - now.getTime()) / 86400000);
       result.push({
         id: `mb-${b.id}`,
@@ -95,7 +128,7 @@ export const TodayV70: React.FC = () => {
       });
 
     return result.slice(0, 5);
-  }, [truies, bandes]);
+  }, [truies, bandes, engineAlerts]);
 
   // V75-o-a (F-6) : state dismissed retiré avec le bouton Acquitter.
   // L'acquittement reviendra via long-press ou menu contextuel à un sprint
