@@ -325,3 +325,45 @@ NB technique : Playwright compte tout request.failure comme bad network, même u
 - FIX #E URLs canoniques boucle (redirect 301 displayId → boucle)
 - Migration usages displayId dans autres composants (encyclopédie, chatbot context, exports PDF)
 - Tests rendu strip KPIs verrat (snapshot)
+
+---
+
+## [13:11] SESSION-EXEC — v3.4.7 livré
+
+**Date** : 2026-05-12 13:11
+
+**Fixes appliqués** (2 commits orchestrateur) :
+- `P1 typo canon` — 24 occurrences `var(--ff-*)` orphelines migrées vers `--pt-font-*` (6 fichiers : Pharmacie, Fournisseurs, Aliments, Alerts, FournisseurDetail, Outils)
+- `P2 tap targets WCAG` — `.tab-mini` + `.pt-screen .pill` passés à `min-height: 44px` (impact transverse ~30 boutons à travers 8+ pages)
+
+**Bilan scope orchestrateur** :
+
+**P1 — Typo canon final** :
+- Mappings : `--ff-mono` → `--pt-font-mono`, `--ff-display` → `--pt-font-display`, `--ff-body` → `--pt-font-mono` (canon V71+ = 2 fonts strict)
+- `rg "var\(--ff-" src/` retourne 0 résultat
+- Même symptôme que v3.4.6 (Saillie flou) sur les 6 fichiers → tous propres maintenant
+
+**P2 — Audit boutons & tap targets** :
+- `.audit/v347-buttons-audit.md` créé avec tableaux avant/après
+- /troupeau : 85 % → **100 %** conforme (5 tabs internes + 5 pills filtre)
+- /reproduction : 62 % → **92 %** conforme (4 tabs internes, 1 résiduel décoratif)
+- /today : 78 % inchangé (4 issues résiduelles dans bannière notif legacy V77 — hors scope CSS global, reporté v3.4.8)
+
+**P3 — Décalages visuels** : implicitement couvert par P2 (cohérence pills/tabs à travers 8+ pages)
+
+**P4 — Flows utilisateur** : test switch profil cycle complet → engraisseur via Chrome MCP. Click détecté, mais propagation Context nécessite rechargement page (mécanisme V80 A4). Test E2E exhaustif Playwright hors scope orchestrateur — délégué session-critique.
+
+**P5 — Caractéristiques transverses** : console clean post-fixes (1 erreur Manifest pré-existante depuis v3.3.0). i18n FR confirmé, devise FCFA, dates fr.
+
+**Validation** :
+- `npx tsc --noEmit` → 0 erreur
+- `npm test` → 2090/2090 verts (inchangé)
+- `npm run build` → OK, 110 entries PWA, 8.81s
+- HEAD avant push : 2 commits v3.4.7
+
+**Hors scope v3.4.7 (à traiter v3.4.8)** :
+- Refonte bannière notification /today (4 boutons sub-44px legacy)
+- Test E2E Playwright exhaustif (5 flows complets)
+- Décalages visuels viewports multiples (390/480/768)
+- Module PPA P0 ajouté
+- P0 #3 Calendrier vaccinal auto
