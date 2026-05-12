@@ -375,9 +375,14 @@
 }
 
 .tab-mini {
+  /* v3.4.7 — tap target ≥ 44px (WCAG AA, terrain mobile mains gantées). */
   flex: 1 0 auto;
   min-width: 0;
-  padding: 7px 12px;
+  min-height: 44px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 999px;
   font-size: 10px;
   font-weight: 600;
@@ -3381,8 +3386,9 @@
 }
 .pt-screen .pills::-webkit-scrollbar { display: none; }
 .pt-screen .pill {
+  /* v3.4.7 — tap target ≥ 44px (WCAG AA, terrain mobile). */
   flex-shrink: 0;
-  height: 36px;
+  min-height: 44px;
   padding: 0 16px;
   border-radius: 999px;
   background: white;
