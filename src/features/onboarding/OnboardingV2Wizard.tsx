@@ -108,12 +108,15 @@ export default function OnboardingV2Wizard() {
       const isEngraisseurPur = data.type === 'ENGRAISSEUR';
 
       // 1. Truies T-001 → T-N (skip pour engraisseur pur)
+      // NB : la colonne DB est `breed` (anglais), pas `race`. Le mapping race→breed
+      // est appliqué en lecture via supabaseService.ts, et en écriture via les Quick*Form
+      // (cf. QuickEditTruieForm.tsx supabasePatch.breed = p.RACE).
       if (!isEngraisseurPur && data.nbTruies > 0) {
         const truies = Array.from({ length: data.nbTruies }, (_, i) => ({
           farm_id: farmId,
           code_id: `T-${String(i + 1).padStart(3, '0')}`,
           statut: 'En attente saillie',
-          race: allRaces[0] ?? 'Local',
+          breed: allRaces[0] ?? 'Local',
         }));
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error: sowsErr } = await (supabase as any).from('sows').insert(truies);
@@ -126,7 +129,7 @@ export default function OnboardingV2Wizard() {
           farm_id: farmId,
           code_id: `V-${String(i + 1).padStart(3, '0')}`,
           statut: 'Actif',
-          race: allRaces[0] ?? 'Local',
+          breed: allRaces[0] ?? 'Local',
         }));
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error: boarsErr } = await (supabase as any).from('boars').insert(verrats);
