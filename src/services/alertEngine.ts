@@ -22,6 +22,7 @@ import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import type { Truie, BandePorcelets, TraitementSante, StockAliment, StockVeto, Saillie } from '../types/farm';
 import type { Note } from '../types';
 import { normaliseStatut } from '../lib/truieStatut';
+import { formatAnimalIdentity } from '../lib/formatAnimalIdentity';
 import { computeBandePhase } from './bandesAggregator';
 import { detectTruiesAReformer } from './perfKpiAnalyzer';
 import { extractPeseesForBande } from './growthAnalyzer';
@@ -194,12 +195,12 @@ function checkMiseBas(truie: Truie, today: Date): FarmAlert | null {
     id: alertId('MB', truie.id, String(mbPrevue.getTime())),
     priority: isRetard ? 'CRITIQUE' : 'HAUTE',
     category: 'REPRO',
-    // v3.4.1 — Décision V31-V32 : URLs truies en boucle, pas UUID (cf.
-    // TodayV70.tsx:77 → /troupeau/truies/${subjectId}). isAlertSubjectOrphan
-    // et TruieDetailView matchent déjà id OU displayId, donc safe.
+    // v3.4.7+ — Boucle prioritaire (cf. formatAnimalIdentity v3.4.5).
+    // subjectId reste sur displayId pour routing rétro-compat ; affichage
+    // user-facing utilise formatAnimalIdentity (boucle si dispo).
     subjectId: truie.displayId ?? truie.boucle ?? truie.id,
-    subjectLabel: truie.displayId,
-    title: isRetard ? `Mise-Bas en Retard — ${truie.displayId}` : `Mise-Bas Imminente — ${truie.displayId}`,
+    subjectLabel: formatAnimalIdentity(truie),
+    title: isRetard ? `Mise-Bas en Retard — ${formatAnimalIdentity(truie)}` : `Mise-Bas Imminente — ${formatAnimalIdentity(truie)}`,
     message: isRetard
       ? `La mise-bas était prévue il y a ${offset} jour(s). Vérifier l'animal immédiatement.`
       : `Mise-bas prévue dans ${Math.abs(offset)} jour(s) (${truie.dateMBPrevue}).`,
@@ -312,9 +313,9 @@ function checkRetourChaleur(truie: Truie, bandes: BandePorcelets[], today: Date)
     priority: joursSevrage > 10 ? 'HAUTE' : 'NORMALE',
     category: 'REPRO',
     subjectId: truie.id,
-    subjectLabel: truie.displayId,
-    title: `Chaleur attendue — ${truie.displayId}`,
-    message: `${truie.displayId} est en attente saillie depuis J+${joursSevrage} post-sevrage. Surveiller les chaleurs (fenêtre J+3 à J+7).`,
+    subjectLabel: formatAnimalIdentity(truie),
+    title: `Chaleur attendue — ${formatAnimalIdentity(truie)}`,
+    message: `${formatAnimalIdentity(truie)} est en attente saillie depuis J+${joursSevrage} post-sevrage. Surveiller les chaleurs (fenêtre J+3 à J+7).`,
     requiresAction: true,
     daysOffset: joursSevrage,
     actions: [
@@ -496,9 +497,9 @@ function checkFenetreEcho(truie: Truie, saillies: Saillie[], today: Date): FarmA
       priority: 'INFO',
       category: 'REPRO',
       subjectId: truie.id,
-      subjectLabel: truie.displayId,
+      subjectLabel: formatAnimalIdentity(truie),
       title: 'Fenêtre Échographie',
-      message: `${truie.displayId} est à J+${jours} post-saillie. Période idéale pour l'écho (J25-J35).`,
+      message: `${formatAnimalIdentity(truie)} est à J+${jours} post-saillie. Période idéale pour l'écho (J25-J35).`,
       requiresAction: false,
       actions: [{ type: 'DISMISS', label: 'Fait' }],
       createdAt: new Date(),
@@ -528,9 +529,9 @@ function checkReSaillieProactive(truie: Truie, today: Date): FarmAlert | null {
       priority,
       category: 'REPRO',
       subjectId: truie.id,
-      subjectLabel: truie.displayId,
+      subjectLabel: formatAnimalIdentity(truie),
       title: 'Re-Saillie Proactive',
-      message: `${truie.displayId} a eu un retour en chaleur il y a ${jours} jour(s).`,
+      message: `${formatAnimalIdentity(truie)} a eu un retour en chaleur il y a ${jours} jour(s).`,
       requiresAction: true,
       actions: [
         { type: 'CONFIRM_SAILLIE', label: 'Re-Saillir', payload: { truieId: truie.id } },
@@ -636,8 +637,8 @@ function checkTruiesAReformer(truies: Truie[], bandes: BandePorcelets[], saillie
       priority: c.motif === 'PERF_INSUFFISANTE' ? 'HAUTE' : 'NORMALE',
       category: 'REPRO',
       subjectId: c.truie.id,
-      subjectLabel: c.truie.displayId,
-      title: `Réforme Suggérée — ${c.truie.displayId}`,
+      subjectLabel: formatAnimalIdentity(c.truie),
+      title: `Réforme Suggérée — ${formatAnimalIdentity(c.truie)}`,
       message: `Motif : ${c.motif}. Détail : ${c.detail}. La productivité de cette truie est sous les standards.`,
       requiresAction: true,
       actions: [
