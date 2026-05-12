@@ -194,7 +194,10 @@ function checkMiseBas(truie: Truie, today: Date): FarmAlert | null {
     id: alertId('MB', truie.id, String(mbPrevue.getTime())),
     priority: isRetard ? 'CRITIQUE' : 'HAUTE',
     category: 'REPRO',
-    subjectId: truie.id,
+    // v3.4.1 — Décision V31-V32 : URLs truies en boucle, pas UUID (cf.
+    // TodayV70.tsx:77 → /troupeau/truies/${subjectId}). isAlertSubjectOrphan
+    // et TruieDetailView matchent déjà id OU displayId, donc safe.
+    subjectId: truie.displayId ?? truie.boucle ?? truie.id,
     subjectLabel: truie.displayId,
     title: isRetard ? `Mise-Bas en Retard — ${truie.displayId}` : `Mise-Bas Imminente — ${truie.displayId}`,
     message: isRetard
