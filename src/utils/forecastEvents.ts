@@ -30,6 +30,7 @@ import type {
 } from '../types/farm';
 import type { Note } from '../types';
 import { extractPeseesForBande } from '../services/growthAnalyzer';
+import { formatAnimalIdentity } from '../lib/formatAnimalIdentity';
 
 // ─── Constantes métier ──────────────────────────────────────────────────────
 
@@ -106,8 +107,12 @@ function inHorizon(d: Date, today: Date, horizonEnd: Date): boolean {
 }
 
 function truieLabel(t: Truie): string {
-  if (t.nom && t.displayId) return `${t.displayId} ${t.nom}`;
-  return t.nom || t.displayId || t.boucle;
+  // v3.4.5+ : boucle prioritaire (cf. src/lib/formatAnimalIdentity.ts).
+  // Format : `<boucle ou displayId>[ <nom>]` — le nom reste en suffixe car
+  // utile pour les éleveurs qui nomment leurs reproducteurs.
+  const id = formatAnimalIdentity(t);
+  if (t.nom) return `${id} ${t.nom}`;
+  return id;
 }
 
 function bandeLabel(b: BandePorcelets): string {
