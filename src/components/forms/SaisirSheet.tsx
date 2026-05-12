@@ -303,7 +303,7 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
                 <span
                   className="saisir-sheet__item-title"
                   style={{
-                    fontFamily: 'var(--ff-mono)',
+                    fontFamily: 'var(--pt-font-mono)',
                     fontSize: 12,
                     fontWeight: 600,
                     letterSpacing: '0.08em',
@@ -318,7 +318,7 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
                   <span
                     className="saisir-sheet__item-hint"
                     style={{
-                      fontFamily: 'var(--ff-mono)',
+                      fontFamily: 'var(--pt-font-mono)',
                       fontSize: 10.5,
                       fontWeight: 500,
                       letterSpacing: '0.04em',
