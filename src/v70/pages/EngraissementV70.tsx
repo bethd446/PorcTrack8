@@ -153,11 +153,12 @@ export const EngraissementV70: React.FC = () => {
         style={{ marginBottom: 16 }}
       >
         <div className="kpi">
-          <div className="kpi__label">Lots actifs</div>
+          {/* v3.4.9 : labels raccourcis pour ne pas tronquer à 360px */}
+          <div className="kpi__label">Lots</div>
           <div className="kpi__val">{kpis.totalLotsActifs}</div>
         </div>
         <div className="kpi">
-          <div className="kpi__label">Porcs stock</div>
+          <div className="kpi__label">Effectif</div>
           <div className="kpi__val">{kpis.porcsEnStock}</div>
         </div>
         <div className="kpi">
