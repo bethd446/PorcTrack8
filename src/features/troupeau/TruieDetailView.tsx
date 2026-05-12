@@ -21,6 +21,7 @@ import { IonContent, IonModal, IonPage, IonToast, useIonAlert } from '@ionic/rea
 import { ChevronRight, MoreHorizontal, Pencil, Printer } from 'lucide-react';
 
 import { useFarm } from '../../context/FarmContext';
+import { formatAnimalIdentity, formatAnimalSubId } from '../../lib/formatAnimalIdentity';
 import { useEntityWithRetry } from '../../hooks/useEntityWithRetry';
 import { SpinnerCenter, EntityNotFoundCard } from '../../v70/components/v70/EntityNotFoundGuard';
 import { enqueueUpdate } from '../../services/offlineQueue';
@@ -522,12 +523,17 @@ const TruieDetailView: React.FC = () => {
               <ChevronRight aria-hidden />
               <Link to="/troupeau?view=truies">Truies</Link>
               <ChevronRight aria-hidden />
-              <b>{safeDisplay(truie.displayId)}</b>
+              <b>{formatAnimalIdentity(truie)}</b>
             </div>
             <div className="ph__row">
               <div>
                 <div className="ph__eyebrow">Élevage · Truie</div>
-                <h1 className="ph__h1">{safeDisplay(truie.displayId)}</h1>
+                <h1 className="ph__h1">{formatAnimalIdentity(truie)}</h1>
+                {formatAnimalSubId(truie) && (
+                  <div className="ph__sub ft-code" style={{ opacity: 0.7, fontSize: 11, letterSpacing: '0.06em', marginTop: 2 }}>
+                    {formatAnimalSubId(truie)}
+                  </div>
+                )}
               </div>
               <button
                 type="button"

@@ -29,6 +29,7 @@ import { LongPressSheet as V70LongPressSheet } from '../components/v70/LongPress
 import { useLongPress } from '../hooks/useLongPress';
 import { useFarm, useMeta } from '../../context/FarmContext';
 import { formatBandeName, isReformed, formatDateFr } from '../lib';
+import { formatAnimalIdentity, formatAnimalSubId } from '../../lib/formatAnimalIdentity';
 import { MariusGreeting } from '../../features/chatbot/MariusGreeting';
 import ListingSkeleton from '../../components/design/ListingSkeleton';
 import { useListingLoadingGuard } from '../../hooks/useListingLoadingGuard';
@@ -263,8 +264,12 @@ const AnimalsV70Inner: React.FC = () => {
                     ? 'À réformer'
                     : null;
             const status = [parite, dateInfo].filter(Boolean).join(' · ') || (t.statut ?? 'Truie active');
+            // v3.4.5 — boucle prioritaire dans displayName ; id reste displayId pour URL
+            const subId = formatAnimalSubId(t);
             return {
               id: t.displayId ?? t.id,
+              displayName: formatAnimalIdentity(t),
+              subId,
               status,
               statusLabel: isPleine ? 'Pleine' : isMater ? 'Maternité' : isVide ? 'Vide' : isAVendre ? 'À vendre' : (t.statut ?? 'Active'),
               pillVariant: (isPleine ? 'success' : isMater ? 'warm' : isVide ? 'warning' : isAVendre ? 'ghost' : 'info') as PillVariant,
@@ -274,6 +279,8 @@ const AnimalsV70Inner: React.FC = () => {
       verrats: verrats?.length
         ? verrats.map(v => ({
             id: v.displayId ?? v.id,
+            displayName: formatAnimalIdentity(v),
+            subId: formatAnimalSubId(v),
             status: v.statut ?? 'Verrat',
             statusLabel: v.statut === 'Actif' ? 'Actif' : 'Inactif',
             pillVariant: (v.statut === 'Actif' ? 'success' : 'warning') as PillVariant,

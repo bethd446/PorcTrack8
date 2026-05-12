@@ -26,6 +26,7 @@ import TopBarSync from '../../components/design/TopBarSync';
 import EditableNumber from '../../components/EditableNumber';
 import EditableText from '../../components/EditableText';
 import NotesTimeline from '../../components/design/NotesTimeline';
+import { formatAnimalIdentity, formatAnimalSubId } from '../../lib/formatAnimalIdentity';
 import PhotoUpload from '../../v70/components/v70/PhotoUpload';
 import PhotoGallery from '../../v70/components/v70/PhotoGallery';
 import { SectionDivider, BottomSheet, type ChipTone } from '../../components/agritech';
@@ -164,8 +165,13 @@ const VerratDetailView: React.FC = () => {
   // depuis verrat (issu de useMemo<Verrat | undefined>).
   if (!verrat) return null;
 
+  // v3.4.5 — boucle prioritaire dans le titre, displayId reste sur le breadcrumb
+  // pour la traçabilité technique. `displayId` legacy conservé pour les ariaLabel
+  // et autres usages internes du composant.
   const displayId = verrat.displayId || verrat.id;
-  const title = verrat.nom ? `${displayId} · ${verrat.nom}` : displayId;
+  const identityPrimary = formatAnimalIdentity(verrat);
+  const identitySub = formatAnimalSubId(verrat);
+  const title = verrat.nom ? `${identityPrimary} · ${verrat.nom}` : identityPrimary;
   const tagVariant = statutTagVariant(verrat.statut);
 
   // Dernière saillie : nom truie si dispo via snapshot ou lookup
@@ -206,12 +212,17 @@ const VerratDetailView: React.FC = () => {
               <ChevronRight aria-hidden />
               <Link to="/troupeau?view=verrats">Verrats</Link>
               <ChevronRight aria-hidden />
-              <b>{displayId}</b>
+              <b>{identityPrimary}</b>
             </div>
             <div className="ph__row">
               <div>
                 <div className="ph__eyebrow">Élevage · Verrat</div>
                 <h1 className="ph__h1">{title}</h1>
+                {identitySub && (
+                  <div className="ph__sub ft-code" style={{ opacity: 0.7, fontSize: 11, letterSpacing: '0.06em', marginTop: 2 }}>
+                    {identitySub}
+                  </div>
+                )}
               </div>
               <button
                 type="button"
