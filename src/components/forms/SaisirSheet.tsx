@@ -43,12 +43,12 @@ interface ActionDef {
 
 const ACTIONS: ActionDef[] = [
   // Repro (cf. PLAN_PROFIL_MULTI §5.2)
-  { kind: 'saillie', title: 'Saillie', hint: 'Truie × verrat', Icon: Heart, tone: 'accent', profilesAllow: ['naisseur', 'cycle_complet'] },
+  { kind: 'saillie', title: 'Saillie', hint: 'Truie + verrat', Icon: Heart, tone: 'accent', profilesAllow: ['naisseur', 'cycle_complet'] },
   { kind: 'echographie', title: 'Écho', hint: 'J28 gestation', Icon: Stethoscope, tone: 'accent', profilesAllow: ['naisseur', 'cycle_complet'] },
-  { kind: 'misebas', title: 'Mise-bas', hint: 'Nés + morts-nés', Icon: Baby, tone: 'accent', profilesAllow: ['naisseur', 'cycle_complet'] },
-  { kind: 'sevrage', title: 'Sevrage', hint: 'Bande + porcelets', Icon: Milk, tone: 'default', profilesAllow: ['naisseur', 'cycle_complet'] },
+  { kind: 'misebas', title: 'Mise-bas', hint: 'Nés / morts', Icon: Baby, tone: 'accent', profilesAllow: ['naisseur', 'cycle_complet'] },
+  { kind: 'sevrage', title: 'Sevrage', hint: 'Bande entière', Icon: Milk, tone: 'default', profilesAllow: ['naisseur', 'cycle_complet'] },
   // Mortalité transverse
-  { kind: 'mortalite', title: 'Mortalité', hint: 'Animal + cause', Icon: AlertOctagon, tone: 'red' },
+  { kind: 'mortalite', title: 'Mortalité', hint: 'Cause + nb', Icon: AlertOctagon, tone: 'red' },
   { kind: 'adoption', title: 'Adoption', hint: 'Transfert mat.', Icon: Repeat, tone: 'default', profilesAllow: ['naisseur', 'cycle_complet'] },
   // Pesée + conso = transverses
   { kind: 'pesee', title: 'Pesée', hint: 'Poids moyen', Icon: Scale, tone: 'amber' },
@@ -56,14 +56,14 @@ const ACTIONS: ActionDef[] = [
   // Tri poids = engraissement
   { kind: 'tripoids', title: 'Tri poids', hint: 'Eng. / finition', Icon: Layers, tone: 'amber', profilesAllow: ['engraisseur', 'cycle_complet'] },
   // v3.4.4 — Engraissement (PLAN_PROFIL_MULTI §5.2)
-  { kind: 'receptionlot', title: 'Réception lot', hint: 'Achat porcelets', Icon: PackagePlus, tone: 'accent', profilesAllow: ['engraisseur', 'cycle_complet'] },
-  { kind: 'ventelot', title: 'Vente lot', hint: 'Abattoir / négoce', Icon: Truck, tone: 'accent', profilesAllow: ['engraisseur', 'cycle_complet'] },
-  { kind: 'soin', title: 'Soin', hint: 'Traitement véto', Icon: Syringe, tone: 'accent' },
+  { kind: 'receptionlot', title: 'Réception', hint: 'Achat lot', Icon: PackagePlus, tone: 'accent', profilesAllow: ['engraisseur', 'cycle_complet'] },
+  { kind: 'ventelot', title: 'Vente lot', hint: 'Abattoir', Icon: Truck, tone: 'accent', profilesAllow: ['engraisseur', 'cycle_complet'] },
+  { kind: 'soin', title: 'Soin', hint: 'Vaccin / véto', Icon: Syringe, tone: 'accent' },
   { kind: 'note', title: 'Note', hint: 'Observation', Icon: FileText, tone: 'default' },
   // v3.4.4 — Stocks + finance transverses (tous profils)
-  { kind: 'stockaliment', title: 'Stock aliment', hint: 'Entrée stock', Icon: Wheat, tone: 'amber' },
+  { kind: 'stockaliment', title: 'Stock alim.', hint: 'Entrée', Icon: Wheat, tone: 'amber' },
   { kind: 'stockveto', title: 'Stock véto', hint: 'Pharmacie', Icon: Pill, tone: 'accent' },
-  { kind: 'finance', title: 'Finance', hint: 'Recette / dépense', Icon: Coins, tone: 'amber' },
+  { kind: 'finance', title: 'Finance', hint: 'Recette / dép.', Icon: Coins, tone: 'amber' },
   { kind: 'marius', title: 'Marius', hint: 'Assistant IA', Icon: Sparkles, tone: 'amber', separator: true },
 ];
 
@@ -262,13 +262,15 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
                 alignItems: 'flex-start',
                 justifyContent: 'flex-start',
                 gap: 8,
-                padding: '14px 12px',
+                padding: '14px 10px',
                 background: 'var(--pt-warm, #F1ECE0)',
                 border: '1px solid var(--pt-line, rgba(26,26,26,0.08))',
                 borderRadius: 14,
                 cursor: 'pointer',
                 textAlign: 'left',
-                minHeight: 104,
+                // v3.4.9 : min-height augmentée 104→112 pour respirer + permettre
+                // un sub-text en 2 lignes sans coupure (cas 'Cause + nb', etc.).
+                minHeight: 112,
                 position: 'relative',
                 ...(separator
                   ? {
