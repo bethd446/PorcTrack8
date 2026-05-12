@@ -27,7 +27,7 @@
  * slice nécessaire et éliminer les re-renders croisés.
  */
 
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type {
   Truie, Verrat, BandePorcelets, TraitementSante,
   FarmState, AlerteServeur, Saillie, FinanceEntry, TransitionBande,
@@ -284,11 +284,19 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   // v3.4.1 — Check porcelets en vrac une seule fois par farm_id. Avant ce
   // patch, le gate <PorceletsReorgGate> refaisait un HEAD count à chaque
   // navigation (24 req/session). On centralise ici (1 req par farm_id).
+  // v3.4.2 — useRef guard pour neutraliser :
+  //   (a) StrictMode double-fire (mount→unmount→mount = 2 invocations)
+  //   (b) transitions currentFarmId pendant bootstrap (null→cached→supabase)
+  // → de 14 ERR_ABORTED résiduels post-v3.4.1 vers 1 req par farm_id réelle.
+  const lastFetchedFarmIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (!currentFarmId) {
       setHasPorceletsVrac(false);
+      lastFetchedFarmIdRef.current = null;
       return;
     }
+    if (lastFetchedFarmIdRef.current === currentFarmId) return;
+    lastFetchedFarmIdRef.current = currentFarmId;
     let cancelled = false;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     void (supabase as any)
