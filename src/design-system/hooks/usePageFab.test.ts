@@ -7,6 +7,7 @@ import { isPageFabEnabled, usePageFab } from './usePageFab';
 
 describe('isPageFabEnabled — pure function', () => {
   it.each([
+    '/today',
     '/troupeau/bandes/L5RM',
     '/reproduction',
     '/reproduction/lots',
@@ -19,7 +20,6 @@ describe('isPageFabEnabled — pure function', () => {
   });
 
   it.each([
-    '/today',
     '/more',
     '/audit',
     '/aide',
@@ -62,11 +62,11 @@ describe('usePageFab — hook React', () => {
     expect(result.current).toBe(false);
   });
 
-  it('renvoie false sur /today', () => {
+  it('renvoie true sur /today (v3.4.1 — FAB de saisie rapide depuis l\'accueil)', () => {
     const { result } = renderHook(() => usePageFab(), {
       wrapper: ({ children }) => wrapper({ children, path: '/today' }),
     });
-    expect(result.current).toBe(false);
+    expect(result.current).toBe(true);
   });
 
   it('renvoie false sur /audit', () => {
