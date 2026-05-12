@@ -367,3 +367,46 @@ NB technique : Playwright compte tout request.failure comme bad network, même u
 - Décalages visuels viewports multiples (390/480/768)
 - Module PPA P0 ajouté
 - P0 #3 Calendrier vaccinal auto
+## 2026-05-12 17:03 — Audit new user complet (session-critique)
+
+**Compte test créé** : audit-new-1778597301447@porctrack.test (Supabase confirmed via SQL)
+
+**3 onboardings superposés détectés** :
+1. `OnboardingWizard.tsx` (12 étapes V71) — utilisé pour /onboarding
+2. `OnboardingV2Wizard.tsx` (5 étapes V71-P3) — utilisé pour /onboarding-v2
+3. Bandeau profil V80 A4 (5 étapes mini) — intégré /today
+
+**Bugs UX détectés** :
+- Doublon flux : signup demande nom ferme, wizard /onboarding redemande SANS pré-remplir
+- Wizard /onboarding bloque toutes routes (gate forced redirect)
+- 12 étapes pour démarrer = taux abandon élevé
+
+**Décision produit user** : Option A++ — suppression nette des 2 wizards legacy.
+Spec complète dans prompt v3.5.0 (ci-dessous, à coller dans session-exec).
+## 2026-05-12 19:08 — Session-critique livraison h-2
+
+**Commits de cette dernière phase** :
+- bf18ee7 feat(v3.5.x-ppa): module PPA isolé (détection + biosécurité)
+
+**Module PPA livré** (différenciateur marché CI) :
+- src/services/ppaDetection.ts (180 lignes, 13 tests verts)
+- src/v70/components/PPABiosecurityChecklist.tsx (190 lignes, checklist 8 items 4 critiques)
+- Branchement à venir en v3.6.0 (alertEngine R17 + UI dans /reglages)
+
+**Audit desktop 1440** :
+- 9 pages testées : 0 console error · 0 bad network
+- Fiche truie : layout étendu pleine largeur (mobile-first, acceptable livraison)
+- À polir v3.6 : max-width 720-900px sur cards desktop
+
+**État final livraison** :
+- HEAD = bf18ee7
+- tsc 0, 2090+13=2103 tests verts, build OK
+- 0 P0 sur 17 pages auditées (3 viewports : 360/390/1440)
+- En attente v3.5.0 (autre session) pour fusion onboardings
+
+**Backlog v3.6.0+** :
+- Branchement PPA (alertEngine R17 + UI /reglages + alerte /today CRITIQUE)
+- Layout desktop max-width sur cards (responsive cleanup)
+- P0 #3 Calendrier vaccinal auto (~4-6h)
+- Refonte structurelle REPRODUCTION EN COURS (option A jauge dynamique)
+

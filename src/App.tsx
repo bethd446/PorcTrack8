@@ -3,14 +3,8 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  useNavigate,
-  useLocation,
 } from 'react-router-dom';
 import { IonApp } from '@ionic/react';
-import OnboardingFlow from './features/onboarding/OnboardingFlow';
-import AgritechLayout from './components/AgritechLayout';
-import { supabase } from './services/supabaseClient';
-import { useAuth } from './context/AuthContext';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -30,7 +24,6 @@ import { AuthProvider } from './context/AuthContext';
 import SupabaseProtectedRoute from './components/auth/ProtectedRoute';
 import { RootErrorBoundary } from './components/RootErrorBoundary';
 import PorceletsReorgGate from './components/auth/PorceletsReorgGate';
-import OnboardingV2Gate from './components/auth/OnboardingV2Gate';
 import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
 import AuthCallback from './components/auth/AuthCallback';
@@ -70,8 +63,6 @@ const ChatbotWidget = React.lazy(() =>
   import(/* webpackChunkName: "chatbot-widget" */ './features/chatbot').then(m => ({ default: m.ChatbotWidget })),
 );
 
-const OnboardingWizard = React.lazy(() => import(/* webpackChunkName: "onboarding-wizard" */ './features/onboarding/OnboardingWizard'));
-
 const SuspenseFallback = () => (
   <div
     className="flex flex-col items-center justify-center h-screen"
@@ -95,65 +86,10 @@ const SuspenseFallback = () => (
   </div>
 );
 
-const OnboardingRoute: React.FC = () => {
-  const navigate = useNavigate();
-  return (
-    <AgritechLayout withNav={false} withSidebar={false}>
-      <OnboardingFlow onComplete={() => navigate('/today', { replace: true })} />
-    </AgritechLayout>
-  );
-};
-
-/**
- * Wizard 10 questions (RT5). Route `/onboarding` lazy : route protégée
- * distincte rendue sans navigation/sidebar.
- */
-const OnboardingWizardRoute: React.FC = () => (
-  <AgritechLayout withNav={false} withSidebar={false}>
-    <OnboardingWizard />
-  </AgritechLayout>
-);
-
-/**
- * Effet : au login, vérifie si l'onboarding a été complété (col
- * `troupeaux.onboarding_completed_at`). Sinon redirige vers `/onboarding`.
- * Ne s'exécute que si l'utilisateur n'est pas déjà sur /onboarding ou sur
- * une route publique.
- */
-const OnboardingGate: React.FC = () => {
-  const { user, profileLoaded } = useAuth();
-  const navigate = useNavigate();
-  const { pathname } = useLocation();
-  useEffect(() => {
-    if (!user || !profileLoaded) return;
-    const skip =
-      pathname.startsWith('/onboarding') ||
-      pathname.startsWith('/login') ||
-      pathname.startsWith('/signup') ||
-      pathname.startsWith('/auth/');
-    if (skip) return;
-    let cancelled = false;
-    void (async () => {
-      try {
-        const { data } = await supabase
-          .from('troupeaux')
-          .select('onboarding_completed_at')
-          .eq('user_id', user.id)
-          .maybeSingle();
-        if (cancelled) return;
-        if (!data?.onboarding_completed_at) {
-          navigate('/onboarding', { replace: true });
-        }
-      } catch {
-        // Silencieux : si la requête échoue (offline, RLS), on ne bloque pas.
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [user, profileLoaded, pathname, navigate]);
-  return null;
-};
+// v3.5.0 — Suppression nette des onboardings legacy (OnboardingFlow,
+// OnboardingWizard, OnboardingV2Wizard, OnboardingV2Gate). Désormais le seul
+// onboarding actif est le bandeau profil V80 A4 intégré dans /today
+// (5 étapes minimaliste : Type d'élevage + races + capacités + check-list).
 
 const SaisirFABMount: React.FC = () => {
   // V40 R3 : usePageFabConfig retourne null | true | {action, label}.
@@ -208,8 +144,8 @@ const AppContent = () => {
       <React.Suspense fallback={<SuspenseFallback />}>
         <QuickActionsProvider>
           <ToastProvider>
-          <OnboardingGate />
-          <OnboardingV2Gate />
+          {/* v3.5.0 : OnboardingGate + OnboardingV2Gate supprimés (forced redirect retiré).
+              Le bandeau profil V80 A4 sur /today reste seul guide pour new user. */}
           <PorceletsReorgGate />
           <Routes>
             {/* ── Routes publiques ─────────────────────────────────────── */}
@@ -223,23 +159,8 @@ const AppContent = () => {
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 
-            {/* ── Onboarding (route protégée distincte) ────────────────── */}
-            <Route
-              path="/onboarding"
-              element={
-                <SupabaseProtectedRoute>
-                  <OnboardingWizardRoute />
-                </SupabaseProtectedRoute>
-              }
-            />
-            <Route
-              path="/onboarding-legacy"
-              element={
-                <SupabaseProtectedRoute>
-                  <OnboardingRoute />
-                </SupabaseProtectedRoute>
-              }
-            />
+            {/* v3.5.0 : routes /onboarding et /onboarding-legacy supprimées.
+                Le bandeau profil V80 A4 dans /today remplace les wizards. */}
 
             {/* ── App protégée (toutes les autres routes) ──────────────── */}
             <Route
