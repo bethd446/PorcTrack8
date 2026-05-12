@@ -22,6 +22,7 @@ import {
   startOfISOWeek,
 } from 'date-fns';
 import type { Truie, BandePorcelets, Saillie } from '../types/farm';
+import { formatAnimalIdentity } from '../lib/formatAnimalIdentity';
 
 // ─── Constantes métier ──────────────────────────────────────────────────────
 
@@ -177,10 +178,11 @@ function resolveDateMBPrevue(truie: Truie, saillies: Saillie[]): Date | null {
   return best;
 }
 
-/** Label d'une truie : nom prioritaire, puis displayId, puis boucle. */
+/** Label d'une truie : boucle prioritaire (v3.4.7+), puis displayId, puis nom. */
 function truieLabel(t: Truie): string {
-  if (t.nom && t.displayId) return `${t.displayId} ${t.nom}`;
-  return t.nom || t.displayId || t.boucle;
+  const id = formatAnimalIdentity(t);
+  if (t.nom) return `${id} ${t.nom}`;
+  return id;
 }
 
 /** Label d'une bande : id porté puis nom court. */

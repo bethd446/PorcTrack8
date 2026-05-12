@@ -707,7 +707,7 @@ function checkPorteesOrphelines(truies: Truie[], bandes: BandePorcelets[]): Farm
         subjectId: orpheline.id,
         subjectLabel: orpheline.idPortee || orpheline.id,
         title: 'Portée Orpheline',
-        message: `La truie ${t.displayId} est morte. ${orpheline.vivants || 0} porcelets sont sans mère. Action requise : adoption ou sevrage précoce.`,
+        message: `La truie ${formatAnimalIdentity(t)} est morte. ${orpheline.vivants || 0} porcelets sont sans mère. Action requise : adoption ou sevrage précoce.`,
         requiresAction: true,
         actions: [
           { type: 'CONFIRM_SEVRAGE', label: 'Sevrage Précoce', variant: 'primary' },

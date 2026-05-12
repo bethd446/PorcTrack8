@@ -9,6 +9,7 @@ import {
 import { Home, ChevronLeft, ChevronRight, MoreHorizontal, Pencil, Archive, Users, ArrowLeftRight } from 'lucide-react';
 
 import { EmptyState } from '../../v70/components/v70/EmptyState';
+import { formatAnimalIdentity } from '../../lib/formatAnimalIdentity';
 import TopBarSync from '../../components/design/TopBarSync';
 import { AnimalListItem, Chip, SectionDivider } from '../../components/agritech';
 import { Button } from '@/design-system';
@@ -311,7 +312,7 @@ const LogeDetailView: React.FC = () => {
                   {contents.truies.map((t) => (
                     <AnimalListItem
                       key={`truie-${t.id}`}
-                      primary={`${t.displayId}${t.nom ? ` · ${t.nom}` : ''}`}
+                      primary={`${formatAnimalIdentity(t)}${t.nom ? ` · ${t.nom}` : ''}`}
                       secondary={`Truie · ${t.statut ?? '—'}`}
                       chip={{ label: 'TRUIE', tone: 'gold' }}
                       onClick={() => navigate(`/troupeau/truies/${t.displayId}`)}
@@ -320,7 +321,7 @@ const LogeDetailView: React.FC = () => {
                   {contents.verrats.map((v) => (
                     <AnimalListItem
                       key={`verrat-${v.id}`}
-                      primary={`${v.displayId}${v.nom ? ` · ${v.nom}` : ''}`}
+                      primary={`${formatAnimalIdentity(v)}${v.nom ? ` · ${v.nom}` : ''}`}
                       secondary={`Verrat · ${v.statut ?? '—'}`}
                       chip={{ label: 'VERRAT', tone: 'blue' }}
                       onClick={() => navigate(`/troupeau/verrats/${v.displayId}`)}

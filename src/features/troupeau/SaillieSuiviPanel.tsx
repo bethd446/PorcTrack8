@@ -45,6 +45,7 @@ import {
 
 import { BottomSheet } from '../../components/agritech';
 import { Button } from '@/design-system';
+import { formatAnimalIdentity } from '../../lib/formatAnimalIdentity';
 import { enqueueUpdate } from '../../services/offlineQueue';
 import { useFarm } from '../../context/FarmContext';
 import { useEscapeKey } from '../../components/forms/useFormA11y';
@@ -225,7 +226,7 @@ const SaillieSuiviPanel: React.FC<SaillieSuiviPanelProps> = ({
   );
 
   const verratLabel = verrat
-    ? `${verrat.displayId}${verrat.nom ? ' · ' + verrat.nom : ''}`
+    ? `${formatAnimalIdentity(verrat)}${verrat.nom ? ' · ' + verrat.nom : ''}`
     : saillie.verratId || '—';
   const verratBoucle = verrat?.boucle ?? '—';
 

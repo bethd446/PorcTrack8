@@ -114,9 +114,10 @@ describe('LogeDetailView', () => {
     // Le numéro apparaît dans le breadcrumb + le hero — on cherche le h1
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('M-01');
     expect(screen.getAllByText(/Maternité/i).length).toBeGreaterThan(0);
-    // Truie occupante visible
+    // Truie occupante visible — v3.4.7+ : boucle prioritaire (FR-0005)
+    // au lieu du displayId (T05). La fixture a les 2 champs renseignés.
     await waitFor(() =>
-      expect(screen.getByText(/T05/)).toBeTruthy(),
+      expect(screen.getByText(/FR-0005/)).toBeTruthy(),
     );
   });
 

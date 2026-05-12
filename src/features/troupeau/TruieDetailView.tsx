@@ -242,7 +242,7 @@ const TruieDetailView: React.FC = () => {
     if (!truie) return;
     presentAlert({
       header: 'Mise en réforme',
-      message: `Confirmer que la truie ${truie.displayId} doit être sortie du cheptel ?`,
+      message: `Confirmer que la truie ${formatAnimalIdentity(truie)} doit être sortie du cheptel ?`,
       buttons: [
         { text: 'Annuler', role: 'cancel' },
         {
@@ -282,7 +282,7 @@ const TruieDetailView: React.FC = () => {
         data.typeSortie === 'VENTE' ? 'vendue'
         : data.typeSortie === 'ABATTOIR' ? 'abattue'
         : 'sortie (mortalité)';
-      setToast(`Truie ${truie.displayId} marquée ${verb}`);
+      setToast(`Truie ${formatAnimalIdentity(truie)} marquée ${verb}`);
       setSortieFormOpen(false);
       await refreshData();
     },
