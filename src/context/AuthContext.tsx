@@ -120,6 +120,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const email = import.meta.env.VITE_DEV_AUTOLOGIN_EMAIL as string | undefined;
       const password = import.meta.env.VITE_DEV_AUTOLOGIN_PASSWORD as string | undefined;
       if (!email || !password) return;
+      // v3.4.1 — Skip si placeholder non remplacé (évite 400 invalid_grant
+      // qui pollue la console et empêche le splash de finir.
+      if (
+        password.includes('REMPLACEZ') ||
+        password.includes('YOUR_PASSWORD') ||
+        password.length < 8
+      ) {
+        if (import.meta.env.DEV) console.info('[Dev autologin] skip (placeholder)');
+        return;
+      }
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         if (import.meta.env.DEV) { console.warn('[Dev autologin] échec :', error.message); }
