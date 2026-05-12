@@ -15,6 +15,8 @@ import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, CalendarDays, CheckCircle2, Info, ClipboardList, Play, ChevronRight } from 'lucide-react';
 import { useFarm, useMeta } from '../../context/FarmContext';
+import { useFarmProfile } from '../../hooks/useFarmProfile';
+import { filterAlertsByProfile } from '../../services/alertProfileFilter';
 import { useAuth } from '../../context/AuthContext';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
@@ -133,7 +135,14 @@ export const TodayV70: React.FC = () => {
   // V75-o-a (F-6) : state dismissed retiré avec le bouton Acquitter.
   // L'acquittement reviendra via long-press ou menu contextuel à un sprint
   // ultérieur. En attendant, toutes les alertes calculées sont affichées.
-  const alerts = computedAlerts;
+  // v3.4.4 — filtrage par profil ferme : un engraisseur ne doit pas voir
+  // "Mise-Bas Imminente", un naisseur ne doit pas voir "Sortie abattoir".
+  // Spec PLAN_PROFIL_MULTI.md §5.3.
+  const profil = useFarmProfile();
+  const alerts = useMemo(
+    () => filterAlertsByProfile(computedAlerts, profil),
+    [computedAlerts, profil],
+  );
 
   // MB imminente dans 3j → hero card
   const heroMiseBas = useMemo(() => {
