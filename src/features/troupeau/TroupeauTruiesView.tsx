@@ -384,11 +384,19 @@ const TroupeauTruiesView: React.FC<TroupeauTruiesViewProps> = ({ searchText, set
         <EmptyStateShared
           size="sm"
           iconNode={<Users size={20} aria-hidden="true" />}
-          title={searchText.trim().length > 0 ? 'Aucun résultat' : 'Aucune truie'}
+          title={searchText.trim().length > 0 ? 'Aucun résultat' : 'Aucune truie pour démarrer'}
           description={
             searchText.trim().length > 0
               ? 'Aucune truie ne correspond à ta recherche.'
-              : 'Ta feuille TRUIES est vide ou non accessible.'
+              : 'Enregistre ta première truie pour commencer le suivi reproductif.'
+          }
+          cta={
+            searchText.trim().length > 0
+              ? undefined
+              : {
+                  label: '+ Ajouter ma première truie',
+                  onClick: () => setAddOpen(true),
+                }
           }
         />
       ) : viewMode === 'grid' ? (

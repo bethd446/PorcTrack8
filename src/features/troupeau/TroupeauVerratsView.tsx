@@ -193,7 +193,11 @@ const TroupeauVerratsView: React.FC<TroupeauVerratsViewProps> = ({ searchText, s
         <EmptyState
           iconNode={<EntityAvatar species="verrat" size="sm" />}
           title="Aucun verrat enregistré"
-          description="Les verrats de la ferme apparaîtront ici dès qu'ils seront saisis dans la feuille VERRATS."
+          description="Enregistre ton premier verrat reproducteur pour activer le suivi (saillies, taux fécondité, descendance)."
+          cta={{
+            label: '+ Ajouter mon premier verrat',
+            onClick: () => setAddOpen(true),
+          }}
         />
       ) : (
         <section
