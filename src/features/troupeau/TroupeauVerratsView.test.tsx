@@ -147,8 +147,8 @@ describe('TroupeauVerratsView', () => {
     renderView();
 
     expect(screen.getByText(/aucun verrat enregistré/i)).toBeDefined();
-    // Helper secondaire (mention de la feuille VERRATS)
-    expect(document.body.textContent).toMatch(/feuille verrats/i);
+    // v3.6.0 : copy empty state remplacée par CTA "Ajouter mon premier verrat"
+    expect(document.body.textContent).toMatch(/ajouter mon premier verrat/i);
     // Le SectionDivider "Verrats · N" ne doit pas apparaître quand empty
     expect(screen.queryByText(/^Verrats · \d+$/)).toBeNull();
   });
