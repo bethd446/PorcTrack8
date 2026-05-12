@@ -135,7 +135,7 @@ function groupStockAlerts(alerts: FarmAlert[]): DisplayAlert[] {
 
 // Styles inline partagés (déduplication V77.1)
 const META_LINE: React.CSSProperties = {
-  fontFamily: 'var(--ff-mono)',
+  fontFamily: 'var(--pt-font-mono)',
   fontSize: 11,
   color: 'var(--pt-muted)',
 };
@@ -160,7 +160,7 @@ const STACK_COL: React.CSSProperties = {
 };
 
 const EMPTY_TITLE: React.CSSProperties = {
-  fontFamily: 'var(--ff-display)',
+  fontFamily: 'var(--pt-font-display)',
   fontWeight: 900,
   fontSize: 22,
   textTransform: 'uppercase',
@@ -182,7 +182,7 @@ const CONTENT_WRAP: React.CSSProperties = {
 const PILLS_ROW: React.CSSProperties = { marginBottom: 12 };
 
 const PILL_COUNT: React.CSSProperties = {
-  fontFamily: 'var(--ff-mono)',
+  fontFamily: 'var(--pt-font-mono)',
   marginLeft: 6,
 };
 

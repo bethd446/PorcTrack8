@@ -57,7 +57,7 @@ const STACK_COL_WITH_GAP: React.CSSProperties = {
 };
 
 const COUNT_STYLE: React.CSSProperties = {
-  fontFamily: 'var(--ff-mono)',
+  fontFamily: 'var(--pt-font-mono)',
 };
 
 const OutilsView: React.FC = () => {

@@ -169,7 +169,7 @@ const AlimentRow: React.FC<AlimentRowProps> = ({
         <div className="card-link__main">
           <div
             className="card-link__title"
-            style={{ fontFamily: 'var(--ff-display)', fontWeight: 700, fontSize: 15, textTransform: 'none', letterSpacing: 0 }}
+            style={{ fontFamily: 'var(--pt-font-display)', fontWeight: 700, fontSize: 15, textTransform: 'none', letterSpacing: 0 }}
           >
             {item.libelle || item.id}
           </div>
@@ -184,7 +184,7 @@ const AlimentRow: React.FC<AlimentRowProps> = ({
           <div
             className="num"
             style={{
-              fontFamily: 'var(--ff-display)',
+              fontFamily: 'var(--pt-font-display)',
               fontWeight: 900,
               fontSize: 18,
               lineHeight: 1,
@@ -204,7 +204,7 @@ const AlimentRow: React.FC<AlimentRowProps> = ({
           flexWrap: 'wrap',
           gap: 8,
           alignItems: 'center',
-          fontFamily: 'var(--ff-mono)',
+          fontFamily: 'var(--pt-font-mono)',
           fontSize: 11,
           color: 'var(--pt-muted)',
           width: '100%',

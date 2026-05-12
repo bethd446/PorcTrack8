@@ -120,7 +120,7 @@ const VetoRow: React.FC<VetoRowProps> = ({ item, farmName, onRefresh }) => {
           <div
             className="card-link__title"
             style={{
-              fontFamily: 'var(--ff-display)',
+              fontFamily: 'var(--pt-font-display)',
               fontWeight: 700,
               fontSize: 15,
               textTransform: 'none',
@@ -133,7 +133,7 @@ const VetoRow: React.FC<VetoRowProps> = ({ item, farmName, onRefresh }) => {
             className="card-link__sub"
             style={{
               marginTop: 2,
-              fontFamily: 'var(--ff-mono)',
+              fontFamily: 'var(--pt-font-mono)',
               fontSize: 11,
               letterSpacing: '0.04em',
             }}
@@ -150,7 +150,7 @@ const VetoRow: React.FC<VetoRowProps> = ({ item, farmName, onRefresh }) => {
           flexWrap: 'wrap',
           gap: 8,
           alignItems: 'center',
-          fontFamily: 'var(--ff-mono)',
+          fontFamily: 'var(--pt-font-mono)',
           fontSize: 11,
           color: 'var(--pt-muted)',
           width: '100%',
