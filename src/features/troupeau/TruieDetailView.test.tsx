@@ -220,12 +220,15 @@ describe('TruieDetailView', () => {
     cleanup();
   });
 
-  it('V41 : affiche le displayId comme h1 (PageHeader sobre) et le nom dans la Card hero', () => {
+  it('v3.4.5 : affiche la boucle physique comme h1 (décision produit boucle prioritaire) avec displayId en sub-text', () => {
     renderAt('/troupeau/truies/T14');
     const heading = screen.getByRole('heading', { level: 1 });
-    // V41 PageHeader : h1 = displayId (shortCode) "T14". Le nom Marguerite est
-    // dans la Card hero compacte sous le PageHeader.
-    expect(heading.textContent).toContain('T14');
+    // v3.4.5 — décision produit 2026-05-12 : la boucle physique prime sur le
+    // displayId T-XXX dans l'affichage utilisateur (c'est ce que l'éleveur LIT
+    // sur l'oreille). Fixture truieT14 a boucle='FR-0014-42' + displayId='T14'.
+    expect(heading.textContent).toContain('FR-0014-42');
+    // Le displayId reste accessible (breadcrumb + sub-text ft-code).
+    expect(document.body.textContent).toContain('T14');
     expect(document.body.textContent).toContain('Marguerite');
   });
 

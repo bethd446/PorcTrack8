@@ -244,6 +244,9 @@ export function findPorteesForVerrat(
 
 export interface VerratPerformance {
   nbSaillies: number;
+  /** v3.4.5 — nombre de truies distinctes servies (utile pour évaluer la
+   *  diversité génétique apportée par le verrat). */
+  nbTruiesServiesDistinct: number;
   tauxSuccesSaillie: number;   // %
   nbPorteesEngendrees: number;
   moyNVEngendrees: number;
@@ -266,8 +269,15 @@ export function computeVerratPerformance(
   );
 
   const nbSaillies = vSaillies.length;
+  // v3.4.5 — compter les truies distinctes servies par ce verrat.
+  const truiesServiesSet = new Set<string>();
+  for (const s of vSaillies) {
+    if (s.truieId) truiesServiesSet.add(s.truieId);
+  }
+  const nbTruiesServiesDistinct = truiesServiesSet.size;
+
   if (nbSaillies === 0) {
-    return { nbSaillies: 0, tauxSuccesSaillie: 0, nbPorteesEngendrees: 0, moyNVEngendrees: 0, scoreFertilite: 0, tier: 'INSUFFISANT' };
+    return { nbSaillies: 0, nbTruiesServiesDistinct: 0, tauxSuccesSaillie: 0, nbPorteesEngendrees: 0, moyNVEngendrees: 0, scoreFertilite: 0, tier: 'INSUFFISANT' };
   }
 
   // Associe chaque saillie à une portée via truieId + dateMBPrevue ±5j
@@ -298,6 +308,7 @@ export function computeVerratPerformance(
 
   return {
     nbSaillies,
+    nbTruiesServiesDistinct,
     tauxSuccesSaillie: tauxSucces,
     nbPorteesEngendrees: porteesTrouvees,
     moyNVEngendrees: Math.round(moyNV * 10) / 10,

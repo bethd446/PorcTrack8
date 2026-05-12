@@ -42,6 +42,7 @@ import QuickPeseeForm from '../../components/forms/QuickPeseeForm';
 import QuickSaillieForm from '../../components/forms/QuickSaillieForm';
 import QuickEditVerratForm from '../../components/forms/QuickEditVerratForm';
 import type { Verrat, TraitementSante, Saillie, Truie } from '../../types/farm';
+import { computeVerratPerformance } from '../../services/performanceAnalyzer';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -94,7 +95,7 @@ type VerratTabId = 'overview' | 'saillies' | 'sante' | 'lignee';
 
 const VerratDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { verrats, truies, saillies, getHealthForAnimal, refreshData } = useFarm();
+  const { verrats, truies, saillies, bandes, getHealthForAnimal, refreshData } = useFarm();
   const [sheet, setSheet] = useState<QuickSheet>(null);
   const [editOpen, setEditOpen] = useState<boolean>(false);
   const [toast, setToast] = useState<string>('');
@@ -117,6 +118,12 @@ const VerratDetailView: React.FC = () => {
   const saillesVerrat = useMemo<Saillie[]>(
     () => (verrat ? sortByDateDesc(saillies.filter((s) => s.verratId === verrat.id)) : []),
     [verrat, saillies],
+  );
+
+  // v3.4.5 — KPIs performance verrat (taux fécondité, NV descendance, etc.)
+  const perf = useMemo(
+    () => (verrat ? computeVerratPerformance(verrat, bandes, saillies, truies) : null),
+    [verrat, bandes, saillies, truies],
   );
 
   // V74 défense-en-profondeur : guard loading/retry/not-found uniforme.
@@ -330,6 +337,46 @@ const VerratDetailView: React.FC = () => {
             {/* ── Card 2 : REPRODUCTION ────────────────────────────────── */}
             <section aria-label="Reproduction" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <Section label="REPRODUCTION" />
+
+              {/* v3.4.5 — strip 4 KPIs performance verrat (cap statistique).
+                  Affiche '—' avec tooltip si saillies insuffisantes (< 3) pour
+                  un taux/moyenne fiable. */}
+              {perf && (
+                <div
+                  className="kpis-strip"
+                  aria-label="Indicateurs performance verrat"
+                  role="group"
+                  style={{ marginBottom: 4 }}
+                >
+                  <div className="kpi">
+                    <div className="kpi__label">Saillies</div>
+                    <div className="kpi__val num">{perf.nbSaillies > 0 ? perf.nbSaillies : '—'}</div>
+                  </div>
+                  <div className="kpi">
+                    <div className="kpi__label">Truies servies</div>
+                    <div className="kpi__val num">{perf.nbTruiesServiesDistinct > 0 ? perf.nbTruiesServiesDistinct : '—'}</div>
+                  </div>
+                  <div className="kpi">
+                    <div className="kpi__label">Taux féc.</div>
+                    <div
+                      className="kpi__val num"
+                      title={perf.nbSaillies < 3 ? '3 saillies minimum requises pour un taux fiable' : undefined}
+                    >
+                      {perf.nbSaillies >= 3 ? `${perf.tauxSuccesSaillie}%` : '—'}
+                    </div>
+                  </div>
+                  <div className="kpi">
+                    <div className="kpi__label">NV moy. desc.</div>
+                    <div
+                      className="kpi__val num"
+                      title={perf.nbPorteesEngendrees < 2 ? 'Au moins 2 portées engendrées requises' : undefined}
+                    >
+                      {perf.nbPorteesEngendrees >= 2 ? perf.moyNVEngendrees.toFixed(1) : '—'}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div
                 style={{
                   background: 'var(--bg-surface)',
