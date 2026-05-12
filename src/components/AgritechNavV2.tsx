@@ -36,6 +36,8 @@ import QuickEchographieForm from './forms/QuickEchographieForm';
 import QuickWeightDistForm from './forms/QuickWeightDistForm';
 import QuickConsoAlimentForm from './forms/QuickConsoAlimentForm';
 import QuickAdoptionForm from './forms/QuickAdoptionForm';
+// v3.4.4 — réutilisation du form A5 pour réception lot (engraisseur)
+import QuickAddLotForm from './forms/QuickAddLotForm';
 
 /* ── QuickActions Context ────────────────────────────────────────────────── */
 
@@ -50,7 +52,13 @@ export type QuickActionKind =
   | 'misebas'
   | 'sevrage'
   | 'tripoids'
-  | 'adoption';
+  | 'adoption'
+  // v3.4.4 — actions engraissement + transverses (PLAN_PROFIL_MULTI §5.2)
+  | 'receptionlot'
+  | 'ventelot'
+  | 'stockaliment'
+  | 'stockveto'
+  | 'finance';
 
 interface QuickActionsContextValue {
   openAction: (kind: QuickActionKind) => void;
@@ -74,10 +82,30 @@ export const QuickActionsProvider: React.FC<{ children: React.ReactNode }> = ({
     open: false,
     message: '',
   });
+  const providerNavigate = useNavigate();
 
   const openAction = useCallback((k: QuickActionKind) => {
+    // v3.4.4 — actions sans modal dédié (transverses + ventelot) : navigation
+    // vers la page métier qui héberge la saisie complète.
+    if (k === 'ventelot') {
+      providerNavigate('/engraissement');
+      setToast({ open: true, message: 'Sélectionner le lot à vendre dans la liste' });
+      return;
+    }
+    if (k === 'stockaliment') {
+      providerNavigate('/ressources/aliments');
+      return;
+    }
+    if (k === 'stockveto') {
+      providerNavigate('/ressources/pharmacie');
+      return;
+    }
+    if (k === 'finance') {
+      providerNavigate('/pilotage/finances/details');
+      return;
+    }
     setKind(k);
-  }, []);
+  }, [providerNavigate]);
 
   const closeSheet = useCallback(() => setKind(null), []);
 
@@ -173,6 +201,15 @@ export const QuickActionsProvider: React.FC<{ children: React.ReactNode }> = ({
           }}
         />
       </BottomSheet>
+
+      <QuickAddLotForm
+        isOpen={kind === 'receptionlot'}
+        onClose={closeSheet}
+        onSuccess={() => {
+          setToast({ open: true, message: 'Lot réceptionné' });
+          closeSheet();
+        }}
+      />
 
       <IonToast
         isOpen={toast.open}

@@ -12,6 +12,10 @@ import {
   Sparkles,
   Layers,
   Repeat,
+  PackagePlus,
+  Truck,
+  Pill,
+  Coins,
   X,
 } from 'lucide-react';
 
@@ -51,8 +55,15 @@ const ACTIONS: ActionDef[] = [
   { kind: 'conso', title: 'Conso', hint: 'Aliment livré', Icon: Wheat, tone: 'amber' },
   // Tri poids = engraissement
   { kind: 'tripoids', title: 'Tri poids', hint: 'Eng. / finition', Icon: Layers, tone: 'amber', profilesAllow: ['engraisseur', 'cycle_complet'] },
+  // v3.4.4 — Engraissement (PLAN_PROFIL_MULTI §5.2)
+  { kind: 'receptionlot', title: 'Réception lot', hint: 'Achat porcelets', Icon: PackagePlus, tone: 'accent', profilesAllow: ['engraisseur', 'cycle_complet'] },
+  { kind: 'ventelot', title: 'Vente lot', hint: 'Abattoir / négoce', Icon: Truck, tone: 'accent', profilesAllow: ['engraisseur', 'cycle_complet'] },
   { kind: 'soin', title: 'Soin', hint: 'Traitement véto', Icon: Syringe, tone: 'accent' },
   { kind: 'note', title: 'Note', hint: 'Observation', Icon: FileText, tone: 'default' },
+  // v3.4.4 — Stocks + finance transverses (tous profils)
+  { kind: 'stockaliment', title: 'Stock aliment', hint: 'Entrée stock', Icon: Wheat, tone: 'amber' },
+  { kind: 'stockveto', title: 'Stock véto', hint: 'Pharmacie', Icon: Pill, tone: 'accent' },
+  { kind: 'finance', title: 'Finance', hint: 'Recette / dépense', Icon: Coins, tone: 'amber' },
   { kind: 'marius', title: 'Marius', hint: 'Assistant IA', Icon: Sparkles, tone: 'amber', separator: true },
 ];
 
