@@ -23,6 +23,7 @@ export interface TabsMiniProps {
 
 export const TabsMini: React.FC<TabsMiniProps> = ({ value, onChange, options }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [isScrollable, setIsScrollable] = useState(false);
 
   // Détecte si le contenu déborde — affiche le fade indicateur uniquement
@@ -44,19 +45,40 @@ export const TabsMini: React.FC<TabsMiniProps> = ({ value, onChange, options }) 
     };
   }, [options]);
 
+  // v3.4.8 — keyboard nav WAI-ARIA tablist : Arrow Left/Right / Home / End.
+  // Cible : conformité accessibilité + cohérence avec autres tabs natifs.
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, idx: number): void => {
+    const last = options.length - 1;
+    let nextIdx = idx;
+    if (e.key === 'ArrowRight') nextIdx = idx === last ? 0 : idx + 1;
+    else if (e.key === 'ArrowLeft') nextIdx = idx === 0 ? last : idx - 1;
+    else if (e.key === 'Home') nextIdx = 0;
+    else if (e.key === 'End') nextIdx = last;
+    else return;
+    e.preventDefault();
+    const target = tabRefs.current[nextIdx];
+    if (target) {
+      target.focus();
+      onChange(options[nextIdx].value);
+    }
+  };
+
   return (
     <div className={`tabs-mini-wrap${isScrollable ? ' is-scrollable' : ''}`}>
       <div className="tabs-mini" role="tablist" ref={scrollRef}>
-        {options.map((opt) => {
+        {options.map((opt, idx) => {
           const isActive = opt.value === value;
           return (
             <button
               key={opt.value}
+              ref={(el) => { tabRefs.current[idx] = el; }}
               type="button"
               role="tab"
               aria-selected={isActive}
+              tabIndex={isActive ? 0 : -1}
               className={`tab-mini${isActive ? ' active' : ''}`}
               onClick={() => onChange(opt.value)}
+              onKeyDown={(e) => handleKeyDown(e, idx)}
             >
               {opt.label}
             </button>
