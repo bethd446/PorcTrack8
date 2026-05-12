@@ -237,3 +237,91 @@ NB technique : Playwright compte tout request.failure comme bad network, même u
 - Règle R18 Pesée hebdo due lot (data `lot_pesees` 7+ jours)
 - R16 sortie abattoir couvre déjà "Lot atteint poids vente" pour batches
 - Forms dédiés QuickSellLotForm + QuickStockAlimentForm + QuickStockVetoForm + QuickFinanceForm (UX optimale vs navigation actuelle)
+
+## 2026-05-12 12:26 — Audit schema DB ↔ TS
+
+## Audit schema DB ↔ TS (session-critique, parallèle v3.4.5)
+
+**Commit** : bcc8767 (pushé)
+**Migration** : v3_4_5_genealogie_sows_boars (appliquée Supabase)
+
+**Bug critique trouvé** (race column of sows in schema cache):
+- src/features/onboarding/OnboardingV2Wizard.tsx l.116 + l.129 envoyait `race:` au lieu de `breed:` à l insert sows/boars.
+- Impact : toute création de ferme via onboarding V2 plantait silencieusement (Supabase rejette schema cache).
+- Fix : 2 lignes `race:` → `breed:`.
+
+**Bug secondaire latent**:
+- QuickAddTruieForm UI active "TRUIE MERE" + "VERRAT ORIGINE" injecte mere_code_id + pere_code_id au payload sows.
+- Ces colonnes n'existaient pas en DB → bug schema garanti dès qu'éleveur renseigne la genealogie.
+- Fix : migration applied (ALTER TABLE sows + boars ADD mere_code_id text, pere_code_id text).
+
+**Audit complet payloads** (sows, boars, porcelets_individuels):
+- sows : tous champs envoyés OK désormais
+- boars : tous champs OK (lignee_parentale mappé correctement par QuickEditVerratForm)
+- porcelets_individuels : typings stricts via PorceletIndividuelInsert (database.types.ts), pas de risque schema cache
+
+**Tests** : 51/51 onboarding verts. tsc 0 erreur.
+
+**Aucun autre bug schema détecté sur sows/boars/porcelets_individuels.**
+
+**Hors scope** (à valider plus tard) :
+- Tables saillies, batches, lots, lot_pesees, etc. (audit non demandé par user)
+- Régénération database.types.ts post-migration mere_code/pere_code (pour avoir typings à jour si on veut typer strict ailleurs)
+
+---
+
+## [12:26] SESSION-EXEC — v3.4.5 livré, en attente audit
+
+**Date** : 2026-05-12 12:26
+
+**Fixes appliqués** (3 commits orchestrateur + 1 inséré par session-critique) :
+- `4ac7e60 feat(v3.4.5): helper formatAnimalIdentity (boucle prioritaire) + tests`
+- `493f8ef feat(v3.4.5): boucle prioritaire dans listings + fiches truie/verrat`
+- `bcc8767 fix(v3.4.5+): schema cache race → breed + migration mere_code_id/pere_code_id` _(inséré par session-critique entre mes commits — pas de scope orchestrateur)_
+- `585e66b feat(v3.4.5): KPIs performance verrat dans fiche détail + adapt test boucle`
+
+**Bilan scope orchestrateur** :
+
+**FIX #A — helper formatAnimalIdentity** :
+- Nouveau `src/lib/formatAnimalIdentity.ts` : `formatAnimalIdentity(animal, variant?)` + `formatAnimalSubId(animal)`
+- 14 tests (3 variants × cas standards + null/undefined + with-tech combo + sub null si seul un id)
+- Boucle physique prioritaire (décision produit 2026-05-12) avec fallback chain `boucle → displayId → id (8 char)`
+
+**FIX #B — migration affichages** :
+- `src/v70/pages/AnimalsV70.tsx` : mapping truies/verrats avec `displayName: formatAnimalIdentity(t)` + `subId: formatAnimalSubId(t)` ; `id` reste `displayId ?? id` pour URL/router rétro-compat
+- `src/features/troupeau/TruieDetailView.tsx` : H1 + breadcrumb migrés ; sub-text ft-code mono petit (opacity 0.7, 11px) si displayId+boucle co-existent
+- `src/features/troupeau/VerratDetailView.tsx` : idem H1 + breadcrumb + sub-text
+
+**FIX #C — UI saisie boucle dans Quick*Form** :
+- **Déjà résolu** par vagues antérieures :
+  - `QuickAddTruieForm.tsx:152` BOUCLE OFFICIELLE (required)
+  - `QuickAddVerratForm.tsx:107` BOUCLE (required)
+  - `QuickEditTruieForm.tsx:444` boucle field
+  - `QuickEditVerratForm.tsx` boucle field
+- Pas de commit C.
+
+**FIX #D — KPIs performance verrat** :
+- `VerratPerformance.nbTruiesServiesDistinct` ajouté (Set sur truieId)
+- `VerratDetailView.tsx` : strip 4 KPIs dans Card REPRODUCTION
+  - Saillies / Truies servies / Taux féc. (≥3 saillies requis) / NV moy. descendance (≥2 portées requis)
+  - Tooltips explicatifs si cap statistique non atteint
+- Test `TruieDetailView.test.tsx:223` adapté à la décision boucle prioritaire (était : H1 contient displayId, devient : H1 contient boucle + displayId visible ailleurs)
+
+**FIX #E — URLs canoniques boucle** : reporté à v3.4.6 (acceptable, l'URL ne casse pas l'UX, le lookup useMemo accepte déjà id|displayId).
+
+**Validation orchestrateur** :
+- `npx tsc --noEmit` → 0 erreur
+- `npm test` → 2090/2090 verts (+14 formatAnimalIdentity, +0 net VerratPerformance — pas de test dédié pour le strip rendu)
+- `npm run build` → OK, 110 entries PWA, 8.81s
+- `git tag v3.4.5` + `git push origin main --follow-tags` → OK
+- HEAD = `585e66b`, tag `v3.4.5` visible sur origin
+
+**Validation finale attendue** :
+- Audit Playwright /troupeau : cards truie/verrat affichent boucle si dispo, displayId sinon (zéro régression compte audit boucle=null)
+- /troupeau/truies/T-022 : H1 montre boucle (ou T-022 fallback) + sub-text displayId si les 2 dispo
+- /troupeau/verrats/V-001 : 4 KPIs visibles dans Card REPRODUCTION (— si cap stat non atteint sur compte test)
+
+**Hors scope v3.4.5 (à traiter v3.4.6)** :
+- FIX #E URLs canoniques boucle (redirect 301 displayId → boucle)
+- Migration usages displayId dans autres composants (encyclopédie, chatbot context, exports PDF)
+- Tests rendu strip KPIs verrat (snapshot)
