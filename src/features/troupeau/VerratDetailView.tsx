@@ -115,8 +115,16 @@ const VerratDetailView: React.FC = () => {
     [verrat, getHealthForAnimal],
   );
 
+  // v3.4.5+ — filter tolérant : supabaseService.ts mappe `verratId` sur
+  // `boars.code_id` (ex: V-001), pas l'UUID. Sans ce fallback, le filter
+  // strict `s.verratId === verrat.id` (UUID) ne matchait JAMAIS → SAILLIES=0
+  // affiché alors que V-001 a 31 saillies en DB. Aligné sur le pattern
+  // TruieDetailView:167-168 qui a déjà ce double-check.
   const saillesVerrat = useMemo<Saillie[]>(
-    () => (verrat ? sortByDateDesc(saillies.filter((s) => s.verratId === verrat.id)) : []),
+    () => (verrat ? sortByDateDesc(saillies.filter((s) =>
+      s.verratId === verrat.id ||
+      (!!verrat.displayId && s.verratId === verrat.displayId)
+    )) : []),
     [verrat, saillies],
   );
 
