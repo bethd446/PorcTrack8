@@ -1,13 +1,17 @@
 import React from 'react';
 import { Check } from 'lucide-react';
 
-// Abréviations pour éviter le chevauchement des labels sur mobile (< 420px).
-// Les labels longs (`Fenêtre retour chaleur`, `Surveillance retour chaleur`,
-// `Échographie`) débordaient et chevauchaient les marqueurs voisins.
+// Abréviations pour éviter le chevauchement des labels en mode horizontal
+// (≥480px). v3.4.5+ "C" : labels reformulés en clair pour mobile vertical
+// (verbes terrain) + abbrev resté pour le rendu horizontal compact.
 const ABBREV: Record<string, string> = {
-  'fenêtre retour chaleur': 'RETOUR CH.',
-  'surveillance retour chaleur': 'SURV. CH.',
-  'retour chaleur': 'RETOUR CH.',
+  'vérifier la truie': 'VÉRIF.',
+  'verifier la truie': 'VÉRIF.',
+  'surveiller chaleur': 'CHALEUR',
+  'fenêtre retour chaleur': 'CHALEUR',
+  'surveillance retour chaleur': 'CHALEUR',
+  'retour chaleur': 'CHALEUR',
+  'surveillance verrat': 'VÉRIF.',
   'échographie': 'ÉCHO',
   'echographie': 'ÉCHO',
   'mise-bas': 'M-BAS',
@@ -24,6 +28,8 @@ function abbrev(label: string): string {
 
 export interface ReproStage {
   day: number | string;
+  /** Date calendaire (dd/MM) à afficher en sub-text. v3.4.5+ "C" */
+  date?: string;
   label: string;
   state: 'passed' | 'current' | 'future';
   position?: number;
@@ -78,6 +84,7 @@ export default function ReproTracker({ stages, progressPct, className = '' }: Re
               </span>
               <span style={{ fontSize: 10, color: 'var(--muted)' }}>
                 {typeof stage.day === 'number' ? `J${stage.day}` : stage.day}
+                {stage.date ? ` · ${stage.date}` : ''}
               </span>
             </div>
           </div>

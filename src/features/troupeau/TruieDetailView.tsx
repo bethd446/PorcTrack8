@@ -194,17 +194,26 @@ const TruieDetailView: React.FC = () => {
     const total = 115;
     const progressPct = Math.min(100, (dayPost / total) * 100);
 
+    // v3.4.5+ "C" — labels reformulés en français terrain (anti-jargon) +
+    // calcul des dates calendaires pour chaque jalon, affichées dans le tracker
+    // pour que l'éleveur pense en "vendredi 13 mai" plutôt qu'en "J115".
+    const dateOfDay = (d: number): string => {
+      const dt = new Date(sailDate);
+      dt.setDate(dt.getDate() + d);
+      return dt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+    };
     const stages: ReproStage[] = [
-      { day: 0, label: 'Saillie', state: dayPost >= 0 ? 'passed' : 'future', position: 0 },
-      { day: 7, label: 'Surveillance verrat', state: dayPost >= 7 ? 'passed' : 'future', position: 6 },
+      { day: 0, label: 'Saillie', date: dateOfDay(0), state: dayPost >= 0 ? 'passed' : 'future', position: 0 },
+      { day: 7, label: 'Vérifier la truie', date: dateOfDay(7), state: dayPost >= 7 ? 'passed' : 'future', position: 6 },
       {
         day: 'J18-J24',
-        label: 'Fenêtre retour chaleur',
+        label: 'Surveiller chaleur',
+        date: `${dateOfDay(18)}–${dateOfDay(24)}`,
         state: dayPost >= 18 && dayPost <= 24 ? 'current' : dayPost > 24 ? 'passed' : 'future',
         position: 19,
       },
-      { day: 28, label: 'Échographie', state: dayPost >= 28 ? 'passed' : 'future', position: 24 },
-      { day: 115, label: 'Mise-bas', state: dayPost >= 115 ? 'passed' : 'future', position: 100 },
+      { day: 28, label: 'Échographie', date: dateOfDay(28), state: dayPost >= 28 ? 'passed' : 'future', position: 24 },
+      { day: 115, label: 'Mise-bas', date: dateOfDay(115), state: dayPost >= 115 ? 'passed' : 'future', position: 100 },
     ];
 
     // Si la saillie est plus récente que J18, current = saillie (pour cas J0-J17).
