@@ -3301,6 +3301,20 @@
   padding-bottom: 32px;
 }
 
+/* v3.6.0 — Layout desktop max-width.
+ * L'app étant mobile-first, sur desktop ≥768px on contraint le contenu à
+ * une colonne lisible (max 720px) centrée. Évite les cards étirées sur 1440px
+ * avec timeline REPRODUCTION éclatée d'un bord à l'autre. */
+@media (min-width: 768px) {
+  .pt-screen,
+  ion-page > .ion-page,
+  .ion-page .ion-padding {
+    max-width: var(--pt-content-max-width, 720px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
 /* ---- HEADERS V77 ---- */
 .pt-screen .ph--primary {
   background: var(--pt-primary);
