@@ -287,7 +287,11 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   // v3.4.2 — useRef guard pour neutraliser :
   //   (a) StrictMode double-fire (mount→unmount→mount = 2 invocations)
   //   (b) transitions currentFarmId pendant bootstrap (null→cached→supabase)
-  // → de 14 ERR_ABORTED résiduels post-v3.4.1 vers 1 req par farm_id réelle.
+  // v3.4.3 — Remplace `cancelled` flag par AbortController : le flag annulait
+  // juste le setState mais le request HTTP restait en flight et finissait
+  // ERR_ABORTED quand le browser le cancellait sur navigation rapide
+  // (~8 ERR_ABORTED résiduels en audit). Avec abort.signal passé à supabase,
+  // l'annulation est silencieuse côté reporting browser.
   const lastFetchedFarmIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (!currentFarmId) {
@@ -297,19 +301,20 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     }
     if (lastFetchedFarmIdRef.current === currentFarmId) return;
     lastFetchedFarmIdRef.current = currentFarmId;
-    let cancelled = false;
+    const controller = new AbortController();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     void (supabase as any)
       .from('porcelets_individuels')
       .select('id', { count: 'exact', head: true })
       .eq('farm_id', currentFarmId)
       .is('batch_id', null)
+      .abortSignal(controller.signal)
       .then(({ count, error }: { count: number | null; error: unknown }) => {
-        if (cancelled || error) return;
+        if (controller.signal.aborted || error) return;
         setHasPorceletsVrac((count ?? 0) > 0);
       });
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [currentFarmId]);
 
