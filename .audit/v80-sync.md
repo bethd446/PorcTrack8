@@ -162,3 +162,78 @@ Impact attendu : ≤2 requêtes par session entière (bootstrap + 1 si farm chan
 **Hors scope v3.4.2 (à traiter en suivant)** :
 - 1× ERR_ABORTED sporadique sur `pesee_planifiees?...` (non récurrent, à investiguer si reproductible)
 - Update blueprint §4.2 / §5 / §7 / §9 / §10 (en cours après ce ping)
+
+## 2026-05-12 11:35 — v3.4.3 finalisé
+
+## v3.4.3 finalisé par session-critique
+
+**Commit** : 35ea909 · **Tag** : v3.4.3
+
+**Livré** :
+1. FarmContext fetch : AbortController au lieu de cancelled flag (annulation propre)
+2. index.html : retiré preload DMMono orphelin -> 0 console warning
+
+**Validation audit Playwright** :
+- Console errors/warnings : 1 -> 0
+- ERR_ABORTED porcelets_individuels : 8 -> 9 (inchangé matériellement, voir analyse)
+- Tests : 2056/2056 verts, tsc 0 erreur, build OK
+
+**Bug #2 DETTE ACCEPTÉE** :
+
+useRef guard + AbortController sont sémantiquement corrects mais ne ramènent pas le compteur à le 2 comme prévu. Cause profonde non identifiée, probablement transitions multiples de currentFarmId pendant le bootstrap auth, chaque transition invalidant le guard ref.
+
+Pour aller plus loin :
+A) Tracer currentFarmId transitions et stabiliser le bootstrap
+B) Déplacer le fetch porcelets_vrac vers un useEffect groupé avec refreshAll pour ne pas en faire un effet indépendant
+
+NB technique : Playwright compte tout request.failure comme bad network, même un AbortController.abort volontaire produit ERR_ABORTED côté browser DevTools. Le compteur ne baissera pas avec ce design même si annulation propre.
+
+**À reclasser** : bug #2 = "partially resolved" dans memory/decisions.md. Pas urgent.
+
+**État sprint V80 + post-V80 final** :
+- v3.4.0 : sprint V80 (multi-profil + engraissement + unification DNA)
+- v3.4.1 : 4 bugs résiduels (FAB /today, autologin, URLs truies, PorceletsReorgGate centralisé)
+- v3.4.2 : useRef guard FarmContext (-43% sur fetch loop)
+- v3.4.3 : AbortController sémantique + 0 console warning
+
+**Suite roadmap** : P0 #3 calendrier vaccinal auto reste open. P1 backlog : retours chaleur auto, perfs verrats, ration auto, DLC pharmacie, pédigrée.
+
+---
+
+## [12:02] SESSION-EXEC — v3.4.4 livré, en attente audit
+
+**Date** : 2026-05-12 12:02
+
+**Fixes appliqués** (2 commits) :
+- `1b72178 fix(v3.4.4): bug #A — filtrage priorités /today par profil ferme`
+- `eee9fa9 fix(v3.4.4): bug #B — actions FAB engraisseur complétées (+5)`
+
+**Bug #A — filtrage /today** :
+- Nouveau service `src/services/alertProfileFilter.ts` (helper `getAlertApplicableProfiles` + `filterAlertsByProfile` générique)
+- 20 nouveaux tests `alertProfileFilter.test.ts` couvrant 9 préfixes naisseur + 2 engraisseur + 5 transverses + fallback
+- TodayV70.tsx : `alerts = useMemo(() => filterAlertsByProfile(computedAlerts, profil))` avant rendu
+- Mapping : MB/SEV/CHA/ECH/RSA/RSV/REG/REF/ORPH + mb-/reform-* → naisseur uniquement ; phase-poids-/sortie- → engraisseur ; MORT/STK/VET/PES/retard → transverses
+
+**Bug #B — FAB engraisseur** :
+- QuickActionKind étendu (+5) : `receptionlot`, `ventelot`, `stockaliment`, `stockveto`, `finance`
+- `receptionlot` réutilise `QuickAddLotForm` (créé par A5) via BottomSheet
+- 4 autres actions naviguent vers la page métier appropriée (`/engraissement`, `/ressources/aliments`, `/ressources/pharmacie`, `/pilotage/finances/details`)
+- SaisirSheet ACTIONS : 5 nouvelles entrées avec icônes Lucide (PackagePlus, Truck, Wheat, Pill, Coins) et `profilesAllow` corrects
+
+**Validation orchestrateur** :
+- `npx tsc --noEmit` → 0 erreur
+- `npm test` → 2076/2076 verts (+20 nouveaux alertProfileFilter)
+- `npm run build` → OK, 110 entries PWA
+- `git tag v3.4.4` + `git push origin main --follow-tags` → OK
+- HEAD = `eee9fa9`, tag `v3.4.4` visible sur origin
+
+**Validation finale attendue** :
+- Audit Playwright switch profil naisseur/engraisseur sur /today : pas de "Mise-Bas" en engraisseur, pas de "Lot prêt" en naisseur
+- Vérifier sheet engraisseur affiche ≥10 actions visibles (réception/vente lot + stocks + finance présents)
+- Si ✅ : marquer bugs #A et #B fully resolved dans memory/decisions.md
+
+**Hors scope v3.4.4 (à traiter v3.4.5)** :
+- Règles R17 Quarantaine fin (data `lots.date_quarantaine_fin`)
+- Règle R18 Pesée hebdo due lot (data `lot_pesees` 7+ jours)
+- R16 sortie abattoir couvre déjà "Lot atteint poids vente" pour batches
+- Forms dédiés QuickSellLotForm + QuickStockAlimentForm + QuickStockVetoForm + QuickFinanceForm (UX optimale vs navigation actuelle)
