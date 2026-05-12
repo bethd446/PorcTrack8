@@ -20,6 +20,7 @@ export type PageFabConfig =
   | { action: string; label: string };
 
 const FAB_GENERIC_PATHS: ReadonlyArray<RegExp> = [
+  /^\/today$/,
   /^\/troupeau\/truies\//,
   /^\/troupeau\/verrats\//,
   /^\/troupeau\/bandes\//,
@@ -39,7 +40,6 @@ const FAB_DISABLED_PATHS: ReadonlyArray<RegExp> = [
   /^\/admin/,
   /^\/onboarding/,
   /^\/checklist\//,
-  /^\/today$/,
   /^\/more$/,
   /^\/plus$/,
   /^\/audit$/,
