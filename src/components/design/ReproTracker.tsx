@@ -53,11 +53,74 @@ export default function ReproTracker({ stages, progressPct, className = '' }: Re
     return () => window.removeEventListener('resize', handler);
   }, []);
 
+  // v3.6.0 — Jauge de progression (option A refonte) : affichage explicite
+  // "Gestation · J{n}/115 · {pct}%" avec barre visuelle. L'éleveur voit
+  // immédiatement où il en est dans le cycle plutôt que d'inférer depuis
+  // les markers ✓/○ des étapes.
+  const ProgressGauge = () => (
+    <div
+      role="progressbar"
+      aria-valuenow={clamped}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={`Progression gestation ${Math.round(clamped)}%`}
+      style={{
+        marginBottom: 14,
+        padding: '10px 12px',
+        background: 'var(--pt-warm, #F1ECE0)',
+        border: '1px solid var(--pt-line, rgba(26,26,26,0.08))',
+        borderRadius: 10,
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+          marginBottom: 6,
+          fontFamily: 'var(--font-mono, monospace)',
+          fontSize: 11,
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+          color: 'var(--pt-muted, #6b6357)',
+        }}
+      >
+        <span>Gestation</span>
+        <span style={{ color: 'var(--pt-ink, #1a1a1a)', fontWeight: 700 }}>
+          {Math.round(clamped)}%
+        </span>
+      </div>
+      <div
+        style={{
+          height: 6,
+          background: 'rgba(26,26,26,0.08)',
+          borderRadius: 3,
+          overflow: 'hidden',
+          position: 'relative',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: `${clamped}%`,
+            background: clamped >= 95 ? 'var(--amber-pork-deep, #c2662b)' : 'var(--pt-primary, #2D4A1F)',
+            borderRadius: 3,
+            transition: 'width 320ms var(--ease-emil, ease-out)',
+          }}
+        />
+      </div>
+    </div>
+  );
+
   // Mobile small (< 480px) : empilement vertical pour éviter le chevauchement
   // des labels lorsque plusieurs stages sont concentrés dans 0-30% du cycle.
   if (isNarrow) {
     return (
       <div className={className} style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '4px 0' }}>
+        <ProgressGauge />
         {stages.map((stage, i) => (
           <div
             key={`${stage.label}-${i}`}
@@ -94,7 +157,9 @@ export default function ReproTracker({ stages, progressPct, className = '' }: Re
   }
 
   return (
-    <div className={className} style={{ position: 'relative', padding: '8px 0 36px' }}>
+    <div className={className}>
+      <ProgressGauge />
+      <div style={{ position: 'relative', padding: '8px 0 36px' }}>
       <div
         style={{
           height: 3,
@@ -175,6 +240,7 @@ export default function ReproTracker({ stages, progressPct, className = '' }: Re
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
