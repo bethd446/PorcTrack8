@@ -85,6 +85,8 @@ interface FarmContextType extends FarmState {
   availableFarms: AvailableFarm[];
   /** V71-P2 — Bascule la ferme courante (vérifie qu'elle ∈ availableFarms). */
   switchFarm: (farmId: string) => void;
+  /** v3.4.1 — true si la ferme a au moins un porcelet en vrac (batch_id NULL). */
+  hasPorceletsVrac: boolean;
   refreshData: (force?: boolean) => Promise<void>;
   getTruieById: (id: string) => Truie | undefined;
   getVerratById: (id: string) => Verrat | undefined;
@@ -121,6 +123,8 @@ interface MetaContextType {
   currentRole: FarmRole | null;
   /** V71-P2 — Bascule sur une autre ferme (must be in availableFarms). */
   switchFarm: (farmId: string) => void;
+  /** v3.4.1 — true si la ferme a au moins un porcelet en vrac (batch_id NULL). */
+  hasPorceletsVrac: boolean;
   refreshData: (force?: boolean) => Promise<void>;
   pullData: () => Promise<void>;
   processQueue: () => Promise<void>;
@@ -153,6 +157,8 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   // V71-P2 — State multi-ferme.
   const [currentFarmId, setCurrentFarmIdState] = useState<string | null>(null);
   const [availableFarms, setAvailableFarms] = useState<AvailableFarm[]>([]);
+  // v3.4.1 — Présence de porcelets en vrac (batch_id NULL) ; gate Wizard reorg.
+  const [hasPorceletsVrac, setHasPorceletsVrac] = useState(false);
   // Dépend de la session auth : RLS Supabase filtre via `farm_members`.
   // Sans session, toutes les requêtes reviennent vides — il faut donc attendre
   // que la session soit attachée avant le premier refreshAll().
@@ -275,6 +281,30 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     return () => window.removeEventListener('online', onOnline);
   }, []);
 
+  // v3.4.1 — Check porcelets en vrac une seule fois par farm_id. Avant ce
+  // patch, le gate <PorceletsReorgGate> refaisait un HEAD count à chaque
+  // navigation (24 req/session). On centralise ici (1 req par farm_id).
+  useEffect(() => {
+    if (!currentFarmId) {
+      setHasPorceletsVrac(false);
+      return;
+    }
+    let cancelled = false;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    void (supabase as any)
+      .from('porcelets_individuels')
+      .select('id', { count: 'exact', head: true })
+      .eq('farm_id', currentFarmId)
+      .is('batch_id', null)
+      .then(({ count, error }: { count: number | null; error: unknown }) => {
+        if (cancelled || error) return;
+        setHasPorceletsVrac((count ?? 0) > 0);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentFarmId]);
+
   const refreshData = useCallback(async (force: boolean = false) => {
     if (force) {
       await processQueueAndRefresh();
@@ -320,6 +350,7 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       availableFarms,
       currentRole,
       switchFarm,
+      hasPorceletsVrac,
       refreshData,
       pullData,
       processQueue,
@@ -416,6 +447,8 @@ export const useFarm = (): FarmContextType => {
     currentFarmId: meta.currentFarmId,
     availableFarms: meta.availableFarms,
     switchFarm: meta.switchFarm,
+    // v3.4.1 — Gate porcelets en vrac
+    hasPorceletsVrac: meta.hasPorceletsVrac,
     refreshData: meta.refreshData,
     pullData: meta.pullData,
     processQueue: meta.processQueue,

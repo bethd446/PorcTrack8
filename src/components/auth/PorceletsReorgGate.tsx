@@ -8,20 +8,26 @@
  * S'applique à TOUS les users (existants + nouveaux). Skip pour les routes
  * publiques (login/signup/auth) et pour la route wizard elle-même pour
  * éviter les boucles.
+ *
+ * v3.4.1 — La détection est centralisée dans FarmContext (1 req HEAD par
+ * farm_id). Ce composant n'émet plus aucune requête : il lit `hasPorceletsVrac`
+ * et déclenche la redirection si l'utilisateur est sur une route éligible.
+ * Avant le patch : 24 req/session (ERR_ABORTED en cascade).
  */
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-import { supabase } from '../../services/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
+import { useFarm } from '../../context/FarmContext';
 
 export const PorceletsReorgGate: React.FC = () => {
   const { user, profileLoaded } = useAuth();
+  const { hasPorceletsVrac } = useFarm();
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
   useEffect(() => {
-    if (!user || !profileLoaded) return;
+    if (!user || !profileLoaded || !hasPorceletsVrac) return;
     const skip =
       pathname.startsWith('/onboarding') ||
       pathname.startsWith('/porcelets-reorg') ||
@@ -30,30 +36,8 @@ export const PorceletsReorgGate: React.FC = () => {
       pathname.startsWith('/auth/') ||
       pathname.startsWith('/reglages');
     if (skip) return;
-
-    let cancelled = false;
-    void (async () => {
-      try {
-        // Porcelets en vrac (batch_id NULL) sur la farm courante
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { count, error } = await (supabase as any)
-          .from('porcelets_individuels')
-          .select('id', { count: 'exact', head: true })
-          .eq('farm_id', user.id)
-          .is('batch_id', null);
-        if (cancelled) return;
-        if (error) return; // silencieux : on ne bloque pas si la requête échoue
-        if ((count ?? 0) > 0) {
-          navigate('/porcelets-reorg', { replace: true });
-        }
-      } catch {
-        // silencieux
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [user, profileLoaded, pathname, navigate]);
+    navigate('/porcelets-reorg', { replace: true });
+  }, [hasPorceletsVrac, pathname, navigate, user, profileLoaded]);
 
   return null;
 };
