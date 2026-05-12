@@ -174,14 +174,24 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   //   1. Lit `pt:current_farm_id` depuis kvStore (persist Capacitor Preferences) ;
   //   2. Si présent ET ∈ availableFarms → utilise ;
   //   3. Sinon → fallback sur auth.uid() (rétro-compat backfill V71-P2).
+  //
+  // v3.4.8 — useRef guard pour neutraliser les re-runs du useEffect quand
+  // `authLoading` toggle pendant le bootstrap (null→loading→resolved peut
+  // produire 2-3 firings du useEffect même si `userId` n'a pas changé).
+  // Chaque fire relançait le fetch `farm_members` → 1 ERR_ABORTED par fire.
+  // Cible session-critique : 19 → ≤2 ERR_ABORTED par session.
+  const lastBootstrapUserIdRef = useRef<string | null | undefined>(undefined);
   useEffect(() => {
     if (authLoading) return;
     if (!userId) {
+      lastBootstrapUserIdRef.current = null;
       setCurrentFarmIdState(null);
       setAvailableFarms([]);
       setCurrentFarmIdRef(null);
       return;
     }
+    if (lastBootstrapUserIdRef.current === userId) return;
+    lastBootstrapUserIdRef.current = userId;
     let cancelled = false;
     void (async () => {
       // Lit les memberships via JOIN farm_members → farms.
