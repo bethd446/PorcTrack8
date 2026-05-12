@@ -28,6 +28,7 @@ import {
   type FarmProfile,
 } from '../../lib/farmProfile';
 import { useToast } from '../../context/ToastContext';
+import { PPABiosecurityChecklist } from '../components/PPABiosecurityChecklist';
 
 const infoCardStyle: React.CSSProperties = {
   background: 'var(--bg-surface)',
@@ -271,6 +272,12 @@ export const MaFermeV70: React.FC = () => {
             <StatTile value={verrats?.length ?? 0} label="Verrats" />
             <StatTile value={bandes?.length ?? 0} label="Bandes" />
           </div>
+        </section>
+
+        {/* v3.6.0 — Module PPA (Peste Porcine Africaine).
+            Différenciateur marché CI : épizootie 2024 = 100k têtes abattues. */}
+        <section className="section">
+          <PPABiosecurityChecklist />
         </section>
 
         <section className="section" style={{ marginTop: 32, marginBottom: 32 }}>
