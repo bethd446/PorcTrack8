@@ -91,6 +91,10 @@ export const HintCard: React.FC<{ hint: FarmHint }> = ({ hint }) => {
             fontWeight: 600,
             color: LEVEL_LINK[hint.level],
             textDecoration: 'none',
+            // v3.4.7+ : tap target WCAG AA (≥44px) via padding vertical
+            // + min-height. Avant fix : 96×18px → trop petit pour le terrain.
+            padding: '12px 4px',
+            minHeight: 44,
           }}
         >
           En savoir plus
