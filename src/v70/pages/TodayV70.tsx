@@ -17,6 +17,7 @@ import { AlertTriangle, CalendarDays, CheckCircle2, Info, ClipboardList, Play, C
 import { useFarm, useMeta } from '../../context/FarmContext';
 import { useFarmProfile } from '../../hooks/useFarmProfile';
 import { filterAlertsByProfile } from '../../services/alertProfileFilter';
+import { formatAnimalIdentity } from '../../lib/formatAnimalIdentity';
 import { useAuth } from '../../context/AuthContext';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
@@ -109,7 +110,7 @@ export const TodayV70: React.FC = () => {
           id: `reform-suggest-${t.id}`,
           variant: 'warning',
           tag: 'Bientôt',
-          title: `À sortir bientôt — ${t.displayId}`,
+          title: `À sortir bientôt — ${formatAnimalIdentity(t)}`,
           meta: reformReason(t),
           to: `/troupeau/truies/${t.id}`,
         });
@@ -123,7 +124,7 @@ export const TodayV70: React.FC = () => {
           id: `reform-action-${t.id}`,
           variant: 'warning',
           tag: 'Cette semaine',
-          title: `À vendre — ${t.displayId}`,
+          title: `À vendre — ${formatAnimalIdentity(t)}`,
           meta: 'Marquer comme vendue ou abattue depuis sa fiche',
           to: `/troupeau/truies/${t.id}`,
         });

@@ -361,9 +361,11 @@ const TruieDetailView: React.FC = () => {
   const showMiseBasCTA = isPleine && daysUntilMB !== null && daysUntilMB >= -5 && daysUntilMB <= 3;
   const miseBasCTALabel = (() => {
     if (daysUntilMB === null) return '';
-    if (daysUntilMB === 0) return `${truie.displayId} doit mettre bas aujourd’hui`;
-    if (daysUntilMB > 0) return `${truie.displayId} doit mettre bas dans ${daysUntilMB}j`;
-    return `${truie.displayId} a dépassé la date prévue (+${Math.abs(daysUntilMB)}j)`;
+    // v3.4.7+ : boucle prioritaire (cf. formatAnimalIdentity v3.4.5).
+    const id = formatAnimalIdentity(truie);
+    if (daysUntilMB === 0) return `${id} doit mettre bas aujourd’hui`;
+    if (daysUntilMB > 0) return `${id} doit mettre bas dans ${daysUntilMB}j`;
+    return `${id} a dépassé la date prévue (+${Math.abs(daysUntilMB)}j)`;
   })();
 
   // ── Vitales : empty state si jamais saillie ───────────────────────────────
