@@ -187,6 +187,52 @@ describe('R1 — Mise-Bas', () => {
     expect(mb?.title).toContain('Imminente');
     expect(mb?.daysOffset).toBe(-2);
   });
+
+  // V81 Sprint 9 — Politique persistance R1 (décision produit 2026-05-13)
+  // Avant : alerte disparaissait après J+17 (BIO.ALERTE_MB_RETARD_JOURS + 15).
+  // Après : tant que la truie reste "Pleine" sans MB confirmée, alerte
+  // CRITIQUE en permanence pour éviter l'oubli silencieux.
+
+  it('déclenche CRITIQUE persistante à J+30 (au-delà de l\'ancien cap J+17)', () => {
+    const truie = makeTruie({
+      dateMBPrevue: toFrDate(dayOffset(NOW, -30)), // MB attendue il y a 30j
+    });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie] }));
+    const mb = alerts.find(a => a.id.startsWith('MB-'));
+    expect(mb).toBeDefined();
+    expect(mb?.priority).toBe('CRITIQUE');
+    expect(mb?.title).toContain('Retard');
+    expect(mb?.daysOffset).toBe(30);
+  });
+
+  it('déclenche CRITIQUE persistante à J+90 (cas extrême — truie oubliée)', () => {
+    const truie = makeTruie({
+      dateMBPrevue: toFrDate(dayOffset(NOW, -90)),
+    });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie] }));
+    const mb = alerts.find(a => a.id.startsWith('MB-'));
+    expect(mb).toBeDefined();
+    expect(mb?.priority).toBe('CRITIQUE');
+    expect(mb?.daysOffset).toBe(90);
+  });
+
+  it('ne déclenche pas si la truie est passée en statut "Morte"', () => {
+    const truie = makeTruie({
+      dateMBPrevue: toFrDate(dayOffset(NOW, -30)),
+      statut: 'Morte',
+    });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie] }));
+    expect(alerts.find(a => a.id.startsWith('MB-'))).toBeUndefined();
+  });
+
+  it('ne déclenche pas si la truie est passée en statut "Réforme"', () => {
+    const truie = makeTruie({
+      dateMBPrevue: toFrDate(dayOffset(NOW, -30)),
+      statut: 'Réforme',
+    });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie] }));
+    expect(alerts.find(a => a.id.startsWith('MB-'))).toBeUndefined();
+  });
 });
 
 // ─── R2 — Sevrage ────────────────────────────────────────────────────────────

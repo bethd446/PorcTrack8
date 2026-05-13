@@ -187,7 +187,13 @@ function checkMiseBas(truie: Truie, today: Date): FarmAlert | null {
   if (!mbPrevue) return null;
 
   const offset = daysDiff(mbPrevue, today);
-  if (offset < -BIO.ALERTE_MB_AVANCE_JOURS || offset > BIO.ALERTE_MB_RETARD_JOURS + 15) return null;
+  // V81 Sprint 9 — Plus de cap supérieur. Décision produit 2026-05-13 :
+  // tant que la truie reste statut "Pleine" sans MB confirmée, l'alerte
+  // CRITIQUE persiste pour éviter l'oubli silencieux d'une truie en retard
+  // de gestation (mort embryonnaire, sortie de cycle, etc.). L'éleveur fait
+  // disparaître l'alerte en confirmant la mise-bas ou en passant la truie
+  // en statut "À surveiller" / "Réforme" / "Morte".
+  if (offset < -BIO.ALERTE_MB_AVANCE_JOURS) return null;
 
   const isRetard = offset > BIO.ALERTE_MB_RETARD_JOURS;
 
