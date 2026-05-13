@@ -161,12 +161,28 @@ async function runUpdate(
   }
 }
 
+/**
+ * V81 Sprint 2 — Pré-génère un UUID v4 côté client si l'appelant n'en a pas
+ * fourni. Bénéfice : en cas de retry réseau (timeout entre INSERT et response),
+ * le 2e essai utilisera le MÊME id et déclenchera `23505 unique_violation` sur
+ * la PK au lieu de créer un doublon silencieux. Le client peut alors faire un
+ * SELECT idempotent par id pour récupérer la row existante.
+ *
+ * Compatible legacy : si `values.id` est déjà fourni (offlineQueue, tests),
+ * on le respecte sans surcharge.
+ */
+function ensureClientId(values: Record<string, unknown>): Record<string, unknown> {
+  if (values.id != null && values.id !== '') return values;
+  if (typeof crypto === 'undefined' || typeof crypto.randomUUID !== 'function') return values;
+  return { ...values, id: crypto.randomUUID() };
+}
+
 async function runInsert<TRow>(
   table: WriteTable,
   values: Record<string, unknown>,
 ): Promise<TRow> {
   const farm_id = await getFarmId();
-  const payload = { ...values, farm_id };
+  const payload = { ...ensureClientId(values), farm_id };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase.from(table) as any)
     .insert(payload)

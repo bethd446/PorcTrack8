@@ -75,7 +75,17 @@ function parseRation(raw: string): number | null {
  *   [ID, NOM, BOUCLE, STATUT, STADE, NB_PORTEES, DERNIERE_PORTEE_NV,
  *    DATE_MB_PREVUE, RATION, NOTES]
  */
-export function validateAddTruie(draft: AddTruieDraft): AddTruieValidation {
+export interface AddTruieUniqueness {
+  /** Codes truies déjà existants dans la ferme (uppercase). Si `id` y figure → erreur. */
+  existingCodes?: ReadonlySet<string>;
+  /** Boucles truies déjà utilisées dans la ferme (case-insensitive). Si `boucle` y figure → erreur. */
+  existingBoucles?: ReadonlySet<string>;
+}
+
+export function validateAddTruie(
+  draft: AddTruieDraft,
+  uniqueness?: AddTruieUniqueness,
+): AddTruieValidation {
   const errors: AddTruieValidation['errors'] = {};
 
   const id = String(draft.id ?? '').trim().toUpperCase();
@@ -83,10 +93,16 @@ export function validateAddTruie(draft: AddTruieDraft): AddTruieValidation {
     errors.id = 'ID requis';
   } else if (!/^T\d+$/.test(id)) {
     errors.id = 'Format invalide (ex: T20)';
+  } else if (uniqueness?.existingCodes?.has(id)) {
+    errors.id = `Le code ${id} est déjà utilisé dans la ferme`;
   }
 
   const boucle = String(draft.boucle ?? '').trim();
-  if (!boucle) errors.boucle = 'Boucle requise';
+  if (!boucle) {
+    errors.boucle = 'Boucle requise';
+  } else if (uniqueness?.existingBoucles?.has(boucle.toUpperCase())) {
+    errors.boucle = `La boucle ${boucle} est déjà utilisée dans la ferme`;
+  }
 
   const ration = parseRation(draft.ration);
   if (ration === null) {

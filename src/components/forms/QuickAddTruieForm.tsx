@@ -39,6 +39,14 @@ interface QuickAddTruieFormProps {
 const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({ isOpen, onClose, onSuccess }) => {
   const { truies, verrats, refreshData } = useFarm();
   const suggestedId = useMemo(() => suggestNextTruieId(truies), [truies]);
+  // V81 Sprint 2 — unicité côté client (code + boucle) avant INSERT
+  const uniqueness = useMemo(
+    () => ({
+      existingCodes: new Set(truies.map((t) => (t.displayId || t.id || '').toUpperCase()).filter(Boolean)),
+      existingBoucles: new Set(truies.map((t) => (t.boucle || '').toUpperCase()).filter(Boolean)),
+    }),
+    [truies],
+  );
   const [code, setCode] = useState<string>(suggestedId);
   const [boucle, setBoucle] = useState<string>('');
   const [statut, setStatut] = useState<StatutChoice>('Vide');
@@ -95,7 +103,7 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({ isOpen, onClose, 
 
   const handleSubmit = async (e?: React.FormEvent | React.MouseEvent): Promise<void> => {
     if (e) e.preventDefault();
-    const result = validateAddTruie({ id: code, boucle, nom: '', stade: 'Adulte', ration: '3.0' });
+    const result = validateAddTruie({ id: code, boucle, nom: '', stade: 'Adulte', ration: '3.0' }, uniqueness);
     if (!result.ok || !result.row) { setErrors(result.errors); return; }
     setErrors({}); setSaving(true);
     try {

@@ -29,6 +29,14 @@ interface QuickAddVerratFormProps {
 const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({ isOpen, onClose, onSuccess }) => {
   const { verrats, refreshData } = useFarm();
   const suggestedId = useMemo(() => suggestNextVerratId(verrats), [verrats]);
+  // V81 Sprint 2 — unicité côté client (code + boucle) avant INSERT
+  const uniqueness = useMemo(
+    () => ({
+      existingCodes: new Set(verrats.map((v) => (v.displayId || v.id || '').toUpperCase()).filter(Boolean)),
+      existingBoucles: new Set(verrats.map((v) => (v.boucle || '').toUpperCase()).filter(Boolean)),
+    }),
+    [verrats],
+  );
   const [code, setCode] = useState<string>(suggestedId);
   const [boucle, setBoucle] = useState<string>('');
   const [dateNaissance, setDateNaissance] = useState<string>('');
@@ -63,7 +71,7 @@ const QuickAddVerratForm: React.FC<QuickAddVerratFormProps> = ({ isOpen, onClose
     if (e) e.preventDefault();
     const result = validateAddVerrat({
       id: code, boucle, nom: '', race: '', dateNaissance, origine, loge: '', statut: 'Actif', ration,
-    });
+    }, uniqueness);
     if (!result.ok || !result.values) { setErrors(result.errors); return; }
     setErrors({}); setSaving(true);
     try {

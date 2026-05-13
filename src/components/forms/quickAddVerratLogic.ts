@@ -93,7 +93,17 @@ function parseRation(raw: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export function validateAddVerrat(draft: AddVerratDraft): AddVerratValidation {
+export interface AddVerratUniqueness {
+  /** Codes verrats déjà existants dans la ferme (uppercase). Si `id` y figure → erreur. */
+  existingCodes?: ReadonlySet<string>;
+  /** Boucles verrats déjà utilisées dans la ferme (case-insensitive). Si `boucle` y figure → erreur. */
+  existingBoucles?: ReadonlySet<string>;
+}
+
+export function validateAddVerrat(
+  draft: AddVerratDraft,
+  uniqueness?: AddVerratUniqueness,
+): AddVerratValidation {
   const errors: AddVerratValidation['errors'] = {};
 
   const id = String(draft.id ?? '').trim().toUpperCase();
@@ -101,11 +111,16 @@ export function validateAddVerrat(draft: AddVerratDraft): AddVerratValidation {
     errors.id = 'ID requis';
   } else if (!/^V\d+$/.test(id)) {
     errors.id = 'Format invalide (ex: V01)';
+  } else if (uniqueness?.existingCodes?.has(id)) {
+    errors.id = `Le code ${id} est déjà utilisé dans la ferme`;
   }
 
   const boucle = String(draft.boucle ?? '').trim();
   if (!boucle) errors.boucle = 'Boucle requise';
   else if (boucle.length > 30) errors.boucle = 'Boucle trop longue (max 30)';
+  else if (uniqueness?.existingBoucles?.has(boucle.toUpperCase())) {
+    errors.boucle = `La boucle ${boucle} est déjà utilisée dans la ferme`;
+  }
 
   const nom = String(draft.nom ?? '').trim();
   if (nom.length > 30) errors.nom = 'Nom trop long (max 30)';
