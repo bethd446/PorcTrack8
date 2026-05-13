@@ -1323,9 +1323,9 @@
 }
 
 .stepper button {
-  width: 30px;
-  height: 30px;
-  border-radius: 7px;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
   border: none;
   background: transparent;
   color: var(--pt-ink);
@@ -1422,9 +1422,9 @@
 }
 
 .sheet__close {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
   border: 1px solid var(--pt-line-strong);
   background: transparent;
   color: var(--pt-ink);

@@ -1286,7 +1286,7 @@ function PerfCell({
       <small
         style={{
           fontFamily: 'var(--font-mono)',
-          fontSize: 9.5,
+          fontSize: 10,
           letterSpacing: '0.16em',
           textTransform: 'uppercase',
           color: 'var(--muted)',
@@ -1310,7 +1310,7 @@ function PerfCell({
         <small
           style={{
             fontFamily: 'var(--font-body)',
-            fontSize: 11.5,
+            fontSize: 12,
             color: 'var(--muted)',
           }}
         >
@@ -1346,7 +1346,7 @@ function DataRow({ label, value, last }: { label: string; value: string; last?: 
       <span
         style={{
           fontFamily: 'var(--font-body)',
-          fontSize: 13.5,
+          fontSize: 14,
           color: 'var(--ink)',
           fontWeight: 500,
         }}
@@ -1445,7 +1445,7 @@ const SaillieRow: React.FC<{ saillie: Saillie; num: number; last: boolean }> = (
           style={{
             display: 'block',
             fontFamily: 'var(--font-body)',
-            fontSize: 11.5,
+            fontSize: 12,
             color: 'var(--muted)',
             marginTop: 2,
             fontWeight: 400,
@@ -1530,7 +1530,7 @@ const RationRecoBlock: React.FC<{ truie: Truie }> = ({ truie }) => {
             <div
               style={{
                 fontFamily: 'var(--font-mono)',
-                fontSize: 9.5,
+                fontSize: 10,
                 letterSpacing: '0.16em',
                 textTransform: 'uppercase',
                 color: 'var(--muted)',
@@ -1556,7 +1556,7 @@ const RationRecoBlock: React.FC<{ truie: Truie }> = ({ truie }) => {
             <div
               style={{
                 fontFamily: 'var(--font-mono)',
-                fontSize: 9.5,
+                fontSize: 10,
                 letterSpacing: '0.16em',
                 textTransform: 'uppercase',
                 color: 'var(--muted)',
@@ -1599,7 +1599,7 @@ const RationRecoBlock: React.FC<{ truie: Truie }> = ({ truie }) => {
         ) : null}
         <div
           style={{
-            fontSize: 11.5,
+            fontSize: 12,
             color: 'var(--muted)',
             fontFamily: 'var(--font-body)',
           }}

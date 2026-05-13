@@ -169,6 +169,7 @@ const QuickConfirmMiseBasForm: React.FC<QuickConfirmMiseBasFormProps> = ({
       nbMales,
       nbFemelles,
       logeId,
+      dateSaillie: saillie.date_saillie,
     };
     const result = validateMiseBas(draft);
     if (!result.ok || !result.values) {

@@ -21,6 +21,8 @@ export interface MiseBasDraft {
   nbMales: string;
   nbFemelles: string;
   logeId: string;
+  /** ISO yyyy-MM-dd de la saillie préchargée — sert au garde-fou MB ≥ saillie. Optionnel. */
+  dateSaillie?: string | null;
 }
 
 export interface MiseBasValidation {
@@ -109,6 +111,11 @@ export function validateMiseBas(draft: MiseBasDraft): MiseBasValidation {
       todayUtc.setUTCHours(23, 59, 59, 999);
       if (d.getTime() > todayUtc.getTime()) {
         errors.dateMiseBas = 'Date future interdite';
+      } else if (draft.dateSaillie && /^\d{4}-\d{2}-\d{2}$/.test(draft.dateSaillie)) {
+        const dSaillie = new Date(draft.dateSaillie + 'T00:00:00Z');
+        if (Number.isFinite(dSaillie.getTime()) && d.getTime() < dSaillie.getTime()) {
+          errors.dateMiseBas = `Mise-bas avant la saillie (${draft.dateSaillie}) impossible`;
+        }
       }
     }
   }

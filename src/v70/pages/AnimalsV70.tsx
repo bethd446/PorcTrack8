@@ -81,9 +81,9 @@ const STUBS_PORCELETS: AnimalStub[] = [
 ];
 
 const STUBS_BANDES: AnimalStub[] = [
-  { id: 'B-MAR', status: 'Mars 2026 · 8 truies · ISSE 12.4', statusLabel: 'Active', pillVariant: 'success' },
-  { id: 'B-FEV', status: 'Février 2026 · 7 truies · ISSE 11.9', statusLabel: 'Active', pillVariant: 'success' },
-  { id: 'B-JAN', status: 'Janvier 2026 · 9 truies · ISSE 11.2', statusLabel: 'Active', pillVariant: 'success' },
+  { id: 'B-MAR', status: 'Mars 2026 · 8 truies · 12,4 j sevrage→saillie', statusLabel: 'Active', pillVariant: 'success' },
+  { id: 'B-FEV', status: 'Février 2026 · 7 truies · 11,9 j sevrage→saillie', statusLabel: 'Active', pillVariant: 'success' },
+  { id: 'B-JAN', status: 'Janvier 2026 · 9 truies · 11,2 j sevrage→saillie', statusLabel: 'Active', pillVariant: 'success' },
   { id: 'B-MAI', status: 'Mai 2026 · 11 truies · J+143 sevrage', statusLabel: 'Maternité', pillVariant: 'warm' },
   { id: 'B-AVR', status: 'Avril 2026 · saillies en cours', statusLabel: 'Saillie', pillVariant: 'info' },
   { id: 'B-DEC', status: 'Décembre 2025 · sortie abattoir', statusLabel: 'Finition', pillVariant: 'warning' },
