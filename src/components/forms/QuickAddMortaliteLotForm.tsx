@@ -15,6 +15,9 @@ interface QuickAddMortaliteLotFormProps {
   isOpen: boolean;
   lotId: string;
   lotCode?: string;
+  /** V81 Sprint 7 — Effectif vivant restant (initial - morts). Si fourni,
+   *  borne nbMorts ≤ effectifRestant pour éviter les KPIs faussés. */
+  effectifRestant?: number;
   onClose: () => void;
   onSuccess?: () => void;
 }
@@ -35,6 +38,7 @@ const QuickAddMortaliteLotForm: React.FC<QuickAddMortaliteLotFormProps> = ({
   isOpen,
   lotId,
   lotCode,
+  effectifRestant,
   onClose,
   onSuccess,
 }) => {
@@ -70,6 +74,11 @@ const QuickAddMortaliteLotForm: React.FC<QuickAddMortaliteLotFormProps> = ({
     if (!date) errs.date = 'Date requise';
     const n = parseInt(nbMorts, 10);
     if (!Number.isFinite(n) || n <= 0) errs.nbMorts = 'Nb morts > 0';
+    // V81 Sprint 7 — Cap sur l'effectif vivant restant : on ne peut pas
+    // déclarer plus de morts qu'il n'y a de porcs dans le lot.
+    else if (typeof effectifRestant === 'number' && n > effectifRestant) {
+      errs.nbMorts = `Lot a ${effectifRestant} porc${effectifRestant > 1 ? 's' : ''} vivant${effectifRestant > 1 ? 's' : ''}`;
+    }
     return errs;
   };
 

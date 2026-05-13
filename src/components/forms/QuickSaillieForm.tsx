@@ -111,16 +111,18 @@ const QuickSaillieForm: React.FC<QuickSaillieFormProps> = ({ isOpen, onClose, de
       });
       try { await refreshData(true); } catch { /* noop */ }
       showToast(`Saillie enregistrée · ${selectedTruie} × ${selectedVerrat}`, 'success');
+      // V81 Sprint 7 — Garder saving=true jusqu'au onClose pour empêcher le
+      // double-clic dans la fenêtre 1.5s entre toast success et fermeture.
       setTimeout(() => {
         setSelectedTruie('');
         setSelectedVerrat('');
         setDateSaillie(todayISO());
+        setSaving(false);
         onClose();
       }, 1500);
     } catch (e) {
       const msg = (e as Error)?.message ?? "Erreur lors de l'enregistrement de la saillie";
       showToast(msg, 'error', 4000);
-    } finally {
       setSaving(false);
     }
   };

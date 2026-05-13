@@ -194,6 +194,13 @@ export function validateMiseBas(draft: MiseBasDraft): MiseBasValidation {
     errors.coherence = `Incohérence : ${nv} vivants + ${mn} morts-nés ≠ ${nt} totaux`;
   }
 
+  // V81 Sprint 7 — Bloquer la bande fantôme : 0 vivant + 0 mort-né = bug de
+  // saisie (probablement double-clic ou form vide). Un éleveur qui valide
+  // sans remplir crée un batch sans porcelets → KPIs faussés + UI confuse.
+  if (nv === 0 && mn === 0 && nt === 0) {
+    errors.coherence = 'Aucun porcelet : renseigne au moins 1 NV ou 1 mort-né';
+  }
+
   let poidsMoyenNum: number | undefined;
   const poidsRaw = String(draft.poidsMoyen ?? '').trim();
   if (poidsRaw !== '') {

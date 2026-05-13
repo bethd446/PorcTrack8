@@ -244,13 +244,21 @@ const QuickMiseBasForm: React.FC<QuickMiseBasFormProps> = ({
       );
       try { await refreshData(true); } catch { /* noop */ }
       if (onSuccess) onSuccess();
-      closeTimerRef.current = setTimeout(() => { closeTimerRef.current = null; onClose(); }, 1500);
+      // V81 Sprint 7 — Garder saving=true jusqu'à onClose pour empêcher le
+      // double-clic pendant la fenêtre de 1.5s de toast success. setSaving
+      // n'est reset qu'en cas d'erreur (catch) pour permettre un retry.
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
+        setSaving(false);
+        onClose();
+      }, 1500);
     } catch (err) {
       showToast(
         err instanceof Error ? `Erreur : ${err.message}` : 'Erreur enregistrement local',
         'error', { duration: 2400 },
       );
-    } finally { setSaving(false); }
+      setSaving(false);
+    }
   };
 
   const errMsg = (msg?: string): React.ReactNode =>

@@ -59,7 +59,8 @@ export const EngraissementV70: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [peseeFor, setPeseeFor] = useState<LotRow | null>(null);
-  const [mortaliteFor, setMortaliteFor] = useState<LotRow | null>(null);
+  // V81 Sprint 7 — Stocke aussi l'effectif restant pour borner nbMorts ≤ vivants
+  const [mortaliteFor, setMortaliteFor] = useState<{ lot: LotRow; vivants: number } | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const refresh = useCallback(async (signal?: AbortSignal): Promise<void> => {
@@ -244,7 +245,7 @@ export const EngraissementV70: React.FC = () => {
                 setExpandedId((prev) => (prev === e.lot.id ? null : e.lot.id))
               }
               onPeser={() => setPeseeFor(e.lot)}
-              onMortalite={() => setMortaliteFor(e.lot)}
+              onMortalite={() => setMortaliteFor({ lot: e.lot, vivants: porcsVivants(e.lot, e.morts) })}
             />
           ))}
         </Section>
@@ -284,8 +285,9 @@ export const EngraissementV70: React.FC = () => {
         {mortaliteFor && (
           <QuickAddMortaliteLotForm
             isOpen={mortaliteFor !== null}
-            lotId={mortaliteFor.id}
-            lotCode={mortaliteFor.code}
+            lotId={mortaliteFor.lot.id}
+            lotCode={mortaliteFor.lot.code}
+            effectifRestant={mortaliteFor.vivants}
             onClose={() => setMortaliteFor(null)}
             onSuccess={() => {
               setMortaliteFor(null);
