@@ -948,6 +948,33 @@ export default function PorceletsReorgWizard() {
 
           {!loading && !error && totalCount > 0 && !showWizard && (
             <>
+              {/* v3.6.1 — Bouton "Plus tard" : skip session pour permettre nav libre.
+                  Le redirect réapparaît au prochain login (sessionStorage). */}
+              <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    try { sessionStorage.setItem('pt:porcelets-reorg-skipped', '1'); } catch { /* noop */ }
+                    navigate('/today', { replace: true });
+                  }}
+                  style={{
+                    fontFamily: 'var(--pt-font-mono)',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    letterSpacing: '0.06em',
+                    color: 'var(--pt-muted)',
+                    background: 'transparent',
+                    border: 'none',
+                    padding: '12px 4px',
+                    cursor: 'pointer',
+                    minHeight: 44,
+                    textDecoration: 'underline',
+                  }}
+                  aria-label="Reporter le rangement des porcelets à plus tard"
+                >
+                  Plus tard →
+                </button>
+              </div>
               <Section label="FILTRES" tone="primary" />
               <div
                 style={{
