@@ -813,8 +813,33 @@ export default function AdminDashboard() {
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteToast, setInviteToast] = useState<string | null>(null);
+  // V81 Sprint 1 sécu — flag super-admin plateforme (cf migration
+  // 20260513_admin_logs_super_admin). null pendant loading, false par défaut
+  // pour éviter de flasher le panel logs aux non super-admin.
+  const [isSuperAdmin, setIsSuperAdmin] = useState<boolean | null>(null);
 
   useEffect(() => {
+    if (!currentUserId) { setIsSuperAdmin(false); return; }
+    let cancelled = false;
+    supabase
+      .from('profiles')
+      .select('is_super_admin')
+      .eq('id', currentUserId)
+      .maybeSingle()
+      .then(({ data, error: fetchErr }) => {
+        if (cancelled) return;
+        if (fetchErr) {
+          console.warn('[AdminDashboard] is_super_admin check failed', fetchErr);
+          setIsSuperAdmin(false);
+          return;
+        }
+        setIsSuperAdmin(Boolean(data?.is_super_admin));
+      }, () => { if (!cancelled) setIsSuperAdmin(false); });
+    return () => { cancelled = true; };
+  }, [currentUserId]);
+
+  useEffect(() => {
+    if (isSuperAdmin !== true) { setLogs([]); setTodayCount(0); return; }
     let cancelled = false;
     supabase
       .from('admin_logs')
@@ -841,7 +866,11 @@ export default function AdminDashboard() {
         setLogs([]);
         setTodayCount(0);
       });
+    return () => { cancelled = true; };
+  }, [isSuperAdmin]);
 
+  useEffect(() => {
+    let cancelled = false;
     supabase
       .from('profiles')
       .select('id, role, last_sign_in_at, email')
@@ -970,14 +999,18 @@ export default function AdminDashboard() {
         ) : (
           <>
             <div className="kpis-strip">
-              <div className="kpi">
-                <div className="kpi__label">Logs totaux</div>
-                <div className="kpi__val num">{logs.length}</div>
-              </div>
-              <div className="kpi">
-                <div className="kpi__label">Logs aujourd'hui</div>
-                <div className="kpi__val num">{todayCount}</div>
-              </div>
+              {isSuperAdmin && (
+                <>
+                  <div className="kpi">
+                    <div className="kpi__label">Logs totaux</div>
+                    <div className="kpi__val num">{logs.length}</div>
+                  </div>
+                  <div className="kpi">
+                    <div className="kpi__label">Logs aujourd'hui</div>
+                    <div className="kpi__val num">{todayCount}</div>
+                  </div>
+                </>
+              )}
               <div className="kpi">
                 <div className="kpi__label">Utilisateurs</div>
                 <div className="kpi__val num">{profiles.length}</div>
@@ -986,7 +1019,7 @@ export default function AdminDashboard() {
 
             <PendingValidationsView />
 
-            <LogsPanel />
+            {isSuperAdmin && <LogsPanel />}
 
             <div
               style={{

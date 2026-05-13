@@ -1399,18 +1399,21 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          is_super_admin: boolean
           role: string | null
         }
         Insert: {
           email?: string | null
           full_name?: string | null
           id: string
+          is_super_admin?: boolean
           role?: string | null
         }
         Update: {
           email?: string | null
           full_name?: string | null
           id?: string
+          is_super_admin?: boolean
           role?: string | null
         }
         Relationships: []
