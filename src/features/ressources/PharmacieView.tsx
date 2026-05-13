@@ -460,14 +460,16 @@ const PharmacieView: React.FC = () => {
           </div>
         </div>
 
-        <button
-          type="button"
-          className="fab"
-          onClick={() => setAddOpen(true)}
-          aria-label="Nouveau produit"
-        >
-          <Plus size={22} aria-hidden />
-        </button>
+        {items.length > 0 && (
+          <button
+            type="button"
+            className="fab"
+            onClick={() => setAddOpen(true)}
+            aria-label="Nouveau produit"
+          >
+            <Plus size={22} aria-hidden />
+          </button>
+        )}
 
         <QuickAddVetoForm
           isOpen={addOpen}
