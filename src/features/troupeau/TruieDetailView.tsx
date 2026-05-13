@@ -502,7 +502,7 @@ const TruieDetailView: React.FC = () => {
 
     return (
       <>
-        {truie.displayId} compte <strong>{nbSaillies} saillies</strong> au registre dont <strong>{nbReussies} confirmées</strong>. Moyenne ferme : 12 % de retours. <strong className="ink">Si nouvel échec après cette saillie, point vétérinaire recommandé.</strong>
+        {truie.displayId} compte <strong>{nbSaillies} {nbSaillies > 1 ? 'saillies' : 'saillie'}</strong> au registre dont <strong>{nbReussies} {nbReussies > 1 ? 'confirmées' : 'confirmée'}</strong>. Moyenne ferme : 12 % de retours. <strong className="ink">Si nouvel échec après cette saillie, point vétérinaire recommandé.</strong>
       </>
     );
   })();

@@ -31,10 +31,10 @@ import { useToast } from '../../context/ToastContext';
 import { PPABiosecurityChecklist } from '../components/PPABiosecurityChecklist';
 
 const infoCardStyle: React.CSSProperties = {
-  background: 'var(--bg-surface)',
+  background: 'var(--pt-bg)',
   borderRadius: 'var(--radius-card, 24px)',
   padding: '18px 20px',
-  border: '1px solid var(--line)',
+  border: '1px solid var(--pt-line)',
   marginBottom: 10,
 };
 
@@ -43,7 +43,7 @@ const infoLabelStyle: React.CSSProperties = {
   fontSize: 10,
   letterSpacing: '0.14em',
   textTransform: 'uppercase',
-  color: 'var(--muted)',
+  color: 'var(--pt-muted)',
   marginBottom: 6,
   fontWeight: 600,
 };
@@ -52,14 +52,14 @@ const infoValueStyle: React.CSSProperties = {
   fontFamily: 'var(--pt-font-display)',
   fontSize: 18,
   fontWeight: 800,
-  color: 'var(--ink)',
+  color: 'var(--pt-ink)',
   lineHeight: 1.25,
   letterSpacing: '-0.005em',
 };
 
 const infoHintStyle: React.CSSProperties = {
   fontSize: 12,
-  color: 'var(--muted)',
+  color: 'var(--pt-muted)',
   marginTop: 6,
 };
 
@@ -78,10 +78,10 @@ const InfoCard: React.FC<InfoCardProps> = ({ label, value, hint }) => (
 );
 
 const statTileStyle: React.CSSProperties = {
-  background: 'var(--bg-surface)',
+  background: 'var(--pt-bg)',
   borderRadius: 'var(--radius-card, 24px)',
   padding: '18px 12px',
-  border: '1px solid var(--line)',
+  border: '1px solid var(--pt-line)',
   textAlign: 'center',
 };
 
@@ -89,7 +89,7 @@ const statValueStyle: React.CSSProperties = {
   fontFamily: 'var(--pt-font-display)',
   fontSize: 28,
   fontWeight: 800,
-  color: 'var(--ink)',
+  color: 'var(--pt-ink)',
   lineHeight: 1,
 };
 
@@ -98,7 +98,7 @@ const statLabelStyle: React.CSSProperties = {
   fontSize: 10,
   letterSpacing: '0.14em',
   textTransform: 'uppercase',
-  color: 'var(--muted)',
+  color: 'var(--pt-muted)',
   marginTop: 6,
   fontWeight: 600,
 };
@@ -241,7 +241,7 @@ export const MaFermeV70: React.FC = () => {
                     border: selected
                       ? '2px solid var(--pt-primary)'
                       : '1px solid var(--pt-line-strong)',
-                    background: selected ? 'var(--pt-warm)' : 'var(--bg-surface)',
+                    background: selected ? 'var(--pt-warm)' : 'var(--pt-bg)',
                     cursor: savingProfil ? 'wait' : 'pointer',
                     display: 'flex',
                     gap: 12,

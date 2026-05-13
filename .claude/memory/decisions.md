@@ -57,7 +57,7 @@
 
 ---
 
-## 2026-05-02 · [V26] Pays par défaut Belgique pour christophe / EUR auto
+## 2026-05-02 · [V26] Pays par défaut Belgique pour christophe / EUR auto · **🚫 RÉVOQUÉE PAR V43.3 (2026-05-13)**
 
 **Contexte** : Compte christophe affichait FCFA partout (fallback métier Afrique de l'Ouest).
 **Options** :
@@ -66,6 +66,8 @@
 **Décision** : B
 **Raison** : Christophe est belge, devise EUR évidente. Pas de friction.
 **Liens** : `src/lib/currency.ts` · [[journal]]
+
+**🚫 STATUT 2026-05-13** : Cette décision est **révoquée** par la décision V43.3 — *"plateforme PorcTrack uniformisée en FCFA, peu importe le pays"*. Cf `src/lib/currency.ts:22` (commentaire d'entête), `CLAUDE.md:213`, et `MaFermeV70.tsx` (V77, *"la plateforme est FCFA only, pas dérivée du pays"*). L'affichage `Belgique · FCFA` sur `/reglages/ma-ferme` n'est PAS un bug — c'est le comportement attendu V43.3. Si multi-devise doit être restauré un jour, ce sera un sprint dédié (currency.ts, FarmContext, formatCurrency call sites, tests).
 
 ---
 

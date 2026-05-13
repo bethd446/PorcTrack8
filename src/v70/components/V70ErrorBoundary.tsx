@@ -67,7 +67,7 @@ export class V70ErrorBoundary extends React.Component<Props, State> {
                 marginTop: 16,
                 padding: '8px 16px',
                 borderRadius: 8,
-                border: '1px solid var(--pt-border)',
+                border: '1px solid var(--pt-line)',
                 background: 'none',
                 cursor: 'pointer',
               }}

@@ -2,7 +2,7 @@
 
 :root {
   /* === FONDS === */
-  --pt-bg:                 #F2EEE3;
+  /* --pt-bg défini dans src/v70/theme/v70-tokens.css (autoritaire #FFFFFF) */
   --pt-surface:            #FBF8F1;
   --pt-surface-alt:        #EFEBE0;
   --pt-surface-warm:       #F5E9D8;
@@ -26,8 +26,7 @@
   --pt-text-muted:         #5C5C5C;
   --pt-text-subtle:        #8A8A8A;
   --pt-divider:            #D4CFC2;
-  --pt-danger:             #B23A2A;
-  --pt-warning:            #D4915C;
+  /* --pt-danger et --pt-warning définis dans src/v70/theme/v70-tokens.css (autoritaires) */
 
   /* === TYPO === */
   /* V71 typo-lock : 2 fonts strict. --pt-font-mono = body avec tabular-nums

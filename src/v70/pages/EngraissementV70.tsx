@@ -180,8 +180,8 @@ export const EngraissementV70: React.FC = () => {
         <div
           role="alert"
           style={{
-            background: 'var(--pt-danger-bg, #fde8e8)',
-            color: 'var(--pt-danger, #991b1b)',
+            background: 'var(--pt-danger-bg-soft)',
+            color: 'var(--pt-danger)',
             padding: '10px 14px',
             borderRadius: 12,
             marginBottom: 12,
@@ -424,7 +424,7 @@ const LotCard: React.FC<LotCardProps> = ({ data, expanded, onToggle, onPeser, on
               </span>
             </div>
             {pesees.length === 1 && (
-              <div style={{ marginTop: 8, color: 'var(--pt-warn, #b45309)', fontSize: 11 }}>
+              <div style={{ marginTop: 8, color: 'var(--pt-warning)', fontSize: 11 }}>
                 Note : 2 pesées minimum requises pour calculer le GMQ.
               </div>
             )}

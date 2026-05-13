@@ -50,10 +50,10 @@ function initialOf(member: TeamMember): string {
 }
 
 const statTileStyle: React.CSSProperties = {
-  background: 'var(--bg-surface)',
+  background: 'var(--pt-bg)',
   borderRadius: 'var(--radius-card, 24px)',
   padding: '18px 12px',
-  border: '1px solid var(--line)',
+  border: '1px solid var(--pt-line)',
   textAlign: 'center',
 };
 
@@ -61,7 +61,7 @@ const statValueStyle: React.CSSProperties = {
   fontFamily: 'var(--pt-font-display)',
   fontSize: 28,
   fontWeight: 800,
-  color: 'var(--ink)',
+  color: 'var(--pt-ink)',
   lineHeight: 1,
 };
 
@@ -70,7 +70,7 @@ const statLabelStyle: React.CSSProperties = {
   fontSize: 10,
   letterSpacing: '0.14em',
   textTransform: 'uppercase',
-  color: 'var(--muted)',
+  color: 'var(--pt-muted)',
   marginTop: 6,
   fontWeight: 600,
 };
@@ -80,8 +80,8 @@ const memberRowStyle: React.CSSProperties = {
   alignItems: 'center',
   gap: 12,
   padding: '14px 16px',
-  background: 'var(--bg-surface)',
-  border: '1px solid var(--line)',
+  background: 'var(--pt-bg)',
+  border: '1px solid var(--pt-line)',
   borderRadius: 16,
   marginBottom: 8,
 };
@@ -105,7 +105,7 @@ const memberNameStyle: React.CSSProperties = {
   fontFamily: 'var(--pt-font-mono)',
   fontSize: 13,
   fontWeight: 600,
-  color: 'var(--ink)',
+  color: 'var(--pt-ink)',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
@@ -113,7 +113,7 @@ const memberNameStyle: React.CSSProperties = {
 
 const memberSubStyle: React.CSSProperties = {
   fontSize: 11,
-  color: 'var(--muted)',
+  color: 'var(--pt-muted)',
   marginTop: 2,
   overflow: 'hidden',
   textOverflow: 'ellipsis',
@@ -133,11 +133,11 @@ const roleBadgeStyle: React.CSSProperties = {
 
 const emptyStateStyle: React.CSSProperties = {
   padding: 18,
-  background: 'var(--bg-surface)',
-  border: '1px solid var(--line)',
+  background: 'var(--pt-bg)',
+  border: '1px solid var(--pt-line)',
   borderRadius: 16,
   fontSize: 13,
-  color: 'var(--muted)',
+  color: 'var(--pt-muted)',
   textAlign: 'center',
 };
 
@@ -259,7 +259,7 @@ const InviteSheet: React.FC<InviteSheetProps> = ({ isOpen, onClose, onInvited, c
               padding: '12px 14px',
               borderRadius: 12,
               border: '1px solid var(--pt-line, rgba(26,26,26,0.16))',
-              background: 'var(--bg-surface, #ffffff)',
+              background: 'var(--pt-bg, #ffffff)',
               fontFamily: 'var(--pt-font-body)',
               fontSize: 15,
               color: 'var(--pt-ink, #1a1a1a)',
@@ -295,7 +295,7 @@ const InviteSheet: React.FC<InviteSheetProps> = ({ isOpen, onClose, onInvited, c
                     padding: '12px 14px',
                     borderRadius: 14,
                     border: `1.5px solid ${active ? 'var(--pt-primary, #2D4A1F)' : 'var(--pt-line, rgba(26,26,26,0.08))'}`,
-                    background: active ? 'var(--pt-warm, #F5E9D8)' : 'var(--bg-surface, #ffffff)',
+                    background: active ? 'var(--pt-warm, #F5E9D8)' : 'var(--pt-bg, #ffffff)',
                     cursor: submitting ? 'not-allowed' : 'pointer',
                     transition: 'border-color 200ms ease, background 200ms ease',
                   }}
@@ -527,7 +527,7 @@ export const MonEquipeV70: React.FC = () => {
                   <div style={memberNameStyle}>
                     {displayName}
                     {isYou && (
-                      <span style={{ fontSize: 10, color: 'var(--muted)', fontWeight: 500, marginLeft: 6 }}>
+                      <span style={{ fontSize: 10, color: 'var(--pt-muted)', fontWeight: 500, marginLeft: 6 }}>
                         (vous)
                       </span>
                     )}

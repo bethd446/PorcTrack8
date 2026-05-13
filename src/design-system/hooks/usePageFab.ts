@@ -29,8 +29,6 @@ const FAB_GENERIC_PATHS: ReadonlyArray<RegExp> = [
   /^\/reproduction($|\/)/,
   /^\/repro($|\/)/,
   /^\/cycles($|\/)/,
-  /^\/ressources\/pharmacie/,
-  /^\/ressources\/aliments/,
   /^\/outils\/sante($|\/)/,
   /^\/outils\/stocks($|\/)/,
 ];
