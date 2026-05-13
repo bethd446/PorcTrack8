@@ -223,6 +223,51 @@ const QuickAddBandeForm: React.FC<QuickAddBandeFormProps> = ({ isOpen, onClose, 
                   <label className="label--v77" htmlFor="add-bande-date-mb">DATE MB <span className="req">requis</span></label>
                   <input id="add-bande-date-mb" className={`field__input mono${dateMb ? ' filled' : ' field__input--ghost'}`} type="date" aria-label="Date de mise-bas" aria-required="true" aria-invalid={!!errors.dateMb} value={dateMb} onChange={e => setDateMb(e.target.value)} disabled={saving} />
                   {errMsg(errors.dateMb)}
+                  {/* v3.6.2 — Fallback "âge approximatif" : si naissance inconnue
+                      (cas import bande existante), saisir le nombre de mois pour
+                      pré-remplir une dateMb théorique. */}
+                  <details style={{ marginTop: 6 }}>
+                    <summary
+                      style={{
+                        fontSize: 11,
+                        color: 'var(--pt-muted)',
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                        padding: '6px 0',
+                      }}
+                    >
+                      Date inconnue ? Estimer par l'âge →
+                    </summary>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                      <label htmlFor="add-bande-age-mois" style={{ fontSize: 12 }}>
+                        Âge approximatif
+                      </label>
+                      <input
+                        id="add-bande-age-mois"
+                        type="number"
+                        inputMode="decimal"
+                        min={0}
+                        max={12}
+                        step={0.5}
+                        aria-label="Âge approximatif en mois"
+                        placeholder="ex 2.5"
+                        style={{ width: 80, padding: '4px 8px' }}
+                        disabled={saving}
+                        onChange={(e) => {
+                          const months = parseFloat(e.target.value);
+                          if (!Number.isFinite(months) || months < 0 || months > 12) return;
+                          const today = new Date();
+                          const estimated = new Date(today.getTime() - months * 30 * 24 * 60 * 60 * 1000);
+                          setDateMb(estimated.toISOString().slice(0, 10));
+                        }}
+                      />
+                      <span style={{ fontSize: 11, color: 'var(--pt-muted)' }}>mois</span>
+                    </div>
+                    <p style={{ fontSize: 10, color: 'var(--pt-subtle)', marginTop: 4 }}>
+                      Calcule une date approximative (mois × 30 jours).
+                      Tu pourras la corriger en saisissant directement.
+                    </p>
+                  </details>
                 </div>
                 <div className="field">
                   <label className="label--v77" htmlFor="add-bande-nv">NV VIVANTS <span className="req">requis</span></label>
