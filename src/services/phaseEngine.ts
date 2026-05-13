@@ -11,6 +11,8 @@ import { FARM_CONFIG } from '../config/farm';
 import { computeBandePhase, type BandePhase } from './bandesAggregator';
 import type { BandePorcelets } from '../types/farm';
 import { enqueueAppendRow } from './offlineQueue';
+// V81 Sprint 12 — Parser date unifié (élimine la divergence DST)
+import { parseDateLocal as parseDateFr } from '../lib/dateParser';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -64,15 +66,8 @@ export const PHASE_LABEL: Record<string, string> = {
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function parseDateFr(s: string | undefined): Date | null {
-  if (!s) return null;
-  const fr = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (fr) return new Date(+fr[3], +fr[2] - 1, +fr[1]);
-  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (iso) return new Date(+iso[1], +iso[2] - 1, +iso[3]);
-  return null;
-}
+// V81 Sprint 12 — `parseDateFr` historique remplacé par l'import du module
+// unifié `src/lib/dateParser.ts` (cf. import en tête de fichier).
 
 function floorDays(from: Date, to: Date): number {
   return Math.floor((to.getTime() - from.getTime()) / 86_400_000);
