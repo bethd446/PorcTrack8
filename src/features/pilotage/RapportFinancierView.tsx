@@ -539,7 +539,7 @@ const RapportFinancierView: React.FC = () => {
                               display: 'flex',
                               justifyContent: 'space-between',
                               fontFamily: 'var(--pt-font-mono)',
-                              fontSize: 11.5,
+                              fontSize: 12,
                               fontWeight: 600,
                               marginBottom: 4,
                             }}

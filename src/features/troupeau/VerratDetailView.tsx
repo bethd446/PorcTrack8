@@ -317,7 +317,7 @@ const VerratDetailView: React.FC = () => {
                   background: 'var(--bg-surface)',
                   borderRadius: 12,
                   padding: '6px 16px',
-                  boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04)',
+                  boxShadow: 'var(--pt-shadow-card)',
                 }}
               >
                 <DetailRow label="Boucle" value={verrat.boucle || '—'} mono />
@@ -390,7 +390,7 @@ const VerratDetailView: React.FC = () => {
                   background: 'var(--bg-surface)',
                   borderRadius: 12,
                   padding: '6px 16px',
-                  boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04)',
+                  boxShadow: 'var(--pt-shadow-card)',
                 }}
               >
                 <DetailRow label="Alimentation" value={verrat.alimentation || '—'} />
@@ -429,7 +429,7 @@ const VerratDetailView: React.FC = () => {
                   background: 'var(--bg-surface)',
                   borderRadius: 12,
                   padding: 16,
-                  boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04)',
+                  boxShadow: 'var(--pt-shadow-card)',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 16,

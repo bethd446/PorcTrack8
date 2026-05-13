@@ -110,13 +110,15 @@ const dangerBtnOverride: React.CSSProperties = {
 const retryChipStyle = (disabled: boolean): React.CSSProperties => ({
   display: 'inline-flex',
   alignItems: 'center',
-  gap: 4,
-  padding: '6px 10px',
+  gap: 6,
+  // V81 Sprint 10 — Touch target conforme norme tactile mobile (44px min)
+  padding: '12px 14px',
+  minHeight: 44,
   borderRadius: 999,
   background: 'var(--pt-bg-app)',
   border: '1px solid var(--pt-line)',
   color: 'var(--pt-ink)',
-  fontSize: 12,
+  fontSize: 13,
   cursor: disabled ? 'not-allowed' : 'pointer',
   opacity: disabled ? 0.5 : 1,
   flexShrink: 0,

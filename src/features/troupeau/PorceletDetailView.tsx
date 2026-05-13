@@ -319,7 +319,7 @@ const PorceletDetailView: React.FC = () => {
                       background: 'var(--bg-surface, var(--pt-bg))',
                       borderRadius: 12,
                       padding: '6px 16px',
-                      boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04)',
+                      boxShadow: 'var(--pt-shadow-card)',
                     }}
                   >
                     <DetailRow label="Bande" value={bande.idPortee || '—'} mono />
@@ -346,7 +346,7 @@ const PorceletDetailView: React.FC = () => {
                       background: 'var(--bg-surface, var(--pt-bg))',
                       borderRadius: 12,
                       padding: 16,
-                      boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04)',
+                      boxShadow: 'var(--pt-shadow-card)',
                     }}
                   >
                     {pesees.length === 0 ? (

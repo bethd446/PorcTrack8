@@ -619,7 +619,7 @@ const TruieDetailView: React.FC = () => {
                     style={{
                       fontFamily: 'var(--pt-font-display)',
                       fontSize: 18,
-                      fontWeight: 600,
+                      fontWeight: 800,
                       color: 'var(--pt-ink)',
                       letterSpacing: '-0.01em',
                     }}
@@ -708,7 +708,7 @@ const TruieDetailView: React.FC = () => {
                     style={{
                       fontFamily: 'var(--pt-font-display)',
                       fontSize: 18,
-                      fontWeight: 600,
+                      fontWeight: 800,
                       color: 'var(--pt-ink)',
                       letterSpacing: '-0.01em',
                     }}
@@ -784,7 +784,7 @@ const TruieDetailView: React.FC = () => {
                         fontSize: 22,
                         lineHeight: 1,
                         color: v.valColor,
-                        fontWeight: 600,
+                        fontWeight: 800,
                         letterSpacing: '-0.02em',
                         opacity: isEmpty ? 0.4 : 1,
                         cursor: isEmpty ? 'help' : 'default',
@@ -880,7 +880,7 @@ const TruieDetailView: React.FC = () => {
                       background: 'var(--pt-bg)',
                       borderRadius: 12,
                       padding: '6px 16px',
-                      boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04)',
+                      boxShadow: 'var(--pt-shadow-card)',
                     }}
                   >
                     <DataRow
@@ -920,7 +920,7 @@ const TruieDetailView: React.FC = () => {
                       background: 'var(--pt-bg)',
                       borderRadius: 12,
                       padding: '6px 16px',
-                      boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04)',
+                      boxShadow: 'var(--pt-shadow-card)',
                     }}
                   >
                     <DataRow label="Statut" value={labelStatutTruie(truie.statut)} />
@@ -1009,7 +1009,7 @@ const TruieDetailView: React.FC = () => {
                         background: 'var(--pt-bg)',
                         borderRadius: 12,
                         padding: '4px 14px',
-                        boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04)',
+                        boxShadow: 'var(--pt-shadow-card)',
                       }}
                     >
                       {sowSaillies.slice(0, 6).map((s, i) => (
@@ -1030,7 +1030,7 @@ const TruieDetailView: React.FC = () => {
                       background: 'var(--pt-bg)',
                       borderRadius: 12,
                       padding: '14px 16px',
-                      boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04)',
+                      boxShadow: 'var(--pt-shadow-card)',
                     }}
                   >
                     <EditableText
@@ -1302,7 +1302,7 @@ function PerfCell({
         style={{
           fontFamily: 'var(--pt-font-display)',
           fontSize: 20,
-          fontWeight: 600,
+          fontWeight: 800,
           color: accent ? 'var(--pt-accent-deep)' : 'var(--pt-ink)',
           letterSpacing: '-0.02em',
           lineHeight: 1.1,
@@ -1440,7 +1440,7 @@ const SaillieRow: React.FC<{ saillie: Saillie; num: number; last: boolean }> = (
           fontSize: 14,
           lineHeight: 1.2,
           color: 'var(--pt-ink)',
-          fontWeight: 600,
+          fontWeight: 800,
           letterSpacing: '-0.005em',
         }}
       >
@@ -1491,7 +1491,7 @@ const RationRecoBlock: React.FC<{ truie: Truie }> = ({ truie }) => {
           background: 'var(--pt-bg)',
           borderRadius: 12,
           padding: '14px 16px',
-          boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04)',
+          boxShadow: 'var(--pt-shadow-card)',
           display: 'flex',
           flexDirection: 'column',
           gap: 10,
@@ -1512,7 +1512,7 @@ const RationRecoBlock: React.FC<{ truie: Truie }> = ({ truie }) => {
           style={{
             fontFamily: 'var(--pt-font-display)',
             fontSize: 18,
-            fontWeight: 600,
+            fontWeight: 800,
             color: 'var(--pt-ink)',
             letterSpacing: '-0.01em',
           }}
@@ -1547,7 +1547,7 @@ const RationRecoBlock: React.FC<{ truie: Truie }> = ({ truie }) => {
               style={{
                 fontFamily: 'var(--pt-font-display)',
                 fontSize: 22,
-                fontWeight: 600,
+                fontWeight: 800,
                 color: 'var(--pt-ink)',
                 letterSpacing: '-0.02em',
               }}
@@ -1573,7 +1573,7 @@ const RationRecoBlock: React.FC<{ truie: Truie }> = ({ truie }) => {
               style={{
                 fontFamily: 'var(--pt-font-display)',
                 fontSize: 22,
-                fontWeight: 600,
+                fontWeight: 800,
                 color: ecart ? 'var(--pt-accent-deep)' : 'var(--pt-ink)',
                 letterSpacing: '-0.02em',
               }}

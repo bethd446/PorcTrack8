@@ -258,7 +258,7 @@ const InviteSheet: React.FC<InviteSheetProps> = ({ isOpen, onClose, onInvited, c
               width: '100%',
               padding: '12px 14px',
               borderRadius: 12,
-              border: '1px solid var(--pt-line, rgba(26,26,26,0.16))',
+              border: '1px solid var(--pt-line)',
               background: 'var(--pt-bg, #ffffff)',
               fontFamily: 'var(--pt-font-body)',
               fontSize: 15,

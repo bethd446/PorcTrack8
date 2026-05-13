@@ -226,7 +226,7 @@ const wizTitleStyle: React.CSSProperties = {
 };
 
 const wizSubStyle: React.CSSProperties = {
-  fontSize: 13.5,
+  fontSize: 14,
   lineHeight: 1.5,
   color: 'var(--pt-muted)',
   margin: '8px 0 16px',
@@ -628,7 +628,7 @@ const DateRow: React.FC<{ label: string; value: string; tone?: 'now' }> = ({
   >
     <div
       style={{
-        fontSize: 9.5,
+        fontSize: 10,
         fontWeight: 600,
         letterSpacing: '0.12em',
         textTransform: 'uppercase',

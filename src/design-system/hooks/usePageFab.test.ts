@@ -13,8 +13,6 @@ describe('isPageFabEnabled — pure function', () => {
     '/reproduction/lots',
     '/cycles',
     '/cycles/maternite',
-    '/ressources/pharmacie',
-    '/ressources/aliments',
   ])('renvoie true pour %s (page de saisie)', (path) => {
     expect(isPageFabEnabled(path)).toBe(true);
   });
@@ -32,6 +30,10 @@ describe('isPageFabEnabled — pure function', () => {
     '/troupeau',
     '/troupeau/',
     '/troupeau/truies',
+    // V81 — /ressources/aliments + /ressources/pharmacie ont leur propre FAB
+    // local conditionné sur items.length > 0 (cf Sprint 1 fix doublon CTA)
+    '/ressources/pharmacie',
+    '/ressources/aliments',
   ])('renvoie false pour %s (hub Élevage = FAB contextuel par sous-tab, hub synthèse, parcours guidé, ou admin)', (path) => {
     expect(isPageFabEnabled(path)).toBe(false);
   });
@@ -76,10 +78,10 @@ describe('usePageFab — hook React', () => {
     expect(result.current).toBe(false);
   });
 
-  it('renvoie true sur /ressources/pharmacie', () => {
+  it('renvoie false sur /ressources/pharmacie (V81 — FAB local conditionné sur items.length)', () => {
     const { result } = renderHook(() => usePageFab(), {
       wrapper: ({ children }) => wrapper({ children, path: '/ressources/pharmacie' }),
     });
-    expect(result.current).toBe(true);
+    expect(result.current).toBe(false);
   });
 });
