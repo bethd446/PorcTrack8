@@ -282,7 +282,7 @@ const AlimentRow: React.FC<AlimentRowProps> = ({
 const AlimentsView: React.FC = () => {
   const navigate = useNavigate();
   const { stockAliment, refreshData, truies, verrats, bandes } = useFarm();
-  const { nomFerme: FARM_NAME } = useMeta();
+  const { nomFerme: FARM_NAME, loading: farmLoading } = useMeta();
   const cheptel = useMemo(() => ({ truies, verrats, bandes }), [truies, verrats, bandes]);
   const { toastProps } = useAppToast();
   const [addOpen, setAddOpen] = useState(false);
@@ -357,6 +357,9 @@ const AlimentsView: React.FC = () => {
       : 'Stock matières premières + sacs prêts';
 
   const isEmptyAll = stockAliment.length === 0;
+  // V81 Sprint 11 — Guard loading : évite le flash empty-state "0 aliments"
+  // pendant que FarmContext fetch encore depuis Supabase.
+  const showLoading = farmLoading && stockAliment.length === 0;
 
   return (
     <IonPage>
@@ -471,7 +474,16 @@ const AlimentsView: React.FC = () => {
               </button>
             </div>
 
-            {isEmptyAll ? (
+            {showLoading ? (
+              // V81 Sprint 11 — Skeleton pendant le fetch initial
+              <div className="empty-state" aria-busy="true" aria-live="polite">
+                <div className="empty-state__icon" aria-hidden style={{ opacity: 0.4 }}>
+                  <Wheat size={38} strokeWidth={2} />
+                </div>
+                <div className="empty-state__title" style={{ opacity: 0.7 }}>Chargement des aliments…</div>
+                <div className="empty-state__sub">Lecture du stock en cours.</div>
+              </div>
+            ) : isEmptyAll ? (
               <div className="empty-state">
                 <div className="empty-state__icon" aria-hidden>
                   <Wheat size={38} strokeWidth={2} />

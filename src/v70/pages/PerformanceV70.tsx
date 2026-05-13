@@ -14,7 +14,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { TrendingUp, TrendingDown, Download, Trophy, Medal, FileText, ChevronRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Download, Trophy, Medal, FileText, ChevronRight, CalendarOff, BarChart3 } from 'lucide-react';
 import { Section } from '../components/ds/Section';
 import { Card } from '../components/ds/Card';
 import { Button } from '../components/ds/Button';
@@ -885,8 +885,12 @@ export const PerformanceV70: React.FC = () => {
           <Section label="Prochaines mises-bas (90 jours)">
             <Card>
               {forecasts.mises.length === 0 ? (
-                <div className="empty-state" style={{ padding: '12px 0', textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
-                  Aucune mise-bas prévue. Enregistre une saillie pour générer la prévision (saillie + 115 j).
+                <div className="empty-state">
+                  <div className="empty-state__icon" aria-hidden>
+                    <CalendarOff size={32} strokeWidth={2} />
+                  </div>
+                  <div className="empty-state__title">Aucune mise-bas prévue</div>
+                  <div className="empty-state__sub">Enregistre une saillie pour générer la prévision (saillie + 115 j).</div>
                 </div>
               ) : (
                 forecasts.mises.map(ev => (
@@ -911,8 +915,12 @@ export const PerformanceV70: React.FC = () => {
           <Section label="Sorties abattoir prévues (90 jours)">
             <Card>
               {forecasts.sorties.length === 0 ? (
-                <div className="empty-state" style={{ padding: '12px 0', textAlign: 'center', color: 'var(--pt-muted)', fontSize: 13 }}>
-                  Aucune sortie abattoir prévue dans la fenêtre.
+                <div className="empty-state">
+                  <div className="empty-state__icon" aria-hidden>
+                    <CalendarOff size={32} strokeWidth={2} />
+                  </div>
+                  <div className="empty-state__title">Aucune sortie prévue</div>
+                  <div className="empty-state__sub">Pas d'abattoir dans la fenêtre 90 jours. Les sorties apparaissent quand un lot atteint le poids cible.</div>
                 </div>
               ) : (
                 forecasts.sorties.map(ev => (
@@ -995,8 +1003,12 @@ export const PerformanceV70: React.FC = () => {
       {advancedMode && (
         <Section label="Tableau détaillé (Mode avancé)">
           {bandesData.length === 0 ? (
-            <div className="empty-state" style={{ textAlign: 'center', padding: '20px 0', color: 'var(--pt-muted)', fontSize: 13 }}>
-              Données disponibles après le 1er cycle complet
+            <div className="empty-state">
+              <div className="empty-state__icon" aria-hidden>
+                <BarChart3 size={32} strokeWidth={2} />
+              </div>
+              <div className="empty-state__title">Pas encore de données</div>
+              <div className="empty-state__sub">Le tableau détaillé s'active après le 1er cycle complet (saillie → sevrage).</div>
             </div>
           ) : (
             <>

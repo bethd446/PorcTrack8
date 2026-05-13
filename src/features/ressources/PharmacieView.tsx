@@ -228,7 +228,7 @@ const VetoRow: React.FC<VetoRowProps> = ({ item, farmName, onRefresh }) => {
 const PharmacieView: React.FC = () => {
   const navigate = useNavigate();
   const { stockVeto, refreshData } = useFarm();
-  const { nomFerme: FARM_NAME } = useMeta();
+  const { nomFerme: FARM_NAME, loading: farmLoading } = useMeta();
   const [addOpen, setAddOpen] = useState(false);
   const [tab, setTab] = useState<PharmacieTab>('vaccins');
   const whatsappReady = hasWhatsAppSupport();
@@ -299,6 +299,8 @@ const PharmacieView: React.FC = () => {
       : 'Vaccins, antibiotiques, vermifuges';
 
   const isEmpty = stockVeto.length === 0;
+  // V81 Sprint 11 — Guard loading : évite flash "Pharmacie vide" pendant fetch
+  const showLoading = farmLoading && stockVeto.length === 0;
 
   const tabs: { value: PharmacieTab; label: string; count: number }[] = [
     { value: 'vaccins', label: 'Vaccins', count: partition.vaccins.length },
@@ -415,7 +417,15 @@ const PharmacieView: React.FC = () => {
               ))}
             </div>
 
-            {isEmpty ? (
+            {showLoading ? (
+              <div className="empty-state" aria-busy="true" aria-live="polite">
+                <div className="empty-state__icon" aria-hidden style={{ opacity: 0.4 }}>
+                  <Stethoscope size={38} strokeWidth={2} />
+                </div>
+                <div className="empty-state__title" style={{ opacity: 0.7 }}>Chargement de la pharmacie…</div>
+                <div className="empty-state__sub">Lecture du stock vétérinaire en cours.</div>
+              </div>
+            ) : isEmpty ? (
               <div className="empty-state">
                 <div className="empty-state__icon" aria-hidden>
                   <Stethoscope size={38} strokeWidth={2} />
