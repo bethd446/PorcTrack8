@@ -547,8 +547,20 @@ async function _processQueueInner(): Promise<ProcessQueueResult> {
       await runMutation(item.mutation);
       processed++;
     } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      // V81 Sprint 5 — Conflit d'unicité (PostgreSQL 23505) = item DÉJÀ
+      // inséré (cas typique : retry réseau idempotent grâce à l'UUID client
+      // pré-généré OU conflit de code_id parce qu'un autre device a inséré
+      // la même chose pendant que l'item était en file). Le retry est inutile
+      // et créerait juste 5 logs d'erreur avant l'archivage. On compte
+      // comme succès idempotent et on retire de la file.
+      if (/duplicate key|unique constraint|23505/i.test(msg)) {
+        console.info(`[Queue] item ${item.id} déjà inséré (unique_violation) — ignoré idempotent`);
+        processed++;
+        continue;
+      }
       item.tries++;
-      item.lastError = e instanceof Error ? e.message : String(e);
+      item.lastError = msg;
       if (item.tries >= MAX_TRIES) {
         console.error(`[Queue] item ${item.id} abandonné après ${MAX_TRIES} essais :`, item.lastError);
         archivedNow.push({ ...item, archivedAt: new Date().toISOString() });
