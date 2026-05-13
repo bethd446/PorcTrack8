@@ -13,7 +13,7 @@ if (typeof window !== 'undefined') {
   const RELOAD_KEY = 'pt:chunk-error-reloaded';
   window.addEventListener('vite:preloadError', (event) => {
     if (sessionStorage.getItem(RELOAD_KEY)) {
-      // eslint-disable-next-line no-console
+       
       console.error('[PWA] Chunk preload error after reload', event);
       return;
     }

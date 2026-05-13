@@ -288,7 +288,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
         try {
           await markPeseeEffectuee(peseeId);
         } catch (e) {
-          // eslint-disable-next-line no-console
+           
           console.warn('[QuickPeseeForm] markPeseeEffectuee failed', e);
         }
       }
@@ -307,7 +307,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
       try { await refreshData(true); } catch { /* noop */ }
     } catch (err) {
       // AUDIT-V1 P0-2 : log explicite sinon submit silencieux côté terrain.
-      // eslint-disable-next-line no-console
+       
       console.error('[QuickPeseeForm] insertNote failed', err);
       setSubmitError(err instanceof Error ? err.message : 'Erreur enregistrement pesée');
       showToast(
@@ -356,7 +356,7 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
   }, (errors) => {
     // AUDIT-V1 P0-2 : second callback de RHF.handleSubmit appelé sur
     // validation FAIL. Sans ça, l'utilisateur voit un submit silencieux.
-    // eslint-disable-next-line no-console
+     
     console.warn('[QuickPeseeForm] validation failed', errors);
     const firstError = Object.values(errors)[0]?.message;
     setSubmitError(firstError ? String(firstError) : 'Champs invalides — vérifie tes saisies');

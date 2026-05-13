@@ -329,7 +329,7 @@ const QuickAddBandeFromLogeForm: React.FC<QuickAddBandeFromLogeFormProps> = ({
               .eq('id', editPendingBatchId)
               .maybeSingle();
             const baseNotes = existing?.notes ?? null;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             const patch2: Record<string, unknown> = { ...patch };
             delete patch2.age_jours_estime;
             patch2.notes = notesWithAge(baseNotes, ageJours);

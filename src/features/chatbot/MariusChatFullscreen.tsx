@@ -496,7 +496,7 @@ export const MariusChatFullscreen: React.FC = () => {
         }
       } catch (err) {
         if ((err as { name?: string }).name === 'AbortError') return;
-        // eslint-disable-next-line no-console
+         
         console.error('[Marius] erreur', err);
         setMessages((prev) => {
           const next = [...prev];

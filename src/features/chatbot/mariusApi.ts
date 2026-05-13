@@ -52,10 +52,10 @@ export async function callMariusAPI(
         signal,
       });
       if (res.ok && res.body) return res;
-      // eslint-disable-next-line no-console
+       
       console.warn('[Marius] Mistral cloud failed, falling back to VPS', res.status);
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.warn('[Marius] Mistral cloud error, falling back to VPS', err);
     }
   }

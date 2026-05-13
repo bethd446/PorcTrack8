@@ -129,7 +129,7 @@ export function computeVerratPerformance(
   for (const s of vSaillies) {
     const tsSaillie = parseFr(s.dateSaillie);
     if (tsSaillie === 0) {
-      // eslint-disable-next-line no-console
+       
       console.warn(
         `[reproducteursClassement] Saillie ignorée — dateSaillie non parseable (verrat ${verrat.id})`,
         s.dateSaillie,

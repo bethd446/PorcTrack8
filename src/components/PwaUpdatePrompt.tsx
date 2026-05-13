@@ -25,11 +25,11 @@ export function PwaUpdatePrompt() {
     immediate: true,
     onRegisteredSW: () => {
       // logger non importé ici pour éviter des deps cycles, console suffit
-      // eslint-disable-next-line no-console
+       
       console.info('[SW] registered (PwaUpdatePrompt)');
     },
     onRegisterError: (err) => {
-      // eslint-disable-next-line no-console
+       
       console.error('[SW] register failed', err);
     },
   });

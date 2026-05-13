@@ -515,7 +515,7 @@ export const ChatbotWidget: React.FC = () => {
       } else if (/CORS|network|fetch/i.test(errMsg)) {
         userMsg = 'Pas de réponse du serveur Marius. Vérifie ta connexion ou réessaye plus tard.';
       }
-      // eslint-disable-next-line no-console
+       
       console.error('[Marius] erreur réponse', { status, errMsg, err });
       setMessages((prev) => {
         const next = [...prev];

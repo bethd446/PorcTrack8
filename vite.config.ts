@@ -284,6 +284,33 @@ export default defineConfig(() => {
               return 'vendor-tanstack';
             }
 
+            // GSAP — used only on the marketing/landing scrollytelling page
+            // (LandingScrollytelling + scenes). ~700kB raw; isolating lets the
+            // app shell skip it entirely until /landing is visited.
+            if (
+              id.includes('/node_modules/gsap/') ||
+              id.includes('/node_modules/@gsap/')
+            ) {
+              return 'vendor-gsap';
+            }
+
+            // Smooth-scroll lib (also landing-only)
+            if (id.includes('/node_modules/lenis/')) {
+              return 'vendor-lenis';
+            }
+
+            // HEIC → JPEG converter, used only inside photoUpload.ts (lazy
+            // path: bandes/truies photo upload). Bundles libheif WASM-ish JS,
+            // ~1MB raw.
+            if (id.includes('/node_modules/heic2any/')) {
+              return 'vendor-heic2any';
+            }
+
+            // Client-side image compression (same upload flow as heic2any)
+            if (id.includes('/node_modules/browser-image-compression/')) {
+              return 'vendor-image-compression';
+            }
+
             // Everything else in node_modules -> generic vendor chunk
             return 'vendor-misc';
           },

@@ -1328,7 +1328,7 @@ export async function getLogeContents(logeId: string): Promise<{
     return { truies: [], verrats: [], bandes: [], totalAnimaux: 0 };
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const [{ data: sowsData }, { data: boarsData }, { data: batchesData }] =
     await Promise.all([
       (supabase.from('sows') as any).select('*').eq('loge_id', logeId),
