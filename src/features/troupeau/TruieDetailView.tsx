@@ -382,19 +382,19 @@ const TruieDetailView: React.FC = () => {
       label: 'Statut',
       trend: '',
       value: truie.statut,
-      valColor: 'var(--amber-pork-deep)',
+      valColor: 'var(--pt-accent-deep)',
     },
     {
       label: 'J post-saillie',
       trend: lastSaillie ? formatDate(lastSaillie.dateSaillie) : '',
       value: cycleData ? String(cycleData.dayPost) : '—',
-      valColor: 'var(--ink)',
+      valColor: 'var(--pt-ink)',
     },
     {
       label: 'Verrat',
       trend: `${sowSaillies.length} insémination${sowSaillies.length > 1 ? 's' : ''}`,
       value: lastSaillie?.verratId ?? '—',
-      valColor: 'var(--ink)',
+      valColor: 'var(--pt-ink)',
       sub: undefined as string | undefined,
     },
     {
@@ -402,14 +402,14 @@ const TruieDetailView: React.FC = () => {
       trend: '',
       value: truie.poids !== undefined ? `${truie.poids}` : '—',
       unit: 'kg',
-      valColor: 'var(--ink)',
+      valColor: 'var(--pt-ink)',
     },
     {
       label: 'Portées',
       trend: '',
       value: truie.nbPortees !== undefined ? `${truie.nbPortees}` : '—',
       unit: truie.nbPortees ? `portée${truie.nbPortees > 1 ? 's' : ''}` : '',
-      valColor: 'var(--ink)',
+      valColor: 'var(--pt-ink)',
     },
   ];
 
@@ -515,7 +515,7 @@ const TruieDetailView: React.FC = () => {
         <div
           className="pt-screen"
           style={{
-            background: 'var(--bg-app)',
+            background: 'var(--pt-bg-app)',
             minHeight: '100%',
             position: 'relative',
             paddingBottom: 168,
@@ -617,10 +617,10 @@ const TruieDetailView: React.FC = () => {
                   <Section label="MISE-BAS IMMINENTE" tone="accent" />
                   <div
                     style={{
-                      fontFamily: 'var(--font-heading)',
+                      fontFamily: 'var(--pt-font-display)',
                       fontSize: 18,
                       fontWeight: 600,
-                      color: 'var(--ink)',
+                      color: 'var(--pt-ink)',
                       letterSpacing: '-0.01em',
                     }}
                   >
@@ -693,9 +693,9 @@ const TruieDetailView: React.FC = () => {
               {showVitalesEmpty ? (
                 <div
                   style={{
-                    background: 'var(--bg-surface)',
+                    background: 'var(--pt-bg)',
                     borderRadius: 12,
-                    border: '1px solid var(--line)',
+                    border: '1px solid var(--pt-line)',
                     padding: '28px 24px',
                     display: 'flex',
                     flexDirection: 'column',
@@ -706,10 +706,10 @@ const TruieDetailView: React.FC = () => {
                 >
                   <div
                     style={{
-                      fontFamily: 'var(--font-heading)',
+                      fontFamily: 'var(--pt-font-display)',
                       fontSize: 18,
                       fontWeight: 600,
-                      color: 'var(--ink)',
+                      color: 'var(--pt-ink)',
                       letterSpacing: '-0.01em',
                     }}
                   >
@@ -717,9 +717,9 @@ const TruieDetailView: React.FC = () => {
                   </div>
                   <div
                     style={{
-                      fontFamily: 'var(--font-body)',
+                      fontFamily: 'var(--pt-font-body)',
                       fontSize: 13,
-                      color: 'var(--muted)',
+                      color: 'var(--pt-muted)',
                       maxWidth: 360,
                       lineHeight: 1.5,
                     }}
@@ -737,10 +737,10 @@ const TruieDetailView: React.FC = () => {
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(5, 1fr)',
-                  background: 'var(--bg-surface)',
+                  background: 'var(--pt-bg)',
                   borderRadius: 12,
                   overflow: 'hidden',
-                  border: '1px solid var(--line)',
+                  border: '1px solid var(--pt-line)',
                 }}
                 className="sow-vitals"
               >
@@ -751,17 +751,17 @@ const TruieDetailView: React.FC = () => {
                     key={v.label}
                     style={{
                       padding: '14px 16px',
-                      background: 'var(--bg-surface)',
-                      borderRight: i < vitales.length - 1 ? '1px solid var(--line)' : 'none',
+                      background: 'var(--pt-bg)',
+                      borderRight: i < vitales.length - 1 ? '1px solid var(--pt-line)' : 'none',
                     }}
                   >
                     <div
                       style={{
-                        fontFamily: 'var(--font-mono)',
+                        fontFamily: 'var(--pt-font-mono)',
                         fontSize: 9,
                         letterSpacing: '0.16em',
                         textTransform: 'uppercase',
-                        color: 'var(--muted)',
+                        color: 'var(--pt-muted)',
                         display: 'flex',
                         justifyContent: 'space-between',
                         marginBottom: 6,
@@ -769,14 +769,14 @@ const TruieDetailView: React.FC = () => {
                     >
                       <span>{v.label}</span>
                       {v.trend && (
-                        <span style={{ color: 'var(--color-accent-500)' }}>{v.trend}</span>
+                        <span style={{ color: 'var(--pt-primary)' }}>{v.trend}</span>
                       )}
                     </div>
                     <div
                       title={isEmpty ? 'Donnée non disponible — saisir une saillie pour activer.' : undefined}
                       aria-label={isEmpty ? `${v.label} non disponible` : undefined}
                       style={{
-                        fontFamily: 'var(--font-heading)',
+                        fontFamily: 'var(--pt-font-display)',
                         fontSize: 22,
                         lineHeight: 1,
                         color: v.valColor,
@@ -788,7 +788,7 @@ const TruieDetailView: React.FC = () => {
                     >
                       {v.value}
                       {'unit' in v && v.unit && (
-                        <small style={{ fontSize: 13, color: 'var(--muted)', marginLeft: 2, fontWeight: 400 }}>
+                        <small style={{ fontSize: 13, color: 'var(--pt-muted)', marginLeft: 2, fontWeight: 400 }}>
                           {' '}{v.unit}
                         </small>
                       )}
@@ -807,9 +807,9 @@ const TruieDetailView: React.FC = () => {
                 <Section label="PERFORMANCE" />
                 <div
                   style={{
-                    background: 'var(--bg-surface)',
+                    background: 'var(--pt-bg)',
                     borderRadius: 12,
-                    border: '1px solid var(--line)',
+                    border: '1px solid var(--pt-line)',
                     padding: '18px 20px',
                     display: 'grid',
                     gridTemplateColumns: 'repeat(2, 1fr)',
@@ -873,7 +873,7 @@ const TruieDetailView: React.FC = () => {
                   <Section label="IDENTITÉ" />
                   <div
                     style={{
-                      background: 'var(--bg-surface)',
+                      background: 'var(--pt-bg)',
                       borderRadius: 12,
                       padding: '6px 16px',
                       boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04)',
@@ -913,7 +913,7 @@ const TruieDetailView: React.FC = () => {
                   <Section label="REPRO & RATIONS" />
                   <div
                     style={{
-                      background: 'var(--bg-surface)',
+                      background: 'var(--pt-bg)',
                       borderRadius: 12,
                       padding: '6px 16px',
                       boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04)',
@@ -988,12 +988,12 @@ const TruieDetailView: React.FC = () => {
                   {sowSaillies.length === 0 ? (
                     <div
                       style={{
-                        background: 'var(--bg-surface)',
+                        background: 'var(--pt-bg)',
                         borderRadius: 12,
                         padding: '24px 22px',
                         textAlign: 'center',
                         fontSize: 12,
-                        color: 'var(--muted)',
+                        color: 'var(--pt-muted)',
                         fontStyle: 'italic',
                       }}
                     >
@@ -1002,7 +1002,7 @@ const TruieDetailView: React.FC = () => {
                   ) : (
                     <div
                       style={{
-                        background: 'var(--bg-surface)',
+                        background: 'var(--pt-bg)',
                         borderRadius: 12,
                         padding: '4px 14px',
                         boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04)',
@@ -1023,7 +1023,7 @@ const TruieDetailView: React.FC = () => {
                   <Section label="NOTES TERRAIN" />
                   <div
                     style={{
-                      background: 'var(--bg-surface)',
+                      background: 'var(--pt-bg)',
                       borderRadius: 12,
                       padding: '14px 16px',
                       boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04)',
@@ -1122,7 +1122,7 @@ const TruieDetailView: React.FC = () => {
                           background: 'var(--pt-warm)',
                           color: 'var(--pt-muted)',
                           fontSize: 13,
-                          fontFamily: 'var(--font-body)',
+                          fontFamily: 'var(--pt-font-body)',
                         }}
                       >
                         {formatSortieLabel(truie)}
@@ -1247,7 +1247,7 @@ const TruieDetailView: React.FC = () => {
             .sow-hero { grid-template-columns: 1fr !important; }
             .sow-hero > div:first-child { min-height: 200px !important; }
           }
-          .sow-vsep { background: var(--line); }
+          .sow-vsep { background: var(--pt-line); }
         `}</style>
       </IonContent>
     </IonPage>
@@ -1258,10 +1258,10 @@ const TruieDetailView: React.FC = () => {
 
 function sectionStyle(): React.CSSProperties {
   return {
-    background: 'var(--bg-surface)',
+    background: 'var(--pt-bg)',
     borderRadius: 12,
     padding: '18px 24px 22px',
-    border: '1px solid var(--line)',
+    border: '1px solid var(--pt-line)',
   };
 }
 
@@ -1285,21 +1285,21 @@ function PerfCell({
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
       <small
         style={{
-          fontFamily: 'var(--font-mono)',
+          fontFamily: 'var(--pt-font-mono)',
           fontSize: 10,
           letterSpacing: '0.16em',
           textTransform: 'uppercase',
-          color: 'var(--muted)',
+          color: 'var(--pt-muted)',
         }}
       >
         {label}
       </small>
       <div
         style={{
-          fontFamily: 'var(--font-heading)',
+          fontFamily: 'var(--pt-font-display)',
           fontSize: 20,
           fontWeight: 600,
-          color: accent ? 'var(--pig-deep, #b91c1c)' : 'var(--ink)',
+          color: accent ? 'var(--pt-accent-deep)' : 'var(--pt-ink)',
           letterSpacing: '-0.02em',
           lineHeight: 1.1,
         }}
@@ -1309,9 +1309,9 @@ function PerfCell({
       {sub ? (
         <small
           style={{
-            fontFamily: 'var(--font-body)',
+            fontFamily: 'var(--pt-font-body)',
             fontSize: 12,
-            color: 'var(--muted)',
+            color: 'var(--pt-muted)',
           }}
         >
           {sub}
@@ -1329,15 +1329,15 @@ function DataRow({ label, value, last }: { label: string; value: string; last?: 
         gridTemplateColumns: 'max-content 1fr',
         columnGap: 20,
         padding: '9px 0',
-        borderBottom: last ? 'none' : '1px solid var(--line-2)',
+        borderBottom: last ? 'none' : '1px solid var(--pt-line-strong)',
         alignItems: 'center',
       }}
     >
       <span
         style={{
-          fontFamily: 'var(--font-mono)',
+          fontFamily: 'var(--pt-font-mono)',
           fontSize: 11,
-          color: 'var(--muted)',
+          color: 'var(--pt-muted)',
           letterSpacing: '0.04em',
         }}
       >
@@ -1345,9 +1345,9 @@ function DataRow({ label, value, last }: { label: string; value: string; last?: 
       </span>
       <span
         style={{
-          fontFamily: 'var(--font-body)',
+          fontFamily: 'var(--pt-font-body)',
           fontSize: 14,
-          color: 'var(--ink)',
+          color: 'var(--pt-ink)',
           fontWeight: 500,
         }}
       >
@@ -1374,15 +1374,15 @@ function DataRowEditable({
         gridTemplateColumns: 'max-content 1fr',
         columnGap: 20,
         padding: '9px 0',
-        borderBottom: last ? 'none' : '1px solid var(--line-2)',
+        borderBottom: last ? 'none' : '1px solid var(--pt-line-strong)',
         alignItems: 'center',
       }}
     >
       <span
         style={{
-          fontFamily: 'var(--font-mono)',
+          fontFamily: 'var(--pt-font-mono)',
           fontSize: 11,
-          color: 'var(--muted)',
+          color: 'var(--pt-muted)',
           letterSpacing: '0.04em',
         }}
       >
@@ -1396,9 +1396,9 @@ function DataRowEditable({
 const SaillieRow: React.FC<{ saillie: Saillie; num: number; last: boolean }> = ({ saillie, num, last }) => {
   const tone = saillie.statut === 'ECHEC' || saillie.statut === 'RETOUR' ? 'return' : saillie.statut === 'EN_ATTENTE' || saillie.statut === undefined ? 'pending' : 'ok';
   const numColors: Record<typeof tone, { bg: string; fg: string }> = {
-    ok: { bg: 'var(--color-accent-100)', fg: 'var(--color-accent-600)' },
-    return: { bg: 'var(--pig-soft)', fg: 'var(--pig-deep)' },
-    pending: { bg: 'var(--amber-pork-soft)', fg: 'var(--amber-pork-deep)' },
+    ok: { bg: 'var(--pt-primary-soft)', fg: 'var(--pt-primary-deep)' },
+    return: { bg: 'var(--pt-rose-bg)', fg: 'var(--pt-accent-deep)' },
+    pending: { bg: 'var(--pt-accent-soft)', fg: 'var(--pt-accent-deep)' },
   };
   const c = numColors[tone];
 
@@ -1410,7 +1410,7 @@ const SaillieRow: React.FC<{ saillie: Saillie; num: number; last: boolean }> = (
         gap: 12,
         padding: '11px 0',
         alignItems: 'center',
-        borderBottom: last ? 'none' : '1px solid var(--line-2)',
+        borderBottom: last ? 'none' : '1px solid var(--pt-line-strong)',
       }}
     >
       <div
@@ -1423,7 +1423,7 @@ const SaillieRow: React.FC<{ saillie: Saillie; num: number; last: boolean }> = (
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontFamily: 'var(--font-mono)',
+          fontFamily: 'var(--pt-font-mono)',
           fontSize: 10,
           fontWeight: 500,
         }}
@@ -1432,10 +1432,10 @@ const SaillieRow: React.FC<{ saillie: Saillie; num: number; last: boolean }> = (
       </div>
       <div
         style={{
-          fontFamily: 'var(--font-heading)',
+          fontFamily: 'var(--pt-font-display)',
           fontSize: 14,
           lineHeight: 1.2,
-          color: 'var(--ink)',
+          color: 'var(--pt-ink)',
           fontWeight: 600,
           letterSpacing: '-0.005em',
         }}
@@ -1444,9 +1444,9 @@ const SaillieRow: React.FC<{ saillie: Saillie; num: number; last: boolean }> = (
         <small
           style={{
             display: 'block',
-            fontFamily: 'var(--font-body)',
+            fontFamily: 'var(--pt-font-body)',
             fontSize: 12,
-            color: 'var(--muted)',
+            color: 'var(--pt-muted)',
             marginTop: 2,
             fontWeight: 400,
           }}
@@ -1484,7 +1484,7 @@ const RationRecoBlock: React.FC<{ truie: Truie }> = ({ truie }) => {
       <Section label="PLAN RATION RECOMMANDÉE" tone="accent" />
       <div
         style={{
-          background: 'var(--bg-surface)',
+          background: 'var(--pt-bg)',
           borderRadius: 12,
           padding: '14px 16px',
           boxShadow: '0 1px 2px rgba(17, 24, 39, 0.04)',
@@ -1495,28 +1495,28 @@ const RationRecoBlock: React.FC<{ truie: Truie }> = ({ truie }) => {
       >
         <div
           style={{
-            fontFamily: 'var(--font-mono)',
+            fontFamily: 'var(--pt-font-mono)',
             fontSize: 10,
             letterSpacing: '0.16em',
             textTransform: 'uppercase',
-            color: 'var(--muted)',
+            color: 'var(--pt-muted)',
           }}
         >
           Phase courante
         </div>
         <div
           style={{
-            fontFamily: 'var(--font-heading)',
+            fontFamily: 'var(--pt-font-display)',
             fontSize: 18,
             fontWeight: 600,
-            color: 'var(--ink)',
+            color: 'var(--pt-ink)',
             letterSpacing: '-0.01em',
           }}
         >
           {phaseCfg.label}
         </div>
         {phaseCfg.description ? (
-          <div style={{ fontSize: 12, color: 'var(--muted)' }}>{phaseCfg.description}</div>
+          <div style={{ fontSize: 12, color: 'var(--pt-muted)' }}>{phaseCfg.description}</div>
         ) : null}
         <div
           style={{
@@ -1529,11 +1529,11 @@ const RationRecoBlock: React.FC<{ truie: Truie }> = ({ truie }) => {
           <div>
             <div
               style={{
-                fontFamily: 'var(--font-mono)',
+                fontFamily: 'var(--pt-font-mono)',
                 fontSize: 10,
                 letterSpacing: '0.16em',
                 textTransform: 'uppercase',
-                color: 'var(--muted)',
+                color: 'var(--pt-muted)',
                 marginBottom: 4,
               }}
             >
@@ -1541,25 +1541,25 @@ const RationRecoBlock: React.FC<{ truie: Truie }> = ({ truie }) => {
             </div>
             <div
               style={{
-                fontFamily: 'var(--font-heading)',
+                fontFamily: 'var(--pt-font-display)',
                 fontSize: 22,
                 fontWeight: 600,
-                color: 'var(--ink)',
+                color: 'var(--pt-ink)',
                 letterSpacing: '-0.02em',
               }}
             >
               {reco.toFixed(1)}{' '}
-              <small style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 400 }}>kg/j</small>
+              <small style={{ fontSize: 11, color: 'var(--pt-muted)', fontWeight: 400 }}>kg/j</small>
             </div>
           </div>
           <div>
             <div
               style={{
-                fontFamily: 'var(--font-mono)',
+                fontFamily: 'var(--pt-font-mono)',
                 fontSize: 10,
                 letterSpacing: '0.16em',
                 textTransform: 'uppercase',
-                color: 'var(--muted)',
+                color: 'var(--pt-muted)',
                 marginBottom: 4,
               }}
             >
@@ -1567,15 +1567,15 @@ const RationRecoBlock: React.FC<{ truie: Truie }> = ({ truie }) => {
             </div>
             <div
               style={{
-                fontFamily: 'var(--font-heading)',
+                fontFamily: 'var(--pt-font-display)',
                 fontSize: 22,
                 fontWeight: 600,
-                color: ecart ? 'var(--amber-pork-deep)' : 'var(--ink)',
+                color: ecart ? 'var(--pt-accent-deep)' : 'var(--pt-ink)',
                 letterSpacing: '-0.02em',
               }}
             >
               {Number.isFinite(truie.ration) ? truie.ration.toFixed(1) : '—'}{' '}
-              <small style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 400 }}>kg/j</small>
+              <small style={{ fontSize: 11, color: 'var(--pt-muted)', fontWeight: 400 }}>kg/j</small>
             </div>
           </div>
         </div>
@@ -1588,7 +1588,7 @@ const RationRecoBlock: React.FC<{ truie: Truie }> = ({ truie }) => {
               borderRadius: 8,
               background: 'var(--pt-surface-warm)',
               color: 'var(--pt-accent-deep)',
-              fontFamily: 'var(--font-mono)',
+              fontFamily: 'var(--pt-font-mono)',
               fontSize: 11,
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
@@ -1600,11 +1600,11 @@ const RationRecoBlock: React.FC<{ truie: Truie }> = ({ truie }) => {
         <div
           style={{
             fontSize: 12,
-            color: 'var(--muted)',
-            fontFamily: 'var(--font-body)',
+            color: 'var(--pt-muted)',
+            fontFamily: 'var(--pt-font-body)',
           }}
         >
-          Aliment référence : <strong style={{ color: 'var(--ink)' }}>{phaseCfg.aliment_ref}</strong>
+          Aliment référence : <strong style={{ color: 'var(--pt-ink)' }}>{phaseCfg.aliment_ref}</strong>
         </div>
       </div>
     </section>
