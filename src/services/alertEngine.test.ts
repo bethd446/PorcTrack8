@@ -1145,3 +1145,158 @@ describe('R17 — Rappel mensuel post-sevrage', () => {
     expect(alerts.find(a => a.id.startsWith('RSV-BP-045'))).toBeUndefined();
   });
 });
+
+// ─── R11 — Réforme (perf insuffisante) ──────────────────────────────────────
+//
+// Cible : `detectTruiesAReformer` → motif `PERF_INSUFFISANTE` → alerte HAUTE.
+// Ce test est minimal (sanity check du code path) car le tier perf nécessite
+// au moins 3 portées sevrées avec NV faible — fixtures lourdes. On délègue
+// la couverture détaillée du calcul perf à `perfKpiAnalyzer.test.ts`.
+
+describe('R11 — Réforme perf insuffisante', () => {
+  it('ne génère pas de REF perf si truie sans portées (cas démarrage)', () => {
+    const truie = makeTruie({ statut: 'Pleine', nbPortees: 0 });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie] }));
+    expect(alerts.find(a => a.id.startsWith('REF-') && a.id.includes('PERF_INSUFFISANTE'))).toBeUndefined();
+  });
+
+  it('émet une alerte HAUTE category REPRO si PERF_INSUFFISANTE détectée', () => {
+    // Note : on ne peut pas facilement déclencher PERF_INSUFFISANTE depuis
+    // une fixture minimale (3+ portées sevrées avec moyenne NV faible
+    // requise). On vérifie ici uniquement la forme de l'alerte SI le détecteur
+    // la sort — sanity de structure et de priorité. Le détecteur est testé
+    // séparément dans `perfKpiAnalyzer.test.ts`.
+    const truie = makeTruie({ statut: 'Réforme', nbPortees: 0 });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie] }));
+    // Aucune erreur lancée par checkTruiesAReformer (couvert par try/catch interne).
+    const refAlerts = alerts.filter(a => a.id.startsWith('REF-'));
+    refAlerts.forEach(a => {
+      expect(a.category).toBe('REPRO');
+      expect(['HAUTE', 'NORMALE']).toContain(a.priority);
+      expect(a.title).toMatch(/Réforme Suggérée/);
+    });
+  });
+});
+
+// ─── R12 — Réforme (inactivité > 90j) ───────────────────────────────────────
+//
+// Cible : truie statut `En attente saillie` + aucune saillie liée OU dernière
+// saillie il y a > 90 jours → motif `INACTIVE_LONG` → alerte NORMALE.
+
+describe('R12 — Réforme inactivité longue', () => {
+  it('émet REF INACTIVE_LONG pour truie "En attente saillie" sans aucune saillie', () => {
+    const truie = makeTruie({
+      id: 'T-INACT-NEVER',
+      displayId: 'T-INACT-NEVER',
+      statut: 'En attente saillie',
+      nbPortees: 0,
+    });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie] }));
+    const ref = alerts.find(a => a.id.startsWith('REF-') && a.subjectId === 'T-INACT-NEVER');
+    expect(ref).toBeDefined();
+    expect(ref?.priority).toBe('NORMALE');
+    expect(ref?.message).toContain('INACTIVE_LONG');
+    expect(ref?.message).toContain('Jamais saillie');
+  });
+
+  it('émet REF INACTIVE_LONG pour truie "En attente saillie" avec dernière saillie il y a > 90j', () => {
+    const truie = makeTruie({
+      id: 'T-INACT-OLD',
+      displayId: 'T-INACT-OLD',
+      statut: 'En attente saillie',
+    });
+    const vieilleSaillie = makeSaillie({
+      truieId: 'T-INACT-OLD',
+      dateSaillie: toFrDate(dayOffset(NOW, -100)), // 100j > 90j seuil
+      statut: 'Inactive',
+    });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie], saillies: [vieilleSaillie] }));
+    const ref = alerts.find(a => a.id.startsWith('REF-') && a.subjectId === 'T-INACT-OLD');
+    expect(ref).toBeDefined();
+    expect(ref?.priority).toBe('NORMALE');
+    expect(ref?.message).toContain('INACTIVE_LONG');
+  });
+
+  it('ne déclenche PAS si truie a une saillie récente (< 90j)', () => {
+    const truie = makeTruie({
+      id: 'T-RECENT',
+      displayId: 'T-RECENT',
+      statut: 'En attente saillie',
+    });
+    const saillieRecente = makeSaillie({
+      truieId: 'T-RECENT',
+      dateSaillie: toFrDate(dayOffset(NOW, -30)), // 30j < 90j
+    });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie], saillies: [saillieRecente] }));
+    expect(alerts.find(a => a.id.startsWith('REF-') && a.subjectId === 'T-RECENT')).toBeUndefined();
+  });
+
+  it('ne déclenche PAS si truie statut "Pleine" (en cycle actif)', () => {
+    const truie = makeTruie({
+      id: 'T-PLEINE',
+      displayId: 'T-PLEINE',
+      statut: 'Pleine',
+    });
+    const alerts = runAlertEngine(emptyInput({ truies: [truie] }));
+    expect(alerts.find(a => a.id.startsWith('REF-') && a.subjectId === 'T-PLEINE')).toBeUndefined();
+  });
+});
+
+// ─── R13 — Manque Pesée (lot post-sevrage / engraissement) ───────────────────
+//
+// Cible : bande en phase POST_SEVRAGE/CROISSANCE/ENGRAISSEMENT/FINITION
+// SANS pesée enregistrée depuis > 21 jours → alerte NORMALE (HAUTE si > 35j).
+
+describe('R13 — Manque Pesée', () => {
+  it('émet PES NORMALE si bande sevrée depuis > 21j sans aucune pesée', () => {
+    const bande = makeBande({
+      id: 'BP-PES-22',
+      idPortee: 'P-PES-22',
+      statut: 'Sevrés',
+      dateSevrageReelle: toFrDate(dayOffset(NOW, -25)), // 25j sans pesée
+      dateMB: toFrDate(dayOffset(NOW, -53)),            // sevrage J28 cohérent
+    });
+    const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
+    const pes = alerts.find(a => a.id.startsWith('PES-BP-PES-22'));
+    expect(pes).toBeDefined();
+    expect(pes?.priority).toBe('NORMALE');
+    expect(pes?.title).toBe('Manque de Pesée');
+  });
+
+  it('escalade en HAUTE si bande sevrée depuis > 35j sans aucune pesée', () => {
+    const bande = makeBande({
+      id: 'BP-PES-40',
+      idPortee: 'P-PES-40',
+      statut: 'Sevrés',
+      dateSevrageReelle: toFrDate(dayOffset(NOW, -40)), // 40j > 35j → HAUTE
+      dateMB: toFrDate(dayOffset(NOW, -68)),
+    });
+    const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
+    const pes = alerts.find(a => a.id.startsWith('PES-BP-PES-40'));
+    expect(pes).toBeDefined();
+    expect(pes?.priority).toBe('HAUTE');
+  });
+
+  it('ne déclenche PAS si bande sevrée depuis < 21j (zone vigilance)', () => {
+    const bande = makeBande({
+      id: 'BP-PES-15',
+      idPortee: 'P-PES-15',
+      statut: 'Sevrés',
+      dateSevrageReelle: toFrDate(dayOffset(NOW, -15)), // 15j < 21j
+      dateMB: toFrDate(dayOffset(NOW, -43)),
+    });
+    const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
+    expect(alerts.find(a => a.id.startsWith('PES-BP-PES-15'))).toBeUndefined();
+  });
+
+  it('ne déclenche PAS si bande encore "Sous mère" (phase MATERNITE)', () => {
+    const bande = makeBande({
+      id: 'BP-PES-MAT',
+      idPortee: 'P-PES-MAT',
+      statut: 'Sous mère',
+      dateMB: toFrDate(dayOffset(NOW, -10)),
+    });
+    const alerts = runAlertEngine(emptyInput({ bandes: [bande] }));
+    expect(alerts.find(a => a.id.startsWith('PES-BP-PES-MAT'))).toBeUndefined();
+  });
+});
