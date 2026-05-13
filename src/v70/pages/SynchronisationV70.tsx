@@ -28,6 +28,7 @@ import {
   type ArchivedQueueItem,
   type QueuedMutation,
 } from '../../services/offlineQueue';
+import DevDatePanel from '../components/v70/DevDatePanel';
 
 const POLL_INTERVAL_MS = 1500;
 
@@ -473,6 +474,9 @@ export const SynchronisationV70: React.FC = () => {
           <ChevronRight size={12} aria-hidden />
           <span>5 retries max · backoff 1s/5s/30s/5min/30min</span>
         </div>
+
+        {/* V81 Sprint 3 — Dev panel simulation date (auto-masqué hors DEV) */}
+        <DevDatePanel />
       </div>
     </div>
   );

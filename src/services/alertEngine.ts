@@ -809,8 +809,11 @@ export interface AlertEngineInput {
   notes: Note[];
 }
 
-export function runAlertEngine(input: AlertEngineInput): FarmAlert[] {
-  const today = new Date();
+export function runAlertEngine(input: AlertEngineInput, now?: Date): FarmAlert[] {
+  // V81 Sprint 3 — paramètre `now` optionnel pour simulation/QA. Défaut =
+  // new Date() pour garder le comportement existant + compatibilité tests
+  // qui utilisent vi.setSystemTime.
+  const today = now ?? new Date();
   const alerts: FarmAlert[] = [];
 
   for (const truie of input.truies) {

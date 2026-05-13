@@ -52,6 +52,7 @@ import {
 } from '../config/aliments';
 import { getQueueStatus, processQueue } from './offlineQueue';
 import { runAlertEngine, type FarmAlert } from './alertEngine';
+import { getNow } from '../lib/clock';
 import { fetchDismissedAlertIds } from './alertDismissals';
 import { supabase } from './supabaseClient';
 import { enqueueAlert } from './confirmationQueue';
@@ -293,7 +294,8 @@ export async function refreshAll(): Promise<void> {
     })();
     patch('ressources', { alimentFormules: formulesFinal });
 
-    // Moteur d'alertes GTTT — s'exécute après chaque refresh complet
+    // Moteur d'alertes GTTT — s'exécute après chaque refresh complet.
+    // V81 Sprint 3 : `getNow()` permet la simulation date (cf src/lib/clock.ts)
     const rawAlerts = runAlertEngine({
       truies: truieRes.data,
       bandes: bandeRes.data,
@@ -302,7 +304,7 @@ export async function refreshAll(): Promise<void> {
       stockVetos: stockVRes.data,
       saillies: sailliesFinal,
       notes: notesRes.data,
-    });
+    }, getNow());
     const newAlerts = await applyDismissals(rawAlerts);
 
     patch('pilotage', {
@@ -354,6 +356,7 @@ export async function processQueueAndRefresh(): Promise<void> {
  * (ex: sevrage en retard qui change à minuit) sans fetch réseau.
  */
 export async function recomputeAlerts(): Promise<void> {
+  // V81 Sprint 3 : `getNow()` honore mockDate côté QA (cf src/lib/clock.ts)
   const rawAlerts = runAlertEngine({
     truies: state.troupeau.truies,
     bandes: state.troupeau.bandes,
@@ -362,7 +365,7 @@ export async function recomputeAlerts(): Promise<void> {
     stockVetos: state.ressources.stockVeto,
     saillies: state.pilotage.saillies,
     notes: state.ressources.notes,
-  });
+  }, getNow());
   const newAlerts = await applyDismissals(rawAlerts);
 
   patch('pilotage', { alerts: newAlerts });
