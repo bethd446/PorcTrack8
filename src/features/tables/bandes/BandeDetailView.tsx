@@ -10,6 +10,7 @@ import PhotoUpload from '../../../v70/components/v70/PhotoUpload';
 import PhotoGallery from '../../../v70/components/v70/PhotoGallery';
 import { Chip, AnimalListItem } from '../../../components/agritech';
 import { computeBandePhase } from '../../../services/bandesAggregator';
+import { getBandeRationPlan } from '../../../services/bandeRationPlan';
 import QuickNoteForm from '../../../components/forms/QuickNoteForm';
 import QuickHealthForm from '../../../components/forms/QuickHealthForm';
 import QuickEditBandeForm from '../../../components/forms/QuickEditBandeForm';
@@ -470,6 +471,97 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                 entityId={bande.id}
                 refreshKey={photosRefreshKey}
               />
+
+              {/* v3.6.3 — Plan ration recommandé (Christophe : voir d'un coup
+                  la conso recommandée par porcelet/jour + coût + j restants
+                  pour atteindre 100 kg). Calculé depuis poids moyen ou fallback. */}
+              {(() => {
+                const plan = getBandeRationPlan(bande);
+                if (plan.effectif === 0) return null;
+                return (
+                  <div className="card-dense space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <h4 className="kpi-label">PLAN RATION · {plan.phaseLabel.toUpperCase()}</h4>
+                      <span
+                        className="text-[10px] uppercase tracking-wide"
+                        style={{ color: 'var(--pt-muted)' }}
+                      >
+                        {plan.poidsMoyenKg.toFixed(0)} kg moy.
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, 1fr)',
+                        gap: 8,
+                      }}
+                    >
+                      <div
+                        style={{
+                          background: 'var(--pt-warm)',
+                          borderRadius: 10,
+                          padding: '10px 12px',
+                        }}
+                      >
+                        <div style={{ fontSize: 10, color: 'var(--pt-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                          Ration / porc / jour
+                        </div>
+                        <div style={{ fontFamily: 'var(--pt-font-display)', fontSize: 20, fontWeight: 800, marginTop: 2 }}>
+                          {plan.rationParAnimalKgJ.toFixed(1)} kg
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          background: 'var(--pt-warm)',
+                          borderRadius: 10,
+                          padding: '10px 12px',
+                        }}
+                      >
+                        <div style={{ fontSize: 10, color: 'var(--pt-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                          Total bande / jour
+                        </div>
+                        <div style={{ fontFamily: 'var(--pt-font-display)', fontSize: 20, fontWeight: 800, marginTop: 2 }}>
+                          {plan.consoTotaleKgJ.toFixed(1)} kg
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          background: 'var(--pt-warm)',
+                          borderRadius: 10,
+                          padding: '10px 12px',
+                        }}
+                      >
+                        <div style={{ fontSize: 10, color: 'var(--pt-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                          Coût aliment / jour
+                        </div>
+                        <div style={{ fontFamily: 'var(--pt-font-display)', fontSize: 18, fontWeight: 800, marginTop: 2 }}>
+                          {plan.coutJournalierFCFA.toLocaleString('fr-FR')} <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--pt-muted)' }}>FCFA</span>
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          background: 'var(--pt-warm)',
+                          borderRadius: 10,
+                          padding: '10px 12px',
+                        }}
+                      >
+                        <div style={{ fontSize: 10, color: 'var(--pt-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                          J. restants → 100 kg
+                        </div>
+                        <div style={{ fontFamily: 'var(--pt-font-display)', fontSize: 20, fontWeight: 800, marginTop: 2 }}>
+                          {plan.joursRestantsVente === 0 ? '✓ Vente' : `~${plan.joursRestantsVente} j`}
+                        </div>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: 11, color: 'var(--pt-muted)', marginTop: 4 }}>
+                      Estimations basées sur le poids moyen et la conso théorique de la phase {plan.phaseLabel}.
+                      {plan.joursRestantsVente !== null && plan.joursRestantsVente > 0 && plan.joursRestantsVente <= 30 && (
+                        <span style={{ color: 'var(--amber-pork-deep)', fontWeight: 600 }}> · Sortie proche</span>
+                      )}
+                    </p>
+                  </div>
+                );
+              })()}
 
               {(() => {
                 const age = bande.age ?? 0;
