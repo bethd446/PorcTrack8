@@ -384,11 +384,14 @@ export const PerformanceV70: React.FC = () => {
               aria-label="Indicateurs clés du troupeau"
               data-pt-strip={profil}
             >
+              {/* V81 Sprint 8 — Tooltips toujours présents (éleveur curieux
+                  comprend les sigles techniques même quand il y a déjà des
+                  chiffres). Pas seulement quand la valeur est null. */}
               <div className="kpi">
                 <div className="kpi__label">ISSE j</div>
                 <div
                   className="kpi__val"
-                  title={kpis?.isseMoyJours == null ? '3 paires sevrage→saillie valides requises' : undefined}
+                  title="Intervalle Sevrage-Saillie moyen. Réf: 5-8j excellent, 9-14j bon, >14j à améliorer."
                 >
                   {fmt(kpis?.isseMoyJours ?? null, 1)}
                 </div>
@@ -397,20 +400,25 @@ export const PerformanceV70: React.FC = () => {
                 <div className="kpi__label">Taux MB</div>
                 <div
                   className="kpi__val"
-                  title={kpis?.tauxMBPct == null ? '5 saillies matures (>115j) requises' : undefined}
+                  title="Taux de mise-bas = % de saillies confirmées en gestation puis MB. Réf: >85% excellent."
                 >
                   {fmt(kpis?.tauxMBPct ?? null, 0, '%')}
                 </div>
               </div>
               <div className="kpi">
                 <div className="kpi__label">NV moy.</div>
-                <div className="kpi__val">{fmt(kpis?.moyNV ?? null, 1)}</div>
+                <div
+                  className="kpi__val"
+                  title="Nés Vivants moyens par portée. Réf: 11-13 standard, 14+ excellent."
+                >
+                  {fmt(kpis?.moyNV ?? null, 1)}
+                </div>
               </div>
               <div className="kpi">
                 <div className="kpi__label">IEM j</div>
                 <div
                   className="kpi__val"
-                  title={kpis?.iemMoyJours == null ? 'Au moins 2 mises-bas datées pour la même truie requises' : undefined}
+                  title="Intervalle Entre Mises-bas moyen. Réf: 145-155j standard."
                 >
                   {fmt(kpis?.iemMoyJours ?? null, 0)}
                 </div>

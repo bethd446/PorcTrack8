@@ -483,7 +483,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                     <div className="flex items-center justify-between gap-2">
                       <h4 className="kpi-label">PLAN RATION · {plan.phaseLabel.toUpperCase()}</h4>
                       <span
-                        className="text-[10px] uppercase tracking-wide"
+                        className="text-[11px] uppercase tracking-wide"
                         style={{ color: 'var(--pt-muted)' }}
                       >
                         {plan.poidsMoyenKg.toFixed(0)} kg moy.
@@ -673,7 +673,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                     ariaLabel="Modifier les truies sources"
                   >
                     <Edit3 size={12} aria-hidden="true" />
-                    <span className="text-[10px] uppercase tracking-wide">
+                    <span className="text-[11px] uppercase tracking-wide">
                       Modifier
                     </span>
                   </Button>
@@ -755,7 +755,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                     ariaLabel="Déplacer cette bande"
                   >
                     <Move size={12} aria-hidden="true" />
-                    <span className="text-[10px] uppercase tracking-wide">
+                    <span className="text-[11px] uppercase tracking-wide">
                       Déplacer
                     </span>
                   </Button>
@@ -828,7 +828,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                     {currentLoge ? (
                       <div className="grid grid-cols-2 gap-2">
                         <div className="rounded-md border border-border bg-bg-0 px-3 py-2">
-                          <p className="text-[10px] uppercase tracking-wide text-text-2">
+                          <p className="text-[11px] uppercase tracking-wide text-text-2">
                             Capacité
                           </p>
                           <p className="text-[13px] tabular-nums text-text-0">
@@ -838,7 +838,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                           </p>
                         </div>
                         <div className="rounded-md border border-border bg-bg-0 px-3 py-2">
-                          <p className="text-[10px] uppercase tracking-wide text-text-2">
+                          <p className="text-[11px] uppercase tracking-wide text-text-2">
                             Occupation
                           </p>
                           <p className="text-[13px] tabular-nums text-text-0">
@@ -884,7 +884,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                         ariaLabel="Splitter cette bande"
                       >
                         <Split size={12} aria-hidden="true" />
-                        <span className="text-[10px] uppercase tracking-wide">
+                        <span className="text-[11px] uppercase tracking-wide">
                           Splitter
                         </span>
                       </Button>
@@ -898,7 +898,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                         ariaLabel="Signaler maladie porcelet"
                       >
                         <Stethoscope size={12} aria-hidden="true" />
-                        <span className="text-[10px] uppercase tracking-wide">
+                        <span className="text-[11px] uppercase tracking-wide">
                           Signaler maladie
                         </span>
                       </Button>
@@ -911,7 +911,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                       ariaLabel="Ajouter un porcelet"
                     >
                       <Plus size={12} aria-hidden="true" />
-                      <span className="text-[10px] uppercase tracking-wide">
+                      <span className="text-[11px] uppercase tracking-wide">
                         Ajouter porcelet
                       </span>
                     </Button>
@@ -923,7 +923,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                     <p className="text-[11px] text-text-2">
                       Aucun porcelet numéroté pour cette bande
                     </p>
-                    <p className="text-[10px] text-text-2 leading-relaxed">
+                    <p className="text-[11px] text-text-2 leading-relaxed">
                       Boucles individuelles permettent le suivi sanitaire détaillé
                     </p>
                     <Button
@@ -952,7 +952,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                               <span className="text-[13px] text-text-0 uppercase">
                                 {p.boucle}
                               </span>
-                              <span className="text-[10px] text-text-2 uppercase">
+                              <span className="text-[11px] text-text-2 uppercase">
                                 {p.sexe === 'M' ? 'M' : p.sexe === 'F' ? 'F' : '?'}
                               </span>
                               {p.poidsCourantKg != null ? (
@@ -991,7 +991,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                       </div>
                       <div className="min-w-0">
                         <p className="text-[12px] font-medium text-text-0">Ligne de registre</p>
-                        <p className="text-[10px] uppercase tracking-wide text-text-2 truncate">
+                        <p className="text-[11px] uppercase tracking-wide text-text-2 truncate">
                           {header && header.includes('DATE MB') ? String(row[header.indexOf('DATE MB')]) : 'ID: ' + bande.id}
                         </p>
                       </div>
@@ -999,7 +999,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="text-right">
                         <p className="text-[11px] text-text-0">{String(row[header.indexOf('STATUT') || 0] || '—')}</p>
-                        <p className="text-[9px] uppercase tracking-wide text-text-2">Statut</p>
+                        <p className="text-[11px] uppercase tracking-wide text-text-2">Statut</p>
                       </div>
                       <ChevronRight size={14} className="text-text-2" />
                     </div>
@@ -1049,7 +1049,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                                 {tpl.label}
                               </span>
                             </div>
-                            <span className="text-[10px] text-text-2 ml-[18px]">
+                            <span className="text-[11px] text-text-2 ml-[18px]">
                               {reco.done ? 'Fait' : `Prévu ${dateStr}`}
                               {tpl.defaultDose ? ` · ${tpl.defaultDose}` : ''}
                             </span>
@@ -1059,7 +1059,7 @@ const BandeDetailView: React.FC<BandeDetailViewProps> = ({ bande, header, meta, 
                               variant="primary"
                               size="small"
                               onClick={() => setPresetType(reco.type)}
-                              className="pressable shrink-0 inline-flex items-center justify-center h-7 px-2.5 rounded-md bg-accent text-bg-0 text-[10px] uppercase tracking-wide hover:brightness-110"
+                              className="pressable shrink-0 inline-flex items-center justify-center h-7 px-2.5 rounded-md bg-accent text-bg-0 text-[11px] uppercase tracking-wide hover:brightness-110"
                             >
                               Saisir
                             </Button>

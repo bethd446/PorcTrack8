@@ -735,8 +735,11 @@ const TruieDetailView: React.FC = () => {
               ) : (
               <div
                 style={{
+                  // V81 Sprint 8 — Grid responsive : 2 col mobile (≤480px) /
+                  // 3 col tablette / 5 col desktop. Avant : repeat(5,1fr) en
+                  // toutes tailles → labels fontSize 9 illisibles sur 390px.
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(5, 1fr)',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
                   background: 'var(--pt-bg)',
                   borderRadius: 12,
                   overflow: 'hidden',
@@ -758,8 +761,9 @@ const TruieDetailView: React.FC = () => {
                     <div
                       style={{
                         fontFamily: 'var(--pt-font-mono)',
-                        fontSize: 9,
-                        letterSpacing: '0.16em',
+                        // V81 Sprint 8 — fontSize 9 → 11 (lisibilité mobile WCAG)
+                        fontSize: 11,
+                        letterSpacing: '0.14em',
                         textTransform: 'uppercase',
                         color: 'var(--pt-muted)',
                         display: 'flex',
