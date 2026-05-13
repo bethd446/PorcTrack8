@@ -40,6 +40,8 @@ vi.mock('../../context/FarmContext', () => ({
     currency: 'EUR',
     refreshData: vi.fn(),
   }),
+  // V81 Sprint A4 — FinancesView importe désormais useMeta pour le loading state
+  useMeta: () => ({ loading: false }),
 }));
 
 vi.mock('@ionic/react', () => ({

@@ -28,6 +28,7 @@ import { detectTruiesAReformer } from './perfKpiAnalyzer';
 import { extractPeseesForBande } from './growthAnalyzer';
 import { detectPendingTransitions, PHASE_LABEL, type PendingTransition } from './phaseEngine';
 import { FARM_CONFIG } from '../config/farm';
+import { parseFrDate } from '../lib/dateParser';
 
 /** Fuseau horaire de référence pour toute la logique métier GTTT.
  *  L'élevage est en Côte d'Ivoire, mais les données Sheets sont saisies
@@ -128,36 +129,6 @@ const SAILLIE_ACTIVE_STATUTS = new Set(['SAILLIE', 'PLEINE', 'Active']);
 // ─────────────────────────────────────────────────────────────────────────────
 // UTILITAIRES DE DATE
 // ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Parse une date sérialisée Sheets (DD/MM/YYYY, YYYY-MM-DD ou serial Excel)
- * en traitant la date comme étant saisie dans le fuseau `Europe/Paris`.
- */
-function parseFrDate(dateStr?: string): Date | null {
-  if (!dateStr || dateStr === '—' || dateStr === '') return null;
-
-  const toFarmMidnight = (y: number, m: number, d: number): Date => {
-    const iso = `${y.toString().padStart(4, '0')}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}T00:00:00`;
-    return fromZonedTime(iso, FARM_TIMEZONE);
-  };
-
-  const dmy = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (dmy) return toFarmMidnight(+dmy[3], +dmy[2], +dmy[1]);
-
-  const ymd = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (ymd) return toFarmMidnight(+ymd[1], +ymd[2], +ymd[3]);
-
-  const serial = Number(dateStr);
-  if (!isNaN(serial) && serial > 20000) {
-    const utcProxy = new Date(Date.UTC(1899, 11, 30) + serial * 86400000);
-    return toFarmMidnight(
-      utcProxy.getUTCFullYear(),
-      utcProxy.getUTCMonth() + 1,
-      utcProxy.getUTCDate(),
-    );
-  }
-  return null;
-}
 
 function daysDiff(from: Date, to: Date = new Date()): number {
   const fromFarm = startOfDay(toZonedTime(from, FARM_TIMEZONE));

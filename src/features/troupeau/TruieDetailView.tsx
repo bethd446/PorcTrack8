@@ -53,6 +53,7 @@ import LineageTree from '../../components/design/LineageTree';
 import TopBarSync from '../../components/design/TopBarSync';
 import PhotoUpload from '../../v70/components/v70/PhotoUpload';
 import PhotoGallery from '../../v70/components/v70/PhotoGallery';
+import { VitalGrid, type VitalItem } from './components/VitalGrid';
 
 import type { Truie, BandePorcelets, Saillie, TraitementSante } from '../../types/farm';
 import {
@@ -377,7 +378,7 @@ const TruieDetailView: React.FC = () => {
 
   // ── Vitales (5 KPI) ────────────────────────────────────────────────────────
 
-  const vitales = [
+  const vitales: VitalItem[] = [
     {
       label: 'Statut',
       trend: '',
@@ -395,7 +396,6 @@ const TruieDetailView: React.FC = () => {
       trend: `${sowSaillies.length} insémination${sowSaillies.length > 1 ? 's' : ''}`,
       value: lastSaillie?.verratId ?? '—',
       valColor: 'var(--pt-ink)',
-      sub: undefined as string | undefined,
     },
     {
       label: 'Poids',
@@ -733,74 +733,12 @@ const TruieDetailView: React.FC = () => {
                   </div>
                 </div>
               ) : (
-              <div
-                style={{
-                  // V81 Sprint 8 — Grid responsive : 2 col mobile (≤480px) /
-                  // 3 col tablette / 5 col desktop. Avant : repeat(5,1fr) en
-                  // toutes tailles → labels fontSize 9 illisibles sur 390px.
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
-                  background: 'var(--pt-bg)',
-                  borderRadius: 12,
-                  overflow: 'hidden',
-                  border: '1px solid var(--pt-line)',
-                }}
-                className="sow-vitals"
-              >
-                {vitales.map((v, i) => {
-                  const isEmpty = v.value === '—' || v.value == null || v.value === '';
-                  return (
-                  <div
-                    key={v.label}
-                    style={{
-                      padding: '14px 16px',
-                      background: 'var(--pt-bg)',
-                      borderRight: i < vitales.length - 1 ? '1px solid var(--pt-line)' : 'none',
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontFamily: 'var(--pt-font-mono)',
-                        // V81 Sprint 8 — fontSize 9 → 11 (lisibilité mobile WCAG)
-                        fontSize: 11,
-                        letterSpacing: '0.14em',
-                        textTransform: 'uppercase',
-                        color: 'var(--pt-muted)',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        marginBottom: 6,
-                      }}
-                    >
-                      <span>{v.label}</span>
-                      {v.trend && (
-                        <span style={{ color: 'var(--pt-primary)' }}>{v.trend}</span>
-                      )}
-                    </div>
-                    <div
-                      title={isEmpty ? 'Donnée non disponible — saisir une saillie pour activer.' : undefined}
-                      aria-label={isEmpty ? `${v.label} non disponible` : undefined}
-                      style={{
-                        fontFamily: 'var(--pt-font-display)',
-                        fontSize: 22,
-                        lineHeight: 1,
-                        color: v.valColor,
-                        fontWeight: 800,
-                        letterSpacing: '-0.02em',
-                        opacity: isEmpty ? 0.4 : 1,
-                        cursor: isEmpty ? 'help' : 'default',
-                      }}
-                    >
-                      {v.value}
-                      {'unit' in v && v.unit && (
-                        <small style={{ fontSize: 13, color: 'var(--pt-muted)', marginLeft: 2, fontWeight: 400 }}>
-                          {' '}{v.unit}
-                        </small>
-                      )}
-                    </div>
-                  </div>
-                  );
-                })}
-              </div>
+              <VitalGrid
+                items={vitales.map(v => ({
+                  ...v,
+                  emptyHint: 'Donnée non disponible — saisir une saillie pour activer.',
+                }))}
+              />
               )}
             </section>
             )}

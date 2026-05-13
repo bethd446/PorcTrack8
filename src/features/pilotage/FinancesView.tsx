@@ -26,7 +26,7 @@ import {
 } from '@ionic/react';
 import { ChevronLeft, ChevronRight, FileText, Plus, TrendingUp, TrendingDown } from 'lucide-react';
 
-import { useFarm } from '../../context/FarmContext';
+import { useFarm, useMeta } from '../../context/FarmContext';
 import {
   summarizeByPeriode,
   summarizeAll,
@@ -89,6 +89,7 @@ function parseDdmmyyyy(s: string): Date | null {
 const FinancesView: React.FC = () => {
   const navigate = useNavigate();
   const { finances, refreshData, currency: farmCurrency } = useFarm();
+  const { loading: farmLoading } = useMeta();
   const [addOpen, setAddOpen] = useState(false);
 
   const entries = finances as FinanceEntry[];
@@ -159,6 +160,7 @@ const FinancesView: React.FC = () => {
   }, [entries]);
 
   const hasData = entries.length > 0;
+  const showLoading = farmLoading && entries.length === 0;
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -192,7 +194,15 @@ const FinancesView: React.FC = () => {
             className="phone-content"
             style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}
           >
-            {!hasData ? (
+            {showLoading ? (
+              <div className="empty-state" aria-busy="true" aria-live="polite">
+                <div className="empty-state__icon" aria-hidden style={{ opacity: 0.4 }}>
+                  <TrendingUp size={38} strokeWidth={2} />
+                </div>
+                <div className="empty-state__title" style={{ opacity: 0.7 }}>Chargement…</div>
+                <div className="empty-state__sub">Lecture des transactions financières en cours.</div>
+              </div>
+            ) : !hasData ? (
               <div className="empty" style={{ marginTop: 16, textAlign: 'center', padding: '40px 16px' }}>
                 <div
                   style={{

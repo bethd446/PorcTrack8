@@ -20,7 +20,7 @@ import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import { ChevronLeft, FileDown, FileText, Share2 } from 'lucide-react';
 
-import { useFarm } from '../../context/FarmContext';
+import { useFarm, useMeta } from '../../context/FarmContext';
 import { useToast } from '../../context/ToastContext';
 import {
   formatMontant,
@@ -91,6 +91,7 @@ const RapportFinancierView: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { finances, currency } = useFarm();
+  const { loading: farmLoading } = useMeta();
   const entries = finances as FinanceEntry[];
 
   const keys6 = useMemo(() => lastNMonthsKeys(6), []);
@@ -173,6 +174,7 @@ const RapportFinancierView: React.FC = () => {
   }, [entries, currentKey, current.couts]);
 
   const hasData = monthly.some((m) => m.revenus > 0 || m.couts > 0);
+  const showLoading = farmLoading && entries.length === 0;
 
   // Sparkline scaling
   const sparkMax = Math.max(1, ...sparkline.map((d) => Math.max(d.revenus, d.couts)));
@@ -213,7 +215,15 @@ const RapportFinancierView: React.FC = () => {
             className="phone-content"
             style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}
           >
-            {!hasData ? (
+            {showLoading ? (
+              <div className="empty-state" aria-busy="true" aria-live="polite">
+                <div className="empty-state__icon" aria-hidden style={{ opacity: 0.4 }}>
+                  <FileText size={38} strokeWidth={2} />
+                </div>
+                <div className="empty-state__title" style={{ opacity: 0.7 }}>Chargement…</div>
+                <div className="empty-state__sub">Génération du rapport en cours.</div>
+              </div>
+            ) : !hasData ? (
               <div className="empty" style={{ marginTop: 16, textAlign: 'center', padding: '40px 16px' }}>
                 <div
                   style={{

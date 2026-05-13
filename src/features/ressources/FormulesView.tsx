@@ -17,7 +17,9 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
-import { ChevronLeft, ChevronRight, Plus, FlaskConical } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FlaskConical, Plus } from 'lucide-react';
+
+import { useFarm, useMeta } from '../../context/FarmContext';
 
 import { Section } from '../../v70/components/ds/Section';
 import { Pill, type PillVariant } from '../../v70/components/ds/Pill';
@@ -154,7 +156,10 @@ const FormuleListItem: React.FC<FormuleListItemProps> = ({ formule, onClick }) =
 
 const FormulesView: React.FC = () => {
   const navigate = useNavigate();
+  const { alimentFormules } = useFarm();
+  const { loading: farmLoading } = useMeta();
   const [filter, setFilter] = useState<string>('all');
+  const showLoading = farmLoading && alimentFormules.length === 0;
 
   const filters = useMemo(() => buildPhaseFilters(FORMULES), []);
   const visible = useMemo(
@@ -207,7 +212,15 @@ const FormulesView: React.FC = () => {
             <Section
               label={`${visible.length} formule${visible.length > 1 ? 's' : ''}`}
             >
-              {visible.length === 0 ? (
+              {showLoading ? (
+                <div className="empty-state" aria-busy="true" aria-live="polite">
+                  <div className="empty-state__icon" aria-hidden style={{ opacity: 0.4 }}>
+                    <FlaskConical size={38} strokeWidth={2} />
+                  </div>
+                  <div className="empty-state__title" style={{ opacity: 0.7 }}>Chargement…</div>
+                  <div className="empty-state__sub">Lecture des formules d'aliment.</div>
+                </div>
+              ) : visible.length === 0 ? (
                 <div className="empty">
                   <FlaskConical size={40} strokeWidth={2} color="var(--pt-subtle)" aria-hidden />
                   <div

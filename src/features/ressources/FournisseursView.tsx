@@ -14,9 +14,10 @@ import React, { useMemo, useState } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Building2, ChevronLeft, ChevronRight, Star, X,
+  Building2, ChevronLeft, ChevronRight, Star, Truck, X,
 } from 'lucide-react';
 
+import { useMeta } from '../../context/FarmContext';
 import {
   FOURNISSEURS_STATIC,
   type FournisseurCategorie,
@@ -106,8 +107,10 @@ function matchesSearch(f: FournisseurStatic, q: string): boolean {
 
 const FournisseursView: React.FC = () => {
   const navigate = useNavigate();
+  const { loading: farmLoading } = useMeta();
   const [filter, setFilter] = useState<FilterKey>('TOUS');
   const [query, setQuery] = useState('');
+  const showLoading = farmLoading && FOURNISSEURS_STATIC.length === 0;
 
   const counts = useMemo(() => {
     const out: Record<FilterKey, number> = {
@@ -198,7 +201,15 @@ const FournisseursView: React.FC = () => {
               {filtered.length} fournisseur{filtered.length > 1 ? 's' : ''}
             </div>
 
-            {filtered.length === 0 ? (
+            {showLoading ? (
+              <div className="empty-state" aria-busy="true" aria-live="polite">
+                <div className="empty-state__icon" aria-hidden style={{ opacity: 0.4 }}>
+                  <Truck size={38} strokeWidth={2} />
+                </div>
+                <div className="empty-state__title" style={{ opacity: 0.7 }}>Chargement…</div>
+                <div className="empty-state__sub">Lecture des fournisseurs.</div>
+              </div>
+            ) : filtered.length === 0 ? (
               <div
                 style={{
                   padding: '24px 16px',
