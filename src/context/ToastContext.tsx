@@ -16,6 +16,11 @@
  * dès qu'on quitte la modale qui rend le toast (race condition + DOM perdu).
  * Maintenant : toasts mountés au top niveau (App.tsx), survivent aux navs.
  */
+/* eslint-disable react-refresh/only-export-components --
+   Ce fichier exporte volontairement le Context + son Provider + le hook
+   useToast ensemble (pattern Context standard). Les séparer en 3 fichiers
+   n'apporte rien runtime et casserait tous les imports. Fast-refresh DX
+   uniquement — acceptable. */
 import React, { createContext, useCallback, useContext, useState } from 'react';
 import { IonToast } from '@ionic/react';
 

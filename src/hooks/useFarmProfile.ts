@@ -57,6 +57,7 @@ export function useFarmProfile(): FarmProfile {
 
   useEffect(() => {
     if (!currentFarmId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Reset volontaire au changement de ferme (!currentFarmId) — pas de cascade réelle (currentFarmId ne boucle pas sur setMetadata).
       setMetadata(null);
       return;
     }

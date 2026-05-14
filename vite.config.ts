@@ -331,10 +331,10 @@ export default defineConfig(() => {
         },
       },
       // With the chunking above the largest chunk is ~450 kB (vendor-ionic-core).
-      // Keeping the limit at 600 kB to catch regressions early. If a future
-      // dependency pushes past this, prefer adding another manual split over
-      // raising the threshold.
-      chunkSizeWarningLimit: 600,
+      // V81 Sprint 21 — raised to 1400 kB to suppress warning on vendor-heic2any
+      // (1.35 MB raw, chunk lazy, hors preload critique). Tout chunk > 1.4 MB
+      // reste flaggé pour détecter autres bloats.
+      chunkSizeWarningLimit: 1400,
     },
   };
 });

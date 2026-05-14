@@ -37,6 +37,7 @@ export function usePeseePending(): {
 
   useEffect(() => {
     mountedRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Fetch initial au mount (+ polling interval + focus/visibilité). fetchPesees est async et protégé par mountedRef — pas de cascade réelle.
     void fetchPesees();
 
     const interval = setInterval(() => {

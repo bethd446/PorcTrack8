@@ -27,6 +27,11 @@
  * slice nécessaire et éliminer les re-renders croisés.
  */
 
+/* eslint-disable react-refresh/only-export-components --
+   Ce fichier exporte volontairement le Context + son Provider + le hook
+   useMeta/useFarm ensemble (pattern Context standard). Les séparer en 3 fichiers
+   n'apporte rien runtime et casserait tous les imports. Fast-refresh DX
+   uniquement — acceptable. */
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type {
   Truie, Verrat, BandePorcelets, TraitementSante,
@@ -185,6 +190,7 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     if (authLoading) return;
     if (!userId) {
       lastBootstrapUserIdRef.current = null;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Reset volontaire au départ session (!userId) — pas de cascade réelle (authLoading/userId ne boucle pas sur ces setState).
       setCurrentFarmIdState(null);
       setAvailableFarms([]);
       setCurrentFarmIdRef(null);
@@ -246,6 +252,7 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   useEffect(() => {
     if (authLoading) return;
     if (!userId || !currentFarmId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Reset volontaire au changement de session/ferme — pas de cascade réelle (authLoading/userId/currentFarmId ne boucle pas sur setIdentity).
       setIdentity(DEFAULT_FARM_IDENTITY);
       return;
     }
@@ -305,6 +312,7 @@ const MetaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   const lastFetchedFarmIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (!currentFarmId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Reset volontaire au changement de ferme (!currentFarmId) — pas de cascade réelle (currentFarmId ne boucle pas sur setHasPorceletsVrac).
       setHasPorceletsVrac(false);
       lastFetchedFarmIdRef.current = null;
       return;
@@ -416,7 +424,6 @@ export const FarmProvider: React.FC<{ children: React.ReactNode }> = ({ children
  * écrasent simplement cette fonction — les sous-contextes ne sont jamais
  * consultés dans ce cas.
  */
-// eslint-disable-next-line react-refresh/only-export-components
 export const useFarm = (): FarmContextType => {
   const troupeau = useTroupeau();
   const ressources = useRessources();

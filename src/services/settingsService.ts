@@ -18,50 +18,32 @@ export interface FarmUpdate {
 }
 
 /**
- * V81 Sprint 5 — Le paramètre `userOrFarmId` accepte :
- *   - un `farms.id` (V71+ multi-tenant) → on lit `farms` en priorité
- *   - un `auth.users.id` (legacy V25) → on lit `troupeaux` par user_id
+ * Sprint 20 — Lecture de la ferme depuis `farms` (V71+, source de vérité
+ * unique). Le fallback legacy `troupeaux` a été retiré : les 10 comptes V25
+ * ont été backfillés vers `farms` (migration
+ * 20260514_sprint20_backfill_troupeaux_to_farms.sql).
  *
- * Stratégie : essayer d'abord `farms` (V71+, source de vérité actuelle), si
- * rien trouvé fallback sur `troupeaux` (legacy). Permet aux écrans qui
- * passaient `user.id` (MaFermeV70:148, SystemManagement) de continuer à
- * fonctionner sans casse, ET aux écrans V71+ qui passent `currentFarmId`
- * (FarmContext:256) de récupérer le rename `farms.name` propagé.
+ * Le paramètre `farmId` est un `farms.id`. Pour les comptes legacy,
+ * `farms.id === auth.users.id`, donc les écrans qui passent encore `user.id`
+ * (MaFermeV70, SystemManagement) restent fonctionnels.
  *
- * `farms.metadata.secteur` est un fallback pour le legacy `troupeaux.secteur`.
+ * `farms.metadata.secteur` porte le secteur (ex-`troupeaux.secteur`).
  */
-export async function fetchFarm(userOrFarmId: string): Promise<FarmInfo | null> {
-  // 1) Priorité : table `farms` (V71+) par id
+export async function fetchFarm(farmId: string): Promise<FarmInfo | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const farmsRes = await (supabase.from('farms') as any)
     .select('id, name, pays, metadata')
-    .eq('id', userOrFarmId)
+    .eq('id', farmId)
     .maybeSingle();
-  if (!farmsRes.error && farmsRes.data) {
-    const meta = (farmsRes.data.metadata ?? {}) as Record<string, unknown>;
-    const name = String(farmsRes.data.name ?? '').trim();
-    return {
-      id: farmsRes.data.id,
-      nom: name,
-      nomFerme: name || null,
-      secteur: typeof meta.secteur === 'string' ? (meta.secteur as string) : null,
-      pays: farmsRes.data.pays ?? null,
-    };
-  }
-
-  // 2) Fallback legacy : table `troupeaux` par user_id (V25)
-  const { data, error } = await supabase
-    .from('troupeaux')
-    .select('id, nom, nom_ferme, secteur, pays')
-    .eq('user_id', userOrFarmId)
-    .maybeSingle();
-  if (error || !data) return null;
+  if (farmsRes.error || !farmsRes.data) return null;
+  const meta = (farmsRes.data.metadata ?? {}) as Record<string, unknown>;
+  const name = String(farmsRes.data.name ?? '').trim();
   return {
-    id: data.id,
-    nom: data.nom,
-    nomFerme: data.nom_ferme,
-    secteur: data.secteur,
-    pays: data.pays,
+    id: farmsRes.data.id,
+    nom: name,
+    nomFerme: name || null,
+    secteur: typeof meta.secteur === 'string' ? (meta.secteur as string) : null,
+    pays: farmsRes.data.pays ?? null,
   };
 }
 
@@ -74,50 +56,32 @@ export async function updateProfile(userId: string, patch: ProfileUpdate): Promi
 }
 
 /**
- * V81 Sprint 5 — Le rename ferme doit propager sur `farms.name` (V71+,
- * lu par `fetchFarm`) ET sur `troupeaux.nom` (legacy, lu par contexts non
- * encore migrés). On écrit best-effort dans les 2 tables et on n'échoue
- * que si AUCUNE écriture n'a fonctionné (un OWNER nouveau compte n'a que
- * `farms`, un compte legacy peut n'avoir que `troupeaux`).
+ * Sprint 20 — Le rename ferme propage sur `farms.name` (V71+, source de
+ * vérité unique). L'écriture best-effort legacy `troupeaux` a été retirée :
+ * tous les comptes ont une row `farms` (cf. migration de backfill Sprint 20).
  */
 export async function updateFarm(farmId: string, patch: FarmUpdate): Promise<void> {
-  const errors: string[] = [];
-  let okCount = 0;
+  if (patch.nom === undefined && patch.secteur === undefined) return;
 
-  // 1) Table actuelle `farms` (V71+) : nom → name, secteur → metadata.secteur
-  if (patch.nom !== undefined || patch.secteur !== undefined) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const farmsPatch: Record<string, any> = {};
+  if (patch.nom !== undefined) farmsPatch.name = patch.nom;
+  if (patch.secteur !== undefined) {
+    // merge metadata.secteur sans écraser d'autres clés
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const farmsPatch: Record<string, any> = {};
-    if (patch.nom !== undefined) farmsPatch.name = patch.nom;
-    if (patch.secteur !== undefined) {
-      // merge metadata.secteur sans écraser d'autres clés
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: existing } = await (supabase.from('farms') as any)
-        .select('metadata')
-        .eq('id', farmId)
-        .maybeSingle();
-      const metaCurrent = (existing?.metadata ?? {}) as Record<string, unknown>;
-      farmsPatch.metadata = { ...metaCurrent, secteur: patch.secteur };
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: farmsErr } = await (supabase.from('farms') as any)
-      .update(farmsPatch)
-      .eq('id', farmId);
-    if (farmsErr) errors.push(`farms: ${farmsErr.message}`);
-    else okCount++;
+    const { data: existing } = await (supabase.from('farms') as any)
+      .select('metadata')
+      .eq('id', farmId)
+      .maybeSingle();
+    const metaCurrent = (existing?.metadata ?? {}) as Record<string, unknown>;
+    farmsPatch.metadata = { ...metaCurrent, secteur: patch.secteur };
   }
-
-  // 2) Table legacy `troupeaux` : best-effort, ne bloque pas si la row
-  // n'existe pas (cas nouveau compte créé après V71)
-  const { error: troupeauxErr } = await supabase
-    .from('troupeaux')
-    .update(patch)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: farmsErr } = await (supabase.from('farms') as any)
+    .update(farmsPatch)
     .eq('id', farmId);
-  if (troupeauxErr) errors.push(`troupeaux: ${troupeauxErr.message}`);
-  else okCount++;
-
-  if (okCount === 0) {
-    throw new Error(`updateFarm failed everywhere — ${errors.join(' | ')}`);
+  if (farmsErr) {
+    throw new Error(`updateFarm failed — farms: ${farmsErr.message}`);
   }
 }
 

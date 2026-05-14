@@ -1,3 +1,8 @@
+/* eslint-disable react-refresh/only-export-components --
+   Ce fichier exporte volontairement le Context + son Provider + le hook
+   useAuth ensemble (pattern Context standard). Les séparer en 3 fichiers
+   n'apporte rien runtime et casserait tous les imports. Fast-refresh DX
+   uniquement — acceptable. */
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabaseClient';

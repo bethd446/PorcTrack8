@@ -32,6 +32,7 @@ export function useEntityWithRetry<T>(
 
   useEffect(() => {
     if (!entity && !retried && !loading) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- One-shot intentionnel : retried passe false→true une seule fois, la condition `!retried` bloque tout re-déclenchement — pas de cascade réelle.
       setRetried(true);
       void refreshData(true);
     }
