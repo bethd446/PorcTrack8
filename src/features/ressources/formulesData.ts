@@ -14,11 +14,19 @@
  */
 
 export type FormulePhaseCode =
+  // Référentiel mockup V78 (FORMULES)
   | 'demarrage-1'
   | 'croissance-std'
   | 'engraissement-eco'
   | 'truies-allaitantes'
-  | 'finition-premium';
+  | 'finition-premium'
+  // Référentiel marché Afrique de l'Ouest V82 (FORMULES_MARCHE)
+  | 'post-sevrage-demarrage'
+  | 'croissance-standard'
+  | 'croissance-rapide'
+  | 'finition'
+  | 'truie-gestante'
+  | 'truie-allaitante';
 
 export type FormulePillTone = 'amber' | 'soft' | 'success' | 'info' | 'warm';
 
@@ -262,3 +270,214 @@ export function buildPhaseFilters(formules: Formule[]): PhaseFilter[] {
   }
   return opts;
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// FORMULES_MARCHE — Référentiel marché Afrique de l'Ouest (V82, 2026-05-14)
+// ════════════════════════════════════════════════════════════════════════════
+//
+// 7 formules de référence avec prix matières premières réels du marché
+// ouest-africain (mai 2026). Destinées à TOUS les utilisateurs (naisseurs +
+// engraisseurs), pas par-ferme — savoir métier universel.
+//
+// Sources prix matières premières (FCFA/kg, mai 2026) :
+//   Maïs grain                  200  — marché local CI / Ghana
+//   Tourteau de soja 48 %       420  — importé / local CI
+//   Son de blé                  150  — local CI
+//   Tourteau de coton 38 %      280  — estimation marché Mali / Burkina
+//   Huile de palme brute        650  — estimation locale CI
+//   Calcaire agricole            50  — estimation locale
+//   CMV 5 % Sécurisé Vitalac   1482  — 37 060 FCFA / sac 25 kg (Vitalac CI)
+//   CMV Truie 1,5 % Vitalac    1662  — 33 245 FCFA / sac 20 kg (Vitalac CI)
+//   KPC 5 % De Heus            1040  — 26 000 FCFA / sac 25 kg (De Heus CI)
+//
+// Invariants vérifiés : somme(pourcent) = 100 par formule · coutKgFcfa =
+// round(Σ pourcent/100 × prixKgFcfa) — couvert par formulesData.test.ts.
+// ════════════════════════════════════════════════════════════════════════════
+
+export const FORMULES_MARCHE: Formule[] = [
+  // 1. Post-sevrage / Démarrage — Porcelets 7-25 kg
+  {
+    id: 'post-sevrage-demarrage',
+    codePhase: 'POST_SEVRAGE',
+    nom: 'Post-sevrage / Démarrage',
+    description: 'Porcelets 7-25 kg · 1,2 kg/j · digestibilité et immunité',
+    pillLabel: 'Démarrage',
+    pillTone: 'amber',
+    coutKgFcfa: 315,
+    dateMAJ: '2026-05-14',
+    ingredients: [
+      { nom: 'Maïs grain', pourcent: 60, prixKgFcfa: 200 },
+      { nom: 'Tourteau de soja 48 %', pourcent: 24, prixKgFcfa: 420 },
+      { nom: 'Son de blé', pourcent: 9, prixKgFcfa: 150 },
+      { nom: 'CMV 5 % Sécurisé Vitalac', pourcent: 5, prixKgFcfa: 1482 },
+      { nom: 'Huile de palme brute', pourcent: 1, prixKgFcfa: 650 },
+      { nom: 'Calcaire agricole', pourcent: 1, prixKgFcfa: 50 },
+    ],
+    apports: [
+      { label: 'Protéines brutes', valeur: '19,2 %', ratio: 96 },
+      { label: 'Lysine digestible', valeur: '1,15 %', ratio: 96 },
+      { label: 'Énergie nette', valeur: '2 380 kcal/kg', ratio: 95 },
+      { label: 'Calcium', valeur: '0,80 %', ratio: 100 },
+      { label: 'Phosphore digest.', valeur: '0,38 %', ratio: 95 },
+    ],
+    bandes: [],
+  },
+  // 2. Croissance standard — Porcs 25-50 kg
+  {
+    id: 'croissance-standard',
+    codePhase: 'CROISSANCE_STD',
+    nom: 'Croissance standard',
+    description: 'Porcs 25-50 kg · 2,5 kg/j · équilibre coût/performance',
+    pillLabel: 'Croissance',
+    pillTone: 'success',
+    coutKgFcfa: 281,
+    dateMAJ: '2026-05-14',
+    ingredients: [
+      { nom: 'Maïs grain', pourcent: 66, prixKgFcfa: 200 },
+      { nom: 'Tourteau de soja 48 %', pourcent: 18, prixKgFcfa: 420 },
+      { nom: 'Son de blé', pourcent: 10, prixKgFcfa: 150 },
+      { nom: 'KPC 5 % De Heus', pourcent: 5, prixKgFcfa: 1040 },
+      { nom: 'Huile de palme brute', pourcent: 1, prixKgFcfa: 650 },
+    ],
+    apports: [
+      { label: 'Protéines brutes', valeur: '16,2 %', ratio: 88 },
+      { label: 'Lysine digestible', valeur: '0,95 %', ratio: 90 },
+      { label: 'Énergie nette', valeur: '2 310 kcal/kg', ratio: 92 },
+      { label: 'Calcium', valeur: '0,65 %', ratio: 87 },
+      { label: 'Phosphore digest.', valeur: '0,32 %', ratio: 86 },
+    ],
+    bandes: [],
+  },
+  // 3. Croissance rapide — Porcs 25-50 kg (GMQ maximisé)
+  {
+    id: 'croissance-rapide',
+    codePhase: 'CROISSANCE_RAPIDE',
+    nom: 'Croissance rapide',
+    description: 'Porcs 25-50 kg · 2,7 kg/j · GMQ maximisé, protéines hautes',
+    pillLabel: 'GMQ+',
+    pillTone: 'info',
+    coutKgFcfa: 309,
+    dateMAJ: '2026-05-14',
+    ingredients: [
+      { nom: 'Maïs grain', pourcent: 58, prixKgFcfa: 200 },
+      { nom: 'Tourteau de soja 48 %', pourcent: 28, prixKgFcfa: 420 },
+      { nom: 'Son de blé', pourcent: 7, prixKgFcfa: 150 },
+      { nom: 'KPC 5 % De Heus', pourcent: 5, prixKgFcfa: 1040 },
+      { nom: 'Huile de palme brute', pourcent: 2, prixKgFcfa: 650 },
+    ],
+    apports: [
+      { label: 'Protéines brutes', valeur: '19,0 %', ratio: 97 },
+      { label: 'Lysine digestible', valeur: '1,08 %', ratio: 97 },
+      { label: 'Énergie nette', valeur: '2 420 kcal/kg', ratio: 97 },
+      { label: 'Calcium', valeur: '0,68 %', ratio: 90 },
+      { label: 'Phosphore digest.', valeur: '0,35 %', ratio: 90 },
+    ],
+    bandes: [],
+  },
+  // 4. Engraissement éco — Porcs 50-90 kg
+  // Tourteau de coton : vérifier gossypol < 100 mg/kg avant usage massif.
+  {
+    id: 'engraissement-eco',
+    codePhase: 'ENGRAISSEMENT_ECO',
+    nom: 'Engraissement éco',
+    description: 'Porcs 50-90 kg · 3,0 kg/j · coût optimisé marché local',
+    pillLabel: 'Éco',
+    pillTone: 'soft',
+    coutKgFcfa: 246,
+    dateMAJ: '2026-05-14',
+    ingredients: [
+      { nom: 'Maïs grain', pourcent: 68, prixKgFcfa: 200 },
+      { nom: 'Tourteau de coton 38 %', pourcent: 14, prixKgFcfa: 280 },
+      { nom: 'Son de blé', pourcent: 12, prixKgFcfa: 150 },
+      { nom: 'KPC 5 % De Heus', pourcent: 5, prixKgFcfa: 1040 },
+      { nom: 'Calcaire agricole', pourcent: 1, prixKgFcfa: 50 },
+    ],
+    apports: [
+      { label: 'Protéines brutes', valeur: '14,8 %', ratio: 82 },
+      { label: 'Lysine digestible', valeur: '0,80 %', ratio: 82 },
+      { label: 'Énergie nette', valeur: '2 250 kcal/kg', ratio: 88 },
+      { label: 'Calcium', valeur: '0,58 %', ratio: 83 },
+      { label: 'Phosphore digest.', valeur: '0,28 %', ratio: 80 },
+    ],
+    bandes: [],
+  },
+  // 5. Finition — Porcs 90-110 kg
+  {
+    id: 'finition',
+    codePhase: 'FINITION',
+    nom: 'Finition',
+    description: 'Porcs 90-110 kg · 3,2 kg/j · qualité carcasse abattoir',
+    pillLabel: 'Finition',
+    pillTone: 'warm',
+    coutKgFcfa: 272,
+    dateMAJ: '2026-05-14',
+    ingredients: [
+      { nom: 'Maïs grain', pourcent: 70, prixKgFcfa: 200 },
+      { nom: 'Tourteau de soja 48 %', pourcent: 14, prixKgFcfa: 420 },
+      { nom: 'Son de blé', pourcent: 10, prixKgFcfa: 150 },
+      { nom: 'KPC 5 % De Heus', pourcent: 5, prixKgFcfa: 1040 },
+      { nom: 'Huile de palme brute', pourcent: 1, prixKgFcfa: 650 },
+    ],
+    apports: [
+      { label: 'Protéines brutes', valeur: '13,8 %', ratio: 79 },
+      { label: 'Lysine digestible', valeur: '0,76 %', ratio: 80 },
+      { label: 'Énergie nette', valeur: '2 290 kcal/kg', ratio: 90 },
+      { label: 'Calcium', valeur: '0,60 %', ratio: 84 },
+      { label: 'Phosphore digest.', valeur: '0,28 %', ratio: 80 },
+    ],
+    bandes: [],
+  },
+  // 6. Truie gestante — J0-J107 de gestation
+  {
+    id: 'truie-gestante',
+    codePhase: 'TRUIE_GESTANTE',
+    nom: 'Truie gestante',
+    description: 'Truies J0-J107 · 2,5 kg/j · ration stable gestation',
+    pillLabel: 'Gestation',
+    pillTone: 'soft',
+    coutKgFcfa: 303,
+    dateMAJ: '2026-05-14',
+    ingredients: [
+      { nom: 'Maïs grain', pourcent: 61, prixKgFcfa: 200 },
+      { nom: 'Tourteau de soja 48 %', pourcent: 18, prixKgFcfa: 420 },
+      { nom: 'Son de blé', pourcent: 14, prixKgFcfa: 150 },
+      { nom: 'CMV Truie 1,5 % Vitalac', pourcent: 5, prixKgFcfa: 1662 },
+      { nom: 'Calcaire agricole', pourcent: 2, prixKgFcfa: 50 },
+    ],
+    apports: [
+      { label: 'Protéines brutes', valeur: '14,5 %', ratio: 92 },
+      { label: 'Lysine digestible', valeur: '0,72 %', ratio: 90 },
+      { label: 'Énergie nette', valeur: '2 150 kcal/kg', ratio: 88 },
+      { label: 'Calcium', valeur: '0,85 %', ratio: 97 },
+      { label: 'Phosphore digest.', valeur: '0,34 %', ratio: 92 },
+    ],
+    bandes: [],
+  },
+  // 7. Truie allaitante — Lactation J0-J35 post-mise bas
+  {
+    id: 'truie-allaitante',
+    codePhase: 'TRUIE_ALLAITANTE',
+    nom: 'Truie allaitante',
+    description: 'Truies lactation J0-J35 · 5-7 kg/j · énergie max lactation',
+    pillLabel: 'Lactation',
+    pillTone: 'warm',
+    coutKgFcfa: 332,
+    dateMAJ: '2026-05-14',
+    ingredients: [
+      { nom: 'Maïs grain', pourcent: 55, prixKgFcfa: 200 },
+      { nom: 'Tourteau de soja 48 %', pourcent: 26, prixKgFcfa: 420 },
+      { nom: 'Son de blé', pourcent: 11, prixKgFcfa: 150 },
+      { nom: 'CMV Truie 1,5 % Vitalac', pourcent: 5, prixKgFcfa: 1662 },
+      { nom: 'Huile de palme brute', pourcent: 2, prixKgFcfa: 650 },
+      { nom: 'Calcaire agricole', pourcent: 1, prixKgFcfa: 50 },
+    ],
+    apports: [
+      { label: 'Protéines brutes', valeur: '17,1 %', ratio: 95 },
+      { label: 'Lysine digestible', valeur: '0,92 %', ratio: 95 },
+      { label: 'Énergie nette', valeur: '2 310 kcal/kg', ratio: 95 },
+      { label: 'Calcium', valeur: '0,92 %', ratio: 98 },
+      { label: 'Phosphore digest.', valeur: '0,40 %', ratio: 95 },
+    ],
+    bandes: [],
+  },
+];
