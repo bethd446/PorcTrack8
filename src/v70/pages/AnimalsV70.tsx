@@ -430,7 +430,7 @@ const AnimalsV70Inner: React.FC = () => {
 
       {/* Filtres pertinents pour Truies uniquement (pleines/maternité/vides) */}
       {tab === 'truies' && (
-        <div className="pills" style={{ marginBottom: 14, marginTop: 14 }}>
+        <div className="pills" role="group" aria-label="Filtrer les truies par statut" style={{ marginBottom: 14, marginTop: 14 }}>
           <button
             type="button"
             className={`pill${filter === 'all' ? ' is-active' : ''}`}

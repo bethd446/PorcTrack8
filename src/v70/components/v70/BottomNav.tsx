@@ -97,6 +97,7 @@ export const BottomNavV70: React.FC = () => {
             role="tab"
             aria-selected={active}
             aria-current={active ? 'page' : undefined}
+            aria-label={tab.label}
             className={`bn-item${active ? ' active' : ''}`}
             onClick={() => navigate(tab.href)}
           >

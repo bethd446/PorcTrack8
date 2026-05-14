@@ -727,6 +727,7 @@ export const PerformanceV70: React.FC = () => {
               <svg
                 viewBox="0 0 320 120"
                 preserveAspectRatio="none"
+                role="img"
                 aria-label="Marge nette des 12 derniers mois"
                 style={{ width: '100%', height: 120, display: 'block' }}
               >

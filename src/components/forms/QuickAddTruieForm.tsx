@@ -132,19 +132,19 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({ isOpen, onClose, 
     } finally { setSaving(false); }
   };
 
-  const errMsg = (msg?: string): React.ReactNode =>
-    msg ? <span role="alert" style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 11, color: 'var(--pt-danger)' }}>{msg}</span> : null;
+  const errMsg = (msg?: string, id?: string): React.ReactNode =>
+    msg ? <span id={id} role="alert" style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 11, color: 'var(--pt-danger)' }}>{msg}</span> : null;
 
   return (
     <>
-      <IonModal isOpen={isOpen} onDidDismiss={handleClose} breakpoints={[0, 1]} initialBreakpoint={1} className="agritech-bottom-sheet pt-sheet-modal pt-screen" aria-label="Ajouter une truie">
+      <IonModal isOpen={isOpen} onDidDismiss={handleClose} breakpoints={[0, 1]} initialBreakpoint={1} className="agritech-bottom-sheet pt-sheet-modal pt-screen" aria-labelledby="add-truie-title">
         <div className="ion-page pt-screen" style={{ position: 'relative', overflow: 'auto' }}>
           <form className="sheet" onSubmit={handleSubmit} noValidate aria-label="Création d'une truie" style={{ position: 'relative', height: '100%', maxHeight: '100%' }}>
             <span className="sheet__handle" />
             <header className="sheet__head">
               <div>
                 <div className="eyebrow">Nouvelle truie</div>
-                <h2 className="sheet__title">Ajouter une truie</h2>
+                <h2 id="add-truie-title" className="sheet__title">Ajouter une truie</h2>
               </div>
               <button type="button" className="sheet__close" onClick={handleClose} aria-label="Fermer" disabled={saving}>
                 <X size={14} aria-hidden="true" />
@@ -153,13 +153,13 @@ const QuickAddTruieForm: React.FC<QuickAddTruieFormProps> = ({ isOpen, onClose, 
             <div className="sheet__body">
               <div className="field">
                 <label className="label--v77" htmlFor="add-truie-code">CODE <span className="hint">auto-généré</span></label>
-                <input id="add-truie-code" ref={firstFieldRef} className={`field__input mono${code ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={10} autoCapitalize="characters" aria-label="Code de la truie" aria-required="true" aria-invalid={!!errors.id} placeholder="T-051" value={code} onChange={e => setCode(e.target.value)} disabled={saving} autoComplete="off" />
-                {errMsg(errors.id)}
+                <input id="add-truie-code" ref={firstFieldRef} className={`field__input mono${code ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={10} autoCapitalize="characters" aria-label="Code de la truie" aria-required="true" aria-invalid={!!errors.id} aria-describedby={errors.id ? 'err-code' : undefined} placeholder="T-051" value={code} onChange={e => setCode(e.target.value)} disabled={saving} autoComplete="off" />
+                {errMsg(errors.id, 'err-code')}
               </div>
               <div className="field">
                 <label className="label--v77" htmlFor="add-truie-boucle">BOUCLE OFFICIELLE <span className="req">requis</span></label>
-                <input id="add-truie-boucle" className={`field__input mono${boucle ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={20} aria-label="Numéro de boucle" aria-required="true" aria-invalid={!!errors.boucle} placeholder="CI-051-26" value={boucle} onChange={e => setBoucle(e.target.value)} disabled={saving} autoComplete="off" />
-                {errMsg(errors.boucle)}
+                <input id="add-truie-boucle" className={`field__input mono${boucle ? ' filled' : ' field__input--ghost'}`} type="text" maxLength={20} aria-label="Numéro de boucle" aria-required="true" aria-invalid={!!errors.boucle} aria-describedby={errors.boucle ? 'err-boucle' : undefined} placeholder="CI-051-26" value={boucle} onChange={e => setBoucle(e.target.value)} disabled={saving} autoComplete="off" />
+                {errMsg(errors.boucle, 'err-boucle')}
               </div>
               <div className="field">
                 <label className="label--v77">STATUT</label>

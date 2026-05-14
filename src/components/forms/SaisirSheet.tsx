@@ -221,8 +221,8 @@ const SaisirSheet: React.FC<SaisirSheetProps> = ({ isOpen, onClose }) => {
             className="pressable"
             style={{
               flexShrink: 0,
-              width: 32,
-              height: 32,
+              width: 44,
+              height: 44,
               borderRadius: 8,
               border: '1px solid var(--pt-line-strong, rgba(26,26,26,0.16))',
               background: 'transparent',

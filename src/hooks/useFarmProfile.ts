@@ -33,7 +33,11 @@ import {
  * détecte la signature du mock (ex: `useMeta() => ({ loading: false })`
  * sans currentFarmId → on saute l'I/O).
  */
-function safeUseCurrentFarmId(): string | null {
+// V81 Sprint 18 — renommé `safeUseCurrentFarmId` → `useSafeCurrentFarmId`
+// pour respecter react-hooks/rules-of-hooks : un wrapper qui appelle un hook
+// (FarmContext.useMeta) DOIT lui-même commencer par `use` pour qu'ESLint le
+// reconnaisse comme custom hook.
+function useSafeCurrentFarmId(): string | null {
   try {
     // Les tests existants mockent FarmContext avec un useMeta qui retourne
     // un objet partiel sans throw — l'appel direct fonctionne donc même
@@ -48,7 +52,7 @@ function safeUseCurrentFarmId(): string | null {
 }
 
 export function useFarmProfile(): FarmProfile {
-  const currentFarmId = safeUseCurrentFarmId();
+  const currentFarmId = useSafeCurrentFarmId();
   const [metadata, setMetadata] = useState<unknown>(null);
 
   useEffect(() => {
