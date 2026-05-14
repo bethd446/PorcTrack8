@@ -25,9 +25,11 @@ import { Section } from '../../v70/components/ds/Section';
 import { Pill, type PillVariant } from '../../v70/components/ds/Pill';
 import {
   FORMULES,
+  FORMULES_MARCHE,
   buildPhaseFilters,
   type Formule,
   type FormulePillTone,
+  type FormuleSource,
 } from './formulesData';
 
 function pillVariantForTone(tone: FormulePillTone): PillVariant {
@@ -158,14 +160,22 @@ const FormulesView: React.FC = () => {
   const navigate = useNavigate();
   const { alimentFormules } = useFarm();
   const { loading: farmLoading } = useMeta();
+  // V82 — sélecteur de référentiel : recettes mockup vs marché Afrique Ouest.
+  const [source, setSource] = useState<FormuleSource>('marche');
   const [filter, setFilter] = useState<string>('all');
   const showLoading = farmLoading && alimentFormules.length === 0;
 
-  const filters = useMemo(() => buildPhaseFilters(FORMULES), []);
+  const refFormules = source === 'marche' ? FORMULES_MARCHE : FORMULES;
+  const filters = useMemo(() => buildPhaseFilters(refFormules), [refFormules]);
   const visible = useMemo(
-    () => (filter === 'all' ? FORMULES : FORMULES.filter((f) => f.pillLabel === filter)),
-    [filter],
+    () => (filter === 'all' ? refFormules : refFormules.filter((f) => f.pillLabel === filter)),
+    [filter, refFormules],
   );
+
+  const handleSourceChange = (next: FormuleSource): void => {
+    setSource(next);
+    setFilter('all'); // les pills phase diffèrent entre référentiels
+  };
 
   return (
     <IonPage>
@@ -183,7 +193,15 @@ const FormulesView: React.FC = () => {
             <div className="eyebrow">Stocks · Formules</div>
             <h1>Formules</h1>
             <div className="sub">
-              <b className="num">{FORMULES.length} recettes</b> par phase de cycle · prix avril 2026
+              {source === 'marche' ? (
+                <>
+                  <b className="num">{FORMULES_MARCHE.length} formules marché</b> · prix réels Afrique de l'Ouest 2026
+                </>
+              ) : (
+                <>
+                  <b className="num">{FORMULES.length} recettes</b> par phase de cycle · prix avril 2026
+                </>
+              )}
             </div>
           </header>
 
@@ -191,6 +209,52 @@ const FormulesView: React.FC = () => {
             className="phone-content"
             style={{ padding: 24, maxWidth: 600, margin: '0 auto' }}
           >
+            {/* V82 — Toggle référentiel : marché (prix réels) vs mockup */}
+            <div
+              role="group"
+              aria-label="Choisir le référentiel de formules"
+              style={{
+                display: 'flex',
+                gap: 4,
+                marginBottom: 12,
+                padding: 4,
+                background: 'var(--pt-bg-app)',
+                border: '1px solid var(--pt-line)',
+                borderRadius: 12,
+              }}
+            >
+              {([
+                { value: 'marche' as const, label: 'Marché' },
+                { value: 'mockup' as const, label: 'Mes recettes' },
+              ]).map((opt) => {
+                const active = source === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => handleSourceChange(opt.value)}
+                    style={{
+                      flex: 1,
+                      minHeight: 44,
+                      borderRadius: 9,
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontFamily: 'var(--pt-font-mono)',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                      background: active ? 'var(--pt-primary)' : 'transparent',
+                      color: active ? 'var(--pt-primary-text)' : 'var(--pt-muted)',
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+
             <div className="chips" style={{ marginBottom: 12 }}>
               {filters.map((opt) => {
                 const active = filter === opt.value;
@@ -242,7 +306,11 @@ const FormulesView: React.FC = () => {
                   <FormuleListItem
                     key={f.id}
                     formule={f}
-                    onClick={() => navigate(`/ressources/formules/${f.id}`)}
+                    onClick={() =>
+                      navigate(
+                        `/ressources/formules/${f.id}${source === 'marche' ? '?ref=marche' : ''}`,
+                      )
+                    }
                   />
                 ))
               )}

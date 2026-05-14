@@ -16,7 +16,7 @@
  */
 
 import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import { ChevronLeft, FlaskConical } from 'lucide-react';
 
@@ -26,6 +26,7 @@ import {
   getFormuleById,
   type Formule,
   type FormulePillTone,
+  type FormuleSource,
 } from './formulesData';
 
 function pillVariantForTone(tone: FormulePillTone): PillVariant {
@@ -255,7 +256,13 @@ const FormuleNotFound: React.FC<{ onBack: () => void }> = ({ onBack }) => (
 const FormuleDetailView: React.FC = () => {
   const navigate = useNavigate();
   const { id = '' } = useParams<{ id: string }>();
-  const formule = getFormuleById(id);
+  // V82 — `?ref=marche` lève l'ambiguïté des ids partagés entre les 2
+  // référentiels (ex: engraissement-eco existe dans mockup ET marché).
+  const [searchParams] = useSearchParams();
+  const refParam = searchParams.get('ref');
+  const source: FormuleSource | undefined =
+    refParam === 'marche' || refParam === 'mockup' ? refParam : undefined;
+  const formule = getFormuleById(id, source);
 
   const goBack = (): void => {
     void navigate('/ressources/formules');

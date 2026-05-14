@@ -241,9 +241,20 @@ export const FORMULES: Formule[] = [
   },
 ];
 
-/** Lookup formule par id (URL slug). undefined si inconnu. */
-export function getFormuleById(id: string): Formule | undefined {
-  return FORMULES.find((f) => f.id === id);
+/** Référentiel de formules : mockup V78 ou marché Afrique de l'Ouest V82. */
+export type FormuleSource = 'mockup' | 'marche';
+
+/**
+ * Lookup formule par id (URL slug). undefined si inconnu.
+ *
+ * V82 — `source` lève l'ambiguïté quand un id existe dans les 2 référentiels
+ * (ex: `engraissement-eco`). Sans `source`, on cherche d'abord dans FORMULES
+ * (compat historique) puis dans FORMULES_MARCHE.
+ */
+export function getFormuleById(id: string, source?: FormuleSource): Formule | undefined {
+  if (source === 'marche') return FORMULES_MARCHE.find((f) => f.id === id);
+  if (source === 'mockup') return FORMULES.find((f) => f.id === id);
+  return FORMULES.find((f) => f.id === id) ?? FORMULES_MARCHE.find((f) => f.id === id);
 }
 
 /** Filtres pills disponibles. */
