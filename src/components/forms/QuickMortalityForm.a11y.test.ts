@@ -65,8 +65,9 @@ describe('QuickMortalityForm · accessibilité', () => {
     // boutons − / + (Button DS expose ariaLabel prop, pas attribut HTML)
     expect(SRC).toMatch(/ariaLabel="Diminuer le nombre de morts"/);
     expect(SRC).toMatch(/ariaLabel="Augmenter le nombre de morts"/);
-    // submit
-    expect(SRC).toMatch(/ariaLabel="Enregistrer la mortalité"/);
+    // submit — Phase 3b : migré vers <QuickActionSheet footer={…}>, le bouton
+    // submit est désormais un <button> natif du footer (attribut aria-label).
+    expect(SRC).toMatch(/aria-label="Enregistrer la mortalité"/);
   });
 
   it('expose aria-describedby sur input count + textarea', () => {

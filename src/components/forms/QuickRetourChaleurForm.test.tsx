@@ -144,11 +144,11 @@ describe('QuickRetourChaleurForm', () => {
     ];
 
     render(<QuickRetourChaleurForm isOpen onClose={() => undefined} />);
-    // T01 visible
-    expect(screen.queryByTestId('retour-truie-T01')).toBeTruthy();
+    // T01 visible (chip EntityPicker, ciblé via l'aria-label contractuel)
+    expect(screen.queryByLabelText(/Sélectionner la truie T01/)).toBeTruthy();
     // T02 et T03 hors fenêtre — pas de chip
-    expect(screen.queryByTestId('retour-truie-T02')).toBeNull();
-    expect(screen.queryByTestId('retour-truie-T03')).toBeNull();
+    expect(screen.queryByLabelText(/Sélectionner la truie T02/)).toBeNull();
+    expect(screen.queryByLabelText(/Sélectionner la truie T03/)).toBeNull();
   });
 
   it('[3] submit : insertHealthLog avec log_type RETOUR_CHALEUR + animal_code', async () => {
@@ -158,7 +158,7 @@ describe('QuickRetourChaleurForm', () => {
     render(<QuickRetourChaleurForm isOpen onClose={() => undefined} />);
 
     // Sélectionne T01
-    fireEvent.click(screen.getByTestId('retour-truie-T01'));
+    fireEvent.click(screen.getByLabelText(/Sélectionner la truie T01/));
     // Action par défaut RESAILLIR — change pour ATTENDRE pour ne pas
     // déclencher onResaillir.
     fireEvent.click(screen.getByTestId('action-attendre'));
@@ -188,7 +188,7 @@ describe('QuickRetourChaleurForm', () => {
 
     render(<QuickRetourChaleurForm isOpen onClose={() => undefined} />);
 
-    fireEvent.click(screen.getByTestId('retour-truie-T01'));
+    fireEvent.click(screen.getByLabelText(/Sélectionner la truie T01/));
     fireEvent.click(screen.getByTestId('action-surveiller'));
     fireEvent.click(screen.getByRole('button', { name: /Enregistrer le retour|Confirmer le retour/i }));
 
@@ -213,7 +213,7 @@ describe('QuickRetourChaleurForm', () => {
       <QuickRetourChaleurForm isOpen onClose={onClose} onResaillir={onResaillir} />,
     );
 
-    fireEvent.click(screen.getByTestId('retour-truie-T07'));
+    fireEvent.click(screen.getByLabelText(/Sélectionner la truie T07/));
     // Action par défaut = RESAILLIR (pas besoin de cliquer)
     fireEvent.click(screen.getByRole('button', { name: /Enregistrer le retour|Confirmer le retour/i }));
 

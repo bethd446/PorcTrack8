@@ -7,8 +7,9 @@ import {
   updateBatchByCode,
 } from '../../services/supabaseWrites';
 import { safeDate } from '../../lib/truieHelpers';
-import { BottomSheet, DataRow } from '../agritech';
+import { DataRow } from '../agritech';
 import { Button, Input, Textarea } from '@/design-system';
+import QuickActionSheet from './QuickActionSheet';
 import { bandesAEligibleSeparation } from '../../services/bandesAggregator';
 import type { BandePorcelets } from '../../types/farm';
 import { kvGet } from '../../services/kvStore';
@@ -35,6 +36,13 @@ import { todayIso } from './_formHelpers';
      - Update PORCELETS_BANDES (patch nbMales/nbFemelles/dateSeparation)
        via offline queue. Le worker côté Sheets ignore un patch si la colonne
        n'existe pas — compatible schéma incrémental.
+
+   Migration FORM_CONTRACT Phase 3b — WIZARD 3 étapes (réf. QuickSplitBandeForm) :
+     - shell `<QuickActionSheet>` avec `footer` custom : Annuler (étape 1),
+       Annuler + Enregistrer (étape 2, `type="submit"`), OK (étape 3).
+     - `handleSubmit` est l'`onSubmit` du `<form>` du shell ; garde-fou sur
+       `step !== 2`.
+     - `bodyClassName="sheet__body--wizard"` pour le layout dense.
    ═════════════════════════════════════════════════════════════════════════ */
 
 interface QuickSexSeparationFormProps {
@@ -165,6 +173,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
+    if (step !== 2) return;
     if (!selectedBande) return;
     if (!validate()) return;
 
@@ -231,17 +240,63 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
     form.dateSeparation !== '' &&
     Object.keys(errors).length === 0;
 
+  const footer =
+    step === 3 ? (
+      <Button variant="primary" onClick={handleClose}>
+        OK
+      </Button>
+    ) : step === 1 ? (
+      <>
+        <button
+          type="button"
+          className="btn btn--ghost"
+          onClick={handleClose}
+          disabled={saving}
+          aria-label="Annuler et fermer"
+        >
+          Annuler
+        </button>
+        <span aria-hidden="true" />
+      </>
+    ) : (
+      <>
+        <button
+          type="button"
+          className="btn btn--ghost"
+          onClick={handleClose}
+          disabled={saving}
+          aria-label="Annuler et fermer"
+        >
+          Annuler
+        </button>
+        <button
+          type="submit"
+          className="btn btn--primary btn--lg btn--block"
+          disabled={saving || !isValid}
+          aria-busy={saving}
+          aria-label="Enregistrer la séparation"
+        >
+          {saving ? 'Enregistrement…' : 'Enregistrer'}
+        </button>
+      </>
+    );
+
   return (
-    <BottomSheet
+    <QuickActionSheet
       isOpen={isOpen}
       onClose={handleClose}
+      eyebrow="Engraissement"
       title="Séparation sexe · Bande"
-      height="full"
+      ariaLabel="Séparation sexe bande"
+      saving={saving}
+      isValid={isValid}
+      onSubmit={handleSubmit}
+      submitLabel="Enregistrer"
+      footer={footer}
+      bodyClassName="sheet__body--wizard"
     >
       <div
-        role="dialog"
         aria-labelledby="sep-form-heading"
-        aria-modal="true"
         className="space-y-5"
       >
         {/* ── Stepper ──────────────────────────────────────────────── */}
@@ -359,7 +414,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
 
         {/* ══════════════ ÉTAPE 2 — Saisie ═══════════════════════════ */}
         {step === 2 && selectedBande ? (
-          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+          <div className="space-y-5">
             {/* Bande sélectionnée */}
             <div className="card-dense !p-3 flex items-center gap-3">
               <Button
@@ -519,30 +574,7 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
                 {submitError}
               </p>
             ) : null}
-
-            {/* Actions */}
-            <div className="flex gap-3 justify-end px-4 py-3 border-t border-border">
-              <Button
-                variant="secondary"
-                onClick={handleClose}
-                disabled={saving}
-              >
-                Annuler
-              </Button>
-              <Button
-                variant="primary"
-                type="submit"
-                disabled={saving || !isValid}
-                aria-label="Enregistrer la séparation"
-              >
-                {saving ? (
-                  <span className="animate-pulse">Enregistrement…</span>
-                ) : (
-                  'Enregistrer'
-                )}
-              </Button>
-            </div>
-          </form>
+          </div>
         ) : null}
 
         {/* ══════════════ ÉTAPE 3 — Succès ═══════════════════════════ */}
@@ -566,19 +598,10 @@ const QuickSexSeparationForm: React.FC<QuickSexSeparationFormProps> = ({ isOpen,
                 {successSummary}
               </p>
             ) : null}
-
-            <div className="mt-8">
-              <Button
-                variant="primary"
-                onClick={handleClose}
-              >
-                OK
-              </Button>
-            </div>
           </div>
         ) : null}
       </div>
-    </BottomSheet>
+    </QuickActionSheet>
   );
 };
 

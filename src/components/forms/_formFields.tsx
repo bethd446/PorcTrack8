@@ -1,5 +1,5 @@
 /**
- * _formFields — primitives de champ partagées par les Quick*Form (Phase 1).
+ * _formFields — primitives de champ partagées par les Quick*Form (Phase 1+3a).
  * ════════════════════════════════════════════════════════════════════════════
  * Regroupe :
  *  - `FieldError`     : rendu canonique d'un message d'erreur sous un champ
@@ -13,6 +13,15 @@
  *
  * Le contrat (FORM_CONTRACT.md) recommande `'chips'` quand la liste est courte
  * (< ~8 entités) et `'autocomplete'` au-delà.
+ *
+ * Phase 3a — extensions `EntityPicker` :
+ *  - `multi` : sélection MULTIPLE (mode `chips` uniquement). `value` devient
+ *    `string[]` et `onChange` reçoit `(ids: string[])`. A11y : les chips
+ *    passent en `role="checkbox"` + `aria-checked` (sémantique correcte d'une
+ *    sélection multiple — un `radiogroup` n'autorise qu'un sélectionné).
+ *  - `renderSubLabel` : sous-titre par chip (ex. `J+X · saillie du …`).
+ *  - `getAriaLabel`   : `aria-label` paramétré par entité (fallback =
+ *    `Sélectionner {entityLabel} {displayId}`, contractuel pour les tests).
  */
 import React, { useMemo } from 'react';
 
@@ -57,15 +66,10 @@ export interface PickableEntity {
   boucle?: string;
 }
 
-export interface EntityPickerProps<T extends PickableEntity> {
-  /** Mode de sélection. */
-  mode: 'chips' | 'autocomplete';
+/** Props communes à tous les modes / cardinalités de l'`EntityPicker`. */
+interface EntityPickerCommonProps<T extends PickableEntity> {
   /** Entités disponibles (déjà filtrées par éligibilité métier). */
   entities: ReadonlyArray<T>;
-  /** Code (`displayId`) actuellement sélectionné. */
-  value: string;
-  /** Callback de sélection — reçoit le `displayId`. */
-  onChange: (displayId: string) => void;
   /**
    * Mot pour l'a11y : `'la truie'` / `'le verrat'`. Utilisé pour
    * `aria-label="Sélectionner {entityLabel} X"` (les tests s'y appuient).
@@ -77,61 +81,115 @@ export interface EntityPickerProps<T extends PickableEntity> {
   emptyText: string;
   /** Verrouille les contrôles (pendant `saving`). */
   disabled?: boolean;
-  /** `id` HTML de l'input (mode autocomplete) — pour `htmlFor` du label. */
+  /**
+   * Sous-titre optionnel rendu sous le code de chaque chip (mode `chips`).
+   * Ex. `J+12 · saillie du 03/05`. Ignoré en mode `autocomplete`.
+   */
+  renderSubLabel?: (entity: T) => React.ReactNode;
+  /**
+   * `aria-label` paramétré par entité. Fallback : `Sélectionner {entityLabel}
+   * {displayId}` (forme contractuelle attendue par les tests existants —
+   * ne PAS changer ce fallback).
+   */
+  getAriaLabel?: (entity: T) => string;
+}
+
+/** Props spécifiques au mode `autocomplete` (mono-sélection uniquement). */
+interface EntityPickerAutocompleteProps<T extends PickableEntity>
+  extends EntityPickerCommonProps<T> {
+  mode: 'autocomplete';
+  multi?: false;
+  /** Code (`displayId`) actuellement sélectionné. */
+  value: string;
+  /** Callback de sélection — reçoit le `displayId`. */
+  onChange: (displayId: string) => void;
+  /** `id` HTML de l'input — pour `htmlFor` du label. */
   inputId?: string;
-  /** Placeholder de l'input (mode autocomplete). */
+  /** Placeholder de l'input. */
   placeholder?: string;
-  /** `true` si le champ est en erreur (mode autocomplete → `aria-invalid`). */
+  /** `true` si le champ est en erreur (→ `aria-invalid`). */
   invalid?: boolean;
-  /** `ref` à poser sur l'input (mode autocomplete) pour le focus auto. */
+  /** `ref` à poser sur l'input pour le focus auto. */
   inputRef?: React.RefObject<HTMLInputElement | null>;
   /**
-   * Mode autocomplete uniquement : query de recherche courante (état contrôlé
-   * par le parent — permet de pré-remplir / réinitialiser).
+   * Query de recherche courante (état contrôlé par le parent — permet de
+   * pré-remplir / réinitialiser).
    */
   query?: string;
-  /** Mode autocomplete : callback de changement de la query. */
+  /** Callback de changement de la query. */
   onQueryChange?: (q: string) => void;
-  /** Mode autocomplete : nombre max de suggestions affichées (défaut 6). */
+  /** Nombre max de suggestions affichées (défaut 6). */
   maxSuggestions?: number;
 }
+
+/** Props du mode `chips` en mono-sélection (comportement Phase 1). */
+interface EntityPickerChipsSingleProps<T extends PickableEntity>
+  extends EntityPickerCommonProps<T> {
+  mode: 'chips';
+  multi?: false;
+  /** Code (`displayId`) actuellement sélectionné. */
+  value: string;
+  /** Callback de sélection — reçoit le `displayId`. */
+  onChange: (displayId: string) => void;
+}
+
+/** Props du mode `chips` en multi-sélection (Phase 3a). */
+interface EntityPickerChipsMultiProps<T extends PickableEntity>
+  extends EntityPickerCommonProps<T> {
+  mode: 'chips';
+  multi: true;
+  /** Codes (`displayId`) actuellement sélectionnés. */
+  value: ReadonlyArray<string>;
+  /** Callback de sélection — reçoit la liste complète des `displayId`. */
+  onChange: (displayIds: string[]) => void;
+}
+
+export type EntityPickerProps<T extends PickableEntity> =
+  | EntityPickerAutocompleteProps<T>
+  | EntityPickerChipsSingleProps<T>
+  | EntityPickerChipsMultiProps<T>;
 
 /**
  * Sélecteur d'entité animale partagé. Préserve les conventions a11y attendues
  * par les tests existants :
- *  - mode chips : `role="radiogroup"` > `role="radio"` + `aria-checked` +
+ *  - mode chips mono : `role="radiogroup"` > `role="radio"` + `aria-checked` +
  *    `aria-label="Sélectionner la truie X"`.
+ *  - mode chips multi (Phase 3a) : `role="group"` > `role="checkbox"` +
+ *    `aria-checked` (sélection multiple — un radiogroup serait sémantiquement
+ *    faux). Le fallback d'`aria-label` reste `"Sélectionner {entityLabel} X"`.
  *  - mode autocomplete : `<input>` + `role="listbox"` > `role="option"`.
  */
-export function EntityPicker<T extends PickableEntity>({
-  mode,
-  entities,
-  value,
-  onChange,
-  entityLabel,
-  groupLabel,
-  emptyText,
-  disabled = false,
-  inputId,
-  placeholder,
-  invalid = false,
-  inputRef,
-  query = '',
-  onQueryChange,
-  maxSuggestions = 6,
-}: EntityPickerProps<T>): React.ReactElement {
+export function EntityPicker<T extends PickableEntity>(
+  props: EntityPickerProps<T>,
+): React.ReactElement {
+  const {
+    mode,
+    entities,
+    entityLabel,
+    groupLabel,
+    emptyText,
+    disabled = false,
+    renderSubLabel,
+    getAriaLabel,
+  } = props;
+
+  const ariaLabelFor = (e: T): string =>
+    getAriaLabel ? getAriaLabel(e) : `Sélectionner ${entityLabel} ${e.displayId}`;
+
   const suggestions = useMemo<ReadonlyArray<T>>(() => {
-    if (mode !== 'autocomplete') return entities;
-    const q = query.trim().toLowerCase();
-    if (!q) return entities.slice(0, maxSuggestions);
+    if (props.mode !== 'autocomplete') return entities;
+    const q = (props.query ?? '').trim().toLowerCase();
+    const max = props.maxSuggestions ?? 6;
+    if (!q) return entities.slice(0, max);
     return entities
       .filter((e) => {
         const id = (e.displayId || e.id || '').toLowerCase();
         const b = (e.boucle || '').toLowerCase();
         return id.includes(q) || b.includes(q);
       })
-      .slice(0, maxSuggestions);
-  }, [mode, entities, query, maxSuggestions]);
+      .slice(0, max);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.mode, entities, props.mode === 'autocomplete' ? props.query : '', props.mode === 'autocomplete' ? props.maxSuggestions : 0]);
 
   if (entities.length === 0) {
     return (
@@ -141,7 +199,43 @@ export function EntityPicker<T extends PickableEntity>({
     );
   }
 
+  if (mode === 'chips' && props.multi === true) {
+    const { value, onChange } = props;
+    const selected = new Set(value);
+    const toggle = (id: string): void => {
+      const next = new Set(selected);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      onChange(Array.from(next));
+    };
+    return (
+      <div className="radio-chips--cards" role="group" aria-label={groupLabel}>
+        {entities.map((e) => {
+          const isOn = selected.has(e.displayId);
+          return (
+            <button
+              key={e.id}
+              type="button"
+              className={`radio-chip--card${isOn ? ' is-selected' : ''}`}
+              role="checkbox"
+              aria-checked={isOn}
+              aria-label={ariaLabelFor(e)}
+              onClick={() => toggle(e.displayId)}
+              disabled={disabled}
+            >
+              <div className="radio-chip__code">{e.displayId}</div>
+              {renderSubLabel ? (
+                <div className="radio-chip__sub">{renderSubLabel(e)}</div>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
   if (mode === 'chips') {
+    const { value, onChange } = props;
     return (
       <div className="radio-chips--cards" role="radiogroup" aria-label={groupLabel}>
         {entities.map((e) => (
@@ -151,11 +245,18 @@ export function EntityPicker<T extends PickableEntity>({
             className={`radio-chip--card${value === e.displayId ? ' is-selected' : ''}`}
             role="radio"
             aria-checked={value === e.displayId}
-            aria-label={`Sélectionner ${entityLabel} ${e.displayId}`}
+            aria-label={ariaLabelFor(e)}
             onClick={() => onChange(e.displayId)}
             disabled={disabled}
           >
-            {e.displayId}
+            {renderSubLabel ? (
+              <>
+                <div className="radio-chip__code">{e.displayId}</div>
+                <div className="radio-chip__sub">{renderSubLabel(e)}</div>
+              </>
+            ) : (
+              e.displayId
+            )}
           </button>
         ))}
       </div>
@@ -163,6 +264,7 @@ export function EntityPicker<T extends PickableEntity>({
   }
 
   // mode === 'autocomplete'
+  const { value, onChange, inputId, placeholder, invalid = false, inputRef, query = '', onQueryChange } = props;
   return (
     <>
       <input

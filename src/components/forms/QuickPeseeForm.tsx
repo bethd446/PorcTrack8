@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
-import { useIonAlert, IonModal, IonSegment, IonSegmentButton, IonLabel } from '@ionic/react';
-import { CheckCircle2, ChevronRight, ArrowLeft, AlertTriangle, X } from 'lucide-react';
+import { useIonAlert, IonSegment, IonSegmentButton, IonLabel } from '@ionic/react';
+import { CheckCircle2, ChevronRight, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,6 +14,7 @@ import {
 } from '../../services/supabaseWrites';
 import { safeDate } from '../../lib/truieHelpers';
 import { todayIso } from './_formHelpers';
+import QuickActionSheet from './QuickActionSheet';
 import type { BandePorcelets, Truie, Verrat } from '../../types/farm';
 import { extractPeseesForBande } from '../../services/growthAnalyzer';
 import { markPeseeEffectuee } from '../../services/peseePlanifieesService';
@@ -41,6 +42,16 @@ import {
      4. Succès
    Persist : NOTES_TERRAIN (5-col) + Update poids (si animal individuel)
    Validation : RHF + Zod (peseeSchema)
+
+   Migration FORM_CONTRACT Phase 3b — WIZARD :
+     - shell `<QuickActionSheet>` avec `footer` custom par étape (pattern
+       QuickSplitBandeForm). Le `<form onSubmit>` du shell porte le submit RHF :
+       il n'est actif qu'à l'étape 2 (handleFormSubmit dispatche selon `step`).
+     - toast canonique `useToast()` déjà en place ; helpers `todayIso` partagés.
+     - SPEC : la validation reste RHF+Zod (`peseeSchema`) — approche légitime,
+       réécriture vers `validateX → {ok,errors,normalized}` jugée risquée
+       (superRefine multi-champs, intégration `<FormMessage>`). Seul le shell
+       est uniformisé.
    ═════════════════════════════════════════════════════════════════════════ */
 
 interface QuickPeseeFormProps {
@@ -486,47 +497,78 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingValues]); // executeSubmit closure stable assez
 
+  // Le <form onSubmit> du shell ne porte le submit RHF qu'à l'étape 2 (saisie).
+  // Aux autres étapes, les boutons footer sont type="button" : aucun submit
+  // natif ne se déclenche, mais on garde le garde-fou.
+  const handleFormSubmit = (e: React.FormEvent): void => {
+    if (step === 2) {
+      void onSubmit(e);
+    } else {
+      e.preventDefault();
+    }
+  };
+
+  const sheetTitle =
+    step === 1 ? 'Choisir le sujet à peser'
+    : step === 2 ? 'Saisir la pesée'
+    : step === 3 ? 'Confirmer la pesée'
+    : 'Pesée enregistrée';
+
+  // Footer custom wizard — varie selon l'étape (FORM_CONTRACT §3 bis).
+  const footer =
+    step === 1 ? (
+      <button type="button" className="btn btn--ghost" onClick={handleClose} disabled={saving}>
+        Annuler
+      </button>
+    ) : step === 2 ? (
+      <>
+        <button type="button" className="btn btn--ghost" onClick={handleClose} disabled={saving}>
+          Annuler
+        </button>
+        <button type="submit" className="btn btn--primary" disabled={saving} aria-busy={saving}>
+          {saving ? 'Enregistrement…' : 'Enregistrer'}
+        </button>
+      </>
+    ) : step === 3 ? (
+      <>
+        <button type="button" className="btn btn--ghost" onClick={() => setStep(2)} disabled={saving}>
+          Modifier
+        </button>
+        <button
+          type="button"
+          className="btn btn--primary"
+          onClick={() => { void handleConfirmRecap(); }}
+          disabled={saving}
+          aria-busy={saving}
+        >
+          {saving ? 'Enregistrement…' : 'Confirmer le nouveau poids'}
+        </button>
+      </>
+    ) : (
+      <button type="button" className="btn btn--primary btn--block" onClick={handleClose}>
+        OK
+      </button>
+    );
+
   return (
-    <IonModal
+    <QuickActionSheet
       isOpen={isOpen}
-      onDidDismiss={handleClose}
-      breakpoints={[0, 1]}
-      initialBreakpoint={1}
-      className="agritech-bottom-sheet pt-sheet-modal pt-screen"
-      aria-label="Pesée rapide"
+      onClose={handleClose}
+      eyebrow="Pesée rapide"
+      title={sheetTitle}
+      ariaLabel="Pesée rapide"
+      saving={saving}
+      isValid={true}
+      onSubmit={handleFormSubmit}
+      submitLabel="Enregistrer"
+      footer={footer}
     >
-      <div className="ion-page pt-screen" style={{ position: 'relative', overflow: 'auto' }}>
-        <div className="sheet" role="dialog" style={{ position: 'relative', height: '100%', maxHeight: '100%' }}>
-          <span className="sheet__handle" />
+      {/* Stepper (1=sélection, 2=saisie, 3=récap, 4=succès) */}
+      <div className="step-pill">Étape {step} / 4</div>
 
-          <header className="sheet__head">
-            <div>
-              <div className="eyebrow">Pesée rapide</div>
-              <h2 className="sheet__title">
-                {step === 1 && 'Choisir le sujet à peser'}
-                {step === 2 && 'Saisir la pesée'}
-                {step === 3 && 'Confirmer la pesée'}
-                {step === 4 && 'Pesée enregistrée'}
-              </h2>
-            </div>
-            <button
-              type="button"
-              className="sheet__close"
-              onClick={handleClose}
-              aria-label="Fermer"
-              disabled={saving}
-            >
-              <X size={14} aria-hidden="true" />
-            </button>
-          </header>
-
-          <div className="sheet__body">
-            {/* Stepper (1=sélection, 2=saisie, 3=récap, 4=succès) */}
-            <div className="step-pill">Étape {step} / 4</div>
-
-            {/* ÉTAPE 1 : Sélection */}
-            {step === 1 && (
-              <>
+      {/* ÉTAPE 1 : Sélection */}
+      {step === 1 && (
+        <>
                 <IonSegment
                   value={subjectType}
                   onIonChange={e => {
@@ -595,10 +637,10 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
               </>
             )}
 
-            {/* ÉTAPE 2 : Saisie */}
-            {step === 2 && selectedSubject && (
-              <Form {...form}>
-                <form onSubmit={onSubmit}>
+      {/* ÉTAPE 2 : Saisie */}
+      {step === 2 && selectedSubject && (
+        <Form {...form}>
+          <div>
                   <div className="calc-card" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <button
                       type="button"
@@ -759,21 +801,13 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
                     )}
                   />
 
-                  <footer className="sheet__foot" style={{ marginTop: 16 }}>
-                    <button type="button" className="btn btn--ghost" onClick={handleClose} disabled={saving}>
-                      Annuler
-                    </button>
-                    <button type="submit" className="btn btn--primary" disabled={saving}>
-                      {saving ? 'Enregistrement…' : 'Enregistrer'}
-                    </button>
-                  </footer>
-                </form>
-              </Form>
-            )}
+          </div>
+        </Form>
+      )}
 
-            {/* ÉTAPE 3 : Récap & confirmation explicite */}
-            {step === 3 && selectedSubject && recapStats && (
-              <div data-testid="pesee-recap">
+      {/* ÉTAPE 3 : Récap & confirmation explicite */}
+      {step === 3 && selectedSubject && recapStats && (
+        <div data-testid="pesee-recap">
                 <div className="calc-card" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <button
                     type="button"
@@ -872,41 +906,22 @@ const QuickPeseeForm: React.FC<QuickPeseeFormProps> = ({ isOpen, onClose, peseeI
                   </div>
                 )}
 
-                <footer className="sheet__foot" style={{ marginTop: 16 }}>
-                  <button type="button" className="btn btn--ghost" onClick={() => setStep(2)}>
-                    Modifier
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn--primary"
-                    onClick={() => { void handleConfirmRecap(); }}
-                    disabled={saving}
-                  >
-                    {saving ? 'Enregistrement…' : 'Confirmer le nouveau poids'}
-                  </button>
-                </footer>
-              </div>
-            )}
-
-            {/* ÉTAPE 4 : Succès */}
-            {step === 4 && (
-              <div className="flex flex-col items-center justify-center py-16 animate-scale-in">
-                <CheckCircle2 size={38} aria-hidden="true" style={{ color: 'var(--pt-primary)', marginBottom: 16 }} strokeWidth={2} />
-                <p className="sheet__title" style={{ textAlign: 'center' }}>Pesée enregistrée</p>
-                {successSummary && (
-                  <p className="sheet__sub" style={{ textAlign: 'center', marginTop: 8, padding: '0 16px' }}>
-                    {successSummary}
-                  </p>
-                )}
-                <button type="button" className="btn btn--primary" onClick={handleClose} style={{ marginTop: 32 }}>
-                  OK
-                </button>
-              </div>
-            )}
-          </div>
         </div>
-      </div>
-    </IonModal>
+      )}
+
+      {/* ÉTAPE 4 : Succès */}
+      {step === 4 && (
+        <div className="flex flex-col items-center justify-center py-16 animate-scale-in">
+          <CheckCircle2 size={38} aria-hidden="true" style={{ color: 'var(--pt-primary)', marginBottom: 16 }} strokeWidth={2} />
+          <p className="sheet__title" style={{ textAlign: 'center' }}>Pesée enregistrée</p>
+          {successSummary && (
+            <p className="sheet__sub" style={{ textAlign: 'center', marginTop: 8, padding: '0 16px' }}>
+              {successSummary}
+            </p>
+          )}
+        </div>
+      )}
+    </QuickActionSheet>
   );
 };
 

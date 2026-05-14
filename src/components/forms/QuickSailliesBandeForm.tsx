@@ -20,9 +20,11 @@
  *  - garde double-clic : `saving` maintenu jusqu'au `onClose`, `closeTimerRef`
  *    + cleanup `useEffect`
  *
- * NOTE : la sélection truies/verrats est MULTIPLE (1-2 verrats, N truies).
- * `EntityPicker` est un sélecteur mono-entité — non applicable ici. Les
- * listes multi-select custom sont conservées (cf. section SPEC du rapport).
+ * MIGRATION FORM_CONTRACT Phase 3b (batch G) :
+ *  - sélection multi-truies → `<EntityPicker mode="chips" multi>` (sans cap).
+ *  - sélection verrats : multi-select custom CONSERVÉ — `EntityPicker multi`
+ *    n'expose pas de cap de sélection ni de désactivation conditionnelle par
+ *    chip, or le verrat est plafonné à 2 (round-robin). Cf. section SPEC.
  *
  * Si une saillie échoue, on continue les autres et on remonte un toast
  * partial-success. Le but : pas perdre la saisie pour 1 erreur réseau.
@@ -41,6 +43,7 @@ import {
 import { normaliseStatut } from '../../lib/truieStatut';
 import type { Truie, Verrat } from '../../types/farm';
 import { todayIso, formatFr } from './_formHelpers';
+import { EntityPicker } from './_formFields';
 import QuickActionSheet from './QuickActionSheet';
 
 const ECHO_DAYS = 28;
@@ -137,12 +140,6 @@ const QuickSailliesBandeForm: React.FC<QuickSailliesBandeFormProps> = ({
   const dateEcho = useMemo(() => addDaysIso(dateIso, ECHO_DAYS), [dateIso]);
   const dateMB = useMemo(() => addDaysIso(dateIso, MB_DAYS), [dateIso]);
   const dateSevrage = useMemo(() => addDaysIso(dateIso, SEVRAGE_DAYS), [dateIso]);
-
-  const toggleTruie = (id: string): void => {
-    setSelectedTruieIds(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id],
-    );
-  };
 
   const toggleVerrat = (id: string): void => {
     setSelectedVerratIds(prev => {
@@ -297,54 +294,19 @@ const QuickSailliesBandeForm: React.FC<QuickSailliesBandeFormProps> = ({
         <label className="label--v77">
           SÉLECTION MULTIPLE <span className="req">requis</span>
         </label>
-        {truiesEligibles.length === 0 ? (
-          <p
-            style={{
-              fontFamily: 'var(--pt-font-mono)',
-              fontSize: 12,
-              color: 'var(--pt-subtle)',
-              margin: 0,
-            }}
-          >
-            Aucune truie éligible (vide / chaleur).
-          </p>
-        ) : (
-          <ul
-            aria-label="Liste truies éligibles"
-            style={{ listStyle: 'none', padding: 0, margin: 0 }}
-          >
-            {truiesEligibles.map(t => {
-              const checked = selectedTruieIds.includes(t.displayId);
-              const inputId = `bande-truie-${t.displayId}`;
-              return (
-                <li key={t.id} style={{ marginBottom: 8 }}>
-                  <label
-                    htmlFor={inputId}
-                    className={`radio-chip--card${checked ? ' is-selected' : ''}`}
-                    style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', width: '100%', textAlign: 'left' }}
-                    data-testid={`bande-truie-row-${t.displayId}`}
-                  >
-                    <input
-                      id={inputId}
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => toggleTruie(t.displayId)}
-                      style={{ height: 20, width: 20, accentColor: 'var(--pt-primary)' }}
-                      aria-label={`Sélectionner truie ${t.displayId}`}
-                      disabled={saving}
-                    />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="radio-chip__code">
-                        {t.displayId}{t.nom ? ` · ${t.nom}` : ''}
-                      </div>
-                      <div className="radio-chip__sub">{t.statut}</div>
-                    </div>
-                  </label>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+        <EntityPicker<Truie>
+          mode="chips"
+          multi
+          entities={truiesEligibles}
+          value={selectedTruieIds}
+          onChange={setSelectedTruieIds}
+          entityLabel="la truie"
+          groupLabel="Liste truies éligibles"
+          emptyText="Aucune truie éligible (vide / chaleur)."
+          disabled={saving}
+          getAriaLabel={t => `Sélectionner truie ${t.displayId}`}
+          renderSubLabel={t => `${t.nom ? `${t.nom} · ` : ''}${t.statut}`}
+        />
       </div>
 
       <div className="step-pill">Étape 2 / 4 · Verrat(s)</div>

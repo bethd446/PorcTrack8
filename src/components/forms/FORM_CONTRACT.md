@@ -37,14 +37,38 @@ import { useToast } from '../../context/ToastContext';
   header (eyebrow/titre/close) + slot body + footer (Annuler ghost +
   submit primary). Câble `useEscapeKey`. Props :
   `isOpen, onClose, eyebrow, title, ariaLabel?, saving, isValid, onSubmit,
-  submitLabel, savingLabel?, submitAriaLabel?, submitDisabled?, children`.
+  submitLabel, savingLabel?, submitAriaLabel?, submitDisabled?, footer?,
+  bodyClassName?, children`.
+  - **`footer?: React.ReactNode`** (Phase 3a) — si fourni, REMPLACE le footer
+    canonique Annuler+submit. Le form rend sa propre navigation (wizard). Le
+    reste du shell est inchangé. Sans `footer` → comportement Phase 1 strict.
+  - **`bodyClassName?: string`** (Phase 3a) — classe additionnelle sur
+    `.sheet__body` (layouts denses / wizard).
 - **`FieldError`** : `<FieldError message={errors.x} />` — rien si `message`
   falsy, sinon `<span role="alert">`.
 - **`EntityPicker`** : sélecteur truie/verrat, modes `chips` /
   `autocomplete`. Préserve l'a11y (`role=radio` + `aria-checked` /
-  `role=listbox` + `role=option`).
+  `role=listbox` + `role=option`). Extensions Phase 3a (toutes additives,
+  défaut = comportement Phase 1) :
+  - **`multi?: boolean`** — mode `chips` uniquement. `multi: true` change
+    `value` en `ReadonlyArray<string>` et `onChange` en `(ids: string[]) =>
+    void`. Les chips passent en `role="checkbox"` + `aria-checked` (sémantique
+    correcte d'une multi-sélection ; un `radiogroup` n'autorise qu'un
+    sélectionné). `EntityPickerProps` est désormais une **union discriminée**
+    sur `mode` × `multi` — TS infère le bon type de `value`/`onChange`.
+  - **`renderSubLabel?: (entity) => React.ReactNode`** — sous-titre par chip
+    (ex. `J+12 · saillie du 03/05`), rendu dans `.radio-chip__sub`.
+  - **`getAriaLabel?: (entity) => string`** — `aria-label` paramétré par
+    entité. Fallback = `Sélectionner {entityLabel} {displayId}` (forme
+    contractuelle attendue par les tests — NE PAS changer le fallback).
 - **`useFocusFirstInput`** : reste appelé PAR LE FORM (la ref va sur son
   premier champ). Le shell ne peut pas la poser lui-même.
+- **`useConfirmFlow`** (Phase 3a) : hook partagé Confirm Sevrage/Reforme. Émet
+  désormais le toast de succès via `useToast()` (conforme au contrat — plus
+  d'`IonToast` local). Les clés `toast` / `dismissToast` de
+  `UseConfirmFlowState` restent exposées mais sont INERTES (`@deprecated`,
+  compat consommateurs) — Phase 3b supprimera les `<IonToast>` morts dans
+  QuickConfirmSevrageForm / QuickConfirmReformeForm.
 
 ---
 
@@ -73,6 +97,29 @@ import { useToast } from '../../context/ToastContext';
 10. **Vérifier** : `npx tsc --noEmit` + `npx vitest run src/components/forms`
     verts. Si un test asserte une structure que le contrat change
     légitimement, adapter l'assertion ET le signaler.
+
+### 3 bis. Checklist spécifique WIZARD (forms multi-étapes)
+
+Pour les ~7 forms wizard (SplitBande, Mortality, SaillieBande,
+AddBandeFromLoge, HealthLogPorcelet, SexSeparation, Pesee) — référence migrée :
+**`QuickSplitBandeForm.tsx`** (3 étapes).
+
+1. **Shell** : `<QuickActionSheet>` avec la prop `footer` — PAS de
+   `<BottomSheet>` + `<Wizard>` DS. Le wizard garde IonModal + handle + header
+   + a11y escape + le `<form onSubmit>` du shell.
+2. **État `step`** : `useState<0 | 1 | … >(0)` local. Reset à `0` dans le
+   bloc reset-on-open render-phase.
+3. **Footer custom** : bouton gauche = `Annuler` (étape 0) ou `Retour`
+   (`type="button"`, → `step-1`) ; bouton droit = `Suivant` (`type="button"`,
+   valide l'étape courante avant `step+1`) ou, à la dernière étape, le bouton
+   final en `type="submit"` (déclenche `onSubmit` du form — contrat respecté).
+4. **Validation par étape** : `validateStepN()` appelée avant `Suivant` ;
+   si invalide, on n'avance pas et on affiche l'erreur d'étape.
+5. **`isValid`** du shell = condition de submit de la DERNIÈRE étape (sert
+   d'indicateur ; le footer custom pilote l'activation réelle de ses boutons).
+6. **`bodyClassName`** : utiliser pour les layouts denses (listes longues).
+7. Reste du contrat (toast `useToast`, garde double-clic `closeTimerRef`,
+   reset render-phase) : identique aux forms simples.
 
 ---
 
@@ -179,12 +226,10 @@ const handleSubmit = async (e: React.FormEvent): Promise<void> => {
 
 ## 6. Notes d'implémentation
 
-- **`useToast` ne supporte pas le tone `warning`** (seulement
-  `success/error/info`). Aucun form de référence n'en avait besoin (MiseBas
-  utilisait `useAppToast` mais seulement avec `success/error/info`). Si un
-  form Phase 2 utilise réellement `warning`, l'étendre dans `ToastContext`
-  (ajouter `'warning'` au type + `color="warning"`) plutôt que réintroduire
-  `useAppToast`. À signaler à l'orchestrateur.
+- **`useToast` supporte le tone `warning`** depuis Phase 3a. Tones valides :
+  `success` (vert) · `error` (rouge) · `warning` (orange, `color="warning"`) ·
+  `info` (gris). Purement additif — les appels `success/error/info` existants
+  sont inchangés. Ne plus réintroduire `useAppToast` pour un besoin `warning`.
 - **`QuickActionSheet` ne rend pas de toast.** Le toast survit à la
   fermeture de la modale parce qu'il est monté au niveau App. C'est l'intérêt
   principal de `useToast` sur `useAppToast`.

@@ -22,10 +22,16 @@
  *  - garde double-clic : `saving` maintenu jusqu'au `onClose`, `closeTimerRef`
  *    + cleanup `useEffect`
  *
- * NOTE : la sélection de truie porte sur des `TruieAvecSaillie` enrichies
- * (sub-label J+X · saillie du …, `data-testid`, `aria-label` paramétré) que
- * `EntityPicker` ne sait pas rendre — les chips custom sont conservées
- * (cf. section SPEC du rapport).
+ * MIGRATION FORM_CONTRACT Phase 3b (batch G) :
+ *  - sélection de truie → `<EntityPicker mode="chips">` avec `renderSubLabel`
+ *    (`J+X · saillie du …`) + `getAriaLabel` paramétré (`Sélectionner la truie
+ *    X (J+N)` — contractuel, des tests s'y appuient). Le picker reçoit les
+ *    `Truie` ; les données saillie sont récupérées via une `Map` indexée.
+ *  - les `data-testid="retour-truie-*"` par chip ne sont plus émis (le contrat
+ *    `EntityPicker` ne porte pas de testid paramétré) : les tests qui les
+ *    ciblaient passent par `getByLabelText` de l'aria-label contractuel.
+ *  - les chips d'ACTION (RESAILLIR / ATTENDRE / SURVEILLER) ne sont pas des
+ *    entités animales → restent en chips custom.
  *
  * Implémentation :
  *   - On filtre les truies dont la dernière saillie est dans la fenêtre
@@ -50,6 +56,7 @@ import {
 } from '../../services/supabaseWrites';
 import type { Saillie, Truie } from '../../types/farm';
 import { todayIso } from './_formHelpers';
+import { EntityPicker } from './_formFields';
 import QuickActionSheet from './QuickActionSheet';
 
 const RETOUR_WINDOW_MIN_DAYS = 12;
@@ -193,6 +200,19 @@ const QuickRetourChaleurForm: React.FC<QuickRetourChaleurFormProps> = ({
     [candidates, selectedTruieId],
   );
 
+  // Entités passées à `EntityPicker` (le picker ne connaît que la `Truie`) +
+  // index par displayId pour retrouver les données de saillie associées.
+  const candidatesByDisplayId = useMemo(() => {
+    const m = new Map<string, TruieAvecSaillie>();
+    for (const c of candidates) m.set(c.truie.displayId, c);
+    return m;
+  }, [candidates]);
+
+  const truieEntities = useMemo<Truie[]>(
+    () => candidates.map(c => c.truie),
+    [candidates],
+  );
+
   const isValid = !!selectedTruieId && !!selected;
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
@@ -328,47 +348,27 @@ const QuickRetourChaleurForm: React.FC<QuickRetourChaleurFormProps> = ({
         <label className="label--v77">
           TRUIE EN RETOUR <span className="req">requis</span>
         </label>
-        {candidates.length === 0 ? (
-          <p
-            style={{
-              fontFamily: 'var(--pt-font-mono)',
-              fontSize: 12,
-              color: 'var(--pt-subtle)',
-              margin: 0,
-            }}
-          >
-            Aucune truie dans la fenêtre d'observation pour cette date.
-            Vérifie la date d'observation ou enregistre d'abord la saillie d'origine.
-          </p>
-        ) : (
-          <div
-            className="radio-chips--cards"
-            role="radiogroup"
-            aria-label="Truie en retour de chaleur"
-          >
-            {candidates.map(c => {
-              const isSelected = selectedTruieId === c.truie.displayId;
-              return (
-                <button
-                  key={c.truie.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={isSelected}
-                  aria-label={`Sélectionner la truie ${c.truie.displayId} (J+${c.joursDepuisSaillie})`}
-                  data-testid={`retour-truie-${c.truie.displayId}`}
-                  onClick={() => setSelectedTruieId(c.truie.displayId)}
-                  className={`radio-chip--card${isSelected ? ' is-selected' : ''}`}
-                  disabled={saving}
-                >
-                  <div className="radio-chip__code">{c.truie.displayId}</div>
-                  <div className="radio-chip__sub">
-                    J+{c.joursDepuisSaillie} · saillie {formatDateFr(c.saillie.dateSaillie)}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
+        <EntityPicker<Truie>
+          mode="chips"
+          entities={truieEntities}
+          value={selectedTruieId}
+          onChange={setSelectedTruieId}
+          entityLabel="la truie"
+          groupLabel="Truie en retour de chaleur"
+          emptyText="Aucune truie dans la fenêtre d'observation pour cette date. Vérifie la date d'observation ou enregistre d'abord la saillie d'origine."
+          disabled={saving}
+          getAriaLabel={t => {
+            const c = candidatesByDisplayId.get(t.displayId);
+            return c
+              ? `Sélectionner la truie ${t.displayId} (J+${c.joursDepuisSaillie})`
+              : `Sélectionner la truie ${t.displayId}`;
+          }}
+          renderSubLabel={t => {
+            const c = candidatesByDisplayId.get(t.displayId);
+            if (!c) return null;
+            return `J+${c.joursDepuisSaillie} · saillie ${formatDateFr(c.saillie.dateSaillie)}`;
+          }}
+        />
       </div>
 
       {selected && (

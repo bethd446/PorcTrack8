@@ -38,6 +38,12 @@ vi.mock('../../context/FarmContext', () => ({
   useFarm: () => mockFarm,
 }));
 
+// Migration FORM_CONTRACT Phase 3b : le form émet via `useToast()` (context
+// global) au lieu d'un `IonToast` local — on mocke le context.
+vi.mock('../../context/ToastContext', () => ({
+  useToast: () => ({ showToast: vi.fn() }),
+}));
+
 vi.mock('@ionic/react', () => ({
   IonToast: ({ isOpen, message }: { isOpen: boolean; message: string }) =>
     isOpen ? <div role="status" data-testid="toast">{message}</div> : null,

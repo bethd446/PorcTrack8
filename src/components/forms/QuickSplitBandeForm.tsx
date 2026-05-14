@@ -9,18 +9,24 @@
  * Cas d'usage : bande "ADDM" (117 porcelets dont 22 mâles) sans loge → on
  * répartit dans plusieurs loges sans tout re-saisir.
  *
- * Migration partielle FORM_CONTRACT (Phase 2 · Batch C) :
- *   - toast canonique `useToast()` (remplace useAppToast + <AppToast> local)
- *   - garde double-clic : `closeTimerRef` + cleanup `useEffect`
- *   - reset-on-open déjà en render-phase (`lastKey`)
- *   Le shell `<QuickActionSheet>` n'est PAS applicable : ce form est un
- *   wizard 3 étapes (`Wizard` DS) ; il reste sur `<BottomSheet>`.
+ * Migration FORM_CONTRACT Phase 3a — référence WIZARD :
+ *   - shell `<QuickActionSheet>` (form + handle + header + a11y escape) avec
+ *     `footer` custom : la navigation 3 étapes (Retour / Suivant / Splitter)
+ *     remplace le footer canonique Annuler+submit. Premier wizard migré ; les
+ *     ~6 autres wizards (Phase 3b) copient ce pattern.
+ *   - `step` géré en state local, validation par étape avant `Suivant`.
+ *   - toast canonique `useToast()` ; garde double-clic `closeTimerRef` +
+ *     cleanup `useEffect` ; reset-on-open render-phase (`lastKey`).
+ *   - `bodyClassName` pour le layout dense de la liste de porcelets.
+ *
+ * Le bouton « Splitter » de la dernière étape est `type="submit"` : il
+ * déclenche `handleSubmit` via `onSubmit` du `<form>` (contrat). Les boutons
+ * Retour / Suivant sont `type="button"`.
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { BottomSheet } from '../agritech';
-import { Button, Select, Wizard, type WizardStep } from '@/design-system';
+import { Button, Select } from '@/design-system';
 import { useToast } from '../../context/ToastContext';
 import {
   getLogeContents,
@@ -36,6 +42,7 @@ import {
   validateSplitStep1,
   validateSplitStep2,
 } from './quickSplitBandeLogic';
+import QuickActionSheet from './QuickActionSheet';
 import type { Loge, PorceletIndividuel } from '../../types/farm';
 
 export interface QuickSplitBandeFormProps {
@@ -74,6 +81,8 @@ const errStyle: React.CSSProperties = {
   marginTop: 4,
 };
 
+const STEP_LABELS = ['Sélection', 'Loge destination', 'Récap & confirmation'] as const;
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 const QuickSplitBandeForm: React.FC<QuickSplitBandeFormProps> = ({
@@ -83,6 +92,7 @@ const QuickSplitBandeForm: React.FC<QuickSplitBandeFormProps> = ({
   bandeCodeId,
   onSuccess,
 }) => {
+  const [step, setStep] = useState<0 | 1 | 2>(0);
   const [porcelets, setPorcelets] = useState<PorceletIndividuel[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loges, setLoges] = useState<Loge[]>([]);
@@ -101,7 +111,7 @@ const QuickSplitBandeForm: React.FC<QuickSplitBandeFormProps> = ({
     };
   }, []);
 
-  // Reset à l'ouverture / changement bande
+  // Reset à l'ouverture / changement bande (render-phase, FORM_CONTRACT)
   const [lastKey, setLastKey] = useState<{ open: boolean; bid: string }>({
     open: isOpen,
     bid: bandeId,
@@ -109,6 +119,7 @@ const QuickSplitBandeForm: React.FC<QuickSplitBandeFormProps> = ({
   if (lastKey.open !== isOpen || lastKey.bid !== bandeId) {
     setLastKey({ open: isOpen, bid: bandeId });
     if (isOpen) {
+      setStep(0);
       setSelectedIds(new Set());
       setDestLogeId('');
       setDestOccupation(0);
@@ -210,9 +221,29 @@ const QuickSplitBandeForm: React.FC<QuickSplitBandeFormProps> = ({
     return r.ok;
   }, [destLoge, destOccupation, selectedIds.size]);
 
-  // ── Submit ───────────────────────────────────────────────────────────────
+  // ── Navigation wizard ────────────────────────────────────────────────────
 
-  const handleComplete = useCallback(async () => {
+  const handleNext = useCallback(() => {
+    if (saving) return;
+    if (step === 0) {
+      if (!validateStep1()) return;
+      setStep(1);
+    } else if (step === 1) {
+      if (!validateStep2()) return;
+      setStep(2);
+    }
+  }, [saving, step, validateStep1, validateStep2]);
+
+  const handlePrev = useCallback(() => {
+    if (saving) return;
+    setStep(s => (s > 0 ? ((s - 1) as 0 | 1) : s));
+  }, [saving]);
+
+  // ── Submit (dernière étape) ──────────────────────────────────────────────
+
+  const handleSubmit = useCallback(async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault();
+    if (step !== 2) return;
     if (!destLoge) return;
     if (selectedIds.size === 0) return;
     setSaving(true);
@@ -252,6 +283,7 @@ const QuickSplitBandeForm: React.FC<QuickSplitBandeFormProps> = ({
       setSaving(false);
     }
   }, [
+    step,
     destLoge,
     selectedIds,
     selectedPorcelets,
@@ -262,282 +294,318 @@ const QuickSplitBandeForm: React.FC<QuickSplitBandeFormProps> = ({
     showToast,
   ]);
 
-  // ── Steps ────────────────────────────────────────────────────────────────
-
-  const steps: WizardStep[] = [
-    {
-      label: 'Sélection',
-      validate: () => validateStep1(),
-      render: () => (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '8px 12px',
-              borderRadius: 'var(--pt-radius-md)',
-              background: 'var(--pt-surface-alt)',
-              fontFamily: 'var(--pt-font-mono)',
-              fontSize: 12,
-              color: 'var(--pt-text)',
-            }}
-            data-testid="split-counter"
-          >
-            <span>
-              {selectedIds.size}/{porcelets.length} sélectionnés
-            </span>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <Button
-                variant="secondary"
-                size="small"
-                onClick={selectAll}
-                disabled={porcelets.length === 0}
-              >
-                Tout
-              </Button>
-              <Button
-                variant="secondary"
-                size="small"
-                onClick={clearAll}
-                disabled={selectedIds.size === 0}
-              >
-                Aucun
-              </Button>
-            </div>
-          </div>
-
-          {porcelets.length === 0 ? (
-            <p style={{ ...hintStyle, fontSize: 12, padding: 12 }}>
-              Aucun porcelet dans cette bande.
-            </p>
-          ) : (
-            <ul
-              data-testid="split-porcelets"
-              style={{
-                listStyle: 'none',
-                padding: 0,
-                margin: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 4,
-                maxHeight: 360,
-                overflowY: 'auto',
-              }}
-            >
-              {porcelets.map(p => {
-                const checked = selectedIds.has(p.id);
-                return (
-                  <li key={p.id}>
-                    <label
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 12,
-                        padding: '10px 12px',
-                        minHeight: 44,
-                        borderRadius: 'var(--pt-radius-md)',
-                        background: checked
-                          ? 'var(--pt-surface-alt)'
-                          : 'var(--pt-surface)',
-                        border: `1px solid ${
-                          checked ? 'var(--pt-primary)' : 'var(--pt-divider)'
-                        }`,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => togglePorcelet(p.id)}
-                        aria-label={`Sélectionner ${p.boucle}`}
-                        style={{ width: 18, height: 18, cursor: 'pointer' }}
-                      />
-                      <span
-                        style={{
-                          flex: 1,
-                          fontFamily: 'var(--pt-font-mono)',
-                          fontSize: 13,
-                          color: 'var(--pt-text)',
-                          textTransform: 'uppercase',
-                        }}
-                      >
-                        {p.boucle}
-                      </span>
-                      <span
-                        style={{
-                          fontFamily: 'var(--pt-font-mono)',
-                          fontSize: 11,
-                          color: 'var(--pt-text-muted)',
-                        }}
-                      >
-                        {p.sexe === 'M' ? '♂' : p.sexe === 'F' ? '♀' : '?'}
-                        {p.poidsCourantKg != null
-                          ? ` · ${p.poidsCourantKg} kg`
-                          : ''}
-                      </span>
-                    </label>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-
-          {step1Error ? (
-            <p role="alert" style={errStyle} data-testid="split-step1-error">
-              {step1Error}
-            </p>
-          ) : null}
-        </div>
-      ),
-    },
-    {
-      label: 'Loge destination',
-      validate: () => validateStep2(),
-      render: () => (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div>
-            <label htmlFor="split-loge" style={labelStyle}>
-              Loge destination · requise
-            </label>
-            <Select
-              id="split-loge"
-              data-testid="split-loge-select"
-              value={destLogeId}
-              onChange={e => setDestLogeId(e.target.value)}
-              disabled={saving}
-            >
-              <option value="">— Choisir —</option>
-              {loges.map(l => (
-                <option key={l.id} value={l.id}>
-                  {l.numero} · {l.type.toLowerCase().replace('_', '-')}
-                  {l.batiment ? ` · ${l.batiment}` : ''}
-                  {l.capaciteMax != null ? ` (max ${l.capaciteMax})` : ''}
-                </option>
-              ))}
-            </Select>
-            <p style={hintStyle}>
-              {destLoge
-                ? destLoge.capaciteMax != null
-                  ? `Occupation : ${destOccupation} / ${destLoge.capaciteMax} · après split : ${destOccupation + selectedIds.size}`
-                  : `Occupation : ${destOccupation} · pas de limite`
-                : 'Sélectionne une loge active.'}
-            </p>
-            {step2Error ? (
-              <p role="alert" style={errStyle} data-testid="split-step2-error">
-                {step2Error}
-              </p>
-            ) : null}
-          </div>
-        </div>
-      ),
-    },
-    {
-      label: 'Récap & confirmation',
-      render: () => {
-        const recapCodeId = destLoge
-          ? buildSplitBatchDraft({
-              todayIso: todayIso(),
-              loge: destLoge,
-              selectedPorcelets,
-              sourceCodeId: bandeCodeId ?? bandeId,
-            }).code_id
-          : '—';
-        const willEmptySource = selectedIds.size === porcelets.length;
-        return (
-          <div
-            style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
-            data-testid="split-recap"
-          >
-            <div
-              style={{
-                padding: '12px 14px',
-                borderRadius: 'var(--pt-radius-md)',
-                background: 'var(--pt-surface-alt)',
-                fontFamily: 'var(--pt-font-body)',
-                fontSize: 14,
-                color: 'var(--pt-text)',
-              }}
-            >
-              <strong style={{ fontFamily: 'var(--pt-font-display)' }}>
-                Déplacer {selectedIds.size} porcelet
-                {selectedIds.size > 1 ? 's' : ''}
-              </strong>{' '}
-              vers{' '}
-              <span
-                style={{
-                  fontFamily: 'var(--pt-font-mono)',
-                  textTransform: 'uppercase',
-                }}
-              >
-                {destLoge?.numero ?? '—'}
-              </span>
-            </div>
-
-            <dl
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'auto 1fr',
-                gap: '8px 14px',
-                fontFamily: 'var(--pt-font-mono)',
-                fontSize: 12,
-                color: 'var(--pt-text-muted)',
-                margin: 0,
-              }}
-            >
-              <dt>Nouveau code</dt>
-              <dd
-                style={{
-                  margin: 0,
-                  color: 'var(--pt-text)',
-                  textTransform: 'uppercase',
-                }}
-                data-testid="split-recap-codeid"
-              >
-                {recapCodeId}
-              </dd>
-              <dt>Phase auto</dt>
-              <dd
-                style={{ margin: 0, color: 'var(--pt-text)' }}
-                data-testid="split-recap-phase"
-              >
-                {phaseAuto.label}
-              </dd>
-              <dt>Poids moyen</dt>
-              <dd style={{ margin: 0, color: 'var(--pt-text)' }}>
-                {poidsMoyen != null ? `${poidsMoyen.toFixed(1)} kg` : '—'}
-              </dd>
-              <dt>Bande source</dt>
-              <dd style={{ margin: 0, color: 'var(--pt-text)' }}>
-                {willEmptySource
-                  ? 'Sera archivée (RECAP)'
-                  : `Reste ${porcelets.length - selectedIds.size} porcelets`}
-              </dd>
-            </dl>
-          </div>
-        );
-      },
-    },
-  ];
-
   const handleClose = useCallback(() => {
     if (saving) return;
     if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
     onClose();
   }, [onClose, saving]);
 
+  // ── Rendu des étapes ─────────────────────────────────────────────────────
+
+  const renderStep1 = (): React.ReactNode => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '8px 12px',
+          borderRadius: 'var(--pt-radius-md)',
+          background: 'var(--pt-surface-alt)',
+          fontFamily: 'var(--pt-font-mono)',
+          fontSize: 12,
+          color: 'var(--pt-text)',
+        }}
+        data-testid="split-counter"
+      >
+        <span>
+          {selectedIds.size}/{porcelets.length} sélectionnés
+        </span>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Button
+            variant="secondary"
+            size="small"
+            onClick={selectAll}
+            disabled={porcelets.length === 0}
+          >
+            Tout
+          </Button>
+          <Button
+            variant="secondary"
+            size="small"
+            onClick={clearAll}
+            disabled={selectedIds.size === 0}
+          >
+            Aucun
+          </Button>
+        </div>
+      </div>
+
+      {porcelets.length === 0 ? (
+        <p style={{ ...hintStyle, fontSize: 12, padding: 12 }}>
+          Aucun porcelet dans cette bande.
+        </p>
+      ) : (
+        <ul
+          data-testid="split-porcelets"
+          style={{
+            listStyle: 'none',
+            padding: 0,
+            margin: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 4,
+            maxHeight: 360,
+            overflowY: 'auto',
+          }}
+        >
+          {porcelets.map(p => {
+            const checked = selectedIds.has(p.id);
+            return (
+              <li key={p.id}>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '10px 12px',
+                    minHeight: 44,
+                    borderRadius: 'var(--pt-radius-md)',
+                    background: checked
+                      ? 'var(--pt-surface-alt)'
+                      : 'var(--pt-surface)',
+                    border: `1px solid ${
+                      checked ? 'var(--pt-primary)' : 'var(--pt-divider)'
+                    }`,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => togglePorcelet(p.id)}
+                    aria-label={`Sélectionner ${p.boucle}`}
+                    style={{ width: 18, height: 18, cursor: 'pointer' }}
+                  />
+                  <span
+                    style={{
+                      flex: 1,
+                      fontFamily: 'var(--pt-font-mono)',
+                      fontSize: 13,
+                      color: 'var(--pt-text)',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {p.boucle}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: 'var(--pt-font-mono)',
+                      fontSize: 11,
+                      color: 'var(--pt-text-muted)',
+                    }}
+                  >
+                    {p.sexe === 'M' ? '♂' : p.sexe === 'F' ? '♀' : '?'}
+                    {p.poidsCourantKg != null
+                      ? ` · ${p.poidsCourantKg} kg`
+                      : ''}
+                  </span>
+                </label>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {step1Error ? (
+        <p role="alert" style={errStyle} data-testid="split-step1-error">
+          {step1Error}
+        </p>
+      ) : null}
+    </div>
+  );
+
+  const renderStep2 = (): React.ReactNode => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div>
+        <label htmlFor="split-loge" style={labelStyle}>
+          Loge destination · requise
+        </label>
+        <Select
+          id="split-loge"
+          data-testid="split-loge-select"
+          value={destLogeId}
+          onChange={e => setDestLogeId(e.target.value)}
+          disabled={saving}
+        >
+          <option value="">— Choisir —</option>
+          {loges.map(l => (
+            <option key={l.id} value={l.id}>
+              {l.numero} · {l.type.toLowerCase().replace('_', '-')}
+              {l.batiment ? ` · ${l.batiment}` : ''}
+              {l.capaciteMax != null ? ` (max ${l.capaciteMax})` : ''}
+            </option>
+          ))}
+        </Select>
+        <p style={hintStyle}>
+          {destLoge
+            ? destLoge.capaciteMax != null
+              ? `Occupation : ${destOccupation} / ${destLoge.capaciteMax} · après split : ${destOccupation + selectedIds.size}`
+              : `Occupation : ${destOccupation} · pas de limite`
+            : 'Sélectionne une loge active.'}
+        </p>
+        {step2Error ? (
+          <p role="alert" style={errStyle} data-testid="split-step2-error">
+            {step2Error}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+
+  const renderStep3 = (): React.ReactNode => {
+    const recapCodeId = destLoge
+      ? buildSplitBatchDraft({
+          todayIso: todayIso(),
+          loge: destLoge,
+          selectedPorcelets,
+          sourceCodeId: bandeCodeId ?? bandeId,
+        }).code_id
+      : '—';
+    const willEmptySource = selectedIds.size === porcelets.length;
+    return (
+      <div
+        style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+        data-testid="split-recap"
+      >
+        <div
+          style={{
+            padding: '12px 14px',
+            borderRadius: 'var(--pt-radius-md)',
+            background: 'var(--pt-surface-alt)',
+            fontFamily: 'var(--pt-font-body)',
+            fontSize: 14,
+            color: 'var(--pt-text)',
+          }}
+        >
+          <strong style={{ fontFamily: 'var(--pt-font-display)' }}>
+            Déplacer {selectedIds.size} porcelet
+            {selectedIds.size > 1 ? 's' : ''}
+          </strong>{' '}
+          vers{' '}
+          <span
+            style={{
+              fontFamily: 'var(--pt-font-mono)',
+              textTransform: 'uppercase',
+            }}
+          >
+            {destLoge?.numero ?? '—'}
+          </span>
+        </div>
+
+        <dl
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'auto 1fr',
+            gap: '8px 14px',
+            fontFamily: 'var(--pt-font-mono)',
+            fontSize: 12,
+            color: 'var(--pt-text-muted)',
+            margin: 0,
+          }}
+        >
+          <dt>Nouveau code</dt>
+          <dd
+            style={{
+              margin: 0,
+              color: 'var(--pt-text)',
+              textTransform: 'uppercase',
+            }}
+            data-testid="split-recap-codeid"
+          >
+            {recapCodeId}
+          </dd>
+          <dt>Phase auto</dt>
+          <dd
+            style={{ margin: 0, color: 'var(--pt-text)' }}
+            data-testid="split-recap-phase"
+          >
+            {phaseAuto.label}
+          </dd>
+          <dt>Poids moyen</dt>
+          <dd style={{ margin: 0, color: 'var(--pt-text)' }}>
+            {poidsMoyen != null ? `${poidsMoyen.toFixed(1)} kg` : '—'}
+          </dd>
+          <dt>Bande source</dt>
+          <dd style={{ margin: 0, color: 'var(--pt-text)' }}>
+            {willEmptySource
+              ? 'Sera archivée (RECAP)'
+              : `Reste ${porcelets.length - selectedIds.size} porcelets`}
+          </dd>
+        </dl>
+      </div>
+    );
+  };
+
+  // ── Footer custom wizard (remplace le footer canonique) ──────────────────
+
+  const isLast = step === 2;
+  const splitDisabled = saving || !destLoge || selectedIds.size === 0;
+
+  const footer = (
+    <>
+      <button
+        type="button"
+        className="btn btn--ghost"
+        onClick={step === 0 ? handleClose : handlePrev}
+        disabled={saving}
+        aria-label={step === 0 ? 'Annuler et fermer' : "Revenir à l'étape précédente"}
+      >
+        {step === 0 ? 'Annuler' : 'Retour'}
+      </button>
+      {isLast ? (
+        <button
+          type="submit"
+          className="btn btn--primary btn--lg btn--block"
+          disabled={splitDisabled}
+          aria-busy={saving}
+          aria-label="Splitter la bande"
+        >
+          {saving ? 'Enregistrement…' : 'Splitter'}
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="btn btn--primary btn--lg btn--block"
+          onClick={handleNext}
+          disabled={saving}
+          aria-label="Passer à l'étape suivante"
+        >
+          Suivant
+        </button>
+      )}
+    </>
+  );
+
   return (
-    <BottomSheet isOpen={isOpen} onClose={handleClose} height="full">
-      <Wizard
-        id={`split-bande-${bandeId}`}
-        steps={steps}
-        eyebrow={`Splitter · ${bandeCodeId ?? bandeId}`}
-        onCancel={handleClose}
-        onComplete={handleComplete}
-        completeLabel="Splitter"
-        busy={saving}
-      />
-    </BottomSheet>
+    <QuickActionSheet
+      isOpen={isOpen}
+      onClose={handleClose}
+      eyebrow={`Splitter · ${bandeCodeId ?? bandeId}`}
+      title={`${STEP_LABELS[step]} · étape ${step + 1} / 3`}
+      ariaLabel={`Splitter la bande ${bandeCodeId ?? bandeId}`}
+      saving={saving}
+      isValid={!splitDisabled}
+      onSubmit={handleSubmit}
+      submitLabel="Splitter"
+      footer={footer}
+      bodyClassName="sheet__body--wizard"
+    >
+      <div className="step-pill" aria-live="polite">
+        Étape {step + 1} / 3 · {STEP_LABELS[step]}
+      </div>
+      {step === 0 ? renderStep1() : step === 1 ? renderStep2() : renderStep3()}
+    </QuickActionSheet>
   );
 };
 

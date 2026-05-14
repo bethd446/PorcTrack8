@@ -3,18 +3,19 @@
  * Champs : boucle · sexe · poids courant · statut · notes.
  * Patch partiel via updatePorcelet ; bouton suppression avec confirmation.
  *
- * Migration partielle FORM_CONTRACT (Phase 2 · Batch C) :
+ * Migration FORM_CONTRACT Phase 3b — shell `<QuickActionSheet>` :
  *  - toast canonique `useToast()` (remplace IonToast local)
  *  - reset-on-open via `lastKey` render-phase (remplace useEffect[isOpen])
  *  - garde double-clic : `closeTimerRef` + cleanup `useEffect`
- *  Le shell `<QuickActionSheet>` n'est PAS applicable : ce form a un bouton
- *  « Supprimer » dédié et reste sur `<BottomSheet>` + composants DS.
+ *  - le bouton « Supprimer » dédié est rendu via la prop `footer` du shell
+ *    (Phase 3a), aux côtés d'Annuler + Enregistrer. `handleSubmit` est
+ *    l'`onSubmit` du `<form>` du shell ; `handleDelete` reste un `onClick`.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Edit3, Save, Trash2 } from 'lucide-react';
 
-import { BottomSheet } from '../agritech';
-import { FormField, Input, Select, Textarea, Button, RadioGroup } from '@/design-system';
+import { FormField, Input, Select, Textarea, RadioGroup } from '@/design-system';
+import QuickActionSheet from './QuickActionSheet';
 import {
   removePorcelet,
   updatePorcelet,
@@ -179,20 +180,69 @@ const QuickEditPorceletForm: React.FC<QuickEditPorceletFormProps> = ({
     }
   };
 
-  return (
-    <>
-      <BottomSheet
-        isOpen={isOpen}
-        onClose={handleClose}
-        title={`Porcelet ${porcelet.boucle}`}
-        height="auto"
+  const footer = (
+    <div
+      style={{
+        gridColumn: '1 / -1',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+      }}
+    >
+      <button
+        type="button"
+        className="btn btn--ghost"
+        onClick={handleDelete}
+        disabled={saving}
+        aria-label={confirmDelete ? 'Confirmer la suppression' : 'Supprimer ce porcelet'}
+        style={{ color: 'var(--pt-danger)' }}
       >
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-5"
-          noValidate
-          aria-label="Édition d'un porcelet individuel"
-        >
+        <span className="inline-flex items-center gap-2">
+          <Trash2 size={14} aria-hidden="true" />
+          {confirmDelete ? 'Confirmer suppression' : 'Supprimer'}
+        </span>
+      </button>
+      <span style={{ flex: 1 }} aria-hidden="true" />
+      <button
+        type="button"
+        className="btn btn--ghost"
+        onClick={handleClose}
+        disabled={saving}
+        aria-label="Annuler"
+      >
+        Annuler
+      </button>
+      <button
+        type="submit"
+        className="btn btn--primary btn--lg"
+        disabled={saving}
+        aria-busy={saving}
+        aria-label="Enregistrer"
+      >
+        {saving ? 'Enregistrement…' : (
+          <span className="inline-flex items-center gap-2">
+            Enregistrer
+            <Save size={14} aria-hidden="true" />
+          </span>
+        )}
+      </button>
+    </div>
+  );
+
+  return (
+    <QuickActionSheet
+      isOpen={isOpen}
+      onClose={handleClose}
+      eyebrow="Cheptel"
+      title={`Porcelet ${porcelet.boucle}`}
+      ariaLabel="Édition d'un porcelet individuel"
+      saving={saving}
+      isValid={!saving}
+      onSubmit={handleSubmit}
+      submitLabel="Enregistrer"
+      footer={footer}
+    >
+        <div className="space-y-5">
           <div className="flex items-center gap-3">
             <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
               <Edit3 size={18} aria-hidden="true" />
@@ -283,48 +333,8 @@ const QuickEditPorceletForm: React.FC<QuickEditPorceletFormProps> = ({
             />
           </FormField>
 
-          <div className="border-t border-border pt-4">
-            <Button
-              variant="danger"
-              fullWidth
-              onClick={handleDelete}
-              disabled={saving}
-              ariaLabel={confirmDelete ? 'Confirmer la suppression' : 'Supprimer ce porcelet'}
-            >
-              <span className="inline-flex items-center gap-2">
-                <Trash2 size={14} aria-hidden="true" />
-                {confirmDelete ? 'Confirmer suppression' : 'Supprimer'}
-              </span>
-            </Button>
-          </div>
-
-          <div className="flex gap-3 justify-end pt-2 border-t border-border">
-            <Button
-              variant="secondary"
-              onClick={handleClose}
-              disabled={saving}
-              ariaLabel="Annuler"
-            >
-              Annuler
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={saving}
-              aria-busy={saving}
-              ariaLabel="Enregistrer"
-            >
-              {saving ? 'Enregistrement…' : (
-                <span className="inline-flex items-center gap-2">
-                  Enregistrer
-                  <Save size={14} aria-hidden="true" />
-                </span>
-              )}
-            </Button>
-          </div>
-        </form>
-      </BottomSheet>
-    </>
+        </div>
+    </QuickActionSheet>
   );
 };
 

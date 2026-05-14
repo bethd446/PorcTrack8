@@ -66,25 +66,27 @@ vi.mock('../../context/FarmContext', () => ({
   useFarm: () => mockFarm,
 }));
 
+// Migration FORM_CONTRACT Phase 3b : le form passe sur le shell
+// `<QuickActionSheet>` (IonModal + toast canonique). On mocke `IonModal` en
+// passthrough et le context `useToast()`.
+vi.mock('../../context/ToastContext', () => ({
+  useToast: () => ({ showToast: vi.fn() }),
+}));
+
 vi.mock('@ionic/react', () => ({
   IonToast: ({ isOpen, message }: { isOpen: boolean; message: string }) =>
     isOpen ? <div role="status" data-testid="toast">{message}</div> : null,
-}));
-
-// BottomSheet → simple passthrough pour exposer le contenu en jsdom
-vi.mock('../agritech', () => ({
-  BottomSheet: ({
+  IonModal: ({
     isOpen,
     children,
-    title,
+    'aria-label': ariaLabel,
   }: {
     isOpen: boolean;
-    onClose: () => void;
-    title?: string;
     children: React.ReactNode;
+    'aria-label'?: string;
   }) =>
     isOpen ? (
-      <div role="dialog" aria-label={title}>
+      <div role="dialog" aria-label={ariaLabel}>
         {children}
       </div>
     ) : null,

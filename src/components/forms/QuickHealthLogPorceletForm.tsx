@@ -10,13 +10,19 @@
  *
  * Auto-update statut : si logType ∈ {CONSULT, TRAITEMENT}, le service patche
  * automatiquement porcelet.statut = 'MALADE'.
+ *
+ * Migration FORM_CONTRACT Phase 3b — WIZARD 2 étapes (réf. QuickSplitBandeForm) :
+ *  - shell `<QuickActionSheet>` avec `footer` custom : Annuler (étape 1) ou
+ *    Annuler + Enregistrer (étape 2, `type="submit"`).
+ *  - `handleSubmit` est l'`onSubmit` du `<form>` du shell ; il garde-fou sur
+ *    `step !== 2`.
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Stethoscope, ChevronRight, Send } from 'lucide-react';
 
-import { BottomSheet } from '../agritech';
-import { Button, Input, Select, Textarea } from '@/design-system';
+import { Input, Select, Textarea } from '@/design-system';
+import QuickActionSheet from './QuickActionSheet';
 import { useToast } from '../../context/ToastContext';
 import {
   insertHealthLogForPorcelet,
@@ -121,6 +127,7 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
+    if (step !== 2) return;
     const nextErrors: Record<string, string> = {};
     if (!selectedId) nextErrors.porcelet = 'Porcelet requis';
     if (!symptome.trim()) nextErrors.symptome = 'Symptômes requis';
@@ -164,12 +171,49 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
     }
   };
 
+  const footer = (
+    <>
+      <button
+        type="button"
+        className="btn btn--ghost"
+        onClick={onClose}
+        disabled={saving}
+        aria-label="Annuler et fermer"
+      >
+        Annuler
+      </button>
+      {step === 2 ? (
+        <button
+          type="submit"
+          className="btn btn--primary btn--lg btn--block"
+          disabled={saving || !symptome.trim()}
+          aria-busy={saving}
+          aria-label="Enregistrer le signalement"
+        >
+          <span className="inline-flex items-center gap-2">
+            <Send size={14} aria-hidden="true" />
+            {saving ? 'Enregistrement…' : 'Enregistrer'}
+          </span>
+        </button>
+      ) : (
+        <span aria-hidden="true" />
+      )}
+    </>
+  );
+
   return (
-    <BottomSheet
+    <QuickActionSheet
       isOpen={isOpen}
       onClose={onClose}
+      eyebrow="Journal sanitaire"
       title="Signaler maladie porcelet"
-      height="full"
+      ariaLabel="Saisie maladie porcelet"
+      saving={saving}
+      isValid={step === 2 && !!symptome.trim()}
+      onSubmit={handleSubmit}
+      submitLabel="Enregistrer"
+      footer={footer}
+      bodyClassName="sheet__body--wizard"
     >
         <div className="flex items-center gap-3 mb-4">
           <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-red">
@@ -232,12 +276,7 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
         )}
 
         {step === 2 && (
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-4 pb-8"
-            noValidate
-            aria-label="Saisie maladie porcelet"
-          >
+          <div className="space-y-4 pb-8">
             {/* Récap porcelet sélectionné */}
             {selectedPorcelet && (
               <div className="rounded-md border border-border bg-bg-0 px-3 py-2 flex items-center justify-between">
@@ -429,21 +468,9 @@ const QuickHealthLogPorceletForm: React.FC<QuickHealthLogPorceletFormProps> = ({
               />
             </div>
 
-            <Button
-              variant="danger"
-              fullWidth
-              type="submit"
-              disabled={saving || !symptome.trim()}
-              ariaLabel="Enregistrer le signalement"
-            >
-              <span className="inline-flex items-center gap-2">
-                <Send size={14} aria-hidden="true" />
-                {saving ? 'Enregistrement…' : 'Enregistrer'}
-              </span>
-            </Button>
-          </form>
+          </div>
         )}
-    </BottomSheet>
+    </QuickActionSheet>
   );
 };
 

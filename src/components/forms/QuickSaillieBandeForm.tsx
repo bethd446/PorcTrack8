@@ -12,36 +12,34 @@
  * Submit → INSERT N rows dans `saillies` (1 par truie, même verrat,
  * même date, même notes). Best-effort : log les échecs sans bloquer.
  *
- * MIGRATION FORM_CONTRACT Phase 2 (batch A) — PARTIELLE :
- *  - helpers date partagés `_formHelpers` (todayIso / formatFr) ✓
- *  - garde double-clic propre : `closeTimerRef` + cleanup `useEffect` ✓
- *  - reset-on-open render-phase (déjà conforme) ✓
- *  - shell `<QuickActionSheet>` NON appliqué : ce form est un wizard 3-step
- *    navigable (boutons Retour / Suivant / Enregistrer dynamiques) que le
- *    footer fixe du shell (Annuler + 1 submit) ne peut pas porter. Le
- *    `BottomSheet` + footer wizard custom sont conservés (cf. section SPEC).
+ * MIGRATION FORM_CONTRACT Phase 3b (batch G) — WIZARD :
+ *  - shell `<QuickActionSheet>` + prop `footer` custom (navigation 3 étapes
+ *    Annuler/Retour · Suivant/Enregistrer), pattern QuickSplitBandeForm.
+ *  - étape 1 → `<EntityPicker mode="chips" multi>` (sélection multi-truies).
+ *  - étape 2 → `<EntityPicker mode="chips">` (verrat mono).
+ *  - toast canonique `useToast()` (remplace l'`IonToast` local).
+ *  - garde double-clic : `closeTimerRef` + cleanup `useEffect`.
+ *  - reset-on-open render-phase (`lastIsOpen`).
+ *
+ * Les `getAriaLabel` des pickers préservent les `aria-label` contractuels
+ * `Sélectionner {displayId}` / `Sélectionner verrat {displayId}` attendus
+ * par les tests existants.
  */
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { IonToast } from '@ionic/react';
-import {
-  ArrowRight,
-  CheckCircle2,
-  Heart,
-} from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { BottomSheet } from '../agritech';
-import { Button, Input, Textarea } from '@/design-system';
 import { useFarm } from '../../context/FarmContext';
+import { useToast } from '../../context/ToastContext';
 import {
   insertSaillie,
   resolveBoarIdByCode,
   resolveSowIdByCode,
 } from '../../services/supabaseWrites';
-import { useEscapeKey } from './useFormA11y';
 import { normaliseStatut } from '../../lib/truieStatut';
 import type { Truie, Verrat } from '../../types/farm';
 import { todayIso, formatFr } from './_formHelpers';
+import { EntityPicker } from './_formFields';
+import QuickActionSheet from './QuickActionSheet';
 
 export interface QuickSaillieBandeFormProps {
   isOpen: boolean;
@@ -72,6 +70,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
   onSuccess,
 }) => {
   const { truies, verrats, refreshData } = useFarm();
+  const { showToast } = useToast();
 
   const [step, setStep] = useState<Step>(1);
   const [selectedTruieIds, setSelectedTruieIds] = useState<string[]>([]);
@@ -79,12 +78,7 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
   const [dateIso, setDateIso] = useState<string>(todayIso());
   const [notes, setNotes] = useState<string>('');
   const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string>('');
-  const [toast, setToast] = useState<{ open: boolean; message: string }>({
-    open: false,
-    message: '',
-  });
 
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -98,7 +92,6 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
       setDateIso(todayIso());
       setNotes('');
       setSaving(false);
-      setSuccess(false);
       setError('');
     }
   }
@@ -112,7 +105,14 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
     };
   }, []);
 
-  useEscapeKey(isOpen && !saving, onClose);
+  const handleClose = useCallback(() => {
+    if (saving) return;
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    onClose();
+  }, [onClose, saving]);
 
   const truiesDispo = useMemo<Truie[]>(
     () => truies.filter(isTruieDispo),
@@ -130,15 +130,8 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
 
   const dateMBPrevue = useMemo(() => addDays(dateIso, 115), [dateIso]);
 
-  const toggleTruie = (displayId: string): void => {
-    setSelectedTruieIds(prev =>
-      prev.includes(displayId)
-        ? prev.filter(id => id !== displayId)
-        : [...prev, displayId],
-    );
-  };
-
   const goNext = (): void => {
+    if (saving) return;
     setError('');
     if (step === 1) {
       if (selectedTruieIds.length < 2) {
@@ -161,12 +154,15 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
   };
 
   const goPrev = (): void => {
+    if (saving) return;
     setError('');
     if (step === 2) setStep(1);
     else if (step === 3) setStep(2);
   };
 
-  const handleSubmit = async (): Promise<void> => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault();
+    if (step !== 3) return;
     setError('');
     if (selectedTruieIds.length < 2) {
       setError('Au moins 2 truies requises');
@@ -185,8 +181,8 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
     let boarId: string | null = null;
     try {
       boarId = await resolveBoarIdByCode(selectedVerratId);
-    } catch (e) {
-      console.warn('[saillie-bande] resolve verrat failed', e);
+    } catch (err) {
+      console.warn('[saillie-bande] resolve verrat failed', err);
     }
 
     const failures: string[] = [];
@@ -194,8 +190,8 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
       let sowId: string | null = null;
       try {
         sowId = await resolveSowIdByCode(truieCode);
-      } catch (e) {
-        console.warn('[saillie-bande] resolve truie failed', truieCode, e);
+      } catch (err) {
+        console.warn('[saillie-bande] resolve truie failed', truieCode, err);
       }
       try {
         await insertSaillie({
@@ -207,8 +203,8 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
           statut: 'SAILLIE',
           notes: notes.trim() || 'Saillie en bande',
         });
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
         failures.push(`${truieCode}: ${msg}`);
       }
     }
@@ -219,18 +215,15 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
       return;
     }
     if (failures.length > 0) {
-      setToast({
-        open: true,
-        message: `Partiel · ${failures.length} échec(s)`,
-      });
+      showToast(`Partiel · ${failures.length} échec(s)`, 'info', 2400);
     } else {
-      setToast({
-        open: true,
-        message: `${selectedTruieIds.length} saillies enregistrées · MB prévue ${formatFr(dateMBPrevue)}`,
-      });
+      showToast(
+        `${selectedTruieIds.length} saillies enregistrées · MB prévue ${formatFr(dateMBPrevue)}`,
+        'success',
+        2400,
+      );
     }
 
-    setSuccess(true);
     try {
       await refreshData(true);
     } catch {
@@ -241,291 +234,218 @@ const QuickSaillieBandeForm: React.FC<QuickSaillieBandeFormProps> = ({
     // par closeTimerRef + cleanup useEffect (FORM_CONTRACT).
     closeTimerRef.current = setTimeout(() => {
       closeTimerRef.current = null;
-      setSuccess(false);
       setSaving(false);
       onClose();
     }, 1400);
   };
 
-  // ── Render helpers ─────────────────────────────────────────────────────
+  // ── Render des étapes ──────────────────────────────────────────────────
 
   const renderStep1 = (): React.ReactNode => (
-    <div className="space-y-4">
-      <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-2 border-b border-border bg-bg-1 px-4 py-3">
-        <p className="text-[12px] uppercase tracking-wide text-text-2">
-          Étape 1 / 3 — Truies à saillir
-        </p>
-        <p className="mt-1 font-heading text-[16px] uppercase tracking-wide tabular-nums">
-          {selectedTruieIds.length} truie(s) sélectionnée(s)
-        </p>
+    <div className="field">
+      <div className="step-pill" aria-live="polite">
+        Étape 1 / 3 · Truies à saillir
       </div>
-
-      {truiesDispo.length === 0 ? (
-        <p className="text-[12px] uppercase tracking-wide text-text-2">
-          Aucune truie disponible (vide / chaleur)
-        </p>
-      ) : (
-        <ul className="space-y-2" aria-label="Truies disponibles">
-          {truiesDispo.map(t => {
-            const checked = selectedTruieIds.includes(t.displayId);
-            return (
-              <li key={t.id}>
-                <label
-                  className="flex cursor-pointer items-center gap-3 rounded-md border border-border bg-bg-0 p-3 hover:border-accent"
-                  data-testid={`truie-${t.displayId}`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => toggleTruie(t.displayId)}
-                    className="h-5 w-5 accent-accent"
-                    aria-label={`Sélectionner ${t.displayId}`}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate ft-code tabular-nums text-[13px] text-text-0">
-                      {t.displayId}
-                      {t.nom ? ` · ${t.nom}` : ''}
-                    </p>
-                    <p className="text-mono-label text-text-2">
-                      {t.statut}
-                    </p>
-                  </div>
-                </label>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      <label className="label--v77">
+        TRUIES À SAILLIR <span className="req">requis</span>
+      </label>
+      <p
+        className="tabular-nums"
+        style={{
+          fontFamily: 'var(--pt-font-mono)',
+          fontSize: 12,
+          color: 'var(--pt-ink)',
+          margin: '0 0 8px',
+        }}
+      >
+        {selectedTruieIds.length} truie(s) sélectionnée(s)
+      </p>
+      <EntityPicker<Truie>
+        mode="chips"
+        multi
+        entities={truiesDispo}
+        value={selectedTruieIds}
+        onChange={setSelectedTruieIds}
+        entityLabel="la truie"
+        groupLabel="Truies disponibles"
+        emptyText="Aucune truie disponible (vide / chaleur)"
+        disabled={saving}
+        getAriaLabel={t => `Sélectionner ${t.displayId}`}
+        renderSubLabel={t => t.statut}
+      />
     </div>
   );
 
   const renderStep2 = (): React.ReactNode => (
-    <div className="space-y-4">
-      <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-2 border-b border-border bg-bg-1 px-4 py-3">
-        <p className="text-[12px] uppercase tracking-wide text-text-2">
-          Étape 2 / 3 — Verrat
-        </p>
-        <p className="mt-1 font-heading text-[16px] uppercase tracking-wide tabular-nums">
-          {selectedTruieIds.length} truies × 1 verrat
-        </p>
+    <div className="field">
+      <div className="step-pill" aria-live="polite">
+        Étape 2 / 3 · Verrat
       </div>
-
-      {verratsActifs.length === 0 ? (
-        <p className="text-[12px] uppercase tracking-wide text-text-2">
-          Aucun verrat actif
-        </p>
-      ) : (
-        <div
-          role="radiogroup"
-          aria-label="Sélectionner un verrat"
-          className="flex flex-wrap gap-2"
-        >
-          {verratsActifs.map(v => {
-            const isSel = selectedVerratId === v.displayId;
-            return (
-              <button
-                key={v.id}
-                type="button"
-                role="radio"
-                aria-checked={isSel}
-                aria-label={`Sélectionner verrat ${v.displayId}`}
-                data-testid={`verrat-${v.displayId}`}
-                onClick={() => setSelectedVerratId(v.displayId)}
-                className={[
-                  'pressable inline-flex items-center justify-center',
-                  'h-9 px-3 rounded-md border',
-                  'ft-code text-[12px] uppercase tracking-wide tabular-nums',
-                  isSel
-                    ? 'bg-accent text-bg-0 border-accent font-semibold'
-                    : 'bg-bg-0 text-text-1 border-border hover:border-text-2',
-                ].join(' ')}
-              >
-                {v.displayId}
-                {v.nom ? ` · ${v.nom}` : ''}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      <label className="label--v77">
+        VERRAT <span className="req">requis</span>
+      </label>
+      <p
+        className="tabular-nums"
+        style={{
+          fontFamily: 'var(--pt-font-mono)',
+          fontSize: 12,
+          color: 'var(--pt-ink)',
+          margin: '0 0 8px',
+        }}
+      >
+        {selectedTruieIds.length} truies × 1 verrat
+      </p>
+      <EntityPicker<Verrat>
+        mode="chips"
+        entities={verratsActifs}
+        value={selectedVerratId}
+        onChange={setSelectedVerratId}
+        entityLabel="le verrat"
+        groupLabel="Sélectionner un verrat"
+        emptyText="Aucun verrat actif"
+        disabled={saving}
+        getAriaLabel={v => `Sélectionner verrat ${v.displayId}`}
+      />
     </div>
   );
 
   const renderStep3 = (): React.ReactNode => (
-    <div className="space-y-4">
-      <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-2 border-b border-border bg-bg-1 px-4 py-3">
-        <p className="text-[12px] uppercase tracking-wide text-text-2">
-          Étape 3 / 3 — Date & notes
-        </p>
-        <p className="mt-1 font-heading text-[16px] uppercase tracking-wide tabular-nums">
-          {selectedTruieIds.length} saillies · MB prévue {formatFr(dateMBPrevue)}
-        </p>
+    <>
+      <div className="step-pill" aria-live="polite">
+        Étape 3 / 3 · Date & notes
       </div>
+      <p
+        className="tabular-nums"
+        style={{
+          fontFamily: 'var(--pt-font-mono)',
+          fontSize: 12,
+          color: 'var(--pt-ink)',
+          margin: '0 0 4px',
+        }}
+      >
+        {selectedTruieIds.length} saillies · MB prévue {formatFr(dateMBPrevue)}
+      </p>
 
-      <div className="space-y-1.5">
-        <label
-          htmlFor="saillie-bande-date"
-          className="block text-mono-label text-text-2"
-        >
-          Date de saillie
+      <div className="field">
+        <label className="label--v77" htmlFor="saillie-bande-date">
+          DATE DE SAILLIE
         </label>
-        <Input
+        <input
           id="saillie-bande-date"
+          className={`field__input mono${dateIso ? ' filled' : ' field__input--ghost'}`}
           type="date"
+          aria-label="Date de saillie"
           value={dateIso}
           onChange={e => setDateIso(e.target.value)}
           disabled={saving}
         />
       </div>
 
-      <div className="space-y-1.5">
-        <label
-          htmlFor="saillie-bande-notes"
-          className="block text-mono-label text-text-2"
-        >
-          Notes <span className="text-text-2 normal-case">· optionnel</span>
+      <div className="field">
+        <label className="label--v77" htmlFor="saillie-bande-notes">
+          NOTES <span className="hint">optionnel</span>
         </label>
-        <Textarea
+        <textarea
           id="saillie-bande-notes"
+          className="field__input"
+          style={{ minHeight: 80, resize: 'vertical' }}
           maxLength={200}
           placeholder="Ex: lot saillie semaine 18…"
           value={notes}
           onChange={e => setNotes(e.target.value)}
+          disabled={saving}
         />
       </div>
 
-      <div className="rounded-md border border-border bg-bg-0 p-3">
-        <p className="mb-2 text-mono-label text-text-2">
-          Récapitulatif
-        </p>
-        <ul className="space-y-1">
+      <div className="calc-card" aria-label="Récapitulatif">
+        <div className="eyebrow" style={{ marginBottom: 8 }}>Récapitulatif</div>
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {selectedTruieIds.map(id => (
             <li
               key={id}
-              className="ft-code tabular-nums text-[12px] text-text-0"
+              className="tabular-nums"
+              style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 12, color: 'var(--pt-ink)' }}
             >
               {id} × {selectedVerratId} · {formatFr(dateIso)}
             </li>
           ))}
         </ul>
       </div>
-    </div>
+    </>
+  );
+
+  // ── Footer custom wizard (remplace le footer canonique) ────────────────
+
+  const nextDisabled =
+    saving ||
+    (step === 1 && selectedTruieIds.length < 2) ||
+    (step === 2 && !selectedVerratId);
+  const isLast = step === 3;
+  const submitDisabled = saving || selectedTruieIds.length < 2 || !selectedVerratId || !dateIso;
+
+  const footer = (
+    <>
+      <button
+        type="button"
+        className="btn btn--ghost"
+        onClick={step === 1 ? handleClose : goPrev}
+        disabled={saving}
+        aria-label={step === 1 ? 'Annuler et fermer' : "Revenir à l'étape précédente"}
+      >
+        {step === 1 ? 'Annuler' : 'Retour'}
+      </button>
+      {isLast ? (
+        <button
+          type="submit"
+          className="btn btn--primary btn--lg btn--block"
+          disabled={submitDisabled}
+          aria-busy={saving}
+          aria-label={`Enregistrer ${selectedTruieIds.length} saillies en bande`}
+        >
+          {saving ? 'Enregistrement…' : `Enregistrer ${selectedTruieIds.length} saillies`}
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="btn btn--primary btn--lg btn--block"
+          onClick={goNext}
+          disabled={nextDisabled}
+          aria-label="Passer à l'étape suivante"
+        >
+          Suivant
+        </button>
+      )}
+    </>
   );
 
   return (
-    <>
-      <BottomSheet
-        isOpen={isOpen}
-        onClose={onClose}
-        title="Saillie en bande"
-        height="full"
-      >
-        {success ? (
-          <div
-            className="flex flex-col items-center justify-center py-20"
-            role="status"
-            aria-live="polite"
-          >
-            <CheckCircle2
-              size={38}
-              className="mb-4 text-accent"
-              strokeWidth={2}
-              aria-hidden="true"
-            />
-            <p className="font-heading text-[18px] uppercase tracking-wide">
-              {selectedTruieIds.length} saillies enregistrées
-            </p>
-            <p className="mt-2 text-[12px] uppercase tracking-wide text-text-2">
-              MB prévue {formatFr(dateMBPrevue)}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-5" aria-label="Wizard saillie en bande">
-            <div className="flex items-center gap-3">
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
-                <Heart size={18} aria-hidden="true" />
-              </div>
-              <p className="text-mono-label text-text-1">
-                N truies × 1 verrat × 1 date
-              </p>
-            </div>
+    <QuickActionSheet
+      isOpen={isOpen}
+      onClose={handleClose}
+      eyebrow="Saillie en bande"
+      title="Saillir plusieurs truies en lot"
+      ariaLabel="Saillie en bande"
+      saving={saving}
+      isValid={!submitDisabled}
+      onSubmit={handleSubmit}
+      submitLabel={`Enregistrer ${selectedTruieIds.length} saillies`}
+      footer={footer}
+      bodyClassName="sheet__body--wizard"
+    >
+      <div className="field--inline" style={{ alignItems: 'center', gap: 12 }}>
+        <p className="text-mono-label" style={{ margin: 0, color: 'var(--pt-subtle)' }}>
+          N truies × 1 verrat × 1 date
+        </p>
+      </div>
 
-            {step === 1 && renderStep1()}
-            {step === 2 && renderStep2()}
-            {step === 3 && renderStep3()}
+      {step === 1 ? renderStep1() : step === 2 ? renderStep2() : renderStep3()}
 
-            {error && (
-              <p
-                role="alert"
-                className="text-mono-label text-red"
-              >
-                {error}
-              </p>
-            )}
-
-            <div className="flex gap-3 justify-end px-4 py-3 border-t border-border">
-              {step > 1 ? (
-                <Button
-                  variant="secondary"
-                  onClick={goPrev}
-                  disabled={saving}
-                >
-                  Retour
-                </Button>
-              ) : (
-                <Button
-                  variant="secondary"
-                  onClick={onClose}
-                  disabled={saving}
-                >
-                  Annuler
-                </Button>
-              )}
-
-              {step < 3 ? (
-                <Button
-                  variant="primary"
-                  onClick={goNext}
-                  disabled={
-                    saving ||
-                    (step === 1 && selectedTruieIds.length < 2) ||
-                    (step === 2 && !selectedVerratId)
-                  }
-                >
-                  <span className="inline-flex items-center gap-2">
-                    Suivant
-                    <ArrowRight size={16} aria-hidden="true" />
-                  </span>
-                </Button>
-              ) : (
-                <Button
-                  variant="primary"
-                  onClick={handleSubmit}
-                  disabled={saving}
-                  aria-busy={saving}
-                >
-                  {saving ? (
-                    <span className="animate-pulse">Enregistrement…</span>
-                  ) : (
-                    <span className="inline-flex items-center gap-2">
-                      <CheckCircle2 size={16} aria-hidden="true" />
-                      Enregistrer {selectedTruieIds.length} saillies
-                    </span>
-                  )}
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
-      </BottomSheet>
-
-      <IonToast
-        isOpen={toast.open}
-        message={toast.message}
-        duration={2400}
-        position="bottom"
-        onDidDismiss={() => setToast({ open: false, message: '' })}
-      />
-    </>
+      {error ? (
+        <p role="alert" style={{ fontFamily: 'var(--pt-font-mono)', fontSize: 11, color: 'var(--pt-danger)', marginTop: 8 }}>
+          {error}
+        </p>
+      ) : null}
+    </QuickActionSheet>
   );
 };
 

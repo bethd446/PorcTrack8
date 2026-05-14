@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, Edit3, Plus, Save, Trash2, X } from 'lucide-react';
 
-import { BottomSheet } from '../agritech';
 import { Button, FormField, Input, Select, Textarea } from '@/design-system';
+import QuickActionSheet from './QuickActionSheet';
 import {
   addBatchSource,
   getBatchSources,
@@ -42,13 +42,15 @@ import QuickAddLogeForm from './QuickAddLogeForm';
    notes, truie, boucle_mere).
    Patch partiel : seules les valeurs modifiées sont envoyées.
 
-   Migration partielle FORM_CONTRACT (Phase 2 · Batch C) :
+   Migration FORM_CONTRACT Phase 3b — shell `<QuickActionSheet>` :
      - toast canonique `useToast()` (remplace IonToast local)
      - garde double-clic : `closeTimerRef` + cleanup `useEffect`
      - reset-on-open déjà en render-phase (`lastKey`)
-   Le shell `<QuickActionSheet>` n'est PAS applicable : ce form a un layout
-   multi-fieldset, des sous-formulaires inline et un `<QuickAddLogeForm>`
-   imbriqué ; il reste sur `<BottomSheet>` + composants DS.
+     - layout multi-fieldset dense → `bodyClassName="sheet__body--wizard"`
+     - footer custom (Annuler + Enregistrer) via la prop `footer` du shell
+     - `handleSubmit` est l'`onSubmit` du `<form>` du shell
+     - le sous-formulaire `<QuickAddLogeForm>` reste un modal frère, rendu
+       à côté du shell dans le même fragment.
    ═════════════════════════════════════════════════════════════════════════ */
 
 interface QuickEditBandeFormProps {
@@ -426,20 +428,61 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
 
   const labelCls = 'block text-mono-label text-text-2';
 
+  const footer = (
+    <div
+      style={{
+        gridColumn: '1 / -1',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+      }}
+    >
+      <button
+        type="button"
+        className="btn btn--ghost"
+        onClick={handleClose}
+        disabled={saving}
+        aria-label="Annuler et fermer"
+        style={{ flex: 1 }}
+      >
+        Annuler
+      </button>
+      <button
+        type="submit"
+        className="btn btn--primary btn--lg"
+        disabled={saving}
+        aria-busy={saving}
+        aria-label="Enregistrer les modifications de la bande"
+        style={{ flex: 2 }}
+      >
+        {saving ? (
+          <span className="animate-pulse">Enregistrement…</span>
+        ) : (
+          <span className="inline-flex items-center gap-2">
+            Enregistrer
+            <Save size={14} aria-hidden="true" />
+          </span>
+        )}
+      </button>
+    </div>
+  );
+
   return (
     <>
-      <BottomSheet
+      <QuickActionSheet
         isOpen={isOpen}
         onClose={handleClose}
+        eyebrow="Cheptel"
         title={`Éditer · ${displayId}`}
-        height="full"
+        ariaLabel="Édition bande"
+        saving={saving}
+        isValid={!saving}
+        onSubmit={handleSubmit}
+        submitLabel="Enregistrer"
+        footer={footer}
+        bodyClassName="sheet__body--wizard"
       >
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-6"
-          noValidate
-          aria-label="Édition bande"
-        >
+        <div className="space-y-6">
           {/* Header */}
           <div className="flex items-center gap-3">
             <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-bg-2 text-accent">
@@ -1103,54 +1146,8 @@ const QuickEditBandeForm: React.FC<QuickEditBandeFormProps> = ({
             />
           </FormField>
 
-          {/* ── Actions ─────────────────────────────────────────────── */}
-          <div className="flex items-center gap-2 pt-2">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleClose}
-              disabled={saving}
-              ariaLabel="Annuler et fermer"
-              className={[
-                'pressable flex-1 h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-bg-1 border border-border text-text-1',
-                'text-[12px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms] hover:border-text-2',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : '',
-              ].join(' ')}
-            >
-              Annuler
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={saving}
-              ariaLabel="Enregistrer les modifications de la bande"
-              aria-busy={saving}
-              className={[
-                'pressable flex-[2] h-14 rounded-md',
-                'inline-flex items-center justify-center gap-2',
-                'bg-accent text-bg-0',
-                'text-[13px] font-bold uppercase tracking-wide',
-                'transition-colors duration-[160ms]',
-                'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2',
-                saving ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110',
-              ].join(' ')}
-            >
-              {saving ? (
-                <span className="animate-pulse">Enregistrement…</span>
-              ) : (
-                <>
-                  <span>Enregistrer</span>
-                  <Save size={14} aria-hidden="true" />
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
-      </BottomSheet>
+        </div>
+      </QuickActionSheet>
 
       <QuickAddLogeForm
         isOpen={addLogeOpen}

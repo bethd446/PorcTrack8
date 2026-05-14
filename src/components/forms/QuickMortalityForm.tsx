@@ -2,8 +2,9 @@ import React, { useMemo, useRef, useState, useCallback } from 'react';
 import { useIonAlert } from '@ionic/react';
 import { CheckCircle2, Search, ChevronRight, ArrowLeft } from 'lucide-react';
 
-import { BottomSheet, DataRow } from '../agritech';
+import { DataRow } from '../agritech';
 import { Button, FormField, Input, Section, Segment, Select, Textarea } from '@/design-system';
+import QuickActionSheet from './QuickActionSheet';
 import { useFarm } from '../../context/FarmContext';
 import { useToast } from '../../context/ToastContext';
 import { todayIso, isoDaysAgo } from './_formHelpers';
@@ -53,6 +54,15 @@ const MORTALITY_BACKDATE_MAX_DAYS = 60;
  *  - Sections UPPERCASE (INFORMATIONS PRINCIPALES / DÉCÈS / NOTES)
  *  - useIonAlert conservé pour la confirmation (modal natif iOS/Android)
  *  - Logique métier intacte : insertHealthLog + updateBatchByCode/updateSowByCode/updateBoarByCode
+ *
+ * Migration FORM_CONTRACT Phase 3b — WIZARD (réf. QuickSplitBandeForm) :
+ *  - shell `<QuickActionSheet>` avec `footer` custom : navigation 3 étapes
+ *    (Annuler / Retour / Enregistrer) remplace le footer canonique.
+ *  - `bodyClassName="sheet__body--wizard"` pour le layout dense.
+ *  - le bouton « Enregistrer » de l'étape 2 est `type="submit"` : il déclenche
+ *    `handleSubmit` (→ `handleSave` → `presentAlert`) via `onSubmit` du `<form>`.
+ *  - `useEscapeKey` / `useFocusFirstInput` restent appelés par le form (le shell
+ *    câble aussi Escape ; le double-binding est inoffensif et idempotent).
  */
 export interface QuickMortalityFormProps {
   isOpen: boolean;
@@ -286,6 +296,12 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
     });
   };
 
+  const handleSubmit = (e: React.FormEvent): void => {
+    e.preventDefault();
+    if (step !== 2) return;
+    void handleSave();
+  };
+
   const executeSave = async (nb: number) => {
     if (!selectedSubject) return;
     setSaving(true);
@@ -379,9 +395,60 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
   const vivants = subjectType === 'BANDE' ? (selectedSubject as BandePorcelets | undefined)?.vivants ?? 0 : 0;
   const maxMorts = Math.max(MIN_DEATHS, Math.min(MAX_DEATHS, vivants > 0 ? vivants : MAX_DEATHS));
 
+  // Footer custom wizard (remplace le footer canonique Annuler+submit).
+  const footer =
+    step === 3 ? (
+      <></>
+    ) : step === 1 ? (
+      <>
+        <button
+          type="button"
+          className="btn btn--ghost"
+          onClick={handleClose}
+          disabled={saving}
+          aria-label="Annuler et fermer"
+        >
+          Annuler
+        </button>
+        <span aria-hidden="true" />
+      </>
+    ) : (
+      <>
+        <button
+          type="button"
+          className="btn btn--ghost"
+          onClick={handleClose}
+          disabled={saving}
+          aria-label="Annuler la déclaration"
+        >
+          Annuler
+        </button>
+        <button
+          type="submit"
+          className="btn btn--primary btn--lg btn--block"
+          disabled={saving || !selectedBandeId || bandesDispo.length === 0}
+          aria-busy={saving}
+          aria-label="Enregistrer la mortalité"
+        >
+          {saving ? 'Enregistrement…' : 'Enregistrer'}
+        </button>
+      </>
+    );
+
   return (
-    <>
-      <BottomSheet isOpen={isOpen} onClose={handleClose} title="Déclarer une mortalité" height="full">
+    <QuickActionSheet
+      isOpen={isOpen}
+      onClose={handleClose}
+      eyebrow="Journal sanitaire"
+      title="Déclarer une mortalité"
+      ariaLabel="Déclarer une mortalité"
+      saving={saving}
+      isValid={!saving && !!selectedBandeId && bandesDispo.length > 0}
+      onSubmit={handleSubmit}
+      submitLabel="Enregistrer"
+      footer={footer}
+      bodyClassName="sheet__body--wizard"
+    >
         <div className="space-y-5">
           {step === 1 && (
             <div className="space-y-4">
@@ -544,28 +611,6 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
                   {error}
                 </p>
               )}
-
-              <div className="flex gap-3 justify-end pt-2 border-t border-border">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={handleClose}
-                  disabled={saving}
-                  ariaLabel="Annuler la déclaration"
-                >
-                  Annuler
-                </Button>
-                <Button
-                  type="button"
-                  variant="danger"
-                  ariaLabel="Enregistrer la mortalité"
-                  aria-busy={saving}
-                  onClick={handleSave}
-                  disabled={saving || !selectedBandeId || bandesDispo.length === 0}
-                >
-                  {saving ? 'Enregistrement…' : 'Enregistrer'}
-                </Button>
-              </div>
             </div>
           )}
 
@@ -581,8 +626,7 @@ const QuickMortalityForm: React.FC<QuickMortalityFormProps> = ({
             </div>
           )}
         </div>
-      </BottomSheet>
-    </>
+    </QuickActionSheet>
   );
 };
 

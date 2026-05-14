@@ -5,7 +5,7 @@
  * Pattern : useToast().showToast(message, type, duration) depuis n'importe
  * quel composant fils du <ToastProvider>.
  *
- * Type 'success' (vert) | 'error' (rouge) | 'info' (gris).
+ * Type 'success' (vert) | 'error' (rouge) | 'warning' (orange) | 'info' (gris).
  *
  * À utiliser sur toute soumission de form qui modifie la DB :
  *  - Saillie / Mise-bas / Sevrage / Soin / Pesée / Note / Mortalité
@@ -24,7 +24,7 @@
 import React, { createContext, useCallback, useContext, useState } from 'react';
 import { IonToast } from '@ionic/react';
 
-type ToastType = 'success' | 'error' | 'info';
+type ToastType = 'success' | 'error' | 'warning' | 'info';
 
 interface ToastMessage {
   id: string;
@@ -70,7 +70,15 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           isOpen={true}
           message={t.message}
           duration={t.duration}
-          color={t.type === 'success' ? 'success' : t.type === 'error' ? 'danger' : 'medium'}
+          color={
+            t.type === 'success'
+              ? 'success'
+              : t.type === 'error'
+                ? 'danger'
+                : t.type === 'warning'
+                  ? 'warning'
+                  : 'medium'
+          }
           position="bottom"
           onDidDismiss={() => dismiss(t.id)}
         />

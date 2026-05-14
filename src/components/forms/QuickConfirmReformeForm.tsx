@@ -9,13 +9,11 @@
  *  - shell `<QuickActionSheet>` (form onSubmit + bouton type=submit)
  *  - helpers date partagés `_formHelpers` (todayIso)
  *  - reset-on-open via `lastOpenKey` render-phase
- *
- * Note SPEC : le toast transactionnel reste géré par `useConfirmFlow`
- * (hook partagé, hors zone) via son `IonToast` local — la bascule vers
- * `useToast()` exigerait de modifier `useConfirmFlow.ts`.
+ *  - toast canonique : émis par `useConfirmFlow` via `useToast()` (Phase 3a) ;
+ *    plus de `<IonToast>` local (supprimé en Phase 3b — clés `toast`/
+ *    `dismissToast` du hook inertes).
  */
 import React, { useMemo, useState } from 'react';
-import { IonToast } from '@ionic/react';
 
 import { FormField, Input, Select } from '@/design-system';
 import type { PendingConfirmation } from '../../services/confirmationQueue';
@@ -58,7 +56,7 @@ const QuickConfirmReformeForm: React.FC<QuickConfirmReformeFormProps> = ({
   const [motif, setMotif] = useState<string>(motifSuggere);
   const [motifAutre, setMotifAutre] = useState<string>('');
   const [dateSortie, setDateSortie] = useState<string>(todayIso());
-  const { saving, error, toast, submit, dismissToast, resetError } = useConfirmFlow({
+  const { saving, error, submit, resetError } = useConfirmFlow({
     pending,
     onClose,
     onSuccess,
@@ -90,85 +88,75 @@ const QuickConfirmReformeForm: React.FC<QuickConfirmReformeFormProps> = ({
   if (!pending) return null;
 
   return (
-    <>
-      <QuickActionSheet
-        isOpen={isOpen}
-        onClose={onClose}
-        eyebrow="Confirmation en attente"
-        title={`Confirmer la réforme de ${truieId}`}
-        ariaLabel={`Confirmer la réforme de ${truieId}`}
-        saving={saving}
-        isValid={true}
-        onSubmit={handleSubmit}
-        submitLabel="Confirmer la réforme"
-        submitAriaLabel="Confirmer la réforme"
-      >
-        <div className="space-y-5">
-          <div className="card-dense !p-4 space-y-1">
-            <div className="text-mono-micro text-text-2">Truie</div>
-            <div className="ft-code text-[13px] text-text-0">{truieId}</div>
-            <p className="mt-2 text-[12px] text-text-1 leading-relaxed">
-              {pending.alertMessage}
-            </p>
-          </div>
+    <QuickActionSheet
+      isOpen={isOpen}
+      onClose={onClose}
+      eyebrow="Confirmation en attente"
+      title={`Confirmer la réforme de ${truieId}`}
+      ariaLabel={`Confirmer la réforme de ${truieId}`}
+      saving={saving}
+      isValid={true}
+      onSubmit={handleSubmit}
+      submitLabel="Confirmer la réforme"
+      submitAriaLabel="Confirmer la réforme"
+    >
+      <div className="space-y-5">
+        <div className="card-dense !p-4 space-y-1">
+          <div className="text-mono-micro text-text-2">Truie</div>
+          <div className="ft-code text-[13px] text-text-0">{truieId}</div>
+          <p className="mt-2 text-[12px] text-text-1 leading-relaxed">
+            {pending.alertMessage}
+          </p>
+        </div>
 
-          <FormField label="Motif retenu">
-            <Select
-              id="reforme-motif"
-              aria-label="Motif retenu"
-              value={motif}
-              onChange={e => setMotif(e.target.value)}
-              disabled={saving}
-            >
-              {REFORME_MOTIFS.map(m => (
-                <option key={m.value} value={m.value}>{m.label}</option>
-              ))}
-            </Select>
-          </FormField>
+        <FormField label="Motif retenu">
+          <Select
+            id="reforme-motif"
+            aria-label="Motif retenu"
+            value={motif}
+            onChange={e => setMotif(e.target.value)}
+            disabled={saving}
+          >
+            {REFORME_MOTIFS.map(m => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </Select>
+        </FormField>
 
-          {motif === 'AUTRE' && (
-            <FormField label="Préciser le motif">
-              <Input
-                id="reforme-motif-autre"
-                type="text"
-                aria-label="Préciser le motif"
-                maxLength={120}
-                value={motifAutre}
-                onChange={e => setMotifAutre(e.target.value)}
-                placeholder="Ex. comportement agressif"
-                disabled={saving}
-              />
-            </FormField>
-          )}
-
-          <FormField label="Date de sortie">
+        {motif === 'AUTRE' && (
+          <FormField label="Préciser le motif">
             <Input
-              id="reforme-date"
-              type="date"
-              aria-label="Date de sortie"
-              value={dateSortie}
-              onChange={e => setDateSortie(e.target.value)}
-              max={todayIso()}
+              id="reforme-motif-autre"
+              type="text"
+              aria-label="Préciser le motif"
+              maxLength={120}
+              value={motifAutre}
+              onChange={e => setMotifAutre(e.target.value)}
+              placeholder="Ex. comportement agressif"
               disabled={saving}
             />
           </FormField>
+        )}
 
-          {error && (
-            <p role="alert" className="text-[11px] text-red">
-              {error}
-            </p>
-          )}
-        </div>
-      </QuickActionSheet>
+        <FormField label="Date de sortie">
+          <Input
+            id="reforme-date"
+            type="date"
+            aria-label="Date de sortie"
+            value={dateSortie}
+            onChange={e => setDateSortie(e.target.value)}
+            max={todayIso()}
+            disabled={saving}
+          />
+        </FormField>
 
-      <IonToast
-        isOpen={toast.show}
-        message={toast.message}
-        duration={2200}
-        position="bottom"
-        onDidDismiss={dismissToast}
-      />
-    </>
+        {error && (
+          <p role="alert" className="text-[11px] text-red">
+            {error}
+          </p>
+        )}
+      </div>
+    </QuickActionSheet>
   );
 };
 

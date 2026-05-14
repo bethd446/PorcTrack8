@@ -1,5 +1,5 @@
 /**
- * QuickActionSheet — shell canonique des Quick*Form (FORM_CONTRACT Phase 1).
+ * QuickActionSheet — shell canonique des Quick*Form (FORM_CONTRACT Phase 1+3a).
  * ════════════════════════════════════════════════════════════════════════════
  * Factorise la coquille commune à tous les formulaires d'action terrain :
  *  - `IonModal` bottom-sheet (breakpoints [0,1]) + classes `pt-sheet-modal`
@@ -16,6 +16,16 @@
  *
  * Le composant ne rend PAS de toast : le système canonique est `useToast()`
  * (context global monté au niveau App), pas un toast local par form.
+ *
+ * Phase 3a — support wizard : la prop optionnelle `footer` REMPLACE le footer
+ * par défaut (Annuler + submit). Les forms wizard multi-étapes rendent ainsi
+ * leur propre navigation (Retour / Suivant / Enregistrer) tout en conservant
+ * le reste du shell (IonModal + sheet + handle + header + a11y escape +
+ * `<form onSubmit>`). Sans `footer`, le comportement est strictement identique
+ * à Phase 1 (rétro-compat totale des 44 forms déjà migrés). Note : un wizard
+ * pilote sa soumission depuis ses propres boutons — passer `isValid={false}`
+ * neutralise le submit par défaut s'il restait un bouton `type="submit"`, mais
+ * comme le footer custom remplace tout, ses boutons sont `type="button"`.
  */
 import React from 'react';
 import { IonModal } from '@ionic/react';
@@ -48,6 +58,15 @@ export interface QuickActionSheetProps {
   submitAriaLabel?: string;
   /** Désactivation supplémentaire du submit (ex. aucune entité éligible). */
   submitDisabled?: boolean;
+  /**
+   * Footer custom (Phase 3a) : si fourni, REMPLACE le footer par défaut
+   * (Annuler + submit). Le form rend sa propre navigation (wizard multi-étapes :
+   * Retour / Suivant / Enregistrer). Le reste du shell est inchangé. Quand
+   * `footer` est absent, le footer canonique Phase 1 est rendu (rétro-compat).
+   */
+  footer?: React.ReactNode;
+  /** Classe CSS additionnelle sur `.sheet__body` (layouts denses / wizard). */
+  bodyClassName?: string;
   /** Corps du formulaire (champs). Rendu dans `.sheet__body`. */
   children: React.ReactNode;
 }
@@ -73,6 +92,8 @@ const QuickActionSheet: React.FC<QuickActionSheetProps> = ({
   savingLabel = 'Enregistrement…',
   submitAriaLabel,
   submitDisabled = false,
+  footer,
+  bodyClassName,
   children,
 }) => {
   // Escape ferme la sheet sauf pendant une sauvegarde (anti-perte de données).
@@ -116,31 +137,35 @@ const QuickActionSheet: React.FC<QuickActionSheetProps> = ({
               <X size={14} aria-hidden="true" />
             </button>
           </header>
-          <div className="sheet__body">{children}</div>
-          <footer className="sheet__foot">
-            <button
-              type="button"
-              className="btn btn--ghost"
-              onClick={handleClose}
-              disabled={saving}
-              aria-label="Annuler et fermer"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              className="btn btn--primary btn--lg btn--block"
-              disabled={!isValid || saving || submitDisabled}
-              aria-busy={saving}
-              aria-label={submitAriaLabel ?? submitLabel}
-            >
-              {saving ? savingLabel : (
-                <>
-                  <Check size={14} aria-hidden="true" /> {submitLabel}
-                </>
-              )}
-            </button>
-          </footer>
+          <div className={bodyClassName ? `sheet__body ${bodyClassName}` : 'sheet__body'}>{children}</div>
+          {footer !== undefined ? (
+            <footer className="sheet__foot">{footer}</footer>
+          ) : (
+            <footer className="sheet__foot">
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={handleClose}
+                disabled={saving}
+                aria-label="Annuler et fermer"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                className="btn btn--primary btn--lg btn--block"
+                disabled={!isValid || saving || submitDisabled}
+                aria-busy={saving}
+                aria-label={submitAriaLabel ?? submitLabel}
+              >
+                {saving ? savingLabel : (
+                  <>
+                    <Check size={14} aria-hidden="true" /> {submitLabel}
+                  </>
+                )}
+              </button>
+            </footer>
+          )}
         </form>
       </div>
     </IonModal>
