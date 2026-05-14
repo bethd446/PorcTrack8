@@ -12,6 +12,13 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
+        // 2026-05-15 — SW renommé sw.js → service-worker.js. Le CDN Hostinger
+        // détenait une copie gelée de /sw.js (max-age 7j, mise en cache avant
+        // le fix .htaccess no-cache) qu'aucune purge SSH ne pouvait évincer
+        // (méthode PURGE → 405, pas d'API CDN). Nouvelle URL = MISS CDN garanti
+        // → SW frais servi immédiatement, et le no-cache .htaccess empêche tout
+        // re-gel. L'ancien /sw.js devient inerte (plus enregistré, expire seul).
+        filename: 'service-worker.js',
         // V74 — vite-plugin-pwa génère /manifest.webmanifest (référencé par
         // index.html). L'ancien public/manifest.json a été supprimé (orphelin
         // jamais référencé). Icônes PNG 192/512/maskable pointées explicitement
